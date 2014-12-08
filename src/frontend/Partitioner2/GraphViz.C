@@ -249,7 +249,9 @@ GraphViz::edgeLabel(const Partitioner &partitioner, const ControlFlowGraph::Cons
             s = "return";
             break;
         case E_CALL_RETURN:
-            s = "call-ret";
+            s = "cret";
+            if (edge->value().confidence() == ASSUMED)
+                s += "\nassumed";
             break;
         case E_NORMAL:
             break;
@@ -400,9 +402,10 @@ GraphViz::dumpFunctionCallees(std::ostream &out, const Partitioner &partitioner,
             }
         } else {
             ASSERT_require(t.event() == ENTER_EDGE);
-            if (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER) {
+            if ((t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER) &&
+                t.edge()->target()->value().type() == V_BASIC_BLOCK && t.edge()->target()->value().function() != function) {
+                dumpFunctionInfo(out, partitioner, t.edge()->target()); // non-recursive function call
                 t.skipChildren();
-                dumpFunctionInfo(out, partitioner, t.edge()->target());
             }
         }
     }

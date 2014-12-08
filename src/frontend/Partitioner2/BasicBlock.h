@@ -38,14 +38,23 @@ public:
     private:
         Semantics::SValuePtr expr_;
         EdgeType type_;
+        Confidence confidence_;
     public:
-        explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL)
-            : expr_(expr), type_(type) {}
+        explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
+            : expr_(expr), type_(type), confidence_(confidence) {}
+
         /** Symbolic expression for the successor address. */
         const Semantics::SValuePtr& expr() const { return expr_; }
 
         /** Type of successor. */
         EdgeType type() const { return type_; }
+
+        /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
+         *
+         * @{ */
+        Confidence confidence() const { return confidence_; }
+        void confidence(Confidence c) { confidence_ = c; }
+        /** @} */
     };
 
     /** All successors in no particular order. */
@@ -271,8 +280,8 @@ public:
      *  fall-through address.
      *
      *  @{ */
-    void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL);
-    void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL);
+    void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
+    void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     /** @} */
 
 

@@ -89,10 +89,13 @@ private:
 class CfgEdge {
 private:
     EdgeType type_;
+    Confidence confidence_;
 public:
-    CfgEdge(): type_(E_NORMAL) {}
-    explicit CfgEdge(EdgeType type): type_(type) {}
+    CfgEdge(): type_(E_NORMAL), confidence_(ASSUMED) {}
+    explicit CfgEdge(EdgeType type, Confidence confidence=ASSUMED): type_(type), confidence_(confidence) {}
     EdgeType type() const { return type_; }
+    Confidence confidence() const { return confidence_; }
+    void confidence(Confidence c) { confidence_ = c; }
 };
 
 /** Control flow graph. */

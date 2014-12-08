@@ -431,7 +431,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
             }
         }
         
-        CfgEdge edge(edgeType);
+        CfgEdge edge(edgeType, successor.confidence());
         if (successor.expr()->is_number()) {
             successors.push_back(VertexEdgePair(insertPlaceholder(successor.expr()->get_number()), edge));
         } else if (!hadIndeterminate) {
@@ -446,8 +446,16 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
     if (autoAddCallReturnEdges_ && !hasCallReturnEdges && basicBlockIsFunctionCall(bblock)) {
         BOOST_FOREACH (const VertexEdgePair &successor, successors) {
             if (successor.second.type() == E_FUNCTION_CALL) {
-                if (basicBlockOptionalMayReturn(bblock).orElse(assumeFunctionsReturn_)) {
-                    successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), CfgEdge(E_CALL_RETURN)));
+                bool mayReturn = false;
+                if (basicBlockOptionalMayReturn(bblock).assignTo(mayReturn)) {
+                    // may-return is provably true or false
+                    CfgEdge edge(E_CALL_RETURN, PROVED);
+                    successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), edge));
+                    break;
+                } else if (assumeFunctionsReturn_) {
+                    // assume functions return without proving it
+                    CfgEdge edge(E_CALL_RETURN, ASSUMED);
+                    successors.push_back(VertexEdgePair(insertPlaceholder(bblock->fallthroughVa()), edge));
                     break;
                 }
             }

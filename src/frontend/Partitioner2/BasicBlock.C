@@ -32,12 +32,12 @@ BasicBlock::init(const Partitioner *partitioner) {
 }
 
 void
-BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType type) {
+BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType type, Confidence confidence) {
     if (successor_ != NULL) {
         Semantics::SValuePtr successor = Semantics::SValue::promote(successor_);
         if (!successors_.isCached()) {
             Successors successors;
-            successors.push_back(Successor(successor, type));
+            successors.push_back(Successor(successor, type, confidence));
             successors_ = successors;
         } else {
             Successors successors = successors_.get();
@@ -49,7 +49,7 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
                 }
             }
             if (!found) {
-                successors.push_back(Successor(successor, type));
+                successors.push_back(Successor(successor, type, confidence));
                 successors_ = successors;
             }
         }
@@ -57,8 +57,8 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
 }
 
 void
-BasicBlock::insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type) {
-    return insertSuccessor(operators_->number_(nBits, va), type);
+BasicBlock::insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type, Confidence confidence) {
+    return insertSuccessor(operators_->number_(nBits, va), type, confidence);
 }
 
 SgAsmInstruction*
