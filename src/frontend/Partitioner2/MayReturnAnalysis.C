@@ -361,14 +361,38 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                     bool functionListed = false;        // function's blacklisted or whitelisted value if listed
                     if (function && function->address()==t.vertex()->value().address() &&
                         mayReturnList_.getOptional(function->name()).assignTo(functionListed)) {
+                        // Whitelisted or blacklisted by name
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<function->printableName()
                                            <<" is " <<(functionListed?"whitelisted":"blacklisted") <<"\n";
                         vertexInfo[t.vertex()->id()].result = functionListed;
                         t.skipChildren();
+                    } else if (function && function->address()==t.vertex()->value().address() &&
+                               (boost::ends_with(function->name(), "@plt") || boost::ends_with(function->name(), "@iat"))) {
+                        // Dynamically linked functions return or not by definition
+                        functionListed = assumeFunctionsReturn_;
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]    " <<function->printableName()
+                                           <<" is " <<(functionListed?"whitelisted":"blacklisted") <<" by /@plt$/ pattern\n";
+                        vertexInfo[t.vertex()->id()].result = functionListed;
+                        t.skipChildren();
+                    } else if (t.vertex()->nOutEdges()==1 && t.vertex()->outEdges().begin()->target()==nonexistingVertex_) {
+                        // Non-existing vertex returns or not by definition
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]    " <<vertexName(t.vertex())
+                                           <<(assumeFunctionsReturn_?"returns":"does not return")
+                                           <<" by virtue of not existing\n";
+                        vertexInfo[t.vertex()->id()].result = assumeFunctionsReturn_;
+                        t.skipChildren();
+                    } else if (t.vertex()->nOutEdges()==1 && t.vertex()->outEdges().begin()->target()==indeterminateVertex_ &&
+                               assumeFunctionsReturn_) {
+                        // Indeterminate successor is likely a permanent condition
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]    " <<vertexName(t.vertex())
+                                           <<" returns by virtue of having only an indeterminate successor\n";
+                        vertexInfo[t.vertex()->id()].result = assumeFunctionsReturn_;
+                        t.skipChildren();
                     } else if (!addressIsExecutable(t.vertex()->value().address())) {
-                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<StringUtility::addrToString(t.vertex()->value().address())
-                                           <<" is not executable; assumeFunctionsReturn="
-                                           <<(assumeFunctionsReturn_?"true":"false") <<"\n";
+                        // Non-executable address is perhaps not possible, but such returns or not by definition
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<vertexName(t.vertex())
+                                           <<(assumeFunctionsReturn_?"returns":"does not return")
+                                           <<" by virtue of being at a non-executable address\n";
                         vertexInfo[t.vertex()->id()].result = assumeFunctionsReturn_;
                         t.skipChildren();
                     } else if (BasicBlock::Ptr bb = t.vertex()->value().bblock()) {
