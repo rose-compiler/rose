@@ -233,6 +233,12 @@ buildMayReturnLists(Partitioner &partitioner) {
     partitioner.setMayReturnBlacklisted("ExitProcess@KERNEL32.dll");
 }
 
+void
+buildStackDeltaList(Partitioner &partitioner) {
+    // FIXME[Robb P. Matzke 2014-12-08]: This list needs to be expanded
+    partitioner.functionStackDelta("EncodePointer@KERNEL32.dll", +8);
+}
+
 } // namespace
 } // namespace
 } // namespace

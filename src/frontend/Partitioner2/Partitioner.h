@@ -225,6 +225,9 @@ public:
      *  The map keys are the function names that are present in the lists. The values are true if the function is whitelisted
      *  and false if blacklisted. */
     typedef Sawyer::Container::Map<std::string, bool> MayReturnList;
+
+    /** Default stack deltas based on function names. */
+    typedef Sawyer::Container::Map<std::string, int64_t> StackDeltaMap;
     
 private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
@@ -240,6 +243,7 @@ private:
     MayReturnList mayReturnList_;                       // White/black list by name for whether functions may return to caller
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
+    StackDeltaMap stackDeltaMap_;                       // Stack deltas defined for certain functions by name
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -272,9 +276,9 @@ public:
           aum_(other.aum_), solver_(other.solver_), progressTotal_(other.progressTotal_),
           isReportingProgress_(other.isReportingProgress_), functions_(other.functions_), useSemantics_(other.useSemantics_),
           mayReturnList_(other.mayReturnList_), autoAddCallReturnEdges_(other.autoAddCallReturnEdges_),
-          assumeFunctionsReturn_(other.assumeFunctionsReturn_), cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_),
-          basicBlockCallbacks_(other.basicBlockCallbacks_), functionPrologueMatchers_(other.functionPrologueMatchers_),
-          functionPaddingMatchers_(other.functionPaddingMatchers_) {
+          assumeFunctionsReturn_(other.assumeFunctionsReturn_), stackDeltaMap_(other.stackDeltaMap_),
+          cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_), basicBlockCallbacks_(other.basicBlockCallbacks_),
+          functionPrologueMatchers_(other.functionPrologueMatchers_), functionPaddingMatchers_(other.functionPaddingMatchers_) {
         init(other);                                    // copies graph iterators, etc.
     }
 
@@ -1310,6 +1314,24 @@ public:
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDelta method must be
      *  non-null for each reachable block in the function. */
     BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const;
+
+    /** Assign explicit stack delta based on function name.
+     *
+     *  Define a function (by name) to have a specific stack delta.  This is only needed for specimens that call library
+     *  functions that are not linked in at the time of analysis and which use callee-cleanup ABI.  The default for functions
+     *  that are not listed here is to assume a stack delta equal to the word size (i.e., assume the function pops a return
+     *  address off the stack which was pushed there by the caller).
+     *
+     *  The @p functionName should include the library part if applicable, as in "EncodePointer@KERNEL32.dll".
+     *
+     *  If @p delta is SgAsmInstruction::INVALID_STACK_DELTA then the record is removed from the table.  Deltas are specified
+     *  in terms of number of bytes.  When querying the delta for a name which is not present in the table, the default is
+     *  returned.
+     *
+     * @{ */
+    void functionStackDelta(const std::string &functionName, int64_t delta);
+    int64_t functionStackDelta(const std::string &functionName) const;
+    /** @} */
 
     /** Stack delta analysis for all functions. */
     void allFunctionStackDelta() const;

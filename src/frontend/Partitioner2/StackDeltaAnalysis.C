@@ -16,8 +16,8 @@ namespace Partitioner2 {
 struct DfCfgVertex {
     enum Type { BBLOCK, CALLRET, FUNCRET };
     Type type;
-    BasicBlock::Ptr bblock;
-    std::vector<Function::Ptr> callees;
+    BasicBlock::Ptr bblock;                             // attached to BBLOCK vertices
+    std::vector<Function::Ptr> callees;                 // attached to CALLRET vertices
     DfCfgVertex(Type type, const BasicBlock::Ptr &bblock = BasicBlock::Ptr()): type(type), bblock(bblock) {}
 };
 
@@ -53,14 +53,8 @@ buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeI
                 }
             }
         } else if (t.event() == ENTER_EDGE) {
-            if (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER) {
-                DfCfg::VertexNodeIterator dfCaller = vmap.getOrElse(t.edge()->source()->id(), dfCfg.vertices().end());
-                ControlFlowGraph::ConstVertexNodeIterator cfgCallee = t.edge()->target();
-                Function::Ptr callee;
-                if (cfgCallee->value().type() == V_BASIC_BLOCK && (callee=cfgCallee->value().function()))
-                    dfCaller->value().callees.push_back(callee);
+            if (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER)
                 t.skipChildren();
-            }
         } else {
             ASSERT_require(t.event() == LEAVE_EDGE);
             ControlFlowGraph::ConstEdgeNodeIterator edge = t.edge();
@@ -71,6 +65,14 @@ buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeI
                     DfCfg::VertexNodeIterator crv = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::CALLRET));
                     dfCfg.insertEdge(source, crv);
                     dfCfg.insertEdge(crv, target);
+                    ControlFlowGraph::ConstVertexNodeIterator cfgCaller = t.edge()->source();
+                    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &callEdge, cfgCaller->outEdges()) {
+                        if (callEdge.value().type()==E_FUNCTION_CALL && callEdge.target()->value().type() == V_BASIC_BLOCK) {
+                            if (Function::Ptr callee = callEdge.target()->value().function()) {
+                                crv->value().callees.push_back(callee);
+                            }
+                        }
+                    }
                 } else {
                     dfCfg.insertEdge(source, target);
                 }
@@ -129,7 +131,11 @@ public:
     static bool
     mergeSValues(BaseSemantics::SValuePtr &ours /*in,out*/, const BaseSemantics::SValuePtr &theirs,
                  const BaseSemantics::RiscOperatorsPtr &ops) {
-        if (!ours->is_number() || !theirs->is_number()) {
+        if (ours == NULL) {
+            ours = theirs;
+        } else if (theirs == NULL) {
+            // void
+        } else if (!ours->is_number() || !theirs->is_number()) {
             if (ours->is_number()) {
                 return true;
             } else {
@@ -202,7 +208,7 @@ public:
                 BaseSemantics::SValuePtr calleeDelta;
                 if (callee->stackDelta().getOptional().assignTo(calleeDelta)) {
                     State::mergeSValues(delta, calleeDelta, ops);
-                    if (!delta->is_number())
+                    if (!delta || !delta->is_number())
                         break;
                 }
             }
@@ -235,9 +241,27 @@ public:
     }
 };
 
+void
+Partitioner::functionStackDelta(const std::string &functionName, int64_t delta) {
+    if (delta == SgAsmInstruction::INVALID_STACK_DELTA) {
+        stackDeltaMap_.erase(functionName);
+    } else {
+        stackDeltaMap_.insert(functionName, delta);
+    }
+}
+
+int64_t
+Partitioner::functionStackDelta(const std::string &functionName) const {
+    int64_t delta = SgAsmInstruction::INVALID_STACK_DELTA;
+    if (!stackDeltaMap_.getOptional(functionName).assignTo(delta))
+        delta = instructionProvider_->instructionPointerRegister().get_nbits() / 8;
+    return delta;
+}
+
 BaseSemantics::SValuePtr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
+    const size_t bitsPerWord = instructionProvider_->instructionPointerRegister().get_nbits();
 
     BaseSemantics::SValuePtr retval;
     if (function->stackDelta().getOptional().assignTo(retval))
@@ -246,6 +270,15 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     Sawyer::Message::Stream trace(mlog[TRACE]);
     SAWYER_MESG(trace) <<"functionCalculateStackDeltas(" <<function->printableName() <<")";
 
+    // Use (and cache) a predetermined delta if one's available.
+    BaseSemantics::RiscOperatorsPtr ops = newOperators();
+    if (Sawyer::Optional<int64_t> delta = stackDeltaMap_.getOptional(function->name())) {
+        retval = ops->number_(bitsPerWord, *delta);
+        function->stackDelta() = retval;
+        SAWYER_MESG(trace) <<"  stack delta is defined as " <<*delta <<" in a lookup table\n";
+        return retval;
+    }
+    
     // Create the CFG that we'll use for dataflow.
     ControlFlowGraph::ConstVertexNodeIterator cfgStart = findPlaceholder(function->address());
     if (cfgStart == cfg_.vertices().end()) {
@@ -254,13 +287,45 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         function->stackDelta() = retval;                // null
         return retval;
     }
+    if (cfgStart->nOutEdges()==1 && cfgStart->outEdges().begin()->target()==nonexistingVertex_) {
+        // This is probably a library function that isn't linked and whose name didn't appear in the lookup table above. Assume
+        // the function pops a return address.
+        retval = ops->number_(bitsPerWord, bitsPerWord/8);
+        function->stackDelta() = retval;
+        SAWYER_MESG(mlog[DEBUG]) <<"  using stack delta default (" <<(bitsPerWord/8) <<") for non-existing function\n";
+        return retval;
+    }
     DfCfg dfCfg = buildDfCfg(cfg_, cfgStart, *this);
     DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
 
     // Get the list of variables over which dataflow is calculated
-    BaseSemantics::RiscOperatorsPtr ops = newOperators();
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
     DataFlow df(cpu);
+    if (mlog[DEBUG]) {
+        using namespace Sawyer::Container::Algorithm;
+        typedef DepthFirstForwardGraphTraversal<DfCfg> Traversal;
+        for (Traversal t(dfCfg, dfCfgStart, ENTER_VERTEX|ENTER_EDGE); t; ++t) {
+            if (t.event() == ENTER_VERTEX) {
+                mlog[DEBUG] <<"  #" <<t.vertex()->id() <<" [";
+                if (BasicBlock::Ptr bb = t.vertex()->value().bblock)
+                    mlog[DEBUG] <<" " <<bb->printableName();
+                if (t.vertex()->value().type == DfCfgVertex::CALLRET) {
+                    mlog[DEBUG] <<" call-ret";
+                } else if (t.vertex()->value().type == DfCfgVertex::FUNCRET) {
+                    mlog[DEBUG] <<" func-ret";
+                }
+                mlog[DEBUG] <<" ]\n";
+                if (BasicBlock::Ptr bb = t.vertex()->value().bblock) {
+                    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                        mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+                }
+                BOOST_FOREACH (const Function::Ptr &callee, t.vertex()->value().callees)
+                    mlog[DEBUG] <<"    returns from " <<callee->printableName() <<"\n";
+            } else {
+                mlog[DEBUG] <<"  #" <<t.edge()->source()->id() <<" -> #" <<t.edge()->target()->id() <<"\n";
+            }
+        }
+    }
 
     // Build the dataflow engine
     TransferFunction xfer(cpu, instructionProvider_->stackPointerRegister());
@@ -270,7 +335,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         engine.runToFixedPoint(dfCfgStart->id(), xfer.initialState());
     } catch (const BaseSemantics::Exception&) {
         SAWYER_MESG(trace) <<" = BOTTOM (semantics exception)\n";
-        function->stackDelta() = retval;                // null
+        retval = ops->undefined_(bitsPerWord);
+        function->stackDelta() = retval;
         return retval;
     }
 
@@ -305,6 +371,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     return retval;
 }
 
+// Compute stack deltas for all basic blocks in all functions, and for functions overall. Functions are processed in an order
+// so that callees are before callers.
 void
 Partitioner::allFunctionStackDelta() const {
     using namespace Sawyer::Container::Algorithm;
