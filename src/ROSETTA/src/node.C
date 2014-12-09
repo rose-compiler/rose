@@ -27,6 +27,10 @@ Grammar::setUpNodes ()
   // Liao 11/1/2010, move SgInitializedName to SgLocatedNode
      NEW_TERMINAL_MACRO (InitializedName, "InitializedName", "InitializedNameTag" );
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     NEW_TERMINAL_MACRO (LambdaCapture    , "LambdaCapture"    , "LambdaCaptureTag" );
+     NEW_TERMINAL_MACRO (LambdaCaptureList, "LambdaCaptureList", "LambdaCaptureListTag" );
+
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      NEW_TERMINAL_MACRO (JavaMemberValuePair, "JavaMemberValuePair", "JavaMemberValuePairTag" );
 
@@ -205,7 +209,9 @@ Grammar::setUpNodes ()
   // a number of the new Fortran specific IRnodes, etc.).
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | 
+                            HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode | 
+                            LambdaCapture | LambdaCaptureList, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -215,7 +221,7 @@ Grammar::setUpNodes ()
 
   // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement  
   // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression , "LocatedNode", "LocatedNodeTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression, "LocatedNode", "LocatedNodeTag", false );
 
      Terminal & Type    = *lookupTerminal(terminalList, "Type");
      Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
@@ -437,6 +443,11 @@ Grammar::setUpNodes ()
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
      LocatedNodeSupport.setFunctionPrototype ( "HEADER_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
+
+
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
+     LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
 
   // ***************************************************************************************
@@ -947,6 +958,33 @@ Grammar::setUpNodes ()
      JavaMemberValuePair.setDataPrototype("SgExpression*","value", "= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+#if 0
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "capture_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "source_closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (/3/2014): I think this makes more sense to be an expression (typically a SgVarRefExp).
+     LambdaCapture.setDataPrototype ( "SgExpression*", "capture_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgExpression*", "source_closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgExpression*", "closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+     LambdaCapture.setDataPrototype ( "bool", "capture_by_reference", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "bool", "implicit", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "bool", "pack_expansion", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     LambdaCaptureList.setDataPrototype ( "SgLambdaCapturePtrList", "capture_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
   // ***********************************************************************
   // ***********************************************************************
@@ -983,6 +1021,9 @@ Grammar::setUpNodes ()
 
      LocatedNodeSupport.setFunctionSource ( "SOURCE_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     LambdaCapture.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
+     LambdaCaptureList.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************
