@@ -33,6 +33,9 @@ else
    AC_SUBST(MAPLE_INCLUDES)
    AC_SUBST(MAPLE_LIBS)
 
+   # DQ (10/27/2014): Added lib directory.
+   AC_SUBST(MAPLE_LIBDIR)
+
    AC_DEFINE([USE_ROSE_MAPLE_SUPPORT],1,[Controls use of ROSE support for Maple Symbolic Algebra Package.])
 fi
 

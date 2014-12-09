@@ -1173,6 +1173,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgEnumDeclaration(declaration)->get_name().str();
                break;
 
+       // DQ (11/5/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateInstantiationTypedefDeclaration:
+       // DQ (11/3/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateTypedefDeclaration:
           case V_SgTypedefDeclaration:
                name = isSgTypedefDeclaration(declaration)->get_name().str();
                break;
@@ -2172,6 +2176,15 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaExp:
+             {
+               const SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
+               ROSE_ASSERT (lambdaExp != NULL);
+               name = "lambda_expression_";
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -2211,15 +2224,26 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
-          case V_SgInitializedName:
-          {
-            const SgInitializedName * n = isSgInitializedName (node);
-            ROSE_ASSERT (n != NULL);
-            returnName = "initialized_name_";
-            returnName += n->get_name().str();
 
-            break;
-          }
+          case V_SgInitializedName:
+             {
+               const SgInitializedName* n = isSgInitializedName(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "initialized_name_";
+               returnName += n->get_name().str();
+               break;
+             }
+
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaCapture:
+             {
+               const SgLambdaCapture* n = isSgLambdaCapture(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "lambda_capture_";
+            // returnName += n->get_name().str();
+               break;
+             }
+
 #if 0
           case V_SgInterfaceBody:
              {
@@ -10259,15 +10283,30 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt &&newStmt);
      ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
      SgNode* parent = targetStmt->get_parent();
-     if (parent==NULL)
+     if (parent == NULL)
         {
-          cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
+          cerr << "Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
           ROSE_ASSERT(parent);
+        }
+
+     if (isSgLabelStatement(parent) != NULL)
+        {
+#if 0
+          printf ("In SageInterface::insertStatement(): Detected case of label statement as parent, using parent of label statement \n");
+#endif
+          SgLabelStatement* labelStatement = isSgLabelStatement(parent);
+       // parent = labelStatement->get_scope();
+          parent = labelStatement->get_parent();
+          ROSE_ASSERT(isSgLabelStatement(parent) == NULL);
         }
 
 #if 0
      printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
 #endif
+
+  // DQ (12/2/2014): Not sure why this was here in the first place (likely debugging code from the fix for the SgLableStatement insertion.
+  // SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(targetStmt);
+  // ROSE_ASSERT(functionDefinition != NULL);
 
   // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
   // returned as it is if it is already a basic block as a body of if/while/catch/ etc.
@@ -10279,10 +10318,19 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     // parent = ensureBasicBlockAsParent(targetStmt);
 
   // must get the new scope after ensureBasicBlockAsParent ()
-     SgScopeStatement* scope= targetStmt->get_scope();
+     SgScopeStatement* scope = targetStmt->get_scope();
      ROSE_ASSERT(scope);
 
-     newStmt->set_parent(targetStmt->get_parent());
+  // DQ (11/16/2014): This step is problematic if the targetStmt has been transformed to be associated with a SgLabelStatement.
+  // The reason is that the targetStmt's parent will have been reset to be the SgLabelStatement and the logic in the set_parent()
+  // function will assert fail when the parent is being set to itself (which is a good idea in general).  A better solution might
+  // be to set the parent to the scope of the target instead.  This would be just as correct in the general case, but also make
+  // more sense in this special case of a SgLabelStatement.
+  // newStmt->set_parent(targetStmt->get_parent());
+     newStmt->set_parent(scope);
+
+  // DQ (11/16/2014): This function had a bug that is now fixed.  It allowed a 2nd SgLableSymbol to be built when an initial one was found.
+  // The fix was the reuse the one that was found.
      fixStatement(newStmt,scope);
 
   // DQ (9/16/2010): Added assertion that appears to be required to be true.
@@ -10296,7 +10344,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt != NULL);
      AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
-   //TODO refactor this portion of code into a separate function
+  // TODO refactor this portion of code into a separate function
   // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
   // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
   // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
@@ -10525,6 +10573,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
         }
    }
+
 
   void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
     if (insertBefore) {
@@ -11390,17 +11439,35 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
      SgName name = label_stmt->get_label();
 
      SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
+
+  // DQ (11/16/2014): Added error checking for when the input scope is the SgFunctionDefinition instead of a nested scope.
+     if (isSgFunctionDefinition(scope) != NULL)
+        {
+          ROSE_ASSERT(label_scope == scope);
+        }
+
      if (label_scope) //Should we assert this instead? No for bottom up AST building
         {
           label_stmt->set_scope(label_scope);
           SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
 
-          if (lsymbol != NULL)
+       // DQ (11/15/2014): I think this is a bug, the precicate should be (lsymbol == NULL), instead of (lsymbol != NULL)
+       // if (lsymbol != NULL)
+          if (lsymbol == NULL)
              {
+#if 0
+               printf ("WARNING: In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol, so why are we adding another one (this bug is now fixed) \n");
+#endif
             // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope).
                lsymbol= new SgLabelSymbol(label_stmt);
                ROSE_ASSERT(lsymbol);
                label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
+             }
+            else
+             {
+#if 0
+               printf ("In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol (bug causing additional symbol to be built is now fixed) \n");
+#endif
              }
         }
    }

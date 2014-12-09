@@ -1370,6 +1370,16 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+                 // DQ (11/10/2014): This case is required for ROSE compiling C++11 header files.
+                    case V_SgRvalueReferenceType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
@@ -3359,6 +3369,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                 // DQ (11/4/2014): Adding support for template typedef declarations.
+                    case V_SgTemplateTypedefSymbol:
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);

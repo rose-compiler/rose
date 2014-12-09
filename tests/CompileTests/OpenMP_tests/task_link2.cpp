@@ -4,6 +4,8 @@
 #include <time.h>
 #include <omp.h>
 
+#include <unistd.h>
+
 using namespace std;
 
 class httpRequest
