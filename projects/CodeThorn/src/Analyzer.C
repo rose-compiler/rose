@@ -586,7 +586,7 @@ void Analyzer::runSolver1() {
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             EState newEState=*nesListIter;
-            assert(newEState.label()!=Labeler::NO_LABEL);
+            assert(newEState.label()!=Label());
             if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
               const EState* newEStatePtr=pres.second;
@@ -1716,7 +1716,7 @@ void Analyzer::generateAstNodeInfo(SgNode* node) {
     assert(*i);
     AstNodeInfo* attr=dynamic_cast<AstNodeInfo*>((*i)->getAttribute("info"));
     if(attr) {
-      if(cfanalyzer->getLabel(*i)!=Labeler::NO_LABEL) {
+      if(cfanalyzer->getLabel(*i)!=Label()) {
         attr->setLabel(cfanalyzer->getLabel(*i));
         attr->setInitialLabel(cfanalyzer->initialLabel(*i));
         attr->setFinalLabels(cfanalyzer->finalLabels(*i));
@@ -1741,7 +1741,7 @@ bool Analyzer::checkTransitionGraph() {
 }
 bool Analyzer::checkEStateSet() {
   for(EStateSet::iterator i=estateSet.begin();i!=estateSet.end();++i) {
-    if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Labeler::NO_LABEL) {
+    if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
       cerr<< "ERROR: estateSet inconsistent. "<<endl;
       cerr << "  label   :"<<(*i)->label()<<endl;
       cerr<< "   estateId: "<<estateSet.estateId(*i)<<endl;
@@ -1754,7 +1754,7 @@ bool Analyzer::checkEStateSet() {
 
 bool Analyzer::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
   for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
-    if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Labeler::NO_LABEL) {
+    if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
       cerr<< "ERROR: estatePtrSet inconsistent. "<<endl;
       cerr << "  label   :"<<(*i)->label()<<endl;
       cerr<< "   estateId: "<<estateSet.estateId(*i)<<endl;

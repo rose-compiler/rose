@@ -25,7 +25,7 @@ void
 PASolver1::computePreInfo(Label lab,Lattice& inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(*_analyzerDataPostInfo[*i]);
+    inInfo.combine(*_analyzerDataPostInfo[(*i).getId()]);
   }
 }
 
@@ -45,19 +45,19 @@ PASolver1::runSolver() {
 
     Lattice* info=_initialElementFactory.create();
     //computePreInfo(lab0,*info);
-    cout<<"DEBUG: P1: ";_analyzerDataPostInfo[lab0]->toStream(cout);cout<<endl;
-    info->combine(*_analyzerDataPostInfo[lab0]);
+    cout<<"DEBUG: P1: ";_analyzerDataPostInfo[lab0.getId()]->toStream(cout);cout<<endl;
+    info->combine(*_analyzerDataPostInfo[lab0.getId()]);
     cout<<"DEBUG: P2: ";info->toStream(cout);cout<<endl;
     _transferFunctions.transfer(lab0,*info);
     cout<<"DEBUG: NewInfo: "<<"@"<<lab0<<": ";info->toStream(cout);cout<<endl;
 
-    bool isApproximatedBy=info->approximatedBy(*_analyzerDataPostInfo[lab1]);
-    cout<<"DEBUG: TEST APPROX: ";info->toStream(cout);cout<<",";_analyzerDataPostInfo[lab1]->toStream(cout);cout<<": "<<isApproximatedBy<<endl;
+    bool isApproximatedBy=info->approximatedBy(*_analyzerDataPostInfo[lab1.getId()]);
+    cout<<"DEBUG: TEST APPROX: ";info->toStream(cout);cout<<",";_analyzerDataPostInfo[lab1.getId()]->toStream(cout);cout<<": "<<isApproximatedBy<<endl;
 
     if(!isApproximatedBy) {
       cout<<"DEBUG: TEST APPROX: combining ..."<<endl;
-      _analyzerDataPostInfo[lab1]->combine(*info);
-      cout<<"DEBUG: new combined info: ";_analyzerDataPostInfo[lab1]->toStream(cout);cout<<endl;
+      _analyzerDataPostInfo[lab1.getId()]->combine(*info);
+      cout<<"DEBUG: new combined info: ";_analyzerDataPostInfo[lab1.getId()]->toStream(cout);cout<<endl;
       Flow outEdges=_flow.outEdges(lab1);
       _workList.add(outEdges);
     } else {

@@ -166,7 +166,7 @@ bool operator!=(const InputOutput& c1, const InputOutput& c2);
 
 class EState {
  public:
- EState():_label(Labeler::NO_LABEL),_pstate(0),_constraints(0){}
+ EState():_label(Label()),_pstate(0),_constraints(0){}
  EState(Label label, const PState* pstate):_label(label),_pstate(pstate),_constraints(0){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
  EState(Label label, const PState* pstate, const ConstraintSet* cset, InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
@@ -242,7 +242,7 @@ class EStateHashFun {
     EStateHashFun() {}
     long operator()(EState* s) const {
       unsigned int hash=1;
-      hash=(long)s->label()*(((long)s->pstate())+1)*(((long)s->constraints())+1);
+      hash=(long)s->label().getId()*(((long)s->pstate())+1)*(((long)s->constraints())+1);
       return long(hash);
     }
    private:
@@ -349,7 +349,7 @@ class EStateList : public list<EState> {
  class TransitionGraph : public HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred> {
  public:
    typedef set<const Transition*> TransitionPtrSet;
- TransitionGraph():_startLabel(Labeler::NO_LABEL),_numberOfNodes(0){}
+ TransitionGraph():_startLabel(Label()),_numberOfNodes(0){}
   EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
   EStatePtrSet estateSetOfLabel(Label lab);
   EStatePtrSet estateSet();
@@ -358,7 +358,7 @@ class EStateList : public list<EState> {
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);
   // eliminates all duplicates of edges
   //long removeDuplicates();
-  Label getStartLabel() { assert(_startLabel!=Labeler::NO_LABEL); return _startLabel; }
+  Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
   void setStartLabel(Label lab) { _startLabel=lab; }
   // this allows to deal with multiple start transitions (must share same start state)
   const EState* getStartEState();

@@ -107,7 +107,7 @@ ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdM
   inEdges.deleteEdges(EDGE_BACKWARD); // only exists for loop-conditions, join-nodes of branch-stmts may not have any backward-edge
   if(inEdges.size()>1) {
     for(EdgeSet::iterator i=inEdges.begin();i!=inEdges.end();++i) {
-      computationInfo[(*i).source].numJmp++;
+      computationInfo[(*i).source.getId()].numJmp++;
     }
   }
   Flow specialEdges=icfg->edgesOfType(EDGE_BACKWARD);
@@ -116,7 +116,7 @@ ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdM
   specialEdges+=callEdges;
   specialEdges+=callreturnEdges;
   for(EdgeSet::iterator i=specialEdges.begin();i!=specialEdges.end();++i) {
-    computationInfo[(*i).source].numJmp++;
+    computationInfo[(*i).source.getId()].numJmp++;
   }
   floatIntStats(node,ci);
   return ci;
@@ -142,7 +142,7 @@ void ProgramStatistics::computeStatistics() {
     Label lab=*i;
     //    UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
     //cout<<"computing for Label "<<lab<<endl;
-    computationInfo[lab]=computeComputationInfo(lab,vidm);
+    computationInfo[lab.getId()]=computeComputationInfo(lab,vidm);
     //cout<<"TEST:"<<computationInfo[lab].numWriteMemLoc[CIT_TOTAL]<<endl;
 #if 0
     UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
@@ -160,7 +160,7 @@ void ProgramStatistics::printStatistics() {
   cout<< "Program statistics:"<<endl;
   cout<< "-----------------------------------"<<endl;    
   for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
-    cout<<"L"<<*i<<":"<<computationInfo[*i].toString()<<endl;
+    cout<<"L"<<*i<<":"<<computationInfo[(*i).getId()].toString()<<endl;
   }
   cout<< "-----------------------------------"<<endl;    
 }
@@ -196,7 +196,7 @@ string ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
     labentry="<TR><TD COLSPAN=\"5\" ROWSPAN=\"1\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD></TR>";
   }
 
-  string entries=/*emptyentry+*/computationInfo[lab].toDot();
+  string entries=/*emptyentry+*/computationInfo[lab.getId()].toDot();
   //string entry2="<TD PORT=\"second\" BGCOLOR=\"blue\">FLOAT</TD>";
   string tableend="</TABLE>>";
   string result=dot.str()+labelstart+tablestart+labentry+rowstart+entries+rowend+tableend+labelend;

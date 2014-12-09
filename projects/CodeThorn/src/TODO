@@ -7,3 +7,14 @@
 * remove RDTransferFunctions.C
 * remove RDTransferFunctions2::*(...,RDLattice);
 * rename RDTransferFunctions2.h/C to RDTransferFunctions.h/C
+
+* move
+  #define NO_STATE -3
+  #define NO_ESTATE -4
+  from file Labeler.h to CodeThorn.h header file (to be created).
+
+* Makefile.am
+  - remove CONSISTENCY_CHECKS
+  - remove LTLCheckerFixpoint.* LTLCheckerUnified.*
+  (they are already deactivated)
+

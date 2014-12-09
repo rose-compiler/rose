@@ -244,7 +244,7 @@ void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
   edge_t e; bool b;
   for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
+    tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
     _flowGraph[e]=(*i).getTypes();
   }
   _boostified=true;
@@ -415,7 +415,7 @@ Flow Flow::outEdges(Label label) {
     // index = get(vertex_index, _flowGraph);
     GraphTraits::out_edge_iterator out_i, out_end;
     GraphTraits::edge_descriptor e;
-    for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
+    for (tie(out_i, out_end) = out_edges(label.getId(), _flowGraph); 
          out_i != out_end; ++out_i) {
       e = *out_i;
       Label src = source(e, _flowGraph), targ = target(e, _flowGraph);

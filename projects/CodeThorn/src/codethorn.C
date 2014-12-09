@@ -12,8 +12,8 @@
 #include "VariableIdMapping.h"
 #include "StateRepresentations.h"
 #include "Timer.h"
-#include "LTLCheckerFixpoint.h"
-#include "LTLCheckerUnified.h"
+//#include "LTLCheckerFixpoint.h"
+//#include "LTLCheckerUnified.h"
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>
@@ -277,6 +277,7 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
     ;
 }
 
+#ifdef USE_OUTDATED_LTL
 void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
   extern CodeThorn::LTL::Formula* ltl_val;
   //
@@ -416,6 +417,7 @@ void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
 
   } 
 }
+#endif
 
 string readableruntime(double time) {
   stringstream s;
@@ -1277,8 +1279,8 @@ int main( int argc, char * argv[] ) {
     ("internal-checks", "run internal consistency checks (without input program)")
     ("verify", po::value< string >(), "verify all LTL formulae in the file [arg]")
     ("ltl-verifier",po::value< int >(),"specify which ltl-verifier to use [=1|2]")
-    ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-ltl", po::value< string >(), "output LTL verification results into a CSV file [arg]")
+    ("debug-mode",po::value< int >(),"set debug mode [arg]")
     ("csv-spot-ltl", po::value< string >(), "output SPOT's LTL verification results into a CSV file [arg]")
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
@@ -1489,7 +1491,9 @@ int main( int argc, char * argv[] ) {
 
   // clean up verify and csv-ltl option in argv
   if (args.count("verify")) {
-    ltl_file = args["verify"].as<string>();
+    cerr<<"Option --verify is deprecated."<<endl;
+    exit(1);
+    //ltl_file = args["verify"].as<string>();
   }
   if(args.count("csv-assert-live")) {
     analyzer.setCsvAssertLiveFileName(args["csv-assert-live"].as<string>());
@@ -1853,10 +1857,12 @@ int main( int argc, char * argv[] ) {
   }
 
   timer.start();
+#ifdef USE_OUTDATED_LTL
   if (ltl_file.size()) {
     generateLTLOutput(analyzer,ltl_file);
     cout << "=============================================================="<<endl;
   }
+#endif
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
   // TODO: reachability in presence of semantic folding
   //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {

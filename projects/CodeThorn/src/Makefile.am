@@ -48,10 +48,6 @@ codethorn_SOURCES = \
   InternalChecks.C                 \
   InternalChecks.h                 \
   LTL.h                            \
-  LTLCheckerFixpoint.C             \
-  LTLCheckerFixpoint.h             \
-  LTLCheckerUnified.C              \
-  LTLCheckerUnified.h              \
   LTLParser.y++                    \
   LanguageRestrictor.C             \
   LanguageRestrictor.h             \
@@ -105,6 +101,11 @@ codethorn_SOURCES = \
   codethorn.h \
   codethorn.C
 
+#  LTLCheckerFixpoint.C             
+#  LTLCheckerFixpoint.h             
+#  LTLCheckerUnified.C              
+# LTLCheckerUnified.h              
+
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
   AstTerm.C \
@@ -134,7 +135,6 @@ faketarget:
 	RERS_Problem8_specialization.C
 	RERS_Problem9_specialization.C
 	rers_cpp_forward_decls.C
-	rdmain.C
 	MFAnalyzer.h
 	MFAnalyzer.C
 	RDLattice.h
@@ -398,9 +398,9 @@ check-local:
 	@echo ================================================================
 	@echo CHECK: all of the following formulae should evaluate to "YES"!
 	@echo ================================================================
-	./codethorn --rersmode=yes --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
+#	./codethorn --rersmode=yes --edg:no_warnings $(srcdir)/tests/rers_mini1.c    --verify $(srcdir)/tests/rers_mini1.ltl
 	rm -f *.consistent
-	$(MAKE) $(CONSISTENCY_CHECKS)
+#	$(MAKE) $(CONSISTENCY_CHECKS)
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir)  . #run RERS examples in several versions and compare to previous results
 
 checkdemos: 

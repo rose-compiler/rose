@@ -207,7 +207,7 @@ void
 DFAnalyzer<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(_analyzerData[*i]);
+    inInfo.combine(_analyzerData[(*i).getId()]);
   }
 }
 
@@ -224,8 +224,8 @@ DFAnalyzer<LatticeType>::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     cout << "Initializing "<<*i<<" with ";
-    _analyzerData[*i]=transfer(*i,_initialElement);
-    _analyzerData[*i].toStream(cout,&_variableIdMapping);
+    _analyzerData[(*i).getId()]=transfer(*i,_initialElement);
+    _analyzerData[(*i).getId()].toStream(cout,&_variableIdMapping);
     cout<<endl;
     LabelSet initsucc=_flow.succ(*i);
     for(LabelSet::iterator i=initsucc.begin();i!=initsucc.end();++i) {
@@ -323,9 +323,9 @@ void DFAnalyzer<LatticeType>::attachInfoToAst(string attributeName,bool inInfo) 
     if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
       if(*i >=0 ) {
         if(inInfo)
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerDataPreInfo[(*i).getId()]));
         else
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerData[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(&_analyzerData[(*i).getId()]));
       }
   }
 }

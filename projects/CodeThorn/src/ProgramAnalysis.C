@@ -30,12 +30,12 @@ Lattice* ProgramAnalysis::getPreInfo(Label lab) {
     computeAllPreInfo();
     ROSE_ASSERT(_preInfoIsValid==true);
   }
-  return _analyzerDataPreInfo[lab];
+  return _analyzerDataPreInfo[lab.getId()];
 }
 
 
 Lattice* ProgramAnalysis::getPostInfo(Label lab) {
-  return _analyzerDataPostInfo[lab];
+  return _analyzerDataPostInfo[lab.getId()];
 }
 
 
@@ -220,12 +220,12 @@ void
 ProgramAnalysis::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-    _analyzerDataPostInfo[*i]=_initialElementFactory->create();
+    _analyzerDataPostInfo[(*i).getId()]=_initialElementFactory->create();
     // TODO: must become a parameter ... of the RDAnalysis ...
-    initializeExtremalValue(_analyzerDataPostInfo[*i]);
-    _transferFunctions->transfer(*i,*_analyzerDataPostInfo[*i]);
+    initializeExtremalValue(_analyzerDataPostInfo[(*i).getId()]);
+    _transferFunctions->transfer(*i,*_analyzerDataPostInfo[(*i).getId()]);
     cout << "INFO: Initialized "<<*i<<" with ";
-    _analyzerDataPostInfo[*i]->toStream(cout,&_variableIdMapping);
+    _analyzerDataPostInfo[(*i).getId()]->toStream(cout,&_variableIdMapping);
     cout<<endl;
     Flow outEdges=_flow.outEdges(*i);
     for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
@@ -323,9 +323,9 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
     if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
       if(*i >=0 ) {
         if(inInfo)
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[(*i).getId()]));
         else
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[*i]));
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[(*i).getId()]));
       }
   }
 }

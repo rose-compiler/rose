@@ -9,6 +9,13 @@
 //#include "AstTerm.h"
 #include <sstream>
 
+Label Labeler::NO_LABEL=Label::Label();
+
+ostream& operator<<(ostream& os, const Label& label) {
+  os<<label._labelId;
+  return os;
+}
+
 LabelProperty::LabelProperty():_isValid(false),_node(0),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
 }
 LabelProperty::LabelProperty(SgNode* node):_isValid(true),_node(node),_labelType(LABEL_UNDEF),_ioType(LABELIO_NONE),_isTerminationRelevant(false),_isLTLRelevant(false) {
@@ -200,12 +207,12 @@ string Labeler::labelToString(Label lab) {
 }
 
 SgNode* Labeler::getNode(Label label) {
-  if(label>=mappingLabelToLabelProperty.size() || label==Labeler::NO_LABEL) {
+  if(label.getId()>=mappingLabelToLabelProperty.size() || label==Label()) {
     cerr << "Error: mapping size: "<<mappingLabelToLabelProperty.size();
     cerr << " getNode: label"<<label<<" => 0."<<endl;
     exit(1);
   }
-  return mappingLabelToLabelProperty[label].getNode();
+  return mappingLabelToLabelProperty[label.getId()].getNode();
 }
 
 /* this access function has O(n). This is OK as this function should only be used rarely, whereas
@@ -222,7 +229,7 @@ void Labeler::computeNodeToLabelMapping() {
   mappingNodeToLabel.clear();
   std::cout << "INFO: computing node<->label with map size: "<<mappingLabelToLabelProperty.size()<<std::endl;
   for(Label i=0;i<mappingLabelToLabelProperty.size();++i) {
-    SgNode* node=mappingLabelToLabelProperty[i].getNode();
+    SgNode* node=mappingLabelToLabelProperty[i.getId()].getNode();
     assert(node);
     // There exist nodes with multiple associated labels (1-3 labels). The labels are guaranteed
     // to be in consecutive increasing order. We only store the very first associated label for each
@@ -241,11 +248,11 @@ void Labeler::computeNodeToLabelMapping() {
 Label Labeler::getLabel(SgNode* node) {
   assert(node);
   if(!node) 
-    return Labeler::NO_LABEL;
+    return Label();
   if(_isValidMappingNodeToLabel) {
     if(mappingNodeToLabel.count(node)==0) {
       //cerr<<"WARNING: getLabel: no label associated with node: "<<node<<endl;
-      return Labeler::NO_LABEL;
+      return Label();
     }
     return mappingNodeToLabel[node];
   } else {
@@ -304,26 +311,26 @@ bool Labeler::isConditionLabel(Label lab) {
 }
 
 bool Labeler::isFunctionEntryLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isFunctionEntryLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isFunctionEntryLabel();
 }
 
 bool Labeler::isFunctionExitLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isFunctionExitLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isFunctionExitLabel();
 }
 bool Labeler::isBlockBeginLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isBlockBeginLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isBlockBeginLabel();
 }
 
 bool Labeler::isBlockEndLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isBlockEndLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isBlockEndLabel();
 }
 
 bool Labeler::isFunctionCallLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isFunctionCallLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isFunctionCallLabel();
 }
 
 bool Labeler::isFunctionCallReturnLabel(Label lab) {
-  return mappingLabelToLabelProperty[lab].isFunctionCallReturnLabel();
+  return mappingLabelToLabelProperty[lab.getId()].isFunctionCallReturnLabel();
 }
 
 LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
@@ -337,7 +344,7 @@ LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
 std::string Labeler::toString() {
   std::stringstream ss;
   for(Label i=0;i<mappingLabelToLabelProperty.size();++i) {
-    LabelProperty lp=mappingLabelToLabelProperty[i];
+    LabelProperty lp=mappingLabelToLabelProperty[i.getId()];
     ss << i<< ":"<<lp.toString()<<endl;
   }
   return ss.str();
@@ -413,33 +420,33 @@ bool IOLabeler::isStdOutLabel(Label label) {
 
 bool IOLabeler::isStdOutVarLabel(Label label, VariableId* id) {
   bool res=false;
-  res=mappingLabelToLabelProperty[label].isStdOutVarLabel();
+  res=mappingLabelToLabelProperty[label.getId()].isStdOutVarLabel();
   if(res&&id)
-    *id=mappingLabelToLabelProperty[label].getIOVarId();
+    *id=mappingLabelToLabelProperty[label.getId()].getIOVarId();
   return res;
 }
 
 bool IOLabeler::isStdOutConstLabel(Label label, int* value) {
   bool res=false;
-  res=mappingLabelToLabelProperty[label].isStdOutConstLabel();
+  res=mappingLabelToLabelProperty[label.getId()].isStdOutConstLabel();
   if(res&&value)
-    *value=mappingLabelToLabelProperty[label].getIOConst();
+    *value=mappingLabelToLabelProperty[label.getId()].getIOConst();
   return res;
 }
 
 bool IOLabeler::isStdInLabel(Label label, VariableId* id) {
   bool res=false;
-  res=mappingLabelToLabelProperty[label].isStdInLabel();
+  res=mappingLabelToLabelProperty[label.getId()].isStdInLabel();
   if(res&&id)
-    *id=mappingLabelToLabelProperty[label].getIOVarId();
+    *id=mappingLabelToLabelProperty[label.getId()].getIOVarId();
   return res;
 }
 
 bool IOLabeler::isStdErrLabel(Label label, VariableId* id) {
   bool res=false;
-  res=mappingLabelToLabelProperty[label].isStdErrLabel();
+  res=mappingLabelToLabelProperty[label.getId()].isStdErrLabel();
   if(res&&id)
-    *id=mappingLabelToLabelProperty[label].getIOVarId();
+    *id=mappingLabelToLabelProperty[label.getId()].getIOVarId();
   return res;
 }
 

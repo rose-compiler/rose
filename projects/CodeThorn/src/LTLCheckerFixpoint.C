@@ -37,11 +37,11 @@ using namespace FixpointLTL;
   GraphTraits::vertex_iterator vi, vi_end;                \
   Label LABEL;                                \
   const EState* STATE;                            \
-  for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL];    \
+  for (tie(vi, vi_end) = vertices(g), LABEL=*vi, STATE=g[LABEL.getId()]; \
        vi != vi_end; ++vi,                        \
-       LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL])            \
+         LABEL=(vi!=vi_end)?*vi:NULL, STATE=g[LABEL.getId()])   \
 
-#define props ltl_properties[label]
+#define props ltl_properties[label.getId()]
 
 
 /**
@@ -67,7 +67,7 @@ public:
   static IAttr newAttr(int n)  { return IAttr((InheritedAttribute*)new Attr(n)); }
 
   int newNode(IAttr a) {
-    int node = label*shift+n++;
+    int node = label.getId()*shift+n++;
     s<<node<<" -> "<<get(a)->dot_label<<" [color=limegreen, weight=2, style=dashed];\n  ";
     return node;
   }
@@ -217,9 +217,9 @@ public:
     : eStateSet(ess), g(btg), endpoints(exits), start(start_label) {
     // reserve a result map for each label
     // it maps an analysis result to each sub-expression of the ltl formula
-    ltl_properties.resize(max_label);
+    ltl_properties.resize(max_label.getId());
     for (Label i=0; i<max_label; i++)
-      ltl_properties[i].resize(expr_size);
+      ltl_properties[i.getId()].resize(expr_size);
   }
 
   /**
@@ -855,11 +855,11 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
 
   FOR_EACH_STATE(state, label) {
     //cerr<<label<<endl;
-    assert(g[label]);
+    assert(g[label.getId()]);
     if (( in_degree(label, g) >= 1) && // keep start
     (out_degree(label, g) >= 0) && // DO NOT keep exits
-    (g[label]->io.op == InputOutput::NONE ||
-     g[label]->io.op == InputOutput::FAILED_ASSERT)) {
+        (g[label.getId()]->io.op == InputOutput::NONE ||
+         g[label.getId()]->io.op == InputOutput::FAILED_ASSERT)) {
       //cerr<<"-- removing "<<label <<endl;//g[label]->toString()<<endl;
 
       // patch pred <--> succ
@@ -881,7 +881,7 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
       // boost graph to reassign numerical labels!
     } else {
       //cerr<<"-- keeping "<<label<<": "<<g[label]->toString()<<endl;
-      renumbered[label] = n++;
+      renumbered[label.getId()] = n++;
       add_vertex(reduced);
     }
     //cerr<<"-- done "<<endl<<endl;
@@ -893,10 +893,10 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
   for (tie(ei, ei_end) = edges(g); ei != ei_end; ++ei) {
     Label src = source(*ei, g);
     Label tgt = target(*ei, g);
-    add_edge(renumbered[src], renumbered[tgt], reduced);
+    add_edge(renumbered[src.getId()], renumbered[tgt.getId()], reduced);
     //cerr<<renumbered[src]<<" -> "<<renumbered[tgt]<<";"<<endl;
-    reduced[renumbered[src]] = g[src];
-    reduced[renumbered[tgt]] = g[tgt];
+    reduced[renumbered[src.getId()]] = g[src.getId()];
+    reduced[renumbered[tgt.getId()]] = g[tgt.getId()];
   }
   //cerr<<"}"<<endl;
 
@@ -904,7 +904,7 @@ Label Checker::collapse_transition_graph(BoostTransitionGraph& g,
   cerr<<"Number of EStates: "<<num_vertices(g)<<endl;
   cerr<<"Number of LTLStates: "<<num_vertices(reduced)<<endl;
 
-  return renumbered[start];
+  return renumbered[start.getId()];
 }
 
 
@@ -912,7 +912,7 @@ BoolLattice
 Checker::verify(const Formula& f)
 {
   // Verify!
-  Verifier v(eStateSet, g, endpoints, start, num_vertices(g), f.size());
+  Verifier v(eStateSet, g, endpoints, start.getId(), num_vertices(g), f.size());
   const Expr& e = f;
   e.accept(v);
 

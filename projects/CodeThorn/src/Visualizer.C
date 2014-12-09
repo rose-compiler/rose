@@ -45,9 +45,9 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
   for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
     Label lab=(*i)->label();
     const PState* p=(*i)->pstate();
-    if(assertions[lab]!="")
-      assertions[lab]+="||";
-    assertions[lab]+="(";
+    if(assertions[lab.getId()]!="")
+      assertions[lab.getId()]+="||";
+    assertions[lab.getId()]+="(";
     {
       bool isFirst=true;
       for(PState::const_iterator j=p->begin();j!=p->end();++j) {
@@ -55,22 +55,22 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
         VariableId varId=(*j).first;
         if(p->varIsConst(varId)) {
           if(!isFirst) {
-            assertions[lab]+=" && ";
+            assertions[lab.getId()]+=" && ";
           } else {
             isFirst=false;
           }
-          assertions[lab]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+          assertions[lab.getId()]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
         }
       }
       const ConstraintSet* cset=(*i)->constraints();
       string constraintstring=cset->toAssertionString(variableIdMapping);
       if(!isFirst && constraintstring!="") {
-        assertions[lab]+=" && ";
+        assertions[lab.getId()]+=" && ";
       } else {
         isFirst=false;
       }
-      assertions[lab]+=constraintstring;
-      assertions[lab]+=")";
+      assertions[lab.getId()]+=constraintstring;
+      assertions[lab.getId()]+=")";
     }
   }
 #if 0

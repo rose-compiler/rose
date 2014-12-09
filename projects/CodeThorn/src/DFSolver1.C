@@ -27,7 +27,7 @@ void
 DFSolver1<LatticeType>::computePreInfo(Label lab,LatticeType& inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(_analyzerDataPostInfo[*i]);
+    inInfo.combine(_analyzerDataPostInfo[(*i).getId()]);
   }
 }
 
@@ -46,8 +46,8 @@ DFSolver1<LatticeType>::runSolver() {
     
     LatticeType newInfo=_transferFunctions.transfer(lab,inInfo);
     //cout<<"NewInfo: ";newInfo.toStream(cout);cout<<endl;
-    if(!newInfo.approximatedBy(_analyzerDataPostInfo[lab])) {
-      _analyzerDataPostInfo[lab].combine(newInfo);
+    if(!newInfo.approximatedBy(_analyzerDataPostInfo[lab.getId()])) {
+      _analyzerDataPostInfo[lab.getId()].combine(newInfo);
       LabelSet succ;
       succ=_flow.succ(lab);
       _workList.add(succ);

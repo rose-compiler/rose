@@ -14,8 +14,67 @@ using namespace std;
 
 #define NO_STATE -3
 #define NO_ESTATE -4
+#define NO_LABEL_ID -1
 
-typedef size_t Label;
+class Label {
+ public:
+  Label() {
+    _labelId=NO_LABEL_ID;
+  }
+  Label(size_t labelId) {
+    _labelId=labelId;
+  }
+  //Copy constructor
+  Label(const Label& other) {
+    _labelId=other._labelId;
+  }
+  //Copy assignemnt operator
+  Label& operator=(const Label& other) {
+    // prevent self-assignment
+    if (this != &other) {
+      _labelId = other._labelId;
+    }
+    return *this;
+  }
+  bool operator<(const Label& other) const {
+    return _labelId<other._labelId;
+  }
+  bool operator==(const Label& other) const {
+    return _labelId==other._labelId;
+  }
+  bool operator!=(const Label& other) const {
+    return !(*this==other);
+  }
+  bool operator>(const Label& other) const {
+    return !(*this<other||*this==other);
+  }
+  bool operator>=(const Label& other) const {
+    return !(*this<other);
+  }
+  Label& operator+(int num) {
+    _labelId+=num;
+    return *this;
+  }
+  // prefix inc operator
+  Label& operator++() {
+    ++_labelId;
+    return *this;
+  }
+  // postfix inc operator
+  Label operator++(int) {
+    Label tmp(*this);
+    ++(*this);
+    return tmp;
+  }
+  friend ostream& operator<<(ostream& os, const Label& label);
+  size_t getId() const {
+    return _labelId;
+  }
+ protected:
+  size_t _labelId;
+};
+
+ostream& operator<<(ostream& os, const Label& label);
 
 /*! 
   * \author Markus Schordan
@@ -125,7 +184,7 @@ LabelSet& operator+=(LabelSet& s2) {
 class Labeler {
  public:
   Labeler();
-  static const Label NO_LABEL=-1;
+  static Label NO_LABEL;
   Labeler(SgNode* start);
   static string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
