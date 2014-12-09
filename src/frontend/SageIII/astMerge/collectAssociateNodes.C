@@ -988,6 +988,12 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 
+       // DQ (11/3/2014): Adding support for templated typedef.
+          case V_SgTemplateTypedefDeclaration:
+
+       // DQ (11/5/2014): Adding support for templated typedef.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+
           case V_SgTypedefDeclaration:
              {
                SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(node);
@@ -2005,6 +2011,11 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                break;
              }
 #endif
+
+       // DQ (9/3/2014): Added support for C++11 Lambda expressions.
+       // case V_SgLambdaExp:
+          case V_SgLambdaCapture:
+          case V_SgLambdaCaptureList:
 
        // DQ (4/16/2011): Added support for another IR node.
           case V_SgJavaImportStatement:

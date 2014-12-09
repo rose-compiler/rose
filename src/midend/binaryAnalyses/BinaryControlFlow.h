@@ -1010,7 +1010,7 @@ void
 ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
                             const VertexPropertyWriter &vpw, const EdgePropertyWriter &epw)
 {
-    typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
+ // typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef typename boost::graph_traits<CFG>::edge_descriptor CFG_Edge;
     typedef typename boost::graph_traits<CFG>::vertex_iterator CFG_VertexIterator;
     typedef typename boost::graph_traits<CFG>::out_edge_iterator CFG_OutEdgeIterator;
