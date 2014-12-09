@@ -610,6 +610,9 @@ AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 # Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
 ROSE_SUPPORT_YICES
 
+# Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
+ROSE_SUPPORT_YAML
+
 # Call supporting macro to check for "--enable-i386" switch
 ROSE_SUPPORT_I386
 
