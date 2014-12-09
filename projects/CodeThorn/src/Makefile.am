@@ -99,11 +99,6 @@ codethorn_SOURCES = \
   codethorn.h \
   codethorn.C
 
-#  LTLCheckerFixpoint.C             
-#  LTLCheckerFixpoint.h             
-#  LTLCheckerUnified.C              
-# LTLCheckerUnified.h              
-
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
   AstTerm.C \
