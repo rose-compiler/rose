@@ -165,6 +165,9 @@ Engine::createBarePartitioner() {
     ModulesPe::buildMayReturnLists(p);
     ModulesElf::buildMayReturnLists(p);
 
+    // Build the stack delta lists
+    ModulesPe::buildStackDeltaList(p);
+
     // Make sure the basicBlockWorkList_ gets updated when the partitioner's CFG is adjusted.
     ASSERT_not_null(basicBlockWorkList_);
     p.cfgAdjustmentCallbacks().prepend(basicBlockWorkList_);

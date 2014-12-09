@@ -60,6 +60,9 @@ void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
 /** Build may-return white and black lists. */
 void buildMayReturnLists(Partitioner&);
 
+/** Build stack delta definitions. */
+void buildStackDeltaList(Partitioner&);
+
 } // namespace
 } // namespace
 } // namespace
