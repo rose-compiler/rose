@@ -16,8 +16,6 @@
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
-#include "LTL.h"
-#include "LTLCheckerFixpoint.h"
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>

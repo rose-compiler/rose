@@ -12,8 +12,6 @@
 #include "VariableIdMapping.h"
 #include "StateRepresentations.h"
 #include "Timer.h"
-//#include "LTLCheckerFixpoint.h"
-//#include "LTLCheckerUnified.h"
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>
@@ -276,148 +274,6 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
 
     ;
 }
-
-#ifdef USE_OUTDATED_LTL
-void generateLTLOutput(Analyzer& analyzer, string ltl_file) {
-  extern CodeThorn::LTL::Formula* ltl_val;
-  //
-  // Verification
-  //
-  int n = 0;
-  int n_yes = 0;
-  int n_no = 0;
-  int n_undecided = 0;
-  int n_failed = 0;
-
-  assert(analyzer.getEStateSet());
-  assert(analyzer.getTransitionGraph());
-  if (ltl_file.size()) {
-    CodeThorn::FixpointLTL::Checker* checker1 = 0; 
-    CodeThorn::UnifiedLTL::UChecker* checker2 = 0; 
-    switch(analyzer.getLTLVerifier()) {
-    case 1: 
-      checker1 = new CodeThorn::FixpointLTL::Checker(*analyzer.getEStateSet(), 
-                             *analyzer.getTransitionGraph());
-
-      break;
-    case 2:
-#if 1
-      checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getEStateSet(),
-                             *analyzer.getTransitionGraph());
-#else
-      {
-        checker2 = new CodeThorn::UnifiedLTL::UChecker(*analyzer.getTransitionGraph()->estateSet());
-                             *analyzer.getTransitionGraph());
-      }
-#endif
-      break;
-    default: 
-      cerr << "Error: unknown ltl-verifier specified with ltl-verifier option."<<endl;
-      exit(1);
-    }
-    ltl_input = fopen(ltl_file.c_str(), "r");
-    if (ltl_input == NULL)
-      cerr<<"Error: could not open file "<<ltl_file.c_str()<<endl;
-    assert(ltl_input);
-
-    ofstream* csv = NULL;
-    if (args.count("csv-ltl")) {
-      csv = new ofstream();
-      // use binary and \r\n tp enforce DOS line endings
-      // http://tools.ietf.org/html/rfc4180
-      csv->open(args["csv-ltl"].as<string>().c_str(), ios::trunc|ios::binary);
-      //*csv << "Index,\"LTL formula\",Result,Confidence\r\n";
-    }
-
-    while ( !ltl_eof) {
-      try { 
-    ltl_label = 0;
-        if (ltl_parse()) {
-          cerr<<color("red")<< "Syntax error" <<color("normal")<<endl;
-      ++n;
-      ++n_failed;
-      continue;
-        }
-        if (ltl_val == NULL) {
-      // empty line
-      continue;
-    }
-      } catch(const char* s) {
-        if (ltl_val) cout<<color("normal")<<string(*ltl_val)<<endl;
-        cout<< s<<endl<<color("red")<< "Grammar Error" <<color("normal")<<endl;
-    ++n;
-    ++n_failed;
-    continue;
-      } catch(...) {
-    cout<<color("red")<< "Parser exception" << endl;
-    ++n;
-    ++n_failed;
-    continue;
-      }  
-      
-      ++n;
-      string formula = *ltl_val;
-      cout<<endl<<"Verifying formula "<<color("white")<<formula<<color("normal")<<"."<<endl;
-      //if (csv) *csv << n <<";\"" <<formula<<"\";";
-
-      if(csv) {
-        switch(resultsFormat) {
-        case RF_RERS2012: *csv << (n-1)+61 <<",";break; // MS: n starts at 1
-        case RF_RERS2013: *csv << (n-1) <<",";break;
-        case RF_UNKNOWN: /* intentional fall-through */
-        default: assert(0);
-        }
-      }
-      try {
-    AType::BoolLattice result;
-    if (checker1) result = checker1->verify(*ltl_val);
-    if (checker2) result = checker2->verify(*ltl_val);
-
-    if (result.isTrue()) {
-      ++n_yes;
-      cout<<color("green")<<"YES"<<color("normal")<<endl;
-      if (csv) *csv << "yes,9\r\n";
-    } else if (result.isFalse()) {
-      ++n_no;
-      cout<<color("cyan")<<"NO"<<color("normal")<<endl;
-      if (csv) *csv << "no,9\r\n";
-    } else {
-      ++n_undecided;
-      cout<<color("magenta")<<"UNKNOWN"<<color("normal")<<endl;
-      if (csv) *csv << "unknown,0\r\n";
-    }
-      } catch(const char* str) {
-    ++n_failed;
-    cerr << "Exception raised: " << str << endl;
-    cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-    if (csv) *csv << "error,0\r\n";
-      } catch(string str) {
-    ++n_failed;
-    cerr << "Exception raised: " << str << endl;
-    cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-    if (csv) *csv << "error,0\r\n";
-      } catch(...) {
-    ++n_failed;
-    cout<<color("red")<<"ERROR"<<color("normal")<<endl;
-    if (csv) *csv << "error,0\r\n";
-      }  
-    }
-    fclose(ltl_input);
-    if (csv) delete csv;
-    if (checker1) delete checker1;
-    if (checker2) delete checker2;
-    assert(n_yes+n_no+n_undecided+n_failed == n);
-    cout<<"\nStatistics "<<endl
-        <<"========== "<<endl
-    <<n_yes      <<"/"<<n<<color("green")  <<" YES, "       <<color("normal")     
-    <<n_no       <<"/"<<n<<color("cyan")   <<" NO, "        <<color("normal")     
-    <<n_undecided<<"/"<<n<<color("magenta")<<" UNKNOWN, "   <<color("normal")     
-    <<n_failed   <<"/"<<n<<color("red")    <<" ERROR"       <<color("normal")     
-    <<endl;
-
-  } 
-}
-#endif
 
 string readableruntime(double time) {
   stringstream s;
@@ -1857,13 +1713,9 @@ int main( int argc, char * argv[] ) {
   }
 
   timer.start();
-#ifdef USE_OUTDATED_LTL
-  if (ltl_file.size()) {
-    generateLTLOutput(analyzer,ltl_file);
-    cout << "=============================================================="<<endl;
-  }
-#endif
+  // LTL run time measurements missing
   double ltlRunTime=timer.getElapsedTimeInMilliSec();
+
   // TODO: reachability in presence of semantic folding
   //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
     analyzer.reachabilityResults.printResultsStatistics();
