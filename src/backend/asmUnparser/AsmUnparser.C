@@ -992,6 +992,7 @@ AsmUnparser::StaticDataDisassembler::init(Disassembler *d, AsmUnparser *u)
         unparser_allocated_here = false;
     } else {
         unparser = new AsmUnparser;
+        unparser->insn_callbacks.pre.erase(&unparser->insnStackDelta); // no stack deltas for data
         unparser->insn_callbacks.unparse.prepend(&data_note);
         unparser_allocated_here = true;
     }
