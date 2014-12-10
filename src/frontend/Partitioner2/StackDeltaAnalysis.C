@@ -131,29 +131,22 @@ public:
     static bool
     mergeSValues(BaseSemantics::SValuePtr &ours /*in,out*/, const BaseSemantics::SValuePtr &theirs,
                  const BaseSemantics::RiscOperatorsPtr &ops) {
-        if (ours == NULL) {
+        if (!ours && !theirs) {
+            return false;                               // both are BOTTOM (not calculated)
+        } else if (!ours) {
             ours = theirs;
-        } else if (theirs == NULL) {
-            // void
-        } else if (!ours->is_number() || !theirs->is_number()) {
-            if (ours->is_number()) {
-                return true;
-            } else {
-                // Make sure non-concrete values are free variables otherwise it could affect subsequent computations
-                // since we're not doing a proper merge.
-                using namespace rose::BinaryAnalysis::InstructionSemantics2;
-                SymbolicSemantics::SValuePtr oursSymbolic = SymbolicSemantics::SValue::promote(ours);
-                InsnSemanticsExpr::LeafNodePtr leaf = oursSymbolic->get_expression()->isLeafNode();
-                if (!leaf || !leaf->is_variable()) {
-                    ours = ops->undefined_(ours->get_width());
-                    return true;
-                }
-            }
-        } else if (!ours->must_equal(theirs)) { // concrete equality (fast, no SMT solver involved)
+            return true;                                // ours is BOTTOM, theirs is not
+        } else if (!theirs) {
+            return false;                               // theirs is BOTTOM, ours is not
+        } else if (!ours->is_number()) {
+            ours = ops->undefined_(ours->get_width());  // make sure its a simple TOP, not some arbitrarily complex expression
+            return false;                               // ours was already TOP
+        } else if (ours->must_equal(theirs)) {
+            return false;                               // ours == theirs
+        } else {
             ours = ops->undefined_(ours->get_width());
-            return true;
+            return true;                                // ours became TOP
         }
-        return false;
     }
     
     // Merge other into this, returning true if this changed.
@@ -204,12 +197,13 @@ public:
             // assume it just pops the return value.
             BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr delta;
-            BOOST_FOREACH (const Function::Ptr &callee, vertex->value().callees) {
-                BaseSemantics::SValuePtr calleeDelta;
-                if (callee->stackDelta().getOptional().assignTo(calleeDelta)) {
+            for (size_t i=0; i<vertex->value().callees.size(); ++i) {
+                Function::Ptr callee = vertex->value().callees[i];
+                BaseSemantics::SValuePtr calleeDelta = callee->stackDelta().getOptional().orDefault();
+                if (0==i) {
+                    delta = calleeDelta;
+                } else {
                     State::mergeSValues(delta, calleeDelta, ops);
-                    if (!delta || !delta->is_number())
-                        break;
                 }
             }
             BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER, ops.get());
@@ -297,8 +291,6 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     DfCfg dfCfg = buildDfCfg(cfg_, cfgStart, *this);
     DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
-
-    // Get the list of variables over which dataflow is calculated
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
     DataFlow df(cpu);
     if (mlog[DEBUG]) {
@@ -327,7 +319,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         }
     }
 
-    // Build the dataflow engine
+    // Run the dataflow until it reaches a fixed point or fails.  The nature of the state (finite number of registers) and
+    // merge function (values form a lattice merged in one direction) ensures that the analysis reaches a fixed point.
     TransferFunction xfer(cpu, instructionProvider_->stackPointerRegister());
     typedef DataFlow::Engine<DfCfg, State::Ptr, TransferFunction> Engine;
     Engine engine(dfCfg, xfer);

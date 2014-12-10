@@ -306,8 +306,8 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     attachPaddingToFunctions(partitioner);
     attachSurroundedDataToFunctions(partitioner);
     attachBlocksToFunctions(partitioner, true);         // to emit warnings about CFG problems
-    updateAnalysisResults(partitioner);
     postPartitionFixups(partitioner, interp);
+    updateAnalysisResults(partitioner);
     return *this;
 }
 
