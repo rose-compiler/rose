@@ -253,10 +253,6 @@ Engine::configureFromFile(Partitioner &partitioner, const FileSystem::Path &name
             // effect of the RET statement popping the return address from the stack).
             if (functionInfo["function"] && functionInfo["function"]["delta"]) {
                 int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-09]
-                if (functionName == "RtlUnwind@KERNEL32.dll")
-                    std::cerr <<"ROBB: " <<functionName <<" assigned delta is " <<delta <<"\n";
-#endif
                 partitioner.functionStackDelta(functionName, delta);
                 ++retval;
             }
