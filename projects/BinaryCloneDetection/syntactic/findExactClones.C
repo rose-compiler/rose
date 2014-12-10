@@ -118,6 +118,7 @@ int main(int argc, char* argv[])
 
   find_exact_clones(tx, stride, windowSize, functionsThatWeAreInterestedIn, numStridesThatMustBeDifferent, vectors, internTable, useCounts);
 
+  tx->commit();
 #if 0
   if( functionsThatWeAreInterestedIn.size() == 0 )
   {
