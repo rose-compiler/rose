@@ -12,6 +12,19 @@ namespace ModulesPe {
 
 using namespace rose::Diagnostics;
 
+// convert "EncodePointer@KERNEL32.dll" (ROSE's canonical form) to "KERNEL32.dll:EncodePointer" (typical of Windows)
+std::string
+systemFunctionName(const std::string &name) {
+    size_t atsign = name.find_last_of('@');
+    if (atsign != std::string::npos && atsign >= 1 &&
+        atsign + 4 < name.size() && name[atsign+1]!='@' && boost::ends_with(name, ".dll")) {
+        std::string library = name.substr(atsign+1);
+        std::string function = name.substr(0, atsign);
+        return library + ":" + function;
+    }
+    return name;
+}
+
 // Scan PE import sections to build an index
 size_t
 getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
@@ -236,6 +249,7 @@ buildMayReturnLists(Partitioner &partitioner) {
 void
 buildStackDeltaList(Partitioner &partitioner) {
     // FIXME[Robb P. Matzke 2014-12-08]: This list needs to be expanded
+    // Consider using Engine::configureFromFile instead
     partitioner.functionStackDelta("EncodePointer@KERNEL32.dll", +8);
 }
 

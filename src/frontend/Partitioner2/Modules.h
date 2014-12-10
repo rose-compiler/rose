@@ -151,6 +151,16 @@ public:
 
 namespace Modules {
 
+/** Convert system function names to ROSE canonical form.
+ *
+ *  ROSE always stores library function names as "function@library" with the reasoning that the function name is typically more
+ *  important than the library name and storing them this way leads to better presentation in sorted lists.  This function
+ *  recognizes and converts the form "library.dll:function" and will convert "KERNEL32.dll:EncodePointer" to
+ *  "EncodePointer@KERNEL32.dll"
+ *
+ * @sa ModulesPe::systemFunctionName and possibly other OS-specific formatters. */
+std::string canonicalFunctionName(const std::string&);
+
 /** Follow basic block ghost edges.
  *
  *  If this callback is registered as a partitioner basic block callback then the partitioner will follow ghost edges when
