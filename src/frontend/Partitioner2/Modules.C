@@ -16,6 +16,20 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace Modules {
 
+// Convert "KERNEL32.dll:EncodePointer" to "EncodePointer@KERNEL32.dll" and similar
+std::string
+canonicalFunctionName(const std::string &name) {
+    size_t colon = name.find_first_of(':');
+    if (colon != std::string::npos &&
+        colon > 4 && name.substr(colon-4, 4)==".dll" &&
+        colon+1 < name.size() && name[colon+1]!=':') {
+        std::string library = name.substr(0, colon);
+        std::string function = name.substr(colon+1);
+        return function + "@" + library;
+    }
+    return name;
+}
+
 bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {

@@ -9,6 +9,15 @@ namespace BinaryAnalysis {
 namespace Partitioner2 {
 namespace ModulesPe {
 
+/** Convert function name to system representation.
+ *
+ *  ROSE always stores library function names as "function@library", and this function rewrites such names to be similar to the
+ *  way thy're typically presented on a particular operating system.  For instance, "EncodePointer@KERNEL32.dll" will be
+ *  rewritten to "KERNEL32.dll:EncodePointer" since that's how it typically appears in Windows tools.
+ *
+ *  @sa Modules::canonicalFunctionName */
+std::string systemFunctionName(const std::string&);
+
 /** Index for PE import addresses.
  *
  *  This is a map from possible import addresses to the item in the Import Address Table (IAT) that describes the function that
