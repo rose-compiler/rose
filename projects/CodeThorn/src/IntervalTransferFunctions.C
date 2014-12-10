@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-
+#include <iostream>
 using namespace std;
 
 #include "CollectionOperators.h"
@@ -9,7 +9,7 @@ using namespace CodeThorn;
 #include "NumberIntervalLattice.h"
 #include "Labeler.h"
 #include "VariableIdMapping.h"
-#include "IntervalTransferFunctions.hpp"
+#include "IntervalTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
 IntervalTransferFunctions::IntervalTransferFunctions() {
@@ -34,8 +34,12 @@ IntervalTransferFunctions::~IntervalTransferFunctions() {
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, IntervalPropertyState& element) {
-
+void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, IntervalPropertyState& pstate) {
+  ROSE_ASSERT(_variableIdMapping);
+  NumberIntervalLattice niLattice;
+  CppExprEvaluator evaluator(&niLattice,&pstate,_variableIdMapping);
+  cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
+  evaluator.evaluate(node); // ignore return value for now
 }
 
 /*! 

@@ -32,32 +32,28 @@ PASolver1::computePreInfo(Label lab,Lattice& inInfo) {
 // runs until worklist is empty
 void
 PASolver1::runSolver() {
-  cout<<"INFO: solver1 (label-out-algorithm1) started."<<endl;
+  cout<<"INFO: solver 1 started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {
     cout<<"INFO: worklist size: "<<_workList.size()<<endl;
     Edge edge=_workList.take();
     Label lab0=edge.source;
     Label lab1=edge.target;
-
-    //_analyzerData[lab]=_analyzerData comb transfer(lab,combined(Pred));
-    // TODO: std::auto_ptr<Lattice*>/std::unique_ptr<Lattice*>
-
     Lattice* info=_initialElementFactory.create();
     //computePreInfo(lab0,*info);
-    cout<<"DEBUG: P1: ";_analyzerDataPostInfo[lab0.getId()]->toStream(cout);cout<<endl;
-    info->combine(*_analyzerDataPostInfo[lab0.getId()]);
-    cout<<"DEBUG: P2: ";info->toStream(cout);cout<<endl;
+    cout<<"DEBUG: P1: "<<_analyzerDataPreInfo[lab0.getId()]->toString()<<endl;
+    info->combine(*_analyzerDataPreInfo[lab0.getId()]);
+    cout<<"DEBUG: P2: "<<info->toString()<<endl;
     _transferFunctions.transfer(lab0,*info);
-    cout<<"DEBUG: NewInfo: "<<"@"<<lab0<<": ";info->toStream(cout);cout<<endl;
+    cout<<"DEBUG: NewInfo: "<<"@"<<lab0<<": "<<info->toString()<<endl;
 
-    bool isApproximatedBy=info->approximatedBy(*_analyzerDataPostInfo[lab1.getId()]);
-    cout<<"DEBUG: TEST APPROX: ";info->toStream(cout);cout<<",";_analyzerDataPostInfo[lab1.getId()]->toStream(cout);cout<<": "<<isApproximatedBy<<endl;
+    bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
+    cout<<"DEBUG: TEST APPROX: "<<info->toString()<<cout<<","<<_analyzerDataPreInfo[lab1.getId()]->toString()<<": "<<isApproximatedBy<<endl;
 
     if(!isApproximatedBy) {
       cout<<"DEBUG: TEST APPROX: combining ..."<<endl;
-      _analyzerDataPostInfo[lab1.getId()]->combine(*info);
-      cout<<"DEBUG: new combined info: ";_analyzerDataPostInfo[lab1.getId()]->toStream(cout);cout<<endl;
+      _analyzerDataPreInfo[lab1.getId()]->combine(*info);
+      cout<<"DEBUG: new combined info: "<<_analyzerDataPreInfo[lab1.getId()]->toString()<<cout<<endl;
       Flow outEdges=_flow.outEdges(lab1);
       _workList.add(outEdges);
     } else {
@@ -65,7 +61,7 @@ PASolver1::runSolver() {
     }
     delete info;
   }
-  cout<<"INFO: solver1 (label-out-algorithm1) finished."<<endl;
+  cout<<"INFO: solver 1 finished."<<endl;
 }
 
 #endif

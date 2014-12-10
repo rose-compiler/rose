@@ -1,11 +1,11 @@
 #ifndef IntervalTRANSFERFUNCTIONS_HPP
 #define IntervalTRANSFERFUNCTIONS_HPP
 
-#include "DFTransferFunctions.hpp"
+#include "PATransferFunctions.h"
 #include "IntervalPropertyState.h"
-#include "AbstractEvaluator.hpp"
+#include "AbstractEvaluator.h"
 
-class IntervalTransferFunctions : public DFTransferFunctions<IntervalPropertyState> {
+class IntervalTransferFunctions : public PATransferFunctions {
 public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();

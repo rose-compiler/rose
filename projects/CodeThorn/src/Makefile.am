@@ -217,8 +217,10 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   IntervalAstAttribute.C \
   IntervalPropertyState.h \
   IntervalPropertyState.C \
-  IntervalAnalyzer.h \
-  IntervalAnalyzer.C \
+  IntervalAnalysis.h \
+  IntervalAnalysis.C \
+  IntervalPropertyStateFactory.h \
+  IntervalPropertyStateFactory.C \
   IntervalTransferFunctions.hpp \
   IntervalTransferFunctions.C \
   IntervalAstAttributeInterface.h \

@@ -9,7 +9,6 @@
 #include "RDLattice.h"
 #include "DFAnalyzer.h"
 #include "WorkList.h"
-//#include "RDAnalyzer.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
@@ -21,6 +20,7 @@
 
 #include "ProgramAnalysis.h"
 #include "RDAnalysis.h"
+#include "IntervalAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -117,14 +117,36 @@ int main(int argc, char* argv[]) {
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
     
+    {
+      cout << "STATUS: creating interval analyzer."<<endl;
+      IntervalAnalysis* intervalAnalyzer=new IntervalAnalysis();
+      cout << "STATUS: initializing interval analyzer."<<endl;
+      intervalAnalyzer->initialize(root);
+      cout << "STATUS: initializing interval transfer functions."<<endl;
+      intervalAnalyzer->initializeTransferFunctions();
+      cout << "STATUS: initializing interval global variables."<<endl;
+      intervalAnalyzer->initializeGlobalVariables(root);
+
+      
+      std::string funtofind="main";
+      RoseAst completeast(root);
+      SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      intervalAnalyzer->determineExtremalLabels(startFunRoot);
+#if 0
+      intervalAnalyzer->run();
+#else
+      cout << "STATUS: did not run interval analysis."<<endl;      
+#endif
+    }
+
     cout << "STATUS: creating RD analyzer."<<endl;
     RDAnalysis* rdAnalyzer=new RDAnalysis();
     cout << "STATUS: initializing RD analyzer."<<endl;
     rdAnalyzer->initialize(root);
-    cout << "STATUS: initializing RD global variables."<<endl;
-    rdAnalyzer->initializeGlobalVariables(root);
     cout << "STATUS: initializing RD transfer functions."<<endl;
     rdAnalyzer->initializeTransferFunctions();
+    cout << "STATUS: initializing RD global variables."<<endl;
+    rdAnalyzer->initializeGlobalVariables(root);
     
     std::string funtofind="main";
     RoseAst completeast(root);

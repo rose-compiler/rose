@@ -17,15 +17,17 @@
 using namespace std;
 using namespace CodeThorn;
 
-#include "RDTransferFunctions.hpp"
+#include "ProgramAnalysis.h"
+#include "IntervalPropertyState.h"
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-class IntervalAnalyzer : public DFAnalyzer<IntervalPropertyState> {
+class IntervalAnalysis : public ProgramAnalysis {
  public:
-  IntervalAnalyzer();
-  ~IntervalAnalyzer();
+  IntervalAnalysis();
+  ~IntervalAnalysis();
+  void initializeExtremalValue(Lattice* element);
  protected:
   virtual DFAstAttribute* createDFAstAttribute(IntervalPropertyState* elem);
 };

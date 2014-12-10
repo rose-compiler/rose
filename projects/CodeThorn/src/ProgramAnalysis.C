@@ -17,35 +17,61 @@ ProgramAnalysis::ProgramAnalysis():
   _cfanalyzer(0),
   _numberOfLabels(0),
   _preInfoIsValid(false),
+  _postInfoIsValid(false),
   _transferFunctions(0),
   _initialElementFactory(0)
 {}
+
+void ProgramAnalysis::initializeSolver() {
+  ROSE_ASSERT(&_workList);
+  ROSE_ASSERT(&_initialElementFactory);
+  ROSE_ASSERT(&_analyzerDataPreInfo);
+  ROSE_ASSERT(&_analyzerDataPostInfo);
+  ROSE_ASSERT(&_flow);
+  ROSE_ASSERT(&_transferFunctions);
+  _solver=new PASolver1(_workList,
+                      _analyzerDataPreInfo,
+                      _analyzerDataPostInfo,
+                      *_initialElementFactory,
+                      _flow,
+                      *_transferFunctions);
+}
 
 void ProgramAnalysis::initializeExtremalValue(Lattice* element) {
   // default identity function
 }
 
 Lattice* ProgramAnalysis::getPreInfo(Label lab) {
-  if(!_preInfoIsValid) {
-    computeAllPreInfo();
-    ROSE_ASSERT(_preInfoIsValid==true);
-  }
+  computeAllPreInfo();
   return _analyzerDataPreInfo[lab.getId()];
 }
 
 
 Lattice* ProgramAnalysis::getPostInfo(Label lab) {
+  computeAllPostInfo();
   return _analyzerDataPostInfo[lab.getId()];
 }
 
 
 void ProgramAnalysis::computeAllPreInfo() {
+  if(!_preInfoIsValid) {
+    _solver->runSolver();
+    _preInfoIsValid=true;
+    _postInfoIsValid=false;
+  }
+}
+
+void ProgramAnalysis::computeAllPostInfo() {
+  computeAllPreInfo();
   for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
     Lattice* le=_initialElementFactory->create();
-    _solver->computePreInfo(lab,*le);
-    _analyzerDataPreInfo[lab]=le;
+    le->combine(*_analyzerDataPreInfo[lab]);
+    if(_analyzerDataPostInfo[lab])
+      delete _analyzerDataPostInfo[lab];
+    _analyzerDataPostInfo[lab]=le;
+    cout<<"DEBUG: post @"<<lab<<": "<<_analyzerDataPostInfo[lab]->toString()<<endl;
   }
-  _preInfoIsValid=true;
+  _postInfoIsValid=true;
 }
 
 void ProgramAnalysis::setInitialElementFactory(PropertyStateFactory* pf) {
@@ -69,8 +95,11 @@ void ProgramAnalysis::initializeGlobalVariables(SgProject* root) {
   Lattice* elem=_initialElementFactory->create();
   list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
-    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end())
+    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
+      cout<<"DEBUG: transfer for global var "<<(*i)->unparseToString()<<endl;
+      ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
+    }
   }
   cout << "INIT: initial element: ";
   elem->toStream(cout,&_variableIdMapping);
@@ -104,6 +133,8 @@ ProgramAnalysis::initialize(SgProject* root) {
     Lattice* le2=_initialElementFactory->create();
     _analyzerDataPostInfo.push_back(le2);
   }
+  cout << "INIT: initialized pre/post property states."<<endl;
+
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctioncCallLocalEdges(_flow);
@@ -129,6 +160,7 @@ ProgramAnalysis::initialize(SgProject* root) {
     set<Label> elab;
     elab.insert(startlab);
     setExtremalLabels(elab);
+    initializeTransferFunctions();
     initializeGlobalVariables(root);
     _analyzerDataPostInfo[startlab]=_initialElementFactory->create();
     cout << "STATUS: Initial info established at label "<<startlab<<endl;
@@ -205,8 +237,7 @@ ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
 
 void
 ProgramAnalysis::solve() {
-  _solver->runSolver();
-  _preInfoIsValid=false;
+  computeAllPreInfo();
 }
 
 DFAstAttribute* ProgramAnalysis::createDFAstAttribute(Lattice* elem) {
@@ -220,12 +251,11 @@ void
 ProgramAnalysis::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
-    _analyzerDataPostInfo[(*i).getId()]=_initialElementFactory->create();
-    // TODO: must become a parameter ... of the RDAnalysis ...
-    initializeExtremalValue(_analyzerDataPostInfo[(*i).getId()]);
-    _transferFunctions->transfer(*i,*_analyzerDataPostInfo[(*i).getId()]);
-    cout << "INFO: Initialized "<<*i<<" with ";
-    _analyzerDataPostInfo[(*i).getId()]->toStream(cout,&_variableIdMapping);
+    ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
+    initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
+    //_transferFunctions->transfer(*i,*_analyzerDataPostInfo[(*i).getId()]);
+    cout<<"INFO: Initialized "<<*i<<" with ";
+    cout<<_analyzerDataPreInfo[(*i).getId()]->toString(&_variableIdMapping);
     cout<<endl;
     Flow outEdges=_flow.outEdges(*i);
     for(Flow::iterator j=outEdges.begin();j!=outEdges.end();++j) {
@@ -312,21 +342,20 @@ size_t ProgramAnalysis::size() {
  */
 
 void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
-  if(inInfo && !_preInfoIsValid)
-    computeAllPreInfo();
+  computeAllPreInfo();
+  computeAllPostInfo();
   LabelSet labelSet=_flow.nodeLabels();
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
       ++i) {
     ROSE_ASSERT(*i<_analyzerDataPostInfo.size());
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
-    if(!_labeler->isFunctionExitLabel(*i) /* && !_labeler->isCallReturnLabel(lab)*/)
-      if(*i >=0 ) {
-        if(inInfo)
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[(*i).getId()]));
-        else
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[(*i).getId()]));
-      }
+    if(*i >=0 ) {
+      if(inInfo)
+        _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[(*i).getId()]));
+      else
+        _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[(*i).getId()]));
+    }
   }
 }
 
@@ -336,8 +365,7 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
  */
 
 void ProgramAnalysis::attachInInfoToAst(string attributeName) {
-  if(!_preInfoIsValid)
-    computeAllPreInfo();
+  computeAllPreInfo();
   attachInfoToAst(attributeName,true);
 }
 
@@ -347,5 +375,6 @@ void ProgramAnalysis::attachInInfoToAst(string attributeName) {
  */
 
 void ProgramAnalysis::attachOutInfoToAst(string attributeName) {
+  computeAllPostInfo();
   attachInfoToAst(attributeName,false);
 }

@@ -1,5 +1,5 @@
-#ifndef RDANALYZER_H
-#define RDANALYZER_H
+#ifndef RDANALYSIS_H
+#define RDANALYSIS_H
 
 // Author: Markus Schordan, 2013.
 
@@ -33,7 +33,6 @@ class RDAnalysis : public ProgramAnalysis {
  public:
   RDAnalysis();
   ~RDAnalysis();
-  virtual void initializeSolver();
   virtual void initializeExtremalValue(Lattice* element); 
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);

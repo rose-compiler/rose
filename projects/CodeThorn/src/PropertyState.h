@@ -25,4 +25,6 @@ class PropertyStateFactory {
   virtual ~PropertyStateFactory();
 };
 
+typedef PropertyStateFactory LatticeElementFactory;
+
 #endif

@@ -34,26 +34,12 @@ RDAnalysis::RDAnalysis() {
 
 RDAnalysis::~RDAnalysis() {
   delete _transferFunctions;
+  delete _initialElementFactory;
 }
 void RDAnalysis::initializeExtremalValue(Lattice* element) {
   RDLattice* rdElement=dynamic_cast<RDLattice*>(element);
   rdElement->setEmptySet();
   cout<<"INFO: initialized extremal value."<<endl;
-}
-
-void RDAnalysis::initializeSolver() {
-  ROSE_ASSERT(&_workList);
-  ROSE_ASSERT(&_initialElementFactory);
-  ROSE_ASSERT(&_analyzerDataPreInfo);
-  ROSE_ASSERT(&_analyzerDataPostInfo);
-  ROSE_ASSERT(&_flow);
-  ROSE_ASSERT(&_transferFunctions);
-  _solver=new PASolver1(_workList,
-                      _analyzerDataPreInfo,
-                      _analyzerDataPostInfo,
-                      *_initialElementFactory,
-                      _flow,
-                      *_transferFunctions);
 }
 
 DFAstAttribute* RDAnalysis::createDFAstAttribute(Lattice* elem) {

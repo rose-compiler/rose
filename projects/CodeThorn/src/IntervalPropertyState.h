@@ -6,7 +6,7 @@
 #include "NumberIntervalLattice.h"
 #include "PropertyState.h"
 
-class IntervalPropertyState : public PropertyState {
+class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
   void toStream(std::ostream& os, VariableIdMapping* vim=0);
@@ -23,6 +23,7 @@ public:
   typedef map<VariableId,NumberIntervalLattice> IntervalMapType;
   IntervalMapType intervals;
   bool isBot() { cerr<<"WARNING: isBot not implement for IntervalPropertState"<<endl; return false; }
+  void setEmptyState();
 };
 
 #endif

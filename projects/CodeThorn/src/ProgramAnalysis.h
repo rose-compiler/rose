@@ -33,7 +33,7 @@ class ProgramAnalysis {
   virtual void initializeGlobalVariables(SgProject* root);
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
-  virtual void initializeSolver()=0;
+  virtual void initializeSolver();
   void determineExtremalLabels(SgNode*);
   void run();
   PropertyState* createPropertyState();
@@ -80,7 +80,9 @@ class ProgramAnalysis {
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);
   void computeAllPreInfo();
+  void computeAllPostInfo();
   bool _preInfoIsValid;
+  bool _postInfoIsValid;
   PATransferFunctions* _transferFunctions;
   PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;

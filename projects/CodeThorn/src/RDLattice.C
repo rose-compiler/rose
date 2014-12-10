@@ -109,7 +109,6 @@ void RDLattice::setBot() {
   * \date 2013.
  */
 void RDLattice::combine(Lattice& b) {
-  cout<<"RD-combine: "<<this->isBot()<<","<<b.isBot()<<endl;
   RDLattice* other=dynamic_cast<RDLattice*>(&b);
   ROSE_ASSERT(other);
   if(b.isBot()) {

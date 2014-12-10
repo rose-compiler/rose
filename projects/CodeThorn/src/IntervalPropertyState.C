@@ -19,6 +19,9 @@ void IntervalPropertyState::addVariable(VariableId varId) {
   intervals[varId]=NumberIntervalLattice();
 }
 
+void IntervalPropertyState::setEmptyState() {
+}
+
 #if 0
   // adds pointer variable
   void IntervalPropertyState::addPointerVariable(VariableId);

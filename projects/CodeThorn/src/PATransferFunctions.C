@@ -18,8 +18,11 @@ PATransferFunctions::PATransferFunctions():_labeler(0),_variableIdMapping(0),_do
 void PATransferFunctions::transfer(Label lab, Lattice& element) {
   //  if(element.isBot())
   //  element.setEmptySet();
+  cout<<"DEBUG: transfer: started @"<<lab.getId()<<endl;
+  ROSE_ASSERT(_labeler);
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
+  cout<<"DEBUG: transfer: node: "<<node<<endl;
   
   if(_labeler->isFunctionCallLabel(lab)) {
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
@@ -73,6 +76,7 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
   if(SgExpression* expr=isSgExpression(node)) {
     transferExpression(lab,expr,element);
   }
+  cout<<"DEBUG: transfer: checking for SgVariableDeclaration."<<endl;
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
     transferDeclaration(lab,vardecl,element);
   }
