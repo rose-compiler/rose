@@ -182,6 +182,7 @@ public:
         if (show_syscall_names)
             insn_callbacks.unparse.append(&syscallName);
         basicblock_callbacks.pre.append(&dominatorBlock);
+        insn_callbacks.pre.erase(&insnStackDelta);      // always empty output for Partitioner version 1
     }
 
 private:
