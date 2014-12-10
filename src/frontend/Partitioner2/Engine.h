@@ -3,6 +3,7 @@
 
 #include <BinaryLoader.h>
 #include <Disassembler.h>
+#include <FileSystem.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -181,6 +182,17 @@ public:
      *  @ref disassembler and @ref memoryMap methods, and/or they can be allocated implicitly by calling steps up through @ref
      *  load. */
     virtual Partitioner createTunedPartitioner();
+
+    /** Configure partitioner from YAML files.
+     *
+     *  Configures the partitioner according to the specified configuration file.  If the name is a directory then the
+     *  directory is searched recursively for configuration files.
+     *
+     *  Configuration files whose names end with ".json" are JSON configuration files whose format is defined by Carnegie
+     *  Mellon University's Software Engineering Institute.
+     *
+     *  Returns the number of configuration items processed. Throws an <code>std::runtime_error</code> for errors. */
+    virtual size_t configureFromFile(Partitioner&, const FileSystem::Path&);
 
 private:
     void checkCreatePartitionerPrerequisites() const;
