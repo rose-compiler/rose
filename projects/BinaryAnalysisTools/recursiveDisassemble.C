@@ -19,7 +19,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-
 // FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
 /* 
  | name                   | purpose                                                   |
@@ -70,6 +69,7 @@ struct Settings {
     bool gvCfgGlobal;                                   // produce GraphViz file containing a global CFG?
     AddressInterval gvCfgInterval;                      // show part of the global CFG
     bool gvCallGraph;                                   // produce a function call graph?
+    std::string configurationName;                      // config file or directory containing such
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true),
@@ -110,6 +110,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("use-semantics")
                .intrinsicValue(false, settings.useSemantics)
                .hidden(true));
+
+    gen.insert(Switch("config")
+               .argument("name", anyParser(settings.configurationName))
+               .doc("Directory containing configuration files, or a configuration file itself.  A directory is searched "
+                    "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
+                    "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
+                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
+                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
+                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
+                    "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
 
     // Switches for disassembly
     SwitchGroup dis("Disassembly switches");
@@ -694,7 +704,6 @@ int main(int argc, char *argv[]) {
     }
 
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
-    Stream info(mlog[INFO] <<"Disassembling and partitioning");
     Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner();
     partitioner.enableSymbolicSemantics(settings.useSemantics);
@@ -703,6 +712,12 @@ int main(int argc, char *argv[]) {
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
+    if (!settings.configurationName.empty()) {
+        Sawyer::Message::Stream info(mlog[INFO]);
+        info <<"loading configuration files";
+        size_t nItems = engine.configureFromFile(partitioner, settings.configurationName);
+        info <<"; configured " <<StringUtility::plural(nItems, "items") <<"\n";
+    }
     if (false)
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
@@ -731,6 +746,8 @@ int main(int argc, char *argv[]) {
     partitioner.memoryMap().dump(mlog[INFO]);
     if (settings.doShowMap)
         partitioner.memoryMap().dump(std::cout);
+
+    Stream info(mlog[INFO] <<"Disassembling and partitioning");
 
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.

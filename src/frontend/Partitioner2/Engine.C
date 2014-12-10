@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "rosePublicConfig.h"
 
 #include "BinaryDebugger.h"
 #include "BinaryLoader.h"
@@ -6,12 +7,18 @@
 #include "DisassemblerX86.h"
 #include "SRecord.h"
 #include <Partitioner2/Engine.h>
+#include <Partitioner2/Modules.h>
 #include <Partitioner2/ModulesElf.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Utility.h>
 #include <sawyer/GraphTraversal.h>
+
+#ifdef ROSE_HAVE_LIBYAML
+#include <yaml-cpp/yaml.h>
+#endif
+
 
 using namespace rose::Diagnostics;
 
@@ -215,6 +222,50 @@ Engine::createTunedPartitioner() {
     }
 
     return createGenericPartitioner();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Configuration files
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+size_t
+Engine::configureFromFile(Partitioner &partitioner, const FileSystem::Path &name) {
+    using namespace FileSystem;
+    size_t retval = 0;
+    if (isDirectory(name)) {
+        BOOST_FOREACH (const Path &fileName, findNamesRecursively(name, isFile)) {
+            if (baseNameMatches(boost::regex(".*\\.json$"))(fileName))
+                retval += configureFromFile(partitioner, fileName);
+        }
+    } else if (isFile(name)) {
+#ifdef ROSE_HAVE_LIBYAML
+        YAML::Node config = YAML::LoadFile(name.string());
+        if (!config["config"] || !config["config"]["exports"])
+            return retval;
+        config = config["config"]["exports"];
+        const size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+        SAWYER_MESG(mlog[TRACE]) <<"loading configuration from " <<name <<"\n";
+        for (YAML::const_iterator iter=config.begin(); iter!=config.end(); ++iter) {
+            std::string functionName = Modules::canonicalFunctionName(iter->first.as<std::string>());
+            YAML::Node functionInfo = iter->second;
+
+            // Look for stack delta and add the word size to it (because the JSON files' stack deltas don't include the
+            // effect of the RET statement popping the return address from the stack).
+            if (functionInfo["function"] && functionInfo["function"]["delta"]) {
+                int delta = functionInfo["function"]["delta"].as<int>() + wordSize;
+#if 1 // DEBUGGING [Robb P. Matzke 2014-12-09]
+                if (functionName == "RtlUnwind@KERNEL32.dll")
+                    std::cerr <<"ROBB: " <<functionName <<" assigned delta is " <<delta <<"\n";
+#endif
+                partitioner.functionStackDelta(functionName, delta);
+                ++retval;
+            }
+        }
+    }
+#else
+    throw std::runtime_error("cannot open \"" + name.string() + "\": no YAML support (configure ROSE with --with-yaml)");
+#endif
+    return retval;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
