@@ -809,8 +809,12 @@ public:
      *
      *  The stack delta is the value of the stack pointer register at the entrance to the specified block minus the stack delta
      *  at the entry point of the function.  The function entry point stack delta is zero; the return address pushed onto the
-     *  stack by the caller is attributed to the caller, not the callee, although the callee pops it from the stack when
-     *  returning. The stack delta can be four different kinds of values:
+     *  stack by the caller is attributed to the caller, and popping the return address during the callee's return is
+     *  attributed to the callee.  Thus, most functions that use a caller-cleans-up-args ABI will have a stack delta equal to
+     *  the size of the return address, and that delta will be positive for stacks that grow down, and negative for stacks that
+     *  grow up.
+     *
+     *  The resulting stack delta can be four different kinds of values:
      *
      *  @li Never-computed is indicated by the basic block not caching any value for the stack delta.  This method will always
      *      attempt to compute a stack delta if none is cached in the basic block.
@@ -818,9 +822,9 @@ public:
      *  @li Error is indicated by a cached null expression. Errors are usually due to a reachable basic block that contains an
      *      instruction for which semantics are not known.
      *
-     *  @li Constant offset, for which the is_number predicate applied to the return value is true.
+     *  @li Constant offset, for which the @c is_number predicate applied to the return value is true.
      *
-     *  @li Top, indicated by a non-null return value for which is_number is false.  This results when two or more paths
+     *  @li Top, indicated by a non-null return value for which @c is_number is false.  This results when two or more paths
      *      through the control flow graph result in different constant offsets. It can also occur when the algebraic
      *      simplifications that are built into ROSE fail to simplify a constant expression.
      *
@@ -828,12 +832,23 @@ public:
      *  the end of the block, returned by the "in" and "out" variants of this method, respectively.
      *
      *  Since stack deltas use the control flow graph during the analysis, the specified basic block must be attached to the
-     *  CFG/AUM before calling this method.
+     *  CFG/AUM before calling this method. Also, since predefined stack deltas are based on function names, function calls
+     *  must be to basic blocks that are attached to a function. Note that currently (Dec 2014) PE thunks transfering to a
+     *  non-linked dynamic function are given names by @ref ModulesPe::nameImportThunks, which runs after all basic blocks and
+     *  functions have been discovered and attached to the CFG/AUM.
+     *
+     *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
     BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const;
     BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const;
     /** @} */
+
+    /** Clears all cached stack deltas.
+     *
+     *  Causes all stack deltas for basic blocks and functions that are attached to the CFG/AUM to be forgotten.  This is
+     *  useful if one needs to recompute deltas in light of new information. */
+    void forgetStackDeltas() const;
 
     /** Determine if part of the CFG can pop the top stack frame.
      *
