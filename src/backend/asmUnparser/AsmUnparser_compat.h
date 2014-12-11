@@ -31,7 +31,7 @@ ROSE_DLL_API std::string unparseAsmInterpretation(SgAsmInterpretation*);
  * X86
  *-------------------------------------------------------------------------------------------------------------------------------*/
 
-std::string unparseX86Mnemonic(SgAsmx86Instruction*);
+std::string unparseX86Mnemonic(SgAsmX86Instruction*);
 std::string unparseX86Expression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*);
 std::string unparseX86Expression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*,
                                  const RegisterDictionary*, bool leaMode);

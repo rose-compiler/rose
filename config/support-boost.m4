@@ -93,12 +93,18 @@ if test \
       "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47"
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.48" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.49" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.50" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.51" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.52" \
+   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.53"
 then
     echo "Reasonable version of Boost found!"
 else
   if test "x$ROSE_ENABLE_BOOST_VERSION_CHECK" = "xyes"; then
-    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.47 is currently supported.])
+    ROSE_MSG_ERROR([Unsupported version of Boost: '$rose_boost_version'. Only 1.45 to 1.53 is currently supported.])
   else
     AC_MSG_WARN([Unsupported version of Boost is being used])
   fi
@@ -112,6 +118,8 @@ AC_DEFINE_UNQUOTED([ROSE_BOOST_PATH],"$ac_boost_path",[Location (unquoted) of Bo
 #AC_DEFINE([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location of Wave specified on configure line.])
 AC_DEFINE_UNQUOTED([ROSE_WAVE_PATH],"$ac_boost_path/wave",[Location (unquoted) of Wave specified on configure line.])
 
+AC_DEFINE_UNQUOTED([ROSE_BOOST_VERSION], $rose_boost_version, [Version of Boost specified on configure line.])
+
 AX_BOOST_THREAD
 AX_BOOST_DATE_TIME
 AX_BOOST_REGEX
@@ -123,6 +131,7 @@ AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_WAVE
+AX_BOOST_IOSTREAMS
 
 # AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 
