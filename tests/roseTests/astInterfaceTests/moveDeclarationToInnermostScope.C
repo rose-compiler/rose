@@ -71,6 +71,7 @@
  * //TODO move to a separated source file or even namespace
 */
 #include "rose.h"
+#include "wholeAST_API.h"
 #include "transformationTracking.h"
 #include <iostream>
 #include <queue> // used for a worklist of declarations to be moved 
@@ -203,6 +204,7 @@ class visitorTraversal : public AstSimpleProcessing
 int main(int argc, char * argv[])
 
 {
+
   vector <string> argvList (argv, argv + argc);
   // pass -rose:debug to turn on debugging mode
   if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
@@ -239,6 +241,9 @@ int main(int argc, char * argv[])
        exampleTraversal.traverseWithinFile(s_file, preorder);
     }
   }
+  string filename= SageInterface::generateProjectName(project);
+  generateDOTforMultipleFile(*project);
+
  // run all tests
   AstTests::runAllTests(project);
   return backend(project);
@@ -699,16 +704,26 @@ std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatemen
     {
         if (if_stmt->get_true_body())     
         {
+	  SgStatement * old_body = if_stmt->get_true_body();
           SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
           SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
           processed_scopes.push_back (true_body);
+	  if (true_body != old_body)
+	  {
+	    assert (true_body->get_file_info()->isTransformation());
+	  }
         }
 
         if (if_stmt->get_false_body())
         {
+	  SgStatement * old_body = if_stmt->get_false_body();
           SageInterface::ensureBasicBlockAsFalseBodyOfIf (if_stmt);
           SgScopeStatement* false_body = isSgScopeStatement(if_stmt->get_false_body());
           processed_scopes.push_back (false_body);
+	  if (false_body != old_body)
+	  {
+	    assert (false_body->get_file_info()->isTransformation());
+	  }
         }
     }
     else
