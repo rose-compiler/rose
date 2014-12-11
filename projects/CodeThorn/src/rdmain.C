@@ -21,6 +21,7 @@
 #include "ProgramAnalysis.h"
 #include "RDAnalysis.h"
 #include "IntervalAnalysis.h"
+#include "LVAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -136,6 +137,26 @@ int main(int argc, char* argv[]) {
       intervalAnalyzer->run();
 #else
       cout << "STATUS: did not run interval analysis."<<endl;      
+#endif
+    }
+
+    {
+      cout << "STATUS: creating liveness analysis."<<endl;
+      SPRAY::LVAnalysis* livenessAnalyzer=new SPRAY::LVAnalysis();
+      cout << "STATUS: initializing liveness analysis."<<endl;
+      livenessAnalyzer->initialize(root);
+      cout << "STATUS: initializing liveness transfer functions."<<endl;
+      livenessAnalyzer->initializeTransferFunctions();
+      cout << "STATUS: initializing liveness global variables."<<endl;
+      livenessAnalyzer->initializeGlobalVariables(root);
+      std::string funtofind="main";
+      RoseAst completeast(root);
+      SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      livenessAnalyzer->determineExtremalLabels(startFunRoot);
+#if 0
+      livenessAnalyzer->run();
+#else
+      cout << "STATUS: did not run liveness analysis."<<endl;      
 #endif
     }
 

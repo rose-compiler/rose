@@ -104,6 +104,9 @@ class Edge {
   typedef graph_traits<FlowGraph>::vertex_descriptor vertex_t;
   typedef graph_traits<FlowGraph>::edge_descriptor edge_t;
   void boostify();
+  //! inverts all edges in the graph. The root node is updated. This operation is only successful if
+  //! the original graph had exactly one final node (which becomes the start node of the new graph).
+  Flow reverseFlow();
 
  private:
   bool _dotOptionDisplayLabel;

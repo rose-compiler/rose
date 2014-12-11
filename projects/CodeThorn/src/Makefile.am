@@ -181,13 +181,10 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 rdmain_LDADD = -lrose
 rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  CFAnalyzer.h CFAnalyzer.C \
- RDLattice.h RDLattice.C \
  DFTransferFunctions.h DFTransferFunctions.C \
-  RDAnalyzer.h RDAnalyzer.C \
   LanguageRestrictor.h LanguageRestrictor.C \
   LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  RDTransferfunctions2.h RDTransferFunctions2.C \
   AnalysisAbstractionLayer.h \
   AnalysisAbstractionLayer.C \
   RDAstAttribute.h         \
@@ -235,8 +232,21 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   PATransferFunctions.C \
   ProgramAnalysis.h \
   ProgramAnalysis.C \
+  RDAnalyzer.h RDAnalyzer.C \
+  RDLattice.h RDLattice.C \
+  RDTransferfunctions2.h RDTransferFunctions2.C \
   RDAnalysis.h \
   RDAnalysis.C \
+  LVLattice.h \
+  LVLattice.C \
+  LVTransferFunctions.h \
+  LVTransferFunctions.C \
+  LVAnalysis.h \
+  LVAnalysis.C \
+  LVAstAttributeInterface.h \
+  LVAstAttributeInterface.C \
+  LVAstAttribute.h \
+  LVAstAttribute.C \
   rdmain.C 
 
 #  RDTransferfunctions.hpp RDTransferFunctions.C

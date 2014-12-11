@@ -69,7 +69,6 @@ void ProgramAnalysis::computeAllPostInfo() {
     if(_analyzerDataPostInfo[lab])
       delete _analyzerDataPostInfo[lab];
     _analyzerDataPostInfo[lab]=le;
-    cout<<"DEBUG: post @"<<lab<<": "<<_analyzerDataPostInfo[lab]->toString()<<endl;
   }
   _postInfoIsValid=true;
 }
@@ -137,7 +136,7 @@ ProgramAnalysis::initialize(SgProject* root) {
 
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
-    size_t numDeletedEdges=_cfanalyzer->deleteFunctioncCallLocalEdges(_flow);
+    size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
     int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }

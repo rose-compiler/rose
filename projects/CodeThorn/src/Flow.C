@@ -243,6 +243,7 @@ Flow::Flow():_boostified(false) {
 void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
   edge_t e; bool b;
+  ROSE_ASSERT(!_boostified);
   for(Flow::iterator i=begin();i!=end();++i) {
     tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
     _flowGraph[e]=(*i).getTypes();
@@ -251,6 +252,13 @@ void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
 }
 
+CodeThorn::Flow Flow::reverseFlow() {
+  Flow reverseFlow;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    reverseFlow.insert(Edge((*i).target,(*i).getTypes(),(*i).source));
+  }
+  return reverseFlow;
+}
 
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;

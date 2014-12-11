@@ -128,7 +128,6 @@ void RDLattice::combine(RDLattice& b) {
  */
 bool RDLattice::approximatedBy(Lattice& b0) {
   RDLattice& b=dynamic_cast<RDLattice&>(b0);
-  cout<<"RDLAttice:::approximatedBy"<<endl;
   if(isBot()&&b.isBot())
     return true;
   if(isBot()) {

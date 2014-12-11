@@ -53,7 +53,7 @@ class CFAnalyzer {
    * is called exactly once in a program.
    */
   int inlineTrivialFunctions(Flow& flow);
-  size_t deleteFunctioncCallLocalEdges(Flow& flow);
+  size_t deleteFunctionCallLocalEdges(Flow& flow);
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   Labeler* labeler;
