@@ -228,6 +228,9 @@ public:
 
     /** Default stack deltas based on function names. */
     typedef Sawyer::Container::Map<std::string, int64_t> StackDeltaMap;
+
+    /** Map address to name. */
+    typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
     
 private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
@@ -244,6 +247,7 @@ private:
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     StackDeltaMap stackDeltaMap_;                       // Stack deltas defined for certain functions by name
+    AddressNameMap addressNames_;                       // Names for various addresses
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -1626,6 +1630,17 @@ public:
     bool assumeFunctionsReturn() const { return assumeFunctionsReturn_; }
     /** @} */
 
+    /** Property: Name for address.
+     *
+     *  The partitioner stores a mapping from addresses to user specified names and uses those names when no other names are
+     *  specified.  For instance, if a function that has no name is attached to the CFG/AUM  and a name has been specified for
+     *  its entry address, then the function is given that name.
+     *
+     * @{ */
+    void addressName(rose_addr_t, const std::string&);
+    const std::string& addressName(rose_addr_t va) const { return addressNames_.getOrDefault(va); }
+    const AddressNameMap& addressNames() const { return addressNames_; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner internal utilities

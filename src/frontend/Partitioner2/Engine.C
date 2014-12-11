@@ -347,6 +347,7 @@ Engine::obtainDisassembler(Disassembler *disassembler) {
 
 Engine&
 Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
+    labelAddresses(partitioner, interp);
     makeContainerFunctions(partitioner, interp);
     discoverFunctions(partitioner);
     attachDeadCodeToFunctions(partitioner);
@@ -356,6 +357,11 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     postPartitionFixups(partitioner, interp);
     updateAnalysisResults(partitioner);
     return *this;
+}
+
+void
+Engine::labelAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
+    Modules::labelSymbolAddresses(partitioner, interp);
 }
 
 void
@@ -405,6 +411,8 @@ void
 Engine::postPartitionFixups(Partitioner &partitioner, SgAsmInterpretation *interp) {
     if (interp)
         ModulesPe::nameImportThunks(partitioner, interp);
+    Modules::nameConstants(partitioner);
+    Modules::nameStrings(partitioner);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
