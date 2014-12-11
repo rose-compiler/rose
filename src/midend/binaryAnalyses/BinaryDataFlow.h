@@ -10,6 +10,7 @@
 #include <list>
 #include <sawyer/GraphTraversal.h>
 #include <sawyer/DistinctList.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -281,9 +282,6 @@ public:
          *  work list is empty (before of after the iteration). */
         bool runOneIteration() {
             using namespace Diagnostics;
-            InstructionSemantics2::BaseSemantics::Formatter fmt;
-            fmt.set_line_prefix("    ");
-
             if (!workList_.isEmpty()) {
                 size_t cfgVertexId = workList_.popFront();
                 if (mlog[DEBUG]) {
@@ -300,11 +298,21 @@ public:
                 StatePtr state = incomingState_[cfgVertexId];
                 ASSERT_not_null2(state,
                                  "initial state must exist for CFG vertex " + boost::lexical_cast<std::string>(cfgVertexId));
-                SAWYER_MESG(mlog[DEBUG]) <<"  incoming state for vertex #" <<cfgVertexId <<"\n" <<(*state+fmt);
+                if (mlog[DEBUG]) {
+                    std::ostringstream ss;
+                    ss <<*state;
+                    mlog[DEBUG] <<"  incoming state for vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<StringUtility::prefixLines(ss.str(), "    ");
+                }
 
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
                 ASSERT_not_null2(state, "outgoing state not created for vertex "+boost::lexical_cast<std::string>(cfgVertexId));
-                SAWYER_MESG(mlog[DEBUG]) <<"  outgoing state for vertex #" <<cfgVertexId <<"\n" <<(*state+fmt);
+                if (mlog[DEBUG]) {
+                    std::ostringstream ss;
+                    ss <<*state;
+                    mlog[DEBUG] <<"  outgoing state for vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<StringUtility::prefixLines(ss.str(), "    ");
+                }
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
                 // is modified as a result will have its CFG vertex added to the work list.
