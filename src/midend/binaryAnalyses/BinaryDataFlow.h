@@ -4,12 +4,12 @@
 #include "DataFlowSemantics2.h"
 #include "Diagnostics.h"
 #include "SymbolicSemantics2.h"
-#include "WorkLists.h"
 
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
 #include <sawyer/GraphTraversal.h>
+#include <sawyer/DistinctList.h>
 #include <string>
 #include <vector>
 
@@ -247,7 +247,8 @@ public:
         typedef std::vector<StatePtr> VertexStates;
         VertexStates incomingState_;                    // incoming data flow state per CFG vertex ID
         VertexStates outgoingState_;                    // outgoing data flow state per CFG vertex ID
-        WorkList<size_t> workList_;                     // CFG vertices to be visited, last in first out w/out duplicates
+        typedef Sawyer::Container::DistinctList<size_t> WorkList;
+        WorkList workList_;                             // CFG vertex IDs to be visited, last in first out w/out duplicates
 
     public:
         /** Constructor.
@@ -256,7 +257,7 @@ public:
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
         Engine(const CFG &cfg, TransferFunction &xfer)
-            : cfg_(cfg), xfer_(xfer), workList_(true) {}
+            : cfg_(cfg), xfer_(xfer) {}
 
         /** Reset engine to initial state.
          *
@@ -271,7 +272,7 @@ public:
             outgoingState_.clear();
             outgoingState_.resize(cfg_.nVertices());
             workList_.clear();
-            workList_.push(startVertexId);
+            workList_.pushBack(startVertexId);
         }
         
         /** Runs one iteration.
@@ -280,32 +281,51 @@ public:
          *  work list is empty (before of after the iteration). */
         bool runOneIteration() {
             using namespace Diagnostics;
-            if (!workList_.empty()) {
-                size_t cfgVertexId = workList_.shift();
+            InstructionSemantics2::BaseSemantics::Formatter fmt;
+            fmt.set_line_prefix("    ");
+
+            if (!workList_.isEmpty()) {
+                size_t cfgVertexId = workList_.popFront();
+                if (mlog[DEBUG]) {
+                    mlog[DEBUG] <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";
+                    mlog[DEBUG] <<"  remaining worklist is {";
+                    BOOST_FOREACH (size_t id, workList_.items())
+                        mlog[DEBUG] <<" " <<id;
+                    mlog[DEBUG] <<" }\n";
+                }
+                
                 ASSERT_require2(cfgVertexId < cfg_.nVertices(),
                                 "vertex " + boost::lexical_cast<std::string>(cfgVertexId) + " must be valid within CFG");
                 typename CFG::ConstVertexNodeIterator vertex = cfg_.findVertex(cfgVertexId);
                 StatePtr state = incomingState_[cfgVertexId];
-                SAWYER_MESG(mlog[DEBUG]) <<"runOneIteration: vertex #" <<cfgVertexId <<" incoming state:\n" <<*state;
                 ASSERT_not_null2(state,
                                  "initial state must exist for CFG vertex " + boost::lexical_cast<std::string>(cfgVertexId));
+                SAWYER_MESG(mlog[DEBUG]) <<"  incoming state for vertex #" <<cfgVertexId <<"\n" <<(*state+fmt);
+
                 state = outgoingState_[cfgVertexId] = xfer_(cfg_, cfgVertexId, state);
-                SAWYER_MESG(mlog[DEBUG]) <<"runOneIteration: vertex #" <<cfgVertexId <<" outgoing state:\n" <<*state;
+                ASSERT_not_null2(state, "outgoing state not created for vertex "+boost::lexical_cast<std::string>(cfgVertexId));
+                SAWYER_MESG(mlog[DEBUG]) <<"  outgoing state for vertex #" <<cfgVertexId <<"\n" <<(*state+fmt);
                 
                 // Outgoing state must be merged into the incoming states for the CFG successors.  Any such incoming state that
                 // is modified as a result will have its CFG vertex added to the work list.
+                SAWYER_MESG(mlog[DEBUG]) <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
+                                         <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
                 BOOST_FOREACH (const typename CFG::EdgeNode &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     StatePtr targetState = incomingState_[nextVertexId];
                     if (targetState==NULL) {
+                        SAWYER_MESG(mlog[DEBUG]) <<"    forwarded to vertex #" <<nextVertexId <<"\n";
                         incomingState_[nextVertexId] = state;
-                        workList_.push(nextVertexId);
+                        workList_.pushBack(nextVertexId);
                     } else if (targetState->merge(state)) {
-                        workList_.push(nextVertexId);
+                        SAWYER_MESG(mlog[DEBUG]) <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
+                        workList_.pushBack(nextVertexId);
+                    } else {
+                        SAWYER_MESG(mlog[DEBUG]) <<"     merged with vertex #" <<nextVertexId <<" (no change)\n";
                     }
                 }
             }
-            return !workList_.empty();
+            return !workList_.isEmpty();
         }
         
         /** Run data flow until it reaches a fixed point.

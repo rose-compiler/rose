@@ -131,15 +131,23 @@ public:
     static bool
     mergeSValues(BaseSemantics::SValuePtr &ours /*in,out*/, const BaseSemantics::SValuePtr &theirs,
                  const BaseSemantics::RiscOperatorsPtr &ops) {
+        // The calls to ops->undefined(...) are mostly so that we're simplifying TOP as much as possible. We want each TOP
+        // value to be distinct from the others so we don't encounter things like "TOP xor TOP = 0", but we also don't want TOP
+        // to be arbitrarily complex since that just makes things slower.
         if (!ours && !theirs) {
             return false;                               // both are BOTTOM (not calculated)
         } else if (!ours) {
-            ours = theirs;
+            ASSERT_not_null(theirs);
+            if (theirs->is_number()) {
+                ours = theirs;
+            } else {
+                ours = ops->undefined_(theirs->get_width());
+            }
             return true;                                // ours is BOTTOM, theirs is not
         } else if (!theirs) {
             return false;                               // theirs is BOTTOM, ours is not
         } else if (!ours->is_number()) {
-            ours = ops->undefined_(ours->get_width());  // make sure its a simple TOP, not some arbitrarily complex expression
+            ours = ops->undefined_(ours->get_width());
             return false;                               // ours was already TOP
         } else if (ours->must_equal(theirs)) {
             return false;                               // ours == theirs
@@ -152,17 +160,34 @@ public:
     // Merge other into this, returning true if this changed.
     bool merge(const State::Ptr &other) {
         bool changed = false;
-        BOOST_FOREACH (const RegPair &reg_val, get_stored_registers()) {
+        if (mlog[DEBUG]) {
+            InstructionSemantics2::BaseSemantics::Formatter fmt;
+            fmt.set_line_prefix("    ");
+            mlog[DEBUG] <<"Stack delta merge states\n";
+            mlog[DEBUG] <<"  this state:\n" <<(*this+fmt);
+            mlog[DEBUG] <<"  other state:\n" <<(*other+fmt);
+        }
+        
+        BOOST_FOREACH (const RegPair &reg_val, other->get_stored_registers()) {
             const RegisterDescriptor &reg = reg_val.desc;
             const BaseSemantics::SValuePtr &theirs = reg_val.value;
+            if (mlog[DEBUG]) {
+                mlog[DEBUG] <<"  register " <<reg <<"\n";
+                mlog[DEBUG] <<"    their value = " <<*theirs <<"\n";
+            }
+
             if (!is_partly_stored(reg)) {
+                SAWYER_MESG(mlog[DEBUG]) <<"    our value   = <none>\n";
                 changed = true;
                 writeRegister(reg, theirs, ops_.get());
             } else {
                 BaseSemantics::SValuePtr ours = readRegister(reg, ops_.get());
-                changed = mergeSValues(ours /*in,out*/, theirs, ops_);
-                if (changed)
+                SAWYER_MESG(mlog[DEBUG]) <<"    our value   = " <<*ours <<"\n";
+                if (mergeSValues(ours /*in,out*/, theirs, ops_)) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"      state changed\n";
                     writeRegister(reg, ours, ops_.get());
+                    changed = true;
+                }
             }
         }
         return changed;
@@ -293,29 +318,30 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
     DataFlow df(cpu);
+
+    // Dump the CFG for debugging
     if (mlog[DEBUG]) {
         using namespace Sawyer::Container::Algorithm;
-        typedef DepthFirstForwardGraphTraversal<DfCfg> Traversal;
-        for (Traversal t(dfCfg, dfCfgStart, ENTER_VERTEX|ENTER_EDGE); t; ++t) {
-            if (t.event() == ENTER_VERTEX) {
-                mlog[DEBUG] <<"  #" <<t.vertex()->id() <<" [";
-                if (BasicBlock::Ptr bb = t.vertex()->value().bblock)
-                    mlog[DEBUG] <<" " <<bb->printableName();
-                if (t.vertex()->value().type == DfCfgVertex::CALLRET) {
-                    mlog[DEBUG] <<" call-ret";
-                } else if (t.vertex()->value().type == DfCfgVertex::FUNCRET) {
-                    mlog[DEBUG] <<" func-ret";
-                }
-                mlog[DEBUG] <<" ]\n";
-                if (BasicBlock::Ptr bb = t.vertex()->value().bblock) {
-                    BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
-                        mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
-                }
-                BOOST_FOREACH (const Function::Ptr &callee, t.vertex()->value().callees)
-                    mlog[DEBUG] <<"    returns from " <<callee->printableName() <<"\n";
-            } else {
-                mlog[DEBUG] <<"  #" <<t.edge()->source()->id() <<" -> #" <<t.edge()->target()->id() <<"\n";
+        BOOST_FOREACH (const DfCfg::VertexNode &vertex, dfCfg.vertices()) {
+            mlog[DEBUG] <<"  Vertex #" <<vertex.id() <<" [";
+            if (BasicBlock::Ptr bb = vertex.value().bblock)
+                mlog[DEBUG] <<" " <<bb->printableName();
+            if (vertex.value().type == DfCfgVertex::CALLRET) {
+                mlog[DEBUG] <<" call-ret";
+            } else if (vertex.value().type == DfCfgVertex::FUNCRET) {
+                mlog[DEBUG] <<" func-ret";
             }
+            mlog[DEBUG] <<" ]\n";
+            if (BasicBlock::Ptr bb = vertex.value().bblock) {
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    mlog[DEBUG] <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
+            }
+            BOOST_FOREACH (const Function::Ptr &callee, vertex.value().callees)
+                mlog[DEBUG] <<"      returns from " <<callee->printableName() <<"\n";
+            mlog[DEBUG] <<"    successor vertices {";
+            BOOST_FOREACH (const DfCfg::EdgeNode &edge, vertex.outEdges())
+                mlog[DEBUG] <<" " <<edge.target()->id();
+            mlog[DEBUG] <<" }\n";
         }
     }
 
@@ -341,8 +367,12 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         State::Ptr stateOut = engine.getFinalState(t.vertex()->id());
         ASSERT_not_null(stateOut);
         BaseSemantics::SValuePtr deltaIn = stateIn->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
-        BaseSemantics::SValuePtr deltaOut = stateOut->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
+        if (deltaIn && !deltaIn->is_number())
+            deltaIn = ops->undefined_(deltaIn->get_width());
         if (BasicBlock::Ptr bb = t.vertex()->value().bblock) {
+            BaseSemantics::SValuePtr deltaOut = stateOut->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
+            if (deltaOut && !deltaOut->is_number())
+                deltaOut = ops->undefined_(deltaOut->get_width());
             bb->stackDeltaIn() = deltaIn;
             bb->stackDeltaOut() = deltaOut;
         }
