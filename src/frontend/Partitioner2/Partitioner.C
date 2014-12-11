@@ -1535,6 +1535,9 @@ Partitioner::attachFunction(const Function::Ptr &function) {
             throw FunctionError(function, functionName(function) + " is already attached with a different function pointer");
         ASSERT_require(function->isFrozen());
     } else {
+        if (function->name().empty())
+            function->name(addressName(function->address()));
+
         // Insert function into the table, and make sure all its basic blocks see that they're owned by the function.
         functions_.insert(function->address(), function);
         nNewBlocks = attachFunctionBasicBlocks(function);
@@ -1934,6 +1937,15 @@ Partitioner::functionCallGraph(bool allowParallelEdges) const {
         }
     }
     return cg;
+}
+
+void
+Partitioner::addressName(rose_addr_t va, const std::string &name) {
+    if (name.empty()) {
+        addressNames_.erase(va);
+    } else {
+        addressNames_.insert(va, name);
+    }
 }
 
 SgAsmBlock*

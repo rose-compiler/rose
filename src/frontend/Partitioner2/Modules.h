@@ -302,6 +302,24 @@ public:
  *  is zero then nothing happens. */
 AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
 
+/** Give labels to addresses that are symbols.
+ *
+ *  Scans the specified binary container and labels those virtual addresses that correspond to symbols.  This function does not
+ *  create any functions in the partitioner, it only gives names to certain addresses.  If the same address is labeled more
+ *  than once by symbols with different names then one name is chosen arbitrarily.
+ *
+ * @{ */
+void labelSymbolAddresses(Partitioner&, SgAsmGenericHeader*);
+void labelSymbolAddresses(Partitioner&, SgAsmInterpretation*);
+/** @} */
+
+/** Give labels to string constants.
+ *
+ *  Finds integer constants that are the address if a C-style NUL-terminated ASCII string and adds a comment to the constant
+ *  (if it had none previously) to describe the string. All instructions that are attached to the CFG/AUM are processed. The
+ *  instructions are modified by attaching the comment, but the comments are not added to the partitioners address name map. */
+void nameStrings(const Partitioner&);
+
 /** Finds functions for which symbols exist.
  *
  *  Scans the specified AST to find symbols that point to functions and makes a function at each such address.  A function is
@@ -312,6 +330,12 @@ std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmGenericH
 std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmInterpretation*);
 size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<Function::Ptr>&);
 /** @} */
+
+/** Gives names to constants in instructions.
+ *
+ *  Scans the entire list of attached instructions and give each constant integer expression a name if the value of the
+ *  expression happens to be an address that has a name. */
+void nameConstants(const Partitioner&);
 
 } // namespace
 

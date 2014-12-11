@@ -5,9 +5,11 @@
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <sawyer/CommandLine.h>
+#include <stringify.h>
 
 using namespace rose::Diagnostics;
 
@@ -426,6 +428,102 @@ deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold) {
     return changes;
 }
 
+void
+labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
+    struct T1: AstSimpleProcessing {
+        Partitioner &partitioner;
+        SgAsmGenericHeader *fileHeader;
+        T1(Partitioner &partitioner, SgAsmGenericHeader *fileHeader)
+            : partitioner(partitioner), fileHeader(fileHeader) {}
+        void visit(SgNode *node) {
+            if (SgAsmGenericSymbol *symbol = isSgAsmGenericSymbol(node)) {
+                std::string name = symbol->get_name()->get_string();
+                if (!name.empty()) {
+                    if (symbol->get_type() != SgAsmGenericSymbol::SYM_NO_TYPE) {
+                        std::string typeName = stringifySgAsmGenericSymbolSymbolType(symbol->get_type(), "SYM_");
+                        name = "(" + boost::to_lower_copy(typeName) + ")" + name;
+                    }
+
+                    rose_addr_t value = fileHeader->get_base_va() + symbol->get_value();
+                    SgAsmGenericSection *section = symbol->get_bound();
+
+                    // Assume symbol's value is a virtual address, but make adjustments if its section is relocated
+                    rose_addr_t va = value;
+                    if (section && section->is_mapped() &&
+                        section->get_mapped_preferred_va() != section->get_mapped_actual_va()) {
+                        va += section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                    }
+                    if (partitioner.memoryMap().at(va).exists())
+                        partitioner.addressName(va, name);
+
+                    // Sometimes weak symbol values are offsets w.r.t. their linked section.
+                    if (section && symbol->get_binding() == SgAsmGenericSymbol::SYM_WEAK) {
+                        va = value + section->get_mapped_actual_va();
+                        if (partitioner.memoryMap().at(va).exists())
+                            partitioner.addressName(va, name);
+                    }
+                }
+            }
+        }
+    } t1(partitioner, fileHeader);
+    t1.traverse(fileHeader, preorder);
+}
+
+static int
+validStringChar(int ch) {
+    return isascii(ch) && (isgraph(ch) || isspace(ch));
+}
+
+void
+nameStrings(const Partitioner &partitioner) {
+    struct T1: AstSimpleProcessing {
+        Sawyer::Container::Map<rose_addr_t, std::string> seen;
+        const Partitioner &partitioner;
+        T1(const Partitioner &partitioner): partitioner(partitioner) {}
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                if (ival->get_comment().empty()) {
+                    rose_addr_t va = ival->get_absoluteValue();
+                    std::string label;
+                    if (!seen.getOptional(va).assignTo(label) && partitioner.instructionsOverlapping(va).empty()) {
+                        // Read a NUL-terminated string from memory which is readable but not writable. We need to make sure it
+                        // ends with the NUL character even though we're only going to display the first part of it, therefore
+                        // we'll read up to a fairly large amount of data looking for the NUL.
+                        std::string c_str = partitioner.memoryMap().readString(va, 8192, validStringChar, NULL,
+                                                                               MemoryMap::READABLE, MemoryMap::WRITABLE);
+                        if (!c_str.empty()) {
+                            static const size_t displayLength = 25; // arbitrary
+                            static const size_t maxLength = displayLength + 7; // strlen("+N more")
+                            size_t truncated = 0;
+                            if (c_str.size() > maxLength) {
+                                truncated = c_str.size() - displayLength;
+                                c_str = c_str.substr(0, displayLength);
+                            }
+                            label = "\"" + StringUtility::cEscape(c_str) + "\"";
+                            if (truncated)
+                                label += "+" + StringUtility::numberToString(truncated) + " more";
+                            ival->set_comment(label);
+                        }
+                        seen.insert(va, label);         // even if it's empty
+                    } else if (!label.empty()) {
+                        ival->set_comment(label);
+                    }
+                }
+            }
+        }
+    } t1(partitioner);
+    BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
+        t1.traverse(insn, preorder);
+}
+
+void
+labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
+    if (interp!=NULL) {
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+            labelSymbolAddresses(partitioner, fileHeader);
+    }
+}
+
 size_t
 findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHeader, std::vector<Function::Ptr> &functions) {
     struct T1: AstSimpleProcessing {
@@ -490,6 +588,23 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
             findSymbolFunctions(partitioner, fileHeader, functions);
     }
     return functions;
+}
+
+void
+nameConstants(const Partitioner &partitioner) {
+    struct ConstantNamer: AstSimpleProcessing {
+        const Partitioner &partitioner;
+        ConstantNamer(const Partitioner &partitioner): partitioner(partitioner) {}
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                if (ival->get_comment().empty())
+                    ival->set_comment(partitioner.addressName(ival->get_absoluteValue()));
+            }
+        }
+    } constantRenamer(partitioner);
+
+    BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
+        constantRenamer.traverse(insn, preorder);
 }
 
 } // namespace

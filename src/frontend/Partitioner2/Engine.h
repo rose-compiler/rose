@@ -267,6 +267,12 @@ public:
      *  blocks to functions.  It is often overridden by subclasses. */
     virtual Engine& runPartitioner(Partitioner&, SgAsmInterpretation*);
 
+    /** Label addresses.
+     *
+     *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
+     *  when it's attached to the partitioner's CFG/AUM. */
+    virtual void labelAddresses(Partitioner&, SgAsmInterpretation*);
+
     /** Discover as many basic blocks as possible.
      *
      *  Processes the "undiscovered" work list until the list becomes empty.  This list is the list of basic block placeholders
