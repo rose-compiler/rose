@@ -552,9 +552,11 @@ public:
                     ASSERT_not_reachable("invalid may-return value");
                 case C_STACKDELTA: {
                     int64_t delta = functionStackDelta(ctx_.partitioner, function);
-                    if (delta == SgAsmInstruction::INVALID_STACK_DELTA)
-                        return Wt::WString("");
-                    return Wt::WString(boost::lexical_cast<std::string>(delta));
+                    if (delta != SgAsmInstruction::INVALID_STACK_DELTA)
+                        return Wt::WString(boost::lexical_cast<std::string>(delta));
+                    if (functionMayReturn(ctx_.partitioner, function) == MAYRETURN_NO)
+                        return Wt::WString("NA");
+                    return Wt::WString("");
                 }
                 default:
                     ASSERT_not_reachable("invalid column number");
@@ -988,6 +990,7 @@ public:
         C_ADDR,                                         // instruction address
         C_BYTES,                                        // instruction bytes in hexadecimal
         C_CHARS,                                        // instruction printable characters
+        C_STACKDELTA,                                   // stack delta
         C_NAME,                                         // instruction mnemonic
         C_ARGS,                                         // instruction operands
         C_COMMENT,                                      // arbitrary text
@@ -1020,13 +1023,14 @@ public:
                                   int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
             switch (column) {
-                case C_ADDR:    return Wt::WString("Address");
-                case C_BYTES:   return Wt::WString("Bytes");
-                case C_CHARS:   return Wt::WString("ASCII");
-                case C_NAME:    return Wt::WString("Mnemonic");
-                case C_ARGS:    return Wt::WString("Operands");
-                case C_COMMENT: return Wt::WString("Comments");
-                default:        return boost::any();
+                case C_ADDR:       return Wt::WString("Address");
+                case C_BYTES:      return Wt::WString("Bytes");
+                case C_CHARS:      return Wt::WString("ASCII");
+                case C_STACKDELTA: return Wt::WString("StackDelta");
+                case C_NAME:       return Wt::WString("Mnemonic");
+                case C_ARGS:       return Wt::WString("Operands");
+                case C_COMMENT:    return Wt::WString("Comments");
+                default:           return boost::any();
             }
         }
         return boost::any();
@@ -1057,6 +1061,13 @@ public:
                         char ch = insn->get_raw_bytes()[i];
                         s += std::string(i?" ":"") + (isgraph(ch) ? std::string(1, ch) : std::string(" "));
                     }
+                    return Wt::WString(s);
+                }
+                case C_STACKDELTA: {
+                    int64_t delta = insn->get_stackDelta();
+                    if (delta == SgAsmInstruction::INVALID_STACK_DELTA)
+                        return Wt::WString("");
+                    std::string s = (delta >= 0 ? "+" : "") + boost::lexical_cast<std::string>(delta);
                     return Wt::WString(s);
                 }
                 case C_NAME: {
@@ -1093,12 +1104,13 @@ public:
         tableView_->setHeaderHeight(28);
         tableView_->setSortingEnabled(false);
         tableView_->setAlternatingRowColors(true);
-        tableView_->setColumnWidth(InstructionListModel::C_ADDR,     Wt::WLength(6, Wt::WLength::FontEm));
-        tableView_->setColumnWidth(InstructionListModel::C_BYTES,    Wt::WLength(12, Wt::WLength::FontEm));
-        tableView_->setColumnWidth(InstructionListModel::C_CHARS,    Wt::WLength(4, Wt::WLength::FontEm));
-        tableView_->setColumnWidth(InstructionListModel::C_NAME,     Wt::WLength(5, Wt::WLength::FontEm));
-        tableView_->setColumnWidth(InstructionListModel::C_ARGS,     Wt::WLength(30, Wt::WLength::FontEm));
-        tableView_->setColumnWidth(InstructionListModel::C_COMMENT,  Wt::WLength(50, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_ADDR,       Wt::WLength(6, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_BYTES,      Wt::WLength(12, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_CHARS,      Wt::WLength(4, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_STACKDELTA, Wt::WLength(4, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_NAME,       Wt::WLength(5, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_ARGS,       Wt::WLength(30, Wt::WLength::FontEm));
+        tableView_->setColumnWidth(InstructionListModel::C_COMMENT,    Wt::WLength(50, Wt::WLength::FontEm));
         tableView_->setColumnResizeEnabled(true);
         tableView_->setSelectionMode(Wt::SingleSelection);
         tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
@@ -1140,7 +1152,8 @@ class WBasicBlockSummary: public Wt::WContainerWidget {
     Wt::WText *wDataBlocks_;                            // FIXME[Robb P. Matzke 2014-09-15]: should be a db list
     Wt::WText *wIsFunctionCall_;                        // does this block look like a function call?
     Wt::WText *wIsFunctionReturn_;                      // does this block appear to return from a function call?
-    Wt::WText *wStackDeltaIn_;                          // symbolic expression for the block's stack delta
+    Wt::WText *wStackDeltaIn_;                          // symbolic expression for the block's incoming stack delta
+    Wt::WText *wStackDeltaOut_;                         // symbolic expression for the block's outgoing stack delta
 public:
     static Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
         Wt::WText *wValue = new Wt::WText();
@@ -1153,13 +1166,14 @@ public:
     WBasicBlockSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), table_(NULL),
           wHasOpaquePredicates_(NULL), wDataBlocks_(NULL), wIsFunctionCall_(NULL), wIsFunctionReturn_(NULL),
-          wStackDeltaIn_(NULL) {
+          wStackDeltaIn_(NULL), wStackDeltaOut_(NULL) {
         std::vector<Wt::WText*> fields;
         wHasOpaquePredicates_   = field(fields, "Block has conditional branches that are never taken?");
         wDataBlocks_            = field(fields, "Number of data blocks owned by this basic block.");
         wIsFunctionCall_        = field(fields, "Does this block appear to call a function?");
         wIsFunctionReturn_      = field(fields, "Does this block appear to return from a function call?");
         wStackDeltaIn_          = field(fields, "Stack pointer delta at block entrance w.r.t. function.");
+        wStackDeltaOut_         = field(fields, "Stack pointer delta at block exit w.r.t. function.");
 
         table_ = new Wt::WTable(this);
         table_->setWidth("100%");
@@ -1191,9 +1205,18 @@ public:
             if (stackDeltaIn!=NULL) {
                 std::ostringstream stackDeltaStream;
                 stackDeltaStream <<*stackDeltaIn;
-                wStackDeltaIn_->setText("stack delta: " + stackDeltaStream.str());
+                wStackDeltaIn_->setText("stack delta in: " + stackDeltaStream.str());
             } else {
-                wStackDeltaIn_->setText("stack delta not computed");
+                wStackDeltaIn_->setText("stack delta in: not computed");
+            }
+
+            InstructionSemantics2::BaseSemantics::SValuePtr stackDeltaOut = ctx_.partitioner.basicBlockStackDeltaOut(bblock);
+            if (stackDeltaOut!=NULL) {
+                std::ostringstream stackDeltaStream;
+                stackDeltaStream <<*stackDeltaOut;
+                wStackDeltaOut_->setText("stack delta out: " + stackDeltaStream.str());
+            } else {
+                wStackDeltaOut_->setText("stack delta out: not computed");
             }
             
             table_->show();
