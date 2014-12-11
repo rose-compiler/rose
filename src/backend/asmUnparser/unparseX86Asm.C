@@ -146,12 +146,14 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
 
             // Optional label.  Prefer a label supplied by the caller's LabelMap, but not for single-byte constants.  If
             // there's no caller-supplied label, then consider whether the value expression is relative to some other IR node.
-            std::string label;
-            if (ival->get_significantBits()>8)
-                label =x86ValToLabel(value, labels);
-            if (label.empty())
-                label = ival->get_label();
-            result = StringUtility::appendAsmComment(result, label);
+            if (expr->get_comment().empty()) {
+                std::string label;
+                if (label.empty() && ival->get_significantBits()>8)
+                    label =x86ValToLabel(value, labels);
+                if (label.empty())
+                    label = ival->get_label();
+                result = StringUtility::appendAsmComment(result, label);
+            }
             break;
         }
 
@@ -161,6 +163,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
     }
 
     result = StringUtility::appendAsmComment(result, expr->get_replacement());
+    result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }
 
