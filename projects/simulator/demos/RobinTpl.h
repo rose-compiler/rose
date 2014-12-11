@@ -66,7 +66,7 @@ analysis_starting(Policy *policy, rose_addr_t target_va)
  *  The @p policy is available if you need access to the current machine state. */
 template<class Policy>
 unsigned
-domains_for_instruction(Policy *policy, SgAsmx86Instruction *insn)
+domains_for_instruction(Policy *policy, SgAsmX86Instruction *insn)
 {
     using namespace MultiDomainDemo; // where things like SYMBOLIC are defined. See MultiWithConversion.h
     unsigned retval = 0;
@@ -206,7 +206,7 @@ ite_merge(Policy *policy, const ValueType<1> &cond, const ValueType<nBits> &a, c
  *  executed. */
 template<class Policy>
 void
-after_instruction(Policy *policy, SgAsmx86Instruction *insn)
+after_instruction(Policy *policy, SgAsmX86Instruction *insn)
 {
     using namespace MultiDomainDemo; // where things like SYMBOLIC are defined. See MultiWithConversion.h
 

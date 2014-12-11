@@ -469,7 +469,7 @@ namespace PartialSymbolicSemantics {
                 if (map && addr.is_known()) {
                     uint8_t buf[sizeof(uint64_t)];
                     ROSE_ASSERT(Len/8 < sizeof buf);
-                    size_t nread = map->read(buf, addr.known_value(), Len/8);
+                    size_t nread = map->readQuick(buf, addr.known_value(), Len/8);
                     if (nread==Len/8) {
                         uint64_t n = 0;
                         for (size_t i=0; i<Len/8; i++)

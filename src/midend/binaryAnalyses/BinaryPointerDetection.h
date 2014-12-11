@@ -4,6 +4,7 @@
 #include "SymbolicSemantics.h"
 #include "WorkLists.h"
 #include "YicesSolver.h"
+#include <sstream>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -262,7 +263,7 @@ protected:
         // interested. This is called by the first pass of analysis, which is trying to discover when pointer variable's value
         // is used.
         bool interesting_access(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->cur_insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(this->cur_insn);
             if (x86_ret==insn->get_kind()) {
                 // memory read for the RET instruction is not interesting.  It is only reading the return address that was pushed
                 // onto the stack by the caller.  What's even worse is that the address of the return value was defined by the
@@ -436,19 +437,26 @@ public:
 
     /** Analyze pointers in a single function.  The analysis will not traverse into other functions called by this function. */ 
     void analyze(SgAsmFunction *func) {
-        ExtentMap func_extent;
+        AddressIntervalSet func_extent;
         func->get_extent(&func_extent);
         analyze(func->get_entry_va(), func_extent);
     }
 
     /** Analyze a code snippet to find pointer variables.  The analysis begins at the @p start_va virtual address but does not
      * follow control flow outside @p addrspc.  If @p addrspc is empty then no control flow pruning is performed. */ 
-    void analyze(rose_addr_t start_va, ExtentMap &addrspc) {
+    void analyze(rose_addr_t start_va, const AddressIntervalSet &addrspc) {
         if (debug) {
             fprintf(debug, "rose::BinaryAnalysis::PointerAnalysis::PointerDetection (a.k.a., PointerDetection): starting\n");
             fprintf(debug, "PointerDetection: starting at 0x%08"PRIx64"\n", start_va);
-            if (!addrspc.empty()) {
-                std::ostringstream ss; ss <<addrspc;
+            if (!addrspc.isEmpty()) {
+                std::ostringstream ss;
+                ss <<"{";
+                BOOST_FOREACH (const AddressInterval &interval, addrspc.intervals()) {
+                    using namespace StringUtility;
+                    ss <<" [" <<toHex(interval.least()) <<" + " <<toHex(interval.size())
+                       <<" = " <<toHex(interval.greatest()+1) <<"]";
+                }
+                ss <<" }";
                 fprintf(debug, "PointerDetection: restricted to these addresses: %s\n", ss.str().c_str());
             }
         }
@@ -482,8 +490,9 @@ public:
                 if (debug)
                     fprintf(debug, "PointerDetection: %s\n", std::string(80, '-').c_str());
                 rose_addr_t va = worklist.pop();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(instruction_providor->get_instruction(va));
-                if (!insn || (!addrspc.empty() && !addrspc.contains(Extent(insn->get_address(), insn->get_size())))) {
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(instruction_providor->get_instruction(va));
+                if (!insn || (!addrspc.isEmpty() && !addrspc.contains(AddressInterval::baseSize(insn->get_address(),
+                                                                                                insn->get_size())))) {
                     if (debug)
                         fprintf(debug, "PointerDetection: processing pass %zu 0x%08"PRIx64": %s\n", info.pass, va,
                                 (insn?"instruction excluded by ExtentMap":"no x86 instruction here"));

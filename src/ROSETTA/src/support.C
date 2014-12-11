@@ -217,6 +217,7 @@ Grammar::setUpSupport ()
      NEW_TERMINAL_MACRO (JavaImportStatementList,  "JavaImportStatementList", "JavaImportStatementListTag" );
      NEW_TERMINAL_MACRO (JavaClassDeclarationList, "JavaClassDeclarationList", "JavaClassDeclarationListTag" );
 
+
 #if 0
   // tps (08/08/07): Added the graph, graph nodes and graph edges
      NEW_NONTERMINAL_MACRO (Support,
@@ -238,19 +239,17 @@ Grammar::setUpSupport ()
 // /* (now derived from GraphNode) DirectedGraphNode | */ GraphNodeList | GraphEdgeList |
 // #if OLD_GRAPH_NODES == 1
      NEW_NONTERMINAL_MACRO (Support,
-          Modifier              | Name                      | SymbolTable         | 
-          Attribute             | File_Info                 | File                | Project              |
-          Options               | Unparse_Info              | BaseClass           | TypedefSeq           |
-          TemplateParameter     | TemplateArgument          | Directory           | FileList             |
-          DirectoryList         | FunctionParameterTypeList | QualifiedName       | TemplateArgumentList |
+          Modifier              | Name                      | SymbolTable              | 
+          Attribute             | File_Info                 | File                     | Project              |
+          Options               | Unparse_Info              | BaseClass                | TypedefSeq           |
+          TemplateParameter     | TemplateArgument          | Directory                | FileList             |
+          DirectoryList         | FunctionParameterTypeList | QualifiedName            | TemplateArgumentList |
           TemplateParameterList | /* RenamePair                | InterfaceBody       |*/
-          Graph                 | GraphNode                 | GraphEdge           |
-
-          GraphNodeList         | GraphEdgeList             | TypeTable           |
-
-          NameGroup             | DimensionObject     | FormatItem           |
-          FormatItemList        | DataStatementGroup        | DataStatementObject | 
-          DataStatementValue    | JavaImportStatementList | JavaClassDeclarationList,
+          Graph                 | GraphNode                 | GraphEdge                |
+          GraphNodeList         | GraphEdgeList             | TypeTable                |
+          NameGroup             | DimensionObject           | FormatItem               |
+          FormatItemList        | DataStatementGroup        | DataStatementObject      | 
+          DataStatementValue    | JavaImportStatementList   | JavaClassDeclarationList,
           "Support", "SupportTag", false);
 //#endif
 
@@ -1298,6 +1297,16 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("int", "unparse_tokens_testing", "= 0",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (11/12/2014): Added to support testing of the unparsing using token streams. This option
+  // forces the output of two files representing the unparsing of each statement using the tken stream
+  // mapping to the AST.  The token_leading_* file uses the mapping and the leading whitespace 
+  // mapping between statements, where as the token_trailing_* file uses the mapping and the trailing 
+  // whitespace mapping between statements.  Both files should be identical, and the same as the 
+  // input file.  This option was previously internally activated when the verbose level was non-zero,
+  // but this was not a good long-term approach.
+     File.setDataPrototype ("bool", "unparse_using_leading_and_trailing_token_mappings", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 1
   // DQ (2/17/2013): Added support to skip AST consistancy testing AstTests::runAllTests(SgProject*)
   // This testing is useful but interferes with performance testing using HPCToolKit.
@@ -1305,6 +1314,10 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
+     Project.setDataPrototype("bool", "appendPID", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
   // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.

@@ -871,6 +871,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+  //
+  // appendPID
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","appendPID",false) == true )
+        {
+#if 0
+          printf ("detected use of appendPID mode \n");
+#endif
+          set_appendPID(true);
+        }
   //
   // specify compilation only option (new style command line processing)
   //
@@ -3078,6 +3089,14 @@ SgFile::usage ( int status )
 "                             Supported for C/C++, and currently only generates token \n"
 "                             stream for fortran (call parser with --tokens option)\n"
 "                             call parser with --tokens option (fortran only)\n"
+"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
+"                             unparses code using original token stream and forces the output \n"
+"                             of two files representing the unparsing of each statement using \n"
+"                             the token stream mapping to the AST.  The token_leading_* file \n"
+"                             uses the mapping and the leading whitespace mapping between \n"
+"                             statements, where as the token_trailing_* file uses the mapping \n"
+"                             and the trailing whitespace mapping between statements.  Both \n"
+"                             files should be identical, and the same as the input file. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3231,6 +3250,9 @@ SgFile::usage ( int status )
 "     -rose:noclobber_if_different_output_file\n"
 "                             force error on rewrite of existing output file only if result\n"
 "                             if a different output file (default: false). \n"
+"     -rose:appendPID\n"
+"                             append PID into the temporary output name. \n"
+"                             This can avoid issues in parallel compilation (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -3490,6 +3512,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse tokens testing mode ON: integerOptionForUnparseTokensTesting = %d \n",integerOptionForUnparseTokensTesting);
           set_unparse_tokens_testing(integerOptionForUnparseTokensTesting);
+        }
+
+  //
+  // DQ (11/20/2010): Added testing for mappings of tokens to the AST (using both leading and trailing whitespace mappings).
+  // Turn on the output of the testing files for the token unparsing (intenal use only).
+  //
+     set_unparse_using_leading_and_trailing_token_mappings(false);
+     ROSE_ASSERT (get_unparse_using_leading_and_trailing_token_mappings() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_using_leading_and_trailing_token_mappings)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse_using_leading_and_trailing_token_mappings mode ON \n");
+          set_unparse_using_leading_and_trailing_token_mappings(true);
         }
 
   //
@@ -4908,6 +4943,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
@@ -5073,6 +5109,8 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
@@ -5362,6 +5400,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
      vector<string> commandLine;
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    // Search dir for header files, after all directories specified by -I but
+    // before the standard system directories.
+    commandLine.push_back("--sys_include");
+    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    #endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -6306,6 +6352,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
   // the default value of "originalCompilerName" is "CC"
      vector<string> compilerNameString;
      compilerNameString.push_back(compilerName);
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    if (get_C_only() || get_Cxx_only())
+    {
+        // Search dir for header files, after all directories specified by -I but
+        // before the standard system directories.
+        compilerNameString.push_back("-isystem");
+        compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    }
+    #endif
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);

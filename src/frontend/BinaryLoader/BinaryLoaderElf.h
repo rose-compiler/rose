@@ -42,7 +42,7 @@ public:
     static void get_dynamic_vars(SgAsmGenericHeader*, std::string &rpath/*out*/, std::string &runpath/*out*/);
 
     // documented in superclass
-    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) /*override*/;
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) ROSE_OVERRIDE;
 
     /* FIXME: These should probably be in SgAsmElfSymver* classes instead. [RPM 2010-09-14] */
     /** Flags for version definitions and requirements. */

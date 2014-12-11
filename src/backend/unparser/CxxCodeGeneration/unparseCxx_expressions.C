@@ -174,10 +174,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
        // DQ (9/4/2013): Added support for compund literals.
-          case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
+          case COMPOUND_LITERAL:        { unparseCompoundLiteral(expr, info); break; }
 
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
-          case TYPE_EXPRESSION:  { unparseTypeExpression(expr, info); break; }
+          case TYPE_EXPRESSION:         { unparseTypeExpression(expr, info); break; }
 
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
           case FUNCTION_PARAMETER_REF_EXP:  { unparseFunctionParameterRefExpression(expr, info); break; }
@@ -191,6 +191,8 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
 
+          case LAMBDA_EXP:              { unparseLambdaExpression(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -199,6 +201,112 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+   }
+
+
+void
+Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
+     ROSE_ASSERT(lambdaExp != NULL);
+
+     curprint(" [");
+
+     if (lambdaExp->get_capture_default() == true)
+        {
+          curprint("=,");
+        }
+
+     if (lambdaExp->get_default_is_by_reference() == true)
+        {
+          curprint("&,");
+        }
+
+     ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
+     size_t bound = lambdaExp->get_lambda_capture_list()->get_capture_list().size();
+     for (size_t i = 0; i < bound; i++)
+        {
+          SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
+          ROSE_ASSERT(lambdaCapture != NULL);
+
+          if (lambdaCapture->get_capture_variable() != NULL)
+             {
+               if (lambdaCapture->get_capture_by_reference() == true)
+                  {
+                    curprint("&");
+                  }
+
+               unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
+             }
+
+          if (i < bound-1)
+             {
+               curprint(",");
+             }
+        }
+     curprint("] ");
+
+     SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
+     ROSE_ASSERT(lambdaFunction != NULL);
+     ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(lambdaFunction->get_definingDeclaration() != NULL);
+
+#if 0
+     printf ("lambdaFunction                                    = %p = %s \n",lambdaFunction,lambdaFunction->class_name().c_str());
+     printf ("lambdaFunction->get_firstNondefiningDeclaration() = %p = %s \n",lambdaFunction->get_firstNondefiningDeclaration(),lambdaFunction->get_firstNondefiningDeclaration()->class_name().c_str());
+     printf ("lambdaFunction->get_definingDeclaration()         = %p = %s \n",lambdaFunction->get_definingDeclaration(),lambdaFunction->get_definingDeclaration()->class_name().c_str());
+#endif
+
+     if (lambdaExp->get_has_parameter_decl() == true)
+        {
+       // Output the function parameters
+          curprint("(");
+          unparseFunctionArgs(lambdaFunction,info);
+          curprint(")");
+        }
+
+     if (lambdaExp->get_is_mutable() == true)
+        {
+          curprint(" mutable ");
+        }
+
+#if 0
+     if (lambdaFunction->get_is_mutable() == true)
+        {
+          curprint(" throw() ");
+        }
+#else
+#if 0
+     printf ("Lambda function throw keyword not yet supported! \n");
+#endif
+#endif
+
+     if (lambdaExp->get_explicit_return_type() == true)
+        {
+          curprint(" -> ");
+          ROSE_ASSERT(lambdaFunction != NULL);
+          ROSE_ASSERT(lambdaFunction->get_type() != NULL);
+          SgType* returnType = lambdaFunction->get_type()->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+          unp->u_type->unparseType(returnType,info);
+        }
+
+
+
+  // Use a new SgUnparse_Info object to support supression of the SgThisExp where compiler generated.
+  // This is required because the function is internally a member function but can't explicitly refer 
+  // to a "this" expression.
+     SgUnparse_Info ninfo(info);
+     ninfo.set_supressImplicitThisOperator();
+
+  // Output the function definition
+     ROSE_ASSERT(lambdaFunction->get_definition() != NULL);
+     unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo);
+
+#if 0
+     printf ("Exitng as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -1236,8 +1344,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
 
+            // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-               curprint("/* varadic template argument */ ...");
+            // curprint("/* varadic template argument */ ...");
+               curprint("/* varadic template argument */ ");
 
                break;
              }
@@ -2195,18 +2305,18 @@ partOfArrowOperatorChain(SgExpression* expr)
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool parent_is_a_function_call                    = false;
-     bool parent_function_call_uses_operator_syntax    = false;
+//   bool parent_is_a_function_call                    = false;
+//   bool parent_function_call_uses_operator_syntax    = false;
      bool parent_function_is_overloaded_arrow_operator = false;
-     bool parent_function_call_is_compiler_generated   = false;
+//   bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
-               parent_is_a_function_call                  = true;
-               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+//             parent_is_a_function_call                  = true;
+//             parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+//             parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
 #if 1
             // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
                SgExpression* rhs = binary_op->get_rhs_operand();
@@ -2300,11 +2410,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(possibleFunctionCall != NULL);
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
      bool uses_operator_syntax = false;
-     bool is_compiler_generated = false;
+//   bool is_compiler_generated = false;
      if (functionCallExp != NULL)
         {
           uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-          is_compiler_generated = functionCallExp->isCompilerGenerated();
+//        is_compiler_generated = functionCallExp->isCompilerGenerated();
 
 #if 0
        // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
@@ -5545,7 +5655,7 @@ containsIncludeDirective(SgLocatedNode* locatedNode)
 static void
 removeIncludeDirective(SgLocatedNode* locatedNode)
    {
-     bool returnResult = false;
+//   bool returnResult = false;
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
      AttachedPreprocessingInfoType includeDirectiveList;
 
@@ -5578,7 +5688,7 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
 #if 0
                          printf ("Found cpp include directive \n");
 #endif
-                         returnResult = true;
+//                       returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
                   }
@@ -5860,8 +5970,17 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
 
   // Note that the g++ compiler might not be named "g++", it is not clear how to handle this case.
      string backEndCompiler = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-#ifndef _MSC_VER
-     if (backEndCompiler == "g++")
+
+     bool usingGxx = false;
+     #ifdef USE_CMAKE
+       #ifdef CMAKE_COMPILER_IS_GNUCXX
+         usingGxx = true;
+       #endif
+     #else
+       usingGxx = (backEndCompiler == "g++");
+     #endif
+
+     if (usingGxx)
         {
        // Now check the version of the identified GNU g++ compiler.
           if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 5) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
@@ -5888,9 +6007,6 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
                   }
              }
         }
-#else
-  // DQ (2/21/2014): Not clear if this is a similar compiler specific bug to address for Visual MSC++.
-#endif
 
      return nameQualifier;
    }

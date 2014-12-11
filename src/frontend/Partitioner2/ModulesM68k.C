@@ -30,6 +30,46 @@ MatchLink::match(const Partitioner *partitioner, rose_addr_t anchor) {
     return false;
 }
 
+// Find padding that appears before the entry address of a function that aligns the entry address on a 4-byte boundary.
+// For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
+// 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
+rose_addr_t
+MatchFunctionPadding::match(const Partitioner *partitioner, rose_addr_t anchor) {
+    const MemoryMap &m = partitioner->memoryMap();
+    if (0==anchor)
+        return anchor;
+
+    // Read backward from the anchor, skipping over padding as we go
+    rose_addr_t padMin = anchor;
+    uint8_t buf[2];                                     // reading two bytes at a time
+    while (AddressInterval accessed = m.at(padMin-1).limit(2).require(MemoryMap::EXECUTABLE)
+           .read(buf, Sawyer::Container::MATCH_BACKWARD)) {
+
+        // Match zero byte or (0x51 0xfc) pair
+        AddressInterval matched;
+        if (2==accessed.size() && (0x51==buf[0] && 0xfc==buf[1])) {
+            matched = accessed;
+        } else if (2==accessed.size() && 0==buf[1]) {
+            matched = AddressInterval::baseSize(accessed.least()+1, 1);
+        } else if (1==accessed.size() && 0==buf[0]) {
+            matched = accessed;
+        } else {
+            break;
+        }
+
+        // Make sure that what we matched is not already part of some other instruction
+        if (!partitioner->instructionsOverlapping(matched).empty())
+            break;
+
+        // This match appears to be valid padding
+        padMin = matched.least();
+        if (0==padMin)
+            break;                                      // avoid overflow
+    }
+    
+    return padMin;
+}
+
 // A "switch" statement looks like this:
 //   0x1000e062: 30 7b 1a 06             |0{..    |   movea.w [pc+0x00000006+d1*0x00000002], a0
 //   0x1000e066: 4e fb 88 02             |N...    |   jmp    pc+0x00000002+a0*0x00000001
@@ -103,6 +143,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     size_t tableIdx = 0;
     rose_addr_t leastCodeVa = (rose_addr_t)(-1);
     std::set<rose_addr_t> codeVas;
+    const MemoryMap &map = args.partitioner->memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
@@ -122,7 +163,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // Read the offset from the offset table.  Something went wrong if we can't read it because we know that the code for
         // the switch cases follows the table.
         uint16_t offsetBE;
-        if (2!=args.partitioner->memoryMap().read(&offsetBE, offsetVa, 2, MemoryMap::MM_PROT_EXEC)) {
+        if (2!=map.at(offsetVa).limit(2).require(MemoryMap::EXECUTABLE).read((uint8_t*)&offsetBE).size()) {
             mlog[WARN] <<"short read entry[" <<tableIdx <<"] " <<StringUtility::addrToString(offsetVa)
                        <<" in offset table " <<StringUtility::addrToString(startOfOffsetTable) <<"\n";
             break;

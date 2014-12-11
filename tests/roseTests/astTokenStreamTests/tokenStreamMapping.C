@@ -53,7 +53,11 @@ extern ROSE_DLL_API bool ROSE_tokenUnparsingTestingMode;
 int
 main ( int argc, char* argv[] )
    {
+  // DQ (11/13/2014): Turn off the testing mode as a test of test2014_101.c and 
+  // test2014_102.c which behave differently because they are different size ASTs).
   // DQ (12/1/2013): Set the ROSE token unparsing testing mode...
+  // ROSE_tokenUnparsingTestingMode = true;
+  // ROSE_tokenUnparsingTestingMode = false;
      ROSE_tokenUnparsingTestingMode = true;
 
      SgProject* project = frontend(argc,argv);

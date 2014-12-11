@@ -1,5 +1,5 @@
-// rose is required because libraryIdentification.h refeences IR nodes.
-#include "rose.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "libraryIdentification.h"
 
 // The cdoe that was here is not in libraryIdentification.h

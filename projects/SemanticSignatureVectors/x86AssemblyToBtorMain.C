@@ -21,9 +21,9 @@ struct HLTHooks: public BtorTranslationHooks {
   void hlt(BtorTranslationPolicy* policy) {
     policy->registerMap.errorFlag[bmc_error_program_failure] = policy->problem.build_op_redor(policy->readGPR(x86_gpr_bx));
   }
-  void startInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) {
+  void startInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) {
   }
-  void finishInstruction(BtorTranslationPolicy* policy, SgAsmx86Instruction* insn) {
+  void finishInstruction(BtorTranslationPolicy* policy, SgAsmX86Instruction* insn) {
   }
 };
 

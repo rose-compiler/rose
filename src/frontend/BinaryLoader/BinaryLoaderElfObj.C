@@ -46,7 +46,7 @@ BinaryLoaderElfObj::align_values(SgAsmGenericSection *section, MemoryMap *map,
         rose_addr_t size = section->get_size();
 
         *malign_lo_p = *malign_hi_p = mem_alignment;
-        *va_p = map->find_free(0, size, mem_alignment);
+        *va_p = *(map->findFreeSpace(size, mem_alignment));
         *mem_size_p = *file_size_p = size;
         *map_private_p = false;
         *offset_p = section->get_offset();

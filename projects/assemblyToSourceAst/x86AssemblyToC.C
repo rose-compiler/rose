@@ -338,12 +338,12 @@ int main(int argc, char** argv) {
     X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
     //AS FIXME: This query gets noting in the form in the repository. Doing this hack since we only 
     //have one binary file anyways.
-    //vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmx86Instruction);
-    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmx86Instruction);
+    //vector<SgNode*> instructions = NodeQuery::querySubTree(asmFiles[0], V_SgAsmX86Instruction);
+    vector<SgNode*> instructions = NodeQuery::querySubTree(proj, V_SgAsmX86Instruction);
 
     std::cout << "Instruction\n";
     for (size_t i = 0; i < instructions.size(); ++i) {
-      SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+      SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
       ROSE_ASSERT (insn);
       try {
           t.processInstruction(insn);
@@ -426,10 +426,10 @@ int main(int argc, char** argv) {
       appendStatement(whileStmt, body);
       policy.whileBody = sw;
       X86InstructionSemantics<X86CTranslationPolicy, WordWithExpression> t(policy);
-      vector<SgNode*> instructions = NodeQuery::querySubTree(binFunc, V_SgAsmx86Instruction);
+      vector<SgNode*> instructions = NodeQuery::querySubTree(binFunc, V_SgAsmX86Instruction);
 
       for (size_t i = 0; i < instructions.size(); ++i) {
-        SgAsmx86Instruction* insn = isSgAsmx86Instruction(instructions[i]);
+        SgAsmX86Instruction* insn = isSgAsmX86Instruction(instructions[i]);
 	if( insn->get_kind() == x86_nop )
 	  continue;
         ROSE_ASSERT (insn);

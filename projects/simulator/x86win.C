@@ -29,7 +29,7 @@ public:
     }
 
     virtual bool operator()(bool enabled, const Args &args) {
-        SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.insn);
+        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         if (insn && x86_rdtsc==insn->get_kind()) {
             uint32_t newip = insn->get_address() + insn->get_size();
             uint64_t value = next_value(args);
@@ -66,17 +66,16 @@ public:
                     FILE *f = fopen("x-maps", "w");
                     assert(f);
 
-                    const MemoryMap::Segments &segments = t->get_process()->get_memory().segments();
-                    BOOST_FOREACH (const MemoryMap::Segments::Node &node, segments.nodes()) {
+                    BOOST_FOREACH (const MemoryMap::Node &node, t->get_process()->get_memory().nodes()) {
                         const AddressInterval &range = node.key();
                         const MemoryMap::Segment &segment = node.value();
-                        unsigned p = segment.get_mapperms();
+                        unsigned p = segment.accessibility();
                         fprintf(f, "%08"PRIx64"-%08"PRIx64" %c%c%cp 00000000 00:00 0 %s\n",
                                 range.least(), range.greatest()+1,
-                                (p & MemoryMap::MM_PROT_READ)  ? 'r' : '-',
-                                (p & MemoryMap::MM_PROT_WRITE) ? 'w' : '-',
-                                (p & MemoryMap::MM_PROT_EXEC)  ? 'x' : '-',
-                                segment.get_name().c_str());
+                                (p & MemoryMap::READABLE)   ? 'r' : '-',
+                                (p & MemoryMap::WRITABLE)   ? 'w' : '-',
+                                (p & MemoryMap::EXECUTABLE) ? 'x' : '-',
+                                segment.name().c_str());
                     }
                     fclose(f);
                     filename = "x-maps";

@@ -53,7 +53,7 @@ public:
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const /*override*/ {
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
         return instance(ops);
     }
 
@@ -64,9 +64,9 @@ public:
         return retval;
     }
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
+    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();

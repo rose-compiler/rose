@@ -25,10 +25,10 @@ std::string MallocAndFree::getDescription() {
 
 void
 MallocAndFree::visit(SgNode* node) {
-  if (isSgAsmx86Instruction(node) && isSgAsmx86Instruction(node)->get_kind() == x86_call) {
+  if (isSgAsmX86Instruction(node) && isSgAsmX86Instruction(node)->get_kind() == x86_call) {
     // this is the address of the mov instruction prior to the call
     rose_addr_t resolveAddr=0;
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(node);
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(node);
     SgNode* instBlock = NULL;
     if (project) 
       instBlock= isSgAsmBlock(inst->get_parent());
@@ -62,12 +62,12 @@ MallocAndFree::visit(SgNode* node) {
       // -------------------- WINDOWS SPECIFIC --------------------------
       if (genericF==NULL) {
 	// IDA-FILE -- assume its windows for now. Is there a way to check this?
-	SgAsmx86Instruction* succInst =NULL;
+	SgAsmX86Instruction* succInst =NULL;
 	// find the instruction after the next function call (wrapper)
 	while (!succList.empty()) {
 	  uint64_t front = succList.front();
 	  succList.pop_front();
-	  succInst = isSgAsmx86Instruction(info->getInstructionAtAddress(front));
+	  succInst = isSgAsmX86Instruction(info->getInstructionAtAddress(front));
 	  SgNode* succBlock = NULL;
 	  if (project) 
 	    succBlock= isSgAsmBlock(succInst->get_parent());
@@ -86,7 +86,7 @@ MallocAndFree::visit(SgNode* node) {
 	    rose_addr_t next_addr2 = succInst->get_address() + succInst->get_raw_bytes().size();
 	    next_addr2 = BinQSupport::checkIfValidAddress(next_addr2, succInst);
 	    //cerr << " Checking next addr : " << RoseBin_support::HexToString(next_addr2) << endl;
-	    if (isSgAsmx86Instruction(succInst) && isSgAsmx86Instruction(succInst)->get_kind() == x86_call) {
+	    if (isSgAsmX86Instruction(succInst) && isSgAsmX86Instruction(succInst)->get_kind() == x86_call) {
 	      // if another call found, stop here
 	      rose_addr_t next_addr = succInst->get_address() + succInst->get_raw_bytes().size();
 	      next_addr = BinQSupport::checkIfValidAddress(next_addr, succInst);
@@ -115,7 +115,7 @@ MallocAndFree::visit(SgNode* node) {
       while (!succList.empty()) {
 	uint64_t front = succList.front();
 	succList.pop_front();
-	SgAsmx86Instruction* succInst = isSgAsmx86Instruction(info->getInstructionAtAddress(front));
+	SgAsmX86Instruction* succInst = isSgAsmX86Instruction(info->getInstructionAtAddress(front));
 	SgNode* succBlock = NULL;
 	if (project) 
 	  succBlock= isSgAsmBlock(succInst->get_parent());
@@ -130,7 +130,7 @@ MallocAndFree::visit(SgNode* node) {
 	if (succFunc==instFunc) {
 	  // the previous instruction is in the same function
 	  // check if it is the instruction we are looking for, e.g. mov mem, reg
-	  if (isSgAsmx86Instruction(succInst)->get_kind() == x86_mov) {
+	  if (isSgAsmX86Instruction(succInst)->get_kind() == x86_mov) {
 	    SgAsmOperandList * ops = succInst->get_operandList();
 	    SgAsmExpressionPtrList& opsList = ops->get_operands();
 	    SgAsmExpressionPtrList::iterator itOP = opsList.begin();
@@ -191,18 +191,18 @@ MallocAndFree::visit(SgNode* node) {
       bool foundMatchingFree=false;
       if (resolveAddr!=0) {
 	SgAsmFunction* succFunc2=instFunc;
-	SgAsmx86Instruction* succInst2=inst;
+	SgAsmX86Instruction* succInst2=inst;
 	//cerr << " Looking for free : start : " << RoseBin_support::HexToString(succInst2->get_address() )<< endl;
 	std::set<uint64_t> visited;
 	while (instFunc==succFunc2) {
 	  next_addr = succInst2->get_address() + succInst2->get_raw_bytes().size();
 	  next_addr = BinQSupport::checkIfValidAddress(next_addr, succInst2);
 	  if (next_addr==0) break;
-	  succInst2 = isSgAsmx86Instruction(info->getInstructionAtAddress(next_addr));
+	  succInst2 = isSgAsmX86Instruction(info->getInstructionAtAddress(next_addr));
 	  if (succInst2==NULL)
 	    break;
 	  //	  cerr << "      Looking for free : next : " << RoseBin_support::HexToString(next_addr )<< 
-	  // "   node : " << toString(isSgAsmx86Instruction(succInst2)->get_kind()) << endl;
+	  // "   node : " << toString(isSgAsmX86Instruction(succInst2)->get_kind()) << endl;
 	  ROSE_ASSERT(succInst2);
 	  if (genericF!=NULL) {
 	    SgAsmBlock* succBlock2 = isSgAsmBlock(succInst2->get_parent());
@@ -217,7 +217,7 @@ MallocAndFree::visit(SgNode* node) {
 	    if (succFunc2==NULL)
 	      continue;
 	  }
-	  if (isSgAsmx86Instruction(succInst2)->get_kind() == x86_call) {
+	  if (isSgAsmX86Instruction(succInst2)->get_kind() == x86_call) {
 	    string calleeName2 = succInst2->get_comment();
 	    //cerr << "  checking succ call : " << calleeName2 << endl; 
 	    // do this if we have found a matching free call
@@ -236,7 +236,7 @@ MallocAndFree::visit(SgNode* node) {
 	      while (!predList.empty()) {
 		uint64_t front = predList.front();
 		predList.pop_front();
-		SgAsmx86Instruction* predInst = isSgAsmx86Instruction(info->getInstructionAtAddress(front));
+		SgAsmX86Instruction* predInst = isSgAsmX86Instruction(info->getInstructionAtAddress(front));
 		predInst = BinQSupport::checkIfValidPredecessor(front,predInst);
 		if (predInst==NULL)
 		  break;
@@ -258,7 +258,7 @@ MallocAndFree::visit(SgNode* node) {
 		if (predFunc==instFunc) {
 		  // the previous instruction is in the same function
 		  // check if it is the instruction we are looking for, e.g. mov reg,addr
-		  if (isSgAsmx86Instruction(predInst)->get_kind() == x86_mov) {
+		  if (isSgAsmX86Instruction(predInst)->get_kind() == x86_mov) {
 		    SgAsmOperandList * ops = predInst->get_operandList();
 		    SgAsmExpressionPtrList& opsList = ops->get_operands();
 		    //	    rose_addr_t addrDest=0;
