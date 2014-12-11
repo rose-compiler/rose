@@ -56,6 +56,7 @@ struct Settings {
     bool doListFunctions;                               // produce a function index
     bool doListFunctionAddresses;                       // list function entry addresses
     bool doListInstructionAddresses;                    // show instruction addresses
+    bool doListContainer;                               // generate information about the containers if present
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
@@ -74,9 +75,9 @@ struct Settings {
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true),
           doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false),
-          doListFunctionAddresses(false), doListInstructionAddresses(false), doShowMap(false), doShowStats(false),
-          doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true), gvShowInstructions(true),
-          gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
+          doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false), doShowMap(false),
+          doShowStats(false), doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true),
+          gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
 };
 
 // Describe and parse the command-line
@@ -310,6 +311,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     out.insert(Switch("no-show-stats")
                .key("show-stats")
                .intrinsicValue(false, settings.doShowStats)
+               .hidden(true));
+
+    out.insert(Switch("list-container")
+               .intrinsicValue(true, settings.doListContainer)
+               .doc("Emit detailed information about all binary containers (ELF, PE, etc).  The @s{no-list-container} "
+                    "switch turns this off. The default is to " + std::string(settings.doListContainer?"":"not ") +
+                    "show this information.\n"));
+    out.insert(Switch("no-list-container")
+               .key("list-container")
+               .intrinsicValue(false, settings.doListContainer)
                .hidden(true));
 
     // Switches controlling GraphViz output
@@ -712,6 +723,7 @@ int main(int argc, char *argv[]) {
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
+    engine.labelAddresses(partitioner, interp);         // label addresses from container before loading configuration
     if (!settings.configurationName.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
         info <<"loading configuration files";
@@ -859,6 +871,22 @@ int main(int argc, char *argv[]) {
             }
         }
     }
+
+    if (settings.doListContainer && interp) {
+        std::set<SgAsmGenericFile*> emittedFiles;
+        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+            SgAsmGenericFile *container = SageInterface::getEnclosingNode<SgAsmGenericFile>(fileHeader);
+            if (emittedFiles.insert(container).second) {
+                container->dump(stdout);
+                int i=0;
+                BOOST_FOREACH (SgAsmGenericSection *section, container->get_sections()) {
+                    printf("Section [%d]:\n", i++);
+                    section->dump(stdout, "  ", -1);
+                }
+            }
+        }
+    }
+    
 
     // Build the AST and unparse it.
     if (settings.doListAsm) {
