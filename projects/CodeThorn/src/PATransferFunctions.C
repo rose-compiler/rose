@@ -13,8 +13,6 @@ using namespace CodeThorn;
 
 PATransferFunctions::PATransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
 
-
-
 void PATransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
   SgNode* node=_labeler->getNode(lab);

@@ -19,7 +19,8 @@ ProgramAnalysis::ProgramAnalysis():
   _preInfoIsValid(false),
   _postInfoIsValid(false),
   _transferFunctions(0),
-  _initialElementFactory(0)
+  _initialElementFactory(0),
+  _analysisType(ProgramAnalysis::FORWARD_ANALYSIS)
 {}
 
 void ProgramAnalysis::initializeSolver() {
@@ -62,15 +63,16 @@ void ProgramAnalysis::computeAllPreInfo() {
 }
 
 void ProgramAnalysis::computeAllPostInfo() {
-  computeAllPreInfo();
-  for(long lab=0;lab<_labeler->numberOfLabels();++lab) {
-    Lattice* le=_initialElementFactory->create();
-    le->combine(*_analyzerDataPreInfo[lab]);
-    if(_analyzerDataPostInfo[lab])
-      delete _analyzerDataPostInfo[lab];
-    _analyzerDataPostInfo[lab]=le;
+  if(!_postInfoIsValid) {
+    computeAllPreInfo();
+    for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
+      Label lab=*i;
+      Lattice* info=_analyzerDataPostInfo[lab.getId()];
+      _solver->computeCombinedPreInfo(lab,*info);
+      _transferFunctions->transfer(lab,*info);
+    }
+    _postInfoIsValid=true;
   }
-  _postInfoIsValid=true;
 }
 
 void ProgramAnalysis::setInitialElementFactory(PropertyStateFactory* pf) {
@@ -81,6 +83,21 @@ void ProgramAnalysis::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
+void ProgramAnalysis::setForwardAnalysis() {
+  _analysisType=ProgramAnalysis::FORWARD_ANALYSIS;
+}
+
+void ProgramAnalysis::setBackwardAnalysis() {
+  _analysisType=ProgramAnalysis::BACKWARD_ANALYSIS;
+}
+
+bool ProgramAnalysis::isForwardAnalysis() {
+  return _analysisType==ProgramAnalysis::FORWARD_ANALYSIS;
+}
+
+bool ProgramAnalysis::isBackwardAnalysis() {
+  return _analysisType==ProgramAnalysis::BACKWARD_ANALYSIS;
+}
 
 void ProgramAnalysis::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
@@ -125,6 +142,13 @@ ProgramAnalysis::initialize(SgProject* root) {
   cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
   _cfanalyzer->intraInterFlow(_flow,interFlow);
   cout << "INIT: IntraInter-CFG OK. (size: " << _flow.size() << " edges)"<<endl;
+  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
+  {
+    size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
+    int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+    cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
+  }
+
   ROSE_ASSERT(_initialElementFactory);
   for(long l=0;l<_labeler->numberOfLabels();++l) {
     Lattice* le1=_initialElementFactory->create();
@@ -132,15 +156,14 @@ ProgramAnalysis::initialize(SgProject* root) {
     Lattice* le2=_initialElementFactory->create();
     _analyzerDataPostInfo.push_back(le2);
   }
-  cout << "INIT: initialized pre/post property states."<<endl;
-
-  cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
-  {
-    size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
-    int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
-    cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
-  }
   cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPostInfo.size()<< " labels."<<endl;
+
+  cout << "INIT: initialized pre/post property states."<<endl;
+  if(isBackwardAnalysis()) {
+    _flow=_flow.reverseFlow();
+    cout << "INIT: established reverse flow for backward analysis."<<endl;
+  }
+
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
 
@@ -218,8 +241,17 @@ void ProgramAnalysis::initializeTransferFunctions() {
 void
 ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {
-    Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-    _extremalLabels.insert(startLabel);
+    if(isForwardAnalysis()) {
+      Label startLabel=_cfanalyzer->getLabel(startFunRoot);
+      _extremalLabels.insert(startLabel);
+    } else if(isBackwardAnalysis()) {
+      Label startLabel=_cfanalyzer->getLabel(startFunRoot);
+      // TODO: temporary hack (requires get-methods for different types of labels
+      // or a list of all labels that are associated with a node)
+      int startLabelId=startLabel.getId();
+      Label endLabel(startLabelId+1);
+      _extremalLabels.insert(endLabel);
+    }
   } else {
     // naive way of initializing all labels
     for(long i=0;i<_labeler->numberOfLabels();++i) {
@@ -347,7 +379,7 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
   for(LabelSet::iterator i=labelSet.begin();
       i!=labelSet.end();
       ++i) {
-    ROSE_ASSERT(*i<_analyzerDataPostInfo.size());
+    ROSE_ASSERT(*i<_analyzerDataPreInfo.size());
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
     if(*i >=0 ) {
       if(inInfo)
@@ -365,7 +397,11 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
 
 void ProgramAnalysis::attachInInfoToAst(string attributeName) {
   computeAllPreInfo();
-  attachInfoToAst(attributeName,true);
+  if(isForwardAnalysis()) {
+    attachInfoToAst(attributeName,true);
+  } else if(isBackwardAnalysis()) {
+    attachInfoToAst(attributeName,false);
+  }
 }
 
 /*! 
@@ -375,5 +411,9 @@ void ProgramAnalysis::attachInInfoToAst(string attributeName) {
 
 void ProgramAnalysis::attachOutInfoToAst(string attributeName) {
   computeAllPostInfo();
-  attachInfoToAst(attributeName,false);
+  if(isForwardAnalysis()) {
+    attachInfoToAst(attributeName,false);
+  } else if(isBackwardAnalysis()) {
+    attachInfoToAst(attributeName,true);
+  }
 }

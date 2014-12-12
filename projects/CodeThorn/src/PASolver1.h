@@ -21,8 +21,8 @@ class PASolver1 {
 	   PATransferFunctions& transferFunctions
 	   );
   virtual void runSolver();
+  void computeCombinedPreInfo(Label lab,Lattice& inInfo);
 
-  void computePreInfo(Label lab,Lattice& inInfo);
  protected:
   WorkListSeq<Edge>& _workList;
   std::vector<Lattice*>& _analyzerDataPreInfo;

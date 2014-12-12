@@ -36,8 +36,9 @@ SPRAY::LVAnalysis::~LVAnalysis() {
   delete _initialElementFactory;
 }
 void SPRAY::LVAnalysis::initializeExtremalValue(Lattice* element) {
-  LVLattice* rdElement=dynamic_cast<LVLattice*>(element);
-  rdElement->setEmptySet();
+  LVLattice* lvElement=dynamic_cast<LVLattice*>(element);
+  ROSE_ASSERT(lvElement);
+  lvElement->setEmptySet();
   cout<<"INFO: initialized extremal value."<<endl;
 }
 

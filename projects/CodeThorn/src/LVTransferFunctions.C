@@ -24,19 +24,21 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   // 1) remove all pairs with lhs-variableid
   // 2) add (lab,lhs.varid)
   
+  // KILL
   // (for programs with pointers we require a set here)
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
-    // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      element.insertVariableId(*i);
-    }
-    assert(0);
+    // since multiple memory locations may be modified, we cannot know which one will be updated and can cannot remove information
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
     element.eraseVariableId(var);
-    element.insertVariableId(var);
+  }
+  // GEN
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
+  //cout<<"DEBUG: GEN @"<<lab.getId()<<": "<<node->unparseToString()<<":"<<endl;
+  for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
+    element.insertVariableId(*i);
   }
 }
 
@@ -55,16 +57,16 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   // same as in transferExpression ... needs to be refined
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
-    // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
-    for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
-      element.insertVariableId(*i);
-    }
+    // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information add information
     assert(0);
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
     element.eraseVariableId(var);
-    element.insertVariableId(var);
+  }
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
+  for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
+    element.insertVariableId(*i);
   }
 }
 
@@ -99,16 +101,14 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
   ROSE_ASSERT(element1);
   LVLattice& element=*element1;
 
-  // generate LVs for each parameter variable
+  // remove LVs for each parameter variable
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
-    // it must hold that this VarId does not exist in the LV-element
-    //assert
-    element.insertVariableId(formalParameterVarId);
+    element.eraseVariableId(formalParameterVarId);
   }
 }
 
@@ -117,15 +117,17 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
   * \date 2013.
  */
 void SPRAY::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
-
+  // nothing to do
+#if 0
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
   ROSE_ASSERT(element1);
   LVLattice& element=*element1;
 
-  // remove all declared variable at function exit (including function parameter variables)
+  // insert all declared variables at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     VariableId varId=*i;
     element.eraseVariableId(varId);
   }
+#endif
   // TODO:: return variable $r
 }

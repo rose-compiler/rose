@@ -30,6 +30,10 @@ class ProgramAnalysis {
   ProgramAnalysis();
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
+  void setForwardAnalysis();
+  void setBackwardAnalysis();
+  bool isForwardAnalysis();
+  bool isBackwardAnalysis();
   virtual void initializeGlobalVariables(SgProject* root);
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
@@ -56,6 +60,7 @@ class ProgramAnalysis {
 
   void attachInfoToAst(string attributeName,bool inInfo);
  protected:
+  enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
   VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
@@ -86,6 +91,7 @@ class ProgramAnalysis {
   PATransferFunctions* _transferFunctions;
   PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;
+  AnalysisType _analysisType;
  private:
 };
 

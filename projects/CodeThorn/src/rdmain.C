@@ -141,23 +141,31 @@ int main(int argc, char* argv[]) {
     }
 
     {
-      cout << "STATUS: creating liveness analysis."<<endl;
-      SPRAY::LVAnalysis* livenessAnalyzer=new SPRAY::LVAnalysis();
-      cout << "STATUS: initializing liveness analysis."<<endl;
-      livenessAnalyzer->initialize(root);
-      cout << "STATUS: initializing liveness transfer functions."<<endl;
-      livenessAnalyzer->initializeTransferFunctions();
-      cout << "STATUS: initializing liveness global variables."<<endl;
-      livenessAnalyzer->initializeGlobalVariables(root);
+      cout << "STATUS: creating LV analysis."<<endl;
+      SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
+      cout << "STATUS: initializing LV analysis."<<endl;
+      lvAnalysis->setBackwardAnalysis();
+      lvAnalysis->initialize(root);
+      cout << "STATUS: initializing LV transfer functions."<<endl;
+      lvAnalysis->initializeTransferFunctions();
+      cout << "STATUS: initializing LV global variables."<<endl;
+      lvAnalysis->initializeGlobalVariables(root);
       std::string funtofind="main";
       RoseAst completeast(root);
       SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-      livenessAnalyzer->determineExtremalLabels(startFunRoot);
-#if 0
-      livenessAnalyzer->run();
+      cout << "generating icfg_backward.dot."<<endl;
+      write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
+
+      lvAnalysis->determineExtremalLabels(startFunRoot);
+#if 1
+      lvAnalysis->run();
+      cout << "INFO: attaching LV-data to AST."<<endl;
+      lvAnalysis->attachInInfoToAst("lv-analysis-in");
+      lvAnalysis->attachOutInfoToAst("lv-analysis-out");
 #else
-      cout << "STATUS: did not run liveness analysis."<<endl;      
+      cout << "STATUS: did not run LV analysis."<<endl;      
 #endif
+      delete lvAnalysis;
     }
 
     cout << "STATUS: creating RD analyzer."<<endl;
@@ -248,6 +256,8 @@ int main(int argc, char* argv[]) {
   AstAnnotator ara(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
+  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
+  ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
   cout << "INFO: generating annotated source code."<<endl;
   root->unparse(0,0);
 #endif

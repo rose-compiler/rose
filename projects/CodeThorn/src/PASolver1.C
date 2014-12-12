@@ -22,10 +22,10 @@ PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 }
 
 void
-PASolver1::computePreInfo(Label lab,Lattice& inInfo) {
+PASolver1::computeCombinedPreInfo(Label lab,Lattice& inInfo) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
-    inInfo.combine(*_analyzerDataPostInfo[(*i).getId()]);
+    inInfo.combine(*_analyzerDataPreInfo[(*i).getId()]);
   }
 }
 
@@ -39,7 +39,11 @@ PASolver1::runSolver() {
     Label lab0=edge.source;
     Label lab1=edge.target;
     Lattice* info=_initialElementFactory.create();
+#if 1
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
+#else
+    computeCombinedPreInfo(lab0,*info);
+#endif
     _transferFunctions.transfer(lab0,*info);
     bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
     if(!isApproximatedBy) {

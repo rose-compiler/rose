@@ -12,3 +12,6 @@
   #define NO_STATE -3
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
+
+* rename method eraseVariableId to removeVariableId in {RD,LV}Lattice.h/C and {RD,LV}TransferFunctions.C
+

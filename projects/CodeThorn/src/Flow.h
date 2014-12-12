@@ -58,7 +58,7 @@ class Edge {
  bool operator<(const Edge& e1, const Edge& e2);
 
 /*! 
-  * \author Markus Schordan
+ * \author Markus Schordan
   * \date 2012.
  */
  class Flow : public set<Edge> {
