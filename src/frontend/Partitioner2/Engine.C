@@ -145,10 +145,17 @@ Engine::partition(SgAsmInterpretation *interp) {
     runPartitioner(partitioner, interp_);
     return partitioner;
 }
-    
 
-    
-    
+SgAsmBlock*
+Engine::buildAst(const std::vector<std::string> &fileNames) {
+    Partitioner partitioner = partition(fileNames);
+    return buildAst(partitioner);
+}
+
+SgAsmBlock*
+Engine::buildAst(const Partitioner &partitioner) {
+    return Modules::buildAst(partitioner, interp_);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Partitioner-making functions
@@ -386,10 +393,12 @@ Engine::discoverFunctions(Partitioner &partitioner) {
             continue;
         }
 
-        // Try looking for a code address mentioned in read-only memory
-        if (Function::Ptr function = makeNextDataReferencedFunction(partitioner, nextReadAddr /*in,out*/)) {
-            partitioner.attachFunction(function);
-            continue;
+        // Try looking for a function address mentioned in read-only memory
+        if (dataMentionedFunctionSearch_) {
+            if (Function::Ptr function = makeNextDataReferencedFunction(partitioner, nextReadAddr /*in,out*/)) {
+                partitioner.attachFunction(function);
+                continue;
+            }
         }
         
         // Nothing more to do

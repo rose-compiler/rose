@@ -53,10 +53,10 @@ public:
 
     /** Arguments passed to the callback. */
     struct Args {
-        const Partitioner *partitioner;                 /**< Partitioner requesting basic block successors. */
+        const Partitioner &partitioner;                 /**< Partitioner requesting basic block successors. */
         BasicBlock::Ptr bblock;                         /**< Basic block whose successors are to be computed. */
         Results &results;                               /**< Results to control basic block discovery. */
-        Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock, Results &results)
+        Args(const Partitioner &partitioner, const BasicBlock::Ptr &bblock, Results &results)
             : partitioner(partitioner), bblock(bblock), results(results) {}
     };
 
@@ -88,7 +88,7 @@ public:
      *  address easier to write, but matchers that match at additional locations must explicitly check those other
      *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
      *  argument). */
-    virtual bool match(const Partitioner*, rose_addr_t anchor) = 0;
+    virtual bool match(const Partitioner&, rose_addr_t anchor) = 0;
 };
 
 
@@ -142,7 +142,7 @@ public:
      *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
      *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
      *  the returned value. */
-    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) = 0;
+    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -336,6 +336,65 @@ size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<
  *  Scans the entire list of attached instructions and give each constant integer expression a name if the value of the
  *  expression happens to be an address that has a name. */
 void nameConstants(const Partitioner&);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                  Partitioner conversion to AST
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Build AST for basic block.
+ *
+ *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
+ *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
+ *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, bool relaxed=false);
+
+/** Build AST for data block.
+ *
+ *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be in
+ *  the CFG.  If @p relaxed is true then IR nodes are created even if they would violate some ROSE invariant, otherwise invalid
+ *  data blocks are ignored and a null pointer is returned for them. */
+SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, bool relaxed=false);
+
+/** Build AST for function.
+ *
+ *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in the
+ *  CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the partitioner
+ *  doesn't know about them).  If no children were created then the returned function IR node violates ROSE's invariants, so a
+ *  null pointer is returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
+SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, bool relaxed=false);
+
+/** Builds the global block AST.
+ *
+ *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
+ *  basic blocks, which in turn contain instructions.  If no functions exist in the CFG then the returned node would violate
+ *  ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then the IR node is returned
+ *  anyway. */
+SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
+
+/** Builds an AST from the CFG.
+ *
+ *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
+ *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
+ *  relaxed is true then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
+ *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
+ *  violate some invariants.
+ *
+ *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
+ *  interpretation allows more fixups to occur. */
+SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool relaxed=false);
+
+/** Fixes pointers in the AST.
+ *
+ *  Traverses the AST to find SgAsmIntegerValueExpressions and changes absolute values to relative values.  If such an
+ *  expression is the starting address of a function then the expression will point to that function; else if the expression is
+ *  the starting address of a basic block then the expression will point to that basic block; else if the expression is the
+ *  starting address of an instruction then the expression will point to that instruction; else if the expression evaluates to
+ *  an address inside a mapped section, then the expression will become relative to the start of the best section. Pointers
+ *  into sections are only created if an interpretation is specified. */
+void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
+
+
 
 } // namespace
 

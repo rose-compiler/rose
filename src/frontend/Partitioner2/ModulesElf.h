@@ -38,7 +38,7 @@ struct PltEntryMatcher: public InstructionMatcher {
 public:
     PltEntryMatcher(rose_addr_t base): baseVa_(base), memAddress_(0), nBytesMatched_(0) {}
     static Ptr instance(rose_addr_t base) { return Ptr(new PltEntryMatcher(base)); }
-    virtual bool match(const Partitioner*, rose_addr_t anchor);
+    virtual bool match(const Partitioner&, rose_addr_t anchor);
     rose_addr_t memAddress() const { return memAddress_; }
     size_t nBytesMatched() const { return nBytesMatched_; }
 };

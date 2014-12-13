@@ -10,6 +10,7 @@
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
+#include <Partitioner2/Modules.h>
 #include <Partitioner2/Utility.h>
 
 #include <sawyer/Assert.h>
@@ -47,6 +48,7 @@ struct Settings {
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
+    rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
     bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     bool doPostAnalysis;                                // perform post-partitioning analysis phase?
@@ -73,10 +75,10 @@ struct Settings {
     std::string configurationName;                      // config file or directory containing such
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), intraFunctionCode(true), intraFunctionData(true),
-          doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false),
-          doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false), doShowMap(false),
-          doShowStats(false), doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true),
+          findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
+          intraFunctionData(true), doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true),
+          doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false),
+          doShowMap(false), doShowStats(false), doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true),
           gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
 };
 
@@ -174,6 +176,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
                .hidden(true));
+
+    dis.insert(Switch("pe-scrambler")
+               .argument("dispatcher_address", nonNegativeIntegerParser(settings.peScramblerDispatcherVa))
+               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
+                    "that go into the specified @v{dispatcher_address} are immediately rewritten so they appear to go "
+                    "instead to the function contained in the dispatcher table which normally immediately follows the "
+                    "dispatcher function.  The dispatcher function is quite easy to find in a call graph because nearly "
+                    "everything calls it -- it will likely have far and away more callers than anything else.  Setting the "
+                    "address to zero disables this module (which is the default)."));
 
     dis.insert(Switch("intra-function-code")
                .intrinsicValue(true, settings.intraFunctionCode)
@@ -474,7 +485,6 @@ public:
 };
 
 
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                              Function-making
 //
@@ -723,6 +733,14 @@ int main(int argc, char *argv[]) {
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
+    if (settings.peScramblerDispatcherVa) {
+        P2::ModulesPe::PeDescrambler::Ptr cb = P2::ModulesPe::PeDescrambler::instance(settings.peScramblerDispatcherVa);
+        cb->nameKeyAddresses(partitioner);              // give names to certain PEScrambler things
+        partitioner.basicBlockCallbacks().append(cb);
+        partitioner.attachFunction(P2::Function::instance(settings.peScramblerDispatcherVa,
+                                                          partitioner.addressName(settings.peScramblerDispatcherVa),
+                                                          SgAsmFunction::FUNC_USERDEF)); 
+    }
     engine.labelAddresses(partitioner, interp);         // label addresses from container before loading configuration
     if (!settings.configurationName.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
@@ -834,7 +852,7 @@ int main(int argc, char *argv[]) {
 
     if (settings.doListFunctions) {
         if (!globalBlock)
-            globalBlock = partitioner.buildAst();
+            globalBlock = engine.buildAst(partitioner);
         std::cout <<AsmFunctionIndex(globalBlock);
     }
 
@@ -891,7 +909,7 @@ int main(int argc, char *argv[]) {
     // Build the AST and unparse it.
     if (settings.doListAsm) {
         if (!globalBlock)
-            globalBlock = partitioner.buildAst();
+            globalBlock = engine.buildAst(partitioner);
         AsmUnparser unparser;
         unparser.set_registers(disassembler->get_registers());
         unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock));

@@ -283,7 +283,7 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
 
         // Give user chance to adjust basic block successors and/or pre-compute cached analysis results
         BasicBlockCallback::Results userResult;
-        basicBlockCallbacks_.apply(true, BasicBlockCallback::Args(this, retval, userResult));
+        basicBlockCallbacks_.apply(true, BasicBlockCallback::Args(*this, retval, userResult));
 
         BOOST_FOREACH (rose_addr_t successorVa, basicBlockConcreteSuccessors(retval)) {
             if (successorVa!=startVa && retval->instructionExists(successorVa)) { // case: successor is inside our own block
@@ -1490,7 +1490,7 @@ Partitioner::nextFunctionPrologue(rose_addr_t startVa) {
             return std::vector<Function::Ptr>();        // empty; no higher unused address
         if (startVa == *unmappedVa) {
             BOOST_FOREACH (const FunctionPrologueMatcher::Ptr &matcher, functionPrologueMatchers_) {
-                if (matcher->match(this, startVa)) {
+                if (matcher->match(*this, startVa)) {
                         std::vector<Function::Ptr> newFunctions = matcher->functions();
                     ASSERT_forbid(newFunctions.empty());
                     return newFunctions;
@@ -1509,7 +1509,7 @@ Partitioner::matchFunctionPadding(const Function::Ptr &function) {
     ASSERT_not_null(function);
     rose_addr_t anchor = function->address();
     BOOST_FOREACH (const FunctionPaddingMatcher::Ptr &matcher, functionPaddingMatchers_) {
-        rose_addr_t paddingVa = matcher->match(this, anchor);
+        rose_addr_t paddingVa = matcher->match(*this, anchor);
         if (paddingVa < anchor)
             return attachFunctionDataBlock(function, paddingVa, anchor-paddingVa);
     }
@@ -1946,273 +1946,6 @@ Partitioner::addressName(rose_addr_t va, const std::string &name) {
     } else {
         addressNames_.insert(va, name);
     }
-}
-
-SgAsmBlock*
-Partitioner::buildBasicBlockAst(const BasicBlock::Ptr &bb, bool relaxed) const {
-    ASSERT_not_null(bb);
-    if (bb->isEmpty()) {
-        if (relaxed) {
-            mlog[WARN] <<"creating an empty basic block AST node at " <<StringUtility::addrToString(bb->address()) <<"\n";
-        } else {
-            return NULL;
-        }
-    }
-
-    ControlFlowGraph::ConstVertexNodeIterator bblockVertex = findPlaceholder(bb->address());
-    SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
-    unsigned reasons = 0;
-
-    // Is this block an entry point for a function?
-    if (Function::Ptr function = functionExists(bb->address())) {
-        if (function->address() == bb->address())
-            reasons |= SgAsmBlock::BLK_ENTRY_POINT;
-    }
-
-    // Does this block have any predecessors?
-    if (bblockVertex != cfg_.vertices().end() && bblockVertex->nInEdges()==0)
-        reasons |= SgAsmBlock::BLK_CFGHEAD;
-
-    ast->set_reason(reasons);
-    ast->set_code_likelihood(1.0);                      // FIXME[Robb P. Matzke 2014-08-07]
-
-    // Outgoing stack delta
-    if (bb->stackDeltaOut().isCached()) {
-        BaseSemantics::SValuePtr v = bb->stackDeltaOut().get();
-        if (v->is_number() && v->get_width()<=64) {
-            int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-            ast->set_stackDeltaOut(delta);
-        } else {
-            ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-        }
-    } else {
-        ast->set_stackDeltaOut(SgAsmInstruction::INVALID_STACK_DELTA);
-    }
-    
-    // Cache the basic block successors in the AST since we've already computed them.  If the basic block is in the CFG then we
-    // can use the CFG's edges to initialize the AST successors since they are canonical. Otherwise we'll use the successors
-    // from bb. In any case, we fill in the successor SgAsmIntegerValueExpression objects with only the address and not
-    // pointers to SgAsmBlock IR nodes since we don't have all the blocks yet; the SgAsmBlock pointers will be initialized
-    // higher up on the AST-building stack.
-    if (bblockVertex != cfg_.vertices().end()) {
-        bool isComplete = true;
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, bblockVertex->outEdges()) {
-            const ControlFlowGraph::VertexNode &target = *edge.target();
-            if (target.value().type() == V_INDETERMINATE || target.value().type() == V_NONEXISTING) {
-                isComplete = false;
-            } else {
-                ASSERT_require(target.value().type() == V_BASIC_BLOCK);
-                SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(target.value().address());
-                succ->set_parent(ast);
-                ast->get_successors().push_back(succ);
-            }
-        }
-        ast->set_successors_complete(isComplete);
-    } else {
-        bool isComplete = true;
-        BOOST_FOREACH (rose_addr_t successorVa, basicBlockConcreteSuccessors(bb, &isComplete)) {
-            SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successorVa);
-            succ->set_parent(ast);
-            ast->get_successors().push_back(succ);
-        }
-        ast->set_successors_complete(isComplete);
-    }
-    return ast;
-}
-
-SgAsmBlock*
-Partitioner::buildDataBlockAst(const DataBlock::Ptr &dblock, bool relaxed) const {
-    // Build the static data item
-    SgUnsignedCharList rawBytes(dblock->size(), 0);
-    size_t nRead = memoryMap_.at(dblock->address()).read(rawBytes).size();
-    ASSERT_always_require(nRead==dblock->size());
-    SgAsmStaticData *datum = SageBuilderAsm::buildStaticData(dblock->address(), rawBytes);
-
-    // Build the data block IR node pointing to the static item
-    return SageBuilderAsm::buildDataBlock(datum);
-}
-
-SgAsmFunction*
-Partitioner::buildFunctionAst(const Function::Ptr &function, bool relaxed) const {
-    ASSERT_not_null(function);
-
-    // Build the child basic block IR nodes and remember all the data blocks
-    std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
-    std::vector<SgAsmBlock*> children;
-    BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator vertex = findPlaceholder(blockVa);
-        if (vertex == cfg_.vertices().end()) {
-            mlog[WARN] <<functionName(function) <<" bblock "
-                       <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
-        } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-            if (SgAsmBlock *child = buildBasicBlockAst(bb, relaxed))
-                children.push_back(child);
-            BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
-                insertUnique(dblocks, dblock, sortDataBlocks);
-        } else {
-            mlog[WARN] <<functionName(function) <<" bblock "
-                       <<StringUtility::addrToString(blockVa) <<" is undiscovered in the CFG; no AST node created\n";
-        }
-    }
-    if (children.empty()) {
-        if (relaxed) {
-            mlog[WARN] <<"creating an empty AST node for " <<functionName(function) <<"\n";
-        } else {
-            return NULL;
-        }
-    }
-
-    // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
-    // blocks owned by the function and the data blocks owned by each of its basic blocks.
-    BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
-        if (SgAsmBlock *child = buildDataBlockAst(dblock, relaxed))
-            children.push_back(child);
-    }
-
-    // Sort the children in the order usually used by ROSE
-    std::sort(children.begin(), children.end(), sortBlocksForAst);
-
-    unsigned reasons = function->reasons();
-
-    // Is the function part of the CFG?
-    ControlFlowGraph::ConstVertexNodeIterator entryVertex = findPlaceholder(function->address());
-    if (entryVertex != cfg_.vertices().end())
-        reasons |= SgAsmFunction::FUNC_GRAPH;
-    
-    // Is the function discontiguous?
-    if (aum(function).extent().nIntervals() > 1)
-        reasons |= SgAsmFunction::FUNC_DISCONT;
-
-    // Is the function the target of a function call?
-    if (entryVertex != cfg_.vertices().end()) {
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, entryVertex->inEdges()) {
-            if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
-                reasons |= SgAsmFunction::FUNC_CALL_TARGET;
-                break;
-            }
-        }
-    }
-
-    // Can this function return to its caller?
-    SgAsmFunction::MayReturn mayReturn = SgAsmFunction::RET_UNKNOWN;
-    if (entryVertex != cfg_.vertices().end()) {
-        if (BasicBlock::Ptr bb = entryVertex->value().bblock()) {
-            bool b = false;
-            if (bb->mayReturn().getOptional().assignTo(b))
-                mayReturn = b ? SgAsmFunction::RET_SOMETIMES : SgAsmFunction::RET_NEVER;
-        }
-    }
-
-    // What is the net change in stack pointer for this function?
-    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (function->stackDelta().isCached()) {
-        BaseSemantics::SValuePtr v = function->stackDelta().get();
-        if (v && v->is_number() && v->get_width()<=64)
-            stackDelta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-    }
-    
-    // Build the AST
-    SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
-    ast->set_reason(reasons);
-    ast->set_name(function->name());
-    ast->set_may_return(mayReturn);
-    ast->set_stackDelta(stackDelta);
-    return ast;
-}
-
-SgAsmBlock*
-Partitioner::buildGlobalBlockAst(bool relaxed) const {
-    // Create the children first
-    std::vector<SgAsmFunction*> children;
-    BOOST_FOREACH (const Function::Ptr &function, functions_.values()) {
-        if (SgAsmFunction *func = buildFunctionAst(function, relaxed)) {
-            children.push_back(func);
-        }
-    }
-    if (children.empty()) {
-        if (relaxed) {
-            mlog[WARN] <<"building an empty global block\n";
-        } else {
-            return NULL;
-        }
-    }
-
-    // Build the global block
-    SgAsmBlock *global = new SgAsmBlock;
-    BOOST_FOREACH (SgAsmFunction *function, children) {
-        global->get_statementList().push_back(function);
-        function->set_parent(global);
-    }
-    return global;
-}
-
-SgAsmBlock*
-Partitioner::buildAst(SgAsmInterpretation *interp/*=NULL*/, bool relaxed) const {
-    if (SgAsmBlock *global = buildGlobalBlockAst(relaxed)) {
-        fixupAstPointers(global, interp);
-        return global;
-    }
-    return NULL;
-}
-
-void
-Partitioner::fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) const {
-    typedef Sawyer::Container::Map<rose_addr_t, SgAsmNode*> Index;
-
-    // Build various indexes since ASTs have inherently linear search time.  We store just the starting address for all these
-    // things because that's all we ever want to point to.
-    struct Indexer: AstSimpleProcessing {
-        Index insnIndex, bblockIndex, funcIndex;
-        void visit(SgNode *node) {
-            if (SgAsmInstruction *insn = isSgAsmInstruction(node)) {
-                insnIndex.insert(insn->get_address(), insn);
-            } else if (SgAsmBlock *block = isSgAsmBlock(node)) {
-                if (!block->get_statementList().empty() && isSgAsmInstruction(block->get_statementList().front()))
-                    bblockIndex.insert(block->get_address(), block);
-            } else if (SgAsmFunction *func = isSgAsmFunction(node)) {
-                funcIndex.insert(func->get_entry_va(), func);
-            }
-        }
-    } indexer;
-    indexer.traverse(ast, preorder);
-
-    // Build a list of memory-mapped sections in the interpretation.  We'll use this list to select the best-matching section
-    // for a particular address via SgAsmGenericFile::best_section_by_va()
-    SgAsmGenericSectionPtrList mappedSections;
-    Index sectionIndex;
-    if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *header, interp->get_headers()->get_headers()) {
-            if (header->is_mapped())
-                mappedSections.push_back(header);
-            BOOST_FOREACH (SgAsmGenericSection *section, header->get_mapped_sections()) {
-                if (!section->get_mapped_xperm())
-                    mappedSections.push_back(section);
-            }
-        }
-    }
-
-    struct FixerUpper: AstSimpleProcessing {
-        const Index &insnIndex, &bblockIndex, &funcIndex;
-        const SgAsmGenericSectionPtrList &mappedSections;
-        FixerUpper(const Index &insnIndex, const Index &bblockIndex, const Index &funcIndex,
-                   const SgAsmGenericSectionPtrList &mappedSections)
-            : insnIndex(insnIndex), bblockIndex(bblockIndex), funcIndex(funcIndex), mappedSections(mappedSections) {}
-        void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                if (ival->get_baseNode()==NULL) {
-                    rose_addr_t va = ival->get_absoluteValue();
-                    SgAsmNode *base = NULL;
-                    if (funcIndex.getOptional(va).assignTo(base) || bblockIndex.getOptional(va).assignTo(base) ||
-                        insnIndex.getOptional(va).assignTo(base)) {
-                        ival->makeRelativeTo(base);
-                    } else if (SgAsmGenericSection *section = SgAsmGenericFile::best_section_by_va(mappedSections, va)) {
-                        ival->makeRelativeTo(section);
-                    }
-                }
-            }
-        }
-    } fixerUpper(indexer.insnIndex, indexer.bblockIndex, indexer.funcIndex, mappedSections);
-    fixerUpper.traverse(ast, preorder);
 }
 
 } // namespace

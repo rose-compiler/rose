@@ -65,6 +65,7 @@ struct Settings {
     bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
     bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
+    rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
@@ -72,7 +73,7 @@ struct Settings {
     std::string configurationName;                      // name of config file or directory containing such
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), intraFunctionData(true),
+          findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionData(true),
           httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
 
@@ -110,6 +111,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
+
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
                .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
@@ -124,6 +126,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("allow-discontiguous-blocks")
                .intrinsicValue(false, settings.allowDiscontiguousBlocks)
                .hidden(true));
+
     dis.insert(Switch("find-function-padding")
                .intrinsicValue(true, settings.findFunctionPadding)
                .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
@@ -134,6 +137,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-function-padding")
                .intrinsicValue(false, settings.findFunctionPadding)
                .hidden(true));
+
     dis.insert(Switch("follow-ghost-edges")
                .intrinsicValue(true, settings.followGhostEdges)
                .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
@@ -143,6 +147,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("follow-ghost-edges")
                .intrinsicValue(false, settings.followGhostEdges)
                .hidden(true));
+
     dis.insert(Switch("find-dead-code")
                .intrinsicValue(true, settings.findDeadCode)
                .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
@@ -153,6 +158,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("find-dead-code")
                .intrinsicValue(false, settings.findDeadCode)
                .hidden(true));
+
+    dis.insert(Switch("pe-scrambler")
+               .argument("dispatcher_address", nonNegativeIntegerParser(settings.peScramblerDispatcherVa))
+               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
+                    "that go into the specified @v{dispatcher_address} are immediately rewritten so they appear to go "
+                    "instead to the function contained in the dispatcher table which normally immediately follows the "
+                    "dispatcher function.  The dispatcher function is quite easy to find in a call graph because nearly "
+                    "everything calls it -- it will likely have far and away more callers than anything else.  Setting the "
+                    "address to zero disables this module (which is the default)."));
+
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
                .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
@@ -163,6 +178,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("intra-function-data")
                .intrinsicValue(false, settings.intraFunctionData)
                .hidden(true));
+
     dis.insert(Switch("remove-zeros")
                .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
                .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
@@ -175,10 +191,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     server.insert(Switch("http-address")
                   .argument("IP-address", anyParser(settings.httpAddress))
                   .doc("IP address to bind to server listening socket. The default is " + settings.httpAddress));
+
     server.insert(Switch("http-port")
                   .argument("TCP-port", nonNegativeIntegerParser(settings.httpPort))
                   .doc("TCP port at which the HTTP server will listen. The default is " +
                        boost::lexical_cast<std::string>(settings.httpPort) + "."));
+
     server.insert(Switch("docroot")
                   .argument("directory", anyParser(settings.docRoot))
                   .doc("Name of root directory for serving HTTP documents.  The default is \"" + settings.docRoot + "\"."));
@@ -273,7 +291,11 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         fileName = uniquePath(".dot");
         boost::filesystem::path tmpName = uniquePath(".dot");
         std::ofstream out(tmpName.string().c_str());
-        P2::GraphViz().dumpCfgFunction(out, partitioner, function);
+        P2::GraphViz graphViz;
+#if 1 // DEBUGGING [Robb P. Matzke 2014-12-13]
+        graphViz.showInstructions(true);
+#endif
+        graphViz.dumpCfgFunction(out, partitioner, function);
         out.close();
         std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
         system(dotCmd.c_str());
@@ -663,9 +685,13 @@ public:
                 sorter = Wt::AscendingOrder==order ? sortByAscendingReturns : sortByDescendingReturns;
                 break;
             case C_MAYRETURN:
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
+                    (void) functionMayReturn(ctx_.partitioner, function); // make sure they're all cached
                 sorter = Wt::AscendingOrder==order ? sortByAscendingMayReturn : sortByDescendingMayReturn;
                 break;
             case C_STACKDELTA:
+                BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
+                    (void) functionStackDelta(ctx_.partitioner, function); // make sure they're all cached
                 sorter = Wt::AscendingOrder==order ? sortByAscendingStackDelta : sortByDescendingStackDelta;
                 break;
             default:
@@ -1441,6 +1467,14 @@ int main(int argc, char *argv[]) {
         partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!settings.allowDiscontiguousBlocks)
         partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
+    if (settings.peScramblerDispatcherVa) {
+        P2::ModulesPe::PeDescrambler::Ptr cb = P2::ModulesPe::PeDescrambler::instance(settings.peScramblerDispatcherVa);
+        cb->nameKeyAddresses(partitioner);              // give names to certain PEScrambler things
+        partitioner.basicBlockCallbacks().append(cb);
+        partitioner.attachFunction(P2::Function::instance(settings.peScramblerDispatcherVa,
+                                                          partitioner.addressName(settings.peScramblerDispatcherVa),
+                                                          SgAsmFunction::FUNC_USERDEF)); 
+    }
     if (!settings.configurationName.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
         info <<"loading configuration files";

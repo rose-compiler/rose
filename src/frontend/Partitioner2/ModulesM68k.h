@@ -19,7 +19,7 @@ public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchLink); }
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner*, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches M68k function padding. */
@@ -27,7 +27,7 @@ class MatchFunctionPadding: public FunctionPaddingMatcher {
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchFunctionPadding); }
-    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */

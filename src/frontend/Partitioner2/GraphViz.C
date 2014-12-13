@@ -104,17 +104,32 @@ makeEdgeColor(const GraphViz::RgbColor &bg) {
 }
 
 std::string
-GraphViz::labelEscape(const std::string &s) {
+GraphViz::quotedEscape(const std::string &s) {
     std::string retval;
     for (size_t i=0; i<s.size(); ++i) {
         if ('\n'==s[i]) {
             retval += "\\n";
         } else if ('"'==s[i]) {
             retval += "\\\"";
-        } else if ('\\'==s[i] && i+1<s.size() && strchr("\\0abtnvfr", s[i+1])) {
-            retval += "\\";                             // seems to already be escaped
-        } else if ('\\'==s[i]) {
-            retval += "\\\\";
+        } else {
+            retval += s[i];
+        }
+    }
+    return retval;
+}
+
+std::string
+GraphViz::htmlEscape(const std::string &s) {
+    std::string retval;
+    for (size_t i=0; i<s.size(); ++i) {
+        if ('\n'==s[i]) {
+            retval += "<br/>";
+        } else if ('<'==s[i]) {
+            retval += "&lt;";
+        } else if ('>'==s[i]) {
+            retval += "&gt;";
+        } else if ('&'==s[i]) {
+            retval += "&amp;";
         } else {
             retval += s[i];
         }
@@ -146,8 +161,8 @@ GraphViz::vertexLabel(const Partitioner &partitioner, const ControlFlowGraph::Co
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
         std::string s;
         BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions())
-            s += (s.empty()?"":"\n") + unparseInstructionWithAddress(insn);
-        return StringUtility::cEscape(s);
+            s += htmlEscape(unparseInstructionWithAddress(insn)) + "<br align=\"left\"/>";
+        return "<" + s + ">";
     }
     return vertexLabelSimple(partitioner, vertex);
 }
@@ -158,18 +173,18 @@ GraphViz::vertexLabelSimple(const Partitioner &partitioner, const ControlFlowGra
     switch (vertex->value().type()) {
         case V_BASIC_BLOCK:
             if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-                return vertex->value().function()->printableName();
+                return "\"" + quotedEscape(vertex->value().function()->printableName()) + "\"";
             } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                return bb->printableName();
+                return "\"" + quotedEscape(bb->printableName()) + "\"";
             } else {
-                return StringUtility::addrToString(vertex->value().address());
+                return "\"" + StringUtility::addrToString(vertex->value().address()) + "\"";
             }
         case V_NONEXISTING:
-            return "nonexisting";
+            return "\"nonexisting\"";
         case V_UNDISCOVERED:
-            return "undiscovered";
+            return "\"undiscovered\"";
         case V_INDETERMINATE:
-            return "indeterminate";
+            return "\"indeterminate\"";
     }
 }
 
@@ -180,7 +195,7 @@ GraphViz::vertexAttributes(const Partitioner &partitioner, const ControlFlowGrap
     attr["shape"] = "box";
 
     if (vertex->value().type() == V_BASIC_BLOCK) {
-        attr["labeljust"] = "l";                        // doesn't seem to align left [Robb P. Matzke 2014-12-01]
+        attr["fontname"] = "Courier";
 
         if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
             attr["style"] = "filled";
@@ -209,7 +224,7 @@ GraphViz::dumpVertex(std::ostream &out, const Partitioner &partitioner,
     size_t id = NO_ID;
     if (!vmap_.getOptional(vertex).assignTo(id) && isSelected(partitioner, vertex)) {
         id = vmap_.size();
-        out <<id <<" [ label=\"" <<labelEscape(vertexLabel(partitioner, vertex)) <<"\" ";
+        out <<id <<" [ label=" <<vertexLabel(partitioner, vertex) <<" ";
         if (vertex->value().type() == V_BASIC_BLOCK)
             out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
         out <<vertexAttributes(partitioner, vertex) <<" ];\n";
@@ -225,7 +240,7 @@ GraphViz::dumpVertexInfo(std::ostream &out, const Partitioner &partitioner,
     size_t id = NO_ID;
     if (!vmap_.getOptional(vertex).assignTo(id)) {
         id = vmap_.size();
-        out <<id <<" [ label=\"" <<labelEscape(vertexLabelSimple(partitioner, vertex)) <<"\" ";
+        out <<id <<" [ label=" <<vertexLabelSimple(partitioner, vertex) <<" ";
         if (vertex->value().type() == V_BASIC_BLOCK)
             out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
         out <<vertexAttributes(partitioner, vertex) <<" ];\n";
@@ -251,7 +266,7 @@ GraphViz::edgeLabel(const Partitioner &partitioner, const ControlFlowGraph::Cons
         case E_CALL_RETURN:
             s = "cret";
             if (edge->value().confidence() == ASSUMED)
-                s += "\nassumed";
+                s += "\\nassumed";
             break;
         case E_NORMAL: {
             // Normal edges don't get labels unless its intra-function, otherwise the graphs would be too noisy.
@@ -261,7 +276,7 @@ GraphViz::edgeLabel(const Partitioner &partitioner, const ControlFlowGraph::Cons
             break;
         }
     }
-    return s;
+    return "\"" + s + "\"";
 }
 
 std::string
@@ -309,7 +324,7 @@ GraphViz::dumpEdge(std::ostream &out, const Partitioner &partitioner,
     }
     
     if (vmap_.getOptional(edge->source()).assignTo(sourceId) && vmap_.getOptional(edge->target()).assignTo(targetId)) {
-        out <<sourceId <<" -> " <<targetId <<" [ label=\"" <<labelEscape(edgeLabel(partitioner, edge)) <<"\" "
+        out <<sourceId <<" -> " <<targetId <<" [ label=" <<edgeLabel(partitioner, edge) <<" "
             <<edgeAttributes(partitioner, edge) <<" ];\n";
         return true;
     }
@@ -352,7 +367,7 @@ GraphViz::dumpInterFunctionOutEdges(std::ostream &out, const Partitioner &partit
 std::string
 GraphViz::functionLabel(const Partitioner &partitioner, const Function::Ptr &function) const {
     ASSERT_not_null(function);
-    return function->printableName();
+    return "\"" + quotedEscape(function->printableName()) + "\"";
 }
 
 std::string
@@ -373,11 +388,11 @@ GraphViz::dumpFunctionInfo(std::ostream &out, const Partitioner &partitioner,
         Function::Ptr function;
         if (vertex->value().type() == V_BASIC_BLOCK && (function = vertex->value().function()) &&
             function->address() == vertex->value().address()) {
-            out <<id <<" [ label=\"" <<labelEscape(functionLabel(partitioner, function)) <<"\" "
+            out <<id <<" [ label=" <<functionLabel(partitioner, function) <<" "
                 <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
                 <<functionAttributes(partitioner, function) <<" ];\n";
         } else {
-            out <<id <<" [ label=\"" <<labelEscape(vertexLabelSimple(partitioner, vertex)) <<"\" ";
+            out <<id <<" [ label=" <<vertexLabelSimple(partitioner, vertex) <<" ";
             if (vertex->value().type() == V_BASIC_BLOCK)
                 out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
             out <<vertexAttributes(partitioner, vertex) <<" ];\n";
@@ -494,7 +509,7 @@ GraphViz::dumpCfgAll(std::ostream &out, const Partitioner &partitioner) const {
         BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
             if (isSelected(partitioner, partitioner.findPlaceholder(function->address()))) {
                 mfprintf(out)("\nsubgraph cluster_F%"PRIx64" {", function->address());
-                out <<" label=\"" <<labelEscape(functionLabel(partitioner, function)) <<"\" "
+                out <<" label=" <<functionLabel(partitioner, function) <<" "
                     <<functionAttributes(partitioner, function) <<";\n";
                 dumpIntraFunction(out, partitioner, function);
                 out <<"}\n";
@@ -545,7 +560,7 @@ GraphViz::dumpCallGraph(std::ostream &out, const Partitioner &partitioner) const
 
     BOOST_FOREACH (const CG::VertexNode &vertex, cg.graph().vertices()) {
         const Function::Ptr &function = vertex.value();
-        out <<vertex.id() <<" [ label=\"" <<labelEscape(functionLabel(partitioner, function)) <<"\" "
+        out <<vertex.id() <<" [ label=" <<functionLabel(partitioner, function) <<" "
             <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
             <<functionAttributes(partitioner, function) <<" ]\n";
     }

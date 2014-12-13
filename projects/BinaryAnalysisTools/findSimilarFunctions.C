@@ -441,7 +441,7 @@ loadFunctions(const std::string &fileName, Disassembler *disassembler) {
     Sawyer::Stopwatch partitionTime;
     P2::Partitioner partitioner = engine.createTunedPartitioner();
     engine.runPartitioner(partitioner, interp);
-    SgAsmBlock *gblock = partitioner.buildGlobalBlockAst();
+    SgAsmBlock *gblock = P2::Modules::buildGlobalBlockAst(partitioner);
     info <<"; completed in " <<partitionTime <<" seconds\n";
 
     return SageInterface::querySubTree<SgAsmFunction>(gblock);

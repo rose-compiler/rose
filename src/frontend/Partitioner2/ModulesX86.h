@@ -25,7 +25,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -40,7 +40,7 @@ class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 <cde>MOV EDI,EDI; PUSH ESI</code> function prologe. */
@@ -50,7 +50,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -60,7 +60,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Match thunk.
@@ -80,7 +80,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchLeaJmpThunk); } /**< Allocating constructor. */
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Match RET followed by PUSH with intervening no-op padding. */
@@ -90,7 +90,7 @@ protected:
 public:
     static Ptr instance() { return Ptr(new MatchRetPadPush); } /**< Allocating constructor. */
     virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner *partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
 /** Basic block callback to detect function returns.
