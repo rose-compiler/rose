@@ -184,16 +184,21 @@ protected:
     // Invalid identification number
     static const size_t NO_ID = -1;
 
-    // Escape things that need to be escaped for GraphViz labels in double quotes.
-    static std::string labelEscape(const std::string&);
+    // Escape things that need to be escaped for GraphViz double quoted values.
+    static std::string quotedEscape(const std::string&);
+
+    // Escape things that need to be escaped for GraphViz HTML strings
+    static std::string htmlEscape(const std::string&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Vertex methods
 protected:
-    // Complete label for vertex. May include multiple lines (such as instruction listings)
+    // Complete label for vertex, including double quotes or angle brackets with proper escaping of contents. May render to
+    // more than one line.
     virtual std::string vertexLabel(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
-    // Simple, short label. Usually a single line, or maybe two but not much more.
+    // Simple, short label including double quotes or angle brackets with proper escaping of contents. Usually a single line,
+    // or maybe two but not much more.
     virtual std::string vertexLabelSimple(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
     // GraphViz attributes for a vertex
@@ -210,7 +215,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Edge methods
 protected:
-    // Label for edge.
+    // Label for edge including double quotes or angle brackets with proper escaping of contents.
     virtual std::string edgeLabel(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
 
     // GraphViz attributes for an edge.
@@ -222,7 +227,7 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Function methods
 protected:
-    // Label for function.
+    // Label for function including double quotes or angle brackets with proper escaping of contents.
     virtual std::string functionLabel(const Partitioner&, const Function::Ptr&) const;
 
     // GraphViz attributes for function vertex.

@@ -253,6 +253,84 @@ buildStackDeltaList(Partitioner &partitioner) {
     partitioner.functionStackDelta("EncodePointer@KERNEL32.dll", +8);
 }
 
+void
+PeDescrambler::nameKeyAddresses(Partitioner &partitioner) {
+    if (partitioner.addressName(dispatcherVa_).empty())
+        partitioner.addressName(dispatcherVa_, "PEScrambler_dispatcher");
+    if (partitioner.addressName(dispatchTableVa_).empty())
+        partitioner.addressName(dispatchTableVa_, "PEScrambler_dispatch_table");
+}
+
+bool
+PeDescrambler::operator()(bool chain, const Args &args) {
+    if (!checkedPreconditions_) {
+        if (args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() != 32)
+            throw std::runtime_error("PeDescrambler module only works on 32-bit specimens");
+        checkedPreconditions_ = true;
+    }
+
+    rose_addr_t calleeVa = 0;
+    if (chain &&
+        basicBlockCallsDispatcher(args.partitioner, args.bblock) &&
+        findCalleeAddress(args.partitioner, args.bblock->fallthroughVa()).assignTo(calleeVa)) {
+        SAWYER_MESG(mlog[DEBUG]) <<"PEScrambler edge rewrite"
+                                 <<" from " <<StringUtility::addrToString(args.bblock->address())
+                                 <<" -> " <<StringUtility::addrToString(dispatcherVa_)
+                                 <<" to " <<StringUtility::addrToString(calleeVa) <<"\n";
+        args.bblock->successors().clear();
+        args.bblock->insertSuccessor(calleeVa, bitsPerWord); // let partitioner figure out the edge type
+    }
+    return chain;
+}
+
+bool
+PeDescrambler::basicBlockCallsDispatcher(const Partitioner &partitioner, const BasicBlock::Ptr &bblock) {
+    ASSERT_not_null(bblock);
+    SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(bblock->instructions().back());
+    if (!x86insn || (x86insn->get_kind() != x86_call && x86insn->get_kind() != x86_farcall))
+        return false;
+    std::vector<rose_addr_t> successors = partitioner.basicBlockConcreteSuccessors(bblock);
+    return 1==successors.size() && 1==partitioner.basicBlockSuccessors(bblock).size() && successors.front() == dispatcherVa_;
+}
+
+Sawyer::Optional<rose_addr_t>
+PeDescrambler::findCalleeAddress(const Partitioner &partitioner, rose_addr_t returnVa) {
+    size_t tableIdx = 0;
+    bool hitNullEntry = false;
+    while (1) {
+        if (tableIdx >= dispatchTable_.size() && !reachedEndOfTable_) {
+            // suck in some more table entries if possible
+            static const size_t nEntriesToRead = 512; // arbitrary
+            static const size_t wordsPerEntry = 2;
+            static const size_t bytesPerEntry = wordsPerEntry * 4;
+            static const size_t nWordsToRead = nEntriesToRead * wordsPerEntry;
+            static uint32_t buf[nWordsToRead];
+            rose_addr_t batchVa = dispatchTableVa_ + dispatchTable_.size() * sizeof(DispatchEntry);
+            size_t nReadBytes = partitioner.memoryMap().at(batchVa).limit(sizeof buf).read((uint8_t*)buf).size();
+            reachedEndOfTable_ = nReadBytes < bytesPerEntry;
+            for (size_t i=0; 4*(i+1)<nReadBytes; i+=2)
+                dispatchTable_.push_back(DispatchEntry(ByteOrder::le_to_host(buf[i+0]), ByteOrder::le_to_host(buf[i+1])));
+            SAWYER_MESG(mlog[DEBUG]) <<"read " <<StringUtility::plural(nReadBytes, "bytes") <<" from PEScrambler dispatch "
+                                     <<"table at " <<StringUtility::addrToString(batchVa) <<"\n";
+        }
+        if (tableIdx >= dispatchTable_.size())
+            return Sawyer::Nothing();               // couldn't find a suitable entry
+        if (dispatchTable_[tableIdx].returnVa == returnVa) {
+            rose_addr_t va = dispatchTable_[tableIdx].calleeVa;
+            if (hitNullEntry) {
+                uint32_t va2;
+                if (4 != partitioner.memoryMap().at(va).limit(4).read((uint8_t*)&va2).size())
+                    return Sawyer::Nothing();       // couldn't dereference table entry
+                va = ByteOrder::le_to_host(va2);
+            }
+            return va;
+        }
+        if (dispatchTable_[tableIdx].returnVa == 0)
+            hitNullEntry = true;
+        ++tableIdx;
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -50,14 +50,14 @@ findErrorHandlingFunctions(SgAsmInterpretation *interp) {
 
 
 bool
-PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
+PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     nBytesMatched_ = 0;
-    SgAsmInstruction *insn = partitioner->discoverInstruction(anchor);
+    SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
     SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn);
 
     // FIXME[Robb P. Matzke 2014-08-23]: Only i386 is supported for now
     static bool warned = false;
-    const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
     if (insn && !insnX86 && !warned && REG_IP.get_nbits()!=32) {
         mlog[WARN] <<"ModulesElf::pltEntryMatcher does not yet support this ISA\n";
         warned = true;
@@ -114,7 +114,7 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
     while (pltOffset<plt->get_mapped_size()) {
         PltEntryMatcher matcher(elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva());
         rose_addr_t pltEntryVa = plt->get_mapped_actual_va() + pltOffset;
-        if (!matcher.match(&partitioner, pltEntryVa)) {
+        if (!matcher.match(partitioner, pltEntryVa)) {
             ++pltOffset;
             continue;
         }

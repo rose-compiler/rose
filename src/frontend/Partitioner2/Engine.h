@@ -67,8 +67,11 @@ class Engine {
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap map_;                                     // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
+    bool dataMentionedFunctionSearch_;                  // search for functions mentioned in read-only data?
 public:
-    Engine(): interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()) {}
+    Engine()
+        : interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()),
+          dataMentionedFunctionSearch_(false) {}
 
     virtual ~Engine() {}
 
@@ -126,6 +129,19 @@ public:
     Partitioner partition(const std::string &fileName) { return partition(std::vector<std::string>(1, fileName)); }
     virtual Partitioner partition(SgAsmInterpretation*);
     /** @} */
+
+    /** Obtain an abstract syntax tree.
+     *
+     *  Constructs a new abstract syntax tree from partitioner information.  The method that takes a file name or list of file
+     *  names calls the @ref partitioner method first on those names, thus it can be a very simple way to disassemble and
+     *  partition all at once, returning a final AST.
+     *
+     * @{ */
+    SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    SgAsmBlock* buildAst(const std::string &fileName) { return buildAst(std::vector<std::string>(1, fileName)); }
+    virtual SgAsmBlock* buildAst(const Partitioner&);
+    /** @} */
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Some utilities
@@ -195,14 +211,25 @@ public:
     virtual size_t configureFromFile(Partitioner&, const FileSystem::Path&);
 
 private:
-    void checkCreatePartitionerPrerequisites() const;
+    virtual void checkCreatePartitionerPrerequisites() const;
     
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-
+    /** Property: make data-mentioned functions.
+     *
+     *  If true, then the @ref discoverFunctions will look for read-only data that mentions addresses that are executable and
+     *  don't correspond to any known instruction or data, and make a function at that address.  This is good for finding
+     *  functions that are used for error handling callbacks, but can introduce a large number of conflicts if those addresses
+     *  aren't really the beginning of functions.
+     *
+     * @{ */
+    virtual bool dataMentionedFunctionSearch() const { return dataMentionedFunctionSearch_; }
+    virtual void dataMentionedFunctionSearch(bool b) { dataMentionedFunctionSearch_ = b; }
+    /** @} */
+    
     /** Property: interpretation.
      *
      *  Returns the interpretation, if any, that was created by the @ref parse step.  If the interpretation is changed then
@@ -211,7 +238,7 @@ public:
      *
      * @{ */
     SgAsmInterpretation* interpretation() const { return interp_; }
-    Engine& interpretation(SgAsmInterpretation *i) { interp_ = i; return *this; }
+    virtual void interpretation(SgAsmInterpretation *i) { interp_ = i; }
     /** @} */
 
     /** Property: loader
@@ -224,7 +251,7 @@ public:
      *
      * @{ */
     BinaryLoader* loader() const { return loader_; }
-    Engine& loader(BinaryLoader *l) { loader_ = l; return *this; }
+    virtual void loader(BinaryLoader *l) { loader_ = l; }
     /** @} */
 
     /** Property: memory map
@@ -241,7 +268,7 @@ public:
      * @{ */
     MemoryMap& memoryMap() { return map_; }
     const MemoryMap& memoryMap() const { return map_; }
-    Engine& memoryMap(const MemoryMap &m) { map_ = m; return *this; }
+    virtual void memoryMap(const MemoryMap &m) { map_ = m; }
     /** @} */
 
     /** Property: disassembler.
@@ -253,7 +280,7 @@ public:
      *
      * @{ */
     Disassembler *disassembler() const { return disassembler_; }
-    Engine& disassembler(Disassembler *d) { disassembler_ = d; return *this; }
+    virtual void disassembler(Disassembler *d) { disassembler_ = d; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,7 +369,7 @@ public:
      *
      *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
      *  condition for a false return is that the pendingCallReturn list is empty. */
-    bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
+    virtual bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods to make functions.

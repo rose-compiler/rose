@@ -14,24 +14,22 @@ namespace Partitioner2 {
 namespace ModulesX86 {
 
 bool
-MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    ASSERT_not_null(partitioner);
-
+MatchStandardPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // Look for PUSH EBP
     SgAsmX86Instruction *insn = NULL; 
     rose_addr_t pushVa = anchor;
-    if (partitioner->instructionExists(pushVa))
+    if (partitioner.instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
-    if (!matchPushBp(*partitioner, insn))
+    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
+    if (!matchPushBp(partitioner, insn))
         return false;
 
     // Look for MOV RBP,RSP following the PUSH.
     rose_addr_t moveVa = insn->get_address() + insn->get_size();
-    if (partitioner->instructionExists(moveVa))
+    if (partitioner.instructionExists(moveVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
-    if (!matchMovBpSp(*partitioner, insn))
+    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(moveVa));
+    if (!matchMovBpSp(partitioner, insn))
         return false;
 
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
@@ -39,13 +37,13 @@ MatchStandardPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
 }
 
 bool
-MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
+MatchHotPatchPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // Match MOV EDI, EDI
     rose_addr_t moveVa = anchor;
-    if (partitioner->instructionExists(moveVa))
+    if (partitioner.instructionExists(moveVa))
         return false;                               // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(moveVa));
-    if (!matchMovDiDi(*partitioner, insn))
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(moveVa));
+    if (!matchMovDiDi(partitioner, insn))
         return false;
 
     // Match a standard prologue immediately following the hot-patch
@@ -58,21 +56,21 @@ MatchHotPatchPrologue::match(const Partitioner *partitioner, rose_addr_t anchor)
 
 // Example function pattern matcher: matches x86 "MOV EDI, EDI; PUSH ESI" as a function prologue.
 bool
-MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
+MatchAbbreviatedPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // Look for MOV EDI, EDI
     rose_addr_t movVa = anchor;
-    if (partitioner->instructionExists(movVa))
+    if (partitioner.instructionExists(movVa))
         return false;                                   // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(movVa));
-    if (!matchMovDiDi(*partitioner, insn))
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(movVa));
+    if (!matchMovDiDi(partitioner, insn))
         return false;
 
     // Look for PUSH ESI
     rose_addr_t pushVa = insn->get_address() + insn->get_size();
-    if (partitioner->instructionExists(pushVa))
+    if (partitioner.instructionExists(pushVa))
         return false;                                   // already in the CFG/AUM
-    insn = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
-    if (!matchPushSi(*partitioner, insn))
+    insn = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
+    if (!matchPushSi(partitioner, insn))
         return false;
 
     // Seems good!
@@ -81,67 +79,62 @@ MatchAbbreviatedPrologue::match(const Partitioner *partitioner, rose_addr_t anch
 }
 
 bool
-MatchEnterPrologue::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    ASSERT_not_null(partitioner);
-    if (partitioner->instructionExists(anchor))
+MatchEnterPrologue::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    if (partitioner.instructionExists(anchor))
         return false;                                   // already in the CFG/AUM
-    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor));
-    if (!matchEnterAnyZero(*partitioner, insn))
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor));
+    if (!matchEnterAnyZero(partitioner, insn))
         return false;
     function_ = Function::instance(anchor, SgAsmFunction::FUNC_PATTERN);
     return true;
 }
 
 bool
-MatchLeaJmpThunk::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    ASSERT_not_null(partitioner);
-
+MatchLeaJmpThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // LEA ECX, [EBP + constant]
     rose_addr_t leaVa = anchor;
-    if (partitioner->instructionExists(leaVa))
+    if (partitioner.instructionExists(leaVa))
         return false;
-    SgAsmX86Instruction *lea = isSgAsmX86Instruction(partitioner->discoverInstruction(leaVa));
-    if (!matchLeaCxMemBpConst(*partitioner, lea))
+    SgAsmX86Instruction *lea = isSgAsmX86Instruction(partitioner.discoverInstruction(leaVa));
+    if (!matchLeaCxMemBpConst(partitioner, lea))
         return false;
 
     // JMP address
     rose_addr_t jmpVa = lea->get_address() + lea->get_size();
-    if (partitioner->instructionExists(jmpVa))
+    if (partitioner.instructionExists(jmpVa))
         return false;
-    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(partitioner->discoverInstruction(jmpVa));
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(partitioner.discoverInstruction(jmpVa));
     rose_addr_t targetVa;
-    if (!matchJmpConst(*partitioner, jmp).assignTo(targetVa))
+    if (!matchJmpConst(partitioner, jmp).assignTo(targetVa))
         return false;
 
     // Check target address
-    if (!partitioner->instructionExists(targetVa) && !partitioner->instructionsOverlapping(targetVa).empty())
+    if (!partitioner.instructionExists(targetVa) && !partitioner.instructionsOverlapping(targetVa).empty())
         return false;                                   // target cannot be in the middle of some instruction
-    SgAsmX86Instruction *targetInsn = isSgAsmX86Instruction(partitioner->discoverInstruction(targetVa));
+    SgAsmX86Instruction *targetInsn = isSgAsmX86Instruction(partitioner.discoverInstruction(targetVa));
     if (!targetInsn)
         return false;                                   // we must be able to disassemble an instruction there
 
     // The thunk is a function, and the thing to which it points is a function.
     functions_.clear();
     functions_.push_back(Function::instance(anchor, SgAsmFunction::FUNC_THUNK));
-    if (!partitioner->functionExists(targetVa))
+    if (!partitioner.functionExists(targetVa))
         functions_.push_back(Function::instance(targetVa, SgAsmFunction::FUNC_GRAPH));
 
     return true;
 }
 
 bool
-MatchRetPadPush::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    ASSERT_not_null(partitioner);
-
+MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // RET (prior to anchor) must already exist in the CFG/AUM
     // The RET instruction can be 1 or 3 bytes.
     SgAsmX86Instruction *ret = NULL;
-    if (partitioner->instructionExists(anchor-1) &&
-        (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-1))) &&
+    if (partitioner.instructionExists(anchor-1) &&
+        (ret = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor-1))) &&
         ret->get_kind() == x86_ret && ret->get_size()==1) {
         // found RET
-    } else if (partitioner->instructionExists(anchor-3) &&
-               (ret = isSgAsmX86Instruction(partitioner->discoverInstruction(anchor-3))) &&
+    } else if (partitioner.instructionExists(anchor-3) &&
+               (ret = isSgAsmX86Instruction(partitioner.discoverInstruction(anchor-3))) &&
                ret->get_kind() == x86_ret && ret->get_size()==3) {
         // found RET x
     } else {
@@ -150,19 +143,19 @@ MatchRetPadPush::match(const Partitioner *partitioner, rose_addr_t anchor) {
 
     // Optional padding (NOP; or INT3; or MOV EDI,EDI)
     rose_addr_t padVa = anchor;
-    if (partitioner->instructionExists(padVa))
+    if (partitioner.instructionExists(padVa))
         return false;
-    SgAsmX86Instruction *pad = isSgAsmX86Instruction(partitioner->discoverInstruction(padVa));
+    SgAsmX86Instruction *pad = isSgAsmX86Instruction(partitioner.discoverInstruction(padVa));
     if (!pad)
         return false;
-    if (pad->get_kind() != x86_nop && pad->get_kind() != x86_int3 && !matchMovDiDi(*partitioner, pad))
+    if (pad->get_kind() != x86_nop && pad->get_kind() != x86_int3 && !matchMovDiDi(partitioner, pad))
         pad = NULL;
 
     // PUSH x
     rose_addr_t pushVa = padVa + (pad ? pad->get_size() : 0);
-    if (partitioner->instructionExists(pushVa))
+    if (partitioner.instructionExists(pushVa))
         return false;
-    SgAsmX86Instruction *push = isSgAsmX86Instruction(partitioner->discoverInstruction(pushVa));
+    SgAsmX86Instruction *push = isSgAsmX86Instruction(partitioner.discoverInstruction(pushVa));
     if (!push || push->get_kind()!=x86_push)
         return false;
 
@@ -189,7 +182,7 @@ FunctionReturnDetector::operator()(bool chain, const Args &args) {
         // A RET/RETF that has a single successor that is concrete probably isn't a real function return. Sometimes these
         // instructions are used to hide unconditional branches, like "PUSH label; RET".
         bool isComplete = false;
-        std::vector<rose_addr_t> concreteSuccessors = args.partitioner->basicBlockConcreteSuccessors(args.bblock, &isComplete);
+        std::vector<rose_addr_t> concreteSuccessors = args.partitioner.basicBlockConcreteSuccessors(args.bblock, &isComplete);
         if (1==concreteSuccessors.size() && isComplete) {
             args.bblock->isFunctionReturn() = false;
             return chain;
@@ -470,7 +463,6 @@ findTableBase(SgAsmExpression *expr) {
 // A "switch" statement is a computed jump consisting of a base address and a register offset.
 bool
 SwitchSuccessors::operator()(bool chain, const Args &args) {
-    ASSERT_not_null(args.partitioner);
     ASSERT_not_null(args.bblock);
     static const rose_addr_t NO_ADDR(-1);
     if (!chain)
@@ -521,7 +513,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     // Set some limits on the location of the target address table, besides those restrictions that will be imposed during the
     // table-reading loop (like table is mapped read-only).
-    size_t wordSize = args.partitioner->instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    size_t wordSize = args.partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
     AddressInterval whole = AddressInterval::hull(0, IntegerOps::genMask<rose_addr_t>(8*wordSize));
     AddressInterval tableLimits = AddressInterval::hull(tableVa, whole.greatest());
 
@@ -533,7 +525,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // function.
     {
         Function::Ptr needle = Function::instance(args.bblock->fallthroughVa());
-        std::vector<Function::Ptr> functions = args.partitioner->functions();
+        std::vector<Function::Ptr> functions = args.partitioner.functions();
         std::vector<Function::Ptr>::iterator nextFunctionIter = std::lower_bound(functions.begin(), functions.end(),
                                                                                  needle, sortFunctionsByAddress);
         if (nextFunctionIter != functions.end()) {
@@ -545,7 +537,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     }
 
     // Read the table
-    std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(*args.partitioner, tableLimits /*in,out*/,
+    std::vector<rose_addr_t> tableEntries = scanCodeAddressTable(args.partitioner, tableLimits /*in,out*/,
                                                                  targetLimits, wordSize);
     if (tableEntries.empty())
         return chain;
