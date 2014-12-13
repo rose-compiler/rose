@@ -22,6 +22,7 @@ class PASolver1 {
 	   );
   virtual void runSolver();
   void computeCombinedPreInfo(Label lab,Lattice& inInfo);
+  void computePostInfo(Label lab,Lattice& inInfo);
 
  protected:
   WorkListSeq<Edge>& _workList;

@@ -11,7 +11,6 @@
 
 using namespace CodeThorn;
 
-
 ProgramAnalysis::ProgramAnalysis():
   _labeler(0),
   _cfanalyzer(0),
@@ -43,16 +42,12 @@ void ProgramAnalysis::initializeExtremalValue(Lattice* element) {
 }
 
 Lattice* ProgramAnalysis::getPreInfo(Label lab) {
-  computeAllPreInfo();
   return _analyzerDataPreInfo[lab.getId()];
 }
 
-
 Lattice* ProgramAnalysis::getPostInfo(Label lab) {
-  computeAllPostInfo();
   return _analyzerDataPostInfo[lab.getId()];
 }
-
 
 void ProgramAnalysis::computeAllPreInfo() {
   if(!_preInfoIsValid) {
@@ -156,7 +151,7 @@ ProgramAnalysis::initialize(SgProject* root) {
     Lattice* le2=_initialElementFactory->create();
     _analyzerDataPostInfo.push_back(le2);
   }
-  cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPostInfo.size()<< " labels."<<endl;
+  cout << "STATUS: initialized monotone data flow analyzer for "<<_analyzerDataPreInfo.size()<< " labels."<<endl;
 
   cout << "INIT: initialized pre/post property states."<<endl;
   if(isBackwardAnalysis()) {
@@ -269,6 +264,7 @@ ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
 void
 ProgramAnalysis::solve() {
   computeAllPreInfo();
+  computeAllPostInfo();
 }
 
 DFAstAttribute* ProgramAnalysis::createDFAstAttribute(Lattice* elem) {
@@ -284,7 +280,6 @@ ProgramAnalysis::run() {
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
-    //_transferFunctions->transfer(*i,*_analyzerDataPostInfo[(*i).getId()]);
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(&_variableIdMapping);
     cout<<endl;
@@ -307,7 +302,7 @@ ProgramAnalysis::run() {
 
 ProgramAnalysis::ResultAccess&
 ProgramAnalysis::getResultAccess() {
-  return _analyzerDataPostInfo;
+  return _analyzerDataPreInfo;
 }
 
 #include <iostream>
@@ -322,8 +317,8 @@ using std::string;
 
 void ProgramAnalysis::attachResultsToAst(string attributeName) {
   size_t lab=0;
-  for(std::vector::iterator i=_analyzerDataPostInfo.begin();
-      i!=_analyzerDataPostInfo.end();
+  for(std::vector::iterator i=_analyzerDataPreInfo.begin();
+      i!=_analyzerDataPreInfo.end();
       ++i) {
     std::stringstream ss;
     (&(*i))->toStream(ss,&_variableIdMapping);
@@ -372,6 +367,10 @@ size_t ProgramAnalysis::size() {
   * \date 2012.
  */
 
+// parameter 2: ingoing information: true, outgoing=false
+/* TODO: nodes with multiple associated labels need to be attached multiple attributes (or a list of attributes)
+   e.g. FunctionEntry/FunctionExit are associated with SgFunctionDefinition (should be a vector of attributes at each node)
+ */
 void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
   computeAllPreInfo();
   computeAllPostInfo();
@@ -380,12 +379,29 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
       i!=labelSet.end();
       ++i) {
     ROSE_ASSERT(*i<_analyzerDataPreInfo.size());
+    ROSE_ASSERT(*i<_analyzerDataPostInfo.size());
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
     if(*i >=0 ) {
-      if(inInfo)
-        _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPreInfo[(*i).getId()]));
-      else
-        _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(_analyzerDataPostInfo[(*i).getId()]));
+      Label lab=*i;
+      if(inInfo) {
+        if(isForwardAnalysis()) {
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPreInfo(lab)));
+        } else if(isBackwardAnalysis()) {
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPostInfo(lab)));
+        } else {
+          cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
+          exit(1);
+        }
+      } else {
+        if(isForwardAnalysis()) {
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPostInfo(lab)));
+        } else if(isBackwardAnalysis()) {
+          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPreInfo(lab)));
+        } else {
+          cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
+          exit(1);
+        }
+      }
     }
   }
 }
@@ -396,12 +412,7 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
  */
 
 void ProgramAnalysis::attachInInfoToAst(string attributeName) {
-  computeAllPreInfo();
-  if(isForwardAnalysis()) {
-    attachInfoToAst(attributeName,true);
-  } else if(isBackwardAnalysis()) {
-    attachInfoToAst(attributeName,false);
-  }
+  attachInfoToAst(attributeName,true);
 }
 
 /*! 
@@ -410,10 +421,5 @@ void ProgramAnalysis::attachInInfoToAst(string attributeName) {
  */
 
 void ProgramAnalysis::attachOutInfoToAst(string attributeName) {
-  computeAllPostInfo();
-  if(isForwardAnalysis()) {
-    attachInfoToAst(attributeName,false);
-  } else if(isBackwardAnalysis()) {
-    attachInfoToAst(attributeName,true);
-  }
+  attachInfoToAst(attributeName,false);
 }
