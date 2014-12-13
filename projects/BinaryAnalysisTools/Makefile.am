@@ -39,12 +39,26 @@ checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 if ROSE_USE_WT
 
-bin_PROGRAMS += bROwSE
-bROwSE_SOURCES = bROwSE.C
-bROwSE_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include
-bROwSE_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+bin_PROGRAMS += bROwSE-server
+bROwSE_server_SOURCES =				\
+	bROwSE/Application.C			\
+	bROwSE/bROwSE.C				\
+	bROwSE/FunctionListModel.C		\
+	bROwSE/FunctionUtil.C			\
+	bROwSE/InstructionListModel.C		\
+	bROwSE/WBasicBlock.C			\
+	bROwSE/WBasicBlockInsns.C		\
+	bROwSE/WBasicBlockSummary.C		\
+	bROwSE/WFunctionCfg.C			\
+	bROwSE/WFunctionList.C			\
+	bROwSE/WFunctions.C			\
+	bROwSE/WFunctionSummary.C		\
+	bROwSE/WInstructionList.C
+bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
+bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 endif
+
 
 #------------------------------------------------------------------------------------------------------------------------
 # Find paths in the CFG
