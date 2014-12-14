@@ -48,13 +48,8 @@ PASolver1::runSolver() {
     Label lab0=edge.source;
     Label lab1=edge.target;
     Lattice* info=_initialElementFactory.create();
-#if 0
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
-#else
-    computeCombinedPreInfo(lab0,*info);
-    cout<<"DEBUG: PRE2 @"<<lab0<<info->toString()<<endl;
-#endif
-    //_transferFunctions.transfer(lab0,*info);
+    _transferFunctions.transfer(lab0,*info);
     bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
     if(!isApproximatedBy) {
       _analyzerDataPreInfo[lab1.getId()]->combine(*info);
