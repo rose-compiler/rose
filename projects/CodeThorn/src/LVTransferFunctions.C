@@ -23,7 +23,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
   // 2) add (lab,lhs.varid)
-  
+
   // KILL
   // (for programs with pointers we require a set here)
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
@@ -36,7 +36,6 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   }
   // GEN
   VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
-  //cout<<"DEBUG: GEN @"<<lab.getId()<<": "<<node->unparseToString()<<":"<<endl;
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }

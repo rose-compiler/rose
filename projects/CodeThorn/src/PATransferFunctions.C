@@ -17,7 +17,7 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
-  //cout<<"DEBUG: transfer: node: "<<node<<endl;
+  //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
   
   if(_labeler->isFunctionCallLabel(lab)) {
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
@@ -65,6 +65,9 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
   }
   
   // desugar SgExprStatement
+  if(isSgReturnStmt(node)) {
+    node=SgNodeHelper::getFirstChild(node);
+  }
   if(isSgExprStatement(node))
     node=SgNodeHelper::getExprStmtChild(node);
 

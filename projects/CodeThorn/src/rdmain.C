@@ -169,42 +169,45 @@ int main(int argc, char* argv[]) {
     }
 
     cout << "STATUS: creating RD analyzer."<<endl;
-    RDAnalysis* rdAnalyzer=new RDAnalysis();
+    RDAnalysis* rdAnalysis=new RDAnalysis();
     cout << "STATUS: initializing RD analyzer."<<endl;
-    rdAnalyzer->initialize(root);
+    rdAnalysis->initialize(root);
     cout << "STATUS: initializing RD transfer functions."<<endl;
-    rdAnalyzer->initializeTransferFunctions();
+    rdAnalysis->initializeTransferFunctions();
     cout << "STATUS: initializing RD global variables."<<endl;
-    rdAnalyzer->initializeGlobalVariables(root);
+    rdAnalysis->initializeGlobalVariables(root);
     
+    cout << "generating icfg_forward.dot."<<endl;
+    write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
+
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-    rdAnalyzer->determineExtremalLabels(startFunRoot);
-    rdAnalyzer->run();
+    rdAnalysis->determineExtremalLabels(startFunRoot);
+    rdAnalysis->run();
     
     cout << "INFO: attaching RD-data to AST."<<endl;
-    rdAnalyzer->attachInInfoToAst("rd-analysis-in");
-    rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
-    //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
+    rdAnalysis->attachInInfoToAst("rd-analysis-in");
+    rdAnalysis->attachOutInfoToAst("rd-analysis-out");
+    //printAttributes<RDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"rd-analysis-in");
     cout << "INFO: generating and attaching UD-data to AST."<<endl;
-    createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
+    createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
 #if 0
   cout << "INFO: substituting uses with rhs of defs."<<endl;
-  substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalyzer->getLabeler(), rdAnalyzer->getVariableIdMapping());
+  substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalysis->getLabeler(), rdAnalysis->getVariableIdMapping());
 #endif
 
-  Flow* flow=rdAnalyzer->getFlow();
+  Flow* flow=rdAnalysis->getFlow();
   cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-  CFAnalyzer* cfAnalyzer0=rdAnalyzer->getCFAnalyzer();
+  CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
   int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
   cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
 
 #if 0
   cout << "INFO: computing program statistics."<<endl;
-  ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
-                       rdAnalyzer->getLabeler(), 
-                       rdAnalyzer->getFlow(),
+  ProgramStatistics ps(rdAnalysis->getVariableIdMapping(),
+                       rdAnalysis->getLabeler(), 
+                       rdAnalysis->getFlow(),
                        "ud-analysis");
   ps.computeStatistics();
   //ps.printStatistics();
@@ -216,44 +219,44 @@ int main(int argc, char* argv[]) {
   cout << "INFO: generating visualization data."<<endl;
   // generate ICFG visualization
   cout << "generating icfg.dot."<<endl;
-  write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
+  write_file("icfg.dot", flow->toDot(rdAnalysis->getLabeler()));
 
   //  cout << "INFO: generating control dependence graph."<<endl;
-  //Flow cdg=rdAnalyzer->getCFAnalyzer()->controlDependenceGraph(*flow);
+  //Flow cdg=rdAnalysis->getCFAnalyzer()->controlDependenceGraph(*flow);
 
   cout << "generating datadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
+  DataDependenceVisualizer ddvis0(rdAnalysis->getLabeler(),
+                                 rdAnalysis->getVariableIdMapping(),
                                  "ud-analysis");
-  //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
+  //printAttributes<UDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"ud-analysis");
   //ddvis._showSourceCode=false; // for large programs
   ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
   flow->resetDotOptions();
 
   cout << "generating icfgdatadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis1(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
+  DataDependenceVisualizer ddvis1(rdAnalysis->getLabeler(),
+                                 rdAnalysis->getVariableIdMapping(),
                                  "ud-analysis");
   ddvis1.includeFlowGraphEdges(flow);
   ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
   flow->resetDotOptions();
 
   cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis2(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
+  DataDependenceVisualizer ddvis2(rdAnalysis->getLabeler(),
+                                 rdAnalysis->getVariableIdMapping(),
                                  "ud-analysis");
-  ddvis2.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
+  ddvis2.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
 
   cout << "generating icfg_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis3(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
+  DataDependenceVisualizer ddvis3(rdAnalysis->getLabeler(),
+                                 rdAnalysis->getVariableIdMapping(),
                                  "ud-analysis");
-  ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
+  ddvis3.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfg_clustered.dot",false);
 
 #if 1
   cout << "INFO: annotating analysis results as comments."<<endl;
-  ROSE_ASSERT(rdAnalyzer->getVariableIdMapping());
-  AstAnnotator ara(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping());
+  ROSE_ASSERT(rdAnalysis->getVariableIdMapping());
+  AstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
