@@ -23,7 +23,7 @@ class AstAnnotator {
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName);
   //MS: planned: void annotateAttributeAsPragma(string attributeName);
  private:
-  void annotateAstAttributesAsComments(SgNode* node, string attributeName, PreprocessingInfo::RelativePositionType posSpecifier);
+  void annotateAstAttributesAsComments(SgNode* node, string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,string analysisInfoTypeDescription);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
