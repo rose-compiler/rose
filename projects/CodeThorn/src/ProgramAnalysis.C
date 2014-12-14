@@ -62,9 +62,13 @@ void ProgramAnalysis::computeAllPostInfo() {
     computeAllPreInfo();
     for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
       Label lab=*i;
-      Lattice* info=_analyzerDataPostInfo[lab.getId()];
+      Lattice* info=_initialElementFactory->create();
       _solver->computeCombinedPreInfo(lab,*info);
       _transferFunctions->transfer(lab,*info);
+      if(_analyzerDataPostInfo[lab.getId()]) {
+	delete _analyzerDataPostInfo[lab.getId()];
+      }
+      _analyzerDataPostInfo[lab.getId()]=info;
     }
     _postInfoIsValid=true;
   }
@@ -313,23 +317,6 @@ ProgramAnalysis::getResultAccess() {
 using std::string;
 
 #include <sstream>
-#if 0
-
-void ProgramAnalysis::attachResultsToAst(string attributeName) {
-  size_t lab=0;
-  for(std::vector::iterator i=_analyzerDataPreInfo.begin();
-      i!=_analyzerDataPreInfo.end();
-      ++i) {
-    std::stringstream ss;
-    (&(*i))->toStream(ss,&_variableIdMapping);
-    //std::cout<<ss.str();
-    // TODO: need to add a solution for nodes with multiple associated labels (e.g. functio call)
-    _labeler->getNode(lab)->setAttribute(attributeName,new GeneralResultAttribute(ss.str()));
-    lab++;
-  }
-
-}
-#endif
 
 CFAnalyzer* ProgramAnalysis::getCFAnalyzer() {
   return _cfanalyzer;

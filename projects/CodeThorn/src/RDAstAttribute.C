@@ -6,6 +6,7 @@
 using namespace std;
 
 void RDAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  os<<"RD:";
   _elem->toStream(os,vim);
 }
 

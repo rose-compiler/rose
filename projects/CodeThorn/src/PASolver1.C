@@ -52,6 +52,7 @@ PASolver1::runSolver() {
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
 #else
     computeCombinedPreInfo(lab0,*info);
+    cout<<"DEBUG: PRE2 @"<<lab0<<info->toString()<<endl;
 #endif
     //_transferFunctions.transfer(lab0,*info);
     bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);

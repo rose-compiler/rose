@@ -12,6 +12,7 @@ bool SPRAY::LVAstAttribute::isLive(VariableId variableId) {
 }
 
 void SPRAY::LVAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  os<<"LV:";
   _elem->toStream(os,vim);
 }
 
