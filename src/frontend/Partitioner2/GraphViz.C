@@ -138,6 +138,57 @@ GraphViz::htmlEscape(const std::string &s) {
 }
 
 bool
+GraphViz::isId(const std::string &s) {
+    if (s.empty())
+        return false;
+    if (isalpha(s[0])) {
+        BOOST_FOREACH (char ch, s) {
+            if (!isalnum(ch) || '_'==ch)
+                return false;
+        }
+        return true;
+    }
+    if (isdigit(s[0])) {
+        BOOST_FOREACH (char ch, s) {
+            if (!isdigit(ch))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+std::string
+GraphViz::escape(const std::string &s) {
+    if (s.empty())
+        return "\"\"";
+    if (isId(s))
+        return s;
+    if ('<'==s[0]) {
+        int depth = 0;
+        BOOST_FOREACH (char ch, s) {
+            if ('<'==ch) {
+                ++depth;
+            } else if ('>'==ch) {
+                if (--depth < 0)
+                    break;
+            }
+        }
+        if (0==depth)
+            return "<" + htmlEscape(s) + ">";
+    }
+    return "\"" + quotedEscape(s) + "\"";
+}
+
+std::string
+GraphViz::toString(const Attributes &attrs) {
+    std::string retval;
+    BOOST_FOREACH (const Attributes::Node &attr, attrs.nodes())
+        retval += (retval.empty()?"":" ") + escape(attr.key()) + "=" + escape(attr.value());
+    return retval;
+}
+
+bool
 GraphViz::isSelected(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
     if (vertex == partitioner.cfg().vertices().end())
         return false;
@@ -160,8 +211,14 @@ GraphViz::vertexLabel(const Partitioner &partitioner, const ControlFlowGraph::Co
     BasicBlock::Ptr bb;
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
         std::string s;
-        BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions())
-            s += htmlEscape(unparseInstructionWithAddress(insn)) + "<br align=\"left\"/>";
+        BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
+            if (showInstructionAddresses_) {
+                s += htmlEscape(unparseInstructionWithAddress(insn));
+            } else {
+                s += htmlEscape(unparseInstruction(insn));
+            }
+            s += "<br align=\"left\"/>";
+        }
         return "<" + s + ">";
     }
     return vertexLabelSimple(partitioner, vertex);
@@ -188,33 +245,30 @@ GraphViz::vertexLabelSimple(const Partitioner &partitioner, const ControlFlowGra
     }
 }
 
-std::string
+GraphViz::Attributes
 GraphViz::vertexAttributes(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
     ASSERT_require(vertex != partitioner.cfg().vertices().end());
-    std::map<std::string, std::string> attr;
-    attr["shape"] = "box";
+    Attributes attr;
+    attr.insert("shape", "box");
 
     if (vertex->value().type() == V_BASIC_BLOCK) {
-        attr["fontname"] = "Courier";
+        attr.insert("fontname", "Courier");
 
         if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-            attr["style"] = "filled";
-            attr["fillcolor"] = "\"" + funcEnterColor_.toString() + "\"";
+            attr.insert("style", "filled");
+            attr.insert("fillcolor", funcEnterColor_.toString());
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (partitioner.basicBlockIsFunctionReturn(bb)) {
-                attr["style"] = "filled";
-                attr["fillcolor"] = "\"" + funcReturnColor_.toString() + "\"";
+                attr.insert("style", "filled");
+                attr.insert("fillcolor", funcReturnColor_.toString());
             }
         }
     } else {
-        attr["style"] = "filled";
-        attr["fillcolor"] = "\"" + warningColor_.toString() + "\"";
+        attr.insert("style", "filled");
+        attr.insert("fillcolor", warningColor_.toString());
     }
 
-    std::string s;
-    for (std::map<std::string, std::string>::iterator ai=attr.begin(); ai!=attr.end(); ++ai)
-        s += (s.empty() ? "" : " ") + ai->first + "=" + ai->second;
-    return s;
+    return attr;
 }
 
 // dump vertex only if it isn't selected and hasn't been already dumped
@@ -227,7 +281,7 @@ GraphViz::dumpVertex(std::ostream &out, const Partitioner &partitioner,
         out <<id <<" [ label=" <<vertexLabel(partitioner, vertex) <<" ";
         if (vertex->value().type() == V_BASIC_BLOCK)
             out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
-        out <<vertexAttributes(partitioner, vertex) <<" ];\n";
+        out <<toString(vertexAttributes(partitioner, vertex)) <<" ];\n";
         vmap_.insert(vertex, id);
     }
     return id;
@@ -243,7 +297,7 @@ GraphViz::dumpVertexInfo(std::ostream &out, const Partitioner &partitioner,
         out <<id <<" [ label=" <<vertexLabelSimple(partitioner, vertex) <<" ";
         if (vertex->value().type() == V_BASIC_BLOCK)
             out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
-        out <<vertexAttributes(partitioner, vertex) <<" ];\n";
+        out <<toString(vertexAttributes(partitioner, vertex)) <<" ];\n";
         vmap_.insert(vertex, id);
     }
     return id;
@@ -279,27 +333,23 @@ GraphViz::edgeLabel(const Partitioner &partitioner, const ControlFlowGraph::Cons
     return "\"" + s + "\"";
 }
 
-std::string
+GraphViz::Attributes
 GraphViz::edgeAttributes(const Partitioner &partitioner, const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
     ASSERT_require(edge != partitioner.cfg().edges().end());
-    std::map<std::string, std::string> attr;
+    Attributes attr;
 
     if (edge->value().type() == E_FUNCTION_RETURN) {
-        attr["color"] = "\"" + makeEdgeColor(funcReturnColor_).toString() + "\"";
+        attr.insert("color", makeEdgeColor(funcReturnColor_).toString());
     } else if (edge->target() == partitioner.indeterminateVertex()) {
-        attr["color"] = "\"" + makeEdgeColor(warningColor_).toString() + "\"";
+        attr.insert("color", makeEdgeColor(warningColor_).toString());
     } else if (edge->value().type() == E_FUNCTION_CALL) {
-        attr["color"] = "\"" + makeEdgeColor(funcEnterColor_).toString() + "\"";
+        attr.insert("color", makeEdgeColor(funcEnterColor_).toString());
     } else if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
                edge->source()->value().bblock() &&
                edge->source()->value().bblock()->fallthroughVa() != edge->target()->value().address()) {
-        attr["style"] = "dotted";                       // non-fallthrough edges
+        attr.insert("style", "dotted");                 // non-fallthrough edges
     }
-    
-    std::string s;
-    for (std::map<std::string, std::string>::iterator ai=attr.begin(); ai!=attr.end(); ++ai)
-        s += (s.empty() ? "" : " ") + ai->first + "=" + ai->second;
-    return s;
+    return attr;
 }
 
 bool
@@ -325,7 +375,7 @@ GraphViz::dumpEdge(std::ostream &out, const Partitioner &partitioner,
     
     if (vmap_.getOptional(edge->source()).assignTo(sourceId) && vmap_.getOptional(edge->target()).assignTo(targetId)) {
         out <<sourceId <<" -> " <<targetId <<" [ label=" <<edgeLabel(partitioner, edge) <<" "
-            <<edgeAttributes(partitioner, edge) <<" ];\n";
+            <<toString(edgeAttributes(partitioner, edge)) <<" ];\n";
         return true;
     }
     return false;
@@ -370,10 +420,13 @@ GraphViz::functionLabel(const Partitioner &partitioner, const Function::Ptr &fun
     return "\"" + quotedEscape(function->printableName()) + "\"";
 }
 
-std::string
+GraphViz::Attributes
 GraphViz::functionAttributes(const Partitioner &partitioner, const Function::Ptr &function) const {
     ASSERT_not_null(function);
-    return "style=filled fillcolor=\"" + subgraphColor().toString() + "\"";
+    Attributes attr;
+    attr.insert("style", "filled");
+    attr.insert("fillcolor", subgraphColor().toString());
+    return attr;
 }
 
 // Dump function entry vertex regardless of whether it's selected (but not if already dumped)
@@ -390,12 +443,12 @@ GraphViz::dumpFunctionInfo(std::ostream &out, const Partitioner &partitioner,
             function->address() == vertex->value().address()) {
             out <<id <<" [ label=" <<functionLabel(partitioner, function) <<" "
                 <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
-                <<functionAttributes(partitioner, function) <<" ];\n";
+                <<toString(functionAttributes(partitioner, function)) <<" ];\n";
         } else {
             out <<id <<" [ label=" <<vertexLabelSimple(partitioner, vertex) <<" ";
             if (vertex->value().type() == V_BASIC_BLOCK)
                 out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
-            out <<vertexAttributes(partitioner, vertex) <<" ];\n";
+            out <<toString(vertexAttributes(partitioner, vertex)) <<" ];\n";
         }
         vmap_.insert(vertex, id);
     }
@@ -505,12 +558,15 @@ void
 GraphViz::dumpCfgAll(std::ostream &out, const Partitioner &partitioner) const {
     vmap_.clear();
     out <<"digraph CFG {\n";
+    out <<"node [ " <<toString(defaultNodeAttributes_) <<" ];\n";
+    out <<"edge [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
+
     if (useFunctionSubgraphs_) {
         BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
             if (isSelected(partitioner, partitioner.findPlaceholder(function->address()))) {
                 mfprintf(out)("\nsubgraph cluster_F%"PRIx64" {", function->address());
                 out <<" label=" <<functionLabel(partitioner, function) <<" "
-                    <<functionAttributes(partitioner, function) <<";\n";
+                    <<toString(functionAttributes(partitioner, function)) <<";\n";
                 dumpIntraFunction(out, partitioner, function);
                 out <<"}\n";
             }
@@ -532,6 +588,8 @@ GraphViz::dumpCfgFunction(std::ostream &out, const Partitioner &partitioner, con
     ASSERT_not_null(function);
     vmap_.clear();
     out <<"digraph CFG {\n";
+    out <<"node [ " <<toString(defaultNodeAttributes_) <<" ];\n";
+    out <<"edge [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
     out <<"# Function callees...\n";
     dumpFunctionCallees(out, partitioner, function);
     out <<"# Intra function nodes and edges...\n";
@@ -557,12 +615,14 @@ GraphViz::dumpCallGraph(std::ostream &out, const Partitioner &partitioner) const
     typedef FunctionCallGraph::Graph CG;
     FunctionCallGraph cg = partitioner.functionCallGraph(false); // parallel edges are compressed
     out <<"digraph CG {\n";
+    out <<"node [ " <<toString(defaultNodeAttributes_) <<" ];\n";
+    out <<"edge [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
 
     BOOST_FOREACH (const CG::VertexNode &vertex, cg.graph().vertices()) {
         const Function::Ptr &function = vertex.value();
         out <<vertex.id() <<" [ label=" <<functionLabel(partitioner, function) <<" "
             <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
-            <<functionAttributes(partitioner, function) <<" ]\n";
+            <<toString(functionAttributes(partitioner, function)) <<" ]\n";
     }
 
     BOOST_FOREACH (const CG::EdgeNode &edge, cg.graph().edges()) {

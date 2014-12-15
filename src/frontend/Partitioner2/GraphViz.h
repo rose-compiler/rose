@@ -28,6 +28,8 @@ public:
         std::string toString() const;                   // returns HTML color spec like #56abff
         HsvColor invert() const;                        // invert value without changing hue or saturation
     };
+
+    typedef Sawyer::Container::Map<std::string, std::string> Attributes;
     
 private:
     typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexNodeIterator, size_t> VMap;
@@ -35,18 +37,22 @@ private:
     bool useFunctionSubgraphs_;                         // should called functions be shown as subgraphs?
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
+    bool showInstructionAddresses_;                     // if instructions are shown, show addresses too?
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
     HsvColor subgraphColor_;                            // background color for function subgraphs
     HsvColor funcEnterColor_;                           // background color for function entrance blocks
     HsvColor funcReturnColor_;                          // background color for function return blocks
     HsvColor warningColor_;                             // background color for special nodes and warnings
+    Attributes defaultNodeAttributes_;                  // default attributes for graph nodes (CFG vertices and other)
+    Attributes defaultEdgeAttributes_;                  // default attributes for graph edges
 
     mutable VMap vmap_;                                 // maps CFG vertices to GraphViz vertex IDs (modified when dumping)
 
 public:
     GraphViz()
-        : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showInNeighbors_(true),
+        : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true),
+          showInNeighbors_(true),
           showOutNeighbors_(true),
           subgraphColor_(0, 0, 0.95),                   // light grey
           funcEnterColor_(0.33, 1.0, 0.9),              // light green
@@ -82,6 +88,33 @@ public:
      * @{ */
     bool showInstructions() const { return showInstructions_; }
     void showInstructions(bool b) { showInstructions_ = b; }
+    /** @} */
+
+    /** Property: show instruction addresses.
+     *
+     *  When true and basic block instructions are shown, show the address of each instruction.
+     *
+     * @{ */
+    bool showInstructionAddresses() const { return showInstructionAddresses_; }
+    void showInstructionAddresses(bool b) { showInstructionAddresses_ = b; }
+    /** @} */
+
+    /** Property: default graph node attributes.
+     *
+     *  Attributes that should apply to all graph nodes.
+     *
+     * @{ */
+    Attributes& defaultNodeAttributes() { return defaultNodeAttributes_; }
+    const Attributes& defaultNodeAttributes() const { return defaultNodeAttributes_; }
+    /** @} */
+
+    /** Property: default graph edge attributes.
+     *
+     *  Attributes that should apply to all graph edges.
+     *
+     * @{ */
+    Attributes& defaultEdgeAttributes() { return defaultEdgeAttributes_; }
+    const Attributes& defaultEdgeAttributes() const { return defaultEdgeAttributes_; }
     /** @} */
 
     /** Restricts selection of vertices.
@@ -190,6 +223,15 @@ protected:
     // Escape things that need to be escaped for GraphViz HTML strings
     static std::string htmlEscape(const std::string&);
 
+    // Escape some value for GraphViz
+    static std::string escape(const std::string&);
+
+    // Convert attributes to strings
+    static std::string toString(const Attributes&);
+
+    // True if s forms a valid GraphViz ID
+    static bool isId(const std::string &s);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Vertex methods
 protected:
@@ -202,7 +244,7 @@ protected:
     virtual std::string vertexLabelSimple(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
     // GraphViz attributes for a vertex
-    virtual std::string vertexAttributes(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    virtual Attributes vertexAttributes(const Partitioner&, const ControlFlowGraph::ConstVertexNodeIterator&) const;
 
     // Emit a single vertex if it hasn't already been emitted and if it's a selected vertex (all vertices are selected by
     // default; see select())
@@ -219,7 +261,7 @@ protected:
     virtual std::string edgeLabel(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
 
     // GraphViz attributes for an edge.
-    virtual std::string edgeAttributes(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
+    virtual Attributes edgeAttributes(const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
 
     // Emit an edge if the edge hasn't already been emited and if its incident vertices are already emitted.
     virtual bool dumpEdge(std::ostream&, const Partitioner&, const ControlFlowGraph::ConstEdgeNodeIterator&) const;
@@ -231,7 +273,7 @@ protected:
     virtual std::string functionLabel(const Partitioner&, const Function::Ptr&) const;
 
     // GraphViz attributes for function vertex.
-    virtual std::string functionAttributes(const Partitioner&, const Function::Ptr&) const;
+    virtual Attributes functionAttributes(const Partitioner&, const Function::Ptr&) const;
 
     // Emit a function GraphViz node unless one has already been emitted. The node is emitted regardless of whether the vertex
     // address is selected, therefore this method can be used to emit neighbors of selected vertices.
