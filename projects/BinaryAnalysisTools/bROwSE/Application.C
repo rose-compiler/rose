@@ -1,11 +1,12 @@
 #include <bROwSE/Application.h>
-#include <bROwSE/WFunctions.h>
+#include <bROwSE/WFunction.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
 #include <Partitioner2/ModulesPe.h>                     // ROSE
 #include <Partitioner2/Partitioner.h>                   // ROSE
 #include <Wt/WApplication>
+#include <Wt/WBootstrapTheme>
 #include <Wt/WContainerWidget>
 #include <Wt/WGridLayout>
 #include <Wt/WImage>
@@ -28,8 +29,11 @@ namespace bROwSE {
 void
 Application::init() {
     setTitle("bROwSE");
-    setCssTheme("polished");
 
+    // This looks nicer than setCssTheme("polished"), but requires some minor CSS adjustments:
+    //  + IMG should not be restricted to 100% available width, otherwise CFGs will be scaled down by the browser to a point
+    //     which might be unreadable.
+    setTheme(new Wt::WBootstrapTheme);
 
     root()->setLayout(wGrid_ = new Wt::WGridLayout());
     wGrid_->setRowStretch(1, 1);
@@ -38,10 +42,10 @@ Application::init() {
     Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/compassrose.jpg");
     wGrid_->addWidget(compassRose, 0, 0);
 
-    wFunctions_ = new WFunctions(ctx_);
-    wGrid_->addWidget(wFunctions_, 1, 1);
+    wFunction_ = new WFunction(ctx_);
+    wGrid_->addWidget(wFunction_, 1, 1);
 
-#if 1 // DEBUGGING [Robb P. Matzke 2014-09-12]
+#if 0 // DEBUGGING [Robb P. Matzke 2014-09-12]
     wGrid_->addWidget(new Wt::WText("North"), 0, 1);
     wGrid_->addWidget(new Wt::WText("NE"),    0, 2);
     wGrid_->addWidget(new Wt::WText("West"),  1, 0);
