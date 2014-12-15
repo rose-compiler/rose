@@ -8,6 +8,10 @@
 #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
 
+#include <sawyer/DistinctList.h>
+#include <Diagnostics.h>
+#include <AstConsistencyTests.h>
+
 
 // DQ (8/1/2005): test use of new static function to create 
 // Sg_File_Info object that are marked as transformations
@@ -21,6 +25,77 @@
 using namespace SageInterface;
 // void FixSgTree(SgNode*);
 // void FixSgProject(SgProject&);
+
+#ifndef NDEBUG
+/** Check parent/child edges in the AST.
+ *
+ *  Checks the specified subtree beginning at @ref ast.  Each node (other than @ref ast itself) must have a non-null parent
+ *  pointer that points back to the node by which it was reached during the AST traversal.  In other words, children of node N
+ *  must have N as their parent. Certain checkers in other parts of ROSE follow parent pointers with the assumption that
+ *  they're correct, and when they are not those checkers can fail in hard-to-find ways.
+ *
+ *  Returns true if all is okay, false otherwise with errors printed to the mlog[ERROR] stream. If @p throws is true then this
+ *  function throws an <code>std::runtime_error</code> instead of returning false. */
+static bool
+checkAstParentChildRelationships(SgNode *ast, const std::string &title="", bool throws=true) {
+    struct Checker: AstPrePostProcessing {
+        const std::string &title;
+        bool throws;
+        Sawyer::Container::DistinctList<SgNode*> stack;
+        size_t nNodes, nErrors;
+        Checker(const std::string &title, bool throws): title(title), throws(throws), nNodes(0), nErrors(0) {}
+        void preOrderVisit(SgNode *node) ROSE_OVERRIDE {
+            ++nNodes;
+            std::string mesg;
+            SgNode *badParent = NULL;
+            if (stack.isEmpty() || 1==nNodes) {
+                // this is the first node we've visited
+                ASSERT_always_require2(1==nNodes,       "some kind of problem with the checker or traversal");
+                ASSERT_always_require2(stack.isEmpty(), "some kind of problem with the checker or traversal");
+            } else if (stack.exists(node)) {
+                mesg = "AST is not a tree because it contains a cycle";
+            } else if (!node->get_parent()) {
+                mesg = "non-root node has no parent";
+            } else if (node->get_parent() != stack.back()) {
+                mesg = "node points to wrong parent";
+                badParent = node->get_parent();
+            }
+            if (!mesg.empty()) {
+                using namespace rose::Diagnostics;
+                ++nErrors;
+                if (mlog[ERROR]) {
+                    Sawyer::Message::Stream error(mlog[ERROR]);
+                    error <<title <<(title.empty()?"":": ") <<"invalid AST connectivity"
+                          <<" at (" <<node->class_name() <<"*)" <<node <<": " <<mesg <<"\n";
+                    if (badParent) {
+                        error <<"  node parent is (" <<badParent->class_name() <<"*)" <<badParent
+                              <<" but expected (" <<stack.back()->class_name() <<"*)" <<stack.back() <<"\n";
+                    }
+                    error <<"  node " <<node <<" was reached by this AST path:";
+                    BOOST_FOREACH (SgNode *n, stack.items())
+                        error <<(n==stack.front()?"":" ->") <<" (" <<n->class_name() <<"*)" <<n;
+                    error <<"\n";
+                }
+                if (throws)
+                    throw std::runtime_error(title + (title.empty()?"":": ") + "invalid AST connectivity");
+            }
+            stack.pushBack(node);
+        }
+        void postOrderVisit(SgNode *node) ROSE_OVERRIDE {
+            ASSERT_always_forbid2(stack.isEmpty(),     "some kind of problem with the checker or traversal");
+            ASSERT_always_require2(stack.back()==node, "some kind of problem with the checker or traversal");
+            stack.popBack();
+        }
+    } checker(title, throws);
+    if (ast)
+        checker.traverse(ast);
+    std::cerr <<"checkAstParentChildRelationships((" <<ast->class_name() <<"*)" <<ast
+              <<", \"" <<StringUtility::cEscape(title) <<"\", throws=" <<(throws?"true":"false") <<") "
+              <<StringUtility::plural(checker.nNodes, "nodes") <<" checked, "
+              <<"found " <<StringUtility::plural(checker.nErrors, "errors") <<"\n";
+    return 0==checker.nErrors;
+}
+#endif
 
 SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
    {
@@ -39,7 +114,6 @@ SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
         {
           returnAssignmentOperator = new SgAssignOp(SgNULL_FILE, lhs, rhs);
           returnAssignmentOperator->set_endOfConstruct(SgNULL_FILE);
-          printf ("Built a SgAssignOp = %p \n",returnAssignmentOperator);
         }
        else
           returnAssignmentOperator = rhs;
@@ -86,7 +160,6 @@ class ChangeReturnsToGotosVisitor: public AstSimpleProcessing
                SgGotoStatement* gotoStatement = new SgGotoStatement(SgNULL_FILE, label);
                gotoStatement->set_endOfConstruct(SgNULL_FILE);
                ROSE_ASSERT(n->get_parent() != NULL);
-            // printf ("Building gotoStatement #2 = %p  n->get_parent() = %p = %s \n",gotoStatement,n->get_parent(),n->get_parent()->class_name().c_str());
                SageInterface::appendStatement(gotoStatement, block);
                isSgStatement(n->get_parent())->replace_statement(rs, block);
                block->set_parent(n->get_parent());
@@ -106,7 +179,6 @@ class ChangeReturnsToGotosPrevisitor: public SageInterface::StatementGenerator {
     end_of_inline_label(end), funbody_copy(body) {}
 
   virtual SgStatement* generate(SgExpression* where_to_write_answer) {
-    // std::cout << "ChangeReturnsToGotosPrevisitor.generate: " << end_of_inline_label->get_name().getString() << " returning into " << where_to_write_answer->unparseToString() << std::endl;
     ChangeReturnsToGotosVisitor(end_of_inline_label, where_to_write_answer).
       traverse(funbody_copy, postorder);
     return funbody_copy;
@@ -231,14 +303,17 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
                assert (false);
 
      assert (funsym);
-     if (isSgMemberFunctionSymbol(funsym) && isSgMemberFunctionSymbol(funsym)->get_declaration()->get_functionModifier().isVirtual())
+     if (isSgMemberFunctionSymbol(funsym) &&
+         isSgMemberFunctionSymbol(funsym)->get_declaration()->get_functionModifier().isVirtual())
         {
        // std::cout << "Inline failed: cannot inline virtual member functions" << std::endl;
           return false;
         }
 
      SgFunctionDeclaration* fundecl = funsym->get_declaration();
-     SgFunctionDefinition* fundef = fundecl->get_definition();
+     fundecl = fundecl ? isSgFunctionDeclaration(fundecl->get_definingDeclaration()) : NULL;
+
+     SgFunctionDefinition* fundef = fundecl ? fundecl->get_definition() : NULL;
      if (!fundef)
         {
        // std::cout << "Inline failed: no definition is visible" << std::endl;
@@ -289,7 +364,6 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
           SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
           assignInitializer->set_endOfConstruct(SgNULL_FILE);
-       // thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, new SgAssignInitializer(SgNULL_FILE, thisptr));
           thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
           thisdecl->set_endOfConstruct(SgNULL_FILE);
           thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
@@ -306,32 +380,40 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           ROSE_ASSERT(assignInitializer->get_parent() != NULL);
         }
 
-     std::cout << "Trying to inline function " << fundecl->get_name().str() << std::endl;
+     // Get the list of actual argument expressions from the function call, which we'll later use to initialize new local
+     // variables in the inlined code.  We need to detach the actual arguments from the AST here since we'll be reattaching
+     // them below (otherwise we would violate the invariant that the AST is a tree).
+     SgFunctionDefinition* targetFunction = PRE::getFunctionDefinition(funcall);
+     SgExpressionPtrList funargs = funcall->get_args()->get_expressions();
+     funcall->get_args()->get_expressions().clear();
+     BOOST_FOREACH (SgExpression *actual, funargs)
+         actual->set_parent(NULL);
+
+     // Make a copy of the to-be-inlined function so we're not modifying and (re)inserting the original.
      SgBasicBlock* funbody_raw = fundef->get_body();
      SgInitializedNamePtrList& params = fundecl->get_args();
-     SgInitializedNamePtrList::iterator i;
-     SgExpressionPtrList& funargs = funcall->get_args()->get_expressions();
-     SgExpressionPtrList::iterator j;
-     //int ctr; // unused variable, Liao
      std::vector<SgInitializedName*> inits;
      SgTreeCopy tc;
      SgFunctionDefinition* function_copy = isSgFunctionDefinition(fundef->copy(tc));
      ROSE_ASSERT (function_copy);
      SgBasicBlock* funbody_copy = function_copy->get_body();
 
-
-     SgFunctionDefinition* targetFunction = PRE::getFunctionDefinition(funcall);
-
      renameLabels(funbody_copy, targetFunction);
-     std::cout << "Original symbol count: " << funbody_raw->get_symbol_table()->size() << std::endl;
-     std::cout << "Copied symbol count: " << funbody_copy->get_symbol_table()->size() << std::endl;
-     // std::cout << "Original symbol count f: " << fundef->get_symbol_table()->size() << std::endl;
-     // std::cout << "Copied symbol count f: " << function_copy->get_symbol_table()->size() << std::endl;
-     // We don't need to keep the copied function definition now that the
-     // labels in it have been moved to the target function.  Having it in the
-     // memory pool confuses the AST tests.
-     function_copy->set_declaration(NULL);
-     function_copy->set_body(NULL);
+     ASSERT_require(funbody_raw->get_symbol_table()->size() == funbody_copy->get_symbol_table()->size());
+
+     // We don't need to keep the copied SgFunctionDefinition now that the labels in it have been moved to the target function
+     // (having it in the memory pool confuses the AST tests), but we must not delete the formal argument list or the body
+     // because we need them below.
+     if (function_copy->get_declaration()) {
+         ASSERT_require(function_copy->get_declaration()->get_parent() == function_copy);
+         function_copy->get_declaration()->set_parent(NULL);
+         function_copy->set_declaration(NULL);
+     }
+     if (function_copy->get_body()) {
+         ASSERT_require(function_copy->get_body()->get_parent() == function_copy);
+         function_copy->get_body()->set_parent(NULL);
+         function_copy->set_body(NULL);
+     }
      delete function_copy;
      function_copy = NULL;
 #if 0
@@ -343,44 +425,58 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      funbody_copy->prepend_statement(pragmaBeginDecl);
      pragmaBeginDecl->set_parent(funbody_copy);
 #endif
+
+     // In the to-be-inserted function body, create new local variables with distinct non-conflicting names, one per formal
+     // argument and having the same type as the formal argument. Initialize those new local variables with the actual
+     // arguments.  Also, build a paramMap that maps each formal argument (SgInitializedName) to its corresponding new local
+     // variable (SgVariableSymbol).
      ReplaceParameterUseVisitor::paramMapType paramMap;
-     for (i = params.begin(), j = funargs.begin(); i != params.end() && j != funargs.end(); ++i, ++j)
-        {
-          SgAssignInitializer* ai = new SgAssignInitializer(SgNULL_FILE, *j, (*i)->get_type());
-          ROSE_ASSERT(ai != NULL);
-          ai->set_endOfConstruct(SgNULL_FILE);
-          SgName shadow_name((*i)->get_name());
-          shadow_name << "__" << ++gensym_counter;
-          SgVariableDeclaration* vardecl = new SgVariableDeclaration(SgNULL_FILE,shadow_name,(*i)->get_type(),ai);
-          vardecl->set_definingDeclaration(vardecl);
-          vardecl->set_endOfConstruct(SgNULL_FILE);
-          vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+     SgInitializedNamePtrList::iterator formalIter = params.begin();
+     SgExpressionPtrList::iterator actualIter = funargs.begin();
+     for (size_t argNumber=0;
+          formalIter != params.end() && actualIter != funargs.end();
+          ++argNumber, ++formalIter, ++actualIter) {
+         SgInitializedName *formalArg = *formalIter;
+         SgExpression *actualArg = *actualIter;
 
-          printf ("Built new SgVariableDeclaration #2 = %p = %s initializer = %p \n",vardecl,shadow_name.str(),(*(vardecl->get_variables().begin()))->get_initializer());
+         // Build the new local variable.
+         // FIXME[Robb P. Matzke 2014-12-12]: we need a better way to generate a non-conflicting local variable name
+         SgAssignInitializer* initializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
+         ASSERT_not_null(initializer);
+         initializer->set_endOfConstruct(SgNULL_FILE);
+         SgName shadow_name(formalArg->get_name());
+         shadow_name << "__" << ++gensym_counter;
+         SgVariableDeclaration* vardecl = new SgVariableDeclaration(SgNULL_FILE, shadow_name, formalArg->get_type(), initializer);
+         vardecl->set_definingDeclaration(vardecl);
+         vardecl->set_endOfConstruct(SgNULL_FILE);
+         vardecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
+         vardecl->set_parent(funbody_copy);
 
-          vardecl->set_parent(funbody_copy);
-          SgInitializedName* init = (vardecl->get_variables()).back();
-          // init->set_endOfConstruct(SgNULL_FILE);
-          inits.push_back(init);
-          ai->set_parent(init);
-          init->set_scope(funbody_copy);
-          funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + (i - params.begin()), vardecl);
-          SgVariableSymbol* sym = new SgVariableSymbol(init);
-          paramMap[*i] = sym;
-          funbody_copy->insert_symbol(shadow_name, sym);
-          sym->set_parent(funbody_copy->get_symbol_table());
-        }
+         // Insert the new local variable into the (near) beginning of the to-be-inserted function body.  We insert them in the
+         // order their corresponding actuals/formals appear, although the C++ standard does not require this order of
+         // evaluation.
+         SgInitializedName* init = vardecl->get_variables().back();
+         inits.push_back(init);
+         initializer->set_parent(init);
+         init->set_scope(funbody_copy);
+         funbody_copy->get_statements().insert(funbody_copy->get_statements().begin() + argNumber, vardecl);
+         SgVariableSymbol* sym = new SgVariableSymbol(init);
+         paramMap[formalArg] = sym;
+         funbody_copy->insert_symbol(shadow_name, sym);
+         sym->set_parent(funbody_copy->get_symbol_table());
+     }
 
-     if (thisdecl)
-        {
-          thisdecl->set_parent(funbody_copy);
-          thisinitname->set_scope(funbody_copy);
-          funbody_copy->get_statements().insert(funbody_copy->get_statements().begin(), thisdecl);
-          SgVariableSymbol* thisSym = new SgVariableSymbol(thisinitname);
-          funbody_copy->insert_symbol(thisname, thisSym);
-          thisSym->set_parent(funbody_copy->get_symbol_table());
-          ReplaceThisWithRefVisitor(thisSym).traverse(funbody_copy, postorder);
-        }
+     // Similarly for "this". We create a local variable in the to-be-inserted function body that will be initialized with the
+     // caller's "this".
+     if (thisdecl) {
+         thisdecl->set_parent(funbody_copy);
+         thisinitname->set_scope(funbody_copy);
+         funbody_copy->get_statements().insert(funbody_copy->get_statements().begin(), thisdecl);
+         SgVariableSymbol* thisSym = new SgVariableSymbol(thisinitname);
+         funbody_copy->insert_symbol(thisname, thisSym);
+         thisSym->set_parent(funbody_copy->get_symbol_table());
+         ReplaceThisWithRefVisitor(thisSym).traverse(funbody_copy, postorder);
+     }
      ReplaceParameterUseVisitor(paramMap).traverse(funbody_copy, postorder);
 
      SgName end_of_inline_name = "rose_inline_end__";
@@ -415,15 +511,13 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      generateAstGraph(project_copy,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH);
 #endif
 
-  // printf ("Exiting as a test after testing the symbol table \n");
-  // ROSE_ASSERT(false);
-
      funbody_copy->append_statement(end_of_inline_label);
      end_of_inline_label->set_scope(targetFunction);
      SgLabelSymbol* end_of_inline_label_sym = new SgLabelSymbol(end_of_inline_label);
      end_of_inline_label_sym->set_parent(targetFunction->get_symbol_table());
      targetFunction->get_symbol_table()->insert(end_of_inline_label->get_name(), end_of_inline_label_sym);
-  // To ensure that there is some statement after the label
+
+     // To ensure that there is some statement after the label
      SgExprStatement* dummyStatement = SageBuilder::buildExprStatement(SageBuilder::buildNullExpression());
      dummyStatement->set_endOfConstruct(SgNULL_FILE);
      funbody_copy->append_statement(dummyStatement);
@@ -437,11 +531,21 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      funbody_copy->append_statement(pragmaEndDecl);
      pragmaEndDecl->set_parent(funbody_copy);
 #endif
-     // std::cout << "funbody_copy is " << funbody_copy->unparseToString() << std::endl;
 
      ChangeReturnsToGotosPrevisitor previsitor = ChangeReturnsToGotosPrevisitor(end_of_inline_label, funbody_copy);
-     // std::cout << "funbody_copy 2 is " << funbody_copy->unparseToString() << std::endl;
      replaceExpressionWithStatement(funcall, &previsitor);
-  // std::cout << "Inline succeeded " << funcall->get_parent()->unparseToString() << std::endl;
+
+     // Make sure the AST is consistent. To save time, we'll just fix things that we know can go wrong. For instance, the
+     // SgAsmExpression.p_lvalue data member is required to be true for certain operators and is set to false in other
+     // situations. Since we've introduced new expressions into the AST we need to adjust their p_lvalue according to the
+     // operators where they were inserted.
+     markLhsValues(targetFunction);
+
+#ifdef NDEBUG
+     checkAstParentChildRelationships(funbody_copy, "funbody_copy after inlining");
+     checkAstParentChildRelationships(targetFunction, "targetFunction after inlining");
+     checkAstParentChildRelationships(SageInterface::getProject(), "entire project after inlining");
+     AstTests::runAllTests(SageInterface::getProject());
+#endif
      return true;
    }

@@ -26,7 +26,7 @@
 #include "AstTraversal.h"
 
 // This controls output for debugging
-#define WARN_ABOUT_ATYPICAL_LVALUES 0
+#define WARN_ABOUT_ATYPICAL_LVALUES 1
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
@@ -5675,15 +5675,19 @@ TestLValueExpressions::visit ( SgNode* node )
                          ROSE_ASSERT(operand != NULL);
 
 #if WARN_ABOUT_ATYPICAL_LVALUES
-                      // if (operand->get_lvalue() == true)
-                         if (operand->get_lvalue() == false)
-                            {
-                              printf ("Error for operand = %p = %s = %s in unary expression (SgMinusMinusOp or SgPlusPlusOp) = %s \n",
-                                   operand,operand->class_name().c_str(),SageInterface::get_name(operand).c_str(),expression->class_name().c_str());
-                              unaryOperator->get_startOfConstruct()->display("Error for operand: operand->get_lvalue() == true: debug");
-                            }
+                         if (operand->get_lvalue() == false) {
+                              std::cerr <<"Error for operand"
+                                        <<" (" <<operand->class_name() <<"*)" <<" = " <<SageInterface::get_name(operand)
+                                        <<" in unary " <<expression->class_name() <<" expression"
+                                        <<": operand->get_lvalue() == false but should be true\n";
+                              std::cerr <<"ancestors of (" <<operand->class_name() <<"*)" <<operand <<" are:";
+                              for (SgNode *p=operand->get_parent(); p; p=p->get_parent())
+                                  std::cerr <<" (" <<p->class_name() <<"*)" <<p;
+                              std::cerr <<"\n";
+                              unaryOperator->get_startOfConstruct()
+                                  ->display("Error for operand: operand->get_lvalue() == false: debug");
+                         }
 #endif
-                      // ROSE_ASSERT(operand->get_lvalue() == false);
                          ROSE_ASSERT(operand->get_lvalue() == true);
                          break;
                        }
