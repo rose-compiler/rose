@@ -49,9 +49,10 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         boost::filesystem::path tmpName = uniquePath(".dot");
         std::ofstream out(tmpName.string().c_str());
         P2::GraphViz graphViz;
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-13]
         graphViz.showInstructions(true);
-#endif
+        graphViz.showInstructionAddresses(false);
+        graphViz.defaultNodeAttributes().insert("fontsize", "10");
+        graphViz.defaultEdgeAttributes().insert("fontsize", "10");
         graphViz.dumpCfgFunction(out, partitioner, function);
         out.close();
         std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
@@ -69,8 +70,18 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
         boost::filesystem::path srcName = functionCfgGraphvizFile(partitioner, function);
         if (srcName.empty())
             return boost::filesystem::path();
+#if 0 // [Robb P. Matzke 2014-12-15]
+        // Dot cannot generate large JPEG files -- it ends up scaling them so small that they're pretty useless in the
+        // browser.
         imageName = uniquePath(".jpg");
         std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.native();
+#else
+        // Most modern browsers can display SVG (vector graphics) efficiently, and dot can generate them very quickly from our
+        // inputs since we've already run the time-consuming layout algorithms, and they're small (compared to JPEG) for
+        // efficient transport from server to browser.
+        imageName = uniquePath(".svg");
+        std::string dotCmd = "dot -Tsvg -o" + imageName.string() + " " + srcName.native();
+#endif
         if (0!=system(dotCmd.c_str())) {
             mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
             return boost::filesystem::path();

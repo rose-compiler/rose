@@ -46,27 +46,49 @@ WFunctionCfg::changeFunction(const P2::Function::Ptr &function) {
         BOOST_FOREACH (const CfgVertexCoords::Node &node, coords.nodes()) {
             rose_addr_t va = node.key();
             Wt::WRectArea *area = new Wt::WRectArea(node.value().x, node.value().y, node.value().dx, node.value().dy);
-            P2::Function::Ptr callee = ctx_.partitioner.functionExists(va);
-            if (callee && callee!=function) {
-                if (!callee->name().empty())
-                    area->setToolTip(callee->name());
+            P2::Function::Ptr other = ctx_.partitioner.functionExists(va);
+            if (other && other!=function) {
+                // Clicking on a called function will show that function's CFG
                 area->clicked().connect(this, &WFunctionCfg::selectFunction);
-            } else if (P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(va)) {
-                // Gecko agents (e.g., firefox) don't like multi-line tooltips--they rewrap the tip as they see fit.
-                // Therefore, on such agents just indicate the number of instructions.  For other agents, create a tooltip
-                // with up to 10 lines listing the instructions.
-                if (ctx_.application->environment().agentIsGecko()) {
-                    area->setToolTip(StringUtility::plural(bblock->nInstructions(), "instructions"));
-                } else {
-                    std::string toolTip;
-                    bool exitEarly = bblock->nInstructions()>10;
-                    for (size_t i=0; (i<9 || (!exitEarly && i<10)) && i<bblock->nInstructions(); ++i)
-                        toolTip += (i?"\n":"") + unparseInstruction(bblock->instructions()[i]);
-                    if (bblock->nInstructions()>10)
-                        toolTip += "\nand " + StringUtility::numberToString(bblock->nInstructions()-9) + " more...";
-                    area->setToolTip(toolTip);
+
+                // Tool tip for called function.  The address and name (if known) are already shown as the node label, so the
+                // tool tip should contain other useful information.
+                std::string toolTip = StringUtility::plural(functionNInsns(ctx_.partitioner, other), "instructions");
+                int64_t stackDelta = functionStackDelta(ctx_.partitioner, other);
+                if (stackDelta != SgAsmInstruction::INVALID_STACK_DELTA) {
+                    toolTip += "; ";                    // semicolon separators since Gecko doesn't honor linefeeds
+                    toolTip += (stackDelta>0 ? "+" : "") + boost::lexical_cast<std::string>(stackDelta) + " stack delta";
                 }
+                area->setToolTip(toolTip);
+
+            } else if (P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(va)) {
+                // Clicking on a basic block selects the basic block, whatever that means.
                 area->clicked().connect(this, &WFunctionCfg::selectBasicBlock);
+
+                // Tool tips for basic blocks should show important information that isn't already available just by looking at
+                // the CFG.
+                static const bool nodesHaveInstructions = true;
+                static const bool nodesHaveAddresses = false;
+                std::string toolTip;
+                if (!nodesHaveInstructions) {
+                    // List a few of the instructions in the tooltip.  Gecko agents (e.g., firefox) don't like multi-line
+                    // tooltips--they rewrap the tip as they see fit--show don't even bother trying to show instructions.
+                    if (ctx_.application->environment().agentIsGecko()) {
+                        toolTip = StringUtility::plural(bblock->nInstructions(), "instructions");
+                    } else {
+                        bool exitEarly = bblock->nInstructions()>10;
+                        for (size_t i=0; (i<9 || (!exitEarly && i<10)) && i<bblock->nInstructions(); ++i)
+                            toolTip += (i?"\n":"") + unparseInstruction(bblock->instructions()[i]);
+                        if (bblock->nInstructions()>10)
+                            toolTip += "\nand " + StringUtility::numberToString(bblock->nInstructions()-9) + " more...";
+                    }
+                } else {
+                    if (!nodesHaveAddresses) {
+                        toolTip = StringUtility::addrToString(bblock->address());
+                    }
+                }
+                if (!toolTip.empty())
+                    area->setToolTip(toolTip);
             }
             wImage_->addArea(area);
             areas_.push_back(std::make_pair(area, va));

@@ -10,15 +10,15 @@
 
 namespace bROwSE {
 
-class WFunctions;
+class WFunction;
 
 class Application: public Wt::WApplication {
     Context ctx_;
     Wt::WGridLayout *wGrid_;
-    WFunctions *wFunctions_;
+    WFunction *wFunction_;
 public:
     Application(P2::Partitioner &partitioner, const Wt::WEnvironment &env)
-        : Wt::WApplication(env), ctx_(partitioner, this),  wFunctions_(NULL) {
+        : Wt::WApplication(env), ctx_(partitioner, this),  wFunction_(NULL) {
         init();
     }
 
