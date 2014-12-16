@@ -191,7 +191,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
 
     // Get a list of all the (parts of) registers that might overlap with this register.
     const Extent need_extent(reg.get_offset(), reg.get_nbits());
-    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
+    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by destination bit offset
     std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
@@ -208,8 +208,17 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
                 const size_t lo_bit = need_extent.first() - have_extent.first();
                 return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
             } else if (!overlap.empty()) {
-                const SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
-                overlaps[overlap.first()] = overlap_val;
+                ASSERT_require(overlap.first() >= have_extent.first());
+                size_t extractBegin = overlap.first() - have_extent.first();
+                size_t extractEnd = extractBegin + overlap.size();
+                ASSERT_require(extractEnd > extractBegin);
+                ASSERT_require(extractEnd <= rvi->value->get_width());
+                const SValuePtr overlap_val = ops->extract(rvi->value, extractBegin, extractEnd);
+                ASSERT_require(overlap_val->get_width() == overlap.size());
+                ASSERT_require(overlap.first() >= need_extent.first());
+                size_t offsetWrtResult = overlap.first() - need_extent.first();
+                overlaps[offsetWrtResult] = overlap_val;
+
                 if (coalesceOnRead) {
                     // If any part of the existing register is not represented by the register being read, then we need to save
                     // that part.
@@ -256,7 +265,8 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     // which we can insert the value we're about to return.
     if (coalesceOnRead)
         ri->second.push_back(RegPair(reg, retval));
-        
+
+    ASSERT_require(reg.get_nbits()==retval->get_width());
     return retval;
 }
 
