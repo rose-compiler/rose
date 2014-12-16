@@ -10,7 +10,7 @@ include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
 
 ########### install files ###############
 
-install(FILES  createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h tokenStreamMapping.h frontierDetection.h previousAndNextNode.h DESTINATION ${INCLUDE_INSTALL_DIR})
+install(FILES  createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h tokenStreamMapping.h frontierDetection.h simpleFrontierDetection.h previousAndNextNode.h DESTINATION ${INCLUDE_INSTALL_DIR})
 
 
 
