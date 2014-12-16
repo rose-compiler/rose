@@ -168,7 +168,9 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_8.C \
   inputmoveDeclarationToInnermostScope_9.C \
   inputmoveDeclarationToInnermostScope_10.C \
-  inputmoveDeclarationToInnermostScope_11.C
+  inputmoveDeclarationToInnermostScope_11.C \
+  inputmoveDeclarationToInnermostScope_12.C \
+  inputmoveDeclarationToInnermostScope_13.C
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
  
@@ -188,6 +190,7 @@ PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
 REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 DIFF=diff
+#$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
