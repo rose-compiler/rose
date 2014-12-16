@@ -1325,13 +1325,18 @@ FrontierDetectionForTokenStreamMappingAttribute::additionalNodeInfo()
 AstAttribute*
 FrontierDetectionForTokenStreamMappingAttribute::copy()
    {
-  // Support for the coping of AST and associated attributes on each IR node (required for attributes 
+  // Support for the copying of AST and associated attributes on each IR node (required for attributes 
   // derived from AstAttribute, else just the base class AstAttribute will be copied).
 
+#if 0
      printf ("Error: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
      ROSE_ASSERT(false);
 
      return new FrontierDetectionForTokenStreamMappingAttribute(*this);
+#else
+     printf ("Warning: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
+     return NULL;
+#endif
    }
 
 #if 0

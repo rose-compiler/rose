@@ -388,6 +388,9 @@ class TokenMappingTraversal : public SgTopDownBottomUpProcessing<InheritedAttrib
           string generateTokenSubsequence( int start, int end);
 
           void consistancyCheck();
+
+       // DQ (12/15/2014): refactoring code for reuse.
+          void trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMapping* mappingInfo, int original_start_of_token_subsequence);
    };
 
 
@@ -808,6 +811,58 @@ end [shape=Msquare];
    }
 
 
+void
+TokenMappingTraversal::trimLeadingWhiteSpaceFromLeft(TokenStreamSequenceToNodeMapping* mappingInfo, int original_start_of_token_subsequence )
+   {
+  // Search backward through the token sequence to find the end of the function parameter list (")").
+
+     int leading_whitespace_end   = mappingInfo->token_subsequence_start - 1;
+     int leading_whitespace_start = leading_whitespace_end;
+
+#if 0
+     printf ("In trimLeadingWhiteSpaceFromLeft(): before loop: leading_whitespace_start            = %d \n",leading_whitespace_start);
+     printf ("In trimLeadingWhiteSpaceFromLeft(): before loop: original_start_of_token_subsequence = %d \n",original_start_of_token_subsequence);
+#endif
+
+  // while (leading_whitespace_start > original_start_of_token_subsequence && tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE)
+     while (leading_whitespace_start > original_start_of_token_subsequence &&
+            ( tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_WHITESPACE ||
+              tokenStream[leading_whitespace_start-1]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO) )
+        {
+#if 0
+          printf ("in loop: leading_whitespace_start = %d \n",leading_whitespace_start);
+#endif
+          ROSE_ASSERT(leading_whitespace_start > original_start_of_token_subsequence);
+
+          leading_whitespace_start--;
+        }
+
+#if 0
+     printf ("In trimLeadingWhiteSpaceFromLeft(): after loop: leading_whitespace_start = %d \n",leading_whitespace_start);
+#endif
+
+  // If the positions are out of bounds then we don't have any leading whitespace.
+     if (leading_whitespace_start < original_start_of_token_subsequence && leading_whitespace_end < original_start_of_token_subsequence)
+        {
+          leading_whitespace_start = -1;
+          leading_whitespace_end   = -1;
+        }
+
+     mappingInfo->leading_whitespace_start = leading_whitespace_start;
+     mappingInfo->leading_whitespace_end   = leading_whitespace_end;
+
+#if 0
+     printf ("In trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
+     printf ("In trimLeadingWhiteSpaceFromLeft(): (adjusted) mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
+#endif
+
+     ROSE_ASSERT(mappingInfo->leading_whitespace_start <= mappingInfo->leading_whitespace_end);
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 
 SynthesizedAttribute
@@ -836,7 +891,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
        // We want the children to not include the "{" and "}" of the SgBasicBlock.
           original_start_of_token_subsequence++;
           original_end_of_token_subsequence--;
-#if 1
+#if 0
           printf ("In evaluateSynthesizedAttribute(): Reset in the case of a SgBasicBlock: original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
 #endif
 #if 0
@@ -846,7 +901,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         }
 #endif
 
-     if (childAttributes.size() > 1)
+  // DQ (12/15/2014): We need to handle the case of even a single child as well 
+  // (so that we get the leading and trailing white space correct).
+  // if (childAttributes.size() > 1)
+     if (childAttributes.size() > 0)
         {
        // Where the number of children are greater than 1, then we have to compute the token subsequence that appears between the children.
 
@@ -856,7 +914,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                isSgStatement(n)->get_startOfConstruct()->display("In evaluateSynthesizedAttribute(): debug");
 #endif
-            // Note: because some nodes traversed in the AST are NULL, we have to accumulate the none null children 
+            // Note: because some nodes traversed in the AST are NULL, we have to accumulate the non-null children 
             // and process the cases where there are 2 or more of them.
                vector<TokenStreamSequenceToNodeMapping*> tokenToNodeVector;
 
@@ -1096,7 +1154,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          vector<TokenStreamSequenceToNodeMapping*>::iterator k = tokenToNodeEntriesToRemove.begin();
                          while (k != tokenToNodeEntriesToRemove.end())
                             {
-#if 1
+#if 0
                            // printf ("Deleting *k = %p node = %p = %s \n",*k,(*k)->node,(*k)->node->class_name().c_str());
                            // printf ("Deleting *k = %p node = %p \n",*k,(*k)->node);
                               printf ("Deleting *k = %p \n",*k);
@@ -1200,8 +1258,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%zu] = %p \n",i,tokenToNodeVector[i]);
 #endif
                          TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
-                      // printf ("   --- node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
-
+#if 0
+                         printf ("   --- node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
 #if 0
                          Sg_File_Info* start_pos = mappingInfo->node->get_startOfConstruct();
                          Sg_File_Info* end_pos   = mappingInfo->node->get_endOfConstruct();
@@ -1267,13 +1326,23 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  trailing_whitespace_end   < 0 ? -1 : tokenStream[trailing_whitespace_end]->ending_fpi.line_num,
                                  trailing_whitespace_end   < 0 ? -1 : tokenStream[trailing_whitespace_end]->ending_fpi.column_num);
 #endif
+#if 0
+                         printf ("   --- token_subsequence (%d:%d,%d:%d) \n",
+                                 token_subsequence_start   < 0 ? -1 : tokenStream[token_subsequence_start]->beginning_fpi.line_num, 
+                                 token_subsequence_start   < 0 ? -1 : tokenStream[token_subsequence_start]->beginning_fpi.column_num,
+                                 token_subsequence_end     < 0 ? -1 : tokenStream[token_subsequence_end]->ending_fpi.line_num, 
+                                 token_subsequence_end     < 0 ? -1 : tokenStream[token_subsequence_end]->ending_fpi.column_num);
+#endif
                       // Handle the left edge of the AST subtree: modify the edged (leading whitespace).
                          if (i == 0)
                             {
                            // Use the current node's lower bound as the base of the leading whitespace subsequence.
                               mappingInfo->leading_whitespace_start = current_node_token_subsequence_start;
                               mappingInfo->leading_whitespace_end   = mappingInfo->token_subsequence_start - 1;
-
+#if 0
+                              printf ("   --- mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
+                              printf ("   --- mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
+#endif
                            // I think that if this fails then both of these need to be set to the default value: -1.
                               if (mappingInfo->leading_whitespace_start > mappingInfo->leading_whitespace_end)
                                  {
@@ -1329,6 +1398,85 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    ROSE_ASSERT(false);
 #endif
                                  }
+
+
+                           // DQ (12/15/2014): A SgFunctionDefinition is nested in a SgFunctionDefinition and we need to compute the 
+                           // leading white space to NOT include the function header (return type, function name, and function parameters).
+                           // This is only required for the leading white space.
+
+                           // SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(n);
+                           // if (functionDefinition != NULL)
+                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+                              if (functionDeclaration != NULL)
+                                 {
+                                   ROSE_ASSERT(mappingInfo->node != NULL);
+                                   SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(mappingInfo->node);
+                                   if (functionDefinition != NULL)
+                                      {
+#if 0
+                                        printf ("$$$$$$$$$$$$ Handle special case of SgFunctionDefinition nested in SgFunctionDeclaration \n");
+#endif
+#if 0
+                                        printf ("   --- (before adjustement) mappingInfo->leading_whitespace_start = %d \n",mappingInfo->leading_whitespace_start);
+                                        printf ("   --- (before adjustement) mappingInfo->leading_whitespace_end   = %d \n",mappingInfo->leading_whitespace_end);
+#endif
+                                        trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+                                      }
+                                 }
+
+                           // DQ (12/15/2014): Adding support for fixing the leading white space of the SgForInitStatement.
+                              SgForStatement* forStatement = isSgForStatement(n);
+                              if (forStatement != NULL)
+                                 {
+                                   ROSE_ASSERT(mappingInfo->node != NULL);
+                                   SgForInitStatement* forInitStatement = isSgForInitStatement(mappingInfo->node);
+                                   if (forInitStatement != NULL)
+                                      {
+#if 0
+                                        printf ("$$$$$$$$$$$$ Handle special case of SgForInitStatement nested in SgForStatement \n");
+#endif
+                                        trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+#if 0
+                                   SgStatement* body = isSgStatement(mappingInfo->node);
+#error DEAD CODE!"
+                                   if (body != NULL && forStatement->get_loop_body() == body)
+                                      {
+#if 0
+                                        printf ("$$$$$$$$$$$$ Handle special case of body nested in SgForStatement \n");
+#endif
+                                        trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+#endif
+                                 }
+
+                           // DQ (12/15/2014): Adding support for fixing the leading white space of the SgForInitStatement.
+                              SgStatement* statement = isSgStatement(n);
+                              if (statement != NULL)
+                                 {
+                                   ROSE_ASSERT(mappingInfo->node != NULL);
+                                   SgBasicBlock* basicBlock = isSgBasicBlock(mappingInfo->node);
+                                   if (basicBlock != NULL)
+                                      {
+#if 0
+                                        printf ("$$$$$$$$$$$$ Handle special case of SgBasicBlock nested in SgStatement \n");
+#endif
+                                        trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+
                             }
                            else
                             {
@@ -1354,6 +1502,44 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                    printf ("Setting leading token subsequence to (%d,%d) \n",mappingInfo->leading_whitespace_start,mappingInfo->leading_whitespace_end);
 #endif
+
+                                // DQ (12/15/2014): Adding support for fixing the leading white space of the SgForInitStatement.
+                                   SgStatement* statement = isSgStatement(n);
+                                   if (statement != NULL)
+                                      {
+                                        ROSE_ASSERT(mappingInfo->node != NULL);
+                                        SgBasicBlock* basicBlock = isSgBasicBlock(mappingInfo->node);
+                                        if (basicBlock != NULL)
+                                           {
+#if 0
+                                             printf ("$$$$$$$$$$$$ Handle special case of SgBasicBlock nested in SgStatement (not the first child) \n");
+#endif
+                                             trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                             printf ("Exiting as a test! \n");
+                                             ROSE_ASSERT(false);
+#endif
+                                           }
+
+                                     // DQ (12/15/2014): Adding support for fixing the leading white space of the SgForStatement body when it is not a SgBasicBlock.
+                                        SgForStatement* forStatement = isSgForStatement(n);
+                                        if (basicBlock == NULL && forStatement != NULL)
+                                           {
+                                             ROSE_ASSERT(mappingInfo->node != NULL);
+                                             SgStatement* body = isSgStatement(mappingInfo->node);
+                                             if (body != NULL && forStatement->get_loop_body() == body)
+                                                {
+#if 0
+                                                  printf ("$$$$$$$$$$$$ Handle special case of body nested in SgForStatement \n");
+#endif
+                                                  trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                                  printf ("Exiting as a test! \n");
+                                                  ROSE_ASSERT(false);
+#endif
+                                                }
+                                           }
+                                      }
                                  }
                                 else
                                  {
@@ -1929,7 +2115,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            // ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
                               if (end_of_token_subsequence >= 0)
                                  {
-                                   ROSE_ASSERT(end_of_token_subsequence < tokenStream.size());
+                                   ROSE_ASSERT(end_of_token_subsequence < (long)tokenStream.size());
                                  }
                             }
 // #if 1
@@ -2277,6 +2463,18 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                Sg_File_Info* start_pos = locatedNode->get_startOfConstruct();
                Sg_File_Info* end_pos   = locatedNode->get_endOfConstruct();
 #if 0
+            // DQ (12/14/2014): This is part of a bug fix where the ending position does not include the trailing ";" in EDG.
+               SgForStatement* parent_is_forStatement = isSgForStatement(locatedNode->get_parent());
+               if (parent_is_forStatement != NULL)
+                  {
+                    if (locatedNode == parent_is_forStatement->get_test())
+                       {
+                         printf ("Found a node where the end position is not properly represented in EDG \n");
+                         ROSE_ASSERT(false);
+                       }
+                  }
+#endif
+#if 0
                printf ("start_pos->isFrontendSpecific() = %s \n",start_pos->isFrontendSpecific() ? "true" : "false");
 #endif
                if (start_pos->isFrontendSpecific() == false)
@@ -2531,6 +2729,41 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
                                  }
                             }
+
+                      // DQ (12/14/2014): This is part of a bug fix where the ending position does not include the trailing ";" in EDG.
+                         SgForStatement* parent_is_forStatement = isSgForStatement(n->get_parent());
+                         if (parent_is_forStatement != NULL && n == parent_is_forStatement->get_test())
+                            {
+#if 0
+                              printf ("Found the test statement in a SgForStatement (ending must be fixed to include semi-colon) \n");
+#endif
+#if 0
+                              printf ("BEFORE LOOP: n=%s: Adjusting the end of the token subsequence to find the trailing ';' token = %s \n",n->class_name().c_str(),tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+                              printf ("   --- original_end_of_token_subsequence = %d \n",original_end_of_token_subsequence);
+#endif
+                              while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ";") )
+                                 {
+                                   end_of_token_subsequence++;
+#if 0
+                                   printf ("In LOOP: Adjusting the end of the token subsequence to find the trailing ';' token = %s end_of_token_subsequence = %d \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
+#endif
+                                 }
+                            }
+
+#if 0
+                      // DQ (12/15/2014): I think this makes more sense to process on the way back up (in the synthesied attribute).
+                      // DQ (12/15/2014): Improve the representation of the leading whitespace for the SgFunctionDefinition 
+                      // (should start at after the function parameter list's closing ")" instead of at the start of the 
+                      // fundection declaration).
+                         SgFunctionDefinition* functionDefinition = isSgFunctionDefinition(n);
+                         if (functionDefinition != NULL)
+                            {
+                              SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionDefinition->get_parent());
+                              ROSE_ASSERT(functionDeclaration != NULL);
+
+                           // start_of_token_subsequence
+                            }
+#endif
                        }
                       else
                        {
@@ -2638,6 +2871,19 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
+
+#if 0
+  // DQ (12/14/2014): This is part of a bug fix where the ending position does not include the trailing ";" in EDG.
+     SgForStatement* parent_is_forStatement = isSgForStatement(n->get_parent());
+     if (parent_is_forStatement != NULL)
+        {
+          if (n == parent_is_forStatement->get_test())
+             {
+               printf ("Found a node where the end position is not properly represented in EDG \n");
+               ROSE_ASSERT(false);
+             }
+        }
+#endif
 
      return InheritedAttribute(inheritedAttribute.sourceFile,start_of_token_subsequence,end_of_token_subsequence,processed);
    }
@@ -3190,16 +3436,379 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 
 
 void
+buildTokenStreamFrontier(SgSourceFile* sourceFile)
+   {
+#if 0
+     printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+  // Note that we first detect the frontier based on a synthysised attribute traversal to record 
+  // where nodes can contain transformation even if they are not a transformation directly.
+     simpleFrontierDetectionForTokenStreamMapping(sourceFile);
+
+#if 0
+     printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 1
+  // DQ (12/6/2014): I think we need the frontier mechanism, and then the partial use of token 
+  // streams on nodes containing transformations is required to provide a more precise generated 
+  // code (precise representation with minimal diff).
+
+#if 0
+     printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+  // Note that we first detect the frontier.
+     frontierDetectionForTokenStreamMapping(sourceFile);
+
+#if 0
+     printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+#endif
+
+  // ************************************************************************************************
+  // DQ (11/29/2013): Mark those entries in the frontier map that are redundantly mapped to the same 
+  // token subsequence.  This can happen with a variable declaration contains a list of variables and 
+  // is mapped to several SgVariableDeclaration IR nodes in the ROSE AST.  This normalization then 
+  // maps several IR nodes redundantly to a single token sequence.  So we have to identify all 
+  // redundant mapping of IR nodes to a token sequence and allow/disallow them to be unparsed 
+  // via the AST or token sequence as a group.
+  // ************************************************************************************************
+
+  // DQ (11/29/2013): Used to mark statements that are redundantly mapped to a single token sequence.
+  // int lastTokenIndex = 0;
+  // std::set<int> tokenSequenceEndSet;
+     std::map<int,SgStatement*> tokenSequenceEndMap;
+     std::multimap<int,SgStatement*> tokenSequenceEndMultimap;
+     std::set<int> redundantTokenEndings;
+
+  // DQ (11/29/2013): Get the token mapping to the AST.
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+
+#if 0
+     printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+#endif
+
+     ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+
+     map<SgStatement*,FrontierNode*> token_unparse_frontier_map = sourceFile->get_token_unparse_frontier();
+
+  // DQ (11/29/2013): This can happen for test_CplusplusMacro_C.c (which has only CPP directives).
+  // ROSE_ASSERT(token_unparse_frontier_map.empty() == false);
+
+#if 1
+  // DQ (12/6/2014): I think we need the frontier mechanism, and then the partial use of token 
+  // streams on nodes containing transformations is required to provide a more precise generated 
+  // code (precise representation with minimal diff).
+     map<SgStatement*,FrontierNode*>::iterator i = token_unparse_frontier_map.begin();
+
+  // Iterator over all of the frontier nodes.
+     while (i != token_unparse_frontier_map.end())
+        {
+          SgStatement* statement = i->first;
+          ROSE_ASSERT(statement != NULL);
+          FrontierNode* frontier_node = i->second;
+          ROSE_ASSERT(frontier_node != NULL);
+
+          TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[statement];
+       // ROSE_ASSERT(tokenSubsequence != NULL);
+
+          if (tokenSubsequence != NULL)
+             {
+          std::map<int,SgStatement*>::iterator j = tokenSequenceEndMap.find(tokenSubsequence->token_subsequence_end);
+          if (j != tokenSequenceEndMap.end())
+             {
+#if 0
+               printf ("In buildTokenStreamMapping(): Found associated tokenStreamSequence for statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+               i->second->redundant_token_subsequence = true;
+               token_unparse_frontier_map[j->second]->redundant_token_subsequence = true;
+
+            // Save this entry in the multimap.
+               if (tokenSequenceEndMultimap.find(tokenSubsequence->token_subsequence_end) != tokenSequenceEndMultimap.end())
+                  {
+                    tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,j->second));
+                  }
+               tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
+
+               redundantTokenEndings.insert(tokenSubsequence->token_subsequence_end);
+#if 0
+               printf ("Mark this as a frontier that is redundantly mapped to a token sequence: statement = %p = %s \n",statement,statement->class_name().c_str());
+               ROSE_ASSERT(false);
+#endif
+#if 0
+            // ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+
+               if (lastTokenIndex == tokenSubsequence->token_subsequence_end)
+                  {
+                 // Mark this as a frontier that is redundantly mapped to a token sequence.
+                    printf ("Mark this as a frontier that is redundantly mapped to a token sequence \n");
+                    ROSE_ASSERT(false);
+
+                 // tokenSubsequence->redundant_token_subsequence = true;
+                  }
+                 else
+                  {
+                 // This is the typical case.
+                  }
+
+               lastTokenIndex = tokenSubsequence->token_subsequence_end;
+#endif
+             }
+            else
+             {
+            // DQ (11/29/2013): Not certain this should be an error or a warning.
+#if 0
+               printf ("WARNING: There is no token sequence mapping already processed as redundant for this statement = %p = %s \n",statement,statement->class_name().c_str());
+#endif
+               tokenSequenceEndMap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
+
+            // Save this entry in the multimap.
+            // tokenSequenceEndMultimap.insert(std::pair<int,SgStatement*>(tokenSubsequence->token_subsequence_end,statement));
+             }
+             }
+
+          i++;
+        }
+#else
+  // DQ (12/6/2014): I ahve deactivated this feature since I think we might not need it.
+     printf ("NOTE: Skipping the processing of the frontier nodes \n");
+#endif
+
+  // std::map<int,SgStatement*>::iterator k = tokenSequenceEndMap.begin();
+  // while (k != tokenSequenceEndMap.end())
+  // std::multimap<int,SgStatement*>::iterator k = tokenSequenceEndMultimap.begin();
+  // while (k != tokenSequenceEndMultimap.end())
+     std::set<int>::iterator k = redundantTokenEndings.begin();
+     while (k != redundantTokenEndings.end())
+        {
+       // int lastTokenIndex = k->first;
+          int lastTokenIndex = *k;
+#if 0
+          printf ("Redundant statement list: lastTokenIndex = %d \n",lastTokenIndex);
+#endif
+          std::pair<std::multimap<int,SgStatement*>::iterator,std::multimap<int,SgStatement*>::iterator> range_iterator = tokenSequenceEndMultimap.equal_range(lastTokenIndex);
+          std::multimap<int,SgStatement*>::iterator first_iterator = range_iterator.first;
+          std::multimap<int,SgStatement*>::iterator last_iterator  = range_iterator.second;
+
+          bool unparseUsingTokenStream = true;
+          std::multimap<int,SgStatement*>::iterator local_iterator = first_iterator;
+          while (local_iterator != last_iterator)
+             {
+               SgStatement* stmt = local_iterator->second;
+#if 0
+               printf ("   --- redundant statement for lastTokenIndex = %d stmt = %p = %s \n",lastTokenIndex,stmt,stmt->class_name().c_str());
+#endif
+               if (token_unparse_frontier_map[stmt]->unparseUsingTokenStream == false)
+                  {
+                    unparseUsingTokenStream = false;
+                  }
+
+               local_iterator++;
+             }
+
+          if (unparseUsingTokenStream == false)
+             {
+            // Reset all of the frontier IR node data structures to unparse from the AST.
+#if 0
+               printf ("Reset all of the frontier IR node data structures to unparse from the AST \n");
+#endif
+               std::multimap<int,SgStatement*>::iterator local_iterator = first_iterator;
+               while (local_iterator != last_iterator)
+                  {
+                    SgStatement* stmt = local_iterator->second;
+#if 0
+                    printf ("   --- redundant statement for lastTokenIndex = %d stmt = %p = %s (setting to unparse from AST) \n",lastTokenIndex,stmt,stmt->class_name().c_str());
+#endif
+                    ROSE_ASSERT(token_unparse_frontier_map.find(stmt) != token_unparse_frontier_map.end());
+                    FrontierNode* token_unparse_frontier = token_unparse_frontier_map[stmt];
+                    ROSE_ASSERT(token_unparse_frontier != NULL);
+
+                    token_unparse_frontier->unparseUsingTokenStream = false;
+                    token_unparse_frontier->unparseFromTheAST       = true;
+
+                    local_iterator++;
+                  }
+             }
+
+          k++;
+        }
+
+  // Save this so that the unparser can avoid duplication when unparsing the statements that
+  // are redundantly mapped to a single token sequence (represented by the last token index).
+     sourceFile->set_redundantTokenEndingsSet(redundantTokenEndings);
+     sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
+
+#if 0
+     printf ("Identify the frontier IR nodes that redundantly map to a single token sequence \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+void
 buildTokenStreamMapping(SgSourceFile* sourceFile)
    {
+  // DQ (12/6/2014): This function seperates the initial generation of the token stream and it's mapping to the AST from 
+  // the assocaited connection to the computed frontier after transformations have been done to define where the AST
+  // should be using the token stream unparsing and where it should be using the AST unparsing.
+
+     vector<stream_element*> tokenVector = getTokenStream(sourceFile);
+
+  // DQ (1/30/2014): Empty files are allowed (and tested).
+  // ROSE_ASSERT(tokenVector.empty() == false);
+     if (tokenVector.empty() == true)
+        {
+          printf ("In buildTokenStreamMapping(): No tokens found in file \n");
+          return;
+        }
+
+  // Build the inherited attribute
+     bool processThisNode = true;
+     InheritedAttribute inheritedAttribute(sourceFile,0,tokenVector.size()-1,processThisNode);
+
+  // Build the traversal object
+     TokenMappingTraversal tokenMappingTraversal(tokenVector);
+
+#if 0
+  // Output the depth of the AST.
+     printf ("***** sourceFile->depthOfSubtree() = %d \n",sourceFile->depthOfSubtree());
+#endif
+
+  // tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
+  // tokenMappingTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
+     tokenMappingTraversal.traverse(sourceFile,inheritedAttribute);
+
+#if 0
+  // We need to set the positions of the trailing whitespace of the last element.
+     if (tokenMappingTraversal.tokenStreamSequenceVector.empty() == false)
+        {
+          TokenStreamSequenceToNodeMapping* lastElement = tokenMappingTraversal.tokenStreamSequenceVector.back();
+
+          lastElement->trailing_whitespace_start = lastElement->token_subsequence_end + 1;
+          lastElement->trailing_whitespace_end   = tokenVector.size() - 1;
+
+          printf ("In buildTokenStreamMapping(): Reset lastElement->trailing_whitespace_start = %d lastElement->trailing_whitespace_end = %d \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end);
+
+          if (lastElement->trailing_whitespace_start > lastElement->trailing_whitespace_end)
+             {
+#if 0
+               printf ("Warning: lastElement->trailing_whitespace_start = %d lastElement->trailing_whitespace_end = %d (reset) \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end);
+#endif
+               lastElement->trailing_whitespace_start = -1;
+               lastElement->trailing_whitespace_end   = -1;
+             }
+          ROSE_ASSERT(lastElement->trailing_whitespace_start <= lastElement->trailing_whitespace_end);
+#if 0
+          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %zu \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
+#endif
+        }
+#endif
+
+     tokenMappingTraversal.outputTokenStreamSequenceMap();
+
 #if 1
+  // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
+     if ( SgProject::get_verbose() > 0 )
+        {
+       // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
+       // Build a dot file of the AST and the token stream showing the mapping.
+          Graph_TokenMappingTraversal::graph_ast_and_token_stream(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap);
+        }
+#endif
+
+#if 1
+  // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
+  // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
+  // if ( SgProject::get_verbose() > 0 )
+     if ( sourceFile->get_unparse_using_leading_and_trailing_token_mappings() == true )
+        {
+       // Output a file generated from the token sequences of each declaration statement directly within the global scope.
+          bool preferTrailingWhitespaceInOutput = true;
+          outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
+
+          preferTrailingWhitespaceInOutput = false;
+          outputSourceCodeFromTokenStream_globalScope(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap,preferTrailingWhitespaceInOutput);
+        }
+#endif
+
+  // DQ (10/27/2013): Build the SgToken IR nodes and the vector of them into the SgSourceFile IR node.
+     SgTokenPtrList & roseTokenList = sourceFile->get_token_list();
+
+  // DQ (11/29/2013): I think this should be empty at this point.
+     ROSE_ASSERT(roseTokenList.empty() == true);
+
+  // Setup the current file ID from the name in the source file.
+     ROSE_ASSERT(sourceFile->get_file_info() != NULL);
+     int currentFileId = sourceFile->get_file_info()->get_file_id();
+
+  // This should now include all of the CPP directives and C/C++ style comments as tokens.
+  // for (LexTokenStreamType::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+     for (vector<stream_element*>::iterator i = tokenVector.begin(); i != tokenVector.end(); i++)
+        {
+          ROSE_ASSERT((*i)->p_tok_elem != NULL);
+#if 0
+          printf ("   --- token #%d token id = %d position range (%d,%d) - (%d,%d): token = -->|%s|<-- \n",
+               counter,(*i)->p_tok_elem->token_id,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num,
+               (*i)->ending_fpi.line_num,(*i)->ending_fpi.column_num,(*i)->p_tok_elem->token_lexeme.c_str());
+#endif
+
+          SgToken* roseToken = new SgToken( (*i)->p_tok_elem->token_lexeme,(*i)->p_tok_elem->token_id);
+          ROSE_ASSERT(roseToken != NULL);
+
+          roseToken->set_startOfConstruct(new Sg_File_Info(currentFileId,(*i)->beginning_fpi.line_num,(*i)->beginning_fpi.column_num));
+          roseToken->set_endOfConstruct  (new Sg_File_Info(currentFileId,(*i)->ending_fpi.line_num,   (*i)->ending_fpi.column_num));
+
+          roseTokenList.push_back(roseToken);
+        }
+
+  // Avoid the copy into the list held by SgSourceFile.
+  // sourceFile->set_token_list(tokenList);
+
+#if 0
+     printf ("In buildTokenStreamMapping(): Calling sourceFile->set_tokenSubsequenceMap() \n");
+#endif
+
+  // Note that the map is actually a member of the ROSE namespace, and that this is done because the 
+  // ROSE IR can't support (as defined by ROSETTA) some more complex types as what we would need to 
+  // support it as a data member of the SgSourceFile IR node.  This is due in part to ROSETTA and the
+  // additional requirements of the generated serialization that is a part of the AST File I/O.
+     sourceFile->set_tokenSubsequenceMap(tokenMappingTraversal.tokenStreamSequenceMap);
+
+#if 0
+     printf ("Completed the AST token stream mapping \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+void
+ALT_buildTokenStreamMapping(SgSourceFile* sourceFile)
+   {
+  // This is the original version which has mixed the frontier analysis with the token stream mapping.
+  // These concepts (one done before the AST is transformed and the other one after the AST is transformed)
+  // are now represented by two seperate functions.  The first is called aafter AST post processing,
+  // and the second is called within the unparser (which at this point we can see transformations, where 
+  // they exist).
+
+     printf ("ALT_buildTokenStreamMapping() is the OLD version which combined the token stream mapping with the frontier detection (now seperated) \n");
+     ROSE_ASSERT(false);
+
+#if 0
      printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // Note that we first detect the frontier.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
