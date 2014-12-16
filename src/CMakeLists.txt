@@ -810,6 +810,7 @@ set( libastTokenStream_SRC
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/unparseMacro.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/tokenStreamMapping.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/frontierDetection.C
+     ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/simpleFrontierDetection.C
      ${CMAKE_SOURCE_DIR}/src/frontend/SageIII/astTokenStream/previousAndNextNode.C
    )
 
