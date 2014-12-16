@@ -2731,6 +2731,8 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                     printf ("These symbols only match based on name and is not the targetInitializedNameSymbol. \n");
 #endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                 // DQ (12/15/2014): Liao's move tool will cause this message to be output, but it is not a problem (I think).
                     if (declaration == NULL)
                        {
                          printf ("variableSymbol = %p \n",variableSymbol);
@@ -2738,6 +2740,7 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
                          printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
                          initializedName->get_file_info()->display("NameQualificationTraversal::nameQualificationDepth(): initializedName");
                        }
+#endif
 
                  // DQ (12/28/2011): I think it may be OK to have this be NULL, in which case there is not name qualification (scope has no associated declaration, so it is NULL as is should be).
                  // ROSE_ASSERT(declaration != NULL);
@@ -2747,7 +2750,10 @@ NameQualificationTraversal::nameQualificationDepth ( SgInitializedName* initiali
                        }
                       else
                        {
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                      // DQ (12/15/2014): Liao's move tool will cause this message to be output, but it is not a problem (I think).
                          printf ("Warning: In NameQualificationTraversal::nameQualificationDepth() --- It might be that this is an incorrect fix for where declaration == NULL in test2004_97.C \n");
+#endif
                        }
                   }
              }

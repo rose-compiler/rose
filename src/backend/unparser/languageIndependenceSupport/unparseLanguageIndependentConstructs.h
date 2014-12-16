@@ -35,6 +35,38 @@ class UnparseLanguageIndependentConstructs
           std::string currentOutputFileName;
 
      public:
+
+#if 1
+       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
+          enum token_sequence_position_enum_type
+             {
+               e_leading_whitespace_start,
+               e_leading_whitespace_end,
+               e_token_subsequence_start,
+               e_token_subsequence_end,
+               e_trailing_whitespace_start,
+               e_trailing_whitespace_end
+             };
+#endif
+#if 1
+       // Single statement specification of token subsequence.
+          void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+
+       // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
+          void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+#endif
+
+          enum unparsed_as_enum_type
+             {
+                e_unparsed_as_error,
+                e_unparsed_as_AST,
+                e_unparsed_as_partial_token_sequence,
+                e_unparsed_as_token_stream,
+                e_unparsed_as_last
+             };
+
+          std::string unparsed_as_kind(unparsed_as_enum_type x);
+
           UnparseLanguageIndependentConstructs(Unparser* unp, std::string fname) : unp(unp)
              {
                currentOutputFileName = fname;
@@ -382,7 +414,7 @@ class UnparseLanguageIndependentConstructs
           int unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
 
        // DQ (11/4/2014): Unparse a partial sequence of tokens up to the next AST node.
-          int unparseStatementFromTokenStreamForNodeContainingTransformation(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+          int unparseStatementFromTokenStreamForNodeContainingTransformation(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream, unparsed_as_enum_type unparsed_as);
 
           bool canBeUnparsedFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt);
 

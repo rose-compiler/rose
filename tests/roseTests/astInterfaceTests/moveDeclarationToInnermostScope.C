@@ -243,6 +243,9 @@ int main(int argc, char * argv[])
 
   SgProject *project = frontend (argvList);
 
+// DQ (12/11/2014): Added output of graph after transformations.
+   generateDOTforMultipleFile(*project);
+
   SgFilePtrList file_ptr_list = project->get_fileList();
   visitorTraversal exampleTraversal;
   for (size_t i = 0; i<file_ptr_list.size(); i++)
@@ -255,6 +258,15 @@ int main(int argc, char * argv[])
        exampleTraversal.traverseWithinFile(s_file, preorder);
     }
   }
+
+// DQ (12/11/2014): Added output of graph after transformations.
+// generateDOTforMultipleFile(*project);
+
+#if 0
+  printf ("Exiting as a test! \n");
+  ROSE_ASSERT(false);
+#endif
+
  // run all tests
   AstTests::runAllTests(project);
   return backend(project);
@@ -675,10 +687,33 @@ std::vector <SgScopeStatement*> processTargetScopes(std::vector <SgScopeStatemen
     SgScopeStatement* target_scope = scopes[i];
     if (SgIfStmt* if_stmt = isSgIfStmt (target_scope))
     {
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
         if (if_stmt->get_true_body())     
         {
+          SgStatement* old_body = if_stmt->get_true_body();
+
+          bool old_body_is_compiler_generated = old_body->isCompilerGenerated();
+          bool old_body_is_compiler_generated_fromFileInfo = old_body->get_file_info()->isCompilerGenerated();
+
           SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
           SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
+
+#if 0
+       // if (old_body != true_body)
+          if (old_body_is_compiler_generated == true || old_body_is_compiler_generated_fromFileInfo == true)
+             {
+               ROSE_ASSERT(true_body->get_file_info()->isTransformation() == true);
+               ROSE_ASSERT(true_body->isTransformation() == true);
+
+               printf ("In processTargetScopes(): true_body = %p = %s \n",true_body,true_body->class_name().c_str());
+
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+             }
+#endif
           processed_scopes.push_back (true_body);
         }
 
@@ -750,6 +785,42 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
       case V_SgBasicBlock:
         {
           SageInterface::prependStatement (decl_copy, adjusted_scope);
+
+          SgStatement* old_body  = isSgStatement(target_scope);
+          SgStatement* true_body = isSgStatement(target_scope);
+
+          bool old_body_is_compiler_generated = old_body->isCompilerGenerated();
+          bool old_body_is_compiler_generated_fromFileInfo = old_body->get_file_info()->isCompilerGenerated();
+#if 0
+          printf ("old_body_is_compiler_generated              = %s \n",old_body_is_compiler_generated ? "true" : "false");
+          printf ("old_body_is_compiler_generated_fromFileInfo = %s \n",old_body_is_compiler_generated_fromFileInfo ? "true" : "false");
+#endif
+          if (old_body_is_compiler_generated == true || old_body_is_compiler_generated_fromFileInfo == true)
+             {
+               ROSE_ASSERT(true_body->get_file_info()->isTransformation() == false);
+
+            // DQ (12/12/2014): Output a message about this, at least we want to decide if marking this as a  
+            // transformation should be a part of the semantics in SageInterface::prependStatement() function.
+               printf ("Marking this SgBasicBlock, which is compiler-generated, as a transformation \n",true_body);
+
+            // true_body->setTransformation();
+            // true_body->get_file_info()->setTransformation();
+               true_body->get_startOfConstruct()->setTransformation();
+               true_body->get_endOfConstruct()->setTransformation();
+               
+               ROSE_ASSERT(true_body->get_file_info()->isTransformation() == true);
+               ROSE_ASSERT(true_body->isTransformation() == true);
+
+            // printf ("In processTargetScopes(): true_body = %p = %s \n",true_body,true_body->class_name().c_str());
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
           break;
         }
       case V_SgForStatement:

@@ -43,8 +43,14 @@ using namespace std;
 // DQ (6/25/2011): Forward declaration for new name qualification support.
 void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
+// DQ (12/6/2014): The call to this function has been moved to the sage_support.cpp file
+// so that it can be called on the AST before transformations.  However it is now
+// split into two parts so that the token stream can be mapped to the AST before 
+// transformations, and then the token stream frontier can be computed after 
+// transformations have been done in the AST.
 // DQ (10/27/2013): Added forward declaration for new token stream support.
-void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile);
+void buildTokenStreamFrontier(SgSourceFile* sourceFile);
 
 
 //-----------------------------------------------------------------------------------
@@ -373,13 +379,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): file->get_unparse_tokens()      = %s \n",file->get_unparse_tokens() ? "true" : "false");
 #endif
 
+#if 0
+  // DQ (12/6/2014): We need this computed in terms of the original AST before transformations, so we have to move this to after the
+  // AST is built, instead of before it is unparsed.  This makes no difference if we don't do transformations, but if transformations
+  // are done if this is computed here then statements removed from the AST showup in the white space between statements (an error).
+
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
      if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 1
+#if 0
           printf ("Building token stream mapping map! \n");
 #endif
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -394,10 +405,30 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              }
 #endif
 
-#if 1
+#if 0
           printf ("DONE: Building token stream mapping map! \n");
 #endif
         }
+#endif
+
+  // DQ (12/6/2014): this is the part of the token stream support that is required after transformations have been done in the AST.
+     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+        {
+       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+#if 0
+          printf ("Building token stream mapping frontier! \n");
+#endif
+       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
+       // and attaches the toke stream to the SgSourceFile IR node.  
+       // *** Next we have to attached the data base ***
+       // buildTokenStreamMapping(file);
+          buildTokenStreamFrontier(file);
+#if 0
+          printf ("DONE: Building token stream mapping frontier! \n");
+#endif
+        }
+     
+
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -417,7 +448,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
             // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
 //MH-20140701 removed comment-out
-#if 1
+#if 0
                printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
 #endif
             // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).

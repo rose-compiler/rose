@@ -11,6 +11,7 @@
 
 #include "unparser.h"
 
+// Unparser::token_sequence_position_enum_type xxx;
 
 class SgExpression;
 class SgStatement;
@@ -492,6 +493,26 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (2/8/2014): The name of the constructor call for a SgConstructorInitializer must 
        // be output differently for the GNU g++ 4.5 version compiler and later.
           SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
+
+#if 0
+       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
+          enum token_sequence_position_enum_type
+             {
+               e_leading_whitespace_start,
+               e_leading_whitespace_end,
+               e_token_subsequence_start,
+               e_token_subsequence_end,
+               e_trailing_whitespace_start,
+               e_trailing_whitespace_end
+             };
+#endif
+#if 0
+       // Single statement specification of token subsequence.
+          void unparseStatementFromTokenStream (SgStatement* stmt, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+
+       // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
+          void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+#endif
    };
 
 #endif
