@@ -9057,6 +9057,12 @@ bool SageInterface::hasMultipleInitStatmentsOrExpressions (SgForStatement* loop)
   if (stmt_list.size() >1) return true; // two var decl statements
   if (stmt_list.size() == 0) return false;
 
+//  generateDOTforMultipleFile(*getProject());
+  //single variable declaration statement, like int i; 
+  SgVariableDeclaration* decl_stmt = isSgVariableDeclaration(stmt_list[0]);
+  if (decl_stmt != NULL)
+    return false;
+
   // single statement, but with comma expression (i=0, j=0)
   SgExprStatement* exp_stmt = isSgExprStatement(stmt_list[0]);
   ROSE_ASSERT (exp_stmt != NULL);
