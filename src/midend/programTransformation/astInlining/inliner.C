@@ -8,7 +8,6 @@
 #include "pre.h"
 #include "rose_config.h" // for BOOST_FILESYSTEM_VERSION
 
-#include <sawyer/DistinctList.h>
 #include <Diagnostics.h>
 #include <AstConsistencyTests.h>
 
@@ -25,77 +24,6 @@
 using namespace SageInterface;
 // void FixSgTree(SgNode*);
 // void FixSgProject(SgProject&);
-
-#ifndef NDEBUG
-/** Check parent/child edges in the AST.
- *
- *  Checks the specified subtree beginning at @ref ast.  Each node (other than @ref ast itself) must have a non-null parent
- *  pointer that points back to the node by which it was reached during the AST traversal.  In other words, children of node N
- *  must have N as their parent. Certain checkers in other parts of ROSE follow parent pointers with the assumption that
- *  they're correct, and when they are not those checkers can fail in hard-to-find ways.
- *
- *  Returns true if all is okay, false otherwise with errors printed to the mlog[ERROR] stream. If @p throws is true then this
- *  function throws an <code>std::runtime_error</code> instead of returning false. */
-static bool
-checkAstParentChildRelationships(SgNode *ast, const std::string &title="", bool throws=true) {
-    struct Checker: AstPrePostProcessing {
-        const std::string &title;
-        bool throws;
-        Sawyer::Container::DistinctList<SgNode*> stack;
-        size_t nNodes, nErrors;
-        Checker(const std::string &title, bool throws): title(title), throws(throws), nNodes(0), nErrors(0) {}
-        void preOrderVisit(SgNode *node) ROSE_OVERRIDE {
-            ++nNodes;
-            std::string mesg;
-            SgNode *badParent = NULL;
-            if (stack.isEmpty() || 1==nNodes) {
-                // this is the first node we've visited
-                ASSERT_always_require2(1==nNodes,       "some kind of problem with the checker or traversal");
-                ASSERT_always_require2(stack.isEmpty(), "some kind of problem with the checker or traversal");
-            } else if (stack.exists(node)) {
-                mesg = "AST is not a tree because it contains a cycle";
-            } else if (!node->get_parent()) {
-                mesg = "non-root node has no parent";
-            } else if (node->get_parent() != stack.back()) {
-                mesg = "node points to wrong parent";
-                badParent = node->get_parent();
-            }
-            if (!mesg.empty()) {
-                using namespace rose::Diagnostics;
-                ++nErrors;
-                if (mlog[ERROR]) {
-                    Sawyer::Message::Stream error(mlog[ERROR]);
-                    error <<title <<(title.empty()?"":": ") <<"invalid AST connectivity"
-                          <<" at (" <<node->class_name() <<"*)" <<node <<": " <<mesg <<"\n";
-                    if (badParent) {
-                        error <<"  node parent is (" <<badParent->class_name() <<"*)" <<badParent
-                              <<" but expected (" <<stack.back()->class_name() <<"*)" <<stack.back() <<"\n";
-                    }
-                    error <<"  node " <<node <<" was reached by this AST path:";
-                    BOOST_FOREACH (SgNode *n, stack.items())
-                        error <<(n==stack.front()?"":" ->") <<" (" <<n->class_name() <<"*)" <<n;
-                    error <<"\n";
-                }
-                if (throws)
-                    throw std::runtime_error(title + (title.empty()?"":": ") + "invalid AST connectivity");
-            }
-            stack.pushBack(node);
-        }
-        void postOrderVisit(SgNode *node) ROSE_OVERRIDE {
-            ASSERT_always_forbid2(stack.isEmpty(),     "some kind of problem with the checker or traversal");
-            ASSERT_always_require2(stack.back()==node, "some kind of problem with the checker or traversal");
-            stack.popBack();
-        }
-    } checker(title, throws);
-    if (ast)
-        checker.traverse(ast);
-    std::cerr <<"checkAstParentChildRelationships((" <<ast->class_name() <<"*)" <<ast
-              <<", \"" <<StringUtility::cEscape(title) <<"\", throws=" <<(throws?"true":"false") <<") "
-              <<StringUtility::plural(checker.nNodes, "nodes") <<" checked, "
-              <<"found " <<StringUtility::plural(checker.nErrors, "errors") <<"\n";
-    return 0==checker.nErrors;
-}
-#endif
 
 SgExpression* generateAssignmentMaybe(SgExpression* lhs, SgExpression* rhs)
    {
@@ -540,12 +468,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
      // situations. Since we've introduced new expressions into the AST we need to adjust their p_lvalue according to the
      // operators where they were inserted.
      markLhsValues(targetFunction);
-
 #ifdef NDEBUG
-     checkAstParentChildRelationships(funbody_copy, "funbody_copy after inlining");
-     checkAstParentChildRelationships(targetFunction, "targetFunction after inlining");
-     checkAstParentChildRelationships(SageInterface::getProject(), "entire project after inlining");
      AstTests::runAllTests(SageInterface::getProject());
 #endif
+
      return true;
    }
