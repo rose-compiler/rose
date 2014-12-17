@@ -1,7 +1,6 @@
 #ifndef ROSE_BitPattern_H
 #define ROSE_BitPattern_H
 
-#include "sage3basic.h"
 #include "integerOps.h"
 #include "StringUtility.h"
 

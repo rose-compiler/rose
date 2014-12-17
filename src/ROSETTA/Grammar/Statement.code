@@ -2262,6 +2262,14 @@ HEADER_CASE_OPTION_STATEMENT_START
 
 HEADER_CASE_OPTION_STATEMENT_END
 
+HEADER_ASYNC_STATEMENT_START
+HEADER_ASYNC_STATEMENT_END
+
+HEADER_FINISH_STATEMENT_START
+HEADER_FINISH_STATEMENT_END
+
+HEADER_AT_STATEMENT_START
+HEADER_AT_STATEMENT_END
 
 HEADER_TRY_STATEMENT_START
 
@@ -2871,6 +2879,24 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
 #endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
+
+       // DQ (12/28/2011): We need a constructor similar to the base class.
+       // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
+
+#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+     private:
+       // DQ (12/29/2011): This is added to support backward compatability.
+          SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+#endif
+
+HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 HEADER_PRAGMA_STATEMENT_START
@@ -5263,6 +5289,11 @@ SgSymbol*
 SgScopeStatement::find_symbol_from_declaration(const T* node) const
    {
      assert (p_symbol_table != NULL);
+
+#if 0
+     printf ("In SgScopeStatement::find_symbol_from_declaration(): calling p_symbol_table->find(node): node %p = %s \n",node,node->class_name().c_str());
+#endif
+
      return p_symbol_table->find(node);
    }
 
@@ -8114,9 +8145,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                  {
                                 // DQ (5/19/2014): This is not a name that needs to be reset, so I think there is nothing to do here!
                                 // ROSE_ASSERT((*i)->get_templateDeclaration() != NULL);
-
-                                   printf ("Warning: SgTemplateArgument::start_of_pack_expansion_argument not implemented \n");
+#if 0
+                                   printf ("Warning: In SgDeclarationStatement::resetTemplateNameSupport(): SgTemplateArgument::start_of_pack_expansion_argument (no reset of name required) \n");
                                 // ROSE_ASSERT(false);
+#endif
                                    break;
                                  }
 
@@ -14234,6 +14266,32 @@ SgCaseOptionStmt::replace_child(SgStatement *target,SgStatement *newstmt,
 
 SOURCE_CASE_OPTION_STATEMENT_END
 
+SOURCE_ASYNC_STATEMENT_START
+
+void
+SgAsyncStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_ASYNC_STATEMENT_END
+
+SOURCE_FINISH_STATEMENT_START
+
+void
+SgFinishStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_FINISH_STATEMENT_END
+
+SOURCE_AT_STATEMENT_START
+
+void
+SgAtStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_AT_STATEMENT_END
 
 SOURCE_TRY_STATEMENT_START
 
@@ -14981,6 +15039,11 @@ SgSymbol*
 SgTypedefDeclaration::get_symbol_from_symbol_table() const
    {
      ROSE_ASSERT(get_scope() != NULL);
+
+#if 0
+     printf ("In SgTypedefDeclaration::get_symbol_from_symbol_table(): calling get_scope()->find_symbol_from_declaration(this) \n");
+#endif
+
   // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
   // return get_scope()->get_symbol_table()->find(this);
      return get_scope()->find_symbol_from_declaration(this);
@@ -14995,7 +15058,7 @@ SgTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
         {
           return p_declaration;
         }
-     else
+       else
         {
           return NULL;
         }
@@ -15365,7 +15428,7 @@ SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
-// DQ (12/292/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
+// DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
 SgDeclarationStatement *
 SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
@@ -15380,7 +15443,7 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
   // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
   // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called unde the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
+     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
      ROSE_ASSERT(false);
 
      return NULL;
@@ -15388,6 +15451,60 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
 #endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
+
+void
+SgTemplateTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_m_data);
+   }
+
+
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+
+// DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
+// As a result we need a function definition (but we need only call the base class version of the function).
+SgDeclarationStatement *
+SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+  // DQ (10/14/2014): We need to skip the call to SgTypedefDeclaration::compute_baseTypeDefiningDeclaration() because it is a private function.
+  // Not clear why this is not symetric to the case of SgTemplateVariableDeclaration.
+  // return SgTypedefDeclaration::compute_baseTypeDefiningDeclaration();
+     return NULL;
+   }
+
+#else
+
+#error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
+
+SgDeclarationStatement *
+SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
+  // I think it will not be used. So we return an error so that it will be detected if called.
+     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+#endif
+
+SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+
+void
+SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (11/4/2014): I don't think we need to do anything here.
+   }
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_START

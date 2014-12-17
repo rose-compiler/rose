@@ -15,8 +15,8 @@ libsageInterface_la_SOURCES      = \
      sageBuilder.h \
      sageBuilder.C \
      sageBuilder_fortran.C \
-     sageBuilder_untypedNodes.C \
-     abiStuff.C
+     abiStuff.C \
+     sageBuilder_untypedNodes.C 
 #     highLevelInterface.C
 
 #     buildSetOfFrontendSpecificNodes.C

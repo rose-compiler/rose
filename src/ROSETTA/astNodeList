@@ -435,6 +435,9 @@ SgLabelStatement
 SgJavaLabelStatement
 SgLabelSymbol
 SgJavaLabelSymbol
+SgLambdaCapture
+SgLambdaCaptureList
+SgLambdaExp
 SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp
@@ -615,6 +618,8 @@ SgTemplateFunctionSymbol
 SgTemplateMemberFunctionDeclaration
 SgTemplateMemberFunctionRefExp
 SgTemplateMemberFunctionSymbol
+SgTemplateTypedefDeclaration
+SgTemplateTypedefSymbol
 SgTemplateVariableDeclaration
 SgTemplateVariableSymbol
 SgTemplateClassDefinition
@@ -624,6 +629,7 @@ SgTemplateInstantiationDefn
 SgTemplateInstantiationDirectiveStatement
 SgTemplateInstantiationFunctionDecl
 SgTemplateInstantiationMemberFunctionDecl
+SgTemplateInstantiationTypedefDeclaration
 SgTemplateParameter
 SgTemplateParameterVal
 SgTemplateParameterList
@@ -782,3 +788,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgAsyncStmt
+SgFinishStmt
+SgAtStmt
+SgHereExp

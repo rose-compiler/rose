@@ -84,7 +84,6 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (StmtDeclarationStatement,  "StmtDeclarationStatement",  "STMT_DECL_STMT" );
      NEW_TERMINAL_MACRO (EnumDeclaration,           "EnumDeclaration",           "ENUM_DECL_STMT" );
      NEW_TERMINAL_MACRO (AsmStmt,                   "AsmStmt",                   "ASM_STMT" );
-     NEW_TERMINAL_MACRO (TypedefDeclaration,        "TypedefDeclaration",        "TYPEDEF_STMT" );
      NEW_TERMINAL_MACRO (FunctionTypeTable,         "FunctionTypeTable",         "FUNC_TBL_STMT" );
      NEW_TERMINAL_MACRO (ExprStatement,             "ExprStatement",             "EXPR_STMT" );
      NEW_TERMINAL_MACRO (LabelStatement,            "LabelStatement",            "LABEL_STMT" );
@@ -98,6 +97,15 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (SpawnStmt,                 "SpawnStmt",                 "SPAWN_STMT" );
 
 
+#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+  #error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
+#endif
+
+  // DQ (10/14/2014): Added template typedef as part of C++11 support.
+  // NEW_TERMINAL_MACRO (TypedefDeclaration,        "TypedefDeclaration",        "TYPEDEF_STMT" );
+     NEW_TERMINAL_MACRO (TemplateTypedefDeclaration, "TemplateTypedefDeclaration",    "TEMPLATE_TYPEDEF_DECL_STMT" );
+     NEW_TERMINAL_MACRO (TemplateInstantiationTypedefDeclaration, "TemplateInstantiationTypedefDeclaration", "TEMPLATE_INST_TYPEDEF_DECL_STMT" );
+     NEW_NONTERMINAL_MACRO (TypedefDeclaration, TemplateTypedefDeclaration | TemplateInstantiationTypedefDeclaration, "TypedefDeclaration", "TYPEDEF_STMT", true );
 
   // DQ (12/13/2005): Added support for empty statement (and empty expression).
      NEW_TERMINAL_MACRO (NullStatement,             "NullStatement",             "NULL_STMT" );
@@ -295,6 +303,7 @@ Grammar::setUpStatements ()
 #endif
 
 #include "java/terminals.cpp"
+#include "x10/terminals.cpp"
 
 
   // DQ (8/21/2007): More IR nodes required for Fortran support
@@ -505,7 +514,7 @@ Grammar::setUpStatements ()
              OmpBarrierStatement       | OmpTaskwaitStatement   |  OmpFlushStatement              | OmpBodyStatement      |
              SequenceStatement         | WithStatement          | PythonPrintStmt                 | PassStatement         |
              AssertStmt                | ExecStatement          | PythonGlobalStmt                | JavaThrowStatement    |
-             JavaSynchronizedStatement /* | JavaPackageDeclaration */,
+             JavaSynchronizedStatement | AsyncStmt              | FinishStmt                      | AtStmt /* | JavaPackageDeclaration */,
              "Statement","StatementTag", false);
 
   // DQ (11/24/2007): These have been moved to be declarations, so they can appear where only declaration statements are allowed
@@ -1868,6 +1877,31 @@ Grammar::setUpStatements ()
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
   // *******************************************************************************
+
+
+  // DQ (10/14/2014): Adding template typedef for C++11 support.
+     TemplateTypedefDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
+     TemplateTypedefDeclaration.setDataPrototype ( "SgTemplateParameterPtrList", "templateParameters", "= SgTemplateParameterPtrList()",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateTypedefDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateTypedefDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/4/2014): Adding IR support for the instantiation of a template typedef (for C++11 support).
+  // All of these data members are generally required for any template instantiation.
+     TemplateInstantiationTypedefDeclaration.setFunctionPrototype ( "HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+     TemplateInstantiationTypedefDeclaration.setDataPrototype ( "SgName", "templateName", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationTypedefDeclaration.setDataPrototype ( "SgName", "templateHeader", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationTypedefDeclaration.setDataPrototype ( "SgTemplateTypedefDeclaration*", "templateDeclaration", "= NULL",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationTypedefDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateArguments",  "= SgTemplateArgumentPtrList()",
+                CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TemplateInstantiationTypedefDeclaration.setDataPrototype ( "bool", "nameResetFromMangledForm", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      TemplateClassDefinition.setFunctionPrototype    ( "HEADER_TEMPLATE_CLASS_DEFINITION_STATEMENT", "../Grammar/Statement.code" );
@@ -3640,6 +3674,12 @@ Grammar::setUpStatements ()
 
   // DQ (12/6/2011): Adding support for template variables (e.g. static template data members).
      TemplateVariableDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (10/14/2014): Adding template typedef for C++11 support.
+     TemplateTypedefDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
+  // DQ (11/4/2014): Adding IR node for instantiation of template typedef for C++11 support.
+     TemplateInstantiationTypedefDeclaration.setFunctionSource ( "SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
   // Support for pragmas in the IR
      PragmaDeclaration.setFunctionSource      ( "SOURCE_PRAGMA_STATEMENT", "../Grammar/Statement.code" );
