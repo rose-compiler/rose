@@ -1173,6 +1173,10 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                name = isSgEnumDeclaration(declaration)->get_name().str();
                break;
 
+       // DQ (11/5/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateInstantiationTypedefDeclaration:
+       // DQ (11/3/2014): Adding support for template typedef declarations (C++11 feature).
+          case V_SgTemplateTypedefDeclaration:
           case V_SgTypedefDeclaration:
                name = isSgTypedefDeclaration(declaration)->get_name().str();
                break;
@@ -2172,6 +2176,15 @@ SageInterface::get_name ( const SgExpression* expr )
                break;
              }
 
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaExp:
+             {
+               const SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
+               ROSE_ASSERT (lambdaExp != NULL);
+               name = "lambda_expression_";
+               break;
+             }
+
           default:
              {
             // Nothing to do for other IR nodes
@@ -2211,15 +2224,26 @@ SageInterface::get_name ( const SgLocatedNodeSupport* node )
                returnName += n->get_use_name().str();
                break;
              }
-          case V_SgInitializedName:
-          {
-            const SgInitializedName * n = isSgInitializedName (node);
-            ROSE_ASSERT (n != NULL);
-            returnName = "initialized_name_";
-            returnName += n->get_name().str();
 
-            break;
-          }
+          case V_SgInitializedName:
+             {
+               const SgInitializedName* n = isSgInitializedName(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "initialized_name_";
+               returnName += n->get_name().str();
+               break;
+             }
+
+        // DQ (9/3/2014): Added support for C++11 lambda expressions.
+           case V_SgLambdaCapture:
+             {
+               const SgLambdaCapture* n = isSgLambdaCapture(node);
+               ROSE_ASSERT (n != NULL);
+               returnName = "lambda_capture_";
+            // returnName += n->get_name().str();
+               break;
+             }
+
 #if 0
           case V_SgInterfaceBody:
              {
@@ -10259,15 +10283,30 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt &&newStmt);
      ROSE_ASSERT(targetStmt != newStmt); // should not share statement nodes!
      SgNode* parent = targetStmt->get_parent();
-     if (parent==NULL)
+     if (parent == NULL)
         {
-          cerr<<"Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
+          cerr << "Empty parent pointer for target statement. May be caused by the wrong order of target and new statements in insertStatement(targetStmt, newStmt)"<<endl;
           ROSE_ASSERT(parent);
+        }
+
+     if (isSgLabelStatement(parent) != NULL)
+        {
+#if 0
+          printf ("In SageInterface::insertStatement(): Detected case of label statement as parent, using parent of label statement \n");
+#endif
+          SgLabelStatement* labelStatement = isSgLabelStatement(parent);
+       // parent = labelStatement->get_scope();
+          parent = labelStatement->get_parent();
+          ROSE_ASSERT(isSgLabelStatement(parent) == NULL);
         }
 
 #if 0
      printf ("In SageInterface::insertStatement(): insert newStmt = %p = %s before/after targetStmt = %p = %s \n",newStmt,newStmt->class_name().c_str(),targetStmt,targetStmt->class_name().c_str());
 #endif
+
+  // DQ (12/2/2014): Not sure why this was here in the first place (likely debugging code from the fix for the SgLableStatement insertion.
+  // SgFunctionDefinition* functionDefinition = SageInterface::getEnclosingProcedure(targetStmt);
+  // ROSE_ASSERT(functionDefinition != NULL);
 
   // Liao 3/2/2012. The semantics of ensureBasicBlockAsParent() are messy. input targetStmt may be
   // returned as it is if it is already a basic block as a body of if/while/catch/ etc.
@@ -10279,10 +10318,19 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
     // parent = ensureBasicBlockAsParent(targetStmt);
 
   // must get the new scope after ensureBasicBlockAsParent ()
-     SgScopeStatement* scope= targetStmt->get_scope();
+     SgScopeStatement* scope = targetStmt->get_scope();
      ROSE_ASSERT(scope);
 
-     newStmt->set_parent(targetStmt->get_parent());
+  // DQ (11/16/2014): This step is problematic if the targetStmt has been transformed to be associated with a SgLabelStatement.
+  // The reason is that the targetStmt's parent will have been reset to be the SgLabelStatement and the logic in the set_parent()
+  // function will assert fail when the parent is being set to itself (which is a good idea in general).  A better solution might
+  // be to set the parent to the scope of the target instead.  This would be just as correct in the general case, but also make
+  // more sense in this special case of a SgLabelStatement.
+  // newStmt->set_parent(targetStmt->get_parent());
+     newStmt->set_parent(scope);
+
+  // DQ (11/16/2014): This function had a bug that is now fixed.  It allowed a 2nd SgLableSymbol to be built when an initial one was found.
+  // The fix was the reuse the one that was found.
      fixStatement(newStmt,scope);
 
   // DQ (9/16/2010): Added assertion that appears to be required to be true.
@@ -10296,7 +10344,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
      ROSE_ASSERT(targetStmt != NULL);
      AttachedPreprocessingInfoType* comments = targetStmt->getAttachedPreprocessingInfo();
 
-   //TODO refactor this portion of code into a separate function
+  // TODO refactor this portion of code into a separate function
   // DQ (9/17/2010): Trying to eliminate failing case in OpenMP projects/OpenMP_Translator/tests/npb2.3-omp-c/LU/lu.c
   // I think that special rules apply to inserting a SgBasicBlock so disable comment reloation when inserting a SgBasicBlock.
   // if (comments != NULL && newStmt->getAttachedPreprocessingInfo() == NULL)
@@ -10525,6 +10573,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(newStmt),scope);
         }
    }
+
 
   void SageInterface::insertStatementList(SgStatement *targetStmt, const std::vector<SgStatement*>& newStmts, bool insertBefore) {
     if (insertBefore) {
@@ -11390,17 +11439,35 @@ void SageInterface::fixLabelStatement(SgLabelStatement* stmt, SgScopeStatement* 
      SgName name = label_stmt->get_label();
 
      SgScopeStatement* label_scope = getEnclosingFunctionDefinition(scope,true);
+
+  // DQ (11/16/2014): Added error checking for when the input scope is the SgFunctionDefinition instead of a nested scope.
+     if (isSgFunctionDefinition(scope) != NULL)
+        {
+          ROSE_ASSERT(label_scope == scope);
+        }
+
      if (label_scope) //Should we assert this instead? No for bottom up AST building
         {
           label_stmt->set_scope(label_scope);
           SgLabelSymbol* lsymbol = label_scope->lookup_label_symbol(name);
 
-          if (lsymbol != NULL)
+       // DQ (11/15/2014): I think this is a bug, the precicate should be (lsymbol == NULL), instead of (lsymbol != NULL)
+       // if (lsymbol != NULL)
+          if (lsymbol == NULL)
              {
+#if 0
+               printf ("WARNING: In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol, so why are we adding another one (this bug is now fixed) \n");
+#endif
             // DQ (12/4/2011): This is the correct handling for SgLabelStatement (always in the function scope).
                lsymbol= new SgLabelSymbol(label_stmt);
                ROSE_ASSERT(lsymbol);
                label_scope->insert_symbol(lsymbol->get_name(), lsymbol);
+             }
+            else
+             {
+#if 0
+               printf ("In SageInterface::fixLabelStatement(): We already found a SgLabelSymbol (bug causing additional symbol to be built is now fixed) \n");
+#endif
              }
         }
    }
@@ -18406,11 +18473,17 @@ Scope_Node*  Scope_Node::findFirstBranchNode()
   while (first_branch_node->children.size()==1)
     first_branch_node = first_branch_node->children[0];
 
+#if 0 // this adjustment should not be done until we figure out if the variable can be
+      // moved downward into the two branch scopes or not.
+      // We only adjust if we cannot move downward further,but trying to move var decl to if-stmt.
+      // With this consideration, we do this adjust later after considering liveness between mutliple scopes.
+      //
   // Adjust for if-stmt: special adjustment
   // switch stmt needs not to be adjusted since there is a middle scope as the innermost scope
   // if a variable is used in multiple case: scopes. 
    if (isSgIfStmt (first_branch_node->scope))
       first_branch_node = first_branch_node->parent;
+#endif
   // now the node must has either 0 or >1 children.
   return first_branch_node; 
 }
@@ -18714,6 +18787,18 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
   ROSE_ASSERT (target_scope != NULL);
   ROSE_ASSERT (target_scope != decl->get_scope());
 
+#if 0 // at this stage, we focus on legal move only, any scope adjustment should be done earlier!
+  // Special handling for If-Stmt, may need to climb up one level of scope when:
+  // two bodies of if uses the same variable, but cannot be pushed down into each body.
+  // If-stmt will be the innermost common scope for the variable.
+  // But we should not move the declaration to if-stmt. We can only move it to the parent scope of if-stmt.
+  if (isSgIfStmt (target_scope))
+  {
+    target_scope = SageInterface::getEnclosingScope (target_scope, false);
+    if (target_scope == )
+  }
+# endif 
+
   // Move the declaration 
   //TODO: consider another way: copy the declaration, insert the copy, replace varRefExp, and remove (delete) the original declaration 
   SageInterface::removeStatement(decl); 
@@ -18725,6 +18810,13 @@ void SageInterface::moveVariableDeclaration(SgVariableDeclaration* decl, SgScope
         SageInterface::prependStatement (decl, target_scope);
         break;
       }
+#if 0 // this check should be done earlier before any side effects can happen
+    case V_SgIfStmt: 
+    {
+       // adjust to parent scope of if-stmt
+       break;
+    }
+#endif
     case V_SgForStatement: 
       {
         // we move int i; to be for (int i=0; ...);
@@ -19100,9 +19192,16 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
         target_scopes.push_back (bottom_scope);
       }
     }
-    else // we still can move it to the innermost common scope
+    else // we still have to move it to the innermost common scope
     {
       SgScopeStatement* bottom_scope = first_branch_node->scope;
+#if 1
+      // special adjustment here for if-stmt as the single bottom scope  to be inserted into the var decl.
+      // we should adjust here, not any other places !!
+      // TODO may have to include other special stmt like while?
+      if (isSgIfStmt(bottom_scope))
+        bottom_scope = SageInterface::getEnclosingScope(bottom_scope, false);
+#endif 
       if (decl->get_scope() != bottom_scope)
       {
         target_scopes.push_back(bottom_scope);
@@ -19123,5 +19222,358 @@ bool SageInterface::moveDeclarationToInnermostScope(SgDeclarationStatement* decl
     delete scope_tree;
     return false;  
   }
+}
+
+
+class SimpleExpressionEvaluator: public AstBottomUpProcessing <struct SageInterface::const_int_expr_t> {
+ public:
+   SimpleExpressionEvaluator() {
+   }
+
+ struct SageInterface::const_int_expr_t getValueExpressionValue(SgValueExp *valExp) {
+   struct SageInterface::const_int_expr_t subtreeVal;
+   subtreeVal.hasValue_ = true;
+
+   if (isSgIntVal(valExp)) {
+     subtreeVal.value_ = isSgIntVal(valExp)->get_value();
+   } else if (isSgLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgLongIntVal(valExp)->get_value();
+   } else if (isSgLongLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgLongLongIntVal(valExp)->get_value();
+   } else if (isSgShortVal(valExp)) {
+     subtreeVal.value_ = isSgShortVal(valExp)->get_value();
+   } else if (isSgUnsignedIntVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedIntVal(valExp)->get_value();
+   } else if (isSgUnsignedLongVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedLongVal(valExp)->get_value();
+   } else if (isSgUnsignedLongLongIntVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedLongLongIntVal(valExp)->get_value();
+   } else if (isSgUnsignedShortVal(valExp)) {
+     subtreeVal.value_ = isSgUnsignedShortVal(valExp)->get_value();
+   }
+   return subtreeVal;
+ }
+
+ struct SageInterface::const_int_expr_t evaluateVariableReference(SgVarRefExp *vRef) {
+   if (isSgModifierType(vRef->get_type()) == NULL) {
+     struct SageInterface::const_int_expr_t val;
+     val.value_ = -1;
+     val.hasValue_ = false;
+     return val;
+   }
+   if (isSgModifierType(vRef->get_type())->get_typeModifier().get_constVolatileModifier().isConst()) {
+     // We know that the var value is const, so get the initialized name and evaluate it
+     SgVariableSymbol *sym = vRef->get_symbol();
+     SgInitializedName *iName = sym->get_declaration();
+     SgInitializer *ini = iName->get_initializer();
+                                                                                 
+     if (isSgAssignInitializer(ini)) {
+       SgAssignInitializer *initializer = isSgAssignInitializer(ini);
+       SgExpression *rhs = initializer->get_operand();
+       SimpleExpressionEvaluator variableEval;
+                                                                                                                
+       return variableEval.traverse(rhs);
+     }
+   }
+   struct SageInterface::const_int_expr_t val;
+   val.hasValue_ = false;
+   val.value_ = -1;
+   return val;
+ }
+
+ struct SageInterface::const_int_expr_t evaluateSynthesizedAttribute(SgNode *node, SynthesizedAttributesList synList) {
+   if (isSgExpression(node)) {
+     if (isSgValueExp(node)) {
+       return this->getValueExpressionValue(isSgValueExp(node));
+     }
+                                                                                                                                                 
+     if (isSgVarRefExp(node)) {
+      //      std::cout << "Hit variable reference expression!" << std::endl;
+       return evaluateVariableReference(isSgVarRefExp(node));
+     }
+     // Early break out for assign initializer // other possibility?
+     if (isSgAssignInitializer(node)) {
+       if(synList.at(0).hasValue_){
+         return synList.at(0);
+       } else { 
+         struct SageInterface::const_int_expr_t val;
+         val.value_ = -1;
+         val.hasValue_ = false;
+         return val;
+       }
+     }
+     struct SageInterface::const_int_expr_t evaluatedValue;
+     evaluatedValue.hasValue_ = false;
+     evaluatedValue.value_ = -1;
+#if 0
+    if(synList.size() != 2){
+      for(SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it){
+        std::cout << "Node: " << node->unparseToString() << "\n" << (*it).value_ << std::endl;
+        std::cout << "Parent: " << node->get_parent()->unparseToString() << std::endl;
+        std::cout << "Parent, Parent: " << node->get_parent()->get_parent()->unparseToString() << std::endl;
+      }
+    }
+#endif
+     for (SynthesizedAttributesList::iterator it = synList.begin(); it != synList.end(); ++it) {
+       if((*it).hasValue_){
+         if (isSgAddOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_ + synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
+         } else if (isSgSubtractOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  - synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
+         } else if (isSgMultiplyOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  * synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
+         } else if (isSgDivideOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  / synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
+         } else if (isSgModOp(node)) {
+           assert(synList.size() == 2);
+           evaluatedValue.value_ = synList[0].value_  % synList[1].value_ ;
+           evaluatedValue.hasValue_ = true;
+         }
+       } else {
+         std::cerr << "Expression is not evaluatable" << std::endl;
+         evaluatedValue.hasValue_ = false;
+         evaluatedValue.value_ = -1;
+         return evaluatedValue;
+       }
+     }
+     evaluatedValue.hasValue_ = true;
+     return evaluatedValue;
+   }
+   struct SageInterface::const_int_expr_t evaluatedValue;
+   evaluatedValue.hasValue_ = false;
+   evaluatedValue.value_ = -1;
+   return evaluatedValue;
+ }
+};
+
+struct SageInterface::const_int_expr_t 
+SageInterface::evaluateConstIntegerExpression(SgExpression *expr){
+  SimpleExpressionEvaluator eval;
+  return eval.traverse(expr);
+}
+
+bool
+SageInterface::checkTypesAreEqual(SgType *typeA, SgType *typeB){
+
+  class TypeEquivalenceChecker {
+    public:
+     TypeEquivalenceChecker(bool profile, bool useSemanticEquivalence)
+       : profile_(profile), useSemanticEquivalence_(useSemanticEquivalence),
+         namedType_(0), pointerType_(0), arrayType_(0), functionType_(0) 
+     {
+     }
+
+     SgNode * getBasetypeIfApplicable(SgNode *t){
+       SgNode * node = t;
+       if (isSgTypedefType(t)) {
+//    std::cout << "This is a typedef nodeT1. We strip everything away and compare the hidden types." << std::endl;
+         node = isSgTypedefType(t)->stripType(SgType::STRIP_TYPEDEF_TYPE);
+     }
+     if(useSemanticEquivalence_){
+       if(isSgModifierType(t)){
+         SgModifierType *modType = isSgModifierType(t);
+         ROSE_ASSERT(modType != NULL);
+         // We need to check for Volatile/Restrict types. These are modelled as ModifierTypes, but are equal (in some cases)
+         // volatile seems to make no difference for basic (built in) types like int, bool etc. But it has an impact on types
+         // like classes
+         // restrict seems to have no impact on the type itself.
+         if(SageInterface::isVolatileType(modType)){
+          // handle volatile case
+          std::cout << "Hit volatile type, stripping of modifier type" << std::endl;
+          node = modType->get_base_type();
+         }
+      if(SageInterface::isRestrictType(modType)){
+        // handle restrict case
+        std::cout << "Hit restrict type, stripping of modifier type" << std::endl;
+        node = modType->get_base_type();
+      }
+    }
+  }
+  ROSE_ASSERT(node != NULL);
+  return node;
+}
+
+bool typesAreEqual(SgType *t1, SgType *t2) {
+  bool equal = false;
+  if(t1 == NULL || t2 == NULL){
+    std::string wasNull;
+    if(t1 == NULL){
+      wasNull = "t1";
+    } else {
+      wasNull = "t2";
+    }
+    std::cerr << "ERROR: " << wasNull << " was NULL" << std::endl;
+    return equal;
+  }
+  // if both pointers point to same location the types MUST be equal!
+  if(t1 == t2){
+//    std::cout << "Pointers are equal, returning true" << std::endl;
+    return true;
+  }
+#ifndef USE_CMAKE
+  RoseAst subT1(t1);
+  RoseAst subT2(t2);
+
+  for (RoseAst::iterator i = subT1.begin(), j = subT2.begin();
+       i != subT1.end(), j != subT2.end(); ++i, ++j) {
+    SgNode *nodeT1 = *i;
+    SgNode *nodeT2 = *j;
+
+//    std::cout << "nodeT1: " << nodeT1->class_name() << " nodeT2: " << nodeT2->class_name() << std::endl;
+   nodeT1 = getBasetypeIfApplicable(nodeT1);
+   nodeT2 = getBasetypeIfApplicable(nodeT2);
+
+   if (nodeT1->variantT() == nodeT2->variantT()) {
+//     std::cout << "variantT is the same" << std::endl;
+      if(isSgModifierType(nodeT1)){
+        // we need to check whether the modifier is the same or not
+        SgTypeModifier modT1 = isSgModifierType(nodeT1)->get_typeModifier();
+        SgTypeModifier modT2 = isSgModifierType(nodeT2)->get_typeModifier();
+        if(modT1.get_constVolatileModifier().isConst() != modT2.get_constVolatileModifier().isConst()){
+          return false;
+        }
+        if(modT1.get_constVolatileModifier().isVolatile() != modT2.get_constVolatileModifier().isVolatile()){
+          return false;
+        }
+      } else if (isSgNamedType(nodeT1)) {      // Two different names -> Must be two different things
+        if (profile_) {
+          namedType_++;
+        }
+        i.skipChildrenOnForward();
+        j.skipChildrenOnForward();
+        SgNamedType *c1 = isSgNamedType(nodeT1);
+        SgNamedType *c2 = isSgNamedType(nodeT2);
+
+//        std::cout << c1->get_qualified_name() << std::endl;
+        // XXX A function to check whether a named type is anonymous or not would speed
+        // up this check, since we could get rid of this string compare.
+//        if (c1->get_qualified_name().getString().find("__anonymous_") != std::string::npos) {
+        if(!c1->get_autonomous_declaration()){
+          return false;
+        }
+        if (!c2->get_autonomous_declaration()){
+          return false;
+        }
+        if (c1->get_qualified_name() == c2->get_qualified_name()) {
+          return true;
+        } else {
+          return false;
+        }
+
+      } else if (isSgPointerType(nodeT1)) {
+        if (profile_) {
+          pointerType_++;
+        }
+        SgPointerType *t1 = isSgPointerType(nodeT1);
+        SgPointerType *t2 = isSgPointerType(nodeT2);
+
+        return typesAreEqual(t1->get_base_type(), t2->get_base_type());
+
+      } else if(isSgReferenceType(nodeT1)){
+        SgReferenceType *t1 = isSgReferenceType(nodeT1);
+        SgReferenceType *t2 = isSgReferenceType(nodeT2);
+
+        return typesAreEqual(t1->get_base_type(), t2->get_base_type());
+      } else if (isSgArrayType(nodeT1)) {
+        if (profile_) {
+          arrayType_++;
+        }
+        SgArrayType *a1 = isSgArrayType(nodeT1);
+        SgArrayType *a2 = isSgArrayType(nodeT2);
+
+        bool arrayBaseIsEqual = typesAreEqual(a1->get_base_type(), a2->get_base_type());
+
+        SageInterface::const_int_expr_t t1Index = SageInterface::evaluateConstIntegerExpression(a1->get_index());
+        SageInterface::const_int_expr_t t2Index = SageInterface::evaluateConstIntegerExpression(a2->get_index());
+        bool arrayIndexExpressionIsEquivalent = false;
+        if(t1Index.hasValue_ && t2Index.hasValue_){
+          if(t1Index.value_ == t2Index.value_){
+            arrayIndexExpressionIsEquivalent = true;
+          }
+        }
+        bool arraysAreEqual = (arrayBaseIsEqual && arrayIndexExpressionIsEquivalent);
+        return arraysAreEqual;
+      } else if (isSgFunctionType(nodeT1)) {
+        if(profile_) {
+          functionType_++;
+        }
+        SgFunctionType *funcTypeA = isSgFunctionType(nodeT1);
+        SgFunctionType *funcTypeB = isSgFunctionType(nodeT2);
+//        std::cout << "Inside SgFunctionType" << std::endl;
+//        assert(funcTypeA != funcTypeB);
+        if(typesAreEqual(funcTypeA->get_return_type(), funcTypeB->get_return_type())) {
+          // If functions don't have the same number of arguments, they are not type-equal
+          if(funcTypeA->get_arguments().size() != funcTypeB->get_arguments().size()) {
+            return false;
+          }
+          // This should always be the same as the if before...
+          if(funcTypeA->get_argument_list()->get_arguments().size() != funcTypeB->get_argument_list()->get_arguments().size()){
+            return false;
+          }
+
+          for(SgTypePtrList::const_iterator ii = funcTypeA->get_arguments().begin(),
+              jj = funcTypeB->get_arguments().begin();
+              ii != funcTypeA->get_arguments().end(),
+              jj != funcTypeB->get_arguments().end();
+              ++ii, ++jj) {
+//            std::cout << (*ii)->class_name() << " " << (*jj)->class_name() << std::endl;
+            // For all argument types check whether they are equal
+            if(!typesAreEqual((*ii), (*jj))) {
+              return false;
+            }
+          }
+          return true;
+        }
+        return false;
+      } else {
+        // We don't have a named type, pointer type or array type, so they are equal
+        // This is for the primitive type - case
+        return true;
+      }
+    } else {
+      // In this case the types are not equal, since its variantT is not equal.
+      return false;
+    }
+  }
+  // this should be unreachable code...
+  return equal;
+#else
+  std::cerr << "This feature for now is available with autotools only!" << std::endl;
+  ROSE_ASSERT(false);
+  return false;
+#endif
+}
+
+int getNamedTypeCount() {
+  return namedType_;
+}
+
+int getPointerTypeCount() {
+  return pointerType_;
+}
+
+int getArrayTypeCount() {
+  return arrayType_;
+}
+
+int getFunctionTypeCount() {
+  return functionType_;
+}
+    private:
+//     SgNode * getBasetypeIfApplicable(SgNode *t);
+     bool profile_, useSemanticEquivalence_;
+     int namedType_, pointerType_, arrayType_, functionType_;
+};
+
+TypeEquivalenceChecker tec(false, false);
+return tec.typesAreEqual(typeA, typeB);
 }
 

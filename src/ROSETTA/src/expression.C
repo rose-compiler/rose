@@ -61,6 +61,9 @@ Grammar::setUpExpressions ()
   // favor of this newer (more language independent) IR node.
      NEW_TERMINAL_MACRO (TypeExpression, "TypeExpression", "TYPE_EXPRESSION");
 
+  // DQ (9/2/2014): Adding support for C++11 Lambda expressions.
+     NEW_TERMINAL_MACRO (LambdaExp,      "LambdaExp",  "LAMBDA_EXP" );
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -226,6 +229,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
      NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
 
+#include "x10/exp_terminals.cpp"
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -268,6 +273,31 @@ Grammar::setUpExpressions ()
 
 #endif
 
+
+#define ROSE_USE_STENCILE_COMPILER_NODES 0
+#if ROSE_USE_STENCILE_COMPILER_NODES
+
+  // Possible new IR nodes specific to new stencil DSL.
+     NEW_TERMINAL_MACRO (ShiftOpExpr,             "ShiftOpExpr",              "Temp_ShiftOpExpr" );
+     NEW_TERMINAL_MACRO (GrowOpExpr,              "GrowOpExpr",               "Temp_GrowOpExpr" );
+     NEW_TERMINAL_MACRO (CrossLevelOpExpr,        "CrossLevelOpExpr",         "Temp_CrossLevelOpExpr" );
+     NEW_TERMINAL_MACRO (PointExpr,               "PointExpr",                "Temp_PointExpr" );
+
+     NEW_TERMINAL_MACRO (BoxOpExpr,               "BoxOpExpr",                "Temp_BoxOpExpr" );
+     NEW_TERMINAL_MACRO (ArrayExpr,               "ArrayExpr",                "Temp_ArrayExpr" );
+
+  // Note that ArrayDecl, ArrayDef, and StencilDef, StencilExpr would be derived from SgExpression.
+
+  // DQ (10/14/2014): ALTERNATIVE:
+  // An alternative to naming new IR nodes would be to add associated AST attributes from a base class
+  // that would be interpreted to be the equivalent new IR nodes at runtime.  The Aterm generator
+  // and Aterm reader would be able to interpret these AST attributes and generate the desired new
+  // aterm nodes (and read then using modified patterns with the new IR node names).  This approach
+  // would simplify the handling of Aterms for new IR nodes extended from existing ROSE IR nodes.
+  
+#endif
+
+
   // An expression with a designator, used for designated initialization in
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
@@ -301,7 +331,7 @@ Grammar::setUpExpressions ()
           BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
           PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
           ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
-          NonMembershipOp | IsOp            | IsNotOp,
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -351,7 +381,8 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp | FunctionParameterRefExp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp, "Expression", "ExpressionTag", false);
+       // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -732,6 +763,9 @@ Grammar::setUpExpressions ()
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
+  // DQ (9/2/2014): Adding support for C++11 lambda functions.
+     LambdaExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      SuperExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -924,6 +958,9 @@ Grammar::setUpExpressions ()
 
   // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
      FunctionParameterRefExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (not sure if these are correct values)
@@ -1297,6 +1334,30 @@ Grammar::setUpExpressions ()
   // parameter_levels_up values.
      FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/10/2014): We need to store an explicit type pointer in this IR node so that we can support
+  // the get_type() function called from any expression that might have this kind of IR node in its subtree.
+     FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
+     LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "capture_default", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "default_is_by_reference", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "explicit_return_type", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "has_parameter_decl", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
@@ -1957,7 +2018,11 @@ Grammar::setUpExpressions ()
 #endif
 
      Initializer.setFunctionPrototype ( "HEADER_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
-     Initializer.setDataPrototype     ( "bool"               , "is_explicit_cast", "= true",
+     Initializer.setDataPrototype     ( "bool", "is_explicit_cast", "= true",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/6/2014): This is C++11 syntax for direct brace initalization (e.g. int n{}).
+     Initializer.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // SgAggregateInitializer.setFunctionPrototype ( "HEADER_REPLACE_EXPRESSION", "../Grammar/Expression.code" );
@@ -2428,6 +2493,9 @@ Grammar::setUpExpressions ()
 
   // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
      FunctionParameterRefExp.setFunctionSource ( "SOURCE_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );

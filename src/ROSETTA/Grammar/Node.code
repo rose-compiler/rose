@@ -82,6 +82,7 @@ std::ostream& operator<<(std::ostream&, const AddressInterval&);
 
 /** A set of virtual addresses. This is optimized for cases when many addresses are contiguous. */
 typedef Sawyer::Container::IntervalSet<AddressInterval> AddressIntervalSet;
+std::ostream& operator<<(std::ostream&, const AddressIntervalSet&);
 
 // deprecated. Use AddressInterval instead for all new code.
 typedef Range<rose_addr_t> Extent;
@@ -641,6 +642,10 @@ typedef SgUntypedFunctionDeclarationPtrList*              SgUntypedFunctionDecla
 class SgAsmRegisterReferenceExpression;
 typedef Rose_STL_Container<SgAsmRegisterReferenceExpression*> SgAsmRegisterReferenceExpressionPtrList;
 typedef SgAsmRegisterReferenceExpressionPtrList* SgAsmRegisterReferenceExpressionPtrListPtr;
+
+// DQ (9/3/2014): Added support for C++11 Lambda expressions.
+typedef Rose_STL_Container<SgLambdaCapture*>     SgLambdaCapturePtrList;
+typedef SgLambdaCapturePtrList*                  SgLambdaCapturePtrListPtr;
 
 
 // DQ (10/28/2013): Forward declaration for new token unparsing support.

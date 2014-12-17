@@ -1,7 +1,15 @@
 /*
- * this includes the forward declarations of all the sage node classes
- * from the generated files (i.e. gives just the class names.)
+ * This header (or its precompiled version) includes the forward declarations of all the Sage IR node classes ("Sg*")
+ * from the ROSETTA-generated files (i.e., gives just the class names).
  *
+ * Every source file (.C) that becomes part of librose should include "sage3basic.h" as the first included file before any C++
+ * token is processed by the compiler, thus allowing a precompiled version of this header to be used.  This applies to pretty
+ * much every .C file under the $ROSE/src directory.  Such source files should not include "rose.h".
+ *
+ * No librose header file (those under $ROSE/src) should include sage3basic.h, rose_config.h, or rose.h.  If a header file
+ * needs something that's declared in sage3basic.h then include sage3basic.h in the .C file first (GCC cannot use the
+ * precompiled version if it is included from inside another header).  If a header file needs a configuration macro (like
+ * HAVE_WHATEVER) from rose_config.h, then it should include "rosePublicConfig.h" instead (and use ROSE_HAVE_WHATEVER).
  */
 
 #ifndef SAGE3_CLASSES_BASIC__H
@@ -22,6 +30,8 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+
+#include "rose_override.h"                              // defines ROSE_OVERRIDE as "override" if C++11 is present
 
 
 #include <semaphore.h>

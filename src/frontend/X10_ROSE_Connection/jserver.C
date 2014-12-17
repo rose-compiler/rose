@@ -34,6 +34,8 @@ namespace Rose {
 
                 SgSourceFile* X10c_globalFilePointer = 0;
 
+                                std::list<std::string> classNames;
+
                 typedef struct {
                    JavaVM * jvm;
                    JNIEnv * env;

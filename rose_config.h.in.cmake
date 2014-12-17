@@ -797,3 +797,7 @@
 #cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
 
+/* Detect whether our compilers are GNU or not */
+#cmakedefine CMAKE_COMPILER_IS_GNUCC
+#cmakedefine CMAKE_COMPILER_IS_GNUCXX
+#cmakedefine CMAKE_COMPILER_IS_GNUG77
