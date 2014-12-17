@@ -5,7 +5,8 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 TESTCODES_REQUIRED_TO_PASS = \
 	jacobi.c \
 	stencil-CNS.c \
-	stream.c
+	stream.c\
+	inputloopTiling.c
 
 
 TEST_OUTPUTS = $(TESTCODES_REQUIRED_TO_PASS:.c=)

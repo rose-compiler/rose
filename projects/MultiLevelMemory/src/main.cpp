@@ -4,13 +4,14 @@ using namespace MLMAPIInsertion;
 using namespace SageInterface;
 vector<SgStatement*> DeletepragmasList;
 vector<SgCallExpression*> callExprList;
+vector<SgForStatement*> forStmtList;
 
 int main (int argc, char** argv)
 {
     // Build the AST used by ROSE
-       SgProject* project = frontend(argc, argv);
+    SgProject* project = frontend(argc, argv);
     // Run internal consistency tests on AST
-       AstTests::runAllTests(project);
+    AstTests::runAllTests(project);
 
     // Insert your own manipulations of the AST here...
     mlmFrontend mlmfrontend;
@@ -23,6 +24,11 @@ int main (int argc, char** argv)
     for(vector<SgCallExpression*>::iterator i=callExprList.begin(); i!=callExprList.end(); ++i)
     {
       mlmtransform.transformCallExp(*i);
+    }
+
+    for(vector<SgForStatement*>::iterator i=forStmtList.begin(); i!=forStmtList.end(); ++i)
+    {
+      mlmtransform.transformForStmt(*i);
     }
 
     for(vector<SgStatement*>::iterator iter = DeletepragmasList.begin(); iter != DeletepragmasList.end(); iter++)

@@ -42,6 +42,8 @@ class mlmTransform : public AstSimpleProcessing
 public:
   void insertHeaders(SgProject* project);
   void transformCallExp(SgCallExpression* callExp);
+  void transformForStmt(SgForStatement* forStmt);
+  bool loopTiling(SgForStatement*, size_t, size_t);
 protected:
   void virtual visit (SgNode*);	
 };
