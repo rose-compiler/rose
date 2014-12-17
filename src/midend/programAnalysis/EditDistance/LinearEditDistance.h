@@ -79,7 +79,7 @@ public:
         ASSERT_require(minDepth <= maxDepth);
     }
 
-    size_t evaluateInheritedAttribute(SgNode *node, size_t depth) /*override*/ {
+    size_t evaluateInheritedAttribute(SgNode *node, size_t depth) ROSE_OVERRIDE {
         Sg_File_Info *nodeInfo = node->get_file_info();
         bool isSelected = (depth >= minDepth_ && depth <= maxDepth_ &&
                            (!containingFile_ || (nodeInfo && nodeInfo->isSameFile(containingFile_))));
@@ -88,7 +88,7 @@ public:
         return depth+1;
     }
 
-    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) /*override*/ {
+    Sawyer::Nothing evaluateSynthesizedAttribute(SgNode*, size_t depth, SubTreeSynthesizedAttributes) ROSE_OVERRIDE {
         return Sawyer::Nothing();
     }
 };

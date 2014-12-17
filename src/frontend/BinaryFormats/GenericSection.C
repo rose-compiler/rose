@@ -605,39 +605,40 @@ SgAsmGenericSection::write_sleb128(unsigned char *buf, rose_addr_t offset, int64
 
 /** Returns a list of parts of a single section that have been referenced.  The offsets are relative to the start of the
  *  section. */
-ExtentMap
+AddressIntervalSet
 SgAsmGenericSection::get_referenced_extents() const
 {
-    ExtentMap retval;
     if (0==get_size())
-        return retval;
+        return AddressIntervalSet();
 
-    Extent s(get_offset(), get_size());
-    const ExtentMap &file_extents = get_file()->get_referenced_extents();
-    for (ExtentMap::const_iterator i=file_extents.begin(); i!=file_extents.end(); i++) {
-        Extent e = i->first;
-        if (e.contained_in(s)) {
-            retval.insert(Extent(e.first()-get_offset(), e.size()));
-        } else if (e.left_of(s) || e.right_of(s)) {
-            /*void*/
-        } else if (e.contains(s)) {
-            retval.insert(Extent(0, get_size()));
-        } else if (e.begins_before(s)) {
-            retval.insert(Extent(0, e.first()+e.size()-get_offset()));
-        } else if (e.ends_after(s)) {
-            retval.insert(Extent(e.first()-get_offset(), get_offset()+get_size()-e.first()));
+    AddressIntervalSet retval;
+    AddressInterval segment = AddressInterval::baseSize(get_offset(), get_size());
+    const AddressIntervalSet &fileExtents = get_file()->get_referenced_extents();
+    BOOST_FOREACH (const AddressInterval &interval, fileExtents.intervals()) {
+        if (segment.isContaining(interval)) {
+            retval.insert(AddressInterval::baseSize(interval.least()-get_offset(), interval.size()));
+        } else if (interval.isLeftOf(segment) || interval.isRightOf(segment)) {
+            // no overlap
+        } else if (interval.isContaining(segment)) {
+            retval.insert(AddressInterval::baseSize(0, get_size()));
+            break;                                      // no point in continuing since we've referenced whole segment now
+        } else if (interval.least() < segment.least()) {
+            retval.insert(AddressInterval::baseSize(0, interval.least()+interval.size()-get_offset()));
+        } else if (interval.greatest() > segment.greatest()) {
+            retval.insert(AddressInterval::baseSize(interval.least()-get_offset(), get_offset()+get_size()-interval.least()));
         } else {
-            assert(!"invalid extent overlap category");
-            abort();
+            ASSERT_not_reachable("invalid extent overlap category");
         }
     }
     return retval;
 }
 
-ExtentMap
+AddressIntervalSet
 SgAsmGenericSection::get_unreferenced_extents() const
 {
-    return get_referenced_extents().subtract_from(Extent(0, get_size())); /*complement*/
+    AddressIntervalSet set = get_referenced_extents();
+    set.invert(AddressInterval::baseSize(0, get_size()));
+    return set;
 }
 
 /** Extend a section by some number of bytes during the construction and/or parsing phase. This is function is considered to

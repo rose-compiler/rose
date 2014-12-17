@@ -9,6 +9,11 @@ SUBDIRS = . CompileTests
 
 if !ROSE_USE_CLANG_FRONTEND
 
+# JP (10/3/14): In order to be able to run the unit tests, we want to build the test support,
+# this includes google test as well as our own header, providing some necessary helper functions
+SUBDIRS += testSupport
+
+
 #if !ROSE_USE_INSURE
 # DQ (4/23/2011): Ignoring this whole directory might be over kill. But I have had problems, 
 # only on Hudson, just compiling a number of these subdirectories.
@@ -123,15 +128,19 @@ if ROSE_WITH_ATERM
 # The Stratego and A-Term support is outside of ROSE
 # This needs a configure flag so that the location outside 
 # of ROSE can be easily specificed at configure time.
-ATERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
-ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+# ATERM_INCLUDE = -I$(ATERM_INSTALL_PATH)/include
+# ATERM_LIB_DIR = $(ATERM_INSTALL_PATH)/lib
+# ATERM_INCLUDE = $(ROSE_ATERM_INCLUDE)
+# ATERM_LIB_DIR = $(ROSE_ATERM_LIBS)
 endif
 
 # Use names set in ROSE/config/Makefile.for.ROSE.includes.and.libs
-INCLUDES = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+# INCLUDES = $(ROSE_INCLUDES) $(ATERM_INCLUDE)
+INCLUDES = $(ROSE_INCLUDES)
 LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
+# testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) $(ATERM_LIB_DIR)/libATerm.a 
+testAtermGraphGeneration_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 EXTRA_DIST = CMakeLists.txt input_codes inputFile.C tests.tex
 

@@ -1,5 +1,6 @@
-#include "staticSingleAssignment.h"
 #include "rose.h"
+
+#include "staticSingleAssignment.h"
 #include "VariableRenaming.h"
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>

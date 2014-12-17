@@ -75,7 +75,7 @@ const RegisterDescriptors &
 RiscOperators::get_important_registers()
 {
     if (important_registers.empty()) {
-        assert(get_state()!=NULL);
+        ASSERT_not_null(get_state());
         const RegisterDictionary *dictionary = get_state()->get_register_state()->get_register_dictionary();
 
         // General-purpose registers
@@ -128,7 +128,7 @@ RiscOperators::get_stored_registers()
     for (size_t i=0; i<regs.size(); ++i) {
         if (regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
-            assert(!name.empty());
+            ASSERT_require(!name.empty());
             SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
 
             // Sometimes registers only have a value because they've been read.  There is no need to emit a definition for
@@ -153,7 +153,7 @@ RiscOperators::get_modified_registers()
     for (size_t i=0; i<regs.size(); ++i) {
         if (cur_regstate->is_partly_stored(regs[i])) {
             const std::string &name = dictionary->lookup(regs[i]);
-            assert(!name.empty());
+            ASSERT_require(!name.empty());
             SValuePtr cur_value = SValue::promote(cur_regstate->readRegister(regs[i], this));
             if (0==cur_value->get_comment().compare(name + "_0")) {
                 // This register has it's initial value, probably because it was read (registers that have never been read or
@@ -197,13 +197,13 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<uint64_t> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node)/*override*/ {
+        virtual InsnSemanticsExpr::VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
             if (!seen.insert(node->hash()).second)
                 return InsnSemanticsExpr::TRUNCATE; // already processed this same expression
             size_t width = node->get_nbits();
             if (InternalNodePtr inode = node->isInternalNode()) {
                 if (InsnSemanticsExpr::OP_READ==inode->get_operator()) {
-                    assert(2==inode->nchildren());
+                    ASSERT_require(2==inode->nchildren());
                     ops->emit_assignment(o, ops->emit_memory_read(o, inode->child(1), width));
                 }
             } else {
@@ -218,7 +218,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
             }
             return InsnSemanticsExpr::CONTINUE;
         }
-        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&)/*override*/ {
+        virtual InsnSemanticsExpr::VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
             return InsnSemanticsExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);
@@ -246,7 +246,7 @@ RiscOperators::emit_register_declarations(std::ostream &o, const RegisterDescrip
     const RegisterDictionary *dictionary = get_state()->get_register_state()->get_register_dictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
-        assert(!name.empty());
+        ASSERT_require(!name.empty());
         o <<prefix() <<"@" <<name <<" = external global " <<llvm_integer_type(regs[i].get_nbits()) <<"\n";
     }
 }
@@ -258,7 +258,7 @@ RiscOperators::emit_register_definitions(std::ostream &o, const RegisterDescript
     const RegisterDictionary *dictionary = regstate->get_register_dictionary();
     for (size_t i=0; i<regs.size(); ++i) {
         const std::string &name = dictionary->lookup(regs[i]);
-        assert(!name.empty());
+        ASSERT_require(!name.empty());
         SValuePtr value = SValue::promote(regstate->readRegister(regs[i], this));
         o <<prefix() <<"; register " <<name <<" = " <<*value <<"\n";
         TreeNodePtr t1 = emit_expression(o, value);
@@ -275,7 +275,7 @@ RiscOperators::emit_next_eip(std::ostream &o, SgAsmInstruction *latest_insn)
     SgAsmBlock *bb = getEnclosingNode<SgAsmBlock>(latest_insn);
     SgAsmFunction *func = getEnclosingNode<SgAsmFunction>(bb);
     SgAsmInterpretation *interp = getEnclosingNode<SgAsmInterpretation>(func);
-    assert(interp!=NULL);                           // instructions must be part of the global AST
+    ASSERT_not_null(interp);                            // instructions must be part of the global AST
     const InstructionMap &insns = interp->get_instruction_map();
     SValuePtr eip = get_instruction_pointer();
     rose_addr_t fallthrough_va = latest_insn->get_address() + latest_insn->get_size();
@@ -423,9 +423,9 @@ RiscOperators::emit_memory_writes(std::ostream &o)
 {
     for (size_t i=0; i<mem_writes.size(); ++i) {
         InternalNodePtr inode = mem_writes[i]->isInternalNode();
-        assert(inode!=NULL);
-        assert(inode->get_operator() == InsnSemanticsExpr::OP_WRITE);
-        assert(inode->nchildren()==3);
+        ASSERT_not_null(inode);
+        ASSERT_require(inode->get_operator() == InsnSemanticsExpr::OP_WRITE);
+        ASSERT_require(inode->nchildren()==3);
         TreeNodePtr addr = inode->child(1);
         TreeNodePtr value = inode->child(2);
         o <<prefix() <<"; store value=" <<*value <<" at address=" <<*addr <<"\n";
@@ -443,24 +443,24 @@ RiscOperators::make_current()
 LeafNodePtr
 RiscOperators::emit_expression(std::ostream &o, const SValuePtr &value)
 {
-    assert(value!=NULL);
+    ASSERT_not_null(value);
     LeafNodePtr result = emit_expression(o, value->get_expression());
-    assert(result!=NULL);
+    ASSERT_not_null(result);
     return result;
 }
 
 std::string
 RiscOperators::llvm_integer_type(size_t width)
 {
-    assert(width>0);
+    ASSERT_require(width>0);
     return "i" + StringUtility::numberToString(width);
 }
 
 std::string
 RiscOperators::llvm_lvalue(const LeafNodePtr &var)
 {
-    assert(var && var->is_variable());
-    assert(!variables.exists(var->get_name()));         // LLVM assembly is SSA
+    ASSERT_require(var && var->is_variable());
+    ASSERT_require(!variables.exists(var->get_name()));         // LLVM assembly is SSA
     return add_variable(var);
 }
 
@@ -468,7 +468,7 @@ std::string
 RiscOperators::llvm_term(const TreeNodePtr &expr)
 {
     LeafNodePtr leaf = expr->isLeafNode();
-    assert(leaf!=NULL);
+    ASSERT_not_null(leaf);
     leaf = rewrites.get_value_or(leaf->hash(), leaf);
 
     if (leaf->is_known()) {
@@ -477,7 +477,7 @@ RiscOperators::llvm_term(const TreeNodePtr &expr)
     }
 
     std::string name = get_variable(leaf);
-    assert(!name.empty());
+    ASSERT_require(!name.empty());
     return name;
 }
 
@@ -505,7 +505,7 @@ RiscOperators::addr_label(rose_addr_t addr)
 std::string
 RiscOperators::function_label(SgAsmFunction *func)
 {
-    assert(func!=NULL);
+    ASSERT_not_null(func);
     std::string retval = "L_" + StringUtility::addrToString(func->get_entry_va());
     std::string fname = func->get_name();
     if (!fname.empty())
@@ -523,8 +523,8 @@ RiscOperators::function_label(SgAsmFunction *func)
 TreeNodePtr
 RiscOperators::emit_zero_extend(std::ostream &o, const TreeNodePtr &value, size_t nbits)
 {
-    assert(value!=NULL);
-    assert(value->get_nbits() <= nbits);
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_nbits() <= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
@@ -540,8 +540,8 @@ RiscOperators::emit_zero_extend(std::ostream &o, const TreeNodePtr &value, size_
 TreeNodePtr
 RiscOperators::emit_sign_extend(std::ostream &o, const TreeNodePtr &value, size_t nbits)
 {
-    assert(value!=NULL);
-    assert(value->get_nbits() <= nbits);
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_nbits() <= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
@@ -558,8 +558,8 @@ RiscOperators::emit_sign_extend(std::ostream &o, const TreeNodePtr &value, size_
 TreeNodePtr
 RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t nbits)
 {
-    assert(value!=NULL);
-    assert(value->get_nbits() >= nbits);
+    ASSERT_not_null(value);
+    ASSERT_require(value->get_nbits() >= nbits);
     if (value->get_nbits() == nbits)
         return value;
 
@@ -568,7 +568,7 @@ RiscOperators::emit_truncate(std::ostream &o, const TreeNodePtr &value, size_t n
     LeafNodePtr t2 = next_temporary(nbits);
     std::string t2_type = llvm_integer_type(nbits);
 #if 1 /*DEBUGGING [Robb P. Matzke 2014-01-15]*/
-    assert(0!=t1_type.compare(t2_type));
+    ASSERT_require(0!=t1_type.compare(t2_type));
 #endif
     o <<prefix() <<llvm_lvalue(t2) <<" = trunc " <<t1_type <<" " <<llvm_term(t1) <<" to " <<t2_type <<"\n";
     return t2;
@@ -590,8 +590,9 @@ RiscOperators::emit_unsigned_resize(std::ostream &o, const TreeNodePtr &value, s
 TreeNodePtr
 RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, const TreeNodePtr &a, const TreeNodePtr &b)
 {
-    assert(a!=NULL && b!=NULL);
-    assert(a->get_nbits() == b->get_nbits());
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    ASSERT_require(a->get_nbits() == b->get_nbits());
     std::string type = llvm_integer_type(a->get_nbits());
     TreeNodePtr t1 = emit_expression(o, a);
     TreeNodePtr t2 = emit_expression(o, b);
@@ -606,7 +607,8 @@ RiscOperators::emit_binary(std::ostream &o, const std::string &llvm_operator, co
 TreeNodePtr
 RiscOperators::emit_signed_binary(std::ostream &o, const std::string &llvm_operator, const TreeNodePtr &a, const TreeNodePtr &b)
 {
-    assert(a!=NULL && b!=NULL);
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
     size_t width = std::max(a->get_nbits(), b->get_nbits());
     TreeNodePtr t1 = emit_sign_extend(o, a, width);
     TreeNodePtr t2 = emit_sign_extend(o, b, width);
@@ -619,7 +621,8 @@ TreeNodePtr
 RiscOperators::emit_unsigned_binary(std::ostream &o, const std::string &llvm_operator,
                                     const TreeNodePtr &a, const TreeNodePtr &b)
 {
-    assert(a!=NULL && b!=NULL);
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
     size_t width = std::max(a->get_nbits(), b->get_nbits());
     TreeNodePtr t1 = emit_zero_extend(o, a, width);
     TreeNodePtr t2 = emit_zero_extend(o, b, width);
@@ -767,13 +770,13 @@ RiscOperators::emit_invert(std::ostream &o, const TreeNodePtr &value)
 TreeNodePtr
 RiscOperators::emit_left_associative(std::ostream &o, const std::string &llvm_operator, const TreeNodes &operands)
 {
-    assert(!operands.empty());
+    ASSERT_require(!operands.empty());
     const size_t width = operands[0]->get_nbits();
     std::string type = llvm_integer_type(width);
     TreeNodePtr result = operands[0];
 
     for (size_t i=1; i<operands.size(); ++i) {
-        assert(operands[i]->get_nbits() == width);
+        ASSERT_require(operands[i]->get_nbits() == width);
         result = emit_binary(o, llvm_operator, result, operands[i]);
     }
     return result;
@@ -784,7 +787,7 @@ RiscOperators::emit_left_associative(std::ostream &o, const std::string &llvm_op
 TreeNodePtr
 RiscOperators::emit_concat(std::ostream &o, TreeNodes operands)
 {
-    assert(!operands.empty());
+    ASSERT_require(!operands.empty());
     if (1==operands.size())
         return operands[0];
 
@@ -859,7 +862,7 @@ RiscOperators::emit_unsigned_modulo(std::ostream &o, const TreeNodePtr &numerato
 TreeNodePtr
 RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
 {
-    assert(!operands.empty());
+    ASSERT_require(!operands.empty());
 
     size_t result_width = 0;
     for (size_t i=0; i<operands.size(); ++i)
@@ -881,7 +884,7 @@ RiscOperators::emit_signed_multiply(std::ostream &o, const TreeNodes &operands)
 TreeNodePtr
 RiscOperators::emit_unsigned_multiply(std::ostream &o, const TreeNodes &operands)
 {
-    assert(!operands.empty());
+    ASSERT_require(!operands.empty());
 
     size_t result_width = 0;
     for (size_t i=0; i<operands.size(); ++i)
@@ -950,9 +953,11 @@ RiscOperators::emit_compare(std::ostream &o, const std::string &llvm_op, const T
 TreeNodePtr
 RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNodePtr &a, const TreeNodePtr &b)
 {
-    assert(cond!=NULL && a!=NULL && b!=NULL);
-    assert(cond->get_nbits()==1);
-    assert(a->get_nbits()==b->get_nbits());
+    ASSERT_not_null(cond);
+    ASSERT_not_null(a);
+    ASSERT_not_null(b);
+    ASSERT_require(cond->get_nbits()==1);
+    ASSERT_require(a->get_nbits()==b->get_nbits());
 
     size_t width = a->get_nbits();
     LeafNodePtr t1 = emit_expression(o, cond);
@@ -968,7 +973,7 @@ RiscOperators::emit_ite(std::ostream &o, const TreeNodePtr &cond, const TreeNode
 TreeNodePtr
 RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t nbits)
 {
-    assert(addr!=NULL);
+    ASSERT_not_null(addr);
 
     // Convert ADDR to a pointer T2. The pointer type is "iNBITS*"
     LeafNodePtr t1 = emit_expression(o, addr);
@@ -988,7 +993,7 @@ RiscOperators::emit_memory_read(std::ostream &o, const TreeNodePtr &addr, size_t
 TreeNodePtr
 RiscOperators::emit_global_read(std::ostream &o, const std::string &varname, size_t nbits)
 {
-    assert(!varname.empty() && varname[0]=='@');
+    ASSERT_require(!varname.empty() && varname[0]=='@');
     LeafNodePtr t1 = next_temporary(nbits);
     o <<prefix() <<llvm_lvalue(t1) <<" = load " <<llvm_integer_type(nbits) <<"* " <<varname <<"\n";
     return t1;
@@ -1012,12 +1017,19 @@ RiscOperators::emit_memory_write(std::ostream &o, const TreeNodePtr &addr, const
       <<", " <<llvm_integer_type(value->get_nbits()) <<"* " <<llvm_term(t3) <<"\n";
 }
 
+LeafNodePtr
+RiscOperators::emit_expression(std::ostream &o, const LeafNodePtr &leaf)
+{
+    TreeNodePtr x = leaf;
+    return emit_expression(o, x);
+}
+
 // Emits LLVM for an expression and returns a terminal (variable or constant).  If the expression is already a terminal then
 // this method is a no-op.
 LeafNodePtr
 RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
 {
-    assert(orig_expr!=NULL);
+    ASSERT_not_null(orig_expr);
     TreeNodePtr cur_expr = orig_expr;
 
     // If we've seen this expression already, then use the replacement value (an LLVM variable).
@@ -1054,7 +1066,7 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 operator_result = emit_left_associative(o, "and", operands);
                 break;
             case InsnSemanticsExpr::OP_ASR:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_arithmetic_right_shift(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_BV_AND:
@@ -1070,132 +1082,132 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
                 operator_result = emit_concat(o, operands);
                 break;
             case InsnSemanticsExpr::OP_EQ:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_EXTRACT:
-                assert(3==operands.size());
+                ASSERT_require(3==operands.size());
                 operator_result = emit_extract(o, operands[2], operands[0], inode->get_nbits());
                 break;
             case InsnSemanticsExpr::OP_INVERT:
-                assert(1==operands.size());
+                ASSERT_require(1==operands.size());
                 operator_result = emit_invert(o, operands[0]);
                 break;
             case InsnSemanticsExpr::OP_ITE:
-                assert(3==operands.size());
+                ASSERT_require(3==operands.size());
                 operator_result = emit_ite(o, operands[0], operands[1], operands[2]);
                 break;
             case InsnSemanticsExpr::OP_LSSB:
-                assert(1==operands.size());
+                ASSERT_require(1==operands.size());
                 operator_result = emit_lssb(o, operands[0]);
                 break;
             case InsnSemanticsExpr::OP_MSSB:
-                assert(1==operands.size());
+                ASSERT_require(1==operands.size());
                 operator_result = emit_mssb(o, operands[0]);
                 break;
             case InsnSemanticsExpr::OP_NE:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ne", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_NEGATE:
-                assert(1==operands.size());
+                ASSERT_require(1==operands.size());
                 operator_result = emit_binary(o, "sub", LeafNode::create_integer(operands[0]->get_nbits(), 0), operands[0]);
                 break;
             case InsnSemanticsExpr::OP_OR:
                 operator_result = emit_left_associative(o, "or", operands);
                 break;
             case InsnSemanticsExpr::OP_READ:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_memory_read(o, operands[1], inode->get_nbits());
                 break;
             case InsnSemanticsExpr::OP_ROL:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_left(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_ROR:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_rotate_right(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SDIV:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_signed_divide(o, operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SEXTEND:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_sign_extend(o, operands[1], inode->get_nbits());
                 break;
             case InsnSemanticsExpr::OP_SGE:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sge", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SGT:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sgt", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SHL0:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SHL1:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_left_shift_ones(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SHR0:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SHR1:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_logical_right_shift_ones(o, operands[1], operands[0]);
                 break;
             case InsnSemanticsExpr::OP_SLE:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp sle", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SLT:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp slt", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SMOD:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_signed_modulo(o, operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_SMUL:
                 operator_result = emit_signed_multiply(o, operands);
                 break;
             case InsnSemanticsExpr::OP_UDIV:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_divide(o, operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_UEXTEND:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_zero_extend(o, operands[1], inode->get_nbits());
                 break;
             case InsnSemanticsExpr::OP_UGE:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp uge", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_UGT:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ugt", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_ULE:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ule", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_ULT:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_compare(o, "icmp ult", operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_UMOD:
-                assert(2==operands.size());
+                ASSERT_require(2==operands.size());
                 operator_result = emit_unsigned_modulo(o, operands[0], operands[1]);
                 break;
             case InsnSemanticsExpr::OP_UMUL:
                 operator_result = emit_unsigned_multiply(o, operands);
                 break;
             case InsnSemanticsExpr::OP_ZEROP:
-                assert(1==operands.size());
+                ASSERT_require(1==operands.size());
                 operator_result = emit_compare(o, "icmp eq", operands[0], LeafNode::create_integer(operands[0]->get_nbits(), 0));
                 break;
 
@@ -1207,13 +1219,13 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
 
             // no default because we want warnings when a new operator is added
         }
-        assert(operator_result!=NULL);                  // no case was executed
+        ASSERT_not_null(operator_result);               // no case was executed
         cur_expr = operator_result;
     }
 
     // The return value must be a constant or variable
     LeafNodePtr retval = cur_expr->isLeafNode();
-    assert(retval!=NULL && (retval->is_known() || retval->is_variable()));
+    ASSERT_require(retval!=NULL && (retval->is_known() || retval->is_variable()));
 
     // Add a rewrite rule so that next time we're asked to emit the same expression we can just emit the result without going
     // through all this work again.
@@ -1224,7 +1236,8 @@ RiscOperators::emit_expression(std::ostream &o, const TreeNodePtr &orig_expr)
 void
 RiscOperators::add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to)
 {
-    assert(from!=NULL && to!=NULL);
+    ASSERT_not_null(from);
+    ASSERT_not_null(to);
     if (from==to) {
         rewrites.erase(from->hash());
     } else {
@@ -1237,7 +1250,7 @@ RiscOperators::add_rewrite(const TreeNodePtr &from, const LeafNodePtr &to)
 std::string
 RiscOperators::add_variable(const LeafNodePtr &var)
 {
-    assert(var!=NULL && var->is_variable());
+    ASSERT_require(var!=NULL && var->is_variable());
     std::string name = get_variable(var);
     if (name.empty()) {
         name = var->get_comment();
@@ -1256,14 +1269,14 @@ RiscOperators::add_variable(const LeafNodePtr &var)
 std::string
 RiscOperators::get_variable(const LeafNodePtr &var)
 {
-    assert(var!=NULL && var->is_variable());
+    ASSERT_require(var!=NULL && var->is_variable());
     return variables.get_value_or(var->get_name(), "");
 }
 
 LeafNodePtr
 RiscOperators::emit_assignment(std::ostream &o, const TreeNodePtr &rhs)
 {
-    assert(rhs!=NULL);
+    ASSERT_not_null(rhs);
     LeafNodePtr t1 = emit_expression(o, rhs);
 
     if (t1->is_variable() && t1->get_comment().empty())
@@ -1344,7 +1357,7 @@ Transcoder::transcodeInstruction(SgAsmInstruction *insn)
 size_t
 Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
 {
-    assert(this!=NULL);
+    ASSERT_this();
     if (!bb)
         return 0;
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(bb);
@@ -1401,7 +1414,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb)
 size_t
 Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
 {
-    assert(this!=NULL);
+    ASSERT_this();
     if (!func)
         return 0;
     size_t nbbs = 0;                                    // number of basic blocks emitted
@@ -1422,7 +1435,7 @@ Transcoder::transcodeFunction(SgAsmFunction *func, std::ostream &o)
     const SgAsmStatementPtrList &bbs = func->get_statementList();
     for (SgAsmStatementPtrList::const_iterator bbi=bbs.begin(); bbi!=bbs.end(); ++bbi) {
         SgAsmBlock *bb = isSgAsmBlock(*bbi);
-        assert(bb!=NULL);
+        ASSERT_not_null(bb);
         if (emit_funcfrags || 0==(bb->get_reason() & SgAsmBlock::BLK_FRAGMENT)) {
             int ninsns = transcodeBasicBlock(bb, o);
             if (ninsns>0)

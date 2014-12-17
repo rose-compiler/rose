@@ -1,7 +1,7 @@
 
 // Support for writing a FLIRT data base from an existing AST.
 
-#include <rose.h>
+#include "sage3basic.h"                                 // every librose .C file must start with this
 
 #include <libraryIdentification.h>
 
