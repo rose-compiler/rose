@@ -321,6 +321,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): SageInterface::is_Java_language()    = %s \n",SageInterface::is_Java_language() ? "true" : "false");
+     printf ("In Unparser::unparseFile(): SageInterface::is_X10_language()    = %s \n",SageInterface::is_X10_language() ? "true" : "false");
      printf ("In Unparser::unparseFile(): file->get_outputLanguage()           = %s \n",file->get_outputLanguage() == SgFile::e_C_output_language ? "C" : 
                                   file->get_outputLanguage() == SgFile::e_Fortran_output_language ? "Fortran" : 
                                   file->get_outputLanguage() == SgFile::e_Java_output_language ? "Java" : "unknown");
@@ -374,10 +375,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
-     if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
+  // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
+     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 0
+#if 1
           printf ("Building token stream mapping map! \n");
 #endif
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -392,7 +394,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              }
 #endif
 
-#if 0
+#if 1
           printf ("DONE: Building token stream mapping map! \n");
 #endif
         }
@@ -414,7 +416,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // This now unparses the raw token stream as a seperate file with the prefix "rose_tokens_"
 
             // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
-#if 0
+//MH-20140701 removed comment-out
+#if 1
                printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
 #endif
             // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
@@ -526,7 +529,12 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                               if (file->get_X10_only())
                               {
                                    Unparse_X10 unparser(this, file->getFileName());
+// MH (7/2/2014) : disabled unparseStatement() and instead invoke unparseX10File()
+#if 0
                                    unparser.unparseStatement(globalScope, info);
+#else
+                                   unparser.unparseX10File(file, info);
+#endif
                               }
                               else
                               {
@@ -551,6 +559,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // cur << "\n\n\n";
      cur.flush();
 
+//MH-20140701 removed comment-out
 #if 0
      printf ("Leaving Unparser::unparseFile(): file = %s = %s \n",file->get_sourceFileNameWithPath().c_str(),file->get_sourceFileNameWithoutPath().c_str());
      printf ("Leaving Unparser::unparseFile(): SageInterface::is_Cxx_language()     = %s \n",SageInterface::is_Cxx_language() ? "true" : "false");
@@ -659,7 +668,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
      string fileNameForTokenStream = file->getFileName();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -825,7 +834,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
      string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFileUsingTokenStream(): Output tokens stream to file: %s \n",outputFilename.c_str());
 #endif
 
@@ -2209,7 +2218,31 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
         {
             // X10 is Java source code; see Java file/class naming conventions.
             // Filenames are based on the Java Class name contained in the file.
-            outputFilename = file->get_sourceFileNameWithPath();
+            SgSourceFile *sourcefile = isSgSourceFile(file);
+            ROSE_ASSERT(sourcefile && "Try to unparse an SgFile not being an SgSourceFile using the x10 unparser");
+
+            SgProject *project = sourcefile -> get_project();
+            ROSE_ASSERT(project != NULL);
+
+            SgJavaPackageStatement *package_statement = sourcefile -> get_package();
+            string package_name = (package_statement ? package_statement -> get_name().getString() : "");
+            //NOTE: Default package equals the empty string ""
+            //ROSE_ASSERT((packageDecl != NULL) && "Couldn't find the package definition of the java source file");
+            string outFolder = "";
+            string ds = project -> get_Java_source_destdir();
+            if (ds != "") {
+                outFolder = ds;
+                outFolder += "/";
+            }
+            outFolder += "rose-output/";
+            boost::replace_all(package_name, ".", "/");
+            outFolder += package_name;
+            outFolder += (package_name.size() > 0 ? "/" : "");
+            // Create package folder structure
+            string mkdirCommand = string("mkdir -p ") + outFolder;
+            int status = system (mkdirCommand.c_str());
+            ROSE_ASSERT(status == 0);
+            outputFilename = outFolder + file -> get_sourceFileNameWithoutPath();
         }
         else
         {

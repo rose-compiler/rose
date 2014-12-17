@@ -705,6 +705,22 @@ ROSE_DLL_API SgTypeExpression *buildTypeExpression(SgType* type);
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp(int parameter_number, int parameter_level );
 ROSE_DLL_API SgFunctionParameterRefExp *buildFunctionParameterRefExp_nfi(int parameter_number, int parameter_level );
 
+
+// DQ (9/3/2014): Adding support for C++11 Lambda expressions
+ROSE_DLL_API SgLambdaExp* buildLambdaExp    (SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+ROSE_DLL_API SgLambdaExp* buildLambdaExp_nfi(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function);
+
+#if 0
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable);
+#else
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture    (SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+ROSE_DLL_API SgLambdaCapture* buildLambdaCapture_nfi(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable);
+#endif
+
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList    ();
+ROSE_DLL_API SgLambdaCaptureList* buildLambdaCaptureList_nfi();
+
 //@}
 
 //--------------------------------------------------------------
@@ -775,6 +791,20 @@ buildTypedefDeclaration(const std::string& name, SgType* base_type, SgScopeState
 
 ROSE_DLL_API SgTypedefDeclaration* 
 buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
+
+ROSE_DLL_API SgTemplateTypedefDeclaration* 
+buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope = NULL, bool has_defining_base=false);
+
+#if 1
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList);
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration);
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// buildTemplateInstantiationTypedefDeclaration_nfi();
+ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration*
+buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList);
+#endif
 
 //! Build an empty SgFunctionParameterList, possibly with some initialized names filled in
 ROSE_DLL_API SgFunctionParameterList * buildFunctionParameterList(SgInitializedName* in1 = NULL, SgInitializedName* in2 = NULL, SgInitializedName* in3 = NULL, SgInitializedName* in4 = NULL, SgInitializedName* in5 = NULL, SgInitializedName* in6 = NULL, SgInitializedName* in7 = NULL, SgInitializedName* in8 = NULL, SgInitializedName* in9 = NULL, SgInitializedName* in10 = NULL);
@@ -1200,6 +1230,17 @@ ROSE_DLL_API SgCommonBlock* buildCommonBlock(SgCommonBlockObject* first_block=NU
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a catch statement.
 ROSE_DLL_API SgCatchOptionStmt* buildCatchOptionStmt(SgVariableDeclaration* condition=NULL, SgStatement* body=NULL);
+
+// MH (6/10/2014): Added async support
+ROSE_DLL_API SgAsyncStmt* buildAsyncStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added finish support
+ROSE_DLL_API SgFinishStmt* buildFinishStmt(SgBasicBlock *body);
+
+// MH (6/11/2014): Added at support
+ROSE_DLL_API SgAtStmt* buildAtStmt(SgExpression *expression, SgBasicBlock *body);
+
+ROSE_DLL_API SgHereExp* buildHereExpression();
 
 // driscoll6 (6/9/2011): Adding support for try stmts.
 // ! Build a try statement.

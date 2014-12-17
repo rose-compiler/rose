@@ -3,6 +3,9 @@
 #-------------------------------------------------------------
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# JP (10/3/14): Added the unit tests subdirectory to be built.
+SUBDIR = typeEquivalenceTests unitTests 
+
 TEST_EXIT_STATUS = $(top_srcdir)/scripts/test_exit_status
 
 INCLUDES =  \
@@ -157,9 +160,10 @@ generatedCodeExamples = \
   rose_inputmoveDeclarationToInnermostScope_5.C \
   rose_inputmoveDeclarationToInnermostScope_6.C \
   rose_inputmoveDeclarationToInnermostScope_7.C \
+  rose_inputmoveDeclarationToInnermostScope_8.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C
+test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -515,6 +519,14 @@ rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostSc
 		INPUT=$(abspath $<) \
 		$(srcdir)/astInterface.conf $@.passed
 
+rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
+	@$(RTH_RUN) \
+		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
+		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
+		INPUT=$(abspath $<) \
+		$(srcdir)/astInterface.conf $@.passed
+
+
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
 	@$(RTH_RUN) \
@@ -610,10 +622,14 @@ EXTRA_DIST = astInterface.conf inputBlank1.C inputBlank2.C inputfindMain.C input
        inputbuildJavaPackage.C inputloopCollapsing_1.C
 
 
+# JP (10/4/14): Added the unit tests
+unit-tests:
+	$(MAKE) check-local -C unitTests
+
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples)
+check-local: $(generatedCodeExamples) unit-tests
 
 clean-local:
 	rm -f $(generatedCodeExamples) *.dot

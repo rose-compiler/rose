@@ -1977,7 +1977,7 @@ Parser::docForSection(const std::string &sectionName) const {
     } else if (0==docKey.compare("synopsis")) {
         if (doc.empty())
             doc = programName() + " [@v{switches}...]\n";
-    } else if (0==docKey.compare("options")) {
+    } else if (0==docKey.compare("switches")) {
         doc += "\n\n" + docForSwitches();
     } else if (0==docKey.compare("see also")) {
         doc += "\n\n@seeAlso";
@@ -2016,11 +2016,11 @@ Parser::documentationMarkup() const {
     std::string doc = "@section{Name}{" + docForSection("name") + "}\n" +
                       "@section{Synopsis}{" + docForSection("synopsis") + "}\n" +
                       "@section{Description}{" + docForSection("description") + "}\n" +
-                      "@section{Options}{" + docForSection("options") + "}\n";
+                      "@section{Switches}{" + docForSection("switches") + "}\n";
     created.insert("name");
     created.insert("synopsis");
     created.insert("description");
-    created.insert("options");
+    created.insert("switches");
 
     // Append user-defined sections
     BOOST_FOREACH (const std::string &sectionName, sectionOrder_.values()) {

@@ -320,9 +320,16 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (11/10/2014): Adding support for C++11 value "nullptr".
+          case V_SgNullptrValExp:
+             {
+               s = "_nullptr_";
+               break;
+             }
+
           default:
              {
-               printf ("Error case of value = %s not handled \n",this->class_name().c_str());
+               printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -3205,8 +3212,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
+               bool usingGfortran = false;
                string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-               if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+               #ifdef USE_CMAKE
+                 #ifdef CMAKE_COMPILER_IS_GNUG77
+                   usingGfortran = true;
+                 #endif
+               #else
+                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+               #endif
+
+               if (usingGfortran)
                   {
                  // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                  // warnings += " -Wunused-labels";
@@ -4437,6 +4453,13 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
         Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
     ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
+/* REMOVE this! MH-2014
+    cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
+    }
+*/
 #endif
         int status = x10_main(argc, argv);
 #ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT

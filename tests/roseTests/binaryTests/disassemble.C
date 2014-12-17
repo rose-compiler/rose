@@ -623,14 +623,14 @@ protected:
 public:
     SimplePartitioner(rose_addr_t entry_va): entry_va(entry_va), function(NULL) {}
 
-    virtual void pre_cfg(SgAsmInterpretation *interp) /*override*/ {
+    virtual void pre_cfg(SgAsmInterpretation *interp) ROSE_OVERRIDE {
         function = add_function(entry_va, SgAsmFunction::FUNC_ENTRY_POINT);
     }
 
-    virtual void post_cfg(SgAsmInterpretation *interp) /*override*/ {}
+    virtual void post_cfg(SgAsmInterpretation *interp) ROSE_OVERRIDE {}
 
     // Organize instructions into basic blocks
-    virtual void analyze_cfg(SgAsmBlock::Reason reason) /*override*/ {
+    virtual void analyze_cfg(SgAsmBlock::Reason reason) ROSE_OVERRIDE {
         ASSERT_not_null(function);
         bool changed = true;
         for (size_t pass=0; changed; ++pass) {

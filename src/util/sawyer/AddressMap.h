@@ -578,7 +578,7 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *  that are matched within the map.  Constraints are indicated by listing them before the map I/O operation, but they do not
  *  modify the map in any way--they exist outside the map.  Constraints are combined by logical conjunction. For instance, the
  *  @ref AddressMap::next method returns the lowest address that satisfies the given constraints, or nothing.  If we wanted
- *  to search for the lowest address beteen 1000 and 1999 inclusive, that has read access but no execute access, we would
+ *  to search for the lowest address beteen 1000 and 1999 inclusive, that has read access but not write access, we would
  *  do so like this:
  *
  * @code
@@ -1153,7 +1153,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(Map::Backward()).assignTo(a); --a) {
+     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
      *      ...
      *      if (a == map.hull().least())
      *          break;
@@ -1282,7 +1282,7 @@ public:
     
     /** Reads data into the supplied buffer.
      *
-     *  Reads data into an arry or STL vector according to the specified constraints.  If the array is a null pointer then no
+     *  Reads data into an array or STL vector according to the specified constraints.  If the array is a null pointer then no
      *  data is read or copied and the return value indicates what addresses would have been accessed. When the buffer is an
      *  STL vector the constraints are augmented by also limiting the number of items accessed; the caller must do that
      *  explicitly for arrays. The return value is the interval of addresses that were read.
@@ -1314,7 +1314,7 @@ public:
      *
      * @code
      *  Value buf[10];
-     *  size_t nRead = map.at(999).limit(10).read(buf, Map::Backward()).size();
+     *  size_t nRead = map.at(999).limit(10).read(buf, MATCH_BACKWARD).size();
      * @endcode
      *
      * @{ */
@@ -1372,7 +1372,7 @@ public:
      *
      * @code
      *  Value buf[10] = { ... };
-     *  size_t nWritten = map.at(999).limit(10).write(buf, Map::Backward()).size();
+     *  size_t nWritten = map.at(999).limit(10).write(buf, MATCH_BACKWARD).size();
      * @endcode
      *
      * @todo FIXME[Robb Matzke 2014-09-01]: The order of values in the buffer being written by AddressMap::write when writing

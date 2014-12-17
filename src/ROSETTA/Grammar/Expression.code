@@ -339,6 +339,10 @@ HEADER_LABEL_REF_EXPRESSION_START
 HEADER_LABEL_REF_EXPRESSION_END
 
 
+HEADER_LAMBDA_EXPRESSION_START
+HEADER_LAMBDA_EXPRESSION_END
+
+
 HEADER_CLASS_NAME_REF_EXPRESSION_START
 HEADER_CLASS_NAME_REF_EXPRESSION_END
 
@@ -683,6 +687,8 @@ HEADER_GREATER_OR_EQUAL_OPERATOR_END
 HEADER_ADD_OPERATOR_START
 HEADER_ADD_OPERATOR_END
 
+//HEADER_DOTDOT_EXPRESSION_START
+//HEADER_DOTDOT_EXPRESSION_END
 
 HEADER_SUBTRACT_OPERATOR_START
 HEADER_SUBTRACT_OPERATOR_END
@@ -1012,6 +1018,10 @@ HEADER_CAST_EXPRESSION_START
           virtual bool isLValue() const;
           virtual bool isChildUsedAsLValue(const SgExpression* child) const; // INTERNAL Recursively call up the chain to answer the child
 
+       // DQ (10/24/2014): Added support to determine when cast should be allowable.
+       // This is used in the SageInterace support for evaluation of constant expressions.
+          bool cast_looses_precision();
+
 HEADER_CAST_EXPRESSION_END
 
 
@@ -1050,6 +1060,9 @@ HEADER_DELETE_OPERATOR_EXPRESSION_START
 #endif
 
 HEADER_DELETE_OPERATOR_EXPRESSION_END
+
+HEADER_HERE_EXPRESSION_START
+HEADER_HERE_EXPRESSION_END
 
 HEADER_THIS_EXPRESSION_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -2153,6 +2166,8 @@ SgExpression::hasExplicitType()
 
   // There are no access functions for SgJavaAnnotation, SgJavaTypeExpression, SgJavaTypeExpression, 
 
+  // DQ (11/10/2014): Added support for SgFunctionParameterRefExp node to store the type explicitly.
+
      if ( isSgTemplateParameterVal(this) != NULL     || isSgComplexVal(this)    != NULL            || isSgSizeOfOp(this) != NULL                 || 
           isSgAlignOfOp(this) != NULL                || isSgJavaInstanceOfOp(this) != NULL         || isSgTypeIdOp(this)  != NULL                ||
           isSgVarArgStartOp(this) != NULL            || isSgVarArgStartOneOperandOp(this) != NULL  || isSgVarArgOp(this)  != NULL                ||
@@ -2161,7 +2176,7 @@ SgExpression::hasExplicitType()
           isSgUpcLocalsizeofExpression(this) != NULL || isSgUpcBlocksizeofExpression(this) != NULL || isSgUpcElemsizeofExpression(this)  != NULL ||
           isSgJavaAnnotation(this) != NULL           || isSgJavaTypeExpression(this) != NULL       || isSgJavaTypeExpression(this)  != NULL      ||
        // isSgConstructorInitializer(this) != NULL   || isSgAssignInitializer(this) != NULL        || isSgPseudoDestructorRefExp(this)  != NULL  ||
-          isSgConstructorInitializer(this) != NULL   || isSgPseudoDestructorRefExp(this)  != NULL)
+          isSgConstructorInitializer(this) != NULL   || isSgPseudoDestructorRefExp(this)  != NULL  || isSgFunctionParameterRefExp(this) != NULL )
         {
           returnValue = true;
         }
@@ -2370,7 +2385,6 @@ SgExpression::set_explicitly_stored_type( SgType* type )
              }
         }
    }
-
 
 SOURCE_BASECLASS_EXPRESSION_END
 
@@ -3035,6 +3049,18 @@ SOURCE_LABEL_REFERENCE_EXPRESSION_END
 
 SOURCE_CLASS_NAME_REFERENCE_EXPRESSION_START
 SOURCE_CLASS_NAME_REFERENCE_EXPRESSION_END
+
+
+SOURCE_LAMBDA_EXPRESSION_START
+
+SgType*
+SgLambdaExp::get_type() const
+   {
+  // DQ (9/2/2014): I think we want this to be the return type of the function (deduced or not).
+     return SageBuilder::buildVoidType(); // TODO this is wrong
+   }
+
+SOURCE_LAMBDA_EXPRESSION_END
 
 
 SOURCE_FUNCTION_REFERENCE_EXPRESSION_START
@@ -4108,6 +4134,8 @@ SOURCE_NOT_OPERATOR_EXPRESSION_END
 SOURCE_ADD_OPERATOR_EXPRESSION_START
 SOURCE_ADD_OPERATOR_EXPRESSION_END
 
+//SOURCE_DOTDOT_EXPRESSION_START
+//SOURCE_DOTDOT_EXPRESSION_END
 
 SOURCE_SUBTRACT_OPERATOR_EXPRESSION_START
 SOURCE_SUBTRACT_OPERATOR_EXPRESSION_END
@@ -5144,6 +5172,33 @@ SgCastExp::get_type() const
      return p_expression_type;
    }
 
+bool 
+SgCastExp::cast_looses_precision()
+   {
+  // DQ (10/24/2014): Added support to determine when cast should be allowable.
+  // This is used in the SageInterace support for evaluation of constant expressions.
+
+     bool result = false;
+     if (isSgTypeDouble(p_expression_type) != NULL && isSgTypeFloat(p_expression_type) != NULL)
+        {
+          SgExpression* operand = this->get_operand();
+          ROSE_ASSERT(operand != NULL);
+
+          SgType* operantType = operand->get_type();
+          ROSE_ASSERT(operantType != NULL);
+
+          if (isSgTypeInt(operantType) != NULL         || isSgTypeLong(operantType) != NULL         || isSgTypeShort(operantType) != NULL         || isSgTypeChar(operantType) != NULL ||
+              isSgTypeUnsignedInt(operantType) != NULL || isSgTypeUnsignedLong(operantType) != NULL || isSgTypeUnsignedShort(operantType) != NULL || isSgTypeUnsignedChar(operantType) != NULL ||
+              isSgTypeSignedInt(operantType) != NULL   || isSgTypeSignedLong(operantType) != NULL   || isSgTypeSignedShort(operantType) != NULL   || isSgTypeSignedChar(operantType) != NULL)
+             {
+               result = true;
+             }  
+        }
+
+     return result;
+   }
+
+
 SOURCE_CAST_EXPRESSION_END
 
 
@@ -5495,6 +5550,20 @@ SgDeleteExp::replace_expression(SgExpression *o, SgExpression *n)
 
 SOURCE_DELETE_OPERATOR_EXPRESSION_END
 
+SOURCE_HERE_EXPRESSION_START
+void
+$CLASSNAME::post_construction_initialization() 
+   {
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     SgType* returnType = SgTypeDefault::createType();
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+SOURCE_HERE_EXPRESSION_END
 
 SOURCE_THIS_EXPRESSION_START
 SOURCE_THIS_EXPRESSION_END
@@ -5786,10 +5855,31 @@ SgConstructorInitializer::get_class_decl () const
 
     if (SgMemberFunctionDeclaration *fdecl = get_declaration()) {
         // The constructor is declared (and is a member of a class type)
+#if 1
+     // DQ (11/11/2014): Modified version of code to address the fact that Fortran is organized a bit differently.
+     // That it is different from C++ might be something to revisit later in the Fortran support.
+        ROSE_ASSERT(get_declaration() != NULL);
+     // printf ("In SgConstructorInitializer::get_class_decl(): get_declaration() = %p = %s \n",get_declaration(),get_declaration()->class_name().c_str());
+        ROSE_ASSERT(fdecl->get_scope() != NULL);
+     // printf ("In SgConstructorInitializer::get_class_decl(): fdecl->get_scope() = %p = %s \n",fdecl->get_scope(),fdecl->get_scope()->class_name().c_str());
+
+        SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
+        if (cdef != NULL)
+           {
+             assert(cdef!=NULL);
+             class_decl = isSgClassDeclaration(cdef->get_parent());
+             assert(class_decl!=NULL);
+           }
+#else
+     // DQ (11/11/2014): Original code which does not work for Fortran (the fortran_constructor_function for a data type is not in the same scope as the data type).
+     // This might be something that we want to visit at some point.  But this is caught as an error because the C++11 support caused more
+     // debug information to be placed into the generated AST graphs and so this function is now called for Fortran code where it had not 
+     // previously been called for Fortran code.
         SgClassDefinition *cdef = isSgClassDefinition(fdecl->get_scope());
         assert(cdef!=NULL);
         class_decl = isSgClassDeclaration(cdef->get_parent());
         assert(class_decl!=NULL);
+#endif
     } else if (SgClassType *expr_type = isSgClassType(get_expression_type())) {
         // Constructor initializer is for a class type with a non-declared default constructor.  We can follow the
         // p_expression_type's declaration.
@@ -6454,6 +6544,18 @@ $CLASSNAME::get_type() const
 
 SOURCE_GET_TYPE_CALLING_GET_EXPRESSION_TYPE_EXPRESSION_END
 
+SOURCE_GET_TYPE_HERE_EXPRESSION_START
+#if 0
+SgType*
+$CLASSNAME::get_type() const 
+   {
+  // DQ (1/14/2006): The p_pobj_this data member was CC++ specific and no longer used (deprecated in Sage III), p_pobj_this is now removed
+     ROSE_ASSERT(get_class_symbol() != NULL);
+     ROSE_ASSERT(get_class_symbol()->get_type() != NULL);
+     return SgPointerType::createType(get_class_symbol()->get_type());
+   }
+#endif
+SOURCE_GET_TYPE_HERE_EXPRESSION_END
 
 SOURCE_GET_TYPE_THIS_EXPRESSION_START
 
@@ -7383,9 +7485,21 @@ SgFunctionParameterRefExp::get_type() const
   // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
 
      ROSE_ASSERT(this != NULL);
-     ROSE_ASSERT(p_parameter_expression != NULL);
 
-     SgType* returnType = p_parameter_expression->get_type();
+     SgType* returnType = NULL;
+
+  // ROSE_ASSERT(p_parameter_expression != NULL);
+     if (p_parameter_expression != NULL)
+        {
+          ROSE_ASSERT(p_parameter_type == NULL);
+          returnType = p_parameter_expression->get_type();
+          ROSE_ASSERT(returnType != NULL);
+        }
+       else
+        {
+          returnType = p_parameter_type;
+          ROSE_ASSERT(returnType != NULL);
+        }
 
      ROSE_ASSERT(returnType != NULL);
      return returnType;

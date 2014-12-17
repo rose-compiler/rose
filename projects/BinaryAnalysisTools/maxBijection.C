@@ -152,7 +152,7 @@ main(int argc, char *argv[]) {
     // Try each possible delta
     typedef Sawyer::Container::Map<Value /*delta*/, size_t /*count*/> Deltas;
     Deltas deltas;
-    Sawyer::ProgressBar<size_t> progress(setA.size()*setB.size(), mlog[INFO]);
+    Sawyer::ProgressBar<size_t> progress(setA.size()*setB.size(), mlog[MARCH]);
     BOOST_FOREACH (Value a, setA) {
         BOOST_FOREACH (Value b, setB) {
             ++progress;
