@@ -3438,7 +3438,7 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
-#if 0
+#if 1
      printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -3446,7 +3446,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // where nodes can contain transformation even if they are not a transformation directly.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 0
+#if 1
      printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -3460,14 +3460,14 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // streams on nodes containing transformations is required to provide a more precise generated 
   // code (precise representation with minimal diff).
 
-#if 0
+#if 1
      printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // Note that we first detect the frontier.
      frontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 0
+#if 1
      printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 #endif

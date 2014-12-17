@@ -415,7 +415,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 0
+#if 1
           printf ("Building token stream mapping frontier! \n");
 #endif
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -423,7 +423,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
        // *** Next we have to attached the data base ***
        // buildTokenStreamMapping(file);
           buildTokenStreamFrontier(file);
-#if 0
+#if 1
           printf ("DONE: Building token stream mapping frontier! \n");
 #endif
         }

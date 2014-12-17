@@ -1137,8 +1137,16 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
 
-#if 0
+#if 1
      printf ("In unparseStatementFromTokenStream(): unparseStatus = %s \n",unparseStatus ? "true" : "false");
+#endif
+
+#if 1
+     if (unparseStatus == false)
+        {
+	  printf ("In unparseStatementFromTokenStream(): unparseStatus == false: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          stmt->get_file_info()->display("unparseStatus == false");
+        }
 #endif
 
   // if (canBeUnparsedFromTokenStream(sourceFile,stmt) == true)
@@ -1185,14 +1193,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                  // bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
                     unparseStatus_previousStatement = (canBeUnparsedFromTokenStream(sourceFile,previousStatement) == true);
                     unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
-#if 0
+#if 1
                     printf ("In unparseStatementFromTokenStream(): unparseStatus_previousStatement = %s \n",unparseStatus_previousStatement ? "true" : "false");
                     printf ("In unparseStatementFromTokenStream(): unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
 #endif
                   }
                  else
                   {
-#if 0
+#if 1
                     printf ("In unparseStatementFromTokenStream(): stmt not in previousAndNextFrontierDataMap: unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
                     printf ("   --- set unparseLeadingTokenStream = true \n");
 #endif
@@ -1213,6 +1221,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                   {
 #if 0
                     printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+#endif
+#if 1
                     printf ("   --- tokenSubsequence->leading_whitespace_start = %d tokenSubsequence->leading_whitespace_end = %d \n",tokenSubsequence->leading_whitespace_start,tokenSubsequence->leading_whitespace_end);
 #endif
 
@@ -1232,7 +1242,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                     if (globalScope != NULL)
                        {
-#if 0
+#if 1
                          printf ("Processing corner case of empty global scope unparsed using the token stream \n");
 #endif
                          if (globalScope->get_declarations().empty() == true)
@@ -1280,7 +1290,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
                             {
-#if 0
+#if 1
                               printf ("Output leading whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1301,7 +1311,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
-#if 0
+#if 1
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1371,7 +1381,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
                             {
-#if 0
+#if 1
                               printf ("Output trailing whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1458,7 +1468,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
    {
      ROSE_ASSERT(stmt != NULL);
 
-#if 0
+#if 1
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      int line    = stmt->get_startOfConstruct()->get_raw_line();
      string file = stmt->get_startOfConstruct()->get_filenameString();
@@ -1855,7 +1865,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
                     curprint("/* In unparseStatement(): DONE: unparseViaTokenStream == true */");
 #endif
-#if 0
+#if 1
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseStatementFromTokenStream(): status = %d \n",status);
 #endif
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
@@ -2059,6 +2069,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
 
                  // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
+                    if (info.unparsedPartiallyUsingTokenStream() == true)
+                       {
+                         printf ("WARNING: reset info.unparsedPartiallyUsingTokenStream() == false (test 1) \n");
+                         info.unset_unparsedPartiallyUsingTokenStream();
+                       }
                     ROSE_ASSERT(info.unparsedPartiallyUsingTokenStream() == false);
                   }
              }
@@ -2067,6 +2082,11 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           if (global_unparsed_as == e_unparsed_as_AST)
              {
             // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
+               if (info.unparsedPartiallyUsingTokenStream() == true)
+                  {
+                    printf ("WARNING: reset info.unparsedPartiallyUsingTokenStream() == false (test 2) \n");
+                    info.unset_unparsedPartiallyUsingTokenStream();
+                  }
                ROSE_ASSERT(info.unparsedPartiallyUsingTokenStream() == false);
              }
 
