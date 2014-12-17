@@ -2024,6 +2024,15 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+<<<<<<< Updated upstream
+=======
+projects/MultiLevelMemory/Makefile
+projects/MultiLevelMemory/src/Makefile
+projects/MultiLevelMemory/tests/Makefile
+projects/PolyOpt2/Makefile
+projects/PolyOpt2/polyopt/Makefile
+projects/PolyOpt2/src/Makefile
+>>>>>>> Stashed changes
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
