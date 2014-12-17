@@ -268,8 +268,9 @@ int main(int argc, char * argv[])
        exampleTraversal.traverseWithinFile(s_file, preorder);
     }
   }
-  string filename= SageInterface::generateProjectName(project);
-  generateDOTforMultipleFile(*project);
+
+  // string filename= SageInterface::generateProjectName(project);
+  // generateDOTforMultipleFile(*project);
 
  // run all tests
   AstTests::runAllTests(project);
