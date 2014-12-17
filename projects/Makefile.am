@@ -52,6 +52,7 @@ SUBDIRS = \
 	extractMPISkeleton \
 	RoseBlockLevelTracing\
 	LineDeleter \
+	PolyOpt2 \
 	$(OPTIONAL_PROJECTS)
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
 #   BinaryDataStructureRecognition 
