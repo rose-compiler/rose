@@ -68,10 +68,12 @@ class Engine {
     MemoryMap map_;                                     // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
     bool dataMentionedFunctionSearch_;                  // search for functions mentioned in read-only data?
+    bool intraFunctionCodeSearch_;                      // search for unreachable code surrounded by a function?
+    bool opaquePredicateSearch_;                        // search for code opposite opaque predicate edges?
 public:
     Engine()
         : interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()),
-          dataMentionedFunctionSearch_(false) {}
+          dataMentionedFunctionSearch_(false), intraFunctionCodeSearch_(true), opaquePredicateSearch_(true) {}
 
     virtual ~Engine() {}
 
@@ -226,8 +228,27 @@ public:
      *  aren't really the beginning of functions.
      *
      * @{ */
-    virtual bool dataMentionedFunctionSearch() const { return dataMentionedFunctionSearch_; }
+    bool dataMentionedFunctionSearch() const { return dataMentionedFunctionSearch_; }
     virtual void dataMentionedFunctionSearch(bool b) { dataMentionedFunctionSearch_ = b; }
+    /** @} */
+
+    /** Property: find code code surrounded by a function.
+     *
+     *  If true, then look for code that's surrounded by a function and add it to that function.
+     *
+     * @{ */
+    bool intraFunctionCodeSearch() const { return intraFunctionCodeSearch_; }
+    virtual void intraFunctionCodeSearch(bool b) { intraFunctionCodeSearch_ = b; }
+    /** @} */
+
+    /** Property: look for dead code to attach to functions
+     *
+     *  If true then look for basic block CFG edges that were suppressed due to opaque predicates (ghost edges) and generate
+     *  code at those addresses, also following the new CFG edges recursively to find additional code.
+     *
+     * @{ */
+    bool opaquePredicateSearch() const { return opaquePredicateSearch_; }
+    virtual void opaquePredicateSearch(bool b) { opaquePredicateSearch_ = b; }
     /** @} */
     
     /** Property: interpretation.
@@ -521,7 +542,19 @@ public:
      *  created at the beginning of the interval and added to the function.
      *
      *  Returns the number of new placeholders created. */
-    size_t attachSurroundedCodeToFunctions(Partitioner&);
+    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
+
+    /** Attach  all possible intra-function basic blocks to functions.
+     *
+     *  This is similar to @ref attachSurroundedCodeToFunctions except it calls that method repeatedly until it cannot do
+     *  anything more.  Between each call it also follows the CFG for the newly discovered blocks to discover as many blocks as
+     *  possible, creates more functions by looking for function calls, and attaches additional basic blocks to functions by
+     *  following the CFG for each function.
+     *
+     *  This method is called automatically by @ref runPartitioner if the @ref intraFunctionCodeSearch property is set.
+     *
+     *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
+    virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
     
     /** Attach intra-function data to functions.
      *
