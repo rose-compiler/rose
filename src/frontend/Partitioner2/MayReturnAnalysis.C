@@ -85,17 +85,15 @@ Partitioner::isMayReturnListed(const std::string &functionName, boost::logic::tr
 }
 
 Sawyer::Optional<bool>
-Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompute) const {
+Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
-    if (recompute)
-        bb->mayReturn().clear();
 
     bool retval;
     if (bb->mayReturn().getOptional().assignTo(retval))
         return retval;                                  // already cached
     ControlFlowGraph::ConstVertexNodeIterator startVertex = findPlaceholder(bb->address());
     if (startVertex != cfg_.vertices().end())
-        return basicBlockOptionalMayReturn(startVertex, recompute); // full CFG-based analysis
+        return basicBlockOptionalMayReturn(startVertex); // full CFG-based analysis
     
     if (basicBlockIsFunctionReturn(bb)) {
         bb->mayReturn() = true;
@@ -128,7 +126,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompu
             callReturnSuccessors.push_back(successorVertex); // skip for now; they need to be processed last
         } else if (edge.type() == E_FUNCTION_CALL) {
             if (!calleeMayReturn) {
-                if (!basicBlockOptionalMayReturn(successorVertex, recompute).assignTo(b)) {
+                if (!basicBlockOptionalMayReturn(successorVertex).assignTo(b)) {
                     calleeIsIndeterminate = true;
                 } else if (b) {
                     calleeMayReturn = true;
@@ -136,7 +134,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompu
             }
         } else {
             // This is a significant edge
-            if (!basicBlockOptionalMayReturn(successorVertex, recompute).assignTo(b)) {
+            if (!basicBlockOptionalMayReturn(successorVertex).assignTo(b)) {
                 successorIsIndeterminate = true;
             } else if (b) {
                 bb->mayReturn() = true;
@@ -149,7 +147,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompu
     if (calleeMayReturn) {
         BOOST_FOREACH (const ControlFlowGraph::ConstVertexNodeIterator &successor, callReturnSuccessors) {
             bool b;
-            if (!basicBlockOptionalMayReturn(successor, recompute).assignTo(b)) {
+            if (!basicBlockOptionalMayReturn(successor).assignTo(b)) {
                 successorIsIndeterminate = true;
             } else if (b) {
                 bb->mayReturn() = true;
@@ -173,11 +171,11 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb, bool recompu
 }
 
 Sawyer::Optional<bool>
-Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start, bool recompute) const {
+Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start) const {
     ASSERT_require(start != cfg_.vertices().end());
 
     // Return a cached value if there is one
-    if (!recompute && start->value().type() == V_BASIC_BLOCK) {
+    if (start->value().type() == V_BASIC_BLOCK) {
         if (BasicBlock::Ptr bblock = start->value().bblock()) {
             bool b;
             if (bblock->mayReturn().getOptional().assignTo(b))
@@ -187,7 +185,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
     
     // Do the hard work
     std::vector<MayReturnVertexInfo> vertexInfo(cfg_.nVertices());
-    return basicBlockOptionalMayReturn(start, recompute, vertexInfo);
+    return basicBlockOptionalMayReturn(start, vertexInfo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,7 +200,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
 //   function calls has an indeterminate may-return.
 // + Other edges are significant, including E_FUNCTION_XFER edges.
 bool
-Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge, bool recompute,
+Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge,
                                         std::vector<MayReturnVertexInfo> &vertexInfo) const {
     if (edge == cfg_.edges().end())
         return false;
@@ -211,7 +209,7 @@ Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIte
     if (edge->target() == edge->source())
         return false;
     if (edge->value().type() == E_CALL_RETURN) {
-        boost::logic::tribool tb = mayReturnDoesCalleeReturn(edge->source(), recompute, vertexInfo);
+        boost::logic::tribool tb = mayReturnDoesCalleeReturn(edge->source(), vertexInfo);
         return tb || boost::logic::indeterminate(tb);
     }
     return true;
@@ -220,7 +218,7 @@ Partitioner::mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIte
 // Internal: Run the may-return analysis on the callees and return true if any of them have a positive or indeterminate
 // may-return property.
 boost::logic::tribool
-Partitioner::mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &caller, bool recompute,
+Partitioner::mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &caller,
                                        std::vector<MayReturnVertexInfo> &vertexInfo) const {
     ASSERT_require(caller != cfg_.vertices().end());
     if (!vertexInfo[caller->id()].processedCallees) {
@@ -230,7 +228,7 @@ Partitioner::mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIt
             if (edge.value().type() == E_FUNCTION_CALL) {
                 ControlFlowGraph::ConstVertexNodeIterator callee = edge.target();
                 bool mayReturn = false;
-                if (!basicBlockOptionalMayReturn(callee, recompute, vertexInfo).assignTo(mayReturn)) {
+                if (!basicBlockOptionalMayReturn(callee, vertexInfo).assignTo(mayReturn)) {
                     hasIndeterminateCallee = true;
                 } else if (mayReturn) {
                     hasPositiveCallee = true;
@@ -253,7 +251,7 @@ Partitioner::mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIt
 // instance, if vertex V calls vertex U but V has no call-return edge then a phantom one will be created unless U has negative
 // may-return. The phantom call-return edge is assumed to point to a phantom vertex with indeterminate may-return.
 boost::logic::tribool
-Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
+Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
                                           std::vector<MayReturnVertexInfo> &vertexInfo) const {
     ASSERT_require(vertex->value().type() == V_BASIC_BLOCK);
 
@@ -266,7 +264,7 @@ Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNod
     for (ControlFlowGraph::ConstEdgeNodeIterator edge = vertex->outEdges().begin();
          edge != vertex->outEdges().end(); ++edge) {
         ControlFlowGraph::ConstVertexNodeIterator successor = edge->target();
-        if (mayReturnIsSignificantEdge(edge, recompute, vertexInfo)) {
+        if (mayReturnIsSignificantEdge(edge, vertexInfo)) {
             // Significant successors
             if (edge->value().type() == E_CALL_RETURN)
                 hasCallReturnEdge = true;
@@ -280,7 +278,7 @@ Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNod
             // Callees
             isFunctionCall = true;
             bool mayReturn = false;
-            if (!basicBlockOptionalMayReturn(successor, recompute, vertexInfo).assignTo(mayReturn)) {
+            if (!basicBlockOptionalMayReturn(successor, vertexInfo).assignTo(mayReturn)) {
                 hasIndeterminateCallee = true;
             } else if (mayReturn) {
                 hasPositiveCallee = true;
@@ -300,7 +298,7 @@ Partitioner::mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNod
 // Internal: returns true if "start" could return to its caller, false if it cannot ever return, and nothing if we can't
 // decide yet.
 Sawyer::Optional<bool>
-Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start, bool recompute,
+Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start,
                                          std::vector<MayReturnVertexInfo> &vertexInfo) const {
     using namespace Sawyer::Container::Algorithm;
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -312,15 +310,14 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
     } depthObserver;
 
     ASSERT_require(start != cfg_.vertices().end());
-    SAWYER_MESG(debug) <<"[" <<depth <<"] basicBlockMayReturn(" <<vertexName(start)
-                       <<", recompute=" <<(recompute?"true":"false") <<") ...\n";
+    SAWYER_MESG(debug) <<"[" <<depth <<"] basicBlockMayReturn(" <<vertexName(start) <<") ...\n";
 
     typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> Traversal;
     for (Traversal t(cfg_, start, ENTER_EDGE|ENTER_VERTEX|LEAVE_VERTEX); t; ++t) {
         switch (t.event()) {
             case ENTER_EDGE: {
                 // The call to mayReturnIsSignificantEdge will be recursive if t.vertex is a function call
-                if (!mayReturnIsSignificantEdge(t.edge(), recompute, vertexInfo)) {
+                if (!mayReturnIsSignificantEdge(t.edge(), vertexInfo)) {
                     SAWYER_MESG(debug) <<"[" <<depth <<"]   skipping edge " <<edgeName(t.edge()) <<"\n";
                     t.skipChildren();
                 } else {
@@ -356,6 +353,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                 // Can we get the may-return value immediately, or do we need to follow outgoing edges first?
                 if (t.vertex()->value().type() == V_BASIC_BLOCK) {
                     Function::Ptr function = t.vertex()->value().function();
+                    BasicBlock::Ptr bb = t.vertex()->value().bblock();
                     if (function)
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     block is owned by " <<function->printableName() <<"\n";
                     bool functionListed = false;        // function's blacklisted or whitelisted value if listed
@@ -381,6 +379,25 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                                            <<" by virtue of not existing\n";
                         vertexInfo[t.vertex()->id()].result = assumeFunctionsReturn_;
                         t.skipChildren();
+                    } else if (bb && bb->mayReturn().isCached()) {
+                        // Basic block may-return is already calculated
+                        bool b = bb->mayReturn().get();
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     already cached: may-return is " <<(b?"yes":"no") <<"\n";
+                        vertexInfo[t.vertex()->id()].result = b;
+                        t.skipChildren();
+                    } else if (bb && basicBlockIsFunctionReturn(bb)) {
+                        // This is a function return statement, so it obviously returns
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     block is a function return; may-return is yes\n";
+                        bb->mayReturn() = true;
+                        vertexInfo[t.vertex()->id()].result = true;
+                        t.skipChildren();
+                    } else if (bb && basicBlockIsFunctionCall(bb)) {
+                        // Function calls handled by recursively computing may-return in the callee
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     block is a function call; process callees...\n";
+                        boost::logic::tribool tb = mayReturnDoesCalleeReturn(t.vertex(), vertexInfo);
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     callees for " <<vertexName(t.vertex()) <<" processed"
+                                           <<"; " <<(tb || boost::logic::indeterminate(tb)?"at least one":"none")
+                                           <<" may return\n";
                     } else if (t.vertex()->nOutEdges()==1 && t.vertex()->outEdges().begin()->target()==indeterminateVertex_ &&
                                assumeFunctionsReturn_) {
                         // Indeterminate successor is likely a permanent condition
@@ -396,27 +413,9 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                         vertexInfo[t.vertex()->id()].result = assumeFunctionsReturn_;
                         t.skipChildren();
                     } else if (BasicBlock::Ptr bb = t.vertex()->value().bblock()) {
-                        if (recompute)
-                            bb->mayReturn().clear();
-                        if (bb->mayReturn().isCached()) {
-                            bool b = bb->mayReturn().get();
-                            SAWYER_MESG(debug) <<"[" <<depth <<"]     already cached: may-return is " <<(b?"yes":"no") <<"\n";
-                            vertexInfo[t.vertex()->id()].result = b;
-                            t.skipChildren();
-                        } else if (basicBlockIsFunctionReturn(bb)) {
-                            SAWYER_MESG(debug) <<"[" <<depth <<"]     block is a function return; may-return is yes\n";
-                            bb->mayReturn() = true;
-                            vertexInfo[t.vertex()->id()].result = true;
-                            t.skipChildren();
-                        } else if (basicBlockIsFunctionCall(bb)) {
-                            SAWYER_MESG(debug) <<"[" <<depth <<"]     block is a function call; process callees...\n";
-                            boost::logic::tribool tb = mayReturnDoesCalleeReturn(t.vertex(), recompute, vertexInfo);
-                            SAWYER_MESG(debug) <<"[" <<depth <<"]     callees for " <<vertexName(t.vertex()) <<" processed"
-                                               <<"; " <<(tb || boost::logic::indeterminate(tb)?"at least one":"none")
-                                               <<" may return\n";
-                        } else {
-                            SAWYER_MESG(debug) <<"[" <<depth <<"]     must process vertex successors first...\n";
-                        }
+                        // FIXME[Robb P. Matzke 2014-12-17]: Need to handle graph cycles, but for now we'll just say that the
+                        // may-return for a cycle is indeterminate.  E.g., see test7_no in i386-may-return-tests.
+                        SAWYER_MESG(debug) <<"[" <<depth <<"]     must process vertex successors first...\n";
                     }
                 }
                 break;
@@ -431,7 +430,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                         // may-return. Otherwise it has indeterminate may-return if any of its significant successors is
                         // indeterminate. Otherwise, it has negative may-return.
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     calling mayReturnDoesSuccessorReturn...\n";
-                        boost::logic::tribool tb = mayReturnDoesSuccessorReturn(t.vertex(), recompute, vertexInfo);
+                        boost::logic::tribool tb = mayReturnDoesSuccessorReturn(t.vertex(), vertexInfo);
                         vertexInfo[t.vertex()->id()].result = tb;
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     mayReturnDoesSuccessorReturn = " <<toString(tb) <<"\n";
                     }
