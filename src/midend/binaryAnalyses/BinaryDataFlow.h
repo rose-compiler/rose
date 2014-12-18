@@ -232,12 +232,14 @@ public:
      *  @li @p StatePtr is a pointer to a data state that maps variables to values.  Variables are abstract locations and
      *      values are members of a lattice as described in the documentation for the DataFlow class.  Since the engine doesn't
      *      implement any particular ownership paradigm, the state pointer type is usually some kind of smart pointer.  The
-     *      engine requires that the pointer have a copy constructor and assignment operator.
+     *      engine requires that the pointer have a copy constructor and assignment operator and that it can be compared to a
+     *      null pointer.
      *
      *  @li @p TransferFunction is a functor that is invoked at each CFG vertex to create a new data state from a previous
      *      data state.  The functor is called with three arguments: a const reference to the control flow graph, the CFG
      *      vertex ID for the vertex being processed, and the incoming state for that vertex.  The call should return a pointer
-     *      to a new state.
+     *      to a new state.  If the transfer function is called with only one argument, the state, then it should just create a
+     *      new state which is a copy of the argument.
      *
      *  The control flow graph and transfer function are specified in the engine's constructor.  The starting CFG vertex and
      *  its initial state are supplied when the engine starts to run. */
@@ -323,7 +325,7 @@ public:
                     StatePtr targetState = incomingState_[nextVertexId];
                     if (targetState==NULL) {
                         SAWYER_MESG(mlog[DEBUG]) <<"    forwarded to vertex #" <<nextVertexId <<"\n";
-                        incomingState_[nextVertexId] = state;
+                        incomingState_[nextVertexId] = xfer_(state); // copy the state
                         workList_.pushBack(nextVertexId);
                     } else if (targetState->merge(state)) {
                         SAWYER_MESG(mlog[DEBUG]) <<"    merged with vertex #" <<nextVertexId <<" (which changed as a result)\n";
