@@ -10,10 +10,11 @@ namespace bROwSE {
 class WFunctionCfg;
 class WFunctionList;
 class WFunctionSummary;
+class WAssemblyListing;
 
 class WFunction: public Wt::WContainerWidget {
 public:
-    enum Tab { FLIST_TAB, SUMMARY_TAB, CFG_TAB };
+    enum Tab { FLIST_TAB, SUMMARY_TAB, CFG_TAB, ASSEMBLY_TAB };
 
 private:
     Context ctx_;
@@ -22,12 +23,13 @@ private:
     WFunctionList *wFunctionList_;
     WFunctionCfg *wFunctionCfg_;
     WFunctionSummary *wFunctionSummary_;
+    WAssemblyListing *wAssemblyListing_;
     P2::Function::Ptr function_;                        // current function
 
 public:
     WFunction(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), wTabs_(NULL), wCfgTab_(NULL), wSummaryTab_(NULL), wFunctionCfg_(NULL),
-          wFunctionSummary_(NULL) {
+          wFunctionSummary_(NULL), wAssemblyListing_(NULL) {
         init();
     }
 
@@ -44,6 +46,9 @@ private:
 
     // Show CFG for one function
     void showFunctionCfg(const P2::Function::Ptr &function);
+
+    // Show assembly listing for one function
+    void showAssemblyListing(const P2::Function::Ptr &function);
 };
 
 

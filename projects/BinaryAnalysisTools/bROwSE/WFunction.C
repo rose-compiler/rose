@@ -1,6 +1,7 @@
 #include <bROwSE/WFunction.h>
 
 #include <bROwSE/FunctionListModel.h>
+#include <bROwSE/WAssemblyListing.h>
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
@@ -51,6 +52,12 @@ WFunction::init() {
     wTable->elementAt(0, 0)->addWidget(wFunctionCfg_);
     wTabs_->addTab(wTable, "CFG");
 
+    // Assembly listing
+    ASSERT_require(ASSEMBLY_TAB==3);
+    wAssemblyListing_ = new WAssemblyListing(ctx_);
+    wAssemblyListing_->hide();
+    wTabs_->addTab(wAssemblyListing_, "Assembly");
+
     setCurrentTab(FLIST_TAB);
 }
 
@@ -67,10 +74,10 @@ WFunction::setCurrentTab(int idx) {
         case CFG_TAB:
             wFunctionCfg_->changeFunction(function_);
             wFunctionCfg_->setHidden(function_==NULL);
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-13]
-            if (function_)
-                std::cerr <<"ROBB: showing function CFG for " <<function_->printableName() <<"\n";
-#endif
+            break;
+        case ASSEMBLY_TAB:
+            wAssemblyListing_->changeFunction(function_);
+            wAssemblyListing_->setHidden(function_==NULL);
             break;
         default:
             ASSERT_not_reachable("tab is not handled");
@@ -100,6 +107,12 @@ void
 WFunction::showFunctionCfg(const P2::Function::Ptr &function) {
     function_ = function;
     setCurrentTab(CFG_TAB);
+}
+
+void
+WFunction::showAssemblyListing(const P2::Function::Ptr &function) {
+    function_ = function;
+    setCurrentTab(ASSEMBLY_TAB);
 }
 
 } // namespace

@@ -1,6 +1,7 @@
 // Operations on specimen functions
 #include <bROwSE/FunctionUtil.h>
 #include <Partitioner2/GraphViz.h>
+#include <Partitioner2/Modules.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 
@@ -247,6 +248,17 @@ functionStackDelta(P2::Partitioner &partitioner, const P2::Function::Ptr &functi
         function->attr(ATTR_STACKDELTA, result);
     }
     return result;
+}
+
+// Obtain the ROSE AST for a function
+SgAsmFunction *
+functionAst(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    SgNode *result = NULL;
+    if (function && !function->attr<SgNode*>(ATTR_AST).assignTo(result)) {
+        result = P2::Modules::buildFunctionAst(partitioner, function);
+        function->attr(ATTR_AST, result);
+    }
+    return isSgAsmFunction(result);
 }
 
 } // namespace

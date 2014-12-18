@@ -47,6 +47,7 @@ extern P2::Attribute::Id ATTR_NCALLERS;
 extern P2::Attribute::Id ATTR_NRETURNS;
 extern P2::Attribute::Id ATTR_MAYRETURN;
 extern P2::Attribute::Id ATTR_STACKDELTA;
+extern P2::Attribute::Id ATTR_AST;
 
 // Context passed around to pretty much all the widgets.
 class Context {
