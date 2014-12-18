@@ -1477,6 +1477,24 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       }
                                  }
 
+                           // DQ (12/18/2014): Adding support for fixing the white space starting position in the first statement after a SgNamespaceDefinitionStatement.
+                              SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(n);
+                              if (namespaceDefinition != NULL)
+                                 {
+                                // The first token past the namespace definition's "{" should be excluded from the whitespace of the first statement.
+                                   SgStatement* statement = isSgStatement(mappingInfo->node);
+                                   if (statement != NULL)
+                                      {
+#if 0
+                                        printf ("$$$$$$$$$$$$ Handle special case of leading whitespace of first statment in SgNamespaceDefinitionStatement \n");
+#endif
+                                        trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
                             }
                            else
                             {
@@ -2750,6 +2768,34 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
                             }
 
+#if 1
+                      // DQ (12/18/2014): Improve the representation of the leading tken sequence for the SgNamespaceDeclarationStatement
+                      // (should start at after the function parameter list's closing ")" instead of at the start of the 
+                      // fundection declaration).
+                         SgNamespaceDefinitionStatement* namespaceDefinition = isSgNamespaceDefinitionStatement(n);
+                         if (namespaceDefinition != NULL)
+                            {
+                           // adjust the start_of_token_subsequence
+#if 0
+                           // printf ("Found case of SgBasicBlock: block = %p \n",block);
+                              printf ("Found case of SgClassDefinition: classDefinition = %p \n",classDefinition);
+
+                              printf ("BEFORE LOOP: SgNamespaceDefinitionStatement: Adjusting the start of the token subsequence to find the leading '{' token = %s \n",tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+                              printf ("BEFORE LOOP: SgNamespaceDefinitionStatement: Adjusting the end of the token subsequence to find the trailing ';' token  = %s \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+                              printf ("   --- original_start_of_token_subsequence = %d start_of_token_subsequence = %d \n",original_start_of_token_subsequence,start_of_token_subsequence);
+                              printf ("   --- original_end_of_token_subsequence = %d end_of_token_subsequence = %d \n",original_end_of_token_subsequence,end_of_token_subsequence);
+#endif
+                           // while ( (start_of_token_subsequence < original_start_of_token_subsequence) && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE || tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme == "{") )
+                              while ( (start_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != "{") )
+                                 {
+                                   start_of_token_subsequence++;
+#if 0
+                                   printf ("In LOOP: Adjusting the start of the token subsequence (forward) to find the leading ';' or '{': token = %s start_of_token_subsequence = %d \n",
+                                        tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),start_of_token_subsequence);
+#endif
+                                 }
+                            }
+#endif
 #if 0
                       // DQ (12/15/2014): I think this makes more sense to process on the way back up (in the synthesied attribute).
                       // DQ (12/15/2014): Improve the representation of the leading whitespace for the SgFunctionDefinition 
@@ -3438,7 +3484,7 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
 void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -3446,7 +3492,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // where nodes can contain transformation even if they are not a transformation directly.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
@@ -3460,14 +3506,14 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // streams on nodes containing transformations is required to provide a more precise generated 
   // code (precise representation with minimal diff).
 
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // Note that we first detect the frontier.
      frontierDetectionForTokenStreamMapping(sourceFile);
 
-#if 1
+#if 0
      printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 #endif

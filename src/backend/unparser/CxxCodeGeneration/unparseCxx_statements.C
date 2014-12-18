@@ -1297,17 +1297,35 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
      curprint("/* In unparseNamespaceDeclarationStatement() */ ");
 #endif
 
-  // DQ (8/12/2014): Adding support for inlined namespaces (C++11 support).
-     if (namespaceDeclaration->get_isInlinedNamespace() == true)
+  // DQ (12/17/2014): Test for if we have unparsed partially using the token stream. 
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     if (saved_unparsedPartiallyUsingTokenStream == false)
         {
-          curprint("inline ");
+       // DQ (8/12/2014): Adding support for inlined namespaces (C++11 support).
+          if (namespaceDeclaration->get_isInlinedNamespace() == true)
+             {
+               curprint("inline ");
+             }
+
+          curprint("namespace ");
+
+       // This can be an empty string (in the case of an unnamed namespace)
+          SgName name = namespaceDeclaration->get_name();
+          curprint(name.str());
         }
-
-     curprint("namespace ");
-
-  // This can be an empty string (in the case of an unnamed namespace)
-     SgName name = namespaceDeclaration->get_name();
-     curprint(name.str());
+       else
+        {
+       // DQ (12/17/2014): Unparse a partial representation of the namespace.
+          SgNamespaceDefinitionStatement* namespaceDefinition = namespaceDeclaration->get_definition();
+          if (namespaceDefinition != NULL)
+             {
+#if 0
+               curprint ("/* unparse start of SgNamespaceDeclarationStatement using tokens */");
+#endif
+               unparseStatementFromTokenStream (stmt, namespaceDefinition, e_token_subsequence_start, e_token_subsequence_start);
+             }
+        }
 
 #if 0
      printf ("In unparseNamespaceDeclarationStatement(): namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
@@ -1337,7 +1355,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
      curprint("/* Leaving unparseNamespaceDeclarationStatement() */ ");
 #endif
 
-#if 1
+#if 0
   // DQ (5/19/2013): There should always be proper source file position infomation so this should not be required.
   // if (stmt->get_file_info()->isCompilerGenerated() == true && stmt->get_file_info()->isOutputInCodeGeneration() == true)
      if (stmt->get_file_info()->isCompilerGenerated() == false && stmt->get_file_info()->isOutputInCodeGeneration() == true)
@@ -1383,9 +1401,21 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      ninfo.set_current_namespace(NULL);
      ninfo.set_current_namespace(namespaceDefinition->get_namespaceDeclaration());
 
-     unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint("{");
-     unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
+  // DQ (12/17/2014): Test for if we have unparsed partially using the token stream. 
+  // If so then we don't want to unparse this syntax, if not then we require this syntax.
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+          unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
+          curprint("{");
+          unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
+        }
+       else
+        {
+          unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
+        }
+
+     SgStatement* last_stmt = NULL;
 
   // unparse all the declarations
      SgDeclarationStatementPtrList & statementList = namespaceDefinition->get_declarations();
@@ -1398,16 +1428,46 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // DQ (11/6/2004): use ninfo instead of info for nested declarations in namespace
           unparseStatement(currentStatement, ninfo);
 
+       // DQ (12/18/2014): Save the last statement so that we can use the trailing token stream if using the token-based unparsing.
+          last_stmt = currentStatement;
+
        // Go to the next statement
           statementIterator++;
         }
 
-  // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
-     unparseAttachedPreprocessingInfo(namespaceDefinition, info, PreprocessingInfo::inside);
+     if (saved_unparsedPartiallyUsingTokenStream == false)
+        {
+       // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
+          unparseAttachedPreprocessingInfo(namespaceDefinition, info, PreprocessingInfo::inside);
 
-     unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
-     curprint("}\n");
-     unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
+          unp->cur.format(namespaceDefinition, info, FORMAT_BEFORE_BASIC_BLOCK2);
+          curprint("}\n");
+          unp->cur.format(namespaceDefinition, info, FORMAT_AFTER_BASIC_BLOCK2);
+        }
+       else
+        {
+#if 0
+          printf ("unparse end of SgNamespaceDefinitionStatement: info.unparsedPartiallyUsingTokenStream() = %s last_stmt = %p \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false",last_stmt);
+          if (last_stmt != NULL)
+             {
+               printf ("   --- last_stmt = %p = %s \n",last_stmt,last_stmt->class_name().c_str());
+             }
+#endif
+
+       // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+          if (last_stmt != NULL)
+             {
+            // Unparse the trailing white space of the last statement.
+               unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
+
+            // Unparse the final "}" for the SgNamespaceDefinitionStatement.
+               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+             }
+            else
+             {
+               unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+             }
+        }
 
   // DQ (11/3/2007): Since "ninfo" will go out of scope shortly, this is not significant.
   // DQ (6/13/2007): Set to null before resetting to non-null value 

@@ -1137,14 +1137,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
 
-#if 1
+#if 0
      printf ("In unparseStatementFromTokenStream(): unparseStatus = %s \n",unparseStatus ? "true" : "false");
 #endif
 
-#if 1
+#if 0
      if (unparseStatus == false)
         {
-	  printf ("In unparseStatementFromTokenStream(): unparseStatus == false: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("In unparseStatementFromTokenStream(): unparseStatus == false: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
           stmt->get_file_info()->display("unparseStatus == false");
         }
 #endif
@@ -1193,14 +1193,14 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                  // bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
                     unparseStatus_previousStatement = (canBeUnparsedFromTokenStream(sourceFile,previousStatement) == true);
                     unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
-#if 1
+#if 0
                     printf ("In unparseStatementFromTokenStream(): unparseStatus_previousStatement = %s \n",unparseStatus_previousStatement ? "true" : "false");
                     printf ("In unparseStatementFromTokenStream(): unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
 #endif
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("In unparseStatementFromTokenStream(): stmt not in previousAndNextFrontierDataMap: unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
                     printf ("   --- set unparseLeadingTokenStream = true \n");
 #endif
@@ -1222,7 +1222,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                     printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
 #endif
-#if 1
+#if 0
                     printf ("   --- tokenSubsequence->leading_whitespace_start = %d tokenSubsequence->leading_whitespace_end = %d \n",tokenSubsequence->leading_whitespace_start,tokenSubsequence->leading_whitespace_end);
 #endif
 
@@ -1242,7 +1242,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                     if (globalScope != NULL)
                        {
-#if 1
+#if 0
                          printf ("Processing corner case of empty global scope unparsed using the token stream \n");
 #endif
                          if (globalScope->get_declarations().empty() == true)
@@ -1290,7 +1290,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->leading_whitespace_start; j <= tokenSubsequence->leading_whitespace_end; j++)
                             {
-#if 1
+#if 0
                               printf ("Output leading whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1311,7 +1311,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
-#if 1
+#if 0
                     printf ("Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1381,7 +1381,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        {
                          for (int j = tokenSubsequence->trailing_whitespace_start; j <= tokenSubsequence->trailing_whitespace_end; j++)
                             {
-#if 1
+#if 0
                               printf ("Output trailing whitespace tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -1468,7 +1468,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
    {
      ROSE_ASSERT(stmt != NULL);
 
-#if 1
+#if 0
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      int line    = stmt->get_startOfConstruct()->get_raw_line();
      string file = stmt->get_startOfConstruct()->get_filenameString();
@@ -1813,7 +1813,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
             // Only unparse from the token stream if this was not a transformed statement.
                unparseViaTokenStream = unparseViaTokenStream && (statementTransformed == false);
-
+#if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): stmt = %p = %s unparseViaTokenStream = %s \n",stmt,stmt->class_name().c_str(),unparseViaTokenStream ? "true" : "false");
+#endif
             // Try overruling the logic to compute if this should be unparsed from the token stream.
                if (unparseViaTokenStream == false)
                   {
@@ -1865,7 +1867,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if 0
                     curprint("/* In unparseStatement(): DONE: unparseViaTokenStream == true */");
 #endif
-#if 1
+#if 0
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseStatementFromTokenStream(): status = %d \n",status);
 #endif
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
@@ -1881,6 +1883,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // AST node (not clear how to compute the start of the last part of the token stream).
 #if 0
                     curprint("/* In unparseStatement(): unparseViaTokenStream == false */");
+#endif
+#if 0
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): stmt->get_containsTransformation() = %s \n",stmt->get_containsTransformation() ? "true" : "false");
 #endif
                     if (stmt->get_containsTransformation() == true)
                        {
