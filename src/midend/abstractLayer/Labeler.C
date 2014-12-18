@@ -310,6 +310,14 @@ bool Labeler::isConditionLabel(Label lab) {
   return SgNodeHelper::isCond(getNode(lab));
 }
 
+bool Labeler::isFirstLabelOfMultiLabeledNode(Label lab) {
+  return isFunctionCallLabel(lab)||isFunctionEntryLabel(lab)||isBlockBeginLabel(lab);
+}
+
+bool Labeler::isSecondLabelOfMultiLabeledNode(Label lab) {
+  return isFunctionCallReturnLabel(lab)||isFunctionExitLabel(lab)||isBlockEndLabel(lab);
+}
+
 bool Labeler::isFunctionEntryLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionEntryLabel();
 }
