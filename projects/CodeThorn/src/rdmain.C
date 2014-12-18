@@ -112,12 +112,17 @@ void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root
 }
 
 int main(int argc, char* argv[]) {
+  bool option_rd_analysis=true;
+  bool option_dd_analysis=false;
+  bool option_lv_analysis=false;
+  bool option_interval_analysis=false;
   try {
     cout << "INIT: Parsing and creating AST."<<endl;
     boolOptions.registerOption("semantic-fold",false); // temporary
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
     
+    if(option_interval_analysis)
     {
       cout << "STATUS: creating interval analyzer."<<endl;
       IntervalAnalysis* intervalAnalyzer=new IntervalAnalysis();
@@ -139,7 +144,7 @@ int main(int argc, char* argv[]) {
       cout << "STATUS: did not run interval analysis."<<endl;      
 #endif
     }
-
+    if(option_lv_analysis)
     {
       cout << "STATUS: creating LV analysis."<<endl;
       SPRAY::LVAnalysis* lvAnalysis=new SPRAY::LVAnalysis();
@@ -162,109 +167,113 @@ int main(int argc, char* argv[]) {
       cout << "INFO: attaching LV-data to AST."<<endl;
       lvAnalysis->attachInInfoToAst("lv-analysis-in");
       lvAnalysis->attachOutInfoToAst("lv-analysis-out");
+      AstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
+      ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
+      ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
 #else
       cout << "STATUS: did not run LV analysis."<<endl;      
 #endif
       delete lvAnalysis;
     }
 
-    cout << "STATUS: creating RD analyzer."<<endl;
-    RDAnalysis* rdAnalysis=new RDAnalysis();
-    cout << "STATUS: initializing RD analyzer."<<endl;
-    rdAnalysis->initialize(root);
-    cout << "STATUS: initializing RD transfer functions."<<endl;
-    rdAnalysis->initializeTransferFunctions();
-    cout << "STATUS: initializing RD global variables."<<endl;
-    rdAnalysis->initializeGlobalVariables(root);
+    if(option_rd_analysis)
+    {
+      cout << "STATUS: creating RD analyzer."<<endl;
+      RDAnalysis* rdAnalysis=new RDAnalysis();
+      cout << "STATUS: initializing RD analyzer."<<endl;
+      rdAnalysis->initialize(root);
+      cout << "STATUS: initializing RD transfer functions."<<endl;
+      rdAnalysis->initializeTransferFunctions();
+      cout << "STATUS: initializing RD global variables."<<endl;
+      rdAnalysis->initializeGlobalVariables(root);
+      
+      cout << "generating icfg_forward.dot."<<endl;
+      write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
     
-    cout << "generating icfg_forward.dot."<<endl;
-    write_file("icfg_forward.dot", rdAnalysis->getFlow()->toDot(rdAnalysis->getLabeler()));
-
-    std::string funtofind="main";
-    RoseAst completeast(root);
-    SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-    rdAnalysis->determineExtremalLabels(startFunRoot);
-    rdAnalysis->run();
+      std::string funtofind="main";
+      RoseAst completeast(root);
+      SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
+      rdAnalysis->determineExtremalLabels(startFunRoot);
+      rdAnalysis->run();
     
-    cout << "INFO: attaching RD-data to AST."<<endl;
-    rdAnalysis->attachInInfoToAst("rd-analysis-in");
-    rdAnalysis->attachOutInfoToAst("rd-analysis-out");
-    //printAttributes<RDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"rd-analysis-in");
-    cout << "INFO: generating and attaching UD-data to AST."<<endl;
-    createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
+      cout << "INFO: attaching RD-data to AST."<<endl;
+      rdAnalysis->attachInInfoToAst("rd-analysis-in");
+      rdAnalysis->attachOutInfoToAst("rd-analysis-out");
+      //printAttributes<RDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"rd-analysis-in");
+      cout << "INFO: annotating analysis results as comments."<<endl;
+      ROSE_ASSERT(rdAnalysis->getVariableIdMapping());
+      AstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
+      ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
+      ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
+
+      cout << "INFO: generating and attaching UD-data to AST."<<endl;
+      createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
 #if 0
-  cout << "INFO: substituting uses with rhs of defs."<<endl;
-  substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalysis->getLabeler(), rdAnalysis->getVariableIdMapping());
+      cout << "INFO: substituting uses with rhs of defs."<<endl;
+      substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalysis->getLabeler(), rdAnalysis->getVariableIdMapping());
 #endif
-
-  Flow* flow=rdAnalysis->getFlow();
-  cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-  CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
-  int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
-  cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
-
+      if(option_dd_analysis) {
+        Flow* flow=rdAnalysis->getFlow();
+        cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
+        CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
+        cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
+        
 #if 0
-  cout << "INFO: computing program statistics."<<endl;
-  ProgramStatistics ps(rdAnalysis->getVariableIdMapping(),
-                       rdAnalysis->getLabeler(), 
-                       rdAnalysis->getFlow(),
-                       "ud-analysis");
-  ps.computeStatistics();
-  //ps.printStatistics();
-  cout << "INFO: generating resource usage visualization."<<endl;
-  ps.setGenerateWithSource(false);
-  ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
-  flow->resetDotOptions();
+        cout << "INFO: computing program statistics."<<endl;
+        ProgramStatistics ps(rdAnalysis->getVariableIdMapping(),
+                             rdAnalysis->getLabeler(), 
+                             rdAnalysis->getFlow(),
+                             "ud-analysis");
+        ps.computeStatistics();
+        //ps.printStatistics();
+        cout << "INFO: generating resource usage visualization."<<endl;
+        ps.setGenerateWithSource(false);
+        ps.generateResourceUsageICFGDotFile("resourceusageicfg.dot");
+        flow->resetDotOptions();
 #endif
-  cout << "INFO: generating visualization data."<<endl;
-  // generate ICFG visualization
-  cout << "generating icfg.dot."<<endl;
-  write_file("icfg.dot", flow->toDot(rdAnalysis->getLabeler()));
+        cout << "INFO: generating visualization data."<<endl;
+        // generate ICFG visualization
+        cout << "generating icfg.dot."<<endl;
+        write_file("icfg.dot", flow->toDot(rdAnalysis->getLabeler()));
+        
+        //  cout << "INFO: generating control dependence graph."<<endl;
+        //Flow cdg=rdAnalysis->getCFAnalyzer()->controlDependenceGraph(*flow);
 
-  //  cout << "INFO: generating control dependence graph."<<endl;
-  //Flow cdg=rdAnalysis->getCFAnalyzer()->controlDependenceGraph(*flow);
-
-  cout << "generating datadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis0(rdAnalysis->getLabeler(),
-                                 rdAnalysis->getVariableIdMapping(),
-                                 "ud-analysis");
-  //printAttributes<UDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"ud-analysis");
-  //ddvis._showSourceCode=false; // for large programs
-  ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
-  flow->resetDotOptions();
-
-  cout << "generating icfgdatadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis1(rdAnalysis->getLabeler(),
-                                 rdAnalysis->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis1.includeFlowGraphEdges(flow);
-  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
-  flow->resetDotOptions();
-
-  cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis2(rdAnalysis->getLabeler(),
-                                 rdAnalysis->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis2.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
-
-  cout << "generating icfg_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis3(rdAnalysis->getLabeler(),
-                                 rdAnalysis->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis3.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfg_clustered.dot",false);
-
-#if 1
-  cout << "INFO: annotating analysis results as comments."<<endl;
-  ROSE_ASSERT(rdAnalysis->getVariableIdMapping());
-  AstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
-  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
-  ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
-  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
-  ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
-  cout << "INFO: generating annotated source code."<<endl;
-  root->unparse(0,0);
-#endif
-  return 0;
+        cout << "generating datadependencegraph.dot."<<endl;
+        DataDependenceVisualizer ddvis0(rdAnalysis->getLabeler(),
+                                        rdAnalysis->getVariableIdMapping(),
+                                        "ud-analysis");
+        //printAttributes<UDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"ud-analysis");
+        //ddvis._showSourceCode=false; // for large programs
+        ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
+        flow->resetDotOptions();
+        
+        cout << "generating icfgdatadependencegraph.dot."<<endl;
+        DataDependenceVisualizer ddvis1(rdAnalysis->getLabeler(),
+                                        rdAnalysis->getVariableIdMapping(),
+                                        "ud-analysis");
+        ddvis1.includeFlowGraphEdges(flow);
+        ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
+        flow->resetDotOptions();
+        
+        cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
+        DataDependenceVisualizer ddvis2(rdAnalysis->getLabeler(),
+                                        rdAnalysis->getVariableIdMapping(),
+                                        "ud-analysis");
+        ddvis2.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
+        
+        cout << "generating icfg_clustered.dot."<<endl;
+        DataDependenceVisualizer ddvis3(rdAnalysis->getLabeler(),
+                                        rdAnalysis->getVariableIdMapping(),
+                                        "ud-analysis");
+        ddvis3.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfg_clustered.dot",false);
+        
+      }
+    }
+    cout << "INFO: generating annotated source code."<<endl;
+    root->unparse(0,0);
+    return 0;
   } catch(char const* s) {
     cout<<s<<endl;
     exit(1);

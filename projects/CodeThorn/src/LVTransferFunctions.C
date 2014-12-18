@@ -13,7 +13,7 @@ SPRAY::LVTransferFunctions::LVTransferFunctions() {
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
@@ -43,9 +43,8 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
-//NOTE: missing: UD must take uses in initializers into account
 void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
   ROSE_ASSERT(element1);
@@ -71,7 +70,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
@@ -85,15 +84,14 @@ void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallE
 }
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element0) {
   //TODO: def in x=f(...) (not seen as assignment)
 }
-//NOTE: UD analysis must take uses of function-call arguments into account
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
@@ -113,20 +111,8 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
 
 /*! 
   * \author Markus Schordan
-  * \date 2013.
+  * \date 2014.
  */
 void SPRAY::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
   // nothing to do
-#if 0
-  LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  LVLattice& element=*element1;
-
-  // insert all declared variables at function exit (including function parameter variables)
-  for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
-    VariableId varId=*i;
-    element.eraseVariableId(varId);
-  }
-#endif
-  // TODO:: return variable $r
 }

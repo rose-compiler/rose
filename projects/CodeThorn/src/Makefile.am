@@ -348,33 +348,12 @@ analyterix_SOURCES = \
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \
-  CommandLineOptions.h CommandLineOptions.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  CFAnalyzer.h \
-  CFAnalyzer.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \
   LanguageRestrictorCollection.h \
   LanguageRestrictorCollection.C \
-  AType.h \
-  AType.C \
   AstTerm.h \
   AstTerm.C \
-  Miscellaneous.C \
-  Miscellaneous.h \
-  ProgramStats.h \
-  ProgramStats.C \
-  Flow.h \
-  Flow.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
-  PropertyValueTable.h \
-  PropertyValueTable.C \
   reverser.C
 
 # obsolete since integration into ROSE

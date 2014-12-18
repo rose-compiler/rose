@@ -18,9 +18,11 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
   //cout<<"DEBUG: transfer: @"<<lab<<": "<<node->class_name()<<":"<<node->unparseToString()<<endl;
-  
   if(_labeler->isFunctionCallLabel(lab)) {
-    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
+    if(isSgExprStatement(node)) {
+      node=SgNodeHelper::getExprStmtChild(node);
+    }
+    if(SgFunctionCallExp* funCall=isSgFunctionCallExp(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
       transferFunctionCall(lab, funCall, arguments, element);
       return;
@@ -64,13 +66,13 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
     }
   }
   
+  if(isSgExprStatement(node))
+    node=SgNodeHelper::getExprStmtChild(node);
+  
   // desugar SgExprStatement
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
   }
-  if(isSgExprStatement(node))
-    node=SgNodeHelper::getExprStmtChild(node);
-
   if(SgExpression* expr=isSgExpression(node)) {
     transferExpression(lab,expr,element);
   }

@@ -370,25 +370,42 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
     // TODO: need to add a solution for nodes with multiple associated labels (e.g. function call)
     if(*i >=0 ) {
       Label lab=*i;
+      SgNode* node=_labeler->getNode(*i);
+      Lattice* info=0;
       if(inInfo) {
         if(isForwardAnalysis()) {
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPreInfo(lab)));
+          info=getPreInfo(lab);
+          if(_labeler->isSecondLabelOfMultiLabeledNode(lab)) {
+            continue;
+          }
         } else if(isBackwardAnalysis()) {
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPostInfo(lab)));
+          if(_labeler->isSecondLabelOfMultiLabeledNode(lab)) {
+            continue;
+          }
+          info=getPostInfo(lab);
         } else {
           cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
           exit(1);
         }
       } else {
         if(isForwardAnalysis()) {
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPostInfo(lab)));
+          if(_labeler->isFirstLabelOfMultiLabeledNode(lab)) {
+            continue;
+          }
+          info=getPostInfo(lab);
         } else if(isBackwardAnalysis()) {
-          _labeler->getNode(*i)->setAttribute(attributeName,createDFAstAttribute(getPreInfo(lab)));
+          if(_labeler->isFirstLabelOfMultiLabeledNode(lab)) {
+            continue;
+          }
+          info=getPreInfo(lab);
         } else {
           cerr<<"Error: Ast-annotation: unsupported analysis mode."<<endl;
           exit(1);
         }
+        
       }
+      ROSE_ASSERT(info!=0);
+      node->setAttribute(attributeName,createDFAstAttribute(info));
     }
   }
 }
