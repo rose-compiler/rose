@@ -166,6 +166,10 @@ if ROSE_WITH_ATERM
    SUBDIRS += AtermTranslation
 endif
 
+# Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+if ROSE_WITH_POCC
+   SUBDIRS += PolyOpt2
+endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
 # be missing at configure time.
