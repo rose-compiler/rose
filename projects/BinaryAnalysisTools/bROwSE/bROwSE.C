@@ -12,6 +12,7 @@ P2::Attribute::Id ATTR_NCALLERS(-1);
 P2::Attribute::Id ATTR_NRETURNS(-1);
 P2::Attribute::Id ATTR_MAYRETURN(-1);
 P2::Attribute::Id ATTR_STACKDELTA(-1);
+P2::Attribute::Id ATTR_AST(-1);
 
 void
 Context::init() {
@@ -26,6 +27,7 @@ Context::init() {
         ATTR_NRETURNS       = P2::Attribute::registerName("Number of returning basic blocks");
         ATTR_MAYRETURN      = P2::Attribute::registerName("May return to caller?");
         ATTR_STACKDELTA     = P2::Attribute::registerName("Stack pointer delta");
+        ATTR_AST            = P2::Attribute::registerName("Abstract syntax tree");
     }
 }
 

@@ -42,6 +42,7 @@ if ROSE_USE_WT
 bin_PROGRAMS += bROwSE-server
 bROwSE_server_SOURCES =				\
 	bROwSE/Application.C			\
+	bROwSE/WAssemblyListing.C		\
 	bROwSE/bROwSE.C				\
 	bROwSE/FunctionListModel.C		\
 	bROwSE/FunctionUtil.C			\

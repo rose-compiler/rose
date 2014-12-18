@@ -21,6 +21,7 @@ size_t functionNCallers(P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNReturns(P2::Partitioner&, const P2::Function::Ptr&);
 MayReturn functionMayReturn(P2::Partitioner&, const P2::Function::Ptr&);
 int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
+SgAsmFunction *functionAst(P2::Partitioner&, const P2::Function::Ptr&);
 
 } // namespace
 #endif
