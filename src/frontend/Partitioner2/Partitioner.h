@@ -934,10 +934,8 @@ public:
      *  @ref basicBlockIsFunctionReturn returns true.  The analysis caches results in the @ref BasicBlock::mayReturn
      *  "mayReturn" property of the reachable basic blocks.
      *
-     *  Since the analysis results might change if edges are inserted or erased even on distant basic blocks, the @p recompute
-     *  argument can be used to force recomputation of the value. If @p recompute is true then the cached value at reachable
-     *  nodes is recomputed.  The @ref basicBlockMayReturnReset method can be used to "forget" the property for all basic
-     *  blocks in the CFG/AUM.
+     *  Since the analysis results might change if edges are inserted or erased even on distant basic blocks, the @ref
+     *  basicBlockMayReturnReset method can be used to "forget" the property for all basic blocks in the CFG/AUM.
      *
      *  A basic block's may-return property is computed as follows (the first applicable rule wins):
      *
@@ -978,10 +976,9 @@ public:
      *  are indicated by returning nothing.
      *
      * @{ */
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&, bool recompute=false) const ROSE_FINAL;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const ROSE_FINAL;
 
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&,
-                                                       bool recompute=false) const ROSE_FINAL;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&) const ROSE_FINAL;
     /** @} */
 
     /** Clear all may-return properties.
@@ -1043,19 +1040,19 @@ private:
     };
 
     // Is edge significant for analysis? See .C file for full documentation.
-    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge, bool recompute,
+    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge,
                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Determine (and cache in vertexInfo) whether any callees return.
-    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
+    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
                                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Maximum may-return result from significant successors including phantom call-return edge.
-    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex, bool recompute,
+    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // The guts of the may-return analysis
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start, bool recompute,
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
