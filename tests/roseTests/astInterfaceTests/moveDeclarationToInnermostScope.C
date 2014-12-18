@@ -111,7 +111,11 @@ class visitorTraversal : public AstSimpleProcessing
   protected:
     void virtual visit (SgNode* n)
     {
-      if (isSgFunctionDeclaration(n)!=NULL){
+//      if (isSgFunctionDeclaration(n)!=NULL)
+//      This will match SgTemplateInstantiationFunctionDecl, which is not wanted.
+      if (n->variantT() == V_SgFunctionDeclaration || n->variantT() == V_SgMemberFunctionDeclaration)
+      {
+	ROSE_ASSERT (n->variantT() != V_SgTemplateInstantiationFunctionDecl);
         SgFunctionDeclaration* func = isSgFunctionDeclaration(n);  
         ROSE_ASSERT(func != NULL);
         if (func->get_definition() == NULL) return;
