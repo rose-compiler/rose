@@ -215,7 +215,8 @@ class Labeler {
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
   bool isConditionLabel(Label lab);
-
+  bool isFirstLabelOfMultiLabeledNode(Label lab);
+  bool isSecondLabelOfMultiLabeledNode(Label lab);
   class iterator {
   public:
     iterator();
