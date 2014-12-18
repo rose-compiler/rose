@@ -147,6 +147,21 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
                     "everything calls it -- it will likely have far and away more callers than anything else.  Setting the "
                     "address to zero disables this module (which is the default)."));
 
+    dis.insert(Switch("intra-function-code")
+               .intrinsicValue(true, settings.intraFunctionCode)
+               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
+                    "followed by the same single function then a basic block is create at the beginning of that region and "
+                    "added as a member of the surrounding function.  A function block discover phase follows in order to "
+                    "find the instructions for the new basic blocks and to follow their control flow to add additional "
+                    "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
+                    "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
+                    "switch turns this off. The default is to " + std::string(settings.intraFunctionCode?"":"not ") +
+                    "perform this analysis."));
+    dis.insert(Switch("no-intra-function-code")
+               .key("intra-function-code")
+               .intrinsicValue(false, settings.intraFunctionCode)
+               .hidden(true));
+
     dis.insert(Switch("intra-function-data")
                .intrinsicValue(true, settings.intraFunctionData)
                .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
@@ -215,6 +230,8 @@ Application::main(int argc, char *argv[]) {
         engine.disassembler(Disassembler::lookup(settings.isaName));
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
+    engine.opaquePredicateSearch(settings.findDeadCode);
+    engine.intraFunctionCodeSearch(settings.intraFunctionCode);
 
     // Load the specimen as raw data or an ELF or PE container
     MemoryMap map = engine.load(specimenNames);

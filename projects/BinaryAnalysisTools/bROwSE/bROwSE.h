@@ -22,6 +22,7 @@ struct Settings {
     bool findFunctionPadding;                           // look for pre-entry-point padding?
     bool findDeadCode;                                  // do we look for unreachable basic blocks?
     rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
+    bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
@@ -29,8 +30,8 @@ struct Settings {
     std::string configurationName;                      // name of config file or directory containing such
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionData(true),
-          httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
+          findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
+          intraFunctionData(true), httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -792,16 +792,8 @@ int main(int argc, char *argv[]) {
         engine.attachDeadCodeToFunctions(partitioner);  // find unreachable code and add it to functions
     if (settings.findFunctionPadding)
         engine.attachPaddingToFunctions(partitioner);   // find function alignment padding before entry points
-    if (settings.intraFunctionCode) {
-        while (engine.attachSurroundedCodeToFunctions(partitioner)) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-11-06]
-            mlog[INFO] <<"ROBB: attached surrounded code to functions\n";
-#endif
-            engine.discoverBasicBlocks(partitioner);    // discover instructions and more basic blocks by following control
-            engine.makeCalledFunctions(partitioner);    // we might have found more function calls from the new blocks
-            engine.attachBlocksToFunctions(partitioner);// attach new blocks to functions wherever possible
-        }
-    }
+    if (settings.intraFunctionCode)
+        engine.attachAllSurroundedCodeToFunctions(partitioner);
     if (settings.intraFunctionData)
         engine.attachSurroundedDataToFunctions(partitioner); // find data areas that are enclosed by functions
 

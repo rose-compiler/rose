@@ -357,13 +357,28 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     labelAddresses(partitioner, interp);
     makeContainerFunctions(partitioner, interp);
     discoverFunctions(partitioner);
-    attachDeadCodeToFunctions(partitioner);
+    if (opaquePredicateSearch_)
+        attachDeadCodeToFunctions(partitioner);
     attachPaddingToFunctions(partitioner);
+    if (intraFunctionCodeSearch_)
+        attachAllSurroundedCodeToFunctions(partitioner);
     attachSurroundedDataToFunctions(partitioner);
     attachBlocksToFunctions(partitioner, true);         // to emit warnings about CFG problems
     postPartitionFixups(partitioner, interp);
     updateAnalysisResults(partitioner);
     return *this;
+}
+
+size_t
+Engine::attachAllSurroundedCodeToFunctions(Partitioner &partitioner) {
+    size_t retval = 0;
+    while (size_t n = attachSurroundedCodeToFunctions(partitioner)) {
+        retval += n;
+        discoverBasicBlocks(partitioner);
+        makeCalledFunctions(partitioner);
+        attachBlocksToFunctions(partitioner);
+    }
+    return retval;
 }
 
 void
