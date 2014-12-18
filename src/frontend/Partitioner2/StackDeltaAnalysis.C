@@ -14,11 +14,13 @@ namespace Partitioner2 {
 
 // Vertex type for the CFG used by dataflow.
 struct DfCfgVertex {
-    enum Type { BBLOCK, CALLRET, FUNCRET };
+    enum Type { BBLOCK, CALLRET, FUNCRET, INDET };      // INDET means we have no info about the basic block
     Type type;
     BasicBlock::Ptr bblock;                             // attached to BBLOCK vertices
     std::vector<Function::Ptr> callees;                 // attached to CALLRET vertices
-    DfCfgVertex(Type type, const BasicBlock::Ptr &bblock = BasicBlock::Ptr()): type(type), bblock(bblock) {}
+    bool hasNonFunctionCallee;                          // if some callee is not a function (and not stored in "callees")
+    explicit DfCfgVertex(Type type, const BasicBlock::Ptr &bblock = BasicBlock::Ptr())
+        : type(type), bblock(bblock), hasNonFunctionCallee(false) {}
 };
 
 // Control flow graph used by dataflow analysis. See buildDfCfg for details.
@@ -51,6 +53,9 @@ buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeI
                     dfCfg.insertEdge(v2, functionReturnVertex);
                     t.skipChildren();
                 }
+            } else {
+                DfCfg::VertexNodeIterator v2 = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::INDET));
+                vmap.insert(v1->id(), v2);
             }
         } else if (t.event() == ENTER_EDGE) {
             if (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER)
@@ -67,10 +72,16 @@ buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeI
                     dfCfg.insertEdge(crv, target);
                     ControlFlowGraph::ConstVertexNodeIterator cfgCaller = t.edge()->source();
                     BOOST_FOREACH (const ControlFlowGraph::EdgeNode &callEdge, cfgCaller->outEdges()) {
-                        if (callEdge.value().type()==E_FUNCTION_CALL && callEdge.target()->value().type() == V_BASIC_BLOCK) {
-                            if (Function::Ptr callee = callEdge.target()->value().function()) {
-                                crv->value().callees.push_back(callee);
-                            }
+                        Function::Ptr callee;
+                        if (callEdge.value().type()==E_CALL_RETURN)
+                            continue;                   // we're only interested in the function calls
+                        if (callEdge.value().type()==E_FUNCTION_CALL && callEdge.target()->value().type() == V_BASIC_BLOCK)
+                            callee = callEdge.target()->value().function();
+                        if (callee) {
+                            crv->value().callees.push_back(callee);
+                        } else {
+                            // calls something for which we won't be able to get a stack delta, such as indeterminate vertex
+                            crv->value().hasNonFunctionCallee = true;
                         }
                     }
                 } else {
@@ -198,21 +209,28 @@ public:
 class TransferFunction {
     BaseSemantics::DispatcherPtr cpu_;
     BaseSemantics::SValuePtr callRetAdjustment_;
-    const RegisterDescriptor STACK_POINTER;
+    const RegisterDescriptor STACK_POINTER_REG;
+    static const rose_addr_t initialStackPointer = 0x7fff0000; // arbitrary stack pointer value at start of function
 public:
     explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor &stackPointerRegister)
-        : cpu_(cpu), STACK_POINTER(stackPointerRegister) {
-        size_t adjustment = STACK_POINTER.get_nbits() / 8; // sizeof return address on top of stack
-        callRetAdjustment_ = cpu->number_(STACK_POINTER.get_nbits(), adjustment);
+        : cpu_(cpu), STACK_POINTER_REG(stackPointerRegister) {
+        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
+        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
     }
 
     State::Ptr initialState() const {
         BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
         State::Ptr retval = State::instance(ops);
-        retval->writeRegister(STACK_POINTER, ops->number_(STACK_POINTER.get_nbits(), 0), ops.get());
+        retval->writeRegister(STACK_POINTER_REG, ops->number_(STACK_POINTER_REG.get_nbits(), initialStackPointer), ops.get());
         return retval;
     }
-    
+
+    // Required by dataflow engine: should return a deep copy of the state
+    State::Ptr operator()(const State::Ptr &incomingState) const {
+        return incomingState ? State::promote(incomingState->clone()) : State::Ptr();
+    }
+
+    // Required by dataflow engine: compute new output state given a vertex and input state.
     State::Ptr operator()(const DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
         State::Ptr retval = State::promote(incomingState->clone());
         DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
@@ -222,20 +240,47 @@ public:
             // assume it just pops the return value.
             BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr delta;
-            for (size_t i=0; i<vertex->value().callees.size(); ++i) {
-                Function::Ptr callee = vertex->value().callees[i];
-                BaseSemantics::SValuePtr calleeDelta = callee->stackDelta().getOptional().orDefault();
-                if (0==i) {
-                    delta = calleeDelta;
-                } else {
-                    State::mergeSValues(delta, calleeDelta, ops);
+            if (!vertex->value().hasNonFunctionCallee) {
+                for (size_t i=0; i<vertex->value().callees.size(); ++i) {
+                    Function::Ptr callee = vertex->value().callees[i];
+                    BaseSemantics::SValuePtr calleeDelta = callee->stackDelta().getOptional().orDefault();
+                    if (0==i) {
+                        delta = calleeDelta;
+                    } else {
+                        State::mergeSValues(delta, calleeDelta, ops);
+                    }
                 }
             }
-            BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER, ops.get());
-            BaseSemantics::SValuePtr newStack = ops->add(oldStack, delta ? delta : callRetAdjustment_);
-            retval->writeRegister(STACK_POINTER, newStack, ops.get());
+
+            BaseSemantics::SValuePtr newStack;
+            if (delta) {
+                BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
+                newStack = ops->add(oldStack, delta);
+            } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
+                // We don't know the callee's delta, or there was more than one and they weren't consistent with each other.
+                // So assume that the callee pops only its return address. This is usually the correct for caller-cleanup ABIs
+                // common on Unix/Linux, but not usually correct for callee-cleanup ABIs common on Microsoft systems.
+                BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
+                newStack = ops->add(oldStack, callRetAdjustment_);
+            } else {
+                // We don't know the callee's delta, or there was more than one and they weren't consistent with each other.
+                // Therefore we don't know how to adjust the delta for the callee's effect.
+                newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
+            }
+            ASSERT_not_null(newStack);
+
+            // FIXME[Robb P. Matzke 2014-12-15]: We should also reset any part of the state that might have been modified by
+            // the called function(s). Unfortunately we don't have good ABI information at this time, so be permissive and
+            // assume that the callee doesn't have any effect on registers except the stack pointer.
+            retval->writeRegister(STACK_POINTER_REG, newStack, ops.get());
+
         } else if (DfCfgVertex::FUNCRET == vertex->value().type) {
-            // identity semantics; this vertex just merges all the various return blocks in the function
+            // Identity semantics; this vertex just merges all the various return blocks in the function.
+
+        } else if (DfCfgVertex::INDET == vertex->value().type) {
+            // We don't know anything about the vertex, therefore we don't know anything about its semantics
+            retval->clear();
+
         } else {
             // Build a new state using the retval created above, then execute instructions to update it.
             ASSERT_require(vertex->value().type == DfCfgVertex::BBLOCK);
@@ -246,10 +291,10 @@ public:
             BaseSemantics::StatePtr fullState = ops->get_state()->create(retval, memState);
             ops->set_state(fullState);
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock->instructions()) {
-                BaseSemantics::SValuePtr v = ops->readRegister(STACK_POINTER);
+                BaseSemantics::SValuePtr v = ops->readRegister(STACK_POINTER_REG);
                 if (v->is_number() && v->get_width() <= 64) {
                     int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
-                    insn->set_stackDelta(delta);
+                    insn->set_stackDelta(delta - initialStackPointer);
                 } else {
                     insn->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
                 }
@@ -330,6 +375,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
                 mlog[DEBUG] <<" call-ret";
             } else if (vertex.value().type == DfCfgVertex::FUNCRET) {
                 mlog[DEBUG] <<" func-ret";
+            } else if (vertex.value().type == DfCfgVertex::INDET) {
+                mlog[DEBUG] <<" indeterminate";
             }
             mlog[DEBUG] <<" ]\n";
             if (BasicBlock::Ptr bb = vertex.value().bblock) {
@@ -338,6 +385,8 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
             }
             BOOST_FOREACH (const Function::Ptr &callee, vertex.value().callees)
                 mlog[DEBUG] <<"      returns from " <<callee->printableName() <<"\n";
+            if (vertex.value().hasNonFunctionCallee)
+                mlog[DEBUG] <<"      returns from indeterminate\n";
             mlog[DEBUG] <<"    successor vertices {";
             BOOST_FOREACH (const DfCfg::EdgeNode &edge, vertex.outEdges())
                 mlog[DEBUG] <<" " <<edge.target()->id();
@@ -359,26 +408,56 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         return retval;
     }
 
+    // Get the initial stack pointer for the function.  We can't get it from the input state for the starting vertex because
+    // the the dataflow might have merged some output states into that also, so get it from a fresh initial state.  The initial
+    // stack register should be concrete, otherwise we might have problems simplifying things.
+    BaseSemantics::SValuePtr initialStackPointer = xfer.initialState()
+                                                   ->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
+    ASSERT_require(initialStackPointer->is_number());
+
     // Reset the cached stack delta for all basic blocks
+    bool branchedToIndeterminate = false;
     typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<DfCfg> Traversal;
     for (Traversal t(dfCfg, dfCfgStart); t; ++t) {
+        if (t.vertex()->value().type == DfCfgVertex::INDET)
+            branchedToIndeterminate = true;
+
+        // Get incoming and outgoing stack pointer for the vertex
         State::Ptr stateIn = engine.getInitialState(t.vertex()->id());
         ASSERT_not_null(stateIn);
         State::Ptr stateOut = engine.getFinalState(t.vertex()->id());
         ASSERT_not_null(stateOut);
-        BaseSemantics::SValuePtr deltaIn = stateIn->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
-        if (deltaIn && !deltaIn->is_number())
+        BaseSemantics::SValuePtr spIn = stateIn->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
+        BaseSemantics::SValuePtr spOut = stateOut->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
+
+        // Deltas are the stack pointers minus the initial stack pointer for the function.
+        BaseSemantics::SValuePtr deltaIn = ops->subtract(spIn, initialStackPointer);
+        BaseSemantics::SValuePtr deltaOut = ops->subtract(spOut, initialStackPointer);
+
+        // Simplify abstract deltas so they're just a single variable. This could save a lot of memory.
+        if (!deltaIn->is_number())
             deltaIn = ops->undefined_(deltaIn->get_width());
+        if (!deltaOut->is_number())
+            deltaOut = ops->undefined_(deltaOut->get_width());
+
+        // Cache results
         if (BasicBlock::Ptr bb = t.vertex()->value().bblock) {
-            BaseSemantics::SValuePtr deltaOut = stateOut->readRegister(instructionProvider_->stackPointerRegister(), ops.get());
-            if (deltaOut && !deltaOut->is_number())
-                deltaOut = ops->undefined_(deltaOut->get_width());
             bb->stackDeltaIn() = deltaIn;
             bb->stackDeltaOut() = deltaOut;
         }
         if (DfCfgVertex::FUNCRET == t.vertex()->value().type)
             retval = deltaIn;
     }
+
+    // If any basic blocks branched to an indeterminate location then we cannot know the stack delta. The indeterminate
+    // location might have eventually branched back into this function with an arbitrary stack delta that should have poisoned
+    // the result.
+    if (branchedToIndeterminate) {
+        SAWYER_MESG(trace) <<"  saw an indeterminate edge, therefore result must be TOP\n";
+        retval = ops->undefined_(instructionProvider_->stackPointerRegister().get_nbits());
+    }
+
+    // Debugging
     if (trace) {
         if (!retval) {
             trace <<" = BOTTOM\n";
