@@ -112,6 +112,7 @@ set( STORAGECLASSES_SRC
 # are included in other source files as required. They do not need to be compiled 
 # separately and generate a warning to the MSVC linker because they contain no symbols.
   set(rose_util_src 
+      ${CMAKE_SOURCE_DIR}/src/util/Color.C
       ${CMAKE_SOURCE_DIR}/src/util/stringSupport/FileNameClassifier.C
       ${CMAKE_SOURCE_DIR}/src/util/rose_getline.C
       ${CMAKE_BINARY_DIR}/src/util/rose_paths.C

@@ -25,6 +25,7 @@ noinst_LTLIBRARIES = libroseutil.la
 
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
+	Color.C					\
 	compilationFileDatabase.C		\
 	FileSystem.C				\
 	processSupport.C			\
@@ -44,6 +45,7 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 pkginclude_HEADERS =				\
+	Color.h					\
 	compilationFileDatabase.h		\
 	FileSystem.h				\
 	FormatRestorer.h			\
