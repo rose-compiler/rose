@@ -22,6 +22,7 @@
 #include "LVAnalysis.h"
 
 #include "addressTakenAnalysis.h"
+#include "FIPointerAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -125,13 +126,13 @@ int main(int argc, char* argv[]) {
     {
       cout<<"STATUS: running address taken analysis."<<endl;
       // compute variableId mappings
-      VariableIdMapping vidm;
-      vidm.computeVariableSymbolMapping(root);
-      // this may need to be extended for global vars
-      VariableIdSet usedVarsInProgram = AnalysisAbstractionLayer::usedVariablesInsideFunctions(root, &vidm);
-      SPRAY::FlowInsensitivePointerInfo fipi(root, vidm, usedVarsInProgram);
-      fipi.collectInfo();
-      fipi.printInfoSets();
+      VariableIdMapping variableIdMapping;
+      variableIdMapping.computeVariableSymbolMapping(root);
+      SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
+      fipa.initialize();
+      fipa.run();
+      VariableIdSet vidset=fipa.getModByPointer();
+      cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
     }
     
     if(option_interval_analysis)

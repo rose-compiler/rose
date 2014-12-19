@@ -50,7 +50,7 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   //cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
   extractVariableIdSetFromVarsInfo(resultSet,defVarsInfo);
   ROSE_ASSERT(defVarsInfo.first.size()==resultSet.size());
-  ROSE_ASSERT(defVarsInfo.first.size()<=1);
+  //ROSE_ASSERT(defVarsInfo.first.size()<=1);
   return resultSet;
 }
 

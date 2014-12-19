@@ -399,7 +399,7 @@ VariableIdSet SPRAY::FlowInsensitivePointerInfo::getMemModByPointer()
 
   // we can perhaps cache this for efficiency
   // to answer queries for multiple dereferencing queries
-  set_union(addrTakenSet, arrayTypeSet, unionSet);
+  SPRAY::set_union(addrTakenSet, arrayTypeSet, unionSet);
 
   return unionSet;
 }

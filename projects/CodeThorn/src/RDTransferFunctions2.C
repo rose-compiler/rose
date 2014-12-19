@@ -31,7 +31,6 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
     for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
       element.insertPair(lab,*i);
     }
-    assert(0);
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
