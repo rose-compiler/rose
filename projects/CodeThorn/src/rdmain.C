@@ -16,12 +16,12 @@
 #include "ProgramStats.h"
 #include "DFAstAttributeConversion.h"
 
-//#include "DFTransferFunctions.hpp"
-
 #include "ProgramAnalysis.h"
 #include "RDAnalysis.h"
 #include "IntervalAnalysis.h"
 #include "LVAnalysis.h"
+
+#include "addressTakenAnalysis.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -121,6 +121,18 @@ int main(int argc, char* argv[]) {
     boolOptions.registerOption("semantic-fold",false); // temporary
     boolOptions.registerOption("post-semantic-fold",false); // temporary
     SgProject* root = frontend(argc,argv);
+
+    {
+      cout<<"STATUS: running address taken analysis."<<endl;
+      // compute variableId mappings
+      VariableIdMapping vidm;
+      vidm.computeVariableSymbolMapping(root);
+      // this may need to be extended for global vars
+      VariableIdSet usedVarsInProgram = AnalysisAbstractionLayer::usedVariablesInsideFunctions(root, &vidm);
+      SPRAY::FlowInsensitivePointerInfo fipi(root, vidm, usedVarsInProgram);
+      fipi.collectInfo();
+      fipi.printInfoSets();
+    }
     
     if(option_interval_analysis)
     {

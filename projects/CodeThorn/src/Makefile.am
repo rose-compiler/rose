@@ -105,12 +105,12 @@ addressTakenAnalysis_SOURCES = \
   AnalysisAbstractionLayer.C \
   Miscellaneous.C \
   CommandLineOptions.C \
-  addressTakenAnalysis.C \
   addressTakenAnalysis.h \
-  defUseQuery.C \
+  addressTakenAnalysis.C \
   defUseQuery.h \
-  VariableIdUtils.C \
+  defUseQuery.C \
   VariableIdUtils.h \
+  VariableIdUtils.C \
   addressTakenAnalysisDriver.C
 
 addressTakenAnalysis_LDADD = -lrose
@@ -204,8 +204,6 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   defUseQuery.h \
   VariableIdUtils.C \
   VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
   Lattice.h \
   Lattice.C \
   PropertyState.h \
@@ -247,6 +245,8 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   LVAstAttributeInterface.C \
   LVAstAttribute.h \
   LVAstAttribute.C \
+  addressTakenAnalysis.h \
+  addressTakenAnalysis.C \
   rdmain.C 
 
 #  RDTransferfunctions.hpp RDTransferFunctions.C
