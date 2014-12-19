@@ -47,6 +47,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/FunctionListModel.C		\
 	bROwSE/FunctionUtil.C			\
 	bROwSE/InstructionListModel.C		\
+	bROwSE/WAddressSpace.C			\
 	bROwSE/WBasicBlock.C			\
 	bROwSE/WBasicBlockInsns.C		\
 	bROwSE/WBasicBlockSummary.C		\
