@@ -33,6 +33,7 @@ public:
         init();
     }
 
+    void setCurrentFunction(const P2::Function::Ptr&);
     void setCurrentTab(int idx);
 
 private:

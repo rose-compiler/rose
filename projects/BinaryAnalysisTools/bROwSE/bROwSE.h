@@ -2,9 +2,11 @@
 #define bROwSE_H
 
 #include <rose.h>
-#include <Diagnostics.h>
-#include <Partitioner2/Partitioner.h>
+#include <Color.h>                                      // ROSE
+#include <Diagnostics.h>                                // ROSE
+#include <Partitioner2/Partitioner.h>                   // ROSE
 #include <Wt/WApplication>
+#include <Wt/WColor>
 
 namespace bROwSE {
 
@@ -48,6 +50,7 @@ extern P2::Attribute::Id ATTR_NRETURNS;
 extern P2::Attribute::Id ATTR_MAYRETURN;
 extern P2::Attribute::Id ATTR_STACKDELTA;
 extern P2::Attribute::Id ATTR_AST;
+extern P2::Attribute::Id ATTR_HEAT;
 
 // Context passed around to pretty much all the widgets.
 class Context {
@@ -65,6 +68,9 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Convert a color from ROSE's representation to Wt's representation. */
+Wt::WColor toWt(const rose::Color::RGB&);
 
 
 } // namespace

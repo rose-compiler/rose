@@ -8,6 +8,15 @@ FunctionListModel::functionAt(size_t idx) {
     return idx < functions_.size() ? functions_[idx] : P2::Function::Ptr();
 }
 
+Wt::WModelIndex
+FunctionListModel::functionIdx(const P2::Function::Ptr &function) const {
+    for (size_t i=0; i<functions_.size(); ++i) {
+        if (functions_[i] == function)
+            return index(i, 0);
+    }
+    return Wt::WModelIndex();
+}
+
 int
 FunctionListModel::rowCount(const Wt::WModelIndex &parent) const {
     return parent.isValid() ? 0 : functions_.size();
@@ -147,47 +156,91 @@ static bool sortByDescendingStackDelta(const P2::Function::Ptr &a, const P2::Fun
     return (a->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA) >
             b->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
 }
-    
+
+static double heatZero(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return 0.0;
+}
+static double heatName(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return function->name().empty() ? 0 : 1;
+}
+static double heatSize(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return functionNBytes(p, function);
+}
+static double heatImport(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return 0==(function->reasons() & SgAsmFunction::FUNC_IMPORT) ? 0 : 1;
+}
+static double heatExport(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return 0==(function->reasons() & SgAsmFunction::FUNC_EXPORT) ? 0 : 1;
+}
+static double heatNCallers(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return functionNCallers(p, function);
+}
+static double heatNReturns(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    return functionNReturns(p, function);
+}
+static double heatMayReturn(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    switch (functionMayReturn(p, function)) {
+        case MAYRETURN_YES: return 1.0;
+        case MAYRETURN_NO: return 0.5;
+        case MAYRETURN_UNKNOWN: return NAN;
+    }
+    ASSERT_not_reachable("unhandled may-return result");
+}
+static double heatStackDelta(P2::Partitioner &p, const P2::Function::Ptr &function) {
+    int64_t delta = functionStackDelta(p, function);
+    return SgAsmInstruction::INVALID_STACK_DELTA==delta ? NAN : (double)delta;
+}
+
 void
 FunctionListModel::sort(int column, Wt::SortOrder order) {
     bool(*sorter)(const P2::Function::Ptr&, const P2::Function::Ptr&) = NULL;
+    double(*heat)(P2::Partitioner&, const P2::Function::Ptr&) = NULL;
     switch (column) {
         case C_ENTRY:
             sorter = Wt::AscendingOrder==order ? sortByAscendingAddress : sortByDescendingAddress;
+            heat = heatZero;
             break;
         case C_NAME:
             sorter = Wt::AscendingOrder==order ? sortByAscendingName : sortByDescendingName;
+            heat = heatName;
             break;
         case C_SIZE:
             BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                 (void) functionNBytes(ctx_.partitioner, function); // make sure sizes are cached for all functions
             sorter = Wt::AscendingOrder==order ? sortByAscendingSize : sortByDescendingSize;
+            heat = heatSize;
             break;
         case C_IMPORT:
             sorter = Wt::AscendingOrder==order ? sortByAscendingImport : sortByDescendingImport;
+            heat = heatImport;
             break;
         case C_EXPORT:
             sorter = Wt::AscendingOrder==order ? sortByAscendingExport : sortByDescendingExport;
+            heat = heatExport;
             break;
         case C_NCALLERS:
             BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                 (void) functionNCallers(ctx_.partitioner, function); // make sure they're all cached before sorting
             sorter = Wt::AscendingOrder==order ? sortByAscendingCallers : sortByDescendingCallers;
+            heat = heatNCallers;
             break;
         case C_NRETURNS:
             BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                 (void) functionNReturns(ctx_.partitioner, function); // make sure they're all cached
             sorter = Wt::AscendingOrder==order ? sortByAscendingReturns : sortByDescendingReturns;
+            heat = heatNReturns;
             break;
         case C_MAYRETURN:
             BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                 (void) functionMayReturn(ctx_.partitioner, function); // make sure they're all cached
             sorter = Wt::AscendingOrder==order ? sortByAscendingMayReturn : sortByDescendingMayReturn;
+            heat = heatMayReturn;
             break;
         case C_STACKDELTA:
             BOOST_FOREACH (const P2::Function::Ptr &function, functions_)
                 (void) functionStackDelta(ctx_.partitioner, function); // make sure they're all cached
             sorter = Wt::AscendingOrder==order ? sortByAscendingStackDelta : sortByDescendingStackDelta;
+            heat = heatStackDelta;
             break;
         default:
             ASSERT_not_reachable("invalid column number");
@@ -197,6 +250,21 @@ FunctionListModel::sort(int column, Wt::SortOrder order) {
         std::sort(functions_.begin(), functions_.end(), sorter);
         layoutChanged().emit();
     }
+
+    // If there's a way to calculate the heat map for a function, then call it and cache the results in the ATTR_HEAT.
+    ASSERT_not_null(heat);
+    std::vector<double> dv;
+    dv.reserve(functions_.size());
+    heatStats_ = FpStatistics();
+    BOOST_FOREACH (const P2::Function::Ptr &function, functions_) {
+        double d = (heat)(ctx_.partitioner, function);
+        function->attr(ATTR_HEAT, d);
+        if (!isnan(d)) {
+            heatStats_.insert(d);
+            dv.push_back(d);
+        }
+    }
+    heatStats_.computeRanks(dv);
 }
 
 } // namespace
