@@ -96,8 +96,10 @@ WFunctionList::selectFunction(const Wt::WModelIndex &idx) {
         tableView_->scrollTo(idx);
 
         // Highlight the function in the address space map
-        if (P2::Function::Ptr function = model_->functionAt(idx.row()))
+        if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
             wAddressSpace_->highlights(functionIdx) = ctx_.partitioner.functionExtent(function);
+            functionSelected_.emit(function);
+        }
     }
     wAddressSpace_->redraw();
 }
@@ -148,6 +150,11 @@ WFunctionList::updateFunctionHeatMaps() {
     wAddressSpace_->bottomGutterGradient() = wAddressSpace_->gradient(functionIdx);
     wAddressSpace_->insert(ctx_.partitioner, ctx_.partitioner.functions());
     wAddressSpace_->redraw();
+}
+
+Wt::Signal<P2::Function::Ptr>&
+WFunctionList::functionSelected() {
+    return functionSelected_;
 }
 
 Wt::Signal<P2::Function::Ptr>&
