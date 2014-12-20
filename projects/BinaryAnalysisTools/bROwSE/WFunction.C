@@ -28,7 +28,7 @@ WFunction::init() {
     ASSERT_require(FLIST_TAB==0);
     wFunctionList_ = new WFunctionList(ctx_, new FunctionListModel(ctx_));
     wFunctionList_->hide();
-    wFunctionList_->tableRowClicked().connect(this, &WFunction::setCurrentFunction);
+    wFunctionList_->functionSelected().connect(this, &WFunction::setCurrentFunction);
     wFunctionList_->tableRowDoubleClicked().connect(this, &WFunction::showFunctionSummary);
     wTabs_->addTab(wFunctionList_, "Functions");
     
@@ -67,6 +67,7 @@ WFunction::init() {
 void
 WFunction::setCurrentFunction(const P2::Function::Ptr &function) {
     function_ = function;
+    setCurrentTab(wTabs_->currentIndex());           // don't change tabs, but do the other stuff
 }
 
 void
