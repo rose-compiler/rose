@@ -6,19 +6,20 @@
 #include <sawyer/CommandLine.h>
 #include <Wt/WApplication>
 #include <Wt/WEnvironment>
-#include <Wt/WGridLayout>
 
 namespace bROwSE {
 
 class WFunction;
+class WAddressSpace;
 
 class Application: public Wt::WApplication {
     Context ctx_;
     Wt::WGridLayout *wGrid_;
     WFunction *wFunction_;
+    WAddressSpace *wAddressSpace_;
 public:
     Application(P2::Partitioner &partitioner, const Wt::WEnvironment &env)
-        : Wt::WApplication(env), ctx_(partitioner, this),  wFunction_(NULL) {
+        : Wt::WApplication(env), ctx_(partitioner, this),  wFunction_(NULL), wAddressSpace_(NULL) {
         init();
     }
 

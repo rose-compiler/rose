@@ -13,6 +13,7 @@ P2::Attribute::Id ATTR_NRETURNS(-1);
 P2::Attribute::Id ATTR_MAYRETURN(-1);
 P2::Attribute::Id ATTR_STACKDELTA(-1);
 P2::Attribute::Id ATTR_AST(-1);
+P2::Attribute::Id ATTR_HEAT(-1);
 
 void
 Context::init() {
@@ -28,7 +29,19 @@ Context::init() {
         ATTR_MAYRETURN      = P2::Attribute::registerName("May return to caller?");
         ATTR_STACKDELTA     = P2::Attribute::registerName("Stack pointer delta");
         ATTR_AST            = P2::Attribute::registerName("Abstract syntax tree");
+        ATTR_HEAT           = P2::Attribute::registerName("Heat value for color gradients [0..1]");
     }
 }
+
+// Convert colors from one representation to another
+Wt::WColor toWt(const rose::Color::RGB &rgb) {
+    using namespace rose::Color;
+    int r = (int)round(clip(rgb.r())*255);
+    int g = (int)round(clip(rgb.g())*255);
+    int b = (int)round(clip(rgb.b())*255);
+    int a = (int)round(clip(rgb.a())*255);
+    return Wt::WColor(r, g, b, a);
+}
+
 
 } // namespace

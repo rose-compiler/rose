@@ -10,7 +10,7 @@
 #include <Wt/WVBoxLayout>
 
 #if 1 // DEBUGGING [Robb P. Matzke 2014-12-14]
-#include <Wt/WTable>
+#include <Wt/WBreak>
 #endif
 
 namespace bROwSE {
@@ -26,9 +26,10 @@ WFunction::init() {
 
     // List of all functions
     ASSERT_require(FLIST_TAB==0);
-    wFunctionList_ = new WFunctionList(new FunctionListModel(ctx_));
+    wFunctionList_ = new WFunctionList(ctx_, new FunctionListModel(ctx_));
     wFunctionList_->hide();
-    wFunctionList_->clicked().connect(this, &WFunction::showFunctionSummary);
+    wFunctionList_->tableRowClicked().connect(this, &WFunction::setCurrentFunction);
+    wFunctionList_->tableRowDoubleClicked().connect(this, &WFunction::showFunctionSummary);
     wTabs_->addTab(wFunctionList_, "Functions");
     
     // Function summary information
@@ -44,13 +45,13 @@ WFunction::init() {
     //
     // FIXME[Robb P. Matzke 2014-12-14]: The scroll area should be part of WFunctionCfg instead.
     ASSERT_require(CFG_TAB==2);
-    Wt::WTable *wTable = new Wt::WTable();
-    wTable->hide();
-    wTable->setHeaderCount(0);
     wFunctionCfg_ = new WFunctionCfg(ctx_);
     wFunctionCfg_->functionClicked().connect(this, &WFunction::showFunctionCfg);
-    wTable->elementAt(0, 0)->addWidget(wFunctionCfg_);
-    wTabs_->addTab(wTable, "CFG");
+
+    Wt::WScrollArea *sa = new Wt::WScrollArea();
+    sa->hide();
+    sa->setWidget(wFunctionCfg_);
+    wTabs_->addTab(sa, "CFG");
 
     // Assembly listing
     ASSERT_require(ASSEMBLY_TAB==3);
@@ -59,6 +60,13 @@ WFunction::init() {
     wTabs_->addTab(wAssemblyListing_, "Assembly");
 
     setCurrentTab(FLIST_TAB);
+}
+
+// Make function the current function.  This doesn't update any tabs until we actually switch to them with
+// setCurrentTab.  It's usually called in response to selecting a new function in the FLIST_TAB.
+void
+WFunction::setCurrentFunction(const P2::Function::Ptr &function) {
+    function_ = function;
 }
 
 void
