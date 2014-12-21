@@ -1,45 +1,51 @@
 #include <bROwSE/WFunctionSummary.h>
 
-#include <bROwSE/FunctionUtil.h>
+#include <Color.h>                                      // ROSE
 #include <Wt/WTable>
 #include <Wt/WText>
 
+using namespace rose;
+
 namespace bROwSE {
 
-static
-Wt::WText* field(std::vector<Wt::WText*> &fields, const std::string &toolTip) {
-    Wt::WText *wValue = new Wt::WText();
-    if (toolTip!="")
-        wValue->setToolTip(toolTip);
-    fields.push_back(wValue);
-    return wValue;
-}
+static const size_t NCOLS = 3;                          // number of columns for analysis results
 
 void
 WFunctionSummary::init() {
-    std::vector<Wt::WText*> fields;
-    wName_       = field(fields, "Function name");
-    wEntry_      = field(fields, "Primary entry virtual address");
-    wBBlocks_    = field(fields, "Number of basic blocks");
-    wDBlocks_    = field(fields, "Number of data blocks");
-    wInsns_      = field(fields, "Number of instructions");
-    wBytes_      = field(fields, "Number of distinct addresses with code and/or data");
-    wDiscontig_  = field(fields, "Number of discontiguous regions in the address space");
-    wCallers_    = field(fields, "Number of distinct functions that call this function");
-    wCallsInto_  = field(fields, "Number of call sites calling this function");
-    wCallees_    = field(fields, "Number of distinct functions this function calls.");
-    wCallsOut_   = field(fields, "Number of function call sites in this function");
-    wRecursive_  = field(fields, "Does this function call itself directly?");
-    wMayReturn_  = field(fields, "Might this function return its caller?");
-    wStackDelta_ = field(fields, "Net effect on stack pointer");
+    analyzers().push_back(FunctionEntryAddress::instance());
+    analyzers().push_back(FunctionName::instance());
+    analyzers().push_back(FunctionSizeBytes::instance());
+    analyzers().push_back(FunctionSizeInsns::instance());
+    analyzers().push_back(FunctionSizeBBlocks::instance());
+    analyzers().push_back(FunctionSizeDBlocks::instance());
+    analyzers().push_back(FunctionImported::instance());
+    analyzers().push_back(FunctionExported::instance());
+    analyzers().push_back(FunctionNCallers::instance());
+    analyzers().push_back(FunctionNReturns::instance());
+    analyzers().push_back(FunctionMayReturn::instance());
+    analyzers().push_back(FunctionStackDelta::instance());
 
-    table_ = new Wt::WTable(this);
-    table_->setWidth("100%");
-    static const size_t ncols = 4;
-    size_t nrows = (fields.size()+ncols-1) / ncols;
-    for (size_t col=0, i=0; col<ncols; ++col) {
-        for (size_t row=0; row<nrows && i<fields.size(); ++row)
-            table_->elementAt(row, col)->addWidget(fields[i++]);
+    // Build a table to hold analysis results. The results will be organized into NCOLS each occupying two table columns (one
+    // for the name and one for the value).
+    const size_t NROWS = (analyzers_.size() + NCOLS - 1) / NCOLS;
+    wAnalysisResultTable_ = new Wt::WTable(this);
+    //wAnalysisResultTable_->setWidth("100%");
+    Wt::WCssDecorationStyle labelDecor;
+    labelDecor.setBackgroundColor(toWt(Color::HSV(0, 0, 0.95)));
+    for (size_t col=0, i=0; col<NCOLS && i<analyzers_.size(); ++col) {
+        for (size_t row=0; row<NROWS && i<analyzers_.size(); ++row) {
+            Wt::WText *label = new Wt::WText("<b>" + analyzers_[i]->header() + "</b>");
+            label->setToolTip(analyzers_[i]->toolTip());
+            wAnalysisResultTable_->elementAt(row, 2*col+0)->addWidget(label);
+            wAnalysisResultTable_->elementAt(row, 2*col+0)->setContentAlignment(Wt::AlignRight);
+            wAnalysisResultTable_->elementAt(row, 2*col+0)->setDecorationStyle(labelDecor);
+            analyzerResults_.push_back(new Wt::WText);
+            analyzerResults_.back()->setToolTip(analyzers_[i]->toolTip());
+            wAnalysisResultTable_->elementAt(row, 2*col+1)->addWidget(analyzerResults_.back());
+            wAnalysisResultTable_->elementAt(row, 2*col+1)->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Left);
+            wAnalysisResultTable_->elementAt(row, 2*col+1)->setPadding(Wt::WLength(10, Wt::WLength::FontEm), Wt::Right);
+            ++i;
+        }
     }
 }
 
@@ -48,54 +54,18 @@ WFunctionSummary::changeFunction(const P2::Function::Ptr &function) {
     if (function == function_)
         return;
     function_ = function;
-    if (function) {
-        size_t nInsns = functionNInsns(ctx_.partitioner, function);
-        size_t nBytes = functionNBytes(ctx_.partitioner, function);
-        size_t nIntervals = ctx_.partitioner.functionExtent(function).nIntervals();
-        const P2::FunctionCallGraph *cg = functionCallGraph(ctx_.partitioner);
-        MayReturn mayReturn = functionMayReturn(ctx_.partitioner, function);
-        std::string mayReturnStr = MAYRETURN_NO==mayReturn?"never returns":
-                                   (MAYRETURN_YES==mayReturn?"may return" : "may return is unknown");
-        int64_t stackDelta = functionStackDelta(ctx_.partitioner, function);
-        char stackDeltaStr[64];
-        if (stackDelta == SgAsmInstruction::INVALID_STACK_DELTA) {
-            strcpy(stackDeltaStr, "stack delta is unknown");
-        } else {
-            sprintf(stackDeltaStr, "stack delta is %+"PRId64, stackDelta);
-        }
 
-        ASSERT_not_null(cg);
-        wName_      ->setText(function->name()==""?std::string("(no name)"):function->name());
-        wEntry_     ->setText("entry "+StringUtility::addrToString(function->address()));
-        wBBlocks_   ->setText(StringUtility::plural(function->basicBlockAddresses().size(), "basic blocks"));
-        wDBlocks_   ->setText(StringUtility::plural(function->dataBlocks().size(), "data blocks"));
-        wInsns_     ->setText(StringUtility::plural(nInsns, "instructions"));
-        wBytes_     ->setText(StringUtility::plural(nBytes, "bytes"));
-        wDiscontig_ ->setText(StringUtility::plural(nIntervals, "contiguous intervals"));
-        wCallers_   ->setText(StringUtility::plural(cg->nCallers(function), "distinct callers"));
-        wCallsInto_ ->setText(StringUtility::plural(cg->nCallsIn(function), "calls")+" incoming");
-        wCallees_   ->setText(StringUtility::plural(cg->nCallees(function), "distinct callees"));
-        wCallsOut_  ->setText(StringUtility::plural(cg->nCallsOut(function), "calls")+" outgoing");
-        wRecursive_ ->setText(cg->nCalls(function, function)?"recursive":"non-recursive");
-        wMayReturn_ ->setText(mayReturnStr);
-        wStackDelta_->setText(stackDeltaStr);
-        table_->show();
-    } else {
-        wName_      ->setText("");
-        wEntry_     ->setText("");
-        wBBlocks_   ->setText("");
-        wDBlocks_   ->setText("");
-        wInsns_     ->setText("");
-        wBytes_     ->setText("");
-        wDiscontig_ ->setText("");
-        wCallers_   ->setText("");
-        wCallsInto_ ->setText("");
-        wCallees_   ->setText("");
-        wCallsOut_  ->setText("");
-        wRecursive_ ->setText("");
-        wMayReturn_ ->setText("");
-        wStackDelta_->setText("");
-        table_->hide();
+    const size_t NROWS = (analyzers_.size() + NCOLS - 1) / NCOLS;
+    for (size_t col=0, i=0; col<NCOLS && i<analyzers_.size(); ++col) {
+        for (size_t row=0; row<NROWS && i<analyzers_.size(); ++row) {
+            Wt::WString str;
+            if (function) {
+                boost::any value = analyzers_[i]->data(ctx_.partitioner, function);
+                str = analyzers_[i]->toString(value);
+            }
+            analyzerResults_[i]->setText(str);
+            ++i;
+        }
     }
 }
 

@@ -37,6 +37,11 @@ public:
      * short. */
     virtual Wt::WString header() const = 0;
 
+    /** Full description for a property. */
+    virtual Wt::WString toolTip() const {
+        return "";
+    }
+
     /** Natural width for the column. */
     virtual Wt::WLength naturalWidth() const {
         return Wt::WLength(5, Wt::WLength::FontEm);
@@ -44,6 +49,11 @@ public:
 
     /** Return data for the table cell. */
     virtual boost::any data(P2::Partitioner&, const P2::Function::Ptr&) const = 0;
+
+    /** Return data as a formatted string. */
+    virtual Wt::WString toString(const boost::any &value) const {
+        return boost::any_cast<Wt::WString>(value);
+    }
 
     /** Sorts two analysis results in ascending order. Should return true if and only if @p a is less than @p b. Since some of
      *  the analyses are expensive to compute, it is customary to cache the result as an attribute of the function. In fact,
@@ -72,7 +82,10 @@ public:
         return Ptr(new FunctionEntryAddress);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Entry");
+        return "Entry";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "This is the address by which the function is entered when called.";
     }
     Wt::WLength naturalWidth() const ROSE_OVERRIDE {
         return Wt::WLength(6, Wt::WLength::FontEm);
@@ -92,13 +105,24 @@ public:
         return Ptr(new FunctionName);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Name");
+        return "Name";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Function name if known, escaped as a C string.";
     }
     Wt::WLength naturalWidth() const ROSE_OVERRIDE {
         return Wt::WLength(25, Wt::WLength::FontEm);
     }
     boost::any data(P2::Partitioner&, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
-        return Wt::WString(StringUtility::cEscape(f->name()));
+        std::string name = f->name();
+        if (!name.empty() && (!isgraph(name[0]) || !isgraph(name[name.size()-1]))) {
+            // Add double quotes to the string after we escape it, otherwise the user can't tell that the name
+            // has leading or trailing non-printable characters.
+            name = "\"" + StringUtility::cEscape(name) + "\"";
+        } else {
+            name = StringUtility::cEscape(name);
+        }
+        return Wt::WString(name);
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->name() < b->name();
@@ -115,10 +139,17 @@ public:
         return Ptr(new FunctionSizeBytes);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Bytes");
+        return "Bytes";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Total size of function in bytes including code and data. Overlapping instructions and/or data "
+                "is counted only once.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNBytes(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->attr<size_t>(ATTR_NBYTES).orElse(0) < b->attr<size_t>(ATTR_NBYTES).orElse(0);
@@ -135,10 +166,16 @@ public:
         return Ptr(new FunctionSizeInsns);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Insns");
+        return "Insns";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Total number of instructions belonging to function.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNInsns(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->attr<size_t>(ATTR_NINSNS).orElse(0) < b->attr<size_t>(ATTR_NINSNS).orElse(0);
@@ -155,10 +192,16 @@ public:
         return Ptr(new FunctionSizeBBlocks);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("BBlocks");
+        return "BBlocks";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Total number of basic blocks belonging to function.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return f->basicBlockAddresses().size();
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->basicBlockAddresses().size() < b->basicBlockAddresses().size();
@@ -175,10 +218,16 @@ public:
         return Ptr(new FunctionSizeDBlocks);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("DBlocks");
+        return "DBlocks";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Total number of data blocks belonging to function.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return f->dataBlocks().size();
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->dataBlocks().size() < b->dataBlocks().size();
@@ -195,7 +244,10 @@ public:
         return Ptr(new FunctionImported);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Imported");
+        return "Imported";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Whether function is mentioned in import tables. Dynamically linked functions are considered imports.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return Wt::WString((f->reasons() & SgAsmFunction::FUNC_IMPORT)!=0 ? "yes" : "no");
@@ -217,7 +269,10 @@ public:
         return Ptr(new FunctionExported);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("Exported");
+        return "Exported";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Whether function is an exported symbol.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return Wt::WString((f->reasons() & SgAsmFunction::FUNC_EXPORT)!=0 ? "yes" : "no");
@@ -239,10 +294,16 @@ public:
         return Ptr(new FunctionNCallers);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("NCallers");
+        return "NCallers";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Number of sites from which this function is called.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallers(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->attr<size_t>(ATTR_NCALLERS).orElse(0) < b->attr<size_t>(ATTR_NCALLERS).orElse(0);
@@ -259,10 +320,17 @@ public:
         return Ptr(new FunctionNReturns);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("NRet");
+        return "NRet";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Number of points at which the function returns to a caller. Return points are counted even if they "
+                "are not reachable according to the control flow graph.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNReturns(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
         return a->attr<size_t>(ATTR_NRETURNS).orElse(0) < b->attr<size_t>(ATTR_NRETURNS).orElse(0);
@@ -279,7 +347,10 @@ public:
         return Ptr(new FunctionMayReturn);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("MayReturn");
+        return "MayReturn";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return "Whether it is possible for a function to return to a caller.";
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         switch (functionMayReturn(p, f)) {
@@ -310,7 +381,11 @@ public:
         return Ptr(new FunctionStackDelta);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("SDelta");
+        return "SDelta";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Net effect on the stack pointer, including popping the return address if that is part of the call-"
+                "return convention.");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         int64_t delta = functionStackDelta(p, f);
