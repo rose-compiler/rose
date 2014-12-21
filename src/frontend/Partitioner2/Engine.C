@@ -661,8 +661,8 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
             undiscovered_.pushBack(args.startVa);
         } else if (p->basicBlockIsFunctionCall(args.bblock)) {
             // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
-            // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need to
-            // later add a call-return edge.
+            // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need
+            // to later add a call-return edge.
             ControlFlowGraph::ConstVertexNodeIterator placeholder = p->findPlaceholder(args.startVa);
             ASSERT_require(placeholder != p->cfg().vertices().end());
             boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
