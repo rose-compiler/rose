@@ -36,6 +36,9 @@ WFunctionList::init() {
     model_->analyzers().push_back(FunctionEntryAddress::instance()); // should normally be first since it's a bit special
     model_->analyzers().push_back(FunctionName::instance());
     model_->analyzers().push_back(FunctionSizeBytes::instance());
+    model_->analyzers().push_back(FunctionSizeInsns::instance());
+    model_->analyzers().push_back(FunctionSizeBBlocks::instance());
+    model_->analyzers().push_back(FunctionSizeDBlocks::instance());
     model_->analyzers().push_back(FunctionImported::instance());
     model_->analyzers().push_back(FunctionExported::instance());
     model_->analyzers().push_back(FunctionNCallers::instance());
