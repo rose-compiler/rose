@@ -26,7 +26,7 @@ WFunction::init() {
 
     // List of all functions
     ASSERT_require(FLIST_TAB==0);
-    wFunctionList_ = new WFunctionList(ctx_, new FunctionListModel(ctx_));
+    wFunctionList_ = new WFunctionList(ctx_);
     wFunctionList_->hide();
     wFunctionList_->functionSelected().connect(this, &WFunction::setCurrentFunction);
     wFunctionList_->tableRowDoubleClicked().connect(this, &WFunction::showFunctionSummary);
