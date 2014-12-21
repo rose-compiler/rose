@@ -115,7 +115,7 @@ public:
         return Ptr(new FunctionSizeBytes);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("NBytes");
+        return Wt::WString("Bytes");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNBytes(p, f);
@@ -125,6 +125,66 @@ public:
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNBytes(p, f);
+    }
+};
+
+/** Size of function in instructions. */
+class FunctionSizeInsns: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionSizeInsns);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return Wt::WString("Insns");
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNInsns(p, f);
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->attr<size_t>(ATTR_NINSNS).orElse(0) < b->attr<size_t>(ATTR_NINSNS).orElse(0);
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNInsns(p, f);
+    }
+};
+
+/** Size of function in basic blocks. */
+class FunctionSizeBBlocks: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionSizeBBlocks);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return Wt::WString("BBlocks");
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return f->basicBlockAddresses().size();
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->basicBlockAddresses().size() < b->basicBlockAddresses().size();
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return f->basicBlockAddresses().size();
+    }
+};
+
+/** Number of data blocks owned by function. */
+class FunctionSizeDBlocks: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionSizeDBlocks);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return Wt::WString("DBlocks");
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return f->dataBlocks().size();
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->dataBlocks().size() < b->dataBlocks().size();
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return f->dataBlocks().size();
     }
 };
 
@@ -179,7 +239,7 @@ public:
         return Ptr(new FunctionNCallers);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("NCalls");
+        return Wt::WString("NCallers");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallers(p, f);
@@ -199,7 +259,7 @@ public:
         return Ptr(new FunctionNReturns);
     }
     Wt::WString header() const ROSE_OVERRIDE {
-        return Wt::WString("NReturns");
+        return Wt::WString("NRet");
     }
     boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNReturns(p, f);
