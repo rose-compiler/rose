@@ -31,6 +31,18 @@ WFunctionList::init() {
     Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
     wTableContainer->setLayout(hbox);
 
+    // Function table model. The order that analyzers are registered is the order that their columns will appear in the table.
+    model_ = new FunctionListModel(ctx_);
+    model_->analyzers().push_back(FunctionEntryAddress::instance()); // should normally be first since it's a bit special
+    model_->analyzers().push_back(FunctionName::instance());
+    model_->analyzers().push_back(FunctionSizeBytes::instance());
+    model_->analyzers().push_back(FunctionImported::instance());
+    model_->analyzers().push_back(FunctionExported::instance());
+    model_->analyzers().push_back(FunctionNCallers::instance());
+    model_->analyzers().push_back(FunctionNReturns::instance());
+    model_->analyzers().push_back(FunctionMayReturn::instance());
+    model_->analyzers().push_back(FunctionStackDelta::instance());
+
     // Function table
     tableView_ = new Wt::WTableView;
     tableView_->setModel(model_);
@@ -38,13 +50,8 @@ WFunctionList::init() {
     tableView_->setHeaderHeight(28);
     tableView_->setSortingEnabled(true);
     tableView_->setAlternatingRowColors(true);
-    tableView_->setColumnWidth(FunctionListModel::C_ENTRY,          Wt::WLength( 6, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_NAME,           Wt::WLength(30, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_SIZE,           Wt::WLength( 5, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_NCALLERS,       Wt::WLength( 5, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_NRETURNS,       Wt::WLength( 5, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_IMPORT,         Wt::WLength( 5, Wt::WLength::FontEm));
-    tableView_->setColumnWidth(FunctionListModel::C_EXPORT,         Wt::WLength( 5, Wt::WLength::FontEm));
+    for (size_t i=0; i<model_->analyzers().size(); ++i)
+        tableView_->setColumnWidth(i, model_->analyzers()[i]->naturalWidth());
     tableView_->setColumnResizeEnabled(true);
     tableView_->setSelectionMode(Wt::SingleSelection);
     tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);

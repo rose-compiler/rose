@@ -19,9 +19,8 @@ class WFunctionList: public Wt::WContainerWidget {
     Wt::Signal<P2::Function::Ptr> functionSelected_;            // emitted when a function is selected
     WAddressSpace *wAddressSpace_;
 public:
-    WFunctionList(Context &ctx, FunctionListModel *model, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), model_(model), wAddressSpace_(NULL) {
-        ASSERT_not_null(model);
+    WFunctionList(Context &ctx, Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), ctx_(ctx), model_(NULL), wAddressSpace_(NULL) {
         init();
     }
 
