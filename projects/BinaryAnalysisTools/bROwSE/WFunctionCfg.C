@@ -1,26 +1,64 @@
 #include <bROwSE/WFunctionCfg.h>
 
 #include <bROwSE/FunctionUtil.h>
+#include <bROwSE/WFunctionNavigation.h>
 #include <Wt/WEnvironment>
+#include <Wt/WScrollArea>
+#include <Wt/WVBoxLayout>
 
 namespace bROwSE {
 
 void
 WFunctionCfg::init() {
-    wMessage_ = new Wt::WText("No function.", this);
+    Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+    setLayout(vbox);
+
+    wNavigation_ = new WFunctionNavigation;
+    wNavigation_->functionChanged().connect(this, &WFunctionCfg::changeFunction);
+    vbox->addWidget(wNavigation_);
+
+    wMessage_ = new Wt::WText("No function.");
+    vbox->addWidget(wMessage_);
+
+    wScrollArea_ = new Wt::WScrollArea(this);
+    vbox->addWidget(wScrollArea_, 1);
+}
+
+void
+WFunctionCfg::clearNavigation() {
+    wNavigation_->clear();
+    if (function_)
+        wNavigation_->push(function_);
 }
 
 void
 WFunctionCfg::changeFunction(const P2::Function::Ptr &function) {
     if (function_ == function)
         return;
+    changeFunctionNoSignal(function);
+    if (function)
+        functionChanged_.emit(function);
+}
+
+void
+WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
+    if (function_ == function)
+        return;
     function_ = function;
+    if (function)
+        wNavigation_->push(function);
 
     // We need to create a new wImage each time because we're adding WRectArea.  See limitation documented for the
     // WImage::addArea method in Wt-3.3.3 [Robb P. Matzke 2014-09-10]
     areas_.clear();
-    delete wImage_;
-    wImage_ = new Wt::WImage(this);
+#if 0 // [Robb P. Matzke 2014-12-21]: not needed since the next setWidget will do the same
+    if (wImage_) {
+        wScrollArea_->takeWidget();
+        delete wImage_;
+    }
+#endif
+    wImage_ = new Wt::WImage();
+    wScrollArea_->setWidget(wImage_);
 
     // Get the CFG image
     if (NULL==function_) {
@@ -29,6 +67,8 @@ WFunctionCfg::changeFunction(const P2::Function::Ptr &function) {
         wImage_->hide();
         return;
     }
+    wMessage_->setText("Building CFG...");
+    wMessage_->show();
     boost::filesystem::path imagePath = functionCfgImage(ctx_.partitioner, function);
     if (imagePath.empty()) {
         wMessage_->setText("CFG not available.");

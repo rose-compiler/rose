@@ -5,7 +5,6 @@
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
-#include <Wt/WScrollArea>
 #include <Wt/WTabWidget>
 #include <Wt/WVBoxLayout>
 
@@ -28,8 +27,8 @@ WFunction::init() {
     ASSERT_require(FLIST_TAB==0);
     wFunctionList_ = new WFunctionList(ctx_);
     wFunctionList_->hide();
-    wFunctionList_->functionSelected().connect(this, &WFunction::setCurrentFunction);
-    wFunctionList_->tableRowDoubleClicked().connect(this, &WFunction::showFunctionSummary);
+    wFunctionList_->functionChanged().connect(this, &WFunction::setCurrentFunction);
+    wFunctionList_->functionRowDoubleClicked().connect(this, &WFunction::showFunctionSummary);
     wTabs_->addTab(wFunctionList_, "Functions");
     
     // Function summary information
@@ -42,16 +41,12 @@ WFunction::init() {
     //
     // When using the BootStrap theme, the img.maxwidth=100% needs to be commented out otherwise no horizontal scroll bars will
     // be added.  Edit resources/themes/bootstrap/2/bootstrap.css.
-    //
-    // FIXME[Robb P. Matzke 2014-12-14]: The scroll area should be part of WFunctionCfg instead.
     ASSERT_require(CFG_TAB==2);
     wFunctionCfg_ = new WFunctionCfg(ctx_);
-    wFunctionCfg_->functionClicked().connect(this, &WFunction::showFunctionCfg);
-
-    Wt::WScrollArea *sa = new Wt::WScrollArea();
-    sa->hide();
-    sa->setWidget(wFunctionCfg_);
-    wTabs_->addTab(sa, "CFG");
+    wFunctionCfg_->hide();
+    wFunctionCfg_->functionChanged().connect(this, &WFunction::setCurrentFunction);
+    wFunctionCfg_->functionClicked().connect(this, &WFunction::setCurrentFunction);
+    wTabs_->addTab(wFunctionCfg_, "CFG");
 
     // Assembly listing
     ASSERT_require(ASSEMBLY_TAB==3);
@@ -74,6 +69,7 @@ void
 WFunction::setCurrentTab(int idx) {
     switch (idx) {
         case FLIST_TAB:
+            wFunctionList_->changeFunction(function_);
             wFunctionList_->setHidden(false);
             break;
         case SUMMARY_TAB:
