@@ -10,7 +10,7 @@ class A
    {
      public:
 #if 0
-       // This test code works fine if the member function has already been seen.
+       // This test code works fine if the member function has already been seen (easy case).
           bool f2 (int i)
              {}
 #endif
@@ -20,7 +20,7 @@ class A
                return &A::f2;
              }
 #if 1
-       // This is the first definition of the function that was previously referenced.
+       // This is the first definition of the function that was previously referenced (harder case).
           bool f2 (int i)
              {}
 #endif
@@ -33,6 +33,5 @@ class A
                (this->*f1(c))(i);
              }
 #endif
-       // bool (A::*pf)(int);
    };
 

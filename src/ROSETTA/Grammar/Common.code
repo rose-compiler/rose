@@ -321,6 +321,26 @@ HEADER_START
        */
           $CLASSNAME* addRegExpAttribute(std::string s, AstRegExAttribute* a);
 
+#ifndef _MSC_VER
+   #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+      // DQ (10/4/2014): Adding ATerm support to ROSE.
+      /*! \brief Support for generation of ATerms.
+
+          This support implements the generation of ATerms (consistant with the ROSE AST).
+          ROSE IR nodes that are traversed are translated as ATerms, and all other IR node 
+          date are attached as ATerm annotations.  This is a bulk translation of ROSE subtrees
+          to ATerms, can be called on any ROSE subtree.  An ATerm interface to ROSE IR nodes
+          is also implemented, but it only works with tools obaying the ATerm API (note that
+          unfortunately SDF tools and Stratego both fail to obay the ATerm API).
+       */
+          virtual ATerm generate_ATerm();
+          virtual void generate_ATerm_Annotation(ATerm & term);
+   #endif
+#endif
+       // These can't be virtual functions since we don't yet know what IR node to build (until we have read the aterm).
+       // virtual generate_AST(ATerm & term);
+       // virtual void read_ATerm_Annotation(ATerm & term);
+
 // *** COMMON CODE SECTION ENDS HERE ***
 HEADER_END
 
@@ -347,9 +367,12 @@ $CLASSNAME::getVariant() const
 // (since the "T" was ment to stand for temporary).
 // When this happens the variantT() will be depricated.
 VariantT
-$CLASSNAME::variantT() const {
-  return V_$CLASSNAME;
-}
+$CLASSNAME::variantT() const 
+   {
+  // DQ (7/30/2014): Added assertion so that we can make sure we have a valid IR node.
+     ROSE_ASSERT(this != NULL);
+     return V_$CLASSNAME;
+   }
 
 #if 0
 int

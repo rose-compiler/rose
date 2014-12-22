@@ -952,7 +952,7 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
     SgNode* stmts = itemsFile[i]->statement;
     int length=1;    
     bool addRow=false;
-    if (isSgAsmx86Instruction(stmts)) {
+    if (isSgAsmX86Instruction(stmts)) {
       currentWidget->addRows(1);
       length = isSgAsmInstruction(stmts)->get_raw_bytes().size();
       //itemsFile[i]->bg=QColor(255,255,255);
@@ -968,9 +968,9 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
       currentWidget->setTextColor(QColor(0,155,0),3,i);
       currentWidget->setTextColor(QColor(0,155,0),4,i);
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->row), 0, i);	
-      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) ), 1, i);
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_mnemonic() ), 2, i);
-      SgAsmOperandList * ops = isSgAsmx86Instruction(stmts)->get_operandList();
+      currentWidget->setText(boost::lexical_cast<std::string>(RoseBin_support::HexToString((isSgAsmX86Instruction(stmts))->get_address()) ), 1, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmX86Instruction(stmts))->get_mnemonic() ), 2, i);
+      SgAsmOperandList * ops = isSgAsmX86Instruction(stmts)->get_operandList();
       SgAsmExpressionPtrList& opsList = ops->get_operands();
       SgAsmExpressionPtrList::iterator it = opsList.begin();
       string opsName="";
@@ -978,13 +978,13 @@ void BinQGUI::showFile(int row, qrs::QRTable* currentWidget,
 	opsName += boost::lexical_cast<std::string>(unparseExpression(*it, NULL, NULL) )+", ";
       }
       currentWidget->setText(boost::lexical_cast<std::string>(opsName), 3, i);	
-      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmx86Instruction(stmts))->get_comment() ), 4, i);
+      currentWidget->setText(boost::lexical_cast<std::string>((isSgAsmX86Instruction(stmts))->get_comment() ), 4, i);
       //currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->comment), 4, i);
-      //cerr << " Setting comment : " << (isSgAsmx86Instruction(stmts))->get_comment() << endl;
+      //cerr << " Setting comment : " << (isSgAsmX86Instruction(stmts))->get_comment() << endl;
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->pos), 5, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->length), 6, i);	
       currentWidget->setText(boost::lexical_cast<std::string>(itemsFile[i]->realByteSize), 7, i);	
-      //cerr << i<< ": Found instruction : " << RoseBin_support::HexToString((isSgAsmx86Instruction(stmts))->get_address()) << "  mnemonic : " << (isSgAsmx86Instruction(stmts))->get_mnemonic()  <<
+      //cerr << i<< ": Found instruction : " << RoseBin_support::HexToString((isSgAsmX86Instruction(stmts))->get_address()) << "  mnemonic : " << (isSgAsmX86Instruction(stmts))->get_mnemonic()  <<
       //	" row : " << itemsFile[i]->row <<  endl;
       addRow=true;
     } else if (isSgAsmBlock(stmts)  && !(isSgAsmInterpretation(isSgAsmBlock(stmts)->get_parent()))) {

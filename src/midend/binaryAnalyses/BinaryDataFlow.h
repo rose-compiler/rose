@@ -9,10 +9,11 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
-#include <sawyer/Graph.h>
+#include <sawyer/GraphTraversal.h>
 #include <string>
 #include <vector>
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Various tools for data flow analysis.
@@ -27,7 +28,7 @@ namespace BinaryAnalysis {
  *  the inputs and/or outputs depend on other inputs.  The binary data flow implemented by this class uses abstract locations
  *  (@ref AbstractLocation) to represent variables. An abstract location is either a register or a memory address.  Registers
  *  are represented by a @ref RegisterDescriptor while addresses are represented by a semantic value in some user-specified
- *  domain (often symbolic, see @ref BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
+ *  domain (often symbolic, see @ref rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue).
  *
  *  Another difference is in the number of basic operations that need to be supported. Source-level languages typically have at
  *  most a few dozen basic operations for which data flow must be explicitly encoded in the analysis, while binary analysis
@@ -76,7 +77,7 @@ namespace BinaryAnalysis {
  *  performed with the usual ROSE binary analysis mechanisms.
  *
  *  Once the scope of the analysis is determined (e.g., a particular function), a control flow graph is obtained with @ref
- *  BinaryAnalysis::ControlFlow, which produces a CFG whose vertices are either instructions or basic blocks (user's
+ *  rose::BinaryAnalysis::ControlFlow, which produces a CFG whose vertices are either instructions or basic blocks (user's
  *  choice). Any kind of graph supporting the Boost Graph Library (BGL) API is permissible if it also satisfies the
  *  requirements layed out in the ControlFlow documentation.
  *
@@ -104,8 +105,8 @@ public:
      *
      *  A variable in binary data flow analysis is an abstract location referencing either a register or memory cell.  The
      *  address for memory locations is an arbitrary semantic expression (@ref
-     *  BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
-    typedef BinaryAnalysis::AbstractLocation Variable;
+     *  rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue). */
+    typedef AbstractLocation Variable;
 
     /** List of variables. */
     typedef std::list<Variable> VariableList;
@@ -155,37 +156,6 @@ private:
     // Helper for buildGraph
     void buildGraphProcessInstruction(SgAsmInstruction*);
 
-private:
-    // graph visitor for the buildGraphPerVertex method
-    template<class CFG>
-    struct BuildGraphPerVertex {
-        std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState; // user-defined states
-        VertexFlowGraphs result;
-        DataFlow *self;
-
-        // constructs visitor by initializing the output state for the first CFG vertex
-        BuildGraphPerVertex(const CFG& cfg, size_t startVertex, DataFlow *self)
-            : postState(cfg.nVertices()), self(self) {
-            ASSERT_require(startVertex < cfg.nVertices());
-            ASSERT_not_null(self);
-            result.insert(startVertex, self->buildGraph(cfg.findVertex(startVertex)->value()));
-            postState[startVertex] = self->userOps_->get_state();
-        }
-
-        // compute output state for each CFG vertex based on its single input
-        void operator()(const typename CFG::ConstVertexNodeIterator &source, bool sourceSeen,
-                        const typename CFG::ConstVertexNodeIterator &target, bool targetSeen,
-                        const typename CFG::ConstEdgeNodeIterator &edge) {
-            InstructionSemantics2::BaseSemantics::StatePtr state = postState[target->id()];
-            if (state==NULL) {
-                ASSERT_not_null(postState[source->id()]);
-                state = postState[target->id()] = postState[source->id()]->clone();
-                self->userOps_->set_state(state);
-                result.insert(target->id(), self->buildGraph(target->value()));
-            }
-        }
-    };
-    
 public:
     /** Compute data flow per CFG vertex.
      *
@@ -198,14 +168,31 @@ public:
      *  variables, although typically not through pointers or array indexing. */
     template<class CFG>
     VertexFlowGraphs buildGraphPerVertex(const CFG &cfg, size_t startVertex) {
-        using namespace rose::Diagnostics;
+        using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(startVertex < cfg.nVertices());
         Stream mesg(mlog[WHERE] <<"buildGraphPerVertex startVertex=" <<startVertex);
-        BuildGraphPerVertex<CFG> visitor(cfg, startVertex, this);
-        cfg.depthFirstVisit(visitor, cfg.findVertex(startVertex));
-        mesg <<"; processed " <<StringUtility::plural(visitor.result.size(), "vertices", "vertex") <<"\n";
-        return visitor.result;
+
+        VertexFlowGraphs result;
+        result.insert(startVertex, buildGraph(cfg.findVertex(startVertex)->value()));
+        std::vector<InstructionSemantics2::BaseSemantics::StatePtr> postState(cfg.nVertices()); // user-defined states
+        postState[startVertex] = userOps_->get_state();
+
+        typedef Sawyer::Container::Algorithm::DepthFirstForwardEdgeTraversal<const CFG> Traversal;
+        for (Traversal t(cfg, cfg.findVertex(startVertex)); t; ++t) {
+            typename CFG::ConstVertexNodeIterator source = t->source();
+            typename CFG::ConstVertexNodeIterator target = t->target();
+            InstructionSemantics2::BaseSemantics::StatePtr state = postState[target->id()];
+            if (state==NULL) {
+                ASSERT_not_null(postState[source->id()]);
+                state = postState[target->id()] = postState[source->id()]->clone();
+                userOps_->set_state(state);
+                result.insert(target->id(), buildGraph(target->value()));
+            }
+        }
+        
+        mesg <<"; processed " <<StringUtility::plural(result.size(), "vertices", "vertex") <<"\n";
+        return result;
     }
 
     /** Get list of unique variables.
@@ -321,6 +308,7 @@ public:
     };
 };
 
+} // namespace
 } // namespace
 
 #endif

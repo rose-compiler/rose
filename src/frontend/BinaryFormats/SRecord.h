@@ -3,6 +3,7 @@
 
 #include "sage3basic.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Motorola S-Record.
@@ -107,7 +108,7 @@ public:
      *  exception is thrown.  When new segments are created they are given access permissions specified by @p
      *  accessPerms. Access permissions are not consulted and do not cause errors when writing S-Record data into the map. */
     static rose_addr_t load(const std::vector<SRecord>&, MemoryMap&, bool createSegments=true,
-                            unsigned accessPerms=MemoryMap::MM_PROT_RWX);
+                            unsigned accessPerms=MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
 
     /** Compute the checksum for the data.
      *
@@ -132,4 +133,6 @@ public:
 };
 
 } // namespace
+} // namespace
+
 #endif

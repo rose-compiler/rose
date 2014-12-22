@@ -14,6 +14,7 @@ handle_sub(int job, int fg)
           struct process *p;
 
 #if 0
+       /* No support for GNU extensions under Windows */
           for (;;)
                if (0)
                   {

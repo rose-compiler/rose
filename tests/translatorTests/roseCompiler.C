@@ -31,7 +31,12 @@ main (int argc, char *argv[])
   {
     // Test unique ID assignment and dot graph generation
     TransformationTracking::registerAstSubtreeIds (sageProject);
-    generateWholeGraphOfAST("wholeAST");
+    generateWholeGraphOfAST("wholeAST-v1");
+
+    AstDOTGeneration astdotgen;
+    astdotgen.generate(sageProject,AstDOTGeneration::TOPDOWNBOTTOMUP, "v1");
+    //astdotgen.generate(sageProject,"myfile", AstDOTGeneration::TOPDOWNBOTTOMUP, "v1.");
+    //astdotgen.generateWithinFile(sageProject, AstDOTGeneration::TOPDOWNBOTTOMUP);
   }
 
 #if 0

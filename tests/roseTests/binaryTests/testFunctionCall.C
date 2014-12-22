@@ -18,8 +18,8 @@ struct GraphvizVertexWriter {
 
 /* Filter that rejects basic block that are uncategorized.  I.e., those blocks that were disassemble but not ultimately
  * linked into the list of known functions.  We excluded these because their control flow information is often nonsensical. */
-struct ExcludeLeftovers: public BinaryAnalysis::FunctionCall::VertexFilter {
-    bool operator()(BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
+struct ExcludeLeftovers: public rose::BinaryAnalysis::FunctionCall::VertexFilter {
+    bool operator()(rose::BinaryAnalysis::FunctionCall *analyzer, SgAsmFunction *func) {
         return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
     }
 };
@@ -45,8 +45,8 @@ main(int argc, char *argv[])
 
     /* Calculate plain old CG over entire interpretation. */
     if (algorithm=="A") {
-        typedef BinaryAnalysis::FunctionCall::Graph CG;
-        BinaryAnalysis::FunctionCall cg_analyzer;
+        typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
+        rose::BinaryAnalysis::FunctionCall cg_analyzer;
         cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_ast<CG>(interps.back());
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));
@@ -54,10 +54,10 @@ main(int argc, char *argv[])
 
     /* Calculate the call graph from the control flow graph. */
     if (algorithm=="B") {
-        typedef BinaryAnalysis::ControlFlow::Graph CFG;
-        typedef BinaryAnalysis::FunctionCall::Graph CG;
-        CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(interps.back());
-        BinaryAnalysis::FunctionCall cg_analyzer;
+        typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
+        typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
+        CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(interps.back());
+        rose::BinaryAnalysis::FunctionCall cg_analyzer;
         cg_analyzer.set_vertex_filter(&exclude_leftovers);
         CG cg = cg_analyzer.build_cg_from_cfg<CG>(cfg);
         boost::write_graphviz(std::cout, cg, GraphvizVertexWriter<CG>(cg));

@@ -13,8 +13,9 @@
 
 using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
-Sawyer::Message::Facility BinaryLoader::mlog("BinaryLoader");
+Sawyer::Message::Facility BinaryLoader::mlog;
 std::vector<BinaryLoader*> BinaryLoader::loaders;
 
 std::ostream&
@@ -44,8 +45,8 @@ void BinaryLoader::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(Diagnostics::destination);
-        Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -459,8 +460,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
              * than trying to undo the parts that had been successful. Allocating a large region does not actually allocate any
              * memory. */
             try {
-                map->insert(AddressInterval::baseSize(va, mem_size),
-                            MemoryMap::Segment(MemoryMap::NullBuffer::create(mem_size), 0, MemoryMap::MM_PROT_NONE));
+                map->insert(AddressInterval::baseSize(va, mem_size), MemoryMap::Segment::nullInstance(mem_size));
                 map->erase(AddressInterval::baseSize(va, mem_size));
             } catch (const MemoryMap::Exception&) {
                 switch (resolve) {
@@ -473,8 +473,13 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                     case RESOLVE_REMAP:
                     case RESOLVE_REMAP_ABOVE: {
                         trace <<"    Unable to map entire desired region.\n";
-                        rose_addr_t above = RESOLVE_REMAP_ABOVE==resolve ? va : 0;
-                        rose_addr_t new_va = map->find_free(above, mem_size, malign_lo); /*may throw MemoryMap::NoFreeSpace*/
+                        AddressInterval where = AddressInterval::hull(RESOLVE_REMAP_ABOVE==resolve ? va : 0,
+                                                                      AddressInterval::whole().greatest());
+                        rose_addr_t new_va = 0;
+                        if (!map->findFreeSpace(mem_size, malign_lo, where).assignTo(new_va)) {
+                            throw MemoryMap::NoFreeSpace("unable to allocate space in specimen memory map",
+                                                         map, mem_size);
+                        }
                         ASSERT_require2(0 == (new_va+mem_size) % malign_hi, "FIXME: not handled yet [RPM 2010-09-03]");
                         va = new_va;
                         trace <<"    Relocated to VA:     " <<StringUtility::addrToString(va) <<" + "
@@ -490,13 +495,13 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
             section->set_mapped_actual_va(va + va_offset);
 
             /* Permissions */
-            unsigned mapperms=MemoryMap::MM_PROT_NONE;
+            unsigned mapperms=0;
             if (section->get_mapped_rperm())
-                mapperms |= MemoryMap::MM_PROT_READ;
+                mapperms |= MemoryMap::READABLE;
             if (section->get_mapped_wperm())
-                mapperms |= MemoryMap::MM_PROT_WRITE;
+                mapperms |= MemoryMap::WRITABLE;
             if (section->get_mapped_xperm())
-                mapperms |= MemoryMap::MM_PROT_EXEC;
+                mapperms |= MemoryMap::EXECUTABLE;
 
             /* Segment name for debugging. This is the file base name and section name concatenated. */
             std::string::size_type file_basename_pos = file->get_name().find_last_of("/");
@@ -522,8 +527,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                       <<"va=" <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
-                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
-                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
+                            MemoryMap::Segment::anonymousInstance(n, mapperms|MemoryMap::PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size = std::min(file_size, mem_size);
             }
@@ -536,8 +540,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
-                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
-                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
+                            MemoryMap::Segment::anonymousInstance(n, mapperms|MemoryMap::PRIVATE, melmt_name));
                 mem_size -= n;
             }
 
@@ -549,8 +552,7 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                       <<StringUtility::addrToString(a) <<" + " <<StringUtility::addrToString(n) <<" = "
                       <<StringUtility::addrToString(a+n) <<"\n";
                 map->insert(AddressInterval::baseSize(a, n),
-                            MemoryMap::Segment(MemoryMap::AnonymousBuffer::create(n), 0,
-                                               mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
+                            MemoryMap::Segment::anonymousInstance(n, mapperms|MemoryMap::PRIVATE, melmt_name));
                 mem_size -= n;
                 file_size -= n;
                 va += n;
@@ -565,17 +567,16 @@ BinaryLoader::remap(MemoryMap *map, SgAsmGenericHeader *header)
                       <<StringUtility::addrToString(va+mem_size) <<" "
                       <<(map_private?"private":"shared") <<"\n";
                 if (map_private) {
-                    uint8_t *storage = new uint8_t[mem_size];
-                    memcpy(storage, &(file->get_data()[offset]), mem_size);
-                    MemoryMap::BufferPtr buffer = MemoryMap::ByteBuffer::create(storage, mem_size);
                     map->insert(AddressInterval::baseSize(va, mem_size),
-                                MemoryMap::Segment(buffer, 0, mapperms|MemoryMap::MM_PROT_PRIVATE, melmt_name));
+                                MemoryMap::Segment::anonymousInstance(mem_size, mapperms|MemoryMap::PRIVATE,
+                                                                      melmt_name));
+                    map->at(va).limit(mem_size).write(&file->get_data()[offset]);
                 } else {
                     // Create the buffer, but the buffer should not take ownership of data from the file.
-                    MemoryMap::BufferPtr buffer = MemoryMap::ExternBuffer::create(&(file->get_data())[0],
-                                                                                  file->get_data().size());
                     map->insert(AddressInterval::baseSize(va, mem_size),
-                                MemoryMap::Segment(buffer, offset, mapperms, melmt_name));
+                                MemoryMap::Segment(MemoryMap::StaticBuffer::instance(&file->get_data()[0],
+                                                                                     file->get_data().size()),
+                                                   offset, mapperms, melmt_name));
                 }
             }
 

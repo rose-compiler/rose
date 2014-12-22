@@ -35,6 +35,7 @@ class Unparse_Type
           virtual void unparsePointerType(SgType* type, SgUnparse_Info& info);
           virtual void unparseMemberPointerType(SgType* type, SgUnparse_Info& info);
           virtual void unparseReferenceType(SgType* type, SgUnparse_Info& info);
+          virtual void unparseRvalueReferenceType(SgType* type, SgUnparse_Info& info);
        // void unparseNameType(SgType* type, SgUnparse_Info& info);
           virtual void unparseClassType(SgType* type, SgUnparse_Info& info);
        // CI
@@ -50,6 +51,12 @@ class Unparse_Type
 
        // DQ (11/20/2011): Adding support for template declarations in the AST.
           virtual void unparseTemplateType(SgType* type, SgUnparse_Info& info);
+
+       // DQ (7/31/2014): Adding support for nullptr constant expression and its associated type.
+          virtual void unparseNullptrType(SgType* type, SgUnparse_Info& info);
+
+       // DQ (8/2/2014): Adding support for C++11 decltype.
+          virtual void unparseDeclType(SgType* type, SgUnparse_Info& info);
 
        // DQ (5/3/2013): This approach is no longer supported, as I recall.
        // virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );

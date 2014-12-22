@@ -389,15 +389,21 @@ enum M68kInstructionKind {
     m68k_lsr,                                           /**< Logical shift right */
     m68k_mac,                                           /**< Multiply accumulate */
     m68k_mov3q,                                         /**< Move 3-bit data quick */
-//    m68k_movclr,
+    m68k_movclr,                                        /**< Move from MAC ACC register and clear */
     m68k_move,                                          /**< Move from source to destination (data, CCR, ACC, MACSR, MASK) */
+    m68k_move_acc,                                      /**< Move MAC ACC register */
+    m68k_move_accext,                                   /**< Move MAC ACCext register */
+    m68k_move_ccr,                                      /**< Move condition code register */
+    m68k_move_macsr,                                    /**< Move MAC status register */
+    m68k_move_mask,                                     /**< Move MAC MASK register */
+    m68k_move_sr,                                       /**< Move status register */
     m68k_move16,                                        /**< Move 16-byte block */
     m68k_movea,                                         /**< Move address from source to destination */
 //    m68k_movec,
     m68k_movem,                                         /**< Move multiple registers */
     m68k_movep,                                         /**< Move peripheral data */
     m68k_moveq,                                         /**< Move quick */
-//    m68k_msac,                          /**< Multiply subtract */
+    m68k_msac,                                          /**< Multiply subtract */
     m68k_muls,                                          /**< Signed multiply */
     m68k_mulu,                                          /**< Unsigned multiply */
     m68k_mvs,                                           /**< Move with sign extend */

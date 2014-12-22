@@ -4,6 +4,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
 namespace InstructionSemantics2 {       // documented elsewhere
 
@@ -22,7 +23,7 @@ namespace InstructionSemantics2 {       // documented elsewhere
 template<class SValuePtr, class RegisterStatePtr, class MemoryStatePtr, class StatePtr, class RiscOperatorsPtr>
 class TestSemantics {
 public:
-    typedef typename SValuePtr::element_type SValue;
+    typedef typename SValuePtr::Pointee SValue;
     typedef typename RegisterStatePtr::element_type RegisterState;
     typedef typename MemoryStatePtr::element_type MemoryState;
     typedef typename StatePtr::element_type State;
@@ -150,7 +151,26 @@ public:
         // Virtual constructor: copy()
         BaseSemantics::SValuePtr v4 = v3->copy();
         check_sval_type(v4, "SValue::copy()");
+        require(v4!=v3, "SValue::copy() should have returned a new object");
         require(v4->get_width()==1, "SValue::copy() width");
+        require(v4->is_number() == v3->is_number(), "copies should be identical");
+        if (v4->is_number())
+            require(v4->get_number() == v3->get_number(), "concrete copies should be identical");
+        std::ostringstream v3str, v4str;
+        v3str <<*v3;
+        v4str <<*v4;
+        require(v3str.str() == v4str.str(), "copies should be identical");
+
+        // may_equal
+        require(v3->may_equal(v3), "a value may_equal itself");
+        require(v3->may_equal(v4), "a value may_equal a copy of itself");
+        require(v4->may_equal(v3), "a value may_equal a copy of itself");
+
+        // must_equal.  Note: must_equal(v3, v4) need not be true when v4 is a copy of v3, although most subclasses do this.
+        require(v3->must_equal(v3), "a value must_equal itself");
+        require(v3->must_equal(v4) == v4->must_equal(v3), "must_equal should be symmetric");
+        
+        
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // RegisterState (read/write is tested by RiscOperators)
@@ -166,11 +186,18 @@ public:
         // Virtual constructors
         BaseSemantics::RegisterStatePtr rs3 = rs1->create(protoval, regdict);
         check_type<RegisterStatePtr>(rs3, "create()");
-        require(rs3->get_register_dictionary()==regdict, "create() register dictionary");
+        require(rs3->get_register_dictionary()==regdict, "RegisterState::create() register dictionary");
+        require(rs3 != rs1, "RegisterState::create() must return a new object");
+        BaseSemantics::SValuePtr rs3v1 = rs3->get_protoval();
+        check_sval_type(rs3v1, "RegisterState::get_protoval() after create()");
 
         BaseSemantics::RegisterStatePtr rs4 = rs1->clone();
         check_type<RegisterStatePtr>(rs4, "clone()");
-
+        require(rs4 != rs1, "RegisterState::clone() must return a new object");
+        require(rs4->get_register_dictionary()==rs1->get_register_dictionary(),
+                "RegisterState::clone() must use the register dictionary from the source state");
+        BaseSemantics::SValuePtr rs4v1 = rs4->get_protoval();
+        check_sval_type(rs4v1, "RegisterState::get_protoval() after clone()");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // MemoryState (read/write is tested by RiscOperators)
@@ -188,10 +215,20 @@ public:
 
         // Virtual constructors
         BaseSemantics::MemoryStatePtr ms2 = ms1->create(protoval, protoval);
+        require(ms2 != ms1, "MemoryState::create() must return a new state");
         check_type<MemoryStatePtr>(ms2, "MemoryState::create(protoval)");
+        BaseSemantics::SValuePtr ms2v1 = ms2->get_addr_protoval();
+        check_sval_type(ms2v1, "MemoryState::get_addr_protoval() after create");
+        BaseSemantics::SValuePtr ms2v2 = ms2->get_val_protoval();
+        check_sval_type(ms2v2, "MemoryState::get_val_protoval() after create");
 
         BaseSemantics::MemoryStatePtr ms3 = ms1->clone();
+        require(ms3 != ms1, "MemoryState::clone must return a new state");
         check_type<MemoryStatePtr>(ms3, "MemoryState::clone()");
+        BaseSemantics::SValuePtr ms3v1 = ms3->get_addr_protoval();
+        check_sval_type(ms3v1, "MemoryState::get_addr_protoval() after clone");
+        BaseSemantics::SValuePtr ms3v2 = ms3->get_val_protoval();
+        check_sval_type(ms3v2, "MemoryState::get_val_protoval() after clone");
         
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // State (read/write is tested by RiscOperators)
@@ -205,10 +242,18 @@ public:
 
         // Virtual constructors
         BaseSemantics::StatePtr s1 = state->create(rs1, ms1);
+        require(s1 != state, "State::create() must return a new state");
         check_type<StatePtr>(s1, "State::create(regs,mem)");
+        require(s1->get_register_state()==rs1, "State::create() must use supplied register state");
+        require(s1->get_memory_state()==ms1, "State::create() must use supplied memory state");
 
         BaseSemantics::StatePtr s2 = state->clone();
+        require(s2 != state, "State::clone() must return a new state");
         check_type<StatePtr>(s2, "State::clone()");
+        require(s2->get_register_state() != state->get_register_state(),
+                "State::clone() must deep-copy the register state");
+        require(s2->get_memory_state() != state->get_memory_state(),
+                "State::clone() must deep-copy the memory state");
 
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // RiscOperators
@@ -222,9 +267,11 @@ public:
         
         // Virtual constructors
         BaseSemantics::RiscOperatorsPtr o1 = ops->create(protoval, solver);
+        require(o1 != ops, "RiscOperators::create(protoval,solver) should return a new object");
         check_type<RiscOperatorsPtr>(o1, "RiscOperators::create(protoval,solver)");
 
         BaseSemantics::RiscOperatorsPtr o2 = ops->create(state, solver);
+        require(o2 != ops, "RiscOperators::create(state,solver) should return a new object");
         check_type<RiscOperatorsPtr>(o2, "RiscOperators::create(state,solver)");
         
         BaseSemantics::StatePtr ops_orig_state = ops->get_state();
@@ -233,9 +280,10 @@ public:
         // We shouldn't use the supplied state because these tests modify it.  So we'll make a copy of the state and use that,
         // and then restore the original state before we return (but leave our state there fore debugging if there's an
         // exception).  This has the side effect of implicitly checking that State::clone() works because if it didn't the
-        // caller would see the mess we made here.
+        // caller would see the mess we made here. State::clone was tested already.
         BaseSemantics::StatePtr our_state = ops_orig_state->clone();
         ops->set_state(our_state);
+        require(ops->get_state() == our_state, "RiscOperators::set_state failed to change state");
 
         for (size_t i=0; i<4; ++i) {
             // Value-creating operators
@@ -407,6 +455,10 @@ public:
             check_sval_type(ops_v35, "RiscOperators::readRegister");
             require(ops_v35->get_width()==32, "RiscOperators::readRegister width");
 
+            // We can't really check many semantics for readMemory because each MemoryState might behave differently.  For
+            // example, we can't check that reading the same address twice in a row returns the same value both times because
+            // the NullSemantics doesn't have this property.
+
             BaseSemantics::SValuePtr dflt8 = ops->number_(8, 0);
             BaseSemantics::SValuePtr ops_v36 = ops->readMemory(segreg, v32a, dflt8, v1);
             check_sval_type(ops_v36, "RiscOperators::readMemory byte");
@@ -416,6 +468,14 @@ public:
             BaseSemantics::SValuePtr ops_v37 = ops->readMemory(segreg, v32a, dflt32, v1);
             check_sval_type(ops_v37, "RiscOperators::readMemory word");
             require(ops_v37->get_width()==32, "RiscOperators::readMemory word width");
+
+            // Nothing to check for write memory other than that we can actually call it.  The problem is that writeMemory only
+            // modifies a state and doesn't return anything we can test.  The specifics of how it modifies a memory state is
+            // entirely up to the implementation, so we can't even test that writing a value to an address and then reading
+            // from that address returns the value that was written (e.g., NullSemantics doesn't have this property).
+
+            ops->writeMemory(segreg, v32a, dflt32, v1);
+
         }
 
         // Restore the original state
@@ -423,6 +483,7 @@ public:
     }
 };
         
+} // namespace
 } // namespace
 } // namespace
 

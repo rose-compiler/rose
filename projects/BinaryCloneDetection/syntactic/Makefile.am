@@ -106,9 +106,26 @@ printOutClones_distinctFiles_SOURCES = printOutClones_distinctFiles.C
 bin_PROGRAMS += printPairs
 printPairs_SOURCES = printPairs.C 
 
+#-----------------------------------------------------------------------------------------------------------------------------
+# Level 110-120: run evaluation metrics on pairwise binaries
+bin_PROGRAMS += 110_compute_aggregate
+110_compute_aggregate_SOURCES = 110-compute-aggregate.C FailureDetectionSchema.C 
+110_compute_aggregate_CPPFLAGS = $(ROSE_INCLUDES)
+110_compute_aggregate_LDADD = $(BOOST_LDFLAGS) $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+MOSTLYCLEANFILES += FailureDetectionSchema.C
+FailureDetectionSchema.C: compute-pairwise-precision.sql
+	@echo "  GEN     $@"
+	@echo "namespace FailureEvaluation {"  			>$@
+	@echo "const char *failure_schema =" 				>>$@
+	@perl -pe 's/"/\\"/g; s/(.*)/    "$$1\\n"/' <$< 	>>$@
+	@echo ';' 						>>$@
+	@echo "} //namespace" 					>>$@
+
 # Andreas is looking into whether any of these files are actually necessary or if they
 # can be removed from the source tree. [Robb Matzke, 2013-03-12]
 EXTRA_DIST = 					\
+        compute-pairwise-precision.sql          \
 	callLSH.h				\
 	collateByHash.C				\
 	createCloneDetectionVectorsBinary.h	\

@@ -104,27 +104,30 @@ HEADER_BINARY_INSTRUCTION_START
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
-                void append_sources( SgAsmInstruction* instruction );
+                void appendSources( SgAsmInstruction* instruction );
 
                 // These are documented in SgAsmInstruction.C
-                virtual bool terminates_basic_block(); /*subclasses must redefine*/
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&);
-                bool is_first_in_block();
-                bool is_last_in_block();
-                virtual bool get_branch_target(rose_addr_t *target/*out*/);
-                virtual bool has_effect();
-                virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                        bool relax_stack_semantics=false);
+                virtual bool terminatesBasicBlock(); /*subclasses must redefine*/
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target, rose_addr_t *ret);
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&);
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&);
+                bool isFirstInBlock();
+                bool isLastInBlock();
+                virtual bool getBranchTarget(rose_addr_t *target/*out*/);
+                virtual bool hasEffect();
+                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+                                       bool relax_stack_semantics=false);
                 virtual std::vector<std::pair<size_t,size_t> >
-                    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                           bool relax_stack_semantics=false);
-                virtual std::set<rose_addr_t> get_successors(bool* complete); /*subclasses must redefine*/
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool *complete,
-                                                             MemoryMap *initial_memory=NULL);
+                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+                                         bool relax_stack_semantics=false);
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete); /*subclasses must redefine*/
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool *complete,
+                                                            const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
-                virtual bool is_unknown() const;
+                virtual bool isUnknown() const;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -603,8 +606,8 @@ HEADER_GENERIC_SECTION_START
                 /* Functions for tracking referenced/unreferenced content. The tracking actually happens at the entire file level
                  * (see functions with the same name in SgAsmGenericFile) and these functions return that same information but
                  * limit the results to this section and return section rather than file offsets. */
-                ExtentMap get_referenced_extents() const;       /* Returns parts of the file that have been referenced */
-                ExtentMap get_unreferenced_extents() const;     /* Returns parts of file that have not been referenced */
+                AddressIntervalSet get_referenced_extents() const; /* Returns parts of the file that have been referenced */
+                AddressIntervalSet get_unreferenced_extents() const; /* Returns parts of file that have not been referenced */
 
                 /* Functions related to mapping of sections into executable memory */
                 bool          is_mapped() const;                /**< True iff non-zero mapped address and size */
@@ -718,7 +721,7 @@ HEADER_GENERIC_FILE_START
                 void dump_all(const std::string& dumpname);             /* Recursively print all known info about the file */
 
                 /* Tracking references */
-                const ExtentMap& get_unreferenced_extents() const;      /* Returns parts of file that have not been referenced */
+                const AddressIntervalSet& get_unreferenced_extents() const; /* Returns parts of file that have not been referenced */
                 void mark_referenced_extent(rose_addr_t start_rva, rose_addr_t size);
 
                 /* Converting encoding/decoding data is it's transferred from/to disk. */
@@ -797,7 +800,7 @@ HEADER_GENERIC_FILE_START
 
         private:
                 void ctor();
-                mutable ExtentMap *p_unreferenced_cache;
+                mutable AddressIntervalSet *p_unreferenced_cache;
                 DataConverter *p_data_converter;
 HEADER_GENERIC_FILE_END
 
@@ -965,8 +968,8 @@ HEADER_GENERIC_STRTAB_START
                 bool reallocate(bool shrink); /*allocate storage for all unallocated strings*/
 
                 /* Free list accessors. Overriding ROSETTA because get_freelist() must return a modifiable free list. */
-                const ExtentMap& get_freelist() const;
-                ExtentMap& get_freelist();
+                const AddressIntervalSet& get_freelist() const;
+                AddressIntervalSet& get_freelist();
 
                 //These should be pure virtual but ROSETTA apparently doesn't support that (RPM 2008-10-03)
                 virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) {abort(); return NULL;}
@@ -2454,7 +2457,7 @@ HEADER_PE_IMPORT_DIRECTORY_START
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
                 size_t iat_required_size() const;
                 int find_import_item(const SgAsmPEImportItem *item, int hint=0) const;
-                size_t hintname_table_extent(ExtentMap &extent/*in,out*/) const;
+                size_t hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const;
         private:
                 void ctor(SgAsmPEImportSection*, const std::string &dll_name);
                 void parse_ilt_iat(const rose_rva_t &table_start, bool assume_bound);
@@ -2562,7 +2565,7 @@ HEADER_PE_EXPORT_SECTION_START
                 typedef uint16_t ExportOrdinal_disk;
 
                 SgAsmPEExportSection(SgAsmPEFileHeader *fhdr)
-                        : SgAsmPESection(fhdr)
+                        : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL)
                         {ctor();}
                 virtual SgAsmPEExportSection *parse();
                 virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
@@ -3613,68 +3616,82 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*>&,
-                                              rose_addr_t *target, rose_addr_t *ret) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*>&) /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target/*out*/) /*override*/;
-                virtual bool has_effect() /*override*/;
-                virtual bool has_effect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                        bool relax_stack_semantics=false) /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
+                virtual bool hasEffect() ROSE_OVERRIDE;
+                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
+                                       bool relax_stack_semantics=false) ROSE_OVERRIDE;
                 virtual std::vector<std::pair<size_t,size_t> >
-                    find_noop_subsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                           bool relax_stack_semantics=false) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool* complete,
-                                                             MemoryMap *initial_memory=NULL) /*override*/;
-                virtual bool is_unknown() const;
+                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
+                                         bool relax_stack_semantics=false) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool* complete,
+                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
+                virtual bool isUnknown() const;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
 
 HEADER_BINARY_POWERPC_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
 
 HEADER_BINARY_ARM_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
 
 HEADER_BINARY_MIPS_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual bool is_unknown() const /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
 HEADER_BINARY_M68K_INSTRUCTION_START
         public:
-                virtual bool terminates_basic_block() /*override*/;
-                virtual bool is_function_call(const std::vector<SgAsmInstruction*> &insns,
-                                              rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) /*override*/;
-                virtual bool is_function_return(const std::vector<SgAsmInstruction*> &insns) /*override*/;
-                virtual bool get_branch_target(rose_addr_t *target) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(bool* complete) /*override*/;
-                virtual std::set<rose_addr_t> get_successors(const std::vector<SgAsmInstruction*>&,
-                                                             bool* complete,
-                                                             MemoryMap *initial_memory=NULL) /*override*/;
-                virtual bool is_unknown() const /*override*/;
+                virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
+                virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                                rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) ROSE_OVERRIDE;
+                virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                                rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) ROSE_OVERRIDE;
+                virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
+                virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
+                                                            bool* complete,
+                                                            const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
+                virtual bool isUnknown() const ROSE_OVERRIDE;
+		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 
@@ -3857,7 +3874,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
         };
 
         /** Returns info about what addresses a function occupies. */
-        size_t get_extent(ExtentMap *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
+        size_t get_extent(AddressIntervalSet *emap=NULL, rose_addr_t *lo_addr=NULL, rose_addr_t *hi_addr=NULL,
                 NodeSelector *selector=NULL);
 
         /** Computes the SHA1 message digest for the bytes of a function. Returns true if the SHA1 is available, false
@@ -3928,8 +3945,8 @@ HEADER_TYPE_START
 
         public:
                 virtual void check() const;
-                virtual std::string toString() const { abort(); }       // ROSETTA doesn't support pure virtual methods
-                virtual size_t get_nBits() const { abort(); }           // ROSETTA doesn't support pure virtual methods
+                virtual std::string toString() const { abort(); return NULL; }       // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
+                virtual size_t get_nBits() const { abort(); return -1; }           // ROSETTA doesn't support pure virtual methods; (TOO1, 2014-08-11): Windows requires return value
                 virtual size_t get_nBytes() const;
 
                 template<class Type>                                    // Type is a subclass of SgAsmType
@@ -3951,9 +3968,9 @@ HEADER_VECTOR_TYPE_START
                 SgAsmVectorType(size_t nElmts, SgAsmType *elmtType);
                 size_t get_nElmts() const;
                 SgAsmType* get_elmtType() const;
-                virtual void check() const /*override*/;
-                virtual std::string toString() const /*override*/;
-                virtual size_t get_nBits() const /*override*/;
+                virtual void check() const ROSE_OVERRIDE;
+                virtual std::string toString() const ROSE_OVERRIDE;
+                virtual size_t get_nBits() const ROSE_OVERRIDE;
 HEADER_VECTOR_TYPE_END
 
 
@@ -3963,7 +3980,7 @@ HEADER_SCALAR_TYPE_START
         public:
                 virtual void check() const;
                 virtual std::string toString() const;
-                virtual size_t get_nBits() const /*override*/;
+                virtual size_t get_nBits() const ROSE_OVERRIDE;
                 ByteOrder::Endianness get_minorOrder() const;
                 ByteOrder::Endianness get_majorOrder() const;
                 size_t get_majorNBytes() const;
@@ -4215,7 +4232,7 @@ SgAsmFunction::nrOfValidInstructions( std::vector<SgNode*>& succs  ) {
     return 0;
 */
   for (;j!=succs.rend(); j++) {
-     SgAsmx86Instruction* n = isSgAsmx86Instruction(*j);
+     SgAsmX86Instruction* n = isSgAsmX86Instruction(*j);
      if (n && (n->get_kind() == x86_ret || n->get_kind() == x86_hlt)) {
           foundRet=true;
           break;
@@ -4322,7 +4339,7 @@ SOURCE_BINARY_FUNCTION_DECLARATION_END
 SOURCE_BINARY_INSTRUCTION_START
 
 void
-SgAsmInstruction::append_sources( SgAsmInstruction* inst )
+SgAsmInstruction::appendSources( SgAsmInstruction* inst )
    {
      p_sources.push_back(inst);
    }
@@ -4347,7 +4364,7 @@ SgAsmInstruction::cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* i
 std::vector<VirtualBinCFG::CFGEdge>
 SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info)
    {
-  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmx86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmx86Instruction(this) ? toString(isSgAsmx86Instruction(this)->get_kind()) : "") << endl;
+  // cerr << "cfgBinOutEdges: " << std::hex << this->get_address() << " " << (isSgAsmX86Instruction(this) ? "x86" : "unknown") << " " << (isSgAsmX86Instruction(this) ? toString(isSgAsmX86Instruction(this)->get_kind()) : "") << endl;
      std::vector<VirtualBinCFG::CFGEdge> result;
 
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
@@ -4357,7 +4374,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
         {
        // cout << "Found branch" << endl;
           uint64_t addr = 0;
-          bool knownTarget = get_branch_target(&addr);
+          bool knownTarget = getBranchTarget(&addr);
           if (knownTarget)
              {
             // cout << "Has known target " << std::hex << addr << endl;
@@ -4393,7 +4410,7 @@ SgAsmInstruction::cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info
              } // else
         } // if
 
-     if ((!isSgAsmx86Instruction(this) || (isSgAsmx86Instruction(this)->get_kind() != x86_ret && isSgAsmx86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmx86Instruction(this) && isSgAsmx86Instruction(this)->get_kind() == x86_call) */ )
+     if ((!isSgAsmX86Instruction(this) || (isSgAsmX86Instruction(this)->get_kind() != x86_ret && isSgAsmX86Instruction(this)->get_kind() != x86_hlt)) /* || !isAsmUnconditionalBranch(this) || (isSgAsmX86Instruction(this) && isSgAsmX86Instruction(this)->get_kind() == x86_call) */ )
         {
        // cout << "Next insn is at " << std::hex << nextAddr << endl;
           SgAsmInstruction* next = info->getInstructionAtAddress(nextAddr);

@@ -414,7 +414,9 @@ UnparseLanguageIndependentConstructs::printOutComments ( SgLocatedNode* locatedN
                     ((*i)->getRelativePosition() == PreprocessingInfo::before) ? "before" : "after",
                     (*i)->getString().c_str());
                printf ("Comment/Directive getNumberOfLines = %d getColumnNumberOfEndOfString = %d \n",(*i)->getNumberOfLines(),(*i)->getColumnNumberOfEndOfString());
+#if 0
                (*i)->get_file_info()->display("comment/directive location");
+#endif
              }
         }
        else
@@ -691,12 +693,72 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
    }
 
 
+bool
+UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingTokenStream(
+   SgLocatedNode* stmt,
+   SgUnparse_Info& info,
+   PreprocessingInfo::RelativePositionType whereToUnparse)
+   {
+  // Get atached preprocessing info
+     AttachedPreprocessingInfoType *prepInfoPtr = stmt->getAttachedPreprocessingInfo();
+
+     bool unparseUsingTokenStream = false;
+     
+  // If we are skiping BOTH comments and CPP directives then there is nothing to do
+     if ( info.SkipComments() && info.SkipCPPDirectives() )
+        {
+       // There's no preprocessing info attached to the current statement
+#if 0
+          printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfoUsingTokenStream(): Skipping output or comments and CPP directives \n");
+#endif
+          return false;
+        }
+
+#if 0
+     printOutComments(stmt);
+#endif
+
+     if (prepInfoPtr != NULL)
+        {
+#if 0
+          info.display("In Unparse_ExprStmt::unparseAttachedPreprocessingInfoUsingTokenStream()");
+#endif
+
+       // Traverse the container of PreprocessingInfo objects
+          AttachedPreprocessingInfoType::iterator i;
+          for (i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
+             {
+            // i is a pointer to the current prepInfo object, print current preprocessing info
+            // Assert that i points to a valid preprocssingInfo object
+               ROSE_ASSERT ((*i) != NULL);
+               ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
+               ROSE_ASSERT ((*i)->getRelativePosition() == PreprocessingInfo::before || 
+                            (*i)->getRelativePosition() == PreprocessingInfo::after  ||
+                            (*i)->getRelativePosition() == PreprocessingInfo::inside);
+#if 0
+            // DQ (1/28/2013): Fixed to use output of PreprocessingInfo::relativePositionName() and thus provide more accurate debug information.
+               printf ("In Unparse_ExprStmt::unparseAttachedPreprocessingInfoUsingTokenStream(): Stored comment: (*i)->getRelativePosition() = %s (*i)->getString() = %s \n",
+                    PreprocessingInfo::relativePositionName((*i)->getRelativePosition()).c_str(),
+                    (*i)->getString().c_str());
+#endif
+               if ((*i)->getRelativePosition() == whereToUnparse)
+                  {
+                    unparseUsingTokenStream = true;
+                  }
+             }
+        }
+
+     return unparseUsingTokenStream;
+   }
+
+
 int
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile* sourceFile, SgStatement* stmt, SgUnparse_Info & info, bool & lastStatementOfGlobalScopeUnparsedUsingTokenStream)
    {
      ROSE_ASSERT(sourceFile != NULL);
      ROSE_ASSERT(stmt != NULL);
 
+  // DQ (11/12/2014): turn this off to test test2014_101.c (which demonstrates an error, but for which this fixes the error).
   // DQ (1/29/2014): Control use of format mechanism to unparse the token stream vs. a higher fedelity 
   // mechanism that does not drop line endings.  The high fedelity version is just prettier, but 
   // pretty counts...
@@ -708,6 +770,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
   // This implementation uses the refactored code.
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+
+#if 0
+     printf ("In unparseStatementFromTokenStream(): unparseStatus = %s \n",unparseStatus ? "true" : "false");
+#endif
 
   // if (canBeUnparsedFromTokenStream(sourceFile,stmt) == true)
      if (unparseStatus == true)
@@ -744,7 +810,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                   }
 
                bool unparseStatus_previousStatement = (canBeUnparsedFromTokenStream(sourceFile,previousStatement) == true);
-               if (unparseStatus_previousStatement == true)
+               bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+#if 0
+               printf ("In unparseStatementFromTokenStream(): unparseStatus_previousStatement = %s \n",unparseStatus_previousStatement ? "true" : "false");
+               printf ("In unparseStatementFromTokenStream(): unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
+#endif
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+            // if (unparseStatus_previousStatement == true)
+               if (unparseStatus_previousStatement == true || unparseLeadingTokenStream == true)
                   {
 #if 0
                     printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
@@ -772,7 +848,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                          if (globalScope->get_declarations().empty() == true)
                             {
-                           // If this is the empry global scope then consider the SgGlobal to be the last statement to be unparsed.
+                           // If this is the empty global scope then consider the SgGlobal to be the last statement to be unparsed.
                            // This will trigger the output of the remaining tokens in the file and suppress any CPP directives and 
                            // comments that are attached to the SgGlobal (because there was no other IR node to attach them to which
                            // could be considered a part of the input file).
@@ -821,6 +897,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                            // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
                            // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                           // *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                           // unp->get_output_stream() << tokenVector[j]->get_lexeme_string();
                               *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
                            // Note that this will interprete line endings which is not going to provide the precise token based output.
@@ -840,6 +918,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                  // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
                  // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                 // *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                 // unp->get_output_stream() << tokenVector[j]->get_lexeme_string();
                     *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
                  // Note that this will interprete line endings which is not going to provide the precise token based output.
@@ -881,6 +961,11 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
                   }
 
+               bool unparseTrailingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::after);
+#if 0
+               printf ("In unparseStatementFromTokenStream(): isLastStatementOfGlobalScope = %s \n",isLastStatementOfGlobalScope ? "true" : "false");
+               printf ("In unparseStatementFromTokenStream(): unparseTrailingTokenStream = %s \n",unparseTrailingTokenStream ? "true" : "false");
+#endif
             // The last statement has to handle the output of the tokens for the rest of the file.
             // If the last statement is output from the AST, then it will be handled using information 
             // in the AST (not the token stream).
@@ -903,6 +988,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if HIGH_FEDELITY_TOKEN_UNPARSING
                            // DQ (1/29/2014): Implementing better fedility in the unparsing of tokens (avoid line ending interpretations 
                            // in curprint() function. Note that "unp->get_output_stream().output_stream()" is of type: "std::ostream*" type.
+                           // *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                           // unp->get_output_stream() << tokenVector[j]->get_lexeme_string();
                               *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
                            // Note that this will interprete line endings which is not going to provide the precise token based output.
@@ -920,6 +1007,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
 #if HIGH_FEDELITY_TOKEN_UNPARSING
   // If we are directly operating on the ostream, then flush after each statement.
+  // unp->get_output_stream().output_stream()->flush();
+  // unp->get_output_stream().flush();
      unp->get_output_stream().output_stream()->flush();
 #endif
 
@@ -930,6 +1019,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
   // Test this function here to be true.
   // ROSE_ASSERT(canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
+
+#if 0
+     printf ("Leaving unparseStatementFromTokenStream(): lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream ? "true" : "false");
+#endif
 
   // Return zero to indicate that there was no error in the unparsing from the token stream.
   // return 0;
@@ -1017,7 +1110,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   // ROSE_ASSERT(stmt->getAttachedPreprocessingInfo() != NULL);
      int numberOfComments = -1;
      if (stmt->getAttachedPreprocessingInfo() != NULL)
-        numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+        {
+          numberOfComments = stmt->getAttachedPreprocessingInfo()->size();
+        }
+
      curprint ( string("/* startOfConstruct: file = " ) + stmt->get_startOfConstruct()->get_filenameString()
          + " raw filename = " + stmt->get_startOfConstruct()->get_raw_filename()
          + " raw line = "     + StringUtility::numberToString(stmt->get_startOfConstruct()->get_raw_line())
@@ -1122,9 +1218,12 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
   //    8) calling unparseFuncDeclStmt
   //    9) calling unparse for funcdefn_stmt->get_body()
   //   10) then trailing comments and CPP directives are output on the body, the function definition, and the function declaration (in that order).
+  // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
+  // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL) || (isSgTypedefDeclaration(stmt) != NULL);
      bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
 #if 0
      printf ("In unparseStatement(): skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
+     printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
      if (skipOutputOfPreprocessingInfo == false)
         {
@@ -1235,7 +1334,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
        // Get the file and check if -rose:unparse_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
           SgFile* cur_file = SageInterface::getEnclosingFileNode(stmt);
-
+#if 0
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file = %p = %s \n",cur_file,cur_file->class_name().c_str());
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file->get_unparse_tokens() = %s \n",cur_file->get_unparse_tokens() ? "true" : "false");
+#endif
        // DQ (10/30/2013): This command-line option controls the use of the token stream in the unparsing.
        // Currently in it's development, we are always unparsing the statements using the token stream if 
        // they qualify.  Later we need to connect a test that will detect if a transformation has been done 
@@ -1276,15 +1378,48 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // bool unparseViaTokenStream = (isFrontierNode == true);
                bool unparseViaTokenStream = (isFrontierNode == true && associatedFrontierNode->unparseUsingTokenStream == true);
 #if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): isFrontierNode = %s \n",isFrontierNode ? "true" : "false");
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode = %p \n",associatedFrontierNode);
+               if (associatedFrontierNode != NULL)
+                  {
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode->unparseUsingTokenStream = %s \n",associatedFrontierNode->unparseUsingTokenStream ? "true" : "false");
+                  }
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): stmt = %p = %s unparseViaTokenStream = %s \n",stmt,stmt->class_name().c_str(),unparseViaTokenStream ? "true" : "false");
 #endif
             // Only unparse from the token stream if this was not a transformed statement.
                unparseViaTokenStream = unparseViaTokenStream && (statementTransformed == false);
 
+#if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",lastStatementOfGlobalScopeUnparsedUsingTokenStream == true ? "true" : "false");
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseViaTokenStream = %s \n",unparseViaTokenStream == true ? "true" : "false");
+#endif
+
+            // DQ (11/12/2014): Added support for unparsing the associated comments that can be attached to the first declaration in global scope.
                if (unparseViaTokenStream == true)
                   {
-                     int status = unparseStatementFromTokenStream(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+#if 0
+                    printf ("In unparseStatement(): unparseViaTokenStream == false: skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
+                    printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+#if 0
+                 // DQ (11/13/2014): This is the wrong approach.
+                    if (skipOutputOfPreprocessingInfo == false)
+                       {
+                      // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
+                         unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
+                       }
+#else
+                 // If we are unparsing from the token stream, then we need to handle the attached preprocessing info as well.
+                 // But we need to handle them as part of unparing the token stream, not from the AST. The reason this is important
+                 // is demonstrated by test2014_101.c and test2014_102.c when used with the testing mode (ROSE_tokenUnparsingTestingMode == true).
+                 // In this mode AST nodes are periodically marked for unparsing from the AST and thus exersizing the logic to 
+                 // switch back and forth between the unparsing from the token stream and unparsing from the AST.
+#endif
 
+                    int status = unparseStatementFromTokenStream(sourceFile,stmt,info,lastStatementOfGlobalScopeUnparsedUsingTokenStream);
+#if 0
+                    printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseStatementFromTokenStream(): status = %d \n",status);
+#endif
                  // If we have unparsed this statement via the token stream then we don't have to unparse it from the AST (so return).
                     outputStatementAsTokens = (status == 0);
                   }
@@ -1293,6 +1428,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                ROSE_ASSERT(false);
 #endif
              }
+
+#if 0
+          printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): outputStatementAsTokens = %s \n",outputStatementAsTokens == true ? "true" : "false");
+#endif
 
        // Only unparse using the AST if this was not able to be unparsed from the token stream.
           if (outputStatementAsTokens == false)
@@ -1307,10 +1446,28 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                     string s = "/* Unparsing from the AST stmt = " + stmt->class_name() + " */ ";
                     curprint (s);
                   }
-
+#if 0
+               printf ("In unparseStatement(): outputStatementAsTokens == false: skipOutputOfPreprocessingInfo = %s \n",skipOutputOfPreprocessingInfo ? "true" : "false");
+               printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
             // bool skipOutputOfPreprocessingInfo = (isSgFunctionDefinition(stmt) != NULL);
                if (skipOutputOfPreprocessingInfo == false)
                   {
+                 // DQ (11/13/2014): Add a new line (CR) to address when we may have unparsed the previous statement from the token stream.
+                    bool unparseExtraNewLine = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+                    if (cur_file != NULL && cur_file->get_unparse_tokens() == true && unparseExtraNewLine == true)
+                       {
+#if 0
+                      // Add a new line.
+                         printf ("##### Adding a new line (previous statement may have been unparsed using the token stream and be missing a CR at the end; error for CPP directives) \n");
+#endif
+                      // Adding a new line is more complex than it should be because the the CR is interpreted and 
+                      // ignored if it is at the end of the string, so adding extra space fixes this temporarily.
+                      // unp->cur.insert_newline(1);
+                      // curprint ("// new line added \n  ");
+                         curprint ("\n ");
+                       }
+
                  // DQ (11/30/2013): Move from above to where we can better support the token unparsing.
                     unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::before);
                   }
@@ -1764,6 +1921,9 @@ UnparseLanguageIndependentConstructs::unparseExpression(SgExpression* expr, SgUn
             // DQ (8/15/2007): This has been moved to the base class
                case EXPR_LIST: { unparseExprList(expr, info); break; }
 
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case NULLPTR_VAL:
+
             // DQ: These cases are separated out so that we can handle the 
             // original expression tree from any possible constant folding by EDG.
                case BOOL_VAL:
@@ -2149,8 +2309,12 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                printf ("Error in unparseAttachedPreprocessingInfo, stmt->get_endOfConstruct() == NULL: stmt = %p = %s = %s \n",
                     stmt,stmt->class_name().c_str(),SageInterface::get_name(stmt).c_str());
              }
-          printOutComments (stmt);
+          printOutComments(stmt);
         }
+#endif
+
+#if 0
+     printOutComments(stmt);
 #endif
 
      if (prepInfoPtr == NULL)
@@ -2178,9 +2342,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 
   // Traverse the container of PreprocessingInfo objects
      AttachedPreprocessingInfoType::iterator i;
-     for(i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
+     for (i = prepInfoPtr->begin(); i != prepInfoPtr->end(); ++i)
         {
-       // i ist a pointer to the current prepInfo object, print current preprocessing info
+       // i is a pointer to the current prepInfo object, print current preprocessing info
        // Assert that i points to a valid preprocssingInfo object
           ROSE_ASSERT ((*i) != NULL);
           ROSE_ASSERT ((*i)->getTypeOfDirective()  != PreprocessingInfo::CpreprocessorUnknownDeclaration);
@@ -2241,9 +2405,13 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 #endif
           if (infoSaysGoAhead && (*i)->getRelativePosition() == whereToUnparse)
              {
-
+#if 0
+               printf ("Calling unp->cur.format(FORMAT_BEFORE_DIRECTIVE): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
                unp->cur.format(stmt, info, FORMAT_BEFORE_DIRECTIVE);
-
+#if 0
+               printf ("DONE: Calling unp->cur.format(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
             // DQ (7/19/2008): If we can assert this, then we can simpleify the code below!
             // It is turned on in the tests/roseTests/programTransformationTests/implicitCodeGenerationTest.C
             // But I still don't know what it does.
@@ -2424,7 +2592,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
 #endif
                                              if (isSelfReferential == true)
                                                 {
-#if 1
+#if 0
                                                // DQ (12/31/2013): Note that the final CR is a part of the CPP #define directive (so we don't need another one).
                                                   printf ("Detected self-referential macro (supressed in generated code) macro = %s ",(*i)->getString().c_str());
 #endif
@@ -2665,6 +2833,123 @@ UnparseLanguageIndependentConstructs::isDotExprWithAnonymousUnion(SgExpression* 
    }
 
 
+bool
+UnparseLanguageIndependentConstructs::isImplicitArrowExpWithinLambdaFunction(SgExpression* expr, SgUnparse_Info& info)
+   {
+     bool suppressOutputOfImplicitArrowExp = false;
+
+     if (info.supressImplicitThisOperator() == true)
+        {
+          SgArrowExp* arrowExp = isSgArrowExp(expr);
+          if (arrowExp != NULL)
+             {
+
+                SgExpression* lhs = arrowExp->get_lhs_operand();
+                ROSE_ASSERT(lhs != NULL);
+                SgThisExp* thisExp = isSgThisExp(lhs);
+                if (thisExp != NULL)
+                   {
+                     if (thisExp->get_file_info()->isCompilerGenerated() == true)
+                        {
+                          suppressOutputOfImplicitArrowExp = true;
+                        }
+                   }
+             }
+        }
+
+#if 0
+     printf ("In isImplicitArrowExpWithinLambdaFunction(): suppressOutputOfImplicitArrowExp = %s \n",suppressOutputOfImplicitArrowExp ? "true" : "false");
+#endif
+
+     return suppressOutputOfImplicitArrowExp;
+   }
+
+
+#if 0
+// DQ (7/6/2014): A different version of this is in the unparseCxx_expressions.C file.
+bool
+partOfArrowOperatorChain(SgExpression* expr)
+   {
+#define DEBUG_ARROW_OPERATOR_CHAIN 1
+
+     SgBinaryOp* binary_op = isSgBinaryOp(expr);
+     ROSE_ASSERT(binary_op != NULL);
+
+     bool result = false;
+
+#if DEBUG_ARROW_OPERATOR_CHAIN
+     printf ("Inside of partOfArrowOperatorChain(): binary_op = %p = %s \n",binary_op,binary_op->class_name().c_str());
+#endif
+
+  // DQ (4/9/2013): Added support for unparsing "operator+(x,y)" in place of "x+y".  This is 
+  // required in places even though we have historically defaulted to the generation of the 
+  // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
+     SgNode* possibleParentFunctionCall = binary_op->get_parent();
+
+  // DQ (4/9/2013): This fails for test2006_92.C.
+  // ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool parent_is_a_function_call                    = false;
+     bool parent_function_call_uses_operator_syntax    = false;
+     bool parent_function_is_overloaded_arrow_operator = false;
+     bool parent_function_call_is_compiler_generated   = false;
+     if (possibleParentFunctionCall != NULL)
+        {
+          SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
+          if (functionCallExp != NULL)
+             {
+               parent_is_a_function_call                  = true;
+               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+#if 1
+            // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
+               SgExpression* rhs = binary_op->get_rhs_operand();
+               bool isRelevantOverloadedOperator = false;
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    string functionName = memberFunctionRefExp->get_symbol()->get_name();
+#if DEBUG_ARROW_OPERATOR_CHAIN
+                    printf ("--- parent function is: functionName = %s \n",functionName.c_str());
+#endif
+                    if (functionName == "operator->")
+                       {
+                         parent_function_is_overloaded_arrow_operator = true;
+                       }
+                  }
+#endif
+               if (parent_function_is_overloaded_arrow_operator == true)
+                  {
+                    SgExpression* expression = isSgExpression(functionCallExp->get_parent());
+                    if (expression != NULL)
+                       {
+                         SgArrowExp* arrowExp = isSgArrowExp(expression);
+                         if (arrowExp != NULL)
+                            {
+                              result = true;
+                            }
+                           else
+                            {
+                              result = partOfArrowOperatorChain(expression);
+                            }
+                       }
+                      else
+                       {
+                         result = false;
+                       }
+                  }
+                 else
+                  {
+                    result = false;
+                  }
+             }
+        }
+
+     return result;
+   }
+#endif
+
+
+
 // DQ (4/14/2013): This is the new reimplemented version of the function (above).
 void
 UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUnparse_Info& info) 
@@ -2677,17 +2962,18 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
 #if DEBUG_BINARY_OPERATORS
       curprint ( string("\n\n /* @@@@@ Inside of unparseBinaryExpr (operator name = ") + info.get_operator_name() + " */ \n");
-      printf ("\n @@@@@ In unparseBinaryExpr() expr = %p %s \n",expr,expr->class_name().c_str());
+      printf ("\n @@@@@ In unparseBinaryExpr(): expr = %p %s \n",expr,expr->class_name().c_str());
 #endif
 
    // DQ (1/23/2014): Added better support for unparsing of data member access of un-named class (structs and unions) typed variables.
-      bool suppressOutputOfDotExp = isDotExprWithAnonymousUnion(expr);
+      bool suppressOutputOfDotExp           = isDotExprWithAnonymousUnion(expr);
+      bool suppressOutputOfImplicitArrowExp = isImplicitArrowExpWithinLambdaFunction(expr,info);
 
 #if DEBUG_BINARY_OPERATORS
-  // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
-      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + binary_op->class_name() + " */ \n");
-      curprint ( string("\n /*                              lhs class name         = ") + binary_op->get_lhs_operand()->class_name() + " */ \n");
-      curprint ( string("\n /*                              rhs class name         = ") + binary_op->get_rhs_operand()->class_name() + " */ \n");
+   // printf ("In Unparse_ExprStmt::unparseBinaryExpr() expr = %s \n",expr->sage_class_name());
+      curprint ( string("\n /* Inside of unparseBinaryExpr (expr class name        = ") + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " */ \n");
+      curprint ( string("\n /*                              lhs class name         = ") + StringUtility::numberToString(binary_op->get_lhs_operand()) + " = " + binary_op->get_lhs_operand()->class_name() + " */ \n");
+      curprint ( string("\n /*                              rhs class name         = ") + StringUtility::numberToString(binary_op->get_rhs_operand()) + " = " + binary_op->get_rhs_operand()->class_name() + " */ \n");
       curprint ( string("\n /*                              suppressOutputOfDotExp = ") + (suppressOutputOfDotExp ? "true" : "false") + " */ \n");
 #endif
 
@@ -2698,26 +2984,62 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool parent_function_call_uses_operator_syntax = false;
+     bool parent_is_a_function_call                    = false;
+     bool parent_function_call_uses_operator_syntax    = false;
+//   bool parent_function_is_overloaded_arrow_operator = false;
+     bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
-               parent_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+               parent_is_a_function_call                  = true;
+               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+#if 1
+            // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
+               SgExpression* rhs = binary_op->get_rhs_operand();
+            // bool isRelevantOverloadedOperator = false;
+               SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
+               if (memberFunctionRefExp != NULL)
+                  {
+                    string functionName = memberFunctionRefExp->get_symbol()->get_name();
+#if DEBUG_BINARY_OPERATORS
+                    printf ("--- parent function is: functionName = %s \n",functionName.c_str());
+#endif
+#if 0
+                    if (functionName == "operator->")
+                       {
+                         parent_function_is_overloaded_arrow_operator = true;
+                       }
+#endif
+                  }
+#endif
              }
         }
+
+  // bool isPartOfArrowOperatorChain = partOfArrowOperatorChain(binary_op);
+
+#if DEBUG_BINARY_OPERATORS
+  // printf ("In unparseBinaryExpr(): isPartOfArrowOperatorChain                   = %s \n",isPartOfArrowOperatorChain ? "true" : "false");
+     printf ("In unparseBinaryExpr(): suppressOutputOfDotExp                       = %s \n",suppressOutputOfDotExp     ? "true" : "false");
+  // printf ("In unparseBinaryExpr(): parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+#endif
 
   // DQ (4/13/13): Checking the current level function call expression.
      SgNode* possibleFunctionCall = binary_op->get_lhs_operand();
      ROSE_ASSERT(possibleFunctionCall != NULL);
+     bool is_currently_a_function_call = false;
      bool current_function_call_uses_operator_syntax = false;
+     bool current_function_call_is_compiler_generated = false;
      if (possibleFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
           if (functionCallExp != NULL)
              {
-               current_function_call_uses_operator_syntax = functionCallExp->get_uses_operator_syntax();
+               is_currently_a_function_call                = true;
+               current_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+               current_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
              }
         }
 
@@ -2735,8 +3057,13 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
      current_function_call_uses_operator_syntax = true;
 #endif
 #if DEBUG_BINARY_OPERATORS
-     printf ("In unparseBinaryExpr(): parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax  == true ? "true" : "false");
-     printf ("In unparseBinaryExpr(): current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): binary_op = %p = %s isCompilerGenerated() = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->isCompilerGenerated() == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_is_a_function_call                    = %s \n",parent_is_a_function_call                   == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax   == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): parent_function_call_is_compiler_generated   = %s \n",parent_function_call_is_compiler_generated  == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): is_currently_a_function_call                 = %s \n",is_currently_a_function_call                == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax  == true ? "true" : "false");
+     printf ("In unparseBinaryExpr(): current_function_call_is_compiler_generated  = %s \n",current_function_call_is_compiler_generated == true ? "true" : "false");
 #endif
 
   // DQ (2/7/2011): Unparser support for more general originalExpressionTree handling.
@@ -2796,7 +3123,6 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #if DEBUG_BINARY_OPERATORS
                     printf ("In unparseBinaryExp(): Case 1.1.1 \n");
 #endif
-
                     if (unp->u_sage->isUnaryPostfixOperator(binary_op->get_rhs_operand()))  // Postfix unary operator.
                        {
                       // ... nothing to do here (output the operator later!) ???
@@ -2829,9 +3155,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                          unparseExpression(binary_op->get_rhs_operand(), info);
                        }
                   }
+                 else
+                  {
+#if DEBUG_BINARY_OPERATORS
+                    printf ("In unparseBinaryExp(): Case 1.1.2 binary_op->get_rhs_operand() is NOT a unary operator (skipping output) \n");
+#endif
+                  }
              }
             else
              {
+               ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+                
 #if DEBUG_BINARY_OPERATORS
                printf ("In unparseBinaryExp(): Case 1.2 \n");
 #endif
@@ -2879,11 +3213,20 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
 
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* STARTING LHS: Calling unparseExpression(): " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          printf ("STARTING LHS: Calling unparseExpression(): for LHS = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
 #endif
-          unparseExpression(binary_op->get_lhs_operand(), info);
+
+       // DQ (9/3/2014): Adding support to supress the output if this operators in lambda functions.
+       // unparseExpression(binary_op->get_lhs_operand(), info);
+          if (suppressOutputOfImplicitArrowExp == false)
+             {
+               unparseExpression(binary_op->get_lhs_operand(), info);
+             }
+
 #if DEBUG_BINARY_OPERATORS
-          curprint ("/* DONE: lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          curprint ("/* FINISHED LHS: Calling unparseExpression(): binary_op = " + StringUtility::numberToString(binary_op) + " = " + binary_op->class_name() + " lhs = " + binary_op->get_lhs_operand()->class_name() + " */\n ");
+          printf ("FINISHED LHS: Calling unparseExpression(): binary_op = %p = %s for LHS = %p = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
 #endif
 
        // if (SageInterface::isPrefixOperator(binary_op->get_rhs_operand()) == true)
@@ -2907,8 +3250,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           curprint ( string("\n/*    --- parent_function_call_uses_operator_syntax  = ") + (parent_function_call_uses_operator_syntax ? "true" : "false") + " */ \n");
 #endif
 #if DEBUG_BINARY_OPERATORS
-          printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-          printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+       // printf ("parent_function_call_uses_operator_syntax  = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+       // printf ("current_function_call_uses_operator_syntax = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+
+          printf ("In unparseBinaryExpr(): (after LHS) binary_op = %p = %s isCompilerGenerated() = %s \n",binary_op,binary_op->class_name().c_str(),binary_op->isCompilerGenerated() == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) suppressOutputOfDotExp                       = %s \n",suppressOutputOfDotExp                      == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_is_a_function_call                    = %s \n",parent_is_a_function_call                   == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax   == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) parent_function_call_is_compiler_generated   = %s \n",parent_function_call_is_compiler_generated  == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) is_currently_a_function_call                 = %s \n",is_currently_a_function_call                == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax  == true ? "true" : "false");
+          printf ("In unparseBinaryExpr(): (after LHS) current_function_call_is_compiler_generated  = %s \n",current_function_call_is_compiler_generated == true ? "true" : "false");
 #endif
 
 #if 0
@@ -2922,6 +3274,9 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
           bool isAnonymousName = false;
           if (rhs_is_varRef == true)
              {
+
+#error "DEAD CODE!"
+
 #if DEBUG_BINARY_OPERATORS
                printf ("Identified a SgVarRefExp: checking the name for __anonymous_0x \n");
 #endif
@@ -2939,34 +3294,56 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
              }
 #endif
 
-          if (suppressOutputOfDotExp == false)
-          {
-          if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
-                 isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
+       // DQ: This is handling that is specific to anonomous unions.
+       // if (suppressOutputOfDotExp == false)
+          if (suppressOutputOfDotExp == false && suppressOutputOfImplicitArrowExp == false)
              {
+               if ( ( (current_function_call_uses_operator_syntax == false) && (parent_function_call_uses_operator_syntax == false) ) || 
+                       isRequiredOperator(binary_op,current_function_call_uses_operator_syntax,parent_function_call_uses_operator_syntax) == true )
+                  {
 #if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.4.2.2.1 \n");
+                    printf("In unparseBinaryExp(): Case 1.4.2.2.1 \n");
+                    printf("   --- In unparseBinaryExpr(): Output operator name = %s \n",info.get_operator_name().c_str());
+                    curprint("/* Output operator name = " + info.get_operator_name() + " */\n ");
 #endif
+                    curprint ( string(" ") + info.get_operator_name() + " ");
+
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2004_149.C (can't be set true or false based on test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2004_142.C (can't be set true or false based on test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                       }
+                 }
+                else
+                 {
 #if DEBUG_BINARY_OPERATORS
-               printf ("   --- In unparseBinaryExpr(): Output operator name = %s \n",info.get_operator_name().c_str());
-               curprint ( "/* Output operator name = " + info.get_operator_name() + " */\n ");
+                    printf("~~~~~~~ In unparseBinaryExpr(): SKIPPING output of SgDotExp (operator name = %s) \n",info.get_operator_name().c_str());
+                    curprint("/* SKIPPING output of operator name = " + info.get_operator_name() + " */\n ");
 #endif
-               curprint ( string(" ") + info.get_operator_name() + " ");
-            }
-           else
-            {
-#if DEBUG_BINARY_OPERATORS
-               printf ("~~~~~~~ In unparseBinaryExpr(): SKIPPING output of operator name = %s \n",info.get_operator_name().c_str());
-               curprint ( "/* SKIPPING output of operator name = " + info.get_operator_name() + " */\n ");
-#endif
-            }
-          }
-          else
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2013_113.C (can't be set true or false based on test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2010_04.C (can't be set true or false based on test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                       }
+                 }
+             }
+            else
              {
             // If this is the case of suppressOutputOfDotExp == true, then output a space to seperate the output tokens (simplifies debugging).
                curprint(" ");
              }
-          
 
        // DQ (2/9/2010): Shouldn't this be true (it should also return a bool type).
           ROSE_ASSERT(info.get_nested_expression() != 0);
@@ -2979,33 +3356,49 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
        // DQ (4/13/2013): We need to detect if this is a prefix operator, and if we unparse it before 
        // the LHS if we are using the oprator syntax, e.g. when current_function_call_uses_operator_syntax == true
 
+#if DEBUG_BINARY_OPERATORS
+          printf ("In unparseBinaryExp(): Case 1.6 \n");
+          curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
+#endif
+       // unparseExpression(rhs, info);
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("++++++++++++++++ Evaluate use of RHS: parent_function_call_uses_operator_syntax = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+#endif
+
+#if DEBUG_BINARY_OPERATORS
+          printf ("parent_function_call_uses_operator_syntax    = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
+       // printf ("parent_function_is_overloaded_arrow_operator = %s \n",parent_function_is_overloaded_arrow_operator ? "true" : "false");
+          printf ("is_currently_a_function_call                 = %s \n",is_currently_a_function_call ? "true" : "false");
+          printf ("current_function_call_uses_operator_syntax   = %s \n",current_function_call_uses_operator_syntax ? "true" : "false");
+#endif
+       // DQ (7/4/2014): Consider this as a possible fix (put back so I can look at this in the morning).
+       // Use (current_function_call_uses_operator_syntax == false) only if the child is a function call.
+
+#define NEW_CASE 0
+
+#if NEW_CASE
+       // if (parent_function_call_uses_operator_syntax == true)
+       // if (current_function_call_uses_operator_syntax == false && parent_function_call_uses_operator_syntax == true)
+       // if ( (is_currently_a_function_call == false) || (is_currently_a_function_call == true && current_function_call_uses_operator_syntax == false) )
 #if 0
-       // DQ (4/21/2013): I don't think this should be a special case.
-          if (info.get_operator_name() == ",")
+          if ( (parent_function_call_uses_operator_syntax == false) || 
+                    ( (is_currently_a_function_call == false) || 
+                      ( (is_currently_a_function_call == true) && 
+                        (current_function_call_uses_operator_syntax == false) && 
+                        (parent_function_is_overloaded_arrow_operator == false) ) ) )
+#endif
+          if ( (parent_function_call_uses_operator_syntax == false) || 
+                    (parent_function_is_overloaded_arrow_operator == false) ||
+                    ( (is_currently_a_function_call == false) || 
+                      ( (is_currently_a_function_call == true) && 
+                        (current_function_call_uses_operator_syntax == false) ) ) )
+#endif
              {
-#if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.5 \n");
-#endif
-               SgUnparse_Info newinfo(info);
-               newinfo.set_inRhsExpr();
-               unp->u_debug->printDebugInfo("rhs: ", false);
 
-               unparseExpression(rhs, newinfo);
-             }
-            else
-#endif
-
-             {
-#if DEBUG_BINARY_OPERATORS
-               printf ("In unparseBinaryExp(): Case 1.6 \n");
-               curprint ( "\n /* unparseBinaryExpr(): Test 5  before unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
-#endif
-            // unparseExpression(rhs, info);
-
-#if DEBUG_BINARY_OPERATORS
-               printf ("++++++++++++++++ Evaluate use of RHS: parent_function_call_uses_operator_syntax = %s \n",parent_function_call_uses_operator_syntax ? "true" : "false");
-#endif
+            // DQ (7/6/2014): change this to be symetric with prefix operator handling (switched back: see test2014_75.C).
                if (parent_function_call_uses_operator_syntax == true)
+            // if (current_function_call_uses_operator_syntax == true)
                   {
                  // DQ (4/20/2013): I think we want to restrict this to the case of overloaded operators for "->" (and maybe ".").
                  // test2013_114.C demonstrates where just because we detect a cast we don't want to skip the output of other operators.
@@ -3013,7 +3406,17 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                  // to be calls (e.g. SgArrowExp or it's overloaded version).  I am unclear if the SgDotExp can be caused to be generated 
                  // by a cases (but I expect it can).
 
+                 // DQ (7/4/2014): I think that we need to check if the current_function_call_uses_operator_syntax, if true then we don't 
+                 // want to output the operator here.  This is the key point of the bug associated with test2014_75.C.  This would avoid
+                 // and elaborate lookup from the rhs expression to see if there were to sequential calls to output an overloaded operator 
+                 // (such as "->").
+
+                    ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+                 // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+
                     bool isRelevantOverloadedOperator = false;
+#if 1
+                 // DQ (7/6/2014): I would like to eliminate this code to simplify the handling of operator syntax.
                     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(rhs);
                     if (memberFunctionRefExp != NULL)
                        {
@@ -3023,12 +3426,22 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
 #endif
                          if (functionName == "operator->")
                             {
+                           // DQ (7/6/2014): Only allow this when it is not compiler generated.
+#if 1
                               isRelevantOverloadedOperator = true;
+#else
+                           // DQ (7/6/2014): This was a bad idea.
+                              if (parent_function_call_is_compiler_generated == false)
+                                 {
+                                   isRelevantOverloadedOperator = true;
+                                 }
+#endif
                             }
                        }
-
+#endif
 #if DEBUG_BINARY_OPERATORS
                     printf ("++++++++++++++++ binary_op = %p = %s parent_function_call_uses_operator_syntax == true: search for SgCastExp \n",binary_op,binary_op->class_name().c_str());
+                    printf ("++++++++++++++++ isRelevantOverloadedOperator = %s \n",isRelevantOverloadedOperator ? "true" : "false");
 #endif
                  // If this is a consequence of a cast that was implicit (compiler generated), then we don't want to output this operator.
                     ROSE_ASSERT(binary_op->get_parent() != NULL);
@@ -3058,42 +3471,120 @@ UnparseLanguageIndependentConstructs::unparseBinaryExpr(SgExpression* expr, SgUn
                            else
                             {
 #if DEBUG_BINARY_OPERATORS
+                              printf ("++++++++++++++++ output of the RHS 1 \n");
                               curprint ( "\n /* unparseBinaryExpr(): output RHS 1 */ \n");
 #endif
+                           // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                              if (is_currently_a_function_call == true)
+                                 {
+                                   ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                                   ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                                 }
+
+                           // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                              if (parent_is_a_function_call == true)
+                                 {
+                                // DQ (7/6/2014): This is true only because of the outer predicate.
+                                // ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+                                   ROSE_ASSERT(parent_function_call_is_compiler_generated == false);
+                                 }
+
                               unparseExpression(rhs, info);
                             }
                        }
                       else
                        {
 #if DEBUG_BINARY_OPERATORS
+                         printf ("++++++++++++++++ output of the RHS 2 \n");
                          curprint ( "\n /* unparseBinaryExpr(): output RHS 2 */ \n");
 #endif
+                      // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                         if (is_currently_a_function_call == true)
+                            {
+                           // DQ (7/6/2014): Reset based on test2013_117.C (can't be set based on test2013_117.C).
+                           // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                           // DQ (7/5/2014): Reset based on test2013_38.C (can't be set based on test2010_04.C).
+                           // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                           // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                            }
+
+                      // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                         if (parent_is_a_function_call == true)
+                            {
+                           // DQ (7/6/2014): This is true only because of the outer predicate.
+                           // ROSE_ASSERT(parent_function_call_uses_operator_syntax == true);
+
+                           // DQ (7/5/2014): Reset based on test2004_47.C (can't be set according to test2005_141.C).
+                           // ROSE_ASSERT(parent_function_call_is_compiler_generated == true);
+                            }
+
                          unparseExpression(rhs, info);
                        }
                   }
                  else
                   {
 #if DEBUG_BINARY_OPERATORS
+                    printf ("++++++++++++++++ output of the RHS 3 (non-operator syntax used) \n");
                     curprint ( "\n /* unparseBinaryExpr(): output RHS 3 */ \n");
 #endif
+                    ROSE_ASSERT(parent_function_call_uses_operator_syntax == false);
+                 // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
                     unparseExpression(rhs, info);
 
+                 // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (is_currently_a_function_call == true)
+                       {
+                      // DQ (7/5/2014): Reset based on test2004_149.C (can't be set according to test2004_47.C).
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                      // ROSE_ASSERT(current_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/5/2014): Reset based on test2014_75.C (can't be set according to test2004_149.C).
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == false);
+                      // ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                       }
+#if 0
+                 // DQ (7/6/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+                    if (parent_is_a_function_call == true)
+                       {
+                      // DQ (7/6/2014): Reset based on test2001_28.C // (can't be set according to test2004_149.C).
+                         ROSE_ASSERT(parent_function_call_uses_operator_syntax == false);
+
+                      // DQ (7/6/2014): Reset based on test2004_141.C (can't be set according to test2001_28.C).
+                      // ROSE_ASSERT(parent_function_call_is_compiler_generated == true);
+                       }
+#endif
 #if DEBUG_BINARY_OPERATORS
                     curprint ( "\n /* DONE: unparseBinaryExpr(): output RHS 3 */ \n");
 #endif
                   }
+             }
+#if NEW_CASE
+            else
+             {
+#if DEBUG_BINARY_OPERATORS
+               printf ("++++++++++++++++ skipping output of the RHS 4 \n");
+#endif
+            // DQ (7/5/2014): Add assertions using simpler evaluation against stored valuses from the EDG translation.
+               if (is_currently_a_function_call == true)
+                  {
+                    ROSE_ASSERT(current_function_call_uses_operator_syntax == true);
+                    ROSE_ASSERT(current_function_call_is_compiler_generated == true);
+                  }
+             }
+#endif
 
 #if DEBUG_BINARY_OPERATORS
                curprint ( "\n /* unparseBinaryExpr(): Test 6  after unparseExpression() rhs = " + rhs->class_name() + "*/ \n");
 #endif
-             }
         }
 
      info.unset_nested_expression();
 
 #if DEBUG_BINARY_OPERATORS
      printf ("Leaving unparseBinaryExpr(): exp = %p = %s \n",expr,expr->class_name().c_str());
-     curprint ( "\n /* Leaving unparseBinaryExpr */ \n");
+     curprint ( "\n /* Leaving unparseBinaryExpr (expr = " + expr->class_name() + " = " + StringUtility::numberToString(expr) + ") */ \n");
 #endif
    }
 
@@ -3126,6 +3617,22 @@ UnparseLanguageIndependentConstructs::isRequiredOperator( SgBinaryOp* binary_op,
           binary_op,binary_op->class_name().c_str(), current_function_call_uses_operator_syntax ? "true" : "false",parent_function_call_uses_operator_syntax ? "true" : "false");
      printf ("   --- binary_op->get_lhs_operand() = %p = %s \n",binary_op->get_lhs_operand(),binary_op->get_lhs_operand()->class_name().c_str());
      printf ("   --- binary_op->get_rhs_operand() = %p = %s \n",binary_op->get_rhs_operand(),binary_op->get_rhs_operand()->class_name().c_str());
+
+#endif
+
+#if 1
+  // DQ (7/6/2014): Simpler appraoch, but wrong since overloaded operators unparsed 
+  // using operator syntax will always be marked as compiler generated.
+  // bool is_compiler_generated = binary_op->isCompilerGenerated();
+
+     bool isArrowExp = (isSgArrowExp(binary_op) != NULL);
+
+     if (isArrowExp == true)
+        {
+          return true;
+        }
+
+  // returnValue = (is_compiler_generated == false || isArrowExp);
 #endif
 
   // if (unp->u_sage->isOperator(binary_op->get_rhs_operand()) == false)
@@ -3282,6 +3789,9 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
                case V_SgLongDoubleVal:          { unparseLongDoubleVal(expr, info);   break; }
                case V_SgComplexVal:             { unparseComplexVal(expr, info);      break; }
 
+            // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+               case V_SgNullptrValExp:          { unparseNullptrVal(expr, info);      break; }
+
                default:
                   {
                     printf ("Default reached in switch statement valueExp = %p = %s \n",valueExp,valueExp->class_name().c_str());
@@ -3292,6 +3802,23 @@ UnparseLanguageIndependentConstructs::unparseValue(SgExpression* expr, SgUnparse
         }
    }
 
+
+// DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
+void
+UnparseLanguageIndependentConstructs::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+   {
+     ROSE_ASSERT(expr != NULL);
+#if 0
+     printf ("In UnparseLanguageIndependentConstructs::unparseNullptrVal(): expr = %p = %s \n",expr,expr->class_name().c_str());
+#endif
+
+     curprint("nullptr");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
 
 
 void
@@ -5050,69 +5577,106 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
 #if 0
      printf ("In getPrecedence(): variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
+     curprint(string("\n/* In getPrecedence(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " */ \n");
 #endif
+
+     PrecedenceSpecifier precedence_value = 0;
 
      switch (variant)
         {
           case V_SgExprListExp:
-          case V_SgCommaOpExp:       return 1;
-          case V_SgAssignOp:         return 2;
+          case V_SgCommaOpExp:       // return 1;
+                                     precedence_value = 1; break;
+
+          case V_SgAssignOp:         // return 2;
        // DQ (2/1/2009): Added precedence for SgPointerAssignOp (Fortran 90)
-          case V_SgPointerAssignOp:  return 2;
-          case V_SgPlusAssignOp:     return 2;
-          case V_SgMinusAssignOp:    return 2;
-          case V_SgAndAssignOp:      return 2;
-          case V_SgIorAssignOp:      return 2;
-          case V_SgMultAssignOp:     return 2;
-          case V_SgDivAssignOp:      return 2;
-          case V_SgModAssignOp:      return 2;
-          case V_SgXorAssignOp:      return 2;
-          case V_SgLshiftAssignOp:   return 2;
-          case V_SgRshiftAssignOp:   return 2;
-          case V_SgConditionalExp:   return 3;
-          case V_SgOrOp:             return 4;
-          case V_SgAndOp:            return 5;
-          case V_SgBitOrOp:          return 6;
-          case V_SgBitXorOp:         return 7;
-          case V_SgBitAndOp:         return 8;
-          case V_SgEqualityOp:       return 9;
-          case V_SgNotEqualOp:       return 9;
-          case V_SgLessThanOp:       return 10;
-          case V_SgGreaterThanOp:    return 10;
-          case V_SgLessOrEqualOp:    return 10;
-          case V_SgGreaterOrEqualOp: return 10;
+          case V_SgPointerAssignOp:  // return 2;
+          case V_SgPlusAssignOp:     // return 2;
+          case V_SgMinusAssignOp:    // return 2;
+          case V_SgAndAssignOp:      // return 2;
+          case V_SgIorAssignOp:      // return 2;
+          case V_SgMultAssignOp:     // return 2;
+          case V_SgDivAssignOp:      // return 2;
+          case V_SgModAssignOp:      // return 2;
+          case V_SgXorAssignOp:      // return 2;
+          case V_SgLshiftAssignOp:   // return 2;
+          case V_SgRshiftAssignOp:   // return 2;
+                                     precedence_value = 2; break;
+
+           case V_SgConditionalExp:   // return 3;
+                                     precedence_value = 3; break;
+
+          case V_SgOrOp:             // return 4;
+                                     precedence_value = 4; break;
+
+          case V_SgAndOp:            // return 5;
+                                     precedence_value = 5; break;
+
+          case V_SgBitOrOp:          // return 6;
+                                     precedence_value = 6; break;
+
+          case V_SgBitXorOp:         // return 7;
+                                     precedence_value = 7; break;
+
+          case V_SgBitAndOp:         // return 8;
+                                     precedence_value = 8; break;
+
+          case V_SgEqualityOp:       // return 9;
+          case V_SgNotEqualOp:       // return 9;
+                                     precedence_value = 9; break;
+
+          case V_SgLessThanOp:       // return 10;
+          case V_SgGreaterThanOp:    // return 10;
+          case V_SgLessOrEqualOp:    // return 10;
+          case V_SgGreaterOrEqualOp: // return 10;
+                                     precedence_value = 10; break;
+
 
        // DQ (1/26/2013): I think this is wrong, "<<" and ">>" have value 7 (lower than "==") (see test2013_42.C).
        // case V_SgLshiftOp:         return 11;
        // case V_SgRshiftOp:         return 11;
-          case V_SgLshiftOp:         return 11;
-          case V_SgRshiftOp:         return 11;
+          case V_SgLshiftOp:         // return 11;
+          case V_SgRshiftOp:         // return 11;
 
-          case V_SgJavaUnsignedRshiftOp: return 11;
-          case V_SgAddOp:            return 12;
+          case V_SgJavaUnsignedRshiftOp: // return 11;
+                                     precedence_value = 11; break;
+
+          case V_SgAddOp:            // return 12;
+                                     precedence_value = 12; break;
+
 
        // DQ (2/1/2009): Added operator (which should have been here before)
-          case V_SgMinusOp:          return 15;
-          case V_SgUnaryAddOp:       return 15;
+          case V_SgMinusOp:          // return 15;
+          case V_SgUnaryAddOp:       // return 15;
+                                     precedence_value = 15; break;
 
-          case V_SgSubtractOp:       return 12;
-          case V_SgMultiplyOp:       return 13;
+
+          case V_SgSubtractOp:       // return 12;
+                                     precedence_value = 12; break;
+
+          case V_SgMultiplyOp:       // return 13;
           case V_SgIntegerDivideOp:
-          case V_SgDivideOp:         return 13;
-          case V_SgModOp:            return 13;
-          case V_SgDotStarOp:        return 14;
-          case V_SgArrowStarOp:      return 14;
-          case V_SgPlusPlusOp:       return 15;
-          case V_SgMinusMinusOp:     return 15;
-          case V_SgBitComplementOp:  return 15;
-          case V_SgNotOp:            return 15;
+          case V_SgDivideOp:         // return 13;
+          case V_SgModOp:            // return 13;
+                                     precedence_value = 13; break;
+
+          case V_SgDotStarOp:        // return 14;
+          case V_SgArrowStarOp:      // return 14;
+                                     precedence_value = 14; break;
+
+          case V_SgPlusPlusOp:       // return 15;
+          case V_SgMinusMinusOp:     // return 15;
+          case V_SgBitComplementOp:  // return 15;
+          case V_SgNotOp:            // return 15;
           case V_SgPointerDerefExp:
           case V_SgAddressOfOp:
           case V_SgUpcLocalsizeofExpression:   // \pp 03/03/11
-          case V_SgSizeOfOp:         return 15;
+          case V_SgSizeOfOp:         // return 15;
 
        // DQ (6/20/2013): Added support for __alignof__ operator.
-          case V_SgAlignOfOp:        return 15;
+          case V_SgAlignOfOp:        // return 15;
+                                     precedence_value = 15; break;
+
 
           case V_SgFunctionCallExp:
              {
@@ -5136,25 +5700,33 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                     ROSE_ASSERT(false);
                   }
 #endif
-               return 16;
+               // return 16;
+               precedence_value = 16;
+               break;
              }
 
-          case V_SgPntrArrRefExp:    return 16;
-          case V_SgArrowExp:         return 16;
-          case V_SgDotExp:           return 16;
+          case V_SgPntrArrRefExp:    // return 16;
+          case V_SgArrowExp:         // return 16;
+          case V_SgDotExp:           // return 16;
 
-          case V_SgImpliedDo:        return 16;
+          case V_SgImpliedDo:        // return 16;
 
-          case V_SgLabelRefExp:      return 16;
-          case V_SgActualArgumentExpression: return 16;
+          case V_SgLabelRefExp:      // return 16;
+          case V_SgActualArgumentExpression: // return 16;
 
        // DQ (2/1/2009): Added support for Fortran operator.
-          case V_SgExponentiationOp: return 16;
-          case V_SgConcatenationOp:  return 11;
-          case V_SgSubscriptExpression:  return 16;  // Make the same as for SgPntrArrRefExp
+          case V_SgExponentiationOp: // return 16;
+                                     precedence_value = 16; break;
+
+          case V_SgConcatenationOp:  // return 11;
+                                     precedence_value = 11; break;
+
+          case V_SgSubscriptExpression:  // return 16;  // Make the same as for SgPntrArrRefExp
+                                     precedence_value = 16; break;
 
        // DQ (2/1/2009): This was missing from before.
-          case V_SgThisExp:          return 0;
+          case V_SgThisExp:          // return 0;
+                                     precedence_value = 0; break;
 
           case V_SgCastExp:
              {
@@ -5212,9 +5784,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                             }
 
                          string func_name = name.str();
-
+#if 0
                          printf ("case V_SgCastExp: functionCallExp = %p associated function func_name = %s \n",functionCallExp,func_name.c_str());
-
+#endif
                          ROSE_ASSERT(func_name.find("operator") != string::npos);
 
                        }
@@ -5239,54 +5811,77 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                     printf ("In getPrecedence(): case V_SgCastExp: If this is an overloaded operator then the precedence should be that of the operator being overloaded (not zero). \n");
                     printf ("   --- castExp = %p isCompilerGenerated = true (return precedence = 1) \n",castExp);
 #endif
-                 // If this is compiler generated thenwe have to look at the precedence of the unary operator's operand.
+                 // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
                  // return 1;
                     if (castExp != NULL)
                        {
-                         return getPrecedence(castExp->get_operand());
+                      // return getPrecedence(castExp->get_operand());
+                         precedence_value = getPrecedence(castExp->get_operand()); 
                        }
                       else
                        {
-                      // If this is compiler generated thenwe have to look at the precedence of the unary operator's operand.
-                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated thenwe have to look at the precedence of the unary operator's operand (returning 1) \n");
-                         return 1;
+                      // DQ (8/29/2014): Changed the precedence to avoid over parenthization of user-defined conversion operators 
+                      // (see test2006_185.C).  If it is compiler generated then we can argue that it has a higher precedence and 
+                      // this avoids the redundant parenthization which is a bug for GNU 4.4 and other versions of GNU.
+
+                      // If this is compiler generated then we have to look at the precedence of the unary operator's operand.
+                      // printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 1) \n");
+                      // return 1;
+                         printf ("WARNING: case of overloaded cast operator: If this is compiler generated then we have to look at the precedence of the unary operator's operand (returning 16) \n");
+                      // return 16;
+                         precedence_value = 16; 
                        }
                   }
+                 else
+                  {
+                    precedence_value = 0; 
+                  }
 
-               return 0;
+            // return 0;
+               break;
              }
 
-       // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
-          case V_SgTemplateParameterVal:   return 0;
+       // DQ (8/29/2014): Added support for SgAggregateInitializer (failed in tutorial examples).
+          case V_SgAggregateInitializer:
 
-          case V_SgBoolValExp:             return 0;
-          case V_SgIntVal:                 return 0;
-          case V_SgThrowOp:                return 0;
-          case V_SgDoubleVal:              return 0;
-          case V_SgUnsignedIntVal:         return 0;
-          case V_SgAssignInitializer:      return 0;
-          case V_SgFloatVal:               return 0;
-          case V_SgVarArgOp:               return 0;
-          case V_SgLongDoubleVal:          return 0;
-          case V_SgLongIntVal:             return 0;
-          case V_SgLongLongIntVal:         return 0;
-          case V_SgVarArgStartOp:          return 0;
-          case V_SgNewExp:                 return 0;
-          case V_SgDeleteExp:              return 0;
-          case V_SgStringVal:              return 0;
-          case V_SgCharVal:                return 0;
-          case V_SgUnsignedLongLongIntVal: return 0;
-          case V_SgUnsignedLongVal:        return 0;
-          case V_SgComplexVal:             return 0;
-          case V_SgCAFCoExpression:        return 16;
+       // DQ (7/13/2013): Added support to support this kind of value (I think this is correct, but not sure).
+          case V_SgTemplateParameterVal:   // return 0;
+
+       // DQ (11/10/2014): Added support to support this C++11 value.
+          case V_SgNullptrValExp:
+
+          case V_SgBoolValExp:             // return 0;
+          case V_SgIntVal:                 // return 0;
+          case V_SgThrowOp:                // return 0;
+          case V_SgDoubleVal:              // return 0;
+          case V_SgUnsignedIntVal:         // return 0;
+          case V_SgAssignInitializer:      // return 0;
+          case V_SgFloatVal:               // return 0;
+          case V_SgVarArgOp:               // return 0;
+          case V_SgLongDoubleVal:          // return 0;
+          case V_SgLongIntVal:             // return 0;
+          case V_SgLongLongIntVal:         // return 0;
+          case V_SgVarArgStartOp:          // return 0;
+          case V_SgNewExp:                 // return 0;
+          case V_SgDeleteExp:              // return 0;
+          case V_SgStringVal:              // return 0;
+          case V_SgCharVal:                // return 0;
+          case V_SgUnsignedLongLongIntVal: // return 0;
+          case V_SgUnsignedLongVal:        // return 0;
+          case V_SgComplexVal:             // return 0;
+                                     precedence_value = 0; break;
+
+          case V_SgCAFCoExpression:        // return 16;
+                                     precedence_value = 16; break;
 
        // Liao, 7/15/2009, UPC nodes
-          case V_SgUpcThreads:             return 0;
-          case V_SgUpcMythread:            return 0;
-          case V_SgNullExpression:         return 0;
+          case V_SgUpcThreads:             // return 0;
+          case V_SgUpcMythread:            // return 0;
+          case V_SgNullExpression:         // return 0;
        // TV (04/26/2010): CUDA nodes
-          case V_SgCudaKernelExecConfig:   return 0;
-          case V_SgCudaKernelCallExp:      return 0;
+          case V_SgCudaKernelExecConfig:   // return 0;
+          case V_SgCudaKernelCallExp:      // return 0;
+                                     precedence_value = 0; break;
 
        // TV (04/24/2011): Add FunctionRefExp to avoid the following Warning. It occurs
        //     after my modification for a more generic support of the original
@@ -5317,44 +5912,58 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
                   }
 #endif
 #endif
-               return 0;
+            // return 0;
+               precedence_value = 0; 
+               break;
              }
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgStatementExpression:      return 0;
+          case V_SgStatementExpression:      // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (10/8/2012): Unclear if this is the correct precedence for this GNU specific feature.
        // Note that this setting is equivalent to what was being returned, so I expect it is fine since it represents no change.
-          case V_SgVarRefExp:                return 0;
+          case V_SgVarRefExp:                // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (7/22/2013): I think this needs to be set so that we never output parenthesis for this case.
        // DQ (10/17/2012): Added support for SgDesignatedInitializer.
        // case V_SgDesignatedInitializer:    return 0;
        // case V_SgDesignatedInitializer:    return 16;
-          case V_SgDesignatedInitializer:    return 0;
+          case V_SgDesignatedInitializer: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (1/26/2013): This case needs to be supported (see test2013_42.C).
-          case V_SgTypeIdOp:                 return 16;
+          case V_SgTypeIdOp:                 // return 16;
+                                     precedence_value = 16; break;
 
        // DQ (7/13/2013): Added support to type trait builtin functions (not clear if this is the correct value).
        // Make this the same precedence as a SgFunctionCallExp.
-          case V_SgTypeTraitBuiltinOperator: return 16;
+          case V_SgTypeTraitBuiltinOperator: // return 16;
+                                     precedence_value = 16; break;
 
        // DQ (9/25/2013): Adding support for new IR node (C90 and C++ compound literals).
-          case V_SgCompoundLiteralExp: return 0;
+          case V_SgCompoundLiteralExp: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (9/25/2013): Adding support for Fortran user defined binary operators (however, I am not certain this is the correct precedence).
-          case V_SgUserDefinedBinaryOp: return 0;
+          case V_SgUserDefinedBinaryOp: // return 0;
+                                     precedence_value = 0; break;
 
        // DQ (9/25/2013): Adding support for C/C++ asm operator (however, I am not certain this is the correct precedence).
-          case V_SgAsmOp: return 0;
+          case V_SgAsmOp: // return 0;
+                                     precedence_value = 0; break;
+
+       // DQ (11/10/2014): Not clear if this is the correct precedence for this C++11 expression.
+          case V_SgFunctionParameterRefExp:
+                                     precedence_value = 0; break;
 
           default:
              {
             // We want this to be a printed warning (so we can catch these missing cases), but it is not worthy of calling an error since the default works fine.
                printf ("Warning: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
-#if 0
+#if 1
             // DQ (9/25/2013): Temporarily added assertion to get rid of warnings (catching them and fixing them).
                printf ("Error: getPrecedence() in unparseLanguageIndependentConstructs.C: Undefined expression variant = %d = %s \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str());
                ROSE_ASSERT(false);
@@ -5362,7 +5971,14 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
              }
         }
 
-     return 0;
+#if 0
+     printf ("Leaving getPrecedence(): variant = %d = %s precedence_value = %d \n",variant,Cxx_GrammarTerminalNames[variant].name.c_str(),precedence_value);
+     curprint(string("\n/* Leaving getPrecedence(): variant = ") + Cxx_GrammarTerminalNames[variant].name + " precedence_value = " + StringUtility::numberToString(precedence_value) + " */ \n");
+#endif
+
+  // DQ (8/29/2014): Modified this function to make it easier to debug the precedence return values directly.
+  // return 0;
+     return precedence_value;
    }
 
 
@@ -5661,6 +6277,28 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
           default:
              {
+            // DQ (8/29/2014): If this is a user-defined operator (SgFunctionCallExp) nested in a user-defined 
+            // operator (SgFunctionCallExp) then we need a more useful parent than the parent function's SgExprListExpr.
+               SgExprListExp* parent_exprListExp = isSgExprListExp(parentExpr);
+               if (parent_exprListExp != NULL)
+                  {
+                    SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(expr);
+                    if (functionCallExp != NULL)
+                       {
+                      // Find a better parent node to use (reach to the parent SgFunctionCallExp).
+                         SgNode* local_parentExpr = parentExpr;
+                         local_parentExpr = local_parentExpr->get_parent();
+                         SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(local_parentExpr);
+                         if (functionCallExp != NULL)
+                            {
+#if DEBUG_PARENTHESIS_PLACEMENT || 0
+                              printf ("In requiresParentheses(): Found a better node to use in determining precedence: functionCallExp = %p \n",functionCallExp);
+#endif
+                              parentExpr = functionCallExp;
+                            }
+                       }
+                  }
+
                int parentVariant   = GetOperatorVariant(parentExpr);
                SgExpression* first = GetFirstOperand(parentExpr);
                if (parentVariant == V_SgPntrArrRefExp && first != expr)
@@ -5675,7 +6313,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
                PrecedenceSpecifier parentPrecedence = getPrecedence(parentExpr);
 
 #if DEBUG_PARENTHESIS_PLACEMENT
-               printf ("parentVariant = %d  parentPrecedence = %d \n",parentVariant,parentPrecedence);
+               printf ("parentExpr = %p = %s parentVariant = %d  parentPrecedence = %d \n",parentExpr,parentExpr->class_name().c_str(),parentVariant,parentPrecedence);
 #endif
 
             // DQ (7/22/2013): Don't return true if this is a SgDesignatedInitializer.
@@ -5702,7 +6340,7 @@ UnparseLanguageIndependentConstructs::requiresParentheses(SgExpression* expr, Sg
 
 #if DEBUG_PARENTHESIS_PLACEMENT
                int exprVariant = GetOperatorVariant(expr);
-               printf ("exprVariant = %d  exprPrecedence = %d \n",exprVariant,exprPrecedence);
+               printf ("expr = %p = %s exprVariant = %d  exprPrecedence = %d \n",expr,expr->class_name().c_str(),exprVariant,exprPrecedence);
 #endif
                if (exprPrecedence > parentPrecedence)
                   {

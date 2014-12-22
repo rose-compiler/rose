@@ -1,5 +1,6 @@
 
 #if 0
+       /* No support for GNU statement expressions (GNU extension) (or maybe also un-named unions) under Windows */
           for (pn = jobtab[jn -> other].procs; pn; pn = pn -> next) 
             if (((({
               union {
@@ -21,6 +22,7 @@ void foobar()
       for (;;)
            break;
 #if 0
+       /* No support for GNU statement expressions (GNU extension) (or maybe also un-named unions) under Windows */
          if (((({ union {
               long __in;
               int __i;}__u;

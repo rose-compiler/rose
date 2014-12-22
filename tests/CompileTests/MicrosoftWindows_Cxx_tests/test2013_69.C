@@ -1,5 +1,5 @@
 
-#if 0
+#if 1
 template<typename _Tp> _Tp __cmath_power(_Tp, unsigned int);
 
 template<typename _Tp>
@@ -13,7 +13,7 @@ __pow_helper(_Tp __x, int __n)
      return __cmath_power(__x, __n);
    }
 
-#if 0
+#if 1
 template<typename _Tp>
 inline _Tp
 __cmath_power(_Tp __x, unsigned int __n)

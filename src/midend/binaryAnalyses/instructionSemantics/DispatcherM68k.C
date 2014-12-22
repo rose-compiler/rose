@@ -4,9 +4,10 @@
 #include "stringify.h"
 #include <boost/foreach.hpp>
 
-using namespace rose;
-using namespace BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
+using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -26,12 +27,17 @@ public:
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_)/*override*/ {
+    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
         DispatcherM68kPtr dispatcher = DispatcherM68k::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         ASSERT_require(insn == operators->get_insn());
+
+        // Update the PC to point to the fall-through instruction before we process the instruction, so that the semantics for
+        // individual instructions (like branches) can override this choice by assigning a new value to PC.  However, we must
+        // be careful of PC-relative addressing since the PC value during the addressing operations is the instruction address
+        // plus 2.
         operators->writeRegister(dispatcher->REG_PC, operators->add(operators->number_(32, insn->get_address()),
                                                                     operators->number_(32, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
@@ -1605,7 +1611,8 @@ struct IP_illegal: P {
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        throw BaseSemantics::Exception("semantics not implemented", insn);
+        SValuePtr addr = d->read(args[0], 32);
+        ops->writeRegister(d->REG_PC, addr);
     }
 };
 
@@ -1724,7 +1731,17 @@ struct IP_lsr: P {
 
 struct IP_mac: P {
     void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 7);
+        // The 7-argument version is "multiply accumulate with load" and the 4-argument version is just "multiply accumulate".
+        // The first 4 arguments are the same in both versions, namely the two registers (args[0] and args[1]) whose product is
+        // shifted according to the scale factor (args[2]) and added to the accumulator (args[3]).  The 7-argument version has
+        // the additional parallel operation of moving the source operand (args[4]) to the destination (args[6]) after
+        // optionally (args[5]) masking it by the MAC MASK register.
+        if (7==args.size()) {
+            assert_args(insn, args, 7);
+        } else {
+            assert_args(insn, args, 4);
+        }
+
         ASSERT_require(args[0]->get_nBits()==16 || args[0]->get_nBits()==32);
         ASSERT_require(args[1]->get_nBits()==16 || args[1]->get_nBits()==32);
         ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
@@ -1745,6 +1762,7 @@ struct IP_mac: P {
         SValuePtr product = ops->unsignedMultiply(ry, rx);
 
         // Shift the product left or right if necessary
+        // FIXME[Robb P. Matzke 2014-08-14]: this could be simplified since args[2] is always a constant
         size_t sfNBits = args[2]->get_nBits();
         SValuePtr sf = d->read(args[2], sfNBits);
         SValuePtr isSf1 = ops->equalToZero(ops->add(sf, ops->number_(sfNBits, -1)));
@@ -1806,29 +1824,29 @@ struct IP_mac: P {
                                        ops->concat(ops->unsignedExtend(newAccFrac, 8), ops->extract(newAccFrac, 40, 48)),
                                        ops->extract(newAccInt, 32, 48));
 
-        // In parallel with multiply-accumulate above, load the <ea> argument (args[4]), optionally mask it with the
-        // MASK register depending on whether args[5] is true or false.  Only the low-order 16 bits of the MASK register are
-        // used and the upper 16 are assumed to be all set.
-        ASSERT_require(args[4]->get_nBits()==32);
-        ASSERT_require(args[6]->get_nBits()==32);
-        d->decrementRegisters(args[4]);
-        SValuePtr toMove = d->read(args[4], 32);
-        d->incrementRegisters(args[4]);
-        toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
-                          toMove,                       // don't use the mask
-                          ops->and_(toMove,
-                                    ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16),
-                                                ops->number_(16, 0xffff))));
-        ASSERT_require(toMove->get_width()==32);
-
-        // Write results
+        if (7==args.size()) {
+            // In parallel with multiply-accumulate above, load the <ea> argument (args[4]), optionally mask it with the MASK
+            // register depending on whether args[5] is true or false.  Only the low-order 16 bits of the MASK register are
+            // used and the upper 16 are assumed to be all set.
+            ASSERT_require(args[4]->get_nBits()==32);
+            ASSERT_require(args[6]->get_nBits()==32);
+            d->decrementRegisters(args[4]);
+            SValuePtr toMove = d->read(args[4], 32);
+            d->incrementRegisters(args[4]);
+            toMove = ops->ite(ops->equalToZero(d->read(args[5], args[5]->get_nBits())),
+                              toMove,                       // don't use the mask
+                              ops->and_(toMove,
+                                        ops->concat(ops->unsignedExtend(ops->readRegister(d->REG_MAC_MASK), 16),
+                                                    ops->number_(16, 0xffff))));
+            ASSERT_require(toMove->get_width()==32);
+            d->write(args[6], toMove);
+        }
+        
+        // Write MAC results (load result was written above)
         ops->writeRegister(macAccReg, newMacAcc);
         ops->writeRegister(macExtReg, newMacExt);
-        d->write(args[6], toMove);
 
-        // Update MACSR indicator flags.  The documentation is not clear whether these flags are updated according to the
-        // 32-bit accumulator result (newMacAcc), the 48-bit accumulator (newMacInt or newMacFrac), or the value that was moved
-        // to the args[6] effective address.  I'm assuming its the 48-bit accumulator. [Robb P. Matzke 2014-07-25]
+        // Update MACSR indicator flags based on the accumulator's new value.
         SValuePtr acc48 = ops->ite(isFrac, newAccFrac, newAccInt);
         ops->writeRegister(d->REG_MACSR_N, ops->extract(acc48, 47, 48));
         ops->writeRegister(d->REG_MACSR_Z, ops->equalToZero(acc48));
@@ -1854,14 +1872,21 @@ struct IP_mov3q: P {
     }
 };
 
+struct IP_movclr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
 struct IP_move: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        ASSERT_require(args[0]->get_nBits() == args[1]->get_nBits());
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
         size_t nBits = args[0]->get_nBits();
         d->decrementRegisters(args[0]);
         d->decrementRegisters(args[1]);
-        SValuePtr result = d->read(args[0], args[0]->get_nBits());
+        SValuePtr result = d->read(args[0], nBits);
         d->write(args[1], result);
         d->incrementRegisters(args[0]);
         d->incrementRegisters(args[1]);
@@ -1870,6 +1895,71 @@ struct IP_move: P {
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CCR_N, ops->extract(result, nBits-1, nBits));
+    }
+};
+
+struct IP_move_acc: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_accext: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_ccr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        size_t srcNBits = args[0]->get_nBits();
+        size_t dstNBits = args[1]->get_nBits();
+        if (8==srcNBits && 16==dstNBits) {
+            // MOVE.W CCR, <ea>
+            d->decrementRegisters(args[1]);
+            SValuePtr src = ops->unsignedExtend(d->read(args[0], 8), 16);
+            d->write(args[1], src);
+            d->incrementRegisters(args[1]);
+        } else {
+            // MOVE.B <ea>, CCR  (truncates <ea> to eight bits)
+            ASSERT_require(8==dstNBits);
+            d->decrementRegisters(args[0]);
+            SValuePtr src = ops->unsignedExtend(d->read(args[0], srcNBits), 8);
+            d->write(args[1], src);
+            d->incrementRegisters(args[0]);
+        }
+    }
+};
+
+struct IP_move_macsr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+struct IP_move_mask: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
+    }
+};
+
+// same as IP_move, but does not update CCR
+struct IP_move_sr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
+        size_t nBits = args[0]->get_nBits();
+        d->decrementRegisters(args[0]);
+        d->decrementRegisters(args[1]);
+        SValuePtr result = d->read(args[0], nBits);
+        d->write(args[1], result);
+        d->incrementRegisters(args[0]);
+        d->incrementRegisters(args[1]);
     }
 };
 
@@ -1978,6 +2068,13 @@ struct IP_moveq: P {
         ops->writeRegister(d->REG_CCR_V, ops->boolean_(false));
         ops->writeRegister(d->REG_CCR_Z, ops->equalToZero(result));
         ops->writeRegister(d->REG_CCR_N, ops->extract(result, 31, 32));
+    }
+};
+
+struct IP_msac: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 4);
+        throw BaseSemantics::Exception("semantics not implemented", insn);
     }
 };
 
@@ -3091,12 +3188,20 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_lsr,         new M68k::IP_lsr);
     iproc_set(m68k_mac,         new M68k::IP_mac);
     iproc_set(m68k_mov3q,       new M68k::IP_mov3q);
+    iproc_set(m68k_movclr,      new M68k::IP_movclr);
     iproc_set(m68k_move,        new M68k::IP_move);
     iproc_set(m68k_move16,      new M68k::IP_move16);
     iproc_set(m68k_movea,       new M68k::IP_movea);
     iproc_set(m68k_movem,       new M68k::IP_movem);
     iproc_set(m68k_movep,       new M68k::IP_movep);
     iproc_set(m68k_moveq,       new M68k::IP_moveq);
+    iproc_set(m68k_move_acc,    new M68k::IP_move_acc);
+    iproc_set(m68k_move_accext, new M68k::IP_move_accext);
+    iproc_set(m68k_move_ccr,    new M68k::IP_move_ccr);
+    iproc_set(m68k_move_macsr,  new M68k::IP_move_macsr);
+    iproc_set(m68k_move_mask,   new M68k::IP_move_mask);
+    iproc_set(m68k_move_sr,     new M68k::IP_move_sr);
+    iproc_set(m68k_msac,        new M68k::IP_msac);
     iproc_set(m68k_muls,        new M68k::IP_muls);
     iproc_set(m68k_mulu,        new M68k::IP_mulu);
     iproc_set(m68k_mvs,         new M68k::IP_mvs);
@@ -3185,19 +3290,21 @@ DispatcherM68k::regcache_init() {
         REG_VBR   = findRegister("vbr", 32);
         REG_SSP   = findRegister("ssp", 32);
 
+        // TOO1 (8/11/2014): Renamed variable from "OPTIONAL" to "IS_OPTIONAL".
+        //                   "OPTIONAL" is a predefined macro in Windows.
         // Multiply-accumulated registers.  These are optional.
-        static const bool OPTIONAL = true;
-        REG_MACSR_SU = findRegister("macsr_su", 1, OPTIONAL);
-        REG_MACSR_FI = findRegister("macsr_fi", 1, OPTIONAL);
-        REG_MACSR_N  = findRegister("macsr_n",  1, OPTIONAL);
-        REG_MACSR_Z  = findRegister("macsr_z",  1, OPTIONAL);
-        REG_MACSR_V  = findRegister("macsr_v",  1, OPTIONAL);
-        REG_MACSR_C  = findRegister("macsr_c",  1, OPTIONAL);
-        REG_MAC_MASK = findRegister("mask",    32, OPTIONAL);
-        REG_MACEXT0  = findRegister("accext0", 16, OPTIONAL);
-        REG_MACEXT1  = findRegister("accext1", 16, OPTIONAL);
-        REG_MACEXT2  = findRegister("accext2", 16, OPTIONAL);
-        REG_MACEXT3  = findRegister("accext3", 16, OPTIONAL);
+        static const bool IS_OPTIONAL = true;
+        REG_MACSR_SU = findRegister("macsr_su", 1, IS_OPTIONAL);
+        REG_MACSR_FI = findRegister("macsr_fi", 1, IS_OPTIONAL);
+        REG_MACSR_N  = findRegister("macsr_n",  1, IS_OPTIONAL);
+        REG_MACSR_Z  = findRegister("macsr_z",  1, IS_OPTIONAL);
+        REG_MACSR_V  = findRegister("macsr_v",  1, IS_OPTIONAL);
+        REG_MACSR_C  = findRegister("macsr_c",  1, IS_OPTIONAL);
+        REG_MAC_MASK = findRegister("mask",    32, IS_OPTIONAL);
+        REG_MACEXT0  = findRegister("accext0", 16, IS_OPTIONAL);
+        REG_MACEXT1  = findRegister("accext1", 16, IS_OPTIONAL);
+        REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
+        REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
     }
 }
 
@@ -3281,5 +3388,23 @@ DispatcherM68k::condition(M68kInstructionKind kind, RiscOperators *ops) {
     }
 }
 
+// Override Dispatcher::read so that if we read the PC register we get the address of the current instruction plus 2.  See
+// the note in M68k::P::process()
+BaseSemantics::SValuePtr
+DispatcherM68k::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/) {
+    ASSERT_not_null(e);
+    SValuePtr retval;
+    if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
+        static const RegisterDescriptor REG_PC(m68k_regclass_spr, m68k_spr_pc, 0, 32);
+        if (re->get_descriptor() == REG_PC) {
+            SgAsmInstruction *insn = get_insn();
+            ASSERT_not_null(insn);
+            return operators->number_(32, insn->get_address() + 2);
+        }
+    }
+    return Dispatcher::read(e, value_nbits, addr_nbits);
+}
+
+} // namespace
 } // namespace
 } // namespace

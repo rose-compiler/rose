@@ -406,12 +406,20 @@ struct SetBits {
 
 /** Set some bits.
  *
- *  Sets (or clears if @p newBits is false) all bits in the specified index range. */
+ *  Sets all bits in the specified index range. */
 template<class Word>
-void set(Word *words, const BitRange &where, bool newBits = true) {
-    if (newBits) {
-        SetBits<Word> visitor;
-        traverse(visitor, words, where, LowToHigh());
+void set(Word *words, const BitRange &where) {
+    SetBits<Word> visitor;
+    traverse(visitor, words, where, LowToHigh());
+}
+
+/** Set or clear some bits.
+ *
+ *  Sets or clears all bits in the specified index range. */
+template<class Word>
+void setValue(Word *words, const BitRange &where, bool value) {
+    if (value) {
+        set(words, where);
     } else {
         clear(words, where);
     }
@@ -755,9 +763,9 @@ void shiftLeft(Word *words, const BitRange &range, size_t nShift, bool newBits=0
         BitRange shiftedTo = BitRange::baseSize(range.least() + nShift, nbits);
         BitRange introduced = BitRange::baseSize(range.least(), nShift);
         copy(words, shiftedFrom, words, shiftedTo);
-        set(words, introduced, newBits);
+        setValue(words, introduced, newBits);
     } else {
-        set(words, range, newBits);
+        setValue(words, range, newBits);
     }
 }
 
@@ -773,9 +781,9 @@ void shiftRight(Word *words, const BitRange &range, size_t nShift, bool newBits=
         BitRange shiftedTo = BitRange::baseSize(range.least(), nbits);
         BitRange introduced = BitRange::baseSize(range.least() + nbits, nShift);
         copy(words, shiftedFrom, words, shiftedTo);
-        set(words, introduced, newBits);
+        setValue(words, introduced, newBits);
     } else {
-        set(words, range, newBits);
+        setValue(words, range, newBits);
     }
 }
 
@@ -1082,7 +1090,7 @@ bool signExtend(const Word *vec1, const BitRange &range1, Word *vec2, const BitR
     } else if (range1.size() < range2.size()) {         // sign extension
         bool oldSign = get(vec1, range1.greatest());
         copy(vec1, range1, vec2, BitRange::baseSize(range2.least(), range1.size()));
-        set(vec2, BitRange::hull(range2.least()+range1.size(), range2.greatest()), oldSign);
+        setValue(vec2, BitRange::hull(range2.least()+range1.size(), range2.greatest()), oldSign);
         return oldSign;
     } else {                                            // truncation or plain copy
         ASSERT_require(range1.size() >= range2.size());

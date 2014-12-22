@@ -5,8 +5,8 @@
 
 #include <iomanip>
 
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
 using namespace rose::Diagnostics;
+using namespace rose::BinaryAnalysis;
 
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
 std::string unparseMipsMnemonic(SgAsmMipsInstruction *insn) {

@@ -6,6 +6,8 @@
 #include "rose.h"
 #include "Debugger.h"
 
+using namespace rose::BinaryAnalysis;
+
 int main(int argc, char *argv[]) {
     std::ios_base::sync_with_stdio(true);
     std::string hostname = "localhost";

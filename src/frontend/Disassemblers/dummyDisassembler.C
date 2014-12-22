@@ -2,14 +2,15 @@
 // provide (stub) definitions for those nodes' virtual methods in order to get things to compile when those nodes aren't
 // actually being used anywhere.
 #include "sage3basic.h"
-
+#include "Diagnostics.h"
+#include "Disassembler.h"
+#include "Partitioner.h"
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmFloatValueExpression
 
 double SgAsmFloatValueExpression::get_nativeValue() const { abort(); }
 void SgAsmFloatValueExpression::set_nativeValue(double) { abort(); }
 void SgAsmFloatValueExpression::updateBitVector() { abort(); }
-void SgAsmFloatValueExpression::updateNativeValue() { abort(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmIntegerValueExpression
@@ -29,81 +30,69 @@ void SgAsmIntegerValueExpression::set_relativeValue(int64_t, size_t) { abort(); 
 // SgAsmInstruction
 
 size_t SgAsmInstruction::get_size() const { return 0; }
-bool SgAsmInstruction::terminates_basic_block() { return false; }
-bool SgAsmInstruction::is_unknown() const { return false; }
-bool SgAsmInstruction::has_effect() { return false; }
-bool SgAsmInstruction::has_effect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
-bool SgAsmInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmInstruction::get_branch_target(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmInstruction::get_successors(bool* complete) { return std::set<rose_addr_t>();}
-
-std::set<rose_addr_t>
-SgAsmInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
-
-std::vector<std::pair<size_t,size_t> >
-SgAsmInstruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
-}
+bool SgAsmInstruction::terminatesBasicBlock() { return false; }
+bool SgAsmInstruction::isUnknown() const { return false; }
+bool SgAsmInstruction::hasEffect() { return false; }
+bool SgAsmInstruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
+bool SgAsmInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmInstruction::getBranchTarget(rose_addr_t*) { return false; }
+std::set<rose_addr_t> SgAsmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>();}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmArmInstruction
 
-bool SgAsmArmInstruction::terminates_basic_block() { return false; }
-bool SgAsmArmInstruction::is_unknown() const { return false; }
-std::set<rose_addr_t> SgAsmArmInstruction::get_successors(bool* complete) { return std::set<rose_addr_t>(); }
+bool SgAsmArmInstruction::terminatesBasicBlock() { return false; }
+bool SgAsmArmInstruction::isUnknown() const { return false; }
+std::set<rose_addr_t> SgAsmArmInstruction::getSuccessors(bool* complete) { return std::set<rose_addr_t>(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmM68kInstruction
 
-bool SgAsmM68kInstruction::terminates_basic_block() { return false; }
-bool SgAsmM68kInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmM68kInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmM68kInstruction::is_unknown() const { return false; }
-std::set<rose_addr_t> SgAsmM68kInstruction::get_successors(bool*) { return std::set<rose_addr_t>(); }
-std::set<rose_addr_t> SgAsmM68kInstruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
-bool SgAsmM68kInstruction::get_branch_target(rose_addr_t*) { return false; }
+bool SgAsmM68kInstruction::terminatesBasicBlock() { return false; }
+bool SgAsmM68kInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmM68kInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmM68kInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmM68kInstruction::isUnknown() const { return false; }
+bool SgAsmM68kInstruction::getBranchTarget(rose_addr_t*) { return false; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmMipsInstruction
 
-bool SgAsmMipsInstruction::terminates_basic_block() { return false; }
-bool SgAsmMipsInstruction::is_unknown() const { return false; }
-bool SgAsmMipsInstruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmMipsInstruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmMipsInstruction::get_branch_target(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmMipsInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
+bool SgAsmMipsInstruction::terminatesBasicBlock() { return false; }
+bool SgAsmMipsInstruction::isUnknown() const { return false; }
+bool SgAsmMipsInstruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmMipsInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmMipsInstruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmMipsInstruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmMipsInstruction::getBranchTarget(rose_addr_t*) { return false; }
+std::set<rose_addr_t> SgAsmMipsInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SgAsmPowerpcInstruction
 
-bool SgAsmPowerpcInstruction::terminates_basic_block() { return false; }
-bool SgAsmPowerpcInstruction::is_unknown() const { return false; } 
-std::set<rose_addr_t> SgAsmPowerpcInstruction::get_successors(bool*) { return std::set<rose_addr_t>();}
+bool SgAsmPowerpcInstruction::terminatesBasicBlock() { return false; }
+bool SgAsmPowerpcInstruction::isUnknown() const { return false; } 
+std::set<rose_addr_t> SgAsmPowerpcInstruction::getSuccessors(bool*) { return std::set<rose_addr_t>();}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SgAsmx86Instruction
+// SgAsmX86Instruction
 
-bool SgAsmx86Instruction::terminates_basic_block() { return false; }
-bool SgAsmx86Instruction::is_unknown() const { return false; }
-bool SgAsmx86Instruction::has_effect() { return false; }
-bool SgAsmx86Instruction::has_effect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
-bool SgAsmx86Instruction::is_function_call(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
-bool SgAsmx86Instruction::is_function_return(const std::vector<SgAsmInstruction*>&) { return false; }
-bool SgAsmx86Instruction::get_branch_target(rose_addr_t*) { return false; }
-std::set<rose_addr_t> SgAsmx86Instruction::get_successors(bool*) { return std::set<rose_addr_t>();}
-
-std::set<rose_addr_t>
-SgAsmx86Instruction::get_successors(const std::vector<SgAsmInstruction*>&, bool*, MemoryMap*) {
-    return std::set<rose_addr_t>();
-}
+bool SgAsmX86Instruction::terminatesBasicBlock() { return false; }
+bool SgAsmX86Instruction::isUnknown() const { return false; }
+bool SgAsmX86Instruction::hasEffect() { return false; }
+bool SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
+bool SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
+bool SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmX86Instruction::isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) { return false; }
+bool SgAsmX86Instruction::getBranchTarget(rose_addr_t*) { return false; }
 
 std::vector<std::pair<size_t,size_t> >
-SgAsmx86Instruction::find_noop_subsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
+SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
     return std::vector<std::pair<size_t,size_t> >();
 }
 
@@ -148,3 +137,20 @@ std::string SgAsmVectorType::toString() const { return std::string(); }
 size_t SgAsmVectorType::get_nBits() const { return 0; }
 size_t SgAsmVectorType::get_nElmts() const { return 0; }
 SgAsmType* SgAsmVectorType::get_elmtType() const { return 0; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Disassembler
+namespace rose {
+namespace BinaryAnalysis{
+void Disassembler::initDiagnostics() {}
+} // namespace
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Partitioner
+
+namespace rose {
+namespace BinaryAnalysis{
+void Partitioner::initDiagnostics() {}
+} // namespace
+} // namespace

@@ -6,13 +6,16 @@
 #include "InstructionEnumsMips.h"
 #include "sageBuilderAsm.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 class DisassemblerMips: public Disassembler {
 public:
     DisassemblerMips() { init(); }
-    virtual DisassemblerMips *clone() const /*override*/ { return new DisassemblerMips(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) /*override*/;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
+    virtual DisassemblerMips *clone() const ROSE_OVERRIDE { return new DisassemblerMips(*this); }
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an
@@ -132,5 +135,8 @@ protected:
     /** Address of instruction currently being disassembled. This is set each time disassembleOne() is called. */
     rose_addr_t insn_va;
 };
+
+} // namespace
+} // namespace
 
 #endif

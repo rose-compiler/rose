@@ -9,4 +9,6 @@
 // The memory model defines when multiple threads may access the same memory location, and specifies when 
 // updates by one thread become visible to other threads.
 
-#error "NEED AND EXAMPLE OF THIS!"
+// This is a library issue independent of the langauge.
+
+// #error "NEED AND EXAMPLE OF THIS!"

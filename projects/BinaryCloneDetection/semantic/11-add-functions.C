@@ -4,8 +4,15 @@
 #include "CloneDetectionLib.h"
 #include "DwarfLineMapper.h"
 #include "BinaryFunctionCall.h"
+#include "BinaryReturnValueUsed.h"
+#include "rose.h"
 
+#include "vectorCompression.h"
+
+using namespace rose;
 using namespace CloneDetection;
+using namespace rose::BinaryAnalysis;
+
 std::string argv0;
 
 static void
@@ -24,6 +31,13 @@ usage(int exit_status)
               <<"            AST will be read by other specimen-processing commands rather than reparsing the specimen.\n"
               <<"            The default is to not save the AST in the database because not all necessary binary information\n"
               <<"            is saved (MemoryMaps for instance, are not part of the AST).\n"
+              <<"    --signature-components=by_category|total_for_variant|operand_total|ops_for_variant|specific_op|\n"
+              <<"                           operand_pair|apply_log\n"
+              <<"            Select which, if any, properties should be counted and/or how they should be counted. By default\n"
+              <<"            no properties are counted. By default the instructions are counted by operation kind, but one can\n"
+              <<"            optionally choose to count by instruction category.\n"
+              <<"    --save-instructions\n"
+              <<"            Save instruction mappping to the database. Only needed for the lsh clone detection.\n"
               <<"    DATABASE\n"
               <<"            The name of the database to which we are connecting.  For SQLite3 databases this is just a local\n"
               <<"            file name that will be created if it doesn't exist; for other database drivers this is a URL\n"
@@ -187,7 +201,7 @@ save_call_graph(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, SgAsmInte
     struct CGFilter: BinaryAnalysis::FunctionCall::VertexFilter {
         const std::map<SgAsmFunction*, int> &existing;
         CGFilter(const std::map<SgAsmFunction*, int> &existing): existing(existing) {}
-        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *vertex) /*override*/ {
+        virtual bool operator()(BinaryAnalysis::FunctionCall*, SgAsmFunction *vertex) ROSE_OVERRIDE {
             return existing.find(vertex)!=existing.end();
         }
     } vertex_filter(existing_funcs);
@@ -206,7 +220,7 @@ save_call_graph(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, SgAsmInte
         sql += (i==file_ids.begin()?"":", ") + StringUtility::numberToString(*i);
     sql += ")";
     tx->execute(sql);
-        
+
     // Add the new call graph edges into to the database
     SqlDatabase::StatementPtr stmt = tx->statement("insert into semantic_cg"
                                                    // 0      1       2        3
@@ -244,7 +258,13 @@ main(int argc, char *argv[])
 
     Switches opt;
     int argno = 1;
+
+    bool save_instructions = false;
+
+    std::vector<std::string> signature_components;
+
     for (/*void*/; argno<argc && '-'==argv[argno][0]; ++argno) {
+        std::cout << argv[argno] << std::endl;
         if (!strcmp(argv[argno], "--")) {
             ++argno;
             break;
@@ -258,6 +278,19 @@ main(int argc, char *argv[])
             opt.save_ast = true;
         } else if (!strcmp(argv[argno], "--no-save-ast")) {
             opt.save_ast = false;
+        } else if (!strcmp(argv[argno], "--save-instructions")) {
+            save_instructions = true;
+        } else if (!strncmp(argv[argno], "--signature-components=", 23)) {
+            static const char *comp_opts[7] = {"by_category", "total_for_variant", "operand_total", "ops_for_variant",
+                                               "specific_op", "operand_pair", "apply_log"};
+            bool isValid = false;
+            for (int i=0; i<7 && !isValid; ++i)
+                isValid = 0==strcmp(argv[argno]+23, comp_opts[i]);
+            if (!isValid) {
+                std::cerr <<argv0 <<": invalid argument for --signature-components: " <<argv[argno]+23 <<"\n";
+                exit(1);
+            }
+            signature_components.push_back(argv[argno]+23);
         } else {
             std::cerr <<argv0 <<": unrecognized switch: " <<argv[argno] <<"\n"
                       <<"see \"" <<argv0 <<" --help\" for usage info.\n";
@@ -284,26 +317,34 @@ main(int argc, char *argv[])
     std::cerr <<argv0 <<": adding " <<functions_to_add.size() <<" function" <<(1==functions_to_add.size()?"":"s")
               <<" to the database\n";
 
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
+    // Figure out how many places each function is called and how many times a return value is used.
+    ReturnValueUsed::Results used_retvals = ReturnValueUsed::analyze(interp);
+
     // Get source code location info for all instructions and update the FilesTable
-    BinaryAnalysis::DwarfLineMapper dlm(binfile);
-    dlm.fix_holes();
-    std::vector<SgAsmInstruction*> all_insns = SageInterface::querySubTree<SgAsmInstruction>(binfile);
-    for (std::vector<SgAsmInstruction*>::iterator ii=all_insns.begin(); ii!=all_insns.end(); ++ii) {
-        BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src((*ii)->get_address());
-        if (srcinfo.file_id>=0)
-            files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+    BinaryAnalysis::DwarfLineMapper* dlm;
+
+    if (save_instructions) {
+        dlm = new BinaryAnalysis::DwarfLineMapper(binfile);
+        dlm->fix_holes();
+        std::vector<SgAsmInstruction*> all_insns = SageInterface::querySubTree<SgAsmInstruction>(binfile);
+        for (std::vector<SgAsmInstruction*>::iterator ii=all_insns.begin(); ii!=all_insns.end(); ++ii) {
+            BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm->addr2src((*ii)->get_address());
+            if (srcinfo.file_id>=0)
+                files.insert(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+        }
     }
-#endif
+
     files.save(tx); // needs to be saved before we write foriegn keys into the semantic_functions table
 
     // Process each function
     SqlDatabase::StatementPtr stmt1 = tx->statement("insert into semantic_functions"
                                                     // 0   1         2     3        4            5
                                                     " (id, entry_va, name, file_id, specimen_id, ninsns,"
-                                                    // 6      7      8     9       10
-                                                    "  isize, dsize, size, digest, cmd)"
-                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                                                    // 6      7      8     9       10          11
+                                                    "  isize, dsize, size, digest, counts_b64, cmd,"
+                                                    // 12         13
+                                                    "  callsites, retvals_used)"
+                                                    " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
     SqlDatabase::StatementPtr stmt2 = tx->statement("insert into semantic_instructions"
                                                     // 0        1     2         3        4
                                                     " (address, size, assembly, func_id, position,"
@@ -312,13 +353,20 @@ main(int argc, char *argv[])
     for (IdFunctionMap::iterator fi=functions_to_add.begin(); fi!=functions_to_add.end(); ++fi) {
         // Save function
         SgAsmFunction *func = fi->second;
-        ExtentMap e_insns, e_data, e_total;
+        ReturnValueUsed::UsageCounts &retval_usage = used_retvals[func];
+        AddressIntervalSet e_insns, e_data, e_total;
         size_t ninsns = func->get_extent(&e_insns, NULL, NULL, &iselector);
         func->get_extent(&e_data, NULL, NULL, &dselector);
         func->get_extent(&e_total);
         uint8_t digest[20];
         func->get_sha1(digest);
         std::string digest_str = Combinatorics::digest_to_string(std::vector<uint8_t>(digest, digest+20));
+
+        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
+        SignatureVector vec;
+        createVectorsForAllInstructions(vec, insns, signature_components);
+        std::vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
+
         stmt1->bind(0, fi->first);
         stmt1->bind(1, func->get_entry_va());
         stmt1->bind(2, func->get_name());
@@ -329,26 +377,32 @@ main(int argc, char *argv[])
         stmt1->bind(7, e_data.size());
         stmt1->bind(8, e_total.size());
         stmt1->bind(9, digest_str);
-        stmt1->bind(10, cmd_id);
+        stmt1->bind(10, StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size()));
+        stmt1->bind(11, cmd_id);
+        stmt1->bind(12, retval_usage.nUsed + retval_usage.nUnused);
+        stmt1->bind(13, retval_usage.nUsed);
         stmt1->execute();
 
-#if 0 /*DEBUGGING [Robb P. Matzke 2013-11-01]  --  Disabled to save memory */
-        // Save instructions
-        std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(func);
-        for (size_t i=0; i<insns.size(); ++i) {
-            BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm.addr2src(insns[i]->get_address());
-            int file_id = srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+	// Save instructions
+	for (size_t i=0; i<insns.size(); ++i) {
+            int file_id  = -1;
+            int line_num = -1;
+            if (save_instructions) {
+                BinaryAnalysis::DwarfLineMapper::SrcInfo srcinfo = dlm->addr2src(insns[i]->get_address());
+                srcinfo.file_id < 0 ? -1 : files.id(Sg_File_Info::getFilenameFromID(srcinfo.file_id));
+                line_num = srcinfo.line_num;
+            }
+
             stmt2->bind(0, insns[i]->get_address());
             stmt2->bind(1, insns[i]->get_size());
             stmt2->bind(2, unparseInstruction(insns[i]));
             stmt2->bind(3, fi->first);
             stmt2->bind(4, i);
             stmt2->bind(5, file_id);
-            stmt2->bind(6, srcinfo.line_num);
+            stmt2->bind(6, line_num);
             stmt2->bind(7, cmd_id);
             stmt2->execute();
-        }
-#endif
+	}
     }
 
     // Save specimen information

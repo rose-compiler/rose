@@ -53,10 +53,10 @@ public:
 
     // The actual analysis, triggered when we reach the specified execution address...
     virtual bool operator()(bool enabled, const Args &args) try {
-        using namespace BinaryAnalysis::InstructionSemantics;
+        using namespace rose::BinaryAnalysis::InstructionSemantics;
 
         static const char *name = "Analysis";
-        using namespace InsnSemanticsExpr;
+        using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
         if (enabled && args.insn->get_address()==trigger_addr) {
             RTS_Message *trace = args.thread->tracing(TRACE_MISC);
             trace->mesg("%s triggered: analyzing function at 0x%08"PRIx64, name, analysis_addr);
@@ -64,8 +64,8 @@ public:
             // An SMT solver is necessary for this example to work correctly. ROSE should have been configured with
             // "--with-yices=/full/path/to/yices/installation".  If not, you'll get a failed assertion when ROSE tries to use
             // the solver.
-            YicesSolver smt_solver;
-            smt_solver.set_linkage(YicesSolver::LM_EXECUTABLE);
+            rose::BinaryAnalysis::YicesSolver smt_solver;
+            smt_solver.set_linkage(rose::BinaryAnalysis::YicesSolver::LM_EXECUTABLE);
             //smt_solver.set_debug(stdout);
 
             // We deactive the simulator while we're doing this analysis.  If the simulator remains activated, then the SIGCHLD
@@ -94,13 +94,15 @@ public:
             {
                 // This is a kludge.  If the first instruction is an indirect JMP then assume we're executing through a dynamic
                 // linker thunk and execute the instruction concretely to advance the instruction pointer.
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.thread->get_process()->get_instruction(analysis_addr));
                 if (x86_jmp==insn->get_kind()) {
                     PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State, PartialSymbolicSemantics::ValueType> p;
                     X86InstructionSemantics<PartialSymbolicSemantics::Policy<PartialSymbolicSemantics::State,
                                                                              PartialSymbolicSemantics::ValueType>,
                                             PartialSymbolicSemantics::ValueType> sem(p);
-                    MemoryMap p_map(args.thread->get_process()->get_memory(), MemoryMap::COPY_ON_WRITE);
+                    MemoryMap p_map = args.thread->get_process()->get_memory();
+                    BOOST_FOREACH (MemoryMap::Segment &segment, p_map.segments())
+                        segment.setCopyOnWrite();
                     p.set_map(&p_map); // won't be thread safe
                     sem.processInstruction(insn);
                     policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));
@@ -116,7 +118,7 @@ public:
             std::vector<TreeNodePtr> constraints; // path constraints for the SMT solver
             while (policy.readRegister<32>("eip").is_known()) {
                 uint64_t va = policy.readRegister<32>("eip").known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(args.thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.thread->get_process()->get_instruction(va));
                 assert(insn!=NULL);
                 trace->mesg("%s: analysing instruction %s", name, unparseInstructionWithAddress(insn).c_str());
                 semantics.processInstruction(insn);
@@ -124,7 +126,7 @@ public:
                     continue;
                 
                 bool complete;
-                std::set<rose_addr_t> succs = insn->get_successors(&complete);
+                std::set<rose_addr_t> succs = insn->getSuccessors(&complete);
                 if (complete && 2==succs.size()) {
                     if (nbranches>=take_branch.size()) {
                         std::ostringstream s; s<<policy.readRegister<32>("eip");
@@ -148,7 +150,7 @@ public:
                     TreeNodePtr c = InternalNode::create(32, OP_EQ, policy.readRegister<32>("eip").get_expression(),
                                                          LeafNode::create_integer(32, target));
                     constraints.push_back(c); // shouldn't really have to do this again if we could save some state
-                    if (SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
+                    if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(constraints)) {
                         policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(target));
                     } else {
                         trace->mesg("%s: chosen control flow path is not feasible (or unknown).", name);
@@ -160,12 +162,13 @@ public:
             // Show the value of the EAX register since this is where GCC puts the function's return value.  If we did things
             // right, the return value should depend only on the unknown bytes from the beginning of the buffer.
             SymbolicSemantics::ValueType<32> result = policy.readRegister<32>("eax");
-            std::set<InsnSemanticsExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
+            std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr> vars = result.get_expression()->get_variables();
             {
                 std::ostringstream s;
                 s <<name <<": symbolic return value is " <<result <<"\n"
                   <<name <<": return value has " <<vars.size() <<" variables:";
-                for (std::set<InsnSemanticsExpr::LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi)
+                for (std::set<rose::BinaryAnalysis::InsnSemanticsExpr::LeafNodePtr>::iterator vi=vars.begin();
+                     vi!=vars.end(); ++vi)
                     s <<" " <<*vi;
                 s <<"\n";
                 if (!constraints.empty()) {
@@ -187,7 +190,7 @@ public:
                     expr = InternalNode::create(32, OP_EQ, *vi, LeafNode::create_integer(32, (int)'x'));
                     exprs.push_back(expr);
                 }
-                if (SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     LeafNodePtr result_value = smt_solver.evidence_for_variable(result_var)->isLeafNode();
                     if (!result_value) {
                         trace->mesg("%s: evaluation result could not be determined. ERROR!", name);
@@ -209,7 +212,7 @@ public:
                 TreeNodePtr expr = InternalNode::create(32, OP_EQ, result.get_expression(),
                                                         LeafNode::create_integer(32, 0xff015e7c));
                 exprs.push_back(expr);
-                if (SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
+                if (rose::BinaryAnalysis::SMTSolver::SAT_YES == smt_solver.satisfiable(exprs)) {
                     for (std::set<LeafNodePtr>::iterator vi=vars.begin(); vi!=vars.end(); ++vi) {
                         LeafNodePtr var_val = smt_solver.evidence_for_variable(*vi)->isLeafNode();
                         if (var_val && var_val->is_known())

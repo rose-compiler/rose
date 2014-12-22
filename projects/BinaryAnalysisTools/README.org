@@ -1,0 +1,273 @@
+* Purpose
+
+  This directory contains various useful binary analysis tools build
+  on the ROSE library and distributed as part of ROSE.
+
+* Installation
+
+  When distributed as part or ROSE, compile librose (make -C
+  $ROSE_BUILD/src) and then run "make" in this project's build
+  directory.
+
+  When not distributed as part of ROSE, untar this project into a
+  subdirectory of $ROSE_SOURCE/projects (it usually lives at
+  $ROSE_SOURCE/projects/BinaryAnalysisTools) before running
+  $ROSE_SOURCE/build and ROSE's "configure" script. Then proceed as
+  above.
+
+* Documentation
+
+  Most of these tools accept "--help" as a command-line switch. Any
+  that don't are probably not too useful anyway.
+
+  Most of these tools accept the same specimen name patterns when
+  parsing and loading a specimen to be analyzed by ROSE.  See the
+  "Specimens" section in the "--help" output.  Some of the more
+  important formats:
+  
+  + Plain file names are ELF or PE containers
+
+  + Names beginning with "map:" are used to load individual map
+    segments from raw data files.
+
+  + Names beginning with "proc:" are used to read data from a running
+    process.
+
+  + Names beginning with "run:" are a combination of ELF container and
+    running process and are useful when one wants ROSE to have an
+    accurate representation of memory for dynamically-linked
+    libraries.
+
+  + Names ending with ".srec" are Motorola S-Record files.
+
+* Demos
+
+  Some demos that can be run to become familiar with how these tools
+  work.
+
+*** Disassembling the Linux "[vdso]" memory
+    See the demo-read-vdso.sh shell script for an interactive demo.
+***** Introduction
+
+      The Linux kernel maps a virtual dynamic shared object (vdso) into
+      the address space of every process.  This library contains the
+      instructions for how a process should make system calls and is not
+      present in any file on the system.  A good description can be
+      found at [[http://www.trilithium.com/johan/2005/08/linux-gate/]].
+
+***** Preparation
+      
+      The first problem is how to get a copy of the VDSO if it doesn't
+      exist in the filesystem.  The "dumpMemory" tool and "run:"
+      specimen name scheme are useful for this purpose.  First, get
+      information about how to use this tool:
+
+          $ ./dumpMemory --help
+
+      We'll use the $ROSE_SOURCE/binaries/samples/i386-mixed
+      executable for this demo because it's a small, statically
+      linked, 32-bit, ELF executable that does nothing but segfault
+      (via HLT instruction). But you could use any program (even
+      /bin/ls). We'll need it to be executable for this demo, so copy
+      it to the CWD and change its permissions:
+
+	  $ cp $ROSE_SRC/binaries/samples/i386-mixed .
+	  $ chmod 700 i386-mixed
+
+***** Finding the VDSO address
+
+      We'll need to know where the VDSO segment is in memory first. One
+      way to get this is by running:
+
+	  $ i386 -R ./dumpMemory run:i386-mixed
+
+      The "i386 -R" command turns off address randomization -- we want
+      Linux to load things at the same address every time we run,
+      otherwise we'll have a hard time asking for the VDSO memory.
+
+      The "run:" means that ROSE will parse the ELF container like
+      normal, and then it will execute the specimen and copy the
+      process' memory.  The specimen is only allowed to execute until
+      it reaches any executable address known to ROSE -- in other
+      words, the dynamic linker will be allowed to run and then the
+      process is stopped, its memory read, and then it is killed.
+
+      The output will be something like this:
+
+	  dumpMemory[22356] 0.00891s tool[WARN ]: no output format selected; see --help
+	  va 0x08048000 + 0x00001000 = 0x08049000 r-x- at buffer aah   + 0x00000000 proc:22502(/home/demo/i386-mixed)
+	  va 0xf7ffd000 + 0x00001000 = 0xf7ffe000 r-x- at buffer aai   + 0x00000000 proc:22502([vdso])
+	  va 0xfffe8000 + 0x00016000 = 0xffffe000 rwx- at buffer aaj   + 0x00000000 proc:22502([stack])
+
+      The warning is okay -- dumpMemory is just informing us that it
+      didn't dump anything. But its side effect is to show us a map of
+      virtual addresses (ROSE's MemoryMap data structure). We can see
+      that the VDSO occupies 4096 (0x1000) bytes starting at
+      0xf7ffd000.
+
+      You might want to run the command another time to make sure that
+      the VDSO is always at the same address.
+
+***** Getting a copy of the VDSO
+
+      Next, we need to get a copy of the VDSO into the filesystem:
+
+	  $ i386 -R ./dumpMemory --binary --prefix=i386-mixed- \
+		--where=0xf7ffd000+4096 run:i386-mixed
+
+      This should have created a file named "i386-mixed-f7ffd000.raw"
+      that contains the contents of the VDSO section.  It also
+      created a file named "i386-mixed-load" that contains some
+      additional information about what was dumped:
+
+	  $ cat i386-mixed-load
+	  # Segment [0xf7ffd000,0xf7ffdfff] "proc:23097([vdso])"
+	  map:0xf7ffd000+0x00001000=rx::i386-mixed-f7ffd000.raw
+
+      The VDSO is an ELF container:
+
+	  $ file i386-mixed-f7ffd000.raw 
+	  i386-mixed-f7ffd000.raw: ELF 32-bit LSB shared object, Intel 80386, version 1 (SYSV), dynamically linked, stripped
+
+***** Disassembling the VDSO
+
+      And finally, we can disassemble it. This tool has a lot of
+      options:
+
+	  $ ./recursiveDisassembler --help
+
+      But all we need is:
+
+	  $ ./recursiveDisassembler i386-mixed-f7ffd000.raw
+
+      The interesting function is "__kernel_vsyscall", which will vary
+      across different kernel versions, kernel configurations, and
+      architectures:
+
+	  0xffffe420: ================================== Function (entry point, graph) <__kernel_vsyscall>
+	  0xffffe420: Called by 0xffffe410<__kernel_rt_sigreturn>
+
+	  0xffffe420: Basic block reasons: entry point
+	  0xffffe420: Predecessor blocks: 0xffffe410<__kernel_rt_sigreturn>
+	  0xffffe420: 51                      |Q       |   push   ecx
+	  0xffffe421: 52                      |R       |   push   edx
+	  0xffffe422: 55                      |U       |   push   ebp
+	  0xffffe423: 89 e5                   |..      |   mov    ebp, esp
+	  0xffffe425: 0f 34                   |.4      |   sysenter 
+	  0xffffe427: 90                      |.       |   nop    
+	  0xffffe428: 90                      |.       |   nop    
+	  0xffffe429: 90                      |.       |   nop    
+	  0xffffe42a: 90                      |.       |   nop    
+	  0xffffe42b: 90                      |.       |   nop    
+	  0xffffe42c: 90                      |.       |   nop    
+	  0xffffe42d: 90                      |.       |   nop    
+	  0xffffe42e: cd 80                   |..      |   int    0x80<-128>
+	  0xffffe430: 5d                      |]       |   pop    ebp
+	  0xffffe431: 5a                      |Z       |   pop    edx
+	  0xffffe432: 59                      |Y       |   pop    ecx
+	  0xffffe433: c3                      |.       |   ret    
+	  0xffffe433: Successor blocks: unknown
+
+      Other disassembly tools are:
+          + linearDisassemble: disassemble one address at a time
+            without any regard for control flow.
+          + $ROSE/tests/roseTests/binaryTests/disassemble: an earlier
+            recursive disassembler that uses a different partitioning
+            mechanism which is what frontend() currently uses (Oct
+            2014).
+
+***** A shortcut
+
+      We didn't actually need a copy of the VDSO in order to be able
+      to disassemble it -- we could have disassembled it directly from
+      the running process. However, the main problem is that the VDSO
+      is an ELF container and ROSE is not currently able to parse an
+      ELF container that was loaded into memory as the result of
+      parsing some other ELF container.
+
+      But if we knew that the address of __kernel_rt_sigreturn was
+      0xf7ffd420 within a running process from some prior analysis,
+      then we could have used the "linearDisassemble" tool to obtain
+      the instructions:
+
+	  $ i386 -R ./linearDisassemble --isa=i386 --start=0xf7ffd420 run:i386-mixed
+
+	  va 0x08048000 + 0x00001000 = 0x08049000 r-x- at buffer aah   + 0x00000000 proc:24877(/home/matzke/GS-CAD/ROSE/sources/m68k/_build/projects/BinaryAnalysisTools/i386-mixed)
+	  va 0xf7ffd000 + 0x00001000 = 0xf7ffe000 r-x- at buffer aai   + 0x00000000 proc:24877([vdso])
+	  va 0xfffe8000 + 0x00016000 = 0xffffe000 rwx- at buffer aaj   + 0x00000000 proc:24877([stack])
+	  0xf7ffd420: 51                      |Q       |   push   ecx
+	  0xf7ffd421: 52                      |R       |   push   edx
+	  0xf7ffd422: 55                      |U       |   push   ebp
+	  0xf7ffd423: 89 e5                   |..      |   mov    ebp, esp
+	  0xf7ffd425: 0f 34                   |.4      |   sysenter 
+	  0xf7ffd427: 90                      |.       |   nop    
+	  0xf7ffd428: 90                      |.       |   nop    
+	  0xf7ffd429: 90                      |.       |   nop    
+	  0xf7ffd42a: 90                      |.       |   nop    
+	  0xf7ffd42b: 90                      |.       |   nop    
+	  0xf7ffd42c: 90                      |.       |   nop    
+	  0xf7ffd42d: 90                      |.       |   nop    
+	  0xf7ffd42e: cd 80                   |..      |   int    0x80<-128>
+	  0xf7ffd430: 5d                      |]       |   pop    ebp
+
+* Miscellaneous documentation
+
+*** Output from the recursiveDisassembler "--dump-cfg" switch
+
+    Control flow graph dumps contain a lot of information packed into
+    limited space.  Here's an example of part of a dump of a CFG (lines
+    quoted with '>') and comments about what each preceding line means.
+
+    >  basic block 0x00101704<36630,X> entry block for function 0x00101704
+					    Start of information for a basic block
+					    0x00101704 is the entry virtual address for the basic block
+					    <...> are comments/auxiliary information
+					    36630 is the unique CFG vertex ID number
+					    "X" means we tried to find an instruction there and failed (not-eXisting block)
+					    "entry block" means this basic block is a function entry address
+					    "function 0x00101704" is a function primary entry address
+					    The body of each basic block will be indented two additional spaces
+    >    predecessors: 0x10053dde<36629>:0x10053e02<fcall>
+					    List of control flow predecessors for this block (there is one)
+					    0x10053dde is the entry address for the predecessor basic block
+					    36629 is the CFG vertex ID for the basic block
+					    0x10053e02 is the starting address of the final instruction of the basic block
+					    <fcall> means the predecessor made a function call to this basic block
+    >    successors: non-existing<2>
+					    List of control flow successors for this block (there is one)
+					    "non-existing" is a special CFG vertex for basic blocks whose first insn failed
+					    2 is the unique CFG vertex ID for this special vertex
+    >  basic block 0x10000000<3> entry block for function 0x10000000 "_start"
+					    Start of information for another basic block; blocks are sorted by starting address
+					    0x10000000 is the starting address for this basic block
+					    3 is the unique CFG vertex ID number
+					    "_start" is the name of the function
+    >    predecessors: none
+					    List of control flow predecessors (none in this case)
+    >      0x10000000: 4e 56 00 00             |NV..    |   link.w bp, 0x0000
+    >      0x10000004: 2f 0c                   |/.      |   move.l a4, [--sp]
+    >      0x10000006: 2f 0b                   |/.      |   move.l a3, [--sp]
+    >      0x10000008: 2f 0a                   |/.      |   move.l a2, [--sp]
+    >      0x1000000a: 45 f9 10 69 47 54       |E..iGT  |   lea.l  [0x10694754<275334996>], a2
+    >      0x10000010: 47 f9 10 69 51 ac       |G..iQ.  |   lea.l  [0x106951ac<275337644>], a3
+    >      0x10000016: a3 40                   |.@      |   mov3q.l 0x00000001, d0
+    >      0x10000018: b0 aa 00 18             |....    |   cmp.l  [a2+0x00000018], d0
+    >      0x1000001c: 66 44                   |fD      |   bne.b  0x10000062<268435554>
+					    List of instructions for the basic block in execution order
+					    0x10000000 etc are the instruction starting addresses
+					    2-digit hexadecimal are the machine code for the instruction in address order
+					    Sometimes "." is used for "00" and "##" is used for "ff" to make these two stand out
+					    Letters between '||' are the ASCII characters or '.' for non-graphic characters
+					    <...> are comments (e.g., decimal representations); [...] are memory references
+					    Operand order depends on the instruction architecture (m68k is source, destination)
+    >    stack delta: 0xfffffff0<4294967280,-16>[32]
+					    Amount by which this basic block adjusts the stack pointer
+					    0xfffffff0 is the hexadecimal adjustment
+					    <...> is a comment
+					    4294967280 is the decimal representation
+					    -16 is the signed decimal representation
+					    32 is the width of the value in bits
+    >    successors: 0x1000001e<4> 0x10000062<5>
+					    List of control flow successors (2 in this case)
+					    0x1000001e and 0x10000062 are basic block entry addresses
+					    4 and 5 are the unique ID numbers for those CFG vertices

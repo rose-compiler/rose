@@ -4,9 +4,12 @@
 
 #include <boost/graph/depth_first_search.hpp>
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /* See header file for documentation. */
 void
-BinaryAnalysis::ControlFlow::clear_ast(SgNode *root)
+ControlFlow::clear_ast(SgNode *root)
 {
     struct T1: public AstSimpleProcessing {
         ControlFlow *analyzer;
@@ -21,3 +24,6 @@ BinaryAnalysis::ControlFlow::clear_ast(SgNode *root)
     };
     T1(this).traverse(root, preorder);
 }
+
+} // namespace
+} // namespace

@@ -3,16 +3,19 @@
 
 -- Clean up. Tables need to be dropped in the opposite order they're created.
 drop table if exists semantic_funcsim;
+drop table if exists semantic_aggprops;
 drop table if exists semantic_funcpartials;
 drop table if exists semantic_fio_calls;
 drop table if exists semantic_fio_coverage;
 drop table if exists semantic_fio_inputs;
 drop table if exists semantic_fio_trace;
 drop table if exists semantic_fio_events;
+drop table if exists api_call_similarity;
 drop table if exists semantic_fio;
 drop table if exists semantic_sources;
 drop table if exists semantic_instructions;
 drop table if exists semantic_cg;
+drop table if exists semantic_rg;
 drop table if exists semantic_binaries;
 drop table if exists semantic_functions;
 drop table if exists semantic_specfiles;
@@ -22,6 +25,7 @@ drop table if exists semantic_outputvalues;
 drop table if exists semantic_inputvalues;
 drop table if exists semantic_input_queues;
 drop table if exists semantic_history;
+drop table if exists equivalent_classes;
 
 -- A history of the commands that were run to produce this database, excluding SQL run by the user.
 create table semantic_history (
@@ -100,7 +104,10 @@ create table semantic_functions (
        isize integer,                           -- size of function instructions in bytes, non-overlapping
        dsize integer,                           -- size of function data in bytes, non-overlapping
        size integer,                            -- total size of function, non-overlapping
+       callsites integer,                       -- number of places this function is called
+       retvals_used integer,                    -- number of call sites where a return value is used
        digest varchar(40),                      -- SHA1 hash of the function's instructions and static data
+       counts_b64 text,                         -- binary blob of signature vector, base64 encoded
        cmd bigint references semantic_history(hashkey) -- command that created this row
 );
 
@@ -111,6 +118,23 @@ create table semantic_cg (
        file_id integer references semantic_files(id), -- File from which this call originates (used during update)
        cmd bigint references semantic_history(hashkey) -- Command that created this row
 );
+
+-- Equivalence classes
+create table equivalent_classes (
+      func_id integer references semantic_functions(id),
+      equivalent_func_id integer references semantic_functions(id),
+      cmd bigint references semantic_history(hashkey) -- Command that created this row
+);
+
+-- Function reachability graph
+create table semantic_rg (
+       caller integer references semantic_functions(id),
+       callee integer references semantic_functions(id),
+       file_id integer references semantic_files(id) -- File from which this call originates (used during update)
+       --cmd bigint references semantic_history(hashkey) -- Command that created this row
+);
+
+
 
 -- This is the list of instructions for each function.  Functions need not be contiguous in memory, and two instructions
 -- might overlap, which is why we have to store each instruction individually.  Every instruction belongs to exactly one
@@ -160,6 +184,9 @@ create table semantic_fio (
        integers_consumed integer,               -- number of inputs consumed for other reasons
        instructions_executed integer,           -- number of instructions executed by this test
        ogroup_id bigint,                        -- output produced by this function, semantic_outputvalues.hashkey
+       counts_b64 text,                         -- binary blob (not sure what), base64 encoded
+       syntactic_ninsns integer,                -- number of instructions covered by the syntactic signature
+       instr_seq_b64 text,                      -- binary MD5 sum of vector, base64 encoded
        status integer references semantic_faults(id), -- exit status of the test
        elapsed_time double precision,           -- number of seconds elapsed excluding ptr analysis
        cpu_time double precision,               -- number of CPU seconds used excluding ptr analysis
@@ -188,12 +215,12 @@ create table semantic_fio_trace (
 
 -- Input values actually consumed by each test.
 create table semantic_fio_inputs (
-       func_id integer,				-- references semantic_functions(id) [commented out for speed]
-       igroup_id integer,			-- references semantic_inputvalues(id) [commented out for speed]
+       func_id integer,                         -- references semantic_functions(id) [commented out for speed]
+       igroup_id integer,                       -- references semantic_inputvalues(id) [commented out for speed]
        request_queue_id integer references semantic_input_queues(id), -- queue whose value was requested
        actual_queue_id integer references semantic_input_queues(id),  -- queue whose value was consumed after redirecting
-       pos integer,				-- sequence number indicates the order that input values were consumed
-       val bigint				-- the actual input value
+       pos integer,                             -- sequence number indicates the order that input values were consumed
+       val bigint                               -- the actual input value
 );
 
 -- Information about instructions that were executed for each test.  This table is only populated when coverage capability is
@@ -230,6 +257,13 @@ create table semantic_funcpartials (
        nvoids integer                           -- Number of ntests where the function did not write to EAX
 );
 
+-- Function properties aggregated over multiples tests. This table holds per-function properties whose values are computed
+-- from multiple runs (rows of semantics_fio), usually depending on rows from semantic_funcpartials.
+create table semantic_aggprops (
+       func_id integer references semantic_functions(id),
+       retprob double precision                 -- probability that this function returns a value
+);
+
 -- Function similarity--how similar are pairs of functions.  The relation_id allows us to store multiple function similarity
 -- relationships where all the similarity values for a given relationship were calculated the same way.  E.g., relationship
 -- #0 could be computed as the maximum output group similarity while relationship #1 could be the average.
@@ -240,5 +274,29 @@ create table semantic_funcsim (
        ncompares integer,                       -- number of output groups compared to reach this value
        maxcompares integer,                     -- potential number of comparisons possible (ncompares is a random sample)
        relation_id int,                         -- Identying number for this set of function similarity values (default is zero)
+       hamming_d integer,                       -- Hamming distance
+       euclidean_d double precision,            -- Euclidean distance
+       euclidean_d_ratio double precision,      -- Euclidean distance divided by the total number of instructions in both functions
+       combined_d integer,                      -- Combined distance
+       path_ave_hamming_d integer,              -- Path sensistive average hamming distance
+       path_min_hamming_d integer,              -- Path sensistive minimum hamming distance
+       path_max_hamming_d integer,              -- Path sensistive maximum hamming distance
+       path_ave_euclidean_d double precision,   -- Path sensistive average euclidean distance
+       path_min_euclidean_d double precision,   -- Path sensistive minimum euclidean distance
+       path_max_euclidean_d double precision,   -- Path sensistive maximum euclidean distance
+       path_ave_euclidean_d_ratio double precision,   -- Path sensistive average euclidean distance ratio
+       path_min_euclidean_d_ratio double precision,   -- Path sensistive minimum euclidean distance ratio
+       path_max_euclidean_d_ratio double precision,   -- Path sensistive maximum euclidean distance ratio
        cmd bigint references semantic_history(hashkey) -- command that set the precision on this row
 );
+
+-- API Call similarity - how similar are pairs of functions.
+create table api_call_similarity (
+    func1_id integer references semantic_functions(id),
+    func2_id integer references semantic_functions(id), -- func1_id < func2_id
+    max_similarity double precision,             -- a value between 0 and 1, with one being equality
+    min_similarity double precision,             -- a value between 0 and 1, with one being equality
+    ave_similarity double precision,             -- a value between 0 and 1, with one being equality
+    cg_similarity  double precision              -- static call graph similarity
+  
+    );

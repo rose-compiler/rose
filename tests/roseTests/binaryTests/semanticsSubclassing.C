@@ -4,7 +4,7 @@
 #include "rose.h"
 #include "SymbolicSemantics2.h"
 
-using namespace BinaryAnalysis::InstructionSemantics2;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,16 +54,16 @@ public:
     // to distinguish between a virtual default constructor that takes no arguments, and the virtual copy constructor which
     // also takes no arguments.  No need for doxygen comments since they're documented in the base class.
 public:
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const /*override*/ {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
         return instance(protocell);
     }
 
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const /*override*/ {
+                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
         return instance(addrProtoval, valProtoval);
     }
 
-    virtual BaseSemantics::MemoryStatePtr clone() const /*override*/ {
+    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
 #if 0
         // it's easier to call the real constructor than to cast the smart-pointer-to-const-object and promote, but if we
         // really want to do that, here's how:
@@ -101,26 +101,28 @@ typedef boost::shared_ptr<class MyRiscOperators> MyRiscOperatorsPtr;
 class MyRiscOperators: public SymbolicSemantics::RiscOperators {
     // Real constructors
 protected:
-    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(protoval, solver) {}
-    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+    explicit MyRiscOperators(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL)
         : SymbolicSemantics::RiscOperators(state, solver) {}
 
     // Static allocating constructors
 public:
-    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(protoval, solver));
     }
-    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+    static MyRiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, rose::BinaryAnalysis::SMTSolver *solver=NULL) {
         return MyRiscOperatorsPtr(new MyRiscOperators(state, solver));
     }
 
     // Virtual constructors
 public:
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(protoval, solver);
     }
-    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) const {
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   rose::BinaryAnalysis::SMTSolver *solver=NULL) const {
         return instance(state, solver);
     }
 
@@ -136,7 +138,7 @@ public:
 
 #if 0
     // See what happens if you don't use a dynamic constructor.
-    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) /*override*/ {
+    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) ROSE_OVERRIDE {
         // This is the wrong way to create a new value.  It assumes that the semantics lattice was built to use the
         // SymbolicSemantics::SValue, but in fact we might be using a subclass thereof.  The error won't be detected until
         // someone tries to use a SymbolicSemantics::SValue subtype, and they might not even notice until this type error
@@ -167,7 +169,7 @@ int main()
     // Build the RiscOperators.  Since we're wanting to use our shiny new classes, we need to build the lattice manually.
     // Refer to SymbolicSemantics::RiscOperators::instance() to see what parts are required, and substitute our class names
     // where appropriate.
-    SMTSolver *solver = NULL;
+    rose::BinaryAnalysis::SMTSolver *solver = NULL;
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
     BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
     BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);

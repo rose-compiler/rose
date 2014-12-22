@@ -7,6 +7,8 @@
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
 
+using namespace rose::BinaryAnalysis;
+
 static RTS_mutex_t global_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
 static bool do_disassemble_at_coredump = false;         /* disassemble when specimen is about to dump core? */
 static std::set<rose_addr_t> do_disassemble_at_addr;    /* disassemble first time these instructions are hit. */

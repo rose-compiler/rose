@@ -35,7 +35,7 @@ AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, stri
      this->filenamePostfix=filenamePostfix;
      DOTInheritedAttribute ia;
      traverse(node,ia);
-     string filename2=string("./")+filename+"."+filenamePostfix+"dot";
+     string filename2=string("./")+filename+"."+filenamePostfix+".dot";
      dotrep.writeToFileAsGraph(filename2);
    }
 
@@ -144,7 +144,7 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
   // DQ (11/17/2013): Added assertion.
      ROSE_ASSERT(node != NULL);
 
-#if 1
+#if 0
      printf ("In AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -160,11 +160,11 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
                ROSE_ASSERT(attribute != NULL);
 
             // This can return a non-empty list in user-defined attributes (derived from AstAttribute).
-#if 1
+#if 0
                printf ("Calling attribute->additionalNodeInfo() \n");
 #endif
                std::vector<AstAttribute::AttributeNodeInfo> nodeList = attribute->additionalNodeInfo();
-#if 1
+#if 0
                printf ("nodeList.size() = %lu \n",nodeList.size());
 #endif
                for (std::vector<AstAttribute::AttributeNodeInfo>::iterator i_node = nodeList.begin(); i_node != nodeList.end(); i_node++)
@@ -172,32 +172,32 @@ void AstDOTGeneration::addAdditionalNodesAndEdges(SgNode* node)
                     SgNode* nodePtr   = i_node->nodePtr;
                     string nodelabel  = i_node->label;
                     string nodeoption = i_node->options;
-#if 1
+#if 0
                     printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding a node nodelabel = %s nodeoption = %s \n",nodelabel.c_str(),nodeoption.c_str());
 #endif
                  // dotrep.addNode(NULL,dotrep.traceFormat(ia.tdTracePos)+nodelabel,nodeoption);
                  // dotrep.addNode( nodePtr, dotrep.traceFormat(ia.tdTracePos) + nodelabel, nodeoption );
                     dotrep.addNode( nodePtr, nodelabel, nodeoption );
                   }
-#if 1
+#if 0
                printf ("Calling attribute->additionalEdgeInfo() \n");
 #endif
                std::vector<AstAttribute::AttributeEdgeInfo> edgeList = attribute->additionalEdgeInfo();
-#if 1
+#if 0
                printf ("edgeList.size() = %lu \n",edgeList.size());
 #endif
                for (std::vector<AstAttribute::AttributeEdgeInfo>::iterator i_edge = edgeList.begin(); i_edge != edgeList.end(); i_edge++)
                   {
                     string edgelabel  = i_edge->label;
                     string edgeoption = i_edge->options;
-#if 1
+#if 0
                     printf ("In AstDOTGeneration::evaluateSynthesizedAttribute(): Adding an edge from i_edge->fromNode = %p to i_edge->toNode = %p edgelabel = %s edgeoption = %s \n",i_edge->fromNode,i_edge->toNode,edgelabel.c_str(),edgeoption.c_str());
 #endif
                     dotrep.addEdge(i_edge->fromNode,edgelabel,i_edge->toNode,edgeoption + "dir=forward");
                   }
              }
         }
-#if 1
+#if 0
      printf ("Leaving AstDOTGeneration::addAdditionalNodesAndEdges(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
    }
@@ -316,6 +316,13 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n") + typedefDeclaration->get_name();
              }
 
+       // DQ (3/20/2011): Added function names to the generated dot file graphs of the AST.
+          SgNamespaceDeclarationStatement* namespaceDeclarationStatement = isSgNamespaceDeclarationStatement(genericDeclaration);
+          if (namespaceDeclarationStatement != NULL)
+             {
+               nodelabel += string("\\n") + namespaceDeclarationStatement->get_name();
+             }
+
           nodelabel += string("\\n") + name;
         }
 
@@ -326,14 +333,14 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           nodelabel += string("\\n") + initializedName->get_name();
         }
 
-  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+  // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.
      SgIntVal* intValue = isSgIntVal(node);
      if (intValue != NULL)
         {
           nodelabel += string("\\n value = ") + StringUtility::numberToString(intValue->get_value());
         }
 
-  // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
+  // DQ (4/6/2011): Added support for output of the name associated with SgVarRefExp IR nodes.
      SgVarRefExp* varRefExp = isSgVarRefExp(node);
      if (varRefExp != NULL)
         {
@@ -352,6 +359,64 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                name = variableSymbol->get_name();
              }
           nodelabel += string("\\n name = ") + name;
+        }
+
+  // DQ (8/28/2014): Added support for output of the name for function IR nodes.
+     SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(node);
+     if (functionRefExp != NULL)
+        {
+          SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (functionSymbol == NULL)
+             {
+               printf ("WARNING: functionSymbol == NULL: functionRefExp = %p \n",functionRefExp);
+             }
+          ROSE_ASSERT(functionSymbol != NULL);
+
+          string name = "unknown";
+          if (functionSymbol != NULL)
+             {
+               name = functionSymbol->get_name();
+             }
+          nodelabel += string("\\n name = ") + name;
+        }
+
+  // DQ (8/28/2014): Added support for output of the name for member function IR nodes.
+     SgMemberFunctionRefExp* memberFunctionRefExp = isSgMemberFunctionRefExp(node);
+     if (memberFunctionRefExp != NULL)
+        {
+          SgMemberFunctionSymbol* memberFunctionSymbol = memberFunctionRefExp->get_symbol();
+
+       // DQ (1/1/2014): test2014_01.c demonstrates where there is no associated SgVariableSymbol.
+          if (memberFunctionSymbol == NULL)
+             {
+               printf ("WARNING: memberFunctionSymbol == NULL: memberFunctionRefExp = %p \n",memberFunctionRefExp);
+             }
+          ROSE_ASSERT(memberFunctionSymbol != NULL);
+
+          string name = "unknown";
+          if (memberFunctionSymbol != NULL)
+             {
+               name = memberFunctionSymbol->get_name();
+             }
+          nodelabel += string("\\n name = ") + name;
+        }
+
+  // DQ (10/19/2014): Added support for output of the name for SgConstructorInitializer IR nodes.
+     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(node);
+     if (constructorInitializer != NULL)
+        {
+          SgClassDeclaration* classDeclaration = constructorInitializer->get_class_decl();
+
+       // DQ (10/20/2014): This can be NULL in rare occasions.
+       // ROSE_ASSERT(classDeclaration != NULL);
+
+          if (classDeclaration != NULL)
+             {
+               string name = classDeclaration->get_name();
+               nodelabel += string("\\n name = ") + name;
+             }
         }
 
 #if 0
@@ -689,7 +754,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                     printf ("Proposed (generated) filename is too long, shortened to: %s \n",generatedProjectName.c_str());
                   }
 
-               string filename = string("./") + generatedProjectName + ".dot";
+               string filename = string("./") + generatedProjectName + "." + filenamePostfix + ".dot";
 
             // printf ("generated filename for dot file (from SgProject) = %s \n",filename.c_str());
                if ( SgProject::get_verbose() >= 1 )
@@ -970,6 +1035,18 @@ AstDOTGeneration::additionalNodeInfo(SgNode* node)
 
   // add memory location of node to dot output
      ss << node << "\\n";
+
+  // DQ (7/4/2014): Adding more debug support to the AST visualization.
+     SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(node);
+     if (functionCallExp != NULL)
+        {
+          string value = "false";
+          if (functionCallExp->get_uses_operator_syntax() == true)
+             {
+               value = "true";
+             }
+          ss << string("uses_operator_syntax() = ") << value << "\\n";
+        }
 
   // DQ (8/31/2013): Added more information about the IR node to the dot graph.
      ss << sourcePositionInformation(node);

@@ -19,7 +19,7 @@ foo()
      while(int y = 1); // { ; }
 #endif
 
-#if 0
+#if 1
      switch(0) { int y; default: y = 0; }     
 
      switch(0)

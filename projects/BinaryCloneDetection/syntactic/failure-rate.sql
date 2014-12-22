@@ -1,6 +1,6 @@
 -- Computes statistics about syntactic false negatives in a database
 -- populated with two or more specimens compiled in different ways.
-begin transaction;
+--begin transaction;
 
 drop table if exists fr_results;
 drop table if exists fr_false_positives;
@@ -35,7 +35,7 @@ create table fr_funcnames as
             on func1.id<>func2.id and func1.name <> '' and func1.name=func2.name and func1.file_id=func2.file_id
         where func2.id is null and func1.ninsns >= 2                                            -- !!FIXME
         group by func1.name
-        having count(*) = (select count(*) from fr_specimens);
+        having count(*) >= 2;
 
 
 -- Functions that have a name and which appear once per specimen by that name.
@@ -121,4 +121,4 @@ select * from fr_results;
 --     join fr_functions as func2 on falseneg.func2_id = func2.id
 --     order by func1.name;
 
-rollback;
+--rollback;

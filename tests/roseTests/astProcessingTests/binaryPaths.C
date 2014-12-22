@@ -13,6 +13,7 @@
 
 using namespace std;
 using namespace boost;
+using namespace rose;
 
 
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */

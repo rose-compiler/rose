@@ -7,13 +7,16 @@
 
 #include "Map.h"
 
-#include <boost/shared_ptr.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <cassert>
 #include <inttypes.h>
 #include <sawyer/BitVector.h>
+#include <sawyer/SharedPointer.h>
+#include <sawyer/SmallObject.h>
 #include <set>
 #include <vector>
+
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Cache hash values in nodes.  If this is defined, then the @p hashval data member member is used to store a hash for the
  *  node and its children.  The hash can be used to prove that two expressions are not structurally equivalent, thus avoiding a
@@ -82,9 +85,9 @@ class TreeNode;
 class InternalNode;
 class LeafNode;
 
-typedef boost::shared_ptr<const TreeNode> TreeNodePtr;
-typedef boost::shared_ptr<const InternalNode> InternalNodePtr;
-typedef boost::shared_ptr<const LeafNode> LeafNodePtr;
+typedef Sawyer::SharedPointer<const TreeNode> TreeNodePtr;
+typedef Sawyer::SharedPointer<const InternalNode> InternalNodePtr;
+typedef Sawyer::SharedPointer<const LeafNode> LeafNodePtr;
 typedef std::vector<TreeNodePtr> TreeNodes;
 typedef Map<uint64_t, uint64_t> RenameMap;
 
@@ -127,17 +130,17 @@ public:
  *  Every node has a specified number of significant bits that is constant over the life of the node.
  *
  *  In order that subtrees can be freely assigned as children of other nodes (provided the structure as a whole remains a
- *  lattice and not a graph with cycles), tree nodes are always referenced through boost::shared_ptr<const T> where T is one of
- *  the tree node types: TreeNode, InternalNode, or LeafNode.  For convenience, we define TreeNodePtr, InternalNodePtr, and
- *  LeafNodePtr typedefs.  The shared_ptr owns the pointer to the tree node and thus the tree node pointer should never be
- *  deleted explicitly. */
-class TreeNode: public boost::enable_shared_from_this<TreeNode> {
+ *  lattice and not a graph with cycles), tree nodes are always referenced through shared-ownership pointers
+ *  (<code>Sawyer::SharedPointer<const T></code> where @t T is one of the tree node types: TreeNode, InternalNode, or LeafNode.
+ *  For convenience, we define TreeNodePtr, InternalNodePtr, and LeafNodePtr typedefs.  The pointers themselves collectively
+ *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
+class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
     size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
     mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
 public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { assert(nbits>0); }
+    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
 
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
@@ -152,6 +155,11 @@ public:
      *  equal values or are the same variable. Two internal nodes are equivalent if they are the same width, the same
      *  operation, have the same number of children, and those children are all pairwise equivalent. */
     virtual bool equivalent_to(const TreeNodePtr& other) const = 0;
+
+    /** Compare two expressions structurally for sorting. Returns -1 if @p this is less than @p other, 0 if they are
+     *  structurally equal, and 1 if @p this is greater than @p other.  This function returns zero when an only when @ref
+     *  equivalent_to returns zero, but @ref equivalent_to can be much faster since it uses hashing. */
+    virtual int structural_compare(const TreeNodePtr& other) const = 0;
 
     /** Substitute one value for another. Finds all occurrances of @p from in this expression and replace them with @p to. If a
      * substitution occurs, then a new expression is returned. The matching of @p from to sub-parts of this expression uses
@@ -204,12 +212,12 @@ public:
 
     /** Dynamic cast of this object to an internal node. */
     InternalNodePtr isInternalNode() const {
-        return boost::dynamic_pointer_cast<const InternalNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const InternalNode>();
     }
 
     /** Dynamic cast of this object to a leaf node. */
     LeafNodePtr isLeafNode() const {
-        return boost::dynamic_pointer_cast<const LeafNode>(shared_from_this());
+        return sharedFromThis().dynamicCast<const LeafNode>();
     }
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
@@ -244,7 +252,7 @@ public:
      * 
      * @endcode
      * @{ */
-    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(shared_from_this(), fmt); }
+    WithFormatter with_format(Formatter &fmt) const { return WithFormatter(sharedFromThis(), fmt); }
     WithFormatter operator+(Formatter &fmt) const { return with_format(fmt); }
     /** @} */
 
@@ -280,99 +288,99 @@ public:
 };
 
 struct AddSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct AndSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct OrSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct XorSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SmulSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
 };
 struct UmulSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
 };
 struct ConcatSimplifier: Simplifier {
-    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const /*override*/;
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr fold(TreeNodes::const_iterator, TreeNodes::const_iterator) const ROSE_OVERRIDE;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct AsrSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct InvertSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct NegateSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct IteSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct NoopSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct RolSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct RorSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UextendSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SextendSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SgeSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SgtSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SleSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SltSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UgeSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UgtSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UleSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UltSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SdivSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct SmodSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UdivSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct UmodSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
@@ -381,17 +389,17 @@ struct ShiftSimplifier: Simplifier {
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct LssbSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 struct MssbSimplifier: Simplifier {
-    virtual TreeNodePtr rewrite(const InternalNode*) const /*override*/;
+    virtual TreeNodePtr rewrite(const InternalNode*) const ROSE_OVERRIDE;
 };
 
 /** Internal node of an expression tree for instruction semantics. Each internal node has an operator (constant for the life of
@@ -405,7 +413,7 @@ private:
     uint64_t nnodes_;                                   // total number of nodes; self + children's nnodes
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
-    // accidently using pointers to these objects -- all access should be through boost::shared_ptr<>.
+    // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
     InternalNode(size_t nbits, Operator op, const std::string comment="")
         : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
@@ -463,11 +471,12 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual bool is_known() const {
         return false; /*if it's known, then it would have been folded to a leaf*/
     }
-    virtual uint64_t get_value() const { assert(!"not a constant value"); return 0;}
+    virtual uint64_t get_value() const { ASSERT_forbid2(true, "not a constant value"); return 0;}
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return nnodes_; }
 
@@ -475,7 +484,7 @@ public:
     size_t nchildren() const { return children.size(); }
 
     /** Returns the specified child. */
-    TreeNodePtr child(size_t idx) const { assert(idx<children.size()); return children[idx]; }
+    TreeNodePtr child(size_t idx) const { ASSERT_require(idx<children.size()); return children[idx]; }
 
     /** Returns all children. */
     TreeNodes get_children() const { return children; }
@@ -521,7 +530,7 @@ public:
     TreeNodePtr rewrite(const Simplifier &simplifier) const;
 
     // documented in super class
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
@@ -571,6 +580,7 @@ public:
     virtual bool must_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool may_equal(const TreeNodePtr &other, SMTSolver*) const;
     virtual bool equivalent_to(const TreeNodePtr &other) const;
+    virtual int structural_compare(const TreeNodePtr& other) const;
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const;
     virtual VisitAction depth_first_traversal(Visitor&) const;
     virtual uint64_t nnodes() const { return 1; }
@@ -586,7 +596,7 @@ public:
     uint64_t get_name() const;
 
     // documented in super class
-    virtual void print(std::ostream&, Formatter&) const /*override*/;
+    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
     /** Prints an integer interpreted as a signed value. */
     void print_as_signed(std::ostream&, Formatter&, bool as_signed=true) const;
@@ -615,7 +625,7 @@ nnodesUnique(InputIterator begin, InputIterator end)
         T1(): nUnique(0) {}
 
         VisitAction preVisit(const TreeNodePtr &node) {
-            if (seen.insert(node.get()).second) {
+            if (seen.insert(getRawPointer(node)).second) {
                 ++nUnique;
                 return CONTINUE;                        // this node has not been seen before; traverse into children
             } else {
@@ -635,4 +645,7 @@ nnodesUnique(InputIterator begin, InputIterator end)
 }
 
 } // namespace
+} // namespace
+} // namespace
+
 #endif

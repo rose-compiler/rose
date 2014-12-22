@@ -19,12 +19,16 @@ fi
 # Copy some of Sawyer's source files into the ROSE source tree. Don't worry about overwriting ROSE-local changes--they
 # should have been contributed back to the Sawyer project by now (besides, that's what Git is for)!
 for f in \
-    Assert BitVector BitVectorSupport CommandLine DefaultAllocator Graph GraphBoost IndexedList \
-    Interval IntervalMap IntervalSet Map Markup MarkupPod Message Optional PoolAllocator ProgressBar \
-    Sawyer SharedPointer WarningsOff WarningsRestore
+    Access Assert AddressMap AddressSegment AllocatingBuffer BitVector BitVectorSupport Buffer CommandLine Cached \
+    Callbacks DefaultAllocator Graph GraphBoost GraphTraversal IndexedList Interval IntervalMap IntervalSet Map \
+    MappedBuffer Markup MarkupPod Message NullBuffer Optional PoolAllocator ProgressBar Sawyer SharedPointer \
+    SmallObject Stack StaticBuffer Stopwatch WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";
     cp "$srcbase.h" .
     [ -f "$srcbase.C" ] && cp "$srcbase.C" .
 done
 
+
+# Add a comment to the Message.h file
+sed --in-place -e '1i// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h

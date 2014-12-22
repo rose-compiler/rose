@@ -91,7 +91,7 @@ namespace Java {
 namespace Ecj {
 //#ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
   // TOO1 (2/13/2014): Declared in src/frontend/ECJ_ROSE_Connection/openJavaParser_main.C.
-  extern SgProject* Ecj_globalProjectPointer;
+  extern ROSE_DLL_API SgProject* Ecj_globalProjectPointer;
 
   int Run(SgProject* project);
   int RunBatchMode(SgProject* project);
@@ -125,6 +125,20 @@ namespace Java {
 
 
 }// ::Rose
+
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace X10 {
+namespace X10c {
+  extern SgSourceFile* X10c_globalFilePointer;
+  extern std::list<std::string> classNames;
+}// ::Rose::Frontend::X10::X10c
+}// ::Rose::Frontend::X10
+}// ::Rose::Frontend
+}// ::Rose
+#endif
+
 
 #endif // ROSE_SAGESUPPORT_H
 

@@ -4,14 +4,89 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
 test2012_02.C \
+test2012_05.C \
 test2014_02.C \
+test2014_04.C \
+test2014_05.C \
+test2014_06.C \
+test2014_07.C \
+test2014_08.C \
+test2014_09.C \
+test2014_11.C \
+test2014_12.C \
+test2014_13.C \
+test2014_14.C \
+test2014_15.C \
+test2014_16.C \
+test2014_17.C \
+test2014_18.C \
+test2014_19.C \
+test2014_20.C \
+test2014_21.C \
+test2014_22.C \
+test2014_23.C \
+test2014_25.C \
+test2014_27.C \
+test2014_28.C \
+test2014_29.C \
+test2014_30.C \
+test2014_32.C \
+test2014_33.C \
+test2014_34.C \
+test2014_36.C \
+test2014_37.C \
+test2014_38.C \
+test2014_39.C \
+test2014_40.C \
+test2014_41.C \
+test2014_42.C \
+test2014_43.C \
+test2014_44.C \
+test2014_45.C \
+test2014_47.C \
+test2014_48.C \
+test2014_49.C \
+test2014_50.C \
+test2014_51.C \
+test2014_52.C \
+test2014_54.C \
+test2014_55.C \
+test2014_56.C \
+test2014_57.C \
+test2014_58.C \
+test2014_70.C \
+test2014_71.C \
+test2014_72.C \
+test2014_73.C \
+test2014_74.C \
+test2014_75.C \
+test2014_76.C \
+test2014_77.C \
+test2014_78.C \
+test2014_79.C \
+test2014_80.C \
+test2014_81.C \
+test2014_83.C \
+test2014_84.C \
+test2014_86.C \
+test2014_87.C \
+test2014_89.C \
+test2014_90.C \
 last.C
 
+# Failing tests:
+# test2014_10.C
+# test2014_24.C
+# test2014_26.C
+# test2014_31.C 
+# test2014_35.C 
+# test2014_46.C 
+# test2014_53.C 
 
+# These are incomplete non-compilable code fragments
 TESTCODE_CURRENTLY_FAILING = \
 test2012_03.C \
 test2012_04.C \
-test2012_05.C \
 test2012_06.C \
 test2012_07.C \
 test2012_08.C \
@@ -41,6 +116,10 @@ test2012_31.C \
 test2012_32.C \
 test2012_33.C \
 test2012_34.C \
+test2014_03.C \
+test2014_82.C \
+test2014_85.C \
+test2014_88.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it
@@ -61,7 +140,8 @@ $(TESTCODE_CURRENTLY_FAILING)
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 
 # Use options to turn on C++11 and process using just the frontend for now.
-CXX11_OPTIONS = -rose:Cxx11 -rose:skip_translation_from_edg_ast_to_rose_ast
+# CXX11_OPTIONS = -rose:Cxx11 -rose:skip_translation_from_edg_ast_to_rose_ast
+CXX11_OPTIONS = -rose:Cxx11 
 
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = $(CXX11_OPTIONS) --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
@@ -150,7 +230,7 @@ if ROSE_USING_GCC_VERSION_LATER_4_9
 endif
 endif
 else
-	@echo "C11 tests require GNU version 4.8 or 4.9 backend compilers."
+	@echo "C++11 tests require configuration with EDG version 4.9 and GNU version 4.8 or 4.9 backend compilers."
 endif
 	@echo "*************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"

@@ -8,6 +8,9 @@
 #include "callbacks.h"
 #include "Diagnostics.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Functions indexed by entry address.
  *
  *  This class is designed to be a highly-configurable way to print a table describing known functions.  The way it works is
@@ -168,7 +171,7 @@ public:
             return val(a) != val(b);
         }
         size_t val(SgAsmFunction *x) {
-            ExtentMap extent;
+            AddressIntervalSet extent;
             x->get_extent(&extent);
             return extent.size();
         }
@@ -486,5 +489,7 @@ protected:
     ROSE_Callbacks::List<OutputCallback> output_callbacks;
 };
 
-    
+} // namespace
+} // namespace
+
 #endif

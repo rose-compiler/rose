@@ -926,3 +926,37 @@ Make a backup using git:
 Delete the backup:
    git branch -D backup
 
+Working with the new_app branch on tux231:
+   470  17:17   smgit commit -am "Fixed more bugs specific to new C++ applications (added test codes for each case)."
+   473  17:18   smgit push origin HEAD:refs/heads/dquinlan/dq-new_app-rc
+
+   496  8:38    smgit fetch origin
+   497  8:39    smgit merge origin/dquinlan/dq-new_app-rc
+
+Working with the new_app branch on zeus:
+   145  9:45    smgit fetch origin
+   146  9:46    smgit merge origin/dquinlan/dq-new_app-rc
+
+
+Technique for debugging exceptions:
+   1) Look for the name of the exception 
+          terminate called after throwing an instance of 'std::logic_error'
+            what():  basic_string::_S_construct NULL not valid
+
+   2) search for the name of the exception to find the associated function in the
+      include-staging/g++_HEADERS directory.
+          grep -r "basic_string::_S_construct NULL not valid" *
+
+   3) Set a break point in gdb to detect when that function is called.
+          (gdb) b std::__throw_logic_error(char const*) 
+
+   4) Use the where command in gdb to get the trace back to the location of the exception.
+          (gdb) w
+
+Example ouput of gdb trace:
+#0  0x000000348f4617d0 in std::__throw_logic_error(char const*) () from /usr/lib64/libstdc++.so.6
+#1  0x000000348f49ce59 in ?? () from /usr/lib64/libstdc++.so.6
+#2  0x000000348f49cf33 in std::basic_string<char, std::char_traits<char>, std::allocator<char> >::basic_string(char const*, std::allocator<char> const&) () from /usr/lib64/libstdc++.so.6
+#3  0x00007ffff6680036 in EDG_ROSE_Translation::getDeclarationScope (scp=...) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:31917
+#4  0x00007ffff668d7f8 in EDG_ROSE_Translation::convert_variable_use (p=0x947d90) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:30057
+#5  0x00007ffff667358b in EDG_ROSE_Translation::convert_expression (e=0x9486a8) at /home/dquinlan/ROSE/git-dq-new_app-rc/src/frontend/CxxFrontend/EDG/edgRose/edgRose.C:8025

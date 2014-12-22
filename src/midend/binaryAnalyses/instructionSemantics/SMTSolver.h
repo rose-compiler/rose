@@ -10,6 +10,9 @@
 
 #include <inttypes.h>
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Although the SMTSolver class was originally
@@ -68,7 +71,7 @@ public:
     }
     virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(const InsnSemanticsExpr::TreeNodePtr &var) {
         InsnSemanticsExpr::LeafNodePtr ln = var->isLeafNode();
-        assert(ln && !ln->is_known());
+        ASSERT_require(ln && !ln->is_known());
         return evidence_for_variable(ln->get_name());
     }
     /** @} */
@@ -139,5 +142,8 @@ private:
     FILE *debug;
     void init();
 };
+
+} // namespace
+} // namespace
 
 #endif

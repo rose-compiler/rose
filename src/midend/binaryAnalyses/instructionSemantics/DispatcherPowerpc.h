@@ -11,6 +11,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
@@ -18,6 +19,9 @@ typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {
 protected:
+    // prototypical constructor
+    DispatcherPowerpc() {}
+
     explicit DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
         set_register_dictionary(RegisterDictionary::dictionary_powerpc());
         regcache_init();
@@ -37,13 +41,19 @@ public:
     RegisterDescriptor REG_IAR, REG_LR, REG_XER, REG_CR, REG_CR0, REG_CTR;
     /** @}*/
 
+    /** Construct a prototypical dispatcher.  The only thing this dispatcher can be used for is to create another dispatcher
+     *  with the virtual @ref create method. */
+    static DispatcherPowerpcPtr instance() {
+        return DispatcherPowerpcPtr(new DispatcherPowerpc);
+    }
+    
     /** Constructor. */
     static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
         return DispatcherPowerpcPtr(new DispatcherPowerpc(ops));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const /*override*/ {
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
         return instance(ops);
     }
 
@@ -54,9 +64,9 @@ public:
         return retval;
     }
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) /*override*/;
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
+    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
@@ -66,6 +76,8 @@ public:
     virtual void record(const BaseSemantics::SValuePtr &result);
 };
         
-} /*namespace*/
-} /*namespace*/
+} // namespace
+} // namespace
+} // namespace
+
 #endif

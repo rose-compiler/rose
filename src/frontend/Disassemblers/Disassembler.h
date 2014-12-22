@@ -7,6 +7,11 @@
 #include "MemoryMap.h"
 #include "integerOps.h"
 #include "Map.h"
+#include "BaseSemantics2.h"
+
+namespace rose {
+namespace BinaryAnalysis {
+
 
 /** Virtual base class for instruction disassemblers.
  *
@@ -223,14 +228,8 @@ public:
     Disassembler()
         : p_registers(NULL), p_partitioner(NULL), p_search(SEARCH_DEFAULT),
           p_wordsize(4), p_sex(ByteOrder::ORDER_LSB), p_alignment(4), p_ndisassembled(0),
-          p_protection(MemoryMap::MM_PROT_EXEC)
+          p_protection(MemoryMap::EXECUTABLE)
         {ctor();}
-
-    Disassembler(const Disassembler& other)
-        : p_registers(other.p_registers), p_partitioner(other.p_partitioner), p_search(other.p_search),
-          p_wordsize(other.p_wordsize), p_sex(other.p_sex), p_alignment(other.p_alignment),
-          p_ndisassembled(other.p_ndisassembled), p_protection(other.p_protection)
-        {}
 
     virtual ~Disassembler() {}
 
@@ -273,6 +272,10 @@ public:
      *  additional disassembles. However, no other thread can be changing attributes of the specified interpretation,
      *  particularly the list of file headers referenced by the interpretation. */
     static Disassembler *lookup(SgAsmInterpretation*);
+
+    /** Finds a suitable disassembler.  Looks up a common disassembler by name.  If the name is the word "list" then a
+     *  list of known names is printed to <code>std::cout</code>. */
+    static Disassembler *lookup(const std::string&);
 
     /** Creates a new copy of a disassembler. The new copy has all the same settings as the original.
      *
@@ -336,6 +339,33 @@ public:
      *  Thread safety: This method is thread safe. */
     const RegisterDictionary *get_registers() const {
         return p_registers;
+    }
+
+    /** Returns the register that points to instructions. */
+    virtual RegisterDescriptor instructionPointerRegister() const {
+        ASSERT_require(REG_IP.is_valid());
+        return REG_IP;
+    }
+
+    /** Returns the register that points to the stack. */
+    virtual RegisterDescriptor stackPointerRegister() const {
+        ASSERT_require(REG_SP.is_valid());
+        return REG_SP;
+    }
+
+    /** Returns the segment register for accessing the stack.  Not all architectures have this register, in which case the
+     * default-constructed register descriptor is returned. */
+    virtual RegisterDescriptor stackSegmentRegister() const {
+        return REG_SS;                                  // need not be valid
+    }
+
+    /** Return an instruction semantics dispatcher if possible.
+     *
+     *  If instruction semantics are implemented for this architecure then return a pointer to a dispatcher. The dispatcher
+     *  will have no attached RISC operators and can only be used to create a new dispatcher via its virtual constructor.  If
+     *  instruction semantics are not implemented then the null pointer is returned. */
+    const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::DispatcherPtr& dispatcher() const {
+        return p_proto_dispatcher;
     }
 
 #ifndef USE_ROSE
@@ -474,7 +504,7 @@ public:
      *  buffer and enables instructions to span file segments that are mapped contiguously in virtual memory by the loader but
      *  which might not be contiguous in the file.  The instruction's successor virtual addresses are added to the optional
      *  successor set (note that successors of an individual instruction can also be obtained via
-     *  SgAsmInstruction::get_successors). If the instruction cannot be disassembled then an exception is thrown and the
+     *  SgAsmInstruction::getSuccessors). If the instruction cannot be disassembled then an exception is thrown and the
      *  successors set is not modified.
      *
      *  Thread safety:  The safety of this method depends on its implementation in the subclass. In any case, no other thread
@@ -676,6 +706,7 @@ public:
     static Sawyer::Message::Facility mlog;              /**< Disassembler diagnostic streams. */
 protected:
     const RegisterDictionary *p_registers;              /**< Description of registers available for this platform. */
+    RegisterDescriptor REG_IP, REG_SP, REG_SS;          /**< Register descriptors initialized during construction. */
     class Partitioner *p_partitioner;                   /**< Used for placing instructions into blocks and functions. */
     unsigned p_search;                                  /**< Mask of SearchHeuristic bits specifying instruction searching. */
     size_t p_wordsize;                                  /**< Word size used by SEARCH_WORDS. */
@@ -687,6 +718,12 @@ protected:
     static double progress_interval;                    /**< Minimum interval between progress reports in seconds. */
     static double progress_time;                        /**< Time of last report, or zero if no report has been generated. */
     static RTS_mutex_t class_mutex;                     /**< Mutex for class-wide thread safety */
+
+    /** Prototypical dispatcher for creating real dispatchers */
+    InstructionSemantics2::BaseSemantics::DispatcherPtr p_proto_dispatcher;
 };
+
+} // namespace
+} // namespace
 
 #endif

@@ -1,6 +1,7 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
 #include "sawyer/Assert.h"
+#include "sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::AsmUnparser
 #include "BinaryDataFlow.h"                             // BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // rose::BinaryLoader
@@ -8,6 +9,8 @@
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::Disassembler
 #include "Partitioner.h"                                // rose::Partitioner
+#include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
+#include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
 #include <cstdarg>
 
@@ -16,8 +19,7 @@ namespace Diagnostics {
 
 Sawyer::Message::DestinationPtr destination;
 Sawyer::Message::PrefixPtr mprefix;
-Sawyer::Message::Facility mlog("rose");
-Sawyer::Message::Facilities facilities;
+Sawyer::Message::Facility mlog;
 
 void initialize() {
     if (!isInitialized()) {
@@ -31,25 +33,35 @@ void initialize() {
             // use FileSink or FdSink because StreamSink can't tell whether output is a tty or not.
             destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
         }
-        mlog.initStreams(destination);
-        facilities.insert(mlog);
+
+        // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, so we'll
+        // disable those that we deem are too noisy for most users.  However, the insertAndAdjust might make other choices if
+        // mfacilities already has some stream inserted or the user has already called mfacilities.impset().
+        mlog = Sawyer::Message::Facility("rose", destination);
+        mlog[DEBUG].disable();
+        mlog[TRACE].disable();
+        mlog[WHERE].disable();
+        mfacilities.insertAndAdjust(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
+
+        // Turn down the progress bar rates
+        Sawyer::ProgressBarSettings::initialDelay(12.0);
+        Sawyer::ProgressBarSettings::minimumUpdateInterval(2.5);
 
         // Register logging facilities from other software layers.  These facilities should already be in a usable, but
         // default, state. They probably have all streams enabled (debug through fatal) and are emitting to standard error
         // using the POSIX unbuffered output functions.  Calling these initializers should make all the streams point to the
         // rose::Diagnostics::destination that we set above.
         BinaryLoader::initDiagnostics();
-        Disassembler::initDiagnostics();
-        Partitioner::initDiagnostics();
-        AsmUnparser::initDiagnostics();
+        BinaryAnalysis::Disassembler::initDiagnostics();
+        BinaryAnalysis::Partitioner::initDiagnostics();
+        BinaryAnalysis::AsmUnparser::initDiagnostics();
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
-
-        // By default, only messages of informational importance and above are dispalyed.
-        facilities.control("none, >=info");
+        BinaryAnalysis::Partitioner2::initDiagnostics();
+        EditDistance::initDiagnostics();
     }
 }
 

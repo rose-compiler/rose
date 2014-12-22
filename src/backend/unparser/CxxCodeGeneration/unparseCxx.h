@@ -304,6 +304,12 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
           virtual void unparseTypeExpression          (SgExpression* expr, SgUnparse_Info& info);
 
+       // DQ (8/11/2014): Added more general support for function parameter expressions (required for C++11 support).
+          virtual void unparseFunctionParameterRefExpression (SgExpression* expr, SgUnparse_Info& info);
+
+       // DQ (9/3/2014): Adding C++11 Lambda expression support.
+          virtual void unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info);
+
       //! unparse statement functions implememted in unparse_stmt.C
        // DQ (4/25/2005): Made this virtual so that Gabriel could build a specialized unparser.
        // virtual void unparseStatement        (SgStatement* stmt, SgUnparse_Info& info);
@@ -352,6 +358,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (7/25/2014): Adding support for C11 static assertions.
           virtual void unparseStaticAssertionDeclaration (SgStatement* stmt, SgUnparse_Info& info);
 
+       // DQ (8/17/2014): Adding support for Microsoft attributes.
+          virtual void unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnparse_Info& info);
+
        // DQ (12/26/2011): New unparse functions for new template declaration IR nodes (new design for template declarations).
           virtual void unparseTemplateClassDeclStmt          (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateClassDefnStmt          (SgStatement* stmt, SgUnparse_Info& info);
@@ -359,6 +368,9 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseTemplateMemberFunctionDeclStmt (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateVariableDeclStmt       (SgStatement* stmt, SgUnparse_Info& info);
           virtual void unparseTemplateFunctionDefnStmt       (SgStatement* stmt, SgUnparse_Info& info);
+
+       // DQ 11/3/2014): Adding C++11 templated typedef declaration support.
+          virtual void unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);

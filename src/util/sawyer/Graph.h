@@ -4,6 +4,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/DefaultAllocator.h>
 #include <sawyer/IndexedList.h>
+#include <sawyer/Optional.h>                            // for Sawyer::Nothing
 #include <sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
 #include <ostream>
@@ -13,6 +14,31 @@
 
 namespace Sawyer {
 namespace Container {
+
+/** Traits for graphs. */
+template<class G>
+struct GraphTraits {
+    typedef typename G::EdgeNodeIterator EdgeNodeIterator;
+    typedef typename G::EdgeValueIterator EdgeValueIterator;
+    typedef typename G::VertexNodeIterator VertexNodeIterator;
+    typedef typename G::VertexValueIterator VertexValueIterator;
+    typedef typename G::VertexNode VertexNode;
+    typedef typename G::EdgeNode EdgeNode;
+    typedef typename G::VertexValue VertexValue;
+    typedef typename G::EdgeValue EdgeValue;
+};
+
+template<class G>
+struct GraphTraits<const G> {
+    typedef typename G::ConstEdgeNodeIterator EdgeNodeIterator;
+    typedef typename G::ConstEdgeValueIterator EdgeValueIterator;
+    typedef typename G::ConstVertexNodeIterator VertexNodeIterator;
+    typedef typename G::ConstVertexValueIterator VertexValueIterator;
+    typedef const typename G::VertexNode VertexNode;
+    typedef const typename G::EdgeNode EdgeNode;
+    typedef const typename G::VertexValue VertexValue;
+    typedef const typename G::EdgeValue EdgeValue;
+};
 
 /** %Graph containing user-defined vertices and edges.
  *
@@ -40,6 +66,9 @@ namespace Container {
  *  always used as the name of a graph component (i.e., a graph has vertices and edges), and the term "node" always refers to a
  *  unit of storage.
  *
+ *  A graph doesn't necessarily need to store data at each vertex or edge. The vertex and node types default to @ref Nothing,
+ *  which is similar to @c void.
+ *
  * @section iterators Iterators
  *
  *  Vertices and edges are referenced via iterators, which are stable across insertion and erasure.  That is, an iterator will
@@ -65,7 +94,7 @@ namespace Container {
  *
  * @code
  *  std::cout <<"Vertex names:\n";
- *  for (MyGraph::ConstVertexNodeIterator vertex=graph.vertices.begin(); vertex!=graph.vertices.end(); ++vertex)
+ *  for (MyGraph::ConstVertexNodeIterator vertex=graph.vertices().begin(); vertex!=graph.vertices().end(); ++vertex)
  *      std::cout <<"  " << vertex->value() <<"\n";
  * @endcode
  *
@@ -86,6 +115,9 @@ namespace Container {
  *  BOOST_FOREACH (const std::string &name, graph.vertexValues())
  *      std::cout <<"  " <<name <<"\n";
  * @endcode
+ *
+ *  %Sawyer also defines numerous graph traversals that can traverse vertices or edges in certain orders by following the graph
+ *  connectivity. See @ref Sawyer::Container::Algorithm::GraphTraversal.
  *
  * @section ids Identification Numbers
  *
@@ -202,7 +234,7 @@ namespace Container {
  *  @li %Graph copy: O(|V|+|E|)
  *
  *  Insertion is amortized constant time due to a vector-based ID map that may require reallocation. */
-template<class V, class E, class Alloc = DefaultAllocator>
+template<class V = Nothing, class E = Nothing, class Alloc = DefaultAllocator>
 class Graph {
 public:
     typedef V VertexValue;                              /**< User-level data associated with vertices. */
@@ -474,6 +506,8 @@ public:
         typedef                    EdgeBaseIterator<EdgeNodeIterator, EdgeNode, EdgeNode, typename EdgeList::NodeIterator,
                                                     VirtualList<EdgeNode> > Super;
     public:
+        typedef EdgeNode& Reference;
+        typedef EdgeNode* Pointer;
         EdgeNodeIterator() {}
         EdgeNodeIterator(const EdgeNodeIterator &other): Super(other) {}
         EdgeNode& operator*() const { return this->dereference(); }
@@ -497,6 +531,8 @@ public:
                                                          typename EdgeList::ConstNodeIterator,
                                                          const VirtualList<EdgeNode> > Super;
     public:
+        typedef const EdgeNode& Reference;
+        typedef const EdgeNode* Pointer;
         ConstEdgeNodeIterator() {}
         ConstEdgeNodeIterator(const ConstEdgeNodeIterator &other): Super(other) {}
         ConstEdgeNodeIterator(const EdgeNodeIterator &other): Super(other.phase_, other.iter_, other.vlist_) {}
@@ -520,6 +556,8 @@ public:
         typedef                     EdgeBaseIterator<EdgeValueIterator, EdgeValue, EdgeNode, typename EdgeList::NodeIterator,
                                                      VirtualList<EdgeNode> > Super;
     public:
+        typedef EdgeValue& Reference;
+        typedef EdgeValue* Pointer;
         EdgeValueIterator() {}
         EdgeValueIterator(const EdgeValueIterator &other): Super(other) {}
         EdgeValueIterator(const EdgeNodeIterator &other): Super(other.phase_, other.iter_, other.vlist_) {}
@@ -543,6 +581,8 @@ public:
                                                           typename EdgeList::ConstNodeIterator,
                                                           const VirtualList<EdgeNode> > Super;
     public:
+        typedef const EdgeValue& Reference;
+        typedef const EdgeValue* Pointer;
         ConstEdgeValueIterator() {}
         ConstEdgeValueIterator(const ConstEdgeValueIterator &other): Super(other) {}
         ConstEdgeValueIterator(const EdgeValueIterator &other): Super(other.phase_, other.iter_, other.vlist_) {}
@@ -567,6 +607,8 @@ public:
         typedef                      VertexBaseIterator<VertexNodeIterator, VertexNode, VertexNode,
                                                         typename VertexList::NodeIterator> Super;
     public:
+        typedef VertexNode& Reference;
+        typedef VertexNode* Pointer;
         VertexNodeIterator() {}
         VertexNodeIterator(const VertexNodeIterator &other): Super(other) {}
         VertexNode& operator*() const { return this->dereference(); }
@@ -586,6 +628,8 @@ public:
         typedef                           VertexBaseIterator<ConstVertexNodeIterator, const VertexNode, const VertexNode,
                                                              typename VertexList::ConstNodeIterator> Super;
     public:
+        typedef const VertexNode& Reference;
+        typedef const VertexNode* Pointer;
         ConstVertexNodeIterator() {}
         ConstVertexNodeIterator(const ConstVertexNodeIterator &other): Super(other) {}
         ConstVertexNodeIterator(const VertexNodeIterator &other): Super(other.base_) {}
@@ -607,6 +651,8 @@ public:
         typedef                       VertexBaseIterator<VertexValueIterator, VertexValue, VertexNode,
                                                          typename VertexList::NodeIterator> Super;
     public:
+        typedef VertexValue& Reference;
+        typedef VertexValue* Pointer;
         VertexValueIterator() {}
         VertexValueIterator(const VertexValueIterator &other): Super(other) {}
         VertexValueIterator(const VertexNodeIterator &other): Super(other.base_) {}
@@ -627,6 +673,8 @@ public:
         typedef                            VertexBaseIterator<ConstVertexValueIterator, const VertexValue, const VertexNode,
                                                               typename VertexList::ConstNodeIterator> Super;
     public:
+        typedef const VertexValue& Reference;
+        typedef const VertexValue* Pointer;
         ConstVertexValueIterator() {}
         ConstVertexValueIterator(const ConstVertexValueIterator &other): Super(other) {}
         ConstVertexValueIterator(const VertexValueIterator &other): Super(other.base_) {}
@@ -707,6 +755,14 @@ public:
         EdgeValue& value() { return value_; }
         const EdgeValue& value() const { return value_; }
         /** @} */
+
+        /** Determines if edge is a self-edge.
+         *
+         *  Returns true if this edge is a self edge.  A self edge is an edge whose source and target vertices are the same
+         *  vertex. */
+        bool isSelfEdge() const {
+            return source_ == target_;
+        }
     };
 
     /** Vertex node.
@@ -1154,7 +1210,7 @@ public:
      *  all edges that originate from or terminate at that vertex. The term "erasure" is Standard Template Library terminology
      *  for the withdrawal and deletion of an object from a container, and differs from the term "remove", which means to move
      *  an object to some near-the-end position in a container.  Any iterator that was pointing at the removed vertex or any of
-     *  its incident edges become invalid and should not be subsequently dereferenced, incremented, decremented, or compared;
+     *  its incident edges becomes invalid and should not be subsequently dereferenced, incremented, decremented, or compared;
      *  other iterators, edge and vertex, are unaffected.  The vertex with the highest ID number will be given the ID of the
      *  vertex that was removed in order to fill the gap left in the ID sequence.  This method returns an iterator for the
      *  vertex following the one that was deleted (possibly the one-past-last iterator if the last vertex was deleted).
@@ -1227,41 +1283,6 @@ public:
     void clear() {
         edges_.clear();
         vertices_.clear();
-    }
-
-private:
-    struct DfsWorkItem {
-        ConstVertexNodeIterator vertex;
-        ConstEdgeNodeIterator edge;
-        DfsWorkItem(const ConstVertexNodeIterator &vertex, const ConstEdgeNodeIterator &edge): vertex(vertex), edge(edge) {}
-    };
-
-public:
-    /** Visits vertices and edges in a depth-first order.
-     *
-     *  Visits every vertex reachable from @p startVertex in depth-first order, traversing every reachable edge exactly once.
-     *  Since all reachable edges are traversed, vertices might be visited more than once. */
-    template<class Visitor>
-    void depthFirstVisit(Visitor &visitor, const ConstVertexNodeIterator &startVertex) const {
-        if (startVertex==vertices().end())
-            return;
-        std::vector<bool> visitedVertex(nVertices(), false);
-        std::vector<DfsWorkItem> workStack;
-        workStack.push_back(DfsWorkItem(startVertex, startVertex->outEdges().begin()));
-        while (!workStack.empty()) {
-            ConstVertexNodeIterator source = workStack.back().vertex;
-            ConstEdgeNodeIterator edge = workStack.back().edge;
-            if (source==vertices().end() || edge==source->outEdges().end()) {
-                workStack.pop_back();
-            } else {
-                ConstVertexNodeIterator target = edge->target();
-                visitor(source, visitedVertex[source->id()], target, visitedVertex[target->id()], edge);
-                workStack.back().edge = ++edge;
-                if (!visitedVertex[target->id()])
-                    workStack.push_back(DfsWorkItem(target, target->outEdges().begin()));
-                visitedVertex[source->id()] = visitedVertex[target->id()] = true;
-            }
-        }
     }
 };
 

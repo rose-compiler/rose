@@ -7,6 +7,7 @@
 
 #include "rosePublicConfig.h" // for ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 
+
 #if 0   // FMZ(07/07/2010): the argument "nextErrorCode" should be call-by-reference
 SgFile* determineFileType ( std::vector<std::string> argv, int nextErrorCode, SgProject* project );
 #else
@@ -213,7 +214,7 @@ struct hash_nodeptr
    ROSE_DLL_API SgTypedefSymbol*   lookupTypedefSymbolInParentScopes  (const SgName & name, SgScopeStatement *currentScope = NULL);
 
 #if 0
- // DQ (8/13/2013): This function does not make since any more, now that we have make the symbol
+ // DQ (8/13/2013): This function does not make since any more, now that we have made the symbol
  // table handling more precise and we have to provide template parameters for any template lookup.
  // We also have to know if we want to lookup template classes, template functions, or template 
  // member functions (since each have specific requirements).
@@ -734,11 +735,11 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 // interface) and used the specified mode to initialize the source position data (Sg_File_Info objects).  This 
 // function is the only function that should be called directly (though in a namespace we can't define permissions).
 //! Set the source code positon for the current (input) node.
-  void setSourcePosition(SgNode* node);
+  ROSE_DLL_API void setSourcePosition(SgNode* node);
 
 // A better name might be "setSourcePositionForSubTree"
 //! Set the source code positon for the subtree (including the root).
-  void setSourcePositionAtRootAndAllChildren(SgNode *root);
+  ROSE_DLL_API void setSourcePositionAtRootAndAllChildren(SgNode *root);
 
 // DQ (5/1/2012): New function with improved name (still preserving the previous interface).
 // This function is not required once the new mechanism defining a source position mode is complete (shortly).
@@ -1058,7 +1059,7 @@ ROSE_DLL_API void setLoopStride(SgNode* loop, SgExpression* stride);
 //! Normalize loop init stmt by promoting the single variable declaration statement outside of the for loop header's init statement, e.g. for (int i=0;) becomes int i_x; for (i_x=0;..) and rewrite the loop with the new index variable, if necessary
 ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 
-//! Normalize a for loop, return true if successful
+//! Normalize a for loop, return true if successful. Generated constants will be fold by default.
 //!
 //! Translations are :
 //!    For the init statement: for (int i=0;... ) becomes int i; for (i=0;..)
@@ -1069,7 +1070,7 @@ ROSE_DLL_API bool normalizeForLoopInitDeclaration(SgForStatement* loop);
 //!           i++ is normalized to i+=1 and
 //!           i-- is normalized to i+=-1
 //!           i-=s is normalized to i+= -s
-ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop);
+ROSE_DLL_API bool forLoopNormalization(SgForStatement* loop, bool foldConstant = true);
 
 //!Normalize a Fortran Do loop. Make the default increment expression (1) explicit
 ROSE_DLL_API bool doLoopNormalization(SgFortranDo* loop);
@@ -1115,8 +1116,11 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)No
    */
     std::vector < SgFile * >generateFileList ();
 
-  //! Get the current SgProject IR Node
-  ROSE_DLL_API SgProject * getProject();
+/** Get the current SgProject IR Node.
+ *
+ *  The library should never have more than one project and it asserts such.  If no project has been created yet then this
+ *  function returns the null pointer. */
+ROSE_DLL_API SgProject * getProject();
 
 //! Query memory pools to grab SgNode of a specified type
 template <typename NodeType>
@@ -1564,7 +1568,8 @@ ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* roo
 //! Move statements in first block to the second block (preserves order and rebuilds the symbol table).
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicBlock* targetBlock );
 
-
+//! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
+ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
 ROSE_DLL_API void appendStatement(SgStatement *stmt, SgScopeStatement* scope=NULL);
 
@@ -1634,6 +1639,10 @@ ROSE_DLL_API void replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, b
 
 //! Replace an anchor node with a specified pattern subtree with optional SgVariantExpression. All SgVariantExpression in the pattern will be replaced with copies of the anchor node.
 ROSE_DLL_API SgNode* replaceWithPattern (SgNode * anchor, SgNode* new_pattern);
+
+//! Replace all variable references to an old symbol in a scope to being references to a new symbol.
+// Essentially replace variable a with b. 
+ROSE_DLL_API void replaceVariableReferences(SgVariableSymbol* old_sym, SgVariableSymbol* new_sym, SgScopeStatement * scope );
 
 /** Given an expression, generates a temporary variable whose initializer optionally evaluates
 * that expression. Then, the var reference expression returned can be used instead of the original
@@ -1792,34 +1801,34 @@ ROSE_DLL_API int fixVariableReferences(SgNode* root);
 It is possible to build a variable declaration without knowing its scope information during bottom-up construction of AST, though top-down construction is recommended in general.
 In this case, we have to patch up symbol table, scope and parent information when the scope is known. This function is usually used internally within appendStatment(), insertStatement().
 */
-void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixVariableDeclaration(SgVariableDeclaration* varDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a struct declaration was built without knowing its target scope.
-void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixStructDeclaration(SgClassDeclaration* structDecl, SgScopeStatement* scope);
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a class declaration was built without knowing its target scope.
-void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixClassDeclaration(SgClassDeclaration* classDecl, SgScopeStatement* scope);
 
 //! Fix symbols, parent and scope pointers. Used internally within appendStatment(), insertStatement() etc when a namespace declaration was built without knowing its target scope.
-void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
+ROSE_DLL_API void fixNamespaceDeclaration(SgNamespaceDeclarationStatement* structDecl, SgScopeStatement* scope);
 
 
 //! Fix symbol table for SgLabelStatement. Used Internally when the label is built without knowing its target scope. Both parameters cannot be NULL.
-void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixLabelStatement(SgLabelStatement* label_stmt, SgScopeStatement* scope);
 
 //! Set a numerical label for a Fortran statement. The statement should have a enclosing function definition already. SgLabelSymbol and SgLabelRefExp are created transparently as needed.
-void setFortranNumericLabel(SgStatement* stmt, int label_value);
+ROSE_DLL_API void setFortranNumericLabel(SgStatement* stmt, int label_value);
 
 //! Suggest next usable (non-conflicting) numeric label value for a Fortran function definition scope
-int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
+ROSE_DLL_API int  suggestNextNumericLabel(SgFunctionDefinition* func_def);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeStatement* scope);
 
 //! Fix the symbol table and set scope (only if scope in declaration is not already set).
-void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeStatement* scope);
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
-void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
+ROSE_DLL_API void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
@@ -1828,7 +1837,7 @@ void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
  *  accordingly if there are any.
  *  Assumption: The function has already inserted/appended/prepended into the scope before calling this function.
  */
-void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
+ROSE_DLL_API void updateDefiningNondefiningLinks(SgFunctionDeclaration* func, SgScopeStatement* scope);
 
 //------------------------------------------------------------------------
 //@{
@@ -1927,8 +1936,8 @@ SgBasicBlock* ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOptionStmt * cs);
 //! Check if the true body of a 'if' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsTrueBodyOfIf(SgIfStmt* ifs);
 
-//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not.
-ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs);
+//! Check if the false body of a 'if' statement is a SgBasicBlock, create one if not when the flag is true.
+ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* ifs, bool createEmptyBody = true);
 
 //! Check if the body of a 'catch' statement is a SgBasicBlock, create one if not.
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos);
@@ -1942,7 +1951,7 @@ ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatemen
 bool isBodyStatement (SgStatement* s);
 
 //! Fix up ifs, loops, while, switch, Catch, OmpBodyStatement, etc. to have blocks as body components. It also adds an empty else body to if statements that don't have them.
-void changeAllBodiesToBlocks(SgNode* top);
+void changeAllBodiesToBlocks(SgNode* top, bool createEmptyBody = true);
 
 //! The same as changeAllBodiesToBlocks(SgNode* top). To be phased out.
 void changeAllLoopBodiesToBlocks(SgNode* top);
@@ -2026,6 +2035,8 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
 
+//! Move a declaration to a scope which is the closest to the declaration's use places
+bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
 
 #if 0
 
@@ -2309,6 +2320,18 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 // DQ (3/4/2014): Added support for testing two trees for equivalents using the AST iterators.
    bool isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 );
+
+// JP (10/14/24): Moved code to evaluate a const integer expression (like in array size definitions) to SageInterface
+  /*! The datastructure is used as the return type for SageInterface::evaluateConstIntegerExpression(). One needs to always check whether hasValue_ is true before accessing value_ */
+  struct const_int_expr_t {
+    size_t value_;
+    bool hasValue_;
+  };
+  /*! \brief The function tries to evaluate const integer expressions (such as are used in array dimension sizes). It follows variable symbols, and requires constness. */
+  struct const_int_expr_t evaluateConstIntegerExpression(SgExpression *expr);
+
+// JP (9/17/14): Added function to test whether two SgType* are equivalent or not
+   bool checkTypesAreEqual(SgType *typeA, SgType *typeB);
 
 //--------------------------------Java interface functions ---------------------
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT

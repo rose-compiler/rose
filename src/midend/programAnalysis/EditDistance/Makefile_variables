@@ -1,0 +1,21 @@
+# -*- makefile -*-
+
+# Follow the pattern established by the parent makefile.  "mpa" means "midend/programAnalysis".
+mpaEditDistance_includes = -I$(mpaEditDistancePath)
+
+mpaEditDistance_la_sources =				\
+	$(mpaEditDistancePath)/EditDistance.C		\
+	$(mpaEditDistancePath)/TreeEditDistance.C
+
+mpaEditDistance_includeHeaders =			\
+	$(mpaEditDistancePath)/DamerauLevenshtein.h	\
+	$(mpaEditDistancePath)/EditDistance.h		\
+	$(mpaEditDistancePath)/Levenshtein.h		\
+	$(mpaEditDistancePath)/TreeEditDistance.h	\
+	$(mpaEditDistancePath)/LinearEditDistance.h
+
+mpaEditDistance_extraDist = $(mpaEditDistancePath)/CMakeLists.txt
+
+mpaEditDistnace_cleanLocal =
+
+mpaEditDistance_distCleanLocal =

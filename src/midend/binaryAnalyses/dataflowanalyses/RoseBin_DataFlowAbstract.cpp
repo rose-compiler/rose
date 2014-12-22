@@ -16,7 +16,7 @@ using namespace RoseBin_Arch;
 
 
 bool
-RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmx86Instruction* inst) {
+RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmX86Instruction* inst) {
   bool alters = false;
   switch (inst->get_kind()) {
     case x86_aaa:
@@ -301,7 +301,7 @@ RoseBin_DataFlowAbstract::isInstructionAlteringOneRegister(SgAsmx86Instruction* 
 
 bool
 RoseBin_DataFlowAbstract::altersMultipleRegisters(vector<std::pair<X86RegisterClass, int> >& codes,
-                                                SgAsmx86Instruction* inst) {
+                                                SgAsmX86Instruction* inst) {
   bool alters=false;
   switch (inst->get_kind()) {
     case x86_push:
@@ -464,8 +464,8 @@ RoseBin_DataFlowAbstract::sameParents(SgGraphNode* node, SgGraphNode* next) {
     return true;
   }
 
-  SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(node->get_SgNode());
-  SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(next->get_SgNode());
+  SgAsmX86Instruction* thisNode = isSgAsmX86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* nextNode = isSgAsmX86Instruction(next->get_SgNode());
   if (thisNode && nextNode) {
     SgAsmFunction* func1 = isSgAsmFunction(thisNode->get_parent());
     SgAsmFunction* func2 = isSgAsmFunction(nextNode->get_parent());
@@ -508,7 +508,7 @@ RoseBin_DataFlowAbstract::getValueInExpression(SgAsmValueExpression* valExp) {
  ***********************************************************/
 int64_t
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
-                                           SgAsmx86Instruction* inst,
+                                           SgAsmX86Instruction* inst,
                                            std::pair<X86RegisterClass, int>  codeSearch,
                                            bool rightSide,
                                            vector<std::pair<X86RegisterClass, int> >& regsOfInterest,
@@ -609,7 +609,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
  ***********************************************************/
 std::pair<X86RegisterClass, int>
 RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
-                                           SgAsmx86Instruction* inst,
+                                           SgAsmX86Instruction* inst,
                                            bool rightSide, bool& memoryReference, bool& registerReference ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
@@ -666,7 +666,7 @@ RoseBin_DataFlowAbstract::check_isRegister(SgGraphNode* node,
  ***********************************************************/
 SgAsmExpression*
 RoseBin_DataFlowAbstract::getOperand(
-                                      SgAsmx86Instruction* inst,
+                                      SgAsmX86Instruction* inst,
                                       bool rightSide ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
@@ -742,7 +742,7 @@ RoseBin_DataFlowAbstract::getValueInMemoryRefExp(SgAsmExpression* expr) {
  * or left hand side of the instruction
  ***********************************************************/
 uint64_t
-RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmx86Instruction* inst,
+RoseBin_DataFlowAbstract::getValueOfInstr( SgAsmX86Instruction* inst,
                                            bool rightSide ) {
   // bool rightSide specifies
   // true = checking the right side (of instruction operands) for a registerReference
@@ -787,7 +787,7 @@ RoseBin_DataFlowAbstract::trackValueForRegister(
   if (RoseBin_support::DEBUG_MODE())
     cout << "    ........ trying to resolve value for register :: " << codeSearch.first << "." << codeSearch.second << endl;
 
-  SgAsmx86Instruction* inst = isSgAsmx86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* inst = isSgAsmX86Instruction(node->get_SgNode());
   ROSE_ASSERT(inst);
   std::pair<X86RegisterClass, int>  code = std::make_pair((X86RegisterClass)refExpr_rightHand->get_descriptor().get_major(),
                                                           refExpr_rightHand->get_descriptor().get_minor());

@@ -38,5 +38,35 @@
 // constructor parameters, to create factory functions that will automatically call the correct constructor for 
 // those particular arguments. This is seen in the emplace_back set of STL methods.
 
-#error "NEED AND EXAMPLE OF THIS!"
+// #error "NEED AND EXAMPLE OF THIS!"
 
+typedef unsigned long size_t;
+
+class MemoryPage
+   {
+     size_t size;
+     char*  buf;
+
+     public:
+          explicit MemoryPage(int sz=512) : size(sz), buf(new char [size]) {}
+         ~MemoryPage() { delete[] buf;}
+       // typical C++03 copy ctor and assignment operator
+          MemoryPage(const MemoryPage&);
+          MemoryPage& operator=(const MemoryPage&);
+
+          MemoryPage(MemoryPage&& other);
+
+   };
+
+// A typical move constructor definition would look like this:
+
+// C++11
+MemoryPage::MemoryPage(MemoryPage&& other) : size(0) // , buf(nullptr)
+   {
+  // pilfer other’s resource
+     size = other.size;
+     buf = other.buf;
+  // reset other
+     other.size = 0;
+//   other.buf = nullptr;
+   }

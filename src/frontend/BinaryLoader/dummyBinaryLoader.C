@@ -1,1 +1,4 @@
-// empty place holder file
+#include "rose.h"
+#include "BinaryLoader.h"
+
+void BinaryLoader::initDiagnostics() {}

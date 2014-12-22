@@ -22,8 +22,12 @@ int
 main()
    {
      int a;
+
+  // Original code is: if ( A() );
      if ( A() );
 
+  // Original code is: if ((A() && B(C() && D())) || E())
+  // Unparsed as: if ((A::A()) && (B::B((C::C()) && (D::D()))) || (E::E()))
      if ((A() && B(C() && D())) || E())
         {
         }

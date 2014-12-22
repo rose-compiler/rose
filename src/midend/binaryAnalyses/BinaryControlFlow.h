@@ -13,529 +13,531 @@
 class SgNode;
 class SgAsmBlock;
 
+namespace rose {
+
 /** Namespace for lots of binary analysis stuff. */
 namespace BinaryAnalysis {
 
-    /** Binary control flow analysis.
+/** Binary control flow analysis.
+ *
+ *  This class serves mostly to organize the functions that operate on control flow graphs, but also provides a container
+ *  for various settings that influence the control flow analyses, such as the vertex and edge filters.
+ *
+ *  The AST contains an implied CFG by virtue of storing control flow successor addresses in each basic block (SgAsmBlock).
+ *  The successor information is initialized by the Partitioner class when the AST is built (see Partitioner::build_ast())
+ *  and is available with SgAsmBlock::get_successors().  The SgAsmBlock::get_successors_complete() returns a Boolean
+ *  indicating whether the set of successors is completely known. Successors would be incomplete, for instance, for a block
+ *  that ends with a computed branch whose targets could not be statically determined. The AST-stored implied graph can be
+ *  turned into an explicit Boost graph with various "build" methods defined in this class.
+ *
+ *  Explicit CFGs use the Boost Graph Library API and come in two flavors: graphs whose vertices are basic blocks, and
+ *  graphs whose vertices are instructions.  Although the AST is optimized to store control flow information over basic
+ *  blocks, an instruction-based CFG can always be created from a basic block CFG since flow of control within a basic
+ *  block is trivial.  It is often easier to work with instruction-based CFGs even though they can be much larger.  Most of
+ *  the following documentation describes these explicit Boost CFG graphs.
+ *
+ *  The CFGs on which this class operates must follow the Boost Graph Library (BGL) API, although not necessarily a BGL
+ *  implementation. The graph type is normally a template parameter for the methods herein.  This class provides two
+ *  typedefs for graphs implemented in BGL: BlockGraph is for basic-block CFGs and InsnGraph is for instruction CFGs.
+ *  The graph must support the BGL adjacency_list graph API with the following features:
+ *
+ *  <ul>
+ *    <li>the graph vertices are stored as a vector ("vecS" as the second template argument of adjacency_list)</li>
+ *    <li>the graph is bidirectional ("bidrectionalS" as the third template argument),</li>
+ *    <li>the boost::vertex_name property is a SgAsmBlock pointer.</li>
+ *  </ul>
+ *
+ *  The wikipedia entry for "Control Flow Graph" [1] has many useful definitions. The BGL documentation is located at the
+ *  http://www.boost.org web site.
+ *
+ *  Control flow graphs can be calculated over any subtree of the AST rooted below a SgAsmInterpretation.  It doesn't make
+ *  sense to compute inter-interpretation CFGs since the OS only ever loads one interpretation at a time (instructions from
+ *  two different interpretations might share the same virtual address). Usually one creates CFGs that span a single
+ *  function or a whole interpretation.  The vertex and edge filtes can restrict which vertices and edges are considered by
+ *  the various methods of this class.  For instance, to create a global CFG that has no inter-function edges
+ *  one could do the following (see also, rose::BinaryAnalysis::FunctionCall):
+ *
+ *  @code
+ *  // Create a filter that rejects all inter-function edges
+ *  struct NoCallEdges: public ControlFlow::EdgeFilter {
+ *      bool operator()(ControlFlow *analyzer, SgAsmNode *src, SgAsmNode *dst) {
+ *          SgAsmFunction *src_func = SageInterface::getEnclosingNode<SgAsmFunction>(src);
+ *          SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst);
+ *          return dst_func != src_func;
+ *      }
+ *  } edge_filter;
+ *
+ *  // Create the control flow analyzer and set its edge filter.
+ *  ControlFlow analyzer;
+ *  analyzer.set_edge_filter(&edge_filter);
+ *
+ *  // Generate a block-based CFG over an entire interpretation. It will include
+ *  // all basic blocks, but only intra-function edges.
+ *  typedef ControlFlow::BlockGraph CFG_B;
+ *  SgAsmInterpretation *interp = ...;
+ *  CFG_B cfg1 = analyzer.build_block_cfg_from_ast<CFG_B>(interp);
+ *
+ *  // Generate an instruction-based CFG over an entire interpretation. It will
+ *  // include all instructions, but only intra-function edges.
+ *  typedef ControlFlow::InsnGraph CFG_I;
+ *  CFG_I cfg2 = analyzer.build_insn_cfg_from_ast<CFG_I>(interp);
+ *  @endcode
+ *
+ *  Another way to exclude vertices and/or edges from a graph is to first build a complete graph and then do a filtered
+ *  copy to obtain a second graph with only the desired vertices and edges.
+ *
+ *  @code
+ *  // Build a complete CFG graph using a default control flow analyzer.
+ *  CFG_I cfg3 = ControlFlow().build_insn_cfg_from_ast<CFG_I>(interp);
+ *
+ *  // Using the same analyzer as the previous example, one that
+ *  // filters out all but the function call edges, create a call
+ *  // graph.
+ *  CFG_I cfg4 = analyzer.copy(cfg3);
+ *  @endcode
+ *
+ *  See also, rose::BinaryAnalysis::FunctionCall, which computes a function call graph whose vertices are functions rather
+ *  than the basic blocks or instructions used in a CFG.
+ *
+ *  Since binary control flow graphs follow the BGL API they can be easily printed as GraphViz graphs using
+ *  boost::write_graphviz().  If you want something other than vertex descriptors in the graphs, you could use a
+ *  PropertyWriter class, like this one, which labels the vertices with the basic block address.  Ideally, one would use a
+ *  class template, but we keep this example simple:
+ *
+ *  @code
+ *  // Label the graphviz vertices with basic block addresses.
+ *  // Boost requires this to be declared at file scope.
+ *  struct GraphvizVertexWriter {
+ *      const rose::BinaryAnalysis::ControlFlow::Graph &cfg;
+ *      GraphvizVertexWriter(rose::BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
+ *      typedef boost::graph_traits<rose::BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
+ *      void operator()(std::ostream &output, const Vertex &v) {
+ *          SgAsmBlock *block = get_ast_node(cfg, v);
+ *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
+ *      }
+ *  };
+ *
+ *  // Write the graph
+ *  boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter(cfg));
+ *  @endcode
+ *
+ *  We also define a similar write_graphviz method within this class that differs from the Boost implementation in two
+ *  ways. First, the GraphViz file that it produces has the vertices organized into clusters based on the function in which
+ *  they appear. Second, the vertex and edge property writers are passed as const references to avoid unnecessary copying.
+ *
+ *  [1] https://secure.wikimedia.org/wikipedia/en/wiki/Control_flow_graph */
+class ControlFlow {
+public:
+    ControlFlow()
+        : vertex_filter(NULL), edge_filter(NULL)
+        {}
+
+
+    /** Default basic block control flow graph type.
      *
-     *  This class serves mostly to organize the functions that operate on control flow graphs, but also provides a container
-     *  for various settings that influence the control flow analyses, such as the vertex and edge filters.
+     *  A control flow graph is has a Boost graph interface whose vertex descriptors are integers and whose vertices point
+     *  to SgAsmBlock nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control
+     *  from one basic block to another.  Since the control flow graph is a Boost graph, it is endowed with all the
+     *  features of a Boost graph and can be the operand of the various Boost graph algorithms.  See
+     *  build_block_cfg_from_ast() for specifics about what is included in such a graph.
      *
-     *  The AST contains an implied CFG by virtue of storing control flow successor addresses in each basic block (SgAsmBlock).
-     *  The successor information is initialized by the Partitioner class when the AST is built (see Partitioner::build_ast())
-     *  and is available with SgAsmBlock::get_successors().  The SgAsmBlock::get_successors_complete() returns a Boolean
-     *  indicating whether the set of successors is completely known. Successors would be incomplete, for instance, for a block
-     *  that ends with a computed branch whose targets could not be statically determined. The AST-stored implied graph can be
-     *  turned into an explicit Boost graph with various "build" methods defined in this class.
+     *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+     *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+     *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+     *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
      *
-     *  Explicit CFGs use the Boost Graph Library API and come in two flavors: graphs whose vertices are basic blocks, and
-     *  graphs whose vertices are instructions.  Although the AST is optimized to store control flow information over basic
-     *  blocks, an instruction-based CFG can always be created from a basic block CFG since flow of control within a basic
-     *  block is trivial.  It is often easier to work with instruction-based CFGs even though they can be much larger.  Most of
-     *  the following documentation describes these explicit Boost CFG graphs.
+     *  @code
+     *  typedef boost::graph_traits<BlockGraph>::vertex_descriptor Vertex;
+     *  typedef boost::graph_traits<BlockGraph>::edge_descriptor Edge;
+     *  @endcode
+     */
+    typedef boost::adjacency_list<boost::setS,                                  /* edges of each vertex in std::list */
+                                  boost::vecS,                                  /* vertices in std::vector */
+                                  boost::bidirectionalS,
+                                  boost::property<boost::vertex_name_t, SgAsmBlock*> > BlockGraph;
+
+    /** Default instruction-based control flow graph.
      *
-     *  The CFGs on which this class operates must follow the Boost Graph Library (BGL) API, although not necessarily a BGL
-     *  implementation. The graph type is normally a template parameter for the methods herein.  This class provides two
-     *  typedefs for graphs implemented in BGL: BlockGraph is for basic-block CFGs and InsnGraph is for instruction CFGs.
-     *  The graph must support the BGL adjacency_list graph API with the following features:
+     *  A control flow graph has a Boost graph interface whose vertex descriptors are integers and whose vertices point to
+     *  SgAsmInstruction nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control
+     *  from one instruction to another.  Since the control flow graph is a Boost graph, it is endowed with all the features
+     *  of a Boost graph and can be the operand of the various Boost graph algorithms.  See build_insn_cfg_from_ast() for
+     *  specifics about what is included in such a graph.
      *
+     *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
+     *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
+     *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
+     *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
+     *
+     *  @code
+     *  typedef boost::graph_traits<InsnGraph>::vertex_descriptor Vertex;
+     *  typedef boost::graph_traits<InsnGraph>::edge_descriptor Edge;
+     *  @endcode
+     */
+    typedef boost::adjacency_list<boost::setS,
+                                  boost::vecS,
+                                  boost::bidirectionalS,
+                                  boost::property<boost::vertex_name_t, SgAsmInstruction*> > InsnGraph;
+
+    /** Default control flow graph.  The original rose::BinaryAnalysis::ControlFlow API defined only "Graph", which was a
+     *  basic-block control flow graph.  We continue to define that type for backward compatibility. */
+    typedef BlockGraph Graph;
+
+
+    /**********************************************************************************************************************
+     *                                      Filters
+     **********************************************************************************************************************/
+public:
+
+    /** Filter for vertices.
+     *
+     *  This class can be specialized in order to filter out vertices (SgAsmBlock or SgAsmInstruction depending on the type
+     *  of the graph) that satisfy an arbitrary condition.  See set_vertex_filter() for details. */
+    class VertexFilter {
+    public:
+        virtual ~VertexFilter() {}
+        virtual bool operator()(ControlFlow*, SgAsmNode*) = 0;
+    };
+
+    /** Filter for edges.
+     *
+     *  This class can be specialized in order to filter out certain edges that would otherwise make it into the control
+     *  flow graph.  See set_edge_filter() for details. */
+    class EdgeFilter {
+    public:
+        virtual ~EdgeFilter() {}
+        virtual bool operator()(ControlFlow*, SgAsmNode *source, SgAsmNode *target) = 0;
+    };
+
+    /** Manipulate the vertex filter.
+     *
+     *  When building a control flow graph, the vertex filter is invoked on each vertex which is about to be added.  If the
+     *  filter returns false then that block is not added to the graph.  A null filter accepts all vertices.
+     *
+     *  @{ */
+    void set_vertex_filter(VertexFilter *filter) { vertex_filter = filter; }
+    VertexFilter *get_vertex_filter() const { return vertex_filter; }
+    /** @}*/
+
+    /** Manipulate the edge filter.
+     *
+     *  When building a control flow graph, the edge filter is invoked for each edge which is about to be added to the
+     *  graph. If the filter returns false then that edge is not added to the graph.  A null filter accepts all edges.
+     *
+     *  @{ */
+    void set_edge_filter(EdgeFilter *filter) { edge_filter = filter; }
+    EdgeFilter *get_edge_filter() const { return edge_filter; }
+    /** @}*/
+
+    /** Determines if a vertex is filtered out.
+     *
+     *  Returns true if the vertex would be filtered out by being rejected by the current vertex filter.
+     *
+     *  @{ */
+    bool is_vertex_filtered(SgAsmNode *bb_or_insn, VertexFilter *filter) { return filter && !(*filter)(this, bb_or_insn); }
+    bool is_vertex_filtered(SgAsmNode *bb_or_insn) { return is_vertex_filtered(bb_or_insn, vertex_filter); }
+    /** @} */
+
+    /** Determines if an edge is filtered out.
+     *
+     *  Returns true if the edge would be filtered out by being rejected by the current edge filter.  The @p src and @p dst
+     *  are the source and destination vertex nodes, either basic blocks or instructions depending on the graph type.
+     *
+     *  @{ */
+    bool is_edge_filtered(SgAsmNode *src, SgAsmNode *dst, EdgeFilter *filter) {
+        return filter && !(*filter)(this, src, dst);
+    }
+    bool is_edge_filtered(SgAsmNode *src, SgAsmNode *dst) {
+        return is_edge_filtered(src, dst, edge_filter);
+    }
+    /** @} */
+
+protected:
+    VertexFilter *vertex_filter;
+    EdgeFilter *edge_filter;
+
+    /**********************************************************************************************************************
+     *                                      Methods that modify the AST
+     **********************************************************************************************************************/
+public:
+
+    /** Clears successor information from the AST.
+     *
+     *  Traverses the specified AST and clears the successor lists for all basic blocks.  The blocks are visited by an AST
+     *  traversal, not by following successor pointers.
+     *
+     *  The current vertex filter determines which edges are filtered. */
+    void clear_ast(SgNode *ast);
+
+    /** Applies graph to AST.
+     *
+     *  Just as a control flow graph can be built from the successor lists stored in the AST (see
+     *  build_block_cfg_from_ast() or build_insn_cfg_from_ast()), a graph can be used to initialize the successor
+     *  information in an AST.  This function does that.  Only the blocks which are vertices of the graph and which pass
+     *  the current vertex filter are affected.  Only edges that pass the current edge filter are added as successors to
+     *  the (cleared) block successor list.
+     *
+     *  Not all instruction-based graphs can be written back to the AST because the implied basic block structure of the
+     *  graph might not match the explicit basic block structure in the AST.  Perhaps a future version will allow the AST
+     *  to be restructured by this operation.
+     *
+     *  At this time [2011-05-19] the successor_complete property of each affected block is set to true, but this may
+     *  change in the future. */
+    template<class ControlFlowGraph>
+    void apply_to_ast(const ControlFlowGraph&);
+
+    /** Cache basic block vertex descriptors in AST.
+     *
+     *  The vertices of a control flow graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
+     *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
+     *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
+     *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
+     *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
+     *
+     *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., dominance
+     *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
+     *  type for CFG vertices.
+     *
+     *  The current vertex filter determines which blocks are modified. */
+    template<class ControlFlowGraph>
+    void cache_vertex_descriptors(const ControlFlowGraph&);
+
+    /**********************************************************************************************************************
+     *                                      Graph construction methods
+     **********************************************************************************************************************/
+public:
+
+    /** Builds a control flow graph for part of an AST.
+     *
+     *  Builds a control flow graph for the part of the abstract syntax tree rooted at @p root by traversing the AST to
+     *  find all basic blocks and using the successors of those blocks to define the edges of the control flow graph.
+     *  Successors are retrieved via SgAsmBlock::get_successors() and are of type SgAsmIntegerValueExpression.  The
+     *  specified @p root for the AST should generally not include multiple interpretations (SgAsmInterpretation) since the
+     *  OS never loads more than one interpretation at a time.
+     *
+     *  The current vertex and edge filters are used to determine which blocks and flow edges are added to the
+     *  graph. However, the following types of successors are never added (and don't trigger a call to the filter):
      *  <ul>
-     *    <li>the graph vertices are stored as a vector ("vecS" as the second template argument of adjacency_list)</li>
-     *    <li>the graph is bidirectional ("bidrectionalS" as the third template argument),</li>
-     *    <li>the boost::vertex_name property is a SgAsmBlock pointer.</li>
+     *    <li>Successors that have no block pointer, but only an address.  This can happen when we didn't disassemble any
+     *        instruction at the successor address, and thus don't have a block at which to point.</li>
+     *    <li>Successors that point to a block outside the specified AST subtree.  For instance, when considering the
+     *        control flow graph of an individual function, successors for function calls will point outside the calling
+     *        function (unless the call is recursive).<li>
+     *    <li>Successors that are not known.  Some basic blocks, such as function return blocks or blocks ending with computed
+     *        branches, usually only have unknown successors.  Such edges are not added to the graph.</li>
      *  </ul>
      *
-     *  The wikipedia entry for "Control Flow Graph" [1] has many useful definitions. The BGL documentation is located at the
-     *  http://www.boost.org web site.
+     * The build_block_cfg_from_ast() builds a CFG whose vertices are basic blocks, while the build_insn_cfg_from_ast()
+     * builds a CFG whose vertices are instructions.  Furthermore, the instruction-based CFG makes some adjustments to
+     * function call and function return nodes by invoking fixup_fcall_fret().
      *
-     *  Control flow graphs can be calculated over any subtree of the AST rooted below a SgAsmInterpretation.  It doesn't make
-     *  sense to compute inter-interpretation CFGs since the OS only ever loads one interpretation at a time (instructions from
-     *  two different interpretations might share the same virtual address). Usually one creates CFGs that span a single
-     *  function or a whole interpretation.  The vertex and edge filtes can restrict which vertices and edges are considered by
-     *  the various methods of this class.  For instance, to create a global CFG that has no inter-function edges
-     *  one could do the following (see also, BinaryAnalysis::FunctionCall):
+     *  @{ */
+    template<class ControlFlowGraph>
+    ControlFlowGraph build_block_cfg_from_ast(SgNode *root);
+
+    template<class ControlFlowGraph>
+    void build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
+
+    template<class ControlFlowGraph>
+    ControlFlowGraph build_insn_cfg_from_ast(SgNode *root);
+
+    template<class ControlFlowGraph>
+    void build_insn_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
+    /** @} */
+
+    /** Create an instruction control flow graph from a basic block control flow graph.
+     * @{ */
+    template<class BlockCFG, class InsnCFG>
+    void explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/*out*/);
+    /** @} */
+
+    /** Fix up a CFG by changing function call and return edges.  The AST does not store function return edges (which this
+     *  method adds), and the AST stores a fall-through edge for function call nodes for callees that may return (which
+     *  this method removes). */
+    template<class InsnCFG>
+    void fixup_fcall_fret(InsnCFG &cfg/*in,out*/, bool preserve_call_fallthrough_edges);
+
+    /** Builds a control flow graph with only function call edges.
      *
-     *  @code
-     *  // Create a filter that rejects all inter-function edges
-     *  struct NoCallEdges: public ControlFlow::EdgeFilter {
-     *      bool operator()(ControlFlow *analyzer, SgAsmNode *src, SgAsmNode *dst) {
-     *          SgAsmFunction *src_func = SageInterface::getEnclosingNode<SgAsmFunction>(src);
-     *          SgAsmFunction *dst_func = SageInterface::getEnclosingNode<SgAsmFunction>(dst);
-     *          return dst_func != src_func;
-     *      }
-     *  } edge_filter;
+     *  This differs from a true FunctionCall::Graph in that the vertices of the returned graph point to basic blocks,
+     *  while the vertices of a FunctionCall::Graph point to functions (SgAsmFunction nodes).
      *
-     *  // Create the control flow analyzer and set its edge filter.
-     *  ControlFlow analyzer;
-     *  analyzer.set_edge_filter(&edge_filter);
+     *  The graph is built by applying an edge filter (in addition to the edge filter that might be set by the user) that
+     *  only accepts edges whose target is a function entry block.
      *
-     *  // Generate a block-based CFG over an entire interpretation. It will include
-     *  // all basic blocks, but only intra-function edges.
-     *  typedef ControlFlow::BlockGraph CFG_B;
-     *  SgAsmInterpretation *interp = ...;
-     *  CFG_B cfg1 = analyzer.build_block_cfg_from_ast<CFG_B>(interp);
+     *  @{ */
+    template<class ControlFlowGraph>
+    ControlFlowGraph build_cg_from_ast(SgNode *root);
+
+    template<class ControlFlowGraph>
+    void build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
+    /** @} */
+
+    /** Copies a graph while filtering.
      *
-     *  // Generate an instruction-based CFG over an entire interpretation. It will
-     *  // include all instructions, but only intra-function edges.
-     *  typedef ControlFlow::InsnGraph CFG_I;
-     *  CFG_I cfg2 = analyzer.build_insn_cfg_from_ast<CFG_I>(interp);
-     *  @endcode
+     *  Copies a graph while applying the current source and destination vertex and edge filters.  If all vertices are
+     *  selected by the vertex filter, then the desintation graph's vertex descriptors will correspond to the same
+     *  vertices in the source graph (i.e., vertex V in the source will be the same basic block as vertex V in the
+     *  destination).
      *
-     *  Another way to exclude vertices and/or edges from a graph is to first build a complete graph and then do a filtered
-     *  copy to obtain a second graph with only the desired vertices and edges.
+     *  If an edge is unfiltered but one of its vertices is filtered, then the edge will not be included in the result.
      *
-     *  @code
-     *  // Build a complete CFG graph using a default control flow analyzer.
-     *  CFG_I cfg3 = ControlFlow().build_insn_cfg_from_ast<CFG_I>(interp);
-     *
-     *  // Using the same analyzer as the previous example, one that
-     *  // filters out all but the function call edges, create a call
-     *  // graph.
-     *  CFG_I cfg4 = analyzer.copy(cfg3);
-     *  @endcode
-     *
-     *  See also, BinaryAnalysis::FunctionCall, which computes a function call graph whose vertices are functions rather
-     *  than the basic blocks or instructions used in a CFG.
-     *
-     *  Since binary control flow graphs follow the BGL API they can be easily printed as GraphViz graphs using
-     *  boost::write_graphviz().  If you want something other than vertex descriptors in the graphs, you could use a
-     *  PropertyWriter class, like this one, which labels the vertices with the basic block address.  Ideally, one would use a
-     *  class template, but we keep this example simple:
-     *
-     *  @code
-     *  // Label the graphviz vertices with basic block addresses.
-     *  // Boost requires this to be declared at file scope.
-     *  struct GraphvizVertexWriter {
-     *      const BinaryAnalysis::ControlFlow::Graph &cfg;
-     *      GraphvizVertexWriter(BinaryAnalysis::ControlFlow::Graph &cfg): cfg(cfg) {}
-     *      typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;
-     *      void operator()(std::ostream &output, const Vertex &v) {
-     *          SgAsmBlock *block = get_ast_node(cfg, v);
-     *          output <<"[ label=\"" <<StringUtility::addrToString(block->get_address()) <<"\" ]";
-     *      }
-     *  };
-     *
-     *  // Write the graph
-     *  boost::write_graphviz(std::cout, cfg, GraphvizVertexWriter(cfg));
-     *  @endcode
-     *
-     *  We also define a similar write_graphviz method within this class that differs from the Boost implementation in two
-     *  ways. First, the GraphViz file that it produces has the vertices organized into clusters based on the function in which
-     *  they appear. Second, the vertex and edge property writers are passed as const references to avoid unnecessary copying.
-     *
-     *  [1] https://secure.wikimedia.org/wikipedia/en/wiki/Control_flow_graph */
-    class ControlFlow {
-    public:
-        ControlFlow()
-            : vertex_filter(NULL), edge_filter(NULL)
-            {}
-        
+     *  @{ */
+    template<class ControlFlowGraph>
+    ControlFlowGraph copy(const ControlFlowGraph &src);
 
-        /** Default basic block control flow graph type.
-         *
-         *  A control flow graph is has a Boost graph interface whose vertex descriptors are integers and whose vertices point
-         *  to SgAsmBlock nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control
-         *  from one basic block to another.  Since the control flow graph is a Boost graph, it is endowed with all the
-         *  features of a Boost graph and can be the operand of the various Boost graph algorithms.  See
-         *  build_block_cfg_from_ast() for specifics about what is included in such a graph.
-         *
-         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
-         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
-         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
-         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
-         *
-         *  @code
-         *  typedef boost::graph_traits<BlockGraph>::vertex_descriptor Vertex;
-         *  typedef boost::graph_traits<BlockGraph>::edge_descriptor Edge;
-         *  @endcode
-         */
-        typedef boost::adjacency_list<boost::setS,                                  /* edges of each vertex in std::list */
-                                      boost::vecS,                                  /* vertices in std::vector */
-                                      boost::bidirectionalS,
-                                      boost::property<boost::vertex_name_t, SgAsmBlock*> > BlockGraph;
+    template<class ControlFlowGraph>
+    void copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/);
+    /** @} */
 
-        /** Default instruction-based control flow graph.
-         *
-         *  A control flow graph has a Boost graph interface whose vertex descriptors are integers and whose vertices point to
-         *  SgAsmInstruction nodes in the AST (via the boost::vertex_name property).  The graph edges represent flow of control
-         *  from one instruction to another.  Since the control flow graph is a Boost graph, it is endowed with all the features
-         *  of a Boost graph and can be the operand of the various Boost graph algorithms.  See build_insn_cfg_from_ast() for
-         *  specifics about what is included in such a graph.
-         *
-         *  It is common to need a type for the vertices and edges.  Boost graphs store this information in graph_traits and
-         *  users should use that to obtain those types.  Doing so will, in the long run, make your code more extensible since
-         *  the only datatype you're depending on is the graph itself--change the graph type and the vertex and edge types will
-         *  automatically adjust.  See Boost Graph Library documentation for all the available types.  The most common are:
-         *
-         *  @code
-         *  typedef boost::graph_traits<InsnGraph>::vertex_descriptor Vertex;
-         *  typedef boost::graph_traits<InsnGraph>::edge_descriptor Edge;
-         *  @endcode
-         */
-        typedef boost::adjacency_list<boost::setS,
-                                      boost::vecS,
-                                      boost::bidirectionalS,
-                                      boost::property<boost::vertex_name_t, SgAsmInstruction*> > InsnGraph;
+    /***********************************************************************************************************************
+     *                                      Graph output
+     ***********************************************************************************************************************/
 
-        /** Default control flow graph.  The original BinaryAnalysis::ControlFlow API defined only "Graph", which was a
-         * basic-block control flow graph.  We continue to define that type for backward compatibility. */
-        typedef BlockGraph Graph;
-
-
-        /**********************************************************************************************************************
-         *                                      Filters
-         **********************************************************************************************************************/
-    public:
-
-        /** Filter for vertices.
-         *
-         *  This class can be specialized in order to filter out vertices (SgAsmBlock or SgAsmInstruction depending on the type
-         *  of the graph) that satisfy an arbitrary condition.  See set_vertex_filter() for details. */
-        class VertexFilter {
-        public:
-            virtual ~VertexFilter() {}
-            virtual bool operator()(ControlFlow*, SgAsmNode*) = 0;
-        };
-
-        /** Filter for edges.
-         *
-         *  This class can be specialized in order to filter out certain edges that would otherwise make it into the control
-         *  flow graph.  See set_edge_filter() for details. */
-        class EdgeFilter {
-        public:
-            virtual ~EdgeFilter() {}
-            virtual bool operator()(ControlFlow*, SgAsmNode *source, SgAsmNode *target) = 0;
-        };
-
-        /** Manipulate the vertex filter.
-         *
-         *  When building a control flow graph, the vertex filter is invoked on each vertex which is about to be added.  If the
-         *  filter returns false then that block is not added to the graph.  A null filter accepts all vertices.
-         *
-         *  @{ */
-        void set_vertex_filter(VertexFilter *filter) { vertex_filter = filter; }
-        VertexFilter *get_vertex_filter() const { return vertex_filter; }
-        /** @}*/
-
-        /** Manipulate the edge filter.
-         *
-         *  When building a control flow graph, the edge filter is invoked for each edge which is about to be added to the
-         *  graph. If the filter returns false then that edge is not added to the graph.  A null filter accepts all edges.
-         *
-         *  @{ */
-        void set_edge_filter(EdgeFilter *filter) { edge_filter = filter; }
-        EdgeFilter *get_edge_filter() const { return edge_filter; }
-        /** @}*/
-
-        /** Determines if a vertex is filtered out.
-         *
-         *  Returns true if the vertex would be filtered out by being rejected by the current vertex filter.
-         *
-         *  @{ */
-        bool is_vertex_filtered(SgAsmNode *bb_or_insn, VertexFilter *filter) { return filter && !(*filter)(this, bb_or_insn); }
-        bool is_vertex_filtered(SgAsmNode *bb_or_insn) { return is_vertex_filtered(bb_or_insn, vertex_filter); }
-        /** @} */
-
-        /** Determines if an edge is filtered out.
-         *
-         *  Returns true if the edge would be filtered out by being rejected by the current edge filter.  The @p src and @p dst
-         *  are the source and destination vertex nodes, either basic blocks or instructions depending on the graph type.
-         *
-         *  @{ */
-        bool is_edge_filtered(SgAsmNode *src, SgAsmNode *dst, EdgeFilter *filter) {
-            return filter && !(*filter)(this, src, dst);
-        }
-        bool is_edge_filtered(SgAsmNode *src, SgAsmNode *dst) {
-            return is_edge_filtered(src, dst, edge_filter);
-        }
-        /** @} */
-
-    protected:
-        VertexFilter *vertex_filter;
-        EdgeFilter *edge_filter;
-
-        /**********************************************************************************************************************
-         *                                      Methods that modify the AST
-         **********************************************************************************************************************/
-    public:
-
-        /** Clears successor information from the AST.
-         *
-         *  Traverses the specified AST and clears the successor lists for all basic blocks.  The blocks are visited by an AST
-         *  traversal, not by following successor pointers.
-         *
-         *  The current vertex filter determines which edges are filtered. */
-        void clear_ast(SgNode *ast);
-
-        /** Applies graph to AST.
-         *
-         *  Just as a control flow graph can be built from the successor lists stored in the AST (see
-         *  build_block_cfg_from_ast() or build_insn_cfg_from_ast()), a graph can be used to initialize the successor
-         *  information in an AST.  This function does that.  Only the blocks which are vertices of the graph and which pass
-         *  the current vertex filter are affected.  Only edges that pass the current edge filter are added as successors to
-         *  the (cleared) block successor list.
-         *
-         *  Not all instruction-based graphs can be written back to the AST because the implied basic block structure of the
-         *  graph might not match the explicit basic block structure in the AST.  Perhaps a future version will allow the AST
-         *  to be restructured by this operation.
-         *
-         *  At this time [2011-05-19] the successor_complete property of each affected block is set to true, but this may
-         *  change in the future. */
-        template<class ControlFlowGraph>
-        void apply_to_ast(const ControlFlowGraph&);
-
-        /** Cache basic block vertex descriptors in AST.
-         *
-         *  The vertices of a control flow graph are of type Vertex, and point at the basic blocks (SgAsmBlock) of the
-         *  AST. Although most graph algorithms will only need to map Vertex to SgAsmBlock, the inverse mapping is also
-         *  sometimes useful.  That mapping can be stored into an std::map via graph traversal, or stored in the AST itself
-         *  attached to each SgAsmBlock.  Using an std::map requires an O(log N) lookup each time we need to get the vertex
-         *  descriptor from a block, while storing the vertex descriptor in the AST requires O(1) lookup time.
-         *
-         *  The vertex descriptors are available via SgAsmBlock::get_cached_vertex().  Other graph types (e.g., dominance
-         *  graphs) might also use the same cache line.  The cached vertex is stored as a size_t, which is the same underlying
-         *  type for CFG vertices.
-         *
-         *  The current vertex filter determines which blocks are modified. */
-        template<class ControlFlowGraph>
-        void cache_vertex_descriptors(const ControlFlowGraph&);
-
-        /**********************************************************************************************************************
-         *                                      Graph construction methods
-         **********************************************************************************************************************/
-    public:
-
-        /** Builds a control flow graph for part of an AST.
-         *
-         *  Builds a control flow graph for the part of the abstract syntax tree rooted at @p root by traversing the AST to
-         *  find all basic blocks and using the successors of those blocks to define the edges of the control flow graph.
-         *  Successors are retrieved via SgAsmBlock::get_successors() and are of type SgAsmIntegerValueExpression.  The
-         *  specified @p root for the AST should generally not include multiple interpretations (SgAsmInterpretation) since the
-         *  OS never loads more than one interpretation at a time.
-         *
-         *  The current vertex and edge filters are used to determine which blocks and flow edges are added to the
-         *  graph. However, the following types of successors are never added (and don't trigger a call to the filter):
-         *  <ul>
-         *    <li>Successors that have no block pointer, but only an address.  This can happen when we didn't disassemble any
-         *        instruction at the successor address, and thus don't have a block at which to point.</li>
-         *    <li>Successors that point to a block outside the specified AST subtree.  For instance, when considering the
-         *        control flow graph of an individual function, successors for function calls will point outside the calling
-         *        function (unless the call is recursive).<li>
-         *    <li>Successors that are not known.  Some basic blocks, such as function return blocks or blocks ending with computed
-         *        branches, usually only have unknown successors.  Such edges are not added to the graph.</li>
-         *  </ul>
-         *
-         * The build_block_cfg_from_ast() builds a CFG whose vertices are basic blocks, while the build_insn_cfg_from_ast()
-         * builds a CFG whose vertices are instructions.  Furthermore, the instruction-based CFG makes some adjustments to
-         * function call and function return nodes by invoking fixup_fcall_fret().
-         *
-         *  @{ */
-        template<class ControlFlowGraph>
-        ControlFlowGraph build_block_cfg_from_ast(SgNode *root);
-
-        template<class ControlFlowGraph>
-        void build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
-
-        template<class ControlFlowGraph>
-        ControlFlowGraph build_insn_cfg_from_ast(SgNode *root);
-        
-        template<class ControlFlowGraph>
-        void build_insn_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
-        /** @} */
-
-        /** Create an instruction control flow graph from a basic block control flow graph.
-         * @{ */
-        template<class BlockCFG, class InsnCFG>
-        void explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/*out*/);
-        /** @} */
-
-        /** Fix up a CFG by changing function call and return edges.  The AST does not store function return edges (which this
-         *  method adds), and the AST stores a fall-through edge for function call nodes for callees that may return (which
-         *  this method removes). */
-        template<class InsnCFG>
-        void fixup_fcall_fret(InsnCFG &cfg/*in,out*/, bool preserve_call_fallthrough_edges);
-
-        /** Builds a control flow graph with only function call edges.
-         *
-         *  This differs from a true FunctionCall::Graph in that the vertices of the returned graph point to basic blocks,
-         *  while the vertices of a FunctionCall::Graph point to functions (SgAsmFunction nodes).
-         *
-         *  The graph is built by applying an edge filter (in addition to the edge filter that might be set by the user) that
-         *  only accepts edges whose target is a function entry block.
-         *
-         *  @{ */
-        template<class ControlFlowGraph>
-        ControlFlowGraph build_cg_from_ast(SgNode *root);
-
-        template<class ControlFlowGraph>
-        void build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/);
-        /** @} */
-
-        /** Copies a graph while filtering.
-         *
-         *  Copies a graph while applying the current source and destination vertex and edge filters.  If all vertices are
-         *  selected by the vertex filter, then the desintation graph's vertex descriptors will correspond to the same
-         *  vertices in the source graph (i.e., vertex V in the source will be the same basic block as vertex V in the
-         *  destination).
-         *
-         *  If an edge is unfiltered but one of its vertices is filtered, then the edge will not be included in the result.
-         *
-         *  @{ */
-        template<class ControlFlowGraph>
-        ControlFlowGraph copy(const ControlFlowGraph &src);
-
-        template<class ControlFlowGraph>
-        void copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/);
-        /** @} */
-
-        /***********************************************************************************************************************
-         *                                      Graph output
-         ***********************************************************************************************************************/
-        
-        /** List of vertices and intra-function edges for one function. */
-        template<class CFG>
-        struct FunctionSubgraphInfo {
-            std::vector<typename boost::graph_traits<CFG>::vertex_descriptor> vertices;
-            std::vector<typename boost::graph_traits<CFG>::edge_descriptor> edges;
-        };
-
-        /** Default vertex property writer is a no-op. */
-        template<class CFG>
-        struct DefaultVertexPropertyWriter {
-            void operator()(std::ostream &o, typename boost::graph_traits<CFG>::vertex_descriptor vertex) const {}
-        };
-
-        /** Default edge property writer is a no-op. */
-        template<class CFG>
-        struct DefaultEdgePropertyWriter {
-            void operator()(std::ostream &o, typename boost::graph_traits<CFG>::edge_descriptor vertex) const {}
-        };
-
-        /** Write a CFG to a graphviz file, creating a cluster subgraph for each function.
-         * @{ */
-        template<typename CFG, class VertexPropertyWriter, class EdgePropertyWriter>
-        void write_graphviz(std::ostream&, const CFG&, const VertexPropertyWriter&, const EdgePropertyWriter&);
-
-        template<typename CFG>
-        void write_graphviz(std::ostream &out, const CFG &cfg) {
-            write_graphviz(out, cfg, DefaultVertexPropertyWriter<CFG>(), DefaultEdgePropertyWriter<CFG>());
-        }
-
-        template<typename CFG, class VertexPropertyWriter>
-        void write_graphviz(std::ostream &out, const CFG &cfg, const VertexPropertyWriter &vpw) {
-            write_graphviz(out, cfg, vpw, DefaultEdgePropertyWriter<CFG>());
-        }
-        /** @} */
-
-        /**********************************************************************************************************************
-         *                                      Miscellaneous members
-         **********************************************************************************************************************/
-
-    private:
-        /* Visitor used by flow_order().  Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
-        template<class ControlFlowGraph>
-        struct FlowOrder: public boost::default_dfs_visitor {
-            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            typedef std::vector<Vertex> VertexList;
-            typedef std::vector<size_t> ReverseVertexList;
-            VertexList *forward_order;
-            FlowOrder(VertexList *forward_order): forward_order(forward_order) {}
-            void compute(const ControlFlowGraph &g, Vertex v0, ReverseVertexList *reverse_order);
-            void finish_vertex(Vertex v, ControlFlowGraph g);
-        };
-            
-        /* Helper class for build_block_cfg_from_ast().  Adds vertices to its 'cfg' member. Vertices are any SgAsmBlock that
-         * contains at least one SgAsmInstruction. */
-        template<class ControlFlowGraph>
-        class VertexInserter: public AstSimpleProcessing {
-        public:
-            ControlFlow *analyzer;
-            ControlFlowGraph &cfg;
-            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
-            BlockVertexMap &bv_map;
-            VertexInserter(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
-                : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
-                {}
-            // Add basic block to graph if it hasn't been added already.
-            void conditionally_add_vertex(SgAsmBlock *block);
-
-            void visit(SgNode *node) {
-                if (isSgAsmFunction(node)) {
-                    // Add the function entry block before the other blocks of the function.  This ensures that the entry block
-                    // of a function has a lower vertex number than the other blocks of the function (the traversal is not
-                    // guaranteed to visit the function basic blocks in that order).
-                    conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
-                } else {
-                    conditionally_add_vertex(isSgAsmBlock(node));
-                }
-            }
-        };
-
-    public:
-        /** Orders nodes by depth first search reverse post order.
-         *
-         *  Reversed, depth-first-search, post-order is a common node order needed for solving flow equations, and this method
-         *  returns a vector whose elements are graph vertices.  The algorithm is to allocate the vector to be the same length
-         *  as the total number of vertices in the graph, and then do a depth-first-search starting with the specified
-         *  node.  Each node is visited after all its children (post-order).  Each node visit adds the node to the vector
-         *  starting at the end of the vector and working forward.
-         *
-         *  If reverse_order is non-null then it will be the inverse mapping from the returned vector.  In other words, if the
-         *  return value is named forward_order, then
-         *
-         *    forward_order[i] == v  implies reverse_order[v] == i
-         *
-         *  Here's an example of how this would typically be used.
-         *
-         *  @code
-         *  std::vector<size_t> rflowlist; // reverse mapping
-         *  std::vector<ControlFlow::Vector> flowlist;
-         *  flowlist = ControlFlow().flow_order(cfg, start, &rflowlist);
-         *
-         *  bool changed;
-         *  do {
-         *      changed = false;
-         *      for (size_t i=0; i<flowlist.size(); ++i) {
-         *          ControlFlow::Vertex vertex = flowlist[i];
-         *          // solve flow equation for vertex...
-         *          if (result_at_vertex_changed)
-         *              changed = true;
-         *      }
-         *  } while (changed);
-         *  @endcode
-         */
-        template<class ControlFlowGraph>
-        std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
-        flow_order(const ControlFlowGraph&,
-                   typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                   std::vector<size_t> *reverse_order=NULL);
-
-    private:
-        /* Visitor used by return_blocks(). Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
-        template<class ControlFlowGraph>
-        struct ReturnBlocks: public boost::default_dfs_visitor {
-            typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
-            typedef std::vector<Vertex> Vector;
-            Vector &blocks;
-            ReturnBlocks(Vector &blocks): blocks(blocks) {}
-            void finish_vertex(Vertex v, ControlFlowGraph g);
-        };
-
-    public:
-        /** Returns list of function return blocks.
-         *
-         *  More specifically, this method traverses the control flow graph (CFG) beginning at the specified node and returns a
-         *  list (in depth first search order) of all vertices which are in the connected subgraph and which do not have any
-         *  known successors, but at least one unknown successor.
-         *
-         *  Currently works only for basic block CFGs. */
-        template<class ControlFlowGraph>
-        std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
-        return_blocks(const ControlFlowGraph &cfg,
-                      typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+    /** List of vertices and intra-function edges for one function. */
+    template<class CFG>
+    struct FunctionSubgraphInfo {
+        std::vector<typename boost::graph_traits<CFG>::vertex_descriptor> vertices;
+        std::vector<typename boost::graph_traits<CFG>::edge_descriptor> edges;
     };
-}
+
+    /** Default vertex property writer is a no-op. */
+    template<class CFG>
+    struct DefaultVertexPropertyWriter {
+        void operator()(std::ostream &o, typename boost::graph_traits<CFG>::vertex_descriptor vertex) const {}
+    };
+
+    /** Default edge property writer is a no-op. */
+    template<class CFG>
+    struct DefaultEdgePropertyWriter {
+        void operator()(std::ostream &o, typename boost::graph_traits<CFG>::edge_descriptor vertex) const {}
+    };
+
+    /** Write a CFG to a graphviz file, creating a cluster subgraph for each function.
+     * @{ */
+    template<typename CFG, class VertexPropertyWriter, class EdgePropertyWriter>
+    void write_graphviz(std::ostream&, const CFG&, const VertexPropertyWriter&, const EdgePropertyWriter&);
+
+    template<typename CFG>
+    void write_graphviz(std::ostream &out, const CFG &cfg) {
+        write_graphviz(out, cfg, DefaultVertexPropertyWriter<CFG>(), DefaultEdgePropertyWriter<CFG>());
+    }
+
+    template<typename CFG, class VertexPropertyWriter>
+    void write_graphviz(std::ostream &out, const CFG &cfg, const VertexPropertyWriter &vpw) {
+        write_graphviz(out, cfg, vpw, DefaultEdgePropertyWriter<CFG>());
+    }
+    /** @} */
+
+    /**********************************************************************************************************************
+     *                                      Miscellaneous members
+     **********************************************************************************************************************/
+
+private:
+    /* Visitor used by flow_order().  Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
+    template<class ControlFlowGraph>
+    struct FlowOrder: public boost::default_dfs_visitor {
+        typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+        typedef std::vector<Vertex> VertexList;
+        typedef std::vector<size_t> ReverseVertexList;
+        VertexList *forward_order;
+        FlowOrder(VertexList *forward_order): forward_order(forward_order) {}
+        void compute(const ControlFlowGraph &g, Vertex v0, ReverseVertexList *reverse_order);
+        void finish_vertex(Vertex v, ControlFlowGraph g);
+    };
+
+    /* Helper class for build_block_cfg_from_ast().  Adds vertices to its 'cfg' member. Vertices are any SgAsmBlock that
+     * contains at least one SgAsmInstruction. */
+    template<class ControlFlowGraph>
+    class VertexInserter: public AstSimpleProcessing {
+    public:
+        ControlFlow *analyzer;
+        ControlFlowGraph &cfg;
+        typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+        typedef Map<SgAsmBlock*, Vertex> BlockVertexMap;
+        BlockVertexMap &bv_map;
+        VertexInserter(ControlFlow *analyzer, ControlFlowGraph &cfg, BlockVertexMap &bv_map)
+            : analyzer(analyzer), cfg(cfg), bv_map(bv_map)
+            {}
+        // Add basic block to graph if it hasn't been added already.
+        void conditionally_add_vertex(SgAsmBlock *block);
+
+        void visit(SgNode *node) {
+            if (isSgAsmFunction(node)) {
+                // Add the function entry block before the other blocks of the function.  This ensures that the entry block
+                // of a function has a lower vertex number than the other blocks of the function (the traversal is not
+                // guaranteed to visit the function basic blocks in that order).
+                conditionally_add_vertex(isSgAsmFunction(node)->get_entry_block());
+            } else {
+                conditionally_add_vertex(isSgAsmBlock(node));
+            }
+        }
+    };
+
+public:
+    /** Orders nodes by depth first search reverse post order.
+     *
+     *  Reversed, depth-first-search, post-order is a common node order needed for solving flow equations, and this method
+     *  returns a vector whose elements are graph vertices.  The algorithm is to allocate the vector to be the same length
+     *  as the total number of vertices in the graph, and then do a depth-first-search starting with the specified
+     *  node.  Each node is visited after all its children (post-order).  Each node visit adds the node to the vector
+     *  starting at the end of the vector and working forward.
+     *
+     *  If reverse_order is non-null then it will be the inverse mapping from the returned vector.  In other words, if the
+     *  return value is named forward_order, then
+     *
+     *    forward_order[i] == v  implies reverse_order[v] == i
+     *
+     *  Here's an example of how this would typically be used.
+     *
+     *  @code
+     *  std::vector<size_t> rflowlist; // reverse mapping
+     *  std::vector<ControlFlow::Vector> flowlist;
+     *  flowlist = ControlFlow().flow_order(cfg, start, &rflowlist);
+     *
+     *  bool changed;
+     *  do {
+     *      changed = false;
+     *      for (size_t i=0; i<flowlist.size(); ++i) {
+     *          ControlFlow::Vertex vertex = flowlist[i];
+     *          // solve flow equation for vertex...
+     *          if (result_at_vertex_changed)
+     *              changed = true;
+     *      }
+     *  } while (changed);
+     *  @endcode
+     */
+    template<class ControlFlowGraph>
+    std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+    flow_order(const ControlFlowGraph&,
+               typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+               std::vector<size_t> *reverse_order=NULL);
+
+private:
+    /* Visitor used by return_blocks(). Declaring this in function scope results in boost errors (boost-1.42, 2011-05). */
+    template<class ControlFlowGraph>
+    struct ReturnBlocks: public boost::default_dfs_visitor {
+        typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
+        typedef std::vector<Vertex> Vector;
+        Vector &blocks;
+        ReturnBlocks(Vector &blocks): blocks(blocks) {}
+        void finish_vertex(Vertex v, ControlFlowGraph g);
+    };
+
+public:
+    /** Returns list of function return blocks.
+     *
+     *  More specifically, this method traverses the control flow graph (CFG) beginning at the specified node and returns a
+     *  list (in depth first search order) of all vertices which are in the connected subgraph and which do not have any
+     *  known successors, but at least one unknown successor.
+     *
+     *  Currently works only for basic block CFGs. */
+    template<class ControlFlowGraph>
+    std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
+    return_blocks(const ControlFlowGraph &cfg,
+                  typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start);
+};
+
 
 /*******************************************************************************************************************************
  *                                      Functions
@@ -589,7 +591,7 @@ put_ast_node(boost::adjacency_list<A, B, C, D, E, F, G> &cfg,
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
+ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
 {
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
@@ -620,7 +622,7 @@ BinaryAnalysis::ControlFlow::apply_to_ast(const ControlFlowGraph &cfg)
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cfg)
+ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cfg)
 {
     typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
     for (boost::tie(vi, vi_end)=boost::vertices(cfg); vi!=vi_end; ++vi) {
@@ -632,7 +634,7 @@ BinaryAnalysis::ControlFlow::cache_vertex_descriptors(const ControlFlowGraph &cf
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add_vertex(SgAsmBlock *block)
+ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add_vertex(SgAsmBlock *block)
 {
     if (block && block->has_instructions() && !analyzer->is_vertex_filtered(block) && !bv_map.exists(block)) {
         Vertex vertex = boost::add_vertex(cfg);
@@ -643,7 +645,7 @@ BinaryAnalysis::ControlFlow::VertexInserter<ControlFlowGraph>::conditionally_add
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
+ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
     Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
@@ -676,7 +678,7 @@ BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowG
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::build_insn_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
+ControlFlow::build_insn_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
 {
     BlockGraph cfgb;
     build_block_cfg_from_ast(root, cfgb);
@@ -687,7 +689,7 @@ BinaryAnalysis::ControlFlow::build_insn_cfg_from_ast(SgNode *root, ControlFlowGr
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/)
+ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &cfg/*out*/)
 {
     struct T1: public EdgeFilter {
         EdgeFilter *parent;
@@ -721,7 +723,7 @@ BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root, ControlFlowGraph &c
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/)
+ControlFlow::copy(const ControlFlowGraph &src, ControlFlowGraph &dst/*out*/)
 {
     typedef typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor Vertex;
     Vertex NO_VERTEX = boost::graph_traits<ControlFlowGraph>::null_vertex();
@@ -751,7 +753,7 @@ BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src, ControlFlowGraph 
 
 template<class ControlFlowGraph>
 ControlFlowGraph
-BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src)
+ControlFlow::copy(const ControlFlowGraph &src)
 {
     ControlFlowGraph dst;
     copy(src, dst);
@@ -760,7 +762,7 @@ BinaryAnalysis::ControlFlow::copy(const ControlFlowGraph &src)
 
 template<class BlockCFG, class InsnCFG>
 void
-BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/*out*/)
+ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/*out*/)
 {
     // BlockCFG is the basic-block binary control flow graph
     typedef typename boost::graph_traits<const BlockCFG>::vertex_descriptor BlockCFG_Vertex;
@@ -816,14 +818,14 @@ BinaryAnalysis::ControlFlow::explode_blocks(const BlockCFG &cfgb, InsnCFG &cfgi/
 
 template<class InsnCFG>
 void
-BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges)
+ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges)
 {
     typedef typename boost::graph_traits<InsnCFG>::vertex_descriptor CFG_Vertex;
     typedef typename boost::graph_traits<InsnCFG>::vertex_iterator CFG_VertexIterator;
     typedef typename boost::graph_traits<InsnCFG>::in_edge_iterator CFG_InEdgeIterator;
     typedef std::pair<CFG_Vertex, CFG_Vertex> CFG_VertexPair;
     typedef Map<SgAsmInstruction*, CFG_Vertex> InsnToVertex;
-    typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
+ // typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
     CFG_Vertex NO_VERTEX = boost::graph_traits<InsnCFG>::null_vertex();
 
     // Build mappings needed later and find the function return points.  We just look for the x86
@@ -841,7 +843,7 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
 
             if (0==boost::out_degree(*vi, cfg)) {
                 // FIXME: Architecture-specific code here
-                if (SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn)) {
+                if (SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn)) {
                     isret[*vi] = x86_ret==insn_x86->get_kind();
                 }
             }
@@ -922,8 +924,8 @@ BinaryAnalysis::ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_f
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Vertex v0,
-                                                                  ReverseVertexList *reverse_order) {
+ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlFlowGraph &g, Vertex v0,
+                                                  ReverseVertexList *reverse_order) {
     forward_order->clear();
     std::vector<boost::default_color_type> colors(boost::num_vertices(g), boost::white_color);
     boost::depth_first_visit(g, v0, *this, &(colors[0]));
@@ -939,15 +941,15 @@ BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::compute(const ControlF
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::FlowOrder<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g) {
+ControlFlow::FlowOrder<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g) {
     forward_order->push_back(v);
 }
 
 template<class ControlFlowGraph>
 std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
-BinaryAnalysis::ControlFlow::flow_order(const ControlFlowGraph &cfg,
-                                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
-                                        std::vector<size_t> *reverse_order/*=NULL*/)
+ControlFlow::flow_order(const ControlFlowGraph &cfg,
+                        typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start,
+                        std::vector<size_t> *reverse_order/*=NULL*/)
 {
     std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor> forward_order;
     FlowOrder<ControlFlowGraph>(&forward_order).compute(cfg, start, reverse_order);
@@ -956,7 +958,7 @@ BinaryAnalysis::ControlFlow::flow_order(const ControlFlowGraph &cfg,
 
 template<class ControlFlowGraph>
 void
-BinaryAnalysis::ControlFlow::ReturnBlocks<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g)
+ControlFlow::ReturnBlocks<ControlFlowGraph>::finish_vertex(Vertex v, ControlFlowGraph g)
 {
     typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
     boost::tie(ei, ei_end) = boost::out_edges(v, g);
@@ -966,8 +968,8 @@ BinaryAnalysis::ControlFlow::ReturnBlocks<ControlFlowGraph>::finish_vertex(Verte
 
 template<class ControlFlowGraph>
 std::vector<typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor>
-BinaryAnalysis::ControlFlow::return_blocks(const ControlFlowGraph &cfg,
-                                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
+ControlFlow::return_blocks(const ControlFlowGraph &cfg,
+                           typename boost::graph_traits<ControlFlowGraph>::vertex_descriptor start)
 {
     typename ReturnBlocks<ControlFlowGraph>::Vector result;
     ReturnBlocks<ControlFlowGraph> visitor(result);
@@ -978,7 +980,7 @@ BinaryAnalysis::ControlFlow::return_blocks(const ControlFlowGraph &cfg,
 
 template<class ControlFlowGraph>
 ControlFlowGraph
-BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root)
+ControlFlow::build_block_cfg_from_ast(SgNode *root)
 {
     ControlFlowGraph cfg;
     build_block_cfg_from_ast(root, cfg);
@@ -987,7 +989,7 @@ BinaryAnalysis::ControlFlow::build_block_cfg_from_ast(SgNode *root)
 
 template<class ControlFlowGraph>
 ControlFlowGraph
-BinaryAnalysis::ControlFlow::build_insn_cfg_from_ast(SgNode *root)
+ControlFlow::build_insn_cfg_from_ast(SgNode *root)
 {
     ControlFlowGraph cfg;
     build_insn_cfg_from_ast(root, cfg);
@@ -996,7 +998,7 @@ BinaryAnalysis::ControlFlow::build_insn_cfg_from_ast(SgNode *root)
 
 template<class ControlFlowGraph>
 ControlFlowGraph
-BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root)
+ControlFlow::build_cg_from_ast(SgNode *root)
 {
     ControlFlowGraph cfg;
     build_cg_from_ast(root, cfg);
@@ -1006,10 +1008,10 @@ BinaryAnalysis::ControlFlow::build_cg_from_ast(SgNode *root)
 /** Write a control flow graph to a graphviz file, creating a cluster subgraph for each function. */
 template<typename CFG, class VertexPropertyWriter, class EdgePropertyWriter>
 void
-BinaryAnalysis::ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
-                                            const VertexPropertyWriter &vpw, const EdgePropertyWriter &epw)
+ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
+                            const VertexPropertyWriter &vpw, const EdgePropertyWriter &epw)
 {
-    typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
+ // typedef typename boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef typename boost::graph_traits<CFG>::edge_descriptor CFG_Edge;
     typedef typename boost::graph_traits<CFG>::vertex_iterator CFG_VertexIterator;
     typedef typename boost::graph_traits<CFG>::out_edge_iterator CFG_OutEdgeIterator;
@@ -1072,5 +1074,7 @@ BinaryAnalysis::ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
     out <<"}\n"; // digraph
 }
 
+} // namespace
+} // namespace
 
 #endif

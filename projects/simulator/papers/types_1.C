@@ -8,7 +8,8 @@
 #include "YicesSolver.h"
 #include "BinaryPointerDetection.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 // If this symbol is undefined then the simulator will not forward its own signals to the specimen, making it easier to kill
 // the specimen in some cases.  See its use in main().
@@ -40,8 +41,8 @@ public:
         : SymbolicSemantics::ValueType<nBits>(node) {}
     ValueType(const PartialSymbolicSemantics::ValueType<nBits> &other, std::string comment="") {
         set_expression(other.is_known() ?
-                       InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
-                       InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
+                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_integer(nBits, other.known_value(), comment) :
+                       rose::BinaryAnalysis::InsnSemanticsExpr::LeafNode::create_variable(nBits, comment));
     }
 };
 
@@ -50,7 +51,7 @@ public:
  ******************************************************************************************************************************/
 
 
-typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
+typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process, ValueType> PointerDetector;
 
 /******************************************************************************************************************************
  *                                              Memory Oracle Analysis
@@ -142,7 +143,7 @@ public:
             // Simulate some instructions
             for (/*void*/; ninsns<limit && policy.readRegister<32>(semantics.REG_EIP).is_known(); ++ninsns) {
                 rose_addr_t va = policy.readRegister<32>(semantics.REG_EIP).known_value();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(thread->get_process()->get_instruction(va));
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(thread->get_process()->get_instruction(va));
                 semantics.processInstruction(insn);
             }
         } catch (const Disassembler::Exception &e) {
@@ -176,13 +177,13 @@ public:
     virtual AnalysisTrigger *clone() { return this; }
 
     // Given a function, figure out what part of the address space its instructions occupy.
-    ExtentMap function_extent(SgAsmFunction *func) {
+    AddressIntervalSet function_extent(SgAsmFunction *func) {
         struct: public AstSimpleProcessing {
-            ExtentMap extents;
+            AddressIntervalSet extents;
             void visit(SgNode *node) {
                 SgAsmInstruction *insn = isSgAsmInstruction(node);
                 if (insn)
-                    extents.insert(Extent(insn->get_address(), insn->get_size()));
+                    extents.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
             }
         } t;
         t.traverse(func, preorder);
@@ -250,7 +251,7 @@ public:
                 }
 
                 // Limit the range of addresses that will be considered during the analysis
-                ExtentMap addrspc;
+                AddressIntervalSet addrspc;
                 if (limit_to_function) {
                     SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
                     if (func) {
@@ -259,20 +260,21 @@ public:
                         m->mesg("%s: cannot limit analysis to a single function at insn at 0x%08"PRIx64, name, analysis_addr);
                     }
                 } else if (!limits.empty()) {
-                    addrspc = limits;
+                    addrspc = toAddressIntervalSet(limits);
                 }
 
                 // Do one pointer analysis
-                SMTSolver *solver = NULL;
+                rose::BinaryAnalysis::SMTSolver *solver = NULL;
                 PointerDetector ptr_detector(args.thread->get_process(), solver);
                 ptr_detector.analyze(analysis_addr, addrspc);
                 const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();
                 std::cout <<"Pointers discovered by PtrAnalysis:\n";
-                for (PointerDetector::Pointers::const_iterator pi=pointers.begin(); pi!=pointers.end(); ++pi) {
+                for (PointerDetector::Pointers::const_iterator pi=pointers.begin();
+                     pi!=pointers.end(); ++pi) {
                     const PointerDetector::Pointer &pointer = *pi;
-                    if (pointer.type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::DATA_PTR)
                         std::cout <<"data ";
-                    if (pointer.type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+                    if (pointer.type & rose::BinaryAnalysis::PointerAnalysis::CODE_PTR)
                         std::cout << "code ";
                     std::cout <<"pointer at " <<pointer.address <<"\n";
                 }

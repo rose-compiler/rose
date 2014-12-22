@@ -5,6 +5,8 @@
 #include "DwarfLineMapper.h"
 #include <cerrno>
 
+using namespace rose;
+
 std::string argv0;
 
 static void
@@ -385,7 +387,7 @@ show_events(const Event &e)
         std::cout <<std::setw(11) <<std::right <<"RET " <<"|   forced early return "
                   <<e.nreturns <<" time" <<(1==e.nreturns?"":"s") <<"\n";
     }
-    
+
     // Subsequent lines for inputs consumed
     if (e.ninputs>0) {
         std::cout <<std::setw(9) <<std::right <<e.ninputs <<"< |   ";
@@ -459,7 +461,7 @@ show_events(const Event &e)
         }
         std::cout <<"\n";
     }
-    
+
     // Subsequent lines for control flow branches
     if (e.nbranches>0) {
         size_t col=0;
@@ -515,7 +517,7 @@ list_assembly(const SqlDatabase::TransactionPtr &tx, int func_id)
         } else {
             std::cout <<std::string(11, ' ');
         }
-            
+
         // Assembly instruction
         std::cout <<"| " <<StringUtility::addrToString(addr) <<":  " <<assembly <<"\n";
 
@@ -548,7 +550,7 @@ load_source_code(const SqlDatabase::TransactionPtr &tx, Listing &listing/*in,out
     }
 }
 
-    
+
 
 static void
 list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_assembly)
@@ -563,7 +565,7 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
     Listing listing;
     gather_source_code(tx);
     load_source_code(tx, listing/*out*/);
-    
+
     // Get lines of assembly code and insert them into the correct place in the Listing.
     if (show_assembly) {
         SqlDatabase::StatementPtr stmt = tx->statement("select"
@@ -667,13 +669,13 @@ list_combined(const SqlDatabase::TransactionPtr &tx, int func_id, bool show_asse
             Events::const_iterator ei=events.find(assm.addr);
             std::cout <<std::setw(4) <<std::right <<assm.func_id <<"." <<std::setw(6) <<std::left <<assm.pos
                       <<(prev_func_id==assm.func_id && prev_position+1==assm.pos ? "|" : "#");
-            
+
             if (ei!=events.end() && ei->second.nexecuted>0) {
                 std::cout <<std::setw(9) <<std::right <<ei->second.nexecuted <<"x ";
             } else {
                 std::cout <<std::string(11, ' ');
             }
-            
+
             std::cout <<StringUtility::addrToString(assm.addr) <<":  "
                       <<(opt.colorize?"\033[32m":"") <<assm.assembly <<(opt.colorize?"\033[m":"") <<"\n";
 

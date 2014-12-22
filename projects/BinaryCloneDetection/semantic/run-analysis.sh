@@ -6,6 +6,12 @@ dir0="${0%$argv0}"
 [ -n "$dir0" ] || dir0="."
 worklist="clone-analysis-$$"
 
+# Show an error message and exit
+die () {
+    echo "$argv0: $*" >&2
+    exit 1
+}
+
 # Parse command-line
 interactive=yes
 configfile=.run-analysis.conf
@@ -77,12 +83,6 @@ usage () {
     echo "            The --save switch (the default) saves configuration information into the" >&2
     echo "            configuration file specified with the --config switch (or a default)." >&2
     exit $exit_status
-}
-
-# Show an error message and exit
-die () {
-    echo "$argv0: $*" >&2
-    exit 1
 }
 
 # For affirmative answers, echo "yes" and return success; otherwise silently return failure
@@ -164,7 +164,7 @@ split_worklist_1d () {
 # that have approximately the same number of points but which minimize the length of the perimeter.
 split_worklist_2d () {
     local nprocs="$1" njobs="${2-64}"
-    $BLDDIR/31-split-2dworklist $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
+    $BLDDIR/31-split-2dworklist --threads=$nprocs $njobs <$worklist | $SRCDIR/31-split-into-files --prefix=$worklist-
     rm $worklist
     echo $worklist-[a-z][a-z]
 }
@@ -193,6 +193,7 @@ add_functions_flags='$add_functions_flags'
 get_pending_tests_flags='$get_pending_tests_flags'
 
 # Flags for running each test
+run_tests_cmd='$run_tests_cmd'
 run_tests_nprocs='$run_tests_nprocs'
 run_tests_job_multiplier='$run_tests_job_multiplier'
 run_tests_flags='$run_tests_flags'
@@ -278,38 +279,56 @@ nwork=$(wc -l <$worklist)
 if [ "$nwork" -eq 0 ]; then
     echo "No tests to run"
 else
-    nprocs=$(parallelism $run_tests_nprocs)
-    worklist_parts=$(split_worklist_1d $nprocs $run_tests_job_multiplier)
-    nparts=$(count_args $worklist_parts)
-    save_settings
+    if [ "$interactive" = "yes" ]; then
+	echo
+	echo "=================================================================================================="
+	echo "Would you like to run the 25-run-tests-fork rather than 25-run-tests?  The fork version of the"
+	echo "command handles its perallelism internally by forking new processes, while the non-fork version"
+	echo "uses a parallel makefile (which will be generated automatically)."
+	echo
+	[ "$run_tests_cmd" = "" ] && run_tests_cmd="25-run-tests";
+	read -e -p "Command for running tests (without path): " -i "$run_tests_cmd" run_tests_cmd
+	save_settings
+    fi
 
     if [ "$interactive" = "yes" ]; then
 	echo
 	echo "=================================================================================================="
-	echo "These are the flags for 25-run-tests, which runs the tests selected in the previous step."
-	$BLDDIR/25-run-tests --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
+	echo "These are the flags for running tests."
+	$BLDDIR/$run_tests_cmd --help 2>&1 |sed -n '/^$/,/^  *DATABASE$/ p' |tail -n +2 |head -n -1
 	read -e -p "Switches for running tests: " -i "$run_tests_flags" run_tests_flags
 	save_settings
     fi
-    if [ "$nparts" -gt 1 ]; then
-	redirect=yes
-	echo
-	echo "Use this command in another window to monitor the progress of 25-run-tests:"
-	echo "    watch 'tail -n1 $worklist-[a-z][a-z].rt.out.tmp'"
-	echo
-	sleep 5
+
+    if [ "$run_tests_cmd" = "25-run-tests-fork" ]; then
+	execute $BLDDIR/$run_tests_cmd $run_tests_flags "$dbname" <$worklist || exit 1
+	rm -f $worklist;
     else
-	redirect=no
+	nprocs=$(parallelism $run_tests_nprocs)
+	worklist_parts=$(split_worklist_1d $nprocs $run_tests_job_multiplier)
+	nparts=$(count_args $worklist_parts)
+	save_settings
+
+	if [ "$nparts" -gt 1 ]; then
+	    redirect=yes
+	    echo
+	    echo "Use this command in another window to monitor the progress of 25-run-tests:"
+	    echo "    watch 'tail -n1 $worklist-[a-z][a-z].rt.out.tmp'"
+	    echo
+	    sleep 5
+	else
+	    redirect=no
+	fi
+	execute make -f $SRCDIR/run-analysis.mk -j $nprocs \
+	    BINDIR="$BLDDIR" \
+	    RUN_FLAGS="$run_tests_flags" \
+	    DBNAME="$dbname" \
+	    INPUTS="$worklist_parts" \
+	    ERROR= \
+	    REDIRECT="$redirect" \
+	    run-tests || exit 1
+	rm -f $worklist_parts
     fi
-    execute make -f $SRCDIR/run-analysis.mk -j $nprocs \
-	BINDIR="$BLDDIR" \
-	RUN_FLAGS="$run_tests_flags" \
-	DBNAME="$dbname" \
-	INPUTS="$worklist_parts" \
-	ERROR= \
-	REDIRECT="$redirect" \
-	run-tests || exit 1
-    rm -f $worklist_parts
 fi
 
 if [ "$interactive" = "yes" ]; then

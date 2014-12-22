@@ -1,12 +1,12 @@
 #include <string>
 #include "x10_token.h"
 
-X10_Token_t::X10_Token_t (std::string s, X10SourceCodePosition * p) : text(s), pos_info(p) {
+X10_Token_t::X10_Token_t (std::string filename_, X10SourceCodePosition * p) : filename(filename_), pos_info(p) {
     // Nothing to do here!
 }
 
-std::string X10_Token_t::getText() {
-    return text;
+std::string X10_Token_t::getFileName() {
+    return filename;
 }
 
 X10SourceCodePosition *X10_Token_t::getSourcecodePosition() {

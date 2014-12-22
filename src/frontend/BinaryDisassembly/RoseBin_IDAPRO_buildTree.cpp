@@ -4,12 +4,12 @@
  * Date : 3Apr07
  * Decription : Code that actually builds the Rose Tree
  ****************************************************/
-// tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
+
 #include "RoseBin_IDAPRO_buildTree.h"
 
 using namespace std;
-
+using namespace rose;
 using namespace RoseBin_Def;
 
 SgAsmType*

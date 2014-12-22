@@ -17,12 +17,13 @@ int main()
      D d;
      A a;
 
-  // expands to:
+  // These all expand semantically to be:
   // (*d.operator->().operator->().operator->()).foo();
   //   D            C            B           A*
+     (*d.operator->().operator->().operator->()).foo();
      d->foo();
-
      d->operator->()->foo();
 
+  // This is semantically a bit different:
      a->foo()->foo();
    }

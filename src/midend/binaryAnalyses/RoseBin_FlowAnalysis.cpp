@@ -138,8 +138,8 @@ RoseBin_FlowAnalysis::sameParents(SgGraphNode* node, SgGraphNode* next) {
     return true;
   }
 
-  SgAsmx86Instruction* thisNode = isSgAsmx86Instruction(node->get_SgNode());
-  SgAsmx86Instruction* nextNode = isSgAsmx86Instruction(next->get_SgNode());
+  SgAsmX86Instruction* thisNode = isSgAsmX86Instruction(node->get_SgNode());
+  SgAsmX86Instruction* nextNode = isSgAsmX86Instruction(next->get_SgNode());
   if (thisNode && nextNode) {
     if (!db) {
       SgAsmFunction* func1 = isSgAsmFunction(thisNode->get_parent()->get_parent());
@@ -254,16 +254,16 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
       continue;
     bool hasStopCondition=false;
     for (unsigned int itf = 0; itf < funcVec.size() ; itf++) {
-      SgAsmx86Instruction* finst = isSgAsmx86Instruction(funcVec[itf]);
+      SgAsmX86Instruction* finst = isSgAsmX86Instruction(funcVec[itf]);
       ROSE_ASSERT(finst);
       if (finst->get_kind() == x86_ret || finst->get_kind() == x86_hlt) {
         hasStopCondition=true;
       }
     }
     //cerr << " last : " << last << endl;
-    SgAsmx86Instruction* lastInst = isSgAsmx86Instruction(funcVec[last]);
+    SgAsmX86Instruction* lastInst = isSgAsmX86Instruction(funcVec[last]);
     ROSE_ASSERT(lastInst);
-    SgAsmx86Instruction* nextInst = isSgAsmx86Instruction(resolveFunction(lastInst, hasStopCondition));
+    SgAsmX86Instruction* nextInst = isSgAsmX86Instruction(resolveFunction(lastInst, hasStopCondition));
     if (nextInst) {
       SgAsmFunction* nextFunc = isSgAsmFunction(nextInst->get_parent());
       if (nextFunc) {
@@ -296,7 +296,7 @@ RoseBin_FlowAnalysis::resolveFunctions(SgAsmNode* globalNode) {
 
 SgAsmInstruction*
 RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondition) {
-  SgAsmx86Instruction* inst = isSgAsmx86Instruction(instx);
+  SgAsmX86Instruction* inst = isSgAsmX86Instruction(instx);
   if (inst==NULL) return NULL;
   ROSE_ASSERT(g_algo->info);
   SgAsmInstruction* nextFlow = inst->cfgBinFlowOutEdge(g_algo->info);
@@ -338,7 +338,7 @@ RoseBin_FlowAnalysis::resolveFunction(SgAsmInstruction* instx, bool hasStopCondi
 }
 
 SgAsmInstruction*
-RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmx86Instruction* inst) {
+RoseBin_FlowAnalysis::process_jumps_get_target(SgAsmX86Instruction* inst) {
   if (inst && x86InstructionIsControlTransfer(inst)) {
     //cerr << " ..................... processing jmp " << endl;
     ostringstream addrhex3;
@@ -470,10 +470,10 @@ RoseBin_FlowAnalysis::process_jumps() {
       cerr << "\n >>>>>>>>> processing jumps ... " << endl;
   rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator it;
   for (it=rememberInstructions.begin();it!=rememberInstructions.end();++it) {
-    SgAsmx86Instruction* inst = isSgAsmx86Instruction(it->second);
+    SgAsmX86Instruction* inst = isSgAsmX86Instruction(it->second);
     if (inst->get_kind() == x86_call) {
       //cerr << "Found call at " << std::hex << inst->get_address() << endl;
-      SgAsmx86Instruction* target = isSgAsmx86Instruction(process_jumps_get_target(inst));
+      SgAsmX86Instruction* target = isSgAsmX86Instruction(process_jumps_get_target(inst));
       if (target) {
         //cerr << "Target is " << std::hex << target->get_address() << endl;
         // inst->get_targets().push_back(target);
@@ -500,7 +500,7 @@ RoseBin_FlowAnalysis::process_jumps() {
             if (target->get_kind() == x86_jmp) {
               //cerr << " >>>>>>>> found a jmp target - number of children: " << b_func->get_traversalSuccessorContainer().size() << endl;
               if (b_func->get_numberOfTraversalSuccessors()==1) {
-                SgAsmx86Instruction* target2 = isSgAsmx86Instruction(process_jumps_get_target(inst));
+                SgAsmX86Instruction* target2 = isSgAsmX86Instruction(process_jumps_get_target(inst));
                 if (target2) {
                   b_b = target2;
                   if (!db)
@@ -541,7 +541,7 @@ RoseBin_FlowAnalysis::process_jumps() {
     } else {
 
       // might be a jmp
-      SgAsmx86Instruction* target = isSgAsmx86Instruction(process_jumps_get_target(inst));
+      SgAsmX86Instruction* target = isSgAsmX86Instruction(process_jumps_get_target(inst));
       if (target) {
         // inst->get_targets().push_back(target);
         // we set the sources (for each node)
@@ -556,7 +556,7 @@ RoseBin_FlowAnalysis::process_jumps() {
   rose_hash::unordered_map <uint64_t, SgAsmInstruction* >::iterator it2;
   for (it2=rememberInstructions.begin();it2!=rememberInstructions.end();++it2) {
     //int id = it2->first;
-    SgAsmx86Instruction* target = isSgAsmx86Instruction(it2->second);
+    SgAsmX86Instruction* target = isSgAsmX86Instruction(it2->second);
     ROSE_ASSERT (target);
 #if 1
     if (target->get_kind() == x86_ret) {
@@ -579,7 +579,7 @@ RoseBin_FlowAnalysis::process_jumps() {
         for (; it3!=dest_list.end();++it3) {
           SgAsmInstruction* dest = isSgAsmInstruction(*it3);
           if (dest) {
-            dest->append_sources(target);
+            dest->appendSources(target);
             //cerr << " appending source to " << dest->get_address() << "   target: " << target->get_address() << endl;
           }
         } // for
@@ -754,7 +754,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
     vector <VirtualBinCFG::CFGEdge> vec;
     if (forward_analysis) {
       vec = binInst->cfgBinOutEdges(g_algo->info);
-      if (isSgAsmx86Instruction(binInst) && isSgAsmx86Instruction(binInst)->get_kind() == x86_call) {
+      if (isSgAsmX86Instruction(binInst) && isSgAsmX86Instruction(binInst)->get_kind() == x86_call) {
         // vec.push_back(VirtualBinCFG::CFGEdge(VirtualBinCFG::CFGNode(binInst), VirtualBinCFG::CFGNode(g_algo->info->getInstructionAtAddress(binInst->get_address() + binInst->get_raw_bytes().size())), g_algo->info));
       }
     }
@@ -780,7 +780,7 @@ RoseBin_FlowAnalysis::checkControlFlow( SgAsmInstruction* binInst,
       SgAsmInstruction* bin_target = isSgAsmInstruction(cfg_target.getNode());
       SgAsmInstruction* thisbin = isSgAsmInstruction(cfg_source.getNode());
       ROSE_ASSERT(thisbin);
-      SgAsmx86Instruction* thisbinX86 = isSgAsmx86Instruction(thisbin);
+      SgAsmX86Instruction* thisbinX86 = isSgAsmX86Instruction(thisbin);
       ROSE_ASSERT (thisbinX86);
 
       string src_mnemonic = thisbin->get_mnemonic();

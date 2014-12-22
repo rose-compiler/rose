@@ -1,19 +1,19 @@
+#include "sage3basic.h"
 #include "BinaryTaintedFlow.h"
 #include "stringify.h"
 
-using namespace rose;
-
+namespace rose {
 namespace BinaryAnalysis {
 
-Sawyer::Message::Facility TaintedFlow::mlog("BinaryAnalysis::TaintedFlow");
+Sawyer::Message::Facility TaintedFlow::mlog;
 
 void
 TaintedFlow::initDiagnostics() {
     static bool initialized = false;
     if (!initialized) {
         initialized = true;
-        mlog.initStreams(rose::Diagnostics::destination);
-        rose::Diagnostics::facilities.insert(mlog);
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::TaintedFlow", Diagnostics::destination);
+        rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
     }
 }
 
@@ -84,7 +84,7 @@ TaintedFlow::State::print(std::ostream &out) const {
 
 TaintedFlow::StatePtr
 TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) {
-    using namespace rose::Diagnostics;
+    using namespace Diagnostics;
 
     const DataFlow::Graph &dfg = index_[cfgVertex]; // data flow for this basic block
     StatePtr out = in->copy();
@@ -163,4 +163,5 @@ operator<<(std::ostream &out, const TaintedFlow::State &state) {
     return out;
 }
 
+} // namespace
 } // namespace

@@ -187,12 +187,11 @@ main(int argc, char *argv[])
         tx->execute("delete from semantic_fio_inputs where func_id "+funcs);
         tx->execute("delete from semantic_fio_trace where func_id "+funcs);
         tx->execute("delete from semantic_fio where func_id "+funcs);
-        
     } else {
         std::cerr <<argv0 <<": unknown command: " <<cmd <<"\n";
         exit(1);
     }
-    
+
     finish_command(tx, cmd_id);
     tx->commit();
     return 0;

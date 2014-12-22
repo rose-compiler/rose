@@ -18,6 +18,10 @@ using boost::math::erf;
 using std::isnan;
 #endif
 
+namespace rose {
+namespace BinaryAnalysis {
+
+
 /******************************************************************************************************************************
  *                                      RegionStats
  ******************************************************************************************************************************/
@@ -562,7 +566,7 @@ Partitioner::count_kinds(const InstructionMap &insns)
         SgAsmInstruction *insn = ii->second->node;
         int kind = -1;
         switch (insn->variantT()) {
-            case V_SgAsmx86Instruction:     kind = isSgAsmx86Instruction(insn)    ->get_kind(); break;
+            case V_SgAsmX86Instruction:     kind = isSgAsmX86Instruction(insn)    ->get_kind(); break;
             case V_SgAsmPowerpcInstruction: kind = isSgAsmPowerpcInstruction(insn)->get_kind(); break;
             case V_SgAsmArmInstruction:     kind = isSgAsmArmInstruction(insn)    ->get_kind(); break;
             default: break; // to shut up compiler warnings
@@ -581,8 +585,8 @@ Partitioner::count_privileged(const InstructionMap &insns)
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = ii->second->node;
         switch (insn->variantT()) {
-            case V_SgAsmx86Instruction:
-                if (x86InstructionIsPrivileged(isSgAsmx86Instruction(insn)))
+            case V_SgAsmX86Instruction:
+                if (x86InstructionIsPrivileged(isSgAsmX86Instruction(insn)))
                     ++retval;
                 break;
             default:    // to shut up compiler warnings
@@ -600,8 +604,8 @@ Partitioner::count_floating_point(const InstructionMap &insns)
     for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         SgAsmInstruction *insn = ii->second->node;
         switch (insn->variantT()) {
-            case V_SgAsmx86Instruction:
-                if (x86InstructionIsFloatingPoint(isSgAsmx86Instruction(insn)))
+            case V_SgAsmX86Instruction:
+                if (x86InstructionIsFloatingPoint(isSgAsmX86Instruction(insn)))
                     ++retval;
                 break;
             default:    // to shut up compiler warnings
@@ -659,7 +663,7 @@ Partitioner::count_size_variance(const InstructionMap &insns)
         double sum=0.0;
         int npoints=0;
         for (InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
-            SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(ii->second);
+            SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(ii->second);
             if (insn_x86) {
                 npoints += 3;
                 for (size_t i=0; i<3; i++) {
@@ -719,10 +723,10 @@ Partitioner::count_size_variance(const InstructionMap &insns)
 Partitioner::RegionStats *
 Partitioner::region_statistics()
 {
-    MemoryMap mymap = *map;
-    mymap.prune(MemoryMap::MM_PROT_EXEC);
-    ExtentMap emap = toExtentMap(mymap.va_extents());
-    return region_statistics(emap);
+    MemoryMap onlyExecutable = *map;
+    onlyExecutable.require(MemoryMap::EXECUTABLE).keep();
+    ExtentMap executableExtent = toExtentMap(AddressIntervalSet(onlyExecutable));
+    return region_statistics(executableExtent);
 }
 
 Partitioner::RegionStats *
@@ -791,7 +795,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
             }
 
             /* The disassembler can also return an "unknown" instruction when failing, depending on how it is invoked. */
-            if (insn->node->is_unknown()) {
+            if (insn->node->isUnknown()) {
                 ++nfails;
                 pending.erase(Extent(va, insn->get_size()));
                 continue;
@@ -811,7 +815,7 @@ Partitioner::region_statistics(const ExtentMap &addresses)
              * instruction even if the more rigorous method determined that one side or the other is always taken.  But this is
              * probably what we want here anyway for determining whether something looks like code. */
             bool complete;
-            Disassembler::AddressSet succs = insn->get_successors(&complete);
+            Disassembler::AddressSet succs = insn->getSuccessors(&complete);
             if (!complete)
                 ++nincomplete;
 
@@ -946,3 +950,6 @@ Partitioner::is_code(const ExtentMap &region, double *raw_vote_ptr, std::ostream
 
     return retval;
 }
+
+} // namespace
+} // namespace

@@ -390,7 +390,7 @@ namespace rose {
  *
  *  \@code
  *   Stringifier stringifyType(stringifyBinaryAnalysisInstructionSemantics2DataFlowSemanticsDataFlowEdgeEdgeType);
- *   std::cout <<stringifyType(CLOBBER) <<"\n";
+ *   std::cout <<stringifyType(CLOBBER) <<"\\n";
  *  \@endcode */
 class Stringifier {
     std::string(*stringifier_)(int, const char*, bool);

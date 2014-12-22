@@ -2404,6 +2404,93 @@ TransformationSupport::getStatement( const SgNode* astNode )
      return const_cast<SgStatement*>(statement);
    }
 
+
+SgType*
+TransformationSupport::getAssociatedType( const SgNode* astNode )
+   {
+  // DQ (8/19/2014): Iterate back through the parents and scopes to find the SgType that the current node is embedded into.
+
+     ROSE_ASSERT(astNode != NULL);
+
+     const SgNode* parentNode = astNode;
+
+  // DQ (6/27/2007): These IR nodes are not contained in any statement
+     if (isSgProject(astNode) != NULL || isSgFile(astNode) != NULL)
+          return NULL;
+
+  // DQ (7/24/2010): Handle the case of an expression in an array type.
+     SgArrayType* arrayType = isSgArrayType(parentNode->get_parent());
+     if (parentNode->get_parent() != NULL && arrayType != NULL)
+        {
+#if 1
+          printf ("TransformationSupport::getAssociatedType(): Case of expression in SgArrayType: arrayType = %p \n",arrayType);
+#endif
+          return arrayType;
+        }
+
+     while ( (isSgStatement(parentNode) == NULL) && (parentNode->get_parent() != NULL) )
+        {
+          parentNode = parentNode->get_parent();
+        }
+
+     ROSE_ASSERT(parentNode != NULL);
+
+  // Check to see if we made it back to the root (current root is SgProject).
+  // It is also OK to stop at a node for which get_parent() returns NULL (SgType and SgSymbol nodes).
+     if ( isSgStatement(parentNode) == NULL &&
+          dynamic_cast<const SgType*>(parentNode) == NULL &&
+          dynamic_cast<const SgSymbol*>(parentNode) == NULL )
+        {
+          if (astNode == NULL)
+             {
+               printf ("Error: could not trace back to SgStatement node \n");
+             }
+            else
+             {
+            // DQ (7/30/2010): This can be allowed for the expression in a SgArrayType!
+            // printf ("Warning: could not trace back to SgStatement node from %s (parentNode = %p = %s) \n",astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+             }
+
+       // ROSE_ABORT();
+          return NULL;
+        }
+       else
+        {
+          if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
+             {
+            // Test for SgArrayType since a value if often hidden there and it is not possible to traverse 
+            // through a SgType along parent IR nodes.
+               if ( dynamic_cast<const SgArrayType*>(parentNode) != NULL )
+                  {
+                 // const SgArrayType* arrayType = isSgArrayType(parentNode);
+                 // SgArrayType* arrayType = const_cast<SgArrayType*>(parentNode);
+                    SgNode* tmp_node = const_cast<SgNode*>(parentNode);
+                    SgArrayType* arrayType = isSgArrayType(tmp_node);
+                    return arrayType;
+                  }
+
+            // DQ (11/10/2007): Note that for an AST fragment (e.g. expression) not connected to the AST, this function will return NULL.
+#if PRINT_DEVELOPER_WARNINGS
+               printf ("Warning: can't locate an associated SgStatement from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+#endif
+            // SgType* possibleOtherType = isSgType(parentNode);
+               SgNode* other_node = const_cast<SgNode*>(parentNode);
+               SgType* possibleOtherType = isSgType(other_node);
+               return possibleOtherType;
+             }
+        }
+
+  // Make sure we have a SgStatement node
+     const SgStatement* statement = isSgStatement(parentNode);
+     ROSE_ASSERT (statement != NULL);
+
+  // DQ (8/19/2014): If we did find a statement then return NULL (since no SgType was found).
+  // return statement;
+  // return const_cast<SgStatement*>(statement);
+     return NULL;
+   }
+
+
 SgFunctionDeclaration*
 TransformationSupport::getFunctionDeclaration( const SgNode* astNode)
    {

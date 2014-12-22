@@ -7,6 +7,7 @@ struct Y
    };
 
 #if 0
+  /* Not allowed in Microsoft MSVC */
 struct X
    {
    };

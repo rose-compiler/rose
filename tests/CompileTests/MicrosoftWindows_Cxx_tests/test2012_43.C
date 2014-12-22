@@ -1,7 +1,7 @@
 int x;
 
-#if 0
-/* Review this issue later (problem with MSVC support for reference to compiler defined implicit copy constructor). */
+#if 1
+/* Review this issue later (problem with MSVC support for reference to compiler defined implicit copy constructor (now fixed)). */
 class X
    {
      public:

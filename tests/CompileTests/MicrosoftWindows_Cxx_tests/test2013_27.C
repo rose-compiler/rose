@@ -10,7 +10,7 @@ void X::Get_Lhs_Array_ID()
    {
    }
 
-#if 0
+#if 1
 class Y : public X
    {
      public:
@@ -18,7 +18,7 @@ class Y : public X
    };
 #endif
 
-#if 0
+#if 1
 // It is a bug to output the "= 0" for a pure virtual function outside of the class where it is declared.
 void Y::Get_Lhs_Array_ID()
    {

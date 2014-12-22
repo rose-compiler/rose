@@ -1,6 +1,6 @@
 int x;
 
-#if 0
+#if 1
 /* Review this issue later (problem with MSVC support for un-named namespace declarations). */
 // Test of un-named namepsace...found in BoxLib.
 

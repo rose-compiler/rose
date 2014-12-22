@@ -36,7 +36,7 @@ fixupAstSymbolTablesToSupportAliasedSymbols (SgNode* node)
 
 // DQ (8/23/2011): Made this a static function so that I could call it from the Java support.
 void
-FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgAccessModifier::access_modifier_enum accessLevel )
+FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeIntoCurrentScope ( SgScopeStatement* referencedScope, SgScopeStatement* currentScope, SgNode* causalNode, SgAccessModifier::access_modifier_enum accessLevel )
    {
      ROSE_ASSERT(referencedScope != NULL);
      ROSE_ASSERT(currentScope    != NULL);
@@ -160,6 +160,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
+                      // DQ (11/10/2014): Added support for templated typedef symbols.
+                         case V_SgTemplateTypedefSymbol:
+
                          case V_SgEnumSymbol:
                          case V_SgVariableSymbol:
                          case V_SgTemplateClassSymbol:
@@ -206,6 +209,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               } // end for
                               break;
                            }
+
+
 #if 0 // uniform handling by code above now
                          case V_SgEnumSymbol:
                             {
@@ -366,9 +371,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                if ( alreadyExists == false)
                   {
                     SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+                    ROSE_ASSERT(aliasSymbol != NULL);
+
+                 // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
+                    ROSE_ASSERT(causalNode != NULL);
+                    aliasSymbol->get_causal_nodes().push_back(causalNode);
 
 #if ALIAS_SYMBOL_DEBUGGING
-                    printf ("Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
 #endif
                  // Use the current name and the alias to the symbol
                     currentScope->insert_symbol(name, aliasSymbol);
@@ -396,7 +406,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 
 #if 0
   // debugging
-     symbolTable->print("In FixupAstSymbolTables::visit(): printing out the symbol tables");
+     symbolTable->print("In injectSymbolsFromReferencedScopeIntoCurrentScope(): printing out the symbol tables");
 #endif
    }
 
@@ -418,6 +428,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
         {
        // DQ (7/23/2011): Assemble namespaces with the same name into vectors defined in the map 
        // accessed using the name of the namespace as a key.
+
+#error "DEAD CODE"
 
           SgName name = namespaceDefinition->get_namespaceDeclaration()->get_name();
 #if ALIAS_SYMBOL_DEBUGGING
@@ -471,6 +483,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                        }
                   }
 
+#error "DEAD CODE"
+
                size_t namespaceListSize = namespaceVector.size();
                if (namespaceListSize > 0)
                   {
@@ -496,6 +510,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                          ROSE_ASSERT(namespaceVector[lastNamespaceIndex]->get_nextNamespaceDefinition() == namespaceDefinition);
                        }
 
+#error "DEAD CODE"
+
                  // DQ (5/9/2013): If this is already set then make sure it was set to the correct value.
                  // namespaceDefinition->set_previousNamespaceDefinition(namespaceVector[lastNamespaceIndex]);
                     ROSE_ASSERT(namespaceDefinition->get_previousNamespaceDefinition() != NULL);
@@ -513,6 +529,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 
             // Add the namespace matching a previous name to the list.
                namespaceVector.push_back(namespaceDefinition);
+
+#error "DEAD CODE"
 
             // Setup scopes as sources and distinations of alias symbols.
                SgNamespaceDefinitionStatement* referencedScope = namespaceDefinition->get_previousNamespaceDefinition();
@@ -537,6 +555,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
                std::vector<SgNamespaceDefinitionStatement*> list(1);
                ROSE_ASSERT(list.size() == 1);
+
+#error "DEAD CODE"
 
                list[0] = namespaceDefinition;
 #if 0
@@ -569,11 +589,16 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
                namespaceMap.insert(std::pair<SgName,std::vector<SgNamespaceDefinitionStatement*> >(mangledNamespaceName,list));
 
+#error "DEAD CODE"
+
 #if ALIAS_SYMBOL_DEBUGGING
                printf ("namespaceMap.size() = %zu \n",namespaceMap.size());
 #endif
              }
         }
+
+#error "DEAD CODE"
+
 #else
   // DQ (5/23/2013): Commented out since we now have a newer and better namespace support for symbol handling.
   // printf ("NOTE:: COMMENTED OUT old support for namespace declarations in FixupAstSymbolTablesToSupportAliasedSymbols traversal \n");
@@ -667,7 +692,10 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
              {
                ROSE_ASSERT(referencedScope != NULL);
                ROSE_ASSERT(currentScope != NULL);
-               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,SgAccessModifier::e_default);
+#if 0
+               printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for usingDirectiveStatement = %p = %s \n",node,node->class_name().c_str());
+#endif
+               injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,currentScope,usingDirectiveStatement,SgAccessModifier::e_default);
              }
 
 #if 0
@@ -723,14 +751,20 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
                     SgClassDeclaration* targetClassDeclaration = isSgClassDeclaration(tmpClassDeclaration->get_definingDeclaration());
                     ROSE_ASSERT(targetClassDeclaration != NULL);
                     SgScopeStatement*   referencedScope  = targetClassDeclaration->get_definition();
-
+#if 0
+                    printf ("Calling injectSymbolsFromReferencedScopeIntoCurrentScope() for classDefinition = %p = %s \n",node,node->class_name().c_str());
+#endif
+                 // DQ (7/12/2014): Use the SgBaseClass as the causal node that has triggered the insertion of the SgAliasSymbols.
                  // We need this function to restrict it's injection of symbol to just those that are associated with public and protected declarations.
-                    injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,accessLevel);
+                    injectSymbolsFromReferencedScopeIntoCurrentScope(referencedScope,classDefinition,baseClass,accessLevel);
                   }
                  else
                   {
                  // DQ (2/25/2012): Print a warning message when this happens (so far only test2012_08.C).
-                    printf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+                    if (SgProject::get_verbose() > 0)
+                       {
+                         printf ("WARNING: In FixupAstSymbolTablesToSupportAliasedSymbols::visit(): Not really clear how to handle this case where tmpClassDeclaration->get_definingDeclaration() == NULL! \n");
+                       }
                   }
 #endif
              }

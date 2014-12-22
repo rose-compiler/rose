@@ -6,11 +6,12 @@
 
 #include <iomanip>
 
-using namespace rose;                                   // temporary until this API lives in the "rose" name space
-using namespace rose::Diagnostics;
+using namespace rose;
+using namespace Diagnostics;
+using namespace BinaryAnalysis;
 
 /** Returns a string containing everthing before the first operand in a typical x86 assembly statement. */
-std::string unparseX86Mnemonic(SgAsmx86Instruction *insn) {
+std::string unparseX86Mnemonic(SgAsmX86Instruction *insn) {
     ASSERT_not_null(insn);
     std::string result;
     if (insn->get_lockPrefix())
@@ -167,9 +168,9 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
 std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::LabelMap *labels,
                                  const RegisterDictionary *registers) {
     /* Find the instruction with which this expression is associated. */
-    SgAsmx86Instruction *insn = NULL;
+    SgAsmX86Instruction *insn = NULL;
     for (SgNode *node=expr; !insn && node; node=node->get_parent()) {
-        insn = isSgAsmx86Instruction(node);
+        insn = isSgAsmX86Instruction(node);
     }
     ASSERT_not_null(insn);
     return unparseX86Expression(expr, labels, registers, insn->get_kind()==x86_lea);

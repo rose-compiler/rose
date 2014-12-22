@@ -1,77 +1,98 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+EXTRA_DIST =
+TEST_TARGETS =
 
-############################################################################################
-# These are C++ testcodes using the Boost Library (if these are comented out it is because #
-# they are currently time consuming to run, interested user may run them directly)         #
-############################################################################################
+########################################################################################################################
+# Input specimens for the tests
 
-TESTCODES_REQUIRED_TO_PASS = \
-   test_unordered_map_include.C
+# All input specimens for the tests, regardless of whether they are expected to pass or fail.
+SPECIMENS_all =					\
+	test_unordered_map_include.C		\
+	test_boost_lambda.C			\
+	test_boost_phoenix_v1.C			\
+	test_boost_phoenix_v2.C
 
-# DQ (11/3/2011): Can't find "boost/spirit/phoenix/core.hpp"
-# test_boost_phoenix_v2.C
+EXTRA_DIST += $(SPECIMENS_all)
 
-# The file test_boost_lambda.C and test_boost_phoenix_v1.C do not fail, but take too long to be included in frequent tests
-TESTCODE_CURRENTLY_FAILING = \
-test_boost_lambda.C \
-test_boost_phoenix_v1.C \
-test_boost_phoenix_v2.C
+########################################################################################################################
+# STUFF FOR THE "testTranslator" TESTS RUN ON EACH INPUT SPECIMEN
 
-# Automake's testing mechanism (which defines the "make check" rule) requires passing tests.
-TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) 
-
-# QMTest allows both passing and failing tests.
-ALL_TESTCODES = \
-$(TESTCODES_REQUIRED_TO_PASS) \
-$(TESTCODE_CURRENTLY_FAILING)
-
-# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict --edg:export
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 --edg:restrict
-
-PASSING_TEST_Objects = ${TESTCODES:.C=.o}
-TEST_Objects = ${ALL_TESTCODES:.C=.o}
-
+# The test executable which runs some test (encoded in the executable) on each specimen.
 TRANSLATOR = ../../testTranslator
 
-$(TEST_Objects): $(TRANSLATOR) $(srcdir)/$(@:.o=.C)
-#	$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.o=.C)
-	$(TRANSLATOR) $(ROSE_FLAGS) $(ROSE_BOOST_PREINCLUDE_PATH) -c $(srcdir)/$(@:.o=.C)
+# Flags to use when running the tests.  Note that we need both the preinclude and normal include directories for
+# boost because the pre-include path might be empty in some configurations (e.g., when configuring with
+# --with-boost=NON_SYSTEM_DIRECTORY as of 2014-04-08).
+TRANSLATOR_FLAGS =				\
+	--edg:no_warnings			\
+	-w					\
+	-rose:verbose 0				\
+	--edg:restrict				\
+	$(ROSE_BOOST_PREINCLUDE_PATH)		\
+	$(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 
-# This test code currently fails due to mangled names being too long!
-test_boost_phoenix_v2.o: ../../testTranslator
-	$(VALGRIND) $(TRANSLATOR) -rose:verbose 0 -I$(srcdir)/usr/local/mstools/include -I$(srcdir)/usr/local/mstools/include/phoenix_v2 -c $(srcdir)/test_boost_phoenix_v2.C
+# Split specimens into separate lists.  The "special" are those specimens that must be run differently than all the rest (i.e.,
+# they need to be run with different command-line switches).
+TRANSLATOR_SPECIMENS_special =			\
+	test_boost_phoenix_v2.C
+TRANSLATOR_SPECIMENS_normal = 			\
+	$(filter-out $(TRANSLATOR_SPECIMENS_special), $(SPECIMENS_all))
+TRANSLATOR_SPECIMENS_failing =			\
+	test_boost_lambda.C			\
+	test_boost_phoenix_v1.C			\
+	test_boost_phoenix_v2.C
+TRANSLATOR_SPECIMENS_passing =			\
+	$(filter-out $(TRANSLATOR_SPECIMENS_failing), $(SPECIMENS_all))
 
 
-CURRENT_DIRECTORY = `pwd`
-QMTEST_Objects = ${ALL_TESTCODES:.C=.qmt}
+# Makefile targets for running tests.  The "special" things need to be separated out because they need different
+# rules.  If they appear as the target for multiple rules then we'll get warnings from make.
+TRANSLATOR_TARGETS_special = $(addprefix translator-, $(addsuffix .passed, $(TRANSLATOR_SPECIMENS_special)))
+TRANSLATOR_TARGETS_normal  = $(addprefix translator-, $(addsuffix .passed, $(TRANSLATOR_SPECIMENS_normal)))
+TRANSLATOR_TARGETS_failing = $(addprefix translator-, $(addsuffix .passed, $(TRANSLATOR_SPECIMENS_failing)))
+TRANSLATOR_TARGETS_passing = $(addprefix translator-, $(addsuffix .passed, $(TRANSLATOR_SPECIMENS_passing)))
 
-# Make rule to build the QMTest database files
-# A number of tests require the path to the A++ include directory 
-# and a number of other tests require a path to the source directory.
-# $(QMTEST_Objects): preprocessor $(srcdir)/$(@:.qmt=.C)
-$(QMTEST_Objects): ../../testTranslator
-#	@echo "Calling QMTEST_Objects rule for Cpp_tests directory: "
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -c $(srcdir)/$(@:.qmt=.C)
+# Rules for testing normal specimens regardless of whether we expect them to pass or fail.
+$(TRANSLATOR_TARGETS_normal): translator-%.passed: % $(TRANSLATOR)
+	@$(RTH_RUN)									\
+		TITLE="testTranslator $* [$@]"						\
+		USE_SUBDIR=yes								\
+		CMD="$(abspath $(TRANSLATOR)) $(TRANSLATOR_FLAGS) -c $(srcdir)/$*"	\
+		$(top_srcdir)/scripts/test_exit_status $@
 
-test_boost_phoenix_v2.qmt: ../../testTranslator
-	$(VALGRIND) ../preprocessor -rose:verbose 0 -I$(srcdir)/usr/local/mstools/include -I$(srcdir)/usr/local/mstools/include/phoenix_v2 -c $(srcdir)/test_boost_phoenix_v2.C
-	qm.sh f rose.RoseTest $(CURRENT_DIRECTORY)/../../testTranslator NULL $(ROSE_FLAGS) -I$(srcdir)/usr/local/mstools/include -I$(srcdir)/usr/local/mstools/include/phoenix_v2 -c $(srcdir)/$(@:.qmt=.C)
+# Rules for the special specimens regardless of whether we expect them to pass or fail.
+test_boost_phoenix_v2_flags =					\
+	-rose:verbose 0						\
+	-I$(srcdir)/usr/local/mstools/include			\
+	-I$(srcdir)/usr/local/mstools/include/phoenix_v2	\
+	$(ROSE_BOOST_PREINCLUDE_PATH)				\
+	$(ROSE_BOOST_NORMAL_INCLUDE_PATH)
+translator-test_boost_phoenix_v2.C.passed: test_boost_phoenix_v2.C $(TRANSLATOR)
+	@$(RTH_RUN)										\
+		TITLE="testTranslator $< [$@]"							\
+		USE_SUBDIR=yes									\
+		CMD="$(abspath $(TRANSLATOR)) $(test_boost_phoenix_v2_flags) -c $(abspath $<)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+# These are the targets that are run by "make check", those that we expect to pass.
+TEST_TARGETS += $(TRANSLATOR_TARGETS_passing)
+
+# These are targets that we might want to run manually.
+.PHONY: check-translator-passing check-translator-failing check-translator
+check-translator-passing: $(TRANSLATOR_TARGETS_passing)
+check-translator-failing: $(TRANSLATOR_TARGETS_failing)
+check-translator: check-translator-passing check-translator-failing
+
+########################################################################################################################
+# The original makefile also had $(QMTEST_Objects) which were test targets, but the rules did not work and they were
+# not run by "make check".  See the Git commit if you're interested. [Robb P Matzke 2014-04-08]
 
 
-# Include makefile rules specific to QMTest
-include $(top_srcdir)/config/QMTest_makefile.inc
+########################################################################################################################
+# Automake boilerplate
 
-EXTRA_DIST = $(ALL_TESTCODES)
-
-check-local:
-	@echo "Tests of Boost Library examples."
-	@$(MAKE) $(PASSING_TEST_Objects)
-	@echo "*************************************************************************************************"
-	@echo "****** ROSE/tests/CompileTests/boost_tests: make check rule complete (terminated normally) ******"
-	@echo "*************************************************************************************************"
+check-local: $(TEST_TARGETS)
 
 clean-local:
-	rm -f *.o rose_*.[cC]
-	rm -rf QMTest
-
+	rm -f $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
+	rm -f $(TRANSLATOR_TARGETS_failing) $(TRANSLATOR_TARGETS_failing:.passed=.failed)

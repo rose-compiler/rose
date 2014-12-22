@@ -2,6 +2,7 @@
 #include "TraceSemantics2.h"
 #include "AsmUnparser_compat.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace TraceSemantics {
@@ -228,7 +229,7 @@ RiscOperators::get_solver() const
 }
 
 BaseSemantics::StatePtr
-RiscOperators::get_state()
+RiscOperators::get_state() const
 {
     check_subdomain();
     return subdomain->get_state();
@@ -921,6 +922,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &a, const BaseSemantics::SVa
     }
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

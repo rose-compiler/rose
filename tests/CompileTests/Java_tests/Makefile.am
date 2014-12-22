@@ -543,9 +543,13 @@ testJavaCommandlineOptions: $(testTranslator)
 #-----------------------------
 # Destdir
 #-----------------------------
+	mkdir -p "$(builddir)/tmp/destdir"
 	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:d "$(builddir)/tmp/destdir"
 	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -d "$(builddir)/tmp/destdir"
+#-----------------------------
 # Source Destdir
+#-----------------------------
+	mkdir -p "$(builddir)/tmp/source_destdir"
 	$(testTranslator) "$(top_srcdir)/tests/input_codes/minimal/minimal.java" -rose:java:ds "$(builddir)/tmp/source_destdir"
 #-----------------------------
 # Source

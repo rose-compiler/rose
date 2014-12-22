@@ -187,10 +187,15 @@ private:
             }
         }
 
-        void showInfo(std::ostream &out) const {
+        size_t showInfo(std::ostream &out) const {
             const size_t nCells = chunkSize / cellSize_;
-            BOOST_FOREACH (const ChunkInfo &info, chunkInfo().values())
+            size_t totalUsed=0;
+            ChunkInfoMap cim = chunkInfo();
+            BOOST_FOREACH (const ChunkInfo &info, cim.values()) {
                 out <<"  chunk " <<info.chunk <<"\t" <<info.nUsed <<"/" <<nCells <<"\t= " <<100.0*info.nUsed/nCells <<"%\n";
+                totalUsed += info.nUsed;
+            }
+            return totalUsed;
         }
     };
 
@@ -312,7 +317,8 @@ public:
         for (size_t pn=0; pn<nPools; ++pn) {
             if (!pools_[pn].isEmpty()) {
                 out <<"  pool #" <<pn <<"; cellSize = " <<cellSize(pn) <<" bytes:\n";
-                pools_[pn].showInfo(out);
+                size_t nUsed = pools_[pn].showInfo(out);
+                out <<"    total objects in use: " <<nUsed <<"\n";
             }
         }
     }

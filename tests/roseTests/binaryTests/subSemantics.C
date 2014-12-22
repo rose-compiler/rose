@@ -3,7 +3,8 @@
 #include "rose.h"
 #include "SymbolicSemantics.h"
 
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Demonstrate that we can subclass a the semantic value type.  Our new value type is the same as the value type used by ROSE's
@@ -129,8 +130,8 @@ struct Test: AstSimpleProcessing {
     Policy<State, ValueType> policy;
     Semantics semantics;
     Test(): semantics(policy) {}
-    virtual void visit(SgNode *node) /*override*/ {
-        if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+    virtual void visit(SgNode *node) ROSE_OVERRIDE {
+        if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
             policy.writeRegister("eip", ValueType<32>(insn->get_address()));
             semantics.processInstruction(insn);
         }
@@ -150,8 +151,8 @@ int main(int argc, char *argv[])
         Policy policy;
         Semantics semantics;
         Test0(): semantics(policy) {}
-        virtual void visit(SgNode *node) /*override*/ {
-            if (SgAsmx86Instruction *insn = isSgAsmx86Instruction(node)) {
+        virtual void visit(SgNode *node) ROSE_OVERRIDE {
+            if (SgAsmX86Instruction *insn = isSgAsmX86Instruction(node)) {
                 policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(insn->get_address()));
                 semantics.processInstruction(insn);
             }

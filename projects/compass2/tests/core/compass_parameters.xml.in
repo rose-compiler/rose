@@ -6,11 +6,11 @@
 
   <!-- General Compass Parameters for all checkers //-->
   <general>
-    <parameter name="RuleSelection">
-      /home/too1/local/workspace/rose/compass2/build/projects/compass2/src/compassSupport/RULE_SELECTION.in
+    <parameter name="foo">
+      bar
     </parameter>
     <parameter name="target_directory">
-      @absolute_path_srcdir@
+      @res_top_src@
     </parameter>
   </general>
 

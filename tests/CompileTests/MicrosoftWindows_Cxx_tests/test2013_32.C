@@ -24,6 +24,7 @@ namespace std {
 //    typedef typename _Alloc::template rebind<_CharT>::other _CharT_alloc_type;
 
 #if 0
+ // MSVC does not allow this "name followed by "::" must be a class or namespace name"
     public:
       typedef _Traits traits_type;
       typedef typename _Traits::char_type value_type;
@@ -35,7 +36,6 @@ namespace std {
       typedef typename _CharT_alloc_type::pointer pointer;
       typedef typename _CharT_alloc_type::const_pointer const_pointer;
 #endif
-    
     };
 }
 

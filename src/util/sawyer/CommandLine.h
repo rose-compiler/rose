@@ -376,6 +376,21 @@ public:
     }
 };
 
+// partial specialization for optional storage
+template<typename T>
+class TypedSaver<Optional<T> >: public ValueSaver {
+    Optional<T> &storage_;
+protected:
+    TypedSaver(Optional<T> &storage): storage_(storage) {}
+public:
+    typedef SharedPointer<TypedSaver> Ptr;
+    static Ptr instance(Optional<T> &storage) { return Ptr(new TypedSaver(storage)); }
+    virtual void save(const boost::any &value) const /*override*/ {
+        T typed = boost::any_cast<T>(value);
+        storage_ = typed;
+    }
+};
+
 // partial specialization for vector storage
 template<typename T>
 class TypedSaver<std::vector<T> >: public ValueSaver {
@@ -596,7 +611,7 @@ typedef std::vector<ParsedValue> ParsedValues;
  *
  * @sa
  *  @ref parser_factories */
-class SAWYER_EXPORT ValueParser: public SharedFromThis<ValueParser> {
+class SAWYER_EXPORT ValueParser: public SharedObject, public SharedFromThis<ValueParser> {
 #include <sawyer/WarningsOff.h>
     ValueSaver::Ptr valueSaver_;
 #include <sawyer/WarningsRestore.h>
@@ -660,6 +675,14 @@ struct LexicalCast {
         }
     }
 };
+
+template<typename T>
+struct LexicalCast<Optional<T> > {
+    static T convert(const std::string &src) {
+        return LexicalCast<T>::convert(src);
+    }
+};
+
 template<typename T>
 struct LexicalCast<std::vector<T> > {
     static T convert(const std::string &src) {
@@ -740,6 +763,14 @@ struct NumericCast {
     }
 };
 
+// partial specialization for Sawyer::Optional<Target>
+template<typename Target, typename Source>
+struct NumericCast<Optional<Target>, Source> {
+    static Target convert(Source from, const std::string &parsed) {
+        return NumericCast<Target, Source>::convert(from, parsed);
+    }
+};
+
 // partial specialization for std::vector<Target>
 template<typename Target, typename Source>
 struct NumericCast<std::vector<Target>, Source> {
@@ -769,13 +800,19 @@ public:
     /** Reference counting pointer for this class. */
     typedef SharedPointer<IntegerParser> Ptr;
 
-    /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
-     *  integerParser factory instead, which requires less typing.
+    /** Allocating constructor.
+     *
+     *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
+     *  instead, which requires less typing.
+     *
      * @sa parser_factories */
     static Ptr instance() { return Ptr(new IntegerParser); }
 
-    /** Allocating constructor. Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref
-     *  integerParser factory instead, which takes the same arguments, but requires less typing.
+    /** Allocating constructor.
+     *
+     *  Returns a pointer to a new IntegerParser object.  Uses will most likely want to use the @ref integerParser factory
+     *  instead, which takes the same arguments, but requires less typing.
+     *
      * @sa parser_factories */
     static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new IntegerParser(valueSaver)); }
 private:
@@ -1039,7 +1076,7 @@ private:
 /** Parses a list of values.
  *
  *  Parses a list of values separated by specified regular expressions.  Each member of the list may have its own parser and
- *  following separator. The final parser and separated are reused as often as necessary. The return value is a ParsedValue
+ *  following separator. The final parser and separator are reused as often as necessary. The return value is a ParsedValue
  *  whose value is an STL @c list with members that are the ParsedValue objects return by the list element parsers.
  *
  * @sa parser_factories */
@@ -2310,6 +2347,9 @@ public:
 
     /** Insert a switch into the group.  The switch declaration is copied into the group. */
     SwitchGroup& insert(const Switch&);
+
+    /** Insert switches from another group into this one.  Other properties are not copied. */
+    SwitchGroup& insert(const SwitchGroup&);
 
     /** Remove a switch from the group. The <em>n</em>th switch is removed, as returned by @ref switches. */
     SwitchGroup& removeByIndex(size_t n);

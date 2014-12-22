@@ -1,6 +1,7 @@
 #ifndef Sawyer_Map_H
 #define Sawyer_Map_H
 
+#include <sawyer/Interval.h>
 #include <sawyer/Optional.h>
 #include <sawyer/Sawyer.h>
 #include <boost/range/iterator_range.hpp>
@@ -69,7 +70,8 @@ public:
     class Node: private std::pair<const Key, Value> {
         // This class MUST BE binary compatible with its super class (see NodeIterator::operator* below)
     public:
-        Node(const std::pair<const Key, Value> &pair): std::pair<const Key, Value>(pair) {}
+        explicit Node(const std::pair<const Key, Value> &pair): std::pair<const Key, Value>(pair) {}
+        Node(const Key &key, Value &value): std::pair<const Key, Value>(key, value) {}
     public:
         /** Key part of key/value node.
          *
@@ -301,6 +303,31 @@ public:
      *  Returns the number of nodes (elements) in this container.  This method executes in constant time. */
     size_t size() const {
         return map_.size();
+    }
+
+    /** Returns the minimum key.  The map must not be empty. */
+    Key least() const {
+        ASSERT_forbid(isEmpty());
+        return map_.begin()->first;
+    }
+
+    /** Returns the maximum key.  The map must not be empty. */
+    Key greatest() const {
+        ASSERT_forbid(isEmpty());
+        typename StlMap::const_iterator last = map_.end();
+        --last;
+        return last->first;
+    }
+
+    /** Returns the range of keys in this map.
+     *
+     *  The return value is an interval containing the least and greatest keys, inclusive.  If the map is empty then an empty
+     *  interval is returned.
+     *
+     *  This method is only defined when the map key type is appropriate for the Interval class template (such as when the keys
+     *  are an integer type). */
+    Interval<Key> hull() const {
+        return isEmpty() ? Interval<Key>() : Interval<Key>(least(), greatest());
     }
 
     

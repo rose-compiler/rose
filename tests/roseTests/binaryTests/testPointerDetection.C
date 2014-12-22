@@ -4,6 +4,8 @@
 #include "AsmFunctionIndex.h"
 #include "YicesSolver.h"
 
+using namespace rose::BinaryAnalysis;
+
 // An object that organizes instructions so they can be looked up in O(log N) time.
 class InstructionProvidor {
 protected:
@@ -79,7 +81,7 @@ main(int argc, char *argv[])
     SMTSolver *solver = use_solver && YicesSolver::available_linkage() ? new YicesSolver : NULL;
     std::cout <<(solver?"Using":"Not using") <<" Yices SMT solver\n";
     InstructionProvidor insns(func);
-    typedef BinaryAnalysis::PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
+    typedef PointerAnalysis::PointerDetection<InstructionProvidor> PointerDetector;
     PointerDetector ptr_detector(&insns, solver);
     if (do_debug)
         ptr_detector.set_debug(stderr);
@@ -88,9 +90,9 @@ main(int argc, char *argv[])
     // Show the results
     const PointerDetector::Pointers &pointers = ptr_detector.get_pointers();
     for (PointerDetector::Pointers::const_iterator pi=pointers.begin(); pi!=pointers.end(); ++pi) {
-        if (pi->type & BinaryAnalysis::PointerAnalysis::DATA_PTR)
+        if (pi->type & PointerAnalysis::DATA_PTR)
             std::cout <<"data ";
-        if (pi->type & BinaryAnalysis::PointerAnalysis::CODE_PTR)
+        if (pi->type & PointerAnalysis::CODE_PTR)
             std::cout <<"code ";
         std::cout <<"pointer at " <<pi->address <<"\n";
     }

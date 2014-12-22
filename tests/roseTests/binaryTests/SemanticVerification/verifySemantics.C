@@ -4,6 +4,8 @@
 #include "Debugger.h"
 #include "x86InstructionSemantics.h"
 
+using namespace rose::BinaryAnalysis;
+
 static const char *trace_prefix = "    ";
 
 /* Registers names, etc. for x86 32-bit */
@@ -127,7 +129,7 @@ public:
      * instruction on the debugged process.
      *
      * On error, this function prints a message and then throws an exception in order to avoid the analysis. */
-    void startInstruction(SgAsmx86Instruction *insn) {
+    void startInstruction(SgAsmX86Instruction *insn) {
         registers_current = false; /* will cause next register read to come from the debugger rather than a cached value. */
         memory.clear();
 
@@ -146,7 +148,7 @@ public:
     }
 
     /* Called after each instruction is processed. */
-    void finishInstruction(SgAsmx86Instruction*) {}
+    void finishInstruction(SgAsmX86Instruction*) {}
 
     /* Called for the HLT instruction */
     void hlt() {} /*FIXME*/
@@ -957,7 +959,7 @@ int main(int argc, char *argv[]) {
     Verifier verifier(&dbg);
 
 #ifndef USE_ROSE
-    BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
+    rose::BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue> semantics(verifier);
 #endif
 
     dbg.cont(); /* Advance to the first breakpoint. */
@@ -987,7 +989,7 @@ int main(int argc, char *argv[]) {
             dbg.cont();
             continue;
         }
-        SgAsmx86Instruction *insn_x86 = isSgAsmx86Instruction(insn);
+        SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         assert(insn_x86);
 #if 1
         /* Trace instructions */
@@ -1010,7 +1012,7 @@ int main(int argc, char *argv[]) {
             dump_registers(stderr, dbg.registers());
             dbg.cont();
             continue;
-        } catch (const BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
+        } catch (const rose::BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<Verifier, VerifierValue>::Exception &e) {
             fprintf(stderr, "%s: %s\n", e.mesg.c_str(), unparseInstructionWithAddress(e.insn).c_str());
         }
 #endif

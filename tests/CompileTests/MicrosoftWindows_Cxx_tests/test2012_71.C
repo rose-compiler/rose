@@ -30,7 +30,7 @@ namespace A
 
 // X<long> x;
 
-#if 0
+#if 1
 void foo()
    {
      A::foobar(1);

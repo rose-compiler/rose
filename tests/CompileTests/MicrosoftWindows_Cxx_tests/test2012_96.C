@@ -17,7 +17,7 @@ class GraphNode
 class GroupGraphNode
    {
      public:
-#if 0
+#if 1
           PtrSetWrap<GraphNode>::Iterator iter;
 #endif
 #if 1

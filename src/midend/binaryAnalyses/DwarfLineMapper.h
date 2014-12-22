@@ -1,7 +1,8 @@
 #ifndef ROSE_DwarfLineMapper_H
 #define ROSE_DwarfLineMapper_H
 
-namespace BinaryAnalysis { // documented elsewhere
+namespace rose {
+namespace BinaryAnalysis {
 
 
 /** Build mappings between source locations and virtual addresses.
@@ -113,7 +114,7 @@ protected:
     AddressSourceMap p_addr2src;                        // Forward mapping
     mutable SourceAddressMap p_src2addr;                // Reverse mapping
     mutable bool up_to_date;                            // Is reverse mapping up-to-date?
-    virtual void visit(SgNode *node) /*override*/;
+    virtual void visit(SgNode *node) ROSE_OVERRIDE;
     void update() const;                                // update p_src2addr if necessary
     void init();                                        // called by constructors
 };
@@ -122,4 +123,6 @@ std::ostream& operator<<(std::ostream&, const DwarfLineMapper::SrcInfo&);
 std::ostream& operator<<(std::ostream&, const DwarfLineMapper&);
 
 } // namespace
+} // namespace
+
 #endif

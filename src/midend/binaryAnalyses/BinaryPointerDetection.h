@@ -4,8 +4,9 @@
 #include "SymbolicSemantics.h"
 #include "WorkLists.h"
 #include "YicesSolver.h"
+#include <sstream>
 
-// documented elsewhere
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Binary pointer analyses. Various analyses for pointer variables in binary specimens. */
@@ -24,10 +25,10 @@ enum PointerType {UNKNOWN_PTR=0x000,            /**< Pointer variable is of unkn
 template <
     template <size_t> class ValueType
     >
-class PointerDetectionState: public BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State<ValueType> {
+class PointerDetectionState: public InstructionSemantics::SymbolicSemantics::State<ValueType> {
 public:
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::State<ValueType> Super;
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::MemoryCell<ValueType> MemoryCell;
+    typedef InstructionSemantics::SymbolicSemantics::State<ValueType> Super;
+    typedef InstructionSemantics::SymbolicSemantics::MemoryCell<ValueType> MemoryCell;
 
     PointerDetectionState() {}
 
@@ -138,8 +139,8 @@ public:
  *  method that takes a single rose_addr_t virtual address and returns  the instruction at that address.  The analysis is run
  *  by calling its analyze() method, after which results can be queried.
  *
- *  The pointer detection normally uses the BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType, but the user
- *  can specify any other compatible value type as a second template argument.
+ *  The pointer detection normally uses the rose::BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType, but the
+ *  user can specify any other compatible value type as a second template argument.
  *
  *  @section Ex1 Example
  *
@@ -150,7 +151,7 @@ public:
  *  // RSIM_Process can be any class that provides a get_instruction() method. In this case
  *  // it is a class that comes from the binary simulator.   The thread->get_process() expression
  *  // returns an instance of the RSIM_Process class. 
- *  typedef BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
+ *  typedef rose::BinaryAnalysis::PointerAnalysis::PointerDetection<RSIM_Process> PointerDetector;
  *  SMTSolver *smt_solver =  YicesSolver::available_linkage() ? new YicesSolver : NULL;
  *  PointerDetector analyzer(thread->get_process(), smt_solver);
  *
@@ -169,7 +170,7 @@ public:
  */
 template <
     class InstructionProvidor,
-    template <size_t> class ValueType = BinaryAnalysis::InstructionSemantics::SymbolicSemantics::ValueType
+    template <size_t> class ValueType = InstructionSemantics::SymbolicSemantics::ValueType
     >
 class PointerDetection {
 public:
@@ -230,7 +231,7 @@ protected:
 
 protected:
     // Parent class of our own instruction semantics policy
-    typedef BinaryAnalysis::InstructionSemantics::SymbolicSemantics::Policy<PointerDetectionState, ValueType> SuperPolicy;
+    typedef InstructionSemantics::SymbolicSemantics::Policy<PointerDetectionState, ValueType> SuperPolicy;
 
     // Instruction semantics policy used internally by PointerDetection analysis. */
     class PointerDetectionPolicy: public SuperPolicy {
@@ -241,7 +242,7 @@ protected:
 
         // This is the set of all instructions that define addresses that are used to dereference memory through the DS register.
         // New instructions are added to this set as we discover them.
-        BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet *addr_definers;
+        InstructionSemantics::SymbolicSemantics::InsnSet *addr_definers;
 
         explicit PointerDetectionPolicy(PointerDetectionInfo *info, SMTSolver *solver=NULL, FILE *debug=NULL)
             : info(info), debug(debug) {
@@ -262,7 +263,7 @@ protected:
         // interested. This is called by the first pass of analysis, which is trying to discover when pointer variable's value
         // is used.
         bool interesting_access(X86SegmentRegister segreg, const ValueType<32> &addr, const ValueType<1> &cond) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(this->cur_insn);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(this->cur_insn);
             if (x86_ret==insn->get_kind()) {
                 // memory read for the RET instruction is not interesting.  It is only reading the return address that was pushed
                 // onto the stack by the caller.  What's even worse is that the address of the return value was defined by the
@@ -277,8 +278,8 @@ protected:
         // Remember the defining instructions.  The @p defs are the set of instructions that were used to define an expression
         // that is being dereferenced.  These instructions are added to this policy's list of instructions that define a
         // pointer value.
-        void mark_addr_definers(const BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet &defs, PointerType type) {
-            for (BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet::const_iterator di=defs.begin();
+        void mark_addr_definers(const InstructionSemantics::SymbolicSemantics::InsnSet &defs, PointerType type) {
+            for (InstructionSemantics::SymbolicSemantics::InsnSet::const_iterator di=defs.begin();
                  di!=defs.end(); ++di) {
                 if (debug)
                     fprintf(debug, " 0x%08"PRIx64, (*di)->get_address());
@@ -304,7 +305,7 @@ protected:
         //
         //   mov eax, DWORD PTR ds:[0x080c0338]
         void dereference(const ValueType<32> &addr, PointerType type, const std::string &desc) {
-            BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet defs = addr.get_defining_instructions();
+            InstructionSemantics::SymbolicSemantics::InsnSet defs = addr.get_defining_instructions();
             defs.erase(this->cur_insn); // see note above
             if (!defs.empty()) {
                 if (debug)
@@ -367,7 +368,7 @@ protected:
                     // We must have processed a branch instruction.  Both directions of the branch are concrete addresses, so
                     // there is no code pointer involved here.
                 } else {
-                    BinaryAnalysis::InstructionSemantics::SymbolicSemantics::InsnSet defs = value.get_defining_instructions();
+                    InstructionSemantics::SymbolicSemantics::InsnSet defs = value.get_defining_instructions();
                     if (!defs.empty()) {
                         if (debug)
                             fprintf(debug, "PointerDetection:   EIP write depends on insn%s at", 1==defs.size()?"":"s");
@@ -389,7 +390,7 @@ protected:
 
 public:
     /** Binary instruction semantics used by this analysis. */
-    typedef BinaryAnalysis::InstructionSemantics::X86InstructionSemantics<PointerDetectionPolicy, ValueType> Semantics;
+    typedef InstructionSemantics::X86InstructionSemantics<PointerDetectionPolicy, ValueType> Semantics;
 
     /** Machine state used by this analysis. */
     typedef std::map<rose_addr_t, PointerDetectionPolicy> StateMap;
@@ -436,19 +437,26 @@ public:
 
     /** Analyze pointers in a single function.  The analysis will not traverse into other functions called by this function. */ 
     void analyze(SgAsmFunction *func) {
-        ExtentMap func_extent;
+        AddressIntervalSet func_extent;
         func->get_extent(&func_extent);
         analyze(func->get_entry_va(), func_extent);
     }
 
     /** Analyze a code snippet to find pointer variables.  The analysis begins at the @p start_va virtual address but does not
      * follow control flow outside @p addrspc.  If @p addrspc is empty then no control flow pruning is performed. */ 
-    void analyze(rose_addr_t start_va, ExtentMap &addrspc) {
+    void analyze(rose_addr_t start_va, const AddressIntervalSet &addrspc) {
         if (debug) {
-            fprintf(debug, "BinaryAnalysis::PointerAnalysis::PointerDetection (a.k.a., PointerDetection): starting\n");
+            fprintf(debug, "rose::BinaryAnalysis::PointerAnalysis::PointerDetection (a.k.a., PointerDetection): starting\n");
             fprintf(debug, "PointerDetection: starting at 0x%08"PRIx64"\n", start_va);
-            if (!addrspc.empty()) {
-                std::ostringstream ss; ss <<addrspc;
+            if (!addrspc.isEmpty()) {
+                std::ostringstream ss;
+                ss <<"{";
+                BOOST_FOREACH (const AddressInterval &interval, addrspc.intervals()) {
+                    using namespace StringUtility;
+                    ss <<" [" <<toHex(interval.least()) <<" + " <<toHex(interval.size())
+                       <<" = " <<toHex(interval.greatest()+1) <<"]";
+                }
+                ss <<" }";
                 fprintf(debug, "PointerDetection: restricted to these addresses: %s\n", ss.str().c_str());
             }
         }
@@ -482,8 +490,9 @@ public:
                 if (debug)
                     fprintf(debug, "PointerDetection: %s\n", std::string(80, '-').c_str());
                 rose_addr_t va = worklist.pop();
-                SgAsmx86Instruction *insn = isSgAsmx86Instruction(instruction_providor->get_instruction(va));
-                if (!insn || (!addrspc.empty() && !addrspc.contains(Extent(insn->get_address(), insn->get_size())))) {
+                SgAsmX86Instruction *insn = isSgAsmX86Instruction(instruction_providor->get_instruction(va));
+                if (!insn || (!addrspc.isEmpty() && !addrspc.contains(AddressInterval::baseSize(insn->get_address(),
+                                                                                                insn->get_size())))) {
                     if (debug)
                         fprintf(debug, "PointerDetection: processing pass %zu 0x%08"PRIx64": %s\n", info.pass, va,
                                 (insn?"instruction excluded by ExtentMap":"no x86 instruction here"));
@@ -554,6 +563,7 @@ public:
     }
 };
 
+} // namespace
 } // namespace
 } // namespace
 

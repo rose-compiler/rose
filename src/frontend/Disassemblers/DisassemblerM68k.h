@@ -6,6 +6,9 @@
 #include "InstructionEnumsM68k.h"
 #include "BitPattern.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for Motorola M68k-based instruction set architectures. */
 class DisassemblerM68k: public Disassembler {
 public:
@@ -21,10 +24,10 @@ public:
         : family(family), map(NULL), insn_va(0), niwords(0), niwords_used(0) {
         init();
     }
-    virtual DisassemblerM68k *clone() const /*override*/ { return new DisassemblerM68k(*this); }
-    virtual bool can_disassemble(SgAsmGenericHeader*) const /*override*/;
-    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) /*override*/;
-    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) /*override*/;
+    virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
+    virtual bool can_disassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual SgAsmInstruction *disassembleOne(const MemoryMap*, rose_addr_t start_va, AddressSet *successors=NULL) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *make_unknown_instruction(const Disassembler::Exception&) ROSE_OVERRIDE;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 
@@ -119,6 +122,9 @@ public:
     /** Create a MAC register reference expression. */
     SgAsmRegisterReferenceExpression *makeMacRegister(M68kMacRegister);
 
+    /** Create a MAC accumulator register. These are ACC0 through ACC3, 32-bit integers. */
+    SgAsmRegisterReferenceExpression *makeMacAccumulatorRegister(unsigned accumIndex);
+
     /** Create a floating point register.  Floating point registers are different sizes on different platforms. For example,
      * the M68040 has 80-bit registers that can store 96-bit extended-precision real values (16-bits of which are zero), but
      * the follow on FreeScale ColdFire processors have only 64-bit registers that hold double-precision real values. */
@@ -172,8 +178,18 @@ private:
     uint16_t    iwords[11];                     /**< Instruction words. */
     size_t      niwords;                        /**< Number of instruction words read. */
     size_t      niwords_used;                   /**< High water number of instruction words used by instructionWord(). */
-    typedef std::list<M68k*> IdisTable;
-    IdisTable idis_table;                       /**< Instruction specific disassemblers. */
+
+    // The instruction disassembly table is an array indexed by the high-order nybble of the first 16-bit word of the
+    // instruction's pattern, the so-called "operator" bits. Since most instruction disassembler have invariant operator
+    // bits, we can divide the table into 16 entries for these invariant bits, and another entry (index 16) for the cases
+    // with a variable operator byte.  Each of these 17 buckets is an unordered list of instruction disassemblers whose
+    // patterns we attempt to match one at a time (the insertion function checks that there are no ambiguities).
+    typedef std::list<M68k*> IdisList;
+    typedef std::vector<IdisList> IdisTable;
+    IdisTable idis_table;
 };
+
+} // namespace
+} // namespace
 
 #endif

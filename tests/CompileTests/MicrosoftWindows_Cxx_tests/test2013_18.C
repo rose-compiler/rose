@@ -13,7 +13,7 @@ class BaseFab
 
    };
 
-#if 0
+#if 1
 template <class T>
 void
 BaseFab<T>::maskLT (BaseFab<int> & mask)

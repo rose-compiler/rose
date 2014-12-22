@@ -992,13 +992,15 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
        */
           enum special_function_modifier_enum
              {
-               e_unknown     = 0,         /*!< error value */
-               e_default     = 1,         /*!< Not a special function (default) */
-               e_none        = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
-               e_constructor = 2,         /*!< A constructor */
-               e_destructor  = 3,         /*!< A destructor */
-               e_conversion  = 4,         /*!< A conversion operator function */
-               e_operator    = 5,         /*!< Any other operator function */
+               e_unknown            = 0,         /*!< error value */
+               e_default            = 1,         /*!< Not a special function (default) */
+               e_none               = e_default, /*!< Not a special function (default) */	/*NO_STRINGIFY*/
+               e_constructor        = 2,         /*!< A constructor */
+               e_destructor         = 3,         /*!< A destructor */
+               e_conversion         = 4,         /*!< A conversion operator function */
+               e_operator           = 5,         /*!< Any other operator function */
+               e_uld_operator       = 6,         /*!< ULD operator function (operators on literals) */
+               e_lambda_entry_point = 7,   /*!< C++11 lambda support */
                e_last_modifier            /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -1038,6 +1040,14 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
           void setOperator();
           void unsetOperator();
 
+          bool isUldOperator() const;
+          void setUldOperator();
+          void unsetUldOperator();
+
+          bool isLambdaEntryPoint() const;
+          void setLambdaEntryPoint();
+          void unsetLambdaEntryPoint();
+
           std::string displayString() const;
           void display ( std::string label ) const;
           friend std::ostream & operator<< ( std::ostream & os, const SgSpecialFunctionModifier & m );
@@ -1068,10 +1078,33 @@ HEADER_DECLARATION_MODIFIER_START
                e_export        = 4,  /*!< Export qualifier */
                e_throw         = 5,  /*!< Exception handling support (throw) */
                e_bind          = 6,  /*!< Fortran bind attribute for declarations (functions, variable, and classes) */
-               e_final         = 7,  /*!< PHP support for specification to not be extended (should be useful for Java, if required in the future) */
+               e_final         = 7,  /*!< PHP, Java, and C++11 support for specification to not be extended */
+               e_override      = 8,  /*!< C++11 support for specification to not be extended */
 
             // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
-               e_java_abstract = 8,  /*!< abstract keyword for Java functions, classes and interfaces */
+               e_java_abstract = 9,  /*!< abstract keyword for Java functions, classes and interfaces */
+
+               e_ms_declspec_align        = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_allocate     = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_appdomain    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_code_seg     = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_deprecated   = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllimport    = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_dllexport    = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_jitintrinsic = 17, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_naked        = 18, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noalias      = 19, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noinline     = 20, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_noreturn     = 21, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_nothrow      = 22, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_novtable     = 23, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_process      = 24, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_property     = 25, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_restrict     = 26, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_safebuffers  = 27, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_selectany    = 28, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_thread       = 29, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_uuid         = 30, /*!< Microsoft declspec() attributes */
 
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
@@ -1139,15 +1172,125 @@ HEADER_DECLARATION_MODIFIER_START
           void setBind();
           void unsetBind();
 
-       // PHP and Java specific attribute
+       // PHP, Java, and C++11 specific attribute
           bool isFinal() const;
           void setFinal();
           void unsetFinal();
+
+       // C++11 specific attribute
+          bool isOverride() const;
+          void setOverride();
+          void unsetOverride();
 
        // DQ (8/11/2011): Added Java specific "abstract" attribute.
           bool isJavaAbstract() const;
           void setJavaAbstract();
           void unsetJavaAbstract();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_align() const;
+          void set_ms_declspec_align();
+          void unset_ms_declspec_align();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_allocate() const;
+          void set_ms_declspec_allocate();
+          void unset_ms_declspec_allocate();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_appdomain() const;
+          void set_ms_declspec_appdomain();
+          void unset_ms_declspec_appdomain();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_code_seg() const;
+          void set_ms_declspec_code_seg();
+          void unset_ms_declspec_code_seg();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_deprecated() const;
+          void set_ms_declspec_deprecated();
+          void unset_ms_declspec_deprecated();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_dllimport() const;
+          void set_ms_declspec_dllimport();
+          void unset_ms_declspec_dllimport();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_dllexport() const;
+          void set_ms_declspec_dllexport();
+          void unset_ms_declspec_dllexport();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_jitintrinsic() const;
+          void set_ms_declspec_jitintrinsic();
+          void unset_ms_declspec_jitintrinsic();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_naked() const;
+          void set_ms_declspec_naked();
+          void unset_ms_declspec_naked();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noalias() const;
+          void set_ms_declspec_noalias();
+          void unset_ms_declspec_noalias();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noinline() const;
+          void set_ms_declspec_noinline();
+          void unset_ms_declspec_noinline();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_noreturn() const;
+          void set_ms_declspec_noreturn();
+          void unset_ms_declspec_noreturn();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_nothrow() const;
+          void set_ms_declspec_nothrow();
+          void unset_ms_declspec_nothrow();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_novtable() const;
+          void set_ms_declspec_novtable();
+          void unset_ms_declspec_novtable();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_process() const;
+          void set_ms_declspec_process();
+          void unset_ms_declspec_process();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_property() const;
+          void set_ms_declspec_property();
+          void unset_ms_declspec_property();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_restrict() const;
+          void set_ms_declspec_restrict();
+          void unset_ms_declspec_restrict();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_safebuffers() const;
+          void set_ms_declspec_safebuffers();
+          void unset_ms_declspec_safebuffers();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_selectany() const;
+          void set_ms_declspec_selectany();
+          void unset_ms_declspec_selectany();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_thread() const;
+          void set_ms_declspec_thread();
+          void unset_ms_declspec_thread();
+
+       // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+          bool is_ms_declspec_uuid() const;
+          void set_ms_declspec_uuid();
+          void unset_ms_declspec_uuid();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -1786,7 +1929,6 @@ HEADER_TYPE_TABLE_START
           void print_typetable(std::ostream& os = std::cout);
 
 HEADER_TYPE_TABLE_END
-
 
 
 SOURCE_ATTRIBUTE_SUPPORT_START
@@ -2779,6 +2921,14 @@ bool $CLASSNAME::isOperator() const    { return checkBit(e_operator,p_modifierVe
 void $CLASSNAME::setOperator()         { setBit(e_operator,p_modifierVector); }
 void $CLASSNAME::unsetOperator()       { unsetBit(e_operator,p_modifierVector); }
 
+bool $CLASSNAME::isUldOperator() const    { return checkBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::setUldOperator()         { setBit(e_uld_operator,p_modifierVector); }
+void $CLASSNAME::unsetUldOperator()       { unsetBit(e_uld_operator,p_modifierVector); }
+
+bool $CLASSNAME::isLambdaEntryPoint() const    { return checkBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::setLambdaEntryPoint()         { setBit(e_lambda_entry_point,p_modifierVector); }
+void $CLASSNAME::unsetLambdaEntryPoint()       { unsetBit(e_lambda_entry_point,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -2896,10 +3046,124 @@ bool SgDeclarationModifier::isFinal() const { return checkBit(e_final,p_modifier
 void SgDeclarationModifier::setFinal()      { setBit(e_final,p_modifierVector); }
 void SgDeclarationModifier::unsetFinal()    { unsetBit(e_final,p_modifierVector); }
 
+// DQ (8/11/2014): C++11 specific attribute
+bool SgDeclarationModifier::isOverride() const { return checkBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::setOverride()      { setBit(e_override,p_modifierVector); }
+void SgDeclarationModifier::unsetOverride()    { unsetBit(e_override,p_modifierVector); }
+
 // DQ (8/11/2011): Added support for Java "abstract" declaration modifier.
 bool SgDeclarationModifier::isJavaAbstract() const { return checkBit(e_java_abstract,p_modifierVector); }
 void SgDeclarationModifier::setJavaAbstract()      { setBit(e_java_abstract,p_modifierVector); }
 void SgDeclarationModifier::unsetJavaAbstract()    { unsetBit(e_java_abstract,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_align() const { return checkBit(e_ms_declspec_align,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_align()      { setBit(e_ms_declspec_align,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_align()    { unsetBit(e_ms_declspec_align,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_allocate() const { return checkBit(e_ms_declspec_allocate,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_allocate()      { setBit(e_ms_declspec_allocate,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_allocate()    { unsetBit(e_ms_declspec_allocate,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_appdomain() const { return checkBit(e_ms_declspec_appdomain,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_appdomain()      { setBit(e_ms_declspec_appdomain,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_appdomain()    { unsetBit(e_ms_declspec_appdomain,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_code_seg() const { return checkBit(e_ms_declspec_code_seg,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_code_seg()      { setBit(e_ms_declspec_code_seg,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_code_seg()    { unsetBit(e_ms_declspec_code_seg,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_deprecated() const { return checkBit(e_ms_declspec_deprecated,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_deprecated()      { setBit(e_ms_declspec_deprecated,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_deprecated()    { unsetBit(e_ms_declspec_deprecated,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_dllimport() const { return checkBit(e_ms_declspec_dllimport,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_dllimport()      { setBit(e_ms_declspec_dllimport,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_dllimport()    { unsetBit(e_ms_declspec_dllimport,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_dllexport() const { return checkBit(e_ms_declspec_dllexport,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_dllexport()      { setBit(e_ms_declspec_dllexport,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_dllexport()    { unsetBit(e_ms_declspec_dllexport,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_jitintrinsic() const { return checkBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_jitintrinsic()      { setBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_jitintrinsic()    { unsetBit(e_ms_declspec_jitintrinsic,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_naked() const { return checkBit(e_ms_declspec_naked,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_naked()      { setBit(e_ms_declspec_naked,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_naked()    { unsetBit(e_ms_declspec_naked,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noalias() const { return checkBit(e_ms_declspec_noalias,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noalias()      { setBit(e_ms_declspec_noalias,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noalias()    { unsetBit(e_ms_declspec_noalias,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noinline() const { return checkBit(e_ms_declspec_noinline,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noinline()      { setBit(e_ms_declspec_noinline,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noinline()    { unsetBit(e_ms_declspec_noinline,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_noreturn() const { return checkBit(e_ms_declspec_noreturn,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_noreturn()      { setBit(e_ms_declspec_noreturn,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_noreturn()    { unsetBit(e_ms_declspec_noreturn,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_nothrow() const { return checkBit(e_ms_declspec_nothrow,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_nothrow()      { setBit(e_ms_declspec_nothrow,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_nothrow()    { unsetBit(e_ms_declspec_nothrow,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_novtable() const { return checkBit(e_ms_declspec_novtable,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_novtable()      { setBit(e_ms_declspec_novtable,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_novtable()    { unsetBit(e_ms_declspec_novtable,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_process() const { return checkBit(e_ms_declspec_process,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_process()      { setBit(e_ms_declspec_process,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_process()    { unsetBit(e_ms_declspec_process,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_property() const { return checkBit(e_ms_declspec_property,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_property()      { setBit(e_ms_declspec_property,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_property()    { unsetBit(e_ms_declspec_property,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_restrict() const { return checkBit(e_ms_declspec_restrict,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_restrict()      { setBit(e_ms_declspec_restrict,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_restrict()    { unsetBit(e_ms_declspec_restrict,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_safebuffers() const { return checkBit(e_ms_declspec_safebuffers,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_safebuffers()      { setBit(e_ms_declspec_safebuffers,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_safebuffers()    { unsetBit(e_ms_declspec_safebuffers,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_selectany() const { return checkBit(e_ms_declspec_selectany,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_selectany()      { setBit(e_ms_declspec_selectany,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_selectany()    { unsetBit(e_ms_declspec_selectany,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_thread() const { return checkBit(e_ms_declspec_thread,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_thread()      { setBit(e_ms_declspec_thread,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_thread()    { unsetBit(e_ms_declspec_thread,p_modifierVector); }
+
+// DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
+bool SgDeclarationModifier::is_ms_declspec_uuid() const { return checkBit(e_ms_declspec_uuid,p_modifierVector); }
+void SgDeclarationModifier::set_ms_declspec_uuid()      { setBit(e_ms_declspec_uuid,p_modifierVector); }
+void SgDeclarationModifier::unset_ms_declspec_uuid()    { unsetBit(e_ms_declspec_uuid,p_modifierVector); }
+
+
+
+
 
 
 string
@@ -4101,6 +4365,9 @@ HEADER_SYMBOL_TABLE_START
           static bool get_force_search_of_base_classes();
           static void set_force_search_of_base_classes( bool value );
 
+       // DQ (7/12/2014): Adding support for static data member.
+          static SgNodeSet & get_aliasSymbolCausalNodeSet();
+
      protected:
 
 #if 0
@@ -4216,6 +4483,7 @@ HEADER_INITIALIZED_NAME_START
                e_virtual_base_class        = 1, /*!< virtual base class value */
                e_nonvirtual_base_class     = 2, /*!< nonvirtual base class value */
                e_data_member               = 3, /*!< data member value */
+               e_delegation_constructor    = 4, /*!< delegation constructor (C++11 feature) */
                e_last_preinitialization         /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4303,6 +4571,18 @@ HEADER_INITIALIZED_NAME_START
             // DQ (1/6/2014): Added support for GNU noreturn attribute
                e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
 
+               e_ms_declspec_parameter_appdomain    =  9, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_deprecated   = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllimport    = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllexport    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_novtable     = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_process      = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_property     = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_restrict     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_selectany    = 18, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_thread       = 19, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_uuid         = 20, /*!< Microsoft declspec() attributes */
+
                e_last_gnu_variable_attribute /*!< last value (upper bound on range of values, used in error checking) */
              };
 
@@ -4358,6 +4638,60 @@ HEADER_INITIALIZED_NAME_START
           void setGnuAttributeNoReturn();
           void unsetGnuAttributeNoReturn();
 
+#if 0
+ // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+          bool is_ms_declspec_parameter_appdomain() const;
+          void set_ms_declspec_parameter_appdomain();
+          void unset_ms_declspec_parameter_appdomain();
+
+          bool is_ms_declspec_parameter_deprecated() const;
+          void set_ms_declspec_parameter_deprecated();
+          void unset_ms_declspec_parameter_deprecated();
+
+          bool is_ms_declspec_parameter_dllimport() const;
+          void set_ms_declspec_parameter_dllimport();
+          void unset_ms_declspec_parameter_dllimport();
+
+          bool is_ms_declspec_parameter_dllexport() const;
+          void set_ms_declspec_parameter_dllexport();
+          void unset_ms_declspec_parameter_dllexport();
+
+          bool is_ms_declspec_parameter_novtable() const;
+          void set_ms_declspec_parameter_novtable();
+          void unset_ms_declspec_parameter_novtable();
+
+          bool is_ms_declspec_parameter_process() const;
+          void set_ms_declspec_parameter_process();
+          void unset_ms_declspec_parameter_process();
+
+          bool is_ms_declspec_parameter_restrict() const;
+          void set_ms_declspec_parameter_restrict();
+          void unset_ms_declspec_parameter_restrict();
+
+          bool is_ms_declspec_parameter_selectany() const;
+          void set_ms_declspec_parameter_selectany();
+          void unset_ms_declspec_parameter_selectany();
+
+          bool is_ms_declspec_parameter_thread() const;
+          void set_ms_declspec_parameter_thread();
+          void unset_ms_declspec_parameter_thread();
+
+          bool is_ms_declspec_parameter_uuid() const;
+          void set_ms_declspec_parameter_uuid();
+          void unset_ms_declspec_parameter_uuid();
+
           void post_construction_initialization();
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -4400,6 +4734,9 @@ HEADER_INITIALIZED_NAME_START
 //               SgInitializedName *itemptr = 0,
                SgInitializedName *prev_decl_item = 0 );
 #endif
+
+       // DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+          SgInitializedName() ROSE_DEPRECATED_FUNCTION;
 
           SgInitializedName(const SgInitializedName& ptr);
 
@@ -5887,6 +6224,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (2/2/2014): Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax (e.g. int array[];).
                b_supressArrayBound = 46, /*!< Supress output of array bound in array type.  Used to support array declearations with empty bracket syntax for secondary (prototype) declarations (e.g. int array[];). */
 
+            // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+               b_supressImplicitThisOperator = 47, /*!< Supress output of SgThisExp (required to support lambda function code generation). */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6131,6 +6471,11 @@ HEADER_UNPARSE_INFO_START
           bool supressArrayBound() const;
           void set_supressArrayBound();
           void unset_supressArrayBound();
+
+       // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+          bool supressImplicitThisOperator() const;
+          void set_supressImplicitThisOperator();
+          void unset_supressImplicitThisOperator();
 
 
 #if 0
@@ -6686,6 +7031,22 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+       // DQ (11/5/2014): Adding support for templated typedef.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+             {
+               const SgTemplateInstantiationTypedefDeclaration* templateInstantiationDeclaration = isSgTemplateInstantiationTypedefDeclaration(node); 
+               name = templateInstantiationDeclaration->get_name();
+               break;
+             }
+
+       // DQ (11/4/2014): Adding support for templated typedef.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               const SgTemplateTypedefDeclaration* templateDeclaration = isSgTemplateTypedefDeclaration(node); 
+               name = templateDeclaration->get_name();
+               break;
+             }
+
           case V_SgFunctionType:
              {
                const SgFunctionType* functionType = isSgFunctionType(node);
@@ -6706,6 +7067,10 @@ SgSymbolTable::get_name( const SgNode* node) const
                assert(false);
              }
         }
+
+#if 0
+     printf ("SgSymbolTable::get_name(SgNode*) node = %p = %s name = %s \n",node,node->class_name().c_str(),name.str());
+#endif
 
      return name;
    }
@@ -7014,7 +7379,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
           deleteList.push_back(it);
           it++;
         }
-#if 1
+#if 0
      printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %zu \n",name.str(),deleteList.size());
 #endif
 
@@ -7048,7 +7413,9 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
      assert(p_table != NULL);
      assert(initializedName != NULL);
 
-  // printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgInitializedName* ): initializedName = %p = %s \n",initializedName,SageInterface::get_name(initializedName).c_str());
+#endif
 
      SgSymbol* returnSymbol = NULL;
 
@@ -7102,7 +7469,9 @@ SgSymbolTable::find( const SgFunctionType* functionType)
      assert(p_table != NULL);
      assert(functionType != NULL);
 
-  // printf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
+#if 0
+     printf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
+#endif
 
      SgSymbol* returnSymbol = NULL;
 
@@ -7322,7 +7691,6 @@ SgSymbolTable::remove( const SgSymbol* symbol )
                                FIND FUNCTIONS
    ************************************************************************/
 
-#if 1
 // DQ (11/27/2010): Change return type to "bool".
 // DQ (2/10/2007): This is a depricated function
 // int (changed the return type)
@@ -7351,7 +7719,6 @@ SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
 
      return false;
    }
-#endif
 
 SgAliasSymbol*
 SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
@@ -7690,6 +8057,13 @@ std::vector<SgTemplateArgument*> getTemplateParametersOrArgumentsList<SgTemplate
                break;
              }
 
+       // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
+          case V_SgTemplateTypedefSymbol:
+             {
+               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateArgument>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               break;
+             }
+
 #if 0
        // We have to support these sorts of declarations in the name qualifiaction.
           SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
@@ -7809,6 +8183,12 @@ std::vector<SgTemplateParameter*> getTemplateParametersOrArgumentsList<SgTemplat
                break;
              }
 
+       // DQ (11/10/2014): Providing an initial implementation for template typedef symbol support.
+          case V_SgTemplateTypedefSymbol:
+             {
+               printf ("WARNING: returning NULL in SgSymbolTable::getTemplateParametersOrArgumentsList<SgTemplateParameter>(): symbol = %p = %s \n",symbol,symbol->class_name().c_str());
+               break;
+             }
 #if 0
        // We have to support these sorts of declarations in the name qualifiaction.
           SgClassDeclaration*              classDeclaration     = isSgClassDeclaration(declaration);
@@ -8146,8 +8526,25 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
                                                             printf ("-----    --- --- These are NOT the same initializedName pointers, but they match in type! \n");
 #endif
+                                                         // DQ (7/7/2014): If these are not the same name then there is no match (see test2014_78.C).
+                                                            if (templateParameterOrArgumentLocal->get_initializedName()->get_name() != templateParameterOrArgumentFromSymbol->get_initializedName()->get_name())
+                                                               {
+#if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
+                                                              // DQ (7/7/2014): For now output debugging informationfor this case.
+                                                                 printf ("These names failed to match: \n");
+                                                                 printf (" --- templateParameterOrArgumentLocal->get_initializedName()->get_name()      = %s \n",templateParameterOrArgumentLocal->get_initializedName()->get_name().str());
+                                                                 printf (" --- templateParameterOrArgumentFromSymbol->get_initializedName()->get_name() = %s \n",templateParameterOrArgumentFromSymbol->get_initializedName()->get_name().str());
+#endif
+#if 0
+                                                              // Extra information to track down the example code.
+                                                                 templateParameterOrArgumentLocal->get_initializedName()->get_file_info()->display("templateParameterOrArgumentLocal: debug");
+                                                                 templateParameterOrArgumentFromSymbol->get_initializedName()->get_file_info()->display("templateParameterOrArgumentLocal: debug");
+#endif
+
+                                                                 isTemplateType = false;
+                                                               }
                                                          // DQ (2/16/2014): I am not certain that the names have to match, but assert this for now as part of testing!
-                                                            ROSE_ASSERT (templateParameterOrArgumentLocal->get_initializedName()->get_name() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_name());
+                                                         // ROSE_ASSERT (templateParameterOrArgumentLocal->get_initializedName()->get_name() == templateParameterOrArgumentFromSymbol->get_initializedName()->get_name());
                                                           }
                                                          else
                                                           {
@@ -8888,6 +9285,74 @@ SgSymbolTable::find_symbol_support (const SgName & nm, SgTemplateParameterPtrLis
    }
 #endif
 
+#if 0
+bool
+isSubset(const std::vector<SgNode*>& a, const std::vector<SgNode*>& b)
+   {
+  // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter 
+  // vector (from the SgAliasSymbol) first will generally reduce the complexity for 
+  // order N instead of N^2.  The value of N would be the number of causal SgNode objects
+  // (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement, SgBaseClass, etc.).
+
+     for (std::vector<SgNode*>::const_iterator i = a.begin(); i != a.end(); i++)
+        {
+          bool found = false;
+
+          for (std::vector<SgNode*>::const_iterator j = b.begin(); j != b.end(); j++)
+             {
+               if (*i == *j)
+                  {
+                    found = true;
+                    break;
+                  }
+             }
+
+          if (!found)
+             {
+               return false;
+             }
+        }
+
+     return true;
+   }
+#endif
+
+
+bool
+isSubset(const std::vector<SgNode*>& a_vector, const std::set<SgNode*>& b_set)
+   {
+  // DQ (7/12/2014): I am not aware of a faster algorithm for this. Using the shorter 
+  // vector (from the SgAliasSymbol) first will generally reduce the complexity for 
+  // order Na * log Nb instead of log Nb.  The value of Na would be the number of 
+  // causal nodes for any SgAliasSymbol (typically one) and Nb would be the number 
+  // of causal SgNode objects (e.g. SgUsingDirectiveStatement, SgUsingDeclarationStatement, 
+  // SgBaseClass, etc.). 
+
+     for (std::vector<SgNode*>::const_iterator i = a_vector.begin(); i != a_vector.end(); i++)
+        {
+          bool found = false;
+#if 0
+          for (std::set<SgNode*>::const_iterator j = b_set.begin(); j != b_set.end(); j++)
+             {
+               if (*i == *j)
+                  {
+                    found = true;
+                    break;
+                  }
+             }
+#else
+          std::set<SgNode*>::const_iterator j = find(b_set.begin(),b_set.end(),*i);
+          found = (j != b_set.end());
+#endif
+          if (!found)
+             {
+               return false;
+             }
+        }
+
+     return true;
+   }
+
 
 // DQ (7/31/2013): Added support for template parameters and template specialization.
 // template<class ReturnType> ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, const SgType* type)
@@ -9150,7 +9615,41 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                       // DQ (8/8/2013): I think we should return the symbol rather than break.
                       // DQ (9/9/2012): We could either call "break" to get out of the loop, or directly "return s".
                       // break;
+#if 1
+                      // DQ (7/12/2014): To support better symbol handling for name qualification. At this point were 
+                      // we have identified the target aliased symbol, we need to check if the associated reason for 
+                      // it being an alias symbol has been see in the AST yet.  The cause for the alias symbol is a
+                      // causal node that is stored in the SgAliasSymbol (new modification to SgAliasSymbol).  The list
+                      // of possible causal nodes for alis symbols to be inserted is help in a static member of the 
+                      // SgSymbolTable (new modification to SgSymbolTable).
+                      // if (aliasSymbolCausalNodeSet.find(original_aliased_symbol->get_causal_nodes().begin(),original_aliased_symbol->get_causal_nodes().end()) != aliasSymbolCausalNodeSet.end())
+                         bool foundCausalNode = isSubset(aliasedSymbol->get_causal_nodes(),get_aliasSymbolCausalNodeSet());
+                         if (foundCausalNode == true)
+                            {
+#if 0
+                              printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                              printf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
+                              printf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
+#endif
+                              return original_aliased_symbol;
+                            }
+                           else
+                            {
+                           // DQ (7/12/2014): If we didn't find the causal node then we can't consider the alias to exist 
+                           // yet in the traversal of the AST represented by the symbol tabel query at this point.
+                              original_aliased_symbol = NULL;
+#if 0
+                              printf ("associated causal nodes not seen yet in traversal of AST: \n",aliasedSymbol->get_causal_nodes().size());
+                              for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
+                                 {
+                                   printf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());
+                                 }
+#endif
+                            }
+#else
+                      // DQ (7/12/2014): Older original version of code.
                          return original_aliased_symbol;
+#endif
                        }
                       else
                        {
@@ -9170,7 +9669,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
        // DQ (3/28/2014): If we reach this point, then in the case of Java, we have to search the 
        // base class definitions (since the representation of Java base class does not presently 
        // inject the base class symbols into the derived class symbol table.  There are pros and 
-       // const to this design.  But this function wil at least make the API semantics that same.
+       // const to this design.  But this function will at least make the API semantics that same.
           SgNode* parentNode = this->get_parent();
           ROSE_ASSERT(parentNode != NULL);
           SgClassDefinition* classDefinition = isSgClassDefinition(parentNode);
@@ -10221,6 +10720,9 @@ SgSymbolTable::maxCollisions()
 // DQ (3/30/2014): Declaration of space for static data member.
 bool SgSymbolTable::p_force_search_of_base_classes = false;
 
+// DQ (7/12/2014): Declaration of space for static data member.
+SgNodeSet SgSymbolTable::p_aliasSymbolCausalNodeSet;
+
 bool
 SgSymbolTable::get_force_search_of_base_classes()
    {
@@ -10232,6 +10734,14 @@ SgSymbolTable::set_force_search_of_base_classes( bool value )
    {
      p_force_search_of_base_classes = value;
    }
+
+// DQ (7/12/2014): Access function for static data member.
+SgNodeSet &
+SgSymbolTable::get_aliasSymbolCausalNodeSet()
+   {
+     return p_aliasSymbolCausalNodeSet;
+   }
+
 
 SOURCE_SYMBOL_TABLE_END
 
@@ -10449,6 +10959,13 @@ SgInitializedName::search_for_symbol_from_symbol_table() const
      return symbol;
    }
 
+// DQ (10/13/2014): Adding a default constructor for compatability with what was previously the API before the newer aterm support.
+SgInitializedName::SgInitializedName()
+   : p_name(""), p_typeptr(NULL), p_initptr(NULL), p_prev_decl_item(NULL), p_is_initializer(false), p_declptr(NULL), p_scope(NULL)
+   {
+  // This constructor has been added to support the previous API, I would like to depricate it.
+   }
+
 #if 0
 SgInitializedName::~SgInitializedName() 
    {
@@ -10635,6 +11152,9 @@ SgInitializedName::post_construction_initialization()
      p_using_C11_Alignas_keyword                     = false;
      p_constant_or_type_argument_for_Alignas_keyword = NULL;
 
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword = false;
+
   // DQ (6/10/2012): Testing for test2012_102.C.
   // printf ("In SgInitializedName::post_construction_initialization(): this = %p \n",this);
    }
@@ -10784,11 +11304,15 @@ SgInitializedName::SgInitializedName (const SgInitializedName& ptr)
 
 
   // DQ (2/2/2014): The secondary declaration for an array may be specified using empty bracket sysntax.
-     p_hasArrayTypeWithEmptyBracketSyntax = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
+     p_hasArrayTypeWithEmptyBracketSyntax     = ptr.p_hasArrayTypeWithEmptyBracketSyntax;
 
   // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
      p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
      p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+  // DQ (8/2/2014): Adding support for C++11 auto keyword.
+     p_using_auto_keyword                     = ptr.p_using_auto_keyword;
+
    }
 
 SgInitializedName&
@@ -10886,6 +11410,9 @@ SgInitializedName::operator= (const SgInitializedName& ptr)
        // DQ (7/27/2014): Added support for C11 "_Alignas" keyword (alternative alignment specification).
           p_using_C11_Alignas_keyword                     = ptr.p_using_C11_Alignas_keyword;
           p_constant_or_type_argument_for_Alignas_keyword = ptr.p_constant_or_type_argument_for_Alignas_keyword;
+
+       // DQ (8/2/2014): Adding support for C++11 auto keyword.
+          p_using_auto_keyword                     = ptr.p_using_auto_keyword;
         }
        else
         {
@@ -11296,6 +11823,59 @@ bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_
 void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
 void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
 
+#if 0
+ // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
+    appdomain
+    deprecated
+    dllimport
+    dllexport
+    novtable
+    process
+    restrict
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+bool SgInitializedName::is_ms_declspec_parameter_appdomain() const  { return checkBit(e_ms_declspec_parameter_appdomain); }
+void SgInitializedName::set_ms_declspec_parameter_appdomain()       { setBit(e_ms_declspec_parameter_appdomain); }
+void SgInitializedName::unset_ms_declspec_parameter_appdomain()     { unsetBit(e_ms_declspec_parameter_appdomain); }
+
+bool SgInitializedName::is_ms_declspec_parameter_deprecated() const  { return checkBit(e_ms_declspec_parameter_deprecated); }
+void SgInitializedName::set_ms_declspec_parameter_deprecated()       { setBit(e_ms_declspec_parameter_deprecated); }
+void SgInitializedName::unset_ms_declspec_parameter_deprecated()     { unsetBit(e_ms_declspec_parameter_deprecated); }
+
+bool SgInitializedName::is_ms_declspec_parameter_dllimport() const  { return checkBit(e_ms_declspec_parameter_dllimport); }
+void SgInitializedName::set_ms_declspec_parameter_dllimport()       { setBit(e_ms_declspec_parameter_dllimport); }
+void SgInitializedName::unset_ms_declspec_parameter_dllimport()     { unsetBit(e_ms_declspec_parameter_dllimport); }
+
+bool SgInitializedName::is_ms_declspec_parameter_dllexport() const  { return checkBit(e_ms_declspec_parameter_dllexport); }
+void SgInitializedName::set_ms_declspec_parameter_dllexport()       { setBit(e_ms_declspec_parameter_dllexport); }
+void SgInitializedName::unset_ms_declspec_parameter_dllexport()     { unsetBit(e_ms_declspec_parameter_dllexport); }
+
+bool SgInitializedName::is_ms_declspec_parameter_novtable() const  { return checkBit(e_ms_declspec_parameter_novtable); }
+void SgInitializedName::set_ms_declspec_parameter_novtable()       { setBit(e_ms_declspec_parameter_novtable); }
+void SgInitializedName::unset_ms_declspec_parameter_novtable()     { unsetBit(e_ms_declspec_parameter_novtable); }
+
+bool SgInitializedName::is_ms_declspec_parameter_process() const  { return checkBit(e_ms_declspec_parameter_process); }
+void SgInitializedName::set_ms_declspec_parameter_process()       { setBit(e_ms_declspec_parameter_process); }
+void SgInitializedName::unset_ms_declspec_parameter_process()     { unsetBit(e_ms_declspec_parameter_process); }
+
+bool SgInitializedName::is_ms_declspec_parameter_restrict() const  { return checkBit(e_ms_declspec_parameter_restrict); }
+void SgInitializedName::set_ms_declspec_parameter_restrict()       { setBit(e_ms_declspec_parameter_restrict); }
+void SgInitializedName::unset_ms_declspec_parameter_restrict()     { unsetBit(e_ms_declspec_parameter_restrict); }
+
+bool SgInitializedName::is_ms_declspec_parameter_selectany() const  { return checkBit(e_ms_declspec_parameter_selectany); }
+void SgInitializedName::set_ms_declspec_parameter_selectany()       { setBit(e_ms_declspec_parameter_selectany); }
+void SgInitializedName::unset_ms_declspec_parameter_selectany()     { unsetBit(e_ms_declspec_parameter_selectany); }
+
+bool SgInitializedName::is_ms_declspec_parameter_thread() const  { return checkBit(e_ms_declspec_parameter_thread); }
+void SgInitializedName::set_ms_declspec_parameter_thread()       { setBit(e_ms_declspec_parameter_thread); }
+void SgInitializedName::unset_ms_declspec_parameter_thread()     { unsetBit(e_ms_declspec_parameter_thread); }
+
+bool SgInitializedName::is_ms_declspec_parameter_uuid() const  { return checkBit(e_ms_declspec_parameter_uuid); }
+void SgInitializedName::set_ms_declspec_parameter_uuid()       { setBit(e_ms_declspec_parameter_uuid); }
+void SgInitializedName::unset_ms_declspec_parameter_uuid()     { unsetBit(e_ms_declspec_parameter_uuid); }
 
 SOURCE_INITIALIZED_NAME_END
 
@@ -13942,13 +14522,19 @@ X aggressive
      p_skip_unparse_asm_commands = false;
      p_read_instructions_only    = false;
 
-     p_disassemblerSearchHeuristics = Disassembler::SEARCH_DEFAULT;
+     p_disassemblerSearchHeuristics = rose::BinaryAnalysis::Disassembler::SEARCH_DEFAULT;
+
+  // DQ (11/12/2014): Previously uninitialized data members
+     p_partitionerSearchHeuristics = SgAsmFunction::FUNC_DEFAULT;
 
   // DQ (11/20/2010): Support for token handling.
      p_unparse_tokens = false;
 
   // DQ (1/30/2014): Support for testing of token unparsing.
      p_unparse_tokens_testing = 0;
+
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     p_unparse_using_leading_and_trailing_token_mappings = false;
 
   // DQ (9/26/2011): This was not initialized previosuly so I have added it.
      p_sourceFileTypeIsUnknown = false;
@@ -14551,6 +15137,9 @@ SgFile::display ( const std::string & label ) const
      printf ("     p_unparse_tokens                       = %s \n",(p_unparse_tokens == true) ? "true" : "false");
      printf ("     p_unparse_tokens_testing               = %d \n",p_unparse_tokens_testing);
 
+  // DQ (11/12/2014): Addded to support test modes for token unparsing.
+     printf ("     p_unparse_using_leading_and_trailing_token_mappings = %s \n",(p_unparse_using_leading_and_trailing_token_mappings == true) ? "true" : "false");
+
      printf ("     p_detect_dangling_pointers             = %d \n",p_detect_dangling_pointers);
 
      printf ("     p_skipAstConsistancyTests              = %s \n",(p_skipAstConsistancyTests == true) ? "true" : "false");
@@ -15035,6 +15624,10 @@ SgProject::initialization()
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     p_appendPID = false;
+  // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
+     p_globalScopeAcrossFiles = NULL;
    }
 
 
@@ -15950,6 +16543,8 @@ SgProject::display ( const std::string & label ) const
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      printf ("   p_noclobber_if_different_output_file = %s \n",(p_noclobber_if_different_output_file == true) ? "true" : "false");
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     printf ("   p_appendPID = %s \n",(p_appendPID == true) ? "true" : "false");
 
      printf ("In this project: numberOfFiles() = %d \n",numberOfFiles());
      for (int i = 0; i < numberOfFiles(); i++)
@@ -17030,6 +17625,17 @@ void SgUnparse_Info::unset_supressArrayBound()
    { unsetBit(b_supressArrayBound); }
 
 
+// DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
+bool SgUnparse_Info::supressImplicitThisOperator() const
+   { return checkBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::set_supressImplicitThisOperator()
+   { setBit(b_supressImplicitThisOperator); }
+
+void SgUnparse_Info::unset_supressImplicitThisOperator()
+   { unsetBit(b_supressImplicitThisOperator); }
+
+
 void
 SgUnparse_Info::display ( const std::string & label ) const
    {
@@ -17112,6 +17718,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("skipCheckAccess                        = %s \n",( skipCheckAccess() == true ) ? "true" : "false");
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
+     printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -17280,10 +17887,12 @@ SgUnparse_Info::dec_nestingLevel() {
 SOURCE_UNPARSE_INFO_END
 
 HEADER_TYPEDEF_SEQ_START         
-      //! Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
+      //! This is the const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           const SgTypePtrList & get_typedefs() const;
 
-      //! Get the list of input types (types of the parameters list) to this function type
+      // Get the list of input types (types of the parameters list) to this function type
+      //! This is the non-const STL container access function for the STL list of typedef types using the type pointing to this SgTypedefSeq.
           SgTypePtrList & get_typedefs();
 
       //! Append new typedef to typedef type list
@@ -17675,7 +18284,9 @@ SgTemplateArgument::get_mangled_name (void) const
                   }
                  else
                   {
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                 // DQ (8/19/2014): I am not clear how important it is to warn about this issue.
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                     printf ("WARNING: In SgTemplateArgument::get_mangled_name(): parent declaration is not handled: this->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
 #endif
                   }
@@ -18728,3 +19339,5 @@ SgTypeTable::lookup_type(const SgName& n)
    }
 
 SOURCE_TYPE_TABLE_END
+
+

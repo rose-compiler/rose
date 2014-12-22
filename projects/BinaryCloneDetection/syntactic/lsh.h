@@ -51,6 +51,7 @@ struct VectorEntry {
     uint32_t rowNumber;
     uint64_t line;
     uint32_t offset;
+    uint32_t ninsns;
     scoped_array_with_size<uint8_t> compressedCounts;
     char instrSeqMD5[16];
     VectorEntry() {} // Mark entry as invalid

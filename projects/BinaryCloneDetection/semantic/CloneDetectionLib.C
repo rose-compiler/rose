@@ -2,8 +2,9 @@
 #include "AST_FILE_IO.h"
 #include "CloneDetectionLib.h"
 #include "Combinatorics.h"
-#include "BinaryLoader.h"
+#include "BinaryLoaderElf.h"
 #include "Partitioner.h"
+#include "rose.h"
 
 #include <algorithm>
 #include <cerrno>
@@ -16,9 +17,13 @@
 #include <sys/mman.h>
 #include <unistd.h>
 
+using namespace rose::BinaryAnalysis;
+
 namespace CloneDetection {
 
 const rose_addr_t GOTPLT_VALUE = 0x09110911; // Address of all dynamic functions that are not loaded
+
+
 
 /*******************************************************************************************************************************
  *                                      Exceptions
@@ -245,7 +250,7 @@ FilesTable::add_content(const SqlDatabase::TransactionPtr &tx, int64_t cmd_id, i
     }
     return found->second.digest;
 }
-    
+
 int
 FilesTable::id(const std::string &name) const
 {
@@ -766,6 +771,58 @@ InsnCoverage::get_ratio(SgAsmFunction *func, int func_id, int igroup_id) const
 }
 
 
+void
+InsnCoverage::get_instructions(std::vector<SgAsmInstruction*>& insns, SgAsmInterpretation* interp, SgAsmFunction* top)
+{
+    // Find the instructions
+    std::vector<SgAsmX86Instruction*> tmp_insns;
+    InstructionMap instr_map = interp->get_instruction_map(interp);
+    if (top != NULL) {
+        FindInstructionsVisitor vis;
+        AstQueryNamespace::querySubTree(top, std::bind2nd(vis, &tmp_insns));
+
+        // Addresses and map of instructions in the subtree of top
+        std::vector<rose_addr_t> query_insns_addr;
+        for (std::vector<SgAsmX86Instruction*>::iterator it = tmp_insns.begin(); it != tmp_insns.end(); ++it)
+            query_insns_addr.push_back((*it)->get_address());
+        std::sort(query_insns_addr.begin(), query_insns_addr.end());
+
+        // Addresses of instruction in the trace
+        std::vector<rose_addr_t> trace_insns_addr;
+        for (CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it)
+            trace_insns_addr.push_back(it->first);
+        std::sort(trace_insns_addr.begin(), trace_insns_addr.end());
+
+        // Addresses in the intersection of the trace and the subtree of top
+        std::vector<rose_addr_t> trace_query_intersection(trace_insns_addr.size() > query_insns_addr.size() ?
+                                                          trace_insns_addr.size() : query_insns_addr.size());
+        std::vector<rose_addr_t>::iterator intersection_end;
+        intersection_end = std::set_intersection(query_insns_addr.begin(), query_insns_addr.end(), trace_insns_addr.begin(),
+                                                 trace_insns_addr.end(), trace_query_intersection.begin());
+
+        //Instructions
+        Disassembler::InstructionMap::iterator find_it;
+        for (std::vector<rose_addr_t>::iterator  it = trace_query_intersection.begin(); it != intersection_end; ++it) {
+            find_it = instr_map.find(*it);
+            if (find_it == instr_map.end()) {
+                assert(!"element not found in instruction map");
+                abort();
+            }
+            insns.push_back(find_it->second);
+        }
+    } else {
+        Disassembler::InstructionMap::iterator find_it;
+        for (CoverageMap::iterator it = coverage.begin(); it != coverage.end(); ++it) {
+            find_it = instr_map.find(it->first);
+            if (find_it == instr_map.end()) {
+                assert(!"element not found in instruction map");
+                abort();
+            }
+            insns.push_back(find_it->second);
+        }
+    }
+}
+
 /*******************************************************************************************************************************
  *                                      Dynamic Call Graph
  *******************************************************************************************************************************/
@@ -848,6 +905,28 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
     SgAsmInterpretation *interp = interps.back();
     SgAsmGenericHeader *spec_header = interp->get_headers()->get_headers().back();
 
+    // If the specimen is a shared library then the .text section (and most of the others) are mapped starting at virtual
+    // address zero.  This will interfere with tests where the specimen reads from a memory address that was randomly
+    // generated--because the randomly generated address will be a low number. When the test tries to read from that low
+    // address it will read an instruction rather than a value from an input queue. The way we avoid this is to pre-map the low
+    // addresses to force BinaryLoader::remap() to move the specimen to a higher address. [Robb P. Matzke 2013-11-26]
+    AddressInterval exclusion_area = AddressInterval::baseSize(0, 0x03000000); // size is arbitrary, but something recognizable
+    SgAsmGenericSection *text = spec_header->get_section_by_name(".text");
+    bool added_exclusion_area = false;
+    if (text!=NULL && text->is_mapped()) {
+        Extent textExtent = text->get_mapped_preferred_extent();
+        AddressInterval textInterval = AddressInterval::hull(textExtent.first(), textExtent.last());
+        if (textInterval.isOverlapping(exclusion_area)) {
+            std::cerr <<argv0 <<": specimen is a shared object; remapping it to a higher virtual address\n";
+            MemoryMap *map = interp->get_map();
+            if (!map)
+                interp->set_map(map = new MemoryMap);
+            map->insert(exclusion_area,
+                        MemoryMap::Segment::anonymousInstance(exclusion_area.size(), 0, "temporary exclusion area"));
+            added_exclusion_area = true;
+        }
+    }
+
     // Get the shared libraries, map them, and apply relocation fixups. We have to do the mapping step even if we're not
     // linking with shared libraries, because that's what gets the various file sections lined up in memory for the
     // disassembler.
@@ -869,7 +948,7 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
                     loader->add_directories(paths);
                 }
                 loader->link(interp);
-            } else {
+            } else if (isSgAsmElfFileHeader(spec_header)) {
                 // If we didn't link with the standard C library, then link with our own library.  Our own library is much
                 // smaller and is intended to provide the same semantics as the C library for those few functions that GCC
                 // occassionally inlines because the function is built into GCC.  This allows us to compare non-optimized
@@ -907,6 +986,8 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
         return NULL;
     }
     assert(interp->get_map()!=NULL);
+    if (added_exclusion_area)
+        interp->get_map()->erase(exclusion_area);
     MemoryMap map = *interp->get_map();
     link_builtins(spec_header, builtin_header, &map);
 
@@ -923,9 +1004,9 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
             sections.insert(sections.end(), s3.begin(), s3.end());
             for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); ++si) {
                 if ((*si)->is_mapped()) {
-                    AddressInterval mapped_va = AddressInterval::baseSize((*si)->get_mapped_actual_va(),
-                                                                          (*si)->get_mapped_size());
-                    map.mprotect(mapped_va, MemoryMap::MM_PROT_READ, true/*relax*/);
+                    map.at((*si)->get_mapped_actual_va())
+                       .limit((*si)->get_mapped_size())
+                       .changeAccess(MemoryMap::READABLE, ~MemoryMap::READABLE);
                 }
             }
         }
@@ -953,13 +1034,11 @@ open_specimen(const std::string &specimen_name, const std::string &argv0, bool d
 void
 link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_header, MemoryMap *map)
 {
+    using namespace StringUtility;
+
     // Find the addresses for the exported functions
     struct Exports: AstSimpleProcessing {
         NameAddress address;
-        Exports(SgAsmGenericHeader *hdr) {
-            if (hdr)
-                traverse(hdr, preorder);
-        }
         void visit(SgNode *node) {
             if (SgAsmElfSymbol *sym = isSgAsmElfSymbol(node)) {
                 if (sym->get_def_state()==SgAsmGenericSymbol::SYM_DEFINED &&
@@ -968,52 +1047,85 @@ link_builtins(SgAsmGenericHeader *imports_header, SgAsmGenericHeader *exports_he
                     sym->get_bound()!=NULL &&
                     sym->get_bound()->get_name()->get_string().compare(".text")==0) {
                     std::string name = sym->get_name()->get_string();
-                    rose_addr_t va = sym->get_bound()->get_mapped_actual_va() + sym->get_value();
+                    SgAsmGenericSection *section = sym->get_bound();
+                    assert(section->is_mapped());
+                    rose_addr_t section_delta = section->get_mapped_actual_va() - section->get_mapped_preferred_va();
+                    rose_addr_t va = sym->get_value() + section_delta;
                     address[name] = va;
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"ROBB: exported symbol \"" <<name <<"\""
+                              <<" = " <<addrToString(sym->get_value()) <<"\n"
+                              <<"        bound to " <<section->get_name()->get_string(true) <<"\n"
+                              <<"           preferred = " <<addrToString(section->get_mapped_preferred_va()) <<"\n"
+                              <<"           actual    = " <<addrToString(section->get_mapped_actual_va()) <<"\n"
+                              <<"           delta     = " <<addrToString(section->get_mapped_actual_va() -
+                                                                         section->get_mapped_preferred_va()) <<"\n"
+                              <<"           final     = " <<addrToString(va) <<"\n";
+#endif
                 }
             }
         }
-        rose_addr_t get_address(const std::string &name) const {
-            std::map<std::string, rose_addr_t>::const_iterator found = address.find(name);
-            return found==address.end() ? 0 : found->second;
-        }
-    } exports(exports_header);
+    } exports;
+    exports.traverse(exports_header, preorder);
 
-    // Link the exports into the importer.  For ELF, this means processing R_386_JMP_SLOT relocations.
+
+    // Link the exports into the import table.  For ELF, this means processing R_386_JMP_SLOT relocations.
     struct Fixup: AstSimpleProcessing {
+        SgAsmGenericHeader *imports_header;
         SgAsmElfSymbolPtrList imports;
         const Exports &exports;
         MemoryMap *map;
+        BinaryLoaderElf loader;
+        SgAsmElfSymbolSection *symsec;
         Fixup(SgAsmGenericHeader *imports_header, const Exports &exports, MemoryMap *map)
-            : exports(exports), map(map) {
-            if (SgAsmElfSymbolSection *symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym"))) {
+            : imports_header(imports_header), exports(exports), map(map) {
+            if ((symsec = isSgAsmElfSymbolSection(imports_header->get_section_by_name(".dynsym")))) {
                 imports = symsec->get_symbols()->get_symbols();
-                traverse(imports_header, preorder);
             }
         }
         void visit(SgNode *node) {
             if (SgAsmElfRelocEntry *reloc = isSgAsmElfRelocEntry(node)) {
                 if (reloc->get_type()==SgAsmElfRelocEntry::R_386_JMP_SLOT && reloc->get_sym()<imports.size()) {
+                    assert(reloc->get_sym() < imports.size());
                     SgAsmElfSymbol *import_symbol = imports[reloc->get_sym()];
                     std::string name = import_symbol->get_name()->get_string();
-                    rose_addr_t import_addr = reloc->get_r_offset();
-                    if (rose_addr_t export_addr = exports.get_address(name)) {
-                        uint32_t export_addr_le;
-                        ByteOrder::host_to_le(export_addr, &export_addr_le);
-                        map->write(&export_addr_le, import_addr, 4);
-#if 1 /*DEBUGGING [Robb P. Matzke 2013-07-10]*/
-                        std::cerr <<"ROBB: fixup"
-                                  <<" offset=" <<StringUtility::addrToString(reloc->get_r_offset())
-                                  <<" addend=" <<StringUtility::addrToString(reloc->get_r_addend())
-                                  <<" sym=" <<reloc->get_sym() <<" " <<name
-                                  <<" addr=" <<StringUtility::addrToString(exports.get_address(name))
-                                  <<"\n";
+
+                    // The value to be written. This is the address of the loaded exported function.
+                    rose_addr_t export_va = exports.address.get_value_or(name, 0);
+                    if (export_va==0)
+                        return;
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"ROBB: fixup for \"" <<name <<"\""
+                              <<" (symbol #" <<reloc->get_sym() <<" in \"" <<symsec->get_name()->get_string(true) <<"\")\n"
+                              <<"        value to write: " <<addrToString(export_va) <<" (exported function)\n";
 #endif
+
+
+                    // The memory address to which we'll eventually write the address of the exported function.  For elf, we'll
+                    // probably be writing the value into the .got.plt section.  Take into account that the section into which
+                    // we're writing may have been moved to a different place in virtual memory than where it expected to be.
+                    rose_addr_t write_va = reloc->get_r_offset();
+                    SgAsmGenericSection *write_sec = loader.find_section_by_preferred_va(imports_header, write_va);
+                    write_va += write_sec->get_mapped_actual_va() - write_sec->get_mapped_preferred_va();
+#if 0 /*DEBUGGING [Robb P. Matzke 2013-12-13]*/
+                    std::cerr <<"        where to write: \n"
+                              <<"           reloc offset = " <<addrToString(reloc->get_r_offset()) <<"\n"
+                              <<"           section = \"" <<write_sec->get_name()->get_string(true) <<"\"\n"
+                              <<"           write va = " <<addrToString(write_va) <<"\n";
+#endif
+
+                    uint32_t export_va_le;
+                    ByteOrder::host_to_le(export_va, &export_va_le);
+                    size_t nwrite = map->writeQuick(&export_va_le, write_va, 4);
+                    if (nwrite!=4) {
+                        std::cerr <<"        write failed into memory map:\n";
+                        map->dump(std::cerr, "          ");
                     }
                 }
             }
         }
     } fixer_upper(imports_header, exports, map);
+    fixer_upper.traverse(imports_header, preorder);
 }
 
 int64_t
@@ -1046,30 +1158,35 @@ finish_command(const SqlDatabase::TransactionPtr &tx, int64_t hashkey, const std
     }
 }
 
-// Return the name of a file containing the specified function.
+// Return the name of a file for the specified header (or AST descendant thereof)
 std::string
-filename_for_function(SgAsmFunction *function, bool basename)
+filename_for_header(SgAsmGenericHeader *hdr, bool basename)
 {
     std::string retval;
-    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
-    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
-    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
-        size_t nmatch;
-        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
-        if (nmatch>0) {
-            SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(*hi);
-            if (file!=NULL && !file->get_name().empty()) {
-                retval = file->get_name();
-                break;
-            }
-        }
-    }
+    SgAsmGenericFile *file = SageInterface::getEnclosingNode<SgAsmGenericFile>(hdr);
+    if (file!=NULL && !file->get_name().empty())
+        retval = file->get_name();
     if (basename) {
         size_t slash = retval.rfind('/');
         if (slash!=std::string::npos)
             retval = retval.substr(slash+1);
     }
     return retval;
+}
+
+// Return the name of a file containing the specified function.
+std::string
+filename_for_function(SgAsmFunction *function, bool basename)
+{
+    SgAsmInterpretation *interp = SageInterface::getEnclosingNode<SgAsmInterpretation>(function);
+    const SgAsmGenericHeaderPtrList &headers = interp->get_headers()->get_headers();
+    for (SgAsmGenericHeaderPtrList::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {
+        size_t nmatch;
+        (*hi)->get_section_by_va(function->get_entry_va(), false, &nmatch);
+        if (nmatch>0)
+            return filename_for_header(*hi, basename);
+    }
+    return "";
 }
 
 // Return a list of functions that are not already in the database, and appropriate ID numbers.  The functions are not
@@ -1279,77 +1396,108 @@ function_to_str(SgAsmFunction *function, const FunctionIdMap &ids)
 }
 
 static double
-function_returns_value(size_t ncalls, size_t nretused, size_t ntests, size_t nvoids)
+function_returns_value(const FuncAnalysis &fa, size_t ncalls_s, size_t nretused_s)
 {
-    assert(nretused<=ncalls);
-    assert(nvoids<=ntests);
-    if (0==ncalls && 0==ntests)
-        return 0.5;
+    if (ncalls_s>0) {
+        assert(nretused_s <= ncalls_s);
+        return (double)nretused_s/ncalls_s;
+    } else {
+        assert(fa.nretused<=fa.ncalls);
+        assert(fa.nvoids<=fa.ntests);
+        if (0==fa.ncalls && 0==fa.ntests)
+            return 0.5;
 
-    double p1 = ntests>0 ? 1.0-(double)nvoids/ntests : 0.5;
-    double p1_weight = ntests>0 ? 1.0 : 0.0;
-    double p2 = ncalls>0 ? (double)nretused/ncalls : 0.5;
-    double p2_weight = ncalls>0 ? 1.0 : 0.0;
+        double p1 = fa.ntests>0 ? 1.0-(double)fa.nvoids/fa.ntests : 0.5;
+        double p1_weight = fa.ntests>0 ? 1.0 : 0.0;
+        double p2 = fa.ncalls>0 ? (double)fa.nretused/fa.ncalls : 0.5;
+        double p2_weight = fa.ncalls>0 ? 1.0 : 0.0;
 
-    if (ntests>0 && nvoids==ntests) {
-        if (nretused>0) {
-            // The function was tested but never wrote to EAX, but callers read a return value. Something bizarre is going on
-            // here! Maybe the function has a logic error?  Give weight to the callers with the assumption that something in
-            // our testing may have prevented writing to EAX.
+        if (fa.ntests>0 && fa.nvoids==fa.ntests) {
+            if (fa.nretused>0) {
+                // The function was tested but never wrote to EAX, but callers read a return value. Something bizarre is going
+                // on here! Maybe the function has a logic error?  Give weight to the callers with the assumption that
+                // something in our testing may have prevented writing to EAX.
+                p1_weight = 0.0;
+                p2_weight = 1.0;
+            } else {
+                // Never wrote to EAX, and no caller read from EAX (or there were no callers).
+                return 0.0;
+            }
+        } else if (0==fa.ntests) {
+            // The function was never tested, so we don't know if it would write to EAX.  Our only choice is to rely entirely
+            // on whether the callers read a return value.  If there were no callers then we know nothing.
+            if (0==fa.ncalls)
+                return 0.5;
             p1_weight = 0.0;
             p2_weight = 1.0;
+        } else if (0==fa.ncalls) {
+            // The function was never called.  Even functions that write to EAX might only be using it as a temporary. If some
+            // of the tests don't write to EAX then EAX is probably not a return value.
+            if (fa.nvoids>0)
+                p1 *= 0.25;
+            p1_weight = 1.0;
+            p2_weight = 0.0;
         } else {
-            // Never wrote to EAX, and no caller read from EAX (or there were no callers).
-            return 0.0;
+            // The function was tested (and writes to EAX at least once), and it was called. Since even void functions can
+            // write to EAX as a temporary, we give more weight to whether the callers read a return value.
+            p1_weight = 1.0;
+            p2_weight = 5.0;
         }
-    } else if (0==ntests) {
-        // The function was never tested, so we don't know if it would write to EAX.  Our only choice is to rely entirely
-        // on whether the callers read a return value.  If there were no callers then we know nothing.
-        if (0==ncalls)
-            return 0.5;
-        p1_weight = 0.0;
-        p2_weight = 1.0;
-    } else if (0==ncalls) {
-        // The function was never called.  Even functions that write to EAX might only be using it as a temporary. If some of
-        // the tests don't write to EAX then EAX is probably not a return value.
-        if (nvoids>0)
-            p1 *= 0.25;
-        p1_weight = 1.0;
-        p2_weight = 0.0;
-    } else {
-        // The function was tested (and writes to EAX at least once), and it was called. Since even void functions can write
-        // to EAX as a temporary, we give more weight to whether the callers read a return value.
-        p1_weight = 1.0;
-        p2_weight = 5.0;
-    }
 
-    assert(p1_weight+p2_weight > 0);
-    return (p1*p1_weight+p2*p2_weight)/(p1_weight+p2_weight);
+        assert(p1_weight+p2_weight > 0);
+        return (p1*p1_weight+p2*p2_weight)/(p1_weight+p2_weight);
+    }
 }
 
 double
 function_returns_value(const SqlDatabase::TransactionPtr &tx, int func_id)
 {
-    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids)"
-                                                   " from semantic_funcpartials where func_id = ?")->bind(0, func_id);
-    SqlDatabase::Statement::iterator row = stmt->begin();
-    if (row==stmt->end())
-        return 0.5; // we know nothing about this function
-    return function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
-                                  row.get<size_t>(2), row.get<size_t>(3));
+
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids)"
+                                                    " from semantic_funcpartials where func_id = ? group by func_id")
+                                      ->bind(0, func_id);
+    SqlDatabase::Statement::iterator row = stmt1->begin();
+    FuncAnalysis fa;
+    if (row!=stmt1->end()) {
+        fa.ncalls = row.get<size_t>(0);
+        fa.nretused = row.get<size_t>(1);
+        fa.ntests = row.get<size_t>(2);
+        fa.nvoids = row.get<size_t>(3);
+    }
+
+    SqlDatabase::StatementPtr stmt2 = tx->statement("select callsites, retvals_used from semantic_functions"
+                                                    " where id = ?")->bind(0, func_id);
+    row = stmt2->begin();
+    assert(row!=stmt2->end());
+    size_t ncalls_s = row.get<size_t>(0);
+    size_t nretused_s = row.get<size_t>(1);
+
+    return function_returns_value(fa, ncalls_s, nretused_s);
 }
 
 std::map<int, double>
 function_returns_value(const SqlDatabase::TransactionPtr &tx)
 {
+    FuncAnalyses fas;
     std::map<int, double> retval;
-    SqlDatabase::StatementPtr stmt = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids), func_id"
+    SqlDatabase::StatementPtr stmt1 = tx->statement("select sum(ncalls), sum(nretused), sum(ntests), sum(nvoids), func_id"
                                                    " from semantic_funcpartials group by func_id");
-    for (SqlDatabase::Statement::iterator row=stmt->begin(); row!=stmt->end(); ++row) {
-        double p = function_returns_value(row.get<size_t>(0), row.get<size_t>(1),
-                                          row.get<size_t>(2), row.get<size_t>(3));
+    for (SqlDatabase::Statement::iterator row=stmt1->begin(); row!=stmt1->end(); ++row) {
         int func_id = row.get<int>(4);
-        retval[func_id] = p;
+        FuncAnalysis &fa = fas[func_id];
+        fa.ncalls = row.get<size_t>(0);
+        fa.nretused = row.get<size_t>(1);
+        fa.ntests = row.get<size_t>(2);
+        fa.nvoids = row.get<size_t>(3);
+    }
+
+    SqlDatabase::StatementPtr stmt2 = tx->statement("select id, callsites, retvals_used from semantic_functions");
+    for (SqlDatabase::Statement::iterator row=stmt2->begin(); row!=stmt2->end(); ++row) {
+        int func_id = row.get<int>(0);
+        FuncAnalysis &fa = fas[func_id];
+        size_t ncalls_s = row.get<size_t>(1);
+        size_t nretused_s = row.get<size_t>(2);
+        retval[func_id] = function_returns_value(fa, ncalls_s, nretused_s);
     }
     return retval;
 }

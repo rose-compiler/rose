@@ -3,6 +3,7 @@
 
 #include "BaseSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Abstract location.
@@ -129,6 +130,7 @@ public:
 
 std::ostream& operator<<(std::ostream&, const AbstractLocation&);
 
+} // namespace
 } // namespace
 
 #endif

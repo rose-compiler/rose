@@ -2,7 +2,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80482c8:push   ebp
+0x080482c8: push   ebp
 registers:
   esp          = v248-0x4[32]
   ebp          = v247[32]
@@ -11,7 +11,7 @@ registers:
 memory:
   addr=v248-0x4[32] value=v247[32]
 
-0x80482c9:mov    ebp, esp
+0x080482c9: mov    ebp, esp
 registers:
   esp          = v248-0x4[32]
   ebp          = v248-0x4[32]
@@ -20,7 +20,7 @@ registers:
 memory:
   addr=v248-0x4[32] value=v247[32]
 
-0x80482cb:sub    esp, 0x08
+0x080482cb: sub    esp, 0x08
 registers:
   esp          = v248-0xc[32]
   ebp          = v248-0x4[32]
@@ -35,7 +35,7 @@ registers:
 memory:
   addr=v248-0x4[32] value=v247[32]
 
-0x80482ce:call   0x08048364<call_gmon_start>
+0x080482ce: call   0x08048364<call_gmon_start>
 registers:
   esp          = v248-0x10[32]
   ebp          = v248-0x4[32]
@@ -54,7 +54,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80482d3:call   0x080483d0<frame_dummy>
+0x080482d3: call   0x080483d0<frame_dummy>
 registers:
   esp          = v356-0x4[32]
   eip          = 0x80483d0[32]
@@ -65,7 +65,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80482d8:call   0x08048580<__do_global_ctors_aux>
+0x080482d8: call   0x08048580<__do_global_ctors_aux>
 registers:
   esp          = v443-0x4[32]
   eip          = 0x8048580[32]
@@ -76,7 +76,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80482dd:leave  
+0x080482dd: leave  
 registers:
   esp          = v530+0x4[32]
   ebp          = v531[32]
@@ -85,7 +85,7 @@ registers:
 memory:
   addr=v530[32] value=v531[32]
 
-0x80482de:ret    
+0x080482de: ret    
 registers:
   esp          = v530+0x8[32]
   ebp          = v531[32]
@@ -98,7 +98,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80482f0:jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
 registers:
   eip          = v621[32]
   fpstatus_top = 0x0[3]
@@ -108,7 +108,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048300:jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
 registers:
   eip          = v709[32]
   fpstatus_top = 0x0[3]
@@ -118,7 +118,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048310:jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
 registers:
   eip          = v797[32]
   fpstatus_top = 0x0[3]
@@ -128,7 +128,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048320:jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
 registers:
   eip          = v885[32]
   fpstatus_top = 0x0[3]
@@ -138,7 +138,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048330:jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
 registers:
   eip          = v973[32]
   fpstatus_top = 0x0[3]
@@ -148,7 +148,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048340:xor    ebp, ebp
+0x08048340: xor    ebp, ebp
 registers:
   ebp          = 0x0[32]
   eip          = 0x8048342[32]
@@ -161,7 +161,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048342:pop    esi
+0x08048342: pop    esi
 registers:
   esp          = v1062+0x4[32]
   ebp          = 0x0[32]
@@ -177,7 +177,7 @@ registers:
 memory:
   addr=v1062[32] value=v1063[32]
 
-0x8048343:mov    ecx, esp
+0x08048343: mov    ecx, esp
 registers:
   ecx          = v1062+0x4[32]
   esp          = v1062+0x4[32]
@@ -194,7 +194,7 @@ registers:
 memory:
   addr=v1062[32] value=v1063[32]
 
-0x8048345:and    esp, 0xf0<-16>
+0x08048345: and    esp, 0xf0<-16>
 registers:
   ecx          = v1062+0x4[32]
   esp          = v1065[32]
@@ -211,7 +211,7 @@ registers:
 memory:
   addr=v1062[32] value=v1063[32]
 
-0x8048348:push   eax
+0x08048348: push   eax
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -230,7 +230,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x8048349:push   esp
+0x08048349: push   esp
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -250,7 +250,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x804834a:push   edx
+0x0804834a: push   edx
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -272,7 +272,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x804834b:push   0x08048520<__libc_csu_fini>
+0x0804834b: push   0x08048520<__libc_csu_fini>
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -295,7 +295,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x8048350:push   0x080484b0<__libc_csu_init>
+0x08048350: push   0x080484b0<__libc_csu_init>
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -319,7 +319,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x8048355:push   ecx
+0x08048355: push   ecx
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -344,7 +344,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x8048356:push   esi
+0x08048356: push   esi
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -370,7 +370,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x8048357:push   0x08048410<main>
+0x08048357: push   0x08048410<main>
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -397,7 +397,7 @@ memory:
   addr=v1065-0x4[32] value=v1083[32]
   addr=v1062[32] value=v1063[32]
 
-0x804835c:call   0x08048310<__libc_start_main@plt>
+0x0804835c: call   0x08048310<__libc_start_main@plt>
 registers:
   eax          = v1083[32]
   ecx          = v1062+0x4[32]
@@ -428,7 +428,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048361:hlt    
+0x08048361: hlt    
 registers:
   eip          = 0x8048361[32]
   fpstatus_top = 0x0[3]
@@ -437,7 +437,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048364:push   ebp
+0x08048364: push   ebp
 registers:
   esp          = v1258-0x4[32]
   ebp          = v1257[32]
@@ -446,7 +446,7 @@ registers:
 memory:
   addr=v1258-0x4[32] value=v1257[32]
 
-0x8048365:mov    ebp, esp
+0x08048365: mov    ebp, esp
 registers:
   esp          = v1258-0x4[32]
   ebp          = v1258-0x4[32]
@@ -455,7 +455,7 @@ registers:
 memory:
   addr=v1258-0x4[32] value=v1257[32]
 
-0x8048367:push   ebx
+0x08048367: push   ebx
 registers:
   ebx          = v1259[32]
   esp          = v1258-0x8[32]
@@ -466,7 +466,7 @@ memory:
   addr=v1258-0x8[32] value=v1259[32]
   addr=v1258-0x4[32] value=v1257[32]
 
-0x8048368:push   ecx
+0x08048368: push   ecx
 registers:
   ecx          = v1260[32]
   ebx          = v1259[32]
@@ -479,7 +479,7 @@ memory:
   addr=v1258-0x8[32] value=v1259[32]
   addr=v1258-0x4[32] value=v1257[32]
 
-0x8048369:call   0x0804836e<<Insn>>
+0x08048369: call   0x0804836e<<Insn>>
 registers:
   ecx          = v1260[32]
   ebx          = v1259[32]
@@ -496,7 +496,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804836e:pop    ebx
+0x0804836e: pop    ebx
 registers:
   ebx          = v1348[32]
   esp          = v1347+0x4[32]
@@ -505,7 +505,7 @@ registers:
 memory:
   addr=v1347[32] value=v1348[32]
 
-0x804836f:add    ebx, 0x0000135a<4954>
+0x0804836f: add    ebx, 0x0000135a<4954>
 registers:
   ebx          = v1348+0x135a[32]
   esp          = v1347+0x4[32]
@@ -520,7 +520,7 @@ registers:
 memory:
   addr=v1347[32] value=v1348[32]
 
-0x8048375:mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
 registers:
   edx          = v1371[32]
   ebx          = v1348+0x135a[32]
@@ -537,7 +537,7 @@ memory:
   addr=v1348+0x1356[32] value=v1371[32]
   addr=v1347[32] value=v1348[32]
 
-0x804837b:test   edx, edx
+0x0804837b: test   edx, edx
 registers:
   edx          = v1371[32]
   ebx          = v1348+0x135a[32]
@@ -554,7 +554,7 @@ memory:
   addr=v1348+0x1356[32] value=v1371[32]
   addr=v1347[32] value=v1348[32]
 
-0x804837d:je     0x08048384<<Insn>>
+0x0804837d: je     0x08048384<<Insn>>
 registers:
   edx          = v1371[32]
   ebx          = v1348+0x135a[32]
@@ -574,7 +574,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804837f:call   0x08048330<__gmon_start__@plt>
+0x0804837f: call   0x08048330<__gmon_start__@plt>
 registers:
   esp          = v1508-0x4[32]
   eip          = 0x8048330[32]
@@ -585,7 +585,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048384:pop    eax
+0x08048384: pop    eax
 registers:
   eax          = v1596[32]
   esp          = v1595+0x4[32]
@@ -594,7 +594,7 @@ registers:
 memory:
   addr=v1595[32] value=v1596[32]
 
-0x8048385:pop    ebx
+0x08048385: pop    ebx
 registers:
   eax          = v1596[32]
   ebx          = v1598[32]
@@ -605,7 +605,7 @@ memory:
   addr=v1595+0x4[32] value=v1598[32]
   addr=v1595[32] value=v1596[32]
 
-0x8048386:leave  
+0x08048386: leave  
 registers:
   eax          = v1596[32]
   ebx          = v1598[32]
@@ -618,7 +618,7 @@ memory:
   addr=v1595+0x4[32] value=v1598[32]
   addr=v1595[32] value=v1596[32]
 
-0x8048387:ret    
+0x08048387: ret    
 registers:
   eax          = v1596[32]
   ebx          = v1598[32]
@@ -635,7 +635,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048390:push   ebp
+0x08048390: push   ebp
 registers:
   esp          = v1812-0x4[32]
   ebp          = v1811[32]
@@ -644,7 +644,7 @@ registers:
 memory:
   addr=v1812-0x4[32] value=v1811[32]
 
-0x8048391:mov    ebp, esp
+0x08048391: mov    ebp, esp
 registers:
   esp          = v1812-0x4[32]
   ebp          = v1812-0x4[32]
@@ -653,7 +653,7 @@ registers:
 memory:
   addr=v1812-0x4[32] value=v1811[32]
 
-0x8048393:sub    esp, 0x08
+0x08048393: sub    esp, 0x08
 registers:
   esp          = v1812-0xc[32]
   ebp          = v1812-0x4[32]
@@ -668,7 +668,7 @@ registers:
 memory:
   addr=v1812-0x4[32] value=v1811[32]
 
-0x8048396:cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
 registers:
   esp          = v1812-0xc[32]
   ebp          = v1812-0x4[32]
@@ -684,7 +684,7 @@ memory:
   addr=0x80496f4[32] value=v1834[8]
   addr=v1812-0x4[32] value=v1811[32]
 
-0x804839d:jne    0x080483cc<<Insn>>
+0x0804839d: jne    0x080483cc<<Insn>>
 registers:
   esp          = v1812-0xc[32]
   ebp          = v1812-0x4[32]
@@ -703,7 +703,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804839f:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
   eax          = v1970[32]
   eip          = 0x80483a4[32]
@@ -711,7 +711,7 @@ registers:
 memory:
   addr=0x80496f0[32] value=v1970[32]
 
-0x80483a4:mov    edx, DWORD PTR ds:[eax]
+0x080483a4: mov    edx, DWORD PTR ds:[eax]
 registers:
   eax          = v1970[32]
   edx          = v1972[32]
@@ -721,7 +721,7 @@ memory:
   addr=v1970[32] value=v1972[32]
   addr=0x80496f0[32] value=v1970[32]
 
-0x80483a6:test   edx, edx
+0x080483a6: test   edx, edx
 registers:
   eax          = v1970[32]
   edx          = v1972[32]
@@ -737,7 +737,7 @@ memory:
   addr=v1970[32] value=v1972[32]
   addr=0x80496f0[32] value=v1970[32]
 
-0x80483a8:je     0x080483c5<<Insn>>
+0x080483a8: je     0x080483c5<<Insn>>
 registers:
   eax          = v1970[32]
   edx          = v1972[32]
@@ -756,14 +756,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483aa:lea    esi, [esi + 0x00000000]
+0x080483aa: lea    esi, [esi + 0x00000000]
 registers:
   esi          = v2105[32]
   eip          = 0x80483b0[32]
   fpstatus_top = 0x0[3]
 memory:
 
-0x80483b0:add    eax, 0x04
+0x080483b0: add    eax, 0x04
 registers:
   eax          = v2106+0x4[32]
   esi          = v2105[32]
@@ -777,7 +777,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80483b3:mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
 registers:
   eax          = v2106+0x4[32]
   esi          = v2105[32]
@@ -792,7 +792,7 @@ registers:
 memory:
   addr=0x80496f0[32] value=v2106+0x4[32]
 
-0x80483b8:call   edx
+0x080483b8: call   edx
 registers:
   eax          = v2106+0x4[32]
   edx          = v2129[32]
@@ -813,7 +813,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483ba:mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
 registers:
   eax          = v2216[32]
   eip          = 0x80483bf[32]
@@ -821,7 +821,7 @@ registers:
 memory:
   addr=0x80496f0[32] value=v2216[32]
 
-0x80483bf:mov    edx, DWORD PTR ds:[eax]
+0x080483bf: mov    edx, DWORD PTR ds:[eax]
 registers:
   eax          = v2216[32]
   edx          = v2218[32]
@@ -831,7 +831,7 @@ memory:
   addr=v2216[32] value=v2218[32]
   addr=0x80496f0[32] value=v2216[32]
 
-0x80483c1:test   edx, edx
+0x080483c1: test   edx, edx
 registers:
   eax          = v2216[32]
   edx          = v2218[32]
@@ -847,7 +847,7 @@ memory:
   addr=v2216[32] value=v2218[32]
   addr=0x80496f0[32] value=v2216[32]
 
-0x80483c3:jne    0x080483b0<<Insn>>
+0x080483c3: jne    0x080483b0<<Insn>>
 registers:
   eax          = v2216[32]
   edx          = v2218[32]
@@ -866,14 +866,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483c5:mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
 registers:
   eip          = 0x80483cc[32]
   fpstatus_top = 0x0[3]
 memory:
   addr=0x80496f4[32] value=0x1[8]
 
-0x80483cc:leave  
+0x080483cc: leave  
 registers:
   esp          = v2351+0x4[32]
   ebp          = v2352[32]
@@ -883,7 +883,7 @@ memory:
   addr=v2351[32] value=v2352[32]
   addr=0x80496f4[32] value=0x1[8]
 
-0x80483cd:ret    
+0x080483cd: ret    
 registers:
   esp          = v2351+0x8[32]
   ebp          = v2352[32]
@@ -897,7 +897,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483d0:push   ebp
+0x080483d0: push   ebp
 registers:
   esp          = v2495-0x4[32]
   ebp          = v2494[32]
@@ -906,7 +906,7 @@ registers:
 memory:
   addr=v2495-0x4[32] value=v2494[32]
 
-0x80483d1:mov    ebp, esp
+0x080483d1: mov    ebp, esp
 registers:
   esp          = v2495-0x4[32]
   ebp          = v2495-0x4[32]
@@ -915,7 +915,7 @@ registers:
 memory:
   addr=v2495-0x4[32] value=v2494[32]
 
-0x80483d3:sub    esp, 0x08
+0x080483d3: sub    esp, 0x08
 registers:
   esp          = v2495-0xc[32]
   ebp          = v2495-0x4[32]
@@ -930,7 +930,7 @@ registers:
 memory:
   addr=v2495-0x4[32] value=v2494[32]
 
-0x80483d6:mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
 registers:
   eax          = v2517[32]
   esp          = v2495-0xc[32]
@@ -947,7 +947,7 @@ memory:
   addr=0x80495f8[32] value=v2517[32]
   addr=v2495-0x4[32] value=v2494[32]
 
-0x80483db:test   eax, eax
+0x080483db: test   eax, eax
 registers:
   eax          = v2517[32]
   esp          = v2495-0xc[32]
@@ -964,7 +964,7 @@ memory:
   addr=0x80495f8[32] value=v2517[32]
   addr=v2495-0x4[32] value=v2494[32]
 
-0x80483dd:je     0x08048400<<Insn>>
+0x080483dd: je     0x08048400<<Insn>>
 registers:
   eax          = v2517[32]
   esp          = v2495-0xc[32]
@@ -984,14 +984,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483df:mov    eax, 0x00000000
+0x080483df: mov    eax, 0x00000000
 registers:
   eax          = 0x0[32]
   eip          = 0x80483e4[32]
   fpstatus_top = 0x0[3]
 memory:
 
-0x80483e4:test   eax, eax
+0x080483e4: test   eax, eax
 registers:
   eax          = 0x0[32]
   eip          = 0x80483e6[32]
@@ -1004,7 +1004,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80483e6:je     0x08048400<<Insn>>
+0x080483e6: je     0x08048400<<Insn>>
 registers:
   eax          = 0x0[32]
   eip          = 0x8048400[32]
@@ -1017,7 +1017,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048400:mov    esp, ebp
+0x08048400: mov    esp, ebp
 registers:
   eax          = 0x0[32]
   esp          = v2651[32]
@@ -1032,7 +1032,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048402:pop    ebp
+0x08048402: pop    ebp
 registers:
   eax          = 0x0[32]
   esp          = v2651+0x4[32]
@@ -1048,7 +1048,7 @@ registers:
 memory:
   addr=v2651[32] value=v2652[32]
 
-0x8048403:ret    
+0x08048403: ret    
 registers:
   eax          = 0x0[32]
   esp          = v2651+0x8[32]
@@ -1068,7 +1068,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483e8:mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
 registers:
   esp          = v2742[32]
   eip          = 0x80483ef[32]
@@ -1076,7 +1076,7 @@ registers:
 memory:
   addr=v2742[32] value=0x80495f8[32]
 
-0x80483ef:call   0x00000000
+0x080483ef: call   0x00000000
 registers:
   esp          = v2742-0x4[32]
   eip          = 0x0[32]
@@ -1088,14 +1088,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80483f4:lea    esi, [esi + 0x00000000]
+0x080483f4: lea    esi, [esi + 0x00000000]
 registers:
   esi          = v2829[32]
   eip          = 0x80483fa[32]
   fpstatus_top = 0x0[3]
 memory:
 
-0x80483fa:lea    edi, [edi + 0x00000000]
+0x080483fa: lea    edi, [edi + 0x00000000]
 registers:
   esi          = v2829[32]
   edi          = v2830[32]
@@ -1106,7 +1106,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048410:push   ebp
+0x08048410: push   ebp
 registers:
   esp          = v2918-0x4[32]
   ebp          = v2917[32]
@@ -1115,7 +1115,7 @@ registers:
 memory:
   addr=v2918-0x4[32] value=v2917[32]
 
-0x8048411:mov    edx, 0x08048480<handler>
+0x08048411: mov    edx, 0x08048480<handler>
 registers:
   edx          = 0x8048480[32]
   esp          = v2918-0x4[32]
@@ -1125,7 +1125,7 @@ registers:
 memory:
   addr=v2918-0x4[32] value=v2917[32]
 
-0x8048416:mov    ebp, esp
+0x08048416: mov    ebp, esp
 registers:
   edx          = 0x8048480[32]
   esp          = v2918-0x4[32]
@@ -1135,7 +1135,7 @@ registers:
 memory:
   addr=v2918-0x4[32] value=v2917[32]
 
-0x8048418:sub    esp, 0x08
+0x08048418: sub    esp, 0x08
 registers:
   edx          = 0x8048480[32]
   esp          = v2918-0xc[32]
@@ -1151,7 +1151,7 @@ registers:
 memory:
   addr=v2918-0x4[32] value=v2917[32]
 
-0x804841b:and    esp, 0xf0<-16>
+0x0804841b: and    esp, 0xf0<-16>
 registers:
   edx          = 0x8048480[32]
   esp          = v2940[32]
@@ -1167,7 +1167,7 @@ registers:
 memory:
   addr=v2918-0x4[32] value=v2917[32]
 
-0x804841e:mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
 registers:
   edx          = 0x8048480[32]
   esp          = v2940[32]
@@ -1184,7 +1184,7 @@ memory:
   addr=v2940+0x4[32] value=0x8048480[32]
   addr=v2918-0x4[32] value=v2917[32]
 
-0x8048422:mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
 registers:
   edx          = 0x8048480[32]
   esp          = v2940[32]
@@ -1202,7 +1202,7 @@ memory:
   addr=v2940+0x4[32] value=0x8048480[32]
   addr=v2918-0x4[32] value=v2917[32]
 
-0x8048429:call   0x080482f0<signal@plt>
+0x08048429: call   0x080482f0<signal@plt>
 registers:
   edx          = 0x8048480[32]
   esp          = v2940-0x4[32]
@@ -1224,7 +1224,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804842e:mov    esp, ebp
+0x0804842e: mov    esp, ebp
 registers:
   esp          = v3044[32]
   ebp          = v3044[32]
@@ -1232,7 +1232,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048430:xor    eax, eax
+0x08048430: xor    eax, eax
 registers:
   eax          = 0x0[32]
   esp          = v3044[32]
@@ -1247,7 +1247,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048432:pop    ebp
+0x08048432: pop    ebp
 registers:
   eax          = 0x0[32]
   esp          = v3044+0x4[32]
@@ -1263,7 +1263,7 @@ registers:
 memory:
   addr=v3044[32] value=v3046[32]
 
-0x8048433:ret    
+0x08048433: ret    
 registers:
   eax          = 0x0[32]
   esp          = v3044+0x8[32]
@@ -1283,7 +1283,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048440:push   ebp
+0x08048440: push   ebp
 registers:
   esp          = v3137-0x4[32]
   ebp          = v3136[32]
@@ -1292,7 +1292,7 @@ registers:
 memory:
   addr=v3137-0x4[32] value=v3136[32]
 
-0x8048441:mov    ebp, esp
+0x08048441: mov    ebp, esp
 registers:
   esp          = v3137-0x4[32]
   ebp          = v3137-0x4[32]
@@ -1301,7 +1301,7 @@ registers:
 memory:
   addr=v3137-0x4[32] value=v3136[32]
 
-0x8048443:sub    esp, 0x08
+0x08048443: sub    esp, 0x08
 registers:
   esp          = v3137-0xc[32]
   ebp          = v3137-0x4[32]
@@ -1316,7 +1316,7 @@ registers:
 memory:
   addr=v3137-0x4[32] value=v3136[32]
 
-0x8048446:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          = v3137-0xc[32]
   ebp          = v3137-0x4[32]
@@ -1332,7 +1332,7 @@ memory:
   addr=v3137-0xc[32] value=0x80485d4[32]
   addr=v3137-0x4[32] value=v3136[32]
 
-0x804844d:call   0x08048300<puts@plt>
+0x0804844d: call   0x08048300<puts@plt>
 registers:
   esp          = v3137-0x10[32]
   ebp          = v3137-0x4[32]
@@ -1352,7 +1352,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048452:mov    esp, ebp
+0x08048452: mov    esp, ebp
 registers:
   esp          = v3245[32]
   ebp          = v3245[32]
@@ -1360,7 +1360,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048454:pop    ebp
+0x08048454: pop    ebp
 registers:
   esp          = v3245+0x4[32]
   ebp          = v3246[32]
@@ -1369,7 +1369,7 @@ registers:
 memory:
   addr=v3245[32] value=v3246[32]
 
-0x8048455:ret    
+0x08048455: ret    
 registers:
   esp          = v3245+0x8[32]
   ebp          = v3246[32]
@@ -1382,7 +1382,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048460:push   ebp
+0x08048460: push   ebp
 registers:
   esp          = v3337-0x4[32]
   ebp          = v3336[32]
@@ -1391,7 +1391,7 @@ registers:
 memory:
   addr=v3337-0x4[32] value=v3336[32]
 
-0x8048461:mov    ebp, esp
+0x08048461: mov    ebp, esp
 registers:
   esp          = v3337-0x4[32]
   ebp          = v3337-0x4[32]
@@ -1400,7 +1400,7 @@ registers:
 memory:
   addr=v3337-0x4[32] value=v3336[32]
 
-0x8048463:sub    esp, 0x08
+0x08048463: sub    esp, 0x08
 registers:
   esp          = v3337-0xc[32]
   ebp          = v3337-0x4[32]
@@ -1415,7 +1415,7 @@ registers:
 memory:
   addr=v3337-0x4[32] value=v3336[32]
 
-0x8048466:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          = v3337-0xc[32]
   ebp          = v3337-0x4[32]
@@ -1431,7 +1431,7 @@ memory:
   addr=v3337-0xc[32] value=0x80485d4[32]
   addr=v3337-0x4[32] value=v3336[32]
 
-0x804846d:call   0x08048300<puts@plt>
+0x0804846d: call   0x08048300<puts@plt>
 registers:
   esp          = v3337-0x10[32]
   ebp          = v3337-0x4[32]
@@ -1451,7 +1451,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048472:mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
 registers:
   esp          = v3445[32]
   eip          = 0x8048479[32]
@@ -1459,7 +1459,7 @@ registers:
 memory:
   addr=v3445[32] value=0x0[32]
 
-0x8048479:call   0x08048320<_exit@plt>
+0x08048479: call   0x08048320<_exit@plt>
 registers:
   esp          = v3445-0x4[32]
   eip          = 0x8048320[32]
@@ -1471,7 +1471,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048480:push   ebp
+0x08048480: push   ebp
 registers:
   esp          = v3533-0x4[32]
   ebp          = v3532[32]
@@ -1480,7 +1480,7 @@ registers:
 memory:
   addr=v3533-0x4[32] value=v3532[32]
 
-0x8048481:mov    ebp, esp
+0x08048481: mov    ebp, esp
 registers:
   esp          = v3533-0x4[32]
   ebp          = v3533-0x4[32]
@@ -1489,7 +1489,7 @@ registers:
 memory:
   addr=v3533-0x4[32] value=v3532[32]
 
-0x8048483:sub    esp, 0x08
+0x08048483: sub    esp, 0x08
 registers:
   esp          = v3533-0xc[32]
   ebp          = v3533-0x4[32]
@@ -1504,7 +1504,7 @@ registers:
 memory:
   addr=v3533-0x4[32] value=v3532[32]
 
-0x8048486:inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
 registers:
   esp          = v3533-0xc[32]
   ebp          = v3533-0x4[32]
@@ -1521,7 +1521,7 @@ memory:
   addr=0x80496f8[32] value=v3555[32]
   addr=v3533-0x4[32] value=v3532[32]
 
-0x804848c:mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          = v3533-0xc[32]
   ebp          = v3533-0x4[32]
@@ -1539,7 +1539,7 @@ memory:
   addr=0x80496f8[32] value=v3555[32]
   addr=v3533-0x4[32] value=v3532[32]
 
-0x8048493:call   0x08048300<puts@plt>
+0x08048493: call   0x08048300<puts@plt>
 registers:
   esp          = v3533-0x10[32]
   ebp          = v3533-0x4[32]
@@ -1561,7 +1561,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048498:mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
 registers:
   esp          = v3690[32]
   eip          = 0x804849f[32]
@@ -1569,7 +1569,7 @@ registers:
 memory:
   addr=v3690[32] value=0x0[32]
 
-0x804849f:call   0x08048320<_exit@plt>
+0x0804849f: call   0x08048320<_exit@plt>
 registers:
   esp          = v3690-0x4[32]
   eip          = 0x8048320[32]
@@ -1581,7 +1581,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484b0:push   ebp
+0x080484b0: push   ebp
 registers:
   esp          = v3778-0x4[32]
   ebp          = v3777[32]
@@ -1590,7 +1590,7 @@ registers:
 memory:
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b1:mov    ebp, esp
+0x080484b1: mov    ebp, esp
 registers:
   esp          = v3778-0x4[32]
   ebp          = v3778-0x4[32]
@@ -1599,7 +1599,7 @@ registers:
 memory:
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b3:push   edi
+0x080484b3: push   edi
 registers:
   esp          = v3778-0x8[32]
   ebp          = v3778-0x4[32]
@@ -1610,7 +1610,7 @@ memory:
   addr=v3778-0x8[32] value=v3779[32]
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b4:push   esi
+0x080484b4: push   esi
 registers:
   esp          = v3778-0xc[32]
   ebp          = v3778-0x4[32]
@@ -1623,7 +1623,7 @@ memory:
   addr=v3778-0x8[32] value=v3779[32]
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b5:push   ebx
+0x080484b5: push   ebx
 registers:
   ebx          = v3781[32]
   esp          = v3778-0x10[32]
@@ -1638,7 +1638,7 @@ memory:
   addr=v3778-0x8[32] value=v3779[32]
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b6:sub    esp, 0x0c
+0x080484b6: sub    esp, 0x0c
 registers:
   ebx          = v3781[32]
   esp          = v3778-0x1c[32]
@@ -1659,7 +1659,7 @@ memory:
   addr=v3778-0x8[32] value=v3779[32]
   addr=v3778-0x4[32] value=v3777[32]
 
-0x80484b9:call   0x080484be<<Insn>>
+0x080484b9: call   0x080484be<<Insn>>
 registers:
   ebx          = v3781[32]
   esp          = v3778-0x20[32]
@@ -1684,7 +1684,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484be:pop    ebx
+0x080484be: pop    ebx
 registers:
   ebx          = v3890[32]
   esp          = v3889+0x4[32]
@@ -1693,7 +1693,7 @@ registers:
 memory:
   addr=v3889[32] value=v3890[32]
 
-0x80484bf:add    ebx, 0x0000120a<4618>
+0x080484bf: add    ebx, 0x0000120a<4618>
 registers:
   ebx          = v3890+0x120a[32]
   esp          = v3889+0x4[32]
@@ -1708,7 +1708,7 @@ registers:
 memory:
   addr=v3889[32] value=v3890[32]
 
-0x80484c5:call   0x080482c8<_init>
+0x080484c5: call   0x080482c8<_init>
 registers:
   ebx          = v3890+0x120a[32]
   esp          = v3889[32]
@@ -1727,7 +1727,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80484ca:lea    eax, [ebx + 0xffffff20<-224>]
+0x080484ca: lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax          = v3999-0xe0[32]
   ebx          = v3999[32]
@@ -1735,7 +1735,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80484d0:lea    edx, [ebx + 0xffffff20<-224>]
+0x080484d0: lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax          = v3999-0xe0[32]
   edx          = v3999-0xe0[32]
@@ -1744,7 +1744,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80484d6:sub    eax, edx
+0x080484d6: sub    eax, edx
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1759,7 +1759,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80484d8:sar    eax, 0x02
+0x080484d8: sar    eax, 0x02
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1774,7 +1774,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80484db:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1791,7 +1791,7 @@ registers:
 memory:
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484de:jne    0x080484f0<<StaticData@0x080484e8>+8>
+0x080484de: jne    0x080484f0<<StaticData@0x080484e8>+8>
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1808,7 +1808,7 @@ registers:
 memory:
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e0:add    esp, 0x0c
+0x080484e0: add    esp, 0x0c
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1826,7 +1826,7 @@ registers:
 memory:
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e3:pop    ebx
+0x080484e3: pop    ebx
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1845,7 +1845,7 @@ memory:
   addr=v4004+0xc[32] value=v4026[32]
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e4:pop    esi
+0x080484e4: pop    esi
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1866,7 +1866,7 @@ memory:
   addr=v4004+0xc[32] value=v4026[32]
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e5:pop    edi
+0x080484e5: pop    edi
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1889,7 +1889,7 @@ memory:
   addr=v4004+0xc[32] value=v4026[32]
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e6:pop    ebp
+0x080484e6: pop    ebp
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1913,7 +1913,7 @@ memory:
   addr=v4004+0xc[32] value=v4026[32]
   addr=v4003-0x10[32] value=0x0[32]
 
-0x80484e7:ret    
+0x080484e7: ret    
 registers:
   eax          = 0x0[32]
   edx          = v3999-0xe0[32]
@@ -1941,7 +1941,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048520:push   ebp
+0x08048520: push   ebp
 registers:
   esp          = v4273-0x4[32]
   ebp          = v4272[32]
@@ -1950,7 +1950,7 @@ registers:
 memory:
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048521:mov    ebp, esp
+0x08048521: mov    ebp, esp
 registers:
   esp          = v4273-0x4[32]
   ebp          = v4273-0x4[32]
@@ -1959,7 +1959,7 @@ registers:
 memory:
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048523:push   edi
+0x08048523: push   edi
 registers:
   esp          = v4273-0x8[32]
   ebp          = v4273-0x4[32]
@@ -1970,7 +1970,7 @@ memory:
   addr=v4273-0x8[32] value=v4274[32]
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048524:push   esi
+0x08048524: push   esi
 registers:
   esp          = v4273-0xc[32]
   ebp          = v4273-0x4[32]
@@ -1983,7 +1983,7 @@ memory:
   addr=v4273-0x8[32] value=v4274[32]
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048525:push   ebx
+0x08048525: push   ebx
 registers:
   ebx          = v4276[32]
   esp          = v4273-0x10[32]
@@ -1998,7 +1998,7 @@ memory:
   addr=v4273-0x8[32] value=v4274[32]
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048526:sub    esp, 0x0c
+0x08048526: sub    esp, 0x0c
 registers:
   ebx          = v4276[32]
   esp          = v4273-0x1c[32]
@@ -2019,7 +2019,7 @@ memory:
   addr=v4273-0x8[32] value=v4274[32]
   addr=v4273-0x4[32] value=v4272[32]
 
-0x8048529:call   0x0804852e<<Insn>>
+0x08048529: call   0x0804852e<<Insn>>
 registers:
   ebx          = v4276[32]
   esp          = v4273-0x20[32]
@@ -2044,7 +2044,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804852e:pop    ebx
+0x0804852e: pop    ebx
 registers:
   ebx          = v4385[32]
   esp          = v4384+0x4[32]
@@ -2053,7 +2053,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x804852f:add    ebx, 0x0000119a<4506>
+0x0804852f: add    ebx, 0x0000119a<4506>
 registers:
   ebx          = v4385+0x119a[32]
   esp          = v4384+0x4[32]
@@ -2068,7 +2068,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x8048535:lea    eax, [ebx + 0xffffff20<-224>]
+0x08048535: lea    eax, [ebx + 0xffffff20<-224>]
 registers:
   eax          = v4385+0x10ba[32]
   ebx          = v4385+0x119a[32]
@@ -2084,7 +2084,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x804853b:lea    edx, [ebx + 0xffffff20<-224>]
+0x0804853b: lea    edx, [ebx + 0xffffff20<-224>]
 registers:
   eax          = v4385+0x10ba[32]
   edx          = v4385+0x10ba[32]
@@ -2101,7 +2101,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x8048541:sub    eax, edx
+0x08048541: sub    eax, edx
 registers:
   eax          = 0x0[32]
   edx          = v4385+0x10ba[32]
@@ -2118,7 +2118,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x8048543:sar    eax, 0x02
+0x08048543: sar    eax, 0x02
 registers:
   eax          = 0x0[32]
   edx          = v4385+0x10ba[32]
@@ -2135,7 +2135,7 @@ registers:
 memory:
   addr=v4384[32] value=v4385[32]
 
-0x8048546:mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
 registers:
   eax          = 0x0[32]
   edx          = v4385+0x10ba[32]
@@ -2154,7 +2154,7 @@ memory:
   addr=v4411-0x10[32] value=0x0[32]
   addr=v4384[32] value=v4385[32]
 
-0x8048549:dec    eax
+0x08048549: dec    eax
 registers:
   eax          = 0xffffffff (-0x1)[32]
   edx          = v4385+0x10ba[32]
@@ -2173,7 +2173,7 @@ memory:
   addr=v4411-0x10[32] value=0x0[32]
   addr=v4384[32] value=v4385[32]
 
-0x804854a:cmp    eax, 0xff<-1>
+0x0804854a: cmp    eax, 0xff<-1>
 registers:
   eax          = 0xffffffff (-0x1)[32]
   edx          = v4385+0x10ba[32]
@@ -2192,7 +2192,7 @@ memory:
   addr=v4411-0x10[32] value=0x0[32]
   addr=v4384[32] value=v4385[32]
 
-0x804854d:je     0x0804856b<<Insn>>
+0x0804854d: je     0x0804856b<<Insn>>
 registers:
   eax          = 0xffffffff (-0x1)[32]
   edx          = v4385+0x10ba[32]
@@ -2211,7 +2211,7 @@ memory:
   addr=v4411-0x10[32] value=0x0[32]
   addr=v4384[32] value=v4385[32]
 
-0x804856b:call   0x080485b0<_fini>
+0x0804856b: call   0x080485b0<_fini>
 registers:
   eax          = 0xffffffff (-0x1)[32]
   edx          = v4385+0x10ba[32]
@@ -2234,7 +2234,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x804854f:lea    esi, [edx + eax*0x04]
+0x0804854f: lea    esi, [edx + eax*0x04]
 registers:
   eax          = v4499[32]
   edx          = v4498[32]
@@ -2243,7 +2243,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048552:xor    edi, edi
+0x08048552: xor    edi, edi
 registers:
   eax          = v4499[32]
   edx          = v4498[32]
@@ -2259,7 +2259,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048554:lea    esi, [esi + 0x00000000]
+0x08048554: lea    esi, [esi + 0x00000000]
 registers:
   eax          = v4499[32]
   edx          = v4498[32]
@@ -2275,7 +2275,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x804855a:lea    edi, [edi + 0x00000000]
+0x0804855a: lea    edi, [edi + 0x00000000]
 registers:
   eax          = v4499[32]
   edx          = v4498[32]
@@ -2291,7 +2291,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048560:call   DWORD PTR ds:[esi]
+0x08048560: call   DWORD PTR ds:[esi]
 registers:
   eax          = v4499[32]
   edx          = v4498[32]
@@ -2313,7 +2313,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048562:inc    edi
+0x08048562: inc    edi
 registers:
   edi          = v4622+0x1[32]
   eip          = 0x8048563[32]
@@ -2325,7 +2325,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048563:sub    esi, 0x04
+0x08048563: sub    esi, 0x04
 registers:
   esi          = v4644-0x4[32]
   edi          = v4622+0x1[32]
@@ -2339,7 +2339,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048566:cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
 registers:
   ebp          = v4666[32]
   esi          = v4644-0x4[32]
@@ -2355,7 +2355,7 @@ registers:
 memory:
   addr=v4666-0x10[32] value=v4667[32]
 
-0x8048569:jne    0x08048560<<Insn>>
+0x08048569: jne    0x08048560<<Insn>>
 registers:
   ebp          = v4666[32]
   esi          = v4644-0x4[32]
@@ -2374,7 +2374,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048570:add    esp, 0x0c
+0x08048570: add    esp, 0x0c
 registers:
   esp          = v4778+0xc[32]
   eip          = 0x8048573[32]
@@ -2387,7 +2387,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048573:pop    ebx
+0x08048573: pop    ebx
 registers:
   ebx          = v4800[32]
   esp          = v4778+0x10[32]
@@ -2402,7 +2402,7 @@ registers:
 memory:
   addr=v4778+0xc[32] value=v4800[32]
 
-0x8048574:pop    esi
+0x08048574: pop    esi
 registers:
   ebx          = v4800[32]
   esp          = v4778+0x14[32]
@@ -2419,7 +2419,7 @@ memory:
   addr=v4778+0x10[32] value=v4802[32]
   addr=v4778+0xc[32] value=v4800[32]
 
-0x8048575:pop    edi
+0x08048575: pop    edi
 registers:
   ebx          = v4800[32]
   esp          = v4778+0x18[32]
@@ -2438,7 +2438,7 @@ memory:
   addr=v4778+0x10[32] value=v4802[32]
   addr=v4778+0xc[32] value=v4800[32]
 
-0x8048576:pop    ebp
+0x08048576: pop    ebp
 registers:
   ebx          = v4800[32]
   esp          = v4778+0x1c[32]
@@ -2459,7 +2459,7 @@ memory:
   addr=v4778+0x10[32] value=v4802[32]
   addr=v4778+0xc[32] value=v4800[32]
 
-0x8048577:ret    
+0x08048577: ret    
 registers:
   ebx          = v4800[32]
   esp          = v4778+0x20[32]
@@ -2484,7 +2484,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048580:push   ebp
+0x08048580: push   ebp
 registers:
   esp          = v4897-0x4[32]
   ebp          = v4896[32]
@@ -2493,7 +2493,7 @@ registers:
 memory:
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048581:mov    ebp, esp
+0x08048581: mov    ebp, esp
 registers:
   esp          = v4897-0x4[32]
   ebp          = v4897-0x4[32]
@@ -2502,7 +2502,7 @@ registers:
 memory:
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048583:push   ebx
+0x08048583: push   ebx
 registers:
   ebx          = v4898[32]
   esp          = v4897-0x8[32]
@@ -2513,7 +2513,7 @@ memory:
   addr=v4897-0x8[32] value=v4898[32]
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048584:sub    esp, 0x04
+0x08048584: sub    esp, 0x04
 registers:
   ebx          = v4898[32]
   esp          = v4897-0xc[32]
@@ -2530,7 +2530,7 @@ memory:
   addr=v4897-0x8[32] value=v4898[32]
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048587:mov    ebx, 0x080495e8<.ctors>
+0x08048587: mov    ebx, 0x080495e8<.ctors>
 registers:
   ebx          = 0x80495e8[32]
   esp          = v4897-0xc[32]
@@ -2547,7 +2547,7 @@ memory:
   addr=v4897-0x8[32] value=v4898[32]
   addr=v4897-0x4[32] value=v4896[32]
 
-0x804858c:mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
 registers:
   eax          = v4920[32]
   ebx          = 0x80495e8[32]
@@ -2566,7 +2566,7 @@ memory:
   addr=v4897-0x8[32] value=v4898[32]
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048591:cmp    eax, 0xff<-1>
+0x08048591: cmp    eax, 0xff<-1>
 registers:
   eax          = v4920[32]
   ebx          = 0x80495e8[32]
@@ -2585,7 +2585,7 @@ memory:
   addr=v4897-0x8[32] value=v4898[32]
   addr=v4897-0x4[32] value=v4896[32]
 
-0x8048594:je     0x080485ac<<Insn>>
+0x08048594: je     0x080485ac<<Insn>>
 registers:
   eax          = v4920[32]
   ebx          = 0x80495e8[32]
@@ -2607,14 +2607,14 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x8048596:lea    esi, [esi + 0x00]
+0x08048596: lea    esi, [esi + 0x00]
 registers:
   esi          = v5082[32]
   eip          = 0x8048599[32]
   fpstatus_top = 0x0[3]
 memory:
 
-0x8048599:lea    edi, [edi + 0x00000000]
+0x08048599: lea    edi, [edi + 0x00000000]
 registers:
   esi          = v5082[32]
   edi          = v5083[32]
@@ -2622,7 +2622,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80485a0:sub    ebx, 0x04
+0x080485a0: sub    ebx, 0x04
 registers:
   ebx          = v5084-0x4[32]
   esi          = v5082[32]
@@ -2637,7 +2637,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x80485a3:call   eax
+0x080485a3: call   eax
 registers:
   eax          = v5107[32]
   ebx          = v5084-0x4[32]
@@ -2658,7 +2658,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485a5:mov    eax, DWORD PTR ds:[ebx]
+0x080485a5: mov    eax, DWORD PTR ds:[ebx]
 registers:
   eax          = v5195[32]
   ebx          = v5194[32]
@@ -2667,7 +2667,7 @@ registers:
 memory:
   addr=v5194[32] value=v5195[32]
 
-0x80485a7:cmp    eax, 0xff<-1>
+0x080485a7: cmp    eax, 0xff<-1>
 registers:
   eax          = v5195[32]
   ebx          = v5194[32]
@@ -2682,7 +2682,7 @@ registers:
 memory:
   addr=v5194[32] value=v5195[32]
 
-0x80485aa:jne    0x080485a0<<Insn>>
+0x080485aa: jne    0x080485a0<<Insn>>
 registers:
   eax          = v5195[32]
   ebx          = v5194[32]
@@ -2700,7 +2700,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485ac:pop    eax
+0x080485ac: pop    eax
 registers:
   eax          = v5306[32]
   esp          = v5305+0x4[32]
@@ -2709,7 +2709,7 @@ registers:
 memory:
   addr=v5305[32] value=v5306[32]
 
-0x80485ad:pop    ebx
+0x080485ad: pop    ebx
 registers:
   eax          = v5306[32]
   ebx          = v5308[32]
@@ -2720,7 +2720,7 @@ memory:
   addr=v5305+0x4[32] value=v5308[32]
   addr=v5305[32] value=v5306[32]
 
-0x80485ae:pop    ebp
+0x080485ae: pop    ebp
 registers:
   eax          = v5306[32]
   ebx          = v5308[32]
@@ -2733,7 +2733,7 @@ memory:
   addr=v5305+0x4[32] value=v5308[32]
   addr=v5305[32] value=v5306[32]
 
-0x80485af:ret    
+0x080485af: ret    
 registers:
   eax          = v5306[32]
   ebx          = v5308[32]
@@ -2750,7 +2750,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485b0:push   ebp
+0x080485b0: push   ebp
 registers:
   esp          = v5401-0x4[32]
   ebp          = v5400[32]
@@ -2759,7 +2759,7 @@ registers:
 memory:
   addr=v5401-0x4[32] value=v5400[32]
 
-0x80485b1:mov    ebp, esp
+0x080485b1: mov    ebp, esp
 registers:
   esp          = v5401-0x4[32]
   ebp          = v5401-0x4[32]
@@ -2768,7 +2768,7 @@ registers:
 memory:
   addr=v5401-0x4[32] value=v5400[32]
 
-0x80485b3:push   ebx
+0x080485b3: push   ebx
 registers:
   ebx          = v5402[32]
   esp          = v5401-0x8[32]
@@ -2779,7 +2779,7 @@ memory:
   addr=v5401-0x8[32] value=v5402[32]
   addr=v5401-0x4[32] value=v5400[32]
 
-0x80485b4:push   eax
+0x080485b4: push   eax
 registers:
   eax          = v5403[32]
   ebx          = v5402[32]
@@ -2792,7 +2792,7 @@ memory:
   addr=v5401-0x8[32] value=v5402[32]
   addr=v5401-0x4[32] value=v5400[32]
 
-0x80485b5:call   0x080485ba<<Insn>>
+0x080485b5: call   0x080485ba<<Insn>>
 registers:
   eax          = v5403[32]
   ebx          = v5402[32]
@@ -2809,7 +2809,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485ba:pop    ebx
+0x080485ba: pop    ebx
 registers:
   ebx          = v5491[32]
   esp          = v5490+0x4[32]
@@ -2818,7 +2818,7 @@ registers:
 memory:
   addr=v5490[32] value=v5491[32]
 
-0x80485bb:add    ebx, 0x0000110e<4366>
+0x080485bb: add    ebx, 0x0000110e<4366>
 registers:
   ebx          = v5491+0x110e[32]
   esp          = v5490+0x4[32]
@@ -2833,7 +2833,7 @@ registers:
 memory:
   addr=v5490[32] value=v5491[32]
 
-0x80485c1:call   0x08048390<__do_global_dtors_aux>
+0x080485c1: call   0x08048390<__do_global_dtors_aux>
 registers:
   ebx          = v5491+0x110e[32]
   esp          = v5490[32]
@@ -2852,7 +2852,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x80485c6:pop    eax
+0x080485c6: pop    eax
 registers:
   eax          = v5601[32]
   esp          = v5600+0x4[32]
@@ -2861,7 +2861,7 @@ registers:
 memory:
   addr=v5600[32] value=v5601[32]
 
-0x80485c7:pop    ebx
+0x080485c7: pop    ebx
 registers:
   eax          = v5601[32]
   ebx          = v5603[32]
@@ -2872,7 +2872,7 @@ memory:
   addr=v5600+0x4[32] value=v5603[32]
   addr=v5600[32] value=v5601[32]
 
-0x80485c8:leave  
+0x080485c8: leave  
 registers:
   eax          = v5601[32]
   ebx          = v5603[32]
@@ -2885,7 +2885,7 @@ memory:
   addr=v5600+0x4[32] value=v5603[32]
   addr=v5600[32] value=v5601[32]
 
-0x80485c9:ret    
+0x080485c9: ret    
 registers:
   eax          = v5601[32]
   ebx          = v5603[32]

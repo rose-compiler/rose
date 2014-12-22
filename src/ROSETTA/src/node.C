@@ -27,6 +27,10 @@ Grammar::setUpNodes ()
   // Liao 11/1/2010, move SgInitializedName to SgLocatedNode
      NEW_TERMINAL_MACRO (InitializedName, "InitializedName", "InitializedNameTag" );
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     NEW_TERMINAL_MACRO (LambdaCapture    , "LambdaCapture"    , "LambdaCaptureTag" );
+     NEW_TERMINAL_MACRO (LambdaCaptureList, "LambdaCaptureList", "LambdaCaptureListTag" );
+
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      NEW_TERMINAL_MACRO (JavaMemberValuePair, "JavaMemberValuePair", "JavaMemberValuePairTag" );
 
@@ -205,7 +209,9 @@ Grammar::setUpNodes ()
   // a number of the new Fortran specific IRnodes, etc.).
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause , "LocatedNodeSupport", "LocatedNodeSupportTag", false );
   // NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNodeSupport, CommonBlockObject | InitializedName | InterfaceBody | 
+                            HeaderFileBody | RenamePair | JavaMemberValuePair | OmpClause | UntypedNode | 
+                            LambdaCapture | LambdaCaptureList, "LocatedNodeSupport", "LocatedNodeSupportTag", false );
 
   // DQ (3/24/2007): Added support for tokens in the IR (to support threading of the token stream 
   // onto the AST as part of an alternative, and exact, form of code generation within ROSE.
@@ -215,7 +221,7 @@ Grammar::setUpNodes ()
 
   // Liao 11/2/2010, LocatedNodeSupport is promoted to the first location since SgInitializedName's internal type is used in some Statement  
   // NEW_NONTERMINAL_MACRO (LocatedNode, LocatedNodeSupport| Statement | Expression | Token, "LocatedNode", "LocatedNodeTag", false );
-     NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression , "LocatedNode", "LocatedNodeTag", false );
+     NEW_NONTERMINAL_MACRO (LocatedNode, Token | LocatedNodeSupport| Statement | Expression, "LocatedNode", "LocatedNodeTag", false );
 
      Terminal & Type    = *lookupTerminal(terminalList, "Type");
      Terminal & Symbol  = *lookupTerminal(terminalList, "Symbol");
@@ -439,6 +445,11 @@ Grammar::setUpNodes ()
      LocatedNodeSupport.setFunctionPrototype ( "HEADER_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
 
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
+     LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
+
+
   // ***************************************************************************************
   // ***************************************************************************************
   //                                 ATerm IR Node Support
@@ -480,7 +491,7 @@ Grammar::setUpNodes ()
      UntypedUnaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedUnaryOperator.setDataPrototype     ( "SgUntypedExpression*", "operand", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedBinaryOperator.setFunctionPrototype ( "HEADER_UNTYPED_BINARY_OPERATOR", "../Grammar/LocatedNode.code");
      UntypedBinaryOperator.setDataPrototype     ( "SgToken::ROSE_Fortran_Operators", "operator_enum", "= SgToken::FORTRAN_INTRINSIC_PLUS",
@@ -488,16 +499,16 @@ Grammar::setUpNodes ()
      UntypedBinaryOperator.setDataPrototype     ( "std::string", "operator_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedBinaryOperator.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedValueExpression.setFunctionPrototype          ( "HEADER_UNTYPED_VALUE_EXPRESSION", "../Grammar/LocatedNode.code");
   // Save this as a string so that we can reproduce the exact value for floating point numbers.
      UntypedValueExpression.setDataPrototype     ( "std::string", "value_string", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedValueExpression.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (3/6/2014): TODO: This array reference will require concepts of indexing, triplet notation, index sets, etc.
      UntypedArrayReferenceExpression.setFunctionPrototype ( "HEADER_UNTYPED_ARRAY_REFERENCE_EXPRESSION", "../Grammar/LocatedNode.code");
@@ -526,23 +537,23 @@ Grammar::setUpNodes ()
 
      UntypedAssignmentStatement.setFunctionPrototype   ( "HEADER_UNTYPED_ASSIGNMENT_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "lhs_operand", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedAssignmentStatement.setDataPrototype     ( "SgUntypedExpression*", "rhs_operand", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedFunctionCallStatement.setFunctionPrototype ( "HEADER_UNTYPED_FUNCTION_CALL_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedBlockStatement.setFunctionPrototype        ( "HEADER_UNTYPED_BLOCK_STATEMENT", "../Grammar/LocatedNode.code");
   // UntypedBlockStatement.setDataPrototype            ( "SgUntypedStatementPtrList", "statement_list", "",
   //              NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedBlockStatement.setDataPrototype            ( "SgUntypedScope*", "scope", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedOtherStatement.setFunctionPrototype        ( "HEADER_UNTYPED_OTHER_STATEMENT", "../Grammar/LocatedNode.code");
 
      UntypedDeclarationStatement.setFunctionPrototype     ( "HEADER_UNTYPED_DECLARATION_STATEMENT", "../Grammar/LocatedNode.code");
      UntypedImplicitDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_IMPLICIT_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedVariableDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_VARIABLE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedVariableDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
 
   // DQ (3/25/2014): It would be better to name this "variables" instead of "parameters".
   // std::vector<SgUntypedInitializedName*> 
@@ -557,9 +568,9 @@ Grammar::setUpNodes ()
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedInitializedNameList*", "parameters", "",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedFunctionScope*", "scope", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedFunctionDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #if 0
@@ -575,7 +586,9 @@ Grammar::setUpNodes ()
 
      UntypedModuleDeclaration.setFunctionPrototype      ( "HEADER_UNTYPED_MODULE_DECLARATION", "../Grammar/LocatedNode.code");
      UntypedModuleDeclaration.setDataPrototype          ( "SgUntypedModuleScope*", "scope", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     UntypedModuleDeclaration.setDataPrototype     ( "SgUntypedNamedStatement*", "end_statement", "= NULL",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedScope.setFunctionPrototype         ( "HEADER_UNTYPED_SCOPE", "../Grammar/LocatedNode.code");
   // Three sorts of list that can be in any scope.
@@ -592,7 +605,7 @@ Grammar::setUpNodes ()
 
      UntypedInitializedName.setFunctionPrototype ( "HEADER_UNTYPED_INITIALIZED_NAME", "../Grammar/LocatedNode.code");
      UntypedInitializedName.setDataPrototype     ( "SgUntypedType*", "type", "= NULL",
-                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
      UntypedInitializedName.setDataPrototype     ( "std::string", "name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -604,7 +617,7 @@ Grammar::setUpNodes ()
 
      UntypedFile.setFunctionPrototype      ( "HEADER_UNTYPED_FILE", "../Grammar/LocatedNode.code");
      UntypedFile.setDataPrototype          ( "SgUntypedGlobalScope*", "scope", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      UntypedStatementList.setFunctionPrototype           ( "HEADER_UNTYPED_STATEMENT_LIST", "../Grammar/LocatedNode.code");
      UntypedStatementList.setDataPrototype               ( "SgUntypedStatementPtrList", "stmt_list", "",
@@ -623,7 +636,7 @@ Grammar::setUpNodes ()
      UntypedType.setDataPrototype     ( "std::string", "type_name", "= \"\"",
                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedType.setDataPrototype     ( "SgUntypedExpression*", "type_kind", "= NULL",
-                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      UntypedType.setDataPrototype     ( "bool", "has_kind", "= false",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      UntypedType.setDataPrototype     ( "bool", "is_literal", "= false",
@@ -720,13 +733,24 @@ Grammar::setUpNodes ()
   //      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (10/9/2007): Use the ROSETTA generated version to test failure
-  
+
+#if 0
+  // DQ (10/10/2014): Older version of code (marked as NO_CONSTRUCTOR_PARAMETER).
      InitializedName.setDataPrototype("SgName","name", "= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (10/10/2014): Modified to make this more suitable for support via Aterm to AST generation.
+     InitializedName.setDataPrototype("SgName","name", "= NULL",
+          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 #else
      InitializedName.setDataPrototype("SgName","name", "= \"\"",
           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+  // DQ (8/18/2014): Added Microsoft specific extension for the uuid string option.
+     InitializedName.setDataPrototype("std::string", "microsoft_uuid_string", "=\"\"",
+          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // FMZ (4/7/2009): Added for Cray pointer declaration
 #if 0
@@ -739,9 +763,17 @@ Grammar::setUpNodes ()
 #endif 
 #endif
 
+#if 0
+  // DQ (10/10/2014): Older version of code (marked as NO_CONSTRUCTOR_PARAMETER).
   // DQ (7/20/2004):  think this is the root of the problems in cycles when we traverse types!
      InitializedName.setDataPrototype("SgType*","typeptr", "= NULL",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (10/10/2014): Modified to make this more suitable for support via Aterm to AST generation.
+     InitializedName.setDataPrototype("SgType*","typeptr", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL || DEF2TYPE_TRAVERSAL, NO_DELETE);
+#endif
+
   // QY:11/2/04 remove itemptr
   //   InitializedName.setDataPrototype("SgInitializedName*","itemptr", "= NULL",
   //                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL);
@@ -914,6 +946,10 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("SgNode*","constant_or_type_argument_for_Alignas_keyword","= NULL",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (8/2/2014): Using C++11 auto keyword.
+     InitializedName.setDataPrototype("bool","using_auto_keyword","= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
   // DQ(1/13/2014): Added Java support for JavaMemberValuePair
      JavaMemberValuePair.setFunctionPrototype     ( "HEADER_JAVA_MEMBER_VALUE_PAIR", "../Grammar/LocatedNode.code");
@@ -921,6 +957,33 @@ Grammar::setUpNodes ()
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JavaMemberValuePair.setDataPrototype("SgExpression*","value", "= NULL",
           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+#if 0
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "capture_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "source_closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgInitializedName*", "closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#else
+  // DQ (/3/2014): I think this makes more sense to be an expression (typically a SgVarRefExp).
+     LambdaCapture.setDataPrototype ( "SgExpression*", "capture_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgExpression*", "source_closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "SgExpression*", "closure_variable", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#endif
+     LambdaCapture.setDataPrototype ( "bool", "capture_by_reference", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "bool", "implicit", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaCapture.setDataPrototype ( "bool", "pack_expansion", "= false",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     LambdaCaptureList.setDataPrototype ( "SgLambdaCapturePtrList", "capture_list", "",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
   // ***********************************************************************
@@ -958,6 +1021,9 @@ Grammar::setUpNodes ()
 
      LocatedNodeSupport.setFunctionSource ( "SOURCE_LOCATED_NODE_SUPPORT", "../Grammar/LocatedNode.code");
 
+  // DQ (9/3/2014): Adding support for C++11 lambda expresions.
+     LambdaCapture.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
+     LambdaCaptureList.setFunctionSource ( "SOURCE_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
   // ***************************************************************************************
   // ***************************************************************************************

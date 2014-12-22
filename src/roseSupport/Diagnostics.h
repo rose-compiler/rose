@@ -15,33 +15,35 @@ namespace rose {
  *  run-time logic assertions can be found in the Sawyer::Assert name space in "assert/Assert.h" (which also defines a number
  *  of C preprocessor macros whose names begin with "ASSERT_".
  *
- *  Sawyer supports multiple instances of messaging facilities (Sawyer::Message::Facility) each of which defines a std::ostream
- *  object for each of a number of message importance levels.  ROSE defines one global library-wide facility,
- *  <code>Diagnostics::mlog</code> whose string name (used in output) is simply "rose".  Software layers within ROSE may define
- *  their own facilities and give them names indicative of the software layer.  All these facilities are then grouped together
- *  into a single Sawyer::Message::Facilities object, Diagnostics::facilities, so they can be controlled collectively or
- *  individually from the ROSE command-line (e.g., the frontend() call) via "-rose:log" switch.
+ *  Sawyer supports multiple instances of messaging facilities (Sawyer::Message::Facility or rose::Diagnostics::Facility) each
+ *  of which defines a std::ostream object for each of a number of message importance levels.  ROSE defines one global
+ *  library-wide facility, <code>rose::Diagnostics::mlog</code> whose string name (used in output) is simply "rose".  Software
+ *  layers within ROSE may define their own facilities and give them names indicative of the software layer.  All these
+ *  facilities are then grouped together into a single Sawyer::Message::Facilities object, rose::Diagnostics::mfacilities, so
+ *  they can be controlled collectively or individually from the ROSE command-line (e.g., the frontend() call) via "-rose:log"
+ *  switch.
  *
  * @section usage Command-line usage
  *
  *  ROSE looks for the command-line switch "-rose:log <em>WHAT</em>".  If <em>WHAT</em> is the word "help" then usage
  *  information is displayed; if <em>WHAT</em> is the word "list" then log settings are displayed.  Otherwise, <em>WHAT</em> is
- *  expected to be a string to pass to the Diagnostics::facilities.control() function.  In short, the string is a
+ *  expected to be a string to pass to the rose::Diagnostics::mfacilities.control() function.  In short, the string is a
  *  comma-separated list of importance levels to enable (or disable when preceded by "!").  Importance levels can also be
  *  enclosed in parentheses and preceded by a facility name to restrict the settings to the specified facility.  For instance,
  *  if one wanted to turn off INFO messages for all facilities, and then turn on TRACE and DEBUG messages for the BinaryLoader,
  *  he would use "-rose:log '!info, BinaryLoader(trace, debug)'".  The single quotes are to prevent the shell from doing what
  *  it normally does for exclamation marks, spaces, and other punctuation.  See the doxygen documentation for
- *  Sawyer::Message::Facilities::control() for details.
- *
- *  The "-rose:log" switch may appear multiple times on the command-line, and they are processed in the order they appear.
- *  This allows for enabling and disabling various diagnostics and then querying to verify that they are in the desired state:
+ *  Sawyer::Message::Facilities::control() for details, or use "-rose:log help".  Tools that don't call ROSE's frontend()
+ *  usually use "--log" and "-L" to control logging. The "-rose:log" switch (or alternative) may appear multiple times on the
+ *  command-line, and they are processed in the order they appear.
  *
  * @section adding Adding a facility to ROSE
  *
+ *  Note: this section is about adding a new logging facility to the ROSE library proper. Adding a facility to a tool that uses
+ *  ROSE is slightly different and is described in a later section.
+ *
  *  As an example, let's say that a programmer wants to convert the BinaryLoader class to use its own logging facilities.  The
- *  first step is to declare a class (static) data member for the facility and give the facility a name.  The facility is
- *  immediately usable, although it is not yet fully initialized or controllable from the command-line.
+ *  first step is to declare a class (static) data member for the facility.
  *
  * @code
  *  // in BinaryLoader.h
@@ -54,24 +56,35 @@ namespace rose {
  *  };
  * @endcode
  *
- *  If we consistently name message facilities "mlog" then any unqualified reference to "mlog" in the source code will probably
- *  be the most appropriate (most narrowly scoped) facility.  Adding a new facility to a software component that already uses
- *  the rose-wide "mlog" is mostly a matter of defining a more narrowly scoped "mlog", and the existing code will start using
- *  it (you probably also need to search for places where "mlog" usage was qualified). Specifically, we avoid using "log" as
- *  the name of any logging facility because it can conflict on some systems with the logorithm function "log".
+ *  If we consistently name message facilities "mlog" then any unqualified reference to @c mlog in the source code will
+ *  probably be the most appropriate (most narrowly scoped) facility.  Adding a new facility to a software component that
+ *  already uses the rose-wide "mlog" is mostly a matter of defining a more narrowly scoped @c mlog, and the existing code will
+ *  start using it (you probably also need to search for places where @c mlog usage was qualified). Specifically, we avoid
+ *  using "log" as the name of any logging facility because it can conflict on some systems with the logorithm function @c log.
  *
- *  Then define the "mlog" and give it a string name.  The string name, "BinaryLoader", is the name by which this facility will
- *  be known to the "-rose:log" command-line switch.  It may contain symbol names, periods, and "::" and should generally be
- *  the same as the name of the software layer which it serves.  We normally omit "rose::" from the string name.
+ *  The second step is to define the @c mlog static variable. Sinc the variable is static, it must be constructed only with the
+ *  default constructor. Sawyer also has other Facility constructors, but these generally can't be used for static variables
+ *  because there is no portable way to ensure that the C++ runtime is initialized before the Facility initialization happens.
+ *  If the initializations occur in the wrong order then bizarre behavior may result, including segmentation faults in STL
+ *  container classes.
  *
  * @code
  *  // in BinaryLoader.C
  *  #include "BinaryLoader.h"
- *  Sawyer::Message::Facility BinaryLoader::mlog("BinaryLoader");
+ *  Sawyer::Message::Facility BinaryLoader::mlog;
  * @endcode
  *
- *  The second step is to cause the facility to be initialized so that messages sent to the facility go to the same place
- *  as the rest of ROSE diagnostics (e.g., standard error).  We do this by defining an initDiagnostics() class method:
+ *  The third step is to initialize the @c mlog static variable after we're sure that the C++ runtime has been initialized. We
+ *  can do this by defining a class method (a.k.a., static function member) that can be called from ROSE's initialization
+ *  phase.  This is the point at which the mlog is given a name and connected to a destination(s).  The name is usually the
+ *  fully qualified name of the component for which the @c mlog object serves as the logging facility, and may contain typical
+ *  C++ symbol names, dots, and "::".  This name is used to enable/disable the facility from the command-line, and will show up
+ *  as part of the output for any message emitted using this facility.
+ *
+ *  The call to Sawyer::Message::Facilities::insertAndAdjust adds this @c mlog facility to the global list of facilities so it
+ *  can be controlled from the command line. It also immediately enables/disables the Facility Stream objects according to the
+ *  settings in @c mfacilities.  Facilities are still usable if they're not registered in the global list -- they just can't be
+ *  controlled by the user in the typical way.
  *
  * @code
  *  // class method in BinaryLoader.C
@@ -79,19 +92,21 @@ namespace rose {
  *      static bool initialized = false;
  *      if (!initialized) {
  *          initialized = true;
- *          mlog.initStreams(Diagnostics::destination);
- *          Diagnostics::facilities.insert(mlog);
+ *          mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::BinaryLoader", Diagnostics::destination);
+ *          Diagnostics::mfacilities.insertAndAdjust(mlog);
  *      }
  *  }
  * @endcode
  *
- *  The Diagnostics::destination is a Sawyer message plumbing lattice that controls where the message ultimately
- *  ends up (standard error is the default, but it might also be files, the syslog daemon, a database, etc).
+ * The fourth and final step is to add a call to BinaryLoader::initDiagnostics() from Diagnostics::initialize().
  *
- *  The final step is to ensure that the BinaryLoader::initDiagnostics() is called from Diagnostics::initialize(). This
- *  requires editing  Diagnostics.C to include BinaryLoader.h and call BinaryLoader::initDiagnostics().
+ * @section usage Using a facility in the ROSE library or tools
  *
- * @section usage Using a facility in ROSE
+ *  When using a message facility within the ROSE library source code, it is generally desirable to have a "using namespace
+ *  rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g.,
+ *  <code>INFO</code>, <code>WARN</code>, etc), but it also brings rose::Diagnostics::mlog, the library-wide logging facility,
+ *  into scope.  Doing so will allow any software component to perform logging using the library-wide facility, and once a more
+ *  local @c mlog is declared the more local symbol is automatically used.
  *
  *  Generally speaking, all one needs to do to use a facility is to write a C++ std::ostream-style output statement whose
  *  left-hand operand is a Sawyer::Message::Stream.  Since streams are held in a Sawyer::Message::Facility and since facilities
@@ -109,6 +124,10 @@ namespace rose {
  * @code
  *  identityTranslator[30603] 0.00949s BinaryLoader[INFO]: loading "/usr/lib32/libc.so"
  * @endcode
+ *
+ *  ROSE also defines a global macro @c mprintf that is a drop-in replacement for @c printf.  This macro uses whatever
+ *  <code>mlog[DEBUG]</code> is in scope.  The @ref mfprintf function can be used as a replacement when a specific logging
+ *  stream is desired.
  *
  *  Sometimes one wants the right hand side of the output statements to be evaluated only in certain circumstances for
  *  performance reasons, and there are multiple ways to do that.  If you already use conditional compilation or "if" statements
@@ -146,6 +165,22 @@ namespace rose {
  *  messages emitted to that stream won't interfere with partial messages emitted to <code>mlog[DEBUG]</code> by called
  *  functions (see next section).
  *
+ *  Another debugging trick is to create a local stream like above, and then explicitly enable or disable it based on some
+ *  condition you're trying to debug:
+ *
+ * @code
+ *  using namespace rose::Diagnostics;
+ *  void doSomething(int foo) {
+ *      Stream debug(mlog[DEBUG]); // get our own copy of a stream
+ *      debug.enable(5==foo); // enable it only in certain cases
+ *      ...
+ *      if (debug) {
+ *          some_debugging_things();
+ *          debug <<"debugging results...\n";
+ *      }
+ *  }
+ * @endcode
+ *
  * @section partial Partial messages
  *
  *  A partial message is any message for which the linefeed, "\n", hasn't been inserted.  If a message stream is unbuffered and
@@ -173,53 +208,58 @@ namespace rose {
  * @section tool Usage in Tools
  *
  *  Tools that are built on top of the ROSE library can use the same Sawyer messaging support, and the tool's Facility objects
- *  can be registered with ROSE and thus controlled along with the library's facilities.  Doing so is a two-step process:
- *  declare the facility in the tool and then initialize and register the facility with ROSE.
+ *  can be registered with ROSE and thus controlled along with the library's facilities.  Doing so is a three-step process:
+ *  declare the facility in the tool, initialize it, and register the facility with ROSE.
  *
- *  The declaration and definition is usually at global scope for the tool in order to be available everywhere in the tool:
+ *  The facility is usually declared as a static object so it can be available to all parts of the tool.  As with static
+ *  facilities in the ROSE library itself (described above), it should be only default constructed.  Also, instead of using
+ *  namespace @ref rose::Diagnostics, the tool uses namespace @ref Sawyer::Message::Common.  This avoids the ambiguity for @c
+ *  mlog that would be created by importing @ref rose::Diagnostics or @ref Sawyer::Message.
  *
  * @code
  *  #include <rose/Diagnostics.h>
- *  using namespace Saywer::Message::Common;
- *  Sawyer::Message::Facility mlog("toolname");
+ *  using namespace Sawyer::Message::Common;
+ *  Sawyer::Message::Facility mlog;
  * @endcode
  *
- *  The initialization and registration is usually near the beginning of main():
+ *  The other two steps, initialization and registration, are usually near the beginning of main():
  *
  * @code
  *  rose::Diagnostics::initialize();
- *  mlog.initStreams(rose::Diagnostics::destination);
- *  rose::Diagnostics::facilities.insertAndAdjust(mlog);
+ *  mlog = Sawyer::Message::Facility("toolName", rose::Diagnostics::destination);
+ *  rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
  * @endcode
  *
  *  The first line ensures that the global variables in rose::Diagnostics are properly initialized. You don't need to do this
  *  if you've already initialized the ROSE library in some other manner.
  *
- *  The initStreams() method connects the tool's logging facility with ROSE's message plumbing lattice to cause the tool's
- *  messages to go to the same place(s) as ROSE library messages.
+ *  The assignment initializes our logging facility by giving it a name and connecting it to the same message destination(s)
+ *  used by the ROSE library (probably standard error).
  *
- *  The insertAndAdjust() method registers the tool's logging facility with the ROSE library and enables and disables the
+ *  The call to @c insertAndAdjust registers the tool's logging facility with the ROSE library and enables and disables the
  *  tool's message streams so they're in the same state as the ROSE library streams (probably debug and tracing messages are
  *  disabled and info, warn, error, and fatal are enabled).
  *
- *  The tool can parse arguments in it's normal way.  It can forward the "-rose:log" arguments to the ROSE library so that the
- *  library can control the tools' message streams, or it can process its own arguments can call
- *  rose::Diagnostics::facilities.control() itself.
+ *  The tool can parse arguments in it's normal way.  If ROSE's frontend() is called then the "-rose:log HOW" switch is
+ *  processed, otherwise we recommend that the tool uses "--log" and "-L" switches to control logging. @ref Sawyer::CommandLine
+ *  has methods for automatically parsing and applying these switches, or the tool can parse its own command-line and pass the
+ *  argument to the @ref rose::Diagnostics::mfacilities.control method.
  */
 namespace Diagnostics {
 
 // Make Sawyer message importance levels available here. That way, we don't have to "use namespace Sawyer::Message", which
 // also sucks in a lot of other stuff.
-using Sawyer::Message::DEBUG;
-using Sawyer::Message::TRACE;
-using Sawyer::Message::WHERE;
-using Sawyer::Message::INFO;
-using Sawyer::Message::WARN;
-using Sawyer::Message::ERROR;
-using Sawyer::Message::FATAL;
+using Sawyer::Message::DEBUG;                           // very low-level debugging mostly for developers
+using Sawyer::Message::TRACE;                           // more low-level debugging but maybe more interesting to users
+using Sawyer::Message::WHERE;                           // higher-level debugging to help users understand ROSE flow
+using Sawyer::Message::MARCH;                           // progress bars and other high-frequency messages
+using Sawyer::Message::INFO;                            // useful information about normal behavior such as stats
+using Sawyer::Message::WARN;                            // warnings that users should almost certainly see at least once
+using Sawyer::Message::ERROR;                           // recoverable errors, possibly followed by throw
+using Sawyer::Message::FATAL;                           // errors which are immediately followed by exit, abort, or similar
 
-using Sawyer::Message::Stream;
-using Sawyer::Message::Facility;
+using Sawyer::Message::Stream;                          // one message stream, e.g., 'mlog[INFO]'
+using Sawyer::Message::Facility;                        // collection of related streams, e.g., 'mlog'
 
 /** Default destination for ROSE diagnostics.  The user may set this explicitly before rose::Diagnostics::initialize is called,
  *  otherwise that function will create a destination that points to standard error and uses the optional
@@ -236,7 +276,7 @@ extern Sawyer::Message::Facility mlog;
 
 /** Collection of all registered ROSE logging facilities. This collection allows the facilities to be controlled collectively
  *  such as from the -rose:log command-line switch. */
-extern Sawyer::Message::Facilities facilities;
+using Sawyer::Message::mfacilities;
     
 /** Initialize diagnostics-related global variables. This should be called before any of the global variables in the
  *  rose::Diagnostics name space are used.  It doesn't hurt to call this more than once. */

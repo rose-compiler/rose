@@ -5,6 +5,8 @@
 
 #include <boost/graph/graphviz.hpp>
 
+using namespace rose::BinaryAnalysis;
+
 /* Label the graphviz vertices with basic block addresses rather than vertex numbers. */
 template<class DominanceGraph>
 struct GraphvizVertexWriter {
@@ -67,7 +69,7 @@ main(int argc, char *argv[])
     }
 
     // Calculate the control flow graph over the entire interpretation.
-    typedef BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
 
     // Run the algorithm over each selected function
@@ -87,44 +89,44 @@ main(int argc, char *argv[])
 
         if (algorithm=="A") {
             // Calculate immediate dominator graph from the control flow graph. Do this for each function.
-            typedef BinaryAnalysis::Dominance::Graph DG;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
+            typedef rose::BinaryAnalysis::Dominance::Graph DG;
+            CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance analyzer;
+            rose::BinaryAnalysis::Dominance analyzer;
             DG dg = analyzer.build_idom_graph_from_cfg<DG>(cfg, start);
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="B") {
             // Calculate immediate dominator graph from dominator relation map. Do this for each function.
-            typedef BinaryAnalysis::Dominance::Graph DG;
-            typedef BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
+            typedef rose::BinaryAnalysis::Dominance::Graph DG;
+            typedef rose::BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
+            CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance analyzer;
+            rose::BinaryAnalysis::Dominance analyzer;
             RelMap rmap = analyzer.build_idom_relation_from_cfg(cfg, start);
             DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="C") {
             // Calculate immediate post dominator graph from the control flow graph. Do this for each function.
-            typedef BinaryAnalysis::Dominance::Graph DG;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
+            typedef rose::BinaryAnalysis::Dominance::Graph DG;
+            CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance analyzer;
+            rose::BinaryAnalysis::Dominance analyzer;
             DG dg = analyzer.build_postdom_graph_from_cfg<DG>(cfg, start);
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));
 
         } else if (algorithm=="D") {
             // Calculate immediate post dominator graph from post dominator relation map. Do this for each function.
-            typedef BinaryAnalysis::Dominance::Graph DG;
-            typedef BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
-            CFG cfg = BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
+            typedef rose::BinaryAnalysis::Dominance::Graph DG;
+            typedef rose::BinaryAnalysis::Dominance::RelationMap<CFG> RelMap;
+            CFG cfg = rose::BinaryAnalysis::ControlFlow().build_block_cfg_from_ast<CFG>(func);
             CFG_Vertex start = 0;
             assert(get(boost::vertex_name, cfg, start)==func->get_entry_block());
-            BinaryAnalysis::Dominance analyzer;
+            rose::BinaryAnalysis::Dominance analyzer;
             RelMap rmap = analyzer.build_postdom_relation_from_cfg(cfg, start);
             DG dg = analyzer.build_graph_from_relation<DG>(cfg, rmap);
             boost::write_graphviz(out, dg, GraphvizVertexWriter<DG>(dg));

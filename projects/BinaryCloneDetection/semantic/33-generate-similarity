@@ -1,0 +1,79 @@
+#!/usr/bin/perl
+# Generates sample data for testing the 33-optimize-weights tool.
+use strict;
+
+# Number of data points
+my $npoints = 10000;
+
+# Likelihood that a pair of functions is similar
+my $similarity_rate = 0.5;
+
+sub URN { "URN" } # use uniform random numbers
+
+# These are the distributions of the randomly-generated similarity values.  You may define as many metrics as you like,
+# and each metric has two distribution curves: one for functions that are dissimilar and the other for functions that are
+# similar.  Each curve has four parameters:
+#   Left:   The lower limit for values that are generated.
+#   Right:  The upper limit for values that are generated.
+#   Center: The location of the "hump" for a normal distribution, or the constant URN for uniform random numbers.
+#   Scale:  How much to stretch the normal curve left and right. The default is 1.0, which means that the distribution
+#           tapers to zero at the left and right end points.  Scales smaller than 1 result in narrower, steeper distributions
+#           and scales larger than 1 result in wider, flatter distributions.  In any case, the values are always clipped to
+#           be between zero and one.
+#
+# The more that NON-SIMILAR and SIMILAR curves for a metric overlap, the lower that metric's precision will be.
+#
+#                        NON-SIMILAR                 SIMILAR
+#                  Left Center Right Scale   Left Center Right Scale
+my @metrics = ( [ [0.00, 0.25, 1.00, 1.00], [0.00, 0.75, 1.00, 1.00] ],  # Metric 0
+		[ [0.00, 0.25, 1.00, 1.00], [0.00, 0.75, 1.00, 1.00] ],  # Metric 1
+		[ [0.00, 0.25, 1.00, 1.00], [0.00, 0.75, 1.00, 1.00] ],  # Metric 2
+    );
+
+# Clip a value to be between 0 and 1, inclusive
+sub clip {
+    my $val = $_[0];
+    return 0 if $val < 0.0;
+    return 1 if $val > 1.0;
+    return $val;
+}
+
+# Approximately normal random numbers. The arguments indicate the range of possible numbers and the center of the distribution.
+# Half the values will appear on either side of the center.
+sub normrand {
+    my($left, $center, $right, $scale) = @_;
+    $left   ||= 0.0;
+    $center ||= 0.5;
+    $right  ||= 1.0;
+    $scale  ||= 1.0;
+
+    my $niter = 5;
+    if ($center eq 'URN') {
+	$niter = 1;
+	$center = ($left + $right) / 2.0;
+    }
+
+    my $sum = 0;
+    $sum += rand() for 1 .. $niter;
+    my $centered_norm = $scale * (2.0 * $sum / $niter - 1.0); # [-scale .. scale)
+
+    return clip($centered_norm*($center-$left ) + $center) if $centered_norm < 0;
+    return clip($centered_norm*($right-$center) + $center);
+}
+
+# Randomly make functions similar
+sub oracle_similarity {
+    return rand() <= $similarity_rate ? 1 : 0;
+}
+
+# Randomly choose a calculated similarity value based on whether two functions are indeed similar
+sub calculated_similarity {
+    my($are_similar, $metric) = @_;
+    return clip(normrand(@{$metrics[$metric][$are_similar?1:0]}));
+}
+
+for my $i (1 .. $npoints) {
+    my $condition = oracle_similarity;
+    my @sim = map {calculated_similarity $condition, $_} 0 .. @metrics-1;
+    print join("\t", $condition?'y':'n', @sim), "\n";
+}

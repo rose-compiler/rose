@@ -10,9 +10,7 @@ class B
    {
      public:
          typedef int x_enum;
-#if 0
-         void x_enum();
-#endif
+      // void x_enum();
    };
 
 class X

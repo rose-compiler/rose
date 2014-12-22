@@ -20,7 +20,7 @@ usage(int exit_status)
               <<"            containing the driver type and all necessary connection parameters.\n";
     exit(exit_status);
 }
-    
+
 int
 main(int argc, char *argv[])
 {

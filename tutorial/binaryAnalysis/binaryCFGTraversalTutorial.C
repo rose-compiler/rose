@@ -10,6 +10,7 @@
 using namespace std;
 // you need boost to put together the graph
 using namespace boost;
+using namespace rose;
 
 //renaming to Vertex and Edge to save space
 typedef boost::graph_traits<BinaryAnalysis::ControlFlow::Graph>::vertex_descriptor Vertex;   /**< Graph vertex type. */

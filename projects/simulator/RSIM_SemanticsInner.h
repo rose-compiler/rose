@@ -27,7 +27,7 @@ namespace RSIM_Semantics {
     /* Classes from which inner semantic classes derive.  The simulator is written so that it should be fairly easy to replace
      * PartialSymbolicSemantics with some other class having a similar interface.  The class must operate in the concrete
      * domain.  We have not tested any semantic layer besides PartialSymbolicSemantics [2012-06-12]. */
-#   define RSIM_SEMANTICS_INNER_BASE BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics
+#   define RSIM_SEMANTICS_INNER_BASE rose::BinaryAnalysis::InstructionSemantics::PartialSymbolicSemantics
 
 
     /** Values manipulated by the simulator's concrete semantics. */
@@ -57,7 +57,7 @@ namespace RSIM_Semantics {
      *  actually used here. By subclassing, we only have a few methods to specialize.  The Memory class of
      *  RSIM_SEMANTICS_INNER_BASE is not used -- instead, we use the concrete MemoryMap stored in the RSIM_Process, and thus
      *  override all superclass methods dealing with memory access. See ROSE's
-     *  BinaryAnalysis::InstructionSemantics::NullSemantics class for documentation for most of the methods herein. */
+     *  rose::BinaryAnalysis::InstructionSemantics::NullSemantics class for documentation for most of the methods herein. */
     template<
         template <template <size_t> class ValueType> class State = RSIM_Semantics::InnerState,
         template <size_t> class ValueType = RSIM_Semantics::InnerValueType

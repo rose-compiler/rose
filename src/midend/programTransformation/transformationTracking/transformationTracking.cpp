@@ -10,12 +10,39 @@ namespace TransformationTracking {
   // reverse lookup 
   std::map <unsigned int, SgNode*> IdToAstTable; 
   static int nextId = 1; 
+  
+  // internal storage to store file info for each node
+  std::map<AST_NODE_ID, std::pair <Sg_File_Info*, Sg_File_Info*> > IdToFileInfoTable;
+
+  // public interface implementation
+  AST_NODE_ID getNextId ()
+  {
+    return nextId;
+  }
 
   AST_NODE_ID getId (SgNode* n)
   {
-    return AstToIdTable[n];
+    //TODO ROSE reuses released memory space to be reused by new AST nodes. 
+    //Using  memory address as the key is not reliable to indicate unique AST nodes! 
+    return AstToIdTable[n]; 
   }
 
+  // an internal helper function
+  static std::pair <Sg_File_Info*, Sg_File_Info*> getBeginAndEndFileInfo (SgNode* n)
+  {
+    std::pair <Sg_File_Info*, Sg_File_Info*> rtvalue; 
+    ROSE_ASSERT (n != NULL);
+    if (isSgPragma(n)||isSgLocatedNode(n))
+    {
+      rtvalue = std::make_pair (n->get_startOfConstruct(), n->get_endOfConstruct());
+    }
+    return rtvalue;
+  }
+
+  std::pair<Sg_File_Info*, Sg_File_Info*>  getFileInfo(AST_NODE_ID id)
+  {
+    return IdToFileInfoTable[id];  
+  }
   void setId (SgNode* n)
   {
     ROSE_ASSERT (n != NULL);
@@ -30,6 +57,8 @@ namespace TransformationTracking {
       AstToIdTable[n] = nextId;
 //      cout<<n->class_name() <<" @ "<<n <<" cur_id is set to \n\t"<< nextId << "."<<endl;
       IdToAstTable[nextId] = n; 
+// We store the file info at the same time
+      IdToFileInfoTable[nextId] = getBeginAndEndFileInfo (n);
       nextId ++;
     }
     else
@@ -42,7 +71,11 @@ class visitorTraversal : public AstSimpleProcessing
     protected:
       void virtual visit (SgNode* n)
       {
-        if (isSgProject(n)|| isSgSourceFile(n)||isSgInitializedName(n)||isSgLocatedNode(n))
+        if (isSgProject(n)
+          ||isSgSourceFile(n)
+          ||isSgInitializedName(n)
+          ||isSgLocatedNode(n)
+          ||isSgFileList(n))
         {
          setId (n);
         }

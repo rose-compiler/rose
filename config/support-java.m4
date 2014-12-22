@@ -1,6 +1,7 @@
 AC_DEFUN([ROSE_SUPPORT_JAVA],
 [
 # Begin macro ROSE_SUPPORT_JAVA.
+ROSE_CONFIGURE_SECTION([Java])
 
 AC_MSG_CHECKING([for Java (javac first, then java, then jvm)])
 
@@ -106,6 +107,45 @@ if test "x$USE_JAVA" = x1; then
   AC_MSG_CHECKING(for java)
   if test -x "${JAVA}"; then
     AC_MSG_RESULT(yes)
+
+echo "JAVA=${JAVA}"
+
+    # Determine java version, e.g. java version "1.7.0_51"
+    JAVA_VERSION=`${JAVA} -version 2>&1 | grep "java version" | sed 's/java version//' | sed 's/"//g'`
+    JAVA_VERSION_MAJOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]1}'`
+    JAVA_VERSION_MINOR=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]2}'`
+    JAVA_VERSION_PATCH=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]1}'`
+    JAVA_VERSION_RELEASE=`echo ${JAVA_VERSION} | awk 'BEGIN {FS="."} {print [$]3}' | awk 'BEGIN {FS="_"} {print [$]2}'`
+
+    AC_MSG_CHECKING([JAVA_VERSION])
+    AC_MSG_RESULT([${JAVA_VERSION}])
+
+    AC_MSG_CHECKING([JAVA_VERSION_MAJOR])
+    AC_MSG_RESULT([${JAVA_VERSION_MAJOR}])
+
+    AC_MSG_CHECKING([JAVA_VERSION_MAJOR])
+    AC_MSG_RESULT([${JAVA_VERSION_MINOR}])
+
+    AC_MSG_CHECKING([JAVA_VERSION_PATCH])
+    AC_MSG_RESULT([${JAVA_VERSION_PATCH}])
+
+    AC_MSG_CHECKING([JAVA_VERSION_RELEASE])
+    AC_MSG_RESULT([${JAVA_VERSION_RELEASE}])
+
+    if test -z "${JAVA_VERSION_MAJOR}" ||
+       test -z "${JAVA_VERSION_MINOR}" ||
+       test -z "${JAVA_VERSION_PATCH}" ||
+       test -z "${JAVA_VERSION_RELEASE}"
+    then
+       ROSE_MSG_ERROR([An error occurred while trying to determine your java -version])
+    else
+      if test ${JAVA_VERSION_MAJOR} -lt 1 ||
+        (test ${JAVA_VERSION_MAJOR} -eq 1 &&
+         test ${JAVA_VERSION_MINOR} -lt 7)
+      then
+        ROSE_MSG_ERROR([Detected unsupported java -version. ROSE currently requires JDK 1.7+])
+      fi
+    fi
   else
     AC_MSG_ERROR([java not found in $JAVA_PATH])
   fi
@@ -198,6 +238,28 @@ AC_SUBST(JAVA)
 AC_SUBST(JAVAC)
 AC_SUBST(JAVAH)
 AC_SUBST(JAR)
+
+# Java Version Information
+AM_CONDITIONAL(ROSE_WITH_JAVA_6, [test "x${JAVA_VERSION_MINOR}" != "x6"])
+AM_CONDITIONAL(ROSE_WITH_JAVA_7, [test "x${JAVA_VERSION_MINOR}" != "x7"])
+AM_CONDITIONAL(ROSE_WITH_JAVA_8, [test "x${JAVA_VERSION_MINOR}" != "x8"])
+
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_MAJOR,
+  ["${JAVA_VERSION_MAJOR}"],
+  [Major version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_MINOR,
+  ["${JAVA_VERSION_MINOR}"],
+  [Minor version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_PATCH,
+  ["${JAVA_VERSION_PATCH}"],
+  [Patch version number of the Java JDK])
+AC_DEFINE_UNQUOTED(
+  JAVA_VERSION_RELEASE,
+  ["${JAVA_VERSION_RELEASE}"],
+  [Release version number of the Java JDK])
 
 
 # End macro ROSE_SUPPORT_JAVA.

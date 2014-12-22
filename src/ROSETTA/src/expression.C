@@ -61,6 +61,9 @@ Grammar::setUpExpressions ()
   // favor of this newer (more language independent) IR node.
      NEW_TERMINAL_MACRO (TypeExpression, "TypeExpression", "TYPE_EXPRESSION");
 
+  // DQ (9/2/2014): Adding support for C++11 Lambda expressions.
+     NEW_TERMINAL_MACRO (LambdaExp,      "LambdaExp",  "LAMBDA_EXP" );
+
 #if USE_UPC_IR_NODES
   // DQ and Liao (6/10/2008): Added new IR nodes specific to UPC.
      NEW_TERMINAL_MACRO (UpcLocalsizeofExpression,    "UpcLocalsizeofExpression",    "UPC_LOCAL_SIZEOF_EXPR" );
@@ -172,6 +175,12 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (DoubleVal,              "DoubleVal",              "DOUBLE_VAL" );
      NEW_TERMINAL_MACRO (LongDoubleVal,          "LongDoubleVal",          "LONG_DOUBLE_VAL" );
 
+  // DQ (7/31/2014): Added support for C++11 nullptr constant value expression (using type nullptr_t).
+     NEW_TERMINAL_MACRO (NullptrValExp,          "NullptrValExp",          "NULLPTR_VAL" );
+
+  // DQ (8/8/2014): Added support for C++11 decltype which references a function parameter.
+     NEW_TERMINAL_MACRO (FunctionParameterRefExp, "FunctionParameterRefExp", "FUNCTION_PARAMETER_REF_EXP" );
+
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      NEW_TERMINAL_MACRO (TemplateParameterVal,   "TemplateParameterVal",   "TEMPLATE_PARAMETER_VAL" );
 
@@ -220,6 +229,8 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (StringConversion,          "StringConversion",              "STR_CONV" );
      NEW_TERMINAL_MACRO (YieldExpression,           "YieldExpression",               "YIELD_EXP" );
 
+#include "x10/exp_terminals.cpp"
+
 #if USE_FORTRAN_IR_NODES
   // Intrisic function are just like other functions, but explicitly marked to be intrinsic.
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice)
@@ -262,6 +273,31 @@ Grammar::setUpExpressions ()
 
 #endif
 
+
+#define ROSE_USE_STENCILE_COMPILER_NODES 0
+#if ROSE_USE_STENCILE_COMPILER_NODES
+
+  // Possible new IR nodes specific to new stencil DSL.
+     NEW_TERMINAL_MACRO (ShiftOpExpr,             "ShiftOpExpr",              "Temp_ShiftOpExpr" );
+     NEW_TERMINAL_MACRO (GrowOpExpr,              "GrowOpExpr",               "Temp_GrowOpExpr" );
+     NEW_TERMINAL_MACRO (CrossLevelOpExpr,        "CrossLevelOpExpr",         "Temp_CrossLevelOpExpr" );
+     NEW_TERMINAL_MACRO (PointExpr,               "PointExpr",                "Temp_PointExpr" );
+
+     NEW_TERMINAL_MACRO (BoxOpExpr,               "BoxOpExpr",                "Temp_BoxOpExpr" );
+     NEW_TERMINAL_MACRO (ArrayExpr,               "ArrayExpr",                "Temp_ArrayExpr" );
+
+  // Note that ArrayDecl, ArrayDef, and StencilDef, StencilExpr would be derived from SgExpression.
+
+  // DQ (10/14/2014): ALTERNATIVE:
+  // An alternative to naming new IR nodes would be to add associated AST attributes from a base class
+  // that would be interpreted to be the equivalent new IR nodes at runtime.  The Aterm generator
+  // and Aterm reader would be able to interpret these AST attributes and generate the desired new
+  // aterm nodes (and read then using modified patterns with the new IR node names).  This approach
+  // would simplify the handling of Aterms for new IR nodes extended from existing ROSE IR nodes.
+  
+#endif
+
+
   // An expression with a designator, used for designated initialization in
   // SgAggregateInitializer
      NEW_TERMINAL_MACRO (DesignatedInitializer, "DesignatedInitializer", "DESIGNATED_INITIALIZER" );
@@ -289,13 +325,13 @@ Grammar::setUpExpressions ()
 
   // DQ (2/2/2006): Support for Fortran IR nodes (contributed by Rice) (adding ExponentiationOp binary operator)
      NEW_NONTERMINAL_MACRO (BinaryOp,
-          ArrowExp       | DotExp           | DotStarOp       | ArrowStarOp      | EqualityOp    | LessThanOp     | 
-          GreaterThanOp  | NotEqualOp       | LessOrEqualOp   | GreaterOrEqualOp | AddOp         | SubtractOp     | 
-          MultiplyOp     | DivideOp         | IntegerDivideOp | ModOp            | AndOp         | OrOp           |
-          BitXorOp       | BitAndOp         | BitOrOp         | CommaOpExp       | LshiftOp      | RshiftOp       |
-          PntrArrRefExp  | ScopeOp          | AssignOp        | ExponentiationOp | JavaUnsignedRshiftOp |
-          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp     |
-          NonMembershipOp | IsOp            | IsNotOp,
+          ArrowExp       | DotExp           | DotStarOp           | ArrowStarOp      | EqualityOp           | LessThanOp     | 
+          GreaterThanOp  | NotEqualOp       | LessOrEqualOp       | GreaterOrEqualOp | AddOp                | SubtractOp     | 
+          MultiplyOp     | DivideOp         | IntegerDivideOp     | ModOp            | AndOp                | OrOp           |
+          BitXorOp       | BitAndOp         | BitOrOp             | CommaOpExp       | LshiftOp             | RshiftOp       |
+          PntrArrRefExp  | ScopeOp          | AssignOp            | ExponentiationOp | JavaUnsignedRshiftOp |
+          ConcatenationOp | PointerAssignOp | UserDefinedBinaryOp | CompoundAssignOp | MembershipOp         |
+          NonMembershipOp | IsOp            | IsNotOp          /* | DotDotExp*/,
           "BinaryOp","BINARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (NaryOp,
@@ -303,11 +339,11 @@ Grammar::setUpExpressions ()
           "NaryOp","NARY_EXPRESSION", false);
 
      NEW_NONTERMINAL_MACRO (ValueExp,
-          BoolValExp     | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
-          WcharVal       | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
-          LongIntVal     | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
-          DoubleVal      | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
-          TemplateParameterVal,
+          BoolValExp           | StringVal        | ShortVal               | CharVal         | UnsignedCharVal |
+          WcharVal             | UnsignedShortVal | IntVal                 | EnumVal         | UnsignedIntVal  | 
+          LongIntVal           | LongLongIntVal   | UnsignedLongLongIntVal | UnsignedLongVal | FloatVal        | 
+          DoubleVal            | LongDoubleVal    | ComplexVal             |  UpcThreads     | UpcMythread     |
+          TemplateParameterVal | NullptrValExp,
           "ValueExp","ValueExpTag", false);
 
      NEW_NONTERMINAL_MACRO (ExprListExp,
@@ -345,7 +381,8 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp, "Expression", "ExpressionTag", false);
+       // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -704,6 +741,7 @@ Grammar::setUpExpressions ()
      ExprListExp.setFunctionSource      ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ValueExp.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      BoolValExp.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource    ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ShortVal.setFunctionSource         ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      CharVal.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      UnsignedCharVal.setFunctionSource  ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -721,6 +759,12 @@ Grammar::setUpExpressions ()
 
   // DQ (11/28/2011): Adding template declaration support to the AST.
      TemplateParameterVal.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda functions.
+     LambdaExp.setFunctionSource( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource       ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
      ThisExp.setFunctionSource          ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", "../Grammar/Expression.code" );
@@ -911,6 +955,12 @@ Grammar::setUpExpressions ()
   // DQ (7/21/2006): Added support for GNU statement expression extension.
      StatementExpression.editSubstitute ( "PRECEDENCE_VALUE", "16" );
      AsmOp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (8/11/2014): Added support for C++11 decltype used in new function return syntax.
+     FunctionParameterRefExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.editSubstitute ( "PRECEDENCE_VALUE", "16" );
 
 #if USE_FORTRAN_IR_NODES
   // DQ (3/19/2007): Support for Fortran IR nodes (not sure if these are correct values)
@@ -1266,6 +1316,49 @@ Grammar::setUpExpressions ()
      BoolValExp.setDataPrototype ( "int", "value", "= 0",
                                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/31/2014): Adding support for nullptr constant value expression.
+     NullptrValExp.setFunctionPrototype ( "HEADER_NULLPTR_VALUE_EXPRESSION", "../Grammar/Expression.code" );
+  // DQ (7/31/2014): I don't think this need a value.
+  // NullptrValExp.setDataPrototype ( "SgNullptrType*", "value", "= 0",
+  //                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
+     FunctionParameterRefExp.setDataPrototype ("int", "parameter_number", "= -1",
+                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionParameterRefExp.setDataPrototype ("int", "parameter_levels_up", "= -1",
+                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/8/2014): This is where we store the reference to the function parameter (likely a SgVarRefExp).
+  // This value is computed as part of the post-processing of the ROSE AST (using the parameter_number and 
+  // parameter_levels_up values.
+     FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/10/2014): We need to store an explicit type pointer in this IR node so that we can support
+  // the get_type() function called from any expression that might have this kind of IR node in its subtree.
+     FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
+     LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "capture_default", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "default_is_by_reference", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "explicit_return_type", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     LambdaExp.setDataPrototype ( "bool", "has_parameter_decl", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      StringVal.setFunctionPrototype ( "HEADER_STRING_VALUE_EXPRESSION", "../Grammar/Expression.code" );
 
   // DQ (3/25/2006): We can have ROSETTA generate the constructor now that we use a C++ style std::string
@@ -1286,6 +1379,16 @@ Grammar::setUpExpressions ()
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
   // DQ (12/23/2007): Added support for distinguishing double quotes (permits use of sing, double, or un-quoted strings in the SgFormatItem object).
      StringVal.setDataPrototype ( "bool", "usesDoubleQuotes", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/13/2014): Added support for C++11 string types (16bit and 32bit character types for strings).
+     StringVal.setDataPrototype ( "bool", "is16bitString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "bool", "is32bitString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "bool", "isRawString", "= false",
+              NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     StringVal.setDataPrototype ( "std::string", "raw_string_value", "= \"\"",
               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // URK (08/22/2006): Added string to hold source code constants of integer and character types precisely.
@@ -1418,9 +1521,11 @@ Grammar::setUpExpressions ()
   // DQ (8/27/2006): Added support for Complex values (save the values as long doubles internally within the AST)
   // JJW (11/22/2008): Changed members to SgValueExp*; real_value can be NULL for imaginary numbers
      ComplexVal.setFunctionPrototype ( "HEADER_COMPLEX_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "real_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "",
+  // DQ (10/7/2014): Added missing default values (caught by ROSETTA generated aterm support).
+     ComplexVal.setDataPrototype ( "SgValueExp*", "imaginary_value", "= NULL",
                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      ComplexVal.setDataPrototype ( "SgType*", "precisionType", "= NULL",
              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1913,7 +2018,11 @@ Grammar::setUpExpressions ()
 #endif
 
      Initializer.setFunctionPrototype ( "HEADER_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
-     Initializer.setDataPrototype     ( "bool"               , "is_explicit_cast", "= true",
+     Initializer.setDataPrototype     ( "bool", "is_explicit_cast", "= true",
+               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/6/2014): This is C++11 syntax for direct brace initalization (e.g. int n{}).
+     Initializer.setDataPrototype     ( "bool", "is_braced_initialized", "= false",
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // SgAggregateInitializer.setFunctionPrototype ( "HEADER_REPLACE_EXPRESSION", "../Grammar/Expression.code" );
@@ -1952,6 +2061,10 @@ Grammar::setUpExpressions ()
   // DQ (9/4/2013): Added support for name qualification on the type referenced by the AggregateInitializer (part of support for compound literals).
      AggregateInitializer.setDataPrototype("bool","global_qualification_required_for_type","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (8/1/2014): Added to support C++11 constexpr constructors that can generate an originalExpressionTree in ROSE.
+     AggregateInitializer.setDataPrototype ( "SgExpression*", "originalExpressionTree", "= NULL",
+                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (9/4/2013): This should be replaced by the use of SgCompoundLiteral since it is the concept trying to be expressed here
@@ -2357,6 +2470,7 @@ Grammar::setUpExpressions ()
 
      ValueExp.setFunctionSource ( "SOURCE_VALUE_EXPRESSION","../Grammar/Expression.code" );
      BoolValExp.setFunctionSource ( "SOURCE_BOOLEAN_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource ( "SOURCE_NULLPTR_VALUE_EXPRESSION","../Grammar/Expression.code" );
      StringVal.setFunctionSource ( "SOURCE_STRING_VALUE_EXPRESSION","../Grammar/Expression.code" );
      ShortVal.setFunctionSource ( "SOURCE_SHORT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CharVal.setFunctionSource ( "SOURCE_CHAR_VALUE_EXPRESSION","../Grammar/Expression.code" );
@@ -2376,6 +2490,12 @@ Grammar::setUpExpressions ()
 
   // DQ (11/28/2011): Adding support for template declarations in the AST.
      TemplateParameterVal.setFunctionSource ( "SOURCE_TEMPLATE_PARAMETER_VALUE_EXPRESSION","../Grammar/Expression.code" );
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+     FunctionParameterRefExp.setFunctionSource ( "SOURCE_FUNCTION_PARAMETER_REFERENCE_EXPRESSION", "../Grammar/Expression.code" );
+
+  // DQ (9/2/2014): Adding support for C++11 lambda expresions.
+     LambdaExp.setFunctionSource ( "SOURCE_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
 
      ComplexVal.setFunctionSource ( "SOURCE_COMPLEX_VALUE_EXPRESSION","../Grammar/Expression.code" );
      CallExpression.setFunctionSource ( "SOURCE_CALL_EXPRESSION","../Grammar/Expression.code" );
@@ -2590,7 +2710,12 @@ Grammar::setUpExpressions ()
      TemplateMemberFunctionRefExp.setFunctionSource   ( "SOURCE_GET_TYPE_FROM_SYMBOL","../Grammar/Expression.code" );
 
      BoolValExp.setFunctionSource             ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+     NullptrValExp.setFunctionSource          ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
      ShortVal.setFunctionSource               ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
+
+  // DQ (8/8/2014): Added support for function parameter reference used in C++11 decltype type declarations.
+  // I think we need a custom get_type() function.
+  // FunctionParameterRefExp.setFunctionSource ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
   // DQ (8/17/2010): types for strings need to be handled using a lenght parameter to the SgTypeString::createType function.
   // For fortran the lenght can be specified as an expression, but for a literal it has to be a known value of an integer.
@@ -2623,6 +2748,7 @@ Grammar::setUpExpressions ()
      UpcMythread.setFunctionSource            ( "SOURCE_GET_TYPE_GENERIC","../Grammar/Expression.code" );
 
      BoolValExp.editSubstitute     ( "GENERIC_TYPE", "SgTypeBool" );
+     NullptrValExp.editSubstitute  ( "GENERIC_TYPE", "SgTypeNullptr" );
      StringVal.editSubstitute      ( "GENERIC_TYPE", "SgTypeString" );
      ShortVal.editSubstitute       ( "GENERIC_TYPE", "SgTypeShort" );
 

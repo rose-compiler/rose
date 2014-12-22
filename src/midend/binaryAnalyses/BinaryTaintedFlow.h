@@ -8,6 +8,7 @@
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
+namespace rose {
 namespace BinaryAnalysis {
 
 /** Various tools for performing tainted flow analysis.
@@ -187,10 +188,10 @@ public:
      *
      *  This method computes a data flow graph for each reachable vertex of the control flow graph, and as a result also
      *  obtains the list of variables over which the tainted flow analysis will operate.  It uses whatever algorithm is
-     *  implemented in @ref BinaryAnalysis::DataFlow::buildGraphPerVertex. */
+     *  implemented in @ref rose::BinaryAnalysis::DataFlow::buildGraphPerVertex. */
     template<class CFG>
     void computeFlowGraphs(const CFG &cfg, size_t cfgStartVertex) {
-        using namespace rose::Diagnostics;
+        using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(cfgStartVertex < cfg.nVertices());
         Stream mesg(mlog[WHERE] <<"computeFlowGraphs starting at CFG vertex " <<cfgStartVertex);
@@ -217,7 +218,7 @@ public:
         return vertexFlowGraphs_;
     }
     void vertexFlowGraphs(const DataFlow::VertexFlowGraphs &graphMap) {
-        using namespace rose::Diagnostics;
+        using namespace Diagnostics;
         ASSERT_this();
         vertexFlowGraphs_ = graphMap;
         variableList_ = dataFlow_.getUniqueVariables(vertexFlowGraphs_);
@@ -252,7 +253,7 @@ public:
      *  Runs the tainted data flow analysis until it converges to a fixed point. */
     template<class CFG>
     void runToFixedPoint(const CFG &cfg, size_t cfgStartVertex, const StatePtr &initialState) {
-        using namespace rose::Diagnostics;
+        using namespace Diagnostics;
         ASSERT_this();
         ASSERT_require(cfgStartVertex < cfg.nVertices());
         ASSERT_not_null(initialState);
@@ -278,6 +279,7 @@ public:
 
 std::ostream& operator<<(std::ostream &out, const TaintedFlow::State &state);
 
+} // namespace
 } // namespace
 
 #endif

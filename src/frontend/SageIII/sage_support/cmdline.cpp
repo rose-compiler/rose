@@ -17,13 +17,16 @@
 
 using namespace rose;                                   // temporary, until this file lives in namespace rose
 
+#include <inttypes.h> /* for %" PRIuPTR " vs. %Iu handling */
+
 /*-----------------------------------------------------------------------------
  *  Variable Definitions
  *---------------------------------------------------------------------------*/
-int Rose::Cmdline::verbose = 0;
-bool Rose::Cmdline::Java::Ecj::batch_mode = false;
-std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
-std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+ROSE_DLL_API int Rose::Cmdline::verbose = 0;
+ROSE_DLL_API bool Rose::Cmdline::Java::Ecj::batch_mode = false;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Fortran::Ofp::jvm_options;
+ROSE_DLL_API std::list<std::string> Rose::Cmdline::Java::Ecj::jvm_options;
+std::list<std::string> Rose::Cmdline::X10::X10c::jvm_options;
 
 /*-----------------------------------------------------------------------------
  *  namespace Rose::Cmdline {
@@ -127,7 +130,7 @@ CommandlineProcessing::isExecutableFilename ( string name )
 
      if (SgProject::get_verbose() > 0)
         {
-          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+          printf ("CommandlineProcessing::isExecutableFilename(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
         }
 
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
@@ -192,7 +195,7 @@ CommandlineProcessing::isValidFileWithExecutableFileSuffixes ( string name )
 
      initExecutableFileSuffixList();
 
-  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %zu \n",name.c_str(),validExecutableFileSuffixes.size());
+  // printf ("CommandlineProcessing::isValidFileWithExecutableFileSuffixes(): name = %s validExecutableFileSuffixes.size() = %" PRIuPTR " \n",name.c_str(),validExecutableFileSuffixes.size());
      ROSE_ASSERT(validExecutableFileSuffixes.empty() == false);
 
      int length = name.size();
@@ -455,7 +458,7 @@ CommandlineProcessing::generateSourceFilenames ( Rose_STL_Container<string> argL
        // if ( ((*i)[0] != '-') || ((*i)[0] != '+') )
           if ( (*i).empty() || (((*i)[0] != '-') && ((*i)[0] != '+')) )
              {
-            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %zu \n",counter,(*i).c_str(),(*i).size());
+            // printf ("In CommandlineProcessing::generateSourceFilenames(): Look for file names:  argv[%d] = %s length = %" PRIuPTR " \n",counter,(*i).c_str(),(*i).size());
 
                  if (!isSourceFilename(*i) &&
                      (binaryMode || !isObjectFilename(*i)) &&
@@ -574,7 +577,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // printf ("DONE with copy of command line in SgProject constructor! \n");
 
-  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %zu \n",local_commandLineArgumentList.size());
+  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
 
      if (SgProject::get_verbose() > 1)
         {
@@ -868,6 +871,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+  //
+  // appendPID
+  //
+     if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","appendPID",false) == true )
+        {
+#if 0
+          printf ("detected use of appendPID mode \n");
+#endif
+          set_appendPID(true);
+        }
   //
   // specify compilation only option (new style command line processing)
   //
@@ -1191,7 +1205,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
        // DQ (12/8/2007): This leverages existing support in commandline processing
        // p_sourceFileNameList = CommandlineProcessing::generateSourceFilenames(argv);
 
-       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %zu \n",p_sourceFileNameList.size());
+       // printf ("In SgProject::processCommandLine(): p_sourceFileNameList.size() = %" PRIuPTR " \n",p_sourceFileNameList.size());
 
        // DQ (2/4/2009): Only put *.o files into the objectFileNameList is they are not being
        // processed as binary source files (targets for analysis, as opposed to linking).
@@ -1587,6 +1601,10 @@ ProcessClobberInputFile (SgProject* project, std::vector<std::string>& argv)
           std::cout << "[INFO] **CAUTION** Turning on the Unparser's destructive clobber mode =O" << std::endl;
 
       project->set_unparser__clobber_input_file(true);
+  }
+  else
+  {
+      project->set_unparser__clobber_input_file(false);
   }
 }// ::Rose::Cmdline::Unparser::ProcessClobberInputFile
 
@@ -2592,6 +2610,13 @@ std::string
 Rose::Cmdline::Java::Ecj::
 GetRoseClasspath ()
 {
+  
+  #ifdef _MSC_VER
+  std::string separator = ";";
+  #else
+  std::string separator = ":";
+  #endif
+  
   std::string classpath = "-Djava.class.path=";
 
   // Java (ECJ front-end) support (adding specific jar file)
@@ -2605,7 +2630,7 @@ GetRoseClasspath ()
           ecj_class_path_jarfile,
           std::string("lib/") + ecj_jar_file_name
       );
-  classpath += ":";
+  classpath += separator;
 
   // Java (ECJ front-end) support (adding path to source tree for the jar file).
   // This allows us to avoid copying the jar file to the build tree which is
@@ -2615,7 +2640,7 @@ GetRoseClasspath ()
       findRoseSupportPathFromBuild(
           ecj_class_path,
           std::string("lib/"));
-  classpath += ":";
+  classpath += separator;
 
   // Everything else?
   classpath += ".";
@@ -2762,6 +2787,79 @@ ProcessX10Only (SgProject* project, std::vector<std::string>& argv)
       project->set_compileOnly(true);
       project->set_X10_only(true);
   }
+}
+
+void
+Rose::Cmdline::X10::X10c::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend commandline options" << std::endl;
+
+  ProcessJvmOptions(project, argv);
+}
+
+void
+Rose::Cmdline::X10::X10c::
+ProcessJvmOptions (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing X10 compiler frontend JVM commandline options" << std::endl;
+
+  std::string x10c_jvm_options = "";
+
+  bool has_x10c_jvm_options =
+      CommandlineProcessing::isOptionWithParameter(
+          argv,
+          X10::option_prefix,
+          "x10c:jvm_options",
+          x10c_jvm_options,
+          Cmdline::REMOVE_OPTION_FROM_ARGV);
+
+  if (has_x10c_jvm_options)
+  {
+      if (SgProject::get_verbose() > 1)
+      {
+          std::cout
+              << "[INFO] Processing X10 compiler options: "
+              << "'" << x10c_jvm_options << "'"
+              << std::endl;
+      }
+
+      std::list<std::string> x10c_jvm_options_list =
+          StringUtility::tokenize(x10c_jvm_options, ' ');
+
+      Cmdline::X10::X10c::jvm_options.insert(
+          Cmdline::X10::X10c::jvm_options.begin(),
+          x10c_jvm_options_list.begin(),
+          x10c_jvm_options_list.end());
+  }// has_x10c_jvm_options
+}// Cmdline::X10::ProcessJvmOptions
+
+std::string
+Rose::Cmdline::X10::X10c::
+GetRoseClasspath ()
+{
+  std::string classpath = "-Djava.class.path=";
+
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+  classpath +=
+      std::string(X10_INSTALL_PATH) + "/lib/x10c.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/lpg.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast.java_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.cast_1.0.0.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.core_1.1.3.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/com.ibm.wala.shrike_1.3.1.201101071300.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/x10wala.jar" + ":" +
+      std::string(X10_INSTALL_PATH) + "/lib/org.eclipse.equinox.common_3.6.0.v20100503.jar";
+#endif // ROSE_BUILD_X10_LANGUAGE_SUPPORT
+
+  classpath += ":";
+
+  // Everything else?
+  classpath += ".";
+
+  return classpath;
 }
 
 /*-----------------------------------------------------------------------------
@@ -2991,6 +3089,14 @@ SgFile::usage ( int status )
 "                             Supported for C/C++, and currently only generates token \n"
 "                             stream for fortran (call parser with --tokens option)\n"
 "                             call parser with --tokens option (fortran only)\n"
+"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
+"                             unparses code using original token stream and forces the output \n"
+"                             of two files representing the unparsing of each statement using \n"
+"                             the token stream mapping to the AST.  The token_leading_* file \n"
+"                             uses the mapping and the leading whitespace mapping between \n"
+"                             statements, where as the token_trailing_* file uses the mapping \n"
+"                             and the trailing whitespace mapping between statements.  Both \n"
+"                             files should be identical, and the same as the input file. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3144,6 +3250,9 @@ SgFile::usage ( int status )
 "     -rose:noclobber_if_different_output_file\n"
 "                             force error on rewrite of existing output file only if result\n"
 "                             if a different output file (default: false). \n"
+"     -rose:appendPID\n"
+"                             append PID into the temporary output name. \n"
+"                             This can avoid issues in parallel compilation (default: false). \n"
 "\n"
 "Debugging options:\n"
 "     -rose:detect_dangling_pointers LEVEL \n"
@@ -3266,7 +3375,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
              SwitchGroup switches;
              switches.insert(Switch("rose:log")
                              .resetLongPrefixes("-")    // ROSE switches only support single hyphens
-                             .action(configureDiagnostics("rose:log", Diagnostics::facilities))
+                             .action(configureDiagnostics("rose:log", Diagnostics::mfacilities))
                              .argument("config"));
              std::vector<std::string> args;
              args.push_back("-rose:log");
@@ -3403,6 +3512,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse tokens testing mode ON: integerOptionForUnparseTokensTesting = %d \n",integerOptionForUnparseTokensTesting);
           set_unparse_tokens_testing(integerOptionForUnparseTokensTesting);
+        }
+
+  //
+  // DQ (11/20/2010): Added testing for mappings of tokens to the AST (using both leading and trailing whitespace mappings).
+  // Turn on the output of the testing files for the token unparsing (intenal use only).
+  //
+     set_unparse_using_leading_and_trailing_token_mappings(false);
+     ROSE_ASSERT (get_unparse_using_leading_and_trailing_token_mappings() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_using_leading_and_trailing_token_mappings)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse_using_leading_and_trailing_token_mappings mode ON \n");
+          set_unparse_using_leading_and_trailing_token_mappings(true);
         }
 
   //
@@ -4459,9 +4581,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_disassemblerSearchHeuristics();
-             heuristics = Disassembler::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Disassembler::parse_switches(stringParameter, heuristics);
              set_disassemblerSearchHeuristics(heuristics);
-         } catch(const Disassembler::Exception &e) {
+         } catch(const rose::BinaryAnalysis::Disassembler::Exception &e) {
              fprintf(stderr, "%s in \"-rose:disassembler_search\" switch\n", e.what());
              ROSE_ASSERT(!"error parsing -rose:disassembler_search");
          }
@@ -4476,7 +4598,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
 #ifdef ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
          try {
              unsigned heuristics = get_partitionerSearchHeuristics();
-             heuristics = Partitioner::parse_switches(stringParameter, heuristics);
+             heuristics = rose::BinaryAnalysis::Partitioner::parse_switches(stringParameter, heuristics);
              set_partitionerSearchHeuristics(heuristics);
          } catch(const std::string &e) {
              fprintf(stderr, "%s in \"-rose:partitioner_search\" switch\n", e.c_str());
@@ -4768,9 +4890,9 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
 
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (TOP): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
 
@@ -4821,6 +4943,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);
@@ -4986,12 +5109,14 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      optionCount = sla(argv, "-rose:", "($)", "noclobber_if_different_output_file",1);
 
+  // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
+     optionCount = sla(argv, "-rose:", "($)", "appendPID",1);
 #if 1
      if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
         {
-          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %zu \n",argv.size());
+          printf ("In stripRoseCommandLineOptions (BOTTOM): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
           for (size_t i=0; i < argv.size(); i++)
-             printf ("     argv[%zu] = %s \n",i,argv[i].c_str());
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
         }
 #endif
    }
@@ -5226,7 +5351,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
      for (size_t i=0; i < configDefs.size(); i++)
         {
-          printf ("configDefs[%zu] = %s \n",i,configDefs[i].c_str());
+          printf ("configDefs[%" PRIuPTR "] = %s \n",i,configDefs[i].c_str());
         }
 #endif
 
@@ -5275,6 +5400,14 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #endif
 
      vector<string> commandLine;
+
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    // Search dir for header files, after all directories specified by -I but
+    // before the standard system directories.
+    commandLine.push_back("--sys_include");
+    commandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    #endif
 
 #ifdef ROSE_USE_MICROSOFT_EXTENSIONS
   // DQ (4/21/2014): Add Microsoft specific options:
@@ -5380,7 +5513,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #else
   // DQ (4/21/2014): The preinclude file we generate for ROSE is specific to the backend and for Windows code might be too specific to Linux.
   // But we certainly don't want the -D options: e.g "-D__GNUG__=4 -D__GNUC__=4 -D__GNUC_MINOR__=4 -D__GNUC_PATCHLEVEL__=7"
+#if 0
+  // DQ (8/18/2014): Supress this output, I think we do want to include the rose_edg_required_macros_and_functions.h 
+  // (but we might want to use it to specify different or additional builtin functions in the future).
      printf ("Note for advance microsoft windows support using MSVC: Not clear if we need a specific --preinclude rose_edg_required_macros_and_functions.h for windows \n");
+#endif
   // commandLine.insert(commandLine.end(), configDefs.begin(), configDefs.end());
      commandLine.push_back("--preinclude");
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
@@ -5735,7 +5872,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--preinit_il");
         }
 
-  // printf ("After processing -sage:preinit_il option argc = %zu \n",argv.size());
+  // printf ("After processing -sage:preinit_il option argc = %" PRIuPTR " \n",argv.size());
 #endif
 
   // ***********************************************************************
@@ -5839,7 +5976,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
   // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
   // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
      if ( SgProject::get_verbose() >= 1 )
-          printf ("project->get_preincludeDirectoryList().size() = %zu \n",project->get_preincludeDirectoryList().size());
+          printf ("project->get_preincludeDirectoryList().size() = %" PRIuPTR " \n",project->get_preincludeDirectoryList().size());
 
   // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
   // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
@@ -5884,7 +6021,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // DQ (8/6/2006): there are a number of options that when specified in their EDG forms
   // should turn on ROSE mechanisms.  "--edg:c" should turn on C mode in ROSE.
-  // printf ("--edg option processing: edgOptionList.size() = %zu \n",edgOptionList.size());
+  // printf ("--edg option processing: edgOptionList.size() = %" PRIuPTR " \n",edgOptionList.size());
      Rose_STL_Container<string>::iterator i = edgOptionList.begin();
      while (i != edgOptionList.end())
         {
@@ -6216,6 +6353,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      vector<string> compilerNameString;
      compilerNameString.push_back(compilerName);
 
+    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+    #ifdef ROSE_BOOST_PATH
+    if (get_C_only() || get_Cxx_only())
+    {
+        // Search dir for header files, after all directories specified by -I but
+        // before the standard system directories.
+        compilerNameString.push_back("-isystem");
+        compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+    }
+    #endif
+
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
@@ -6477,7 +6625,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
         }
 
 #if 0
-     printf ("Selected compilerNameString.size() = %zu compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
+     printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
@@ -6551,7 +6699,7 @@ if (get_C_only() ||
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
-     printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+     printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
 
   // DQ (4/20/2006): Modified to only do this when generating code and compiling it
@@ -6565,7 +6713,7 @@ if (get_C_only() ||
           ROSE_ASSERT (project != NULL);
           Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 #if 0
-          printf ("sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+          printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
@@ -6603,7 +6751,7 @@ if (get_C_only() ||
         }
 
 #if 0
-     printf ("After removing source file name: argcArgvList.size() = %zu argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+     printf ("After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
 
@@ -6667,7 +6815,7 @@ if (get_C_only() ||
             // unsigned int endingQuote   = i->rfind("\"");
                std::string::size_type endingQuote   = i->rfind("\"");
 #if 0
-               printf ("startingQuote = %zu endingQuote = %zu \n",startingQuote,endingQuote);
+               printf ("startingQuote = %" PRIuPTR " endingQuote = %" PRIuPTR " \n",startingQuote,endingQuote);
 #endif
             // There should be a double quote on both ends of the string
                ROSE_ASSERT (endingQuote != std::string::npos);
@@ -6678,7 +6826,7 @@ if (get_C_only() ||
             // std::string quotedSubstringWithoutQuotes = i->substr(startingQuote,endingQuote);
                std::string::size_type substringWithoutQuotesSize = ((endingQuote-1) - (startingQuote+1)) + 1;
 #if 0
-               printf ("substringWithoutQuotesSize = %zu \n",substringWithoutQuotesSize);
+               printf ("substringWithoutQuotesSize = %" PRIuPTR " \n",substringWithoutQuotesSize);
 #endif
             // Generate the string without quotes so that we can rebuild the quoted string.
             // This is more critical if there were escpes before the quotes in the original string.
@@ -6710,7 +6858,7 @@ if (get_C_only() ||
 
 #if 0
      printf ("In buildCompilerCommandLineOptions: test 2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
-     printf ("argcArgvList.size()                                            = %zu \n",argcArgvList.size());
+     printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
      printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 

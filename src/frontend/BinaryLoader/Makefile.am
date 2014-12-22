@@ -12,5 +12,3 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
 else
    libroseBinaryLoader_la_SOURCES = dummyBinaryLoader.C
 endif
-
-EXTRA_DIST = dummyBinaryLoader.C

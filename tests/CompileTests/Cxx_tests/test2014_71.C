@@ -1,46 +1,31 @@
-#if 1
-struct Domain_s;
+#include "boost/shared_ptr.hpp"
 
-#if 0
-class _string 
+typedef int LocalId;
+
+class Patch
    {
      public:
-          _string (char*);
+          const LocalId& getLocalId() const;
    };
 
-typedef _string string;
-#else
-typedef class _string 
+class PatchLevel
    {
      public:
-          _string (char*);
-   } string;
-#endif
+          class Iterator
+             {
+               public:
+                    Iterator();
+                    const boost::shared_ptr<Patch>& operator->() const;           
+             };
 
-#endif
+          typedef Iterator iterator;
+   };
 
-#if 0
-#include <string>
+void Refine_postProcessFluxLimiter( double phi_floor )
+   {
+     PatchLevel::iterator pi;
 
-struct Domain_s;
-#endif
+     int mbid = pi->getLocalId();
+   }
 
-class DomainGraphViz
-{
-public:
 
-#if 1
-   explicit DomainGraphViz(Domain_s* domain, string prefix = "");
-#else
-   explicit DomainGraphViz(Domain_s* domain, string prefix);
-#endif
-
-   void graphIndicesAndMixSlots(Domain_s* domain, string prefix);
-   void graphSpecFrac(Domain_s* domain, string prefix);
-   void graphIreg(Domain_s* domain, string prefix);
-
-   virtual ~DomainGraphViz();
-
-  // private:
-
-};

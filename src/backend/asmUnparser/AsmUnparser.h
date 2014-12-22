@@ -13,6 +13,8 @@ class SgAsmBlock;
 class SgAsmFunction;
 class SgAsmInterpretation;
 
+namespace rose {
+namespace BinaryAnalysis {
 
 /** Unparses binary AST into text.
  *
@@ -256,10 +258,10 @@ public:
 
     /** Control Flow Graph type.  The unparser supports the standard binary control flow graph data type.  This could be
      *  templatized, but we're planning to move to a non-template graph type in the near future [RPM 2012-04-18]. */
-    typedef BinaryAnalysis::ControlFlow::Graph CFG;
+    typedef rose::BinaryAnalysis::ControlFlow::Graph CFG;
     typedef boost::graph_traits<CFG>::vertex_descriptor CFG_Vertex;
     typedef std::map<SgAsmBlock*, CFG_Vertex> CFG_BlockMap;
-    typedef BinaryAnalysis::FunctionCall::Graph CG;
+    typedef rose::BinaryAnalysis::FunctionCall::Graph CG;
     typedef boost::graph_traits<CG>::vertex_descriptor CG_Vertex;
     typedef std::map<SgAsmFunction*, CG_Vertex> CG_FunctionMap;
 
@@ -885,7 +887,7 @@ public:
     /** Associates a control flow graph with this unparser.  If a control flow graph is present then certain output callbacks
      *  will be able to use that information.  For instance, the basicBlockPredecessors will emit a list of all the
      *  predecessors of a block.  Passing an empty graph will remove control flow information. */
-    void add_control_flow_graph(const BinaryAnalysis::ControlFlow::Graph &cfg);
+    void add_control_flow_graph(const rose::BinaryAnalysis::ControlFlow::Graph &cfg);
 
     /** Controls printing of skip/back messages during linear output.  Each callback that prints an object that occupies
      *  address space should call start_of_object() and end_of_object() before and after printing the object.  If output is
@@ -1013,5 +1015,8 @@ protected:
         rose_addr_t address;            /**< Address to use when generating a prefix string. */
     } lineprefix;
 };
+
+} // namespace
+} // namespace
 
 #endif

@@ -3,6 +3,9 @@
 #ifndef ROSE_DISASSEMBLER_ARM_H
 #define ROSE_DISASSEMBLER_ARM_H
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the ARM architecture. Most of the useful disassembly methods can be found in the superclass. */
 class DisassemblerArm: public Disassembler {
 public:
@@ -87,5 +90,8 @@ private:
     uint32_t insn;                              /**< 4-byte instruction word */
     ArmInstructionCondition cond;
 };
+
+} // namespace
+} // namespace
 
 #endif

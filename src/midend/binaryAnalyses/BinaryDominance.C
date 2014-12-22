@@ -2,8 +2,11 @@
 #include "threadSupport.h"  // for __attribute__ on Visual Studio
 #include "BinaryDominance.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 void
-BinaryAnalysis::Dominance::clear_ast(SgNode *ast)
+Dominance::clear_ast(SgNode *ast)
 {
     struct T1: public AstSimpleProcessing {
         void visit(SgNode *node) {
@@ -16,7 +19,7 @@ BinaryAnalysis::Dominance::clear_ast(SgNode *ast)
 }
 
 bool
-BinaryAnalysis::Dominance::is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad_blocks/*=NULL*/)
+Dominance::is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad_blocks/*=NULL*/)
 {
     struct T1: public AstSimpleProcessing {
         bool failed;
@@ -46,3 +49,6 @@ BinaryAnalysis::Dominance::is_consistent(SgNode *ast, std::set<SgAsmBlock*> *bad
     t1.traverse(ast, preorder);
     return t1.failed;
 }
+
+} // namespace
+} // namespace

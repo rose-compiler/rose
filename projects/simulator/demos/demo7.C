@@ -52,6 +52,8 @@
 
 #include "RSIM_Linux32.h"
 
+using namespace rose::BinaryAnalysis;
+
 class Demo: public RSIM_Callbacks::InsnCallback {
 public:
     virtual Demo *clone() { return this; }

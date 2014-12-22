@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "PartialSymbolicSemantics2.h"
 
+namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace PartialSymbolicSemantics {
@@ -79,29 +80,49 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 void
 State::print_diff_registers(std::ostream &o, const StatePtr &other_state, Formatter &fmt) const
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
 }
 
 bool
 State::equal_registers(const StatePtr &other) const
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
     return false;
 }
 
 void
 State::discard_popped_memory()
 {
-    assert(!"FIXME");
-    abort();
+    ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
 }
 
 
 /*******************************************************************************************************************************
  *                                      RISC Operators
  *******************************************************************************************************************************/
+
+RiscOperatorsPtr
+RiscOperators::instance(const RegisterDictionary *regdict)
+{
+    BaseSemantics::SValuePtr protoval = SValue::instance();
+#if defined(__GNUC__)
+#if __GNUC__==4 && __GNUC_MINOR__==2
+    // GCC 4.2.4 may have problems optimizing the function.  It was originally [2014-07] defined in the header file where an
+    // extraneous volatile read from the protoval reference counter defeated the bug.  Later [2014-10] the proval pointer
+    // mechanism was changed to use Sawyer::SharedPointer and the volatile read was no longer an option, but adding extra
+    // function calls (like 'std::cerr <<ownershipCount(protoval) <<"\n"') defeated the bug.  Eventually [2014-10] this
+    // function was moved from the header to the .C file which seems to defeat the bug without the need for volatile reads or
+    // extra function calls.
+#endif
+#endif
+    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+    BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
+    memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
+    BaseSemantics::StatePtr state = State::instance(registers, memory);
+    SMTSolver *solver = NULL;
+    RiscOperatorsPtr ops = RiscOperatorsPtr(new RiscOperators(state, solver));
+    return ops;
+}
 
 void
 RiscOperators::interrupt(int majr, int minr)
@@ -114,7 +135,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if ((!a->name && 0==a->offset) || (!b->name && 0==b->offset))
         return number_(a->get_width(), 0);
     if (a->name || b->name)
@@ -127,7 +148,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->must_equal(b))
         return a->copy();
     if (!a->name && !b->name)
@@ -144,7 +165,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (!a->name && !b->name)
         return number_(a->get_width(), a->offset ^ b->offset);
     if (a->must_equal(b))
@@ -177,8 +198,8 @@ BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit)
 {
     SValuePtr a = SValue::promote(a_);
-    assert(end_bit<=a->get_width());
-    assert(begin_bit<end_bit);
+    ASSERT_require(end_bit<=a->get_width());
+    ASSERT_require(begin_bit<end_bit);
     if (0==begin_bit) {
         if (end_bit==a->get_width())
             return a->copy();
@@ -215,8 +236,8 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &sel_,
     SValuePtr sel = SValue::promote(sel_);
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(1==sel->get_width());
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(1==sel->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->must_equal(b))
         return a->copy();
     if (sel->name)
@@ -327,7 +348,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 {
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
-    assert(a->get_width()==b->get_width());
+    ASSERT_require(a->get_width()==b->get_width());
     if (a->name==b->name && (!a->name || a->negate!=b->negate)) {
         /* [V1+x] + [-V1+y] = [x+y]  or
          * [x] + [y] = [x+y] */
@@ -350,7 +371,7 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSema
     SValuePtr a = SValue::promote(a_);
     SValuePtr b = SValue::promote(b_);
     SValuePtr c = SValue::promote(c_);
-    assert(a->get_width()==b->get_width() && c->get_width()==1);
+    ASSERT_require(a->get_width()==b->get_width() && c->get_width()==1);
     int n_unknown = (a->name?1:0) + (b->name?1:0) + (c->name?1:0);
     if (n_unknown <= 1) {
         /* At most, one of the operands is an unknown value. See add() for more details. */
@@ -523,9 +544,11 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &value,
                            const BaseSemantics::SValuePtr &condition)
 {
+#ifndef NDEBUG
     size_t nbits = value->get_width();
-    assert(8==nbits || 16==nbits || 32==nbits);
-    assert(1==condition->get_width()); // FIXME: condition is not used
+    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+#endif
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     state->writeMemory(address, value, this, this);
@@ -538,17 +561,17 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
                           const BaseSemantics::SValuePtr &condition)
 {
     size_t nbits = dflt_->get_width();
-    assert(1==condition->get_width()); // FIXME: condition is not used
-    assert(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
 
     // Default values come from an optional memory map if possible, otherwise use the passed-in default.
     BaseSemantics::SValuePtr dflt = dflt_;
     if (map && address->is_number()) {
         size_t nbytes = nbits/8;
         uint8_t *buf = new uint8_t[nbytes];
-        size_t nread = map->read(buf, address->get_number(), nbytes);
+        size_t nread = map->readQuick(buf, address->get_number(), nbytes);
         if (nread == nbytes) {
-            ByteOrder::convert(buf, nbytes, map->get_byte_order(), ByteOrder::ORDER_LSB);
+            ByteOrder::convert(buf, nbytes, map->byteOrder(), ByteOrder::ORDER_LSB);
             uint64_t dflt_val = 0;
             for (size_t i=0; i<nbytes; ++i)
                 dflt_val |= IntegerOps::shiftLeft2<uint64_t>(buf[i], 8*i);
@@ -562,6 +585,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     return retval;
 }
 
+} // namespace
 } // namespace
 } // namespace
 } // namespace

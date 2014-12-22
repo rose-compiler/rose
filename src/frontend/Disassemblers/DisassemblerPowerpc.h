@@ -6,6 +6,9 @@
 #include "integerOps.h"
 #include "sageBuilderAsm.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** Disassembler for the PowerPC architecture. */
 class DisassemblerPowerpc: public Disassembler {
 public:
@@ -248,5 +251,8 @@ private:
     uint64_t ip;                                /**< Instruction pointer */
     uint32_t insn;                              /**< 4-byte instruction word */
 };
+
+} // namespace
+} // namespace
 
 #endif

@@ -1,7 +1,43 @@
+#include <iostream>
 #include <string>
 #include <assert.h>
 #include "jni_x10SourceCodePosition.h"
 #include "jni_x10_utils.h"
+
+using namespace std;
+
+//
+// Replace newline character by its escape character sequence.
+//
+// TODO: PC Question: Shouldn't the unparser be doing this as it is already processing
+//                    other escape sequences such as \" and \'.
+//
+string normalize(string source) {
+    string target = "";
+    for (string::iterator it = source.begin(); it < source.end(); it++) {
+        switch(*it) {
+            case '\0':
+                target += "\\0";
+                break;
+            case '\n':
+                target += "\\n";
+                break;
+            case '\r':
+                target += "\\r";
+                break;
+            case '\\':
+                target += "\\\\";
+                break;
+            default:
+                target += (*it);
+                break;
+        }
+    }
+
+    return target;
+}
+
+
 
 X10SourceCodePosition *convert_X10_SourcePosition(JNIEnv *env, jobject sourcePosition) {
     jclass cls;
@@ -42,3 +78,17 @@ X10SourceCodePosition *convert_X10_SourcePosition(JNIEnv *env, jobject sourcePos
     return pos_info;
 }
 
+std::string convertJavaStringToCxxString(JNIEnv *env, const jstring &java_string) {
+     // Note that "env" can't be passed into this function as "const".
+    const char *str = env -> GetStringUTFChars(java_string, NULL);
+    assert(str != NULL);
+
+    string returnString = str;
+
+    // printf ("Inside of convertJavaStringToCxxString s = %s \n", str);
+
+    // Note that str is not set to NULL.
+    env -> ReleaseStringUTFChars(java_string, str);
+
+    return normalize(returnString);
+}

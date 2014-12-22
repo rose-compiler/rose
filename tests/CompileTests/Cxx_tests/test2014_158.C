@@ -1,0 +1,2687 @@
+// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/CompileTests/Cxx_tests/test2014_157.C"
+// # 1 "<built-in>"
+// # 1 "<command-line>"
+// # 1 "/home/dquinlan/ROSE/git-dq-new_app-rc/tests/CompileTests/Cxx_tests/test2014_157.C"
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/vector" 1 3
+// # 59 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/vector" 3
+       
+// # 60 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/vector" 3
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 1 3
+// # 60 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/c++config.h" 1 3
+// # 243 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/c++config.h" 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/os_defines.h" 1 3
+// # 39 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/os_defines.h" 3
+// # 1 "/usr/include/features.h" 1 3 4
+// # 361 "/usr/include/features.h" 3 4
+// # 1 "/usr/include/sys/cdefs.h" 1 3 4
+// # 365 "/usr/include/sys/cdefs.h" 3 4
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 366 "/usr/include/sys/cdefs.h" 2 3 4
+// # 362 "/usr/include/features.h" 2 3 4
+// # 385 "/usr/include/features.h" 3 4
+// # 1 "/usr/include/gnu/stubs.h" 1 3 4
+
+
+
+// # 1 "/usr/include/bits/wordsize.h" 1 3 4
+// # 5 "/usr/include/gnu/stubs.h" 2 3 4
+
+
+
+
+// # 1 "/usr/include/gnu/stubs-64.h" 1 3 4
+// # 10 "/usr/include/gnu/stubs.h" 2 3 4
+// # 386 "/usr/include/features.h" 2 3 4
+// # 40 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/os_defines.h" 2 3
+// # 244 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/c++config.h" 2 3
+
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/cpu_defines.h" 1 3
+// # 247 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/c++config.h" 2 3
+// # 61 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 1 3
+// # 41 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+       
+// # 42 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/include/stddef.h" 1 3 4
+// # 149 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/include/stddef.h" 3 4
+typedef long int ptrdiff_t;
+// # 211 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/include/stddef.h" 3 4
+typedef long unsigned int size_t;
+// # 45 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 2 3
+
+
+
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+  using ::ptrdiff_t;
+  using ::size_t;
+
+}
+// # 62 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/functexcept.h" 1 3
+// # 37 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/functexcept.h" 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/exception_defines.h" 1 3
+// # 38 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/functexcept.h" 2 3
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+
+  void
+  __throw_bad_exception(void) __attribute__((__noreturn__));
+
+
+  void
+  __throw_bad_alloc(void) __attribute__((__noreturn__));
+
+
+  void
+  __throw_bad_cast(void) __attribute__((__noreturn__));
+
+  void
+  __throw_bad_typeid(void) __attribute__((__noreturn__));
+
+
+  void
+  __throw_logic_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_domain_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_invalid_argument(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_length_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_out_of_range(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_runtime_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_range_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_overflow_error(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_underflow_error(const char*) __attribute__((__noreturn__));
+
+
+  void
+  __throw_ios_failure(const char*) __attribute__((__noreturn__));
+
+  void
+  __throw_system_error(int) __attribute__((__noreturn__));
+
+}
+// # 63 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 1 3
+// # 36 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 3
+       
+// # 37 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 3
+// # 69 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 3
+namespace __gnu_cxx __attribute__ ((__visibility__ ("default"))) {
+
+  template<typename _Iterator, typename _Container>
+    class __normal_iterator;
+
+}
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+  struct __true_type { };
+  struct __false_type { };
+
+  template<bool>
+    struct __truth_type
+    { typedef __false_type __type; };
+
+  template<>
+    struct __truth_type<true>
+    { typedef __true_type __type; };
+
+
+
+  template<class _Sp, class _Tp>
+    struct __traitor
+    {
+      enum { __value = bool(_Sp::__value) || bool(_Tp::__value) };
+      typedef typename __truth_type<__value>::__type __type;
+    };
+
+
+  template<typename, typename>
+    struct __are_same
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<typename _Tp>
+    struct __are_same<_Tp, _Tp>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+  template<typename _Tp>
+    struct __is_void
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<>
+    struct __is_void<void>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_integer
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+
+
+
+  template<>
+    struct __is_integer<bool>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<signed char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<unsigned char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+  template<>
+    struct __is_integer<wchar_t>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+// # 194 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 3
+  template<>
+    struct __is_integer<short>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<unsigned short>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<int>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<unsigned int>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<long>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<unsigned long>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<long long>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_integer<unsigned long long>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_floating
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+
+  template<>
+    struct __is_floating<float>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_floating<double>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_floating<long double>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_pointer
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<typename _Tp>
+    struct __is_pointer<_Tp*>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_normal_iterator
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<typename _Iterator, typename _Container>
+    struct __is_normal_iterator< __gnu_cxx::__normal_iterator<_Iterator,
+             _Container> >
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_arithmetic
+    : public __traitor<__is_integer<_Tp>, __is_floating<_Tp> >
+    { };
+
+
+
+
+  template<typename _Tp>
+    struct __is_fundamental
+    : public __traitor<__is_void<_Tp>, __is_arithmetic<_Tp> >
+    { };
+
+
+
+
+  template<typename _Tp>
+    struct __is_scalar
+    : public __traitor<__is_arithmetic<_Tp>, __is_pointer<_Tp> >
+    { };
+
+
+
+
+  template<typename _Tp>
+    struct __is_char
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<>
+    struct __is_char<char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+  template<>
+    struct __is_char<wchar_t>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+  template<typename _Tp>
+    struct __is_byte
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+
+  template<>
+    struct __is_byte<char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_byte<signed char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+  template<>
+    struct __is_byte<unsigned char>
+    {
+      enum { __value = 1 };
+      typedef __true_type __type;
+    };
+
+
+
+
+  template<typename _Tp>
+    struct __is_move_iterator
+    {
+      enum { __value = 0 };
+      typedef __false_type __type;
+    };
+// # 417 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/cpp_type_traits.h" 3
+}
+// # 64 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/type_traits.h" 1 3
+// # 32 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/type_traits.h" 3
+       
+// # 33 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/type_traits.h" 3
+
+
+
+
+namespace __gnu_cxx __attribute__ ((__visibility__ ("default"))) {
+
+
+  template<bool, typename>
+    struct __enable_if
+    { };
+
+  template<typename _Tp>
+    struct __enable_if<true, _Tp>
+    { typedef _Tp __type; };
+
+
+
+  template<bool _Cond, typename _Iftrue, typename _Iffalse>
+    struct __conditional_type
+    { typedef _Iftrue __type; };
+
+  template<typename _Iftrue, typename _Iffalse>
+    struct __conditional_type<false, _Iftrue, _Iffalse>
+    { typedef _Iffalse __type; };
+
+
+
+  template<typename _Tp>
+    struct __add_unsigned
+    {
+    private:
+      typedef __enable_if<std::__is_integer<_Tp>::__value, _Tp> __if_type;
+
+    public:
+      typedef typename __if_type::__type __type;
+    };
+
+  template<>
+    struct __add_unsigned<char>
+    { typedef unsigned char __type; };
+
+  template<>
+    struct __add_unsigned<signed char>
+    { typedef unsigned char __type; };
+
+  template<>
+    struct __add_unsigned<short>
+    { typedef unsigned short __type; };
+
+  template<>
+    struct __add_unsigned<int>
+    { typedef unsigned int __type; };
+
+  template<>
+    struct __add_unsigned<long>
+    { typedef unsigned long __type; };
+
+  template<>
+    struct __add_unsigned<long long>
+    { typedef unsigned long long __type; };
+
+
+  template<>
+    struct __add_unsigned<bool>;
+
+  template<>
+    struct __add_unsigned<wchar_t>;
+
+
+
+  template<typename _Tp>
+    struct __remove_unsigned
+    {
+    private:
+      typedef __enable_if<std::__is_integer<_Tp>::__value, _Tp> __if_type;
+
+    public:
+      typedef typename __if_type::__type __type;
+    };
+
+  template<>
+    struct __remove_unsigned<char>
+    { typedef signed char __type; };
+
+  template<>
+    struct __remove_unsigned<unsigned char>
+    { typedef signed char __type; };
+
+  template<>
+    struct __remove_unsigned<unsigned short>
+    { typedef short __type; };
+
+  template<>
+    struct __remove_unsigned<unsigned int>
+    { typedef int __type; };
+
+  template<>
+    struct __remove_unsigned<unsigned long>
+    { typedef long __type; };
+
+  template<>
+    struct __remove_unsigned<unsigned long long>
+    { typedef long long __type; };
+
+
+  template<>
+    struct __remove_unsigned<bool>;
+
+  template<>
+    struct __remove_unsigned<wchar_t>;
+
+
+
+  template<typename _Type>
+    inline bool
+    __is_null_pointer(_Type* __ptr)
+    { return __ptr == 0; }
+
+  template<typename _Type>
+    inline bool
+    __is_null_pointer(_Type)
+    { return false; }
+
+
+
+  template<typename _Tp, bool = std::__is_integer<_Tp>::__value>
+    struct __promote
+    { typedef double __type; };
+
+  template<typename _Tp>
+    struct __promote<_Tp, false>
+    { typedef _Tp __type; };
+
+  template<typename _Tp, typename _Up>
+    struct __promote_2
+    {
+    private:
+      typedef typename __promote<_Tp>::__type __type1;
+      typedef typename __promote<_Up>::__type __type2;
+
+    public:
+      typedef __typeof__(__type1() + __type2()) __type;
+    };
+
+  template<typename _Tp, typename _Up, typename _Vp>
+    struct __promote_3
+    {
+    private:
+      typedef typename __promote<_Tp>::__type __type1;
+      typedef typename __promote<_Up>::__type __type2;
+      typedef typename __promote<_Vp>::__type __type3;
+
+    public:
+      typedef __typeof__(__type1() + __type2() + __type3()) __type;
+    };
+
+  template<typename _Tp, typename _Up, typename _Vp, typename _Wp>
+    struct __promote_4
+    {
+    private:
+      typedef typename __promote<_Tp>::__type __type1;
+      typedef typename __promote<_Up>::__type __type2;
+      typedef typename __promote<_Vp>::__type __type3;
+      typedef typename __promote<_Wp>::__type __type4;
+
+    public:
+      typedef __typeof__(__type1() + __type2() + __type3() + __type4()) __type;
+    };
+
+}
+// # 65 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/numeric_traits.h" 1 3
+// # 32 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/numeric_traits.h" 3
+       
+// # 33 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/numeric_traits.h" 3
+
+
+
+
+namespace __gnu_cxx __attribute__ ((__visibility__ ("default"))) {
+// # 52 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/numeric_traits.h" 3
+  template<typename _Value>
+    struct __numeric_traits_integer
+    {
+
+      static const _Value __min = (((_Value)(-1) < 0) ? (_Value)1 << (sizeof(_Value) * 8 - ((_Value)(-1) < 0)) : (_Value)0);
+      static const _Value __max = (((_Value)(-1) < 0) ? (((((_Value)1 << ((sizeof(_Value) * 8 - ((_Value)(-1) < 0)) - 1)) - 1) << 1) + 1) : ~(_Value)0);
+
+
+
+      static const bool __is_signed = ((_Value)(-1) < 0);
+      static const int __digits = (sizeof(_Value) * 8 - ((_Value)(-1) < 0));
+    };
+
+  template<typename _Value>
+    const _Value __numeric_traits_integer<_Value>::__min;
+
+  template<typename _Value>
+    const _Value __numeric_traits_integer<_Value>::__max;
+
+  template<typename _Value>
+    const bool __numeric_traits_integer<_Value>::__is_signed;
+
+  template<typename _Value>
+    const int __numeric_traits_integer<_Value>::__digits;
+// # 97 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/numeric_traits.h" 3
+  template<typename _Value>
+    struct __numeric_traits_floating
+    {
+
+      static const int __max_digits10 = (2 + (std::__are_same<_Value, float>::__value ? 24 : std::__are_same<_Value, double>::__value ? 53 : 64) * 3010 / 10000);
+
+
+      static const bool __is_signed = true;
+      static const int __digits10 = (std::__are_same<_Value, float>::__value ? 6 : std::__are_same<_Value, double>::__value ? 15 : 18);
+      static const int __max_exponent10 = (std::__are_same<_Value, float>::__value ? 38 : std::__are_same<_Value, double>::__value ? 308 : 4932);
+    };
+
+  template<typename _Value>
+    const int __numeric_traits_floating<_Value>::__max_digits10;
+
+  template<typename _Value>
+    const bool __numeric_traits_floating<_Value>::__is_signed;
+
+  template<typename _Value>
+    const int __numeric_traits_floating<_Value>::__digits10;
+
+  template<typename _Value>
+    const int __numeric_traits_floating<_Value>::__max_exponent10;
+
+  template<typename _Value>
+    struct __numeric_traits
+    : public __conditional_type<std::__is_integer<_Value>::__value,
+    __numeric_traits_integer<_Value>,
+    __numeric_traits_floating<_Value> >::__type
+    { };
+
+}
+// # 66 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 1 3
+// # 60 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/move.h" 1 3
+// # 34 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/move.h" 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 1 3
+// # 41 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+       
+// # 42 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/include/stddef.h" 1 3 4
+// # 45 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 2 3
+// # 35 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/move.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/concept_check.h" 1 3
+// # 33 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/concept_check.h" 3
+       
+// # 34 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/concept_check.h" 3
+// # 36 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/move.h" 2 3
+// # 66 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/move.h" 3
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+
+
+
+
+
+
+  template<typename _Tp>
+    inline void
+    swap(_Tp& __a, _Tp& __b)
+    {
+
+     
+
+      _Tp __tmp = (__a);
+      __a = (__b);
+      __b = (__tmp);
+    }
+
+
+
+  template<typename _Tp, size_t _Nm>
+    inline void
+    swap(_Tp (&__a)[_Nm], _Tp (&__b)[_Nm])
+    {
+      for (size_t __n = 0; __n < _Nm; ++__n)
+ swap(__a[__n], __b[__n]);
+    }
+
+}
+// # 61 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 2 3
+
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+
+  template<class _T1, class _T2>
+    struct pair
+    {
+      typedef _T1 first_type;
+      typedef _T2 second_type;
+
+      _T1 first;
+      _T2 second;
+
+
+
+
+
+      pair()
+      : first(), second() { }
+
+
+      pair(const _T1& __a, const _T2& __b)
+      : first(__a), second(__b) { }
+// # 98 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 3
+      template<class _U1, class _U2>
+        pair(const pair<_U1, _U2>& __p)
+ : first(__p.first),
+   second(__p.second) { }
+// # 141 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 3
+    };
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator==(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return __x.first == __y.first && __x.second == __y.second; }
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator<(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return __x.first < __y.first
+      || (!(__y.first < __x.first) && __x.second < __y.second); }
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator!=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return !(__x == __y); }
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator>(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return __y < __x; }
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator<=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return !(__y < __x); }
+
+
+  template<class _T1, class _T2>
+    inline bool
+    operator>=(const pair<_T1, _T2>& __x, const pair<_T1, _T2>& __y)
+    { return !(__x < __y); }
+// # 213 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 3
+  template<class _T1, class _T2>
+    inline pair<_T1, _T2>
+    make_pair(_T1 __x, _T2 __y)
+    { return pair<_T1, _T2>(__x, __y); }
+// # 259 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_pair.h" 3
+}
+// # 67 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 1 3
+// # 63 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 3
+       
+// # 64 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 3
+
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 1 3
+// # 41 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+       
+// # 42 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 3
+
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/include/stddef.h" 1 3 4
+// # 45 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/cstddef" 2 3
+// # 67 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 2 3
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+// # 79 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 3
+  struct input_iterator_tag { };
+
+  struct output_iterator_tag { };
+
+  struct forward_iterator_tag : public input_iterator_tag { };
+
+
+  struct bidirectional_iterator_tag : public forward_iterator_tag { };
+
+
+  struct random_access_iterator_tag : public bidirectional_iterator_tag { };
+// # 102 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_types.h" 3
+  template<typename _Category, typename _Tp, typename _Distance = ptrdiff_t,
+           typename _Pointer = _Tp*, typename _Reference = _Tp&>
+    struct iterator
+    {
+
+      typedef _Category iterator_category;
+
+      typedef _Tp value_type;
+
+      typedef _Distance difference_type;
+
+      typedef _Pointer pointer;
+
+      typedef _Reference reference;
+    };
+
+
+
+
+
+
+
+  template<typename _Iterator>
+    struct iterator_traits
+    {
+      typedef typename _Iterator::iterator_category iterator_category;
+      typedef typename _Iterator::value_type value_type;
+      typedef typename _Iterator::difference_type difference_type;
+      typedef typename _Iterator::pointer pointer;
+      typedef typename _Iterator::reference reference;
+    };
+
+  template<typename _Tp>
+    struct iterator_traits<_Tp*>
+    {
+      typedef random_access_iterator_tag iterator_category;
+      typedef _Tp value_type;
+      typedef ptrdiff_t difference_type;
+      typedef _Tp* pointer;
+      typedef _Tp& reference;
+    };
+
+  template<typename _Tp>
+    struct iterator_traits<const _Tp*>
+    {
+      typedef random_access_iterator_tag iterator_category;
+      typedef _Tp value_type;
+      typedef ptrdiff_t difference_type;
+      typedef const _Tp* pointer;
+      typedef const _Tp& reference;
+    };
+
+
+
+
+
+  template<typename _Iter>
+    inline typename iterator_traits<_Iter>::iterator_category
+    __iterator_category(const _Iter&)
+    { return typename iterator_traits<_Iter>::iterator_category(); }
+
+
+
+}
+// # 68 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 1 3
+// # 63 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 3
+       
+// # 64 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 3
+
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+  template<typename _InputIterator>
+    inline typename iterator_traits<_InputIterator>::difference_type
+    __distance(_InputIterator __first, _InputIterator __last,
+               input_iterator_tag)
+    {
+
+     
+
+      typename iterator_traits<_InputIterator>::difference_type __n = 0;
+      while (__first != __last)
+ {
+   ++__first;
+   ++__n;
+ }
+      return __n;
+    }
+
+  template<typename _RandomAccessIterator>
+    inline typename iterator_traits<_RandomAccessIterator>::difference_type
+    __distance(_RandomAccessIterator __first, _RandomAccessIterator __last,
+               random_access_iterator_tag)
+    {
+
+     
+
+      return __last - __first;
+    }
+// # 108 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 3
+  template<typename _InputIterator>
+    inline typename iterator_traits<_InputIterator>::difference_type
+    distance(_InputIterator __first, _InputIterator __last)
+    {
+
+      return std::__distance(__first, __last,
+        std::__iterator_category(__first));
+    }
+
+  template<typename _InputIterator, typename _Distance>
+    inline void
+    __advance(_InputIterator& __i, _Distance __n, input_iterator_tag)
+    {
+
+     
+      while (__n--)
+ ++__i;
+    }
+
+  template<typename _BidirectionalIterator, typename _Distance>
+    inline void
+    __advance(_BidirectionalIterator& __i, _Distance __n,
+       bidirectional_iterator_tag)
+    {
+
+     
+
+      if (__n > 0)
+        while (__n--)
+   ++__i;
+      else
+        while (__n++)
+   --__i;
+    }
+
+  template<typename _RandomAccessIterator, typename _Distance>
+    inline void
+    __advance(_RandomAccessIterator& __i, _Distance __n,
+              random_access_iterator_tag)
+    {
+
+     
+
+      __i += __n;
+    }
+// # 166 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 3
+  template<typename _InputIterator, typename _Distance>
+    inline void
+    advance(_InputIterator& __i, _Distance __n)
+    {
+
+      typename iterator_traits<_InputIterator>::difference_type __d = __n;
+      std::__advance(__i, __d, std::__iterator_category(__i));
+    }
+// # 195 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator_base_funcs.h" 3
+}
+// # 69 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 1 3
+// # 68 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+namespace std __attribute__ ((__visibility__ ("default"))) {
+// # 89 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Iterator>
+    class reverse_iterator
+    : public iterator<typename iterator_traits<_Iterator>::iterator_category,
+        typename iterator_traits<_Iterator>::value_type,
+        typename iterator_traits<_Iterator>::difference_type,
+        typename iterator_traits<_Iterator>::pointer,
+                      typename iterator_traits<_Iterator>::reference>
+    {
+    protected:
+      _Iterator current;
+
+    public:
+      typedef _Iterator iterator_type;
+      typedef typename iterator_traits<_Iterator>::difference_type
+              difference_type;
+      typedef typename iterator_traits<_Iterator>::reference reference;
+      typedef typename iterator_traits<_Iterator>::pointer pointer;
+
+    public:
+
+
+
+
+
+
+      reverse_iterator() : current() { }
+
+
+
+
+      explicit
+      reverse_iterator(iterator_type __x) : current(__x) { }
+
+
+
+
+      reverse_iterator(const reverse_iterator& __x)
+      : current(__x.current) { }
+
+
+
+
+
+      template<typename _Iter>
+        reverse_iterator(const reverse_iterator<_Iter>& __x)
+ : current(__x.base()) { }
+
+
+
+
+      iterator_type
+      base() const
+      { return current; }
+
+
+
+
+
+
+      reference
+      operator*() const
+      {
+ _Iterator __tmp = current;
+ return *--__tmp;
+      }
+
+
+
+
+
+
+      pointer
+      operator->() const
+      { return &(operator*()); }
+
+
+
+
+
+
+      reverse_iterator&
+      operator++()
+      {
+ --current;
+ return *this;
+      }
+
+
+
+
+
+
+      reverse_iterator
+      operator++(int)
+      {
+ reverse_iterator __tmp = *this;
+ --current;
+ return __tmp;
+      }
+
+
+
+
+
+
+      reverse_iterator&
+      operator--()
+      {
+ ++current;
+ return *this;
+      }
+
+
+
+
+
+
+      reverse_iterator
+      operator--(int)
+      {
+ reverse_iterator __tmp = *this;
+ ++current;
+ return __tmp;
+      }
+
+
+
+
+
+
+      reverse_iterator
+      operator+(difference_type __n) const
+      { return reverse_iterator(current - __n); }
+
+
+
+
+
+
+      reverse_iterator&
+      operator+=(difference_type __n)
+      {
+ current -= __n;
+ return *this;
+      }
+
+
+
+
+
+
+      reverse_iterator
+      operator-(difference_type __n) const
+      { return reverse_iterator(current + __n); }
+
+
+
+
+
+
+      reverse_iterator&
+      operator-=(difference_type __n)
+      {
+ current += __n;
+ return *this;
+      }
+
+
+
+
+
+
+      reference
+      operator[](difference_type __n) const
+      { return *(*this + __n); }
+    };
+// # 276 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Iterator>
+    inline bool
+    operator==(const reverse_iterator<_Iterator>& __x,
+        const reverse_iterator<_Iterator>& __y)
+    { return __x.base() == __y.base(); }
+
+  template<typename _Iterator>
+    inline bool
+    operator<(const reverse_iterator<_Iterator>& __x,
+       const reverse_iterator<_Iterator>& __y)
+    { return __y.base() < __x.base(); }
+
+  template<typename _Iterator>
+    inline bool
+    operator!=(const reverse_iterator<_Iterator>& __x,
+        const reverse_iterator<_Iterator>& __y)
+    { return !(__x == __y); }
+
+  template<typename _Iterator>
+    inline bool
+    operator>(const reverse_iterator<_Iterator>& __x,
+       const reverse_iterator<_Iterator>& __y)
+    { return __y < __x; }
+
+  template<typename _Iterator>
+    inline bool
+    operator<=(const reverse_iterator<_Iterator>& __x,
+        const reverse_iterator<_Iterator>& __y)
+    { return !(__y < __x); }
+
+  template<typename _Iterator>
+    inline bool
+    operator>=(const reverse_iterator<_Iterator>& __x,
+        const reverse_iterator<_Iterator>& __y)
+    { return !(__x < __y); }
+
+  template<typename _Iterator>
+    inline typename reverse_iterator<_Iterator>::difference_type
+    operator-(const reverse_iterator<_Iterator>& __x,
+       const reverse_iterator<_Iterator>& __y)
+    { return __y.base() - __x.base(); }
+
+  template<typename _Iterator>
+    inline reverse_iterator<_Iterator>
+    operator+(typename reverse_iterator<_Iterator>::difference_type __n,
+       const reverse_iterator<_Iterator>& __x)
+    { return reverse_iterator<_Iterator>(__x.base() - __n); }
+
+
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator==(const reverse_iterator<_IteratorL>& __x,
+        const reverse_iterator<_IteratorR>& __y)
+    { return __x.base() == __y.base(); }
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator<(const reverse_iterator<_IteratorL>& __x,
+       const reverse_iterator<_IteratorR>& __y)
+    { return __y.base() < __x.base(); }
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator!=(const reverse_iterator<_IteratorL>& __x,
+        const reverse_iterator<_IteratorR>& __y)
+    { return !(__x == __y); }
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator>(const reverse_iterator<_IteratorL>& __x,
+       const reverse_iterator<_IteratorR>& __y)
+    { return __y < __x; }
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator<=(const reverse_iterator<_IteratorL>& __x,
+        const reverse_iterator<_IteratorR>& __y)
+    { return !(__y < __x); }
+
+  template<typename _IteratorL, typename _IteratorR>
+    inline bool
+    operator>=(const reverse_iterator<_IteratorL>& __x,
+        const reverse_iterator<_IteratorR>& __y)
+    { return !(__x < __y); }
+
+  template<typename _IteratorL, typename _IteratorR>
+
+
+
+
+
+
+
+    inline typename reverse_iterator<_IteratorL>::difference_type
+    operator-(const reverse_iterator<_IteratorL>& __x,
+       const reverse_iterator<_IteratorR>& __y)
+
+    { return __y.base() - __x.base(); }
+// # 388 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container>
+    class back_insert_iterator
+    : public iterator<output_iterator_tag, void, void, void, void>
+    {
+    protected:
+      _Container* container;
+
+    public:
+
+      typedef _Container container_type;
+
+
+      explicit
+      back_insert_iterator(_Container& __x) : container(&__x) { }
+// # 414 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      back_insert_iterator&
+      operator=(typename _Container::const_reference __value)
+      {
+ container->push_back(__value);
+ return *this;
+      }
+// # 431 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      back_insert_iterator&
+      operator*()
+      { return *this; }
+
+
+      back_insert_iterator&
+      operator++()
+      { return *this; }
+
+
+      back_insert_iterator
+      operator++(int)
+      { return *this; }
+    };
+// # 457 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container>
+    inline back_insert_iterator<_Container>
+    back_inserter(_Container& __x)
+    { return back_insert_iterator<_Container>(__x); }
+// # 472 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container>
+    class front_insert_iterator
+    : public iterator<output_iterator_tag, void, void, void, void>
+    {
+    protected:
+      _Container* container;
+
+    public:
+
+      typedef _Container container_type;
+
+
+      explicit front_insert_iterator(_Container& __x) : container(&__x) { }
+// # 497 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      front_insert_iterator&
+      operator=(typename _Container::const_reference __value)
+      {
+ container->push_front(__value);
+ return *this;
+      }
+// # 514 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      front_insert_iterator&
+      operator*()
+      { return *this; }
+
+
+      front_insert_iterator&
+      operator++()
+      { return *this; }
+
+
+      front_insert_iterator
+      operator++(int)
+      { return *this; }
+    };
+// # 540 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container>
+    inline front_insert_iterator<_Container>
+    front_inserter(_Container& __x)
+    { return front_insert_iterator<_Container>(__x); }
+// # 559 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container>
+    class insert_iterator
+    : public iterator<output_iterator_tag, void, void, void, void>
+    {
+    protected:
+      _Container* container;
+      typename _Container::iterator iter;
+
+    public:
+
+      typedef _Container container_type;
+
+
+
+
+
+      insert_iterator(_Container& __x, typename _Container::iterator __i)
+      : container(&__x), iter(__i) {}
+// # 601 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      insert_iterator&
+      operator=(typename _Container::const_reference __value)
+      {
+ iter = container->insert(iter, __value);
+ ++iter;
+ return *this;
+      }
+// # 620 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+      insert_iterator&
+      operator*()
+      { return *this; }
+
+
+      insert_iterator&
+      operator++()
+      { return *this; }
+
+
+      insert_iterator&
+      operator++(int)
+      { return *this; }
+    };
+// # 646 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _Container, typename _Iterator>
+    inline insert_iterator<_Container>
+    inserter(_Container& __x, _Iterator __i)
+    {
+      return insert_iterator<_Container>(__x,
+      typename _Container::iterator(__i));
+    }
+
+}
+
+namespace __gnu_cxx __attribute__ ((__visibility__ ("default"))) {
+// # 665 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  using std::iterator_traits;
+  using std::iterator;
+  template<typename _Iterator, typename _Container>
+    class __normal_iterator
+    {
+    protected:
+      _Iterator _M_current;
+
+    public:
+      typedef _Iterator iterator_type;
+      typedef typename iterator_traits<_Iterator>::iterator_category
+                                                             iterator_category;
+      typedef typename iterator_traits<_Iterator>::value_type value_type;
+      typedef typename iterator_traits<_Iterator>::difference_type
+                                                             difference_type;
+      typedef typename iterator_traits<_Iterator>::reference reference;
+      typedef typename iterator_traits<_Iterator>::pointer pointer;
+
+      __normal_iterator() : _M_current(_Iterator()) { }
+
+      explicit
+      __normal_iterator(const _Iterator& __i) : _M_current(__i) { }
+
+
+      template<typename _Iter>
+        __normal_iterator(const __normal_iterator<_Iter,
+     typename __enable_if<
+              (std::__are_same<_Iter, typename _Container::pointer>::__value),
+        _Container>::__type>& __i)
+        : _M_current(__i.base()) { }
+
+
+      reference
+      operator*() const
+      { return *_M_current; }
+
+      pointer
+      operator->() const
+      { return _M_current; }
+
+      __normal_iterator&
+      operator++()
+      {
+ ++_M_current;
+ return *this;
+      }
+
+      __normal_iterator
+      operator++(int)
+      { return __normal_iterator(_M_current++); }
+
+
+      __normal_iterator&
+      operator--()
+      {
+ --_M_current;
+ return *this;
+      }
+
+      __normal_iterator
+      operator--(int)
+      { return __normal_iterator(_M_current--); }
+
+
+      reference
+      operator[](const difference_type& __n) const
+      { return _M_current[__n]; }
+
+      __normal_iterator&
+      operator+=(const difference_type& __n)
+      { _M_current += __n; return *this; }
+
+      __normal_iterator
+      operator+(const difference_type& __n) const
+      { return __normal_iterator(_M_current + __n); }
+
+      __normal_iterator&
+      operator-=(const difference_type& __n)
+      { _M_current -= __n; return *this; }
+
+      __normal_iterator
+      operator-(const difference_type& __n) const
+      { return __normal_iterator(_M_current - __n); }
+
+      const _Iterator&
+      base() const
+      { return _M_current; }
+    };
+// # 763 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_iterator.h" 3
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator==(const __normal_iterator<_IteratorL, _Container>& __lhs,
+        const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() == __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator==(const __normal_iterator<_Iterator, _Container>& __lhs,
+        const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() == __rhs.base(); }
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator!=(const __normal_iterator<_IteratorL, _Container>& __lhs,
+        const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() != __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator!=(const __normal_iterator<_Iterator, _Container>& __lhs,
+        const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() != __rhs.base(); }
+
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator<(const __normal_iterator<_IteratorL, _Container>& __lhs,
+       const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() < __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator<(const __normal_iterator<_Iterator, _Container>& __lhs,
+       const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() < __rhs.base(); }
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator>(const __normal_iterator<_IteratorL, _Container>& __lhs,
+       const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() > __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator>(const __normal_iterator<_Iterator, _Container>& __lhs,
+       const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() > __rhs.base(); }
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator<=(const __normal_iterator<_IteratorL, _Container>& __lhs,
+        const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() <= __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator<=(const __normal_iterator<_Iterator, _Container>& __lhs,
+        const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() <= __rhs.base(); }
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+    inline bool
+    operator>=(const __normal_iterator<_IteratorL, _Container>& __lhs,
+        const __normal_iterator<_IteratorR, _Container>& __rhs)
+    { return __lhs.base() >= __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline bool
+    operator>=(const __normal_iterator<_Iterator, _Container>& __lhs,
+        const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() >= __rhs.base(); }
+
+
+
+
+
+  template<typename _IteratorL, typename _IteratorR, typename _Container>
+
+
+
+
+
+
+
+    inline typename __normal_iterator<_IteratorL, _Container>::difference_type
+    operator-(const __normal_iterator<_IteratorL, _Container>& __lhs,
+       const __normal_iterator<_IteratorR, _Container>& __rhs)
+
+    { return __lhs.base() - __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline typename __normal_iterator<_Iterator, _Container>::difference_type
+    operator-(const __normal_iterator<_Iterator, _Container>& __lhs,
+       const __normal_iterator<_Iterator, _Container>& __rhs)
+    { return __lhs.base() - __rhs.base(); }
+
+  template<typename _Iterator, typename _Container>
+    inline __normal_iterator<_Iterator, _Container>
+    operator+(typename __normal_iterator<_Iterator, _Container>::difference_type
+       __n, const __normal_iterator<_Iterator, _Container>& __i)
+    { return __normal_iterator<_Iterator, _Container>(__i.base() + __n); }
+
+}
+// # 70 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+
+// # 1 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/debug/debug.h" 1 3
+// # 47 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/debug/debug.h" 3
+namespace std
+{
+  namespace __debug { }
+}
+
+
+
+
+namespace __gnu_debug
+{
+  using namespace std::__debug;
+}
+// # 72 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 2 3
+
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+
+
+
+
+  template<bool _BoolType>
+    struct __iter_swap
+    {
+      template<typename _ForwardIterator1, typename _ForwardIterator2>
+        static void
+        iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
+        {
+          typedef typename iterator_traits<_ForwardIterator1>::value_type
+            _ValueType1;
+          _ValueType1 __tmp = (*__a);
+          *__a = (*__b);
+          *__b = (__tmp);
+ }
+    };
+
+  template<>
+    struct __iter_swap<true>
+    {
+      template<typename _ForwardIterator1, typename _ForwardIterator2>
+        static void
+        iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
+        {
+          swap(*__a, *__b);
+        }
+    };
+// # 115 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _ForwardIterator1, typename _ForwardIterator2>
+    inline void
+    iter_swap(_ForwardIterator1 __a, _ForwardIterator2 __b)
+    {
+      typedef typename iterator_traits<_ForwardIterator1>::value_type
+ _ValueType1;
+      typedef typename iterator_traits<_ForwardIterator2>::value_type
+ _ValueType2;
+
+
+     
+
+     
+
+     
+
+     
+
+
+      typedef typename iterator_traits<_ForwardIterator1>::reference
+ _ReferenceType1;
+      typedef typename iterator_traits<_ForwardIterator2>::reference
+ _ReferenceType2;
+      std::__iter_swap<__are_same<_ValueType1, _ValueType2>::__value
+ && __are_same<_ValueType1&, _ReferenceType1>::__value
+ && __are_same<_ValueType2&, _ReferenceType2>::__value>::
+ iter_swap(__a, __b);
+    }
+// # 156 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _ForwardIterator1, typename _ForwardIterator2>
+    _ForwardIterator2
+    swap_ranges(_ForwardIterator1 __first1, _ForwardIterator1 __last1,
+  _ForwardIterator2 __first2)
+    {
+
+     
+
+     
+
+      ;
+
+      for (; __first1 != __last1; ++__first1, ++__first2)
+ std::iter_swap(__first1, __first2);
+      return __first2;
+    }
+// # 184 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _Tp>
+    inline const _Tp&
+    min(const _Tp& __a, const _Tp& __b)
+    {
+
+     
+
+      if (__b < __a)
+ return __b;
+      return __a;
+    }
+// # 207 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _Tp>
+    inline const _Tp&
+    max(const _Tp& __a, const _Tp& __b)
+    {
+
+     
+
+      if (__a < __b)
+ return __b;
+      return __a;
+    }
+// # 230 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _Tp, typename _Compare>
+    inline const _Tp&
+    min(const _Tp& __a, const _Tp& __b, _Compare __comp)
+    {
+
+      if (__comp(__b, __a))
+ return __b;
+      return __a;
+    }
+// # 251 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _Tp, typename _Compare>
+    inline const _Tp&
+    max(const _Tp& __a, const _Tp& __b, _Compare __comp)
+    {
+
+      if (__comp(__a, __b))
+ return __b;
+      return __a;
+    }
+
+
+
+
+  template<typename _Iterator,
+    bool _IsNormal = __is_normal_iterator<_Iterator>::__value>
+    struct __niter_base
+    {
+      static _Iterator
+      __b(_Iterator __it)
+      { return __it; }
+    };
+
+  template<typename _Iterator>
+    struct __niter_base<_Iterator, true>
+    {
+      static typename _Iterator::iterator_type
+      __b(_Iterator __it)
+      { return __it.base(); }
+    };
+
+
+  template<typename _Iterator,
+    bool _IsMove = __is_move_iterator<_Iterator>::__value>
+    struct __miter_base
+    {
+      static _Iterator
+      __b(_Iterator __it)
+      { return __it; }
+    };
+
+  template<typename _Iterator>
+    struct __miter_base<_Iterator, true>
+    {
+      static typename _Iterator::iterator_type
+      __b(_Iterator __it)
+      { return __it.base(); }
+    };
+
+
+
+
+
+
+
+  template<bool, bool, typename>
+    struct __copy_move
+    {
+      template<typename _II, typename _OI>
+        static _OI
+        __copy_m(_II __first, _II __last, _OI __result)
+        {
+   for (; __first != __last; ++__result, ++__first)
+     *__result = *__first;
+   return __result;
+ }
+    };
+// # 333 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<>
+    struct __copy_move<false, false, random_access_iterator_tag>
+    {
+      template<typename _II, typename _OI>
+        static _OI
+        __copy_m(_II __first, _II __last, _OI __result)
+        {
+   typedef typename iterator_traits<_II>::difference_type _Distance;
+   for(_Distance __n = __last - __first; __n > 0; --__n)
+     {
+       *__result = *__first;
+       ++__first;
+       ++__result;
+     }
+   return __result;
+ }
+    };
+// # 371 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<bool _IsMove>
+    struct __copy_move<_IsMove, true, random_access_iterator_tag>
+    {
+      template<typename _Tp>
+        static _Tp*
+        __copy_m(const _Tp* __first, const _Tp* __last, _Tp* __result)
+        {
+   __builtin_memmove(__result, __first,
+       sizeof(_Tp) * (__last - __first));
+   return __result + (__last - __first);
+ }
+    };
+
+  template<bool _IsMove, typename _II, typename _OI>
+    inline _OI
+    __copy_move_a(_II __first, _II __last, _OI __result)
+    {
+      typedef typename iterator_traits<_II>::value_type _ValueTypeI;
+      typedef typename iterator_traits<_OI>::value_type _ValueTypeO;
+      typedef typename iterator_traits<_II>::iterator_category _Category;
+      const bool __simple = (__is_pod(_ValueTypeI)
+                      && __is_pointer<_II>::__value
+                      && __is_pointer<_OI>::__value
+        && __are_same<_ValueTypeI, _ValueTypeO>::__value);
+
+      return std::__copy_move<_IsMove, __simple,
+                       _Category>::__copy_m(__first, __last, __result);
+    }
+
+
+
+#if 0
+#endif
+
+// # 509 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<bool, bool, typename>
+    struct __copy_move_backward
+    {
+      template<typename _BI1, typename _BI2>
+        static _BI2
+        __copy_move_b(_BI1 __first, _BI1 __last, _BI2 __result)
+        {
+   while (__first != __last)
+     *--__result = *--__last;
+   return __result;
+ }
+    };
+// # 537 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<>
+    struct __copy_move_backward<false, false, random_access_iterator_tag>
+    {
+      template<typename _BI1, typename _BI2>
+        static _BI2
+        __copy_move_b(_BI1 __first, _BI1 __last, _BI2 __result)
+        {
+   typename iterator_traits<_BI1>::difference_type __n;
+   for (__n = __last - __first; __n > 0; --__n)
+     *--__result = *--__last;
+   return __result;
+ }
+    };
+// # 567 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<bool _IsMove>
+    struct __copy_move_backward<_IsMove, true, random_access_iterator_tag>
+    {
+      template<typename _Tp>
+        static _Tp*
+        __copy_move_b(const _Tp* __first, const _Tp* __last, _Tp* __result)
+        {
+   const ptrdiff_t _Num = __last - __first;
+   __builtin_memmove(__result - _Num, __first, sizeof(_Tp) * _Num);
+   return __result - _Num;
+ }
+    };
+
+  template<bool _IsMove, typename _BI1, typename _BI2>
+    inline _BI2
+    __copy_move_backward_a(_BI1 __first, _BI1 __last, _BI2 __result)
+    {
+      typedef typename iterator_traits<_BI1>::value_type _ValueType1;
+      typedef typename iterator_traits<_BI2>::value_type _ValueType2;
+      typedef typename iterator_traits<_BI1>::iterator_category _Category;
+      const bool __simple = (__is_pod(_ValueType1)
+                      && __is_pointer<_BI1>::__value
+                      && __is_pointer<_BI2>::__value
+        && __are_same<_ValueType1, _ValueType2>::__value);
+
+      return std::__copy_move_backward<_IsMove, __simple,
+                                _Category>::__copy_move_b(__first,
+         __last,
+         __result);
+    }
+
+  template<bool _IsMove, typename _BI1, typename _BI2>
+    inline _BI2
+    __copy_move_backward_a2(_BI1 __first, _BI1 __last, _BI2 __result)
+    {
+      return _BI2(std::__copy_move_backward_a<_IsMove>
+    (std::__niter_base<_BI1>::__b(__first),
+     std::__niter_base<_BI1>::__b(__last),
+     std::__niter_base<_BI2>::__b(__result)));
+    }
+// # 626 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _BI1, typename _BI2>
+    inline _BI2
+    copy_backward(_BI1 __first, _BI1 __last, _BI2 __result)
+    {
+
+     
+     
+     
+
+
+      ;
+
+      return (std::__copy_move_backward_a2<__is_move_iterator<_BI1>::__value>
+       (std::__miter_base<_BI1>::__b(__first),
+        std::__miter_base<_BI1>::__b(__last), __result));
+    }
+// # 684 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _ForwardIterator, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<!__is_scalar<_Tp>::__value, void>::__type
+    __fill_a(_ForwardIterator __first, _ForwardIterator __last,
+       const _Tp& __value)
+    {
+      for (; __first != __last; ++__first)
+ *__first = __value;
+    }
+
+  template<typename _ForwardIterator, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<__is_scalar<_Tp>::__value, void>::__type
+    __fill_a(_ForwardIterator __first, _ForwardIterator __last,
+      const _Tp& __value)
+    {
+      const _Tp __tmp = __value;
+      for (; __first != __last; ++__first)
+ *__first = __tmp;
+    }
+
+
+  template<typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<__is_byte<_Tp>::__value, void>::__type
+    __fill_a(_Tp* __first, _Tp* __last, const _Tp& __c)
+    {
+      const _Tp __tmp = __c;
+      __builtin_memset(__first, static_cast<unsigned char>(__tmp),
+         __last - __first);
+    }
+// # 728 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _ForwardIterator, typename _Tp>
+    inline void
+    fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value)
+    {
+
+     
+
+      ;
+
+      std::__fill_a(std::__niter_base<_ForwardIterator>::__b(__first),
+      std::__niter_base<_ForwardIterator>::__b(__last), __value);
+    }
+
+  template<typename _OutputIterator, typename _Size, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<!__is_scalar<_Tp>::__value, _OutputIterator>::__type
+    __fill_n_a(_OutputIterator __first, _Size __n, const _Tp& __value)
+    {
+      for (; __n > 0; --__n, ++__first)
+ *__first = __value;
+      return __first;
+    }
+
+  template<typename _OutputIterator, typename _Size, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<__is_scalar<_Tp>::__value, _OutputIterator>::__type
+    __fill_n_a(_OutputIterator __first, _Size __n, const _Tp& __value)
+    {
+      const _Tp __tmp = __value;
+      for (; __n > 0; --__n, ++__first)
+ *__first = __tmp;
+      return __first;
+    }
+
+  template<typename _Size, typename _Tp>
+    inline typename
+    __gnu_cxx::__enable_if<__is_byte<_Tp>::__value, _Tp*>::__type
+    __fill_n_a(_Tp* __first, _Size __n, const _Tp& __c)
+    {
+      std::__fill_a(__first, __first + __n, __c);
+      return __first + __n;
+    }
+// # 783 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _OI, typename _Size, typename _Tp>
+    inline _OI
+    fill_n(_OI __first, _Size __n, const _Tp& __value)
+    {
+
+     
+
+      return _OI(std::__fill_n_a(std::__niter_base<_OI>::__b(__first),
+     __n, __value));
+    }
+
+  template<bool _BoolType>
+    struct __equal
+    {
+      template<typename _II1, typename _II2>
+        static bool
+        equal(_II1 __first1, _II1 __last1, _II2 __first2)
+        {
+   for (; __first1 != __last1; ++__first1, ++__first2)
+     if (!(*__first1 == *__first2))
+       return false;
+   return true;
+ }
+    };
+
+  template<>
+    struct __equal<true>
+    {
+      template<typename _Tp>
+        static bool
+        equal(const _Tp* __first1, const _Tp* __last1, const _Tp* __first2)
+        {
+   return !__builtin_memcmp(__first1, __first2, sizeof(_Tp)
+       * (__last1 - __first1));
+ }
+    };
+
+  template<typename _II1, typename _II2>
+    inline bool
+    __equal_aux(_II1 __first1, _II1 __last1, _II2 __first2)
+    {
+      typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      typedef typename iterator_traits<_II2>::value_type _ValueType2;
+      const bool __simple = (__is_integer<_ValueType1>::__value
+                      && __is_pointer<_II1>::__value
+                      && __is_pointer<_II2>::__value
+        && __are_same<_ValueType1, _ValueType2>::__value);
+
+      return std::__equal<__simple>::equal(__first1, __last1, __first2);
+    }
+
+
+  template<typename, typename>
+    struct __lc_rai
+    {
+      template<typename _II1, typename _II2>
+        static _II1
+        __newlast1(_II1, _II1 __last1, _II2, _II2)
+        { return __last1; }
+
+      template<typename _II>
+        static bool
+        __cnd2(_II __first, _II __last)
+        { return __first != __last; }
+    };
+
+  template<>
+    struct __lc_rai<random_access_iterator_tag, random_access_iterator_tag>
+    {
+      template<typename _RAI1, typename _RAI2>
+        static _RAI1
+        __newlast1(_RAI1 __first1, _RAI1 __last1,
+     _RAI2 __first2, _RAI2 __last2)
+        {
+   const typename iterator_traits<_RAI1>::difference_type
+     __diff1 = __last1 - __first1;
+   const typename iterator_traits<_RAI2>::difference_type
+     __diff2 = __last2 - __first2;
+   return __diff2 < __diff1 ? __first1 + __diff2 : __last1;
+ }
+
+      template<typename _RAI>
+        static bool
+        __cnd2(_RAI, _RAI)
+        { return true; }
+    };
+
+  template<bool _BoolType>
+    struct __lexicographical_compare
+    {
+      template<typename _II1, typename _II2>
+        static bool __lc(_II1, _II1, _II2, _II2);
+    };
+
+  template<bool _BoolType>
+    template<typename _II1, typename _II2>
+      bool
+      __lexicographical_compare<_BoolType>::
+      __lc(_II1 __first1, _II1 __last1, _II2 __first2, _II2 __last2)
+      {
+ typedef typename iterator_traits<_II1>::iterator_category _Category1;
+ typedef typename iterator_traits<_II2>::iterator_category _Category2;
+ typedef std::__lc_rai<_Category1, _Category2> __rai_type;
+
+ __last1 = __rai_type::__newlast1(__first1, __last1,
+      __first2, __last2);
+ for (; __first1 != __last1 && __rai_type::__cnd2(__first2, __last2);
+      ++__first1, ++__first2)
+   {
+     if (*__first1 < *__first2)
+       return true;
+     if (*__first2 < *__first1)
+       return false;
+   }
+ return __first1 == __last1 && __first2 != __last2;
+      }
+
+  template<>
+    struct __lexicographical_compare<true>
+    {
+      template<typename _Tp, typename _Up>
+        static bool
+        __lc(const _Tp* __first1, const _Tp* __last1,
+      const _Up* __first2, const _Up* __last2)
+ {
+   const size_t __len1 = __last1 - __first1;
+   const size_t __len2 = __last2 - __first2;
+   const int __result = __builtin_memcmp(__first1, __first2,
+      std::min(__len1, __len2));
+   return __result != 0 ? __result < 0 : __len1 < __len2;
+ }
+    };
+
+  template<typename _II1, typename _II2>
+    inline bool
+    __lexicographical_compare_aux(_II1 __first1, _II1 __last1,
+      _II2 __first2, _II2 __last2)
+    {
+      typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      typedef typename iterator_traits<_II2>::value_type _ValueType2;
+      const bool __simple =
+ (__is_byte<_ValueType1>::__value && __is_byte<_ValueType2>::__value
+  && !__gnu_cxx::__numeric_traits<_ValueType1>::__is_signed
+  && !__gnu_cxx::__numeric_traits<_ValueType2>::__is_signed
+  && __is_pointer<_II1>::__value
+  && __is_pointer<_II2>::__value);
+
+      return std::__lexicographical_compare<__simple>::__lc(__first1, __last1,
+           __first2, __last2);
+    }
+
+}
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+// # 950 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _II1, typename _II2>
+    inline bool
+    equal(_II1 __first1, _II1 __last1, _II2 __first2)
+    {
+
+     
+     
+     
+
+
+      ;
+
+      return std::__equal_aux(std::__niter_base<_II1>::__b(__first1),
+         std::__niter_base<_II1>::__b(__last1),
+         std::__niter_base<_II2>::__b(__first2));
+    }
+// # 982 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _IIter1, typename _IIter2, typename _BinaryPredicate>
+    inline bool
+    equal(_IIter1 __first1, _IIter1 __last1,
+   _IIter2 __first2, _BinaryPredicate __binary_pred)
+    {
+
+     
+     
+      ;
+
+      for (; __first1 != __last1; ++__first1, ++__first2)
+ if (!bool(__binary_pred(*__first1, *__first2)))
+   return false;
+      return true;
+    }
+// # 1013 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _II1, typename _II2>
+    inline bool
+    lexicographical_compare(_II1 __first1, _II1 __last1,
+       _II2 __first2, _II2 __last2)
+    {
+
+      typedef typename iterator_traits<_II1>::value_type _ValueType1;
+      typedef typename iterator_traits<_II2>::value_type _ValueType2;
+     
+     
+     
+     
+      ;
+      ;
+
+      return std::__lexicographical_compare_aux
+ (std::__niter_base<_II1>::__b(__first1),
+  std::__niter_base<_II1>::__b(__last1),
+  std::__niter_base<_II2>::__b(__first2),
+  std::__niter_base<_II2>::__b(__last2));
+    }
+// # 1048 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _II1, typename _II2, typename _Compare>
+    bool
+    lexicographical_compare(_II1 __first1, _II1 __last1,
+       _II2 __first2, _II2 __last2, _Compare __comp)
+    {
+      typedef typename iterator_traits<_II1>::iterator_category _Category1;
+      typedef typename iterator_traits<_II2>::iterator_category _Category2;
+      typedef std::__lc_rai<_Category1, _Category2> __rai_type;
+
+
+     
+     
+      ;
+      ;
+
+      __last1 = __rai_type::__newlast1(__first1, __last1, __first2, __last2);
+      for (; __first1 != __last1 && __rai_type::__cnd2(__first2, __last2);
+    ++__first1, ++__first2)
+ {
+   if (__comp(*__first1, *__first2))
+     return true;
+   if (__comp(*__first2, *__first1))
+     return false;
+ }
+      return __first1 == __last1 && __first2 != __last2;
+    }
+// # 1088 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _InputIterator1, typename _InputIterator2>
+    pair<_InputIterator1, _InputIterator2>
+    mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
+      _InputIterator2 __first2)
+    {
+
+     
+     
+     
+
+
+      ;
+
+      while (__first1 != __last1 && *__first1 == *__first2)
+        {
+   ++__first1;
+   ++__first2;
+        }
+      return pair<_InputIterator1, _InputIterator2>(__first1, __first2);
+    }
+// # 1125 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/stl_algobase.h" 3
+  template<typename _InputIterator1, typename _InputIterator2,
+    typename _BinaryPredicate>
+    pair<_InputIterator1, _InputIterator2>
+    mismatch(_InputIterator1 __first1, _InputIterator1 __last1,
+      _InputIterator2 __first2, _BinaryPredicate __binary_pred)
+    {
+
+     
+     
+      ;
+
+      while (__first1 != __last1 && bool(__binary_pred(*__first1, *__first2)))
+        {
+   ++__first1;
+   ++__first2;
+        }
+      return pair<_InputIterator1, _InputIterator2>(__first1, __first2);
+    }
+
+}
+
+
+extern "C++" {
+
+namespace std
+{
+  class exception
+  {
+  public:
+    exception() throw() { }
+    virtual ~exception() throw();
+
+
+
+    virtual const char* what() const throw();
+  };
+
+
+
+  class bad_exception : public exception
+  {
+  public:
+    bad_exception() throw() { }
+
+
+
+    virtual ~bad_exception() throw();
+
+
+    virtual const char* what() const throw();
+  };
+
+
+  typedef void (*terminate_handler) ();
+
+
+  typedef void (*unexpected_handler) ();
+
+
+  terminate_handler set_terminate(terminate_handler) throw();
+
+
+
+  void terminate() __attribute__ ((__noreturn__));
+
+
+  unexpected_handler set_unexpected(unexpected_handler) throw();
+
+
+
+  void unexpected() __attribute__ ((__noreturn__));
+// # 115 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/exception" 3
+  bool uncaught_exception() throw();
+
+
+}
+
+namespace __gnu_cxx __attribute__ ((__visibility__ ("default"))) {
+// # 138 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/exception" 3
+  void __verbose_terminate_handler();
+
+}
+
+}
+
+// #pragma GCC visibility pop
+// # 41 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/new" 2 3
+
+// #pragma GCC visibility push(default)
+
+extern "C++" {
+
+namespace std
+{
+
+
+
+
+
+
+  class bad_alloc : public exception
+  {
+  public:
+    bad_alloc() throw() { }
+
+
+
+    virtual ~bad_alloc() throw();
+
+
+    virtual const char* what() const throw();
+  };
+
+  struct nothrow_t { };
+
+  extern const nothrow_t nothrow;
+
+
+
+  typedef void (*new_handler)();
+
+
+
+  new_handler set_new_handler(new_handler) throw();
+}
+// # 91 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/new" 3
+void* operator new(std::size_t) throw (std::bad_alloc);
+void* operator new[](std::size_t) throw (std::bad_alloc);
+void operator delete(void*) throw();
+void operator delete[](void*) throw();
+void* operator new(std::size_t, const std::nothrow_t&) throw();
+void* operator new[](std::size_t, const std::nothrow_t&) throw();
+void operator delete(void*, const std::nothrow_t&) throw();
+void operator delete[](void*, const std::nothrow_t&) throw();
+
+
+inline void* operator new(std::size_t, void* __p) throw() { return __p; }
+inline void* operator new[](std::size_t, void* __p) throw() { return __p; }
+
+
+inline void operator delete (void*, void*) throw() { }
+inline void operator delete[](void*, void*) throw() { }
+
+}
+
+
+namespace __gnu_cxx // __attribute__ ((__visibility__ ("default"))) 
+{
+  using std::size_t;
+  using std::ptrdiff_t;
+  template<typename _Tp>
+    class new_allocator
+    {
+    public:
+      typedef size_t size_type;
+      typedef ptrdiff_t difference_type;
+      typedef _Tp* pointer;
+      typedef const _Tp* const_pointer;
+      typedef _Tp& reference;
+      typedef const _Tp& const_reference;
+      typedef _Tp value_type;
+
+      template<typename _Tp1>
+        struct rebind
+        { typedef new_allocator<_Tp1> other; };
+
+      new_allocator() throw() { }
+
+      new_allocator(const new_allocator&) throw() { }
+
+      template<typename _Tp1>
+        new_allocator(const new_allocator<_Tp1>&) throw() { }
+
+      ~new_allocator() throw() { }
+
+      pointer
+      address(reference __x) const { return &__x; }
+
+      const_pointer
+      address(const_reference __x) const { return &__x; }
+
+
+
+      pointer
+      allocate(size_type __n, const void* = 0)
+      {
+ if (__builtin_expect(__n > this->max_size(), false))
+   std::__throw_bad_alloc();
+
+ return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp)));
+      }
+
+
+      void
+      deallocate(pointer __p, size_type)
+      { ::operator delete(__p); }
+
+      size_type
+      max_size() const throw()
+      { return size_t(-1) / sizeof(_Tp); }
+
+
+
+      void
+      construct(pointer __p, const _Tp& __val)
+      { ::new((void *)__p) _Tp(__val); }
+// # 114 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/ext/new_allocator.h" 3
+      void
+      destroy(pointer __p) { __p->~_Tp(); }
+    };
+
+  template<typename _Tp>
+    inline bool
+    operator==(const new_allocator<_Tp>&, const new_allocator<_Tp>&)
+    { return true; }
+
+  template<typename _Tp>
+    inline bool
+    operator!=(const new_allocator<_Tp>&, const new_allocator<_Tp>&)
+    { return false; }
+
+}
+// # 35 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/x86_64-unknown-linux-gnu/bits/c++allocator.h" 2 3
+// # 49 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/allocator.h" 2 3
+
+namespace std __attribute__ ((__visibility__ ("default"))) {
+// # 59 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/allocator.h" 3
+  template<typename _Tp>
+    class allocator;
+
+
+  template<>
+    class allocator<void>
+    {
+    public:
+      typedef size_t size_type;
+      typedef ptrdiff_t difference_type;
+      typedef void* pointer;
+      typedef const void* const_pointer;
+      typedef void value_type;
+
+      template<typename _Tp1>
+        struct rebind
+        { typedef allocator<_Tp1> other; };
+    };
+// # 85 "/nfs/casc/overture/ROSE/opt/rhel6/x86_64/gcc/4.4.7/mpc/1.0/mpfr/3.1.2/gmp/5.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.4.7/../../../../include/c++/4.4.7/bits/allocator.h" 3
+
+
+
+  template<typename _Tp>
+    class allocator: public __gnu_cxx::new_allocator<_Tp>
+    {
+   public:
+      typedef size_t size_type;
+      typedef ptrdiff_t difference_type;
+      typedef _Tp* pointer;
+      typedef const _Tp* const_pointer;
+      typedef _Tp& reference;
+      typedef const _Tp& const_reference;
+      typedef _Tp value_type;
+
+      template<typename _Tp1>
+        struct rebind
+        { typedef allocator<_Tp1> other; };
+
+      allocator() throw() { }
+
+      allocator(const allocator& __a) throw()
+      : __gnu_cxx::new_allocator<_Tp>(__a) { }
+
+      template<typename _Tp1>
+        allocator(const allocator<_Tp1>&) throw() { }
+
+      ~allocator() throw() { }
+
+
+    };
+
+#if 1
+  template<typename _T1, typename _T2>
+    inline bool
+    operator==(const allocator<_T1>&, const allocator<_T2>&)
+    { return true; }
+
+  template<typename _Tp>
+    inline bool
+    operator==(const allocator<_Tp>&, const allocator<_Tp>&)
+    { return true; }
+
+  template<typename _T1, typename _T2>
+    inline bool
+    operator!=(const allocator<_T1>&, const allocator<_T2>&)
+    { return false; }
+
+  template<typename _Tp>
+    inline bool
+    operator!=(const allocator<_Tp>&, const allocator<_Tp>&)
+    { return false; }
+
+
+
+
+
+  extern template class allocator<char>;
+  extern template class allocator<wchar_t>;
+
+
+
+
+
+
+  template<typename _Alloc, bool = __is_empty(_Alloc)>
+    struct __alloc_swap
+    { static void _S_do_it(_Alloc&, _Alloc&) { } };
+
+  template<typename _Alloc>
+    struct __alloc_swap<_Alloc, false>
+    {
+      static void
+      _S_do_it(_Alloc& __one, _Alloc& __two)
+      {
+
+ if (__one != __two)
+   swap(__one, __two);
+      }
+    };
+
+
+  template<typename _Alloc, bool = __is_empty(_Alloc)>
+    struct __alloc_neq
+    {
+      static bool
+      _S_do_it(const _Alloc&, const _Alloc&)
+      { return false; }
+    };
+
+  template<typename _Alloc>
+    struct __alloc_neq<_Alloc, false>
+    {
+      static bool
+      _S_do_it(const _Alloc& __one, const _Alloc& __two)
+      { return __one != __two; }
+    };
+#endif
+}
+
+
+
+namespace std // __attribute__ ((__visibility__ ("default"))) 
+{
+  template<typename _Tp, typename _Alloc = std::allocator<_Tp> >
+     class vector // : protected _Vector_base<_Tp, _Alloc>
+    {
+
+      typedef typename _Alloc::value_type _Alloc_value_type;
+     
+    public:
+
+      typedef _Alloc allocator_type;
+
+      vector();
+      explicit
+      vector(const allocator_type& __a);
+    };
+}
+
+namespace XXX
+   {
+     void foobar(const int def[3]);
+   }
+
+namespace XXX
+   {
+     namespace
+        {
+
+          const unsigned size = 3;
+
+          struct AAA
+             {
+               bool isPeriodic;
+             };
+
+
+          struct YYY {};
+          std::vector<YYY*> boundary_data;
+
+      }
+
+
+     void foobar( const int def[size] )
+        {
+
+
+
+
+        }
+
+   }

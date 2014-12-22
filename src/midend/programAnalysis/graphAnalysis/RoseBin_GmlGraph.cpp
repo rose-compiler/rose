@@ -57,7 +57,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
 //        ROSE_ASSERT(false);
 
           // CH (4/7/2010): Workaround for MSVC
-          vector<SgAsmx86Instruction*> temp_list;
+          vector<SgAsmX86Instruction*> temp_list;
           AstQueryNamespace::querySubTree(func, std::bind2nd( vis, &temp_list ));
           list.resize(temp_list.size());
           std::copy(temp_list.begin(), temp_list.end(), list.begin());
@@ -169,7 +169,7 @@ RoseBin_GMLGraph::printNodes(    bool dfg, RoseBin_FlowAnalysis* flow,bool forwa
       //      if (skipFunctions)
       //        text ="";
     } /*not a func*/ else {
-      SgAsmx86Instruction* bin_inst = isSgAsmx86Instruction(internal);
+      SgAsmX86Instruction* bin_inst = isSgAsmX86Instruction(internal);
       //cerr << " else part " << endl;
       SgAsmFunction* funcDecl_parent = NULL;
       if (bin_inst) {
@@ -220,7 +220,7 @@ RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
                                      bool forward_analysis, SgAsmNode* internal) {
 
   SgAsmInstruction* bin_inst = isSgAsmInstruction(internal);
-  SgAsmx86Instruction* control = isSgAsmx86Instruction(internal);
+  SgAsmX86Instruction* control = isSgAsmX86Instruction(internal);
   // get the unparser string!
   string eval = "";
   string name="noname";
@@ -333,7 +333,7 @@ RoseBin_GMLGraph::getInternalNodes(  SgGraphNode* node,
   int length = name.length();
 
 
-  SgAsmx86Instruction* pre = NULL; // isSgAsmx86Instruction(bin_inst->cfgBinFlowInEdge());
+  SgAsmX86Instruction* pre = NULL; // isSgAsmX86Instruction(bin_inst->cfgBinFlowInEdge());
   if (pre==NULL) {
     // first node
     nodeStr +="   first_ 1 \n";
@@ -442,7 +442,7 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
         "\n   target " + RoseBin_support::ToString(pos_t) + "\n";
 
       // ------------------
-      SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
+      SgAsmX86Instruction* contrl = isSgAsmX86Instruction(source->get_SgNode());
       string add = "";
       if (contrl && x86InstructionIsControlTransfer(contrl)) {
         // the source is a control transfer function
@@ -451,7 +451,7 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
         // dest is used for single destinations during cfg run
         // dest_list is used for a static cfg image
         vector<VirtualBinCFG::CFGEdge> outEdges = contrl->cfgBinOutEdges(info);
-        SgAsmx86Instruction* dest = isSgAsmx86Instruction(outEdges.empty() ? NULL : outEdges.back().target().getNode());
+        SgAsmX86Instruction* dest = isSgAsmX86Instruction(outEdges.empty() ? NULL : outEdges.back().target().getNode());
         bool dest_list_empty = true;
         if (contrl->get_kind() == x86_ret)
           dest_list_empty = outEdges.empty();
@@ -491,7 +491,7 @@ void RoseBin_GMLGraph::printEdges( VirtualBinCFG::AuxiliaryInformation* info, bo
       //if (isSgAsmFunction(binStat_s))
       //  blankOutput=true;
       if (skipInternalEdges) {
-        SgAsmx86Instruction* contrl = isSgAsmx86Instruction(source->get_SgNode());
+        SgAsmX86Instruction* contrl = isSgAsmX86Instruction(source->get_SgNode());
         if (contrl && x86InstructionIsControlTransfer(contrl) && contrl->get_kind() != x86_ret) {
           if (contrl->get_kind() == x86_call)
             output += "  Edge_Color_ FF0000  \n  Type_ \"[ 33554432 CALL_EDGE ]\" \n";

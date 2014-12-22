@@ -4,7 +4,7 @@
 
 // ROSE is slowly organizing all binary analysis into name spaces.  SymbolicSemantics is now inside
 // BinaryAnalysis::InstructionSemantics.
-using namespace BinaryAnalysis::InstructionSemantics;
+using namespace rose::BinaryAnalysis::InstructionSemantics;
 
 typedef SymbolicSemantics::Policy<SymbolicSemantics::State,SymbolicSemantics::ValueType> Policy;
 typedef SymbolicSemantics::State<SymbolicSemantics::ValueType> State;
@@ -48,7 +48,7 @@ main(int argc, char* argv[])
         SgAsmBlock* bblock = isSgAsmBlock(tree[x]);
         const SgAsmStatementPtrList &insns = bblock->get_statementList();
         for (size_t i=0; i<insns.size(); ++i) {
-            SgAsmx86Instruction *insn = isSgAsmx86Instruction(insns[i]);
+            SgAsmX86Instruction *insn = isSgAsmX86Instruction(insns[i]);
             if (insn) {
                 try {
                     std::cout << unparseInstructionWithAddress(insn) << std::endl;

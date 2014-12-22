@@ -1,5 +1,6 @@
 
 #if 0
+/* No support for transparent unions declarations (GNU extension) (or maybe also un-named unions) under Windows */
 union X
    {
       char* b;
@@ -25,7 +26,7 @@ void foobar()
    }
 #endif
 
-void aba();
+void abc();
 
 
    

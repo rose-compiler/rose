@@ -8,7 +8,7 @@ void handle_sub(int job, int fg)
      for (;;)
         {
 #if 0
-       /* No support for GNU extensions under Windlws */
+       /* No support for GNU extensions under Windows */
           if ((((__extension__ ({ union { __typeof(status) __in; int __i; } __u; __u.__in = (status); __u.__i; }))) & 0x7f)) 
              {
                if (2)

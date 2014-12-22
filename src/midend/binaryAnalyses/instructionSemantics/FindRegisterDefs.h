@@ -5,10 +5,12 @@
 #include "integerOps.h"
 #include "Registers.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 /** A policy for x86InstructionSemantics.
  *
  *  This policy keeps track of which registers (or parts of registers) are initialized. */
-
 namespace FindRegisterDefs {
 
 /******************************************************************************************************************************
@@ -359,7 +361,7 @@ public:
                     throw Exception("byte access only valid for general purpose registers");
                 if (reg.get_minor()>=cur_state.n_gprs)
                     throw Exception("register not implemented in semantic policy");
-                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                 switch (reg.get_offset()) {
                     case 0:
                         rdundef.gpr[reg.get_minor()].defbits |= ~cur_state.gpr[reg.get_minor()].defbits & 0x000000ff;
@@ -459,7 +461,7 @@ public:
                     throw Exception("byte access only valid for general purpose registers.");
                 if (reg.get_minor()>=cur_state.n_gprs)
                     throw Exception("register not implemented in semantic policy");
-                assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+                ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
                 switch (reg.get_offset()) {
                     case 0:
                         cur_state.gpr[reg.get_minor()] =
@@ -775,6 +777,8 @@ public:
     }
 };
 
-}; // namespace
+} // namespace
+} // namespace
+} // namespace
 
 #endif

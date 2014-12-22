@@ -4,8 +4,11 @@
 #include "integerOps.h"
 #include "Diagnostics.h"
 
+namespace rose {
+namespace BinaryAnalysis {
+
 using namespace IntegerOps;
-using namespace rose::Diagnostics;
+using namespace Diagnostics;
 
 class DisassemblerMips;
 
@@ -89,7 +92,7 @@ DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
     if (start_va & 0x03)
         throw Exception("non-aligned instruction", start_va);
     uint32_t insn_disk; // instruction in file byte order
-    if (4!=map->read(&insn_disk, start_va, 4, get_protection()))
+    if (4!=map->at(start_va).limit(4).require(get_protection()).read((uint8_t*)&insn_disk).size())
         throw Exception("short read", start_va);
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-02-13]*/
     unsigned insn_bits = SgAsmExecutableFileFormat::le_to_host(insn_disk);
@@ -103,7 +106,7 @@ DisassemblerMips::disassembleOne(const MemoryMap *map, rose_addr_t start_va, Add
 
     if (successors) {
         bool complete;
-        AddressSet suc2 = insn->get_successors(&complete);
+        AddressSet suc2 = insn->getSuccessors(&complete);
         successors->insert(suc2.begin(), suc2.end());
     }
 
@@ -3591,6 +3594,9 @@ void
 DisassemblerMips::init()
 {
     set_registers(RegisterDictionary::dictionary_mips32());     // only a default
+    REG_IP = *get_registers()->lookup("pc");
+    REG_SP = *get_registers()->lookup("sp");
+
     set_wordsize(4);
     set_alignment(4);
     set_sex(ByteOrder::ORDER_MSB);
@@ -3860,3 +3866,6 @@ DisassemblerMips::init()
 //   024 = W    word fixed point
 //   025 = L    long fixed point
 //   026 = PS   pair of single precision
+
+} // namespace
+} // namespace

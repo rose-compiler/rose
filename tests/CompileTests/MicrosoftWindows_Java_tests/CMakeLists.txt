@@ -15,14 +15,23 @@ set(baseline_flags -rose:java:d javac-output-classes -rose:verbose 0)
 set(ROSE_FLAGS_SKIP_FINAL_COMPILATION
   -rose:verbose 0 -rose:skipfinalCompileStep)
 
-# almost an exact duplicate of "compile_test", but no -c
+# make sure javac output dir exists
+execute_process(COMMAND ${CMAKE_COMMAND} -E
+  make_directory ${CMAKE_BINARY_DIR}/tests/javac-output-classes)
+
+# similar to "compile_test", but no -c
 function(java_test input_file)
   get_filename_component(test_name ${input_file} NAME_WE)
   add_test(
     NAME ${test_name}
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/tests
     COMMAND ${translator}
       ${ROSE_FLAGS} ${CMAKE_CURRENT_SOURCE_DIR}/${input_file}
   )
+
+  # these tests should fail if javac just prints out its usage info.
+  set_tests_properties(${test_name}
+    PROPERTIES FAIL_REGULAR_EXPRESSION "Usage: javac")
 endfunction()
 
 

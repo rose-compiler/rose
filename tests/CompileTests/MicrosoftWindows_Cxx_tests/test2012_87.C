@@ -13,7 +13,7 @@ class X
           void getRemapField();
    };
 
-#if 0
+#if 1
 template<typename ObjectType>
 void X<ObjectType>::getRemapField()
    {

@@ -320,9 +320,16 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
+       // DQ (11/10/2014): Adding support for C++11 value "nullptr".
+          case V_SgNullptrValExp:
+             {
+               s = "_nullptr_";
+               break;
+             }
+
           default:
              {
-               printf ("Error case of value = %s not handled \n",this->class_name().c_str());
+               printf ("Error SgValueExp::get_constant_folded_value_as_string(): case of value = %s not handled \n",this->class_name().c_str());
                ROSE_ASSERT(false);
              }
         }
@@ -446,6 +453,11 @@ findRoseSupportPathFromBuild(const string& buildTreeLocation,
   if (inInstallTree) {
     return installTreePath + "/" + installTreeLocation;
   } else {
+    #ifdef _MSC_VER
+    if (buildTreeLocation.compare(0, 3, "lib") == 0 || buildTreeLocation.compare(0, 3, "bin") == 0) {
+      return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation + "/" + CMAKE_INTDIR;
+    }
+    #endif
     return string(ROSE_AUTOMAKE_TOP_BUILDDIR) + "/" + buildTreeLocation;
   }
 }
@@ -1032,10 +1044,7 @@ cout.flush();
                               file->set_outputLanguage(SgFile::e_C_output_language);
 
                               file->set_C_only(true);
-#if 0
-                              printf ("Checking for UPC file extension: CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) = %s \n",CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) ? "true" : "false");
-                              printf ("   --- sourceFile->get_UPC_only() = %s \n",sourceFile->get_UPC_only() ? "true" : "false");
-#endif
+
                            // Liao 6/6/2008  Set the newly introduced p_UPC_only flag.
                               if (CommandlineProcessing::isUPCFileNameSuffix(filenameExtension) == true)
                                  {
@@ -1263,7 +1272,7 @@ cout.flush();
                                               string objectFileName = *i;
                                               printf ("objectFileName = %s \n",objectFileName.c_str());
                                               binary->get_libraryArchiveObjectFileNameList().push_back(objectFileName);
-                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %zu \n",binary->get_libraryArchiveObjectFileNameList().size());
+                                              printf ("binary->get_libraryArchiveObjectFileNameList().size() = %" PRIuPTR " \n",binary->get_libraryArchiveObjectFileNameList().size());
                                           }
 #if 0
                                           printf ("Exiting in processing a library archive file. \n");
@@ -1497,6 +1506,18 @@ namespace Ecj {
 }// Rose
 #endif
 
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+namespace Rose {
+namespace Frontend {
+namespace X10 {
+namespace X10c {
+  extern void jserver_init();
+}// Rose::Frontend::X10::X10c
+}// Rose::Frontend::X10
+}// Rose::Frontend
+}// Rose
+#endif
+
 //! internal function to invoke the EDG frontend and generate the AST
 int
 SgProject::parse(const vector<string>& argv)
@@ -1585,7 +1606,7 @@ SgProject::parse(const vector<string>& argv)
             else
              {
             // Normal case without AST Merge: Compiling ...
-            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %zu \n",get_sourceFileNameList().size());
+            // printf ("In SgProject::parse(const vector<string>& argv): get_sourceFileNameList().size() = %" PRIuPTR " \n",get_sourceFileNameList().size());
                if (get_sourceFileNameList().size() > 0)
                   {
                  // This is a compile line
@@ -1616,6 +1637,9 @@ SgProject::parse(const vector<string>& argv)
 #endif
 #ifdef ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
                     Rose::Frontend::Java::Ecj::jserver_init();
+#endif
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+                    Rose::Frontend::X10::X10c::jserver_init();
 #endif
 // #endif // USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 #endif
@@ -1690,10 +1714,7 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
   // printf ("In the SgSourceFile constructor \n");
-     this->p_package = NULL;
-     this->p_import_list = NULL;
-     this->p_class_list = NULL;
-     
+
      set_globalScope(NULL);
 
   // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).
@@ -1820,7 +1841,7 @@ SgProject::parse()
   // Simplify multi-file handling so that a single file is just the trivial
   // case and not a special separate case.
 #if 0
-     printf ("Loop through the source files on the command line! p_sourceFileNameList = %zu \n",p_sourceFileNameList.size());
+     printf ("Loop through the source files on the command line! p_sourceFileNameList = %" PRIuPTR " \n",p_sourceFileNameList.size());
 #endif
 
      Rose_STL_Container<string>::iterator nameIterator = p_sourceFileNameList.begin();
@@ -1916,7 +1937,7 @@ SgProject::parse()
         }
 
 #if 0
-     printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %zu \n",vectorOfFiles.size());
+     printf ("In Project::parse(): (calling the frontend on all previously setup SgFile objects) vectorOfFiles.size() = %" PRIuPTR " \n",vectorOfFiles.size());
 #endif
 
   errorCode = this->RunFrontend();
@@ -2266,6 +2287,10 @@ SgFile::generate_C_preprocessor_intermediate_filename( string sourceFilename )
 // This function calls the Java JVM to load the Java implemented parser (written
 // using ANTLR, a parser generator).
 int openFortranParser_main(int argc, char **argv );
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+// This is defined seperately only in configured for the EXPERIMENTAL_OFP_ROSE_CONNECTION.
 int experimental_openFortranParser_main(int argc, char **argv );
 #endif
 
@@ -2749,7 +2774,7 @@ SgSourceFile_processCppLinemarkers::GatherASTSourcePositionsBasedOnDetectedLineD
           AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
 
           if (SgProject::get_verbose() > 1)
-               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+               printf ("GatherASTSourcePositionsBasedOnDetectedLineDirectives::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
           if (commentOrDirectiveList != NULL)
              {
@@ -2894,7 +2919,7 @@ SgSourceFile_processCppLinemarkers::FixupASTSourcePositionsBasedOnDetectedLineDi
    : filenameIdList(filenameSet)
    {
      if (SgProject::get_verbose() > 1)
-          printf ("In FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives(): filenameIdList.size() = %zu \n",filenameIdList.size());
+          printf ("In FixupASTSourcePositionsBasedOnDetectedLineDirectives::FixupASTSourcePositionsBasedOnDetectedLineDirectives(): filenameIdList.size() = %" PRIuPTR " \n",filenameIdList.size());
    }
 
 
@@ -3187,8 +3212,17 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // Check if we are using GNU compiler backend (if so then we are using gfortran, though we have no test in place currently for what
             // version of gfortran (as we do for C and C++))
+               bool usingGfortran = false;
                string backendCompilerSystem = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-               if (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx")
+               #ifdef USE_CMAKE
+                 #ifdef CMAKE_COMPILER_IS_GNUG77
+                   usingGfortran = true;
+                 #endif
+               #else
+                 usingGfortran = (backendCompilerSystem == "g++" || backendCompilerSystem == "mpicc" || backendCompilerSystem == "mpicxx");
+               #endif
+
+               if (usingGfortran)
                   {
                  // Since this is specific to gfortran version 4.1.2, we will exclude it (it is also redundant since it is included in -Wall)
                  // warnings += " -Wunused-labels";
@@ -3585,7 +3619,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
 #if 1
      if ( get_verbose() > 0 )
-          printf ("Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",frontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",frontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 #endif
 
 #if 0
@@ -3647,7 +3681,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           experimentalFrontEndCommandLine.push_back(parseTableOption);
 
        // string path_to_table = findRoseSupportPathFromSource("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
-          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+       // string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/Fortran.tbl", "bin/Fortran.tbl");
+          string path_to_table = findRoseSupportPathFromBuild("src/3rdPartyLibraries/experimental-fortran-parser/sdf_syntax/Fortran.tbl", "bin/Fortran.tbl");
 
           experimentalFrontEndCommandLine.push_back(path_to_table);
 
@@ -3660,9 +3695,27 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           CommandlineProcessing::generateArgcArgvFromList(experimentalFrontEndCommandLine,experimental_openFortranParser_argc,experimental_openFortranParser_argv);
 
           printf ("Calling the experimental fortran frontend (this work is incomplete) \n");
-          printf ("   --- Fortran numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+          printf ("   --- Fortran numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",experimentalFrontEndCommandLine.size(),CommandlineProcessing::generateStringFromArgList(experimentalFrontEndCommandLine,false,false).c_str());
+#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
           frontendErrorLevel = experimental_openFortranParser_main (experimental_openFortranParser_argc, experimental_openFortranParser_argv);
-          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) \n");
+#else
+          printf ("ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION is not defined \n");
+#endif
+          printf ("DONE: Calling the experimental fortran frontend (this work is incomplete) frontendErrorLevel = %d \n",frontendErrorLevel);
+          if (frontendErrorLevel == 0)
+             {
+#if 0
+               printf ("Exiting before unparser (checking only through call to experimental_openFortranParser_main(): SUCESS! \n");
+               exit(0);
+#else
+               printf ("frontendErrorLevel == 0: call to experimental_openFortranParser_main(): SUCESS! \n");
+#endif
+             }
+            else
+             {
+               printf ("Error returned from call to experimental_openFortranParser_main(): FAILED! (frontendErrorLevel = %d) \n",frontendErrorLevel);
+               exit(1);
+             }
         }
        else
         {
@@ -3675,7 +3728,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
   // ROSE_ASSERT(astIncludeStack.size() == 0);
      if (astIncludeStack.size() != 0)
         {
-          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %zu \n",astIncludeStack.size());
+          printf ("Warning: astIncludeStack not cleaned up after openFortranParser_main(): astIncludeStack.size() = %" PRIuPTR " \n",astIncludeStack.size());
         }
 #endif
 
@@ -4153,11 +4206,10 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           string backendClassOutput = "javac-syntax-check-classes";
           javaCommandLine.push_back("-d");
           javaCommandLine.push_back(backendClassOutput);
-          if(mkdir(backendClassOutput.c_str(),0777)==-1) {
-                  if(errno != EEXIST) {
-                          printf ("Can't create destination folder for syntax checking\n");
-                          ROSE_ASSERT(false);
-                  }
+          boost::filesystem::create_directory(backendClassOutput.c_str());
+          if (!boost::filesystem::exists(backendClassOutput.c_str())) {
+              printf ("Can't create destination folder for syntax checking\n");
+              ROSE_ASSERT(false);
           }
 
           if (classpath.size()) {
@@ -4171,7 +4223,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
           }
 
           // Specify warnings for javac compiler.
-          if (backendJavaCompiler == "javac") {
+          if (backendJavaCompiler == "javac" || backendJavaCompiler == "javac.exe") {
               if (get_output_warnings() == true) {
                   javaCommandLine.push_back("-Xlint");
               } else {
@@ -4312,7 +4364,7 @@ SgSourceFile::build_Java_AST( vector<string> argv, vector<string> inputCommandLi
      frontEndCommandLine.push_back(get_sourceFileNameWithPath());
 
      if ( get_verbose() > 0 )
-          printf ("Java numberOfCommandLineArguments = %zu frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
+          printf ("Java numberOfCommandLineArguments = %" PRIuPTR " frontEndCommandLine = %s \n",inputCommandLine.size(),CommandlineProcessing::generateStringFromArgList(frontEndCommandLine,false,false).c_str());
 
      int ecjArgc = 0;
      char** ecjArgv = NULL;
@@ -4360,14 +4412,60 @@ SgSourceFile::build_X10_AST(const vector<string>& p_argv)
       if (SgProject::get_verbose() >= 1)
           std::cout << "[INFO] Building the X10 AST" << std::endl;
   #endif
+    if (this -> get_package() != NULL || this -> attributeExists("error")) { // Has this file been processed already? If so, ignore it.
+        return 0;
+    }
+
+    ROSE_ASSERT(get_requires_C_preprocessor() == false);
+
+    vector<string> frontEndCommandLine;
+    frontEndCommandLine.push_back(p_argv[0]);
+
+    // Java does not use include files, so we can enforce this.
+    ROSE_ASSERT(get_project()->get_includeDirectorySpecifierList().empty() == true);
+
+  // Add the source file as the last argument on the command line (checked by intermediate testing before calling ECJ).
+#if 0
+    frontEndCommandLine.push_back(get_sourceFileNameWithPath());
+#else
+    // MH-20140424
+    // Add all of the specified source files
+    Rose_STL_Container<string> sourceFilenames = get_project()->get_sourceFileNameList();
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+        frontEndCommandLine.push_back(targetSourceFileToRemove);
+    }
+#endif
+
+#if 0
+    int size = frontEndCommandLine.size();
+    for (int i = 0; i < size; ++i) {
+        printf("%d : %s\n", i, frontEndCommandLine[i].c_str());
+    }
+#endif
 
   int argc = p_argv.size();
   char** argv = NULL;
 
-  CommandlineProcessing::
-      generateArgcArgvFromList(p_argv, argc, argv);
+        CommandlineProcessing::
+        generateArgcArgvFromList(frontEndCommandLine, argc, argv);
 
-  int status = x10_main(argc, argv);
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+        Rose::Frontend::X10::X10c::X10c_globalFilePointer = const_cast<SgSourceFile*>(this);
+    ROSE_ASSERT(Rose::Frontend::X10::X10c::X10c_globalFilePointer != NULL);
+/* REMOVE this! MH-2014
+    cout << "Filename from GFP=" << Rose::Frontend::X10::X10c::X10c_globalFilePointer->getFileName()  << endl;
+    for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++) {
+        string targetSourceFileToRemove = StringUtility::getAbsolutePathFromRelativePath(*i);
+                cout << "sourceFileNames=" << targetSourceFileToRemove << endl;
+    }
+*/
+#endif
+        int status = x10_main(argc, argv);
+#ifdef ROSE_BUILD_X10_LANGUAGE_SUPPORT
+    Rose::Frontend::X10::X10c::X10c_globalFilePointer = NULL;
+#endif
+
   return status;
 }
 
@@ -4440,7 +4538,7 @@ SgSourceFile_processCppLinemarkers::LinemarkerTraversal::visit ( SgNode* astNode
           AttachedPreprocessingInfoType *commentOrDirectiveList = statement->getAttachedPreprocessingInfo();
 
           if ( SgProject::get_verbose() > 1 )
-               printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %zu) \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
+               printf ("LinemarkerTraversal::visit(): commentOrDirectiveList = %p (size = %" PRIuPTR ") \n",commentOrDirectiveList,(commentOrDirectiveList != NULL) ? commentOrDirectiveList->size() : 0);
 
           if (commentOrDirectiveList != NULL)
              {
@@ -4680,7 +4778,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
         for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
+            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
                     i, get_libraryArchiveObjectFileNameList()[i].c_str());
             string filename = get_libraryArchiveObjectFileNameList()[i];
             printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
@@ -4695,7 +4793,7 @@ SgBinaryComposite::buildAST(vector<string> /*argv*/, vector<string> /*inputComma
     if (!get_read_executable_file_format_only()) {
         const SgAsmInterpretationPtrList &interps = get_interpretations()->get_interpretations();
         for (size_t i=0; i<interps.size(); i++) {
-            Partitioner::disassembleInterpretation(interps[i]);
+            rose::BinaryAnalysis::Partitioner::disassembleInterpretation(interps[i]);
         }
     }
 
@@ -4733,7 +4831,7 @@ SgBinaryFile::buildAST(vector<string> /*argv*/, vector<string> /*inputCommandLin
         ROSE_ASSERT(get_libraryArchiveObjectFileNameList().empty() == (get_isLibraryArchive() == false));
 
         for (size_t i = 0; i < get_libraryArchiveObjectFileNameList().size(); i++) {
-            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%zu] = %s \n",
+            printf("Build binary AST for get_libraryArchiveObjectFileNameList()[%" PRIuPTR "] = %s \n",
                     i, get_libraryArchiveObjectFileNameList()[i].c_str());
             string filename = "tmp_objects/" + get_libraryArchiveObjectFileNameList()[i];
             printf("Build SgAsmGenericFile from: %s \n", filename.c_str());
@@ -5136,13 +5234,13 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
           if ( get_verbose() > 1 )
              {
                printf ("calling systemFromVector() \n");
-               printf ("Number of command line arguments: %zu\n", compilerCmdLine.size());
+               printf ("Number of command line arguments: %" PRIuPTR "\n", compilerCmdLine.size());
                for (size_t i = 0; i < compilerCmdLine.size(); ++i)
                   {
                     #ifdef _MSC_VER
                     printf ("Backend compiler arg[%Iu]: = %s\n", i, compilerCmdLine[i].c_str());
                     #else
-                    printf ("Backend compiler arg[%zu]: = %s\n", i, compilerCmdLine[i].c_str());
+                    printf ("Backend compiler arg[%" PRIuPTR "]: = %s\n", i, compilerCmdLine[i].c_str());
                     #endif
                   }
                printf("End of command line for backend compiler\n");
@@ -5414,15 +5512,13 @@ std::string
 Rose::Backend::Java::CreateDestdir(SgProject* project)
 {
   std::string destdir = project->get_Java_destdir();
-  if (!boost::filesystem::create_directory(destdir.c_str()))
+  boost::filesystem::create_directory(destdir.c_str());
+  if (!boost::filesystem::exists(destdir.c_str()))
   {
-      if (errno != EEXIST)
-      {
-          std::cout
-              << "[FATAL] Can't create javac destination folder"
-              << std::endl;
-          ROSE_ASSERT(false);
-      }
+      std::cout
+          << "[FATAL] Can't create javac destination folder"
+          << std::endl;
+      ROSE_ASSERT(false);
   }
   return destdir;
 }
@@ -5537,6 +5633,17 @@ SgProject::compileOutput()
                   }
              }
 
+          // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+          #ifdef ROSE_BOOST_PATH
+          if (get_C_only() || get_Cxx_only())
+          {
+              // Search dir for header files, after all directories specified by -I but
+              // before the standard system directories.
+              originalCommandLine.push_back("-isystem");
+              originalCommandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+          }
+          #endif
+
        // DQ (8/13/2006): Add a space to avoid building "g++-E" as output.
        // compilerNameString += " ";
 
@@ -5553,6 +5660,15 @@ SgProject::compileOutput()
           printf ("Support for \"-E\" not implemented yet. \n");
           ROSE_ASSERT(false);
 #endif
+
+          // Debug: Output commandline arguments before actually executing
+          if (SgProject::get_verbose() > 0)
+          {
+              for (unsigned int i=0; i < originalCommandLine.size(); ++i)
+              {
+                   printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
+              }
+          }
 
           errorCode = systemFromVector(originalCommandLine);
 

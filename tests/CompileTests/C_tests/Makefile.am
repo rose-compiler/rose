@@ -464,6 +464,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2014_93.c \
      test2014_94.c \
      test2014_95.c \
+     test2014_100.c \
+     test2014_200.c \
+     test2014_201.c \
+     test2014_202.c \
      math.c \
      complex_01.c \
      stdio.c \
@@ -485,7 +489,17 @@ if OS_VENDOR_REDHAT_REL6
    EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173_redhat_rel6.c
 endif
 
-
+# DQ (8/14/2014) List these files explicitly to avoid failing the policy tests.
+FILES_NOT_PASSING = \
+     test2014_71.c \
+     test2014_73.c \
+     test2014_74.c \
+     test2014_75.c \
+     test2014_90.c \
+     test2014_96.c \
+     test2014_97.c \
+     test2014_98.c \
+     test2014_99.c 
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))

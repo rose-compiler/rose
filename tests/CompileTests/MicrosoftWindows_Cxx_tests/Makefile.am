@@ -159,8 +159,47 @@ test2014_02.C \
 test2014_03.C \
 test2014_04.C \
 test2014_05.C \
-test2014_06.C
+test2014_06.C 
 
+if ROSE_USE_MICROSOFT_EXTENSIONS
+# Linux support does not include Microsoft support (at the same time), so these 
+# tests fail unless we have configured with --enable-microsoft-extensions.
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2014_07.C \
+test2014_08.C \
+test2014_09.C \
+test2014_10.C \
+test2014_11.C \
+test2014_14.C \
+test2014_15.C \
+test2014_17.C \
+test2014_18.C \
+test2014_23.C \
+test2014_12_nouuid.C \
+test2014_13_nouuid.C \
+test2014_16_nouuid.C \
+test2014_19_nouuid.C \
+test2014_20_nouuid.C \
+test2014_21_nouuid.C \
+test2014_22_nouuid.C 
+
+
+if ROSE_USE_EDG_VERSION_4_9
+# These test code require EDG version 4.9 for the better Microsoft support for the declspec(uuid).
+EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
+test2014_12.C \
+test2014_13.C \
+test2014_16.C \
+test2014_19.C \
+test2014_20.C \
+test2014_21.C \
+test2014_22.C 
+endif
+
+endif
+
+# Waiting for commit from Zack.
+# hello.C
 
 TESTCODE_CURRENTLY_FAILING = 
 
@@ -198,18 +237,20 @@ $(TESTCODE_CURRENTLY_FAILING)
 SKIP_UNPARSE_C_ASM_STATEMENTS = -rose:skip_unparse_asm_commands
 # SKIP_UNPARSE_C_ASM_STATEMENTS = 
 
+# DQ (8/18/2014): When unparsing Microsoft extensions we can't pass this the generated code to the GNU g++ compiler.
 # DQ (5/8/2011): Adding -rose:skipfinalCompileStep so that we can test the new name qualification support that is not yet hooked up to the unparser.
 ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS)
 # ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS)
-ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
+# ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
+ROSE_FLAGS = --edg:no_warnings -w -rose:verbose 0 -rose:skipfinalCompileStep $(SKIP_UNPARSE_C_ASM_STATEMENTS) -pedantic-errors -std=c++98
 
 # DQ (3/10/2013): Add the Boost path so that the case where Boost is not installed in /usr/include is covered.
 # Some of these test codes reference A++ header files as part of their tests
 # Include the path to A++ and the transformation specification
 # TESTCODE_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 # TESTCODE_INCLUDES = $(ROSE_BOOST_PREINCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
-# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA -I$(top_srcdir)/tests/CompileTests/A++Code
-TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -DBOOST_REGEX_MATCH_EXTRA
+# TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH) -I$(top_srcdir)/tests/CompileTests/A++Code
+TESTCODE_INCLUDES = $(ROSE_BOOST_NORMAL_INCLUDE_PATH)
 APP_INCLUDES = -I$(top_srcdir)/tests/CompileTests/A++Code
 
 PASSING_TEST_Objects = ${TESTCODES:.C=.o} ${ROSE__CXX_TESTS__BOOST:.C=.o}
@@ -328,6 +369,12 @@ testBuildUsingAbsolutePath: $(TEST_TRANSLATOR)
 	echo "class A { int x; float y;}; int main() { int x=0; return x; }" > roseTestProgram.C; \
 	$(TEST_TRANSLATOR) -rose:verbose 0 `pwd`/roseTestProgram.C
 
+test_msvc_1:
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -I$(srcdir) -c $(srcdir)/$(@:.C.passed=.C)" $(top_srcdir)/scripts/test_exit_status $@
+#	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2.cxx
+	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -c $(srcdir)/cl_preprocessed_hello2_noline.cxx
+
+
 # DQ (10/23/2010): Added MPI tests that I can at least run locally to debug when Hudson MPI tests fail.
 MPI_LOCATION = /home/dquinlan/ROSE/ROSE_TESTS/MPI_header_tests/MPI_header_tests_64bit
 test_MPI_LAM:
@@ -355,7 +402,11 @@ hpctoolkit:
 
 
 check-local:
+if ROSE_USING_GCC_VERSION_LATER_4_4
 	@$(MAKE) $(PASSING_TEST_Sources)
+else
+	@echo "Microsoft C++ tests require GNU version 4.4 (or greater) backend compilers."
+endif
 	@echo "****************************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/MicrosoftWindows_Cxx_tests: make check rule complete (terminated normally) ******"
 	@echo "****************************************************************************************************************"
