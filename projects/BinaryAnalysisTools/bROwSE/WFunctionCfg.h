@@ -11,37 +11,59 @@
 
 namespace bROwSE {
 
-// Control flow graph for a function
+class WFunctionNavigation;
 
+/** Function control flow graph.
+ *
+ *  This widget displays a function control flow graph with clickable elements. It also maintains a forward/back style
+ *  navigation bar that gets updated each time the current function is changed (via @ref changeFunction). */
 class WFunctionCfg: public Wt::WContainerWidget {
     Context &ctx_;
     P2::Function::Ptr function_;                        // currently-displayed function
+    WFunctionNavigation *wNavigation_;
+    Wt::WScrollArea *wScrollArea_;                      // contains a CFG image or a message
     Wt::WImage *wImage_;                                // image for the CFG
     Wt::WText *wMessage_;
     typedef std::pair<Wt::WRectArea*, rose_addr_t> AreaAddr;
     std::vector<AreaAddr> areas_;
-    Wt::Signal<P2::BasicBlock::Ptr> basicBlockClicked_;
-    Wt::Signal<P2::Function::Ptr> functionClicked_;
+    Wt::Signal<P2::Function::Ptr> functionChanged_;     // emitted when the current function changes
+    Wt::Signal<P2::BasicBlock::Ptr> basicBlockClicked_; // emitted when a basic block node is clicked
+    Wt::Signal<P2::Function::Ptr> functionClicked_;     // emitted when a function node is clicked
 public:
     WFunctionCfg(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), wImage_(NULL) {
+        : Wt::WContainerWidget(parent), ctx_(ctx), wNavigation_(NULL), wScrollArea_(NULL), wImage_(NULL), wMessage_(NULL) {
         init();
     }
 
-    // Returns currently displayed function
+    /** Current function. */
     P2::Function::Ptr function() const {
         return function_;
     }
 
-    // Display information for the specified function
+    /** Reset the navigation information.
+     *
+     *  The navigation is cleared and re-initialized to contain only the current function (if any). */
+    void clearNavigation();
+
+    /** Change displayed information.
+     *
+     *  Changes the widget so it's displaying information about the specified function.  If this is different than the function
+     *  it was displaying then a @ref functionChanged signal is emitted. */
     void changeFunction(const P2::Function::Ptr &function);
 
-    // Emitted when a basic block vertex is clicked.
+    /** Signal emitted when the current function changes.
+     *
+     *  This is emitted whenever @ref changeFunction changes the current function. */
+    Wt::Signal<P2::Function::Ptr>& functionChanged() {
+        return functionChanged_;
+    }
+
+    /** Signal emitted when a basic block node is clicked. */
     Wt::Signal<P2::BasicBlock::Ptr>& basicBlockClicked() {
         return basicBlockClicked_;
     }
 
-    // Emitted when a function vertex is clicked.
+    /** Signal emitted when a function node is clicked. */
     Wt::Signal<P2::Function::Ptr>& functionClicked() {
         return functionClicked_;
     }
@@ -49,8 +71,13 @@ public:
 private:
     void init();
 
+    // Just like changeFunction but doesn't emit the functionChanged signal
+    void changeFunctionNoSignal(const P2::Function::Ptr&);
+
+    // Called when a basic block node is clicked. Emits a basicBlockClicked signal.
     void selectBasicBlock(const Wt::WMouseEvent &event);
 
+    // Called when a function node is clicked. Emits a functionClicked signal.
     void selectFunction(const Wt::WMouseEvent &event);
 };
 

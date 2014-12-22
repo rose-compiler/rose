@@ -55,6 +55,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WFunction.C			\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\
+	bROwSE/WFunctionNavigation.C		\
 	bROwSE/WFunctionSummary.C		\
 	bROwSE/WInstructionList.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include

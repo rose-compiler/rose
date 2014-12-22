@@ -34,12 +34,15 @@ WFunctionSummary::init() {
     labelDecor.setBackgroundColor(toWt(Color::HSV(0, 0, 0.95)));
     for (size_t col=0, i=0; col<NCOLS && i<analyzers_.size(); ++col) {
         for (size_t row=0; row<NROWS && i<analyzers_.size(); ++row) {
-            Wt::WText *label = new Wt::WText("<b>" + analyzers_[i]->header() + "</b>");
-            label->setToolTip(analyzers_[i]->toolTip());
-            wAnalysisResultTable_->elementAt(row, 2*col+0)->addWidget(label);
+            Wt::WText *wLabel = new Wt::WText("<b>" + analyzers_[i]->header() + "</b>");
+            wLabel->setToolTip(analyzers_[i]->toolTip());
+            wAnalysisResultTable_->elementAt(row, 2*col+0)->addWidget(wLabel);
             wAnalysisResultTable_->elementAt(row, 2*col+0)->setContentAlignment(Wt::AlignRight);
             wAnalysisResultTable_->elementAt(row, 2*col+0)->setDecorationStyle(labelDecor);
-            analyzerResults_.push_back(new Wt::WText);
+
+            Wt::WText *wValue = new Wt::WText;
+            wValue->setTextFormat(Wt::PlainText);
+            analyzerResults_.push_back(wValue);
             analyzerResults_.back()->setToolTip(analyzers_[i]->toolTip());
             wAnalysisResultTable_->elementAt(row, 2*col+1)->addWidget(analyzerResults_.back());
             wAnalysisResultTable_->elementAt(row, 2*col+1)->setPadding(Wt::WLength(1, Wt::WLength::FontEm), Wt::Left);

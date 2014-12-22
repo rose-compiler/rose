@@ -20,9 +20,9 @@ WFunctionList::init() {
 
     // Address space
     wAddressSpace_ = new WAddressSpace(ctx_);
-    wAddressSpace_->insertSegmentsAndFunctions();
-    wAddressSpace_->topGutterClicked().connect(this, &WFunctionList::selectSegment);
-    wAddressSpace_->bottomGutterClicked().connect(this, &WFunctionList::selectFunction);
+    wAddressSpace_->insertSegmentsAndFunctions();       // segments are bar0, functions are bar1
+    wAddressSpace_->topGutterClicked().connect(this, &WFunctionList::selectSegmentByAddress);
+    wAddressSpace_->bottomGutterClicked().connect(this, &WFunctionList::selectFunctionByAddress);
     vbox->addWidget(wAddressSpace_);
 
     // Container for the function table, with a horizontal layout so the table scrolls horizontally
@@ -58,79 +58,83 @@ WFunctionList::init() {
     tableView_->setColumnResizeEnabled(true);
     tableView_->setSelectionMode(Wt::SingleSelection);
     tableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
-    tableView_->clicked().connect(this, &WFunctionList::clickRow);
-    tableView_->doubleClicked().connect(this, &WFunctionList::doubleClickRow);
+    tableView_->      clicked().connect(this, &WFunctionList::selectFunctionByRow1);
+    tableView_->doubleClicked().connect(this, &WFunctionList::selectFunctionByRow2);
     tableView_->headerClicked().connect(this, &WFunctionList::updateFunctionHeatMaps);
     hbox->addWidget(tableView_);
 }
 
-// Selects a specific segment, zooming the address map in or out to select just that segment
+// Internal: called when top gutter is clicked. Zoom to segment and emit segmentAddressClicked
 void
-WFunctionList::selectSegment(rose_addr_t va, const Wt::WMouseEvent&) {
+WFunctionList::selectSegmentByAddress(rose_addr_t va, const Wt::WMouseEvent &event) {
     boost::iterator_range<MemoryMap::ConstNodeIterator> found = ctx_.partitioner.memoryMap().at(va).nodes();
     if (found.begin() != found.end()) {
         const AddressInterval &interval = found.begin()->key();
         wAddressSpace_->displayedDomain(interval);
         wAddressSpace_->redraw();
+        segmentAddressClicked_.emit(va, event);
     }
 }
 
-// Select function from clicking on the address space's bottom gutter
-// Implemented in terms of selectFunction by pointer
+// Internal: called when bottom gutter is clicked. Choose a function and make it the current function. Emit
+// functionAddressClicked.
 void
-WFunctionList::selectFunction(rose_addr_t va, const Wt::WMouseEvent&) {
+WFunctionList::selectFunctionByAddress(rose_addr_t va, const Wt::WMouseEvent &event) {
     std::vector<P2::Function::Ptr> functions = ctx_.partitioner.functionsOverlapping(va);
-    if (!functions.empty())
-        selectFunction(functions.front());
+    if (!functions.empty()) {
+        changeFunction(functions.front());
+        functionAddressClicked_.emit(functions.front(), va, event);
+    }
 }
 
-// Select function by specifying a function pointer
-// Implemented in terms of selectFunction by table row
-Wt::WModelIndex
-WFunctionList::selectFunction(const P2::Function::Ptr &function) {
-    Wt::WModelIndex idx = model_->functionIdx(function);
-    selectFunction(idx);
-    return idx;
-}
-
-// Select function by specifying a table row
-// Lowest level way to select a function
+// Internal: called when a table row is clicked.  Make function current and emit functionRowClicked.
 void
-WFunctionList::selectFunction(const Wt::WModelIndex &idx) {
-    static const size_t functionIdx = 1;
-    wAddressSpace_->highlights(functionIdx).clear();
+WFunctionList::selectFunctionByRow1(const Wt::WModelIndex &idx) {
+    if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
+        changeFunction(function);
+        functionRowClicked_.emit(function);
+    }
+}
 
+// Internal: same, but emit functionRowDoubleClicked
+void
+WFunctionList::selectFunctionByRow2(const Wt::WModelIndex &idx) {
+    if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
+        changeFunction(function);
+        functionRowDoubleClicked_.emit(function);
+    }
+}
+
+// Make function the current function. Highlight its addresses in the address space, select it in the table, and emit a
+// functionChanged signal.  Do nothing if it's already the current function.
+void
+WFunctionList::changeFunction(const P2::Function::Ptr &function) {
+    if (function == function_)
+        return;
+    function_ = function;
+
+    if (!function) {
+        wAddressSpace_->highlights(FUNCTION_BAR).clear();
+        wAddressSpace_->redraw();
+        tableView_->setSelectedIndexes(Wt::WModelIndexSet());// deselect everything
+        return;                                         // return without emitting functionChanged signal
+    }
+
+    // Update the address space
+    wAddressSpace_->highlights(FUNCTION_BAR) = ctx_.partitioner.functionExtent(function);
+    wAddressSpace_->redraw();
+
+    // Update the table
+    Wt::WModelIndex idx = model_->functionIdx(function);
     if (idx.isValid()) {
-        // Highlight the function in the table
         tableView_->select(idx);
         tableView_->scrollTo(idx);
-
-        // Highlight the function in the address space map
-        if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
-            wAddressSpace_->highlights(functionIdx) = ctx_.partitioner.functionExtent(function);
-            functionSelected_.emit(function);
-        }
     }
-    wAddressSpace_->redraw();
+    
+    functionChanged_.emit(function);
 }
 
-// Same as selectFunction, but also emit a tableRowClicked event
-void
-WFunctionList::clickRow(const Wt::WModelIndex &idx) {
-    selectFunction(idx);
-    if (P2::Function::Ptr function = model_->functionAt(idx.row()))
-        tableRowClicked_.emit(function);
-}
-
-// Same as selectFunction, but also emit a tableRowDoubleClicked event
-void
-WFunctionList::doubleClickRow(const Wt::WModelIndex &idx) {
-    selectFunction(idx);
-    if (P2::Function::Ptr function = model_->functionAt(idx.row()))
-        tableRowDoubleClicked_.emit(function);
-}
-
-// Redraw the address space map        
+// Redraw the address space map. This is normally called when a table column is sorted.
 void
 WFunctionList::updateFunctionHeatMaps() {
     static const size_t functionIdx = 1;
@@ -161,21 +165,5 @@ WFunctionList::updateFunctionHeatMaps() {
     wAddressSpace_->insert(ctx_.partitioner, ctx_.partitioner.functions());
     wAddressSpace_->redraw();
 }
-
-Wt::Signal<P2::Function::Ptr>&
-WFunctionList::functionSelected() {
-    return functionSelected_;
-}
-
-Wt::Signal<P2::Function::Ptr>&
-WFunctionList::tableRowClicked() {
-    return tableRowClicked_;
-}
-
-Wt::Signal<P2::Function::Ptr>&
-WFunctionList::tableRowDoubleClicked() {
-    return tableRowDoubleClicked_;
-}
-
 
 } // namespace
