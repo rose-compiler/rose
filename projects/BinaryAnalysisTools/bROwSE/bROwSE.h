@@ -39,18 +39,20 @@ struct Settings {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Attributes initialized by the first construction of a Context object (where they are documented)
-extern P2::Attribute::Id ATTR_NBYTES;
-extern P2::Attribute::Id ATTR_NINSNS;
-extern P2::Attribute::Id ATTR_CFG_DOTFILE;
-extern P2::Attribute::Id ATTR_CFG_IMAGE;
-extern P2::Attribute::Id ATTR_CFG_COORDS;
-extern P2::Attribute::Id ATTR_CG;
-extern P2::Attribute::Id ATTR_NCALLERS;
-extern P2::Attribute::Id ATTR_NRETURNS;
-extern P2::Attribute::Id ATTR_MAYRETURN;
-extern P2::Attribute::Id ATTR_STACKDELTA;
-extern P2::Attribute::Id ATTR_AST;
-extern P2::Attribute::Id ATTR_HEAT;
+extern P2::Attribute::Id ATTR_NBytes;
+extern P2::Attribute::Id ATTR_NInsns;
+extern P2::Attribute::Id ATTR_NIntervals;
+extern P2::Attribute::Id ATTR_NDiscontiguousBlocks;
+extern P2::Attribute::Id ATTR_CfgGraphVizFile;
+extern P2::Attribute::Id ATTR_CfgImage;
+extern P2::Attribute::Id ATTR_CfgVertexCoords;
+extern P2::Attribute::Id ATTR_CallGraph;
+extern P2::Attribute::Id ATTR_NCallers;
+extern P2::Attribute::Id ATTR_NReturns;
+extern P2::Attribute::Id ATTR_MayReturn;
+extern P2::Attribute::Id ATTR_StackDelta;
+extern P2::Attribute::Id ATTR_Ast;
+extern P2::Attribute::Id ATTR_Heat;
 
 // Context passed around to pretty much all the widgets.
 class Context {

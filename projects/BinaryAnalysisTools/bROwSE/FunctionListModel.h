@@ -40,7 +40,7 @@ public:
     std::vector<FunctionAnalyzer::Ptr>& analyzers() { return analyzers_; }
     /** @} */
 
-    /** Statistics about the lastest function heat calculatations.  Heat values are stored in function ATTR_HEAT attributes and
+    /** Statistics about the lastest function heat calculatations.  Heat values are stored in function ATTR_Heat attributes and
      *  are updated when the function table is sorted by a particular column. */
     const FpStatistics& heatStats() const { return heatStats_; }
 

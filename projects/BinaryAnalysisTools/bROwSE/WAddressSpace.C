@@ -184,7 +184,7 @@ WAddressSpace::insert(const P2::Partitioner &partitioner, const std::vector<P2::
         AddressIntervalSet whereDefined = partitioner.functionExtent(function);
         BOOST_FOREACH (const AddressInterval &interval, whereDefined.intervals()) {
             double value = NAN;
-            function->attr<double>(ATTR_HEAT).assignTo(value);
+            function->attr<double>(ATTR_Heat).assignTo(value);
             map(idx).insert(interval, value);
             if (showStarts)
                 gutter.insert(function->address(), value);

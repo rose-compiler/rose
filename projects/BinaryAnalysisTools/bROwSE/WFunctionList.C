@@ -14,10 +14,6 @@ WFunctionList::init() {
     Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
     setLayout(vbox);
 
-    // Initialize the ATTR_HEAT values so they're not returned as NaN on the first update of wAddressSpace_
-    BOOST_FOREACH (const P2::Function::Ptr &function, ctx_.partitioner.functions())
-        function->attr<double>(ATTR_HEAT, 0.0);
-
     // Address space
     wAddressSpace_ = new WAddressSpace(ctx_);
     wAddressSpace_->insertSegmentsAndFunctions();       // segments are bar0, functions are bar1
@@ -39,6 +35,8 @@ WFunctionList::init() {
     model_->analyzers().push_back(FunctionSizeInsns::instance());
     model_->analyzers().push_back(FunctionSizeBBlocks::instance());
     model_->analyzers().push_back(FunctionSizeDBlocks::instance());
+    model_->analyzers().push_back(FunctionNDiscontiguousBlocks::instance());
+    model_->analyzers().push_back(FunctionNIntervals::instance());
     model_->analyzers().push_back(FunctionImported::instance());
     model_->analyzers().push_back(FunctionExported::instance());
     model_->analyzers().push_back(FunctionNCallers::instance());
@@ -62,6 +60,11 @@ WFunctionList::init() {
     tableView_->doubleClicked().connect(this, &WFunctionList::selectFunctionByRow2);
     tableView_->headerClicked().connect(this, &WFunctionList::updateFunctionHeatMaps);
     hbox->addWidget(tableView_);
+
+    // Startup. Initialize the ATTR_Heat values so they're not returned as NaN on the first redraw.
+    BOOST_FOREACH (const P2::Function::Ptr &function, ctx_.partitioner.functions())
+        function->attr<double>(ATTR_Heat, 0.0);
+    updateFunctionHeatMaps();
 }
 
 // Internal: called when top gutter is clicked. Zoom to segment and emit segmentAddressClicked
@@ -125,8 +128,15 @@ WFunctionList::changeFunction(const P2::Function::Ptr &function) {
     wAddressSpace_->redraw();
 
     // Update the table
+#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
+    std::cerr <<"ROBB: WFunctionList::changeFunction for " <<function->printableName() <<"\n";
+#endif
     Wt::WModelIndex idx = model_->functionIdx(function);
-    if (idx.isValid()) {
+    if (idx.isValid() && !tableView_->isSelected(idx)) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
+        std::cerr <<"ROBB:   selecting index (" <<idx.row() <<", " <<idx.column() <<")"
+                  <<" for " <<function->printableName() <<"\n";
+#endif
         tableView_->select(idx);
         tableView_->scrollTo(idx);
     }
