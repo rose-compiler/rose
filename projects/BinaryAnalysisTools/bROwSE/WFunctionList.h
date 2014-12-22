@@ -42,7 +42,7 @@ public:
      *  the current function then a @ref functionChanged signal is emitted. */
     void changeFunction(const P2::Function::Ptr&);      // also private version
 
-    /** Redraw the address space based on functions' ATTR_HEAT. */
+    /** Redraw the address space based on functions' ATTR_Heat. */
     void updateFunctionHeatMaps();
 
     /** Signal emitted when the current function changes.

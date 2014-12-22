@@ -225,7 +225,7 @@ public:
     /** Initialize with function addresses.
      *
      *  Initilializes the map with addresses for the specified functions.  The @p partitioner is used to determine the function
-     *  extents.  If the function has an ATTR_HEAT attribute (which must be of type @c double and should be between zero and
+     *  extents.  If the function has an ATTR_Heat attribute (which must be of type @c double and should be between zero and
      *  one) then that is used as the lookup in the corresponding color gradient.  The @p idx determines which layer of the bar
      *  graph is used for these functions and is also the return value.  If the @p idx is -1 then a new layer is allocated. If
      *  @p showStarts is true then the starting address of each function will be added to the gutter (top gutter for layer

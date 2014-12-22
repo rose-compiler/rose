@@ -13,6 +13,8 @@ typedef Sawyer::Container::Map<rose_addr_t, Box> CfgVertexCoords;
 
 size_t functionNBytes(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNInsns(const P2::Partitioner&, const P2::Function::Ptr&);
+size_t functionNIntervals(const P2::Partitioner&, const P2::Function::Ptr&);
+size_t functionNDiscontiguousBlocks(const P2::Partitioner&, const P2::Function::Ptr&);
 boost::filesystem::path functionCfgGraphvizFile(const P2::Partitioner&, const P2::Function::Ptr&);
 boost::filesystem::path functionCfgImage(const P2::Partitioner&, const P2::Function::Ptr&);
 CfgVertexCoords functionCfgVertexCoords(const P2::Partitioner&, const P2::Function::Ptr&);
@@ -36,6 +38,11 @@ public:
     /** Short name for a property.  This is the name that will appear as the table header and should be capitalized and very
      * short. */
     virtual Wt::WString header() const = 0;
+
+    /** Longer name for a property.  This name is suitable for tables where the heading is on the left rather than the top. */
+    virtual Wt::WString name() const {
+        return header();
+    }
 
     /** Full description for a property. */
     virtual Wt::WString toolTip() const {
@@ -83,6 +90,9 @@ public:
     }
     Wt::WString header() const ROSE_OVERRIDE {
         return "Entry";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Entry virtual address";
     }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return "This is the address by which the function is entered when called.";
@@ -141,6 +151,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "Bytes";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of bytes";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return ("Total size of function in bytes including code and data. Overlapping instructions and/or data "
                 "is counted only once.");
@@ -152,7 +165,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NBYTES).orElse(0) < b->attr<size_t>(ATTR_NBYTES).orElse(0);
+        return a->attr<size_t>(ATTR_NBytes).orElse(0) < b->attr<size_t>(ATTR_NBytes).orElse(0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNBytes(p, f);
@@ -168,6 +181,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "Insns";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of instructions";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return "Total number of instructions belonging to function.";
     }
@@ -178,7 +194,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NINSNS).orElse(0) < b->attr<size_t>(ATTR_NINSNS).orElse(0);
+        return a->attr<size_t>(ATTR_NInsns).orElse(0) < b->attr<size_t>(ATTR_NInsns).orElse(0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNInsns(p, f);
@@ -193,6 +209,9 @@ public:
     }
     Wt::WString header() const ROSE_OVERRIDE {
         return "BBlocks";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of basic blocks";
     }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return "Total number of basic blocks belonging to function.";
@@ -220,6 +239,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "DBlocks";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of data blocks";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return "Total number of data blocks belonging to function.";
     }
@@ -236,6 +258,68 @@ public:
         return f->dataBlocks().size();
     }
 };
+
+/** Number of discontiguous basic blocks in a function. */
+class FunctionNDiscontiguousBlocks: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionNDiscontiguousBlocks);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return "BBDis";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Discontiguous basic blocks";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Number of basic blocks that are not contiguous in memory.  This can indicate opaque predicates, "
+                "scattered blocks sewed together by unconditional branches.");
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNDiscontiguousBlocks(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->attr<size_t>(ATTR_NDiscontiguousBlocks).orElse(0) < b->attr<size_t>(ATTR_NDiscontiguousBlocks).orElse(0);
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNDiscontiguousBlocks(p, f);
+    }
+};
+    
+/** Number of contiguous intervals in a function's code and data addresses. */
+class FunctionNIntervals: public FunctionAnalyzer {
+public:
+    static Ptr instance() {
+        return Ptr(new FunctionNIntervals);
+    }
+    Wt::WString header() const ROSE_OVERRIDE {
+        return "Intervals";
+    }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of intervals";
+    }
+    Wt::WString toolTip() const ROSE_OVERRIDE {
+        return ("Number of discontiguous regions forming the function's code and data. I.e., one more than the "
+                "number of gaps in the function's addresses.");
+
+    }
+    boost::any data(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNIntervals(p, f);
+    }
+    Wt::WString toString(const boost::any &data) const ROSE_OVERRIDE {
+        return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
+    }
+    bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
+        return a->attr<size_t>(ATTR_NIntervals).orElse(0) < b->attr<size_t>(ATTR_NIntervals).orElse(0);
+    }
+    double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
+        return functionNIntervals(p, f);
+    }
+};
+    
 
 /** Whether function is marked as an import. */
 class FunctionImported: public FunctionAnalyzer {
@@ -296,6 +380,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "NCallers";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of callers";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return ("Number of sites from which this function is called.");
     }
@@ -306,7 +393,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NCALLERS).orElse(0) < b->attr<size_t>(ATTR_NCALLERS).orElse(0);
+        return a->attr<size_t>(ATTR_NCallers).orElse(0) < b->attr<size_t>(ATTR_NCallers).orElse(0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNCallers(p, f);
@@ -322,6 +409,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "NRet";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Number of return points";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return ("Number of points at which the function returns to a caller. Return points are counted even if they "
                 "are not reachable according to the control flow graph.");
@@ -333,7 +423,7 @@ public:
         return boost::lexical_cast<std::string>(boost::any_cast<size_t>(data));
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return a->attr<size_t>(ATTR_NRETURNS).orElse(0) < b->attr<size_t>(ATTR_NRETURNS).orElse(0);
+        return a->attr<size_t>(ATTR_NReturns).orElse(0) < b->attr<size_t>(ATTR_NReturns).orElse(0);
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         return functionNReturns(p, f);
@@ -349,6 +439,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "MayReturn";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "May return to caller";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return "Whether it is possible for a function to return to a caller.";
     }
@@ -356,13 +449,13 @@ public:
         switch (functionMayReturn(p, f)) {
             case MAYRETURN_YES:     return Wt::WString("yes");
             case MAYRETURN_NO:      return Wt::WString("no");
-            case MAYRETURN_UNKNOWN: return Wt::WString("");
+            case MAYRETURN_UNKNOWN: return Wt::WString("unknown");
         }
         ASSERT_not_reachable("invalid may-return value");
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return (a->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN) <
-                b->attr<MayReturn>(ATTR_MAYRETURN).orElse(MAYRETURN_UNKNOWN));
+        return (a->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN) <
+                b->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN));
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         switch (functionMayReturn(p, f)) {
@@ -383,6 +476,9 @@ public:
     Wt::WString header() const ROSE_OVERRIDE {
         return "SDelta";
     }
+    Wt::WString name() const ROSE_OVERRIDE {
+        return "Stack delta";
+    }
     Wt::WString toolTip() const ROSE_OVERRIDE {
         return ("Net effect on the stack pointer, including popping the return address if that is part of the call-"
                 "return convention.");
@@ -392,12 +488,27 @@ public:
         if (delta != SgAsmInstruction::INVALID_STACK_DELTA)
             return Wt::WString(boost::lexical_cast<std::string>(delta));
         if (functionMayReturn(p, f) == MAYRETURN_NO)
-            return Wt::WString("N.A.");
-        return Wt::WString("");
+            return Wt::WString("inapt");
+        return Wt::WString("unknown");
     }
     bool isAscending(const P2::Function::Ptr &a, const P2::Function::Ptr &b) const ROSE_OVERRIDE {
-        return (a->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA) <
-                b->attr<int64_t>(ATTR_STACKDELTA).orElse(SgAsmInstruction::INVALID_STACK_DELTA));
+        // order: inapt, unknown, concrete.
+        int64_t aDelta = a->attr<int64_t>(ATTR_StackDelta).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
+        int64_t bDelta = b->attr<int64_t>(ATTR_StackDelta).orElse(SgAsmInstruction::INVALID_STACK_DELTA);
+        if (aDelta == SgAsmInstruction::INVALID_STACK_DELTA) {
+            if (aDelta == bDelta) {
+                // ATTR_MayReturn should exist since the stack delta is invalid.  See data() method.
+                MayReturn aMayRet = a->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN);
+                MayReturn bMayRet = b->attr<MayReturn>(ATTR_MayReturn).orElse(MAYRETURN_UNKNOWN);
+                return aMayRet==MAYRETURN_NO && bMayRet!=MAYRETURN_NO;
+            } else {
+                return true;                            // b is concrete
+            }
+        } else if (bDelta == SgAsmInstruction::INVALID_STACK_DELTA) {
+            return false;                               // a is concrete
+        } else {
+            return aDelta < bDelta;                     // a and b are concrete
+        }
     }
     double heatValue(P2::Partitioner &p, const P2::Function::Ptr &f) const ROSE_OVERRIDE {
         int64_t delta = functionStackDelta(p, f);

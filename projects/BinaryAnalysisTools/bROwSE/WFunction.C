@@ -61,8 +61,14 @@ WFunction::init() {
 // setCurrentTab.  It's usually called in response to selecting a new function in the FLIST_TAB.
 void
 WFunction::setCurrentFunction(const P2::Function::Ptr &function) {
-    function_ = function;
-    setCurrentTab(wTabs_->currentIndex());           // don't change tabs, but do the other stuff
+    ASSERT_not_null(function);
+    if (function_ != function) {
+#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
+        std::cerr <<"ROBB: WFunction::setCurrentFunction(" <<function->printableName() <<")\n";
+#endif
+        function_ = function;
+        setCurrentTab(wTabs_->currentIndex());          // don't change tabs, but do the other stuff
+    }
 }
 
 void

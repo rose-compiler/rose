@@ -69,13 +69,13 @@ FunctionListModel::sort(int column, Wt::SortOrder order) {
     
     layoutChanged().emit();
 
-    // Calculate and cache values for ATTR_HEAT used by WAddressSpace when calculating colors for a heat map.
+    // Calculate and cache values for ATTR_Heat used by WAddressSpace when calculating colors for a heat map.
     std::vector<double> dv;
     dv.reserve(functions_.size());
     heatStats_ = FpStatistics();
     BOOST_FOREACH (const P2::Function::Ptr &function, functions_) {
         double d = analyzers_[column]->heatValue(ctx_.partitioner, function);
-        function->attr(ATTR_HEAT, d);
+        function->attr(ATTR_Heat, d);
         if (!isnan(d)) {
             heatStats_.insert(d);
             dv.push_back(d);

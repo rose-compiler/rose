@@ -8,7 +8,7 @@ using namespace rose;
 
 namespace bROwSE {
 
-static const size_t NCOLS = 3;                          // number of columns for analysis results
+static const size_t NCOLS = 4;                          // number of columns for analysis results
 
 void
 WFunctionSummary::init() {
@@ -18,6 +18,8 @@ WFunctionSummary::init() {
     analyzers().push_back(FunctionSizeInsns::instance());
     analyzers().push_back(FunctionSizeBBlocks::instance());
     analyzers().push_back(FunctionSizeDBlocks::instance());
+    analyzers().push_back(FunctionNDiscontiguousBlocks::instance());
+    analyzers().push_back(FunctionNIntervals::instance());
     analyzers().push_back(FunctionImported::instance());
     analyzers().push_back(FunctionExported::instance());
     analyzers().push_back(FunctionNCallers::instance());
@@ -34,7 +36,7 @@ WFunctionSummary::init() {
     labelDecor.setBackgroundColor(toWt(Color::HSV(0, 0, 0.95)));
     for (size_t col=0, i=0; col<NCOLS && i<analyzers_.size(); ++col) {
         for (size_t row=0; row<NROWS && i<analyzers_.size(); ++row) {
-            Wt::WText *wLabel = new Wt::WText("<b>" + analyzers_[i]->header() + "</b>");
+            Wt::WText *wLabel = new Wt::WText("<b>" + analyzers_[i]->name() + "</b>");
             wLabel->setToolTip(analyzers_[i]->toolTip());
             wAnalysisResultTable_->elementAt(row, 2*col+0)->addWidget(wLabel);
             wAnalysisResultTable_->elementAt(row, 2*col+0)->setContentAlignment(Wt::AlignRight);
