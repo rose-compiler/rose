@@ -1,7 +1,6 @@
 #ifndef ROSE_BitPattern_H
 #define ROSE_BitPattern_H
 
-#include "sage3basic.h"
 #include "integerOps.h"
 #include "StringUtility.h"
 
@@ -52,8 +51,8 @@ template<typename T>
 class BitPattern {
     typedef std::vector<T> Words;
     typedef std::vector<Words> Alternatives;
-    Words mask;                                 // significant bits
-    Alternatives patterns;                      // set of alternative patterns; each pattern has the same size as the mask
+    Words mask_;                                // significant bits
+    Alternatives patterns_;                     // set of alternative patterns; each pattern has the same size as the mask
 
 public:
     /** Creates a new, empty bit pattern. An empty pattern matches all values. */
@@ -74,11 +73,11 @@ public:
 
     /** Verify internal consistency. This is asserted at the beginning and end of methods that modify a bit pattern. */
     bool is_consistent() const {
-        for (size_t i=0; i<patterns.size(); ++i) {
-            if (patterns[i].size()!=mask.size()) {
+        for (size_t i=0; i<patterns_.size(); ++i) {
+            if (patterns_[i].size()!=mask_.size()) {
                 std::cerr <<"BitPattern::is_consistent failed\n"
-                          <<"    mask.size() = " <<mask.size() <<"\n"
-                          <<"    patterns[" <<i <<"].size() = " <<patterns[i].size() <<"\n"
+                          <<"    mask_.size() = " <<mask_.size() <<"\n"
+                          <<"    patterns_[" <<i <<"].size() = " <<patterns_[i].size() <<"\n"
                           <<"    these two vectors should have been the same size\n";
                 std::cerr <<"    this = " <<*this <<"\n"; // printing might fail
                 return false;
@@ -90,39 +89,61 @@ public:
     /** Returns the number of significant bits. Returns zero if the pattern is empty. */
     size_t nsignificant() const {
         size_t retval = 0;
-        for (size_t i=0; i<mask.size(); ++i)
-            retval += IntegerOps::countSet(mask[i]);
+        for (size_t i=0; i<mask_.size(); ++i)
+            retval += IntegerOps::countSet(mask_[i]);
         return retval;
     }
 
     /** Returns the number of words in the pattern.  Although the final word of the pattern will have at least one significant
      *  bit, the previous pattern words might not be significant. */
     size_t nwords() const {
-        return mask.size();
+        return mask_.size();
     }
 
     /** Returns the size of the pattern in bits.  If the pattern has no significant bits, then zero is returned. Otherwise the
      * return value is the one-origin position of the most significant bit of the pattern mask. */
     size_t width() const {
-        if (0==mask.size())
+        if (0==mask_.size())
             return 0;
-        assert(mask.back()!=0);
-        return 8*sizeof(T)*(mask.size()-1) + IntegerOps::msb_set(mask.back()).get() + 1;
+        assert(mask_.back()!=0);
+        return 8*sizeof(T)*(mask_.size()-1) + IntegerOps::msb_set(mask_.back()).get() + 1;
+    }
+
+    /** Returns the mask for the specified word. The mask determines which bits the pattern cares about. */
+    T mask(size_t wordnum) {
+        if (wordnum >= mask_.size())
+            return 0;
+        return mask_[wordnum];
+    }
+
+    /** Returns invariant bits.  Given a set of of bits and a word number, this method returns values for bits that must be set
+     *  or cleared and a mask indicating which bits are invariant.  For instance, if a pattern's alternatives all require that
+     *  bits at positions 24 (inclusive) to 32 (exclusive) have the value 0xbe, don't care about bits at positions 8 to 24, and
+     *  each alternative is different in bits 0-8, then the return value wil be the value 0xbe000000 (first member of the
+     *  returned pair) and mask 0xff000000 (second member of the pair). */
+    std::pair<T, T> invariants(T msk, size_t wordnum) {
+        if (msk==0 || wordnum>mask_.size() || patterns_.empty())
+            return std::pair<T, T>(0, 0);
+        T retmsk = msk & mask_[wordnum];
+        T retpat = retmsk & patterns_[0][wordnum];
+        for (size_t i=1; i<patterns_.size() && retmsk!=0; ++i)
+            retmsk &= ~(retpat ^ patterns_[i][wordnum]); // retmsk reduced to set of bits that are the same
+        return std::pair<T, T>(retpat & retmsk, retmsk);
     }
     
     /** Returns the number of alternatives. Returns zero if the pattern is empty. */
     size_t nalternatives() const {
-        return patterns.size();
+        return patterns_.size();
     }
 
     /** Determines if the specified bits conflict with a particular pattern alternative.  If the new pattern (the arguments)
      *  conflicts with an existing pattern, then a mask describing the bits in conflict is returned.  This function returns zero
      *  if there is no conflict with the specified alternative. */
     T conflict(T msk, T pat, size_t wordnum, size_t altnum) const {
-        if (wordnum < mask.size()) {
-            if (T overlap = mask[wordnum] & msk) {
-                assert(altnum < patterns.size());
-                if (T differ = (patterns[altnum][wordnum] & overlap) ^ (pat & overlap))
+        if (wordnum < mask_.size()) {
+            if (T overlap = mask_[wordnum] & msk) {
+                assert(altnum < patterns_.size());
+                if (T differ = (patterns_[altnum][wordnum] & overlap) ^ (pat & overlap))
                     return differ;
             }
         }
@@ -133,7 +154,7 @@ public:
      *  pattern (the arguments) conflicts with an existing pattern, then a mask describing the bits in conflict is returned.
      *  If there is no conflict, then this function returns zero. */
     T conflict(T msk, T pat, size_t wordnum) const {
-        if (wordnum < mask.size()) {
+        if (wordnum < mask_.size()) {
             for (size_t altnum=0; altnum<nalternatives(); ++altnum) {
                 if (T differ = conflict(msk, pat, wordnum, altnum))
                     return differ;
@@ -145,7 +166,7 @@ public:
     /** Check that a pattern insertion does not conflict with an existing pattern.  If a conflict is present, print
      *  information about the conflict to stderr and abort. */
     void check_insertion(T msk, T pat, size_t wordnum) const {
-        if (0!=msk && wordnum<mask.size()) {
+        if (0!=msk && wordnum<mask_.size()) {
             if (T differ = conflict(msk, pat, wordnum)) {
                 std::cerr <<"BitPattern::insert(msk=" <<StringUtility::addrToString(msk, 8*sizeof(T))
                           <<", pat=" <<StringUtility::addrToString(pat, 8*sizeof(T))
@@ -163,14 +184,14 @@ public:
         if (nwords()!=other.nwords())
             return false;
         for (size_t wordnum=0; wordnum<nwords(); ++wordnum) {
-            if (mask[wordnum]!=other.mask[wordnum])
+            if (mask_[wordnum]!=other.mask_[wordnum])
                 return false;
         }
         for (size_t a1=0; a1<nalternatives(); ++a1) {
             for (size_t a2=0; a2<other.nalternatives(); ++a2) {
                 bool are_same = true;
                 for (size_t wordnum=0; are_same && wordnum<nwords(); ++wordnum)
-                    are_same = patterns[a1][wordnum] == other.patterns[a2][wordnum];
+                    are_same = patterns_[a1][wordnum] == other.patterns_[a2][wordnum];
                 if (are_same) {
                     if (alternatives!=NULL)
                         *alternatives = std::make_pair(a1, a2);
@@ -188,18 +209,18 @@ public:
         assert(0 == (pat & ~msk));
         check_insertion(msk, pat, wordnum);
         if (msk != 0) {
-            if (wordnum >= mask.size())
-                mask.resize(wordnum+1, T(0));
-            mask[wordnum] |= msk;
-            if (patterns.empty()) {
-                patterns.resize(1);
-                patterns[0].resize(wordnum+1, T(0));
-                patterns[0][wordnum] = pat;
+            if (wordnum >= mask_.size())
+                mask_.resize(wordnum+1, T(0));
+            mask_[wordnum] |= msk;
+            if (patterns_.empty()) {
+                patterns_.resize(1);
+                patterns_[0].resize(wordnum+1, T(0));
+                patterns_[0][wordnum] = pat;
             } else {
                 for (size_t altnum=0; altnum<nalternatives(); ++altnum) {
-                    if (wordnum >= patterns[altnum].size())
-                        patterns[altnum].resize(wordnum+1, T(0));
-                    patterns[altnum][wordnum] |= pat;
+                    if (wordnum >= patterns_[altnum].size())
+                        patterns_[altnum].resize(wordnum+1, T(0));
+                    patterns_[altnum][wordnum] |= pat;
                 }
             }
         }
@@ -222,7 +243,7 @@ public:
         std::cerr <<"BitPattern::shift_left: nbits=" <<nbits <<"; this=" <<*this <<"\n";
 #endif
         assert(is_consistent());
-        if (0==nbits || patterns.empty())
+        if (0==nbits || patterns_.empty())
             return *this;
         static const size_t word_size = 8*sizeof(T);
         size_t need_nbits = width() + nbits;
@@ -233,21 +254,21 @@ public:
         BitPattern retval;
 
         // shift the mask
-        retval.mask.resize(need_nwords, 0);
-        for (size_t i=0; i<mask.size(); ++i) {
-            retval.mask[i+word_delta] |= IntegerOps::shiftLeft2(mask[i], bit_delta_lt);
+        retval.mask_.resize(need_nwords, 0);
+        for (size_t i=0; i<mask_.size(); ++i) {
+            retval.mask_[i+word_delta] |= IntegerOps::shiftLeft2(mask_[i], bit_delta_lt);
             if (i+word_delta+1<need_nwords)
-                retval.mask[i+word_delta+1] = IntegerOps::shiftRightLogical2(mask[i], bit_delta_rt);
+                retval.mask_[i+word_delta+1] = IntegerOps::shiftRightLogical2(mask_[i], bit_delta_rt);
         }
 
         // shift each pattern
-        retval.patterns.resize(patterns.size());
-        for (size_t i=0; i<patterns.size(); ++i) {
-            retval.patterns[i].resize(need_nwords, 0);
-            for (size_t j=0; j<patterns[i].size(); ++j) {
-                retval.patterns[i][j+word_delta] |= IntegerOps::shiftLeft2(patterns[i][j], bit_delta_lt);
+        retval.patterns_.resize(patterns_.size());
+        for (size_t i=0; i<patterns_.size(); ++i) {
+            retval.patterns_[i].resize(need_nwords, 0);
+            for (size_t j=0; j<patterns_[i].size(); ++j) {
+                retval.patterns_[i][j+word_delta] |= IntegerOps::shiftLeft2(patterns_[i][j], bit_delta_lt);
                 if (j+word_delta+1<need_nwords)
-                    retval.patterns[i][j+word_delta+1] = IntegerOps::shiftRightLogical2(patterns[i][j], bit_delta_rt);
+                    retval.patterns_[i][j+word_delta+1] = IntegerOps::shiftRightLogical2(patterns_[i][j], bit_delta_rt);
             }
         }
         assert(is_consistent());
@@ -273,25 +294,25 @@ public:
         // check that the operation is possible
         for (size_t altnum=0; altnum<other.nalternatives(); ++altnum) {
             for (size_t wordnum=0; wordnum<other.nwords(); ++wordnum)
-                check_insertion(other.mask[wordnum], other.patterns[altnum][wordnum], wordnum);
+                check_insertion(other.mask_[wordnum], other.patterns_[altnum][wordnum], wordnum);
         }
 
         // merge masks
-        size_t this_nwords = mask.size();
-        size_t result_nwords = std::max(this_nwords, other.mask.size());
-        mask.resize(result_nwords, T(0));
-        for (size_t wordnum=0; wordnum<other.mask.size(); ++wordnum)
-            mask[wordnum] |= other.mask[wordnum];
+        size_t this_nwords = mask_.size();
+        size_t result_nwords = std::max(this_nwords, other.mask_.size());
+        mask_.resize(result_nwords, T(0));
+        for (size_t wordnum=0; wordnum<other.mask_.size(); ++wordnum)
+            mask_[wordnum] |= other.mask_[wordnum];
 
         // do the conjunction
         Alternatives retval;
-        for (size_t a1=0; a1<patterns.size(); ++a1) {
-            for (size_t a2=0; a2<other.patterns.size(); ++a2) {
+        for (size_t a1=0; a1<patterns_.size(); ++a1) {
+            for (size_t a2=0; a2<other.patterns_.size(); ++a2) {
                 retval.push_back(Words(result_nwords, T(0)));
                 for (size_t i=0; i<this_nwords; ++i)
-                    retval.back()[i] = patterns[a1][i];
+                    retval.back()[i] = patterns_[a1][i];
                 for (size_t i=0; i<other.nwords(); ++i)
-                    retval.back()[i] |= other.patterns[a2][i];
+                    retval.back()[i] |= other.patterns_[a2][i];
 
                 // check for and remove duplicate pattern
                 for (size_t a3=0; a3+1<retval.size(); ++a3) {
@@ -305,7 +326,7 @@ public:
                 }
             }
         }
-        patterns = retval;
+        patterns_ = retval;
         assert(is_consistent());
 #if 0 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
         std::cerr <<"  conjunction result = " <<*this <<"\n";
@@ -326,17 +347,17 @@ public:
         } else {
             assert(nwords()==other.nwords());
             for (size_t wordnum=0; wordnum<nwords(); ++wordnum)
-                assert(mask[wordnum]==other.mask[wordnum]);
+                assert(mask_[wordnum]==other.mask_[wordnum]);
             size_t na = nalternatives();
             for (size_t a1=0; a1<other.nalternatives(); ++a1) {
                 bool isdup = false;
                 for (size_t a2=0; !isdup && a2<na; ++a2) {
                     isdup = true;
                     for (size_t wordnum=0; isdup && wordnum<nwords(); ++wordnum)
-                        isdup = patterns[a2][wordnum] == other.patterns[a1][wordnum];
+                        isdup = patterns_[a2][wordnum] == other.patterns_[a1][wordnum];
                 }
                 if (!isdup)
-                    patterns.push_back(other.patterns[a1]);
+                    patterns_.push_back(other.patterns_[a1]);
             }
         }
         assert(is_consistent());
@@ -377,7 +398,7 @@ public:
         for (size_t altnum=0; altnum<nalternatives(); ++altnum) {
             bool eq = true;
             for (size_t wordnum=0; eq && wordnum<nwords(); ++wordnum)
-                eq = (value_words[wordnum] & mask[wordnum]) == (patterns[altnum][wordnum] & mask[wordnum]);
+                eq = (value_words[wordnum] & mask_[wordnum]) == (patterns_[altnum][wordnum] & mask_[wordnum]);
             if (eq)
                 return true;
         }
@@ -396,7 +417,7 @@ public:
         if (0==nalternatives() || wordnum>=nwords())
             return true;
         for (size_t altnum=0; altnum<nalternatives(); ++altnum) {
-            if ((value & mask[wordnum]) == (patterns[altnum][wordnum] & mask[wordnum]))
+            if ((value & mask_[wordnum]) == (patterns_[altnum][wordnum] & mask_[wordnum]))
                 return true;
         }
         return false;
@@ -407,9 +428,9 @@ public:
         assert(altnum<nalternatives());
         o <<(1==nwords()?"":"{");
         for (size_t wordnum=0; wordnum<nwords(); ++wordnum) {
-            o <<(0==wordnum?"":",") <<StringUtility::addrToString(patterns[altnum][wordnum], 8*sizeof(T));
+            o <<(0==wordnum?"":",") <<StringUtility::addrToString(patterns_[altnum][wordnum], 8*sizeof(T));
             if (with_mask)
-                o <<"/" <<StringUtility::addrToString(mask[wordnum], 8*sizeof(T));
+                o <<"/" <<StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
         }
         o <<(1==nwords()?"":"}");
     }
@@ -427,7 +448,7 @@ public:
             o <<(1==nalternatives()?"":")");
             o <<"/" <<(1==nwords()?"":"{");
             for (size_t wordnum=0; wordnum<nwords(); ++wordnum)
-                o <<(wordnum>0?",":"") <<StringUtility::addrToString(mask[wordnum], 8*sizeof(T));
+                o <<(wordnum>0?",":"") <<StringUtility::addrToString(mask_[wordnum], 8*sizeof(T));
             o <<(1==nwords()?"":"}");
         }
     }

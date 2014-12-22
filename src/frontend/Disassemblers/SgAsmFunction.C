@@ -110,7 +110,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *  (exclusive) address which are returned by reference, but not all functions own all the bytes within that range of
  *  addresses. Therefore, the exact bytes are returned by adding them to the optional ExtentMap argument.  This function
  *  returns the number of nodes (instructions and static data items) in the function.  If the function contains no nodes then
- *  the extent map is not modified and the low and high addresses are both set to zero.
+ *  @p extents is not modified and the low and high addresses are both set to zero.
  *
  *  If an @p selector functor is provided, then only nodes for which it returns true are considered part of the function.  This
  *  can be used for such things as filtering out data blocks that are marked as padding.  For example:
@@ -125,7 +125,7 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *      }
  *  } notPadding;
  *
- *  ExtentMap extents;
+ *  AddressIntervalSet extents;
  *  function->get_extent(&extents, NULL, NULL, &notPadding);
  *  @endcode
  *
@@ -140,19 +140,19 @@ SgAsmFunction::reason_str(bool do_pad, unsigned r)
  *      }
  *  } onlyPadding;
  *
- *  ExtentMap extents;
+ *  AddressIntervalSet extents;
  *  function->get_extent(&extents, NULL, NULL, &onlyPadding);
  *  @endcode
  */
 size_t
-SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+SgAsmFunction::get_extent(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
 {
     struct T1: public AstSimpleProcessing {
-        ExtentMap *extents;
+        AddressIntervalSet *extents;
         rose_addr_t *lo_addr, *hi_addr;
         NodeSelector *selector;
         size_t nnodes;
-        T1(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
+        T1(AddressIntervalSet *extents, rose_addr_t *lo_addr, rose_addr_t *hi_addr, NodeSelector *selector)
             : extents(extents), lo_addr(lo_addr), hi_addr(hi_addr), selector(selector), nnodes(0) {
             if (lo_addr)
                 *lo_addr = 0;
@@ -187,7 +187,7 @@ SgAsmFunction::get_extent(ExtentMap *extents, rose_addr_t *lo_addr, rose_addr_t 
                     *hi_addr = std::max(*hi_addr, hi);
             }
             if (extents && hi>lo)
-                extents->insert(Extent(lo, hi-lo));
+                extents->insert(AddressInterval::baseSize(lo, hi-lo));
         }
     } t1(extents, lo_addr, hi_addr, selector);
     t1.traverse(this, preorder);
@@ -202,7 +202,7 @@ SgAsmFunction::get_sha1(uint8_t digest[20], NodeSelector *selector)
         NodeSelector *selector;
         gcry_md_hd_t md; // message digest
         T1(NodeSelector *selector): selector(selector) {
-            gcry_error_t error = gcry_md_open(&md, GCRY_MD_SHA1, 0);
+            gcry_error_t error __attribute__((unused)) = gcry_md_open(&md, GCRY_MD_SHA1, 0);
             assert(GPG_ERR_NO_ERROR==error);
         }
         ~T1() {

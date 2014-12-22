@@ -376,7 +376,9 @@ sub load_config {
   close CONFIG;
 
   # Convert the timeout value to seconds (zero implies infinity)
-  if ($conf{timeout} !~ /^\d+$/) {
+  if ($conf{timeout} eq "") {
+    $conf{timeout} = 15*60; # use the default
+  } elsif ($conf{timeout} !~ /^\d+$/) {
     if ($conf{timeout} =~ /^(\d+)\s*(s|sec|seconds?|m|min|minutes?|hr?|hours?)$/) {
       $conf{timeout} = $1 * {s=>1, m=>60, h=>3600}->{substr $2,0,1};
     } elsif ($conf{timeout} eq 'never') {
@@ -445,9 +447,9 @@ sub run_command {
 # be in use or left over from a previous run that didn't clean up, so use Perl's rand() to create one. This not
 # cryptographically strong, but at least we're unlikely to have conflicts.
 sub tempname {
-    my @chars = qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
-                   A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
-                   0 1 2 3 4 5 6 7 8 9 _ +/;
+    my @chars = (qw/a b c d e f g h i j k l m n o p q r s t u v w x y z
+                    A B C D E F G H I J K L M N O P Q R S T U V W X Y Z
+                    0 1 2 3 4 5 6 7 8 9 _ +/);
     my $prefix = ($ENV{TMPDIR} && -d $ENV{TMPDIR} && -w _ ? $ENV{TMPDIR} : "/tmp") . "/rose";
     while (1) {
 	my $retval = $prefix;
@@ -531,7 +533,7 @@ if ($config{subdir} eq 'yes') {
 }
 
 # Run the commands, capturing their output into files.
-my($cmd_stdout_file,$cmd_stderr_file) = map {tempname} qw/out err/;
+my($cmd_stdout_file,$cmd_stderr_file) = map {tempname} (qw/out err/);
 unlink $cmd_stdout_file, $cmd_stderr_file;
 if (!$immediate_output) {
     open CMD_STDOUT, ">", $cmd_stdout_file or die "$cmd_stdout_file: $!\n";
@@ -677,7 +679,7 @@ close CMD_STDOUT;
 close CMD_STDERR;
 open TARGET, ">", $target_fail or die "$0: $target_fail: $!\n";
 my %output_filename = (out => $cmd_stdout_file, err => $cmd_stderr_file);
-for my $stream qw(out err) {
+for my $stream (qw(out err)) {
   if (open OUTPUT, "<", $output_filename{$stream}) {
     while (<OUTPUT>) {
       print TARGET $_;

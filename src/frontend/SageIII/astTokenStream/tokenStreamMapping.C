@@ -42,7 +42,9 @@
 // use the token stream support.
 */
 
-#include "rose.h"
+// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
+// #include "rose.h"
+#include "sage3basic.h"
 
 #include "general_token_defs.h"
 
@@ -3242,6 +3244,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
      if ( SgProject::get_verbose() > 0 )
         {
+       // DQ (12/3/2014): Note that this function fails for the Amr.cxx file in ARES.
        // Build a dot file of the AST and the token stream showing the mapping.
           Graph_TokenMappingTraversal::graph_ast_and_token_stream(sourceFile,tokenVector,tokenMappingTraversal.tokenStreamSequenceMap);
         }
@@ -3250,7 +3253,8 @@ buildTokenStreamMapping(SgSourceFile* sourceFile)
 #if 1
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
   // This generates files: token_leading_<filename>.c and token_trailing_<filename>.c.
-     if ( SgProject::get_verbose() > 0 )
+  // if ( SgProject::get_verbose() > 0 )
+     if ( sourceFile->get_unparse_using_leading_and_trailing_token_mappings() == true )
         {
        // Output a file generated from the token sequences of each declaration statement directly within the global scope.
           bool preferTrailingWhitespaceInOutput = true;

@@ -1363,6 +1363,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #endif
 #endif
 
+#if 0
+     printf ("In printSpecifier2(SgDeclarationStatement* decl_stmt): TOP \n");
+#endif
+
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(decl_stmt);
 
   // DQ (2/4/2006): Moved output of "friend" keywork inside of test for SgFunctionDeclaration
@@ -1401,6 +1405,12 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
           if (functionDeclaration->get_using_C11_Noreturn_keyword() == true)
              {
                curprint("_Noreturn ");
+             }
+
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (functionDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
              }
 
        // DQ (2/4/2006): Template specialization declarations (forward declaration) can't have some modified output
@@ -1497,15 +1507,30 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeHint())
              {
+#if 0
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
             // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+#endif
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
              }
           if (functionDeclaration->get_functionModifier().hasOpenclWorkGroupSizeReq())
              {
+#if 0
                SgFunctionModifier::opencl_work_group_size_t opencl_work_group_size = functionDeclaration->get_functionModifier().get_opencl_work_group_size();
             // curprint( "__attribute__((work_group_size_hint(" << opencl_work_group_size.x << ", " << opencl_work_group_size.y << ", " << opencl_work_group_size.z << "))) ");
+#endif
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
+             }
+        }
+
+
+     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(decl_stmt);
+     if (variableDeclaration != NULL)
+        {
+       // DQ (8/1/2014): Added support to output the constexpr keyword.
+          if (variableDeclaration->get_is_constexpr() == true)
+             {
+               curprint("constexpr ");
              }
         }
 
@@ -1523,7 +1548,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().get_modifier() >= 0);
 
 #if 0
-     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic() = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isStatic()  = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isStatic() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isExtern()  = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isExtern() ? "true" : "false");
+     printf ("In printSpecifier2(): decl_stmt = %p decl_stmt->get_declarationModifier().get_storageModifier().isDefault() = %s \n",decl_stmt,decl_stmt->get_declarationModifier().get_storageModifier().isDefault() ? "true" : "false");
 #endif
 
      if (decl_stmt->get_declarationModifier().get_storageModifier().isStatic())
@@ -1539,6 +1566,9 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #if 0
           printf ("In Unparse_MOD_SAGE::printSpecifier2(): Output the extern keyword \n");
 #endif
+       // DQ (7/23/2014): Looking for greater precision in the control of the output of the "extern" keyword.
+          ROSE_ASSERT(decl_stmt->get_declarationModifier().get_storageModifier().isDefault() == false);
+
           curprint( "extern ");
         }
 
@@ -1590,6 +1620,167 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      if (decl_stmt->get_declarationModifier().get_storageModifier().isCudaDynamicShared())
         {
           curprint( "extern __device__ __shared__ ");
+        }
+
+
+#if 0
+    align( # )
+    allocate(" segname ")
+    appdomain
+    code_seg(" segname ")
+    deprecated
+    dllimport
+    dllexport
+    jitintrinsic
+    naked
+    noalias
+    noinline
+#endif
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_align())
+        {
+          curprint("__declspec(align(4)) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_allocate())
+        {
+          curprint("__declspec(allocate(\"unknown_allocate_name\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_appdomain())
+        {
+          curprint("__declspec(appdomain) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_code_seg())
+        {
+          curprint("__declspec(code_seg(\"unknown_code_seg_name\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_deprecated())
+        {
+          curprint("__declspec(deprecated) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_dllimport())
+        {
+          curprint("__declspec(dllimport) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_dllexport())
+        {
+          curprint("__declspec(dllexport) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_jitintrinsic())
+        {
+          curprint("__declspec(jitintrinsic) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_naked())
+        {
+          curprint("__declspec(naked) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noalias())
+        {
+          curprint("__declspec(noalias) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noinline())
+        {
+          curprint("__declspec(noinline) ");
+        }
+
+#if 0
+    noreturn
+    nothrow
+    novtable
+    process
+    property( {get=get_func_name|,put=put_func_name})
+    restrict
+    safebuffers
+    selectany
+    thread
+    uuid(" ComObjectGUID ")
+#endif
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_noreturn())
+        {
+          curprint("__declspec(noreturn) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_nothrow())
+        {
+          curprint("__declspec(nothrow) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_novtable())
+        {
+          curprint("__declspec(novtable) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_process())
+        {
+          curprint("__declspec(process) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_property())
+        {
+       // curprint("__declspec(property( {get=get_func_name|,put=put_func_name})) ");
+          curprint("__declspec(property(\"");
+
+          string get_function_name         = decl_stmt->get_declarationModifier().get_microsoft_property_get_function_name();
+          bool get_function_name_non_empty = get_function_name.empty();
+          string put_function_name         = decl_stmt->get_declarationModifier().get_microsoft_property_put_function_name();
+          bool put_function_name_non_empty = put_function_name.empty();
+
+          if (get_function_name_non_empty == false)
+             {
+               curprint("get=");
+               curprint(get_function_name);
+             }
+
+          if (get_function_name_non_empty == false && put_function_name_non_empty == false)
+             {
+               curprint(", ");
+             }
+
+          if (put_function_name_non_empty == false)
+             {
+               curprint("put=");
+               curprint(put_function_name);
+             }
+
+          curprint("\")) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_restrict())
+        {
+          curprint("__declspec(restrict) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_safebuffers())
+        {
+          curprint("__declspec(safebuffers) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_selectany())
+        {
+          curprint("__declspec(selectany) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_thread())
+        {
+          curprint("__declspec(thread) ");
+        }
+
+     if (decl_stmt->get_declarationModifier().is_ms_declspec_uuid())
+        {
+       // curprint("__declspec(uuid(\" ComObjectGUID \")) ");
+          curprint("__declspec(uuid(\"");
+          curprint(decl_stmt->get_declarationModifier().get_microsoft_uuid_string());
+          curprint("\")) ");
         }
    }
 
@@ -1891,7 +2082,9 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
              {
                curprint( " __attribute__((used))");
              }
-
+#if 0
+          printf ("In printAttributes(SgDeclarationStatement*): functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() = %s \n",functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() ? "true" : "false");
+#endif
           if (functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() == true)
              {
                curprint( " __attribute__((deprecated))");

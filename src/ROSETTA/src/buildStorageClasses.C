@@ -747,6 +747,10 @@ Terminal::evaluateType(std::string& varTypeString)
         {
           returnType = STL_MAP;
         }
+     else if (varTypeString == "AddressIntervalSet")
+        {
+          returnType = STL_SET;
+        }
      else if ( 15 < length && varTypeString.substr(0,14) == "std::multimap<" && varTypeString.rfind(">" ) == length-1 )
         {
           returnType = STL_MULTIMAP;
@@ -1084,7 +1088,7 @@ string Terminal::buildStorageClassPickOutIRNodeDataSource ()
                   {
                     switch (evaluateType(varTypeString) )
                        {
-                        case SGCLASS_POINTER:
+                         case SGCLASS_POINTER:
                            s += "     " + varStorageNameString + " = "\
                                 "AST_FILE_IO::getGlobalIndexFromSgClassPointer ( source->p_" + varNameString + " );\n" ;
                            break;
@@ -2309,8 +2313,9 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
      std::string classNameString = this->name;
      vector<GrammarString *> copyList;
      vector<GrammarString *>::const_iterator stringListIterator;
-      
-     copyList        = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+
+     copyList = this->getMemberDataPrototypeList(Terminal::LOCAL_LIST,Terminal::INCLUDE_LIST);
+
      for ( stringListIterator = copyList.begin(); stringListIterator != copyList.end(); stringListIterator++ )
         {
           GrammarString *data = *stringListIterator;
@@ -2318,11 +2323,11 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
           string varTypeString = string(data->getTypeNameString());
           if ( varTypeString.substr(0,7) ==  "static " )
              {
-                string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
-                varTypeString = varTypeString.substr(7,varTypeString.size()-1 ) ;
+               string varStorageNameString =  "storageOf_" + classNameString + "_"  + varNameString;
+               varTypeString = varTypeString.substr(7,varTypeString.size()-1 ) ;
             
-                if (varNameString != "freepointer" )
-                   {
+               if (varNameString != "freepointer" )
+                  {
                     switch (evaluateType(varTypeString) )
                        {
                          case SGCLASS_POINTER:
@@ -2363,6 +2368,7 @@ std::string Terminal::buildStaticDataMemberListOfStorageClass()
                          case OSTREAM:
                          case SKIP_TYPE:
                            break;
+
                          case TO_HANDLE:
                          default:
                            std::cout << " There is a class not handled in buildStorageClasses.C, Line " << __LINE__ << endl ;
@@ -2485,6 +2491,9 @@ string Terminal::buildSourceForStoringStaticMembers ()
                            s += "        }\n";
                            s += "      delete [] tempList" + classNameString + "; \n";
                       break;
+
+                 // DQ (7/12/2014): Adding support for STL_SET.
+                    case STL_SET:
                  // DQ (4/30/2009): Added case of STL_MULTIMAP
                     case STL_MULTIMAP:
                     case STL_MAP:
@@ -2548,6 +2557,9 @@ string Terminal::buildStaticDataConstructorSource ()
                            "(" + sg_string + ")(AST_FILE_IO::getSgClassPointerFromGlobalIndex ( (unsigned long) (*i_" + classNameString + " )  ) );\n";
                       s += "        }\n";
                       break;
+
+                 // DQ (7/12/2014): Adding support for STL_SET.
+                    case STL_SET:
                  // DQ (4/30/2009): Added case of STL_MULTIMAP
                     case STL_MULTIMAP:
                     case STL_MAP:
@@ -2601,6 +2613,9 @@ string Terminal::buildStaticDataWriteEasyStorageDataToFileSource()
                            addString += "     EasyStorage<" + varTypeString + "> :: writeToFile(out) ;\n";
                            break;
                          case SGCLASS_POINTER_LIST:
+
+                      // DQ (7/12/2014): Adding support for STL_SET.
+                         case STL_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
@@ -2662,11 +2677,15 @@ string Terminal::buildStaticDataReadEasyStorageDataFromFileSource()
                            addString += "     EasyStorage<" + varTypeString + "> :: readFromFile(in) ;\n";
                            break;
                          case SGCLASS_POINTER_LIST:
+
+                      // DQ (7/12/2014): Adding support for STL_SET.
+                         case STL_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: readFromFile(in) ;\n";
                            break;
+
                          default:
                            std::cout << " There is a class not handled in buildStorageClasses.C, Line " << __LINE__ << endl ;
                            std::cout << "In class " + classNameString + " caused by variable " + varTypeString + " p_" + varNameString << endl ;
@@ -2719,6 +2738,9 @@ string Terminal::buildStaticDataArrangeEasyStorageInOnePoolSource()
                          case CHAR_POINTER:
                          case STRING:
                          case SGCLASS_POINTER_LIST:
+
+                      // DQ (7/12/2014): Adding support for STL_SET.
+                         case STL_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
@@ -2776,11 +2798,15 @@ string Terminal::buildStaticDataDeleteEasyStorageMemoryPoolSource()
                          case CHAR_POINTER:
                          case STRING:
                          case SGCLASS_POINTER_LIST:
+
+                      // DQ (7/12/2014): Adding support for STL_SET.
+                         case STL_SET:
                       // DQ (4/30/2009): Added case of STL_MULTIMAP
                          case STL_MULTIMAP:
                          case STL_MAP:
                            addString += "     EasyStorage<" + varTypeString + " > :: deleteMemoryPool();\n";
                            break;
+
                          default:
                            std::cout << " There is a class not handled in buildStorageClasses.C, Line " << __LINE__ << endl ;
                            std::cout << "In class " + classNameString + " caused by variable " + varTypeString + " p_" + varNameString << endl ;

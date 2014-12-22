@@ -40,6 +40,11 @@
 
 // $REPLACE_ME_WITH_MACRO_DEFINITIONS
 
+/* DQ (9/1/2014): Define this for the Intel compiler (to avoid Intel specific code not handled by EDG) */
+#ifdef __INTEL_COMPILER
+  #define _OVERRIDE_COMPLEX_SPECIALIZATION_
+#endif
+
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
 /* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
@@ -240,6 +245,42 @@ long double __builtin_sinl   (long double __builtin__x);
 float       __builtin_sqrtf  (float       __builtin__x);
 long double __builtin_sqrtl  (long double __builtin__x);
 
+/* DQ (11/6/2014): Use a different mechanism to handle these for the GNU 4.7 compiler and above (required form C++11) */
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7))
+
+#if 0
+/* DQ (11/10/2014): This was added to support the use of math.h header files for C++11, 
+   but might not be required now. It is a problem when not using the C++11 mode.
+ */
+constexpr bool __builtin_isgreater(double x, double y);
+constexpr bool __builtin_isgreaterequal(double x, double y);
+constexpr bool __builtin_isless(double x, double y);
+#else
+int __builtin_isgreater(double x, double y);
+int __builtin_isgreaterequal(double x, double y);
+int __builtin_isless(double x, double y);
+#endif
+int __builtin_ia32_bsrsi(int x);
+unsigned long long __builtin_ia32_rdpmc(int x);
+unsigned long long __builtin_ia32_rdtsc(void);
+unsigned long long __builtin_ia32_rdtscp(unsigned int *__A);
+unsigned char      __builtin_ia32_rolqi(unsigned char __X, int __C);
+unsigned short     __builtin_ia32_rolhi(unsigned short __X, int __C);
+unsigned char      __builtin_ia32_rorqi(unsigned char __X, int __C);
+unsigned short     __builtin_ia32_rorhi(unsigned short __X, int __C);
+void               __builtin_ia32_pause();
+int                __builtin_ia32_bsrdi(long long __X);
+long long          __builtin_bswap64(long long __X);
+
+void               __builtin_ia32_fxsave(void *__P);
+void               __builtin_ia32_fxrstor(void *__P);
+void               __builtin_ia32_fxsave64(void *__P);
+void               __builtin_ia32_fxrstor64(void *__P);
+unsigned char      __builtin_ia32_addcarryx_u32(unsigned char __CF, unsigned int __X, unsigned int __Y, unsigned int *__P);
+unsigned char      __builtin_ia32_addcarryx_u64(unsigned char __CF, unsigned long __X, unsigned long __Y, unsigned long long *__P);
+
+#else
+
 /* DQ (5/4/2010): Reported problem under Ubuntu 9.10 with GCC 4.4.1 and Boost 1.42.
 */
 int __builtin_fpclassify (int, int, int, int, int, ...);
@@ -298,6 +339,9 @@ DQ (6/19/2007): These might required math.h to be included.
    ({ __typeof__(u) __u = (u); __typeof__(v) __v = (v);			      \
       fpclassify (__u) == FP_NAN || fpclassify (__v) == FP_NAN; }))
 # endif
+
+/* #if ((__GNUC__ == 4) && (__GNUC_MINOR__ >= 7)) */
+#endif
 
 /* int __builtin_isgreater(x,y) isgreater(x,y);
 int __builtin_isgreaterequal(x,y) isgreaterequal(x,y);
@@ -2209,7 +2253,7 @@ int __builtin_ia32_psrlqi(long long,int);
 // explictly e.g. int32_t __builtin_bswap32 (int32_t x)
 // However, integer types such as int32_t are not defined here.
 int __builtin_bswap32 (int x);
-long int __builtin_bswap64 (long int x);
+/* long int __builtin_bswap64 (long int x); */
 
 /* matching else for SKIP_ROSE_BUILTIN_DECLARATIONS */
 #else

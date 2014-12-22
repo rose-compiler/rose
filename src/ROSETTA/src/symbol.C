@@ -44,7 +44,10 @@ Grammar::setUpSymbols ()
 
      NEW_TERMINAL_MACRO ( EnumSymbol,           "EnumSymbol",           "ENUM_NAME" );
      NEW_TERMINAL_MACRO ( EnumFieldSymbol,      "EnumFieldSymbol",      "FIELD_NAME" );
-     NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
+
+  // NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
+     NEW_TERMINAL_MACRO    ( TemplateTypedefSymbol,  "TemplateTypedefSymbol",  "TEMPLATE_TYPEDEF_NAME" );
+     NEW_NONTERMINAL_MACRO ( TypedefSymbol, TemplateTypedefSymbol, "TypedefSymbol", "TYPEDEF_NAME", true);
 
   // NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
      NEW_TERMINAL_MACRO ( TemplateFunctionSymbol, "TemplateFunctionSymbol", "TEMPLATE_FUNC_NAME" );
@@ -268,6 +271,15 @@ Grammar::setUpSymbols ()
      AliasSymbol.setDataPrototype       ( "SgName", "new_name", "= \"\"",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (7/11/2014): Added to support references to the associated using declarations and using directives 
+  // that caused the sgAliasSymbol symbol to be built.  This is critical to support for name qualification
+  // that is different before and after a using declaration; but which forces the sgAliasSymbol to be 
+  // generated only once within the AST (before uparsing the associated using declaration of using directive
+  // that caused the generation of the sgAliasSymbol in the symbol tabel for the associated scope.
+  // Note that test2014_90.C is a simple example of why this is important.
+     AliasSymbol.setDataPrototype("SgNodePtrList", "causal_nodes", "",
+                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      RenameSymbol.setFunctionPrototype   ( "HEADER_RENAME_SYMBOL", "../Grammar/Symbol.code" );
      RenameSymbol.setDataPrototype       ( "SgSymbol*", "original_symbol", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -323,7 +335,12 @@ Grammar::setUpSymbols ()
   // TemplateInstantiationSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" ); // [DT] 5/11/2000
      EnumSymbol.setFunctionSource           ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
      TypedefSymbol.setFunctionSource        ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
+  // DQ (11/4/2014): Added support for templated typedef (C++11 feature).
+     TemplateTypedefSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 
@@ -355,6 +372,10 @@ Grammar::setUpSymbols ()
      EnumSymbol.setFunctionSource           ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TypedefSymbol.setFunctionSource        ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+
+  // DQ (11/4/2014): Added support for templated typedef (C++11 feature).
+     TemplateTypedefSymbol.setFunctionSource( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 

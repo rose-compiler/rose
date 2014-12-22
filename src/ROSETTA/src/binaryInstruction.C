@@ -54,25 +54,25 @@ Grammar::setUpBinaryInstructions()
 
 
 
-    NEW_TERMINAL_MACRO(Asmx86Instruction, "Asmx86Instruction", "Asmx86InstructionTag");
-    Asmx86Instruction.setFunctionPrototype("HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
-    Asmx86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
+    NEW_TERMINAL_MACRO(AsmX86Instruction, "AsmX86Instruction", "AsmX86InstructionTag");
+    AsmX86Instruction.setFunctionPrototype("HEADER_BINARY_X86_INSTRUCTION", "../Grammar/BinaryInstruction.code");
+    AsmX86Instruction.setDataPrototype("X86InstructionKind", "kind", "= x86_unknown_instruction",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
+    AsmX86Instruction.setDataPrototype("X86InstructionSize", "baseSize", "= x86_insnsize_none",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
+    AsmX86Instruction.setDataPrototype("X86InstructionSize", "operandSize", "= x86_insnsize_none",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
+    AsmX86Instruction.setDataPrototype("X86InstructionSize", "addressSize", "= x86_insnsize_none",
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("bool", "lockPrefix", "= false",
+    AsmX86Instruction.setDataPrototype("bool", "lockPrefix", "= false",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
+    AsmX86Instruction.setDataPrototype("X86RepeatPrefix", "repeatPrefix", "= x86_repeat_none",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
+    AsmX86Instruction.setDataPrototype("X86BranchPrediction", "branchPrediction", "= x86_branch_prediction_none",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
+    AsmX86Instruction.setDataPrototype("X86SegmentRegister", "segmentOverride", "= x86_segreg_none",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
-    Asmx86Instruction.setPredeclarationString("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION",
+    AsmX86Instruction.setPredeclarationString("HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION",
                                               "../Grammar/BinaryInstruction.code");
 
 
@@ -104,7 +104,7 @@ Grammar::setUpBinaryInstructions()
 
 
     NEW_NONTERMINAL_MACRO(AsmInstruction,
-                          Asmx86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
+                          AsmX86Instruction | AsmArmInstruction | AsmPowerpcInstruction | AsmMipsInstruction |
                           AsmM68kInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setPredeclarationString("HEADER_BINARY_INSTRUCTION_PREDECLARATION", "../Grammar/BinaryInstruction.code");
@@ -1258,7 +1258,7 @@ Grammar::setUpBinaryInstructions()
      AsmPEExportSection.setFunctionPrototype("HEADER_PE_EXPORT_SECTION", "../Grammar/BinaryInstruction.code");
      AsmPEExportSection.setDataPrototype("SgAsmPEExportDirectory*", "export_dir", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "",
+     AsmPEExportSection.setDataPrototype("SgAsmPEExportEntryList*", "exports", "= NULL",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -2389,7 +2389,7 @@ Grammar::setUpBinaryInstructions()
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmGenericStrtab::referenced_t", "storage_list", "",
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericStrtab.setDataPrototype("ExtentMap", "freelist", "", // space avail. for new strings
+     AsmGenericStrtab.setDataPrototype("AddressIntervalSet", "freelist", "", // space avail. for new strings
                                        NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericStrtab.setDataPrototype("SgAsmStringStorage*", "dont_free", "= NULL", // never free this storage
                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2543,7 +2543,7 @@ Grammar::setUpBinaryInstructions()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "tracking_references", "= true",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AsmGenericFile.setDataPrototype("ExtentMap", "referenced_extents", "",
+     AsmGenericFile.setDataPrototype("AddressIntervalSet", "referenced_extents", "",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AsmGenericFile.setDataPrototype("bool", "neuter", "= false", // if set, refuse to unparse file
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

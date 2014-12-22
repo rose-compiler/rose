@@ -245,7 +245,7 @@ SgAsmUnaryPlus
 SgAsmUnaryRrx
 SgAsmValueExpression
 SgAsmVectorType
-SgAsmx86Instruction
+SgAsmX86Instruction
 SgAsmBinaryAddressSymbol
 SgAsmBinaryDataSymbol
 SgAssertStmt
@@ -317,6 +317,7 @@ SgDeadIfDirectiveStatement
 SgDeallocateStatement
 SgDeclarationModifier
 SgDeclarationStatement
+SgDeclType
 SgDefaultOptionStmt
 SgDefaultSymbol
 SgDefineDirectiveStatement
@@ -379,6 +380,7 @@ SgFunctionDeclaration
 SgFunctionDefinition
 SgFunctionModifier
 SgFunctionParameterList
+SgFunctionParameterRefExp
 SgFunctionParameterTypeList
 SgFunctionRefExp
 SgFunctionSymbol
@@ -433,6 +435,9 @@ SgLabelStatement
 SgJavaLabelStatement
 SgLabelSymbol
 SgJavaLabelSymbol
+SgLambdaCapture
+SgLambdaCaptureList
+SgLambdaExp
 SgLambdaRefExp
 SgLessOrEqualOp
 SgLessThanOp
@@ -453,6 +458,7 @@ SgMemberFunctionRefExp
 SgMemberFunctionSymbol
 SgMemberFunctionType
 SgMembershipOp
+SgMicrosoftAttributeDeclaration
 SgMinusAssignOp
 SgMinusMinusOp
 SgMinusOp
@@ -482,6 +488,7 @@ SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
 SgNullExpression
+SgNullptrValExp
 SgNullStatement
 SgNullifyStatement
 SgOmpAtomicStatement
@@ -565,6 +572,7 @@ SgReturnStmt
 SgRewindStatement
 SgRshiftAssignOp
 SgRshiftOp
+SgRvalueReferenceType
 SgJavaUnsignedRshiftAssignOp
 SgJavaUnsignedRshiftOp
 SgScopeOp
@@ -610,6 +618,8 @@ SgTemplateFunctionSymbol
 SgTemplateMemberFunctionDeclaration
 SgTemplateMemberFunctionRefExp
 SgTemplateMemberFunctionSymbol
+SgTemplateTypedefDeclaration
+SgTemplateTypedefSymbol
 SgTemplateVariableDeclaration
 SgTemplateVariableSymbol
 SgTemplateClassDefinition
@@ -619,6 +629,7 @@ SgTemplateInstantiationDefn
 SgTemplateInstantiationDirectiveStatement
 SgTemplateInstantiationFunctionDecl
 SgTemplateInstantiationMemberFunctionDecl
+SgTemplateInstantiationTypedefDeclaration
 SgTemplateParameter
 SgTemplateParameterVal
 SgTemplateParameterList
@@ -649,6 +660,7 @@ SgTypeLong
 SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
+SgTypeNullptr
 SgTypeShort
 SgTypeSigned128bitInteger
 SgTypeSignedChar
@@ -776,3 +788,7 @@ SgJavaQualifiedType
 SgClassExp
 SgJavaUnionType
 SgJavaParameterType
+SgAsyncStmt
+SgFinishStmt
+SgAtStmt
+SgHereExp

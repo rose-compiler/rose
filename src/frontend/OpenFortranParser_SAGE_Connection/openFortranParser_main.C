@@ -121,6 +121,7 @@ int openFortranParser_main(int argc, char **argv)
 
 
 #if 0
+#if 0
 int
 experimental_openFortranParser_main(int argc, char **argv)
    {
@@ -289,5 +290,6 @@ experimental_openFortranParser_main(int argc, char **argv)
 
      return 0;
    }
+#endif
 #endif
 

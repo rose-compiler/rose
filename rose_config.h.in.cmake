@@ -524,14 +524,12 @@
 #undef RETSIGTYPE
 
 /* Location (unquoted) of Boost specified on configure line. */
-#define ROSE_BOOST_PATH ${BOOST_ROOT}
+#define ROSE_BOOST_PATH "${BOOST_ROOT}"
 
 /* Location of ROSE Compile Tree. */
 #define ROSE_COMPILE_TREE_PATH ${ROSE_TOP_BINARY_DIR}
 
-/* Variable like LD_LIBRARY_PATH */
-//AS Don't know what to do with this
-//ZG Setting to LD_LIBRARY_PATH for now.
+/* PATH on Windows, LD_LIBRARY_PATH everywhere else. */
 #define ROSE_SHLIBPATH_VAR "${ROSE_SHLIBPATH_VAR}"
 
 /* Whether to use the new EDG version 4.x */
@@ -799,3 +797,7 @@
 #cmakedefine ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 #cmakedefine ROSE_SUPPORT_MICROSOFT_EXTENSIONS
 
+/* Detect whether our compilers are GNU or not */
+#cmakedefine CMAKE_COMPILER_IS_GNUCC
+#cmakedefine CMAKE_COMPILER_IS_GNUCXX
+#cmakedefine CMAKE_COMPILER_IS_GNUG77

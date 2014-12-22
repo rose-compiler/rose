@@ -218,6 +218,13 @@ class ROSE_DLL_API TransformationSupport
        // static SgTemplateDeclaration* getTemplateDeclaration( const SgNode* astNode);
           static SgDeclarationStatement* getTemplateDeclaration( const SgNode* astNode);
 
+       // DQ (8/19/2014): Iterate back through the parents and scopes to find the SgType that the current node is embedded into.
+      /*! \brief Find the associated type that might be a parent (through a parent chain) of the input SgNode.
+
+          \internal Returns NULL if a SgStatement, SgFile, or SgProject is found (SgSymbol should never be found).
+       */
+          static SgType* getAssociatedType( const SgNode* astNode );
+
        // DQ (5/11/2011): This function was moved to SgTemplateArgument a long time ago and is not longer available.
        // DQ (6/9/2007): This function traverses through the parents to the first scope (used for name qualification support of template arguments)
        // static SgScopeStatement* getScope(const SgNode* astNode);

@@ -71,9 +71,8 @@ if (NOT EXISTS "${rose_system_headers_dir}/Windows.h")
     # <rose-bin>/include
     if (EXISTS "${vs9_include_dir}")
       message(STATUS "copying from ${vs9_include_dir}")
-      file(GLOB_RECURSE h_files "${vs9_include_dir}/*.h")
-      file(GLOB_RECURSE inl_files "${vs9_include_dir}/*.inl")
-      set(headers ${h_files} ${inl_files})
+      file(GLOB_RECURSE header_files "${vs9_include_dir}/*")
+      set(headers ${header_files})
       foreach(header ${headers})
         string(REPLACE "${vs9_include_dir}/" "" relative_path "${header}")
         execute_process(

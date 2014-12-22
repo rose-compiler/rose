@@ -82,7 +82,11 @@ int openJavaParser_main(int argc, char **argv) {
     /* Overwite to a new value. It is not clear when to use the install path and when to use the build path! */
     // string new_value = findRoseSupportPathFromBuild("src/frontend/OpenFortranParser_SAGE_Connection/.libs", "lib");
     #ifdef USE_CMAKE
-    string new_value = findRoseSupportPathFromBuild("lib", "lib");
+        #ifdef _MSC_VER
+        string new_value = findRoseSupportPathFromBuild("bin", "bin");
+        #else
+        string new_value = findRoseSupportPathFromBuild("lib", "lib");
+        #endif
     #else
     string new_value = findRoseSupportPathFromBuild("src/frontend/ECJ_ROSE_Connection/.libs", "lib");
     #endif
@@ -96,7 +100,13 @@ int openJavaParser_main(int argc, char **argv) {
 
 #if OVERWRITE_LD_LIBRARY_PATH
     int overwrite = 1;
+    #ifdef _MSC_VER
+    new_value += ";";
+    new_value += old_value;
+    int env_status = _putenv_s(ROSE_SHLIBPATH_VAR, new_value.c_str());
+    #else
     int env_status = setenv(ROSE_SHLIBPATH_VAR,new_value.c_str(),overwrite);
+    #endif
     assert(env_status == 0);
 #endif
 
@@ -128,7 +138,11 @@ int openJavaParser_main(int argc, char **argv) {
     // DQ (9/9/2011): Note that old_value can be NULL and if so then we don't want it to be dereferenced.
     // env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
     if (old_value != NULL)
+        #ifdef _MSC_VER
+        env_status = _putenv_s(ROSE_SHLIBPATH_VAR,old_value);
+        #else
         env_status = setenv(ROSE_SHLIBPATH_VAR,old_value,overwrite);
+        #endif
 
     assert(env_status == 0);
 #endif

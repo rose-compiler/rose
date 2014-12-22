@@ -1,7 +1,15 @@
 /*
- * this includes the forward declarations of all the sage node classes
- * from the generated files (i.e. gives just the class names.)
+ * This header (or its precompiled version) includes the forward declarations of all the Sage IR node classes ("Sg*")
+ * from the ROSETTA-generated files (i.e., gives just the class names).
  *
+ * Every source file (.C) that becomes part of librose should include "sage3basic.h" as the first included file before any C++
+ * token is processed by the compiler, thus allowing a precompiled version of this header to be used.  This applies to pretty
+ * much every .C file under the $ROSE/src directory.  Such source files should not include "rose.h".
+ *
+ * No librose header file (those under $ROSE/src) should include sage3basic.h, rose_config.h, or rose.h.  If a header file
+ * needs something that's declared in sage3basic.h then include sage3basic.h in the .C file first (GCC cannot use the
+ * precompiled version if it is included from inside another header).  If a header file needs a configuration macro (like
+ * HAVE_WHATEVER) from rose_config.h, then it should include "rosePublicConfig.h" instead (and use ROSE_HAVE_WHATEVER).
  */
 
 #ifndef SAGE3_CLASSES_BASIC__H
@@ -22,6 +30,8 @@
 #define __STDC_FORMAT_MACROS
 #endif
 #include <inttypes.h>
+
+#include "rose_override.h"                              // defines ROSE_OVERRIDE as "override" if C++11 is present
 
 
 #include <semaphore.h>
@@ -85,6 +95,10 @@
 //#include <cstdlib> // For abort()
 #include <algorithm>
 #include <fstream>
+
+// DQ (8/25/2014): Added logic to isTemplateDeclaration(a_routine_ptr) to force isTemplateDeclaration 
+// in ROSE/EDG connection to be false where the topScopeStack() is a template class instantaition scope.
+#define ENFORCE_NO_FUNCTION_TEMPLATE_DECLARATIONS_IN_TEMPLATE_CLASS_INSTANTIATIONS 0
 
 // DQ (9/24/2004): Try again to remove use of set parent side effect in EDG/Sage III connection! This works!!!
 #define REMOVE_SET_PARENT_FUNCTION
@@ -315,11 +329,60 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
    #define ROSE_USING_SMALL_GENERATED_HEADER_FILES 1
 #endif
 
+// DQ (10/4/2014): Added to support USE_ROSE_ATERM_SUPPORT macro.
+// Including rose_config.h is a problem, and is caught in any files that
+// also include rose.h.  Since ROSE source files in /src should not be 
+// including rose.h I have fixed many of these, but at least one fails
+// without rose.h (/src/midend/programAnalysis/genericDataflow/cfgUtils/CFGRewrite.C)
+// so maybe we should have it be an enforced policy instead of the kind of
+// error that is is if rose_config.h is included below.  The better solution 
+// for users is to include rosePublicConfig.h below (no in place).
+// Note also that some macros from ROSE may need to be added to the generated
+// rosePublicConfig.h file (in the script scripts/publicConfiguration.pl).
+// #include "rose_config.h"
+#include "rosePublicConfig.h"
+
+// DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
+// I think we need a specific macro to be defined for when ATerms are being used.
+// Also I want to initially seperate this from Windows support.
+#ifndef _MSC_VER
+  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+ // DQ (9/27/2013): This is required to be defined for the 64bit ATerm support.
+    #if (__x86_64__ == 1)
+   // 64-bit machines are required to set this before including the ATerm header files.
+      #define SIZEOF_LONG 8
+      #define SIZEOF_VOID_P 8
+    #else
+   // 32-bit machines need not have the values defined (but it is required for this program).
+      #define SIZEOF_LONG 4
+      #define SIZEOF_VOID_P 4
+    #endif
+
+    #include "aterm1.h"
+    #include "aterm2.h"
+  #else
+ // Define this away so that we can trivially compile without ATerm support.
+    typedef int ATerm;
+  #endif
+#else
+// Define this away so that we can trivially compile without ATerm support.
+   typedef int ATerm;
+#endif
+
 // DQ (3/7/2013): I think that we need to use "" instead of <> and this may make a difference for SWIG.
 // DQ (9/21/2005): This is the simplest way to include this here
 // This is the definition of the Sage III IR classes (generated header).
 // #include <Cxx_Grammar.h>
 #include "Cxx_Grammar.h"
+
+// DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
+// I think we need a specific macro to be defined for when ATerms are being used.
+// Also I want to initially seperate this from Windows support.
+#ifndef _MSC_VER
+//  #ifdef ROSE_USE_ROSE_ATERM_SUPPORT
+    #include "atermSupport.h"
+//  #endif
+#endif
 
 // Disable CC++ extensions (we want to support only the C++ Standard)
 #undef CCPP_EXTENSIONS_ALLOWED

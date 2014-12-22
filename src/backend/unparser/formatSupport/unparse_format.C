@@ -140,7 +140,7 @@ UnparseFormat::insert_newline(int num, int indent)
           --num;
         }
 
-     for (int i = 0 ; i < num; i++)
+     for (int i = 0; i < num; i++)
         {
 #if 1
           (*os) << endl;
@@ -159,12 +159,18 @@ UnparseFormat::insert_newline(int num, int indent)
         }
 
      if (indent > currentIndent)
-         indent -= currentIndent;
-     else
-         indent = 0;
+        {
+          indent -= currentIndent;
+        }
+       else
+        {
+          indent = 0;
+        }
 
      if (indent > 0)
-        insert_space( (indent > indentstop)? indentstop : indent );
+        {
+          insert_space( (indent > indentstop) ? indentstop : indent );
+        }
    }
 
 //-----------------------------------------------------------------------------------
@@ -177,11 +183,17 @@ UnparseFormat::insert_space(int num)
    {
   // insert blank space
      for (int i = 0; i < num; i++)
+        {
           (*os) << " ";
+        }
+
      if (num > 0)
         {
-          if (currentIndent == chars_on_line) 
+          if (currentIndent == chars_on_line)
+             {
                currentIndent += num;
+             }
+
           chars_on_line += num;
         }
    }
@@ -603,6 +615,10 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
        // (*this) << formatOptionToString(opt) << ":" << node->class_name() << "[";
           (*this) << formatOptionToString(opt) << ":" << node->class_name() << "[";
         }
+
+#if 0
+     printf ("UnparseFormat::format(): node = %p = %s currentLine = %d chars_on_line = %d \n",node,node->class_name().c_str(),currentLine,chars_on_line);
+#endif
 
   // DQ (3/18/2006): The default is TABINDENT but we get a value from formatHelp if available
      int tabIndentSize = TABINDENT;

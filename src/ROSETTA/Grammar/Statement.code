@@ -1465,6 +1465,10 @@ HEADER_LIST_DECLARATIONS
       //! This function generates the qualified name prefix to be used with the return type.
           SgName get_qualified_name_prefix_for_return_type() const;
 
+       // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
+          static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
+
+
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
 HEADER_FUNCTION_PARAMETER_LIST_START
@@ -2258,6 +2262,14 @@ HEADER_CASE_OPTION_STATEMENT_START
 
 HEADER_CASE_OPTION_STATEMENT_END
 
+HEADER_ASYNC_STATEMENT_START
+HEADER_ASYNC_STATEMENT_END
+
+HEADER_FINISH_STATEMENT_START
+HEADER_FINISH_STATEMENT_END
+
+HEADER_AT_STATEMENT_START
+HEADER_AT_STATEMENT_END
 
 HEADER_TRY_STATEMENT_START
 
@@ -2722,6 +2734,9 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_STATEMENT_START
        // to it being a part of a template.
           void set_definition( SgTemplateInstantiationDefn* definition );
 
+       // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+          void set_definition( SgClassDefinition* definition );
+
        // DQ (2/11/2007): Add this to the derived class so that the SgSymbolTable::find() function will work properly
           virtual SgSymbol* get_symbol_from_symbol_table() const;
 
@@ -2854,13 +2869,34 @@ HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_START
        // DQ (12/28/2011): We need a constructor similar to the base class.
           $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
 
-#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+// DQ (10/5/2014): This is now wrong because we now include rose_config.h before processing the
+// files generated from this file.  This change was required to support the ATerm libraries.
+// #ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+#ifdef ROSE_TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
      private:
        // DQ (12/29/2011): This is added to support backward compatability.
           SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
 #endif
 
 HEADER_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
+
+       // DQ (12/28/2011): We need a constructor similar to the base class.
+       // $CLASSNAME ( const SgName& var_name, SgType *type, SgInitializer *initializer );
+
+#ifndef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+     private:
+       // DQ (12/29/2011): This is added to support backward compatability.
+          SgDeclarationStatement *compute_baseTypeDefiningDeclaration() const;
+#endif
+
+HEADER_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
+
+
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+HEADER_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 HEADER_PRAGMA_STATEMENT_START
@@ -3622,6 +3658,16 @@ HEADER_JAVA_PACKAGE_DECLARATION_END
 HEADER_JAVA_PACKAGE_STATEMENT_START
           virtual SgName get_mangled_name() const;
 HEADER_JAVA_PACKAGE_STATEMENT_END
+
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+       // We need this to be defined to avoid calling the base class version (which is an error).
+          SgName get_mangled_name() const;
+
+          bool hasExplicitScope() const;
+
+HEADER_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
 
 // #########################################################
 // #########################################################
@@ -4492,6 +4538,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 #if 1
        // DQ (5/16/2013): Build an alias symbol for the 
           SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
+
+       // DQ (7/12/2014): Added assertion.
+          ROSE_ASSERT(aliasSymbol != NULL);
+
           if (namespaceDefinitionStatement->get_global_definition() == NULL)
              {
                SgNamespaceDeclarationStatement* namespaceDeclarationStatement = isSgNamespaceDeclarationStatement(namespaceDefinitionStatement->get_namespaceDeclaration());
@@ -5239,6 +5289,11 @@ SgSymbol*
 SgScopeStatement::find_symbol_from_declaration(const T* node) const
    {
      assert (p_symbol_table != NULL);
+
+#if 0
+     printf ("In SgScopeStatement::find_symbol_from_declaration(): calling p_symbol_table->find(node): node %p = %s \n",node,node->class_name().c_str());
+#endif
+
      return p_symbol_table->find(node);
    }
 
@@ -8090,9 +8145,10 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
                                  {
                                 // DQ (5/19/2014): This is not a name that needs to be reset, so I think there is nothing to do here!
                                 // ROSE_ASSERT((*i)->get_templateDeclaration() != NULL);
-
-                                   printf ("Warning: SgTemplateArgument::start_of_pack_expansion_argument not implemented \n");
+#if 0
+                                   printf ("Warning: In SgDeclarationStatement::resetTemplateNameSupport(): SgTemplateArgument::start_of_pack_expansion_argument (no reset of name required) \n");
                                 // ROSE_ASSERT(false);
+#endif
                                    break;
                                  }
 
@@ -9066,7 +9122,9 @@ SgDeclarationStatement::set_firstNondefiningDeclaration ( SgDeclarationStatement
         {
           printf ("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this = %p = %s IS NOT THE SAME AS firstNondefiningDeclaration = %p = %s \n",
                this,this->class_name().c_str(),firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+          ROSE_ASSERT(this->get_file_info() != NULL);
           this->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): this: debug");
+          ROSE_ASSERT(firstNondefiningDeclaration->get_file_info() != NULL);
           firstNondefiningDeclaration->get_file_info()->display("ERROR: In SgDeclarationStatement::set_firstNondefiningDeclaration(): firstNondefiningDeclaration: debug");
       }
 
@@ -11667,6 +11725,16 @@ SgVariableDeclaration::post_construction_initialization()
   // ==2562== Conditional jump or move depends on uninitialised value(s)
   // ==2562==    at 0x69758FB: Unparse_ExprStmt::unparseVarDeclStmt(SgStatement*, SgUnparse_Info&) (unparseCxx_statements.C:4421)
      p_isAssociatedWithDeclarationList = false; // non list case
+
+  // DQ (8/15/2014): These were not previously set by default.
+     p_isFirstDeclarationOfDeclarationList           = true;
+     p_is_thread_local                               = false;
+#if 0
+  // Moved these to SgInitializedName
+     p_using_C11_Alignas_keyword                     = false;
+     p_constant_or_type_argument_for_Alignas_keyword = false;
+#endif
+     p_is_constexpr                                  = false;
    }
 
 
@@ -12277,14 +12345,23 @@ SgVariableDeclaration::set_baseTypeDefiningDeclaration(SgDeclarationStatement* d
   // defining declaration in a SgVariableDeclaration (if such a thing is defined).  An example of where this
   // happens is in: "struct { int x; } y;", here the structure declaration is in the variable declaration for "y".
 
-     ROSE_ASSERT(d != NULL);
+  // DQ (10/11/2014): We need to handle the case where the input in NULL, required for more general processing 
+  // for ROSETTA generated ATerm support.
+  // ROSE_ASSERT(d != NULL);
+     if (d != NULL)
+        {
+          p_baseTypeDefiningDeclaration = d;
+          ROSE_ASSERT(p_baseTypeDefiningDeclaration != NULL);
 
-     p_baseTypeDefiningDeclaration = d;
-     ROSE_ASSERT(p_baseTypeDefiningDeclaration != NULL);
-
-  // Mark the p_variableDeclarationContainsBaseTypeDefiningDeclaration as true so that the p_baseTypeDefiningDeclaration
-  // declaration will be used (by compute_baseTypeDefiningDeclaration()).
-     set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+       // Mark the p_variableDeclarationContainsBaseTypeDefiningDeclaration as true so that the p_baseTypeDefiningDeclaration
+       // declaration will be used (by compute_baseTypeDefiningDeclaration()).
+          set_variableDeclarationContainsBaseTypeDefiningDeclaration(true);
+        }
+       else
+        {
+          p_baseTypeDefiningDeclaration = NULL;
+          set_variableDeclarationContainsBaseTypeDefiningDeclaration(false);
+        }
    }
 
 
@@ -12959,6 +13036,19 @@ SgTemplateInstantiationDecl::set_definition( SgTemplateInstantiationDefn* defini
    }
 
 void
+SgTemplateInstantiationDecl::set_definition( SgClassDefinition* definition )
+   {
+  // DQ (10/10/2014): Implemented to support Aterm constructor functions.
+  // We need a way for the automatically generated code to set the 
+  // definition data member in the base class.
+
+  // DQ (10/10/2014): Make sure that this is a SgTemplateInstantiationDefn (or NULL).
+     ROSE_ASSERT(definition == NULL || isSgTemplateInstantiationDefn(definition) != NULL);
+
+     SgClassDeclaration::set_definition(definition);
+   }
+
+void
 SgTemplateInstantiationDecl::resetTemplateName ()
    {
   // local version of function to support generation of template names
@@ -13081,7 +13171,12 @@ SgTemplateInstantiationFunctionDecl::get_symbol_from_symbol_table() const
 
 // DQ (11/27/2011): Adding support to hold the template declarations in the AST.
 SgTemplateInstantiationFunctionDecl::SgTemplateInstantiationFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+#if 0
+// DQ (10/11/2014): Marking SgFunctionParameterList as a constructor parameter to support aterm to AST generation.
+// : SgFunctionDeclaration(name, NULL, type, definition)
+#else
    : SgFunctionDeclaration(name, type, definition)
+#endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgFunctionDeclaration, 
   // SgTemplateInstantiationFunctionDecl, SgMemberFunctionDeclaration, and SgTemplateInstantiationMemberFunctionDecl.
@@ -13209,7 +13304,12 @@ SgTemplateInstantiationMemberFunctionDecl::get_symbol_from_symbol_table() const
 
 // DQ (11/27/2011): Adding support to hold the template declarations in the AST.
 SgTemplateInstantiationMemberFunctionDecl::SgTemplateInstantiationMemberFunctionDecl ( SgName name, SgFunctionType* type, SgFunctionDefinition* definition )
+#if 0
+// DQ (10/11/2014): Marking SgFunctionParameterList as a constructor parameter to support aterm to AST generation.
+// : SgMemberFunctionDeclaration(name, NULL, type, definition)
+#else
    : SgMemberFunctionDeclaration(name, type, definition)
+#endif
    {
   // Custom constructor to support same interface and allow for a templated function to to build SgMemberFunctionDeclaration, 
   // SgTemplateInstantiationMemberFunctionDecl, SgFunctionDeclaration, and SgTemplateInstantiationFunctionDecl.
@@ -14166,6 +14266,32 @@ SgCaseOptionStmt::replace_child(SgStatement *target,SgStatement *newstmt,
 
 SOURCE_CASE_OPTION_STATEMENT_END
 
+SOURCE_ASYNC_STATEMENT_START
+
+void
+SgAsyncStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_ASYNC_STATEMENT_END
+
+SOURCE_FINISH_STATEMENT_START
+
+void
+SgFinishStmt::post_construction_initialization() 
+   {
+   }
+
+SOURCE_FINISH_STATEMENT_END
+
+SOURCE_AT_STATEMENT_START
+
+void
+SgAtStmt::post_construction_initialization()
+       {
+       }
+
+SOURCE_AT_STATEMENT_END
 
 SOURCE_TRY_STATEMENT_START
 
@@ -14913,6 +15039,11 @@ SgSymbol*
 SgTypedefDeclaration::get_symbol_from_symbol_table() const
    {
      ROSE_ASSERT(get_scope() != NULL);
+
+#if 0
+     printf ("In SgTypedefDeclaration::get_symbol_from_symbol_table(): calling get_scope()->find_symbol_from_declaration(this) \n");
+#endif
+
   // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
   // return get_scope()->get_symbol_table()->find(this);
      return get_scope()->find_symbol_from_declaration(this);
@@ -14927,7 +15058,7 @@ SgTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
         {
           return p_declaration;
         }
-     else
+       else
         {
           return NULL;
         }
@@ -15297,7 +15428,7 @@ SgTemplateVariableDeclaration::SgTemplateVariableDeclaration( const SgName& var_
 
 #ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
 
-// DQ (12/292/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
+// DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
 // As a result we need a function definition (but we need only call the base class version of the function).
 SgDeclarationStatement *
 SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
@@ -15312,7 +15443,7 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
    {
   // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
   // I think it will not be used. So we return an error so that it will be detected if called.
-     printf ("This function should not be called unde the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
+     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
      ROSE_ASSERT(false);
 
      return NULL;
@@ -15320,6 +15451,60 @@ SgTemplateVariableDeclaration::compute_baseTypeDefiningDeclaration() const
 #endif
 
 SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_START
+
+void
+SgTemplateTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (12/21/2011): This is not what we want for the newer design with SgTemplateVariableDeclaration derived from SgVariableDeclaration.
+  // this->set_template_kind(e_template_m_data);
+   }
+
+
+#ifdef TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS
+
+// DQ (12/29/2011): The generate Cxx_Grammar.h header file will see the prototype for this function (even though I tried to make it NOT visible).
+// As a result we need a function definition (but we need only call the base class version of the function).
+SgDeclarationStatement *
+SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+  // DQ (10/14/2014): We need to skip the call to SgTypedefDeclaration::compute_baseTypeDefiningDeclaration() because it is a private function.
+  // Not clear why this is not symetric to the case of SgTemplateVariableDeclaration.
+  // return SgTypedefDeclaration::compute_baseTypeDefiningDeclaration();
+     return NULL;
+   }
+
+#else
+
+#error "TEMPLATE_DECLARATIONS_DERIVED_FROM_NON_TEMPLATE_DECLARATIONS must be defined!"
+
+SgDeclarationStatement *
+SgTemplateTypedefDeclaration::compute_baseTypeDefiningDeclaration() const
+   {
+  // DQ (12/29/2011): Not clear what this definition should be.  This is provided for backward compatability with the EDG 3.3 version.
+  // I think it will not be used. So we return an error so that it will be detected if called.
+     printf ("This function should not be called under the EDG 3.3 interface, and is not defined under the EDG 4.3 interface. \n");
+     ROSE_ASSERT(false);
+
+     return NULL;
+   }
+
+#endif
+
+SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT_END
+
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_START
+
+void
+SgTemplateInstantiationTypedefDeclaration::post_construction_initialization()
+   {
+  // DQ (11/4/2014): I don't think we need to do anything here.
+   }
+
+SOURCE_TEMPLATE_INSTANTIATION_TYPEDEF_DECLARATION_STATEMENT_END
 
 
 SOURCE_TEMPLATE_CLASS_DEFINITION_STATEMENT_START
@@ -17099,4 +17284,34 @@ SgOmpSimdStatement::post_construction_initialization()
    {}
 SOURCE_OMP_SIMD_STATEMENT_END
 
+
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_START
+
+void
+SgMicrosoftAttributeDeclaration::post_construction_initialization()
+   {
+  // Not sure we have to do anything here!
+   }
+
+// We need this to be defined to avoid calling the base class version (which is an error).
+SgName
+SgMicrosoftAttributeDeclaration::get_mangled_name() const
+   {
+  // Not sure we have to do anything here!
+
+#if 0
+     printf ("Exiting as a test! (SgMicrosoftAttributeDeclaration::get_mangled_name() not implemented) \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return "microsoft_attribute";
+   }
+
+bool
+SgMicrosoftAttributeDeclaration::hasExplicitScope() const
+   {
+  // This function reports that this IR node does NOT store its scope explicitly.
+     return false;
+   }
+SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT_END
 

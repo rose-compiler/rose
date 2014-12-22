@@ -1353,11 +1353,32 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        {
                       // Unclear what should be checked here, for now allow this as an acceptable case.
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgModifierType returned from SgFunctionCallExp::get_type() member function \n");
+                         printf ("Warning: EDG 4.0 specific case, found unusual case of SgTypeVoid returned from SgFunctionCallExp::get_type() member function \n");
 #endif
                          break;
                        }
 #endif
+#ifdef ROSE_USE_EDG_VERSION_4
+                 // DQ (7/7/2014): This case is required for ROSE compiling ROSE header files.
+                    case V_SgTypeUnknown:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+#endif
+
+                 // DQ (11/10/2014): This case is required for ROSE compiling C++11 header files.
+                    case V_SgRvalueReferenceType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
 
                     default:
                        {
@@ -2746,16 +2767,31 @@ TestAstForProperlySetDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                SgAccessModifier::access_modifier_enum firstNondefiningDeclaration_access_modifier = firstNondefiningDeclaration->get_declarationModifier().get_accessModifier().get_modifier();
                if (definingDeclaration_access_modifier != firstNondefiningDeclaration_access_modifier)
                   {
-                    printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                 // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+                    if (isSgTemplateInstantiationDecl(definingDeclaration) != NULL)
+                       {
+                         printf ("Warning: (different access modifiers used) definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+                         printf ("Warning: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Waringg: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
+                      else
+                       {
+                         printf ("Error: definingDeclaration = %p firstNondefiningDeclaration = %p = %s  \n",definingDeclaration,firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
 
-                    firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
-                    definingDeclaration->get_file_info()->display("definingDeclaration");
+                         firstNondefiningDeclaration->get_file_info()->display("firstNondefiningDeclaration");
+                         definingDeclaration->get_file_info()->display("definingDeclaration");
 
-                    printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
-                    printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                         printf ("Error: definingDeclaration_access_modifier         = %d \n",definingDeclaration_access_modifier);
+                         printf ("Error: firstNondefiningDeclaration_access_modifier = %d \n",firstNondefiningDeclaration_access_modifier);
+                       }
                   }
-               
-               ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+
+            // DQ (6/30/2014): I think this is not an error for SgTemplateInstantiationDecl.
+            // ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+               if (isSgTemplateInstantiationDecl(definingDeclaration) == NULL)
+                 {
+                   ROSE_ASSERT(definingDeclaration_access_modifier == firstNondefiningDeclaration_access_modifier);
+                 }
              }
         }
 
@@ -3333,6 +3369,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                 // DQ (11/4/2014): Adding support for template typedef declarations.
+                    case V_SgTemplateTypedefSymbol:
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
@@ -3688,8 +3726,8 @@ TestExpressionTypes::visit ( SgNode* node )
        // PC (10/12/2009): The following test verifies that array types properly decay to pointer types
        //  From C99 6.3.2.1p3:
        /* Except when it is the operand of the sizeof operator or the unary & operator, or is a
-          string literal used to initialize an array, an expression that has type ‚Äò‚Äòarray of type‚Äô‚Äô is
-          converted to an expression with type ‚Äò‚Äòpointer to type‚Äô‚Äô that points to the initial element of
+          string literal used to initialize an array, an expression that has type array of type is
+          converted to an expression with type pointer to type that points to the initial element of
           the array object and is not an lvalue. */
           type = type->stripTypedefsAndModifiers();
           ROSE_ASSERT(type != NULL);
@@ -5055,8 +5093,11 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
-                              printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
-                                   node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                              if (SgProject::get_verbose() > 0)
+                                 {
+                                   printf ("Warning: TestChildPointersInMemoryPool::visit(): Node is not in parent's child list, node: %p = %s = %s parent: %p = %s \n",
+                                        node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str());
+                                 }
                             }
 #else
                       // DQ (9/26/2011): Trying to handle this via a better implementation of this test.
@@ -5273,8 +5314,10 @@ TestChildPointersInMemoryPool::visit( SgNode *node )
                             }
                            else
                             {
+                           // DQ (8/19/2014): Since these are shared (by design, so that the symbol table use is optimal) it is less important to warn about these.
                            // DQ (3/6/2007): This is always a case we want to warn about!
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+// #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+#if 0
                               printf ("SgTemplateArgument is not in parent's child list, node: %p = %s = %s parent: %p = %s = %s \n",
                                    node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),parent,parent->class_name().c_str(),SageInterface::get_name(parent).c_str());
 #endif
@@ -6143,7 +6186,7 @@ TestForParentsMatchingASTStructure::preOrderVisit(SgNode *node)
           if (NULL == node->get_parent())
              {
             // output << prefix << "node has null parent property but was reached by AST traversal\n";
-               printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (NULL == node->get_parent()): prefix = %s node's parent property does not match traversal parent\n",prefix.c_str());
+               printf ("In TestForParentsMatchingASTStructure::preOrderVisit(): (NULL == node->get_parent()): node class_name = %s , prefix = %s node's parent property is NULL\n",node->class_name().c_str(), prefix.c_str());
 
                show_details_and_maybe_fail(node);
              } 

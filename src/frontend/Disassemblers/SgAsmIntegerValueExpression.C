@@ -272,8 +272,7 @@ SgAsmIntegerValueExpression::get_absoluteValue(size_t nbits) const
 int64_t
 SgAsmIntegerValueExpression::get_signedValue() const
 {
-    size_t nbits = get_significantBits();
-    ASSERT_require(nbits <= 8*sizeof(uint64_t));
+    ASSERT_require(get_significantBits() <= 8*sizeof(uint64_t));
     int64_t retval = get_baseAddress() + get_relativeValue();
     return retval;
 }

@@ -4,6 +4,8 @@
 #include "BinaryControlFlow.h"
 #include "Diagnostics.h"
 
+using namespace rose::BinaryAnalysis;
+
 /* FIXME: this should be a SgAsmInstruction class method. */
 std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels, const RegisterDictionary *registers) {
     /* Mnemonic */
@@ -26,14 +28,14 @@ std::string unparseInstruction(SgAsmInstruction* insn, const AsmUnparser::LabelM
 std::string unparseInstructionWithAddress(SgAsmInstruction* insn, const AsmUnparser::LabelMap *labels,
                                           const RegisterDictionary *registers) {
     if (!insn) return "BOGUS:NULL";
-    return StringUtility::intToHex(insn->get_address()) + ":" + unparseInstruction(insn, labels, registers);
+    return StringUtility::addrToString(insn->get_address()) + ": " + unparseInstruction(insn, labels, registers);
 }
 
 /* FIXME: This should be a SgAsmInstruction class method. */
 std::string unparseMnemonic(SgAsmInstruction *insn) {
     switch (insn->variantT()) {
-        case V_SgAsmx86Instruction:
-            return unparseX86Mnemonic(isSgAsmx86Instruction(insn));
+        case V_SgAsmX86Instruction:
+            return unparseX86Mnemonic(isSgAsmX86Instruction(insn));
         case V_SgAsmArmInstruction:
             return unparseArmMnemonic(isSgAsmArmInstruction(insn));
         case V_SgAsmPowerpcInstruction:
@@ -63,7 +65,7 @@ std::string unparseExpression(SgAsmExpression *expr, const AsmUnparser::LabelMap
         return unparseX86Expression(expr, labels, registers, false);
         
     switch (insn->variantT()) {
-        case V_SgAsmx86Instruction:
+        case V_SgAsmX86Instruction:
             return unparseX86Expression(expr, labels, registers);
         case V_SgAsmArmInstruction:
             return unparseArmExpression(expr, labels, registers);
@@ -88,7 +90,7 @@ unparseAsmStatement(SgAsmStatement* stmt)
     std::ostringstream s;
     AsmUnparser u;
     switch (stmt->variantT()) {
-        case V_SgAsmx86Instruction:
+        case V_SgAsmX86Instruction:
         case V_SgAsmArmInstruction:
         case V_SgAsmPowerpcInstruction:
         case V_SgAsmMipsInstruction:
@@ -115,15 +117,15 @@ unparseAsmInterpretation(SgAsmInterpretation* interp)
     AsmUnparser unparser;
 
     // Build a control flow graph, but exclude all the basic blocks that are marked as disassembly leftovers.
-    struct NoLeftovers: public BinaryAnalysis::ControlFlow::VertexFilter {
-        virtual bool operator()(BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
+    struct NoLeftovers: public rose::BinaryAnalysis::ControlFlow::VertexFilter {
+        virtual bool operator()(rose::BinaryAnalysis::ControlFlow*, SgAsmNode *node) {
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node);
             return func && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS);
         }
     } vertex_filter;
-    BinaryAnalysis::ControlFlow cfg_analyzer;
+    rose::BinaryAnalysis::ControlFlow cfg_analyzer;
     cfg_analyzer.set_vertex_filter(&vertex_filter);
-    BinaryAnalysis::ControlFlow::Graph cfg;
+    rose::BinaryAnalysis::ControlFlow::Graph cfg;
     cfg_analyzer.build_block_cfg_from_ast(interp, cfg/*out*/);
 
     // We will try to disassemble static data blocks (i.e., disassembling data as instructions), but we need to choose an

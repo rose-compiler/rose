@@ -6,11 +6,22 @@ $CLASSNAME::$CLASSNAME ( $CONSTRUCTOR_PARAMETER_LIST )
 #ifdef DEBUG
   // printf ("In $CLASSNAME::$CLASSNAME ($CONSTRUCTOR_PARAMETER_LIST) sage_class_name() = %s \n",sage_class_name());
 #endif
+#if 0
+  // debugging information!
+     printf ("In $CLASSNAME::$CLASSNAME ($CONSTRUCTOR_PARAMETER_LIST): this = %p = %s \n",this,this->class_name().c_str());
+#endif
 
 $CONSTRUCTOR_BODY
 
+#if 0
+  // DQ (7/30/2014): Call a virtual function.
+     std::string s = this->class_name();
+#endif
+
   // Test the variant virtual function
-     assert($CLASSTAG == variant());
+  // assert($CLASSTAG == variant());
+     assert($CLASSTAG == this->variant());
+     ROSE_ASSERT($CLASSTAG == (int)(this->variantT()));
      post_construction_initialization();
 
   // Test the is$CLASSNAME() function since it has been problematic
