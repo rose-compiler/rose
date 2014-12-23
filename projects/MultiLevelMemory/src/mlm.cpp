@@ -85,8 +85,20 @@ void mlmTransform::transformForStmt(SgForStatement* forStmt)
       mlmAttribute* mlmAttr = dynamic_cast<mlmAttribute*> (attr);
       int tileArg = mlmAttr->getMemType();
       bool result=false;
-      result = loopTiling(forStmt,2, tileArg);
-      ROSE_ASSERT(result != false);
+//      result = loopTiling(forStmt,2, tileArg);
+//      ROSE_ASSERT(result != false);
+      FILE* tileFile;
+      tileFile = fopen("tile.sizes", "w");
+      fprintf(tileFile, "%d %d %d",tileArg,tileArg, 1);
+      fclose(tileFile);
+      int polyargc = 3;
+      char* polyargv[polyargc];
+      polyargv[0] = "";
+      polyargv[1] = "--polyopt-fixed-tiling";
+      polyargv[2] = "--polyopt-pocc-verbose";
+      PolyRoseOptions polyoptions (polyargc, polyargv);
+      int retval;
+      retval = PolyOptOptimizeSubTree(forStmt, polyoptions); 
     }
 
 }
@@ -202,7 +214,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
 //      cout << "replacing free" << endl;
       if(argList.size() != 1)  return;
       SgExpression* varExp = isSgExpression(argList[0]);
-cout << "exp:" << varExp->class_name() << endl;
+//cout << "exp:" << varExp->class_name() << endl;
       if(!isSgVarRefExp(varExp))
       {
         if(isSgCastExp(varExp))

@@ -2,6 +2,7 @@
 #define _MLMAPI_H
 
 #include <rose.h>
+#include "polyopt/PolyOpt.hpp"
 
 namespace MLMAPIInsertion
 {
