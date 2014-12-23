@@ -16,6 +16,7 @@
 #include "PATransferFunctions.h"
 #include "PASolver1.h"
 #include "DFAstAttribute.h"
+#include "PointerAnalysisInterface.h"
 
 namespace CodeThorn {
 
@@ -28,6 +29,7 @@ namespace CodeThorn {
 class ProgramAnalysis {
  public:
   ProgramAnalysis();
+  virtual ~ProgramAnalysis();
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   void setForwardAnalysis();
@@ -59,7 +61,9 @@ class ProgramAnalysis {
   void attachOutInfoToAst(string attributeName);
 
   void attachInfoToAst(string attributeName,bool inInfo);
+
  protected:
+
   enum AnalysisType {FORWARD_ANALYSIS, BACKWARD_ANALYSIS};
   virtual void solve();
   VariableIdMapping _variableIdMapping;
@@ -81,7 +85,8 @@ class ProgramAnalysis {
   iterator end();
   size_t size();
 #endif
-
+  // optional: allows to set a pointer analysis (if not set the default behavior is used (everything is modified through any pointer)).
+  void setPointerAnalysis(SPRAY::PointerAnalysisInterface* pa);
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice*);
   void computeAllPreInfo();
@@ -93,6 +98,8 @@ class ProgramAnalysis {
   PASolver1* _solver;
   AnalysisType _analysisType;
  private:
+  SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
+  SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;
 };
 
 } // end of namespace

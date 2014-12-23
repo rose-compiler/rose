@@ -33,7 +33,8 @@ class RDAnalysis : public ProgramAnalysis {
  public:
   RDAnalysis();
   ~RDAnalysis();
-  virtual void initializeExtremalValue(Lattice* element); 
+  virtual void initializeExtremalValue(Lattice* element);
+  // allows to define a pointer analysis to be used in resolving pointer-expressions
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };

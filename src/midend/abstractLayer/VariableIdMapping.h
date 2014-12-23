@@ -101,7 +101,6 @@ class VariableIdMapping {
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
 
  private:
-
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   string generateDotSgSymbol(SgSymbol* sym);
   typedef pair<string,SgSymbol*> MapPair;
@@ -152,5 +151,6 @@ class VariableId {
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
 bool operator!=(VariableId id1, VariableId id2);
+VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
 
 #endif

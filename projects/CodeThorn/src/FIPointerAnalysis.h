@@ -4,12 +4,13 @@
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
 #include "addressTakenAnalysis.h"
+#include "PointerAnalysisInterface.h"
 
 using namespace CodeThorn;
 
 namespace SPRAY {
 
-class FIPointerAnalysis {
+  class FIPointerAnalysis : public PointerAnalysisInterface {
  public:
   FIPointerAnalysis(VariableIdMapping*, SgProject*);
   ~FIPointerAnalysis();
@@ -25,4 +26,3 @@ class FIPointerAnalysis {
 
 } // end of namespace SPRAY
 #endif
-

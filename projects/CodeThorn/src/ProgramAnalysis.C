@@ -10,6 +10,7 @@
 #include "GeneralResultAttribute.h"
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 ProgramAnalysis::ProgramAnalysis():
   _labeler(0),
@@ -19,9 +20,15 @@ ProgramAnalysis::ProgramAnalysis():
   _postInfoIsValid(false),
   _transferFunctions(0),
   _initialElementFactory(0),
-  _analysisType(ProgramAnalysis::FORWARD_ANALYSIS)
+  _analysisType(ProgramAnalysis::FORWARD_ANALYSIS),
+  _pointerAnalysisInterface(0),
+  _pointerAnalysisEmptyImplementation(0)
 {}
 
+ProgramAnalysis::~ProgramAnalysis() {
+  if(_pointerAnalysisEmptyImplementation)
+    delete _pointerAnalysisEmptyImplementation;
+}
 void ProgramAnalysis::initializeSolver() {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(&_initialElementFactory);
@@ -126,6 +133,9 @@ void
 ProgramAnalysis::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
   _variableIdMapping.computeVariableSymbolMapping(root);
+  _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(&_variableIdMapping);
+  _pointerAnalysisEmptyImplementation->initialize();
+  _pointerAnalysisEmptyImplementation->run();
   cout << "INIT: Creating Labeler."<<endl;
   _labeler= new Labeler(root);
   //cout << "INIT: Initializing ExprAnalyzer."<<endl;
@@ -227,15 +237,20 @@ ProgramAnalysis::initialize(SgProject* root) {
 #endif
 }
 
-
-
 void ProgramAnalysis::initializeTransferFunctions() {
   ROSE_ASSERT(_transferFunctions);
   ROSE_ASSERT(_labeler);
   _transferFunctions->setLabeler(_labeler);
   _transferFunctions->setVariableIdMapping(&_variableIdMapping);
+  if(_pointerAnalysisInterface==0)
+    _transferFunctions->setPointerAnalysis(_pointerAnalysisEmptyImplementation);
+  else
+    _transferFunctions->setPointerAnalysis(_pointerAnalysisInterface);
 }
 
+void ProgramAnalysis::setPointerAnalysis(PointerAnalysisInterface* pa) {
+  _pointerAnalysisInterface=pa;
+}
 
 void
 ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {

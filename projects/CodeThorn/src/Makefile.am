@@ -249,6 +249,8 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   addressTakenAnalysis.C \
   FIPointerAnalysis.h \
   FIPointerAnalysis.C \
+  PointerAnalysisInterface.h \
+  PointerAnalysisInterface.C \
   rdmain.C 
 
 #  RDTransferfunctions.hpp RDTransferFunctions.C

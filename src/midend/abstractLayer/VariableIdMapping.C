@@ -500,6 +500,13 @@ bool operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
+VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2) {
+  for(VariableIdSet::iterator i=s2.begin();i!=s2.end();++i) {
+    s1.insert(*i);
+  }
+  return s1;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.

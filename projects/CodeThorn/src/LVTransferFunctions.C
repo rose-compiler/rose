@@ -26,9 +26,13 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
 
   // KILL
   // (for programs with pointers we require a set here)
-  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
+  VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);
+  ROSE_ASSERT(_pointerAnalysisInterface);
+  VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
+  // union sets
+  defVarIds+=modVarIds;
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
-    // since multiple memory locations may be modified, we cannot know which one will be updated and can cannot remove information
+    // since multiple memory locations may be modified, we cannot know which one will be updated and cannot remove information
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
