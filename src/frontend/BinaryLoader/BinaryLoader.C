@@ -661,8 +661,8 @@ BinaryLoader::bialign(rose_addr_t val1, rose_addr_t align1, rose_addr_t val2, ro
     Stream trace(mlog[TRACE]);
 
     /* Minimum amount by which the addresses must be adjusted downward to independently meet their alignment constraint. */
-    int64_t Ma = val1 - ALIGN_DN(val1, align1);
-    int64_t Mb = val2 - ALIGN_DN(val2, align2);
+    int64_t Ma = val1 - alignDown(val1, align1);
+    int64_t Mb = val2 - alignDown(val2, align2);
     if (Ma > Mb) {
         std::swap(val1, val2);
         std::swap(align1, align2);
@@ -767,7 +767,7 @@ BinaryLoader::align_values(SgAsmGenericSection *section, MemoryMap *map,
 
     /* Extend mapped region to satisfy high alignment; but do not extend the file region */
     if ((va + mem_size) % malign_hi != 0) {
-        uint64_t extend_by = ALIGN_UP(va+mem_size, malign_hi) - (va+mem_size);
+        uint64_t extend_by = alignUp(va+mem_size, malign_hi) - (va+mem_size);
         mem_size += extend_by;
     }
 

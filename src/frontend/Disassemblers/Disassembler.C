@@ -594,7 +594,7 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
     if (map->isEmpty())
         return;
 
-    rose_addr_t va = ALIGN_UP(map->hull().least(), get_alignment());
+    rose_addr_t va = alignUp(map->hull().least(), get_alignment());
     rose_addr_t constant = 0;                           // value read from memory
     ASSERT_require(get_wordsize() <= sizeof constant);
     uint8_t buf[sizeof constant];

@@ -1819,8 +1819,8 @@ syscall_munmap(RSIM_Thread *t, int callno)
 {
     uint32_t va=t->syscall_arg(0);
     uint32_t sz=t->syscall_arg(1);
-    uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
-    uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+    uint32_t aligned_va = alignDown(va, (uint32_t)PAGE_SIZE);
+    uint32_t aligned_sz = alignUp(sz+va-aligned_va, (uint32_t)PAGE_SIZE);
 
     /* Check ranges */
     if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
@@ -2001,7 +2001,7 @@ static ControlHeader *cmsg_next(void *control, size_t controllen, ControlHeader 
     if (!cur) return NULL;
     assert(control!=NULL && (uint8_t*)cur>=(uint8_t*)control);
     assert(cur->cmsg_len >= sizeof(ControlHeader));
-    size_t offset = (uint8_t*)cur - (uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    size_t offset = (uint8_t*)cur - (uint8_t*)control + alignUp((size_t)cur->cmsg_len, sizeof(cur->cmsg_len));
     return offset+sizeof(ControlHeader)<=controllen ? (ControlHeader*)((uint8_t*)control+offset) : NULL;
 }
 template<class ControlHeader>
@@ -2009,7 +2009,7 @@ static const ControlHeader *cmsg_next(const void *control, size_t controllen, co
     if (!cur) return NULL;
     assert(control!=NULL && (const uint8_t*)cur>=(const uint8_t*)control);
     assert(cur->cmsg_len >= sizeof(ControlHeader));
-    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + alignUp((size_t)cur->cmsg_len, sizeof(cur->cmsg_len));
     return offset+sizeof(ControlHeader)<=controllen ? (const ControlHeader*)((const uint8_t*)control+offset) : NULL;
 }
 
@@ -2063,7 +2063,7 @@ static size_t cmsg_needed(const void *control, size_t controllen)
     for (const SourceType *ctl=cmsg_first<SourceType>(control, controllen);
          ctl!=NULL;
          ctl=cmsg_next<SourceType>(control, controllen, ctl)) {
-        retval = ALIGN_UP(retval, sizeof(dst->cmsg_len));
+        retval = alignUp(retval, sizeof(dst->cmsg_len));
         retval += sizeof(DestinationType) + cmsg_payload_size(control, controllen, ctl);
     }
     return retval;
@@ -3738,8 +3738,8 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
             assert(!freeArea.isEmpty());
             shmaddr = freeArea.least();
         } else if (shmflg & SHM_RND) {
-            shmaddr = ALIGN_DN(shmaddr, SHMLBA);
-        } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
+            shmaddr = alignDown(shmaddr, (uint32_t)SHMLBA);
+        } else if (alignDown(shmaddr, (uint32_t)4096)!=shmaddr) {
             result = -EINVAL;
             break;
         }
@@ -4179,7 +4179,7 @@ syscall_mprotect(RSIM_Thread *t, int callno)
     if (va % PAGE_SIZE) {
         t->syscall_return(-EINVAL);
     } else {
-        uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
+        uint32_t aligned_sz = alignUp(size, (uint32_t)PAGE_SIZE);
         t->syscall_return(t->get_process()->mem_protect(va, aligned_sz, rose_perms, real_perms));
     }
 }

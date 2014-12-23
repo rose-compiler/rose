@@ -8,11 +8,22 @@
 #include <sawyer/MappedBuffer.h>
 #include <sawyer/Optional.h>
 
-/* Increase ADDR if necessary to make it a multiple of ALMNT */
-#define ALIGN_UP(ADDR,ALMNT)       ((((ADDR)+(ALMNT)-1)/(ALMNT))*(ALMNT))
+/** Align address downward to boundary.
+ *
+ *  Returns the largest multiple of alignment which is less than or equal to address. */
+template<typename T>
+T alignUp(T address, T alignment) {
+    return ((address + alignment - 1) / alignment) * alignment;
+}
 
-/* Decrease ADDR if necessary to make it a multiple of ALMNT */
-#define ALIGN_DN(ADDR,ALMNT)       (((ADDR)/(ALMNT))*(ALMNT))
+/** Align address upward to boundary.
+ *
+ *  Returns the smallest multiple of alignment which is greater than or equal to address. Returns zero if no such value can be
+ *  returned due to overflow. */
+template<typename T>
+T alignDown(T address, T alignment) {
+    return (address / alignment) * alignment;
+}
 
 /** An efficient mapping from an address space to stored data.
  *

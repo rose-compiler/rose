@@ -56,7 +56,7 @@ SgAsmPEImportItem::ctor(SgAsmPEImportDirectory *idir, unsigned ordinal)
 size_t
 SgAsmPEImportItem::hintname_required_size() const
 {
-    return ALIGN_UP(2/*hint*/ + p_name->get_string().size() + 1/*NUL*/, 2);
+    return alignUp(2/*hint*/ + p_name->get_string().size() + 1/*NUL*/, (size_t)2);
 }
 
 /** Virtual address of an IAT entry.  Returns the virtual address of the IAT slot for this import item.  This import item must
