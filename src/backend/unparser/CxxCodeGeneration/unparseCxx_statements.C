@@ -61,6 +61,12 @@ void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (SgSt
       printf ("unparseStatementFromTokenStream(stmt = %p = %s): \n",stmt,stmt->class_name().c_str());
 #endif
 
+     if ( SgProject::get_verbose() > 0 )
+        {
+          string s = "/* Unparse a partial token sequence: stmt = " + stmt->class_name() + " */ ";
+          curprint (s);
+        }
+
      unparseStatementFromTokenStream(stmt,stmt,e_token_sequence_position_start,e_token_sequence_position_end);
    }
 
@@ -74,6 +80,16 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (SgStateme
 #if 0
      printf ("unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
 #endif
+
+     if ( SgProject::get_verbose() > 0 )
+        {
+       // Avoid redundant output from unparseStatementFromTokenStream() taking a single SgStatement.
+          if (stmt_1 != stmt_2)
+             {
+               string s = "/* Unparse a partial token sequence: stmt_1 = " + stmt_1->class_name() + " stmt_2 = " + stmt_2->class_name() +  " */ ";
+               curprint (s);
+             }
+        }
 
      SgSourceFile* sourceFile = isSgSourceFile(SageInterface::getEnclosingFileNode(stmt_1));
      ROSE_ASSERT(sourceFile != NULL);
@@ -1338,6 +1354,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
         {
 #if 0
           printf ("Calling unparseStatement() for namespaceDeclaration->get_definition() = %p \n",namespaceDeclaration->get_definition());
+          curprint ("/* calling unparseNamespaceDefinitionStatement using tokens */");
 #endif
        // DQ (8/19/2014): If we unparse the SgNamespaceDeclarationStatement, then we mean to unparse the SgNamespaceDefinition as well.
        // test2014_110.C demonstrates where the SgNamespaceDefinition has the wrong source position (from a header file) and
@@ -1428,6 +1445,9 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // DQ (11/6/2004): use ninfo instead of info for nested declarations in namespace
           unparseStatement(currentStatement, ninfo);
 
+       // DQ (12/22/2014): NOTE: last_stmt might have to be based on token stream sugsequence availability.
+          printf ("NOTE: In unparseNamespaceDefinitionStatement(): last_stmt might have to be based on token stream sugsequence availability. \n");
+
        // DQ (12/18/2014): Save the last statement so that we can use the trailing token stream if using the token-based unparsing.
           last_stmt = currentStatement;
 
@@ -1457,9 +1477,14 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
           if (last_stmt != NULL)
              {
+#if 0
+               curprint("/* trailing whitespace from the last statement */ ");
+#endif
             // Unparse the trailing white space of the last statement.
                unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
-
+#if 0
+               curprint("/* unparse the } */ ");
+#endif
             // Unparse the final "}" for the SgNamespaceDefinitionStatement.
                unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
              }
@@ -8572,8 +8597,16 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      printf ("Note: In unparseTemplateDeclarationStatment_support(): Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
 #endif
 
+#if 0
+     curprint("/* In unparseTemplateDeclarationStatment_support(): calling unparseAttachedPreprocessingInfo() */ \n");
+#endif
+
   // DQ (1/28/2013): This helps handle cases such as "#if 1 void foo () #endif { }"
      unparseAttachedPreprocessingInfo(template_stmt, info, PreprocessingInfo::inside);
+
+#if 0
+     curprint("/* In unparseTemplateDeclarationStatment_support(): DONE: calling unparseAttachedPreprocessingInfo() */ \n");
+#endif
 
   // Check to see if this is an object defined within a class
      ROSE_ASSERT (template_stmt->get_parent() != NULL);
@@ -8621,7 +8654,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
         }
 
-#if 0
+#if 1
      printf ("In unparseTemplateDeclarationStatment_support(): string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
 #endif
 
@@ -8667,7 +8700,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 1
             // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
             // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
-            // printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
+               printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
                return;
 #endif
              }

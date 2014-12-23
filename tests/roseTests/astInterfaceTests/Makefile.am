@@ -171,7 +171,10 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_11.C \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
-  inputmoveDeclarationToInnermostScope_14.C
+  inputmoveDeclarationToInnermostScope_14.C 
+
+# DQ (12/23/2014): This fails because the nonmal unparsing (without token unparsing) is failing.
+#  inputmoveDeclarationToInnermostScope_test2014_26.C
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
  
@@ -188,6 +191,66 @@ PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
    $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
+# DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_1.C \
+  inputmoveDeclarationToInnermostScope_2.C \
+  inputmoveDeclarationToInnermostScope_3.C \
+  inputmoveDeclarationToInnermostScope_4.C \
+  inputmoveDeclarationToInnermostScope_6.C \
+  inputmoveDeclarationToInnermostScope_7.C \
+  inputmoveDeclarationToInnermostScope_8.C \
+  inputmoveDeclarationToInnermostScope_9.C \
+  inputmoveDeclarationToInnermostScope_10.C \
+  inputmoveDeclarationToInnermostScope_11.C \
+  inputmoveDeclarationToInnermostScope_12.C \
+  inputmoveDeclarationToInnermostScope_13.C \
+  inputmoveDeclarationToInnermostScope_14.C \
+  inputmoveDeclarationToInnermostScope_test2014_01.C \
+  inputmoveDeclarationToInnermostScope_test2014_02.C \
+  inputmoveDeclarationToInnermostScope_test2014_03.C \
+  inputmoveDeclarationToInnermostScope_test2014_04.C \
+  inputmoveDeclarationToInnermostScope_test2014_05.C \
+  inputmoveDeclarationToInnermostScope_test2014_06.C \
+  inputmoveDeclarationToInnermostScope_test2014_07.C \
+  inputmoveDeclarationToInnermostScope_test2014_08.C \
+  inputmoveDeclarationToInnermostScope_test2014_09.C \
+  inputmoveDeclarationToInnermostScope_test2014_10.C \
+  inputmoveDeclarationToInnermostScope_test2014_11.C \
+  inputmoveDeclarationToInnermostScope_test2014_12.C \
+  inputmoveDeclarationToInnermostScope_test2014_13.C \
+  inputmoveDeclarationToInnermostScope_test2014_14.C \
+  inputmoveDeclarationToInnermostScope_test2014_15.C \
+  inputmoveDeclarationToInnermostScope_test2014_16.C \
+  inputmoveDeclarationToInnermostScope_test2014_17.C \
+  inputmoveDeclarationToInnermostScope_test2014_19.C \
+  inputmoveDeclarationToInnermostScope_test2014_20.C \
+  inputmoveDeclarationToInnermostScope_test2014_21.C \
+  inputmoveDeclarationToInnermostScope_test2014_23.C \
+  inputmoveDeclarationToInnermostScope_test2014_24.C \
+  inputmoveDeclarationToInnermostScope_test2014_25.C \
+  inputmoveDeclarationToInnermostScope_test2014_26.C
+
+# DQ (12/23/2014): These fail (for the same reason) and demonstrate a bug in the move tool.
+# inputmoveDeclarationToInnermostScope_test2014_18.C 
+# inputmoveDeclarationToInnermostScope_test2014_22.C
+# inputmoveDeclarationToInnermostScope_5.C (while statements not yet supported)
+
+# DQ (12/23/2014): Notes:
+# inputmoveDeclarationToInnermostScope_2.C (works, but demonstrates that "\" is not output as token)
+# inputmoveDeclarationToInnermostScope_4.C (works, but diff includes "{" and "}" for for loop bodies that didn't include that syntax).
+# inputmoveDeclarationToInnermostScope_6.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+# inputmoveDeclarationToInnermostScope_9.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+# inputmoveDeclarationToInnermostScope_14.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+
+
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
+
+PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
+   $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) 
+
+
+
 REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 DIFF=diff
@@ -197,6 +260,8 @@ $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+
+test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
 
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 
@@ -512,6 +577,10 @@ $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDec
 
 $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:keep_going $(srcdir)/$(@:rose_%=%)
+
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+
 
 #rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
 #	@$(RTH_RUN) \
