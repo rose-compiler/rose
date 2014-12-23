@@ -1725,7 +1725,7 @@ Grammar::setUpStatements ()
      TemplateFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used int eh unparser.
+  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
   // Functions like this were modified in the class template representation to be a function prototype and the
   // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
      TemplateFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
@@ -1838,7 +1838,7 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used int eh unparser.
+  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
   // Functions like this were modified in the class template representation to be a function prototype and the
   // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
      TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",

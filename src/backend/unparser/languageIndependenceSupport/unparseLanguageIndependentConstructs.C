@@ -362,6 +362,17 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                          statementInFile = true;
                        }
                   }
+
+            // DQ (12/22/2014): this is the most general way to supress the output of normalized template declaration member and non-member functions.
+            // The alternative approach is implemented in the unparseTemplateDeclarationStatment_support() function.
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
+               if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
+                  {
+#if 1
+                    printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
+#endif
+                    statementInFile = false;
+                  }
              }
 #if 0
           printf ("In statementFromFile (statementInFile = %s output = %s stmt = %p = %s = %s in file = %s sourceFilename = %s ) \n",
@@ -1192,7 +1203,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                  // bool unparseStatus_previousStatement = (canBeUnparsedFromTokenStream(sourceFile,previousStatement) == true);
                  // bool unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
                     unparseStatus_previousStatement = (canBeUnparsedFromTokenStream(sourceFile,previousStatement) == true);
-                    unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+
+                 // DQ (12/23/2014): I think this should be true when we unparse from the token stream (partial or fully), but not when we unparse from the AST.
+                 // unparseLeadingTokenStream = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
+                    unparseLeadingTokenStream = true;
 #if 0
                     printf ("In unparseStatementFromTokenStream(): unparseStatus_previousStatement = %s \n",unparseStatus_previousStatement ? "true" : "false");
                     printf ("In unparseStatementFromTokenStream(): unparseLeadingTokenStream = %s \n",unparseLeadingTokenStream ? "true" : "false");
@@ -1220,12 +1234,11 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                if (unparseStatus_previousStatement == true || unparseLeadingTokenStream == true)
                   {
 #if 0
-                    printf ("Output the leading tokens for this statement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+                    printf ("Output the leading tokens for this statement = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 #if 0
                     printf ("   --- tokenSubsequence->leading_whitespace_start = %d tokenSubsequence->leading_whitespace_end = %d \n",tokenSubsequence->leading_whitespace_start,tokenSubsequence->leading_whitespace_end);
 #endif
-
                     SgGlobal* globalScope = isSgGlobal(stmt);
 #if 0
                     printf ("In unparseStatementFromTokenStream(): globalScope = %p \n",globalScope);
@@ -1307,7 +1320,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
                   }
 #if 0
-               printf ("In unparseStatementFromTokenStream(): DONE: previousStatement = %p = %s \n",previousStatement,previousStatement->class_name().c_str());
+               printf ("In unparseStatementFromTokenStream(): DONE: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
@@ -2110,7 +2123,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // DQ (12/1/2013): Not clear if this is helpful or not (but it communicates in the 
             // unparsed code what statements were unparse using either the AST or the token stream).
             // if ( SgProject::get_verbose() > 0 )
-               if ( SgProject::get_verbose() > 0 && SageInterface::getProject()->get_C_only() == true)
+            // if ( SgProject::get_verbose() > 0 && SageInterface::getProject()->get_C_only() == true)
+               if ( SgProject::get_verbose() > 0 && (SageInterface::getProject()->get_C_only() == true || SageInterface::getProject()->get_Cxx_only() == true) )
                   {
                     string s = "/* Unparsing from the AST stmt = " + stmt->class_name() + " */ ";
                     curprint (s);
@@ -2319,6 +2333,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
           if (lastStatementOfGlobalScopeUnparsedUsingTokenStream == false)
              {
+#if 0
+               curprint("/* PreprocessingInfo::after: skipOutputOfPreprocessingInfo == false (unparse attached comment or directive) */\n");
+#endif
                unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
              }
         }
@@ -2827,6 +2844,19 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      int declarationCounter = 0;
 #endif
 
+  // DQ (12/22/2014): We need to make sure that the last_statement is the last statement that had a token mapping.
+  // SgSourceFile* sourceFile = isSgSourceFile(SageInterface::getEnclosingFileNode(stmt));
+  // ROSE_ASSERT(sourceFile != NULL);
+  // DQ (12/10/2014): Unparse the trailing whitespace at the end of the file (global scope).
+     SgSourceFile* sourceFile = isSgSourceFile(globalScope->get_parent());
+     ROSE_ASSERT(sourceFile != NULL);
+
+     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+     if (sourceFile->get_unparse_tokens() == false)
+        {
+          ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
+        }
+
   // DQ (12/10/2014): This is used to support the token-based unparsing.
      SgStatement* last_statement = NULL;
 
@@ -2867,7 +2897,25 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           unparseStatement(currentStatement, infoLocal);
 
        // DQ (12/10/2014): Save the last statement.
-          last_statement = currentStatement;
+       // last_statement = currentStatement;
+          if (sourceFile->get_unparse_tokens() == true)
+             {
+            // DQ (12/22/2014): The stl semantics are allowing NULL pointers to get into the tokenStreamSequenceMap container.
+            // bool found_token_data = (tokenStreamSequenceMap.find(currentStatement) != tokenStreamSequenceMap.end());
+               bool found_token_data = (tokenStreamSequenceMap.find(currentStatement) != tokenStreamSequenceMap.end()) && tokenStreamSequenceMap[currentStatement] != NULL;
+#if 0
+               printf ("In unparseGlobalStmt(): currentStatement = %p = %s found_token_data = %s \n",currentStatement,currentStatement->class_name().c_str(),found_token_data ? "true" : "false");
+#endif
+               if (found_token_data == true)
+                  {
+                    last_statement = currentStatement;
+#if 0
+                    TokenStreamSequenceToNodeMapping* tokenStreamSequence = tokenStreamSequenceMap[currentStatement];
+                    ROSE_ASSERT(tokenStreamSequence != NULL);
+                    tokenStreamSequence->display("In unparseGlobalStmt(): tokenStreamSequence");
+#endif
+                  }
+             }
 
        // Go to the next statement
           statementIterator++;
@@ -2878,8 +2926,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #endif
 
   // DQ (12/10/2014): Unparse the trailing whitespace at the end of the file (global scope).
-     SgSourceFile* sourceFile = isSgSourceFile(globalScope->get_parent());
-     ROSE_ASSERT(sourceFile != NULL);
+  // SgSourceFile* sourceFile = isSgSourceFile(globalScope->get_parent());
+  // ROSE_ASSERT(sourceFile != NULL);
      if (sourceFile->get_unparse_tokens() == true)
         {
           ROSE_ASSERT(last_statement != NULL);
