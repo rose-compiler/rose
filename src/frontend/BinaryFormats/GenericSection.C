@@ -76,14 +76,14 @@ SgAsmGenericSection::align()
 
     if (get_file_alignment()>0) {
         rose_addr_t old_offset = get_offset();
-        rose_addr_t new_offset = ALIGN_UP(old_offset, get_file_alignment());
+        rose_addr_t new_offset = alignUp(old_offset, get_file_alignment());
         set_offset(new_offset);
         changed = changed ? true : (old_offset!=new_offset);
     }
 
     if (is_mapped() && get_mapped_alignment()>0) {
         rose_addr_t old_rva = get_mapped_preferred_rva();
-        rose_addr_t new_rva = ALIGN_UP(old_rva, get_mapped_alignment());
+        rose_addr_t new_rva = alignUp(old_rva, get_mapped_alignment());
         set_mapped_preferred_rva(new_rva);
         changed = changed ? true : (old_rva!=new_rva);
     }
