@@ -514,6 +514,20 @@ Graph_TokenMappingTraversal::visit(SgNode* n)
 
           string label = "";
 
+       // DQ (12/21/2014): Output names of associated declarations.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+          if (functionDeclaration != NULL)
+             {
+               label += string("\n name = ") + functionDeclaration->get_name().str();
+             }
+
+       // DQ (12/21/2014): Output names of associated declarations.
+          SgClassDeclaration* classDeclaration = isSgClassDeclaration(n);
+          if (classDeclaration != NULL)
+             {
+               label += string("\n name = ") + classDeclaration->get_name().str();
+             }
+
        // This could be a seperate subgraph...if it were seperated from this AST traversal into a seperate AST traversal.
        // Check if we have strored token information about this AST IR node.
           if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
@@ -877,7 +891,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
      printf ("\nIn evaluateSynthesizedAttribute(): n = %p = %s childAttributes.size() = %zu (start=%d,end=%d) \n",n,n->class_name().c_str(),childAttributes.size(),original_start_of_token_subsequence,original_end_of_token_subsequence);
+     if (isSgClassDeclaration(n) != NULL)
+        {
+          printf ("   --- class name = %s \n",isSgClassDeclaration(n)->get_name().str());
+        }
+     if (isSgFunctionDeclaration(n) != NULL)
+        {
+          printf ("   --- function name = %s \n",isSgFunctionDeclaration(n)->get_name().str());
+        }
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
+     printf ("   --- inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
 #endif
 
   // DQ (10/14/2013): Added consistancy test.
@@ -925,6 +948,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                printf ("In evaluateSynthesizedAttribute(): children: \n");
 #endif
+
+            // DQ (12/22/2014): Record the last child that contains token mapping information (e.g. template 
+            // instantations and normalized template declarations will be excluded).
+               int firstChildWithTokenMapping = -1;
+               int lastChildWithTokenMapping  = -1;
+
                for (size_t i = 0; i < childAttributes.size(); i++)
                   {
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
@@ -943,6 +972,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                          printf ("       --- Found mapping information \n");
 #endif
+
+                      // This is used to know where the compute the leading white space token information (in cases where the leading children do not have a token mapping).
+                         if (firstChildWithTokenMapping < 0)
+                            {
+                              firstChildWithTokenMapping = (int)i;
+                            }
+
+                      // This is used to know where the compute the trailing white space token information (in cases where the trailing children do not have a token mapping).
+                         lastChildWithTokenMapping = (int)i;
+
                          TokenStreamSequenceToNodeMapping* mappingInfo = tokenStreamSequenceMap[childAttributes[i].node];
 
                          TokenStreamSequenceToNodeMapping* mappingInfo_to_add = mappingInfo;
@@ -1199,6 +1238,21 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                    printf ("      --- process_node (is same file test) = %s \n",process_node ? "true" : "false");
 #endif
+                                   process_node = (process_node == true) && (inheritedAttribute.processChildNodes == true);
+#if 0
+                                   printf ("      --- process_node (inheritedAttribute.processChildNodes test) = %s \n",process_node ? "true" : "false");
+#endif
+                                // DQ (12/22/2014): If this is part of an EDG normalization of template function definitions in template classes then it should not be processed.
+                                   SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(statement);
+                                   if (functionDeclaration != NULL)
+                                      {
+                                        process_node = (process_node == true) && (functionDeclaration->isNormalizedTemplateFunction() == false);
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                                        printf ("      --- process_node = %s functionDeclaration->isNormalizedTemplateFunction() = %s \n",
+                                             process_node ? "true" : "false",functionDeclaration->isNormalizedTemplateFunction() ? "true" : "false");
+#endif
+                                      }
+
                                    if (process_node == true)
                                       {
                                         childrenWithoutTokenMappings.push_back(i);
@@ -1216,14 +1270,22 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
                     printf ("   --- tokenToNodeVector[j=%zu] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
+                 // printf ("   --- is first child with token mapping = %s \n",(firstChildWithTokenMapping == j) ? "true" : "false");
+                 // printf ("   --- is last child with token mapping  = %s \n",(lastChildWithTokenMapping == j) ? "true" : "false");
                   }
 #endif
+            // ROSE_ASSERT(firstChildWithTokenMapping <= lastChildWithTokenMapping);
 #if 0
                printf ("tokenToNodeVector.size() = %zu childrenWithoutTokenMappings.size() = %zu \n",tokenToNodeVector.size(),childrenWithoutTokenMappings.size());
+               printf ("   --- firstChildWithTokenMapping = %d \n",firstChildWithTokenMapping);
+               printf ("   --- lastChildWithTokenMapping  = %d \n",lastChildWithTokenMapping);
 #endif
                if (tokenToNodeVector.size() > 0)
                   {
                  // We have to process the elements of the tokenToNodeVector.
+
+                 // There should be at least one child with token information.
+                    ROSE_ASSERT(lastChildWithTokenMapping >= 0);
 #if 0
                     printf ("In evaluateSynthesizedAttribute(): inheritedAttribute.processChildNodes = %s start_of_token_sequence = %d end_of_token_sequence = %d \n",
                             inheritedAttribute.processChildNodes ? "true" : "false",inheritedAttribute.start_of_token_sequence,inheritedAttribute.end_of_token_sequence);
@@ -1334,6 +1396,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  token_subsequence_end     < 0 ? -1 : tokenStream[token_subsequence_end]->ending_fpi.column_num);
 #endif
                       // Handle the left edge of the AST subtree: modify the edged (leading whitespace).
+
+                         ROSE_ASSERT(firstChildWithTokenMapping <= lastChildWithTokenMapping);
+#if 0
+                         printf ("firstChildWithTokenMapping = %d i = %zu \n",firstChildWithTokenMapping,i);
+#endif
+                      // if (i == firstChildWithTokenMapping)
                          if (i == 0)
                             {
                            // Use the current node's lower bound as the base of the leading whitespace subsequence.
@@ -1498,6 +1566,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
                            else
                             {
+                           // Handle the left edge of a non-left-most child in the synthisized attribute list.
+
                               if (mappingInfo->shared == false)
                                  {
                                 // DQ (10/16/2013): I think this is an error.
@@ -1599,7 +1669,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
                             }
 
+                         ROSE_ASSERT(lastChildWithTokenMapping >= 0);
+                      // ROSE_ASSERT(lastChildWithTokenMapping == (tokenToNodeVector.size()-1));
+#if 0
+                         printf ("lastChildWithTokenMapping = %d i = %zu tokenToNodeVector.size() = %zu \n",lastChildWithTokenMapping,i,tokenToNodeVector.size());
+#endif
                       // Handle the right edge of the AST subtree: modify the edged (trailing whitespace).
+                      // if (i == (tokenToNodeVector.size()-1))
+                      // if (i == lastChildWithTokenMapping)
                          if (i == (tokenToNodeVector.size()-1))
                             {
                            // Use the current node's lower bound as the base of the leading whitespace subsequence.
@@ -1619,7 +1696,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                            // printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector.size() = %zu tokenStream.size() = %zu \n",tokenToNodeVector.size(),tokenStream.size());
                               ROSE_ASSERT(mappingInfo->trailing_whitespace_end == -1 || mappingInfo->trailing_whitespace_end < (int) tokenStream.size());
-
+#if 0
+                              printf ("mappingInfo->trailing_whitespace_start = %d mappingInfo->trailing_whitespace_end = %d \n",mappingInfo->trailing_whitespace_start,mappingInfo->trailing_whitespace_end);
+#endif
                            // DQ (12/1/2013): Added support for the SgClassDefinition.
                            // DQ (11/30/2013): Added to support trimming of the token stream for the first and last children to exclude the trailing "}" token.
                            // if (isSgBasicBlock(n) != NULL)
@@ -1656,6 +1735,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
                            else
                             {
+                           // Handle the right edge of a non-rightmost child in the synthisized attribute list.
+
                               if (mappingInfo->shared == false)
                                  {
                                    ROSE_ASSERT(i+1 < tokenToNodeVector.size());
@@ -1711,13 +1792,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                     printf ("In evaluateSynthesizedAttribute(): current_node_token_subsequence_start = %d current_node_token_subsequence_end = %d \n",
                          current_node_token_subsequence_start,current_node_token_subsequence_end);
+                    printf ("   --- childrenWithoutTokenMappings.size() = %zu \n",childrenWithoutTokenMappings.size());
 #endif
                  // for (size_t i = 0; i < childrenWithoutTokenMappings.size(); i++)
                     size_t i = 0;
                     while (i < childrenWithoutTokenMappings.size())
                        {
 #if 0
-                         printf ("i = %zu \n",i);
+                         printf ("childrenWithoutTokenMappings: i = %zu \n",i);
 #endif
 // #if 0
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
@@ -2004,6 +2086,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             {
                            // Find the token sequence on the left.
                               SgNode* trailing_edge_node = childAttributes[ending_NodeSequenceWithoutTokenMapping+1].node;
+
+                              printf ("Check if this trailing_edge_node can be used to map token sequences \n");
+
 // #if 1
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                               printf ("ending_NodeSequenceWithoutTokenMapping = %zu childAttributes.size() = %zu trailing_edge_node = %p \n",ending_NodeSequenceWithoutTokenMapping,childAttributes.size(),trailing_edge_node);
@@ -2020,6 +2105,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    index++;
                                  }
 
+#if 0
+                              printf ("Before processing trailing_edge_node = %p start_of_token_subsequence = %d end_of_token_subsequence = %d \n",trailing_edge_node,start_of_token_subsequence,end_of_token_subsequence);
+#endif
                            // DQ (10/13/2013): test2012_20.c demonstrates a case where (trailing_edge_node == NULL).
                            // ROSE_ASSERT(trailing_edge_node != NULL);
                               if (trailing_edge_node != NULL)
@@ -2095,6 +2183,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 // #if 1
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                                         printf ("Didn't find a token sequence for this node: trailing_edge_node = %p = %s \n",trailing_edge_node,trailing_edge_node->class_name().c_str());
+                                        printf ("   --- start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
 #endif
                                       }
                                  }
@@ -2392,6 +2481,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
      printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(n): n = %p = %s childAttributes.size() = %zu \n",n,(n != NULL) ? n->class_name().c_str() : "null",childAttributes.size());
+  // printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
+  //      start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
 #endif
 
   // DQ (10/14/2013): Added consistancy test.
@@ -2417,6 +2508,15 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
      printf ("In evaluateInheritedAttribute(): n = %p = %s original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d processed = %s \n",
           n,n->class_name().c_str(),original_start_of_token_subsequence,original_end_of_token_subsequence,processed ? "true" : "false");
+     if (isSgClassDeclaration(n) != NULL)
+        {
+          printf ("   --- class name = %s \n",isSgClassDeclaration(n)->get_name().str());
+        }
+     if (isSgFunctionDeclaration(n) != NULL)
+        {
+          printf ("   --- function name = %s \n",isSgFunctionDeclaration(n)->get_name().str());
+        }
+     printf ("   --- start_of_token_subsequence          = %d end_of_token_subsequence          = %d \n",start_of_token_subsequence,end_of_token_subsequence);
      printf ("   --- original_start_of_token_subsequence = %d original_end_of_token_subsequence = %d \n",original_start_of_token_subsequence,original_end_of_token_subsequence);
 #endif
 
@@ -2505,19 +2605,36 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          start_of_token_subsequence,end_of_token_subsequence);
                     printf ("   --- locatedNode = %p = %s: start_pos->isCompilerGenerated() = %s inheritedAttribute.processChildNodes = %s \n",
                          n,n->class_name().c_str(),start_pos->isCompilerGenerated() ? "true" : "false", inheritedAttribute.processChildNodes ? "true" : "false");
+                    printf ("   --- start_pos->isSourcePositionUnavailableInFrontend() = %s \n",start_pos->isSourcePositionUnavailableInFrontend() ? "true" : "false");
+
+                 // DQ (12/21/2014): Debugging code.
+                    if (start_pos->isCompilerGenerated() == false && start_pos->isSourcePositionUnavailableInFrontend() == false && start_pos->get_physical_line() == 0 && end_pos->get_physical_line() == 0)
+                       {
+                         printf ("   --- SageInterface::is_Fortran_language() = %s \n",SageInterface::is_Fortran_language() ? "true" : "false");
+                         start_pos->display("get_physical_line() == 0 : debug");
+                         end_pos->display("get_physical_line() == 0 : debug");
+#if 1
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
 #endif
+                       }
+#endif
+
+
                  // bool process_node = (start_pos->isCompilerGenerated() == false) && (isSgGlobal(n) == NULL) && (inheritedAttribute.processChildNodes == true);
                     bool process_node = (start_pos->isCompilerGenerated() == false) && (inheritedAttribute.processChildNodes == true);
 
                     ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
                     process_node = (process_node == true) && (start_pos->isSameFile(inheritedAttribute.sourceFile));
-#if 0
-                    printf ("start_pos->isSameFile(inheritedAttribute.sourceFile) = %s \n",start_pos->isSameFile(inheritedAttribute.sourceFile) ? "true" : "false");
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                    printf ("   --- start_pos->isSameFile(inheritedAttribute.sourceFile) = %s \n",start_pos->isSameFile(inheritedAttribute.sourceFile) ? "true" : "false");
 #endif
-#if 0
-                    printf ("start_pos->isCompilerGenerated() = %s \n",start_pos->isCompilerGenerated() ? "true" : "false");
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                    printf ("   --- start_pos->isCompilerGenerated() = %s \n",start_pos->isCompilerGenerated() ? "true" : "false");
                  // printf ("isSgGlobal(n) == NULL = %s \n",(isSgGlobal(n) == NULL) ? "true" : "false");
-                    printf ("inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
+                    printf ("   --- (after reset): inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
 #endif
                  // int starting_line   = start_pos->get_line();
                     int starting_line   = start_pos->get_physical_line();
@@ -2543,6 +2660,19 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                     printf ("starting_line = %d ending_line = %d starting_column = %d ending_column = %d process_node = %s \n",starting_line,ending_line,starting_column,ending_column,process_node ? "true" : "false");
 #endif
+
+                 // DQ (12/22/2014): If this is part of an EDG normalization of template function definitions in template classes then it should not be processed.
+                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+                    if (functionDeclaration != NULL)
+                       {
+                         process_node = (process_node == true) && (functionDeclaration->isNormalizedTemplateFunction() == false);
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                         printf ("process_node = %s functionDeclaration->isNormalizedTemplateFunction() = %s \n",
+                              process_node ? "true" : "false",functionDeclaration->isNormalizedTemplateFunction() ? "true" : "false");
+#endif
+                       }
+
                     if (process_node == true)
                        {
 // #if 1
@@ -2557,12 +2687,14 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                    (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
                                  && start_of_token_subsequence < end_of_token_subsequence)
                             {
-#if 0
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 0
                               printf ("TOP OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
 #endif
                               start_of_token_subsequence++;
                               ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
-#if 0
+// #if 0
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 0
                               printf ("BOTTOM OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
 #endif
                             }
@@ -2593,6 +2725,10 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
 #endif
 
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                         printf ("Before special case adjustments in evaluateInheritedAttribute(): building InheritedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
+                              start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
+#endif
                       // Fixup any mistakes in the processing, usually cased by bad source position information from EDG.
                       // Specific cases are:
                       //    1) Function prototypes (secondary declarations) have a source position that is typcally the 
@@ -2683,13 +2819,16 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if 0
                            // printf ("Found case of SgBasicBlock: block = %p \n",block);
                               printf ("Found case of SgClassDefinition: classDefinition = %p \n",classDefinition);
-
+#endif
+#if 0
                               printf ("BEFORE LOOP: SgBasicBlock: Adjusting the start of the token subsequence to find the leading '{' token = %s \n",tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                               printf ("BEFORE LOOP: SgBasicBlock: Adjusting the end of the token subsequence to find the trailing ';' token  = %s \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                               printf ("   --- original_start_of_token_subsequence = %d start_of_token_subsequence = %d \n",original_start_of_token_subsequence,start_of_token_subsequence);
                               printf ("   --- original_end_of_token_subsequence = %d end_of_token_subsequence = %d \n",original_end_of_token_subsequence,end_of_token_subsequence);
 #endif
                            // while ( (start_of_token_subsequence < original_start_of_token_subsequence) && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE || tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme == "{") )
+                              int saved_start_of_token_subsequence = start_of_token_subsequence;
+                              int saved_end_of_token_subsequence   = end_of_token_subsequence;
                               while ( (start_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != "{") )
                                  {
                                    start_of_token_subsequence++;
@@ -2697,6 +2836,14 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                    printf ("In LOOP: Adjusting the start of the token subsequence (forward) to find the leading ';' or '{': token = %s start_of_token_subsequence = %d \n",
                                         tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),start_of_token_subsequence);
 #endif
+                                 }
+
+                           // DQ (12/19/2014): If we didn't find the "{" then reset it back to it's original value (this is an issue 
+                           // for some template types used in variable declarations in template declarations (iostream header file).
+                           // See inputmoveDeclarationToInnermostScope_test2014_18.C
+                              if (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != "{")
+                                 {
+                                   start_of_token_subsequence = saved_start_of_token_subsequence;
                                  }
 
                            // while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE || tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme == "}") )
@@ -2708,6 +2855,20 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                         tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
 #endif
                                  }
+
+                           // DQ (12/19/2014): If we didn't find the "{" then reset it back to it's original value (this is an issue 
+                           // for some template types used in variable declarations in template declarations (iostream header file).
+                           // See inputmoveDeclarationToInnermostScope_test2014_18.C
+                              if (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != "{")
+                                 {
+                                   start_of_token_subsequence = saved_start_of_token_subsequence;
+                                 }
+
+                              if (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != "}")
+                                 {
+                                   end_of_token_subsequence = saved_end_of_token_subsequence;
+                                 }
+
 #if 0
                               printf ("AFTER LOOP:   --- start_of_token_subsequence = %d \n",start_of_token_subsequence);
                               printf ("AFTER LOOP:   --- end_of_token_subsequence   = %d \n",end_of_token_subsequence);
@@ -2730,11 +2891,13 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                             {
                            // Note: this needs to be moved to the evaluateSynthesizedAttribute function so that it can use the base 
                            // and bound of the adjacent sibling nodes to bound the expansion (for both leading and trailing directions).
-#if 0
+// #if 0
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("NOTE: move fixup of start_of_token_subsequence and end_of_token_subsequence to evaluateSynthesizedAttribute() (n = %s) \n",n->class_name().c_str());
 #endif
                            // Then this is a secondary declaration (function prototype).
-#if 0
+// #if 0
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                               printf ("BEFORE LOOP: n=%s: Adjusting the end of the token subsequence to find the trailing ';' token = %s \n",n->class_name().c_str(),tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                               printf ("   --- original_end_of_token_subsequence = %d \n",original_end_of_token_subsequence);
 #endif
@@ -2742,10 +2905,15 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               while ( (end_of_token_subsequence < original_end_of_token_subsequence) && (tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme != ";") )
                                  {
                                    end_of_token_subsequence++;
-#if 0
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                                    printf ("In LOOP: Adjusting the end of the token subsequence to find the trailing ';' token = %s end_of_token_subsequence = %d \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str(),end_of_token_subsequence);
 #endif
                                  }
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("special case of variable, typedef, enum, or class: start_of_token_subsequence=%d end_of_token_subsequence=%d): n = %p = %s \n",
+                                   start_of_token_subsequence,end_of_token_subsequence,n,n->class_name().c_str());
+#endif
                             }
 
                       // DQ (12/14/2014): This is part of a bug fix where the ending position does not include the trailing ";" in EDG.
@@ -2777,9 +2945,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                             {
                            // adjust the start_of_token_subsequence
 #if 0
-                           // printf ("Found case of SgBasicBlock: block = %p \n",block);
-                              printf ("Found case of SgClassDefinition: classDefinition = %p \n",classDefinition);
-
+                              printf ("Found case of SgNamespaceDefinitionStatement: namespaceDefinition = %p \n",namespaceDefinition);
+#endif
+#if 0
                               printf ("BEFORE LOOP: SgNamespaceDefinitionStatement: Adjusting the start of the token subsequence to find the leading '{' token = %s \n",tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                               printf ("BEFORE LOOP: SgNamespaceDefinitionStatement: Adjusting the end of the token subsequence to find the trailing ';' token  = %s \n",tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
                               printf ("   --- original_start_of_token_subsequence = %d start_of_token_subsequence = %d \n",original_start_of_token_subsequence,start_of_token_subsequence);
@@ -2873,6 +3041,11 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               printf ("Not Handled: start_of_token_subsequence < 0: n = %p = %s \n",n,n->class_name().c_str());
 #endif
                             }
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                         printf ("end of adjustments in evaluateInheritedAttribute(): building InheritedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
+                              start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
+#endif
                        }
                       else
                        {
@@ -2909,6 +3082,16 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
           start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
 #endif
 
+     if (start_of_token_subsequence > end_of_token_subsequence)
+        {
+          printf ("Error: evaluateInheritedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
+          SgLocatedNode* locatedNode = isSgLocatedNode(n);
+          if (locatedNode != NULL)
+             {
+               locatedNode->get_startOfConstruct()->display("Error: evaluateInheritedAttribute(): start");
+               locatedNode->get_endOfConstruct()->display("Error: evaluateInheritedAttribute(): end");
+             }
+        }
      ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
 
      ROSE_ASSERT(end_of_token_subsequence == -1 || end_of_token_subsequence < tokenStream.size());
