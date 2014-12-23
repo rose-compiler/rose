@@ -13,12 +13,16 @@
  * The translator accepts a debugging option "-rose:debug", which is turned on by default in the testing.  
  * Some dot graph files will be generated for scope trees of variables for debugging purpose.
 
- * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
- *   Without this option, the tool will stop on assertion failures. 
-
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
  *  without an initializer to be safe.
+ *
+ * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
+ *   Without this option, the tool will stop on assertion failures. 
+ *  
+ * -rose:identity  will turn off any transformations and act like an identity translator. Useful for debugging purposes. 
+ *
+ *
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -142,6 +146,9 @@ class visitorTraversal : public AstSimpleProcessing
         {
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
+	  // skip compiler generated (frontend) declarations
+	  if (decl->get_file_info()->isCompilerGenerated())
+	    continue; 
           worklist.push(decl);
         }
 
@@ -183,7 +190,7 @@ class visitorTraversal : public AstSimpleProcessing
             if (decl_mover_conservative)
             {
               if (debug)
-                 cout<<"Using conservative moving for decl .."<<endl;
+                 cout<<"Consiering conservative moving for decl: "<<decl->get_file_info()->get_line() <<endl;
               if (null_initializer)   
                 result = moveDeclarationToInnermostScope(decl, worklist, debug);
               else
@@ -208,8 +215,16 @@ class visitorTraversal : public AstSimpleProcessing
 int main(int argc, char * argv[])
 
 {
+  bool isIdentity = false;
 
   vector <string> argvList (argv, argv + argc);
+  // acting like an identity translator, used for debugging
+  if (CommandlineProcessing::isOption (argvList,"-rose:identity","",true))
+  {
+    isIdentity = true;
+    cout<<"Acting as an identity translator ..."<<endl;
+  }
+ 
   // pass -rose:debug to turn on debugging mode
   if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
   {
@@ -233,20 +248,23 @@ int main(int argc, char * argv[])
 
   SgProject *project = frontend (argvList);
 
-  SgFilePtrList file_ptr_list = project->get_fileList();
-  visitorTraversal exampleTraversal;
-  for (size_t i = 0; i<file_ptr_list.size(); i++)
+  if (!isIdentity)
   {
-    SgFile* cur_file = file_ptr_list[i];
-    SgSourceFile* s_file = isSgSourceFile(cur_file);
-    if (s_file != NULL)
+    SgFilePtrList file_ptr_list = project->get_fileList();
+    visitorTraversal exampleTraversal;
+    for (size_t i = 0; i<file_ptr_list.size(); i++)
     {
-      //exampleTraversal.traverseInputFiles(project,preorder);
-       exampleTraversal.traverseWithinFile(s_file, preorder);
+      SgFile* cur_file = file_ptr_list[i];
+      SgSourceFile* s_file = isSgSourceFile(cur_file);
+      if (s_file != NULL)
+      {
+	//exampleTraversal.traverseInputFiles(project,preorder);
+	exampleTraversal.traverseWithinFile(s_file, preorder);
+      }
     }
+    string filename= SageInterface::generateProjectName(project);
+    generateDOTforMultipleFile(*project);
   }
-  string filename= SageInterface::generateProjectName(project);
-  generateDOTforMultipleFile(*project);
 
  // run all tests
   AstTests::runAllTests(project);

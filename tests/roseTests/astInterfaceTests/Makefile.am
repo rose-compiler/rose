@@ -169,9 +169,14 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
   inputmoveDeclarationToInnermostScope_14.C \
-  inputmoveDeclarationToInnermostScope_15.C
+  inputmoveDeclarationToInnermostScope_15.C 
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+
+# identity translator cannot handle them properly  
+MOVE_DECLS_TESTCODES_FAILING = \
+  inputmoveDeclarationToInnermostScope_test2014_18.C \
+  inputmoveDeclarationToInnermostScope_test2014_22.C
  
 MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
