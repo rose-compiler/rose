@@ -254,7 +254,7 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argvList);
 
 // DQ (12/11/2014): Added output of graph after transformations.
-   generateDOTforMultipleFile(*project);
+// generateDOTforMultipleFile(*project);
 
   SgFilePtrList file_ptr_list = project->get_fileList();
   visitorTraversal exampleTraversal;
