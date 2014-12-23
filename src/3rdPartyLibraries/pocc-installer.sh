@@ -47,7 +47,7 @@ if [ $# -eq 1 ]; then
 fi;
 
 ## Install the release version of PoCC.
-ADDRESS="http://web.cse.ohio-state.edu/~pouchet/software/pocc/download/"
+ADDRESS="http://www.cs.ucla.edu/~pouchet/software/pocc/download/"
 SOFTVERSION="pocc-1.1"
 
 new_file=0;
