@@ -1471,6 +1471,8 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
           static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
 
+       // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+          bool isNormalizedTemplateFunction() const;
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -10702,6 +10704,49 @@ SgFunctionDeclaration::get_template_header() const
      return template_header;
    }
 
+
+bool
+SgFunctionDeclaration::isNormalizedTemplateFunction() const
+   {
+  // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+  // EDG normalizes member and non-member function definitions defined in template classes.
+  // As a result we need to detect where this normalization is done in both the unparser and
+  // the token mapping.  Where the normalization has been done the text string saved in EDG 
+  // and used in ROSE is only representing the body of the function and so the unparser must
+  // know to generate the function prototype declaration to assemble with the function body
+  // held as text.  In the future we will unparse the template declarations from the AST and/or
+  // the token stream, but that is a later step.
+
+     bool string_represents_function_body = false;
+     const SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(this);
+     const SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(this);
+     if (templateFunctionDeclaration != NULL)
+        {
+       // printf ("This is a SgTemplateFunctionDeclaration \n");
+          string_represents_function_body = templateFunctionDeclaration->get_string_represents_function_body();
+        }
+       else
+        {
+          if (templateMemberFunctionDeclaration != NULL)
+             {
+            // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+               string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
+            // template_function_name = templateMemberFunctionDeclaration->get_name();
+             }
+            else
+             {
+#if 0
+            // This is likely a SgTemplateClassDeclaration
+               if (isSgTemplateClassDeclaration(this) == NULL)
+                  {
+                    printf ("Error: In SgFunctionDeclaration::isNormalizedTemplateFunction(): What is this if not a template function or template member function stmt = %p = %s \n",this,this->class_name().c_str());
+                  }
+#endif
+             }
+        }
+
+     return string_represents_function_body;
+   }
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END

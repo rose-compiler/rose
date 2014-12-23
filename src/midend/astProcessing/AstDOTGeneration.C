@@ -866,6 +866,13 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
      ss += StringUtility::numberToString(line);
      ss += ":";
      ss += StringUtility::numberToString(column);
+
+  // DQ (12/21/2014): Adding the physical line number (used by the token mapping).
+     int physical_line    = fileInfo->get_physical_line();
+     ss += " (physical line=";
+     ss += StringUtility::numberToString(physical_line);
+     ss += ")";
+
      ss += "\\n";
 
      return ss;
