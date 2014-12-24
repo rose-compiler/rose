@@ -47,6 +47,7 @@ WFunction::init() {
     wFunctionCfg_->hide();
     wFunctionCfg_->functionChanged().connect(this, &WFunction::setCurrentFunction);
     wFunctionCfg_->functionClicked().connect(this, &WFunction::setCurrentFunction);
+    wFunctionCfg_->addressClicked().connect(this, &WFunction::showHexDumpAtAddress);
     wTabs_->addTab(wFunctionCfg_, "CFG");
 
     // Assembly listing
@@ -135,6 +136,12 @@ WFunction::showAssemblyListing(const P2::Function::Ptr &function) {
 
 void
 WFunction::showHexDump() {
+    setCurrentTab(HEXDUMP_TAB);
+}
+
+void
+WFunction::showHexDumpAtAddress(rose_addr_t va) {
+    wHexDump_->makeVisible(va);
     setCurrentTab(HEXDUMP_TAB);
 }
 

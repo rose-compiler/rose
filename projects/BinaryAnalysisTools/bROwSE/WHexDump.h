@@ -9,14 +9,13 @@
 
 namespace bROwSE {
 
+/** Data model for the WHexDump widget. */
 class HexDumpModel: public Wt::WAbstractTableModel {
     Context &ctx_;
     size_t nRows_;                                      // total number of table rows
 
-#if 0 // [Robb P. Matzke 2014-12-23]: not needed yet
     typedef Sawyer::Container::Map<rose_addr_t, size_t> AddrRowMap;
     AddrRowMap addrRow_;                                // partial mapping from virtual address to table row
-#endif
 
     // Partial mapping of row to address. We store only those rose that contain the first address of each segment, and the
     // address member is the first address in the segment, which must be aligned downward to get the first address on the table
@@ -48,6 +47,11 @@ public:
      *  If no address is specified or the address is not mapped then nothing is returned. */
     Sawyer::Optional<uint8_t> readByte(const Sawyer::Optional<rose_addr_t>&) const;
 
+    /** Returns closest row containing address.
+     *
+     *  If address is contained in a row then return that row, otherwise return a row that's close. */
+    size_t closestRowForAddress(rose_addr_t va) const;
+
 #if 0 // [Robb P. Matzke 2014-12-23]: not needed yet
     /** Convert VA to table row index.
      *
@@ -67,6 +71,9 @@ private:
     void init();
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Widget that shows a hexdump. */
 class WHexDump: public Wt::WContainerWidget {
     Context &ctx_;
     HexDumpModel *model_;
@@ -77,6 +84,9 @@ public:
         : WContainerWidget(parent), ctx_(ctx), model_(NULL), tableView_(NULL) {
         init();
     }
+
+    /** Show the address closest to the specified address. */
+    void makeVisible(rose_addr_t);
 
 private:
     void init();

@@ -1,9 +1,13 @@
 #include <bROwSE/WFunctionCfg.h>
 
 #include <bROwSE/FunctionUtil.h>
+#include <bROwSE/WAddressComboBox.h>
 #include <bROwSE/WFunctionNavigation.h>
+#include <Wt/WComboBox>
 #include <Wt/WEnvironment>
+#include <Wt/WHBoxLayout>
 #include <Wt/WScrollArea>
+#include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
 namespace bROwSE {
@@ -13,9 +17,27 @@ WFunctionCfg::init() {
     Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
     setLayout(vbox);
 
-    wNavigation_ = new WFunctionNavigation;
-    wNavigation_->functionChanged().connect(this, &WFunctionCfg::changeFunction);
-    vbox->addWidget(wNavigation_);
+    // Action bar horizontally across the top of the CFG area (does not scroll with CFG image)
+    Wt::WContainerWidget *actionBar = new Wt::WContainerWidget;
+    vbox->addWidget(actionBar);
+    {
+        // Action bar is horizontal
+        Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
+        actionBar->setLayout(hbox);
+
+        // Function forward/back navigation bar placed into the action bar
+        wNavigation_ = new WFunctionNavigation;
+        wNavigation_->functionChanged().connect(this, &WFunctionCfg::changeFunction);
+        hbox->addWidget(wNavigation_);
+        hbox->addWidget(new Wt::WText("    "));         // padding
+
+        // Addresses associated with current basic block, placed into the action bar
+        wAddresses_ = new WAddressComboBox;
+        wAddresses_->addButton("Hexdump");
+        wAddresses_->clicked().connect(this, &WFunctionCfg::emitAddressClicked);
+        hbox->addWidget(wAddresses_);
+        hbox->addWidget(new Wt::WText, 1 /*stretch*/);  // padding
+    }
 
     wMessage_ = new Wt::WText("No function.");
     vbox->addWidget(wMessage_);
@@ -45,8 +67,12 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
     if (function_ == function)
         return;
     function_ = function;
-    if (function)
+    if (function) {
         wNavigation_->push(function);
+        wAddresses_->clear();
+        wAddresses_->insertAddress(function->address());
+        wAddresses_->redraw();
+    }
 
     // We need to create a new wImage each time because we're adding WRectArea.  See limitation documented for the
     // WImage::addArea method in Wt-3.3.3 [Robb P. Matzke 2014-09-10]
@@ -84,6 +110,7 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
             if (other && other!=function) {
                 // Clicking on a called function will show that function's CFG
                 area->clicked().connect(this, &WFunctionCfg::selectFunction);
+                area->setCursor(Wt::PointingHandCursor);
 
                 // Tool tip for called function.  The address and name (if known) are already shown as the node label, so the
                 // tool tip should contain other useful information.
@@ -98,6 +125,7 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
             } else if (P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(va)) {
                 // Clicking on a basic block selects the basic block, whatever that means.
                 area->clicked().connect(this, &WFunctionCfg::selectBasicBlock);
+                area->setCursor(Wt::PointingHandCursor);
 
                 // Tool tips for basic blocks should show important information that isn't already available just by looking at
                 // the CFG.
@@ -138,7 +166,15 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
     wImage_->show();
     return;
 }
-    
+
+struct ConstantFinder: AstSimpleProcessing {
+    std::set<rose_addr_t> constants_;
+    void visit(SgNode *node) {
+        if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node))
+            constants_.insert(ival->get_absoluteValue());
+    }
+};
+
 void
 WFunctionCfg::selectBasicBlock(const Wt::WMouseEvent &event) {
     BOOST_FOREACH (const AreaAddr &pair, areas_) {
@@ -146,8 +182,12 @@ WFunctionCfg::selectBasicBlock(const Wt::WMouseEvent &event) {
         if (event.widget().x >= area->x() && event.widget().x <= area->x() + area->width() &&
             event.widget().y >= area->y() && event.widget().y <= area->y() + area->height()) {
             P2::BasicBlock::Ptr bblock = ctx_.partitioner.basicBlockExists(pair.second);
-            if (bblock)
+            if (bblock) {
+                wAddresses_->clear();
+                wAddresses_->insertBasicBlock(ctx_.partitioner, bblock);
+                wAddresses_->redraw();
                 basicBlockClicked_.emit(bblock);
+            }
             return;
         }
     }
@@ -160,11 +200,20 @@ WFunctionCfg::selectFunction(const Wt::WMouseEvent &event) {
         if (event.widget().x >= area->x() && event.widget().x <= area->x() + area->width() &&
             event.widget().y >= area->y() && event.widget().y <= area->y() + area->height()) {
             P2::Function::Ptr function = ctx_.partitioner.functionExists(pair.second);
-            if (function)
+            if (function) {
+                wAddresses_->clear();
+                wAddresses_->insertAddress(function->address());
+                wAddresses_->redraw();
                 functionClicked_.emit(function);
+            }
             return;
         }
     }
+}
+
+void
+WFunctionCfg::emitAddressClicked(rose_addr_t va, Wt::WString label, size_t buttonIdx) {
+    addressClicked_.emit(va);
 }
 
 } // namespace

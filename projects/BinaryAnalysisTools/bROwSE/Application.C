@@ -213,9 +213,12 @@ public:
     AppCreator(P2::Partitioner &partitioner): partitioner_(partitioner) {}
     Wt::WApplication* operator()(const Wt::WEnvironment &env) {
         Wt::WApplication *app = new Application(partitioner_, env);
+
+        // Hexdump style sheet rules
         app->styleSheet().addRule(".hexdump_evenrow", "font-family: monospace;");
         app->styleSheet().addRule(".hexdump_oddrow", "font-family: monospace; background-color: #f9f9f9;");
         app->styleSheet().addRule(".hexdump_unmapped", "background-color: black;");
+
         return app;
     }
 };
