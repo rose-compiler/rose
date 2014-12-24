@@ -93,18 +93,22 @@ WFunctionList::selectFunctionByAddress(rose_addr_t va, const Wt::WMouseEvent &ev
 // Internal: called when a table row is clicked.  Make function current and emit functionRowClicked.
 void
 WFunctionList::selectFunctionByRow1(const Wt::WModelIndex &idx) {
-    if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
-        changeFunction(function);
-        functionRowClicked_.emit(function);
+    if (idx.isValid()) {
+        if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
+            changeFunction(function);
+            functionRowClicked_.emit(function);
+        }
     }
 }
 
 // Internal: same, but emit functionRowDoubleClicked
 void
 WFunctionList::selectFunctionByRow2(const Wt::WModelIndex &idx) {
-    if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
-        changeFunction(function);
-        functionRowDoubleClicked_.emit(function);
+    if (idx.isValid()) {
+        if (P2::Function::Ptr function = model_->functionAt(idx.row())) {
+            changeFunction(function);
+            functionRowDoubleClicked_.emit(function);
+        }
     }
 }
 
@@ -128,15 +132,8 @@ WFunctionList::changeFunction(const P2::Function::Ptr &function) {
     wAddressSpace_->redraw();
 
     // Update the table
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
-    std::cerr <<"ROBB: WFunctionList::changeFunction for " <<function->printableName() <<"\n";
-#endif
     Wt::WModelIndex idx = model_->functionIdx(function);
     if (idx.isValid() && !tableView_->isSelected(idx)) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
-        std::cerr <<"ROBB:   selecting index (" <<idx.row() <<", " <<idx.column() <<")"
-                  <<" for " <<function->printableName() <<"\n";
-#endif
         tableView_->select(idx);
         tableView_->scrollTo(idx);
     }

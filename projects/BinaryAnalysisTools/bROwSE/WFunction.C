@@ -5,6 +5,7 @@
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
+#include <bROwSE/WHexDump.h>
 #include <Wt/WTabWidget>
 #include <Wt/WVBoxLayout>
 
@@ -54,6 +55,12 @@ WFunction::init() {
     wAssemblyListing_->hide();
     wTabs_->addTab(wAssemblyListing_, "Assembly");
 
+    // Data listing
+    ASSERT_require(HEXDUMP_TAB==4);
+    wHexDump_ = new WHexDump(ctx_);
+    wHexDump_->hide();
+    wTabs_->addTab(wHexDump_, "Hexdump");
+
     setCurrentTab(FLIST_TAB);
 }
 
@@ -63,9 +70,6 @@ void
 WFunction::setCurrentFunction(const P2::Function::Ptr &function) {
     ASSERT_not_null(function);
     if (function_ != function) {
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-22]
-        std::cerr <<"ROBB: WFunction::setCurrentFunction(" <<function->printableName() <<")\n";
-#endif
         function_ = function;
         setCurrentTab(wTabs_->currentIndex());          // don't change tabs, but do the other stuff
     }
@@ -89,6 +93,9 @@ WFunction::setCurrentTab(int idx) {
         case ASSEMBLY_TAB:
             wAssemblyListing_->changeFunction(function_);
             wAssemblyListing_->setHidden(function_==NULL);
+            break;
+        case HEXDUMP_TAB:
+            wHexDump_->setHidden(false);
             break;
         default:
             ASSERT_not_reachable("tab is not handled");
@@ -124,6 +131,11 @@ void
 WFunction::showAssemblyListing(const P2::Function::Ptr &function) {
     function_ = function;
     setCurrentTab(ASSEMBLY_TAB);
+}
+
+void
+WFunction::showHexDump() {
+    setCurrentTab(HEXDUMP_TAB);
 }
 
 } // namespace

@@ -11,10 +11,11 @@ class WFunctionCfg;
 class WFunctionList;
 class WFunctionSummary;
 class WAssemblyListing;
+class WHexDump;
 
 class WFunction: public Wt::WContainerWidget {
 public:
-    enum Tab { FLIST_TAB, SUMMARY_TAB, CFG_TAB, ASSEMBLY_TAB };
+    enum Tab { FLIST_TAB, SUMMARY_TAB, CFG_TAB, ASSEMBLY_TAB, HEXDUMP_TAB };
 
 private:
     Context ctx_;
@@ -24,12 +25,13 @@ private:
     WFunctionCfg *wFunctionCfg_;
     WFunctionSummary *wFunctionSummary_;
     WAssemblyListing *wAssemblyListing_;
+    WHexDump *wHexDump_;
     P2::Function::Ptr function_;                        // current function
 
 public:
     WFunction(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), wTabs_(NULL), wCfgTab_(NULL), wSummaryTab_(NULL), wFunctionCfg_(NULL),
-          wFunctionSummary_(NULL), wAssemblyListing_(NULL) {
+          wFunctionSummary_(NULL), wAssemblyListing_(NULL), wHexDump_(NULL) {
         init();
     }
 
@@ -50,6 +52,9 @@ private:
 
     // Show assembly listing for one function
     void showAssemblyListing(const P2::Function::Ptr &function);
+
+    // Show the hexdump pane
+    void showHexDump();
 };
 
 
