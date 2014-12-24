@@ -214,10 +214,26 @@ public:
     Wt::WApplication* operator()(const Wt::WEnvironment &env) {
         Wt::WApplication *app = new Application(partitioner_, env);
 
-        // Hexdump style sheet rules
-        app->styleSheet().addRule(".hexdump_evenrow", "font-family: monospace;");
-        app->styleSheet().addRule(".hexdump_oddrow", "font-family: monospace; background-color: #f9f9f9;");
-        app->styleSheet().addRule(".hexdump_unmapped", "background-color: black;");
+        // Hexdump style sheet rules. The colors here are the same as those used by WAddressSpace.
+        app->styleSheet().addRule(".hexdump_evenrow", "font-family:monospace;");
+        app->styleSheet().addRule(".hexdump_oddrow", "font-family:monospace; background-color:#f9f9f9;");
+        app->styleSheet().addRule(".hexdump_unmapped", "background-color:black;");
+        app->styleSheet().addRule(".hexdump_addr_none", "font-family:monospace;"
+                                  " background-color:" + toHtml(darken(Color::red, 0.25)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_r", "font-family:monospace;"
+                                  "background-color:" + toHtml(Color::RGB(0.9, 0.8, 0)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_w", "font-family:monospace;"
+                                  " background-color:" + toHtml(fade(darken(Color::red, 0.25), 0.75)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_x", "font-family:monospace;"
+                                  " background-color:" + toHtml(darken(Color::green, 0.15)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_rw", "font-family:monospace;"
+                                  " background-color:" + toHtml(fade(Color::RGB(0.9, 0.8, 0), 0.75)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_rx", "font-family:monospace;"
+                                  " background-color:" + toHtml(darken(Color::green, 0.15)) + ";"); // same as execute-only
+        app->styleSheet().addRule(".hexdump_addr_wx", "font-family:monospace;"
+                                  " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
+        app->styleSheet().addRule(".hexdump_addr_rwx", "font-family:monospace;"
+                                  " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
 
         return app;
     }

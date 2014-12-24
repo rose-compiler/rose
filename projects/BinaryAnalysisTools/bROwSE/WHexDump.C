@@ -1,6 +1,11 @@
 #include <bROwSE/WHexDump.h>
+
+#include <rose_strtoull.h>
 #include <Wt/WHBoxLayout>
+#include <Wt/WLineEdit>
 #include <Wt/WTableView>
+#include <Wt/WText>
+#include <Wt/WVBoxLayout>
 
 namespace bROwSE {
 
@@ -29,17 +34,31 @@ HexDumpModel::init() {
         row += nRows + 1;                               // +1 is the blank row between segments
     }
     nRows_ = row;
+}
 
-#if 1 // DEBUGGING [Robb P. Matzke 2014-12-23]
-#if 0 // [Robb P. Matzke 2014-12-23]: not needed yet
-    std::cerr <<"ROBB: addr->row mapping:\n";
-    BOOST_FOREACH (const AddrRowMap::Node &node, addrRow_.nodes())
-        std::cerr <<"        " <<StringUtility::addrToString(node.key()) <<" -> " <<node.value() <<"\n";
-#endif
-    std::cerr <<"ROBB: row->addr mapping:\n";
-    BOOST_FOREACH (const RowAddrMap::Node &node, rowAddr_.nodes())
-        std::cerr <<"        " <<node.key() <<" -> " <<StringUtility::addrToString(node.value()) <<"\n";
-#endif
+MemoryMap::ConstNodeIterator
+HexDumpModel::rowSegment(size_t row) const {
+    ASSERT_require(row < nRows_);
+
+    // Find the rowAddr map entry for this row.
+    RowAddrMap::ConstNodeIterator found = rowAddr_.lowerBound(row);
+    if (found == rowAddr_.nodes().end())
+        --found;                                        // row > last segment's starting row
+    if (row < found->key()) {
+        ASSERT_forbid2(found == rowAddr_.nodes().begin(), "row 0 is apparently not mapped");
+        --found;
+    }
+
+    size_t segmentRowIdx = found->key();
+    rose_addr_t segmentVa = found->value();
+    rose_addr_t segmentRowVa = alignDown(segmentVa, bytesPerRow);
+    if (row == segmentRowIdx)
+        return ctx_.partitioner.memoryMap().at(segmentVa).findNode();
+    rose_addr_t rowVa = segmentRowVa + (row - segmentRowIdx) * bytesPerRow;
+    MemoryMap::ConstNodeIterator mmIter = ctx_.partitioner.memoryMap().at(segmentVa).findNode();
+    if (!mmIter->key().isContaining(rowVa))
+        return ctx_.partitioner.memoryMap().nodes().end();// segment separator row
+    return mmIter;
 }
 
 Sawyer::Optional<rose_addr_t>
@@ -208,6 +227,27 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
         } else {
             ASSERT_not_reachable("this column needs data");
         }
+    } else if (role == Wt::ToolTipRole) {
+        MemoryMap::ConstNodeIterator mmNode = ctx_.partitioner.memoryMap().nodes().end();
+        rose_addr_t va = 0;
+        if (column == addressColumn) {
+            mmNode = rowSegment(row);
+            va = cellAddress(row, 0).orElse(0);
+        } else if (column >= bytesColumn && column < bytesColumn + bytesPerRow &&
+                   cellAddress(row, column-bytesColumn).assignTo(va)) {
+            mmNode = ctx_.partitioner.memoryMap().at(va).findNode();
+        } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow &&
+                   cellAddress(row, column-asciiColumn).assignTo(va)) {
+            mmNode = ctx_.partitioner.memoryMap().at(va).findNode();
+        }
+        if (mmNode != ctx_.partitioner.memoryMap().nodes().end()) {
+            const AddressInterval &interval = mmNode->key();
+            const MemoryMap::Segment &segment = mmNode->value();
+            std::string tip = StringUtility::htmlEscape(segment.name());
+            if (interval.isContaining(va))
+                tip += "+" + StringUtility::addrToString(va-interval.least());
+            return Wt::WString(tip);
+        }
     } else if (role == Wt::StyleClassRole) {
         if (column==sep1Column || column==sep2Column || !rowAddress(row)) {
             return Wt::WString("hexdump_unmapped");
@@ -215,6 +255,20 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             return Wt::WString("hexdump_unmapped");
         } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow && !cellAddress(row, column-asciiColumn)) {
             return Wt::WString("hexdump_unmapped");
+        } else if (column == addressColumn) {
+            MemoryMap::ConstNodeIterator mmIter = rowSegment(row);
+            ASSERT_require(mmIter != ctx_.partitioner.memoryMap().nodes().end()); // would have been caught above
+            unsigned a = mmIter->value().accessibility();
+            std::string style;
+            if (0!=(a & MemoryMap::READABLE))
+                style += "r";
+            if (0!=(a & MemoryMap::WRITABLE))
+                style += "w";
+            if (0!=(a & MemoryMap::EXECUTABLE))
+                style += "x";
+            if (style.empty())
+                style = "none";
+            return Wt::WString("hexdump_addr_" + style);
         } else if (row % 2) {
             return Wt::WString("hexdump_oddrow");
         } else {
@@ -224,13 +278,23 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
     return boost::any();
 }
 
-
-
-
 void
 WHexDump::init() {
+    Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+    setLayout(vbox);
+
+    Wt::WContainerWidget *actionsBox = new Wt::WContainerWidget;
+    vbox->addWidget(actionsBox);
+    {
+        new Wt::WText("Goto: ", actionsBox);
+        wAddressEdit_ = new Wt::WLineEdit(actionsBox);
+        wAddressEdit_->enterPressed().connect(this, &WHexDump::handleGoto);
+    }
+
+    Wt::WContainerWidget *tableContainer = new Wt::WContainerWidget;
+    vbox->addWidget(tableContainer, 1 /*stretch*/);
     Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;        // so the table scrolls horizontally
-    setLayout(hbox);
+    tableContainer->setLayout(hbox);
 
     model_ = new HexDumpModel(ctx_);
 
@@ -251,7 +315,6 @@ WHexDump::init() {
         tableView_->setColumnWidth(bytesColumn + i, Wt::WLength(2+extra, Wt::WLength::FontEm));
         tableView_->setColumnWidth(asciiColumn + i, Wt::WLength(2+extra, Wt::WLength::FontEm));
     }
-
     hbox->addWidget(tableView_);
 }
 
@@ -265,5 +328,11 @@ WHexDump::makeVisible(rose_addr_t va) {
     tableView_->select(model_->index(rowIdx, 0));
 }
 
+void
+WHexDump::handleGoto() {
+    std::string str = wAddressEdit_->valueText().narrow();
+    rose_addr_t va = rose_strtoull(str.c_str(), NULL, 0);
+    makeVisible(va);
+}
 
 } // namespace

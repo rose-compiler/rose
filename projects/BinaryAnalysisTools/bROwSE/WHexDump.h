@@ -36,6 +36,11 @@ public:
      *  specifying column zero because a row might have data, just not any at column zero. */
     Sawyer::Optional<rose_addr_t> rowAddress(size_t row) const;
 
+    /** Return segment contained in row.
+     *
+     *  Returns information about the memory segment that the specified row contains. */
+    MemoryMap::ConstNodeIterator rowSegment(size_t row) const;
+
     /** Return the address for a table cell.
      *
      *  The @p pseudoColumn is the address offset from the table's row address and should be zero (inclusive) to the number of
@@ -76,12 +81,13 @@ private:
 /** Widget that shows a hexdump. */
 class WHexDump: public Wt::WContainerWidget {
     Context &ctx_;
+    Wt::WLineEdit *wAddressEdit_;                       // for entering a goto address
     HexDumpModel *model_;
     Wt::WTableView *tableView_;
 
 public:
     explicit WHexDump(Context &ctx, Wt::WContainerWidget *parent = NULL)
-        : WContainerWidget(parent), ctx_(ctx), model_(NULL), tableView_(NULL) {
+        : WContainerWidget(parent), ctx_(ctx), wAddressEdit_(NULL), model_(NULL), tableView_(NULL) {
         init();
     }
 
@@ -90,6 +96,8 @@ public:
 
 private:
     void init();
+
+    void handleGoto();
 };
 
 
