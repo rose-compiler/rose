@@ -55,6 +55,7 @@ private:
 
     // Show the hexdump pane
     void showHexDump();
+    void showHexDumpAtAddress(rose_addr_t);
 };
 
 

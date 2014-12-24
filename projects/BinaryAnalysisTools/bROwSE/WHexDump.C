@@ -21,9 +21,7 @@ HexDumpModel::init() {
     // of the first byte of each row should be 0 modulo N.
     size_t row = 0;
     BOOST_FOREACH (const AddressInterval &interval, ctx_.partitioner.memoryMap().intervals()) {
-#if 0 // [Robb P. Matzke 2014-12-23]: not needed yet
         addrRow_.insert(interval.least(), row);
-#endif
         rowAddr_.insert(row, interval.least());
         rose_addr_t beginVa = alignDown(interval.least(), bytesPerRow);
         rose_addr_t endVa = alignUp(interval.greatest()+1, bytesPerRow);
@@ -104,6 +102,26 @@ HexDumpModel::readByte(const Sawyer::Optional<rose_addr_t> &cellVa) const {
     if (cellVa && ctx_.partitioner.memoryMap().at(*cellVa).limit(1).read(&byte))
         return byte;
     return Sawyer::Nothing();
+}
+
+size_t
+HexDumpModel::closestRowForAddress(rose_addr_t va) const {
+    ASSERT_forbid(addrRow_.isEmpty());
+    AddrRowMap::ConstNodeIterator found = addrRow_.lowerBound(va);
+    if (found == addrRow_.nodes().end())
+        --found;                                        // va > last segment's starting address
+    if (va < found->key()) {
+        if (found == addrRow_.nodes().begin())
+            return 0;                                   // va < first row of table
+        --found;
+    }
+
+    rose_addr_t segmentVa = found->key();               // starting address for segment possibly containing va
+    size_t segmentRow = found->value();                 // row where that segment begins
+    rose_addr_t segmentRowVa = alignDown(segmentVa, bytesPerRow); // address for beginning of that row
+    size_t row = segmentRow + (va - segmentRowVa)/bytesPerRow; // potential return value
+    row = std::min(row, nRows_-1);
+    return row;
 }
 
 int
@@ -206,20 +224,6 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
     return boost::any();
 }
 
-// size_t
-// HexDumpModel::addressToRow(rose_addr_t va) const {
-//     ASSERT_forbid(addrRow_.isEmpty());
-//     AddrRowMap::ConstNodeIterator found = addrRow_.lowerBound(va);
-//     if (found == addrRow_.nodes().end())
-//         --found;                                        // va > last segment's starting address
-//     if (va < found->key()) {
-//         ASSERT_forbid2(found == addrRow_.nodes().begin(), "VA must be greater than or equal to lowest mapped address");
-//         --found;
-//     }
-//     size_t row = found->value();                        // starting row for containing segment
-//     rose_addr_t baseVa = alignDown(found->key(), bytesPerRow);// VA for the start of row
-//     return row + (va - baseVa) / bytesPerRow;
-// }
 
 
 
@@ -250,5 +254,16 @@ WHexDump::init() {
 
     hbox->addWidget(tableView_);
 }
+
+void
+WHexDump::makeVisible(rose_addr_t va) {
+    size_t rowIdx = model_->closestRowForAddress(va);
+    static const size_t leadingContextRows = 5;         // number of rows to show above that
+
+    tableView_->scrollTo(model_->index(rowIdx - std::min(rowIdx, leadingContextRows), 0));
+    tableView_->scrollTo(model_->index(rowIdx, 0));
+    tableView_->select(model_->index(rowIdx, 0));
+}
+
 
 } // namespace

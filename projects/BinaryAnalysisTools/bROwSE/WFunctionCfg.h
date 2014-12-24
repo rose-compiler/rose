@@ -11,6 +11,7 @@
 
 namespace bROwSE {
 
+class WAddressComboBox;
 class WFunctionNavigation;
 
 /** Function control flow graph.
@@ -21,6 +22,7 @@ class WFunctionCfg: public Wt::WContainerWidget {
     Context &ctx_;
     P2::Function::Ptr function_;                        // currently-displayed function
     WFunctionNavigation *wNavigation_;
+    WAddressComboBox *wAddresses_;                      // addresses related to current basic block, etc.
     Wt::WScrollArea *wScrollArea_;                      // contains a CFG image or a message
     Wt::WImage *wImage_;                                // image for the CFG
     Wt::WText *wMessage_;
@@ -29,9 +31,11 @@ class WFunctionCfg: public Wt::WContainerWidget {
     Wt::Signal<P2::Function::Ptr> functionChanged_;     // emitted when the current function changes
     Wt::Signal<P2::BasicBlock::Ptr> basicBlockClicked_; // emitted when a basic block node is clicked
     Wt::Signal<P2::Function::Ptr> functionClicked_;     // emitted when a function node is clicked
+    Wt::Signal<rose_addr_t> addressClicked_;            // emitted when an address is clicked
 public:
     WFunctionCfg(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), wNavigation_(NULL), wScrollArea_(NULL), wImage_(NULL), wMessage_(NULL) {
+        : Wt::WContainerWidget(parent), ctx_(ctx),
+          wNavigation_(NULL), wAddresses_(NULL), wScrollArea_(NULL), wImage_(NULL), wMessage_(NULL) {
         init();
     }
 
@@ -67,6 +71,13 @@ public:
     Wt::Signal<P2::Function::Ptr>& functionClicked() {
         return functionClicked_;
     }
+
+    /** Signal emitted when an address is clicked.
+     *
+     *  The CFG toolbar contains a list of addresses and when one of them is activated then this signal is generated. */
+    Wt::Signal<rose_addr_t>& addressClicked() {
+        return addressClicked_;
+    }
     
 private:
     void init();
@@ -79,6 +90,9 @@ private:
 
     // Called when a function node is clicked. Emits a functionClicked signal.
     void selectFunction(const Wt::WMouseEvent &event);
+
+    // Forward the wAddresses_ activated signal to emit an addressClicked signal.
+    void emitAddressClicked(rose_addr_t, Wt::WString, size_t);
 };
 
 } // namespace
