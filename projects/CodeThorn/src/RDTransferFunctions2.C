@@ -8,6 +8,21 @@ using namespace CodeThorn;
 #include "RDTransferFunctions2.h"
 #include "AnalysisAbstractionLayer.h"
 
+bool hasDereferenceOperation(SgExpression* exp) {
+  RoseAst ast(exp);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(SgExpression* exp=isSgExpression(*i)) {
+      if(isSgArrowExp(exp)
+         ||isSgPointerDerefExp(exp)
+         ||(isSgVarRefExp(exp)&&isSgReferenceType(exp->get_type()))
+         ) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 RDTransferFunctions::RDTransferFunctions() {
 }
 
@@ -23,9 +38,15 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   // this is only correct for RERS12-C programs
   // 1) remove all pairs with lhs-variableid
   // 2) add (lab,lhs.varid)
-  
+
   // (for programs with pointers we require a set here)
   VariableIdSet defVarIds=AnalysisAbstractionLayer::defVariables(node,*_variableIdMapping);  
+  ROSE_ASSERT(_pointerAnalysisInterface);
+  if(hasDereferenceOperation(node)) {
+    VariableIdSet modVarIds=_pointerAnalysisInterface->getModByPointer();
+    // union sets
+    defVarIds+=modVarIds;
+  }
   if(defVarIds.size()>1 /* TODO: || existsArrayVarId(defVarIds)*/ ) {
     // since multiple memory locations may be modified, we cannot know which one will be updated and can only add information
     for(VariableIdMapping::VariableIdSet::iterator i=defVarIds.begin();i!=defVarIds.end();++i) {
@@ -45,9 +66,9 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
  */
 //NOTE: missing: UD must take uses in initializers into account
 void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
-  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
-  ROSE_ASSERT(element1);
-  RDLattice& element=*element1;
+  RDLattice& element=dynamic_cast<RDLattice&>(element0);
+  //  ROSE_ASSERT(element1);
+  //RDLattice& element=*element1;
 
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
