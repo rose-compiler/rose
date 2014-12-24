@@ -263,10 +263,13 @@ GraphViz::edgeAttributes(const Partitioner &partitioner, const ControlFlowGraph:
         attr.insert("color", makeEdgeColor(warningColor_).toHtml());
     } else if (edge->value().type() == E_FUNCTION_CALL) {
         attr.insert("color", makeEdgeColor(funcEnterColor_).toHtml());
-    } else if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
-               edge->source()->value().bblock() &&
-               edge->source()->value().bblock()->fallthroughVa() != edge->target()->value().address()) {
-        attr.insert("style", "dotted");                 // non-fallthrough edges
+    }
+
+    // Fall-through edges are less important, so make them dotted.
+    if (edge->source()->value().type() ==V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
+        edge->source()->value().bblock() &&
+        edge->source()->value().bblock()->fallthroughVa() == edge->target()->value().address()) {
+        attr.insert("style", "dotted");                 // fall-through edge
     }
     return attr;
 }
