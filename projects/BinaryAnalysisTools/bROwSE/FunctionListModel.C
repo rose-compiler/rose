@@ -30,9 +30,13 @@ FunctionListModel::columnCount(const Wt::WModelIndex &parent) const {
 
 boost::any
 FunctionListModel::headerData(int column, Wt::Orientation orientation, int role) const {
-    if (Wt::Horizontal == orientation && Wt::DisplayRole == role) {
-        ASSERT_require(column>=0 && (size_t)column < analyzers_.size());
-        return analyzers_[column]->header();
+    if (Wt::Horizontal == orientation) {
+        if (Wt::DisplayRole == role) {
+            ASSERT_require(column>=0 && (size_t)column < analyzers_.size());
+            return analyzers_[column]->header();
+        } else if (Wt::ToolTipRole == role) {
+            return analyzers_[column]->toolTip();
+        }
     }
     return boost::any();
 }

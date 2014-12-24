@@ -51,12 +51,6 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
     // We need to create a new wImage each time because we're adding WRectArea.  See limitation documented for the
     // WImage::addArea method in Wt-3.3.3 [Robb P. Matzke 2014-09-10]
     areas_.clear();
-#if 0 // [Robb P. Matzke 2014-12-21]: not needed since the next setWidget will do the same
-    if (wImage_) {
-        wScrollArea_->takeWidget();
-        delete wImage_;
-    }
-#endif
     wImage_ = new Wt::WImage();
     wScrollArea_->setWidget(wImage_);
 
