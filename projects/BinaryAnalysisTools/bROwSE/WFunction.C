@@ -6,6 +6,7 @@
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
 #include <bROwSE/WHexDump.h>
+#include <bROwSE/WMemoryMap.h>
 #include <Wt/WTabWidget>
 #include <Wt/WVBoxLayout>
 
@@ -24,8 +25,14 @@ WFunction::init() {
     vbox->addWidget(wTabs_, 1 /*stretch*/);
     wTabs_->currentChanged().connect(this, &WFunction::setCurrentTab);
 
+    // Memory map
+    ASSERT_require(MEMORY_TAB==0);
+    wMemoryMap_ = new WMemoryMap(ctx_.partitioner.memoryMap());
+    wMemoryMap_->hide();
+    wTabs_->addTab(wMemoryMap_, "Memory");
+
     // List of all functions
-    ASSERT_require(FLIST_TAB==0);
+    ASSERT_require(FLIST_TAB==1);
     wFunctionList_ = new WFunctionList(ctx_);
     wFunctionList_->hide();
     wFunctionList_->functionChanged().connect(this, &WFunction::setCurrentFunction);
@@ -33,7 +40,7 @@ WFunction::init() {
     wTabs_->addTab(wFunctionList_, "Functions");
     
     // Function summary information
-    ASSERT_require(SUMMARY_TAB==1);
+    ASSERT_require(SUMMARY_TAB==2);
     wFunctionSummary_ = new WFunctionSummary(ctx_);
     wFunctionSummary_->hide();
     wTabs_->addTab(wFunctionSummary_, "Summary");
@@ -42,7 +49,7 @@ WFunction::init() {
     //
     // When using the BootStrap theme, the img.maxwidth=100% needs to be commented out otherwise no horizontal scroll bars will
     // be added.  Edit resources/themes/bootstrap/2/bootstrap.css.
-    ASSERT_require(CFG_TAB==2);
+    ASSERT_require(CFG_TAB==3);
     wFunctionCfg_ = new WFunctionCfg(ctx_);
     wFunctionCfg_->hide();
     wFunctionCfg_->functionChanged().connect(this, &WFunction::setCurrentFunction);
@@ -51,18 +58,18 @@ WFunction::init() {
     wTabs_->addTab(wFunctionCfg_, "CFG");
 
     // Assembly listing
-    ASSERT_require(ASSEMBLY_TAB==3);
+    ASSERT_require(ASSEMBLY_TAB==4);
     wAssemblyListing_ = new WAssemblyListing(ctx_);
     wAssemblyListing_->hide();
     wTabs_->addTab(wAssemblyListing_, "Assembly");
 
     // Data listing
-    ASSERT_require(HEXDUMP_TAB==4);
+    ASSERT_require(HEXDUMP_TAB==5);
     wHexDump_ = new WHexDump(ctx_);
     wHexDump_->hide();
     wTabs_->addTab(wHexDump_, "Hexdump");
 
-    setCurrentTab(FLIST_TAB);
+    setCurrentTab(MEMORY_TAB);
 }
 
 // Make function the current function.  This doesn't update any tabs until we actually switch to them with
@@ -79,6 +86,9 @@ WFunction::setCurrentFunction(const P2::Function::Ptr &function) {
 void
 WFunction::setCurrentTab(int idx) {
     switch (idx) {
+        case MEMORY_TAB:
+            wMemoryMap_->setHidden(false);
+            break;
         case FLIST_TAB:
             wFunctionList_->changeFunction(function_);
             wFunctionList_->setHidden(false);

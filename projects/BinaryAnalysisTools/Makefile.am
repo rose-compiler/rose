@@ -59,7 +59,9 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WFunctionNavigation.C		\
 	bROwSE/WFunctionSummary.C		\
 	bROwSE/WHexDump.C			\
-	bROwSE/WInstructionList.C
+	bROwSE/WHexValueEdit.C			\
+	bROwSE/WInstructionList.C		\
+	bROwSE/WMemoryMap.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
