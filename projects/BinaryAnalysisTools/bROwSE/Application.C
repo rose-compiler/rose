@@ -1,5 +1,10 @@
 #include <bROwSE/Application.h>
-#include <bROwSE/WFunction.h>
+
+#include <bROwSE/WFunctionCfg.h>
+#include <bROwSE/WFunctionList.h>
+#include <bROwSE/WFunctionSummary.h>
+#include <bROwSE/WMemoryMap.h>
+#include <bROwSE/WPartitioner.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -10,7 +15,9 @@
 #include <Wt/WContainerWidget>
 #include <Wt/WGridLayout>
 #include <Wt/WImage>
+#include <Wt/WTabWidget>
 #include <Wt/WText>
+#include <Wt/WVBoxLayout>
 
 int main(int argc, char *argv[]) {
     bROwSE::Application::main(argc, argv);
@@ -26,37 +33,7 @@ using namespace ::rose::Diagnostics;
 
 namespace bROwSE {
 
-void
-Application::init() {
-    setTitle("bROwSE");
-
-    // This looks nicer than setCssTheme("polished"), but requires some minor CSS adjustments:
-    //  + IMG should not be restricted to 100% available width, otherwise CFGs will be scaled down by the browser to a point
-    //     which might be unreadable.
-    setTheme(new Wt::WBootstrapTheme);
-
-    root()->setLayout(wGrid_ = new Wt::WGridLayout());
-    wGrid_->setRowStretch(1, 1);
-    wGrid_->setColumnStretch(1, 1);
-
-    Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/compassrose.jpg");
-    wGrid_->addWidget(compassRose, 0, 0);
-
-    wFunction_ = new WFunction(ctx_);
-    wGrid_->addWidget(wFunction_, 1, 1);
-
-#if 0 // DEBUGGING [Robb P. Matzke 2014-09-12]
-    wGrid_->addWidget(new Wt::WText("North"), 0, 1);
-    wGrid_->addWidget(new Wt::WText("NE"),    0, 2);
-    wGrid_->addWidget(new Wt::WText("West"),  1, 0);
-    wGrid_->addWidget(new Wt::WText("East"),  1, 2);
-    wGrid_->addWidget(new Wt::WText("SW"),    2, 0);
-    wGrid_->addWidget(new Wt::WText("South"), 2, 1);
-    wGrid_->addWidget(new Wt::WText("SE"),    2, 2);
-#endif
-
-}
-
+// Class method
 Sawyer::CommandLine::ParserResult
 Application::parseCommandLine(int argc, char *argv[], Settings &settings)
 {
@@ -64,17 +41,6 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
 
     // Generic switches
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
-    gen.insert(Switch("use-semantics")
-               .intrinsicValue(true, settings.useSemantics)
-               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
-                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                    "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is " +
-                    std::string(settings.useSemantics?"true":"false") + "."));
-    gen.insert(Switch("no-use-semantics")
-               .key("use-semantics")
-               .intrinsicValue(false, settings.useSemantics)
-               .hidden(true));
-
     gen.insert(Switch("config")
                .argument("name", anyParser(settings.configurationName))
                .doc("Directory containing configuration files, or a configuration file itself.  A directory is searched "
@@ -87,92 +53,6 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
 
     // Switches for disassembly
     SwitchGroup dis("Disassembly switches");
-    dis.insert(Switch("isa")
-               .argument("architecture", anyParser(settings.isaName))
-               .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-
-    dis.insert(Switch("allow-discontiguous-blocks")
-               .intrinsicValue(true, settings.allowDiscontiguousBlocks)
-               .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
-                    "the other requirements for a basic block are still met. Discontiguous blocks can be formed when a "
-                    "compiler fails to optimize away an opaque predicate for a conditional branch, or when basic blocks "
-                    "are scattered in memory by the introduction of unconditional jumps.  The @s{no-allow-discontiguous-blocks} "
-                    "switch disables this feature and can slightly improve partitioner performance by avoiding cases where "
-                    "an unconditional branch initially creates a larger basic block which is later discovered to be "
-                    "multiple blocks.  The default is to " + std::string(settings.allowDiscontiguousBlocks?"":"not ") +
-                    "allow discontiguous basic blocks."));
-    dis.insert(Switch("no-allow-discontiguous-blocks")
-               .key("allow-discontiguous-blocks")
-               .intrinsicValue(false, settings.allowDiscontiguousBlocks)
-               .hidden(true));
-
-    dis.insert(Switch("find-function-padding")
-               .intrinsicValue(true, settings.findFunctionPadding)
-               .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
-                    "lowest address of a function and attach them to the function as static data.  The "
-                    "@s{no-find-function-padding} switch turns this off.  The default is to " +
-                    std::string(settings.findFunctionPadding?"":"not ") + "search for padding."));
-    dis.insert(Switch("no-find-function-padding")
-               .key("find-function-padding")
-               .intrinsicValue(false, settings.findFunctionPadding)
-               .hidden(true));
-
-    dis.insert(Switch("follow-ghost-edges")
-               .intrinsicValue(true, settings.followGhostEdges)
-               .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
-                    "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
-                    "is " + std::string(settings.followGhostEdges?"true":"false") + "."));
-    dis.insert(Switch("no-follow-ghost-edges")
-               .key("follow-ghost-edges")
-               .intrinsicValue(false, settings.followGhostEdges)
-               .hidden(true));
-
-    dis.insert(Switch("find-dead-code")
-               .intrinsicValue(true, settings.findDeadCode)
-               .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
-                    "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
-                    "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
-                    std::string(settings.findDeadCode?"true":"false") + "."));
-    dis.insert(Switch("no-find-dead-code")
-               .key("find-dead-code")
-               .intrinsicValue(false, settings.findDeadCode)
-               .hidden(true));
-
-    dis.insert(Switch("pe-scrambler")
-               .argument("dispatcher_address", nonNegativeIntegerParser(settings.peScramblerDispatcherVa))
-               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
-                    "that go into the specified @v{dispatcher_address} are immediately rewritten so they appear to go "
-                    "instead to the function contained in the dispatcher table which normally immediately follows the "
-                    "dispatcher function.  The dispatcher function is quite easy to find in a call graph because nearly "
-                    "everything calls it -- it will likely have far and away more callers than anything else.  Setting the "
-                    "address to zero disables this module (which is the default)."));
-
-    dis.insert(Switch("intra-function-code")
-               .intrinsicValue(true, settings.intraFunctionCode)
-               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                    "followed by the same single function then a basic block is create at the beginning of that region and "
-                    "added as a member of the surrounding function.  A function block discover phase follows in order to "
-                    "find the instructions for the new basic blocks and to follow their control flow to add additional "
-                    "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
-                    "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
-                    "switch turns this off. The default is to " + std::string(settings.intraFunctionCode?"":"not ") +
-                    "perform this analysis."));
-    dis.insert(Switch("no-intra-function-code")
-               .key("intra-function-code")
-               .intrinsicValue(false, settings.intraFunctionCode)
-               .hidden(true));
-
-    dis.insert(Switch("intra-function-data")
-               .intrinsicValue(true, settings.intraFunctionData)
-               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                    "followed by the same function then add that region of memory to that function as a static data block."
-                    "The @s{no-intra-function-data} switch turns this feature off.  The default is " +
-                    std::string(settings.intraFunctionData?"true":"false") + "."));
-    dis.insert(Switch("no-intra-function-data")
-               .key("intra-function-data")
-               .intrinsicValue(false, settings.intraFunctionData)
-               .hidden(true));
-
     dis.insert(Switch("remove-zeros")
                .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
                .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
@@ -207,97 +87,29 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
     return parser.with(gen).with(dis).with(server).parse(argc, argv).apply();
 }
 
+// Functor to create a new application on first connection to server
 class AppCreator {
-    P2::Partitioner &partitioner_;
+    std::vector<std::string> specimenNames_;
 public:
-    AppCreator(P2::Partitioner &partitioner): partitioner_(partitioner) {}
+    explicit AppCreator(const std::vector<std::string> &specimenNames): specimenNames_(specimenNames) {}
     Wt::WApplication* operator()(const Wt::WEnvironment &env) {
-        Wt::WApplication *app = new Application(partitioner_, env);
-
-        // Hexdump style sheet rules. The colors here are the same as those used by WAddressSpace.
-        app->styleSheet().addRule(".hexdump_evenrow", "font-family:monospace;");
-        app->styleSheet().addRule(".hexdump_oddrow", "font-family:monospace; background-color:#f9f9f9;");
-        app->styleSheet().addRule(".hexdump_unmapped", "background-color:black;");
-        app->styleSheet().addRule(".hexdump_addr_none", "font-family:monospace;"
-                                  " background-color:" + toHtml(darken(Color::red, 0.25)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_r", "font-family:monospace;"
-                                  "background-color:" + toHtml(Color::RGB(0.9, 0.8, 0)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_w", "font-family:monospace;"
-                                  " background-color:" + toHtml(fade(darken(Color::red, 0.25), 0.75)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_x", "font-family:monospace;"
-                                  " background-color:" + toHtml(darken(Color::green, 0.15)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_rw", "font-family:monospace;"
-                                  " background-color:" + toHtml(fade(Color::RGB(0.9, 0.8, 0), 0.75)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_rx", "font-family:monospace;"
-                                  " background-color:" + toHtml(darken(Color::green, 0.15)) + ";"); // same as execute-only
-        app->styleSheet().addRule(".hexdump_addr_wx", "font-family:monospace;"
-                                  " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
-        app->styleSheet().addRule(".hexdump_addr_rwx", "font-family:monospace;"
-                                  " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
-
-        return app;
+        return new Application(specimenNames_, env);
     }
 };
 
-
+// Class method
 void
 Application::main(int argc, char *argv[]) {
     // Do this explicitly since librose doesn't do this automatically yet
     Diagnostics::initialize();
+    mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
+    Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse the command-line
-    P2::Engine engine;
     Settings settings;
     std::vector<std::string> specimenNames = Application::parseCommandLine(argc, argv, settings).unreachedArgs();
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    engine.opaquePredicateSearch(settings.findDeadCode);
-    engine.intraFunctionCodeSearch(settings.intraFunctionCode);
-
-    // Load the specimen as raw data or an ELF or PE container
-    MemoryMap map = engine.load(specimenNames);
-    P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
-    SgAsmInterpretation *interp = engine.interpretation();
-
-    // Obtain a suitable disassembler if none was specified on the command-line
-    Disassembler *disassembler = engine.obtainDisassembler();
-    if (NULL==disassembler)
-        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-
-    // Create the partitioner
-    P2::Partitioner partitioner = engine.createTunedPartitioner();
-    partitioner.enableSymbolicSemantics(settings.useSemantics);
-    if (settings.followGhostEdges)
-        partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
-    if (!settings.allowDiscontiguousBlocks)
-        partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
-    if (settings.peScramblerDispatcherVa) {
-        P2::ModulesPe::PeDescrambler::Ptr cb = P2::ModulesPe::PeDescrambler::instance(settings.peScramblerDispatcherVa);
-        cb->nameKeyAddresses(partitioner);              // give names to certain PEScrambler things
-        partitioner.basicBlockCallbacks().append(cb);
-        partitioner.attachFunction(P2::Function::instance(settings.peScramblerDispatcherVa,
-                                                          partitioner.addressName(settings.peScramblerDispatcherVa),
-                                                          SgAsmFunction::FUNC_USERDEF)); 
-    }
-    if (!settings.configurationName.empty()) {
-        Sawyer::Message::Stream info(mlog[INFO]);
-        info <<"loading configuration files";
-        size_t nItems = engine.configureFromFile(partitioner, settings.configurationName);
-        info <<"; configured " <<StringUtility::plural(nItems, "items") <<"\n";
-    }
-    partitioner.memoryMap().dump(std::cout);            // show what we'll be working on
-
-    // Disassemble and partition into functions
-    engine.runPartitioner(partitioner, interp);
-    std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nFunctions(), "functions") <<"\n";
-    std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBasicBlocks(), "basic blocks") <<"\n";
-    std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nDataBlocks(), "data blocks") <<"\n";
-    std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nInstructions(), "instructions") <<"\n";
-    std::cout <<"CFG contains " <<StringUtility::plural(partitioner.nBytes(), "bytes") <<"\n";
-    std::cout <<"Instruction cache contains "
-              <<StringUtility::plural(partitioner.instructionProvider().nCached(), "instructions") <<"\n";
 
     // Start the web server
     int wtArgc = 0;
@@ -310,11 +122,215 @@ Application::main(int argc, char *argv[]) {
     wtArgv[wtArgc++] = strdup("--http-port");
     wtArgv[wtArgc++] = strdup(boost::lexical_cast<std::string>(settings.httpPort).c_str());
     wtArgv[wtArgc] = NULL;
-    AppCreator ac(partitioner);
+    AppCreator ac(specimenNames);
     Wt::WRun(wtArgc, wtArgv, ac);
 
     exit(0);
 }
+
+void
+Application::init() {
+    setTitle("bROwSE");
+
+    // This looks nicer than setCssTheme("polished"), but requires some minor CSS adjustments:
+    //  + IMG should not be restricted to 100% available width, otherwise CFGs will be scaled down by the browser to a point
+    //     which might be unreadable.
+    setTheme(new Wt::WBootstrapTheme);
+
+    // Hexdump style sheet rules. The colors here are the same as those used by WAddressSpace.
+    styleSheet().addRule(".hexdump_evenrow", "font-family:monospace;");
+    styleSheet().addRule(".hexdump_oddrow", "font-family:monospace; background-color:#f9f9f9;");
+    styleSheet().addRule(".hexdump_unmapped", "background-color:black;");
+    styleSheet().addRule(".hexdump_addr_none", "font-family:monospace;"
+                         " background-color:" + toHtml(darken(Color::red, 0.25)) + ";");
+    styleSheet().addRule(".hexdump_addr_r", "font-family:monospace;"
+                         "background-color:" + toHtml(Color::RGB(0.9, 0.8, 0)) + ";");
+    styleSheet().addRule(".hexdump_addr_w", "font-family:monospace;"
+                         " background-color:" + toHtml(fade(darken(Color::red, 0.25), 0.75)) + ";");
+    styleSheet().addRule(".hexdump_addr_x", "font-family:monospace;"
+                         " background-color:" + toHtml(darken(Color::green, 0.15)) + ";");
+    styleSheet().addRule(".hexdump_addr_rw", "font-family:monospace;"
+                         " background-color:" + toHtml(fade(Color::RGB(0.9, 0.8, 0), 0.75)) + ";");
+    styleSheet().addRule(".hexdump_addr_rx", "font-family:monospace;"
+                         " background-color:" + toHtml(darken(Color::green, 0.15)) + ";"); // same as execute-only
+    styleSheet().addRule(".hexdump_addr_wx", "font-family:monospace;"
+                         " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
+    styleSheet().addRule(".hexdump_addr_rwx", "font-family:monospace;"
+                         " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
+
+    // Grid layout
+    root()->setLayout(wGrid_ = new Wt::WGridLayout());
+    wGrid_->setRowStretch(1, 1);
+    wGrid_->setColumnStretch(1, 1);
+
+    // Logo (reset button)
+    // FIXME[Robb P. Matzke 2014-12-27]: eventually this should be a reset button
+    Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/logo.jpg");
+    wGrid_->addWidget(compassRose, 0, 0);
+
+    // The central region the page is a set of tabs that are visible or not depending on the context
+    wGrid_->addWidget(instantiateMainTabs(), 1, 1);
+
+#if 0 // DEBUGGING [Robb P. Matzke 2014-09-12]
+    wGrid_->addWidget(new Wt::WText("North"), 0, 1);
+    wGrid_->addWidget(new Wt::WText("NE"),    0, 2);
+    wGrid_->addWidget(new Wt::WText("West"),  1, 0);
+    wGrid_->addWidget(new Wt::WText("East"),  1, 2);
+    wGrid_->addWidget(new Wt::WText("SW"),    2, 0);
+    wGrid_->addWidget(new Wt::WText("South"), 2, 1);
+    wGrid_->addWidget(new Wt::WText("SE"),    2, 2);
+#endif
+}
+
+Wt::WContainerWidget*
+Application::instantiateMainTabs() {
+    Wt::WContainerWidget *mainTabContainer = new Wt::WContainerWidget;
+    Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+    mainTabContainer->setLayout(vbox);
+
+    wMainTabs_ = new Wt::WTabWidget;
+    wMainTabs_->currentChanged().connect(boost::bind(&Application::changeTab2, this, _1));
+    vbox->addWidget(wMainTabs_, 1 /*stretch*/);
+
+    for (size_t i=0; i<NMainTabs; ++i) {
+        Wt::WString tabName;
+        Wt::WContainerWidget *tabContent = NULL;
+        switch ((MainTab)i) {
+            case PartitionerTab: {
+                tabName = "Partitioner";
+                tabContent = wPartitioner_ = new WPartitioner(ctx_);
+                wPartitioner_->specimenParsed().connect(boost::bind(&Application::handleSpecimenParsed, this, _1));
+                wPartitioner_->specimenLoaded().connect(boost::bind(&Application::handleSpecimenLoaded, this, _1));
+                wPartitioner_->specimenPartitioned().connect(boost::bind(&Application::handleSpecimenPartitioned, this, _1));
+                break;
+            }
+            case MemoryMapTab: {
+                tabName = "Memory Map";
+                tabContent = wMemoryMap_ = new WMemoryMap;
+                break;
+            }
+            case FunctionListTab: {
+                tabName = "Functions";
+                tabContent = wFunctionList_ = new WFunctionList(ctx_);
+                wFunctionList_->functionChanged().connect(boost::bind(&Application::changeFunction, this, _1));
+                wFunctionList_->functionRowDoubleClicked().connect(boost::bind(&Application::changeFunctionSummary, this, _1));
+                break;
+            }
+            case FunctionSummaryTab: {
+                tabName = "Summary";
+                tabContent = wFunctionSummary_ = new WFunctionSummary(ctx_);
+                break;
+            }
+            case FunctionCfgTab: {
+                tabName = "CFG";
+                tabContent = wFunctionCfg_ = new WFunctionCfg(ctx_);
+                wFunctionCfg_->functionChanged().connect(boost::bind(&Application::changeFunction, this, _1));
+                wFunctionCfg_->functionClicked().connect(boost::bind(&Application::changeFunction, this, _1));
+                wFunctionCfg_->addressClicked().connect(boost::bind(&Application::showHexDumpAtAddress, this, _1));
+                break;
+            }
+            default:
+                ASSERT_not_reachable("invalid main tab");
+        }
+        ASSERT_not_null(tabContent);
+        ASSERT_forbid(tabName.empty());
+        wMainTabs_->addTab(tabContent, tabName);
+    }
+
+    wPartitioner_->memoryMapProvider(wMemoryMap_);
+    showHideTabs();
+    return mainTabContainer;
+}
+
+bool
+Application::isTabAvailable(MainTab idx) {
+    ASSERT_require(idx < NMainTabs);
+    switch (idx) {
+        case PartitionerTab:
+            return true;
+        case MemoryMapTab:
+            return !wMemoryMap_->memoryMap().isEmpty();
+        case FunctionListTab:
+            return (!ctx_.partitioner.isDefaultConstructed() && wFunctionList_->functions().size());
+        case FunctionSummaryTab:
+        case FunctionCfgTab:
+            return currentFunction_ != NULL;
+        default:
+            ASSERT_not_reachable("invalid main tab");
+    }
+}
+
+void
+Application::showHideTabs() {
+    Sawyer::Optional<size_t> someAvail;
+    for (size_t i=0; i<NMainTabs; ++i) {
+        bool avail = isTabAvailable((MainTab)i);
+        wMainTabs_->setTabHidden(i, !avail);
+        if (avail && (!someAvail || i<=(size_t)wMainTabs_->count()))
+            someAvail = i;
+    }
+
+    // If current tab is now hidden we need to select some other
+    if (wMainTabs_->isTabHidden(wMainTabs_->currentIndex())) {
+        ASSERT_require2(someAvail, "all main tabs are hidden");
+        wMainTabs_->setCurrentIndex(*someAvail);
+    }
+}
+
+void
+Application::handleSpecimenParsed(bool done) {
+    showHideTabs();
+}
+
+void
+Application::handleSpecimenLoaded(bool done) {
+    if (done) {
+        wMemoryMap_->memoryMap(ctx_.engine.memoryMap());
+    } else {
+        wMemoryMap_->memoryMap(MemoryMap());
+    }
+    showHideTabs();
+}
+
+void
+Application::handleSpecimenPartitioned(bool done) {
+    wMemoryMap_->isEditable(!done);                     // disallow memory map editing once the partitioner has run
+    wFunctionList_->reload();
+    if (!done)
+        currentFunction_ = P2::Function::Ptr();
+    showHideTabs();
+}
+
+void
+Application::changeTab(MainTab tab) {
+    wMainTabs_->setCurrentIndex(tab);
+
+    // Special handling for the FunctionCfgTab.  This widget's redraw can be very expensive and we don't want to do it until
+    // we're actually switching to that tab (because we might never switch to it).  Since the redraw is triggered by its
+    // changeFunction method, we'll delay calling it until we change to it.
+    if (FunctionCfgTab == tab)
+        wFunctionCfg_->changeFunction(currentFunction_);
+}
+
+void
+Application::changeFunction(const P2::Function::Ptr &function) {
+    if (function != currentFunction_) {
+        currentFunction_ = function;
+        wFunctionSummary_->changeFunction(function);
+        // wFunctionCfg_->changeFunction(function);  -- not called. See comment in changeTab
+        showHideTabs();
+    }
+}
+
+// called when a table row is double clicked in the WFunctionList widget.
+void
+Application::changeFunctionSummary(const P2::Function::Ptr &function) {
+    changeFunction(function);
+    changeTab(FunctionSummaryTab);
+}
+
+void
+Application::showHexDumpAtAddress(rose_addr_t va) {}
 
 } // namespace
 

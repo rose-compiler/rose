@@ -30,6 +30,17 @@ public:
         init();
     }
 
+    /** Load functions from the partitioner.
+     *
+     *  This may be called at any time when the partitioner's list of functions changes.  It invalidates all data in the table
+     *  model, so it may not be very fast. */
+    void reload();
+
+    /** Functions being displayed.
+     *
+     *  Returns a vector of the functions that are being displayed in the order they're being displayed. */
+    const std::vector<P2::Function::Ptr>& functions() const;
+
     /** Currently function.
      *
      *  Returns the currently selected function, or a null pointer if no function is currently selected. The currently selected

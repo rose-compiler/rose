@@ -67,6 +67,19 @@ WFunctionList::init() {
     updateFunctionHeatMaps();
 }
 
+void
+WFunctionList::reload() {
+    model_->reload();
+    wAddressSpace_->clear();
+    wAddressSpace_->insertSegmentsAndFunctions();
+}
+
+const std::vector<P2::Function::Ptr>&
+WFunctionList::functions() const {
+    ASSERT_not_null(model_);
+    return model_->functions();
+}
+
 // Internal: called when top gutter is clicked. Zoom to segment and emit segmentAddressClicked
 void
 WFunctionList::selectSegmentByAddress(rose_addr_t va, const Wt::WMouseEvent &event) {

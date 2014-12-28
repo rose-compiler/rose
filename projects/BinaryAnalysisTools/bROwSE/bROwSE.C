@@ -2,6 +2,8 @@
 
 namespace bROwSE {
 
+Sawyer::Message::Facility mlog;
+
 P2::Attribute::Id ATTR_NBytes(-1);
 P2::Attribute::Id ATTR_NInsns(-1);
 P2::Attribute::Id ATTR_NIntervals(-1);
