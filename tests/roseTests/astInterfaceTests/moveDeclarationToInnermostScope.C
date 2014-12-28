@@ -879,7 +879,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
           SageInterface::prependStatement (decl_copy, adjusted_scope);
 
           SgStatement* old_body  = isSgStatement(target_scope);
-          SgStatement* true_body = isSgStatement(target_scope);
+       // SgStatement* true_body = isSgStatement(target_scope);
 
           bool old_body_is_compiler_generated = old_body->isCompilerGenerated();
           bool old_body_is_compiler_generated_fromFileInfo = old_body->get_file_info()->isCompilerGenerated();
@@ -889,21 +889,23 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 #endif
           if (old_body_is_compiler_generated == true || old_body_is_compiler_generated_fromFileInfo == true)
              {
-               ROSE_ASSERT(true_body->get_file_info()->isTransformation() == false);
+            // ROSE_ASSERT(true_body->get_file_info()->isTransformation() == false);
+               if (old_body->get_file_info()->isTransformation() == false)
+                  {
+                 // DQ (12/12/2014): Output a message about this, at least we want to decide if marking this as a  
+                 // transformation should be a part of the semantics in SageInterface::prependStatement() function.
+                    printf ("Marking this SgBasicBlock, which is compiler-generated, as a transformation \n",old_body);
 
-            // DQ (12/12/2014): Output a message about this, at least we want to decide if marking this as a  
-            // transformation should be a part of the semantics in SageInterface::prependStatement() function.
-               printf ("Marking this SgBasicBlock, which is compiler-generated, as a transformation \n",true_body);
+                 // true_body->setTransformation();
+                 // true_body->get_file_info()->setTransformation();
+                    old_body->get_startOfConstruct()->setTransformation();
+                    old_body->get_endOfConstruct()->setTransformation();
+                  }
 
-            // true_body->setTransformation();
-            // true_body->get_file_info()->setTransformation();
-               true_body->get_startOfConstruct()->setTransformation();
-               true_body->get_endOfConstruct()->setTransformation();
-               
-               ROSE_ASSERT(true_body->get_file_info()->isTransformation() == true);
-               ROSE_ASSERT(true_body->isTransformation() == true);
+               ROSE_ASSERT(old_body->get_file_info()->isTransformation() == true);
+               ROSE_ASSERT(old_body->isTransformation() == true);
 
-            // printf ("In processTargetScopes(): true_body = %p = %s \n",true_body,true_body->class_name().c_str());
+            // printf ("In processTargetScopes(): old_body = %p = %s \n",old_body,old_body->class_name().c_str());
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -1068,8 +1070,11 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
        if (isSgForStatement(bottom_scope)||isSgDoWhileStmt(bottom_scope) || isSgWhileStmt(bottom_scope))
        {
          cout<<"Warning: aggressive declaration moving across a loop boundary at line "<< bottom_scope->get_file_info()->get_line()<<endl;
+#if 0
+      // DQ (12/26/2014): commented out to avoid overly verbose output.
          cout<<"The declaration in question has the following file info:"<<endl;
          decl->get_file_info()->display();
+#endif
        }
 
      } while (top_scope!=bottom_scope);
