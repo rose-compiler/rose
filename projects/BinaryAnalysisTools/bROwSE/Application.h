@@ -10,11 +10,13 @@
 
 namespace bROwSE {
 
-class WPartitioner;
-class WMemoryMap;
+class WAssemblyListing;
 class WFunctionCfg;
 class WFunctionList;
 class WFunctionSummary;
+class WHexDump;
+class WMemoryMap;
+class WPartitioner;
 
 class Application: public Wt::WApplication {
 public:
@@ -25,6 +27,8 @@ public:
         FunctionListTab,                                /**< List of all known functions. */
         FunctionSummaryTab,                             /**< Summary information for one function. */
         FunctionCfgTab,                                 /**< Control flow graph for one function. */
+        AssemblyTab,                                    /**< More traditional assembly listing. */
+        HexDumpTab,                                     /**< Dump raw data bytes from anywhere in memory. */
         NMainTabs
     };
 
@@ -37,13 +41,15 @@ private:
     WFunctionList *wFunctionList_;                      // widget listing all functions
     WFunctionSummary *wFunctionSummary_;                // summary info for one function at a time
     WFunctionCfg *wFunctionCfg_;                        // control flow graph for one function at a time
+    WHexDump *wHexDump_;                                // raw data from anywhere in memory
+    WAssemblyListing *wAssembly_;                       // traditional assembly listing
     P2::Function::Ptr currentFunction_;                 // current function or null
 
 public:
     explicit Application(const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
         : Wt::WApplication(env), ctx_(specimenNames, this),
           wGrid_(NULL), wMainTabs_(NULL), wPartitioner_(NULL), wMemoryMap_(NULL), wFunctionList_(NULL),
-          wFunctionSummary_(NULL), wFunctionCfg_(NULL) {
+          wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wAssembly_(NULL) {
         init();
     }
 
@@ -69,10 +75,11 @@ private:
 
     void changeFunction(const P2::Function::Ptr &function);
 
-    // Change current function and go to the FunctionSummary tab
-    void changeFunctionSummary(const P2::Function::Ptr &function);
+    void changeFunctionDoubleClick(const P2::Function::Ptr &function);
 
     void showHexDumpAtAddress(rose_addr_t);
+
+    void memoryMapChanged();
 };
 
 } // namespace

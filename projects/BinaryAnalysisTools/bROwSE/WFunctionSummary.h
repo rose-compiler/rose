@@ -30,6 +30,7 @@ public:
     std::vector<FunctionAnalyzer::Ptr>& analyzers() { return analyzers_; }
     /** @} */
 
+    P2::Function::Ptr function() { return function_; }
     void changeFunction(const P2::Function::Ptr &function);
 
 private:

@@ -1,8 +1,10 @@
 #include <bROwSE/Application.h>
 
+#include <bROwSE/WAssemblyListing.h>
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
+#include <bROwSE/WHexDump.h>
 #include <bROwSE/WMemoryMap.h>
 #include <bROwSE/WPartitioner.h>
 #include <Disassembler.h>                               // ROSE
@@ -207,13 +209,15 @@ Application::instantiateMainTabs() {
             case MemoryMapTab: {
                 tabName = "Memory Map";
                 tabContent = wMemoryMap_ = new WMemoryMap;
+                wMemoryMap_->mapChanged().connect(boost::bind(&Application::memoryMapChanged, this));
                 break;
             }
             case FunctionListTab: {
                 tabName = "Functions";
                 tabContent = wFunctionList_ = new WFunctionList(ctx_);
                 wFunctionList_->functionChanged().connect(boost::bind(&Application::changeFunction, this, _1));
-                wFunctionList_->functionRowDoubleClicked().connect(boost::bind(&Application::changeFunctionSummary, this, _1));
+                wFunctionList_->functionRowDoubleClicked()
+                    .connect(boost::bind(&Application::changeFunctionDoubleClick, this, _1));
                 break;
             }
             case FunctionSummaryTab: {
@@ -227,6 +231,16 @@ Application::instantiateMainTabs() {
                 wFunctionCfg_->functionChanged().connect(boost::bind(&Application::changeFunction, this, _1));
                 wFunctionCfg_->functionClicked().connect(boost::bind(&Application::changeFunction, this, _1));
                 wFunctionCfg_->addressClicked().connect(boost::bind(&Application::showHexDumpAtAddress, this, _1));
+                break;
+            }
+            case AssemblyTab: {
+                tabName = "Assembly";
+                tabContent = wAssembly_ = new WAssemblyListing(ctx_);
+                break;
+            }
+            case HexDumpTab: {
+                tabName = "Hexdump";
+                tabContent = wHexDump_ = new WHexDump;
                 break;
             }
             default:
@@ -254,7 +268,10 @@ Application::isTabAvailable(MainTab idx) {
             return (!ctx_.partitioner.isDefaultConstructed() && wFunctionList_->functions().size());
         case FunctionSummaryTab:
         case FunctionCfgTab:
+        case AssemblyTab:
             return currentFunction_ != NULL;
+        case HexDumpTab:
+            return !wHexDump_->memoryMap().isEmpty();
         default:
             ASSERT_not_reachable("invalid main tab");
     }
@@ -284,6 +301,7 @@ Application::handleSpecimenParsed(bool done) {
 
 void
 Application::handleSpecimenLoaded(bool done) {
+    // Changing the WMemoryMap will cause it to emit a mapChanged signal, which is wired to our memoryMapChanged method.
     if (done) {
         wMemoryMap_->memoryMap(ctx_.engine.memoryMap());
     } else {
@@ -301,36 +319,75 @@ Application::handleSpecimenPartitioned(bool done) {
     showHideTabs();
 }
 
+// Called either when the current function is changed or when the user clicks on a tab.
 void
 Application::changeTab(MainTab tab) {
-    wMainTabs_->setCurrentIndex(tab);
+    // Update the child before we switch to it.  Some of these operations are expensive, which is why we've delayed them until
+    // we're about to make the child visible.
+    switch (tab) {
+        case PartitionerTab:
+            break;
+        case MemoryMapTab:
+            break;
+        case FunctionListTab:
+            wFunctionList_->changeFunction(currentFunction_);
+            break;
+        case FunctionSummaryTab:
+            wFunctionSummary_->changeFunction(currentFunction_);
+            wFunctionSummary_->show();
+            break;
+        case FunctionCfgTab:
+            wFunctionCfg_->changeFunction(currentFunction_);
+            wFunctionCfg_->show();
+            break;
+        case AssemblyTab:
+            wAssembly_->changeFunction(currentFunction_);
+            wAssembly_->show();
+            break;
+        case HexDumpTab:
+            break;
+        default:
+            ASSERT_not_reachable("invalid main tab");
+    }
 
-    // Special handling for the FunctionCfgTab.  This widget's redraw can be very expensive and we don't want to do it until
-    // we're actually switching to that tab (because we might never switch to it).  Since the redraw is triggered by its
-    // changeFunction method, we'll delay calling it until we change to it.
-    if (FunctionCfgTab == tab)
-        wFunctionCfg_->changeFunction(currentFunction_);
+    // When moving away from certain expensive tabs, hide the tab so stale info isn't shown when we return.
+    wFunctionSummary_->setHidden(FunctionSummaryTab!=tab && wFunctionSummary_->function()!=currentFunction_);
+    wFunctionCfg_->setHidden(FunctionCfgTab!=tab && wFunctionCfg_->function()!=currentFunction_);
+    wAssembly_->setHidden(AssemblyTab!=tab && wAssembly_->function()!=currentFunction_);
+
+    // redundant when use clicked on a tab, but not otherwise
+    wMainTabs_->setCurrentIndex(tab);
 }
 
 void
 Application::changeFunction(const P2::Function::Ptr &function) {
+    // In order to keep this fast, we want to delay changing the current function in the children until that child is actually
+    // displayed. See changeTab.
     if (function != currentFunction_) {
         currentFunction_ = function;
-        wFunctionSummary_->changeFunction(function);
-        // wFunctionCfg_->changeFunction(function);  -- not called. See comment in changeTab
         showHideTabs();
+        changeTab((MainTab)(wMainTabs_->currentIndex()));
     }
 }
 
 // called when a table row is double clicked in the WFunctionList widget.
 void
-Application::changeFunctionSummary(const P2::Function::Ptr &function) {
+Application::changeFunctionDoubleClick(const P2::Function::Ptr &function) {
     changeFunction(function);
-    changeTab(FunctionSummaryTab);
+    changeTab(FunctionCfgTab);
+}
+
+// This is called when the user edits the memory map or a new map is given to the WMemoryMap widget.
+void
+Application::memoryMapChanged() {
+    wHexDump_->memoryMap(wMemoryMap_->memoryMap());
 }
 
 void
-Application::showHexDumpAtAddress(rose_addr_t va) {}
+Application::showHexDumpAtAddress(rose_addr_t va) {
+    wHexDump_->makeVisible(va);
+    changeTab(HexDumpTab);
+}
 
 } // namespace
 
