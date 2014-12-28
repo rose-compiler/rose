@@ -73,6 +73,7 @@ private:
     MemoryMap memoryMap_;                               // the memory map being manipulated
     Wt::WTable *wTable_;
     bool isEditable_;                                   // can entries be edited?
+    Wt::Signal<> mapChanged_;                           // emitted when the memory map changes
 
     // Information about each segment in the table. We use a list rather than a vector because a list's iterators are stable
     // over insertion and we want to be able to take a reference to a RowGroup and not have it change from under us.  The row
@@ -91,6 +92,8 @@ public:
 
     bool isEditable() const { return isEditable_; }
     void isEditable(bool b);
+
+    Wt::Signal<>& mapChanged() { return mapChanged_; }
 
 private:
     void init();

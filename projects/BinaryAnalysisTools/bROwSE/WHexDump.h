@@ -11,7 +11,7 @@ namespace bROwSE {
 
 /** Data model for the WHexDump widget. */
 class HexDumpModel: public Wt::WAbstractTableModel {
-    Context &ctx_;
+    MemoryMap memoryMap_;
     size_t nRows_;                                      // total number of table rows
 
     typedef Sawyer::Container::Map<rose_addr_t, size_t> AddrRowMap;
@@ -25,9 +25,15 @@ class HexDumpModel: public Wt::WAbstractTableModel {
 
 
 public:
-    HexDumpModel(Context &ctx): ctx_(ctx) {
-        init();
-    }
+    /** Default constructor. Displays an empty memory map. */
+    HexDumpModel() { init(); }
+
+    /** Memory map supplying data.
+     *
+     * @{ */
+    const MemoryMap& memoryMap() const { return memoryMap_; }
+    void memoryMap(const MemoryMap&);
+    /** @} */
 
     /** Return address for start of table row.
      *
@@ -80,19 +86,26 @@ private:
 
 /** Widget that shows a hexdump. */
 class WHexDump: public Wt::WContainerWidget {
-    Context &ctx_;
     Wt::WLineEdit *wAddressEdit_;                       // for entering a goto address
     HexDumpModel *model_;
     Wt::WTableView *tableView_;
 
 public:
-    explicit WHexDump(Context &ctx, Wt::WContainerWidget *parent = NULL)
-        : WContainerWidget(parent), ctx_(ctx), wAddressEdit_(NULL), model_(NULL), tableView_(NULL) {
+    /** Default constructor. Displays an empty memory map. */
+    explicit WHexDump(Wt::WContainerWidget *parent = NULL)
+        : WContainerWidget(parent), wAddressEdit_(NULL), model_(NULL), tableView_(NULL) {
         init();
     }
 
     /** Show the address closest to the specified address. */
     void makeVisible(rose_addr_t);
+
+    /** Memory map supplying data.
+     *
+     * @{ */
+    const MemoryMap& memoryMap() const { return model_->memoryMap(); }
+    void memoryMap(const MemoryMap &m) { model_->memoryMap(m); }
+    /** @} */
 
 private:
     void init();

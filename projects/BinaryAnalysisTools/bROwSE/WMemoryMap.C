@@ -55,6 +55,7 @@ void
 WMemoryMap::memoryMap(const MemoryMap &map) {
     memoryMap_ = map;
     synchronize();
+    mapChanged_.emit();
 }
 
 // Synchronize the RowGroup list and the WTable rows with the MemoryMap
@@ -356,6 +357,7 @@ WMemoryMap::finishDeleteSegment(Wt::WText *wId) {
     ASSERT_require(rg.editingColumn == DeleteColumn);
     memoryMap_.erase(findMapNode(rg)->key());
     synchronize();
+    mapChanged_.emit();
 }
 
 void
@@ -403,6 +405,7 @@ WMemoryMap::finishMoveSegment(Wt::WText *wId) {
             MemoryMap::Segment newSegment = mmNode->value();
             memoryMap_.erase(mmNode->key());
             memoryMap_.insert(newInterval, newSegment);
+            mapChanged_.emit();
         }
     }
     synchronize();
@@ -453,6 +456,7 @@ WMemoryMap::finishMergeSegments(Wt::WText *wId) {
 
     // Insert the new segment over the top of the two we're replacing
     memoryMap_.insert(newInterval, newSegment);
+    mapChanged_.emit();
     synchronize();
 }
 
@@ -534,6 +538,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
             if (value > rg.segmentVa) {
                 AddressInterval toErase = AddressInterval::hull(rg.segmentVa, value-1);
                 memoryMap_.erase(toErase);
+                mapChanged_.emit();
             } else if (value < rg.segmentVa) {
                 MemoryMap::Segment newSegment = mmNode->value();
                 rose_addr_t negDelta = rg.segmentVa - value;
@@ -541,6 +546,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 newSegment.offset(mmNode->value().offset() - negDelta);
                 AddressInterval newInterval = AddressInterval::hull(value, mmNode->key().greatest());
                 memoryMap_.insert(newInterval, newSegment);
+                mapChanged_.emit();
             }
             break;
         case GreatestVaColumn:
@@ -550,9 +556,11 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 ASSERT_require(newSegment.buffer()->available(newSegment.offset()) >= newSize);
                 AddressInterval newInterval = AddressInterval::baseSize(rg.segmentVa, newSize);
                 memoryMap_.insert(newInterval, newSegment);
+                mapChanged_.emit();
             } else if (value < mmNode->key().greatest()) {
                 AddressInterval toErase = AddressInterval::hull(value+1, mmNode->key().greatest());
                 memoryMap_.erase(toErase);
+                mapChanged_.emit();
             }
             break;
         case SizeColumn:
@@ -562,9 +570,11 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
                 ASSERT_require(newSegment.buffer()->available(newSegment.offset()) >= newSize);
                 AddressInterval newInterval = AddressInterval::baseSize(rg.segmentVa, newSize);
                 memoryMap_.insert(newInterval, newSegment);
+                mapChanged_.emit();
             } else if (value < mmNode->key().size()) {
                 AddressInterval toErase = AddressInterval::baseSize(rg.segmentVa, value);
                 memoryMap_.erase(toErase);
+                mapChanged_.emit();
             }
             break;
         case SplitColumn: {
@@ -578,6 +588,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
             newSegment.offset(newSegment.offset() + delta);
             AddressInterval newInterval = AddressInterval::hull(value, mmNode->key().greatest());
             memoryMap_.insert(newInterval, newSegment);
+            mapChanged_.emit();
             break;
         }
         default:
@@ -591,14 +602,18 @@ WMemoryMap::toggleAccess(Wt::WText *wId, Wt::WCheckBox *wCheckBox, unsigned acce
     ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
-    unsigned bits = mmNode->value().accessibility();
+    unsigned oldBits = mmNode->value().accessibility();
+    unsigned newBits = oldBits;
     if (wCheckBox->checkState() == Wt::Checked) {
-        bits |= accessBits;
+        newBits |= accessBits;
     } else {
-        bits &= ~accessBits;
+        newBits &= ~accessBits;
     }
-    mmNode->value().accessibility(bits);
-    synchronize();
+    if (newBits != oldBits) {
+        mmNode->value().accessibility(newBits);
+        synchronize();
+        mapChanged_.emit();
+    }
 }
 
 void

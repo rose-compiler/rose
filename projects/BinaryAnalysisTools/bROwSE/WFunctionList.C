@@ -72,6 +72,7 @@ WFunctionList::reload() {
     model_->reload();
     wAddressSpace_->clear();
     wAddressSpace_->insertSegmentsAndFunctions();
+    function_ = P2::Function::Ptr();                    // FIXME[Robb P. Matzke 2014-12-28]: emit functionChanged(NULL)?
 }
 
 const std::vector<P2::Function::Ptr>&

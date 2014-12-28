@@ -19,13 +19,22 @@ static const size_t endColumn = asciiColumn + bytesPerRow;      // index one pas
 
 void
 HexDumpModel::init() {
+}
+
+void
+HexDumpModel::memoryMap(const MemoryMap &map) {
+    layoutAboutToBeChanged().emit();
+    memoryMap_ = map;
+
     // We need to be able to quickly look up the virtual address that corresponds to the first byte of the table row.  Segments
     // occupy contiguous memory addresses but there are gaps between them. We want to show these gaps in the table by a blank
     // line (even if they are zero size gaps). Furthermore, the data should be aligned so that address represented by each
     // table column is consistent modulo N for all rows, where N is the number of bytes displayed per row.  I.e., the address
     // of the first byte of each row should be 0 modulo N.
     size_t row = 0;
-    BOOST_FOREACH (const AddressInterval &interval, ctx_.partitioner.memoryMap().intervals()) {
+    addrRow_.clear();
+    rowAddr_.clear();
+    BOOST_FOREACH (const AddressInterval &interval, memoryMap_.intervals()) {
         addrRow_.insert(interval.least(), row);
         rowAddr_.insert(row, interval.least());
         rose_addr_t beginVa = alignDown(interval.least(), bytesPerRow);
@@ -34,6 +43,8 @@ HexDumpModel::init() {
         row += nRows + 1;                               // +1 is the blank row between segments
     }
     nRows_ = row;
+
+    layoutChanged().emit();
 }
 
 MemoryMap::ConstNodeIterator
@@ -53,11 +64,11 @@ HexDumpModel::rowSegment(size_t row) const {
     rose_addr_t segmentVa = found->value();
     rose_addr_t segmentRowVa = alignDown(segmentVa, bytesPerRow);
     if (row == segmentRowIdx)
-        return ctx_.partitioner.memoryMap().at(segmentVa).findNode();
+        return memoryMap_.at(segmentVa).findNode();
     rose_addr_t rowVa = segmentRowVa + (row - segmentRowIdx) * bytesPerRow;
-    MemoryMap::ConstNodeIterator mmIter = ctx_.partitioner.memoryMap().at(segmentVa).findNode();
+    MemoryMap::ConstNodeIterator mmIter = memoryMap_.at(segmentVa).findNode();
     if (!mmIter->key().isContaining(rowVa))
-        return ctx_.partitioner.memoryMap().nodes().end();// segment separator row
+        return memoryMap_.nodes().end();// segment separator row
     return mmIter;
 }
 
@@ -83,7 +94,7 @@ HexDumpModel::rowAddress(size_t row) const {
     // If the first cell of the row has a address that's unmapped or belongs to some other segment then this must be an empty
     // segement-separator row that has no address.
     rose_addr_t segmentVa = found->value();
-    if (ctx_.partitioner.memoryMap().at(segmentVa).findNode() != ctx_.partitioner.memoryMap().at(rowVa).findNode())
+    if (memoryMap_.at(segmentVa).findNode() != memoryMap_.at(rowVa).findNode())
         return Sawyer::Nothing();
     return rowVa;
 }
@@ -109,7 +120,7 @@ HexDumpModel::cellAddress(size_t row, size_t pseudoColumn) const {
 
     // If the cellVa comes from a different memory segment then it has no address
     rose_addr_t segmentVa = found->value();
-    if (ctx_.partitioner.memoryMap().at(segmentVa).findNode() != ctx_.partitioner.memoryMap().at(cellVa).findNode())
+    if (memoryMap_.at(segmentVa).findNode() != memoryMap_.at(cellVa).findNode())
         return Sawyer::Nothing();
 
     return cellVa;
@@ -118,7 +129,7 @@ HexDumpModel::cellAddress(size_t row, size_t pseudoColumn) const {
 Sawyer::Optional<uint8_t>
 HexDumpModel::readByte(const Sawyer::Optional<rose_addr_t> &cellVa) const {
     uint8_t byte;
-    if (cellVa && ctx_.partitioner.memoryMap().at(*cellVa).limit(1).read(&byte))
+    if (cellVa && memoryMap_.at(*cellVa).limit(1).read(&byte))
         return byte;
     return Sawyer::Nothing();
 }
@@ -228,19 +239,19 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             ASSERT_not_reachable("this column needs data");
         }
     } else if (role == Wt::ToolTipRole) {
-        MemoryMap::ConstNodeIterator mmNode = ctx_.partitioner.memoryMap().nodes().end();
+        MemoryMap::ConstNodeIterator mmNode = memoryMap_.nodes().end();
         rose_addr_t va = 0;
         if (column == addressColumn) {
             mmNode = rowSegment(row);
             va = cellAddress(row, 0).orElse(0);
         } else if (column >= bytesColumn && column < bytesColumn + bytesPerRow &&
                    cellAddress(row, column-bytesColumn).assignTo(va)) {
-            mmNode = ctx_.partitioner.memoryMap().at(va).findNode();
+            mmNode = memoryMap_.at(va).findNode();
         } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow &&
                    cellAddress(row, column-asciiColumn).assignTo(va)) {
-            mmNode = ctx_.partitioner.memoryMap().at(va).findNode();
+            mmNode = memoryMap_.at(va).findNode();
         }
-        if (mmNode != ctx_.partitioner.memoryMap().nodes().end()) {
+        if (mmNode != memoryMap_.nodes().end()) {
             const AddressInterval &interval = mmNode->key();
             const MemoryMap::Segment &segment = mmNode->value();
             std::string tip = StringUtility::htmlEscape(segment.name());
@@ -257,7 +268,7 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             return Wt::WString("hexdump_unmapped");
         } else if (column == addressColumn) {
             MemoryMap::ConstNodeIterator mmIter = rowSegment(row);
-            ASSERT_require(mmIter != ctx_.partitioner.memoryMap().nodes().end()); // would have been caught above
+            ASSERT_require(mmIter != memoryMap_.nodes().end()); // would have been caught above
             unsigned a = mmIter->value().accessibility();
             std::string style;
             if (0!=(a & MemoryMap::READABLE))
@@ -296,7 +307,7 @@ WHexDump::init() {
     Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;        // so the table scrolls horizontally
     tableContainer->setLayout(hbox);
 
-    model_ = new HexDumpModel(ctx_);
+    model_ = new HexDumpModel;
 
     tableView_ = new Wt::WTableView;
     tableView_->setModel(model_);

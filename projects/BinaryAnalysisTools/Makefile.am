@@ -53,7 +53,6 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WBasicBlock.C			\
 	bROwSE/WBasicBlockInsns.C		\
 	bROwSE/WBasicBlockSummary.C		\
-	bROwSE/WFunction.C			\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\
 	bROwSE/WFunctionNavigation.C		\
