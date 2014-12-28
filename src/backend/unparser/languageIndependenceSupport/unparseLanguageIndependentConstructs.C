@@ -992,7 +992,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
 
             // If the next statement is part of a transformation then there will not be a record of it as a token subsequence in the AST's token stream.
                TokenStreamSequenceToNodeMapping* nextStatement_tokenSubsequence = tokenStreamSequenceMap[nextStatement];
-#if 1
+#if 0
                printf ("--- isNested = %s \n",isNested ? "true" : "false");
 #endif
 
@@ -2130,7 +2130,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // if ( SgProject::get_verbose() > 0 && SageInterface::getProject()->get_C_only() == true)
                if ( SgProject::get_verbose() > 0 && (SageInterface::getProject()->get_C_only() == true || SageInterface::getProject()->get_Cxx_only() == true) )
                   {
-                    string s = "/* Unparsing from the AST stmt = " + stmt->class_name() + " */ ";
+                    string s = "/* Unparsing from the AST stmt (or partially from token stream) = " + stmt->class_name() + " */ ";
                     curprint (s);
                   }
 #if 0
