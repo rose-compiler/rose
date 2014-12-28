@@ -7,6 +7,7 @@
 #include <bROwSE/WFunctionSummary.h>
 #include <bROwSE/WHexDump.h>
 #include <bROwSE/WMemoryMap.h>
+#include <bROwSE/WPartitioner.h>
 #include <Wt/WTabWidget>
 #include <Wt/WVBoxLayout>
 
@@ -25,14 +26,20 @@ WFunction::init() {
     vbox->addWidget(wTabs_, 1 /*stretch*/);
     wTabs_->currentChanged().connect(this, &WFunction::setCurrentTab);
 
+    // Partitioner
+    ASSERT_require(PARTITIONER_TAB==0);
+    wPartitioner_ = new WPartitioner(ctx_);
+    wPartitioner_->hide();
+    wTabs_->addTab(wPartitioner_, "Partitioner");
+
     // Memory map
-    ASSERT_require(MEMORY_TAB==0);
+    ASSERT_require(MEMORY_TAB==1);
     wMemoryMap_ = new WMemoryMap(ctx_.partitioner.memoryMap());
     wMemoryMap_->hide();
     wTabs_->addTab(wMemoryMap_, "Memory");
 
     // List of all functions
-    ASSERT_require(FLIST_TAB==1);
+    ASSERT_require(FLIST_TAB==2);
     wFunctionList_ = new WFunctionList(ctx_);
     wFunctionList_->hide();
     wFunctionList_->functionChanged().connect(this, &WFunction::setCurrentFunction);
@@ -40,7 +47,7 @@ WFunction::init() {
     wTabs_->addTab(wFunctionList_, "Functions");
     
     // Function summary information
-    ASSERT_require(SUMMARY_TAB==2);
+    ASSERT_require(SUMMARY_TAB==3);
     wFunctionSummary_ = new WFunctionSummary(ctx_);
     wFunctionSummary_->hide();
     wTabs_->addTab(wFunctionSummary_, "Summary");
@@ -49,7 +56,7 @@ WFunction::init() {
     //
     // When using the BootStrap theme, the img.maxwidth=100% needs to be commented out otherwise no horizontal scroll bars will
     // be added.  Edit resources/themes/bootstrap/2/bootstrap.css.
-    ASSERT_require(CFG_TAB==3);
+    ASSERT_require(CFG_TAB==4);
     wFunctionCfg_ = new WFunctionCfg(ctx_);
     wFunctionCfg_->hide();
     wFunctionCfg_->functionChanged().connect(this, &WFunction::setCurrentFunction);
@@ -58,13 +65,13 @@ WFunction::init() {
     wTabs_->addTab(wFunctionCfg_, "CFG");
 
     // Assembly listing
-    ASSERT_require(ASSEMBLY_TAB==4);
+    ASSERT_require(ASSEMBLY_TAB==5);
     wAssemblyListing_ = new WAssemblyListing(ctx_);
     wAssemblyListing_->hide();
     wTabs_->addTab(wAssemblyListing_, "Assembly");
 
     // Data listing
-    ASSERT_require(HEXDUMP_TAB==5);
+    ASSERT_require(HEXDUMP_TAB==6);
     wHexDump_ = new WHexDump(ctx_);
     wHexDump_->hide();
     wTabs_->addTab(wHexDump_, "Hexdump");
@@ -88,6 +95,9 @@ WFunction::setCurrentTab(int idx) {
     switch (idx) {
         case MEMORY_TAB:
             wMemoryMap_->setHidden(false);
+            break;
+        case PARTITIONER_TAB:
+            wPartitioner_->setHidden(false);
             break;
         case FLIST_TAB:
             wFunctionList_->changeFunction(function_);

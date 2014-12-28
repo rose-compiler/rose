@@ -22,9 +22,16 @@ class FunctionListModel: public Wt::WAbstractTableModel {
 public:
     /** Construct a model having the list of all functions in the partitioner. */
     FunctionListModel(Context &ctx): ctx_(ctx) {
-        BOOST_FOREACH (const P2::Function::Ptr &function, ctx.partitioner.functions())
-            functions_.push_back(function);
+        reload();
     }
+
+    /** Loads functions from the partitioner. */
+    void reload();
+
+    /** All listed functions.
+     *
+     *  Returns the list of functions in the model in the order they are currently sorted and appearing in the WTableView. */
+    const std::vector<P2::Function::Ptr>& functions() const { return functions_; }
 
     /** Returns the function at the specified index, or null. */
     P2::Function::Ptr functionAt(size_t idx);

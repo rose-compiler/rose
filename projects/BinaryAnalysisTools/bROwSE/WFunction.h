@@ -13,13 +13,15 @@ class WFunctionList;
 class WFunctionSummary;
 class WHexDump;
 class WMemoryMap;
+class WPartitioner;
 
 class WFunction: public Wt::WContainerWidget {
 public:
-    enum Tab { MEMORY_TAB, FLIST_TAB, SUMMARY_TAB, CFG_TAB, ASSEMBLY_TAB, HEXDUMP_TAB };
+    enum Tab { PARTITIONER_TAB, MEMORY_TAB, FLIST_TAB, SUMMARY_TAB, CFG_TAB, ASSEMBLY_TAB, HEXDUMP_TAB };
 
 private:
     Context ctx_;
+    P2::Function::Ptr function_;                        // current function
     Wt::WTabWidget *wTabs_;
     Wt::WContainerWidget *wCfgTab_, wSummaryTab_;
     WFunctionList *wFunctionList_;
@@ -28,12 +30,12 @@ private:
     WAssemblyListing *wAssemblyListing_;
     WHexDump *wHexDump_;
     WMemoryMap *wMemoryMap_;
-    P2::Function::Ptr function_;                        // current function
+    WPartitioner *wPartitioner_;
 
 public:
     WFunction(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), wTabs_(NULL), wCfgTab_(NULL), wSummaryTab_(NULL), wFunctionCfg_(NULL),
-          wFunctionSummary_(NULL), wAssemblyListing_(NULL), wHexDump_(NULL), wMemoryMap_(NULL) {
+          wFunctionSummary_(NULL), wAssemblyListing_(NULL), wHexDump_(NULL), wMemoryMap_(NULL), wPartitioner_(NULL) {
         init();
     }
 

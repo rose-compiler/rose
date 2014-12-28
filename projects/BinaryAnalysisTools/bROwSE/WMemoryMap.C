@@ -39,6 +39,24 @@ WMemoryMap::init() {
     synchronize();
 }
 
+void
+WMemoryMap::isEditable(bool b) {
+    if (b != isEditable_) {
+        isEditable_ = b;
+        if (!rowGroups_.empty()) {
+            // Make sure widgets are enabled or disabled. All edit rows are hidden (either by this call or because we were
+            // previously not editable) therefore the RowGroup passed to synchronizeEdits is irrelevant.
+            synchronizeEdits(rowGroups_.front(), ZeroColumn);
+        }
+    }
+}
+
+void
+WMemoryMap::memoryMap(const MemoryMap &map) {
+    memoryMap_ = map;
+    synchronize();
+}
+
 // Synchronize the RowGroup list and the WTable rows with the MemoryMap
 void
 WMemoryMap::synchronize() {
@@ -81,7 +99,7 @@ WMemoryMap::synchronizeEdits(RowGroup &rg, ColumnNumber toEdit) {
     for (/*void*/; mmNode != memoryMap_.nodes().end(); ++mmNode, ++rgIter) {
         ASSERT_require(rgIter != rowGroups_.end());
         ASSERT_require(mmNode->key().least() == rgIter->segmentVa);
-        if (rgIter->wId != rg.wId)
+        if (rgIter->wId != rg.wId || !isEditable_)
             rgIter->editingColumn = ZeroColumn;
         updateRowGroupEditWidgets(*rgIter, mmNode);
     }
@@ -159,7 +177,7 @@ WMemoryMap::instantiateTableWidgets(RowGroup &rg, size_t tableIdx) {
                                                   rg.wId, rg.wExecutable, MemoryMap::EXECUTABLE));
     wTable_->elementAt(tableIdx+DataRow, ExecutableColumn)->addWidget(rg.wExecutable);
 
-    rg.wName = new Wt::WInPlaceEdit();
+    rg.wName = new Wt::WInPlaceEdit;
     rg.wName->setPlaceholderText("(no name)");
     wTable_->elementAt(tableIdx+DataRow, NameColumn)->addWidget(rg.wName);
 
@@ -216,8 +234,8 @@ WMemoryMap::updateRowGroupDataWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNo
     ASSERT_forbid(interval.isEmpty());
     ASSERT_require(rg.segmentVa == interval.least());
 
-    rg.wSplit->setHidden(rg.editingColumn==SplitColumn || !canSplit(rg, mmNode));
-    rg.wMerge->setHidden(rg.editingColumn==MergeColumn || !canMerge(rg, mmNode));
+    rg.wSplit->setHidden(!isEditable_ || rg.editingColumn==SplitColumn || !canSplit(rg, mmNode));
+    rg.wMerge->setHidden(!isEditable_ || rg.editingColumn==MergeColumn || !canMerge(rg, mmNode));
 
     rg.wLeastVa->setText(StringUtility::addrToString(interval.least()));
     rg.wGreatestVa->setText(StringUtility::addrToString(interval.greatest()));
@@ -238,36 +256,49 @@ WMemoryMap::updateRowGroupDataWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNo
 
 void
 WMemoryMap::updateRowGroupEditWidgets(RowGroup &rg, MemoryMap::NodeIterator mmNode) {
-    rg.wDelete->setHidden(rg.editingColumn==DeleteColumn);
-    rg.wMove->setHidden(rg.editingColumn==MoveColumn);
-    rg.wSplit->setHidden(rg.editingColumn==SplitColumn || !canSplit(rg, mmNode));
-    rg.wMerge->setHidden(rg.editingColumn==MergeColumn || !canMerge(rg, mmNode));
+    if (isEditable_) {
+        rg.wDelete->setHidden(rg.editingColumn==DeleteColumn);
+        rg.wMove->setHidden(rg.editingColumn==MoveColumn);
+        rg.wSplit->setHidden(rg.editingColumn==SplitColumn || !canSplit(rg, mmNode));
+        rg.wMerge->setHidden(rg.editingColumn==MergeColumn || !canMerge(rg, mmNode));
+        rg.wReadable->setEnabled(true);
+        rg.wWritable->setEnabled(true);
+        rg.wExecutable->setEnabled(true);
 
-    switch (rg.editingColumn) {
-        case ZeroColumn:
-            rg.wEditStack->hide();
-            break;
-        case DeleteColumn:
-            rg.wEditStack->setCurrentWidget(rg.wDeleteConfirm);
-            rg.wEditStack->show();
-            break;
-        case MoveColumn:
-            rg.wEditStack->setCurrentWidget(rg.wMoveSegment);
-            rg.wEditStack->show();
-            break;
-        case MergeColumn:
-            rg.wEditStack->setCurrentWidget(rg.wMergeConfirm);
-            rg.wEditStack->show();
-            break;
-        case SplitColumn:
-        case LeastVaColumn:
-        case GreatestVaColumn:
-        case SizeColumn:
-            rg.wEditStack->setCurrentWidget(rg.wHexValueEdit);
-            rg.wEditStack->show();
-            break;
-        default:
-            ASSERT_not_reachable("don't know how to edit column " + StringUtility::numberToString(rg.editingColumn));
+        switch (rg.editingColumn) {
+            case ZeroColumn:
+                rg.wEditStack->hide();
+                break;
+            case DeleteColumn:
+                rg.wEditStack->setCurrentWidget(rg.wDeleteConfirm);
+                rg.wEditStack->show();
+                break;
+            case MoveColumn:
+                rg.wEditStack->setCurrentWidget(rg.wMoveSegment);
+                rg.wEditStack->show();
+                break;
+            case MergeColumn:
+                rg.wEditStack->setCurrentWidget(rg.wMergeConfirm);
+                rg.wEditStack->show();
+                break;
+            case SplitColumn:
+            case LeastVaColumn:
+            case GreatestVaColumn:
+            case SizeColumn:
+                rg.wEditStack->setCurrentWidget(rg.wHexValueEdit);
+                rg.wEditStack->show();
+                break;
+            default:
+                ASSERT_not_reachable("don't know how to edit column " + StringUtility::numberToString(rg.editingColumn));
+        }
+    } else {
+        rg.wDelete->hide();
+        rg.wMove->hide();
+        rg.wSplit->hide();
+        rg.wMerge->hide();
+        rg.wReadable->setEnabled(false);
+        rg.wWritable->setEnabled(false);
+        rg.wExecutable->setEnabled(false);
     }
 }
 
@@ -312,6 +343,7 @@ WMemoryMap::rowGroup(rose_addr_t segmentVa) {
 
 void
 WMemoryMap::startDeleteSegment(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     if (rg.editingColumn != DeleteColumn)
         synchronizeEdits(rowGroup(wId), DeleteColumn);
@@ -319,6 +351,7 @@ WMemoryMap::startDeleteSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::finishDeleteSegment(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     ASSERT_require(rg.editingColumn == DeleteColumn);
     memoryMap_.erase(findMapNode(rg)->key());
@@ -327,6 +360,7 @@ WMemoryMap::finishDeleteSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::startMoveSegment(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     if (rg.editingColumn != MoveColumn) {
         MemoryMap::NodeIterator mmNode = findMapNode(rg);
@@ -339,6 +373,7 @@ WMemoryMap::startMoveSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::checkMoveSegment(Wt::WText *wId, rose_addr_t destinationVa) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     if (destinationVa != mmNode->key().least()) {
@@ -352,6 +387,7 @@ WMemoryMap::checkMoveSegment(Wt::WText *wId, rose_addr_t destinationVa) {
 
 void
 WMemoryMap::finishMoveSegment(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     ASSERT_require(rg.editingColumn == MoveColumn);
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
@@ -374,6 +410,7 @@ WMemoryMap::finishMoveSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::startSplitSegment(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     if (rg.editingColumn != SplitColumn) {
         MemoryMap::NodeIterator mmNode = findMapNode(rg);
@@ -387,6 +424,7 @@ WMemoryMap::startSplitSegment(Wt::WText *wId) {
 
 void
 WMemoryMap::startMergeSegments(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     if (rg.editingColumn != MergeColumn)
         synchronizeEdits(rg, MergeColumn);
@@ -394,6 +432,7 @@ WMemoryMap::startMergeSegments(Wt::WText *wId) {
 
 void
 WMemoryMap::finishMergeSegments(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rgCurrent = rowGroup(wId);
     MemoryMap::NodeIterator mmCurrent = findMapNode(rgCurrent);
     const RowGroup rgNext = rowGroup(mmCurrent->key().greatest() + 1);// copied so it doesn't dangle after deleteSegment
@@ -419,6 +458,8 @@ WMemoryMap::finishMergeSegments(Wt::WText *wId) {
 
 void
 WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
+    if (!isEditable_)
+        return;
     ASSERT_forbid(column==ZeroColumn);                  // can't edit column zero
     RowGroup &rg = rowGroup(wId);
     if (rg.editingColumn == column)
@@ -484,6 +525,7 @@ WMemoryMap::startHexValueEdit(Wt::WText *wId, ColumnNumber column) {
 
 void
 WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     rose_addr_t value = rg.wHexValueEdit->value();
@@ -546,6 +588,7 @@ WMemoryMap::finishHexValueEdit(Wt::WText *wId) {
 
 void
 WMemoryMap::toggleAccess(Wt::WText *wId, Wt::WCheckBox *wCheckBox, unsigned accessBits) {
+    ASSERT_require(isEditable_);
     RowGroup &rg = rowGroup(wId);
     MemoryMap::NodeIterator mmNode = findMapNode(rg);
     unsigned bits = mmNode->value().accessibility();

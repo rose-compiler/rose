@@ -121,17 +121,19 @@ WAddressSpace::centerInterval(rose_addr_t center, rose_addr_t size, const Addres
 
 void
 WAddressSpace::insertSegmentsAndFunctions() {
-    // Add the address map segments and indicate their starting positions in the top gutter.
-    properties(0).pen = Wt::WPen(Wt::NoPen);
-    insert(ctx_.partitioner.memoryMap(), 0);
+    if (!ctx_.partitioner.isDefaultConstructed()) {
+        // Add the address map segments and indicate their starting positions in the top gutter.
+        properties(0).pen = Wt::WPen(Wt::NoPen);
+        insert(ctx_.partitioner.memoryMap(), 0);
 
-    // Add function extents and mark their start in the bottom gutter. Adjacent functions will merge into one colored area and
-    // we don't try to separate them with
-    insert(ctx_.partitioner, ctx_.partitioner.functions(), 1);
-    Color::HSV functionColor = darken(Color::cyan, 0.25);
-    gradient(1).insert(0, functionColor);
-    bottomGutterGradient().insert(0, functionColor);
-    properties(1).pen = Wt::WPen(Wt::NoPen);
+        // Add function extents and mark their start in the bottom gutter. Adjacent functions will merge into one colored area and
+        // we don't try to separate them with
+        insert(ctx_.partitioner, ctx_.partitioner.functions(), 1);
+        Color::HSV functionColor = darken(Color::cyan, 0.25);
+        gradient(1).insert(0, functionColor);
+        bottomGutterGradient().insert(0, functionColor);
+        properties(1).pen = Wt::WPen(Wt::NoPen);
+    }
 }
 
 size_t
@@ -321,7 +323,7 @@ void
 WAddressSpace::instantiateSubBar(size_t idx) {
     for (size_t i=maps_.size(); i<=idx; ++i) {
         maps_.pushBack(HeatMap());
-        ASSERT_require(maps_.backNode().id() == idx);
+        ASSERT_require(maps_.backNode().id() == i);
         gradients_.pushBack(Color::Gradient());
         properties_.pushBack(Properties());
         properties_.backValue().highlightPen = Wt::WPen(Wt::yellow);

@@ -4,6 +4,17 @@
 
 namespace bROwSE {
 
+void
+FunctionListModel::reload() {
+    layoutAboutToBeChanged().emit();
+    functions_.clear();
+    if (!ctx_.partitioner.isDefaultConstructed()) {
+        BOOST_FOREACH (const P2::Function::Ptr &function, ctx_.partitioner.functions())
+            functions_.push_back(function);
+    }
+    layoutChanged().emit();
+}
+
 P2::Function::Ptr
 FunctionListModel::functionAt(size_t idx) {
     return idx < functions_.size() ? functions_[idx] : P2::Function::Ptr();

@@ -72,6 +72,7 @@ private:
 private:
     MemoryMap memoryMap_;                               // the memory map being manipulated
     Wt::WTable *wTable_;
+    bool isEditable_;                                   // can entries be edited?
 
     // Information about each segment in the table. We use a list rather than a vector because a list's iterators are stable
     // over insertion and we want to be able to take a reference to a RowGroup and not have it change from under us.  The row
@@ -80,10 +81,16 @@ private:
     RowGroups rowGroups_;
 
 public:
-    explicit WMemoryMap(const MemoryMap &map, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), memoryMap_(map), wTable_(NULL) {
+    explicit WMemoryMap(const MemoryMap &map = MemoryMap(), Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), memoryMap_(map), wTable_(NULL), isEditable_(true) {
         init();
     }
+
+    const MemoryMap& memoryMap() const { return memoryMap_; }
+    void memoryMap(const MemoryMap&);
+
+    bool isEditable() const { return isEditable_; }
+    void isEditable(bool b);
 
 private:
     void init();
