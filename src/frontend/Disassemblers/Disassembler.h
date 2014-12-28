@@ -262,6 +262,11 @@ public:
      *  Thread safety: Multiple threads can call this class method simultaneously even when other threads are registering
      *  additional disassemblers. */
     static Disassembler *lookup(SgAsmGenericHeader*);
+
+    /** List of names recognized by @ref lookup.
+     *
+     *  Returns the list of names that the @ref lookup method recognizes. */
+    static std::vector<std::string> isaNames();
     
     /** Finds a suitable disassembler. Looks through the list of registered disassembler instances (from most recently
      *  registered to earliest registered) and returns the first one whose can_disassemble() predicate returns true. This is
