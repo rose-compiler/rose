@@ -35,7 +35,8 @@ void Partitioner::initDiagnostics() {
 
 void
 Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
-    instructionProvider_ = InstructionProvider::instance(disassembler, map);
+    if (disassembler)
+        instructionProvider_ = InstructionProvider::instance(disassembler, map);
     undiscoveredVertex_ = cfg_.insertVertex(CfgVertex(V_UNDISCOVERED));
     indeterminateVertex_ = cfg_.insertVertex(CfgVertex(V_INDETERMINATE));
     nonexistingVertex_ = cfg_.insertVertex(CfgVertex(V_NONEXISTING));
