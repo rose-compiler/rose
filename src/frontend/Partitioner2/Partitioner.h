@@ -342,20 +342,58 @@ public:
         init(disassembler, map);
     }
 
+    /** Default constructor.
+     *
+     *  The default constructor does not produce a usable partitioner, but is convenient when one needs to pass a default
+     *  partitioner by value or reference. */
+    Partitioner()
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
+        init(NULL, memoryMap_);
+    }
+
     // FIXME[Robb P. Matzke 2014-11-08]: This is not ready for use yet.  The problem is that because of the shallow copy, both
     // partitioners are pointing to the same basic blocks, data blocks, and functions.  This is okay by itself since these
     // things are reference counted, but the paradigm of locked/unlocked blocks and functions breaks down somewhat -- does
     // unlocking a basic block from one partitioner make it modifiable even though it's still locked in the other partitioner?
-    Partitioner(const Partitioner &other)
-        : instructionProvider_(other.instructionProvider_), memoryMap_(other.memoryMap_), cfg_(other.cfg_),
-          aum_(other.aum_), solver_(other.solver_), progressTotal_(other.progressTotal_),
-          isReportingProgress_(other.isReportingProgress_), functions_(other.functions_), useSemantics_(other.useSemantics_),
-          mayReturnList_(other.mayReturnList_), autoAddCallReturnEdges_(other.autoAddCallReturnEdges_),
-          assumeFunctionsReturn_(other.assumeFunctionsReturn_), stackDeltaMap_(other.stackDeltaMap_),
-          cfgAdjustmentCallbacks_(other.cfgAdjustmentCallbacks_), basicBlockCallbacks_(other.basicBlockCallbacks_),
-          functionPrologueMatchers_(other.functionPrologueMatchers_), functionPaddingMatchers_(other.functionPaddingMatchers_) {
-        init(other);                                    // copies graph iterators, etc.
+    // FIXME[Robb P. Matzke 2014-12-27]: Not the most efficient implementation, but saves on cut-n-paste which would surely rot
+    // after a while.
+    Partitioner(const Partitioner &other)               // initialize just like default
+        : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
+        init(NULL, memoryMap_);                         // initialize just like default
+        *this = other;                                  // then delegate to the assignment operator
     }
+    Partitioner& operator=(const Partitioner &other) {
+        Attribute::StoredValues::operator=(other);
+        instructionProvider_ = other.instructionProvider_;
+        memoryMap_ = other.memoryMap_;
+        cfg_ = other.cfg_;
+        vertexIndex_.clear();                           // initialized by init(other)
+        aum_ = other.aum_;
+        solver_ = other.solver_;
+        progressTotal_ = other.progressTotal_;
+        isReportingProgress_ = other.isReportingProgress_;
+        functions_ = other.functions_;
+        useSemantics_ = other.useSemantics_;
+        mayReturnList_ = other.mayReturnList_;
+        autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
+        assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
+        stackDeltaMap_ = other.stackDeltaMap_;
+        addressNames_ = other.addressNames_;
+        cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
+        basicBlockCallbacks_ = other.basicBlockCallbacks_;
+        functionPrologueMatchers_ = other.functionPrologueMatchers_;
+        functionPaddingMatchers_ = other.functionPaddingMatchers_;
+        init(other);                                    // copies graph iterators, etc.
+        return *this;
+    }
+
+    /** Return true if this is a default constructed partitioner.
+     *
+     *  Most methods won't work when applied to a default-constructed partitioner since it has no way to obtain instructions
+     *  and it has an empty memory map. */
+    bool isDefaultConstructed() const { return instructionProvider_ == NULL; }
 
     /** Initialize partitioner diagnostic streams.
      *
