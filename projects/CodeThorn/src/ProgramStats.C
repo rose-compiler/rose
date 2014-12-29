@@ -3,6 +3,8 @@
 #include "rose.h"
 #include "ProgramStats.h"
 
+using namespace CodeThorn;
+
 void  ProgramStatistics::floatIntStats(SgNode* node, ComputationInfo& cit) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {

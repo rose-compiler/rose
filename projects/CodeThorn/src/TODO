@@ -1,10 +1,4 @@
 1) rename class ProgramAnalysis
-2) remove files DFAnalysis.*
-3) remove files DFTransferFunctions.*
-4) remove files DFSolver1.*
-5) remove files RDAnalyzer.*
-6) remove file RDTransferFunctions.hpp
-7) remove file RDTransferFunctions.C
 8) remove method RDTransferFunctions2::*(...,RDLattice);
 9) rename files RDTransferFunctions2.h/C to RDTransferFunctions.h/C
 
@@ -58,3 +52,4 @@ iv) PointerAnalysis
 v) AEAnalysis (requires ExpressionId)
 vi) VBEAnalysis (requires ExpressionId)
 vii) CodeMotionAnalysis (requires RD+AE)
+23) rename GeneralResultAttribute to PAResultAttribute

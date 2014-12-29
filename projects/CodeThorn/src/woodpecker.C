@@ -7,14 +7,7 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
-#include "RDLattice.h"
-#include "DFAnalyzer.h"
-#include "WorkList.h"
-#include "RDAnalyzer.h"
-#include "RDAstAttribute.h"
 #include "AstAnnotator.h"
-//#include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
 #include "CommandLineOptions.h"
@@ -47,9 +40,6 @@ const char* csvAssertFileName=0;
 const char* csvConstResultFileName=0;
 bool global_option_multiconstanalysis=false;
 
-// temporary
-//#include "ReachabilityAnalysis.C"
-
 #if 0
 bool isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();
@@ -65,10 +55,6 @@ size_t numberOfFunctions(SgNode* node) {
   }
   return num;
 }
-
-//#include "FIConstAnalysis.C"
-//#include "DeadCodeEliminationOperators.C"
-
 
 void printResult(VariableIdMapping& variableIdMapping, VarConstSetMap& map) {
   cout<<"Result:"<<endl;

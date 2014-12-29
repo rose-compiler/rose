@@ -7,7 +7,6 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
 #include "WorkList.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"

@@ -7,11 +7,10 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
+#include "WorkList.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
-#include "WorkList.h"
-#include "RDAnalyzer.h"
+#include "RDAnalysis.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
 #include "DataDependenceVisualizer.h"
@@ -302,7 +301,7 @@ void rdAnalysis(SgProject* root) {
   boolOptions.registerOption("semantic-fold",false); // temporary
   boolOptions.registerOption("post-semantic-fold",false); // temporary
 
-  RDAnalyzer* rdAnalyzer=new RDAnalyzer();
+  RDAnalysis* rdAnalyzer=new RDAnalysis();
   rdAnalyzer->initialize(root);
   rdAnalyzer->initializeGlobalVariables(root);
 

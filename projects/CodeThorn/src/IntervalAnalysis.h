@@ -8,7 +8,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
+#include "ProgramAnalysis.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"

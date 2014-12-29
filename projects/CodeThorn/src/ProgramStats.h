@@ -6,9 +6,11 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
 #include "RDAstAttribute.h"
 #include "Miscellaneous.h"
+#include "AnalysisAbstractionLayer.h"
+
+using CodeThorn::Flow;
 
 enum CompInfoType {CIT_TOTAL=1, CIT_INT, CIT_FLOAT, CIT_NUM};
 class ComputationInfo {

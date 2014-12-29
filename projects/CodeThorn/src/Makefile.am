@@ -66,7 +66,6 @@ codethorn_SOURCES = \
   RDLattice.C                      \
   Evaluator.h                      \
   WorkListSeq.h                    \
-  DFAnalyzer.h                     \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   RDAstAttribute.h         \
@@ -128,8 +127,6 @@ faketarget:
 	RERS_Problem8_specialization.C
 	RERS_Problem9_specialization.C
 	rers_cpp_forward_decls.C
-	MFAnalyzer.h
-	MFAnalyzer.C
 	RDLattice.h
 	RDLattice.C
 	WorkList.h
@@ -141,7 +138,6 @@ faketarget:
 	WorkListOMP.h
 	WorkListOMP.C
 	WorkListSeq.C
-	DFAnalyzer.C
 	DeadCodeEliminationOperators.C 
 	spotconnection/ltlverifier.C 
 	spotconnection/stg2.c 
@@ -181,7 +177,6 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 rdmain_LDADD = -lrose
 rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
  CFAnalyzer.h CFAnalyzer.C \
- DFTransferFunctions.h DFTransferFunctions.C \
   LanguageRestrictor.h LanguageRestrictor.C \
   LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -220,8 +215,6 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   IntervalTransferFunctions.C \
   IntervalAstAttributeInterface.h \
   IntervalAstAttributeInterface.C \
-  DFSolver1.h \
-  DFSolver1.C \
   NumberIntervalLattice.h \
   NumberIntervalLattice.C \
   PASolver1.h \
@@ -230,7 +223,6 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   PATransferFunctions.C \
   ProgramAnalysis.h \
   ProgramAnalysis.C \
-  RDAnalyzer.h RDAnalyzer.C \
   RDLattice.h RDLattice.C \
   RDTransferfunctions2.h RDTransferFunctions2.C \
   RDAnalysis.h \
@@ -298,14 +290,20 @@ analyterix_SOURCES = \
   AnalysisAbstractionLayer.C       \
   CFAnalyzer.h \
   CFAnalyzer.C \
-  RDTransferFunctions.hpp \
-  RDTransferFunctions.C \
-  DFTransferFunctions.hpp \
-  DFTransferFunctions.C \
+  ProgramAnalysis.h \
+  ProgramAnalysis.C \
+  PASolver1.h \
+  PASolver1.C \
+  PointerAnalysisInterface.h \
+  PointerAnalysisInterface.C \
   RDLattice.h \
   RDLattice.C \
-  RDAnalyzer.h \
-  RDAnalyzer.C \
+  RDAnalysis.h \
+  RDAnalysis.C \
+  PATransferFunctions.h \
+  PATransferFunctions.C \
+  RDTransferFunctions2.h \
+  RDTransferFunctions2.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \
