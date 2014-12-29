@@ -5,7 +5,7 @@ using namespace std;
 #include "CollectionOperators.h"
 using namespace CodeThorn;
 
-#include "RDTransferFunctions2.h"
+#include "RDTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
 bool hasDereferenceOperation(SgExpression* exp) {

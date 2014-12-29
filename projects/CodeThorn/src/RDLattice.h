@@ -25,9 +25,7 @@ class RDLattice : public Lattice {
   bool exists(pair<Label,VariableId>);
   void setEmptySet();
   void combine(Lattice& b);
-  void combine(RDLattice& b);// TODO: delete
   bool approximatedBy(Lattice& b);
-  bool approximatedBy(RDLattice& b); // TODO: delete
 
  private:
   set<pair<Label,VariableId> > rdSet;

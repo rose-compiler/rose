@@ -224,7 +224,7 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   ProgramAnalysis.h \
   ProgramAnalysis.C \
   RDLattice.h RDLattice.C \
-  RDTransferfunctions2.h RDTransferFunctions2.C \
+  RDTransferfunctions.h RDTransferFunctions.C \
   RDAnalysis.h \
   RDAnalysis.C \
   LVLattice.h \
@@ -244,8 +244,6 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   PointerAnalysisInterface.h \
   PointerAnalysisInterface.C \
   rdmain.C 
-
-#  RDTransferfunctions.hpp RDTransferFunctions.C
 
 woodpecker_LDADD = -lrose
 woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -302,8 +300,8 @@ analyterix_SOURCES = \
   RDAnalysis.C \
   PATransferFunctions.h \
   PATransferFunctions.C \
-  RDTransferFunctions2.h \
-  RDTransferFunctions2.C \
+  RDTransferFunctions.h \
+  RDTransferFunctions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
   LanguageRestrictor.h \
   LanguageRestrictor.C \

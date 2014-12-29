@@ -12,11 +12,10 @@
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
+#include "RDTransferFunctions.h"
 
 using namespace std;
 using namespace CodeThorn;
-
-#include "RDTransferFunctions2.h"
 
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:

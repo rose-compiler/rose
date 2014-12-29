@@ -119,9 +119,7 @@ void RDLattice::combine(Lattice& b) {
   }
   _bot=false;
 }
-void RDLattice::combine(RDLattice& b) {
-  ROSE_ASSERT(false);
-}
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -146,11 +144,7 @@ bool RDLattice::approximatedBy(Lattice& b0) {
   }
   return true;
 }
-// OUTDATED
-bool RDLattice::approximatedBy(RDLattice& b0) {
-  cerr<<"RDLattice::approximatedBy(RDLattice) : outdated."<<endl;
-  exit(1);
-}
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
