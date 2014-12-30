@@ -73,7 +73,7 @@ public:
     bool exists(const Item &item) const {
         return position_.exists(item);
     }
-
+    
     /** Determine the position of an item.
      *
      *  Returns the position of an item from the beginning of the list.  This is an O(n) operation. */
