@@ -1795,7 +1795,15 @@ syscall_mmap(RSIM_Thread *t, int callno)
         return;
     }
 
-    uint32_t result = t->get_process()->mem_map(args.addr, args.len, args.prot, args.flags, args.offset, args.fd);
+    unsigned rose_perms = 0;
+    if (0 != (args.prot & PROT_READ))
+        rose_perms |= MemoryMap::READABLE;
+    if (0 != (args.prot & PROT_WRITE))
+        rose_perms |= MemoryMap::WRITABLE;
+    if (0 != (args.prot & PROT_EXEC))
+        rose_perms |= MemoryMap::EXECUTABLE;
+
+    uint32_t result = t->get_process()->mem_map(args.addr, args.len, rose_perms, args.flags, args.offset, args.fd);
     t->syscall_return(result);
 }
 
@@ -4941,7 +4949,15 @@ syscall_mmap2(RSIM_Thread *t, int callno)
     uint32_t start=t->syscall_arg(0), size=t->syscall_arg(1), prot=t->syscall_arg(2), flags=t->syscall_arg(3);
     uint32_t offset=t->syscall_arg(5)*PAGE_SIZE;
     int fd=t->syscall_arg(4);
-    uint32_t result = t->get_process()->mem_map(start, size, prot, flags, offset, fd);
+    unsigned rose_perms = 0;
+    if (0 != (prot & PROT_READ))
+        rose_perms |= MemoryMap::READABLE;
+    if (0 != (prot & PROT_WRITE))
+        rose_perms |= MemoryMap::WRITABLE;
+    if (0 != (prot & PROT_EXEC))
+        rose_perms |= MemoryMap::EXECUTABLE;
+
+    uint32_t result = t->get_process()->mem_map(start, size, rose_perms, flags, offset, fd);
     t->syscall_return(result);
 }
 
