@@ -2089,7 +2089,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                  // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
                     if (info.unparsedPartiallyUsingTokenStream() == true)
                        {
+#if 0
                          printf ("WARNING: reset info.unparsedPartiallyUsingTokenStream() == false (test 1) \n");
+#endif
                          info.unset_unparsedPartiallyUsingTokenStream();
                        }
                     ROSE_ASSERT(info.unparsedPartiallyUsingTokenStream() == false);
@@ -2102,7 +2104,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // DQ (12/12/2014): If we are transitioning to unparsing from the AST, then this should be valid.
                if (info.unparsedPartiallyUsingTokenStream() == true)
                   {
+#if 0
                     printf ("WARNING: reset info.unparsedPartiallyUsingTokenStream() == false (test 2) \n");
+#endif
                     info.unset_unparsedPartiallyUsingTokenStream();
                   }
                ROSE_ASSERT(info.unparsedPartiallyUsingTokenStream() == false);
@@ -2930,9 +2934,11 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
   // ROSE_ASSERT(sourceFile != NULL);
      if (sourceFile->get_unparse_tokens() == true)
         {
-          ROSE_ASSERT(last_statement != NULL);
+       // DQ (12/26/2014): Handle case where last_statement == NULL.
+       // ROSE_ASSERT(last_statement != NULL);
 #if 0
-          printf ("In UnparseLanguageIndependentConstructs::unparseGlobalStmt(): last_statement = %p = %s \n",last_statement,last_statement->class_name().c_str());
+          if (last_statement != NULL)
+               printf ("In UnparseLanguageIndependentConstructs::unparseGlobalStmt(): last_statement = %p = %s \n",last_statement,last_statement->class_name().c_str());
        // printf ("global_previous_unparsed_as: %s \n",unparsed_as_kind(global_previous_unparsed_as).c_str());
           printf ("global_unparsed_as:          %s \n",unparsed_as_kind(global_unparsed_as).c_str());
 #endif
@@ -2942,7 +2948,16 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
             // This has to be handled using the unparsing for the partial token stream (just the trailing whitespace at the end fo the file).
                ROSE_ASSERT(globalScope->isTransformation() == false);
 
-               unparseStatementFromTokenStream (last_statement, globalScope, UnparseLanguageIndependentConstructs::e_trailing_whitespace_start, UnparseLanguageIndependentConstructs::e_token_subsequence_end);
+             // DQ (12/26/2014): Handle case where last_statement == NULL.
+             // unparseStatementFromTokenStream (last_statement, globalScope, UnparseLanguageIndependentConstructs::e_trailing_whitespace_start, UnparseLanguageIndependentConstructs::e_token_subsequence_end);
+	       if (last_statement != NULL)
+                  {
+                    unparseStatementFromTokenStream (last_statement, globalScope, UnparseLanguageIndependentConstructs::e_trailing_whitespace_start, UnparseLanguageIndependentConstructs::e_token_subsequence_end);
+                  }
+                 else
+                  {
+		    printf ("NOTE: last_statement == NULL: skipped call to unparseStatementFromTokenStream(last_statement, globalScope) \n");
+                  }
 #if 0
                printf ("In UnparseLanguageIndependentConstructs::unparseGlobalStmt(): unparse the last token as well \n");
 #endif
