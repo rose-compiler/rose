@@ -364,8 +364,9 @@ Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
         attachAllSurroundedCodeToFunctions(partitioner);
     attachSurroundedDataToFunctions(partitioner);
     attachBlocksToFunctions(partitioner, true);         // to emit warnings about CFG problems
-    postPartitionFixups(partitioner, interp);
-    updateAnalysisResults(partitioner);
+    applyPostPartitionFixups(partitioner, interp);
+    if (postPartitionAnalyses_)
+        updateAnalysisResults(partitioner);
     return *this;
 }
 
@@ -432,7 +433,7 @@ Engine::updateAnalysisResults(Partitioner &partitioner) {
 }
 
 void
-Engine::postPartitionFixups(Partitioner &partitioner, SgAsmInterpretation *interp) {
+Engine::applyPostPartitionFixups(Partitioner &partitioner, SgAsmInterpretation *interp) {
     if (interp)
         ModulesPe::nameImportThunks(partitioner, interp);
     Modules::nameConstants(partitioner);
