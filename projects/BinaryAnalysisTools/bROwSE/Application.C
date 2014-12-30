@@ -169,6 +169,7 @@ Application::init() {
     // FIXME[Robb P. Matzke 2014-12-27]: eventually this should be a reset button
     Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/logo.jpg");
     wGrid_->addWidget(compassRose, 0, 0);
+    wGrid_->addWidget(new Wt::WText("bROwSE: Binary ROSE On-line Workbench for Specimen Exploration"), 0, 1);
 
     // The central region the page is a set of tabs that are visible or not depending on the context
     wGrid_->addWidget(instantiateMainTabs(), 1, 1);

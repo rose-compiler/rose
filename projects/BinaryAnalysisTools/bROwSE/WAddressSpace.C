@@ -357,6 +357,7 @@ WAddressSpace::highlights(size_t idx) {
 
 void
 WAddressSpace::clear() {
+    displayedDomain_ = AddressInterval();
     maps_.clear();
     gradients_.clear();
 }
