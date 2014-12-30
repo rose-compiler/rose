@@ -70,10 +70,12 @@ class Engine {
     bool dataMentionedFunctionSearch_;                  // search for functions mentioned in read-only data?
     bool intraFunctionCodeSearch_;                      // search for unreachable code surrounded by a function?
     bool opaquePredicateSearch_;                        // search for code opposite opaque predicate edges?
+    bool postPartitionAnalyses_;                        // run various analyses after partitioning?
 public:
     Engine()
         : interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()),
-          dataMentionedFunctionSearch_(false), intraFunctionCodeSearch_(true), opaquePredicateSearch_(true) {}
+          dataMentionedFunctionSearch_(false), intraFunctionCodeSearch_(true), opaquePredicateSearch_(true),
+          postPartitionAnalyses_(true) {}
 
     virtual ~Engine() {}
 
@@ -250,6 +252,16 @@ public:
     bool opaquePredicateSearch() const { return opaquePredicateSearch_; }
     virtual void opaquePredicateSearch(bool b) { opaquePredicateSearch_ = b; }
     /** @} */
+
+    /** Property: run post-partitioning analyses
+     *
+     *  If true then @ref runPartitioner will perform various analyses after partitioning. These include things like making
+     *  sure that function may-return and stack-delta results are all computed.
+     *
+     * @{ */
+    bool postPartitionAnalyses() const { return postPartitionAnalyses_; }
+    virtual void postPartitionAnalyses(bool b) { postPartitionAnalyses_ = b; }
+    /** @} */
     
     /** Property: interpretation.
      *
@@ -351,7 +363,7 @@ public:
      *
      *  This method is normally run after the CFG/AUM is built. It does things like give names to some functions. The binary
      *  interpretation argument is optional, although some functionality is reduced when it is null. */
-    virtual void postPartitionFixups(Partitioner&, SgAsmInterpretation*);
+    virtual void applyPostPartitionFixups(Partitioner&, SgAsmInterpretation*);
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Methods to make basic blocks
