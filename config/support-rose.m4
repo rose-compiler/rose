@@ -2042,6 +2042,7 @@ projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
+projects/SMTPathFeasibility/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
