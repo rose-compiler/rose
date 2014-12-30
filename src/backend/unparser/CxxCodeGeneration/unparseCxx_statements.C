@@ -1489,15 +1489,17 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // DQ (11/6/2004): use ninfo instead of info for nested declarations in namespace
           unparseStatement(currentStatement, ninfo);
 
-       // DQ (12/22/2014): NOTE: last_stmt might have to be based on token stream sugsequence availability.
-          printf ("NOTE: In unparseNamespaceDefinitionStatement(): last_stmt might have to be based on token stream sugsequence availability. \n");
-
        // DQ (12/18/2014): Save the last statement so that we can use the trailing token stream if using the token-based unparsing.
           last_stmt = currentStatement;
 
        // Go to the next statement
           statementIterator++;
         }
+
+#if 0
+  // DQ (12/22/2014): NOTE: last_stmt might have to be based on token stream sugsequence availability.
+     printf ("NOTE: In unparseNamespaceDefinitionStatement(): last_stmt might have to be based on token stream subsequence availability. \n");
+#endif
 
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
@@ -8846,7 +8848,7 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
              }
         }
 
-#if 1
+#if 0
      printf ("In unparseTemplateDeclarationStatment_support(): string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
 #endif
 
@@ -8892,7 +8894,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
 #if 1
             // DQ (9/13/2014): Turn this on until we have a few more bugs fixed.
             // DQ (9/8/2014): Adding support to skip over partially represented template declaration (restores previous behaviour in ROSE).
+#if 0
                printf ("In unparseTemplateDeclarationStatment_support(): (string_represents_function_body == true): Skip unparsing of partial template function declarations:  \n");
+#endif
                return;
 #endif
              }
