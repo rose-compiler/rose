@@ -805,7 +805,7 @@ int main(int argc, char *argv[]) {
     // the same name as the imported function to which they point.  This is especially important if there's no basic block at
     // the imported function's address (i.e., the dynamic linker hasn't run) because ROSE's AST can't represent basic blocks
     // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
-    engine.postPartitionFixups(partitioner, interp);
+    engine.applyPostPartitionFixups(partitioner, interp);
 
     // Analyze each basic block and function and cache results.  We do this before listing the CFG or building the AST.
     if (settings.doPostAnalysis) {
