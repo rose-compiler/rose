@@ -8,12 +8,12 @@ using namespace std;
 #include "CollectionOperators.h"
 using namespace CodeThorn;
 
-#include "PATransferFunctions.h"
+#include "DFTransferFunctions.h"
 
 
-PATransferFunctions::PATransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
+DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
 
-void PATransferFunctions::transfer(Label lab, Lattice& element) {
+void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
   SgNode* node=_labeler->getNode(lab);
   //cout<<"Analyzing:"<<node->class_name()<<endl;
@@ -83,32 +83,32 @@ void PATransferFunctions::transfer(Label lab, Lattice& element) {
 }
 
 
-void PATransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
+void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
   // default identity function
 }
   
 
-void PATransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
+void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) {
   // default identity function
 }
 
 
-void PATransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
+void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
   // default identity function
 }
 
 
-void PATransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
 }
 
 
-void PATransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
+void DFTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // default identity function
 }
 
 
-void PATransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
+void DFTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // default identity function
 }
 

@@ -36,7 +36,7 @@ void SPRAY::LVTransferFunctions::transferExpression(Label lab, SgExpression* nod
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
-    element.eraseVariableId(var);
+    element.removeVariableId(var);
   }
   // GEN
   VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
@@ -64,7 +64,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
-    element.eraseVariableId(var);
+    element.removeVariableId(var);
   }
   VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
@@ -109,7 +109,7 @@ void SPRAY::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefi
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
     VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
-    element.eraseVariableId(formalParameterVarId);
+    element.removeVariableId(formalParameterVarId);
   }
 }
 

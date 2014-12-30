@@ -65,7 +65,7 @@ void SPRAY::LVLattice::insertVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void SPRAY::LVLattice::eraseVariableId(VariableId var) {
+void SPRAY::LVLattice::removeVariableId(VariableId var) {
   lvSet.erase(var);
 }
 /*! 

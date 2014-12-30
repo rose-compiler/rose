@@ -1,11 +1,7 @@
-1) rename class ProgramAnalysis
-
 10) move
   #define NO_STATE -3
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
-
-11) rename method eraseVariableId to removeVariableId in {RD,LV}Lattice.h/C and {RD,LV}TransferFunctions.C
 
 12) introduce AnalysisBaseMechanisms data structure to contain
   - Labeler*

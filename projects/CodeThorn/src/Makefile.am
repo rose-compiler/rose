@@ -219,10 +219,10 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   NumberIntervalLattice.C \
   PASolver1.h \
   PASolver1.C \
-  PATransferFunctions.h \
-  PATransferFunctions.C \
-  ProgramAnalysis.h \
-  ProgramAnalysis.C \
+  DFTransferFunctions.h \
+  DFTransferFunctions.C \
+  DFAnalysis2.h \
+  DFAnalysis2.C \
   RDLattice.h RDLattice.C \
   RDTransferfunctions.h RDTransferFunctions.C \
   RDAnalysis.h \
@@ -288,8 +288,8 @@ analyterix_SOURCES = \
   AnalysisAbstractionLayer.C       \
   CFAnalyzer.h \
   CFAnalyzer.C \
-  ProgramAnalysis.h \
-  ProgramAnalysis.C \
+  DFAnalysis2.h \
+  DFAnalysis2.C \
   PASolver1.h \
   PASolver1.C \
   PointerAnalysisInterface.h \
@@ -298,8 +298,8 @@ analyterix_SOURCES = \
   RDLattice.C \
   RDAnalysis.h \
   RDAnalysis.C \
-  PATransferFunctions.h \
-  PATransferFunctions.C \
+  DFTransferFunctions.h \
+  DFTransferFunctions.C \
   RDTransferFunctions.h \
   RDTransferFunctions.C \
   FIConstAnalysis.h FIConstAnalysis.C \
@@ -332,19 +332,11 @@ analyterix_SOURCES = \
   addressTakenAnalysis.h \
   PropertyValueTable.h \
   PropertyValueTable.C \
-  GeneralResultAttribute.h \
-  GeneralResultAttribute.C \
   Lattice.h \
   Lattice.C \
   PropertyState.h \
   PropertyState.C \
   analyterix.C
-
-#  GeneralAnalyzerBase.h \
-  GeneralAnalyzerBase.C \
-  GeneralAnalyzer.h \
-  GeneralAnalyzer.C
-
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \

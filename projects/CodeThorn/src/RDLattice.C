@@ -78,7 +78,7 @@ void RDLattice::erasePair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
+void RDLattice::removeAllPairsWithVariableId(VariableId var) {
   RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
     if(var==(*i).second) {

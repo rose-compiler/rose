@@ -18,7 +18,7 @@ class RDLattice : public Lattice {
   size_t size();
   void insertPair(Label,VariableId);
   void erasePair(Label,VariableId);
-  void eraseAllPairsWithVariableId(VariableId var);
+  void removeAllPairsWithVariableId(VariableId var);
   bool isBot();
   void setBot();
   void toStream(ostream& os, VariableIdMapping* vim=0);

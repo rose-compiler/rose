@@ -15,7 +15,7 @@
 #include "ProgramStats.h"
 #include "DFAstAttributeConversion.h"
 
-#include "ProgramAnalysis.h"
+#include "DFAnalysis2.h"
 #include "RDAnalysis.h"
 #include "IntervalAnalysis.h"
 #include "LVAnalysis.h"

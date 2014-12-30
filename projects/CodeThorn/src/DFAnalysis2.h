@@ -4,8 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef PROGRAMANALYSIS_H
-#define PROGRAMANALYSIS_H
+#ifndef DFANALYSIS_H
+#define DFANALYSIS_H
 
 #include <set>
 #include <string>
@@ -13,7 +13,7 @@
 #include "CFAnalyzer.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
-#include "PATransferFunctions.h"
+#include "DFTransferFunctions.h"
 #include "PASolver1.h"
 #include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
@@ -26,10 +26,10 @@ namespace CodeThorn {
 
 #include "PropertyState.h"
 
-class ProgramAnalysis {
+class DFAnalysis2 {
  public:
-  ProgramAnalysis();
-  virtual ~ProgramAnalysis();
+  DFAnalysis2();
+  virtual ~DFAnalysis2();
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   void setForwardAnalysis();
@@ -93,7 +93,7 @@ class ProgramAnalysis {
   void computeAllPostInfo();
   bool _preInfoIsValid;
   bool _postInfoIsValid;
-  PATransferFunctions* _transferFunctions;
+  DFTransferFunctions* _transferFunctions;
   PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;
   AnalysisType _analysisType;

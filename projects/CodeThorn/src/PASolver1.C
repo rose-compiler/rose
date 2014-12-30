@@ -10,7 +10,7 @@ PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPostInfo,
 				  PropertyStateFactory& initialElementFactory,
 				  Flow& flow,
-				  PATransferFunctions& transferFunctions
+				  DFTransferFunctions& transferFunctions
 				  ):
   _workList(workList),
   _analyzerDataPreInfo(analyzerDataPreInfo),

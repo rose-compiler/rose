@@ -37,11 +37,6 @@
 #include <cmath>
 #include "assert.h"
 
-#ifdef USE_OUTDATED
-#include "GeneralAnalyzerBase.h"
-#include "GeneralAnalyzer.h"
-#endif
-
 // ROSE analyses
 #include "VariableRenaming.h"
 

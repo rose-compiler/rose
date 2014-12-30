@@ -5,14 +5,13 @@
  *************************************************************/
 
 #include "sage3basic.h"
-#include "ProgramAnalysis.h"
+#include "DFAnalysis2.h"
 #include "AnalysisAbstractionLayer.h"
-#include "GeneralResultAttribute.h"
 
 using namespace CodeThorn;
 using namespace SPRAY;
 
-ProgramAnalysis::ProgramAnalysis():
+DFAnalysis2::DFAnalysis2():
   _labeler(0),
   _cfanalyzer(0),
   _numberOfLabels(0),
@@ -20,16 +19,16 @@ ProgramAnalysis::ProgramAnalysis():
   _postInfoIsValid(false),
   _transferFunctions(0),
   _initialElementFactory(0),
-  _analysisType(ProgramAnalysis::FORWARD_ANALYSIS),
+  _analysisType(DFAnalysis2::FORWARD_ANALYSIS),
   _pointerAnalysisInterface(0),
   _pointerAnalysisEmptyImplementation(0)
 {}
 
-ProgramAnalysis::~ProgramAnalysis() {
+DFAnalysis2::~DFAnalysis2() {
   if(_pointerAnalysisEmptyImplementation)
     delete _pointerAnalysisEmptyImplementation;
 }
-void ProgramAnalysis::initializeSolver() {
+void DFAnalysis2::initializeSolver() {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(&_initialElementFactory);
   ROSE_ASSERT(&_analyzerDataPreInfo);
@@ -44,19 +43,19 @@ void ProgramAnalysis::initializeSolver() {
                       *_transferFunctions);
 }
 
-void ProgramAnalysis::initializeExtremalValue(Lattice* element) {
+void DFAnalysis2::initializeExtremalValue(Lattice* element) {
   // default identity function
 }
 
-Lattice* ProgramAnalysis::getPreInfo(Label lab) {
+Lattice* DFAnalysis2::getPreInfo(Label lab) {
   return _analyzerDataPreInfo[lab.getId()];
 }
 
-Lattice* ProgramAnalysis::getPostInfo(Label lab) {
+Lattice* DFAnalysis2::getPostInfo(Label lab) {
   return _analyzerDataPostInfo[lab.getId()];
 }
 
-void ProgramAnalysis::computeAllPreInfo() {
+void DFAnalysis2::computeAllPreInfo() {
   if(!_preInfoIsValid) {
     _solver->runSolver();
     _preInfoIsValid=true;
@@ -64,7 +63,7 @@ void ProgramAnalysis::computeAllPreInfo() {
   }
 }
 
-void ProgramAnalysis::computeAllPostInfo() {
+void DFAnalysis2::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
     for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
@@ -81,31 +80,31 @@ void ProgramAnalysis::computeAllPostInfo() {
   }
 }
 
-void ProgramAnalysis::setInitialElementFactory(PropertyStateFactory* pf) {
+void DFAnalysis2::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
-void ProgramAnalysis::setExtremalLabels(set<Label> extremalLabels) {
+void DFAnalysis2::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
-void ProgramAnalysis::setForwardAnalysis() {
-  _analysisType=ProgramAnalysis::FORWARD_ANALYSIS;
+void DFAnalysis2::setForwardAnalysis() {
+  _analysisType=DFAnalysis2::FORWARD_ANALYSIS;
 }
 
-void ProgramAnalysis::setBackwardAnalysis() {
-  _analysisType=ProgramAnalysis::BACKWARD_ANALYSIS;
+void DFAnalysis2::setBackwardAnalysis() {
+  _analysisType=DFAnalysis2::BACKWARD_ANALYSIS;
 }
 
-bool ProgramAnalysis::isForwardAnalysis() {
-  return _analysisType==ProgramAnalysis::FORWARD_ANALYSIS;
+bool DFAnalysis2::isForwardAnalysis() {
+  return _analysisType==DFAnalysis2::FORWARD_ANALYSIS;
 }
 
-bool ProgramAnalysis::isBackwardAnalysis() {
-  return _analysisType==ProgramAnalysis::BACKWARD_ANALYSIS;
+bool DFAnalysis2::isBackwardAnalysis() {
+  return _analysisType==DFAnalysis2::BACKWARD_ANALYSIS;
 }
 
-void ProgramAnalysis::initializeGlobalVariables(SgProject* root) {
+void DFAnalysis2::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
@@ -130,7 +129,7 @@ void ProgramAnalysis::initializeGlobalVariables(SgProject* root) {
 
 
 void
-ProgramAnalysis::initialize(SgProject* root) {
+DFAnalysis2::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
   _variableIdMapping.computeVariableSymbolMapping(root);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(&_variableIdMapping);
@@ -237,7 +236,7 @@ ProgramAnalysis::initialize(SgProject* root) {
 #endif
 }
 
-void ProgramAnalysis::initializeTransferFunctions() {
+void DFAnalysis2::initializeTransferFunctions() {
   ROSE_ASSERT(_transferFunctions);
   ROSE_ASSERT(_labeler);
   _transferFunctions->setLabeler(_labeler);
@@ -248,12 +247,12 @@ void ProgramAnalysis::initializeTransferFunctions() {
     _transferFunctions->setPointerAnalysis(_pointerAnalysisInterface);
 }
 
-void ProgramAnalysis::setPointerAnalysis(PointerAnalysisInterface* pa) {
+void DFAnalysis2::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
 }
 
 void
-ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
+DFAnalysis2::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {
     if(isForwardAnalysis()) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
@@ -281,12 +280,12 @@ ProgramAnalysis::determineExtremalLabels(SgNode* startFunRoot=0) {
 // runs until worklist is empty
 
 void
-ProgramAnalysis::solve() {
+DFAnalysis2::solve() {
   computeAllPreInfo();
   computeAllPostInfo();
 }
 
-DFAstAttribute* ProgramAnalysis::createDFAstAttribute(Lattice* elem) {
+DFAstAttribute* DFAnalysis2::createDFAstAttribute(Lattice* elem) {
   // elem ignored in default function
   return new DFAstAttribute();
 }
@@ -294,7 +293,7 @@ DFAstAttribute* ProgramAnalysis::createDFAstAttribute(Lattice* elem) {
 // runs until worklist is empty
 
 void
-ProgramAnalysis::run() {
+DFAnalysis2::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
@@ -319,8 +318,8 @@ ProgramAnalysis::run() {
 
 // default identity function
 
-ProgramAnalysis::ResultAccess&
-ProgramAnalysis::getResultAccess() {
+DFAnalysis2::ResultAccess&
+DFAnalysis2::getResultAccess() {
   return _analyzerDataPreInfo;
 }
 
@@ -333,33 +332,33 @@ using std::string;
 
 #include <sstream>
 
-CFAnalyzer* ProgramAnalysis::getCFAnalyzer() {
+CFAnalyzer* DFAnalysis2::getCFAnalyzer() {
   return _cfanalyzer;
 }
 
 
-Labeler* ProgramAnalysis::getLabeler() {
+Labeler* DFAnalysis2::getLabeler() {
   return _labeler;
 }
 
 
-VariableIdMapping* ProgramAnalysis::getVariableIdMapping() {
+VariableIdMapping* DFAnalysis2::getVariableIdMapping() {
   return &_variableIdMapping;
 }
 
 #if 0
 
-CodeThorn::ProgramAnalysis::iterator CodeThorn::ProgramAnalysis::begin() {
+CodeThorn::DFAnalysis2::iterator CodeThorn::DFAnalysis2::begin() {
   return _analyzerDataPostInfo.begin();
 }
   
 
-ProgramAnalysis::iterator CodeThorn::ProgramAnalysis::end() {
+DFAnalysis2::iterator CodeThorn::DFAnalysis2::end() {
   return _analyzerDataPostInfo.end();
 }
 
 
-size_t ProgramAnalysis::size() {
+size_t DFAnalysis2::size() {
   return _analyzerDataPostInfo.size();
 }
 #endif // begin/end
@@ -373,7 +372,7 @@ size_t ProgramAnalysis::size() {
 /* TODO: nodes with multiple associated labels need to be attached multiple attributes (or a list of attributes)
    e.g. FunctionEntry/FunctionExit are associated with SgFunctionDefinition (should be a vector of attributes at each node)
  */
-void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
+void DFAnalysis2::attachInfoToAst(string attributeName,bool inInfo) {
   computeAllPreInfo();
   computeAllPostInfo();
   LabelSet labelSet=_flow.nodeLabels();
@@ -430,7 +429,7 @@ void ProgramAnalysis::attachInfoToAst(string attributeName,bool inInfo) {
   * \date 2012.
  */
 
-void ProgramAnalysis::attachInInfoToAst(string attributeName) {
+void DFAnalysis2::attachInInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,true);
 }
 
@@ -439,6 +438,6 @@ void ProgramAnalysis::attachInInfoToAst(string attributeName) {
   * \date 2012.
  */
 
-void ProgramAnalysis::attachOutInfoToAst(string attributeName) {
+void DFAnalysis2::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }

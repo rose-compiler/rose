@@ -8,7 +8,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "ProgramAnalysis.h"
+#include "DFAnalysis2.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
@@ -28,7 +28,7 @@ class RDPropertyStateFactory : public PropertyStateFactory {
   * \author Markus Schordan
   * \date 2013.
  */
-class RDAnalysis : public ProgramAnalysis {
+class RDAnalysis : public DFAnalysis2 {
  public:
   RDAnalysis();
   ~RDAnalysis();

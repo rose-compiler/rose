@@ -7,7 +7,7 @@
 #include "Flow.h"
 #include "Lattice.h"
 #include "PropertyState.h"
-#include "PATransferFunctions.h"
+#include "DFTransferFunctions.h"
 
 #include <vector>
 
@@ -18,7 +18,7 @@ class PASolver1 {
 	   std::vector<Lattice*>& analyzerDataPostInfo,
 	   PropertyStateFactory& initialElementFactory,
 	   Flow& flow,
-	   PATransferFunctions& transferFunctions
+	   DFTransferFunctions& transferFunctions
 	   );
   virtual void runSolver();
   void computeCombinedPreInfo(Label lab,Lattice& inInfo);
@@ -30,7 +30,7 @@ class PASolver1 {
   std::vector<Lattice*>& _analyzerDataPostInfo;
   PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
-  PATransferFunctions& _transferFunctions;
+  DFTransferFunctions& _transferFunctions;
 };
 
 #endif

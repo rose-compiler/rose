@@ -55,7 +55,7 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
-    element.eraseAllPairsWithVariableId(var);
+    element.removeAllPairsWithVariableId(var);
     element.insertPair(lab,var);
   }
 }
@@ -83,7 +83,7 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   } else if(defVarIds.size()==1) {
     // one unique memory location (variable). We can remove all pairs with this variable
     VariableId var=*defVarIds.begin();
-    element.eraseAllPairsWithVariableId(var);
+    element.removeAllPairsWithVariableId(var);
     element.insertPair(lab,var);
   }
 }
@@ -145,7 +145,7 @@ void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* 
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     VariableId varId=*i;
-    element.eraseAllPairsWithVariableId(varId);
+    element.removeAllPairsWithVariableId(varId);
   }
   // TODO:: return variable $r
 }
