@@ -22,11 +22,14 @@ public:
         LoadedSpecimen,                                 /**< Memory maps are initialized but not partitioner or disassembler
                                                          *   has been created yet. */
         PartitionedSpecimen,                            /**< Specimen has been disassembled and partitioned. */
+
+        NStates
     };
 
 private:
     Context &ctx_;
     State state_;                                       // current state
+    std::vector<Wt::WPanel*> panels_;                   // panels created by init()
 
     Wt::WComboBox *wIsaName_;                           // instruction set architecture
     Wt::WText *wIsaError_;                              // error message for ISA problems
@@ -35,7 +38,7 @@ private:
     Wt::WCheckBox *wAllowDiscontiguousBlocks_;          // can basic blocks be discontiguous?
     Wt::WCheckBox *wFindDeadCode_;                      // look for unreachable basic blocks?
     Wt::WCheckBox *wDefeatPeScrambler_;                 // descramble PEScrambler binaries?
-    WHexValueEdit *wPeScramblerDispatchVa_;             // address for PEScrambler dispatcher
+    Wt::WLineEdit *wPeScramblerDispatchVa_;             // address for PEScrambler dispatcher
     Wt::WCheckBox *wIntraFunctionCode_;                 // suck up unused addresses as intra-function code?
     Wt::WCheckBox *wAssumeFunctionsReturn_;             // how do unknown functions behave?
     Wt::WComboBox *wInterpretation_;                    // which interpretation to unparse
@@ -78,6 +81,7 @@ public:
 
     State currentState() const { return state_; }
     void changeState(State);
+    void redoState(State);
 
     Wt::Signal<bool>& specimenParsed() { return specimenParsed_; }
     Wt::Signal<bool>& specimenLoaded() { return specimenLoaded_; }
@@ -85,6 +89,8 @@ public:
 
 private:
     void init();
+    Wt::WContainerWidget *makePanel(State, const std::string &title, Wt::WContainerWidget *parent);
+    void adjustPanelBorders();
 
     void parseSpecimen();
     void undoParseSpecimen();
