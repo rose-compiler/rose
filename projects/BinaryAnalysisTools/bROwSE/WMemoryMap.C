@@ -61,6 +61,7 @@ WMemoryMap::memoryMap(const MemoryMap &map) {
 // Synchronize the RowGroup list and the WTable rows with the MemoryMap
 void
 WMemoryMap::synchronize() {
+    memoryMap_.checkConsistency();
     MemoryMap::NodeIterator mmNode = memoryMap_.nodes().begin();
     RowGroups::iterator rg = rowGroups_.begin();
     size_t rgIdx = 0;
