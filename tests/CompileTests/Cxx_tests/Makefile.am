@@ -260,8 +260,20 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_232.C \
    test2014_233.C \
    test2014_234.C \
+   test2014_235.C \
+   test2014_236.C \
+   test2014_238.C \
+   test2014_239.C \
+   test2014_240.C \
+   test2014_241.C \
+   test2014_242.C \
+   test2014_243.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (12/30/2014): This large file fails:
+# unparseCxx_types.C:418: virtual void Unparse_Type::unparseType(SgType*, SgUnparse_Info&): Assertion `info.SkipClassDefinition() == info.SkipEnumDefinition()' failed.
+# test2014_237.C
 
 # DQ (8/29/2014): Put macros into testcode files so that they are only run on GNU g++ 4.4 compiler.
 # DQ (8/25/2014): These fail for older versions of GNU (e.g. g++ version 4.2.2)
