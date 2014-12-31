@@ -1610,9 +1610,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
 
                            // DQ (12/26/2014): Adding support for fixing the leading white space of conditionals statements (in C++ most conditional expressions are actually statements).
-                              SgWhileStmt* whileStatement = isSgWhileStmt(n);
+                              SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
                               SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
-                              if (whileStatement != NULL || switchStatement != NULL)
+                              SgIfStmt*          ifStatement     = isSgIfStmt(n);
+                              if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL)
                                  {
                                    ROSE_ASSERT(mappingInfo->node != NULL);
                                    SgStatement* conditionStatement = isSgStatement(mappingInfo->node);
@@ -1620,10 +1621,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                       {
                                         if ( (whileStatement  != NULL && conditionStatement == whileStatement->get_condition()) ||
                                              (switchStatement != NULL && conditionStatement == switchStatement->get_item_selector()) ||
-                                             (switchStatement != NULL && conditionStatement == switchStatement->get_item_selector()) )
+                                             (ifStatement     != NULL && conditionStatement == ifStatement->get_conditional()) )
                                            {
 #if 0
-                                             printf ("$$$$$$$$$$$$ Handle special case of SgStatement (condition) nested in SgWhileStmt \n");
+                                             printf ("$$$$$$$$$$$$ Handle special case of SgStatement (condition) nested in n = %p = %s \n",n,n->class_name().c_str());
 #endif
                                              trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
 

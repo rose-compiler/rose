@@ -36,7 +36,6 @@ class UnparseLanguageIndependentConstructs
 
      public:
 
-#if 1
        // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
           enum token_sequence_position_enum_type
              {
@@ -47,14 +46,15 @@ class UnparseLanguageIndependentConstructs
                e_trailing_whitespace_start,
                e_trailing_whitespace_end
              };
-#endif
-#if 1
+
        // Single statement specification of token subsequence.
           void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
 
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
           void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
-#endif
+
+       // DQ (12/30/2014): Adding debugging information.
+          std::string token_sequence_position_name( token_sequence_position_enum_type e );
 
           enum unparsed_as_enum_type
              {

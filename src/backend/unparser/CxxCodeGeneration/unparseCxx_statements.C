@@ -54,8 +54,31 @@ Unparse_ExprStmt::~Unparse_ExprStmt()
   // Nothing to do here!
    }
 
+string UnparseLanguageIndependentConstructs::token_sequence_position_name( UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e )
+   {
+     string s;
+     switch(e)
+        {
+          case e_leading_whitespace_start:  s = "e_leading_whitespace_start";  break;
+          case e_leading_whitespace_end:    s = "e_leading_whitespace_end";    break;
+          case e_token_subsequence_start:   s = "e_token_subsequence_start";   break;
+          case e_token_subsequence_end:     s = "e_token_subsequence_end";     break;
+          case e_trailing_whitespace_start: s = "e_trailing_whitespace_start"; break;
+          case e_trailing_whitespace_end:   s = "e_trailing_whitespace_end";   break;
 
-void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (SgStatement* stmt, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
+          default:
+             {
+               printf ("default reached in switch: value = %d \n",e);
+             }
+        }
+
+     return s;
+   }
+
+void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
+   SgStatement* stmt, 
+   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
+   UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
    {
 #if 0
       printf ("unparseStatementFromTokenStream(stmt = %p = %s): \n",stmt,stmt->class_name().c_str());
@@ -82,8 +105,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
 #if 0
      printf ("unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
-     printf ("   --- e_token_sequence_position_start = %d \n",e_token_sequence_position_start);
-     printf ("   --- e_token_sequence_position_end   = %d \n",e_token_sequence_position_end);
+     printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
+     printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
 #endif
 
      if ( SgProject::get_verbose() > 0 )
@@ -197,6 +220,12 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                          break;
                     case e_leading_whitespace_end:
                          end = tokenSubsequence_2->leading_whitespace_end;
+
+                      // DQ (12/30/2014): Note that white space is not always available.
+                         if (end == -1)
+                            {
+                              end = tokenSubsequence_2->token_subsequence_start;
+                            }
                          ROSE_ASSERT(end >= 0);
                          break;
                     case e_token_subsequence_start:
@@ -249,6 +278,11 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                curprint(tokenVector[j]->get_lexeme_string());
 #endif
              }
+        }
+       else
+        {
+          printf ("ERROR: Token subsequence position unavailable: tokenSubsequence_1 = %p tokenSubsequence_2 = %p \n",tokenSubsequence_1,tokenSubsequence_2);
+          ROSE_ASSERT(false);
         }
    }
 
@@ -7280,7 +7314,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ROSE_ASSERT(while_stmt != NULL);
 
-#if 0
+#if 1
      printf ("In unparseWhileStmt(): info.unparsedPartiallyUsingTokenStream() = %s \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false");
      curprint("/* In unparseWhileStmt(): TOP */ ");
 #endif
@@ -7304,7 +7338,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (stmt, condition, e_token_subsequence_start, e_token_subsequence_start);
         }
 
-#if 0
+#if 1
      printf ("In unparseWhileStmt(): unparse the condition \n");
      curprint("/* In unparseWhileStmt(): unparse the condition */ ");
 #endif
@@ -7355,8 +7389,9 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_leading_whitespace_start);
 
           unparseStatement(while_stmt->get_body(), info);
-
+#if 0
           curprint("/* end of SgWhileStmt body (partial token strean unparse) */ ");
+#endif
         }
 
 #if 0
@@ -7378,7 +7413,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 #endif
 
-#if 0
+#if 1
      printf ("Leaving unparseWhileStmt() \n");
      curprint("/* Leaving unparseWhileStmt() */ ");
 #endif
