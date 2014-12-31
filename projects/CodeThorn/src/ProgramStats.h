@@ -12,6 +12,8 @@
 
 using CodeThorn::Flow;
 
+namespace SPRAY {
+
 enum CompInfoType {CIT_TOTAL=1, CIT_INT, CIT_FLOAT, CIT_NUM};
 class ComputationInfo {
 public:
@@ -105,6 +107,7 @@ public:
 class ProgramStatistics {
  public:
   ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName);
+  static void printBasicCodeInfo(SgNode* root);
   void computeStatistics();
   void generateResourceUsageICFGDotFile(string dotfile);
   void printStatistics();
@@ -121,5 +124,7 @@ class ProgramStatistics {
   vector<ComputationInfo> computationInfo;
   bool _withSource;
 };
+
+} // end of namespace SPRAY
 
 #endif

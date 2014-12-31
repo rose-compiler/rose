@@ -282,60 +282,89 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
 
 analyterix_LDADD = -lrose
 analyterix_SOURCES = \
-  CommandLineOptions.h CommandLineOptions.C \
-  DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  CFAnalyzer.h \
-  CFAnalyzer.C \
-  DFAnalysis2.h \
-  DFAnalysis2.C \
-  PASolver1.h \
-  PASolver1.C \
-  PointerAnalysisInterface.h \
-  PointerAnalysisInterface.C \
-  RDLattice.h \
-  RDLattice.C \
-  RDAnalysis.h \
-  RDAnalysis.C \
-  DFTransferFunctions.h \
-  DFTransferFunctions.C \
-  RDTransferFunctions.h \
-  RDTransferFunctions.C \
-  FIConstAnalysis.h FIConstAnalysis.C \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
-  LanguageRestrictorCollection.h \
-  LanguageRestrictorCollection.C \
-  DataDependenceVisualizer.h \
-  DataDependenceVisualizer.C \
-  AType.h \
-  AType.C \
-  RDAstAttribute.h \
-  RDAstAttribute.C \
-  UDAstAttribute.h \
-  UDAstAttribute.C \
-  CPAstAttribute.h CPAstAttribute.C \
-  AstTerm.h \
-  AstTerm.C \
-  Miscellaneous.C \
-  Miscellaneous.h \
-  ProgramStats.h \
-  ProgramStats.C \
-  Flow.h \
-  Flow.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
-  PropertyValueTable.h \
-  PropertyValueTable.C \
-  Lattice.h \
+  AnalysisAbstractionLayer.C \
+  AnalysisAbstractionLayer.h \
+  AstTerm.C \
+  AstTerm.h \
+  AType.C \
+  AType.h \
+  CFAnalyzer.C \
+  CFAnalyzer.h \
+  CPAstAttribute.h CPAstAttribute.C \
+  CommandLineOptions.h \
+  CommandLineOptions.C \
+  DataDependenceVisualizer.C \
+  DataDependenceVisualizer.h \
+  defUseQuery.C \
+  defUseQuery.h \
+  DFAnalysis2.C \
+  DFAnalysis2.h \
+  DFAstAttributeConversion.h DFAstAttributeConversion.C \
+  DFTransferFunctions.C \
+  DFTransferFunctions.h \
+  FIConstAnalysis.h FIConstAnalysis.C \
+  FIPointerAnalysis.C \
+  FIPointerAnalysis.h \
+  Flow.C \
+  Flow.h \
+  IntervalAnalysis.C \
+  IntervalAnalysis.h \
+  IntervalAstAttribute.C \
+  IntervalAstAttribute.h \
+  IntervalAstAttributeInterface.C \
+  IntervalAstAttributeInterface.h \
+  IntervalPropertyState.C \
+  IntervalPropertyState.h \
+  IntervalPropertyStateFactory.C \
+  IntervalPropertyStateFactory.h \
+  IntervalTransferFunctions.C \
+  IntervalTransferFunctions.h \
+  LanguageRestrictor.h \
+  LanguageRestrictor.C \
+  LanguageRestrictorCollection.C \
+  LanguageRestrictorCollection.h \
   Lattice.C \
-  PropertyState.h \
+  Lattice.h \
+  LVAnalysis.C \
+  LVAnalysis.h \
+  LVAstAttribute.C \
+  LVAstAttribute.h \
+  LVAstAttributeInterface.C \
+  LVAstAttributeInterface.h \
+  LVLattice.C \
+  LVLattice.h \
+  LVTransferFunctions.C \
+  LVTransferFunctions.h \
+  Miscellaneous.C \
+  Miscellaneous.h \
+  NumberIntervalLattice.C \
+  NumberIntervalLattice.h \
+  PASolver1.C \
+  PASolver1.h \
+  PointerAnalysisInterface.C \
+  PointerAnalysisInterface.h \
+  ProgramStats.C \
+  ProgramStats.h \
   PropertyState.C \
+  PropertyState.h \
+  PropertyValueTable.C \
+  PropertyValueTable.h \
+  RDAnalysis.C \
+  RDAnalysis.h \
+  RDAstAttribute.C \
+  RDAstAttribute.h \
+  RDLattice.h \
+  RDLattice.C \
+  RDTransferFunctions.C \
+  RDTransferFunctions.h \
+  RoseRDAnalysis.C \
+  RoseRDAnalysis.h \
+  UDAstAttribute.C \
+  UDAstAttribute.h \
+  VariableIdUtils.C \
+  VariableIdUtils.h \
   analyterix.C
 
 reverser_LDADD = -lrose
