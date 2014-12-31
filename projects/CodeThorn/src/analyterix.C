@@ -12,7 +12,7 @@
 #include "RDLattice.h"
 #include "DFAnalysis2.h"
 #include "RDAnalysis.h"
-#include "RoseRDAnalysis.h"
+//#include "RoseRDAnalysis.h"
 #include "LVAnalysis.h"
 #include "IntervalAnalysis.h"
 #include "RDAstAttribute.h"
@@ -435,9 +435,11 @@ int main(int argc, char* argv[]) {
   }
 
   runAnalyses(root);
+#if 0
   if(option_roserdanalysis) {
     Experimental::RoseRDAnalysis::generateRoseRDDotFiles(labeler,root);
   }
+#endif
 
   cout<< "STATUS: finished."<<endl;
 

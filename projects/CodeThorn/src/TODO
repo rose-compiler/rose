@@ -46,3 +46,4 @@ iv) PointerAnalysis
 v) AEAnalysis (requires ExpressionId)
 vi) VBEAnalysis (requires ExpressionId)
 vii) CodeMotionAnalysis (requires RD+AE)
+23) enable RoseRDAnalysis (after adding missing files)

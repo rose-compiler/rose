@@ -359,13 +359,14 @@ analyterix_SOURCES = \
   RDLattice.C \
   RDTransferFunctions.C \
   RDTransferFunctions.h \
-  RoseRDAnalysis.C \
-  RoseRDAnalysis.h \
   UDAstAttribute.C \
   UDAstAttribute.h \
   VariableIdUtils.C \
   VariableIdUtils.h \
   analyterix.C
+
+#  RoseRDAnalysis.C 
+#  RoseRDAnalysis.h 
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \
