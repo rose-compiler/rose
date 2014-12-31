@@ -232,7 +232,8 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_26.C \
   inputmoveDeclarationToInnermostScope_test2014_27.C \
   inputmoveDeclarationToInnermostScope_test2014_28.C \
-  inputmoveDeclarationToInnermostScope_test2014_29.C
+  inputmoveDeclarationToInnermostScope_test2014_29.C \
+  inputmoveDeclarationToInnermostScope_test2014_30.C
 
 # DQ (12/23/2014): These fail (for the same reason) and demonstrate a bug in the move tool.
 # inputmoveDeclarationToInnermostScope_test2014_18.C 
