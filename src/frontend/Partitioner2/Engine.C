@@ -264,10 +264,10 @@ Engine::configureFromFile(Partitioner &partitioner, const FileSystem::Path &name
                 ++retval;
             }
         }
-    }
 #else
-    throw std::runtime_error("cannot open \"" + name.string() + "\": no YAML support (configure ROSE with --with-yaml)");
+        throw std::runtime_error("cannot open \"" + name.string() + "\": no YAML support (configure ROSE with --with-yaml)");
 #endif
+    }
     return retval;
 }
 
