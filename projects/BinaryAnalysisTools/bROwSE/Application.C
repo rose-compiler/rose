@@ -7,6 +7,7 @@
 #include <bROwSE/WHexDump.h>
 #include <bROwSE/WMemoryMap.h>
 #include <bROwSE/WPartitioner.h>
+#include <bROwSE/WStatus.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -91,25 +92,30 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
 
 // Functor to create a new application on first connection to server
 class AppCreator {
+    Settings settings;                                  // settings from the command-line
     std::vector<std::string> specimenNames_;
 public:
-    explicit AppCreator(const std::vector<std::string> &specimenNames): specimenNames_(specimenNames) {}
+    explicit AppCreator(const Settings &settings, const std::vector<std::string> &specimenNames)
+        : settings(settings), specimenNames_(specimenNames) {}
     Wt::WApplication* operator()(const Wt::WEnvironment &env) {
-        return new Application(specimenNames_, env);
+        return new Application(settings, specimenNames_, env);
     }
 };
 
 // Class method
 void
 Application::main(int argc, char *argv[]) {
-    // Do this explicitly since librose doesn't do this automatically yet
+    // Initialize diagnostics. The destination is usually just stderr, but we turn it into a multiplexer so that we can add our
+    // own message sinks to the list later.
+    Diagnostics::destination = Sawyer::Message::Multiplexer::instance()
+                               ->to(Sawyer::Message::FileSink::instance(stderr));
     Diagnostics::initialize();
     mlog = Sawyer::Message::Facility("bROwSE", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse the command-line
     Settings settings;
-    std::vector<std::string> specimenNames = Application::parseCommandLine(argc, argv, settings).unreachedArgs();
+    std::vector<std::string> specimenNames = Application::parseCommandLine(argc, argv, settings /*out*/).unreachedArgs();
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
@@ -124,7 +130,7 @@ Application::main(int argc, char *argv[]) {
     wtArgv[wtArgc++] = strdup("--http-port");
     wtArgv[wtArgc++] = strdup(boost::lexical_cast<std::string>(settings.httpPort).c_str());
     wtArgv[wtArgc] = NULL;
-    AppCreator ac(specimenNames);
+    AppCreator ac(settings, specimenNames);
     Wt::WRun(wtArgc, wtArgv, ac);
 
     exit(0);
@@ -160,6 +166,13 @@ Application::init() {
     styleSheet().addRule(".hexdump_addr_rwx", "font-family:monospace;"
                          " background-color:" + toHtml(fade(darken(Color::green, 0.15), 0.75)) + ";");
 
+    // Status message style sheet rules.
+    styleSheet().addRule(".status_oddrow", "background-color:#f9f9f9;");
+    styleSheet().addRule(".status_info", "background-color:#b5ffb3;");// light green
+    styleSheet().addRule(".status_warn", "background-color:#f8ff81;");// light yellow
+    styleSheet().addRule(".status_error", "background-color:#ffd781;");// light orange
+    styleSheet().addRule(".status_fatal", "background-color:#ff8181;");// light red
+
     // Grid layout
     root()->setLayout(wGrid_ = new Wt::WGridLayout());
     wGrid_->setRowStretch(1, 1);
@@ -174,15 +187,10 @@ Application::init() {
     // The central region the page is a set of tabs that are visible or not depending on the context
     wGrid_->addWidget(instantiateMainTabs(), 1, 1);
 
-#if 0 // DEBUGGING [Robb P. Matzke 2014-09-12]
-    wGrid_->addWidget(new Wt::WText("North"), 0, 1);
-    wGrid_->addWidget(new Wt::WText("NE"),    0, 2);
-    wGrid_->addWidget(new Wt::WText("West"),  1, 0);
-    wGrid_->addWidget(new Wt::WText("East"),  1, 2);
-    wGrid_->addWidget(new Wt::WText("SW"),    2, 0);
-    wGrid_->addWidget(new Wt::WText("South"), 2, 1);
-    wGrid_->addWidget(new Wt::WText("SE"),    2, 2);
-#endif
+    // The bottom center is the status area
+    wStatusBar_ = new WStatusBar;
+    wStatus_->messageArrived().connect(boost::bind(&WStatusBar::appendMessage, wStatusBar_, _1));
+    wGrid_->addWidget(wStatusBar_, 2, 1);
 }
 
 Wt::WContainerWidget*
@@ -244,6 +252,11 @@ Application::instantiateMainTabs() {
                 tabContent = wHexDump_ = new WHexDump;
                 break;
             }
+            case StatusTab: {
+                tabName = "Status";
+                tabContent = wStatus_ = new WStatus(ctx_);
+                break;
+            }
             default:
                 ASSERT_not_reachable("invalid main tab");
         }
@@ -273,6 +286,8 @@ Application::isTabAvailable(MainTab idx) {
             return currentFunction_ != NULL;
         case HexDumpTab:
             return !wHexDump_->memoryMap().isEmpty();
+        case StatusTab:
+            return true;
         default:
             ASSERT_not_reachable("invalid main tab");
     }
@@ -346,6 +361,9 @@ Application::changeTab(MainTab tab) {
             wAssembly_->show();
             break;
         case HexDumpTab:
+            break;
+        case StatusTab:
+            wStatus_->redraw();
             break;
         default:
             ASSERT_not_reachable("invalid main tab");

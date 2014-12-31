@@ -17,6 +17,8 @@ class WFunctionSummary;
 class WHexDump;
 class WMemoryMap;
 class WPartitioner;
+class WStatus;
+class WStatusBar;
 
 class Application: public Wt::WApplication {
 public:
@@ -29,6 +31,7 @@ public:
         FunctionCfgTab,                                 /**< Control flow graph for one function. */
         AssemblyTab,                                    /**< More traditional assembly listing. */
         HexDumpTab,                                     /**< Dump raw data bytes from anywhere in memory. */
+        StatusTab,                                      /**< Complete list of all messages from ROSE, system status, etc. */
         NMainTabs
     };
 
@@ -43,13 +46,15 @@ private:
     WFunctionCfg *wFunctionCfg_;                        // control flow graph for one function at a time
     WHexDump *wHexDump_;                                // raw data from anywhere in memory
     WAssemblyListing *wAssembly_;                       // traditional assembly listing
+    WStatus *wStatus_;                                  // info for the "Status" tab
+    WStatusBar *wStatusBar_;                            // info across the bottom of the screen
     P2::Function::Ptr currentFunction_;                 // current function or null
 
 public:
-    explicit Application(const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
-        : Wt::WApplication(env), ctx_(specimenNames, this),
+    explicit Application(const Settings &settings, const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
+        : Wt::WApplication(env), ctx_(settings, specimenNames, this),
           wGrid_(NULL), wMainTabs_(NULL), wPartitioner_(NULL), wMemoryMap_(NULL), wFunctionList_(NULL),
-          wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wAssembly_(NULL) {
+          wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wAssembly_(NULL), wStatus_(NULL), wStatusBar_(NULL) {
         init();
     }
 

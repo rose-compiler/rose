@@ -48,13 +48,14 @@ extern P2::Attribute::Id ATTR_Heat;
 // Context passed around to pretty much all the widgets.
 class Context {
 public:
+    Settings settings;                                  // settings mostly from the command-line
     std::vector<std::string> specimenNames;             // names of specimen files
     P2::Engine engine;                                  // partitioning engine
     P2::Partitioner partitioner;                        // partitioner used by the engine
     Wt::WApplication *application;                      // Wt probably has a method to get this, but I can't find it
     
-    explicit Context(const std::vector<std::string> &specimenNames, Wt::WApplication *app)
-        : specimenNames(specimenNames), application(app) {
+    explicit Context(const Settings &settings, const std::vector<std::string> &specimenNames, Wt::WApplication *app)
+        : settings(settings), specimenNames(specimenNames), application(app) {
         init();
     }
 
