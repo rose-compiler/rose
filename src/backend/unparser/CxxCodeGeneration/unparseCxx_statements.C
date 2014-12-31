@@ -7320,7 +7320,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ROSE_ASSERT(while_stmt != NULL);
 
-#if 1
+#if 0
      printf ("In unparseWhileStmt(): info.unparsedPartiallyUsingTokenStream() = %s \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false");
      curprint("/* In unparseWhileStmt(): TOP */ ");
 #endif
@@ -7344,7 +7344,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (stmt, condition, e_token_subsequence_start, e_token_subsequence_start);
         }
 
-#if 1
+#if 0
      printf ("In unparseWhileStmt(): unparse the condition \n");
      curprint("/* In unparseWhileStmt(): unparse the condition */ ");
 #endif
@@ -7419,7 +7419,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 #endif
 
-#if 1
+#if 0
      printf ("Leaving unparseWhileStmt() \n");
      curprint("/* Leaving unparseWhileStmt() */ ");
 #endif
