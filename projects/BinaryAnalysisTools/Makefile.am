@@ -53,6 +53,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WBasicBlock.C			\
 	bROwSE/WBasicBlockInsns.C		\
 	bROwSE/WBasicBlockSummary.C		\
+	bROwSE/WBusy.C				\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\
 	bROwSE/WFunctionNavigation.C		\
@@ -61,7 +62,8 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WHexValueEdit.C			\
 	bROwSE/WInstructionList.C		\
 	bROwSE/WMemoryMap.C			\
-	bROwSE/WPartitioner.C
+	bROwSE/WPartitioner.C			\
+	bROwSE/WStatus.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

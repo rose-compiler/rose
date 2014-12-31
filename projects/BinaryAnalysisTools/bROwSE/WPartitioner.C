@@ -62,8 +62,9 @@ WPartitioner::init() {
         tip = "Some containers hold multiple binary interpretations, such as a DOS or PE interpretation in "
               "Microsoft Windows binary. The disassembler operates on only one interpretation at a time.";
         new Wt::WBreak(c);
-        (new Wt::WText("Interpretation: ", c))->setToolTip(tip);
+        new Wt::WText("Interpretation: ", c);
         wInterpretation_ = new Wt::WComboBox(c);
+        wInterpretation_->setToolTip(tip);
         wInterpretation_->sactivated().connect(boost::bind(&WPartitioner::chooseInterpretation, this, _1));
 
         new Wt::WBreak(c);
@@ -79,11 +80,23 @@ WPartitioner::init() {
         new Wt::WText("These steps disassemble memory and partition instructions into basic blocks and basic blocks into "
                       "functions.", c);
 
+        // FIXME[Robb P. Matzke 2014-12-30]: not fully implemented
+        tip = "A configuration file can be specified on the command-line when the server is started. This item is mostly "
+              "just a placeholder for when we eventually allow configuration files to be uploaded from the browser.";
+        new Wt::WBreak(c);
+        wUseConfiguration_ =
+            new Wt::WCheckBox("Use configuration \"" +
+                              StringUtility::htmlEscape(StringUtility::cEscape(ctx_.settings.configurationName)) + "\"?", c);
+        wUseConfiguration_->setToolTip(tip);
+        wUseConfiguration_->setCheckState(Wt::Checked);
+        wUseConfiguration_->setHidden(ctx_.settings.configurationName.empty());
+
         tip = "Overrides the ISA found in an ELF/PE container, or provides an ISA if the specimen has "
               "no container (e.g., raw data).";
         new Wt::WBreak(c);
-        (new Wt::WText("Instruction set architecture: ", c))->setToolTip(tip);
+        new Wt::WText("Instruction set architecture: ", c);
         wIsaName_ = new Wt::WComboBox(c);
+        wIsaName_->setToolTip(tip);
         wIsaName_->addItem("automatic");
         BOOST_FOREACH (const std::string &s, BinaryAnalysis::Disassembler::isaNames())
             wIsaName_->addItem(s);
@@ -100,6 +113,8 @@ WPartitioner::init() {
         wUseSemantics_ = new Wt::WCheckBox("Use semantics?", c);
         wUseSemantics_->setToolTip(tip);
         wUseSemantics_->setCheckState(Wt::Checked);
+        wUseSemantics_->checked().connect(boost::bind(&WPartitioner::handleUseSemantics, this, true));
+        wUseSemantics_->unChecked().connect(boost::bind(&WPartitioner::handleUseSemantics, this, false));
 
         tip = "ROSE's definition of basic block is more permissive than many disassemblers, and can allow instructions "
               "that are not located adjacent to each other in memory, or instructions that overlap.  Disabling this will "
@@ -110,30 +125,40 @@ WPartitioner::init() {
         wAllowDiscontiguousBlocks_->setCheckState(Wt::Checked);
 
         tip = "Ghost edges are those edges occluded by an opaque predicate.  Following such edges is one method by "
-              "which dead code can be found.";
+              "which dead code can be found. The edges can either be followed immediately as if the predicate was not "
+              "opaque, or they can be followed later when more information is known about their target address. In any "
+              "case, ghost edges are real edges when instruction semantics is disabled.";
         new Wt::WBreak(c);
-        wFollowGhostEdges_ = new Wt::WCheckBox("Follow ghost edges?", c);
+        new Wt::WText("Follow ghost edges? ", c);
+        wFollowGhostEdges_ = new Wt::WComboBox(c);
         wFollowGhostEdges_->setToolTip(tip);
-        wFollowGhostEdges_->setCheckState(Wt::Unchecked);
+        wFollowGhostEdges_->addItem("Never");           ASSERT_require(FOLLOW_NEVER==0); // or fix followGhostEdges()
+        wFollowGhostEdges_->addItem("Immediately");     ASSERT_require(FOLLOW_NOW==1);
+        wFollowGhostEdges_->addItem("Later");           ASSERT_require(FOLLOW_LATER==2);
+        wFollowGhostEdges_->setCurrentIndex(FOLLOW_LATER);
+        wFollowGhostEdgesWarning_ = new Wt::WText("&nbsp;&nbsp;(no ghost edges possible; requires semantics)", c);
+        wFollowGhostEdgesWarning_->hide();
 
         tip = "If checked, search for dead code by looking for regions of memory that were not disassembled by other means. "
-              "This finds more code than ghost-edge-following because it does not need an edge to find the code.";
+              "This finds more code than ghost-edge-following because it does not need an edge to find the code, but it is"
+              "more likely to inadvertently disassemble non-code areas.";
         new Wt::WBreak(c);
-        wFindDeadCode_ = new Wt::WCheckBox("Find dead code?", c);
+        wFindDeadCode_ = new Wt::WCheckBox("Find disconnected dead code?", c);
         wFindDeadCode_->setToolTip(tip);
         wFindDeadCode_->setCheckState(Wt::Checked);
 
-        // FIXME[Robb P. Matzke 2014-12-28]: this needs some tuning
+        tip = "PEScrambler is \"a tool to obfuscate win32 binaries automatically. It can relocate portions of code and protect "
+              "them with anti-disassembly code. It also defeats static program flow analysis by re-routing all function calls "
+              "through a central dispatcher function.\" ROSE is largely immune to these techniques by default, and supplying "
+              "the address of the central dispatcher function here will immunize it against the dispatcher. The dispatcher "
+              "address can be easily found by looking for the function that has the most calls.";
         new Wt::WBreak(c);
         wDefeatPeScrambler_ = new Wt::WCheckBox("Defeat PEScrambler?", c);
+        wDefeatPeScrambler_->setToolTip(tip);
         wDefeatPeScrambler_->setCheckState(Wt::Unchecked);
         new Wt::WText("&nbsp;&nbsp;&nbsp;&nbsp;PEScrambler dispatcher VA:", c);
         wPeScramblerDispatchVa_ = new Wt::WLineEdit(c);
-
-        // FIXME[Robb P. Matzke 2014-12-28]: how does this compare with "Find dead code?"
-        new Wt::WBreak(c);
-        wIntraFunctionCode_ = new Wt::WCheckBox("Find intra-function unreachable code?", c);
-        wIntraFunctionCode_->setCheckState(Wt::Checked);
+        wPeScramblerDispatchVa_->setToolTip(tip);
 
         tip = "Assume functions return if nothing can be proven about whether they return.  The \"returnability\" of "
               "a function can influence whether the disassembler looks for code following its call sites.";
@@ -182,25 +207,28 @@ WPartitioner::changeState(State newState) {
         return;
     } else if (state_ < newState) {
         while (state_ < newState) {
+            bool success = false;
             State nextState = (State)(state_ + 1);      // state to cause to become in effect
             switch (nextState) {
                 case InitialState:
                     ASSERT_not_reachable("InitialState must be first");
                 case ParsedSpecimen:
-                    parseSpecimen();
+                    success = parseSpecimen();
                     break;
                 case LoadedSpecimen:
-                    loadSpecimen();
+                    success = loadSpecimen();
                     break;
                 case PartitionedSpecimen:
-                    partitionSpecimen();
+                    success = partitionSpecimen();
                     break;
                 default:
                     ASSERT_not_reachable("invalid state");
             }
+            if (!success)
+                break;
             state_ = nextState;
-            adjustPanelBorders();
         }
+        adjustPanelBorders();
     } else {
         // Undo each state_ one at a time.
         while (state_ > newState) {
@@ -220,8 +248,8 @@ WPartitioner::changeState(State newState) {
                     ASSERT_not_reachable("invalid state");
             }
             state_ = (State)(state_ - 1);
-            adjustPanelBorders();
         }
+        adjustPanelBorders();
     }
 }
 
@@ -234,7 +262,7 @@ WPartitioner::redoState(State newState) {
     changeState(newState);
 }
 
-void
+bool
 WPartitioner::parseSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"parse ELF/PE containers");
@@ -262,6 +290,7 @@ WPartitioner::parseSpecimen() {
     }
     
     specimenParsed_.emit(true);
+    return true;
 }
 
 void
@@ -281,13 +310,14 @@ WPartitioner::chooseInterpretation(const Wt::WString &text) {
     }
 }
 
-void
+bool
 WPartitioner::loadSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"load specimen");
     ctx_.engine.load(ctx_.specimenNames);
     info <<"; took " <<timer <<" seconds\n";
     specimenLoaded_.emit(true);
+    return true;
 }
 
 void
@@ -304,7 +334,7 @@ WPartitioner::clearIsaError() {
     wIsaError_->hide();
 }
 
-void
+bool
 WPartitioner::partitionSpecimen() {
     SgAsmInterpretation *interp = ctx_.engine.interpretation();// null if no ELF/PE container
 
@@ -312,12 +342,12 @@ WPartitioner::partitionSpecimen() {
     if (NULL==disassembler) {
         wIsaError_->setText("ISA must be specified when there is no ELF/PE container.");
         wIsaError_->show();
-        return;
+        return false;
     }
 
     // Adjust some engine settings
     ctx_.engine.opaquePredicateSearch(findDeadCode());
-    ctx_.engine.intraFunctionCodeSearch(intraFunctionCode());
+    ctx_.engine.intraFunctionCodeSearch(followGhostEdges()==FOLLOW_LATER);
     
     // Obtain the memory map which might have been edited by now.
     if (wMemoryMap_)
@@ -339,22 +369,45 @@ WPartitioner::partitionSpecimen() {
         p.attachFunction(P2::Function::instance(dispatcherVa, p.addressName(dispatcherVa), SgAsmFunction::FUNC_USERDEF));
     }
     ctx_.engine.labelAddresses(p, interp);
+    ctx_.engine.postPartitionAnalyses(false);           // we do them explicitly in order to get timing info
 
-    // FIXME[Robb P. Matzke 2014-12-27]: we should load configuration files here
+    // Load configuration information from files
+    std::string configName = useConfiguration();
+    if (!configName.empty()) {
+        Sawyer::Stopwatch timer;
+        Sawyer::Message::Stream info(mlog[INFO] <<"loading configuration files");
+        size_t nItems = ctx_.engine.configureFromFile(p, ctx_.settings.configurationName);
+        info <<"; " <<StringUtility::plural(nItems, "items") <<" took " <<timer <<" seconds\n";
+    }
 
     // Run the partitioner (this could take a long time)
-    Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"disassembling and partitioning");
+    Sawyer::Stopwatch timer;
     ctx_.engine.runPartitioner(ctx_.partitioner, interp);
     info <<"; took " <<timer <<" seconds\n";
 
+    // Post-partitioning analysis
+    ctx_.engine.postPartitionAnalyses(true);
+    info <<"running post-partitioning analyses";
+    timer.start(true /*reset*/);
+    ctx_.engine.updateAnalysisResults(ctx_.partitioner);
+    info <<"; took " <<timer <<" seconds\n";
+
     specimenPartitioned_.emit(true);
+    return true;
 }
 
 void
 WPartitioner::undoPartitionSpecimen() {
     ctx_.partitioner = P2::Partitioner();
     specimenPartitioned_.emit(false);
+}
+
+std::string
+WPartitioner::useConfiguration() const {
+    if (wUseConfiguration_->checkState() != Wt::Checked)
+        return "";
+    return ctx_.settings.configurationName;
 }
 
 std::string
@@ -370,9 +423,15 @@ WPartitioner::useSemantics() const {
     return wUseSemantics_->checkState() == Wt::Checked;
 }
 
-bool
+void
+WPartitioner::handleUseSemantics(bool isChecked) {
+    wFollowGhostEdges_->setEnabled(isChecked);
+    wFollowGhostEdgesWarning_->setHidden(isChecked);
+}
+
+WPartitioner::GhostEdgeFollowing
 WPartitioner::followGhostEdges() const {
-    return wFollowGhostEdges_->checkState() == Wt::Checked;
+    return (GhostEdgeFollowing)wFollowGhostEdges_->currentIndex();
 }
 
 bool
@@ -395,11 +454,6 @@ WPartitioner::peScramblerDispatcherVa() const {
     std::string str = wPeScramblerDispatchVa_->text().narrow();
     rose_addr_t va = rose_strtoull(str.c_str(), NULL, 16);
     return va;
-}
-
-bool
-WPartitioner::intraFunctionCode() const {
-    return wIntraFunctionCode_->checkState() == Wt::Checked;
 }
 
 bool

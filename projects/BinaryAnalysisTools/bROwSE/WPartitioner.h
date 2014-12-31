@@ -26,20 +26,23 @@ public:
         NStates
     };
 
+    enum GhostEdgeFollowing { FOLLOW_NEVER, FOLLOW_NOW, FOLLOW_LATER };
+
 private:
     Context &ctx_;
     State state_;                                       // current state
     std::vector<Wt::WPanel*> panels_;                   // panels created by init()
 
+    Wt::WCheckBox *wUseConfiguration_;                  // use configuration files from command-line?
     Wt::WComboBox *wIsaName_;                           // instruction set architecture
     Wt::WText *wIsaError_;                              // error message for ISA problems
     Wt::WCheckBox *wUseSemantics_;                      // use symbolic semantics?
-    Wt::WCheckBox *wFollowGhostEdges_;                  // do we ignore opaque predicates?
+    Wt::WComboBox *wFollowGhostEdges_;                  // how to follow ghost edges from opaque predicates?
+    Wt::WText *wFollowGhostEdgesWarning_;               // warning message for wFollowGhostEdges
     Wt::WCheckBox *wAllowDiscontiguousBlocks_;          // can basic blocks be discontiguous?
     Wt::WCheckBox *wFindDeadCode_;                      // look for unreachable basic blocks?
     Wt::WCheckBox *wDefeatPeScrambler_;                 // descramble PEScrambler binaries?
     Wt::WLineEdit *wPeScramblerDispatchVa_;             // address for PEScrambler dispatcher
-    Wt::WCheckBox *wIntraFunctionCode_;                 // suck up unused addresses as intra-function code?
     Wt::WCheckBox *wAssumeFunctionsReturn_;             // how do unknown functions behave?
     Wt::WComboBox *wInterpretation_;                    // which interpretation to unparse
 
@@ -56,10 +59,10 @@ private:
 public:
     explicit WPartitioner(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx), state_(InitialState),
-          wIsaName_(NULL), wIsaError_(NULL), wUseSemantics_(NULL), wFollowGhostEdges_(NULL), wAllowDiscontiguousBlocks_(NULL),
-          wFindDeadCode_(NULL), wDefeatPeScrambler_(NULL), wPeScramblerDispatchVa_(NULL), wIntraFunctionCode_(NULL),
-          wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wParseSpecimen_(NULL), wLoadSpecimen_(NULL),
-          wPartitionSpecimen_(NULL) {
+          wUseConfiguration_(NULL), wIsaName_(NULL), wIsaError_(NULL), wUseSemantics_(NULL), wFollowGhostEdges_(NULL),
+          wFollowGhostEdgesWarning_(NULL), wAllowDiscontiguousBlocks_(NULL), wFindDeadCode_(NULL), wDefeatPeScrambler_(NULL),
+          wPeScramblerDispatchVa_(NULL), wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wParseSpecimen_(NULL),
+          wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
         init();
     }
 
@@ -69,14 +72,14 @@ public:
      *  provider. A null provider causes the default memory map to be used. */
     void memoryMapProvider(WMemoryMap *w) { wMemoryMap_ = w; }
 
+    std::string useConfiguration() const;
     std::string isaName() const;
     bool useSemantics() const;
-    bool followGhostEdges() const;
+    GhostEdgeFollowing followGhostEdges() const;
     bool allowDiscontiguousBlocks() const;
     bool findDeadCode() const;
     bool defeatPeScrambler() const;
     rose_addr_t peScramblerDispatcherVa() const;
-    bool intraFunctionCode() const;
     bool assumeFunctionsReturn() const;
 
     State currentState() const { return state_; }
@@ -92,17 +95,21 @@ private:
     Wt::WContainerWidget *makePanel(State, const std::string &title, Wt::WContainerWidget *parent);
     void adjustPanelBorders();
 
-    void parseSpecimen();
+    // called when the useSemantics checkbox is checked or unchecked in order to adjust some other widgets that depend on
+    // having semantics available.
+    void handleUseSemantics(bool);
+
+    bool parseSpecimen();
     void undoParseSpecimen();
 
     void chooseInterpretation(const Wt::WString&);
 
-    void loadSpecimen();
+    bool loadSpecimen();
     void undoLoadSpecimen();
 
     void clearIsaError();
 
-    void partitionSpecimen();
+    bool partitionSpecimen();
     void undoPartitionSpecimen();
 
 };
