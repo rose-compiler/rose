@@ -11,6 +11,22 @@
 
 namespace bROwSE {
 
+// Forward declarations for all bROwSE widgets
+class WAddressComboBox;
+class WAssemblyListing;
+class WAddressSpace;
+class WBusy;
+class WFunctionCfg;
+class WFunctionList;
+class WFunctionNavigation;
+class WFunctionSummary;
+class WHexDump;
+class WHexValueEdit;
+class WMemoryMap;
+class WPartitioner;
+class WStatus;
+class WStatusBar;
+
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 static const rose_addr_t NO_ADDRESS(-1);
@@ -53,6 +69,7 @@ public:
     P2::Engine engine;                                  // partitioning engine
     P2::Partitioner partitioner;                        // partitioner used by the engine
     Wt::WApplication *application;                      // Wt probably has a method to get this, but I can't find it
+    WBusy *busy;                                        // the main busy widget
     
     explicit Context(const Settings &settings, const std::vector<std::string> &specimenNames, Wt::WApplication *app)
         : settings(settings), specimenNames(specimenNames), application(app) {

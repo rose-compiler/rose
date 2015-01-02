@@ -7,8 +7,6 @@
 
 namespace bROwSE {
 
-class WMemoryMap;
-
 /** Settings for running the partitioner. */
 class WPartitioner: public Wt::WContainerWidget {
 public:

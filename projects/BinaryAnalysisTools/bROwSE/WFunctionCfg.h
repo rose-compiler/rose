@@ -11,9 +11,6 @@
 
 namespace bROwSE {
 
-class WAddressComboBox;
-class WFunctionNavigation;
-
 /** Function control flow graph.
  *
  *  This widget displays a function control flow graph with clickable elements. It also maintains a forward/back style

@@ -1,5 +1,7 @@
 #include <bROwSE/WPartitioner.h>
 
+#include <boost/thread.hpp>
+#include <bROwSE/WBusy.h>
 #include <bROwSE/WMemoryMap.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -334,6 +336,58 @@ WPartitioner::clearIsaError() {
     wIsaError_->hide();
 }
 
+// Updates the global WBusy widget's progress whenever a basic block is inserted into the partitioner's CFG.
+class BusyUpdater: public P2::CfgAdjustmentCallback {
+    WBusy *busy_;
+    size_t ncalls_;
+protected:
+    BusyUpdater(WBusy *busy): busy_(busy), ncalls_(0) {}
+public:
+    typedef Sawyer::SharedPointer<BusyUpdater> Ptr;
+    static Ptr instance(WBusy *busy) {
+        return Ptr(new BusyUpdater(busy));
+    }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE {
+        if (0 == ++ncalls_ % 1000)
+            busy_->setValue(args.partitioner->nBytes());
+        return chain;
+    }
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+};
+
+// The thread in which to run the very expensive partitioning step.  The caller must have already incremented the global WBusy
+// counter, which we'll decrement when we finish.
+class LaunchPartitioner {
+    Context *ctx_;
+    Wt::Signal<bool> *finished_;
+    SgAsmInterpretation *interp_;
+public:
+    LaunchPartitioner(Context *ctx, Wt::Signal<bool> *finished, SgAsmInterpretation *interp)
+        : ctx_(ctx), finished_(finished), interp_(interp) {}
+
+    void operator()() {
+        Sawyer::Message::Stream info(mlog[INFO] <<"disassembling and partitioning");
+        Sawyer::Stopwatch timer;
+        ctx_->engine.runPartitioner(ctx_->partitioner, interp_);
+        info <<"; took " <<timer <<" seconds\n";
+
+        // Post-partitioning analysis
+        ctx_->busy->replaceWork("Post-partitioning anlaysis...", 0);
+        ctx_->engine.postPartitionAnalyses(true);
+        info <<"running post-partitioning analyses";
+        timer.start(true /*reset*/);
+        ctx_->engine.updateAnalysisResults(ctx_->partitioner);
+        info <<"; took " <<timer <<" seconds\n";
+
+        // All done, update app, which is in some other thread.
+        Wt::WApplication::UpdateLock lock(ctx_->application);
+        if (lock) {
+            finished_->emit(true);
+            ctx_->busy->popWork();
+        }
+    }
+};
+
 bool
 WPartitioner::partitionSpecimen() {
     SgAsmInterpretation *interp = ctx_.engine.interpretation();// null if no ELF/PE container
@@ -380,20 +434,20 @@ WPartitioner::partitionSpecimen() {
         info <<"; " <<StringUtility::plural(nItems, "items") <<" took " <<timer <<" seconds\n";
     }
 
+    // Configure the progress bar
+    size_t expectedTotal = 0;
+    BOOST_FOREACH (const MemoryMap::Node &node, ctx_.engine.memoryMap().nodes()) {
+        if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+            expectedTotal += node.key().size();
+    }
+    ctx_.busy->pushWork("Disassembling and partitioning", expectedTotal);
+    BusyUpdater::Ptr bupper = BusyUpdater::instance(ctx_.busy);
+    ctx_.partitioner.cfgAdjustmentCallbacks().prepend(bupper);
+
     // Run the partitioner (this could take a long time)
-    Sawyer::Message::Stream info(mlog[INFO] <<"disassembling and partitioning");
-    Sawyer::Stopwatch timer;
-    ctx_.engine.runPartitioner(ctx_.partitioner, interp);
-    info <<"; took " <<timer <<" seconds\n";
+    LaunchPartitioner launcher(&ctx_, &specimenPartitioned_, interp);
+    boost::thread thread(launcher);
 
-    // Post-partitioning analysis
-    ctx_.engine.postPartitionAnalyses(true);
-    info <<"running post-partitioning analyses";
-    timer.start(true /*reset*/);
-    ctx_.engine.updateAnalysisResults(ctx_.partitioner);
-    info <<"; took " <<timer <<" seconds\n";
-
-    specimenPartitioned_.emit(true);
     return true;
 }
 

@@ -1,6 +1,7 @@
 #include <bROwSE/Application.h>
 
 #include <bROwSE/WAssemblyListing.h>
+#include <bROwSE/WBusy.h>
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
@@ -18,6 +19,7 @@
 #include <Wt/WContainerWidget>
 #include <Wt/WGridLayout>
 #include <Wt/WImage>
+#include <Wt/WStackedWidget>
 #include <Wt/WTabWidget>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
@@ -173,8 +175,34 @@ Application::init() {
     styleSheet().addRule(".status_error", "background-color:#ffd781;");// light orange
     styleSheet().addRule(".status_fatal", "background-color:#ff8181;");// light red
 
+    // So other threads can obtain a lock, modify the DOM, and then call triggerUpdate.
+    enableUpdates(true);
+
+    // The application has mutually exclusive phases that are children of a stacked widget
+    Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+    root()->setLayout(vbox);
+    wStacked_ = new Wt::WStackedWidget;
+    vbox->addWidget(wStacked_);
+
+    //------------ 
+    // Busy phase
+    //------------
+    ctx_.busy = new WBusy(ctx_);
+    ctx_.busy->workStarted().connect(boost::bind(&Wt::WStackedWidget::setCurrentIndex, wStacked_, BusyPhase));
+    ctx_.busy->workFinished().connect(boost::bind(&Wt::WStackedWidget::setCurrentIndex, wStacked_, InteractivePhase));
+    ASSERT_require(wStacked_->count() == BusyPhase);
+    wStacked_->addWidget(ctx_.busy);
+
+    //-------------------
+    // Interactive phase
+    //-------------------
+    wInteractivePhase_ = new Wt::WContainerWidget;
+    ASSERT_require(wStacked_->count() == InteractivePhase);
+    wStacked_->addWidget(wInteractivePhase_);
+    wStacked_->setCurrentIndex(InteractivePhase);
+
     // Grid layout
-    root()->setLayout(wGrid_ = new Wt::WGridLayout());
+    wInteractivePhase_->setLayout(wGrid_ = new Wt::WGridLayout);
     wGrid_->setRowStretch(1, 1);
     wGrid_->setColumnStretch(1, 1);
 

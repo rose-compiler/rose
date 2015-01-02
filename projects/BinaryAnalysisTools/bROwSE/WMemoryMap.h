@@ -6,8 +6,6 @@
 
 namespace bROwSE {
 
-class WHexValueEdit;
-
 /** Displays and edits a memory map. */
 class WMemoryMap: public Wt::WContainerWidget {
 public:

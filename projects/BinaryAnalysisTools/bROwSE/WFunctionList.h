@@ -7,7 +7,6 @@
 namespace bROwSE {
 
 class FunctionListModel;
-class WAddressSpace;
 
 // Presents a list of functions
 class WFunctionList: public Wt::WContainerWidget {

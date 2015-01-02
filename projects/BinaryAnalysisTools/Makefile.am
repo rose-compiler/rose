@@ -50,9 +50,6 @@ bROwSE_server_SOURCES =				\
 	bROwSE/Statistics.C			\
 	bROwSE/WAddressComboBox.C		\
 	bROwSE/WAddressSpace.C			\
-	bROwSE/WBasicBlock.C			\
-	bROwSE/WBasicBlockInsns.C		\
-	bROwSE/WBasicBlockSummary.C		\
 	bROwSE/WBusy.C				\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\

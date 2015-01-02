@@ -3,12 +3,16 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
+#include <InsnSemanticsExpr.h>                          // ROSE
 #include <sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WTableView>
 #include <Wt/WText>
+#include <Wt/WTree>
+#include <Wt/WTreeTable>
+#include <Wt/WTreeTableNode>
 #include <Wt/WVBoxLayout>
 
 using namespace rose;
@@ -30,13 +34,14 @@ facilityBaseName(const std::string &s) {
 // Sits between Sawyer::Message and WStatusModel to transfer messages from Sawyer (originally from ROSE, etc) into the message
 // model which can then be displayed in a table.
 class MessageTransfer: public Sawyer::Message::Destination {
+    Wt::WApplication *application_;
     MessageModel *model_;
     WStatus *wStatus_;
     size_t sequence_;
 
 protected:
-    MessageTransfer(MessageModel *model, WStatus *wStatus)
-        : model_(model), wStatus_(wStatus), sequence_(0) {
+    MessageTransfer(Wt::WApplication *application, MessageModel *model, WStatus *wStatus)
+        : application_(application), model_(model), wStatus_(wStatus), sequence_(0) {
         ASSERT_not_null(model);
         ASSERT_not_null(wStatus);
     }
@@ -44,8 +49,8 @@ protected:
 public:
     typedef Sawyer::SharedPointer<MessageTransfer> Ptr;
 
-    static Ptr instance(MessageModel *model, WStatus *wStatus) {
-        return Ptr(new MessageTransfer(model, wStatus));
+    static Ptr instance(Wt::WApplication *application, MessageModel *model, WStatus *wStatus) {
+        return Ptr(new MessageTransfer(application, model, wStatus));
     }
 
     void post(const Sawyer::Message::Mesg &mesg, const Sawyer::Message::MesgProps &props) ROSE_OVERRIDE {
@@ -61,8 +66,16 @@ public:
                          tm->tm_hour, tm->tm_min, tm->tm_sec, tm->tm_zone);
                 
                 MessageModel::Message m(mesg.id(), ++sequence_, facility, *props.importance, arrivalTime, mesg.text());
-                model_->insertMessage(m);
-                wStatus_->handleMessageArrival(m);
+
+                // Message may be coming from any thread, so be careful
+                Wt::WApplication::UpdateLock lock(application_);
+                if (lock) {
+                    model_->insertMessage(m);
+                    wStatus_->handleMessageArrival(m);
+#if 0 // [Robb P. Matzke 2014-12-31]: is this necessary?
+                    application_->triggerUpdate();
+#endif
+                }
             }
         }
     }
@@ -160,19 +173,74 @@ MessageModel::data(const Wt::WModelIndex &index, int role) const {
 //                                      WStatus (the big status)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static Wt::WText*
+addNode(Wt::WTreeTableNode *parent, const std::string &name, const std::string &units) {
+    Wt::WTreeTableNode *node = new Wt::WTreeTableNode(name, 0, parent);
+    Wt::WText *wValue = new Wt::WText("0");
+    node->setColumnWidget(1, wValue);
+    node->setColumnWidget(2, new Wt::WText(units));
+    return wValue;
+}
+
 void
 WStatus::init() {
     Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
     setLayout(vbox);
 
-    wPartitionerStats_ = new Wt::WText("Partitioner stats:", Wt::PlainText);
-    vbox->addWidget(wPartitionerStats_);
+    //----------------------------------------------
+    // Statistics from various parts of the system.
+    //----------------------------------------------
 
-    wProcessStats_ = new Wt::WText("Process stats:", Wt::PlainText);
-    vbox->addWidget(wProcessStats_);
+    // We need the hbox to prevent the treetable from spaning the entire width of the browser
+    Wt::WContainerWidget *statusContainer = new Wt::WContainerWidget;
+    vbox->addWidget(statusContainer);
+    Wt::WHBoxLayout *statusHBox = new Wt::WHBoxLayout;
+    statusContainer->setLayout(statusHBox);
 
-    wRoseStats_ = new Wt::WText("ROSE stats:", Wt::PlainText);
-    vbox->addWidget(wRoseStats_);
+    wStats_ = new Wt::WTreeTable;
+    wStats_->tree()->setSelectionMode(Wt::SingleSelection);
+    wStats_->addColumn("Value", Wt::WLength(6, Wt::WLength::FontEm));
+    wStats_->addColumn("Units", Wt::WLength(6, Wt::WLength::FontEm));
+    wStats_->resize(650, Wt::WLength::Auto);
+    statusHBox->addWidget(wStats_);
+
+    Wt::WTreeTableNode *root = new Wt::WTreeTableNode("System statistics");
+    wStats_->setTreeRoot(root, "System statistics");
+
+    Wt::WTreeTableNode *processGroup = new Wt::WTreeTableNode("Process", 0, root);
+    wProcessMemory_ = addNode(processGroup, "memory", "MB");
+    wProcessTime_   = addNode(processGroup, "time",   "seconds");
+
+    Wt::WTreeTableNode *partitionerGroup = new Wt::WTreeTableNode("Partitioner", 0, root);
+    wPartitionerInsns_     = addNode(partitionerGroup, "InsnCache",  "insns");
+    wPartitionerBBlocks_   = addNode(partitionerGroup, "CFG",        "bblocks");
+    wPartitionerFunctions_ = addNode(partitionerGroup, "CFG",        "functions");
+    wPartitionerBytes_     = addNode(partitionerGroup, "AUM actual", "bytes");
+    wPartitionerHullSize_  = addNode(partitionerGroup, "AUM hull",   "bytes");
+
+    Wt::WTreeTableNode *semanticsGroup = new Wt::WTreeTableNode("Semantics", 0, root);
+    wSemanticsAllocated_ = addNode(semanticsGroup, "allocated", "nodes");
+    wSemanticsReserved_  = addNode(semanticsGroup, "reserved",  "nodes");
+
+    Wt::WTreeTableNode *roseGroup = new Wt::WTreeTableNode("ROSE AST", 0, root);
+    wRoseProject_ = addNode(roseGroup, "project", "nodes");
+    wRoseTotal_   = addNode(roseGroup, "total",   "nodes");
+
+    root->expand();
+    processGroup->expand();
+    partitionerGroup->expand();
+    semanticsGroup->expand();
+    roseGroup->expand();
+
+    statusHBox->addWidget(new Wt::WText(""), 1 /*stretch*/);// prevent WTreeTable from spanning entire width
+
+    //-------------------------------
+    // Diagnostic messages from ROSE
+    //-------------------------------
+
+    vbox->addWidget(new Wt::WBreak());
+    vbox->addWidget(new Wt::WBreak());
+    vbox->addWidget(new Wt::WText("<b>Diagnostics from ROSE</b>"));
 
     Wt::WContainerWidget *wMessageTable = new Wt::WContainerWidget;
     vbox->addWidget(wMessageTable, 1 /*stretch*/);
@@ -199,7 +267,7 @@ WStatus::init() {
     hbox->addWidget(tableView_);
 
     // Wire up ROSE diagnostics to the MessageModel
-    MessageTransfer::Ptr xfer = MessageTransfer::instance(model_, this);
+    MessageTransfer::Ptr xfer = MessageTransfer::instance(ctx_.application, model_, this);
     Sawyer::Message::MultiplexerPtr mplex = rose::Diagnostics::destination.dynamicCast<Sawyer::Message::Multiplexer>();
     ASSERT_not_null(mplex);
     mplex->addDestination(xfer);
@@ -216,29 +284,42 @@ WStatus::handleMessageArrival(const MessageModel::Message &mesg) {
 // a message.
 void
 WStatus::redraw() {
-    if (!ctx_.partitioner.isDefaultConstructed()) {
-        std::ostringstream ss;
-        ss <<"Partitioner: insns=" <<ctx_.partitioner.instructionProvider().nCached()
-           <<"; blocks=" <<ctx_.partitioner.nPlaceholders()
-           <<"; functions=" <<ctx_.partitioner.nFunctions();
-        wPartitionerStats_->setText(ss.str());
-        wPartitionerStats_->show();
-    } else {
-        wPartitionerStats_->hide();
-    }
+    using namespace StringUtility;
 
+    // Process info
     struct rusage ru;
     if (0==getrusage(RUSAGE_SELF, &ru)) {
-        std::ostringstream ss;
-        ss <<"Process: mem=" <<(ru.ru_maxrss/1024.0) <<" MB";
-        ss <<"; time=" <<(ru.ru_utime.tv_sec + ru.ru_utime.tv_usec*1e-6) <<" seconds";
-        wProcessStats_->setText(ss.str());
-        wProcessStats_->show();
+        wProcessMemory_->setText(numberToString(ru.ru_maxrss/1024.0));
+        wProcessTime_->setText(numberToString(ru.ru_utime.tv_sec + ru.ru_utime.tv_usec*1e-6));
     } else {
-        wProcessStats_->hide();
+        wProcessMemory_->setText("N/A");
+        wProcessTime_->setText("N/A");
     }
 
-    // FIXME[Robb P. Matzke 2014-12-30]: how do we count parts of the AST that aren't linked to the project yet?
+    // Partitioner info
+    if (!ctx_.partitioner.isDefaultConstructed()) {
+        wPartitionerInsns_->setText(numberToString(ctx_.partitioner.instructionProvider().nCached()));
+        wPartitionerBBlocks_->setText(numberToString(ctx_.partitioner.nPlaceholders()));
+        wPartitionerFunctions_->setText(numberToString(ctx_.partitioner.nFunctions()));
+        wPartitionerBytes_->setText(numberToString(ctx_.partitioner.aum().size()));
+        wPartitionerHullSize_->setText(numberToString(ctx_.partitioner.aum().hull().size()));
+    } else {
+        wPartitionerInsns_->setText("0");
+        wPartitionerBBlocks_->setText("0");
+        wPartitionerFunctions_->setText("0");
+        wPartitionerBytes_->setText("0");
+        wPartitionerHullSize_->setText("0");
+    }
+
+    // Semantics info
+    {
+        Sawyer::PoolAllocator &exprPool = BinaryAnalysis::InsnSemanticsExpr::TreeNode::poolAllocator();
+        std::pair<size_t, size_t> exprAllocs = exprPool.nAllocated();
+        wSemanticsAllocated_->setText(numberToString(exprAllocs.first));
+        wSemanticsReserved_->setText(numberToString(exprAllocs.second));
+    }
+    
+    // ROSE info
     if (SgProject *project = SageInterface::getProject()) {
         struct T1: AstSimpleProcessing {
             size_t nNodes;
@@ -246,12 +327,13 @@ WStatus::redraw() {
             void visit(SgNode*) { ++nNodes; }
         } t1;
         t1.traverse(project, preorder);
-        std::ostringstream ss;
-        ss <<"ROSE: project=" <<StringUtility::plural(t1.nNodes, "nodes");
-        wRoseStats_->setText(ss.str());
-        wRoseStats_->show();
+        wRoseProject_->setText(numberToString(t1.nNodes));
     } else {
-        wRoseStats_->hide();
+        wRoseProject_->setText("0");
+    }
+    {
+        VariantVector allVariants = V_SgNode;
+        wRoseTotal_->setText(numberToString(NodeQuery::queryMemoryPool(allVariants).size()));
     }
 }
 
