@@ -1,6 +1,7 @@
 #include <bROwSE/WMemoryMap.h>
 
 #include <bROwSE/WHexValueEdit.h>
+#include <Wt/WBreak>
 #include <Wt/WCheckBox>
 #include <Wt/WImage>
 #include <Wt/WInPlaceEdit>
@@ -13,6 +14,17 @@ namespace bROwSE {
 
 void
 WMemoryMap::init() {
+
+    new Wt::WText("The memory map represents the addresses that are mapped as part of the specimen. ROSE's partitioner "
+                  "will assume that values stored at non-writable addresses are constant for the life of the specimen, "
+                  "and that all writable data could change.  Instructions must be executable, but ROSE will assume that "
+                  "they don't change even if an instruction's segment is writable (it is relatively common for old "
+                  "specimens to have writable .text sections even though they have no self-modifying code). If you "
+                  "haven't yet started the disassembly process, the memory layout is editable.  For instance, one "
+                  "might want to adjust dynamic linking tables to be read-only if linking has already been performed.", this);
+    new Wt::WBreak(this);
+    new Wt::WBreak(this);
+
     wTable_ = new Wt::WTable(this);
 
     // Table headers
@@ -446,13 +458,20 @@ WMemoryMap::finishMergeSegments(Wt::WText *wId) {
     MemoryMap::Segment newSegment = mmCurrent->value();
 
     // If the following node and this node's buffers cannot be merged then create a new buffer.
-    if (mmCurrent->value().buffer() != mmNext->value().buffer() &&
+    if (mmCurrent->value().buffer() != mmNext->value().buffer() ||
         mmCurrent->value().offset() + mmCurrent->key().size() != mmNext->value().offset()) {
         MemoryMap::Buffer::Ptr newBuffer = MemoryMap::AllocatingBuffer::instance(newInterval.size());
+
         const uint8_t *src = mmCurrent->value().buffer()->data();
         ASSERT_not_null2(src, "fast copying will not work here");
-        newBuffer->write(src, 0, newInterval.size());
+        newBuffer->write(src + mmCurrent->value().offset(), 0, mmCurrent->key().size());
+
+        src = mmNext->value().buffer()->data();
+        ASSERT_not_null2(src, "fast copying will not work here");
+        newBuffer->write(src + mmNext->value().offset(), mmCurrent->key().size(), mmNext->key().size());
+
         newSegment.buffer(newBuffer);
+        newSegment.offset(0);
     }
 
     // Insert the new segment over the top of the two we're replacing

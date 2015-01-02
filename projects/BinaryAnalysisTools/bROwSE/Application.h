@@ -10,18 +10,13 @@
 
 namespace bROwSE {
 
-class WAssemblyListing;
-class WFunctionCfg;
-class WFunctionList;
-class WFunctionSummary;
-class WHexDump;
-class WMemoryMap;
-class WPartitioner;
-class WStatus;
-class WStatusBar;
-
 class Application: public Wt::WApplication {
 public:
+    enum Phase {
+        BusyPhase,                                      /**< GUI is waiting for some long-running task like partitioning. */
+        InteractivePhase                                /**< GUI is in normal phase of interactive operation. */
+    };
+
     /** The tabs in the central part of the main window. */
     enum MainTab {
         PartitionerTab,                                 /**< Partitioner configuration and actions. */
@@ -37,6 +32,10 @@ public:
 
 private:
     Context ctx_;                                       // many other objects have a reference to this
+    Wt::WStackedWidget *wStacked_;                      // the main phases of the application
+
+    // Interact phase
+    Wt::WContainerWidget *wInteractivePhase_;
     Wt::WGridLayout *wGrid_;                            // layout for the application as a whole
     Wt::WTabWidget *wMainTabs_;                         // main tabs in the central region of the app
     WPartitioner *wPartitioner_;                        // configuration
@@ -52,7 +51,7 @@ private:
 
 public:
     explicit Application(const Settings &settings, const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
-        : Wt::WApplication(env), ctx_(settings, specimenNames, this),
+        : Wt::WApplication(env), ctx_(settings, specimenNames, this), wStacked_(NULL), wInteractivePhase_(NULL),
           wGrid_(NULL), wMainTabs_(NULL), wPartitioner_(NULL), wMemoryMap_(NULL), wFunctionList_(NULL),
           wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wAssembly_(NULL), wStatus_(NULL), wStatusBar_(NULL) {
         init();

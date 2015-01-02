@@ -57,14 +57,23 @@ public:
  *  This displays full information about the status of the system and serves as the contents of the main "Status" tab. */
 class WStatus: public Wt::WContainerWidget {
     Context &ctx_;
-    Wt::WText *wPartitionerStats_, *wProcessStats_, *wRoseStats_;
+
+    Wt::WTreeTable *wStats_;
+    Wt::WText *wProcessMemory_, *wProcessTime_, *wPartitionerInsns_, *wPartitionerBBlocks_, *wPartitionerFunctions_;
+    Wt::WText *wPartitionerHullSize_, *wPartitionerBytes_, *wSemanticsAllocated_, *wSemanticsReserved_;
+    Wt::WText *wRoseProject_, *wRoseTotal_;
+    
     MessageModel *model_;
     Wt::WTableView *tableView_;
+
     Wt::Signal<std::string> messageArrived_;            // emitted when a message arrives from ROSE
 
 public:
     explicit WStatus(Context &ctx, Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), wPartitionerStats_(NULL), wProcessStats_(NULL), wRoseStats_(NULL),
+        : Wt::WContainerWidget(parent), ctx_(ctx),
+          wStats_(NULL), wProcessMemory_(NULL), wProcessTime_(NULL), wPartitionerInsns_(NULL), wPartitionerBBlocks_(NULL),
+          wPartitionerFunctions_(NULL), wPartitionerHullSize_(NULL), wPartitionerBytes_(NULL),
+          wSemanticsAllocated_(NULL), wSemanticsReserved_(NULL), wRoseProject_(NULL), wRoseTotal_(NULL),
           model_(NULL), tableView_(NULL) {
         init();
     }

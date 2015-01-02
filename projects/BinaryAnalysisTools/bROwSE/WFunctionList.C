@@ -3,6 +3,7 @@
 
 #include <bROwSE/FunctionListModel.h>
 #include <Wt/WHBoxLayout>
+#include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
 using namespace rose;
@@ -15,6 +16,16 @@ WFunctionList::init() {
     setLayout(vbox);
 
     // Address space
+    vbox->addWidget(new Wt::WText("Representation of the address space. The top bar represents the memory map segments "
+                                  "where green is executable (faded means also writable); yellow is non-executable and "
+                                  "readable (faded means also writable); pink means write-only (faded means no permissions); "
+                                  "and black represents unmapped areas.  Clicking in the gutter area above the bar will zoom "
+                                  "into a single segment.  The lower bar represents functions and is a heat-map based on "
+                                  "whatever table column is currently sorted: dark blues for low values, and light red for "
+                                  "high values; pure red means no value. Clicking in the gutter area below the functions "
+                                  "will select the function.  Clicking within a bar graph zooms in, or out (with Control), "
+                                  "or all the way out (with Shift-Control)."));
+
     wAddressSpace_ = new WAddressSpace(ctx_);
     wAddressSpace_->insertSegmentsAndFunctions();       // segments are bar0, functions are bar1
     wAddressSpace_->topGutterClicked().connect(this, &WFunctionList::selectSegmentByAddress);
