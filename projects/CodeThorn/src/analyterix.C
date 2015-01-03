@@ -12,7 +12,7 @@
 #include "RDLattice.h"
 #include "DFAnalysis2.h"
 #include "RDAnalysis.h"
-//#include "RoseRDAnalysis.h"
+#include "RoseRDAnalysis.h"
 #include "LVAnalysis.h"
 #include "IntervalAnalysis.h"
 #include "RDAstAttribute.h"
@@ -56,7 +56,7 @@ using namespace AnalysisAbstractionLayer;
 string option_prefix;
 bool option_stats=false;
 bool option_generalanalysis=false;
-bool option_roserdanalysis=false;
+bool option_rose_rd_analysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
 bool option_rd_analysis=true;
@@ -316,6 +316,12 @@ int main(int argc, char* argv[]) {
       cout << "Error: wrong command line options."<<endl;
       exit(1);
     }
+    cout << "INIT: Parsing and creating AST."<<endl;
+    boolOptions.registerOption("semantic-fold",false); // temporary
+    boolOptions.registerOption("post-semantic-fold",false); // temporary
+    SgProject* root = frontend(argc,argv);
+    //  AstTests::runAllTests(root);
+
     // Command line option handling.
     namespace po = boost::program_options;
     po::options_description desc
@@ -328,12 +334,14 @@ int main(int argc, char* argv[]) {
       ("rose-help", "show help for compiler frontend options.")
       ("version,v", "display the version.")
       ("stats", "display code statistics.")
-      ("rd-analysis", "perform reaching definitions analysis.")
-      ("lv-analysis", "perform live variables analysis.")
-      ("rose-rd-analysis", "perform rose-core reaching definitions analysis.")
       ("fi-constanalysis", "perform flow-insensitive constant analysis.")
-      ("print-varidmapping", "prints variableIdMapping")
       ("csv-fi-constanalysis",po::value< string >(), "generate csv-file [arg] with const-analysis data.")
+      ("rd-analysis", "perform reaching definitions analysis.")
+      ("rose-rd-analysis", "perform rose reaching definitions analysis.")
+      ("lv-analysis", "perform live variables analysis.")
+      ("dd-analysis", "data dependence analysis.")
+      ("interval-analysis", "perform interval analysis.")
+      ("print-varidmapping", "prints variableIdMapping")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -369,8 +377,15 @@ int main(int argc, char* argv[]) {
     if(args.count("lv-analysis")) {
       option_lv_analysis=true;
     }
+    if(args.count("interval-analysis")) {
+      option_interval_analysis=true;
+    }
+    if(args.count("dd-analysis")) {
+      option_rd_analysis=true; // required
+      option_dd_analysis=true;
+    }
     if(args.count("rose-rd-analysis")) {
-      option_roserdanalysis=true;
+      option_rose_rd_analysis=true;
     }
     if(args.count("fi-constanalysis")) {
       option_fi_constanalysis=true;
@@ -390,11 +405,6 @@ int main(int argc, char* argv[]) {
         argv[i+1] = strdup("");
       }
     }
-
-  cout << "INIT: Parsing and creating AST."<<endl;
-  SgProject* root = frontend(argc,argv);
-  //  AstTests::runAllTests(root);
-  // inline all functions
 
   if(option_stats) {
     SPRAY::ProgramStatistics::printBasicCodeInfo(root);
@@ -435,11 +445,10 @@ int main(int argc, char* argv[]) {
   }
 
   runAnalyses(root);
-#if 0
-  if(option_roserdanalysis) {
+
+  if(option_rose_rd_analysis) {
     Experimental::RoseRDAnalysis::generateRoseRDDotFiles(labeler,root);
   }
-#endif
 
   cout<< "STATUS: finished."<<endl;
 

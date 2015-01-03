@@ -363,10 +363,9 @@ analyterix_SOURCES = \
   UDAstAttribute.h \
   VariableIdUtils.C \
   VariableIdUtils.h \
+  RoseRDAnalysis.C \
+  RoseRDAnalysis.h \
   analyterix.C
-
-#  RoseRDAnalysis.C 
-#  RoseRDAnalysis.h 
 
 reverser_LDADD = -lrose
 reverser_SOURCES = \
