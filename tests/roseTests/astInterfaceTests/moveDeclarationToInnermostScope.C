@@ -883,9 +883,9 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
           bool old_body_is_compiler_generated = old_body->isCompilerGenerated();
           bool old_body_is_compiler_generated_fromFileInfo = old_body->get_file_info()->isCompilerGenerated();
-#if 0
-          printf ("old_body_is_compiler_generated              = %s \n",old_body_is_compiler_generated ? "true" : "false");
-          printf ("old_body_is_compiler_generated_fromFileInfo = %s \n",old_body_is_compiler_generated_fromFileInfo ? "true" : "false");
+#if 1
+          printf ("####### old_body = %p old_body_is_compiler_generated              = %s \n",old_body,old_body_is_compiler_generated ? "true" : "false");
+       // printf ("old_body_is_compiler_generated_fromFileInfo = %s \n",old_body_is_compiler_generated_fromFileInfo ? "true" : "false");
 #endif
           if (old_body_is_compiler_generated == true || old_body_is_compiler_generated_fromFileInfo == true)
              {

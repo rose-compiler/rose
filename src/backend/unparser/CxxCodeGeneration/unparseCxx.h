@@ -511,7 +511,8 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           void unparseStatementFromTokenStream (SgStatement* stmt, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
 
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
-          void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+       // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
 #endif
    };
 

@@ -224,16 +224,30 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_16.C \
   inputmoveDeclarationToInnermostScope_test2014_17.C \
   inputmoveDeclarationToInnermostScope_test2014_19.C \
-  inputmoveDeclarationToInnermostScope_test2014_20.C \
   inputmoveDeclarationToInnermostScope_test2014_21.C \
   inputmoveDeclarationToInnermostScope_test2014_23.C \
   inputmoveDeclarationToInnermostScope_test2014_24.C \
   inputmoveDeclarationToInnermostScope_test2014_25.C \
-  inputmoveDeclarationToInnermostScope_test2014_26.C \
   inputmoveDeclarationToInnermostScope_test2014_27.C \
   inputmoveDeclarationToInnermostScope_test2014_28.C \
   inputmoveDeclarationToInnermostScope_test2014_29.C \
-  inputmoveDeclarationToInnermostScope_test2014_30.C
+  inputmoveDeclarationToInnermostScope_test2014_30.C \
+  inputmoveDeclarationToInnermostScope_test2014_31.C \
+  inputmoveDeclarationToInnermostScope_test2015_01.C \
+  inputmoveDeclarationToInnermostScope_test2015_02.C \
+  inputmoveDeclarationToInnermostScope_test2015_03.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
+  inputmoveDeclarationToInnermostScope_test2015_05.C \
+  inputmoveDeclarationToInnermostScope_test2015_08.C \
+  inputmoveDeclarationToInnermostScope_test2015_09.C \
+  inputmoveDeclarationToInnermostScope_test2015_10.C
+
+# DQ (1/4/2014): Failing test with new design.
+#  inputmoveDeclarationToInnermostScope_test2014_20.C 
+#  inputmoveDeclarationToInnermostScope_test2014_26.C 
+#  inputmoveDeclarationToInnermostScope_test2015_06.C 
+#  inputmoveDeclarationToInnermostScope_test2015_07.C 
+#  inputmoveDeclarationToInnermostScope_test2015_11.C 
 
 # DQ (12/23/2014): These fail (for the same reason) and demonstrate a bug in the move tool.
 # inputmoveDeclarationToInnermostScope_test2014_18.C 

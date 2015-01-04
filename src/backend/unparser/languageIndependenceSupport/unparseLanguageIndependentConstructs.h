@@ -44,14 +44,18 @@ class UnparseLanguageIndependentConstructs
                e_token_subsequence_start,
                e_token_subsequence_end,
                e_trailing_whitespace_start,
-               e_trailing_whitespace_end
+               e_trailing_whitespace_end,
+            // DQ (12/31/2014): Added to support the middle subsequence of tokens in the SgIfStmt as a special case.
+               e_else_whitespace_start,
+               e_else_whitespace_end
              };
 
        // Single statement specification of token subsequence.
           void unparseStatementFromTokenStream (SgStatement* stmt, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
 
        // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
-          void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+       // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
+          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, token_sequence_position_enum_type e_leading_whitespace_start, token_sequence_position_enum_type e_token_subsequence_start);
 
        // DQ (12/30/2014): Adding debugging information.
           std::string token_sequence_position_name( token_sequence_position_enum_type e );
