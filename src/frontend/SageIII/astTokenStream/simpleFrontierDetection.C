@@ -217,6 +217,15 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNo
                if ( currentStatement != NULL && currentStatement->isTransformation() == false && (statement->isTransformation() == true || statement->get_containsTransformation() == true) )
                   {
                     n->set_containsTransformation(true);
+
+#if 0
+                 // DQ (12/31/2014): This will not work since we would not have an associated token stream.
+                    SgBasicBlock* basicBlock = isSgBasicBlock(n);
+                    if (basicBlock != NULL && basicBlock->isCompilerGenerated() == true)
+                       {
+                      // Mark this as a transformation so that we can output it.
+                       }
+#endif
                   }
              }
 #endif

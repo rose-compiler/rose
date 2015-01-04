@@ -66,6 +66,10 @@ string UnparseLanguageIndependentConstructs::token_sequence_position_name( Unpar
           case e_trailing_whitespace_start: s = "e_trailing_whitespace_start"; break;
           case e_trailing_whitespace_end:   s = "e_trailing_whitespace_end";   break;
 
+       // DQ (12/31/2014): Added to support the middle subsequence of tokens in the SgIfStmt as a special case.
+          case e_else_whitespace_start:     s = "e_else_whitespace_start";     break;
+          case e_else_whitespace_end:       s = "e_else_whitespace_end";       break;
+
           default:
              {
                printf ("default reached in switch: value = %d \n",e);
@@ -96,14 +100,17 @@ void UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
 void
 UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
-   SgStatement* stmt_1, SgStatement* stmt_2, 
+// SgStatement* stmt_1, SgStatement* stmt_2, 
+   SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, 
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_start, 
    UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_sequence_position_end)
    {
   // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
   // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
 
-#if 0
+#define DEBUG_TOKEN_STREAM_UNPARSING 0
+
+#if DEBUG_TOKEN_STREAM_UNPARSING
      printf ("unparseStatementFromTokenStream(stmt_1=%p=%s,stmt_2=%p=%s): \n",stmt_1,stmt_1->class_name().c_str(),stmt_2,stmt_2->class_name().c_str());
      printf ("   --- e_token_sequence_position_start = %d = %s \n",e_token_sequence_position_start,token_sequence_position_name(e_token_sequence_position_start).c_str());
      printf ("   --- e_token_sequence_position_end   = %d = %s \n",e_token_sequence_position_end,token_sequence_position_name(e_token_sequence_position_end).c_str());
@@ -156,18 +163,22 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                        }
                     ROSE_ASSERT(start >= 0);
                     break;
+
                case e_leading_whitespace_end:
                     start = tokenSubsequence_1->leading_whitespace_end;
                     ROSE_ASSERT(start >= 0);
                     break;
+
                case e_token_subsequence_start:
                     start = tokenSubsequence_1->token_subsequence_start;
                     ROSE_ASSERT(start >= 0);
                     break;
+
                case e_token_subsequence_end:
                     start = tokenSubsequence_1->token_subsequence_end;
                     ROSE_ASSERT(start >= 0);
                     break;
+
                case e_trailing_whitespace_start:
                     start = tokenSubsequence_1->trailing_whitespace_start;
 
@@ -178,8 +189,15 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                        }
                     ROSE_ASSERT(start >= 0);
                     break;
+
                case e_trailing_whitespace_end:
                     start = tokenSubsequence_1->trailing_whitespace_end;
+
+                 // DQ (1/2/2015): Note that white space is not always available.
+                    if (start == -1)
+                       {
+                         start = tokenSubsequence_1->token_subsequence_end + 1;
+                       }
                     ROSE_ASSERT(start >= 0);
                     break;
 
@@ -218,6 +236,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                             }
                          ROSE_ASSERT(end >= 0);
                          break;
+
                     case e_leading_whitespace_end:
                          end = tokenSubsequence_2->leading_whitespace_end;
 
@@ -228,14 +247,17 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                             }
                          ROSE_ASSERT(end >= 0);
                          break;
+
                     case e_token_subsequence_start:
                          end = tokenSubsequence_2->token_subsequence_start;
                          ROSE_ASSERT(end >= 0);
                          break;
+
                     case e_token_subsequence_end:
                          end = tokenSubsequence_2->token_subsequence_end;
                          ROSE_ASSERT(end >= 0);
                          break;
+
                     case e_trailing_whitespace_start:
                          end = tokenSubsequence_2->trailing_whitespace_start;
 
@@ -246,8 +268,15 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                             }
                          ROSE_ASSERT(end >= 0);
                          break;
+
                     case e_trailing_whitespace_end:
                          end = tokenSubsequence_2->trailing_whitespace_end;
+
+                      // DQ (1/2/2015): Note that white space is not always available.
+                         if (end == -1)
+                            {
+                              end = tokenSubsequence_2->token_subsequence_end + 1;
+                            }
                          ROSE_ASSERT(end >= 0);
                          break;
 #endif
@@ -258,7 +287,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                        }
                   }
              }
-#if 0
+
+#if DEBUG_TOKEN_STREAM_UNPARSING
           printf ("unparseStatementFromTokenStream(): Iterate from start = %d to end = %d \n",start,end);
 #endif
           ROSE_ASSERT(start >= 0);
@@ -268,7 +298,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
        // We don't want to unparse the token at the end.
           for (int j = start; j < end; j++)
              {
-#if 0
+#if DEBUG_TOKEN_STREAM_UNPARSING
                printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
@@ -2663,7 +2693,12 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
           unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK1);
-          curprint ( string("{"));
+       // curprint ( string("{"));
+          if (SgProject::get_verbose() > 0)
+               curprint("/* syntax from AST */ {");
+            else
+               curprint("{");
+
           unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK1);
         }
        else
@@ -2767,7 +2802,13 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
           unp->cur.format(basic_stmt, info, FORMAT_BEFORE_BASIC_BLOCK2);
-          curprint ( string("}"));
+
+       // curprint ( string("}"));
+          if (SgProject::get_verbose() > 0)
+               curprint("/* syntax from AST */ }");
+            else
+               curprint("}");
+
           unp->cur.format(basic_stmt, info, FORMAT_AFTER_BASIC_BLOCK2);
         }
        else
@@ -2871,7 +2912,11 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                     UnparseLanguageIndependentConstructs::unparseStatement(tmp_stmt, testInfo);
                   }
                testInfo.unset_inConditional();
-               curprint ( string(") "));
+            // curprint ( string(") "));
+               if (SgProject::get_verbose() > 0)
+                    curprint ("/* syntax from AST */ ) ");
+                 else
+                    curprint (") ");
              }
             else
              {
@@ -2919,6 +2964,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
              {
+#if 0
+               printf ("Unparse the else between the true and false body \n");
+               curprint("\n/* Unparse the else between the true and false body */ \n");
+#endif
                size_t elsesNeededForInnerIfs = countElsesNeededToPreventDangling(if_stmt->get_true_body());
                for (size_t i = 0; i < elsesNeededForInnerIfs; ++i) 
                   {
@@ -2931,10 +2980,18 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                if (saved_unparsedPartiallyUsingTokenStream == false)
                   {
                     unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
-                    curprint ( string("else "));
+                 // curprint ( string("else "));
+                    if (SgProject::get_verbose() > 0)
+                         curprint ("/* syntax from AST */ else ");
+                      else
+                         curprint(" else ");
                   }
                  else
                   {
+#if 0
+                    printf ("Unparse the else before the false body \n");
+                    curprint("/* Unparse the else before the false body */");
+#endif
                  // DQ (12/9/2014): Adding more support for unparsing using the token stream.
                     SgStatement* true_body  = if_stmt->get_true_body();
                     SgStatement* false_body = if_stmt->get_false_body();
@@ -2943,7 +3000,8 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                          unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_token_subsequence_start);
                        }
 #if 0
-                    curprint("/* Unparse the else before the false body */");
+                    printf ("DONE: Unparse the else before the false body \n");
+                    curprint("/* DONE: Unparse the else before the false body */");
 #endif
                   }
 
@@ -2986,6 +3044,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
              }
         }
+
+#if 0
+     curprint("/* DONE: Unparse the if statement */");
+#endif
    }
 
 
@@ -3268,6 +3330,15 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // In this case it is better to use the start and end of the trailing whitespace subsequence.
        // unparseStatementFromTokenStream (test_stmt, body, e_trailing_whitespace_start, e_token_subsequence_start);
           unparseStatementFromTokenStream (test_stmt, e_trailing_whitespace_start, e_trailing_whitespace_end);
+       // curprint("/* syntax from partial token unparse */ )");
+       // SgStatement* loopBody = for_stmt->get_loop_body();
+       // unparseStatementFromTokenStream (test_stmt, loopBody, e_trailing_whitespace_end, e_leading_whitespace_start);
+          SgExpression *increment_expr = for_stmt->get_increment();
+          unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
+#if 0
+          curprint("/* syntax from partial token unparse */");
+#endif
+          curprint(")");
 #if 0
           curprint ("/* unparse end of SgForStatement header */");
 #endif
