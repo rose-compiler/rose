@@ -2861,6 +2861,51 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
           ROSE_ASSERT(tokenStreamSequenceMap.size() == 0);
         }
 
+  // DQ (1/4/2015): Find the first statement so that we can unparse the tokens leading up to it.
+     SgStatement* first_statement = NULL;
+     if (sourceFile->get_unparse_tokens() == true)
+        {
+       // Setup an iterator to go through all the statements in the top scope of the file.
+          SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
+          SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
+#if 0
+          int first_statement_declarationCounter = 0;
+#endif
+          while ( statementIterator != globalStatementList.end() )
+             {
+               SgStatement* currentStatement = *statementIterator;
+               ROSE_ASSERT(currentStatement != NULL);
+#if 0
+               printf ("In unparseGlobalStmt(): find first statement: first_statement_declaration #%d is %p = %s = %s \n",
+                    first_statement_declarationCounter++,currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+#endif
+            // DQ (12/22/2014): The stl semantics are allowing NULL pointers to get into the tokenStreamSequenceMap container.
+            // bool found_token_data = (tokenStreamSequenceMap.find(currentStatement) != tokenStreamSequenceMap.end());
+               bool found_token_data = (tokenStreamSequenceMap.find(currentStatement) != tokenStreamSequenceMap.end()) && tokenStreamSequenceMap[currentStatement] != NULL;
+               if (found_token_data == true && first_statement == NULL)
+                  {
+                    first_statement = currentStatement;
+                  }
+
+            // Go to the next statement
+               statementIterator++;
+             }
+
+          if (first_statement != NULL)
+             {
+#if 0
+               printf ("first_statement = %p = %s \n",first_statement,first_statement->class_name().c_str());
+               first_statement->get_file_info()->display("first_statement: debug");
+#endif
+            // Unparse the leading part of the file's token stream up to the leading whitespace of the first statement to be unparsed.
+               unparseStatementFromTokenStream(globalScope, first_statement, e_token_subsequence_start, e_leading_whitespace_start);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+
   // DQ (12/10/2014): This is used to support the token-based unparsing.
      SgStatement* last_statement = NULL;
 
