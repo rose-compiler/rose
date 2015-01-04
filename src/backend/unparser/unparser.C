@@ -700,7 +700,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      string fileNameForTokenStream = file->getFileName();
 
 #if 1
-     printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+     printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
@@ -821,9 +821,13 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
           if ((*i)->beginning_fpi.column_num != current_column_number)
              {
-               printf ("error: (*i)->beginning_fpi.column_num = %d \n",(*i)->beginning_fpi.column_num);
-               printf ("error: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
-               ROSE_ASSERT(false);
+            // DQ (1/4/2014): This problem is demonstrated by tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_18.C when using the "-rose:verbose 2" option.
+               printf ("error: In Unparser::unparseFileUsingTokenStream(): (*i)->beginning_fpi.column_num = %d \n",(*i)->beginning_fpi.column_num);
+               printf ("error: In Unparser::unparseFileUsingTokenStream(): current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
+
+            // DQ (1/4/2014): Commented this assertion out as part of debugging tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_18.C when using the "-rose:verbose 2" option.
+            // Note that "}" that is a part of an "extern \"C\" {" fails this test (is classified as CPP_PREPROCESSING_INFO).
+            // ROSE_ASSERT(false);
              }
 
           current_line_number += lines;

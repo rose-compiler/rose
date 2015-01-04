@@ -1,9 +1,7 @@
 #if 1
 #include <string>
 #else
-namespace XXXstd 
-   {
-   }
+int x;
 #endif
 
   void foo()
