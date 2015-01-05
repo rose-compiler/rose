@@ -159,6 +159,16 @@ Partitioner::erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeh
     return bblock;
 }
 
+void
+Partitioner::basicBlockDropSemantics() const {
+    BOOST_FOREACH (const ControlFlowGraph::VertexValue &vertex, cfg_.vertexValues()) {
+        if (vertex.type() == V_BASIC_BLOCK) {
+            if (BasicBlock::Ptr bblock = vertex.bblock())
+                bblock->dropSemantics();
+        }
+    }
+}
+
 size_t
 Partitioner::nBasicBlocks() const {
     size_t nBasicBlocks = 0;
@@ -482,6 +492,9 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
         dblock->incrementOwnerCount();
     }
 
+    if (basicBlockSemanticsAutoDrop_)
+        bblock->dropSemantics();
+
     bblockAttached(placeholder);
 }
 
@@ -505,6 +518,32 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
     return retval;
 }
 
+std::vector<Function::Ptr>
+Partitioner::basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const {
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (rose_addr_t va, bblockVas) {
+        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(va);
+        if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
+            placeholder->value().function()!=NULL) {
+            insertUnique(retval, placeholder->value().function(), sortFunctionsByAddress);
+        }
+    }
+    return retval;
+}
+
+std::vector<Function::Ptr>
+Partitioner::basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr> &bblocks) const {
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const BasicBlock::Ptr &bblock, bblocks) {
+        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblock->address());
+        if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
+            placeholder->value().function()!=NULL) {
+            insertUnique(retval, placeholder->value().function(), sortFunctionsByAddress);
+        }
+    }
+    return retval;
+}
+    
 BasicBlock::Successors
 Partitioner::basicBlockSuccessors(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
@@ -1560,58 +1599,53 @@ Partitioner::attachFunction(const Function::Ptr &function) {
 Function::Ptr
 Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
     ASSERT_not_null(function);
-    Function::Ptr exists;
-    if (functions_.getOptional(function->address()).assignTo(exists)) {
-        if (exists != function) {
-            bool canMerge = true;
-            for (int pass=0; pass<2 && canMerge; ++pass) { // first pass to check, second pass to make changes
-                // FIXME[Robb P. Matzke 2014-08-23]: we could relax these: found could be a subset of exists
-                if (0==pass) {
-                    if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size()) {
-                        canMerge = false;
-                        break;
-                    }
-                    if (!std::equal(exists->basicBlockAddresses().begin(), exists->basicBlockAddresses().end(),
-                                    function->basicBlockAddresses().begin())) {
-                        canMerge = false;
-                        break;
-                    }
-                    if (exists->dataBlocks().size() != function->dataBlocks().size()) {
-                        canMerge = false;
-                        break;
-                    }
-                    if (!std::equal(exists->dataBlocks().begin(), exists->dataBlocks().end(), function->dataBlocks().begin())) {
-                        canMerge = false;
-                        break;
-                    }
-                }
 
-                // Function name. Use new function's name if existing function has no name.  If names are the same except for
-                // the "@plt" part then use the version with the "@plt".
-                if (exists->name() == function->name()) {
-                    // nothing to do
-                } else if (exists->name().empty()) {
-                    if (pass>0)
-                        exists->name(function->name());
-                } else if (boost::ends_with(exists->name(), "@plt") && boost::starts_with(exists->name(), function->name())) {
-                    // nothing to do
-                } else if (boost::ends_with(function->name(), "@plt") && boost::starts_with(function->name(), exists->name())) {
-                    if (pass>0)
-                        exists->name(function->name());
-                } else {
-                    canMerge = false;
-                    break;
-                }
-            }
-            if (!canMerge) {
-                throw FunctionError(function,
-                                    functionName(function) + " cannot be merged with attached " + functionName(exists));
-            }
-        }
-        return exists;
+    // If this function is already in the CFG then we have nothing to do.
+    if (function->isFrozen())
+        return function;
+
+    // The basic blocks in function must not be owned by more than one attached function.
+    std::vector<Function::Ptr> owningFunctions = basicBlockFunctionOwners(function->basicBlockAddresses());
+    if (owningFunctions.size() > 1) {
+        std::ostringstream ss;
+        ss <<function->printableName() + " cannot be merged because multiple attached functions own its basic blocks:";
+        BOOST_FOREACH (const Function::Ptr &f, owningFunctions)
+            ss <<" " <<f->printableName();
+        throw FunctionError(function, ss.str());
     }
-    attachFunction(function);
-    return function;
+
+    // If this function shares no basic blocks with an existing function then just add this function the usual way.
+    if (owningFunctions.empty()) {
+        attachFunction(function);
+        return function;
+    }
+    
+    // If an existing function has the same entry address as this new function, then perhapse use this new function's name.  If
+    // the names are the same except for the "@plt" part then use the version with the "@plt".
+    ASSERT_forbid(owningFunctions.empty());
+    Function::Ptr exists = owningFunctions.front();
+    if (exists->address()==function->address()) {
+        if (exists->name().empty()) {
+            exists->name(function->name());
+        } else {
+            size_t atSign = function->name().find_last_of('@');
+            if (atSign != std::string::npos && exists->name()==function->name().substr(0, atSign))
+                exists->name(function->name());
+        }
+    }
+
+    // Add this function's basic blocks to the existing function.
+    BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses())
+        exists->insertBasicBlock(bblockVa);
+    attachFunctionBasicBlocks(exists);
+
+    // Add this function's data blocks to the existing function.
+    BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
+        attachDataBlock(dblock);
+        dblock->incrementOwnerCount();
+    }
+
+    return exists;
 }
     
 size_t

@@ -66,7 +66,7 @@ private:
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BaseSemantics::DispatcherPtr dispatcher_;           // How instructions are dispatched (null if no instructions)
     BaseSemantics::RiscOperatorsPtr operators_;         // Risc operators even if we're not using a dispatcher
-    BaseSemantics::StatePtr initialState_;              // Initial state for semantics (null if no instructions)
+    BaseSemantics::StatePtr initialState_;              // Initial state for semantics (null if dropped semantics)
     bool usingDispatcher_;                              // True if dispatcher's state is up-to-date for the final instruction
     Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
     std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
@@ -230,9 +230,21 @@ public:
     //                                  Semantics
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Determines whether semantics have been dropped.
+     *
+     *  Returns true if a basic block's semantics have been dropped and a dispatcher is available. Always returns false if a
+     *  dispatcher is not available. */
+    bool isSemanticsDropped() const { return dispatcher_ && !initialState_; }
+
+    /** Determines whether a semantics error was encountered.
+     *
+     *  Returns true if an error was encountered in the block's instruction semantics.  Always returns false if a dispatcher is
+     *  not available or if semantics have been dropped. */
+    bool isSemanticsError() const { return dispatcher_ && initialState_ && !usingDispatcher_; }
+
     /** Return the initial semantic state.
      *
-     *  A null pointer is returned if this basic block has no instructions. */
+     *  A null pointer is returned if this basic block's semantics have been dropped. */
     const BaseSemantics::StatePtr& initialState() const { return initialState_; }
 
     /** Return the final semantic state.
@@ -248,6 +260,18 @@ public:
      *  that was used.  The register dictionary can be employed to obtain names for the registers in the semantic
      *  states. A null dispatcher is returned if this basic block is empty. */
     const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
+
+    /** Drops semantic information.
+     *
+     *  This function deletes semantic information for the basic block and can be used to save space.  The partitioner can be
+     *  configured to drop semantic information when a basic block is attached to the CFG. */
+    void dropSemantics();
+
+    /** Undrop semantics.
+     *
+     *  This is the inverse of dropSemantics.  If semantics have been dropped then they will be recalculated if possible. If
+     *  semantics have not been dropped then nothing happens. */
+    void undropSemantics();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
