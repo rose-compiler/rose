@@ -291,6 +291,7 @@ set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUs
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataFlow.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Engine.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Exception.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Function.C

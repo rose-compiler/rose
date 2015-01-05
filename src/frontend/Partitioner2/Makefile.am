@@ -14,6 +14,7 @@ libPartitioner_la_SOURCES =			\
 	BasicBlock.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\
+	DataFlow.C				\
 	Engine.C				\
 	Exception.C				\
 	Function.C				\

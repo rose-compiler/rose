@@ -1634,17 +1634,45 @@ Partitioner::attachOrMergeFunction(const Function::Ptr &function) {
         }
     }
 
-    // Add this function's basic blocks to the existing function.
-    BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses())
-        exists->insertBasicBlock(bblockVa);
-    attachFunctionBasicBlocks(exists);
-
-    // Add this function's data blocks to the existing function.
-    BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
-        attachDataBlock(dblock);
-        dblock->incrementOwnerCount();
+    // If the new function has basic blocks or data blocks that aren't in the existing function, then update the existing
+    // function.
+    bool needsUpdate = false;
+    if (exists->basicBlockAddresses().size() != function->basicBlockAddresses().size()) {
+        needsUpdate = true;
+    } else {
+        const std::set<rose_addr_t> &s1 = function->basicBlockAddresses();
+        const std::set<rose_addr_t> &s2 = exists->basicBlockAddresses();
+        if (!std::equal(s1.begin(), s1.end(), s2.begin()))
+            needsUpdate = true;
+    }
+    if (!needsUpdate) {
+        if (exists->dataBlocks().size() != function->dataBlocks().size()) {
+            needsUpdate = true;
+        } else {
+            const std::vector<DataBlock::Ptr> &v1 = function->dataBlocks();
+            const std::vector<DataBlock::Ptr> &v2 = exists->dataBlocks();
+            if (!std::equal(v1.begin(), v1.end(), v2.begin()))
+                needsUpdate = true;
+        }
     }
 
+    if (needsUpdate) {
+        detachFunction(exists);
+
+        // Add this function's basic blocks to the existing function.
+        BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses())
+            exists->insertBasicBlock(bblockVa);
+        attachFunctionBasicBlocks(exists);
+
+        // Add this function's data blocks to the existing function.
+        BOOST_FOREACH (const DataBlock::Ptr &dblock, function->dataBlocks()) {
+            attachDataBlock(dblock);
+            dblock->incrementOwnerCount();
+        }
+
+        attachFunction(exists);
+    }
+    
     return exists;
 }
     
