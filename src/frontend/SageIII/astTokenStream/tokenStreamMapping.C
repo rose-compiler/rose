@@ -1402,8 +1402,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
                                 else
                                  {
+#if 0
                                    printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceMap \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
+#endif
                                  }
 
                               k2 = find(tokenStreamSequenceVector.begin(),tokenStreamSequenceVector.end(),tokenToNodeEntriesToRemove[index]);
@@ -1413,8 +1415,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
                                 else
                                  {
+#if 0
                                    printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
+#endif
                                  }
 #if 0
                               printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
