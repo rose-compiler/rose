@@ -46,7 +46,7 @@ WMemoryMap::init() {
     wTable_->columnAt(ReadableColumn  )->setWidth(Wt::WLength(2,  Wt::WLength::FontEm));
     wTable_->columnAt(WritableColumn  )->setWidth(Wt::WLength(2,  Wt::WLength::FontEm));
     wTable_->columnAt(ExecutableColumn)->setWidth(Wt::WLength(2,  Wt::WLength::FontEm));
-    wTable_->columnAt(NameColumn      )->setWidth(Wt::WLength(20, Wt::WLength::FontEm));
+    wTable_->columnAt(NameColumn      )->setWidth(Wt::WLength(30, Wt::WLength::FontEm));
 
     synchronize();
 }

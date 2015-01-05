@@ -27,10 +27,12 @@ class WBusy: public Wt::WContainerWidget {
     Wt::WText *wTitle_;
     Wt::WProgressBar *wBar_;
     Wt::Signal<> workStarted_, workFinished_;
+    double lastUpdateTime_;                             // time of last call to redraw() that wasn't a no-op
+    bool lastUpdateWasEmpty_;                           // was the work list empty at the last redraw time?
 
 public:
     explicit WBusy(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), wTitle_(NULL), wBar_(NULL) {
+        : Wt::WContainerWidget(parent), ctx_(ctx), wTitle_(NULL), wBar_(NULL), lastUpdateTime_(0.0), lastUpdateWasEmpty_(true) {
         init();
     }
 
