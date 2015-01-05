@@ -339,17 +339,21 @@ WPartitioner::clearIsaError() {
 // Updates the global WBusy widget's progress whenever a basic block is inserted into the partitioner's CFG.
 class BusyUpdater: public P2::CfgAdjustmentCallback {
     WBusy *busy_;
-    size_t ncalls_;
+    double lastUpdateTime_;
 protected:
-    BusyUpdater(WBusy *busy): busy_(busy), ncalls_(0) {}
+    BusyUpdater(WBusy *busy): busy_(busy), lastUpdateTime_(0.0) {}
 public:
     typedef Sawyer::SharedPointer<BusyUpdater> Ptr;
     static Ptr instance(WBusy *busy) {
         return Ptr(new BusyUpdater(busy));
     }
     virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE {
-        if (0 == ++ncalls_ % 1000)
+        static const double minimumUpdateInterval = 1.5;    // seconds
+        double now = Sawyer::Message::now();
+        if (now - lastUpdateTime_ >= minimumUpdateInterval) {
+            lastUpdateTime_ = now;
             busy_->setValue(args.partitioner->nBytes());
+        }
         return chain;
     }
     virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
@@ -366,15 +370,33 @@ public:
         : ctx_(ctx), finished_(finished), interp_(interp) {}
 
     void operator()() {
-        Sawyer::Message::Stream info(mlog[INFO] <<"disassembling and partitioning");
+        Sawyer::Message::Stream info(mlog[INFO]);
+
+        // Load configuration information from files
+        if (!ctx_->settings.configurationName.empty()) {
+            info <<"loading configuration files";
+            ctx_->busy->replaceWork("Loading configuration files...", 0);
+            Sawyer::Stopwatch timer;
+            size_t nItems = ctx_->engine.configureFromFile(ctx_->partitioner, ctx_->settings.configurationName);
+            info <<"; " <<StringUtility::plural(nItems, "items") <<" took " <<timer <<" seconds\n";
+        }
+
+        // Disassemble and partition
+        info <<"disassembling and partitioning";
+        size_t expectedTotal = 0;
+        BOOST_FOREACH (const MemoryMap::Node &node, ctx_->engine.memoryMap().nodes()) {
+            if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
+                expectedTotal += node.key().size();
+        }
+        ctx_->busy->replaceWork("Disassembling and partitioning...", expectedTotal);
         Sawyer::Stopwatch timer;
         ctx_->engine.runPartitioner(ctx_->partitioner, interp_);
         info <<"; took " <<timer <<" seconds\n";
 
         // Post-partitioning analysis
+        info <<"running post-partitioning analyses";
         ctx_->busy->replaceWork("Post-partitioning anlaysis...", 0);
         ctx_->engine.postPartitionAnalyses(true);
-        info <<"running post-partitioning analyses";
         timer.start(true /*reset*/);
         ctx_->engine.updateAnalysisResults(ctx_->partitioner);
         info <<"; took " <<timer <<" seconds\n";
@@ -425,22 +447,9 @@ WPartitioner::partitionSpecimen() {
     ctx_.engine.labelAddresses(p, interp);
     ctx_.engine.postPartitionAnalyses(false);           // we do them explicitly in order to get timing info
 
-    // Load configuration information from files
-    std::string configName = useConfiguration();
-    if (!configName.empty()) {
-        Sawyer::Stopwatch timer;
-        Sawyer::Message::Stream info(mlog[INFO] <<"loading configuration files");
-        size_t nItems = ctx_.engine.configureFromFile(p, ctx_.settings.configurationName);
-        info <<"; " <<StringUtility::plural(nItems, "items") <<" took " <<timer <<" seconds\n";
-    }
-
-    // Configure the progress bar
-    size_t expectedTotal = 0;
-    BOOST_FOREACH (const MemoryMap::Node &node, ctx_.engine.memoryMap().nodes()) {
-        if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
-            expectedTotal += node.key().size();
-    }
-    ctx_.busy->pushWork("Disassembling and partitioning", expectedTotal);
+    // Configure the progress bar. We need to add a work item here in the parent thread, although the child will quickly
+    // override it with something more appropriate.
+    ctx_.busy->pushWork("Disassembling and partitioning...", 0);
     BusyUpdater::Ptr bupper = BusyUpdater::instance(ctx_.busy);
     ctx_.partitioner.cfgAdjustmentCallbacks().prepend(bupper);
 
