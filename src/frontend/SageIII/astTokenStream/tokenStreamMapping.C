@@ -1478,6 +1478,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                    printf ("      --- process_node (inheritedAttribute.processChildNodes test) = %s \n",process_node ? "true" : "false");
 #endif
+#if 1
+                                // DQ (1/4/2014): commented out to test with using token based unparsing.
+
                                 // DQ (12/22/2014): If this is part of an EDG normalization of template function definitions in template classes then it should not be processed.
                                    SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(statement);
                                    if (functionDeclaration != NULL)
@@ -1488,7 +1491,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              process_node ? "true" : "false",functionDeclaration->isNormalizedTemplateFunction() ? "true" : "false");
 #endif
                                       }
-
+#endif
                                    if (process_node == true)
                                       {
                                         childrenWithoutTokenMappings.push_back(i);
@@ -3251,6 +3254,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                     printf ("starting_line = %d ending_line = %d starting_column = %d ending_column = %d process_node = %s \n",starting_line,ending_line,starting_column,ending_column,process_node ? "true" : "false");
 #endif
 
+#if 1
+                 // DQ (1/4/2014): commented out to test with using token based unparsing.
+
                  // DQ (12/22/2014): If this is part of an EDG normalization of template function definitions in template classes then it should not be processed.
                     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
                     if (functionDeclaration != NULL)
@@ -3262,7 +3268,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                               process_node ? "true" : "false",functionDeclaration->isNormalizedTemplateFunction() ? "true" : "false");
 #endif
                        }
-
+#endif
                     if (process_node == true)
                        {
 // #if 1

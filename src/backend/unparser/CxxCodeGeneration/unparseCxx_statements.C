@@ -2879,6 +2879,7 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 
 #if 0
      printf ("In unparseIfStmt(): unparse if statement stmt = %p \n",stmt);
+     curprint("/* Unparse the if statement */");
 #endif
 #if 0
      printf ("info.unparsedPartiallyUsingTokenStream() = %s \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false");
@@ -2982,9 +2983,16 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                     unp->cur.format(if_stmt, info, FORMAT_BEFORE_STMT);
                  // curprint ( string("else "));
                     if (SgProject::get_verbose() > 0)
-                         curprint ("/* syntax from AST */ else ");
+                       {
+                         curprint ("/* syntax from AST (part 1) */ else ");
+                       }
                       else
+                       {
+                      // DQ (1/4/2015): Remove trailing space to avoid redundant output of whitespace in token unparsing.
+                      // We actually need to extra space to avoid unparsing "elseif" by mistake (likely we can address this detail later).
+                      // curprint(" else ");
                          curprint(" else ");
+                       }
                   }
                  else
                   {
@@ -2997,7 +3005,17 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                     SgStatement* false_body = if_stmt->get_false_body();
                     if (true_body != NULL && false_body != NULL)
                        {
-                         unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_token_subsequence_start);
+                      // DQ (1/4/2015): If the false body is a transformation then the token sequence will not exist 
+                      // and the unparseStatementFromTokenStream() function will not output any token sequence.
+                      // unparseStatementFromTokenStream (true_body, false_body, e_trailing_whitespace_start, e_token_subsequence_start);
+                         if (SgProject::get_verbose() > 0)
+                            {
+                              curprint ("/* syntax from AST (part 2) */ else ");
+                            }
+                           else
+                            {
+                              curprint(" else ");
+                            }
                        }
 #if 0
                     printf ("DONE: Unparse the else before the false body \n");
