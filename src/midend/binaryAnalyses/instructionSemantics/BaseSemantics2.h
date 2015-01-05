@@ -2004,19 +2004,30 @@ public:
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
     virtual SValuePtr mostSignificantSetBit(const SValuePtr &a) = 0;
 
-    /** Rotate bits to the left. The return value will have the same width as operand @p a. */
+    /** Rotate bits to the left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
+     *  handles it naturally. */
     virtual SValuePtr rotateLeft(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Rotate bits to the right. The return value will have the same width as operand @p a. */
+    /** Rotate bits to the right. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
+     *  handles it naturally. */
     virtual SValuePtr rotateRight(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted left. The return value will have the same width as operand @p a. */
+    /** Returns arg shifted left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. New bits shifted into the value are zero. If @p nbits is equal to or larger than the width of @p a then the
+     *  result is zero. */
     virtual SValuePtr shiftLeft(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted right logically (no sign bit). The return value will have the same width as operand @p a. */
+    /** Returns arg shifted right logically (no sign bit). The return value will have the same width as operand @p a. The @p
+     *  nbits is interpreted as unsigned. New bits shifted into the value are zero. If  @p nbits is equal to or larger than the
+     *  width of @p a then the result is zero. */
     virtual SValuePtr shiftRight(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted right arithmetically (with sign bit). The return value will have the same width as operand @p a. */
+    /** Returns arg shifted right arithmetically (with sign bit). The return value will have the same width as operand @p
+     *  a. The @p nbits is interpreted as unsigned. New bits shifted into the value are the same as the most significant bit
+     *  (the "sign bit"). If @p nbits is equal to or larger than the width of @p a then the result has all bits cleared or all
+     *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
