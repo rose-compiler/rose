@@ -315,6 +315,7 @@ private:
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     StackDeltaMap stackDeltaMap_;                       // Stack deltas defined for certain functions by name
     AddressNameMap addressNames_;                       // Names for various addresses
+    bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
 
     // Callback lists
     CfgAdjustmentCallbacks cfgAdjustmentCallbacks_;
@@ -338,7 +339,7 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
         init(disassembler, map);
     }
 
@@ -348,7 +349,7 @@ public:
      *  partitioner by value or reference. */
     Partitioner()
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
         init(NULL, memoryMap_);
     }
 
@@ -360,7 +361,7 @@ public:
     // after a while.
     Partitioner(const Partitioner &other)               // initialize just like default
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
         init(NULL, memoryMap_);                         // initialize just like default
         *this = other;                                  // then delegate to the assignment operator
     }
@@ -381,6 +382,7 @@ public:
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
         stackDeltaMap_ = other.stackDeltaMap_;
         addressNames_ = other.addressNames_;
+        basicBlockSemanticsAutoDrop_ = other.basicBlockSemanticsAutoDrop_;
         cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
         basicBlockCallbacks_ = other.basicBlockCallbacks_;
         functionPrologueMatchers_ = other.functionPrologueMatchers_;
@@ -641,6 +643,29 @@ public:
     //                                  Partitioner basic block operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Property: Automatically drop semantics for attached basic blocks.
+     *
+     *  Basic blocks normally cache their semantic state as they're being discovered so that the state does not need to be
+     *  recomputed from the beginning of the block each time a new instruction is appended.  However, caching this information
+     *  can consume a large number of symbolic expression nodes which are seldom needed once the basic block is fully
+     *  discovered.  Therefore, setting this property to true will cause a basic block's semantic information to be forgotten
+     *  as soon as the basic block is attached to the CFG.
+     *
+     *  @sa basicBlockDropSemantics
+     *
+     * @{ */
+    bool basicBlockSemanticsAutoDrop() const ROSE_FINAL { return basicBlockSemanticsAutoDrop_; }
+    void basicBlockSemanticsAutoDrop(bool b) { basicBlockSemanticsAutoDrop_ = b; }
+    /** @} */
+
+    /** Immediately drop semantic information for all attached basic blocks.
+     *
+     *  Semantic information for all attached basic blocks is immediately forgotten by calling @ref
+     *  BasicBlock::dropSemantics. It can be recomputed later if necessary.
+     *
+     *  @sa basicBlockSemanticsAutoDrop */
+    void basicBlockDropSemantics() const ROSE_FINAL;
+
     /** Returns the number of basic blocks attached to the CFG/AUM.
      *
      *  This method returns the number of CFG vertices that are more than mere placeholders in that they point to an actual,
@@ -726,6 +751,17 @@ public:
      *
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const ROSE_FINAL;
+
+    /** Returns the list of functions that own the specified basic blocks.
+     *
+     *  The returned vector contains a list of distinct functions that own the specified basic blocks.  The functions are
+     *  sorted by their entry address.  No function pointer (not even null) is returned for basic blocks that are not owned by
+     *  any function.
+     *
+     * @{ */
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const ROSE_FINAL;
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const ROSE_FINAL;
+    /** @} */
 
     /** Detach a basic block from the CFG/AUM.
      *
