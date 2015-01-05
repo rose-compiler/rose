@@ -18,7 +18,7 @@ WFunctionList::init() {
     // Address space
     vbox->addWidget(new Wt::WText("Representation of the address space. The top bar represents the memory map segments "
                                   "where green is executable (faded means also writable); yellow is non-executable and "
-                                  "readable (faded means also writable); pink means write-only (faded means no permissions); "
+                                  "readable (faded means also writable); dark red means no permissions (faded means write-only); "
                                   "and black represents unmapped areas.  Clicking in the gutter area above the bar will zoom "
                                   "into a single segment.  The lower bar represents functions and is a heat-map based on "
                                   "whatever table column is currently sorted: dark blues for low values, and light red for "
