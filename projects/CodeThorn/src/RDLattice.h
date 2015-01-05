@@ -18,16 +18,14 @@ class RDLattice : public Lattice {
   size_t size();
   void insertPair(Label,VariableId);
   void erasePair(Label,VariableId);
-  void eraseAllPairsWithVariableId(VariableId var);
+  void removeAllPairsWithVariableId(VariableId var);
   bool isBot();
   void setBot();
   void toStream(ostream& os, VariableIdMapping* vim=0);
   bool exists(pair<Label,VariableId>);
   void setEmptySet();
   void combine(Lattice& b);
-  void combine(RDLattice& b);// TODO: delete
   bool approximatedBy(Lattice& b);
-  bool approximatedBy(RDLattice& b); // TODO: delete
 
  private:
   set<pair<Label,VariableId> > rdSet;

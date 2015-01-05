@@ -8,7 +8,7 @@
 #include "RDAnalysis.h"
 #include "RDAstAttribute.h"
 #include "CollectionOperators.h"
-#include "RDTransferFunctions2.h"
+#include "RDTransferFunctions.h"
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"

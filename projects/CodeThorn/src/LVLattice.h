@@ -19,7 +19,7 @@ class LVLattice : public Lattice {
   iterator end();
   size_t size();
   void insertVariableId(VariableId);
-  void eraseVariableId(VariableId);
+  void removeVariableId(VariableId);
   bool isBot();
   void setBot();
   void toStream(ostream& os, VariableIdMapping* vim=0);

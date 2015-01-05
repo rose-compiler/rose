@@ -1,10 +1,10 @@
-#ifndef RDTRANSFERFUNCTIONS2_H
-#define RDTRANSFERFUNCTIONS2_H
+#ifndef RDTRANSFERFUNCTIONS_H
+#define RDTRANSFERFUNCTIONS_H
 
-#include "PATransferFunctions.h"
+#include "DFTransferFunctions.h"
 #include "RDLattice.h"
 
-class RDTransferFunctions : public PATransferFunctions {
+class RDTransferFunctions : public DFTransferFunctions {
 public:
   RDTransferFunctions();
   void transferExpression(Label label, SgExpression* expr, Lattice& element);

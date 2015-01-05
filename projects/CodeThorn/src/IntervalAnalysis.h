@@ -8,7 +8,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalyzer.h"
+#include "DFAnalysis2.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
@@ -17,13 +17,13 @@
 using namespace std;
 using namespace CodeThorn;
 
-#include "ProgramAnalysis.h"
+#include "DFAnalysis2.h"
 #include "IntervalPropertyState.h"
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-class IntervalAnalysis : public ProgramAnalysis {
+class IntervalAnalysis : public DFAnalysis2 {
  public:
   IntervalAnalysis();
   ~IntervalAnalysis();

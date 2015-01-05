@@ -78,7 +78,7 @@ void RDLattice::erasePair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
+void RDLattice::removeAllPairsWithVariableId(VariableId var) {
   RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
     if(var==(*i).second) {
@@ -119,9 +119,7 @@ void RDLattice::combine(Lattice& b) {
   }
   _bot=false;
 }
-void RDLattice::combine(RDLattice& b) {
-  ROSE_ASSERT(false);
-}
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -146,11 +144,7 @@ bool RDLattice::approximatedBy(Lattice& b0) {
   }
   return true;
 }
-// OUTDATED
-bool RDLattice::approximatedBy(RDLattice& b0) {
-  cerr<<"RDLattice::approximatedBy(RDLattice) : outdated."<<endl;
-  exit(1);
-}
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

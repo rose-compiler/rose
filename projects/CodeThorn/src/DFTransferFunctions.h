@@ -7,9 +7,9 @@
 
 class Domain;
 
-class PATransferFunctions {
+class DFTransferFunctions {
 public:
-  PATransferFunctions();
+  DFTransferFunctions();
   void setLabeler(Labeler* labeler) { _labeler=labeler; }
   Labeler* getLabeler() { return _labeler; }
   void setDomain(Domain* domain) { _domain=domain; }

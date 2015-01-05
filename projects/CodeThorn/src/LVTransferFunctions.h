@@ -1,12 +1,12 @@
 #ifndef LVTRANSFERFUNCTIONS2_H
 #define LVTRANSFERFUNCTIONS2_H
 
-#include "PATransferFunctions.h"
+#include "DFTransferFunctions.h"
 #include "LVLattice.h"
 
 namespace SPRAY {
 
-class LVTransferFunctions : public PATransferFunctions {
+class LVTransferFunctions : public DFTransferFunctions {
 public:
   LVTransferFunctions();
   void transferExpression(Label label, SgExpression* expr, Lattice& element);

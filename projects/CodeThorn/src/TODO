@@ -1,25 +1,49 @@
-1) rename class ProgramAnalysis
-2) remove files DFAnalysis.*
-3) remove files DFTransferFunctions.*
-4) remove files DFSolver1.*
-5) remove files RDAnalyzer.*
-6) remove file RDTransferFunctions.hpp
-7) remove file RDTransferFunctions.C
-8) remove method RDTransferFunctions2::*(...,RDLattice);
-9) rename files RDTransferFunctions2.h/C to RDTransferFunctions.h/C
-
 10) move
   #define NO_STATE -3
   #define NO_ESTATE -4
   from file Labeler.h to CodeThorn.h header file (to be created).
 
-11) rename method eraseVariableId to removeVariableId in {RD,LV}Lattice.h/C and {RD,LV}TransferFunctions.C
-
 12) introduce AnalysisBaseMechanisms data structure to contain
   - Labeler*
   - VariableIdMapping*
   - PointerAnalysisInterface*
+  - etc.
   to REPLACE ProgramAnalysis::initializeTransferFunctions()
   INSTEAD ref to AnalysisBaseMechanisms is passed around
 
+13) refactor rdmain, integrate into analyterix
+14) remove rdmain
+15) integrate matcher_demo into anlyterix; remove matcher_demo
+15) refine woodpecker cl-interface (codepecker?)
+16) refactor reverser and add cl-interface, establish as separate project
+17) establish Normalizer
+i) define normalization/denormalization pairs (denormalizer adapts analysis results)
+ii) every normalization establishes a subset of the language (provide language-restrictor/checker for this subset)
+iii) normalize function calls
+iv) normalize expressions (introduce temporaries, such that one op on rhs)
+18) use predicates for normalized program to extract program information
+    - the results should allow to implement analyses without side-passing this interface (=abstraction-layer)
+    - e.g.  while([lab1:]E) [lab2:]S; => [Lab1:] L1: T1 t1=E1;..; bool tn=tn; if(tn) [lab2:]S; goto L1;
+    - e.g. f(g(x)) => t1=g(x);f(t1);
+    - SPRAY::isLowLevelAst(SgNode*)
+19) for all Ids generate a CSV file with the mapped information
+   e.g.: VariableId: id,original-name(as in source), SPRAY::unique-name, line of declaration, column of declaration, scopeId, scope-nesting
+20 Implement Ids (in addition to VariableId)
+i) Implement ScopeId: Scopes have the same structure as types. A nested scope is like a inheriting type. Thus, we have isNestedScopeOf(s1,s2)
+ii) Implement ExpressionId
+iii) Implement FunctionId
+iv) Implement TypeId (+ isSubTypeOf(t1,t2))
 
+21) establish Id-based query-interface. Analyses only use Ids in their analysis information.
+    e.g.: - isInScope(VariableId, ScopeId);
+          - ScopeId getScopeOfVariable(varId);
+          - isShadowedBy(variableId, variableId);
+22) establish analyses
+i) RDAnalysis
+ii) LVAnalysis
+iii) IntervalAnalysis
+iv) PointerAnalysis
+v) AEAnalysis (requires ExpressionId)
+vi) VBEAnalysis (requires ExpressionId)
+vii) CodeMotionAnalysis (requires RD+AE)
+23) enable RoseRDAnalysis (after adding missing files)
