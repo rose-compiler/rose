@@ -16,14 +16,6 @@ WBusy::init() {
 // Internal (lock already acquired)
 void
 WBusy::redraw() {
-    // Don't update the progress bar too often (each update is a round trip to the browser)
-    static const double minimumUpdateInterval = 1.5;    // seconds
-    double now = Sawyer::Message::now();
-    if (workStack_.empty() == lastUpdateWasEmpty_) {
-        if (now - lastUpdateTime_ < minimumUpdateInterval)
-            return;
-    }
-
     if (workStack_.empty()) {
         // This stuff is just placeholders since the widget is not displayed when it isn't busy.
         wTitle_->setText("Busy, please wait.");
@@ -40,8 +32,6 @@ WBusy::redraw() {
         }
     }
     ctx_.application->triggerUpdate();
-    lastUpdateTime_ = now;
-    lastUpdateWasEmpty_ = workStack_.empty();
 }
 
 // This can be called from any thread
