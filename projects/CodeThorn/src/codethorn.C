@@ -25,6 +25,7 @@
 #include "RewriteSystem.h"
 #include "SpotConnection.h"
 #include "CounterexampleAnalyzer.h"
+#include "RefinementConstraints.h"
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 
@@ -1216,11 +1217,13 @@ int main( int argc, char * argv[] ) {
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
+    ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
     ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
     ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
     ("with-ltl-counterexamples", po::value< string >(), "report counterexamples that violate LTL properties [=yes|no]")
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
+    ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
     ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
@@ -1299,12 +1302,14 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("std-io-only",false);
   boolOptions.registerOption("std-in-only",false);
   boolOptions.registerOption("std-out-only",false);
+  boolOptions.registerOption("no-input-input",false);
 
   boolOptions.registerOption("with-counterexamples",false);
   boolOptions.registerOption("with-assert-counterexamples",false);
   boolOptions.registerOption("with-ltl-counterexamples",false);
   boolOptions.registerOption("counterexamples-with-output",false);
-  boolOptions.registerOption("check-ltl-counterexamples",false);
+  boolOptions.registerOption("check-ltl-counterexamples",false); 
+  boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
 
@@ -1869,6 +1874,11 @@ int main( int argc, char * argv[] ) {
         cout << "STATUS: number of states remaining after reduction to I/O/(worklist) states only: " <<eStateSetSizeIoOnly << endl;
       }
     }
+    if(boolOptions["no-input-input"]) {  //delete transitions that indicate two input states without an output in between
+      analyzer.removeInputInputTransitions();
+      transitionGraphSizeIoOnly = (analyzer.getTransitionGraph())->size();
+      cout << "STATUS: number of transitions remaining after removing input->input transitions: " << transitionGraphSizeIoOnly << endl;
+    }
     bool withCounterexample = false;
     if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
       withCounterexample = true;
@@ -1897,6 +1907,8 @@ int main( int argc, char * argv[] ) {
     if (boolOptions["check-ltl-counterexamples"]) {
       cout << "STATUS: checking for spurious counterexamples..."<<endl;
       CounterexampleAnalyzer ceAnalyzer(analyzer);
+      RefinementConstraints constraintManager(analyzer.getFlow(), analyzer.getLabeler(), 
+                analyzer.getExprAnalyzer(), analyzer.getCFAnalyzer(), analyzer.getVariableIdMapping());
       for (unsigned int i = 0; i < ltlResults->size(); i++) {
         //only check counterexamples
         if (ltlResults->getPropertyValue(i) == PROPERTY_VALUE_NO) {
@@ -1907,12 +1919,35 @@ int main( int argc, char * argv[] ) {
             ltlResults->setCounterexample(i, "");
             ltlResults->setPropertyValue(i, PROPERTY_VALUE_UNKNOWN);
             cout << "INFO: property " << i << " was reset to unknown (spurious counterexample)." << endl;
+            if (boolOptions["refinement-constraints-demo"]) {
+              constraintManager.addConstraintsByLabel(ceAnalysisResult.spuriousTargetLabel);
+            }
           } else if (ceAnalysisResult.analysisResult == CE_TYPE_REAL) {
             //cout << "DEBUG: counterexample is a real counterexample! success" << endl;
           }
         }
       }
       cout << "STATUS: counterexample check done."<<endl;
+      if (boolOptions["refinement-constraints-demo"]) {
+        cout << "=============================================================="<<endl;
+        cout << "STATUS: refinement constraints collected from all LTL counterexamples: "<< endl;
+        VariableIdSet varIds = (analyzer.getVariableIdMapping())->getVariableIdSet();
+        for (VariableIdSet::iterator i = varIds.begin(); i != varIds.end(); i++) {
+          set<int> constraints = constraintManager.getConstraintsForVariable(*i);
+          if (constraints.size() > 0) {
+            //print the constraints collected for this VariableId
+            cout << (analyzer.getVariableIdMapping())->variableName(*i) << ":";
+            for (set<int>::iterator k = constraints.begin(); k!= constraints.end(); ++k) {
+              if (k != constraints.begin()) {
+                cout << ",";
+              }
+              cout << *k;
+            }
+            cout << endl;
+          }
+        }
+        cout << "=============================================================="<<endl;
+      }
     }
 
     ltlResults-> printResults("YES (verified)", "NO (falsified)", "ltl_property_", withCounterexample);

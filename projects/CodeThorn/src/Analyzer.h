@@ -153,6 +153,10 @@ namespace CodeThorn {
     void removeNonIOStates();
     // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
     void reduceToObservableBehavior();
+    // erases transitions that lead directly from one output state to another output state
+    void removeOutputOutputTransitions();
+    // erases transitions that lead directly from one input state to another input state
+    void removeInputInputTransitions();
     // cuts off all paths in the transition graph that lead to leaves 
     // (recursively until only paths of infinite length remain)
     void pruneLeavesRec();
@@ -379,6 +383,7 @@ namespace CodeThorn {
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
+    const EState* _latestOutputEstate;
     bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;

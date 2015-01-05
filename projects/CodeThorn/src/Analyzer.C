@@ -3202,6 +3202,11 @@ void Analyzer::runSolver8() {
           }
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
           const EState* newEStatePtr=pres.second;
+          // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
+          // further tracing of an STG that is reduced to input/output/error states.
+          if (newEStatePtr->io.isStdOutIO()) {
+            _latestOutputEstate = newEStatePtr;
+          }
           if (true)//simply continue analysing until the input sequence runs out
             addToWorkList(newEStatePtr);          
           recordTransition(currentEStatePtr,e,newEStatePtr);
@@ -3422,6 +3427,41 @@ void Analyzer::reduceToObservableBehavior() {
   }
 }
 
+void Analyzer::removeOutputOutputTransitions() {
+  EStatePtrSet states=transitionGraph.estateSet();
+  std::list<const EState*>* worklist = new list<const EState*>(states.begin(), states.end());  
+  // output cannot directly follow another output in RERS programs. Erase those transitions
+  for(std::list<const EState*>::iterator i=worklist->begin();i!=worklist->end();++i) {
+    if ((*i)->io.isStdOutIO()) {
+      TransitionPtrSet inEdges = transitionGraph.inEdges(*i);
+      for(TransitionPtrSet::iterator k=inEdges.begin();k!=inEdges.end();++k) {
+        const EState* pred = (*k)->source;
+        if (pred->io.isStdOutIO()) {
+          transitionGraph.erase(**k);
+          cout << "DEBUG: erased an output -> output transition." << endl;
+        }
+      }
+    }
+  }
+}
+
+void Analyzer::removeInputInputTransitions() {
+  EStatePtrSet states=transitionGraph.estateSet();
+  // input cannot directly follow another input in RERS'14 programs. Erase those transitions
+  for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
+    if ((*i)->io.isStdInIO()) {
+      TransitionPtrSet outEdges = transitionGraph.outEdges(*i);
+      for(TransitionPtrSet::iterator k=outEdges.begin();k!=outEdges.end();++k) {
+        const EState* succ = (*k)->target;
+        if (succ->io.isStdInIO()) {
+          transitionGraph.erase(**k);
+          //cout << "DEBUG: erased an input -> input transition." << endl;
+        }
+      }
+    }
+  }
+}
+
 void Analyzer::storeStgBackup() {
   backupTransitionGraph = transitionGraph;
 }
@@ -3471,7 +3511,14 @@ void Analyzer::resetAnalyzerToSolver8(EState* startEState) {
 }
 
 void Analyzer::continueAnalysisFrom(EState * newStartEState) {
-        assert(newStartEState);
-	addToWorkList(newStartEState);
-	runSolver();
+  assert(newStartEState);
+  addToWorkList(newStartEState);
+  // connect the latest output state with the state where the analysis stopped due to missing 
+  // values in the input sequence
+  assert(_latestOutputEstate);
+  assert(_estateBeforeMissingInput);
+  Edge edge(_latestOutputEstate->label(),EDGE_PATH,_estateBeforeMissingInput->label());
+  Transition transition(_latestOutputEstate,edge,_estateBeforeMissingInput); 
+  transitionGraph.add(transition);
+  runSolver();
 }

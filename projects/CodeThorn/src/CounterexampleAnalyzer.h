@@ -35,6 +35,10 @@ namespace CodeThorn {
     CounterexampleType analysisResult;
     const EState* mostRecentStateRealTrace; 
     int spuriousIndexInCurrentPart;
+    bool continueTracingOriginal;
+    //special case for an output state followed by a failing assertion in the original program (leading to spurious input)
+    bool assertionCausingSpuriousInput;
+    Label failingAssertionInOriginal;
   };
 
   // analyzes whether or not counterexamples are spurious.
@@ -55,12 +59,20 @@ namespace CodeThorn {
     // "statesPerCycleIndex" is provided, then this function can identify cycles in the original program and thus identify real counterexamples.
     CEAnalysisStep getSpuriousTransition(list<CeIoVal> partOfCeTrace, TransitionGraph* originalTraceGraph, 
                                          const EState* compareFollowingHere, StateSets* statesPerCycleIndex = NULL);
-    // retrieve a label in the original program where spurious behavior occured first while analyzing the counterexample trace
-    Label getFirstSpuriousLabel(TransitionGraph* analyzedModel, PrefixAndCycle counterexample, int numberOfSteps);
+    // final evaluation of the result of the "getSpuriousTransition(...)" function
+    void determineAnalysisStepResult(CEAnalysisStep& result, IoType mostRecentOriginalIoType, 
+                                                const EState* currentState, TransitionGraph* originalTraceGraph, int index);
+    // retrieve a label in the original program where spurious behavior of the counterexample occured first 
+    // (according to observable input/output behavior)
+    Label getFirstObservableSpuriousLabel(TransitionGraph* analyzedModel, PrefixAndCycle counterexample, int numberOfSteps);
     // retrieve input/output/error information from a given estate
     CeIoVal eStateToCeIoVal(const EState* eState);
     // parses the InputOuput into the IoType format (enum of observable behavior)
     IoType getIoType(InputOutput io);
+
+    //for debugging purposes
+    string ceIoValToString(CeIoVal& ioVal);
+    string ioErrTraceToString(list<pair<int, IoType> > trace);
 
     Analyzer _analyzer;
   };

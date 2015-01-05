@@ -94,6 +94,8 @@ codethorn_SOURCES = \
   SpotSuccIter.h \
   CounterexampleAnalyzer.C \
   CounterexampleAnalyzer.h \
+  RefinementConstraints.C \
+  RefinementConstraints.h \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
   codethorn.h \
