@@ -59,10 +59,11 @@ bool option_generalanalysis=false;
 bool option_rose_rd_analysis=false;
 bool option_fi_constanalysis=false;
 const char* csvConstResultFileName=0;
-bool option_rd_analysis=true;
-bool option_dd_analysis=false;
+bool option_rd_analysis=false;
+bool option_ud_analysis=false;
 bool option_lv_analysis=false;
 bool option_interval_analysis=false;
+bool option_at_analysis=false;
 
 //boost::program_options::variables_map args;
 
@@ -141,13 +142,27 @@ void rdAnalysis0(SgProject* root) {
   AstAnnotator ara(rdAnalyzer->getLabeler());
   ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
   ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
-  cout << "INFO: generating annotated source code."<<endl;
-  root->unparse(0,0);
 }
 #endif
 
-void runAnalyses(SgProject* root) {
-  {
+void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
+
+  if(option_fi_constanalysis) {
+    VarConstSetMap varConstSetMap;
+    FIConstAnalysis fiConstAnalysis(variableIdMapping);
+    fiConstAnalysis.runAnalysis(root);
+    fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
+    if(csvConstResultFileName) {
+      cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
+      fiConstAnalysis.writeCvsConstResult(*variableIdMapping, option_prefix+csvConstResultFileName);
+    }
+    cout << "INFO: annotating analysis results as comments."<<endl;
+    AstAnnotator ara(labeler);
+    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
+    ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
+  }
+
+  if(option_at_analysis) {
     cout<<"STATUS: running address taken analysis."<<endl;
     // compute variableId mappings
     VariableIdMapping variableIdMapping;
@@ -155,8 +170,10 @@ void runAnalyses(SgProject* root) {
     SPRAY::FIPointerAnalysis fipa(&variableIdMapping,root);
     fipa.initialize();
     fipa.run();
+#if 0
     VariableIdSet vidset=fipa.getModByPointer();
     cout<<"mod-set: "<<SPRAY::VariableIdSetPrettyPrint::str(vidset,variableIdMapping)<<endl;
+#endif
   }
   
   if(option_interval_analysis) {
@@ -241,13 +258,14 @@ void runAnalyses(SgProject* root) {
       ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
       ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
 
-      cout << "INFO: generating and attaching UD-data to AST."<<endl;
-      createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
 #if 0
       cout << "INFO: substituting uses with rhs of defs."<<endl;
       substituteUsesWithAvailableExpRhsOfDef("ud-analysis", root, rdAnalysis->getLabeler(), rdAnalysis->getVariableIdMapping());
 #endif
-      if(option_dd_analysis) {
+      if(option_ud_analysis) {
+        ROSE_ASSERT(option_rd_analysis);
+        cout << "INFO: generating and attaching UD-data to AST."<<endl;
+        createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
         CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
@@ -306,8 +324,6 @@ void runAnalyses(SgProject* root) {
         
       }
     }
-    cout << "INFO: generating annotated source code."<<endl;
-    root->unparse(0,0);
 }
 
 int main(int argc, char* argv[]) {
@@ -339,7 +355,8 @@ int main(int argc, char* argv[]) {
       ("rd-analysis", "perform reaching definitions analysis.")
       ("rose-rd-analysis", "perform rose reaching definitions analysis.")
       ("lv-analysis", "perform live variables analysis.")
-      ("dd-analysis", "data dependence analysis.")
+      ("ud-analysis", "use-def analysis.")
+      ("at-analysis", "address-taken analysis.")
       ("interval-analysis", "perform interval analysis.")
       ("print-varidmapping", "prints variableIdMapping")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
@@ -382,7 +399,7 @@ int main(int argc, char* argv[]) {
     }
     if(args.count("dd-analysis")) {
       option_rd_analysis=true; // required
-      option_dd_analysis=true;
+      option_ud_analysis=true;
     }
     if(args.count("rose-rd-analysis")) {
       option_rose_rd_analysis=true;
@@ -393,6 +410,9 @@ int main(int argc, char* argv[]) {
     if (args.count("csv-fi-constanalysis")) {
       csvConstResultFileName=args["csv-fi-constanalysis"].as<string>().c_str();
       option_fi_constanalysis=true;
+    }
+    if(args.count("at-analysis")) {
+      option_at_analysis=true;
     }
     // clean up string-options in argv
     for (int i=1; i<argc; ++i) {
@@ -425,26 +445,10 @@ int main(int argc, char* argv[]) {
     variableIdMapping.toStream(cout);
   }
 
-  if(option_fi_constanalysis) {
-    VarConstSetMap varConstSetMap;
-    FIConstAnalysis fiConstAnalysis(&variableIdMapping);
-    fiConstAnalysis.runAnalysis(root);
-    fiConstAnalysis.attachAstAttributes(labeler,"const-analysis-inout"); // not iolabeler
-    if(csvConstResultFileName) {
-      cout<<"INFO: generating const CSV file "<<option_prefix+csvConstResultFileName<<endl;
-      fiConstAnalysis.writeCvsConstResult(variableIdMapping, option_prefix+csvConstResultFileName);
-    }
-#if 1
-    cout << "INFO: annotating analysis results as comments."<<endl;
-    AstAnnotator ara(labeler);
-    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "const-analysis-inout");
-    ara.annotateAstAttributesAsCommentsAfterStatements(root, "const-analysis-inout");
-    cout << "INFO: generating annotated source code."<<endl;
-    root->unparse(0,0);
-#endif
-  }
+  runAnalyses(root, labeler, &variableIdMapping);
 
-  runAnalyses(root);
+  cout << "INFO: generating annotated source code."<<endl;
+  root->unparse(0,0);
 
   if(option_rose_rd_analysis) {
     Experimental::RoseRDAnalysis::generateRoseRDDotFiles(labeler,root);

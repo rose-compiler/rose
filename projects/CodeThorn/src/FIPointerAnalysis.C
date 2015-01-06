@@ -16,7 +16,7 @@ void SPRAY::FIPointerAnalysis::initialize() {
   VariableIdSet usedVarsInProgram = AnalysisAbstractionLayer::usedVariablesInsideFunctions(_astRoot, _variableIdMapping);
   _fipi=new FlowInsensitivePointerInfo(_astRoot, *_variableIdMapping, usedVarsInProgram);
   _modVariableIds=_fipi->getMemModByPointer();
-  cout<<"DEBUG: _modVariableIds.size(): "<<_modVariableIds.size()<<endl;
+  //cout<<"DEBUG: _modVariableIds.size(): "<<_modVariableIds.size()<<endl;
 }
 
 VariableIdSet SPRAY::FIPointerAnalysis::getModByPointer() {
