@@ -182,9 +182,9 @@ public:
                 BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
                 newStack = ops->add(oldStack, delta);
             } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
-                // We don't know the callee's delta, or there was more than one and they weren't consistent with each other.
-                // So assume that the callee pops only its return address. This is usually the correct for caller-cleanup ABIs
-                // common on Unix/Linux, but not usually correct for callee-cleanup ABIs common on Microsoft systems.
+                // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
+                // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
+                // common on Microsoft systems.
                 BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
                 newStack = ops->add(oldStack, callRetAdjustment_);
             } else {
