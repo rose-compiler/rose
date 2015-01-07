@@ -9,8 +9,68 @@
 //#include "AstTerm.h"
 #include <sstream>
 
+using namespace std;
+
 Label Labeler::NO_LABEL=Label::Label();
 
+Label::Label() {
+    _labelId=NO_LABEL_ID;
+  }
+
+Label::Label(size_t labelId) {
+  _labelId=labelId;
+}
+
+//Copy constructor
+Label::Label(const Label& other) {
+  _labelId=other._labelId;
+}
+
+//Copy assignemnt operator
+Label& Label::operator=(const Label& other) {
+  // prevent self-assignment
+  if (this != &other) {
+    _labelId = other._labelId;
+  }
+  return *this;
+}
+
+bool Label::operator<(const Label& other) const {
+  return _labelId<other._labelId;
+}
+bool Label::operator==(const Label& other) const {
+  return _labelId==other._labelId;
+}
+bool Label::operator!=(const Label& other) const {
+  return !(*this==other);
+}
+bool Label::operator>(const Label& other) const {
+  return !(*this<other||*this==other);
+}
+bool Label::operator>=(const Label& other) const {
+  return !(*this<other);
+}
+Label& Label::operator+(int num) {
+  _labelId+=num;
+  return *this;
+}
+// prefix inc operator
+Label& Label::operator++() {
+  ++_labelId;
+  return *this;
+}
+// postfix inc operator
+Label Label::operator++(int) {
+  Label tmp(*this);
+  ++(*this);
+  return tmp;
+}
+
+size_t Label::getId() const {
+  return _labelId;
+}
+
+// friend function
 ostream& operator<<(ostream& os, const Label& label) {
   os<<label._labelId;
   return os;
@@ -347,6 +407,36 @@ LabelSet Labeler::getLabelSet(set<SgNode*>& nodeSet) {
     lset.insert(getLabel(*i));
   }
   return lset;
+}
+
+LabelSet LabelSet::operator+(LabelSet& s2) {
+  LabelSet result;
+  result=*this;
+  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+    result.insert(*i2);
+  return result;
+}
+
+LabelSet& LabelSet::operator+=(LabelSet& s2) {
+  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+    insert(*i2);
+  return *this;
+}
+
+std::string LabelSet::toString() {
+  std::stringstream ss;
+   ss<<"{";
+   for(LabelSet::iterator i=begin();i!=end();++i) {
+     if(i!=begin())
+       ss<<",";
+     ss<<*i;
+   }
+   ss<<"}";
+   return ss.str();
+}
+
+bool LabelSet::isElement(Label lab) {
+  return find(lab)!=end();
 }
 
 std::string Labeler::toString() {

@@ -9,7 +9,7 @@
 #include "RoseAst.h"
 #include <set>
 
-using std::set;
+using namespace std;
 
 VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
 }
