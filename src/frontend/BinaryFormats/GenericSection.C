@@ -401,22 +401,16 @@ SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
 std::string
 SgAsmGenericSection::read_content_local_str(rose_addr_t rel_offset, bool strict)
 {
-    static char *buf=NULL;
-    static size_t nalloc=0;
-    size_t nused=0;
-
+    std::string retval;
     while (1) {
-        if (nused >= nalloc) {
-            nalloc = std::max((size_t)32, 2*nalloc);
-            buf = (char*)realloc(buf, nalloc);
-            ROSE_ASSERT(buf!=NULL);
+        char ch;
+        if (read_content_local(rel_offset+retval.size(), &ch, 1, strict)) {
+            if ('\0'==ch)
+                return retval;
+            retval += ch;
+        } else {
+            return retval;
         }
-
-        unsigned char byte;
-        read_content_local(rel_offset+nused, &byte, 1, strict);
-        if (!byte)
-            return std::string(buf, nused);
-        buf[nused++] = byte;
     }
 }
 

@@ -1,6 +1,13 @@
-/* ELF Error Handling Frames (SgAsmElfEHFrameSection and related classes) */
+// ELF Error Handling Frames (SgAsmElfEHFrameSection and related classes).  Documentation for the format of these sections is
+// notoriously sparse, but similar, but not idential, to the DWARF .debug_frame section.  The best documentation is to read the
+// C++ runtime code that parses this section.  Here are some other sources:
+//      http://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
+//      http://www.airs.com/blog/archives/460
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 static const size_t WARNING_LIMIT=10;
 static size_t nwarnings=0;
@@ -265,6 +272,12 @@ SgAsmElfEHFrameSection::parse()
     rose_addr_t record_offset=0;
     std::map<rose_addr_t, SgAsmElfEHFrameEntryCI*> cies;
 
+    // This section consists of a Common Information Entry (CIE) followed by one or more Frame Description Entry (FDE) and this
+    // pattern is repeated for the entire section or until a termination record is reached.  There is typically one CIE per
+    // object file and one FDE per function.  The CIE and FDE together describe how to unwind the caller during an exception if
+    // the current instruction pointer is in the range covered by the FDE.
+
+    Sawyer::Optional<rose_addr_t> prevCieOffset;
     while (record_offset<get_size()) {
         rose_addr_t at = record_offset;
         unsigned char u8_disk;
@@ -290,6 +303,7 @@ SgAsmElfEHFrameSection::parse()
             /* This is a CIE record */
             SgAsmElfEHFrameEntryCI *cie = new SgAsmElfEHFrameEntryCI(this);
             cies[record_offset] = cie;
+            prevCieOffset = record_offset;
 
             /* Version. This parser was written based on version 1 documentation. */
             uint8_t cie_version;
@@ -397,6 +411,20 @@ SgAsmElfEHFrameSection::parse()
             /* This is a FDE record */
             bool fde_parse_error = false;
             rose_addr_t cie_offset = record_offset + length_field_size - cie_back_offset;
+            if (cies.find(cie_offset) == cies.end()) {
+                mlog[ERROR] <<"bad CIE offset " <<cie_offset
+                            <<" in section \"" <<StringUtility::cEscape(get_name()->get_string()) <<"\"\n";
+                mlog[ERROR] <<"  referenced by FDE at offset " <<record_offset
+                            <<" having CIE back offset " <<cie_back_offset <<"\n";
+                if (prevCieOffset) {
+                    mlog[ERROR] <<"  previous CIE was at offset " <<*prevCieOffset <<"\n";
+                } else {
+                    mlog[ERROR] <<"  there was no previous CIE in this section\n";
+                }
+                mlog[ERROR] <<"  bailing out early\n";
+                break;
+            }
+
             assert(cies.find(cie_offset)!=cies.end());
             SgAsmElfEHFrameEntryCI *cie = cies[cie_offset];
             SgAsmElfEHFrameEntryFD *fde = new SgAsmElfEHFrameEntryFD(cie);
@@ -441,6 +469,13 @@ SgAsmElfEHFrameSection::parse()
 
         record_offset += length_field_size + record_size;
     }
+
+    if (record_offset < get_size()) {
+        mlog[WARN] <<"ELF error handling section \"" <<StringUtility::cEscape(get_name()->get_string()) <<"\""
+                   <<" contains " <<StringUtility::plural(get_size()-record_offset, "more bytes")
+                   <<" that were not parsed\n";
+    }
+
     return this;
 }
 
