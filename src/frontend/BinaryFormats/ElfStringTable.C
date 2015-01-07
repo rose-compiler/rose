@@ -204,7 +204,7 @@ void
 SgAsmElfStrtab::rebind(SgAsmStringStorage *storage, rose_addr_t offset)
 {
     ROSE_ASSERT(p_dont_free && storage!=p_dont_free && storage->get_offset()==p_dont_free->get_offset());
-    std::string s = get_container()->read_content_local_str(offset);
+    std::string s = get_container()->read_content_local_str(offset, false /*relax*/);
     storage->set_offset(offset);
     storage->set_string(s);
 }

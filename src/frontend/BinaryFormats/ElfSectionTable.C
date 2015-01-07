@@ -1,8 +1,10 @@
 /* ELF Section Tables (SgAsmElfSectionTable and related classes) */
 #include "sage3basic.h"
+#include "Diagnostics.h"
 #include "stringify.h"
 
 using namespace rose;
+using namespace rose::Diagnostics;
 
 /** Converts 32-bit disk representation to host representation */
 void
@@ -112,23 +114,32 @@ SgAsmElfSectionTable::parse()
     if (get_size()<=1 && get_size()<nentries*ent_size)
         extend(nentries*ent_size - get_size());
 
-    /* Read all the section headers. */
+    // Read all the section headers.  Section headers are not essential to the Unix loader, which uses only segments. Therefore
+    // we should be prepared to handle bad entries.
     std::vector<SgAsmElfSectionTableEntry*> entries;
     rose_addr_t offset = 0;
-    for (size_t i=0; i<nentries; i++, offset+=ent_size) {
-        SgAsmElfSectionTableEntry *shdr = NULL;
-        if (4 == fhdr->get_word_size()) {
-            SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
-            read_content_local(offset, &disk, struct_size);
-            shdr = new SgAsmElfSectionTableEntry(sex, &disk);
-        } else {
-            SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
-            read_content_local(offset, &disk, struct_size);
-            shdr = new SgAsmElfSectionTableEntry(sex, &disk);
+    try {
+        for (size_t i=0; i<nentries; i++, offset+=ent_size) {
+            SgAsmElfSectionTableEntry *shdr = NULL;
+            if (4 == fhdr->get_word_size()) {
+                SgAsmElfSectionTableEntry::Elf32SectionTableEntry_disk disk;
+                read_content_local(offset, &disk, struct_size);
+                shdr = new SgAsmElfSectionTableEntry(sex, &disk);
+            } else {
+                SgAsmElfSectionTableEntry::Elf64SectionTableEntry_disk disk;
+                read_content_local(offset, &disk, struct_size);
+                shdr = new SgAsmElfSectionTableEntry(sex, &disk);
+            }
+            if (opt_size>0)
+                shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
+            entries.push_back(shdr);
         }
-        if (opt_size>0)
-            shdr->get_extra() = read_content_local_ucl(offset+struct_size, opt_size);
-        entries.push_back(shdr);
+    } catch (const ShortRead &error) {
+        mlog[ERROR] <<"short read for elf section header #" <<entries.size()
+                    <<" at file offset " <<StringUtility::addrToString(error.offset)
+                    <<" when reading " <<StringUtility::plural(error.size, "bytes") <<"\n";
+        mlog[ERROR] <<"expected " <<StringUtility::plural(nentries, "sections") <<", but bailing out early\n";
+        nentries = entries.size();
     }
 
     /* This vector keeps track of which sections have already been parsed. We could get the same information by calling
@@ -139,8 +150,9 @@ SgAsmElfSectionTable::parse()
 
     /* All sections implicitly depend on the section string table for their names. */
     SgAsmElfStringSection *section_name_strings=NULL;
-    if (fhdr->get_e_shstrndx() > 0) {
+    if (fhdr->get_e_shstrndx() > 0 && fhdr->get_e_shstrndx() < entries.size()) {
         SgAsmElfSectionTableEntry *entry = entries[fhdr->get_e_shstrndx()];
+        ASSERT_not_null(entry);
         section_name_strings = new SgAsmElfStringSection(fhdr);
         section_name_strings->init_from_section_table(entry, section_name_strings, fhdr->get_e_shstrndx());
         section_name_strings->parse();

@@ -1,8 +1,6 @@
 #ifndef ROSE_BinaryFormats_SRecord_H
 #define ROSE_BinaryFormats_SRecord_H
 
-#include "sage3basic.h"
-
 namespace rose {
 namespace BinaryAnalysis {
 
