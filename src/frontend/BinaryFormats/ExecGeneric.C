@@ -47,58 +47,66 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     converters.push_back(NULL); /*no conversion*/
     converters.push_back(new Rot13);
 
-    try {
-        for (size_t ci=0; !ef && ci<converters.size(); ci++) {
-            ef = new SgAsmGenericFile();
-            ef->set_data_converter(converters[ci]);
-            converters[ci] = NULL;
-            ef->parse(name);
-
-            if (SgAsmElfFileHeader::is_ELF(ef)) {
-                (new SgAsmElfFileHeader(ef))->parse();
-            } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
-                SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
-                dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
-
-                /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header
-                 * immediately after the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header
-                 * contains a file offset to a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The
-                 * is_* methods check for this magic number. */
-                SgAsmGenericHeader *big_hdr = NULL;
-                if (SgAsmPEFileHeader::is_PE(ef)) {
-                    SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
-                    dos2_hdr->parse();
-                    SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
-                    pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
-                    pe_hdr->parse();
-                    big_hdr = pe_hdr;
-                } else if (SgAsmNEFileHeader::is_NE(ef)) {
-                    SgAsmNEFileHeader::parse(dos_hdr);
-                } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
-                    SgAsmLEFileHeader::parse(dos_hdr);
-                }
-
-#if 0 /*This iterferes with disassembling the DOS interpretation*/
-                /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header,
-                 * constrain it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting
-                 * holes in the PE format much easier. */
-                dos_hdr->parse_rm_section(big_hdr ? big_hdr->get_offset() : 0);
-#else
-                dos_hdr->parse_rm_section(0);
-#endif
-            } else {
-                if (ef) delete ef->get_data_converter();
-                SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
-                ef = NULL;
+    struct Cleanup {
+        std::vector<DataConverter*> &converters;
+        SgAsmGenericFile *&ef;
+        bool canceled;
+        Cleanup(std::vector<DataConverter*> &converters, SgAsmGenericFile *&ef)
+            : converters(converters), ef(ef), canceled(false) {}
+        ~Cleanup() {
+            if (!canceled) {
+                BOOST_FOREACH (DataConverter *converter, converters)
+                    delete converter;
+                if (ef)
+                    delete ef->get_data_converter();
+                SageInterface::deleteAST(ef);
             }
         }
-    } catch(...) {
-        for (size_t ci=0; ci<converters.size(); ci++)
-            delete converters[ci];
-        if (ef) delete ef->get_data_converter();
-        SageInterface::deleteAST(ef);
-        ef = NULL;
-        throw;
+    } cleanup(converters, ef);
+
+    for (size_t ci=0; !ef && ci<converters.size(); ci++) {
+        ef = new SgAsmGenericFile();
+        ef->set_data_converter(converters[ci]);
+        converters[ci] = NULL;
+        ef->parse(name);
+
+        if (SgAsmElfFileHeader::is_ELF(ef)) {
+            (new SgAsmElfFileHeader(ef))->parse();
+        } else if (SgAsmDOSFileHeader::is_DOS(ef)) {
+            SgAsmDOSFileHeader *dos_hdr = new SgAsmDOSFileHeader(ef);
+            dos_hdr->parse(false); /*delay parsing the DOS Real Mode Section*/
+
+            /* DOS Files can be overloaded to also be PE, NE, LE, or LX. Such files have an Extended DOS Header
+             * immediately after the DOS File Header (various forms of Extended DOS Header exist). The Extended DOS Header
+             * contains a file offset to a PE, NE, LE, or LX File Header, the first bytes of which are a magic number. The
+             * is_* methods check for this magic number. */
+            SgAsmGenericHeader *big_hdr = NULL;
+            if (SgAsmPEFileHeader::is_PE(ef)) {
+                SgAsmDOSExtendedHeader *dos2_hdr = new SgAsmDOSExtendedHeader(dos_hdr);
+                dos2_hdr->parse();
+                SgAsmPEFileHeader *pe_hdr = new SgAsmPEFileHeader(ef);
+                pe_hdr->set_offset(dos2_hdr->get_e_lfanew());
+                pe_hdr->parse();
+                big_hdr = pe_hdr;
+            } else if (SgAsmNEFileHeader::is_NE(ef)) {
+                SgAsmNEFileHeader::parse(dos_hdr);
+            } else if (SgAsmLEFileHeader::is_LE(ef)) { /*or LX*/
+                SgAsmLEFileHeader::parse(dos_hdr);
+            }
+
+#if 0 /*This iterferes with disassembling the DOS interpretation*/
+            /* Now go back and add the DOS Real-Mode section but rather than using the size specified in the DOS header,
+             * constrain it to not extend beyond the beginning of the PE, NE, LE, or LX file header. This makes detecting
+             * holes in the PE format much easier. */
+            dos_hdr->parse_rm_section(big_hdr ? big_hdr->get_offset() : 0);
+#else
+            dos_hdr->parse_rm_section(0);
+#endif
+        } else {
+            if (ef) delete ef->get_data_converter();
+            SageInterface::deleteAST(ef);      /* ~SgAsmGenericFile() closes ef->p_fd if it was opened. */
+            ef = NULL;
+        }
     }
     
     /* If no executable file could be parsed then try to use system tools to get the file type. On Unix-based systems, the
@@ -112,7 +120,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
                 printf ("ERROR: Commented out use of functions from sys/wait.h \n");
                 ROSE_ASSERT(false);
 #else
-                pipe(child_stdout);
+        pipe(child_stdout);
         pid_t pid = fork();
         if (0==pid) {
             close(0);
@@ -161,6 +169,7 @@ SgAsmExecutableFileFormat::parseBinaryFormat(const char *name)
     t1.traverse(ef, preorder);
 #endif
 
+    cleanup.canceled = true;
     return ef;
 }
 std::string SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::InsSetArchitecture isa)
