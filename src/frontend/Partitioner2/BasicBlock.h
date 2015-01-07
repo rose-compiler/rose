@@ -7,6 +7,7 @@
 #include <Partitioner2/Semantics.h>
 
 #include <sawyer/Cached.h>
+#include <sawyer/Map.h>
 #include <sawyer/Optional.h>
 #include <sawyer/SharedPointer.h>
 
@@ -70,6 +71,13 @@ private:
     bool usingDispatcher_;                              // True if dispatcher's state is up-to-date for the final instruction
     Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
     std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
+
+    // When a basic block gets lots of instructions some operations become slow due to the linear nature of the instruction
+    // list. Therefore, we also keep a mapping from instruction address to position in the list. The mapping is only used when
+    // the bigBlock size is reached.
+    static const size_t bigBlock_ = 200;
+    typedef Sawyer::Container::Map<rose_addr_t, size_t> InsnAddrMap;
+    InsnAddrMap insnAddrMap_;                           // maps instruction address to index in insns_ vector
 
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the

@@ -54,18 +54,34 @@ BasicBlock::insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type, Confide
 
 SgAsmInstruction*
 BasicBlock::instructionExists(rose_addr_t startVa) const {
-    BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
-        if (insn->get_address() == startVa)
-            return insn;
+    if (insns_.size() >= bigBlock_) {
+        // O(log N) search for large blocks
+        ASSERT_require(insns_.size() == insnAddrMap_.size());
+        size_t idx = 0;
+        if (insnAddrMap_.getOptional(startVa).assignTo(idx))
+            return insns_[idx];
+    } else {
+        // O(N) search for small blocks
+        BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
+            if (insn->get_address() == startVa)
+                return insn;
+        }
     }
     return NULL;
 }
 
 Sawyer::Optional<size_t>
 BasicBlock::instructionExists(SgAsmInstruction *toFind) const {
-    for (size_t i=0; i<insns_.size(); ++i) {
-        if (insns_[i]==toFind)
-            return i;
+    if (insns_.size() >= bigBlock_) {
+        ASSERT_require(insns_.size() == insnAddrMap_.size());
+        size_t idx = 0;
+        if (insnAddrMap_.getOptional(toFind->get_address()).assignTo(idx) && insns_[idx]==toFind)
+            return idx;
+    } else {
+        for (size_t i=0; i<insns_.size(); ++i) {
+            if (insns_[i]==toFind)
+                return i;
+        }
     }
     return Sawyer::Nothing();
 }
@@ -133,11 +149,22 @@ BasicBlock::append(SgAsmInstruction *insn) {
         undropSemantics();
     }
 
+    // Append instruction to block, switching to O(log N) mode if the block becomes big.
+    insns_.push_back(insn);
+    if (insns_.size() == bigBlock_) {
+        ASSERT_require(insnAddrMap_.isEmpty());
+        for (size_t i=0; i<insns_.size(); ++i)
+            insnAddrMap_.insert(insns_[i]->get_address(), i);
+        ASSERT_require(insnAddrMap_.size() == insns_.size());
+    } else if (insns_.size() > bigBlock_) {
+        insnAddrMap_.insert(insns_.back()->get_address(), insns_.size()-1);
+        ASSERT_require(insnAddrMap_.size() == insns_.size());
+    }
+
     // Process the instruction to create a new state
     optionalPenultimateState_ = usingDispatcher_ ?
                                 dispatcher_->get_operators()->get_state()->clone() :
                                 BaseSemantics::StatePtr();
-    insns_.push_back(insn);
     if (usingDispatcher_) {
         try {
             dispatcher_->processInstruction(insn);
@@ -153,6 +180,13 @@ BasicBlock::pop() {
     ASSERT_forbid2(isFrozen(), "basic block must be modifiable to pop an instruction");
     ASSERT_forbid2(insns_.empty(), "basic block must have at least one instruction to pop");
     ASSERT_require2(optionalPenultimateState_, "only one level of undo is possible");
+
+    if (insns_.size() > bigBlock_) {
+        insnAddrMap_.erase(insns_.back()->get_address());
+        ASSERT_require(insnAddrMap_.size() + 1 == insns_.size());
+    } else if (insns_.size() == bigBlock_) {
+        insnAddrMap_.clear();
+    }
     insns_.pop_back();
 
     if (BaseSemantics::StatePtr ps = *optionalPenultimateState_) {
