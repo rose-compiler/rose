@@ -102,21 +102,24 @@ functionCfgImage(const P2::Partitioner &partitioner, const P2::Function::Ptr &fu
         boost::filesystem::path srcName = functionCfgGraphvizFile(partitioner, function);
         if (srcName.empty())
             return boost::filesystem::path();
-#if 0 // [Robb P. Matzke 2014-12-15]
-        // Dot cannot generate large JPEG files -- it ends up scaling them so small that they're pretty useless in the
-        // browser.
-        imageName = uniquePath(".jpg");
-        std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.native();
-#else
+
         // Most modern browsers can display SVG (vector graphics) efficiently, and dot can generate them very quickly from our
         // inputs since we've already run the time-consuming layout algorithms, and they're small (compared to JPEG) for
         // efficient transport from server to browser.
         imageName = uniquePath(".svg");
         std::string dotCmd = "dot -Tsvg -o" + imageName.string() + " " + srcName.native();
-#endif
         if (0!=system(dotCmd.c_str())) {
             mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
-            return boost::filesystem::path();
+
+            // The dot-to-svg translator in GraphViz-2.26.3 has a buffer overflow problem that's triggered by basic blocks that
+            // have a large number of instructions.  So if that fails, try generating a JPEG file instead.  The unfortunate
+            // thing with this is that they might get scaled so small as to be unusable.
+            imageName = uniquePath(".jpg");
+            std::string dotCmd = "dot -Tjpg -o" + imageName.string() + " " + srcName.native();
+            if (0!=system(dotCmd.c_str())) {
+                mlog[ERROR] <<"command failed: " <<dotCmd <<"\n";
+                return boost::filesystem::path();
+            }
         }
         function->attr(ATTR_CfgImage, imageName);
     }
