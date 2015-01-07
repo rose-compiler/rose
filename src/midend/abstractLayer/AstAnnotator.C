@@ -7,6 +7,7 @@
 #include "AstAnnotator.h"
 #include "RoseAst.h"
 #include <iostream>
+
 using namespace std;
 
 AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler),_variableIdMapping(0) {
@@ -39,14 +40,14 @@ void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attribut
         //cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
         string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
         string commentStart="// ";
-	string artAttributeString;
-	if(!_variableIdMapping) {
-	  artAttributeString=artAttribute->toString();
-	} else {
-	  stringstream ss;
-	  artAttribute->toStream(ss,_variableIdMapping);
-	  artAttributeString=ss.str();
-	}
+        string artAttributeString;
+        if(!_variableIdMapping) {
+          artAttributeString=artAttribute->toString();
+        } else {
+          stringstream ss;
+          artAttribute->toStream(ss,_variableIdMapping);
+          artAttributeString=ss.str();
+        }
         insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+": "+artAttributeString,posSpecifier,stmt);
       }
     }

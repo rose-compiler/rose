@@ -5,7 +5,6 @@
 
 
 #include <string>
-using std::string;
 
 #include "DFAstAttribute.h"
 #include "Labeler.h"
@@ -19,11 +18,11 @@ class AstAnnotator {
   AstAnnotator(Labeler* labeler);
   AstAnnotator(Labeler* labeler, VariableIdMapping* variableIdMapping);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
-  void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName);
-  void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName);
-  //MS: planned: void annotateAttributeAsPragma(string attributeName);
+  void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, std::string attributeName);
+  void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, std::string attributeName);
+  //MS: planned: void annotateAttributeAsPragma(std::string attributeName);
  private:
-  void annotateAstAttributesAsComments(SgNode* node, string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,string analysisInfoTypeDescription);
+  void annotateAstAttributesAsComments(SgNode* node, std::string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,std::string analysisInfoTypeDescription);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;

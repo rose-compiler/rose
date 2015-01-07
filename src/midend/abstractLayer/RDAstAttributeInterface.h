@@ -13,8 +13,8 @@
  */
 class RDAstAttributeInterface : public DFAstAttribute {
  public:
-  typedef pair<Label,VariableId> RDPair;
-  typedef set<RDPair> RDPairSet;
+  typedef std::pair<Label,VariableId> RDPair;
+  typedef std::set<RDPair> RDPairSet;
   typedef RDPairSet::iterator iterator;
   virtual bool isBottomElement()=0;
   virtual VariableIdSet allVariableIds()=0;
