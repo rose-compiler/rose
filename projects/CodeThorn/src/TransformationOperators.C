@@ -1,5 +1,11 @@
-// clones a function definition, but also the corresponding declaration
-SgFunctionDefinition* cloneFunctionDefinition(SgFunctionDefinition* originalFunDef, string prefix, string suffix) {
+#include "sage3basic.h"
+#include "TransformationOperators.h"
+
+using namespace std;
+using namespace SPRAY;
+
+// creates a copy of a function definition, but also the corresponding declaration, and creates a new name.
+SgFunctionDefinition* SPRAY::TransformationOperators::createAdaptedFunctionDefinitionCopy(SgFunctionDefinition* originalFunDef, string prefix, string suffix) {
     SgFunctionDeclaration* originalFunDecl=originalFunDef->get_declaration();
     SgFunctionDeclaration* clonedFunDecl=isSgFunctionDeclaration(SageInterface::deepCopyNode(originalFunDecl));
     clonedFunDecl->set_name(SgName(prefix+clonedFunDecl->get_name().getString()+suffix));
@@ -9,7 +15,7 @@ SgFunctionDefinition* cloneFunctionDefinition(SgFunctionDefinition* originalFunD
     return clonedFunDef;
 }
 
-list<SgExpression*> varRefExpOfusedVar(SgNode* root, VariableId varId, VariableIdMapping* variableIdMapping ) {
+list<SgExpression*> SPRAY::TransformationOperators::varRefExpOfVar(SgNode* root, VariableId varId, VariableIdMapping* variableIdMapping ) {
   list<SgExpression*> varRefList;
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
@@ -23,7 +29,7 @@ list<SgExpression*> varRefExpOfusedVar(SgNode* root, VariableId varId, VariableI
 }
 
 // requires available expressions analysis
-void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
+void SPRAY::TransformationOperators::substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
   RoseAst ast(root);
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {
@@ -62,7 +68,7 @@ void substituteUsesWithAvailableExpRhsOfDef(string udAttributeName, SgNode* root
                 rhsExp=isSgExpression(SgNodeHelper::getRhs(assignOp));
               }
               if(rhsExp) {
-                list<SgExpression*> uses=varRefExpOfusedVar(node, *i, variableIdMapping);
+                list<SgExpression*> uses=varRefExpOfVar(node, *i, variableIdMapping);
                 for(list<SgExpression*>::iterator i=uses.begin();i!=uses.end();++i) {
                   cout<<"Substituting:"<<(*i)->unparseToString()<<" by "<<rhsExp->unparseToString()<<endl;
                   SgNodeHelper::replaceExpression(*i,SageInterface::copyExpression(rhsExp),true); // must be true (otherwise internal error)

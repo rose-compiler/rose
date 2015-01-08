@@ -60,15 +60,14 @@ list<SgExpression*> exprRootList(SgNode *node) {
 }
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
-list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string prefix) {
+list<SgPragmaDeclaration*> findPragmaDeclarations(SgNode* root, string pragmaKeyWord) {
   list<SgPragmaDeclaration*> pragmaList;
   RoseAst ast(root);
-  cout<<"STATUS: searching for fragment markers."<<endl;
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
-      string foundPrefix=SageInterface::extractPragmaKeyword(pragmaDecl);
-      //cout<<"DEBUG: PREFIX:"<<foundPrefix<<endl;
-      if(prefix==foundPrefix || "end"+prefix==foundPrefix) {
+      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
+      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
+      if(pragmaKeyWord==foundPragmaKeyWord || "end"+pragmaKeyWord==foundPragmaKeyWord) {
         pragmaList.push_back(pragmaDecl);
       }
     }
@@ -276,8 +275,10 @@ void printAssertStatistics(Analyzer& analyzer, SgProject* sageProject) {
     ;
 }
 
-string readableruntime(double time) {
+//
+string readableruntime(double timeInMilliSeconds) {
   stringstream s;
+  double time=timeInMilliSeconds;
   s << std::fixed << std::setprecision(2); // 2 digits past decimal point.
   if(time<1000.0) {
     s<<time<<" ms";
@@ -396,6 +397,7 @@ static Analyzer* global_analyzer=0;
    Label elab=estate->label();
    return elab==lab;
  }
+
 void extractArrayUpdateOperations(Analyzer* ana,
                                   ArrayUpdatesSequence& arrayUpdates,
                                   RewriteSystem& rewriteSystem,
@@ -1584,21 +1586,15 @@ int main( int argc, char * argv[] ) {
       cerr<<"Error: pragma "<<option_pragma_name<<" marking the fragment not found."<<endl;
       exit(1);
     }
-    if(pragmaDeclList.size()==1) {
-      cerr<<"Error: pragma "<<option_pragma_name<<" only found once. The fragment is required to be marked with two pragmas."<<endl;
-      exit(1);
-    }
     if(pragmaDeclList.size()>2) {
       cerr<<"Error: pragma "<<option_pragma_name<<" : too many markers found ("<<pragmaDeclList.size()<<")"<<endl;
       exit(1);
     }
     cout<<"STATUS: Fragment marked by "<<option_pragma_name<<": correctly identified."<<endl;
 
-    ROSE_ASSERT(pragmaDeclList.size()==2);
+    ROSE_ASSERT(pragmaDeclList.size()==1);
     list<SgPragmaDeclaration*>::iterator i=pragmaDeclList.begin();
     fragmentStartNode=*i;
-    ++i;
-    fragmentEndNode=*i;
   }
 
   if(boolOptions["eliminate-arrays"]) {
