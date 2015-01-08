@@ -7,6 +7,8 @@ using std::string;
 
 #include "VariableIdMapping.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -18,5 +20,7 @@ class DFAstAttribute : public AstAttribute {
   void virtual toStream(std::ostream& os,VariableIdMapping*);
   ~DFAstAttribute();
 };
+
+}
 
 #endif

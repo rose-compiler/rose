@@ -14,6 +14,8 @@
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 
+namespace SPRAY {
+
 class VariableId;
 typedef std::string VariableName;
 
@@ -149,5 +151,7 @@ bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
 bool operator!=(VariableId id1, VariableId id2);
 VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
+
+}
 
 #endif

@@ -10,6 +10,7 @@
 #include <set>
 
 using namespace std;
+using namespace SPRAY;
 
 VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
 }
@@ -490,17 +491,17 @@ VariableId::longVariableName() const {
 }
 #endif
 
-bool operator<(VariableId id1, VariableId id2) {
+bool SPRAY::operator<(VariableId id1, VariableId id2) {
   return id1._id<id2._id;
 }
-bool operator==(VariableId id1, VariableId id2) {
+bool SPRAY::operator==(VariableId id1, VariableId id2) {
   return id1._id==id2._id;
 }
-bool operator!=(VariableId id1, VariableId id2) {
+bool SPRAY::operator!=(VariableId id1, VariableId id2) {
   return !(id1==id2);
 }
 
-VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2) {
+VariableIdSet& SPRAY::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   for(VariableIdSet::iterator i=s2.begin();i!=s2.end();++i) {
     s1.insert(*i);
   }
