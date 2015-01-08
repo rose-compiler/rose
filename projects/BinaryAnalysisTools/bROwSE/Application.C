@@ -8,6 +8,7 @@
 #include <bROwSE/WHexDump.h>
 #include <bROwSE/WMemoryMap.h>
 #include <bROwSE/WPartitioner.h>
+#include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
@@ -193,6 +194,15 @@ Application::init() {
     wStacked_ = new Wt::WStackedWidget;
     vbox->addWidget(wStacked_);
 
+    //--------------
+    // Splash phase
+    //--------------
+    WSplash *wSplash = new WSplash;
+    wSplash->clicked().connect(boost::bind(&Wt::WStackedWidget::setCurrentIndex, wStacked_, InteractivePhase));
+    ASSERT_require(wStacked_->count() == SplashPhase);
+    wStacked_->addWidget(wSplash);
+    wStacked_->setCurrentIndex(SplashPhase);
+
     //------------ 
     // Busy phase
     //------------
@@ -208,7 +218,6 @@ Application::init() {
     wInteractivePhase_ = new Wt::WContainerWidget;
     ASSERT_require(wStacked_->count() == InteractivePhase);
     wStacked_->addWidget(wInteractivePhase_);
-    wStacked_->setCurrentIndex(InteractivePhase);
 
     // Grid layout
     wInteractivePhase_->setLayout(wGrid_ = new Wt::WGridLayout);
