@@ -131,12 +131,25 @@ GraphViz::vertexLabel(const Partitioner &partitioner, const ControlFlowGraph::Co
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
         std::string s;
         BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
-            if (showInstructionAddresses_) {
-                s += htmlEscape(unparseInstructionWithAddress(insn));
-            } else {
-                s += htmlEscape(unparseInstruction(insn));
+            if (showInstructionAddresses_)
+                s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
+            if (showInstructionStackDeltas_) {
+                int64_t delta = insn->get_stackDelta();
+                if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
+                    // Stack delta as a two-character hexadecimal, but show a '+' sign when it's positive and nothing
+                    // when it's negative (negative is the usual case for most architectures).
+                    char buf[64];
+                    if (delta <= 0) {
+                        sprintf(buf, "%02"PRIx64" ", -delta);
+                    } else {
+                        sprintf(buf, "+%"PRIx64" ", delta);
+                    }
+                    s += buf;
+                } else {
+                    s += " ?? ";
+                }
             }
-            s += "<br align=\"left\"/>";
+            s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
         }
         return "<" + s + ">";
     }
