@@ -83,6 +83,7 @@ namespace Fortran_to_C
     SgType* translateType(SgType*);
 
     SgExpression* getFortranDimensionSize(SgExpression*);
+    SgExpression* foldBinaryOp(SgExpression*);
     SgExpression* get0basedIndex(SgExpression*, SgExpression*);
 }
 

@@ -620,7 +620,7 @@ void Fortran_to_C::translateFortranDoLoop(SgFortranDo* fortranDo)
                                                    cIncrementOp,
                                                    loopBody,
                                                    NULL); 
-
+  constantFolding(forStatement);
   forStatement->set_numeric_label(numericLabel);
   forInitStatement->set_parent(forStatement);
   testStatement->set_parent(forStatement);
