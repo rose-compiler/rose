@@ -10,6 +10,7 @@
 #include <sstream>
 
 using namespace std;
+using namespace SPRAY;
 
 Label Labeler::NO_LABEL=Label::Label();
 
@@ -59,7 +60,7 @@ Label& Label::operator++() {
   ++_labelId;
   return *this;
 }
-// postfix inc operator
+  // postfix inc operator
 Label Label::operator++(int) {
   Label tmp(*this);
   ++(*this);
@@ -71,7 +72,7 @@ size_t Label::getId() const {
 }
 
 // friend function
-ostream& operator<<(ostream& os, const Label& label) {
+ostream& SPRAY::operator<<(ostream& os, const Label& label) {
   os<<label._labelId;
   return os;
 }

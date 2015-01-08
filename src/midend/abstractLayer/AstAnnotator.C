@@ -9,6 +9,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace SPRAY;
 
 AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler),_variableIdMapping(0) {
 }

@@ -15,8 +15,8 @@
  */
 class AstAnnotator {
  public:
-  AstAnnotator(Labeler* labeler);
-  AstAnnotator(Labeler* labeler, VariableIdMapping* variableIdMapping);
+  AstAnnotator(SPRAY::Labeler* labeler);
+  AstAnnotator(SPRAY::Labeler* labeler, VariableIdMapping* variableIdMapping);
   // annotates attributes of Type DFAstAttribute of name 'attributeName' as comment for all nodes in the AST subtree of  node 'node'.
   void annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, std::string attributeName);
   void annotateAstAttributesAsCommentsAfterStatements(SgNode* node, std::string attributeName);
@@ -24,7 +24,7 @@ class AstAnnotator {
  private:
   void annotateAstAttributesAsComments(SgNode* node, std::string attributeName, PreprocessingInfo::RelativePositionType posSpecifier,std::string analysisInfoTypeDescription);
   void insertComment(std::string comment, PreprocessingInfo::RelativePositionType posSpecifier, SgStatement* node);
-  Labeler* _labeler;
+  SPRAY::Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
 };
 
