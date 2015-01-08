@@ -15,7 +15,7 @@ struct RewriteStatistics {
   int numArrayUpdates; // number of array updates (i.e. assignments)
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
   void reset();
-  string toString();
+  std::string toString();
 private:
   void init();
 };

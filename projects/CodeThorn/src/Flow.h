@@ -5,6 +5,7 @@
 #include <boost/graph/graphviz.hpp>
 using namespace std;
 using namespace boost; 
+using namespace SPRAY;
 
 namespace CodeThorn {
 

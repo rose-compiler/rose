@@ -11,24 +11,24 @@
  */
 class RDLattice : public Lattice {
  public:
-  typedef set<pair<Label,VariableId> >::iterator iterator;
+  typedef std::set<std::pair<SPRAY::Label,VariableId> >::iterator iterator;
   RDLattice();
   iterator begin();
   iterator end();
   size_t size();
-  void insertPair(Label,VariableId);
-  void erasePair(Label,VariableId);
+  void insertPair(SPRAY::Label,VariableId);
+  void erasePair(SPRAY::Label,VariableId);
   void removeAllPairsWithVariableId(VariableId var);
   bool isBot();
   void setBot();
-  void toStream(ostream& os, VariableIdMapping* vim=0);
-  bool exists(pair<Label,VariableId>);
+  void toStream(std::ostream& os, VariableIdMapping* vim=0);
+  bool exists(std::pair<SPRAY::Label,VariableId>);
   void setEmptySet();
   void combine(Lattice& b);
   bool approximatedBy(Lattice& b);
 
  private:
-  set<pair<Label,VariableId> > rdSet;
+  std::set<std::pair<SPRAY::Label,VariableId> > rdSet;
   bool _bot;
 };
 

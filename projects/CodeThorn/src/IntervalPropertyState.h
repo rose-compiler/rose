@@ -20,9 +20,9 @@ public:
   // adds array elements for indices 0 to number-1
   void addArrayElements(VariableId,int number);
 #endif
-  typedef map<VariableId,NumberIntervalLattice> IntervalMapType;
+  typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
   IntervalMapType intervals;
-  bool isBot() { cerr<<"WARNING: isBot not implement for IntervalPropertState"<<endl; return false; }
+  bool isBot() { std::cerr<<"WARNING: isBot not implement for IntervalPropertState"<<std::endl; return false; }
   void setEmptyState();
 };
 

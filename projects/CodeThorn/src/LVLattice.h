@@ -13,7 +13,7 @@ namespace SPRAY {
  */
 class LVLattice : public Lattice {
  public:
-  typedef set<VariableId>::iterator iterator;
+    typedef std::set<VariableId>::iterator iterator;
   LVLattice();
   iterator begin();
   iterator end();
@@ -22,7 +22,7 @@ class LVLattice : public Lattice {
   void removeVariableId(VariableId);
   bool isBot();
   void setBot();
-  void toStream(ostream& os, VariableIdMapping* vim=0);
+  void toStream(std::ostream& os, VariableIdMapping* vim=0);
   bool exists(VariableId);
   void setEmptySet();
   void combine(Lattice& b);
@@ -31,7 +31,7 @@ class LVLattice : public Lattice {
   bool approximatedBy(LVLattice& b); // TODO: delete
 
  private:
-  set<VariableId> lvSet;
+  std::set<VariableId> lvSet;
   bool _bot;
 };
 

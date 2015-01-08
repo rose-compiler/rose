@@ -4,6 +4,8 @@
 #include "LVLattice.h"
 #include "SetAlgo.h"
 
+using namespace std;
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

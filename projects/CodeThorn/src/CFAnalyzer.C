@@ -12,6 +12,7 @@
 #include <boost/foreach.hpp>
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
 }

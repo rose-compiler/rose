@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "RewriteSystem.h"
 
+using namespace std;
+
 RewriteStatistics::RewriteStatistics() {
   init();
 }

@@ -9,7 +9,7 @@
 #include "IntervalPropertyState.h"
 #include <string>
 
-using std::string;
+using namespace std;
 
 class IntervalAstAttribute : public IntervalAstAttributeInterface {
  public:

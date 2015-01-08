@@ -10,6 +10,7 @@
 
 using namespace std;
 using namespace CodeThorn::AType;
+using namespace SPRAY;
 
 // does not support -inf, +inf yet
 class VariableValueRangeInfo {

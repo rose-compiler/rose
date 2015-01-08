@@ -1,5 +1,7 @@
 #include "ArrayElementAccessData.h"
 
+using namespace std;
+
 ArrayElementAccessData::ArrayElementAccessData() {
 }
 

@@ -4,6 +4,9 @@
 #include "RDLattice.h"
 #include "SetAlgo.h"
 
+using namespace std;
+using namespace SPRAY;
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

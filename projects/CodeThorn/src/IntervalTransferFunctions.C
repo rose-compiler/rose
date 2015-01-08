@@ -12,6 +12,8 @@ using namespace CodeThorn;
 #include "IntervalTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
+using namespace SPRAY;
+
 IntervalTransferFunctions::IntervalTransferFunctions() {
   _cppExprEvaluator=0;
 }

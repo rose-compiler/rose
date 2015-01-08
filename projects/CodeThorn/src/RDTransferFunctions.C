@@ -8,6 +8,8 @@ using namespace CodeThorn;
 #include "RDTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
+using namespace SPRAY;
+
 bool hasDereferenceOperation(SgExpression* exp) {
   RoseAst ast(exp);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {

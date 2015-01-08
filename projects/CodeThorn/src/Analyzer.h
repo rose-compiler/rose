@@ -238,8 +238,8 @@ namespace CodeThorn {
 
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    IOLabeler* getLabeler() const {
-      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+    SPRAY::IOLabeler* getLabeler() const {
+      SPRAY::IOLabeler* ioLabeler=dynamic_cast<SPRAY::IOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }

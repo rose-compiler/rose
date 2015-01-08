@@ -15,6 +15,7 @@
 
 using namespace std;
 using namespace CodeThorn;
+using namespace SPRAY;
 
 RDPropertyStateFactory::RDPropertyStateFactory() {
 }

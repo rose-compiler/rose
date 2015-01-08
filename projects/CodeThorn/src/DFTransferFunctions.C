@@ -10,6 +10,7 @@ using namespace CodeThorn;
 
 #include "DFTransferFunctions.h"
 
+using namespace SPRAY;
 
 DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
 

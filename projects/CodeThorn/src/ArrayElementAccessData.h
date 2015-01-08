@@ -6,13 +6,13 @@
 
 struct ArrayElementAccessData {
   VariableId varId;
-  vector<int> subscripts;
+  std::vector<int> subscripts;
   VariableId getVariable();
   int getSubscript(int numOfDimension);
   int getDimensions();
   ArrayElementAccessData();
   ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdMapping* variableIdMapping);
-  string toString(VariableIdMapping* variableIdMapping);
+  std::string toString(VariableIdMapping* variableIdMapping);
   //! checks validity of data. The default value is not valid (does not correspond to any array) but can be used when creating STL containers.
   bool isValid();
   bool operator==(ArrayElementAccessData& other) {
