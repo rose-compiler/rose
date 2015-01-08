@@ -4,6 +4,8 @@
 #include "sage3basic.h"
 #include "VariableIdMapping.h"
 
+using namespace SPRAY;
+
 struct ArrayElementAccessData {
   VariableId varId;
   std::vector<int> subscripts;

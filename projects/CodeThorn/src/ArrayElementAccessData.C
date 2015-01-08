@@ -1,6 +1,7 @@
 #include "ArrayElementAccessData.h"
 
 using namespace std;
+using namespace SPRAY;
 
 ArrayElementAccessData::ArrayElementAccessData() {
 }

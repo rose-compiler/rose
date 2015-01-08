@@ -9,6 +9,7 @@
 #include "addressTakenAnalysis.h"
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 /*************************************************
  ***************** ProcessQuery  *****************

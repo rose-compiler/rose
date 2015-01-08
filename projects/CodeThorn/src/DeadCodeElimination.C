@@ -4,8 +4,7 @@
 #include "TrivialInlining.h"
 
 using namespace std;
-
-typedef VariableIdMapping::VariableIdSet VariableIdSet;
+using namespace SPRAY;
 
 bool DeadCodeElimination::isVariableOfInterest(VariableId varId) {
   return variablesOfInterest.find(varId)!=variablesOfInterest.end();

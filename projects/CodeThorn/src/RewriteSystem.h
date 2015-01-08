@@ -5,6 +5,8 @@
 #include "Labeler.h"
 #include "AstMatching.h"
 
+using namespace SPRAY;
+
 struct RewriteStatistics {
   RewriteStatistics();
   int numElimMinusOperator;

@@ -2,6 +2,8 @@
 #include <sstream>
 #include "Lattice.h"
 
+using namespace SPRAY;
+
 Lattice::Lattice() {
 }
 

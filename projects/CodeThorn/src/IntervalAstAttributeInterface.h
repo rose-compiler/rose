@@ -7,6 +7,8 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
+using namespace SPRAY;
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

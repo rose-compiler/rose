@@ -21,7 +21,7 @@ SPRAY::PointerAnalysisEmptyImplementation::run() {
   // nothing to be done
 }
 
-VariableIdSet SPRAY::PointerAnalysisEmptyImplementation::getModByPointer() {
+SPRAY::VariableIdSet SPRAY::PointerAnalysisEmptyImplementation::getModByPointer() {
   ROSE_ASSERT(_variableIdMapping);
   return _variableIdMapping->getVariableIdSet();
 }

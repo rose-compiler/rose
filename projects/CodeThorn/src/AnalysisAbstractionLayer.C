@@ -6,6 +6,8 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 
+using namespace SPRAY;
+
 VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);

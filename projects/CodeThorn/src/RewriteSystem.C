@@ -2,6 +2,7 @@
 #include "RewriteSystem.h"
 
 using namespace std;
+using namespace SPRAY;
 
 RewriteStatistics::RewriteStatistics() {
   init();
