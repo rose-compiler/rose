@@ -14,6 +14,7 @@
 #include <Partitioner2/Modules.h>                       // ROSE
 #include <Partitioner2/ModulesPe.h>                     // ROSE
 #include <Partitioner2/Partitioner.h>                   // ROSE
+#include <signal.h>
 #include <Wt/WApplication>
 #include <Wt/WBootstrapTheme>
 #include <Wt/WContainerWidget>
@@ -138,6 +139,14 @@ Application::main(int argc, char *argv[]) {
     exit(0);
 }
 
+// This probably isn't the right way to do this, but we need some method for killing the built-in server. Calling exit doesn't
+// always work.
+static void
+killServer() {
+    raise(SIGKILL);
+    exit(0);
+}
+
 void
 Application::init() {
     setTitle("bROwSE");
@@ -209,6 +218,8 @@ Application::init() {
     // Logo (reset button)
     // FIXME[Robb P. Matzke 2014-12-27]: eventually this should be a reset button
     Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/logo.jpg");
+    compassRose->setToolTip("Click here to reset the server");
+    compassRose->clicked().connect(boost::bind(killServer));
     wGrid_->addWidget(compassRose, 0, 0);
     wGrid_->addWidget(new Wt::WText("bROwSE: Binary ROSE On-line Workbench for Specimen Exploration"), 0, 1);
 
