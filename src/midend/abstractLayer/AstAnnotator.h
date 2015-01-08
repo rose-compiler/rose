@@ -9,6 +9,8 @@
 #include "DFAstAttribute.h"
 #include "Labeler.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -27,5 +29,7 @@ class AstAnnotator {
   SPRAY::Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
 };
+
+} // end of namespace SPRAY
 
 #endif

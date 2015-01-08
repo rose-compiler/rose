@@ -7,6 +7,8 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -25,5 +27,7 @@ class RDAstAttributeInterface : public DFAstAttribute {
   virtual iterator end()=0;
   virtual ~RDAstAttributeInterface();
 };
+
+}
 
 #endif

@@ -16,6 +16,10 @@
 
 namespace SPRAY {
 
+/*! 
+  * \author Markus Schordan
+  * \date 2012, 2014.
+ */
 class Label {
  public:
   Label();
