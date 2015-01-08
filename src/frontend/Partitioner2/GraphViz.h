@@ -20,6 +20,7 @@ private:
     bool showReturnEdges_;                              // show E_FUNCTION_RETURN edges?
     bool showInstructions_;                             // show instructions or only block address?
     bool showInstructionAddresses_;                     // if instructions are shown, show addresses too?
+    bool showInstructionStackDeltas_;                   // show stack deltas for instructions
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
     Color::HSV subgraphColor_;                          // background color for function subgraphs
@@ -33,7 +34,8 @@ private:
 
 public:
     GraphViz()
-        : useFunctionSubgraphs_(true), showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true),
+        : useFunctionSubgraphs_(true), showReturnEdges_(true),
+          showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
           showInNeighbors_(true),
           showOutNeighbors_(true),
           subgraphColor_(0, 0, 0.95),                   // light grey
@@ -79,6 +81,16 @@ public:
      * @{ */
     bool showInstructionAddresses() const { return showInstructionAddresses_; }
     void showInstructionAddresses(bool b) { showInstructionAddresses_ = b; }
+    /** @} */
+
+    /** Property: show instruction stack deltas.
+     *
+     *  When true each instruction will be preceeded by a two-digit (or more) hexadecimal stack offset. The stack delta appears
+     *  after the address (if any).
+     *
+     * @{ */
+    bool showInstructionStackDeltas() const { return showInstructionStackDeltas_; }
+    void showInstructionStackDeltas(bool b) { showInstructionStackDeltas_ = b; }
     /** @} */
 
     /** Property: default graph node attributes.

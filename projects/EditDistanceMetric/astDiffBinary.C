@@ -95,8 +95,8 @@ main(int argc, char *argv[]) {
     // Disassemble and partition code into functions.
     mlog[INFO] <<"disassembling and partitioning specimens...\n";
     Sawyer::Stopwatch partitionTime;
-    SgAsmBlock *gblock1 = Partitioner2::Engine().partition(interp1).buildAst(interp1);
-    SgAsmBlock *gblock2 = Partitioner2::Engine().partition(interp2).buildAst(interp2);
+    SgAsmBlock *gblock1 = Partitioner2::Engine().buildAst(interp1);
+    SgAsmBlock *gblock2 = Partitioner2::Engine().buildAst(interp2);
     mlog[INFO] <<"disassembled and partitioned in " <<partitionTime <<" seconds\n";
 
     // Some stats before we start.
