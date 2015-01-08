@@ -512,7 +512,7 @@ VariableIdSet& SPRAY::operator+=(VariableIdSet& s1, VariableIdSet& s2) {
   * \author Markus Schordan
   * \date 2012.
  */
-size_t hash_value(const VariableId& vid) {
+size_t SPRAY::hash_value(const VariableId& vid) {
   return vid.getIdCode();
 }
 

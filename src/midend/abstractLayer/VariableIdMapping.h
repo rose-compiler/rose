@@ -145,7 +145,7 @@ class VariableId {
   int _id;
 };
 
- size_t hash_value(const VariableId& vid);
+size_t hash_value(const VariableId& vid);
 
 bool operator<(VariableId id1, VariableId id2);
 bool operator==(VariableId id1, VariableId id2);
