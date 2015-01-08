@@ -148,59 +148,6 @@ void attachPointerExprLists(SgNode* node) {
   }
 }
 
-void generateAssertsCsvFile(Analyzer& analyzer, SgProject* sageProject, string filename) {
-  ofstream* csv = NULL;
-  csv = new ofstream();
-  // use binary and \r\n tp enforce DOS line endings
-  // http://tools.ietf.org/html/rfc4180
-  csv->open(filename.c_str(), ios::trunc|ios::binary);
-  //*csv << "Index;\"Assert Error Label\";ReachabilityResult;Confidence\r\n";
-  
-  LabelSet lset=analyzer.getTransitionGraph()->labelSetOfIoOperations(InputOutput::FAILED_ASSERT);
-  list<pair<SgLabelStatement*,SgNode*> > assertNodes=analyzer.listOfLabeledAssertNodes(sageProject);
-  if(boolOptions["rers-binary"]) {
-	cout<<"DEBUG: generating assert results for binary analysis."<<endl;
-    int assertStart=-1;
-    int assertEnd=-1;
-    switch(resultsFormat) {
-    case RF_RERS2012: assertStart=0; assertEnd=60;break;
-    case RF_RERS2013: assertStart=100; assertEnd=159;break;
-    default: assert(0);
-    }
-    for(int i=assertStart;i<=assertEnd;i++) {
-      *csv << i<<",";
-      if(analyzer.binaryBindingAssert[i]) {
-        *csv << "yes,9";
-      } else {
-        *csv << "no,9";
-      }
-      *csv << "\n";
-    }
-  } else {
-    for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=assertNodes.begin();i!=assertNodes.end();++i) {
-      string name=SgNodeHelper::getLabelName((*i).first);
-      if(name=="globalError")
-        name="error_60";
-      int num;
-      stringstream(name.substr(6,name.size()-6))>>num;
-      switch(resultsFormat) {
-      case RF_RERS2012: *csv<<(num);break;
-      case RF_RERS2013: *csv<<(num+100);break;
-      default: assert(0);
-      } 
-      *csv <<",";
-      Label lab=analyzer.getLabeler()->getLabel((*i).second);
-      if(lset.find(lab)!=lset.end()) {
-        *csv << "yes,9";
-      } else {
-        *csv << "no,9";
-      }
-      *csv << "\n";
-    }
-  }
-  if (csv) delete csv;
-}
-
 void printAsserts(Analyzer& analyzer, SgProject* sageProject) {
   if(boolOptions["rers-binary"]) {
     int assertStart=-1;
@@ -1664,35 +1611,13 @@ int main( int argc, char * argv[] ) {
   }
   double totalInputTracesTime = extractAssertionTracesTime + determinePrefixDepthTime;
 
-  // since CT1.2 the ADT TransitionGraph ensures that no duplicates can exist
-#if 0
-  long removed=analyzer.getTransitionGraph()->removeDuplicates();
-  cout << "Transitions reduced: "<<removed<<endl;
-#endif
-
   cout << "=============================================================="<<endl;
   bool withCe = boolOptions["with-counterexamples"] || boolOptions["with-assert-counterexamples"];
   analyzer.reachabilityResults.printResults("YES (REACHABLE)", "NO (UNREACHABLE)", "error_", withCe);
-#if 0
-  // TODO: reachability in presence of semantic folding
-  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
-
-  } else {
-    printAsserts(analyzer,sageProject);
-  }
-#endif
   if (args.count("csv-assert")) {
     string filename=args["csv-assert"].as<string>().c_str();
     analyzer.reachabilityResults.writeFile(filename.c_str(), false, 0, withCe);
     cout << "Reachability results written to file \""<<filename<<"\"." <<endl;
-#if 0  //result tables of different sizes are now handled by the PropertyValueTable object itself
-    switch(resultsFormat) {
-    case RF_RERS2012: analyzer.reachabilityResults.write2012File(filename.c_str());break;
-    case RF_RERS2013: analyzer.reachabilityResults.write2013File(filename.c_str());break;
-    default: analyzer.reachabilityResults.writeFile(filename.c_str());break;
-    }
-    //    OLD VERSION:  generateAssertsCsvFile(analyzer,sageProject,filename);
-#endif
     cout << "=============================================================="<<endl;
   }
   if(boolOptions["tg-ltl-reduced"]) {
