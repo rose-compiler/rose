@@ -13,6 +13,7 @@ namespace bROwSE {
 class Application: public Wt::WApplication {
 public:
     enum Phase {
+        SplashPhase,                                    /**< GUI is saying hello. */
         BusyPhase,                                      /**< GUI is waiting for some long-running task like partitioning. */
         InteractivePhase                                /**< GUI is in normal phase of interactive operation. */
     };
