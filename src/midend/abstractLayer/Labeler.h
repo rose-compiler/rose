@@ -14,6 +14,8 @@
 #define NO_ESTATE -4
 #define NO_LABEL_ID -1
 
+namespace SPRAY {
+
 class Label {
  public:
   Label();
@@ -32,7 +34,7 @@ class Label {
   Label& operator++();
   // postfix inc operator
   Label operator++(int);
-  std::size_t getId() const;
+  size_t getId() const;
 
   friend std::ostream& operator<<(std::ostream& os, const Label& label);
 
@@ -200,5 +202,7 @@ class IOLabeler : public Labeler {
  private:
   VariableIdMapping* _variableIdMapping;
 };
+
+} // end of namespace SPRAY
 
 #endif
