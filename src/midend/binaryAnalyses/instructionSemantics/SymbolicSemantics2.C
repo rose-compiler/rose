@@ -291,7 +291,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVa
     SValuePtr retval;
     // We leave these simplifications here because InsnSemanticsExpr doesn't yet have a way to pass an SMT solver to its
     // simplifier.
-    if (a->is_number() && b->is_number()) {
+    if (a->is_number() && b->is_number() && a->get_width()<=64) {
         retval = svalue_number(a->get_width(), a->get_number() ^ b->get_number());
     } else if (a->get_expression()->must_equal(b->get_expression(), solver)) {
         retval = svalue_number(a->get_width(), 0);
