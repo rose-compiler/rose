@@ -26,7 +26,7 @@
 #include "AstTraversal.h"
 
 // This controls output for debugging
-#define WARN_ABOUT_ATYPICAL_LVALUES 1
+#define WARN_ABOUT_ATYPICAL_LVALUES 0
 
 // DQ (10/14/2010):  This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
