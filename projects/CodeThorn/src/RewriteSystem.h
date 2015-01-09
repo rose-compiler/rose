@@ -5,8 +5,6 @@
 #include "Labeler.h"
 #include "AstMatching.h"
 
-using namespace SPRAY;
-
 struct RewriteStatistics {
   RewriteStatistics();
   int numElimMinusOperator;
@@ -16,6 +14,7 @@ struct RewriteStatistics {
   int numVariableElim;
   int numArrayUpdates; // number of array updates (i.e. assignments)
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
+  // resets all statistics counters to 0.
   void reset();
   std::string toString();
   // create a comma separated value string
@@ -26,8 +25,8 @@ private:
 
 class RewriteSystem {
  public:
-  void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping);
-  void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
+  void rewriteCompoundAssignments(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping);
+  void rewriteAst(SgNode*& root, SPRAY::VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
   RewriteStatistics getStatistics();
   void resetStatistics();
   RewriteStatistics getRewriteStatistics();

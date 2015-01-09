@@ -3,6 +3,7 @@
 
 using namespace std;
 using namespace SPRAY;
+
 RewriteStatistics RewriteSystem::getRewriteStatistics() {
   return dump1_stats;
 }
