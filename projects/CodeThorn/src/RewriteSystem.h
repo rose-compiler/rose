@@ -18,6 +18,8 @@ struct RewriteStatistics {
   int numConstExprElim; // number of const-expr found and substituted by constant (new rule, includes variables)
   void reset();
   std::string toString();
+  // create a comma separated value string
+  std::string toCsvString();
 private:
   void init();
 };
@@ -25,10 +27,11 @@ private:
 class RewriteSystem {
  public:
   void rewriteCompoundAssignments(SgNode*& root, VariableIdMapping* variableIdMapping);
-  void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false);
+  void rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace=false, bool ruleAddReorder=false, bool performCompoundAssignmentsElimination=false);
   RewriteStatistics getStatistics();
   void resetStatistics();
- public:
+  RewriteStatistics getRewriteStatistics();
+ private:
   RewriteStatistics dump1_stats;
 };
 

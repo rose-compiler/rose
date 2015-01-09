@@ -3,6 +3,9 @@
 
 using namespace std;
 using namespace SPRAY;
+RewriteStatistics RewriteSystem::getRewriteStatistics() {
+  return dump1_stats;
+}
 
 RewriteStatistics::RewriteStatistics() {
   init();
@@ -32,6 +35,19 @@ string RewriteStatistics::toString() {
   ss<<"Const fold     : "<<numConstantFolding<<endl;
   ss<<"Variable elim  : "<<numVariableElim<<endl;
   ss<<"Const expr elim: "<<numConstExprElim<<endl;
+  return ss.str();
+}
+
+string RewriteStatistics::toCsvString() {
+  stringstream ss;
+  ss<<numArrayUpdates
+    <<","<<numElimMinusOperator
+    <<","<<numElimAssignOperator
+    <<","<<numAddOpReordering
+    <<","<<numConstantFolding
+    <<","<<numVariableElim
+    <<","<<numConstExprElim
+    ;
   return ss.str();
 }
 
@@ -76,7 +92,7 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
  // rewrites an AST
  // requirements: all variables have been replaced by constants
  // uses AstMatching to match patterns.
-void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder) {
+void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMapping, bool rewriteTrace, bool ruleAddReorder, bool performCompoundAssignmentsElimination) {
    //  cout<<"Rewriting AST:"<<endl;
    bool someTransformationApplied=false;
    bool transformationApplied=false;
@@ -88,6 +104,7 @@ void RewriteSystem::rewriteAst(SgNode*& root, VariableIdMapping* variableIdMappi
       3) constant folding (leave nodes)
    */
 
+   if(performCompoundAssignmentsElimination)
    {
      rewriteCompoundAssignments(root,variableIdMapping);
    }

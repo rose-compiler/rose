@@ -97,6 +97,8 @@ codethorn_SOURCES = \
   RefinementConstraints.h \
   ArrayElementAccessData.h \
   ArrayElementAccessData.C \
+  Specialization.h \
+  Specialization.C \
   codethorn.h \
   codethorn.C
 
