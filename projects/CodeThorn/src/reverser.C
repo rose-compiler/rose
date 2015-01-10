@@ -21,9 +21,6 @@
 #include "limits.h"
 #include "assert.h"
 
-// ROSE analyses
-#include "VariableRenaming.h"
-
 using namespace std;
 
 string option_prefix;
