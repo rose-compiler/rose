@@ -2279,7 +2279,17 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                SgStatement* lastStatement = NULL;
                if (scope != NULL)
                   {
-                    lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
+                 // DQ (1/12/2015): The call to lastStatementOfScopeWithTokenInfo() can fail when the scope is a SgIfStmt 
+                 // (this happens in the tests/CompileTests/Cxx_tests test codes).
+                 // lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
+                    if (sourceFile->get_unparse_tokens() == true)
+                       {
+                         if (isSgIfStmt(scope) != NULL)
+                            {
+                              printf ("Warning: can't call SageInterface::lastStatementOfScopeWithTokenInfo() with scope == SgIfStmt \n");
+                            }
+                         lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
+                       }
                     isLastStatementOfScope = (stmt == lastStatement);
                   }
                  else
