@@ -254,7 +254,11 @@ int main(int argc, char * argv[])
   SgProject *project = frontend (argvList);
 
 // DQ (12/11/2014): Added output of graph after transformations.
-// generateDOTforMultipleFile(*project);
+   if (SgProject::get_verbose() > 0)
+      {
+        printf ("Generating a DOT graph of the AST \n");
+        generateDOTforMultipleFile(*project);
+      }
 
   SgFilePtrList file_ptr_list = project->get_fileList();
   visitorTraversal exampleTraversal;
@@ -271,6 +275,16 @@ int main(int argc, char * argv[])
 
   // string filename= SageInterface::generateProjectName(project);
   // generateDOTforMultipleFile(*project);
+
+   if (SgProject::get_verbose() > 0)
+      {
+        printf ("Generating a WHOLE AST DOT graph \n");
+
+     // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
+        const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
+        generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
+      }
+   
 
  // run all tests
   AstTests::runAllTests(project);

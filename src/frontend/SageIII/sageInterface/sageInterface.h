@@ -598,6 +598,10 @@ bool isPostfixOperator( SgExpression* exp );
 //! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
 bool isIndexOperator( SgExpression* exp );
 
+// DQ (1/10/2014): Adding more general support for token based unparsing.
+//! Used to support token unparsing (when the output the trailing token sequence).
+SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+
 //@}
 
 //------------------------------------------------------------------------

@@ -14385,6 +14385,66 @@ SageInterface::isIndexOperator( SgExpression* exp )
    }
 
 
+// DQ (1/10/2014): Adding more general support for token based unparsing.
+SgStatement*
+SageInterface::lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap)
+   {
+  // Return the last statement in the associated scope that has token information.
+     SgStatement* lastStatement = NULL;
+
+     ROSE_ASSERT(scope != NULL);
+
+#if 0
+     printf ("In SageInterface::lastStatementOfScopeWithTokenInfo(): scope = %p = %s \n",scope,scope->class_name().c_str());
+#endif
+
+     SgStatementPtrList statementList = scope->generateStatementList();
+     if (statementList.rbegin() != statementList.rend())
+        {
+       // Find the last statement with token stream information.
+          int counter = 0;
+
+          SgStatementPtrList::reverse_iterator i = statementList.rbegin();
+
+          while (i != statementList.rend() && (tokenStreamSequenceMap.find(*i) == tokenStreamSequenceMap.end() || tokenStreamSequenceMap[*i] == NULL) )
+             {
+#if 0
+               printf ("IN LOOP: SgDeclarationStatementPtrList::reverse_iterator i = %p = %s \n",*i,(*i)->class_name().c_str());
+#endif
+               i++;
+
+               counter++;
+             }
+#if 0
+          printf ("AFTER LOOP: SgDeclarationStatementPtrList::reverse_iterator i = %p = %s \n",*i,(*i)->class_name().c_str());
+          printf ("Number of declarations without token information at the bottom of the global scope: counter = %d \n",counter);
+#endif
+
+       // DQ (1/12/2015): If we are not using the token based unparsing (which is allowed) then this assertion will fail.
+       // ROSE_ASSERT(i != statementList.rend());
+       // ROSE_ASSERT(tokenStreamSequenceMap.find(*i) != tokenStreamSequenceMap.end());
+       // lastStatement = *i;
+          if (i == statementList.rend())
+             {
+               lastStatement = NULL;
+             }
+            else
+             {
+               lastStatement = *i;
+             }
+#if 0
+          printf ("computed lastStatement of scope = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("In SageInterface::lastStatementOfScopeWithTokenInfo(): scope is empty! \n");
+#endif
+        }
+
+     return lastStatement;
+   }
 
 
 //! Generate copies for a list of declarations and insert them into a different targetScope.

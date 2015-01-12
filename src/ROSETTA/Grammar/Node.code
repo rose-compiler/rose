@@ -2667,6 +2667,8 @@ SgNode::set_containsTransformation ( bool containsTransformation)
 bool
 SgNode::get_containsTransformation () const
    {
+     assert (this != NULL);
+
      return p_containsTransformation; 
    }
                                                                                                    

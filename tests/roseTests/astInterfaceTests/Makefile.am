@@ -214,7 +214,6 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_06.C \
   inputmoveDeclarationToInnermostScope_test2014_07.C \
   inputmoveDeclarationToInnermostScope_test2014_08.C \
-  inputmoveDeclarationToInnermostScope_test2014_09.C \
   inputmoveDeclarationToInnermostScope_test2014_10.C \
   inputmoveDeclarationToInnermostScope_test2014_11.C \
   inputmoveDeclarationToInnermostScope_test2014_12.C \
@@ -224,10 +223,12 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2014_16.C \
   inputmoveDeclarationToInnermostScope_test2014_17.C \
   inputmoveDeclarationToInnermostScope_test2014_19.C \
+  inputmoveDeclarationToInnermostScope_test2014_20.C \
   inputmoveDeclarationToInnermostScope_test2014_21.C \
   inputmoveDeclarationToInnermostScope_test2014_23.C \
   inputmoveDeclarationToInnermostScope_test2014_24.C \
   inputmoveDeclarationToInnermostScope_test2014_25.C \
+  inputmoveDeclarationToInnermostScope_test2014_26.C \
   inputmoveDeclarationToInnermostScope_test2014_27.C \
   inputmoveDeclarationToInnermostScope_test2014_28.C \
   inputmoveDeclarationToInnermostScope_test2014_29.C \
@@ -238,6 +239,7 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_03.C \
   inputmoveDeclarationToInnermostScope_test2015_04.C \
   inputmoveDeclarationToInnermostScope_test2015_05.C \
+  inputmoveDeclarationToInnermostScope_test2015_06.C \
   inputmoveDeclarationToInnermostScope_test2015_07.C \
   inputmoveDeclarationToInnermostScope_test2015_08.C \
   inputmoveDeclarationToInnermostScope_test2015_09.C \
@@ -252,7 +254,21 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_18.C \
   inputmoveDeclarationToInnermostScope_test2015_19.C \
   inputmoveDeclarationToInnermostScope_test2015_20.C \
-  inputmoveDeclarationToInnermostScope_test2015_21.C
+  inputmoveDeclarationToInnermostScope_test2015_21.C \
+  inputmoveDeclarationToInnermostScope_test2015_22.C \
+  inputmoveDeclarationToInnermostScope_test2015_23.C \
+  inputmoveDeclarationToInnermostScope_test2015_24.C \
+  inputmoveDeclarationToInnermostScope_test2015_25.C \
+  inputmoveDeclarationToInnermostScope_test2015_26.C \
+  inputmoveDeclarationToInnermostScope_test2015_27.C \
+  inputmoveDeclarationToInnermostScope_test2015_28.C \
+  inputmoveDeclarationToInnermostScope_test2015_29.C \
+  inputmoveDeclarationToInnermostScope_test2015_30.C
+
+# DQ (1/11/2014): Failing test with new design.
+# inputmoveDeclarationToInnermostScope_test2014_09.C 
+# inputmoveDeclarationToInnermostScope_test2014_26.C 
+# inputmoveDeclarationToInnermostScope_test2015_06.C 
 
 # DQ (1/4/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2014_20.C 

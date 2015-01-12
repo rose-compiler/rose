@@ -196,6 +196,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                  // DQ (1/2/2015): Note that white space is not always available.
                     if (start == -1)
                        {
+                      // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
+                         ROSE_ASSERT(tokenSubsequence_1->token_subsequence_end != -1);
                          start = tokenSubsequence_1->token_subsequence_end + 1;
                        }
                     ROSE_ASSERT(start >= 0);
@@ -275,6 +277,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                       // DQ (1/2/2015): Note that white space is not always available.
                          if (end == -1)
                             {
+                           // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
+                              ROSE_ASSERT(tokenSubsequence_2->token_subsequence_end != -1);
                               end = tokenSubsequence_2->token_subsequence_end + 1;
                             }
                          ROSE_ASSERT(end >= 0);
@@ -295,18 +299,38 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
           SgTokenPtrList & tokenVector = sourceFile->get_token_list();
 
-       // We don't want to unparse the token at the end.
-          for (int j = start; j < end; j++)
+          int tokenVectorSize = tokenVector.size();
+
+       // DQ (1/10/2015): I think we can assert this now that we no longer call this function to output the trailing whitespace of the SgGlobalScope.
+          ROSE_ASSERT(start < tokenVectorSize && end <= tokenVectorSize);
+
+          if (start < tokenVectorSize && end <= tokenVectorSize)
              {
+            // We don't want to unparse the token at the end.
+               for (int j = start; j < end; j++)
+                  {
+                 // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
+                     ROSE_ASSERT(j < (int)tokenVector.size());
+
 #if DEBUG_TOKEN_STREAM_UNPARSING
-               printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
+                    printf ("unparseStatementFromTokenStream: Output tokenVector[j=%d]->get_lexeme_string() = %s \n",j,tokenVector[j]->get_lexeme_string().c_str());
 #endif
 #if HIGH_FEDELITY_TOKEN_UNPARSING
-               *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
+                    *(unp->get_output_stream().output_stream()) << tokenVector[j]->get_lexeme_string();
 #else
-            // Note that this will interprete line endings which is not going to provide the precise token based output.
-               curprint(tokenVector[j]->get_lexeme_string());
+                 // Note that this will interprete line endings which is not going to provide the precise token based output.
+                    curprint(tokenVector[j]->get_lexeme_string());
 #endif
+                  }
+             }
+            else
+             {
+            // DQ (1/10/2015): The case of SgGlobalScope does not permit the output of a trailing whitespce (since it is not defined).
+               if (isSgGlobal(stmt_1) == NULL || isSgGlobal(stmt_2) == NULL)
+                  {
+                    printf ("ERROR: unparseStatementFromTokenStream(): skipped output of token range: start = %d end = %d tokenVectorSize = %d \n",start,end,tokenVectorSize);
+                    ROSE_ASSERT(false);
+                  }
              }
         }
        else
@@ -1396,6 +1420,11 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
           printf ("WARNING: scopes stored in SgUnparse_Info object have been changed \n");
         }
 #endif
+
+#if 0
+     printf ("In unparseLanguageSpecificStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+     curprint (string("/* Inside of unparseLanguageSpecificStatement() stmt = ") + stmt->class_name() + " */ \n");
+#endif
    }
 
 
@@ -1422,7 +1451,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
      SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceDeclaration != NULL);
 
-#if 0
+#if 1
      printf("In unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint("/* In unparseNamespaceDeclarationStatement() */ ");
 #endif
@@ -1593,19 +1622,22 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
           if (last_stmt != NULL)
              {
-#if 0
-               curprint("/* trailing whitespace from the last statement */ ");
+#if 1
+               curprint("/* last_stmt != NULL: trailing whitespace from the last statement */ ");
 #endif
             // Unparse the trailing white space of the last statement.
                unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
-#if 0
-               curprint("/* unparse the } */ ");
+#if 1
+               curprint("/* last_stmt != NULL: unparse the } */ ");
 #endif
             // Unparse the final "}" for the SgNamespaceDefinitionStatement.
                unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
              }
             else
              {
+#if 1
+               curprint("/* last_stmt == NULL */ ");
+#endif
                unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
              }
         }
@@ -1620,7 +1652,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      if (saved_namespace != NULL)
           printf ("In unparseNamespaceDefinitionStatement(): reset saved_namespace = %p = %s \n",saved_namespace,saved_namespace->class_name().c_str());
 #endif
-#if 0
+#if 1
      curprint("/* Leaving unparseNamespaceDefinitionStatement() */ ");
 #endif
    }
@@ -2734,7 +2766,8 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      outputHiddenListData (basic_stmt);
 #endif
 
-     SgStatement* last_stmt = NULL;
+  // DQ (1/7/2015): The funcationality to output the trailing tokens of the last statement is implemented in the unparseStatementFromTokenStream() function.
+  // SgStatement* last_stmt = NULL;
 
      SgStatementPtrList::iterator p = basic_stmt->get_statements().begin();
      while(p != basic_stmt->get_statements().end())
@@ -2750,7 +2783,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ("/* LOOP: END unparse statement in SgBasicBlock */");
 #endif
        // DQ (12/6/2014): Save the last statement so that we can use the trailing token stream if using the token-based unparsing.
-          last_stmt = *p;
+       // last_stmt = *p;
 
           p++;
         }
@@ -2813,6 +2846,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
+#if 0
        // We might have to make sure that this SgStatement would be output.
           if (last_stmt != NULL)
              {
@@ -2823,6 +2857,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
             // unparseStatementFromTokenStream (last_stmt, stmt, e_token_subsequence_end, e_token_subsequence_start);
                unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
              }
+#endif
 #if 0
           printf ("unparse last token in SgBasicBlock \n");
           curprint ("/* unparse last token in SgBasicBlock */");
@@ -2830,6 +2865,7 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
         }
    }
+
 
 // Determine how many "else {}"'s an outer if that has an else clause needs to
 // prevent dangling if problems
