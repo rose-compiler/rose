@@ -2331,7 +2331,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
   // TODO: move to the header
   // Input: 
   //
-  //  map(alloc|in|out|inout:var_list)
+  //  map(alloc|to|from|tofrom:var_list)
   //  array variable in var_list should have dimension bounds information like [0:N-1][0:K-1]
   //  
   //  Essentially, we have to decide if we need to do the following steps for each variable
@@ -2409,7 +2409,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     // collect map clauses and their variables 
     // ----------------------------------------------------------
     // Some notes for the relevant AST input: 
-    // we store a map clause for each variant/operator (alloc, in, out, and inout), so there should be up to 4 SgOmpMapClause.
+    // we store a map clause for each variant/operator (alloc, to, from, and tofrom), so there should be up to 4 SgOmpMapClause.
     //    SgOmpClause::omp_map_operator_enum
     // each map clause has 
     //   a variable list (SgVarRefExp), accessible through get_variables()
@@ -2425,9 +2425,9 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
 
     // store each time of map clause explicitly
     SgOmpMapClause* map_alloc_clause = NULL;
-    SgOmpMapClause* map_in_clause = NULL;
-    SgOmpMapClause* map_out_clause = NULL;
-    SgOmpMapClause* map_inout_clause = NULL;
+    SgOmpMapClause* map_to_clause = NULL;
+    SgOmpMapClause* map_from_clause = NULL;
+    SgOmpMapClause* map_tofrom_clause = NULL;
     // dimension map is the same for all the map clauses under the same omp target directive
     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
 
@@ -2451,12 +2451,12 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
        SgOmpClause::omp_map_operator_enum map_operator = m_cls->get_operation();
        if (map_operator == SgOmpClause::e_omp_map_alloc)
          map_alloc_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_in)  
-         map_in_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_out)  
-         map_out_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_inout)  
-         map_inout_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_to)  
+         map_to_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_from)  
+         map_from_clause = m_cls;
+       else if (map_operator == SgOmpClause::e_omp_map_tofrom)  
+         map_tofrom_clause = m_cls;
        else 
        {
          cerr<<"Error. transOmpMapVariables() from omp_lowering.cpp: found unacceptable map operator type:"<< map_operator <<endl;
@@ -2497,7 +2497,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
     //   Element_type * _dev_var; 
     //   e.g.: double* _dev_array; 
-    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, in, out, or inout)
+    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, to, from, or tofrom)
  
      // TODO: is this a safe assumption here??
      SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
@@ -2575,12 +2575,12 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
      }
 
      // Step 3. copy the data from CPU to GPU
-     // Only for variable in map(in:), or map(inout:) 
+     // Only for variable in map(to:), or map(tofrom:) 
      // e.g. xomp_memcpyHostToDevice ((void*)dev_m1, (const void*)a, array_size);
      if (need_generate_data_stmt)
      {
-       if ( ((map_in_clause) && (isInClauseVariableList (map_in_clause,sym))) || 
-           ((map_inout_clause) && (isInClauseVariableList (map_inout_clause,sym))) )
+       if ( ((map_to_clause) && (isInClauseVariableList (map_to_clause,sym))) || 
+           ((map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))) )
        {
          SgExprListExp * parameters = buildExprListExp (
              buildCastExp(buildVarRefExp(dev_var_name, insertion_scope), buildPointerType(buildVoidType())),
@@ -2601,8 +2601,8 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
      if (need_generate_data_stmt)
      {
        // SgStatement* prev_stmt = target_parallel_stmt;
-       if (( (map_out_clause) && (isInClauseVariableList (map_out_clause,sym))) ||
-           ( (map_inout_clause) && (isInClauseVariableList (map_inout_clause,sym))))
+       if (( (map_from_clause) && (isInClauseVariableList (map_from_clause,sym))) ||
+           ( (map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))))
        {
          SgExprListExp * parameters = buildExprListExp (
              buildCastExp(buildVarRefExp(orig_name, insertion_scope), buildPointerType(buildVoidType()) ),
@@ -2643,15 +2643,15 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
    // TODO handle scalar, separate or merged into previous loop ?
     
   // store remaining variables so outliner can readily use this information
-   // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (in|out|alloc|inout)
-   // for a scalar, two cases: in vs. out |inout
+   // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (to|from|alloc|tofrom)
+   // for a scalar, two cases: to vs. from | tofrom
    // if in only, pass by value is good
-   // if either out or inout:  
+   // if either from or tofrom:  
    // two possible solutions:
    // 1) we need to treat it as an array of size 1 or any other choices. TODO!!
    //  we also have to replace the reference to scalar to the array element access: be cautious about using by value (a) vs. using by address  (&a)
    // 2) try to still pass by value, but copy the final value back to the CPU version 
-   // right now we assume they are not on out|inout , until we face a real input applications with map(out:scalar_a)
+   // right now we assume they are not on from|tofrom, until we face a real input applications with map(from:scalar_a)
    // For all scalars, we directly copy them into all_syms for now
    for (std::set<SgSymbol*> ::iterator iter = atom_syms.begin(); iter != atom_syms.end(); iter ++)
    {
@@ -5003,8 +5003,8 @@ int patchUpFirstprivateVariables(SgFile*  file)
 * add new variables inserted by SageInterface::loopCollasping() into mapin clause
 *
 * This function passes target for loop of collpase clause and the collapse factor to the function SageInterface::loopCollapse.
-* After return from SageInterface::loopCollapse, this function will insert new variables(generated by loopCollapse()) into mapin
-* or mapinout clause, if the collapse clause comes with target directive.
+* After return from SageInterface::loopCollapse, this function will insert new variables(generated by loopCollapse()) into map to
+* or map tofrom clause, if the collapse clause comes with target directive.
 *
 */
 void transOmpCollapse(SgOmpClauseBodyStatement * node)
@@ -5047,7 +5047,7 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
     if(isSgOmpTargetStatement(target_stmt))
     {
         Rose_STL_Container<SgOmpClause*> map_clauses;
-        SgOmpMapClause * map_in;
+        SgOmpMapClause * map_to;
 
         /*get the data clause of this target statement*/
         SgOmpClauseBodyStatement * target_clause_body = isSgOmpClauseBodyStatement(target_stmt); 
@@ -5066,27 +5066,27 @@ void transOmpCollapse(SgOmpClauseBodyStatement * node)
         for(Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
         {
              SgOmpMapClause * temp_map_clause = isSgOmpMapClause(*iter);
-             if(temp_map_clause != NULL) //Winnie, look for the map(in) or map(inout) clause
+             if(temp_map_clause != NULL) //Winnie, look for the map(to) or map(tofrom) clause
              {
                  SgOmpClause::omp_map_operator_enum map_operator = temp_map_clause->get_operation();
-                 if(map_operator == SgOmpClause::e_omp_map_in || map_operator == SgOmpClause::e_omp_map_inout)
+                 if(map_operator == SgOmpClause::e_omp_map_to || map_operator == SgOmpClause::e_omp_map_tofrom)
                  {
-                     map_in = temp_map_clause;
+                     map_to = temp_map_clause;
                      break;
                  }
              }
         }
         
-        if(map_in == NULL)
+        if(map_to == NULL)
         {
             cerr <<"prepare to create a map in clause" << endl;
         }
         
-        SgVarRefExpPtrList & mapin_var_list = map_in->get_variables();
+        SgVarRefExpPtrList & mapto_var_list = map_to->get_variables();
         SgExpressionPtrList new_vars = new_var_list->get_expressions();
         for(size_t i = 0; i < new_vars.size(); i++)
         {
-            mapin_var_list.push_back(deepCopy(isSgVarRefExp(new_vars[i])));
+            mapto_var_list.push_back(deepCopy(isSgVarRefExp(new_vars[i])));
         }
 
         // TODO We also have to move the relevant variable declarations to sit in front of the map() clause
