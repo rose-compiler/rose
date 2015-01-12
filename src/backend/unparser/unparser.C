@@ -339,6 +339,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
      TimingPerformance timer ("Unparse File:");
 
+  // DQ (1/10/2015): Set the current source file.
+     info.set_current_source_file(file);
+
   // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -1627,6 +1630,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
                                _forced_transformation_format,
                                _unparse_includes );
 
+
   // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
   // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
 
@@ -1748,6 +1752,17 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
 
        // DQ (5/19/2011): Allow compiler generated statements to be unparsed by default.
           inheritedAttributeInfoPointer->set_outputCompilerGeneratedStatements();
+
+       // DQ (1/10/2015): Add initialization of the current_source_file.
+       // This is required where this function is called from the name qualification support.
+          SgSourceFile* sourceFile = TransformationSupport::getSourceFile(astNode);
+       // ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile == NULL)
+             {
+               printf ("NOTE: in globalUnparseToString(): TransformationSupport::getSourceFile(astNode = %p = %s) == NULL \n",astNode,astNode->class_name().c_str());
+             }
+
+          inheritedAttributeInfoPointer->set_current_source_file(sourceFile);
         }
 
      ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);

@@ -453,6 +453,16 @@ TokenMappingTraversal::consistancyCheck()
              }
 #endif
         }
+
+  // DQ (1/6/2015): Test the tokenStreamSequenceMap to make sure there are no NULL entries.
+     map<SgNode*,TokenStreamSequenceToNodeMapping*>::iterator i = tokenStreamSequenceMap.begin();
+     while (i != tokenStreamSequenceMap.end())
+        {
+          ROSE_ASSERT(i->first != NULL);
+          ROSE_ASSERT(i->second != NULL);
+
+          i++;
+        }
    }
 
 
@@ -1125,7 +1135,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      int original_start_of_token_subsequence = inheritedAttribute.start_of_token_sequence;
      int original_end_of_token_subsequence   = inheritedAttribute.end_of_token_sequence;
 
-#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
      printf ("\nIn evaluateSynthesizedAttribute(): n = %p = %s childAttributes.size() = %zu (start=%d,end=%d) \n",n,n->class_name().c_str(),childAttributes.size(),original_start_of_token_subsequence,original_end_of_token_subsequence);
      if (isSgClassDeclaration(n) != NULL)
         {
@@ -1202,7 +1212,26 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
 
+                 // DQ (1/6/2015): Adding assertions to eliminate possible null entries in the tokenStreamSequenceMap.
+                 // ROSE_ASSERT(childAttributes[i].node != NULL);
+                    if (childAttributes[i].node == NULL)
+                       {
+#if 0
+                         printf ("WARNING: tokenStreamSequenceMap will contain a NULL key entry: n = %p = %s childAttributes[i=%zu].node == NULL \n",n,n->class_name().c_str(),i);
+#else
+                      // DQ (1/7/2015): I want to control the output of this warning, and look into it later.
+                         static int counter = 0;
+                         if (counter % 100 == 0)
+                            {
+                              printf ("WARNING: tokenStreamSequenceMap will contain a NULL key entry: n = %p = %s childAttributes[i=%zu].node == NULL \n",n,n->class_name().c_str(),i);
+                            }
+#endif
+                         counter++;
+                       }
+
                  // Look up these children in the tokenStreamSequenceMap
+                 // if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
+                 // if (childAttributes[i].node != NULL && tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
                     if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
                        {
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
@@ -1219,6 +1248,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          lastChildWithTokenMapping = (int)i;
 
                          TokenStreamSequenceToNodeMapping* mappingInfo = tokenStreamSequenceMap[childAttributes[i].node];
+
+                      // DQ (1/6/2015): Adding assertion.
+                         ROSE_ASSERT(mappingInfo != NULL);
 
                          TokenStreamSequenceToNodeMapping* mappingInfo_to_add = mappingInfo;
 
@@ -1459,7 +1491,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // We need to build a TokenStreamSequenceToNodeMapping for this case (but we currently do this afterward)..
 
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
-                         printf ("       --- No mapping has been found at childAttributes[i].node = %p \n",childAttributes[i].node);
+                         printf ("      --- No mapping has been found at childAttributes[i].node = %p \n",childAttributes[i].node);
 #endif
                       // We need to ignore NULL pointers.
                       // nodesWithoutTokenMappings.push_back(childAttributes[i].node);
@@ -1739,8 +1771,220 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          ROSE_ASSERT(mappingInfo->leading_whitespace_start  <= mappingInfo->leading_whitespace_end);
                          ROSE_ASSERT(mappingInfo->trailing_whitespace_start <= mappingInfo->trailing_whitespace_end);
                          ROSE_ASSERT(mappingInfo->else_whitespace_start     <= mappingInfo->else_whitespace_end);
+
+                      // DQ (1/11/2014): Record the dark tokens so that we can add them the the white space range.
+                      // Dark tokens are defines as those tokens between the previous mappings trailing whitespace 
+                      // end and the token sequence start for the current IR node.
+
+#define DEBUG_DARK_TOKEN_FIXUP 0
+
+                         ROSE_ASSERT(mappingInfo->node != NULL);
+
+                         bool fixupDarkTokenSubsequences = false;
+                         SgForStatement* forStatement = isSgForStatement(n);
+                         if (forStatement != NULL && mappingInfo->node == forStatement->get_loop_body() )
+                            {
+                              fixupDarkTokenSubsequences = true;
+                            }
+#if DEBUG_DARK_TOKEN_FIXUP
+                         printf ("fixupDarkTokenSubsequences = %s \n",fixupDarkTokenSubsequences ? "true" : "false");
+#endif
+
+                         if (fixupDarkTokenSubsequences == false)
+                            {
+                         if (i == 0)
+                      // if (i == tokenToNodeVector.size()-1)
+                            {
+                           // Dark tokens are defined for the leading token sequence, but we want to work out and debug 
+                           // the case of the trailing dark token sequence first.
+                              if (tokenToNodeVector.size() == 1)
+                                 {
+                                   TokenStreamSequenceToNodeMapping* previous_mappingInfo = NULL;
+                                   if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                                      {
+                                        previous_mappingInfo = tokenStreamSequenceMap[n];
+                                      }
+
+                                   if (previous_mappingInfo != NULL)
+                                      {
+                                     // In this case their is only a single child so the first child has a trailing token sequence to fixup.
+#if DEBUG_DARK_TOKEN_FIXUP
+                                     // printf ("Dark tokens fixup: i == 0: Fixup the trailing token sequence for the singleton child token sequence \n");
+                                        printf ("Dark tokens fixup: i == tokenToNodeVector.size()-1: i = %d \n",i);
+                                        printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
+                                        printf ("   --- node          = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
+                                     // int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
+                                     // int current_mappingInfo_leading_whitespace_start = mappingInfo->leading_whitespace_start;
+                                        int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->token_subsequence_end;
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("   --- previous_mappingInfo_trailing_whitespace_end = %d \n",previous_mappingInfo_trailing_whitespace_end);
+                                        printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
+#endif
+                                        ROSE_ASSERT(previous_mappingInfo_trailing_whitespace_end >= 0);
+                                     // ROSE_ASSERT(current_mappingInfo_leading_whitespace_start >= 0);
+                                        if (current_mappingInfo_leading_whitespace_start < 0)
+                                           {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                             printf ("Skip this case where current_mappingInfo_leading_whitespace_start < 0 \n");
+#endif
+                                           }
+                                          else
+                                           {
+                                          // if (current_mappingInfo_leading_whitespace_start + 1 > previous_mappingInfo_trailing_whitespace_end)
+                                             if (current_mappingInfo_leading_whitespace_start + 1 < previous_mappingInfo_trailing_whitespace_end)
+                                                {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                                  printf ("Dark tokens fixup: Reset test 1 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_trailing_whitespace_end);
+#endif
+                                               // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+                                                  mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
+                                               // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+#if 0
+                                                  printf ("Exiting as a test! \n");
+                                                  ROSE_ASSERT(false);
+#endif
+                                                }
+                                           }
+                                      }
+                                 }
+                                else
+                                 {
+                                // This is the case of a first child which other children so here we would fixup the leading token 
+                                // sequence to match the trail token sequence of the previous IR node.
+                                 }
+                            }
+                           else
+                            {
+                           // This branch can be refactored with the previous branch.
+                           // This is the first case to fixup.
+                              TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
+                              ROSE_ASSERT(previous_mappingInfo != NULL);
+#if DEBUG_DARK_TOKEN_FIXUP
+                              printf ("Dark tokens fixup: i != 0: i = %d \n",i);
+                              printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
+                              printf ("   --- node          = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
+                           // int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
+                              int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
+                           // int current_mappingInfo_leading_whitespace_start = mappingInfo->leading_whitespace_start;
+                           // int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+                              int current_mappingInfo_token_subsequence_start = mappingInfo->token_subsequence_start;
+#if DEBUG_DARK_TOKEN_FIXUP
+                              printf ("   --- previous_mappingInfo_trailing_whitespace_end = %d \n",previous_mappingInfo_trailing_whitespace_end);
+                              printf ("   --- current_mappingInfo_token_subsequence_start  = %d \n",current_mappingInfo_token_subsequence_start);
+#endif
+                           // if (current_mappingInfo_leading_whitespace_start < 0)
+                              if (previous_mappingInfo_trailing_whitespace_end < 0)
+                                 {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                   printf ("Skip this case where previous_mappingInfo_trailing_whitespace_end < 0 \n");
+#endif
+                                 }
+                                else
+                                 {
+                                // if (current_mappingInfo_leading_whitespace_start + 1 > previous_mappingInfo_trailing_whitespace_end)
+                                   if (current_mappingInfo_token_subsequence_start > previous_mappingInfo_trailing_whitespace_end + 1)
+                                      {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("Dark tokens fixup: Reset the previous_mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_trailing_whitespace_end);
+#endif
+                                     // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+                                     // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
+                                        previous_mappingInfo->trailing_whitespace_end = current_mappingInfo_token_subsequence_start;
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+
+                           // This is the same case as i == 0.
+                           // Handle the trailing space.
+                              if (i == tokenToNodeVector.size()-1)
+                                 {
+                                   TokenStreamSequenceToNodeMapping* previous_mappingInfo = NULL;
+                                   if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                                      {
+                                        previous_mappingInfo = tokenStreamSequenceMap[n];
+                                      }
+
+                                   ROSE_ASSERT(previous_mappingInfo != NULL);
+                                   if (previous_mappingInfo != NULL)
+                                      {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("Dark tokens fixup: i == tokenToNodeVector.size()-1: i = %d \n",i);
+                                        printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
+                                        printf ("   --- node          = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
+                                     // int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
+                                     // int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+                                        int previous_mappingInfo_token_subsequence_end   = previous_mappingInfo->token_subsequence_end;
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("   --- previous_mappingInfo_token_subsequence_end = %d \n",previous_mappingInfo_token_subsequence_end);
+                                        printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
+#endif
+#if DEBUG_DARK_TOKEN_FIXUP
+                                     // printf ("Dark tokens fixup: Reset test 2 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_token_subsequence_end);
+#endif
+                                        ROSE_ASSERT(previous_mappingInfo_token_subsequence_end >= 0);
+                                     // ROSE_ASSERT(current_mappingInfo_leading_whitespace_start >= 0);
+                                        if (current_mappingInfo_leading_whitespace_start < 0)
+                                           {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                             printf ("Skip this case where current_mappingInfo_leading_whitespace_start < 0 \n");
+#endif
+                                           }
+                                          else
+                                           {
+                                          // if (current_mappingInfo_leading_whitespace_start + 1 > previous_mappingInfo_trailing_whitespace_end)
+                                             if (current_mappingInfo_leading_whitespace_start + 1 < previous_mappingInfo_token_subsequence_end)
+                                                {
+#if 1
+                                               // DQ (1/12/2015): If this is a node with syntax, then we want the token just before, else we want the value of previous_mappingInfo_token_subsequence_end
+                                               // int update_value = previous_mappingInfo_token_subsequence_end - 1;
+                                                  int update_value = 0;
+                                               // if (isSgGlobal(mappingInfo->node) != NULL)
+                                                  if (isSgGlobal(n) != NULL)
+                                                     {
+                                                    // The end of the global scope does not have syntax to mark it.
+                                                       update_value = previous_mappingInfo_token_subsequence_end;
+                                                     }
+                                                    else
+                                                     {
+                                                       update_value = previous_mappingInfo_token_subsequence_end - 1;
+                                                     }
+#else
+                                                  int update_value = previous_mappingInfo_token_subsequence_end;
+#endif
+#if DEBUG_DARK_TOKEN_FIXUP
+                                               // printf ("Dark tokens fixup: Reset test 2 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_token_subsequence_end);
+                                                  printf ("Dark tokens fixup: Reset test 2 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,update_value);
+#endif
+                                               // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+                                                  mappingInfo->trailing_whitespace_end = update_value;
+#if 0
+                                                  printf ("Exiting as a test! \n");
+                                                  ROSE_ASSERT(false);
+#endif
+                                                }
+                                           }
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+                            }
+
+                      // end of body for if fixupDarkTokenSubsequences == false
+                            }
 #else
                       // DQ (1/2/2015): START OF COMMENTED OUT BLOCK: We want to make sure that leading a trailing white space does not include syntax.
+
+#error "DEAD CODE!"
 
                       // if (i == firstChildWithTokenMapping)
                          if (i == 0)

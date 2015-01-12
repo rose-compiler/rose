@@ -2078,14 +2078,24 @@ CustomMemoryPoolDOTGeneration::defaultColorFilter(SgNode* node)
        // string labelWithSourceCode = string("\\n  ") + node->unparseToString() + "  ";
           string labelWithSourceCode;
 
-          std::string token_classification_string = SgToken::ROSE_Fortran_keyword_map [token->get_classification_code()].token_lexeme;
+       // DQ (1/11/2015): Added assertion.
+          ROSE_ASSERT(token != NULL);
+#if 0
+#if 1
+          printf ("In CustomMemoryPoolDOTGeneration::defaultColorFilter(): token->get_classification_code() = %d \n",token->get_classification_code());
+#endif
+       // DQ (1/11/2015): We can't just be looking up the token classification assuming Fortran since at this point we don't know what language is being used.
+       // std::string token_classification_string = SgToken::ROSE_Fortran_keyword_map [token->get_classification_code()].token_lexeme;
+          std::string token_classification_string = "keyword langague classification not known";
+
           labelWithSourceCode = string("\\n  ") + token->get_lexeme_string() + "  " + 
-                                string("\\n  ") + token_classification_string + "  " + 
+//                              string("\\n  ") + token_classification_string + "  " + 
                                 string("\\n  ") + StringUtility::numberToString(node) + "  ";
 
           NodeType graphNode(node,labelWithSourceCode,additionalNodeOptions);
 
           addNode(graphNode);
+#endif
         }
 
      if (isSgAsmType(node) != NULL)
