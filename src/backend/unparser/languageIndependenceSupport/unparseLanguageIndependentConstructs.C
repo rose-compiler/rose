@@ -2335,7 +2335,10 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
              }
             else
              {
+#if 0
+            // This message it commented out, it is frequently triggered for SgVariableDeclaration IR nodes.
                printf ("NOTE: info.get_current_source_file() == NULL for stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
              }
         }
 

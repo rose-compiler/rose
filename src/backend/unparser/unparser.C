@@ -1759,7 +1759,10 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgume
        // ROSE_ASSERT(sourceFile != NULL);
           if (sourceFile == NULL)
              {
+#if 0
+            // DQ (1/12/2015): This message it commented out, it is frequently triggered for expression IR nodes (SgNullExpression, SgIntVal, SgTemplateParameterVal, SgAddOp, etc.).
                printf ("NOTE: in globalUnparseToString(): TransformationSupport::getSourceFile(astNode = %p = %s) == NULL \n",astNode,astNode->class_name().c_str());
+#endif
              }
 
           inheritedAttributeInfoPointer->set_current_source_file(sourceFile);
