@@ -269,7 +269,7 @@ postprocess(const SqlDatabase::TransactionPtr &tx)
     cerr << "... done" << endl;
 
     cerr << "About to postprocess" << endl;
-    SqlDatabase::StatementPtr cmd = tx->statement("select cluster, function_id, index_within_function, row_number"
+    SqlDatabase::StatementPtr cmd = tx->statement("select cluster, function_id, index_within_function, vectors_row"
                                                   " from clusters order by cluster, function_id, index_within_function");
     SqlDatabase::StatementPtr insertCmd = tx->statement("insert into postprocessed_clusters"
                                                         " select * from clusters where row_number = ?");

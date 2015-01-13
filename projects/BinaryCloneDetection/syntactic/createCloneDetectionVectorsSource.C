@@ -1,7 +1,10 @@
 #include "rose.h"
-#include "createCloneDetectionVectors.h"
+#include "createCloneDetectionVectorsSource.h"
 
 using namespace std;
+
+
+
 
 SynthesizedAttribute::SynthesizedAttribute() {
   nodesInSubtree = new int[V_SgNumVariants];
