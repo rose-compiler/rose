@@ -11,6 +11,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/IntervalMap.h>
 #include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1236,25 +1237,24 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
  *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
  *  state. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
-protected:
-    SValuePtr address;                                  /**< Address of memory cell. */
-    SValuePtr value;                                    /**< Value stored at that address. */
-    boost::optional<rose_addr_t> latest_writer;         /**< Optional address for most recent writer of this cell's value. */
+    SValuePtr address_;                                 // Address of memory cell.
+    SValuePtr value_;                                   // Value stored at that address.
+    Sawyer::Optional<rose_addr_t> latestWriter_;        // Optional address for most recent writer of this cell's value.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
-        : address(address), value(value) {
+        : address_(address), value_(value) {
         ASSERT_not_null(address);
         ASSERT_not_null(value);
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
     MemoryCell(const MemoryCell &other) {
-        address = other.address->copy();
-        value = other.value->copy();
-        latest_writer = other.latest_writer;
+        address_ = other.address_->copy();
+        value_ = other.value_->copy();
+        latestWriter_ = other.latestWriter_;
     }
 
 public:
@@ -1299,28 +1299,38 @@ public:
 public:
     /** Accessor for the memory cell address.
      * @{ */
-    virtual SValuePtr get_address() const { return address; }
+    virtual SValuePtr get_address() const { return address_; }
     virtual void set_address(const SValuePtr &addr) {
         ASSERT_not_null(addr);
-        address = addr;
+        address_ = addr;
     }
     /** @}*/
 
     /** Accessor for the value stored at a memory location.
      * @{ */
-    virtual SValuePtr get_value() const { return value; }
+    virtual SValuePtr get_value() const { return value_; }
     virtual void set_value(const SValuePtr &v) {
         ASSERT_not_null(v);
-        value = v;
+        value_ = v;
     }
     /** @}*/
 
     /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
      *  describe the most recent instruction that wrote to this memory location.
      * @{ */
-    virtual boost::optional<rose_addr_t> get_latest_writer() const { return latest_writer; }
-    virtual void set_latest_writer(rose_addr_t writer_va) { latest_writer = writer_va; }
-    virtual void clear_latest_writer() { latest_writer = boost::optional<rose_addr_t>(); }
+    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use latestWriter instead") {
+        return latestWriter_ ? boost::optional<rose_addr_t>(*latestWriter_) : boost::optional<rose_addr_t>();
+    }
+    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use latestWriter instead") {
+        latestWriter_ = writer_va;
+    }
+    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearLatestWriter instead") {
+        latestWriter_ = Sawyer::Nothing();
+    }
+
+    virtual Sawyer::Optional<rose_addr_t> latestWriter() const { return latestWriter_; }
+    virtual void latestWriter(rose_addr_t writerVa) { latestWriter_ = writerVa; }
+    virtual void clearLatestWriter() { latestWriter_ = Sawyer::Nothing(); }
     /** @} */
 
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that

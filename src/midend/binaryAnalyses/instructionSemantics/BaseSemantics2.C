@@ -935,15 +935,15 @@ bool
 MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
-    if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->may_equal(other->get_address(), addrOps->get_solver());
+    if (8==value_->get_width() && 8==other->get_value()->get_width())
+        return address_->may_equal(other->get_address(), addrOps->get_solver());
 
-    size_t addr_nbits = address->get_width();
+    size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    ASSERT_require(value->get_width() % 8 == 0);        // memory is byte addressable, so values must be multiples of a byte
-    SValuePtr lo1 = address;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
+    ASSERT_require(value_->get_width() % 8 == 0);       // memory is byte addressable, so values must be multiples of a byte
+    SValuePtr lo1 = address_;
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
 
     ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
@@ -974,15 +974,15 @@ bool
 MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
-    if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->must_equal(other->get_address(), addrOps->get_solver());
+    if (8==value_->get_width() && 8==other->get_value()->get_width())
+        return address_->must_equal(other->get_address(), addrOps->get_solver());
 
-    size_t addr_nbits = address->get_width();
+    size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    ASSERT_require(value->get_width() % 8 == 0);
-    SValuePtr lo1 = address;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
+    ASSERT_require(value_->get_width() % 8 == 0);
+    SValuePtr lo1 = address_;
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
 
     ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
@@ -1012,10 +1012,10 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
-    stream <<"addr=" <<(*address+fmt);
-    if (fmt.get_show_latest_writers() && latest_writer)
-        stream <<" writer=" <<StringUtility::addrToString(*latest_writer);
-    stream <<" value=" <<(*value+fmt);
+    stream <<"addr=" <<(*address_+fmt);
+    if (fmt.get_show_latest_writers() && latestWriter_)
+        stream <<" writer=" <<StringUtility::addrToString(*latestWriter_);
+    stream <<" value=" <<(*value_+fmt);
 }
 
 SValuePtr
@@ -1052,8 +1052,8 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
     CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
     for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
         MemoryCellPtr cell = *fi;
-        if (cell->get_latest_writer())
-            retval.insert(cell->get_latest_writer().get());
+        if (cell->latestWriter())
+            retval.insert(cell->latestWriter().get());
     }
     return retval;
 }

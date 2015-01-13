@@ -717,7 +717,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
             BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
             BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
             ASSERT_not_null(cell); // we just wrote to it!
-            cell->set_latest_writer(insn->get_address());
+            cell->latestWriter(insn->get_address());
         }
     }
 }
