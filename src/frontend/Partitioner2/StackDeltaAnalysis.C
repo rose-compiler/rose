@@ -18,7 +18,9 @@ namespace Partitioner2 {
 struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
     const Partitioner &partitioner;
     InterproceduralPredicate(const Partitioner &partitioner): partitioner(partitioner) {}
-    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeNodeIterator &callEdge) {
+    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeNodeIterator &callEdge, size_t depth) {
+        if (depth > partitioner.stackDeltaInterproceduralLimit())
+            return false;
         ASSERT_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
         Function::Ptr function = callEdge->target()->value().function();
@@ -181,7 +183,7 @@ public:
             if (delta) {
                 BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
                 newStack = ops->add(oldStack, delta);
-            } else if (false) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
+            } else if (true) { // FIXME[Robb P. Matzke 2014-12-15]: should only apply if caller cleans up arguments
                 // We don't know the callee's delta, so assume that the callee pops only its return address. This is usually
                 // the correct for caller-cleanup ABIs common on Unix/Linux, but not usually correct for callee-cleanup ABIs
                 // common on Microsoft systems.

@@ -97,13 +97,15 @@ typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
 class InterproceduralPredicate {
 public:
     virtual ~InterproceduralPredicate() {}
-    virtual bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&) = 0;
+    virtual bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&, size_t depth) = 0;
 };
 
 /** Predicate that always returns false, preventing interprocedural analysis. */
 class NotInterprocedural: public InterproceduralPredicate {
 public:
-    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&) ROSE_OVERRIDE { return false; }
+    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&, size_t depth) ROSE_OVERRIDE {
+        return false;
+    }
 };
 extern NotInterprocedural NOT_INTERPROCEDURAL;
 
@@ -204,6 +206,7 @@ public:
 
 public:
     bool merge(const Ptr &other);                       // merge other into this, returning true iff changed
+    bool mergeDefiners(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;
     bool mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;
     bool mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstState,
                              const BaseSemantics::RegisterStateGenericPtr &srcState) const;
