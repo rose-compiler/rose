@@ -26,13 +26,6 @@ recursiveDisassemble_SOURCES = recursiveDisassemble.C
 recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
-bin_PROGRAMS += graphOutput
-graphOutput_SOURCES  = graphOutput.C
-graphOutput_CPPFLAGS = $(ROSE_INCLUDES)
-graphOutput_LDADD    = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
-
-
-
 #------------------------------------------------------------------------------------------------------------------------
 # Single-step a process and compare execution addresses with a list of addresses
 
