@@ -84,23 +84,27 @@ void mlmTransform::transformForStmt(SgForStatement* forStmt)
     {
       mlmAttribute* mlmAttr = dynamic_cast<mlmAttribute*> (attr);
       int tileArg = mlmAttr->getMemType();
-      bool result=false;
+//      bool result=false;
 //      result = loopTiling(forStmt,2, tileArg);
 //      ROSE_ASSERT(result != false);
+/*
       FILE* tileFile;
       tileFile = fopen("tile.sizes", "w");
       fprintf(tileFile, "%d %d %d",tileArg,tileArg, 1);
       fclose(tileFile);
-      int polyargc = 3;
+      int polyargc = 4;
       char* polyargv[polyargc];
       polyargv[0] = "";
       polyargv[1] = "--polyopt-fixed-tiling";
-      polyargv[2] = "--polyopt-pocc-verbose";
+      polyargv[2] = "--polyopt-scop-extractor-verbose=4";
+      polyargv[4] = "--polyopt-verbose";
       PolyRoseOptions polyoptions (polyargc, polyargv);
       int retval;
-      retval = PolyOptOptimizeSubTree(forStmt, polyoptions); 
+      retval = PolyOptOptimizeSubTree(forStmt, polyoptions);
+*/
+      int retval;
+      retval = PolyOptLoopTiling(forStmt,tileArg,tileArg,1); 
     }
-
 }
 
 

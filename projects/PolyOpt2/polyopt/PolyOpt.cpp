@@ -836,3 +836,24 @@ optimizeSingleScop(scoplib_scop_p scoplibScop,
     std::cout << "[PolyOpt] Scop #"<< scopId << " successfully optimized"
 	      << std::endl;
 }
+
+
+int PolyOptLoopTiling(SgForStatement* forStmt, int tileArg1, int tileArg2, int tileArg3)
+{
+  ROSE_ASSERT(forStmt);
+  FILE* tileFile;
+  tileFile = fopen("tile.sizes", "w");
+  fprintf(tileFile, "%d %d %d",tileArg1,tileArg2, tileArg3);
+  fclose(tileFile);
+  int polyargc = 3;
+  char* polyargv[polyargc];
+  polyargv[0] = "";
+  polyargv[1] = "--polyopt-fixed-tiling";
+  polyargv[2] = "--polyopt-scop-extractor-verbose=4";
+  PolyRoseOptions polyoptions (polyargc, polyargv);
+  int retval;
+  retval = PolyOptOptimizeSubTree(forStmt, polyoptions);
+  remove("tile.sizes"); 
+  return retval;
+
+}
