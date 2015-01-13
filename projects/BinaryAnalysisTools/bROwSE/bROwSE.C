@@ -18,6 +18,7 @@ P2::Attribute::Id ATTR_MayReturn(-1);
 P2::Attribute::Id ATTR_StackDelta(-1);
 P2::Attribute::Id ATTR_Ast(-1);
 P2::Attribute::Id ATTR_Heat(-1);
+P2::Attribute::Id ATTR_DataFlow(-1);
 
 void
 Context::init() {
@@ -36,6 +37,7 @@ Context::init() {
         ATTR_StackDelta           = P2::Attribute::registerName("Stack pointer delta");
         ATTR_Ast                  = P2::Attribute::registerName("Abstract syntax tree");
         ATTR_Heat                 = P2::Attribute::registerName("Heat value for color gradients [0..1]");
+        ATTR_DataFlow             = P2::Attribute::registerName("Data flow information");
     }
 }
 

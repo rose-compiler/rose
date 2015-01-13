@@ -8,6 +8,7 @@
 #include <bROwSE/WHexDump.h>
 #include <bROwSE/WMemoryMap.h>
 #include <bROwSE/WPartitioner.h>
+#include <bROwSE/WSemantics.h>
 #include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
 #include <Disassembler.h>                               // ROSE
@@ -235,6 +236,10 @@ Application::init() {
     // The central region the page is a set of tabs that are visible or not depending on the context
     wGrid_->addWidget(instantiateMainTabs(), 1, 1);
 
+    // East side is a tool pane
+    wSemantics_ = new WSemantics(ctx_);
+    wGrid_->addWidget(wSemantics_, 1, 2);
+
     // The bottom center is the status area
     wStatusBar_ = new WStatusBar;
     wStatus_->messageArrived().connect(boost::bind(&WStatusBar::appendMessage, wStatusBar_, _1));
@@ -288,6 +293,7 @@ Application::instantiateMainTabs() {
                 wFunctionCfg_->functionChanged().connect(boost::bind(&Application::changeFunction, this, _1));
                 wFunctionCfg_->functionClicked().connect(boost::bind(&Application::changeFunction, this, _1));
                 wFunctionCfg_->addressClicked().connect(boost::bind(&Application::showHexDumpAtAddress, this, _1));
+                wFunctionCfg_->basicBlockClicked().connect(boost::bind(&Application::changeBasicBlock, this, _1));
                 break;
             }
             case AssemblyTab: {
@@ -454,6 +460,11 @@ void
 Application::showHexDumpAtAddress(rose_addr_t va) {
     wHexDump_->makeVisible(va);
     changeTab(HexDumpTab);
+}
+
+void
+Application::changeBasicBlock(const P2::BasicBlock::Ptr &bb) {
+    wSemantics_->changeBasicBlock(bb);
 }
 
 } // namespace

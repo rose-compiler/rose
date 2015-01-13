@@ -60,8 +60,10 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WInstructionList.C		\
 	bROwSE/WMemoryMap.C			\
 	bROwSE/WPartitioner.C			\
+	bROwSE/WSemantics.C			\
 	bROwSE/WSplash.C			\
-	bROwSE/WStatus.C
+	bROwSE/WStatus.C			\
+	bROwSE/WToggleButton.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 

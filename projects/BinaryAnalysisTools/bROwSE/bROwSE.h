@@ -24,8 +24,10 @@ class WHexDump;
 class WHexValueEdit;
 class WMemoryMap;
 class WPartitioner;
+class WSemantics;
 class WStatus;
 class WStatusBar;
+class WToggleButton;
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
@@ -59,6 +61,7 @@ extern P2::Attribute::Id ATTR_MayReturn;
 extern P2::Attribute::Id ATTR_StackDelta;
 extern P2::Attribute::Id ATTR_Ast;
 extern P2::Attribute::Id ATTR_Heat;
+extern P2::Attribute::Id ATTR_DataFlow;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Context passed around to pretty much all the widgets.
