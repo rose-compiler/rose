@@ -3,7 +3,25 @@
 #include "rose.h"
 #include "ProgramStats.h"
 
-void  ProgramStatistics::floatIntStats(SgNode* node, ComputationInfo& cit) {
+using namespace CodeThorn;
+
+void SPRAY::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
+  SgProject* project=isSgProject(root);
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(project);
+  VariableIdSet setOfUsedVars=AnalysisAbstractionLayer::usedVariablesInsideFunctions(project,&variableIdMapping);
+  cout<<"----------------------------------------------------------------------"<<endl;
+  cout<<"Statistics:"<<endl;
+  cout<<"Number of functions          : "<<SgNodeHelper::listOfFunctionDefinitions(project).size()<<endl;
+  cout<<"Number of global variables   : "<<SgNodeHelper::listOfGlobalVars(project).size()<<endl;
+  cout<<"Number of global variableIds : "<<AnalysisAbstractionLayer::globalVariables(project,&variableIdMapping).size()<<endl;
+  cout<<"Number of used variables     : "<<setOfUsedVars.size()<<endl;
+  cout<<"----------------------------------------------------------------------"<<endl;
+  cout<<"VariableIdMapping-size       : "<<variableIdMapping.getVariableIdSet().size()<<endl;
+  cout<<"----------------------------------------------------------------------"<<endl;
+}
+
+void SPRAY::ProgramStatistics::floatIntStats(SgNode* node, SPRAY::ComputationInfo& cit) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgExpression* expr=isSgExpression(*i)) {
@@ -37,7 +55,7 @@ void  ProgramStatistics::floatIntStats(SgNode* node, ComputationInfo& cit) {
   }
 }
 
-void ProgramStatistics::computeOpStats(ComputationInfo& ci, SgNode* node) {
+void SPRAY::ProgramStatistics::computeOpStats(SPRAY::ComputationInfo& ci, SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(isSgAddOp(*i)||isSgDivideOp(*i)||isSgSubtractOp(*i)||isSgModOp(*i)||isSgMultiplyOp(*i)) {
@@ -73,7 +91,7 @@ void ProgramStatistics::computeOpStats(ComputationInfo& ci, SgNode* node) {
   }
 }
 
-ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdMapping* vidm) {
+SPRAY::ComputationInfo SPRAY::ProgramStatistics::computeComputationInfo(Label lab, VariableIdMapping* vidm) {
   SgNode* node=labeler->getNode(lab);
   // TODO: check node for not being at the expression yet
   if(isSgExprStatement(node))
@@ -107,7 +125,7 @@ ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdM
   inEdges.deleteEdges(EDGE_BACKWARD); // only exists for loop-conditions, join-nodes of branch-stmts may not have any backward-edge
   if(inEdges.size()>1) {
     for(EdgeSet::iterator i=inEdges.begin();i!=inEdges.end();++i) {
-      computationInfo[(*i).source].numJmp++;
+      computationInfo[(*i).source.getId()].numJmp++;
     }
   }
   Flow specialEdges=icfg->edgesOfType(EDGE_BACKWARD);
@@ -116,13 +134,13 @@ ComputationInfo ProgramStatistics::computeComputationInfo(Label lab, VariableIdM
   specialEdges+=callEdges;
   specialEdges+=callreturnEdges;
   for(EdgeSet::iterator i=specialEdges.begin();i!=specialEdges.end();++i) {
-    computationInfo[(*i).source].numJmp++;
+    computationInfo[(*i).source.getId()].numJmp++;
   }
   floatIntStats(node,ci);
   return ci;
 }
 
-ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName)
+SPRAY::ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName)
   :vidm(vidm),
    labeler(labeler),
    icfg(icfg),
@@ -131,18 +149,18 @@ ProgramStatistics::ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, 
 {
   computationInfo.resize(labeler->numberOfLabels());
 }
-void ProgramStatistics::setGenerateWithSource(bool withsource) {
+void SPRAY::ProgramStatistics::setGenerateWithSource(bool withsource) {
   _withSource=withsource;
 }
 
-void ProgramStatistics::computeStatistics() {
+void SPRAY::ProgramStatistics::computeStatistics() {
   LabelSet labSet=icfg->nodeLabels();
   //long labelNum=labeler->numberOfLabels();
   for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
     Label lab=*i;
     //    UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
     //cout<<"computing for Label "<<lab<<endl;
-    computationInfo[lab]=computeComputationInfo(lab,vidm);
+    computationInfo[lab.getId()]=computeComputationInfo(lab,vidm);
     //cout<<"TEST:"<<computationInfo[lab].numWriteMemLoc[CIT_TOTAL]<<endl;
 #if 0
     UDAstAttribute* node0=dynamic_cast<UDAstAttribute*>(node->getAttribute(useDefAstAttributeName));
@@ -153,19 +171,19 @@ void ProgramStatistics::computeStatistics() {
 
 }
 
-void ProgramStatistics::printStatistics() {
+void SPRAY::ProgramStatistics::printStatistics() {
   LabelSet labSet=icfg->nodeLabels();
   // print results
   cout<< "-----------------------------------"<<endl;    
   cout<< "Program statistics:"<<endl;
   cout<< "-----------------------------------"<<endl;    
   for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
-    cout<<"L"<<*i<<":"<<computationInfo[*i].toString()<<endl;
+    cout<<"L"<<*i<<":"<<computationInfo[(*i).getId()].toString()<<endl;
   }
   cout<< "-----------------------------------"<<endl;    
 }
 
-string ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
+string SPRAY::ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
   stringstream dot;
   dot<<lab;
   string labelstart="[label=";
@@ -196,14 +214,14 @@ string ProgramStatistics::generateNodeResourceUsageDotString(Label lab) {
     labentry="<TR><TD COLSPAN=\"5\" ROWSPAN=\"1\" BGCOLOR=\"firebrick4\"><font color=\"white\">L"+dot.str()+"</font></TD></TR>";
   }
 
-  string entries=/*emptyentry+*/computationInfo[lab].toDot();
+  string entries=/*emptyentry+*/computationInfo[lab.getId()].toDot();
   //string entry2="<TD PORT=\"second\" BGCOLOR=\"blue\">FLOAT</TD>";
   string tableend="</TABLE>>";
   string result=dot.str()+labelstart+tablestart+labentry+rowstart+entries+rowend+tableend+labelend;
   return result;
 }
 
-void ProgramStatistics::generateResourceUsageICFGDotFile(string dotfilename) {
+void SPRAY::ProgramStatistics::generateResourceUsageICFGDotFile(string dotfilename) {
   // generate ICFG visualization
   cout << "generating "<<dotfilename<<endl;
   icfg->setDotOptionDisplayLabel(false);

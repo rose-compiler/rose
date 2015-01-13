@@ -12,11 +12,12 @@
 #include <boost/foreach.hpp>
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
 }
 
-size_t CFAnalyzer::deleteFunctioncCallLocalEdges(Flow& flow) {
+size_t CFAnalyzer::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
 
@@ -110,11 +111,11 @@ InterFlow CFAnalyzer::interFlow(Flow& flow) {
     Label callLabel,entryLabel,exitLabel,callReturnLabel;
     if(funDef==0) {
       // we were not able to find the funDef in the AST
-      cout << "STATUS: External function ";
-      if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
-        cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
-      else
-        cout << "cannot be determined."<<endl;
+      //cout << "STATUS: External function ";
+      //if(SgFunctionDeclaration* funDecl=funCall->getAssociatedFunctionDeclaration())
+      //  cout << SgNodeHelper::getFunctionName(funDecl)<<"."<<endl;
+      //else
+      //  cout << "cannot be determined."<<endl;
       callLabel=*i;
       entryLabel=Labeler::NO_LABEL;
       exitLabel=Labeler::NO_LABEL;
@@ -322,6 +323,8 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   * \date 2013.
  */
 int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
+  //cerr<<"Error: inlineTrivialFunctions is deactivated."<<endl;
+  //exit(1);
   // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
   //    AND have the number of formal parameters is 0 AND have void return type.
   // 2) inline function
@@ -402,6 +405,7 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+    //cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
     if(isSgBasicBlock(getNode(*i))) {
 #if 1
       cnt+=reduceNode(flow,*i);
@@ -572,7 +576,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       if(isSgFunctionDefinition(*i)) {
         i.skipChildrenOnForward();
-        cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
+        //cout << "STATUS: Generating flow for function "<<SgNodeHelper::getFunctionName(*i)<<endl;
         tmpEdgeSet=flow(*i);
         edgeSet+=tmpEdgeSet;
       }
@@ -618,6 +622,14 @@ Flow CFAnalyzer::flow(SgNode* node) {
       Edge explicitEdge=Edge(*i,EDGE_FORWARD,labeler->functionExitLabel(node));
       if(SgNodeHelper::isLoopCond(labeler->getNode(*i))) {
         explicitEdge.addType(EDGE_FALSE);
+      }
+      if(SgNodeHelper::isCond(labeler->getNode(*i))) {
+        if(SgIfStmt* ifStmt=isSgIfStmt(labeler->getNode(*i)->get_parent())) {
+          if(!SgNodeHelper::getFalseBranch(ifStmt)) {
+            // MS: 07/02/2014: in case of empty if-false branch (at end of function), FALSE must be added to explicit node (only if-false can be empty)
+            explicitEdge.addType(EDGE_FALSE);
+          }
+        }
       }
       edgeSet.insert(explicitEdge);
     }
