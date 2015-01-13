@@ -3,6 +3,9 @@
 
 #include <bROwSE/bROwSE.h>
 
+#include <BinaryDataFlow.h>                             // ROSE
+#include <Partitioner2/DataFlow.h>
+
 namespace bROwSE {
 
 enum MayReturn { MAYRETURN_YES, MAYRETURN_NO, MAYRETURN_UNKNOWN };
@@ -10,6 +13,12 @@ enum MayReturn { MAYRETURN_YES, MAYRETURN_NO, MAYRETURN_UNKNOWN };
 struct Box { int x, y, dx, dy; };
 
 typedef Sawyer::Container::Map<rose_addr_t, Box> CfgVertexCoords;
+
+struct FunctionDataFlow {
+    P2::DataFlow::DfCfg dfCfg;                          // control flow graph used for dataflow
+    P2::DataFlow::States initialStates;                 // initial state for each dfCfg vertex
+    P2::DataFlow::States finalStates;                   // final state for each dfCfg vertex
+};
 
 size_t functionNBytes(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNInsns(const P2::Partitioner&, const P2::Function::Ptr&);
@@ -24,6 +33,8 @@ size_t functionNReturns(P2::Partitioner&, const P2::Function::Ptr&);
 MayReturn functionMayReturn(P2::Partitioner&, const P2::Function::Ptr&);
 int64_t functionStackDelta(P2::Partitioner&, const P2::Function::Ptr&);
 SgAsmFunction *functionAst(P2::Partitioner&, const P2::Function::Ptr&);
+rose::BinaryAnalysis::DataFlow::VariableList functionVariables(P2::Partitioner&, const P2::Function::Ptr&);
+FunctionDataFlow functionDataFlow(P2::Partitioner&, const P2::Function::Ptr&);
 
 /** Interface for computing some property of a function. */
 class FunctionAnalyzer: public Sawyer::SharedObject {

@@ -1,5 +1,9 @@
 // Operations on specimen functions
+#include <sage3basic.h>
+
+#include <BaseSemantics2.h>                             // ROSE
 #include <bROwSE/FunctionUtil.h>
+#include <Partitioner2/DataFlow.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Modules.h>
 #include <rose_getline.h>
@@ -293,6 +297,44 @@ functionAst(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
         function->attr(ATTR_Ast, result);
     }
     return isSgAsmFunction(result);
+}
+
+// Perform a data-flow analysis on a function.
+FunctionDataFlow
+functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
+    using namespace rose::BinaryAnalysis;
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    FunctionDataFlow result;
+    if (function && !function->attr<FunctionDataFlow>(ATTR_DataFlow).assignTo(result)) {
+        // Dataflow doesn't work unless we have instruction semantics
+        BaseSemantics::RiscOperatorsPtr ops = partitioner.newOperators();
+        ASSERT_not_null(ops);
+        if (BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops)) {
+    
+            // Build the CFG for this one function.
+            P2::ControlFlowGraph::VertexNodeIterator startVertex = partitioner.findPlaceholder(function->address());
+            ASSERT_require(startVertex != partitioner.cfg().vertices().end());
+            P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), startVertex,
+                                                                 P2::DataFlow::NOT_INTERPROCEDURAL);
+
+            // Dataflow
+            DataFlow df(cpu);
+            P2::DataFlow::TransferFunction xfer(cpu, partitioner.instructionProvider().stackPointerRegister());
+            typedef DataFlow::Engine<P2::DataFlow::DfCfg, P2::DataFlow::State::Ptr, P2::DataFlow::TransferFunction> Engine;
+            Engine engine(dfCfg, xfer);
+            try {
+                engine.runToFixedPoint(0 /*startVertex*/, xfer.initialState());
+            } catch (const BaseSemantics::Exception &e) {
+                P2::mlog[ERROR] <<e <<"\n";
+            }
+
+            result.dfCfg = dfCfg;
+            result.initialStates = engine.getInitialStates();
+            result.finalStates = engine.getFinalStates();
+            function->attr(ATTR_DataFlow, result);
+        }
+    }
+    return result;
 }
 
 } // namespace
