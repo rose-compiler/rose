@@ -518,6 +518,17 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
     return retval;
 }
 
+Function::Ptr
+Partitioner::basicBlockFunctionOwner(const BasicBlock::Ptr &bblock) const {
+    ASSERT_not_null(bblock);
+    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblock->address());
+    if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
+        placeholder->value().function()!=NULL) {
+        return placeholder->value().function();
+    }
+    return Function::Ptr();
+}
+
 std::vector<Function::Ptr>
 Partitioner::basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const {
     std::vector<Function::Ptr> retval;

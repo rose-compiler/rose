@@ -1,6 +1,7 @@
 #ifndef ROSE_Partitioner2_DataFlow_H
 #define ROSE_Partitioner2_DataFlow_H
 
+#include <BinaryDataFlow.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
@@ -12,6 +13,11 @@ namespace Partitioner2 {
 
 /** Dataflow utilities. */
 namespace DataFlow {
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Control Flow Graph
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** CFG vertex for dataflow analysis.
  *
@@ -94,6 +100,16 @@ public:
     virtual bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&) = 0;
 };
 
+/** Predicate that always returns false, preventing interprocedural analysis. */
+class NotInterprocedural: public InterproceduralPredicate {
+public:
+    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&) ROSE_OVERRIDE { return false; }
+};
+extern NotInterprocedural NOT_INTERPROCEDURAL;
+
+/** Unpacks a vertex into a list of instructions. */
+std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
+
 /** build a cfg useful for dataflow analysis.
  *
  *  The returned CFG will be constructed from the global CFG vertices that are reachable from @p startVertex such that the
@@ -101,10 +117,144 @@ public:
  *
  *  @sa DfCfg */
 DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexNodeIterator &startVertex,
-                 InterproceduralPredicate&);
+                 InterproceduralPredicate &predicate = NOT_INTERPROCEDURAL);
 
 /** Emit a dataflow CFG as a GraphViz file. */
 void dumpDfCfg(std::ostream&, const DfCfg&);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Dataflow State
+//
+// Any state can be used in the calls to the generic BinaryAnalysis::DataFlow stuff, but we define a state here based on
+// symbolic semantics because that's what's commonly wanted.  Users are free to create their own states either from scratch or
+// by inheriting from the one defined here.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+/** A multi-byte variable that appears on the stack. */
+struct StackVariable {
+    int64_t offset;                                     /**< Offset from initial stack pointer. */
+    size_t nBytes;                                      /**< Size of variable in bytes. */
+    BaseSemantics::SValuePtr address;                   /**< Starting address, i.e., initial stack pointer + offset. */
+
+    /** Create a new stack variable. The @p offset is the starting (low) address of the variable and @p addr is the symbolic
+     *  address for that offset. */
+    StackVariable(int64_t offset, size_t nBytes, const BaseSemantics::SValuePtr &address)
+        : offset(offset), nBytes(nBytes), address(address) {}
+};
+
+/** Multiple stack variables. */
+typedef std::vector<StackVariable> StackVariables;
+
+/** State for dataflow. Mostly the same as a semantic state. */
+class State: public Sawyer::SharedObject {
+public:
+    typedef Sawyer::SharedPointer<State> Ptr;
+
+private:
+    BaseSemantics::RiscOperatorsPtr ops_;
+    BaseSemantics::StatePtr semanticState_;
+
+protected:
+    explicit State(const BaseSemantics::RiscOperatorsPtr &ops)
+        : ops_(ops) {
+        init();
+    }
+
+    // Deep copy
+    State(const State &other): ops_(other.ops_) {
+        semanticState_ = other.semanticState_->clone();
+    }
+
+
+public:
+    // Allocating constructor
+    static Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
+        return Ptr(new State(ops));
+    }
+
+    // Copy + allocate constructor
+    Ptr clone() const {
+        return Ptr(new State(*this));
+    }
+
+    void clear() {
+        semanticState_->clear();
+    }
+
+    BaseSemantics::StatePtr semanticState() const { return semanticState_; }
+    
+    /** Returns the list of all known stack variables.  A stack variable is any memory location whose address is a constant
+     *  offset from an initial stack pointer.  That is, the address has the form (add SP0 CONSTANT) where SP0 is a variable
+     *  supplied as an argument to this function.  Although memory is byte addressable and values are stored as individual
+     *  bytes in memory, this function attempts to sew related addresses back together again to produce variables that are
+     *  multiple bytes.  There are many ways to do this, all of which are heuristic. */
+    StackVariables findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) const;
+
+    /** Returns the list of all known local variables.  A local variable is any stack variable whose starting address is less
+     *  than the specified stack pointer.  For the definition of stack variable, see @ref findStackVariables. */
+    StackVariables findLocalVariables(const BaseSemantics::SValuePtr &initialStackPointer) const;
+
+    /** Returns the list of all known function arguments.  A function argument is any stack variable whose starting address is
+     *  greater than or equal to the specified stack pointer.  For the definition of stack variable, see @ref
+     *  findStackVariables.   On architectures that pass a return address on the top of the stack, that return address is
+     *  considered to be the first argument of the function. */
+    StackVariables findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer) const;
+
+public:
+    bool merge(const Ptr &other);                       // merge other into this, returning true iff changed
+    bool mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;
+    bool mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstState,
+                             const BaseSemantics::RegisterStateGenericPtr &srcState) const;
+    bool mergeMemoryStates(const BaseSemantics::MemoryCellListPtr &dstState,
+                           const BaseSemantics::MemoryCellListPtr &srcState) const;
+
+private:
+    void init();
+};
+
+std::ostream& operator<<(std::ostream&, const State &x);
+
+/** List of states, one per dataflow vertex. */
+typedef std::vector<State::Ptr> States;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Transfer function
+//
+// The transfer function is reponsible for taking a CFG vertex and an initial state and producing the next state, the final
+// state for that vertex.  Users can use whatever transfer function they want; this one is based on the DfCfg and State types
+// defined above.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Dataflow transfer functor. */
+class TransferFunction {
+    BaseSemantics::DispatcherPtr cpu_;
+    BaseSemantics::SValuePtr callRetAdjustment_;
+    const RegisterDescriptor STACK_POINTER_REG;
+public:
+    explicit TransferFunction(const BaseSemantics::DispatcherPtr &cpu, const RegisterDescriptor &stackPointerRegister)
+        : cpu_(cpu), STACK_POINTER_REG(stackPointerRegister) {
+        size_t adjustment = STACK_POINTER_REG.get_nbits() / 8; // sizeof return address on top of stack
+        callRetAdjustment_ = cpu->number_(STACK_POINTER_REG.get_nbits(), adjustment);
+    }
+
+    State::Ptr initialState() const;
+
+    // Required by dataflow engine: should return a deep copy of the state
+    State::Ptr operator()(const State::Ptr &incomingState) const {
+        return incomingState ? incomingState->clone() : State::Ptr();
+    }
+
+    // Required by dataflow engine: compute new output state given a vertex and input state.
+    State::Ptr operator()(const DfCfg&, size_t vertexId, const State::Ptr &incomingState) const;
+};
+
+/** Dataflow engine. */
+typedef rose::BinaryAnalysis::DataFlow::Engine<DfCfg, State::Ptr, TransferFunction> Engine;
+
 
 } // namespace
 } // namespace

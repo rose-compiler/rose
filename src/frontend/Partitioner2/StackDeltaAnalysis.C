@@ -285,12 +285,6 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     InterproceduralPredicate ip(*this);
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(*this, cfg_, cfgStart, ip);
-#if 1 // DEBUGGING [Robb P. Matzke 2015-01-06]
-    if (function->address() == 0x080480cf) {
-        std::ofstream graphViz("x.dot");
-        P2::DataFlow::dumpDfCfg(graphViz, dfCfg);
-    }
-#endif
     P2::DataFlow::DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
     BinaryAnalysis::DataFlow df(cpu);
