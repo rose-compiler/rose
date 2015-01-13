@@ -314,6 +314,7 @@ private:
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
     StackDeltaMap stackDeltaMap_;                       // Stack deltas defined for certain functions by name
+    size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
 
@@ -339,7 +340,8 @@ public:
      *  memory map that represents a (partially) loaded instance of the specimen (i.e., a process). */
     Partitioner(Disassembler *disassembler, const MemoryMap &map)
         : memoryMap_(map), solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+          basicBlockSemanticsAutoDrop_(true) {
         init(disassembler, map);
     }
 
@@ -349,7 +351,8 @@ public:
      *  partitioner by value or reference. */
     Partitioner()
         : solver_(NULL), progressTotal_(0), isReportingProgress_(true), useSemantics_(false),
-          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), basicBlockSemanticsAutoDrop_(true) {
+          autoAddCallReturnEdges_(false), assumeFunctionsReturn_(true), stackDeltaInterproceduralLimit_(1),
+          basicBlockSemanticsAutoDrop_(true) {
         init(NULL, memoryMap_);
     }
 
@@ -381,6 +384,7 @@ public:
         autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
         stackDeltaMap_ = other.stackDeltaMap_;
+        stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
         addressNames_ = other.addressNames_;
         basicBlockSemanticsAutoDrop_ = other.basicBlockSemanticsAutoDrop_;
         cfgAdjustmentCallbacks_ = other.cfgAdjustmentCallbacks_;
@@ -1006,6 +1010,17 @@ public:
      *  Causes all stack deltas for basic blocks and functions that are attached to the CFG/AUM to be forgotten.  This is
      *  useful if one needs to recompute deltas in light of new information. */
     void forgetStackDeltas() const ROSE_FINAL;
+
+    /** Property: max depth for inter-procedural stack delta analysis.
+     *
+     *  Stack delta analysis will be interprocedural when this property has a value greater than one. Interprocedural analysis
+     *  is only used when a called function's stack delta is unknown.  Large values for this property will likely be clipped by
+     *  the actual dataflow implementation.
+     *
+     * @{ */
+    size_t stackDeltaInterproceduralLimit() const { return stackDeltaInterproceduralLimit_; }
+    void stackDeltaInterproceduralLimit(size_t n) { stackDeltaInterproceduralLimit_ = std::max(size_t(1), n); }
+    /** @} */
 
     /** Determine if part of the CFG can pop the top stack frame.
      *

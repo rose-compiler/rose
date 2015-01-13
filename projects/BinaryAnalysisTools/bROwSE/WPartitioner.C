@@ -16,6 +16,7 @@
 #include <Wt/WLineEdit>
 #include <Wt/WPanel>
 #include <Wt/WPushButton>
+#include <Wt/WSlider>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
 
@@ -114,7 +115,7 @@ WPartitioner::init() {
         new Wt::WBreak(c);
         wUseSemantics_ = new Wt::WCheckBox("Use semantics?", c);
         wUseSemantics_->setToolTip(tip);
-        wUseSemantics_->setCheckState(Wt::Checked);
+        wUseSemantics_->setCheckState(Wt::Unchecked);
         wUseSemantics_->checked().connect(boost::bind(&WPartitioner::handleUseSemantics, this, true));
         wUseSemantics_->unChecked().connect(boost::bind(&WPartitioner::handleUseSemantics, this, false));
 
@@ -169,6 +170,18 @@ WPartitioner::init() {
         wAssumeFunctionsReturn_->setToolTip(tip);
         wAssumeFunctionsReturn_->setCheckState(Wt::Checked);
 
+        tip = "Stack-delta analysis determines the net effect that a function has on the stack pointer. This is a "
+              "data flow analysis whose results are always propagated backward along the edges in a function call graph. "
+              "In some cases, a called function's stack delta can only be computed in the context of a caller. Setting "
+              "the maximum interprocedural depth to a value larger than one will enable interprocedural analysis.";
+        new Wt::WBreak(c);
+        new Wt::WText("Stack-delta max call depth: ", c);
+        wStackDeltaDepth_ = new Wt::WSlider(c);
+        wStackDeltaDepth_->setToolTip(tip);
+        wStackDeltaDepth_->setTickInterval(1);
+        wStackDeltaDepth_->setValue(1);
+        wStackDeltaDepth_->setRange(1, 10);
+        
         new Wt::WBreak(c);
         wPartitionSpecimen_ = new Wt::WPushButton("Disassemble", c);
         wPartitionSpecimen_->clicked().connect(boost::bind(&WPartitioner::redoState, this, PartitionedSpecimen));
@@ -433,6 +446,7 @@ WPartitioner::partitionSpecimen() {
     P2::Partitioner &p = ctx_.partitioner = ctx_.engine.createTunedPartitioner();
     p.enableSymbolicSemantics(useSemantics());
     p.assumeFunctionsReturn(assumeFunctionsReturn());
+    p.stackDeltaInterproceduralLimit(wStackDeltaDepth_->value());
     if (followGhostEdges())
         p.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
     if (!allowDiscontiguousBlocks())

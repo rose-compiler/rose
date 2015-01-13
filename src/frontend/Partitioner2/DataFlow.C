@@ -38,13 +38,13 @@ public:
 
     typedef std::list<CallFrame> CallStack;             // we use a list since there's no default constructor for an iterator
     CallStack callStack;
-    size_t maxCallStackSize;
+    size_t maxCallStackSize;                            // safety to prevent infinite recursion
     
 
     DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg,
                  const ControlFlowGraph::ConstVertexNodeIterator &startVertex, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), startVertex(startVertex), interproceduralPredicate(predicate),
-          maxCallStackSize(4) {}
+          maxCallStackSize(10) {}
     
     typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> CfgTraversal;
 
@@ -145,7 +145,7 @@ public:
                         ASSERT_require(isValidVertex(callFrom));
                         callStack.push_back(CallFrame(dfCfg));
                         if (callStack.size() <= maxCallStackSize && edge->target()->value().type()==V_BASIC_BLOCK &&
-                            interproceduralPredicate(cfg, edge)) {
+                            interproceduralPredicate(cfg, edge, callStack.size())) {
                             // Incorporate the call into the dfCfg
                             DfCfg::VertexNodeIterator callTo = findOrInsertBasicBlockVertex(edge->target());
                             ASSERT_require(isValidVertex(callTo));
@@ -270,30 +270,47 @@ State::merge(const Ptr &other) {
 }
 
 bool
+State::mergeDefiners(BaseSemantics::SValuePtr &dstValueBase /*in,out*/, const BaseSemantics::SValuePtr &srcValueBase) const {
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    SymbolicSemantics::SValuePtr dstValue = SymbolicSemantics::SValue::promote(dstValueBase);
+    SymbolicSemantics::SValuePtr srcValue = SymbolicSemantics::SValue::promote(srcValueBase);
+    SymbolicSemantics::InsnSet dstDefiners = dstValue->get_defining_instructions();
+    SymbolicSemantics::InsnSet srcDefiners = srcValue->get_defining_instructions();
+    if (dstDefiners.size() == srcDefiners.size() && std::equal(dstDefiners.begin(), dstDefiners.end(), srcDefiners.begin()))
+        return false;                                   // no change
+    dstValue->add_defining_instructions(srcDefiners);
+    return true;
+}
+
+bool
 State::mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const {
     // The calls to ops->undefined(...) are mostly so that we're simplifying TOP as much as possible. We want each TOP
     // value to be distinct from the others so we don't encounter things like "TOP xor TOP = 0", but we also don't want TOP
     // to be arbitrarily complex since that just makes things slower.
-    if (!dstValue && !srcValue) {
-        return false;                               // both are BOTTOM (not calculated)
-    } else if (!dstValue) {
+    if (!dstValue && !srcValue) {                       // both are BOTTOM (not calculated)
+        return false;
+    } else if (!dstValue) {                             // dstValue is BOTTOM, srcValue is not
         ASSERT_not_null(srcValue);
         if (srcValue->is_number()) {
             dstValue = srcValue;
         } else {
             dstValue = ops_->undefined_(srcValue->get_width());
         }
-        return true;                                // dstValue is BOTTOM, srcValue is not
-    } else if (!srcValue) {
-        return false;                               // srcValue is BOTTOM, dstValue is not
-    } else if (!dstValue->is_number()) {
-        dstValue = ops_->undefined_(dstValue->get_width());
-        return false;                               // dstValue was already TOP
-    } else if (dstValue->must_equal(srcValue)) {
-        return false;                               // dstValue == srcValue
-    } else {
-        dstValue = ops_->undefined_(dstValue->get_width());
-        return true;                                // dstValue became TOP
+        return true;
+    } else if (!srcValue) {                             // srcValue is BOTTOM, dstValue is not
+        return false;
+    } else if (!dstValue->is_number()) {                // dstValue was already TOP
+        BaseSemantics::SValuePtr merged = ops_->undefined_(dstValue->get_width());
+        mergeDefiners(merged /*in,out*/, dstValue);
+        dstValue = merged;
+        return mergeDefiners(dstValue /*in,out*/, srcValue);
+    } else if (dstValue->must_equal(srcValue)) {        // dstValue == srcValue
+        return mergeDefiners(dstValue, srcValue);
+    } else {                                            // dstValue becomes TOP
+        BaseSemantics::SValuePtr merged = ops_->undefined_(dstValue->get_width());
+        mergeDefiners(merged /*in,out*/, dstValue);
+        dstValue = merged;
+        return mergeDefiners(dstValue /*in,out*/, srcValue);
     }
 }
 
@@ -314,6 +331,10 @@ State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstStat
                 changed = true;
             }
         }
+        // FIXME[Robb P. Matzke 2015-01-13]: we should adjust latestWriter also, but unfortunately we can only store one writer
+        // per bit of the register's value, and it's hard to get information about the individual bits.  So we'll just clear
+        // all the writer info all the time so users don't depend on it.
+        dstState->clear_latest_writer(reg);
     }
     return changed;
 }
@@ -321,9 +342,20 @@ State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstStat
 bool
 State::mergeMemoryStates(const BaseSemantics::MemoryCellListPtr &dstState,
                          const BaseSemantics::MemoryCellListPtr &srcState) const {
-    // FIXME[Robb P. Matzke 2015-01-08]: not implemented yet
-    dstState->clear();
-    return false;
+    using namespace rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+    bool changed = false;
+    BOOST_REVERSE_FOREACH (const MemoryCellPtr &srcCell, srcState->get_cells()) {
+        // Get the source and destination values
+        SValuePtr srcValue = ops_->undefined_(8);
+        srcValue = srcState->readMemory(srcCell->get_address(), srcValue, ops_.get(), ops_.get());
+        SValuePtr dstValue = ops_->undefined_(8);
+        dstValue = dstState->readMemory(srcCell->get_address(), dstValue, ops_.get(), ops_.get());
+        if (mergeSValues(dstValue /*in,out*/, srcValue)) {
+            dstState->writeMemory(srcCell->get_address(), dstValue, ops_.get(), ops_.get());
+            changed = true;
+        }
+    }
+    return changed;
 }
 
 // If the expression is an offset from the initial stack register then return the offset, else nothing.
@@ -366,7 +398,8 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
     // What is the word size for this architecture?  We'll assume the word size is the same as the width of the stack pointer,
     // whose value we have in initialStackPointer.
     ASSERT_require2(initialStackPointer->get_width() % 8 == 0, "stack pointer width is not an integral number of bytes");
-    size_t wordNBytes = initialStackPointer->get_width() / 8;
+    int64_t wordNBytes = initialStackPointer->get_width() / 8;
+    ASSERT_require2(wordNBytes>0, "overflow");
 
     // Find groups of consecutive addresses that were written to by the same instruction. This is how we coalesce adjacent
     // bytes into larger variables.
@@ -391,10 +424,11 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
     std::vector<StackVariable> retval;
     BOOST_FOREACH (const OffsetInterval &interval, stackWriters.intervals()) {
         int64_t offset=interval.least();
-        size_t nRemaining = interval.size();
+        int64_t nRemaining = interval.size();
+        ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
-            BaseSemantics::SValuePtr addr = offsetAddress.get(interval.least());
-            size_t nBytes = 0;
+            BaseSemantics::SValuePtr addr = offsetAddress.get(offset);
+            int64_t nBytes = 0;
             if (offset < 0 && offset + nRemaining > 0) {
                 // Never create a variable that spans memory below and above (or equal to) the initial stack pointer. The
                 // initial stack pointer is generally the boundary between local variables and function arguments (we're

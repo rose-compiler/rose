@@ -43,6 +43,7 @@ private:
     Wt::WLineEdit *wPeScramblerDispatchVa_;             // address for PEScrambler dispatcher
     Wt::WCheckBox *wAssumeFunctionsReturn_;             // how do unknown functions behave?
     Wt::WComboBox *wInterpretation_;                    // which interpretation to unparse
+    Wt::WSlider *wStackDeltaDepth_;                     // max depth for interprocedural stack delta analysis
 
     Wt::WPushButton *wParseSpecimen_;                   // causes ELF/PE files to be parsed
     Wt::WPushButton *wLoadSpecimen_;                    // causes specimen to be loaded into memory, and possibly linked
@@ -59,8 +60,8 @@ public:
         : Wt::WContainerWidget(parent), ctx_(ctx), state_(InitialState),
           wUseConfiguration_(NULL), wIsaName_(NULL), wIsaError_(NULL), wUseSemantics_(NULL), wFollowGhostEdges_(NULL),
           wFollowGhostEdgesWarning_(NULL), wAllowDiscontiguousBlocks_(NULL), wFindDeadCode_(NULL), wDefeatPeScrambler_(NULL),
-          wPeScramblerDispatchVa_(NULL), wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wParseSpecimen_(NULL),
-          wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
+          wPeScramblerDispatchVa_(NULL), wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wStackDeltaDepth_(NULL),
+          wParseSpecimen_(NULL), wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
         init();
     }
 
