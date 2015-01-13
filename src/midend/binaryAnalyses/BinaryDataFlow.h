@@ -357,6 +357,9 @@ public:
             return outgoingState_[cfgVertexId];
         }
 
+        const VertexStates& getInitialStates() const {
+            return incomingState_;
+        }
         const VertexStates& getFinalStates() const {
             return outgoingState_;
         }

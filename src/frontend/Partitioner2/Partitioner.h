@@ -752,6 +752,11 @@ public:
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
     AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const ROSE_FINAL;
 
+    /** Returns the function that owns a basic block.
+     *
+     *  Returns the function that owns this basic block in the CFG, or null if no function owns it. */
+    Function::Ptr basicBlockFunctionOwner(const BasicBlock::Ptr&) const ROSE_FINAL;
+
     /** Returns the list of functions that own the specified basic blocks.
      *
      *  The returned vector contains a list of distinct functions that own the specified basic blocks.  The functions are
@@ -1738,6 +1743,9 @@ private:
     void reportProgress() const;
 
 public:
+    // Non-shared pointer to SMT solver
+    SMTSolver *smtSolver() const ROSE_FINAL { return solver_; }
+
     // Obtain a new RiscOperators along with new states
     BaseSemantics::RiscOperatorsPtr newOperators() const ROSE_FINAL;
 
