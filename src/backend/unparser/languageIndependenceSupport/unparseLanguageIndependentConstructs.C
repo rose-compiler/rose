@@ -370,7 +370,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt);
                if (functionDeclaration != NULL && functionDeclaration->isNormalizedTemplateFunction() == true)
                   {
-#if 1
+#if 0
                     printf ("In statementFromFile(): Detected a normalized template declaration: functionDeclaration = %p = %s name = %s \n",functionDeclaration,functionDeclaration->class_name().c_str(),functionDeclaration->get_name().str());
 #endif
                     statementInFile = false;
@@ -577,7 +577,7 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
   // This function factors out the details of the conditions under which a statement can be unparsed from the token stream.
   // Note that it is conditional upon if there is a mapping identified between the token stream and the statement.  These
   // mapping can be shared across more than one statement, or not exist, depending on the statement and the use of macro 
-  // expansion in the statement (or acorss multiple statements).
+  // expansion in the statement (or across multiple statements).
 
   // Note that we might want this function to return a pointer to a TokenStreamSequenceToNodeMapping instead (and NULL if no info is available)
 
@@ -675,6 +675,9 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
+  // DQ (1/13/2015): Adding another mechanism to support supression of previously unparsed token subsequences (required to support macros that map to multiple statements).
+     static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
+
      if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
         {
           TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
@@ -722,6 +725,23 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
              {
 #if 0
                printf ("Not found in redundantTokenEndings: lastTokenIndex = %d \n",lastTokenIndex);
+#endif
+#if 1
+            // DQ (1/13/2015): We might need to output the last statement that has a replicated token sequence, and not the first (I think).
+               if (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
+                  {
+#if 0
+                    printf ("Return TRUE from redundantStatementMappingToTokenSequence(): tokenSubsequence = %p stmt = %p = %s \n",tokenSubsequence,stmt,stmt->class_name().c_str());
+#endif
+                    return true;
+                  }
+                 else
+                  {
+#if 0
+                    printf ("Record that this TokenStreamSequenceToNodeMapping data has been processed: tokenSubsequence = %p \n",tokenSubsequence);
+#endif
+                    previouslyUnparsedTokenSubsequences.insert(tokenSubsequence);
+                  }
 #endif
              }
         }
@@ -1017,7 +1037,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
         {
        // Check if this is a previously processed statement (static map is located in redundantStatementMappingToTokenSequence() function.
           bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt);
-
+#if 0
+          printf ("In unparseStatementFromTokenStream(): stmt = %p = %s redundantStatement = %s \n",stmt,stmt->class_name().c_str(),redundantStatement ? "true" : "false");
+#endif
           if (redundantStatement == false)
              {
             // Check for the leading token stream for this statement.  Unparse it if the previous statement was unparsed as a token stream.
@@ -1025,7 +1047,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
                TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
                ROSE_ASSERT(tokenSubsequence != NULL);
-
+#if 0
+               printf ("In unparseStatementFromTokenStream(): tokenSubsequence = %p (%d,%d) \n",tokenSubsequence,tokenSubsequence->token_subsequence_start,tokenSubsequence->token_subsequence_end);
+#endif
                ROSE_ASSERT(tokenSubsequence->token_subsequence_start != -1);
 
             // Sometimes the previousAndNextFrontierDataMap is not defined for a stmt.
