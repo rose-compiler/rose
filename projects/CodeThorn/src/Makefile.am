@@ -162,6 +162,75 @@ faketarget:
 	tests/rdtest3.C 
 	tests/rdtest4.C 
 	tests/rers13_mini1.C 
+	AbstractEvaluator.h
+	AbstractValue.C
+	AbstractValue.h
+	CPDomain.hpp
+	Domain.hpp
+	GenericIntervalLattice.h
+	IOSequenceGenerator.C
+	InfoOperations.C
+	ReachabilityResults.C
+	ReachabilityResults.h
+	cpptests/cpp-test-1.C
+	intervalLattice/testIntervalLattice.C
+	outdated.cpp
+	rtests/array1/checkarrayoperators.cpp
+	rtests/linked-list/900_create_insert_delall.C
+	rtests/linked-list/901_create_insert_delall.C
+	rtests/linked-list/902_create_insert_delall.C
+	rtests/linked-list/rose_900_create_insert_delall.C
+	rtests/linked-list/rose_900_create_insert_delall_mod2.C
+	rtests/linked-list/rose_901_create_insert_delall.C
+	rtests/linked-list/rose_902_create_insert_delall.C
+	rtests/linked-list/test_2014_09_26_rose_900_create_insert_delall.C
+	rtests/linked-list/test_rose_900_create_insert_delall_mod.C
+	rtests/ross-event/rose_simple2-event-funcs-modified-2.c
+	rtests/ross-event/rose_simple2-event-funcs-modified.c
+	rtests/ross-event/runtime.C
+	rtests/ross-event/runtime.h
+	rtests/ross-event/runtime_macros.h
+	rtests/ross-event/simple2-bs.c
+	rtests/ross-event/simple2-event-funcs.c
+	rtests/ross-event/simple2.c
+	rtests/vector1/RevStack.h
+	rtests/vector1/rev_rtest3.C
+	rtests/vector1/rev_rtest4.C
+	rtests/vector1/rev_rtest4.cpp.C
+	rtests/vector1/rev_rtest4.cpppure.C
+	rtests/vector1/revcheck.C
+	rtests/vector1/revtest.C
+	rtests/vector1/rose_rev_rtest4.C
+	rtests/vector1/rose_rev_rtest4.cpp.C
+	rtests/vector1/rose_rev_rtest4.cpppure.C
+	rtests/vector1/rose_rev_rtest4.cpppure2.C
+	rtests/vector1/rtest1.C
+	rtests/vector1/rtest2.C
+	runtime/isstacktest.C
+	runtime/runtime.C
+	runtime/runtime.h
+	runtime/runtime_macros.h
+	runtime/testruntimesystem.C
+	spotconnection/spotdriver.C
+	spotconnection/spotdriver.h
+	testAbstractValue.C
+	tests/Problem1403_mymod.c
+	tests/arraytest1.c
+	tests/basictest17.C
+	tests/cfgtest1.C
+	tests/consttest1.C
+	tests/consttest2.C
+	tests/consttest3.C
+	tests/consttest4.C
+	tests/csettest1.c
+	tests/lvtest1.C
+	tests/lvtest2.C
+	tests/lvtest3.C
+	tests/rers/Problem1T_size5_14.c
+	tests/rers/Problem1_mod.c
+	tests/rers/Problem1_pmod.c
+	tests/rers/inputsequencepack/Problem1_pmod.c
+	tests/rev1.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
