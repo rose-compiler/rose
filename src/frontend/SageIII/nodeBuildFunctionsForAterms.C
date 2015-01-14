@@ -14044,3 +14044,133 @@ SgAterm* SgAterm::build_node_from_nonlist_children ( std::string name )
      return returnNode;
    }
 
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgLambdaCapture* SgLambdaCapture::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgExpression*, bool, bool, bool)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLambdaCapture::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgExpression*, SgExpression*, bool, bool, bool): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLambdaCapture* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgTemplateTypedefDeclaration* SgTemplateTypedefDeclaration::build_node_from_nonlist_children(Sg_File_Info*, SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTemplateTypedefDeclaration::build_node_from_nonlist_children(Sg_File_Info*, SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTemplateTypedefDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgFinishStmt* SgFinishStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgFinishStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgFinishStmt* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgAtStmt* SgAtStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgStatement*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgAtStmt::build_node_from_nonlist_children(Sg_File_Info*, SgExpression*, SgStatement*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgAtStmt* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgHereExp* SgHereExp::build_node_from_nonlist_children(Sg_File_Info*, SgType*, SgExpression*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgHereExp::build_node_from_nonlist_children(Sg_File_Info*, SgType*, SgExpression*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgHereExp* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgLambdaCaptureList* SgLambdaCaptureList::build_node_from_nonlist_children(Sg_File_Info*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLambdaCaptureList::build_node_from_nonlist_children(Sg_File_Info*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLambdaCaptureList* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgTemplateTypedefSymbol* SgTemplateTypedefSymbol::build_node_from_nonlist_children(SgTypedefDeclaration*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTemplateTypedefSymbol::build_node_from_nonlist_children(SgTypedefDeclaration*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTemplateTypedefSymbol* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgTemplateInstantiationTypedefDeclaration* SgTemplateInstantiationTypedefDeclaration::build_node_from_nonlist_children(Sg_File_Info*, SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, std::vector<SgTemplateArgument*, std::allocator<SgTemplateArgument*> >)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgTemplateInstantiationTypedefDeclaration::build_node_from_nonlist_children(Sg_File_Info*, SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, std::vector<SgTemplateArgument*, std::allocator<SgTemplateArgument*> >): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgTemplateInstantiationTypedefDeclaration* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgLambdaExp* SgLambdaExp::build_node_from_nonlist_children(Sg_File_Info*, SgLambdaCaptureList*, SgClassDeclaration*, SgFunctionDeclaration*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgLambdaExp::build_node_from_nonlist_children(Sg_File_Info*, SgLambdaCaptureList*, SgClassDeclaration*, SgFunctionDeclaration*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgLambdaExp* returnNode = NULL;
+
+     return returnNode;
+   }
+
+// DQ (12/11/2014): Added these which were missing as a result of new C++11 support.
+SgAsyncStmt* SgAsyncStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*)
+   {
+#if 0
+  // debugging information!
+     printf ("In SgAsyncStmt::build_node_from_nonlist_children(Sg_File_Info*, SgStatement*): this = %p = %s \n",this,this->class_name().c_str());
+#endif
+
+     SgAsyncStmt* returnNode = NULL;
+
+     return returnNode;
+   }
+
