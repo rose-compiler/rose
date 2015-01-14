@@ -1,18 +1,9 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-
-########### next target ###############
-
-
-########### next target ###############
-
-#BEGIN ***************** GENERATING armInstructionEnumPrinter.C *******************
+### Generate armInstructionEnumPrinter.C ###
 FILE(READ armInstructionEnum.h contents)
 
-file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C )
-file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "\#include \"armInstructionEnum.h\"\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "\#include <string>\n" )
+file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp )
+file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "\#include \"armInstructionEnum.h\"\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "\#include <string>\n" )
 
 # Convert file contents into a CMake list (where each element in the list
 # is one line of the file)
@@ -23,7 +14,7 @@ STRING(REGEX REPLACE "\n" ";" contents "${contents}")
 
 set(found_first FALSE)
 
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "static const char* armInstructionStrings[] = {\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "static const char* armInstructionStrings[] = {\n" )
 foreach(v ${contents})
   if(v MATCHES "arm_unknown_instruction.*" )
     set(found_first TRUE)
@@ -34,25 +25,30 @@ foreach(v ${contents})
     string( REGEX MATCH "[a-zA-Z0-9_]+" v3 ${v2}  )
     set(v4 "\"${v3}\",")
     string( REGEX REPLACE "_record" "." v4 ${v4}  )
-    file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "${v4}\n" )
+    file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "${v4}\n" )
   endif()
   if( v MATCHES ".*arm_last_instruction.*" )
     break()
   endif()
 endforeach()
 
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "\"\"};\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C "std::string toString(ArmInstructionKind k) {static const int s = sizeof(armInstructionStrings) / sizeof(*armInstructionStrings); if ((int)k < 0 || (int)k >= s) return \"\"; else return armInstructionStrings[(int)k];}\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "\"\"};\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp "std::string toString(ArmInstructionKind k) {static const int s = sizeof(armInstructionStrings) / sizeof(*armInstructionStrings); if ((int)k < 0 || (int)k >= s) return \"\"; else return armInstructionStrings[(int)k];}\n" )
 
-#END ***************** GENERATING armInstructionEnumPrinter.C *******************
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C.tmp
+          ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/armInstructionEnumPrinter.C
+)
 
-#***************** GENERATING powerpcInstructionEnumPrinter.C *******************
+
+### Generate powerpcInstructionEnumPrinter.C ###
 
 FILE(READ powerpcInstructionEnum.h contents)
 
-file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C )
-file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "\#include \"powerpcInstructionEnum.h\"\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "\#include <string>\n" )
+file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp )
+file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "\#include \"powerpcInstructionEnum.h\"\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "\#include <string>\n" )
 
 # Convert file contents into a CMake list (where each element in the list
 # is one line of the file)
@@ -63,7 +59,7 @@ STRING(REGEX REPLACE "\n" ";" contents "${contents}")
 
 set(found_first FALSE)
 
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "static const char* powerpcInstructionStrings[] = {\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "static const char* powerpcInstructionStrings[] = {\n" )
 foreach(v ${contents})
   if(v MATCHES "powerpc_unknown_instruction.*" )
     set(found_first TRUE)
@@ -74,17 +70,34 @@ foreach(v ${contents})
     string( REGEX MATCH "[a-zA-Z0-9_]+" v3 ${v2}  )
     set(v4 "\"${v3}\",")
     string( REGEX REPLACE "_record" "." v4 ${v4}  )
-    file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "${v4}\n" )
+    file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "${v4}\n" )
   endif()
   if( v MATCHES ".*powerpc_last_instruction.*" )
     break()
   endif()
 endforeach()
 
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "\"\"};\n" )
-file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C "std::string toString(PowerpcInstructionKind k) {static const int s = sizeof(powerpcInstructionStrings) / sizeof(*powerpcInstructionStrings); if ((int)k < 0 || (int)k >= s) return \"\"; else return powerpcInstructionStrings[(int)k];}\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "\"\"};\n" )
+file( APPEND ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp "std::string toString(PowerpcInstructionKind k) {static const int s = sizeof(powerpcInstructionStrings) / sizeof(*powerpcInstructionStrings); if ((int)k < 0 || (int)k >= s) return \"\"; else return powerpcInstructionStrings[(int)k];}\n" )
 
-#END ***************** GENERATING powerpcInstructionEnumPrinter.C *******************
+execute_process(
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C.tmp
+          ${ROSE_TOP_BINARY_DIR}/src/frontend/BinaryDisassembly/powerpcInstructionEnumPrinter.C
+)
+
+
+### Generate the library ###
+add_library(binaryFrontend OBJECT
+  RoseBin_support.cpp instructionDispatch.cpp x86InstructionProperties.h
+  x86InstructionProperties.C armInstructionEnum.h powerpcInstructionEnum.h
+  powerpcInstructionProperties.h powerpcInstructionProperties.C readTicl.C
+  RoseBin_file.cpp RoseFile.cpp RoseBin_buildTree.cpp
+  RoseBin_IDAPRO_buildTree.cpp AST_BIN_Traversal.C
+  ${CMAKE_CURRENT_BINARY_DIR}/armInstructionEnumPrinter.C
+  ${CMAKE_CURRENT_BINARY_DIR}/powerpcInstructionEnumPrinter.C
+)
+add_dependencies(binaryFrontend rosetta_generated)
 
 
 ########### install files ###############
