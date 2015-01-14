@@ -15,7 +15,7 @@ class SymbolicVar;
 class SymbolicFunction;
 class SymbolicExpr;
 class SymbolicAstWrap;
-class SymbolicVisitor
+class ROSE_DLL_API SymbolicVisitor
 {
  protected:
   virtual void Default() {}
@@ -34,7 +34,7 @@ typedef enum {VAL_BASE = 0, VAL_CONST = 1, VAL_VAR = 2, VAL_AST = 4,
 typedef enum { SYMOP_NIL = 0, SYMOP_MULTIPLY=1, SYMOP_PLUS = 2,
                SYMOP_MIN=3, SYMOP_MAX=4, SYMOP_POW = 5} SymOpType;
 
-class SymbolicValImpl 
+class ROSE_DLL_API SymbolicValImpl
 {
  protected:
   virtual ~SymbolicValImpl() {}
@@ -56,7 +56,7 @@ inline SymbolicValImpl* Clone(const SymbolicValImpl& that)
   { return that.Clone(); }
 
 
-class SymbolicConst : public SymbolicValImpl
+class ROSE_DLL_API SymbolicConst : public SymbolicValImpl
 {
   std:: string val, type;
   int intval, dval;
@@ -91,7 +91,7 @@ class SymbolicConst : public SymbolicValImpl
   std:: string GetVal() const { return val; }
 };
 
-class SymbolicVar : public SymbolicValImpl
+class ROSE_DLL_API SymbolicVar : public SymbolicValImpl
 {
   std:: string varname;
   AstNodePtr scope;
@@ -112,7 +112,7 @@ class SymbolicVar : public SymbolicValImpl
   void Visit( SymbolicVisitor *op) const { op->VisitVar(*this); }
 };
 
-class SymbolicAstWrap : public SymbolicValImpl
+class ROSE_DLL_API SymbolicAstWrap : public SymbolicValImpl
 {
   AstNodePtr ast;
   Map2Object <AstInterface*, AstNodePtr, AstNodePtr>* codegen;
@@ -210,7 +210,7 @@ class ROSE_DLL_API SymbolicVal : public CountRefHandle <SymbolicValImpl>
     { return (ConstPtr()== 0)? std:: string("NIL") : ConstRef().GetTypeName(); }
 };
 
-class SymbolicFunction : public SymbolicValImpl
+class ROSE_DLL_API SymbolicFunction : public SymbolicValImpl
 {
   std:: string op;
   std:: vector<SymbolicVal> args;
@@ -268,7 +268,7 @@ SymbolicVal:: isFunction(std:: string& name, std:: vector<SymbolicVal>* argp) co
    return false;
 }
 
-class SymbolicPow : public SymbolicFunction
+class ROSE_DLL_API SymbolicPow : public SymbolicFunction
 {
  public:
   SymbolicPow( const SymbolicVal& v, int e ) 
@@ -288,7 +288,7 @@ class SymbolicPow : public SymbolicFunction
 
 /******************* Symbolic Operator interface *************/
 
-class SymbolicValGenerator
+class ROSE_DLL_API SymbolicValGenerator
 {
  public:
  static SymbolicVal GetSymbolicVal( AstInterface &fa, const AstNodePtr& exp);
@@ -297,8 +297,8 @@ class SymbolicValGenerator
         SymbolicVal* lb =0, SymbolicVal* ub=0, SymbolicVal* step=0, AstNodePtr* body=0);
 };
 
-SymbolicVal ApplyBinOP( SymOpType t, const SymbolicVal &v1,
-                        const SymbolicVal &v2);
+SymbolicVal ROSE_DLL_API ApplyBinOP( SymOpType t, const SymbolicVal &v1,
+                                     const SymbolicVal &v2);
 inline SymbolicVal operator + (const SymbolicVal &v1, const SymbolicVal &v2)
   { return ApplyBinOP(SYMOP_PLUS, v1, v2); }
 SymbolicVal operator * (const SymbolicVal &v1, const SymbolicVal &v2);
@@ -310,7 +310,7 @@ inline SymbolicVal operator - (const SymbolicVal &v) { return -1 * v; }
 typedef enum {REL_NONE = 0, REL_EQ = 1, REL_LT = 2, REL_LE = 3,
               REL_GT = 4, REL_GE = 5, REL_NE = 6, REL_UNKNOWN = 8} CompareRel;
  
-class SymbolicCond
+class ROSE_DLL_API SymbolicCond
 {
   SymbolicVal val1, val2;
   CompareRel t;
@@ -407,7 +407,7 @@ bool FindVal( const SymbolicVal &v, const SymbolicVal &sub);
 SymbolicVal ReplaceVal( const SymbolicVal &v, const SymbolicVal &sub, const SymbolicVal& newval);
 SymbolicVal ReplaceVal( const SymbolicVal &v, MapObject<SymbolicVal, SymbolicVal>& valmap);
 
-class AstTreeReplaceVar : public ProcessAstNode
+class ROSE_DLL_API AstTreeReplaceVar : public ProcessAstNode
 {
    SymbolicVar oldvar;
    SymbolicVal val;

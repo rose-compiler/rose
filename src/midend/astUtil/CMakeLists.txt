@@ -1,37 +1,25 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+add_library(midend_util OBJECT
+  astInterface/CPPAstInterface.C
+  astInterface/AstInterface.C
+  symbolicVal/SymbolicVal.C
+  symbolicVal/SymbolicOperator.C
+  symbolicVal/SymbolicUnwrapCond.C
+  symbolicVal/SymbolicBound.C
+  symbolicVal/SymbolicFind.C
+  symbolicVal/SymbolicExpr.C
+  annotation/OperatorAnnotation.C
+  annotation/AnnotIO.C
+  annotation/AnnotGen.C
+  annotation/AnnotCollect.C
+  annotation/AnnotDescriptors.C
+  annotation/OperatorDescriptors.C
+  annotation/AnnotExpr.C
+  annotation/TypeAnnotation.C
+  astSupport/ProcessAstTree.C
+  astSupport/StmtInfoCollect.C)
+add_dependencies(midend_util rosetta_generated)
 
 add_subdirectory(astInterface)
 add_subdirectory(astSupport)
 add_subdirectory(symbolicVal)
 add_subdirectory(annotation)
-
-
-########### install files ###############
-
-
-
-#add_library( midend_util STATIC ${midend_util_src}  )
-#add_dependencies( midend_util ROSETTA )
-
-
-
-#original Makefile.am contents follow:
-
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-#SUBDIRS = astInterface astSupport  symbolicVal  annotation
-#
-### The grammar generator (ROSETTA) should use its own template repository
-#CXX_TEMPLATE_REPOSITORY_PATH = .
-#
-#clean-local:
-#
-#distclean-local:
-#
-#
-#
-#
-#
-#
-#
