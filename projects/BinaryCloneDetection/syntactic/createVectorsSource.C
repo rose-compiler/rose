@@ -2,10 +2,22 @@
 //AS(091107) Tool to generate an input vector file for the
 //Deccard clone detection tool. 
 
-//#include "rose.h"
+#include "rose.h"
+#include "SqlDatabase.h"
+#include "AST_FILE_IO.h"
 
-//#include "createCloneDetectionVectors.h"
-#include "createCloneDetectionVectors.C"
+#include "createSignatureVectors.h"
+
+#include "../semantic/CloneDetectionLib.h"
+#include "createCloneDetectionVectorsBinary.h"
+
+#include <boost/program_options.hpp>
+#include <iostream>
+#include <stdio.h>
+#include <sys/resource.h>
+#include <sys/time.h>
+
+
 
 using namespace std;
 
@@ -82,6 +94,10 @@ static const char* OPTION_MINTOKENS = "*clone:minTokens";
 
 static const char* OPTION_STRIDE    = "*clone:stride";
 
+static const char* OPTION_WINDOWSIZE    = "*clone:window";
+
+static const char* OPTION_DATABASE    = "*clone:database";
+
 
 //! Default command-line prefix for ROSE options
 static const char* OPTION_PREFIX_ROSE = "-rose:";
@@ -132,9 +148,22 @@ using namespace std;
 int main( int argc, char * argv[] ) {
 	//printGlobalVariantToFile();
 	std::vector<std::string> argvList(argv, argv + argc);
-	CreateCloneDetectionVectors t;
 
 
+       std::map<SgNode*, int* > nodeToCloneVector; 
+
+       //Variants to put in the generated vector
+       std::vector<int> variantNumVec;
+
+       //Variants to write to file
+       std::vector<int> variantToWriteToFile;
+
+       //stride
+       int stride = 0;
+       int windowSize = 0;
+	
+       //min number of tokens before writing out
+       int minTokens = 0;
 
 	//Read in the variants which should be in the generated vector 
 	std::vector<std::string> raw_conf_filename;
@@ -142,15 +171,15 @@ int main( int argc, char * argv[] ) {
 
 
 	if( raw_conf_filename.size() != 1  ){
-		std::cerr << "Usage: cloneDetection -rose:clone:inVector your_filename" << std::endl;
-		exit(1);
+		//std::cerr << "Usage: cloneDetection -rose:clone:inVector your_filename" << std::endl;
+		//exit(1);
 	}else{
 		ROSE_ASSERT( raw_conf_filename.size() == 1);
 		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
 			std::string filename = raw_conf_filename[i];
 			std::vector<std::string> variantNameVec = readFile(filename);           
 			std::vector<int> variantNumVec = fileToVariantT(variantNameVec);  
-			t.variantNumVec = variantNumVec;
+			variantNumVec = variantNumVec;
 		}
 
 	}
@@ -159,15 +188,15 @@ int main( int argc, char * argv[] ) {
 	getRoseOptionValues (argvList, OPTION_VARIANTSTOVECTOR, raw_conf_filename);
 
 	if( raw_conf_filename.size() != 1  ){
-		std::cerr << "Usage: cloneDetection -rose:clone:toFile your_filename" << std::endl;
-		exit(1);
+		//std::cerr << "Usage: cloneDetection -rose:clone:toFile your_filename" << std::endl;
+		//exit(1);
 	}else{
 		ROSE_ASSERT( raw_conf_filename.size() == 1);
 		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
 			std::string filename = raw_conf_filename[i];
 			std::vector<std::string> variantNameVec = readFile(filename);           
 			std::vector<int> variantToWriteToFile = fileToVariantT(variantNameVec);
-			t.variantToWriteToFile = variantToWriteToFile;
+			variantToWriteToFile = variantToWriteToFile;
 		}
 
 	}
@@ -177,7 +206,7 @@ int main( int argc, char * argv[] ) {
 	raw_conf_filename.clear();
 	getRoseOptionValues (argvList, OPTION_MINTOKENS, raw_conf_filename);
 
-	int minTokens = 0;
+	minTokens = 0;
 
 	if( raw_conf_filename.size() != 1  ){
 		std::cerr << "Usage: cloneDetection -rose:clone:minTokens $integer" << std::endl;
@@ -189,13 +218,28 @@ int main( int argc, char * argv[] ) {
 		}
 
 	}
-	t.minTokens = minTokens;
+
+
+	//Find the windowSize
+	raw_conf_filename.clear();
+	getRoseOptionValues (argvList, OPTION_WINDOWSIZE, raw_conf_filename);
+
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:window $integer" << std::endl;
+		exit(1);
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			windowSize = atoi(raw_conf_filename[i].c_str());
+		}
+
+	}
+
+
 
 	//Find the stride
 	raw_conf_filename.clear();
 	getRoseOptionValues (argvList, OPTION_STRIDE, raw_conf_filename);
-
-	int stride = 0;
 
 	if( raw_conf_filename.size() != 1  ){
 		std::cerr << "Usage: cloneDetection -rose:clone:stride $integer" << std::endl;
@@ -208,29 +252,58 @@ int main( int argc, char * argv[] ) {
 
 	}
 
-	t.stride = stride;
+        std::string database;
+ 	raw_conf_filename.clear();
+	getRoseOptionValues (argvList, OPTION_DATABASE, raw_conf_filename);
 
-	for( int i=0; i < V_SgNumVariants; i++ )
-		t.mergedVector.push_back(0);
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:database your_db_name" << std::endl;
+		exit(1);
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			database = raw_conf_filename[i];
+		}
+
+	}
+
+
+	//for( int i=0; i < V_SgNumVariants; i++ )
+	//	t.mergedVector.push_back(0);
+
+
+        SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
+ 
+        // Save parameters in the database; or check against existing parameters
+	if (0 == tx->statement("select count(*) from run_parameters")->execute_int()) {
+		if ((size_t)-1 == stride || (size_t)-1 == windowSize) {
+			std::cerr <<argv <<": stride and window size must be specified\n";
+			exit(1);
+		}
+		tx->statement("insert into run_parameters (window_size, stride) values (?, ?)")
+			->bind(0, windowSize)->bind(1, stride)->execute();
+	} else {
+		SqlDatabase::Statement::iterator params = tx->statement("select window_size, stride from run_parameters")->begin();
+		size_t oldWindowSize = params.get<size_t>(0);
+		size_t oldStride = params.get<size_t>(1);
+		if ((size_t)-1==stride)
+			stride = oldStride;
+		if ((size_t)-1==windowSize)
+			windowSize = oldWindowSize;
+		if (oldWindowSize != windowSize || oldStride != stride) {
+			std::cerr <<argv <<": window size (" <<windowSize <<") and stride (" <<stride <<") do not match"
+				<<" existing window size (" <<oldWindowSize <<") and stride (" <<oldStride <<")\n";
+			exit (1);
+		}
+	}
+
 
 
 	SgProject* project = frontend(argvList);
 
-
-
-
-	ostringstream filename; 
-	filename << "vdb_" << minTokens <<
-		"_" << stride;
-	//Open the file for appending to the end
-	t.myfile.open(filename.str().c_str(), ios::app);
-
-	//Go to end of file
-
-	t.traverseInputFiles(project);
-
-
-	t.myfile.close();
+        createSourceVectorsRespectingFunctionBoundaries(project, minTokens, stride, windowSize, variantNumVec, variantToWriteToFile, tx );
+        
+        tx->commit();
 
         return backend(project);
 

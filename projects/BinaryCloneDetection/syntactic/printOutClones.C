@@ -1,3 +1,6 @@
+#include "createCloneDetectionVectorsBinary.h"
+
+
 #include <boost/pending/disjoint_sets.hpp>
 #include <stdio.h>
 #include <sys/time.h>
@@ -68,23 +71,21 @@ int main(int argc, char* argv[])
 
 
 
-  sqlite3_connection con;
-  con.open(database.c_str());
-
-
+  SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
+ 
   double similarity =0;
   
   int windowSize=0;
   int stride=0;
   
   try {
-    similarity = sqlite3x::sqlite3_command(con, "select similarity_threshold from detection_parameters limit 1").executedouble();
+    similarity = tx->statement("select similarity_threshold from run_parameters limit 1")->execute_double();
   } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
   try {
-    windowSize = sqlite3x::sqlite3_command(con, "select window_size from run_parameters limit 1").executeint();
+    windowSize = tx->statement("select window_size from run_parameters limit 1")->execute_int();
   } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
   try {
-    stride = sqlite3x::sqlite3_command(con, "select stride from run_parameters limit 1").executeint();
+    stride = tx->statement("select stride from run_parameters limit 1")->execute_int();
   } catch (std::exception& ex) {std::cerr << "Exception Occurred: " << ex.what() << std::endl;}
 
 
@@ -100,10 +101,10 @@ int main(int argc, char* argv[])
   
   try {
     if( similarity == 1.0)
-    eltCount = boost::lexical_cast<size_t>(con.executestring("select count(distinct cluster) from postprocessed_clusters"));
+    eltCount = boost::lexical_cast<size_t>(tx->statement("select count(distinct cluster) from clusters")->execute_string());
 
     else
-    eltCount = boost::lexical_cast<size_t>(con.executestring("select count(distinct cluster) from clusters"));
+    eltCount = boost::lexical_cast<size_t>(tx->statement("select count(distinct cluster) from clusters")->execute_int());
   } catch (exception& e) {cerr << "Exception: " << e.what() << endl;}
 
   if (eltCount == 0) {
@@ -116,10 +117,9 @@ int main(int argc, char* argv[])
   //Create set of clone pairs
   try{
     std::string databaseTable =(similarity == 1.0 ) ?" postprocessed_clusters " : " clusters " ;
-    std::string selectSeparateDatasets ="select c.cluster, vec.id, fuction.id, function.file, function.function_name, vec.line, vec.offset from vectors as vec join "+ databaseTable +" as c  on c.vectors_row = vec.id join functions as function on c.function_id = function.id order by c.cluster;";
+    std::string selectSeparateDatasets ="select c.cluster, vec.id, function.id, file.name, function.name, vec.line, vec.index_within_function from vectors as vec join "+ databaseTable +" as c  on c.vectors_row = vec.id join semantic_functions as function on c.function_id = function.id join semantic_files as file on function.file_id = file.id order by c.cluster;";
 
-    sqlite3_command cmd(con, selectSeparateDatasets.c_str());
-    sqlite3_reader datasets=cmd.executereader();
+    SqlDatabase::StatementPtr cmd = tx->statement(selectSeparateDatasets);
 
     
    
@@ -131,19 +131,17 @@ int main(int argc, char* argv[])
     
     int64_t last_clone=0;
     int64_t clone_cluster=0;
-      
-    while(datasets.read())
-    {
     
+    for (SqlDatabase::Statement::iterator r=cmd->begin(); r!=cmd->end(); ++r) {
       Element cur_elem;
-      cur_elem.cluster       = boost::lexical_cast<int64_t>(datasets.getstring(0));
+      cur_elem.cluster       = r.get<int64_t>(0);
 
-      cur_elem.vectors_row   = boost::lexical_cast<int64_t>(datasets.getstring(1));
-      cur_elem.function_id   = boost::lexical_cast<int64_t>(datasets.getstring(2));
-      cur_elem.file          = datasets.getstring(3);
-      cur_elem.function_name = datasets.getstring(4);
-      cur_elem.line          = boost::lexical_cast<int64_t>(datasets.getstring(5));
-      cur_elem.offset        = boost::lexical_cast<int64_t>(datasets.getstring(6));
+      cur_elem.vectors_row   = r.get<int64_t>(1);
+      cur_elem.function_id   = r.get<int64_t>(2);
+      cur_elem.file          = r.get<std::string>(3);
+      cur_elem.function_name = r.get<std::string>(4);
+      cur_elem.line          = r.get<int64_t>(5);
+      cur_elem.offset        = r.get<int64_t>(6);
 
       if( cur_elem.cluster != last_clone )
       {
