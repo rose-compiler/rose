@@ -257,3 +257,7 @@ bool RoseAst::iterator::is_at_last_child() const {
   return e.index==num_children(e.node)-1 && e.index!=ROOT_NODE_INDEX;
 }
 
+bool RoseAst::isSubType(VariantT DerivedClassVariant, VariantT BaseClassVariant) { 
+  /* access the byte containing the information and mask and extract the bit that holds the value */
+  return rose_ClassHierarchyCastTable[DerivedClassVariant][BaseClassVariant >> 3] & (1 << (BaseClassVariant & 7));
+}
