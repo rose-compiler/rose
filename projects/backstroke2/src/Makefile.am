@@ -7,6 +7,11 @@ INCLUDES = $(ROSE_INCLUDES) \
 PROJ_LIB=..
 
 bin_PROGRAMS = backstroke2
-backstroke2_SOURCES = backstroke2.cpp Timer.h Timer.cpp
+backstroke2_SOURCES = \
+  Timer.h Timer.cpp \
+  TransformationSequence.h TransformationSequence.C \
+  CodeGenerator.h CodeGenerator.C \
+  Utility.h Utility.C \
+  backstroke2.cpp
 backstroke2_CPPFLAGS = $(ROSE_INCLUDES) $(INCLUDES) 
 backstroke2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
