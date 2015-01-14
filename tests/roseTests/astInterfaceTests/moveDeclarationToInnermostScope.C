@@ -840,6 +840,12 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     SgScopeStatement* adjusted_scope = target_scope; 
     SgVariableDeclaration * decl_copy = SageInterface::deepCopy(decl);
 
+    // Liao 1/14/2015
+    // AST copy will copy the pointer to attached preprocessing information of the original declaration.
+    // We don't want this behavior since it may duplicate the troublesome #endif for each copy of the declaration
+    // A workaround is to clean this pointer
+    decl_copy->set_attachedPreprocessingInfoPtr (NULL);
+
     //bool skip = false; // in some rare case, we skip a target scope, no move to that scope (like while-stmt)
     //This won't work. The move must happen to all scopes or not at all, or dangling variable use without a declaration.
     //We must skip scopes when generating scope tree, not wait until now.
@@ -886,7 +892,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
 	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
 	      // insert the merged decl into the list, TODO preserve the order in the list
-	      // else other cases: we simply preprent decl_copy tothe front of init_stmt
+	      // else other cases: we simply preprent decl_copy to the front of init_stmt
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
@@ -1022,9 +1028,31 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
   } //end for all scopes
 
-  // remove the original declaration , must use false to turn of auto-relocate comments
-  // TODO: investigate why default behavior adds two extra comments in the end of the code
+  // Special handing of preprocessing info.
+  // Must happen before removing decl
+  if (decl->get_attachedPreprocessingInfoPtr() != NULL)
+  {
+    // For a variable declaration to be copy/moved, the assumption is that they must have next statements (or no movement is possible)
+    // Another assumption is that the preprocessing info must be attached to the "before" position of the declaration.
+    SgStatement* next_stmt = SageInterface::getNextStatement(decl);
+    if (next_stmt== NULL)
+    {
+      cerr<<"Error. Cannot find the next statement of the declaration to be moved!"<<endl;
+      if (!tool_keep_going)
+        ROSE_ASSERT (next_stmt!= NULL);
+    }
+    else
+    { 
+      // consider things attached before, move to the same location, using preprepend  to insert it.
+       SageInterface::movePreprocessingInfo(decl, next_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true); 
+    }
+  } // end if preprocessingInfo
+
+  // remove the original declaration , must use false to turn off auto-relocate comments, since it does not work correctly.
+  // TODO: fix this in SageInterface or redesign how to store comments in AST: independent vs. attachments
   SageInterface::removeStatement(decl, false);
+
+
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);
