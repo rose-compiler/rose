@@ -5023,19 +5023,19 @@ static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
   string result;
   switch (ro)
   {
-    case SgOmpClause::e_omp_map_inout: 
+    case SgOmpClause::e_omp_map_tofrom: 
       {
-        result = "inout";
+        result = "tofrom";
         break;
       }
-    case SgOmpClause::e_omp_map_in: 
+    case SgOmpClause::e_omp_map_to: 
       {
-        result = "in";
+        result = "to";
         break;
       }
-    case SgOmpClause::e_omp_map_out:   
+    case SgOmpClause::e_omp_map_from:   
       {
-        result = "out";
+        result = "from";
         break;
       }
     case SgOmpClause::e_omp_map_alloc:  

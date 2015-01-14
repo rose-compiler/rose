@@ -87,9 +87,9 @@ HEADER_OMP_CLAUSE_START
         {
           e_omp_map_unknown,
           e_omp_map_alloc,
-          e_omp_map_in,
-          e_omp_map_out,
-          e_omp_map_inout,
+          e_omp_map_to,
+          e_omp_map_from,
+          e_omp_map_tofrom,
           e_omp_map_last,
         };
 
