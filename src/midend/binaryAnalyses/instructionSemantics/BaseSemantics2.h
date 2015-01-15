@@ -1330,6 +1330,7 @@ public:
 
     virtual Sawyer::Optional<rose_addr_t> latestWriter() const { return latestWriter_; }
     virtual void latestWriter(rose_addr_t writerVa) { latestWriter_ = writerVa; }
+    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) { latestWriter_ = w; }
     virtual void clearLatestWriter() { latestWriter_ = Sawyer::Nothing(); }
     /** @} */
 

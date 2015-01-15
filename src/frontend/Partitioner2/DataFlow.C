@@ -310,7 +310,8 @@ State::mergeSValues(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSem
         BaseSemantics::SValuePtr merged = ops_->undefined_(dstValue->get_width());
         mergeDefiners(merged /*in,out*/, dstValue);
         dstValue = merged;
-        return mergeDefiners(dstValue /*in,out*/, srcValue);
+        mergeDefiners(dstValue /*in,out*/, srcValue);
+        return true;
     }
 }
 
@@ -323,7 +324,7 @@ State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstStat
         const BaseSemantics::SValuePtr &srcValue = reg_val.value;
         if (!dstState->is_partly_stored(reg)) {
             changed = true;
-            dstState->writeRegister(reg, srcValue, ops_.get());
+            dstState->writeRegister(reg, ops_->undefined_(reg.get_nbits()), ops_.get());
         } else {
             BaseSemantics::SValuePtr dstValue = dstState->readRegister(reg, ops_.get());
             if (mergeSValues(dstValue /*in,out*/, srcValue)) {
@@ -331,9 +332,9 @@ State::mergeRegisterStates(const BaseSemantics::RegisterStateGenericPtr &dstStat
                 changed = true;
             }
         }
-        // FIXME[Robb P. Matzke 2015-01-13]: we should adjust latestWriter also, but unfortunately we can only store one writer
-        // per bit of the register's value, and it's hard to get information about the individual bits.  So we'll just clear
-        // all the writer info all the time so users don't depend on it.
+        // We should adjust latestWriter also, but unfortunately we can only store one writer per bit of the register's value,
+        // and it's hard to get information about the individual bits.  So we'll just clear all the writer info all the time so
+        // users don't depend on it.
         dstState->clear_latest_writer(reg);
     }
     return changed;
@@ -348,11 +349,29 @@ State::mergeMemoryStates(const BaseSemantics::MemoryCellListPtr &dstState,
         // Get the source and destination values
         SValuePtr srcValue = ops_->undefined_(8);
         srcValue = srcState->readMemory(srcCell->get_address(), srcValue, ops_.get(), ops_.get());
-        SValuePtr dstValue = ops_->undefined_(8);
-        dstValue = dstState->readMemory(srcCell->get_address(), dstValue, ops_.get(), ops_.get());
-        if (mergeSValues(dstValue /*in,out*/, srcValue)) {
-            dstState->writeMemory(srcCell->get_address(), dstValue, ops_.get(), ops_.get());
+        bool shortCircuited = false;
+        if (dstState->scan(srcCell->get_address(), 8, ops_.get(), ops_.get(), shortCircuited /*out*/).empty()) {
+            // dstState doesn't even know about this address, so consider it undefined (i.e., TOP)
+            dstState->writeMemory(srcCell->get_address(), ops_->undefined_(8), ops_.get(), ops_.get());
             changed = true;
+        } else {
+            // dstState has this address, so merge the src and dst values
+            SValuePtr dstValue = dstState->readMemory(srcCell->get_address(), ops_->undefined_(8), ops_.get(), ops_.get());
+            if (mergeSValues(dstValue /*in,out*/, srcValue)) {
+                dstState->writeMemory(srcCell->get_address(), dstValue, ops_.get(), ops_.get());
+                changed = true;
+            }
+
+            // Merge writer sets (but do not set changed=true because writer sets don't form a lattice and might not
+            // converge to a fixed point during the dataflow loop).
+            std::set<rose_addr_t> srcWriters = srcState->get_latest_writers(srcCell->get_address(), 8, ops_.get(), ops_.get());
+            std::set<rose_addr_t> dstWriters = dstState->get_latest_writers(srcCell->get_address(), 8, ops_.get(), ops_.get());
+            if (srcWriters.size()!=dstWriters.size() || !std::equal(srcWriters.begin(), srcWriters.end(), dstWriters.begin())) {
+                MemoryCellList::CellList dstCells = dstState->scan(srcCell->get_address(), 8, ops_.get(), ops_.get(),
+                                                                   shortCircuited /*out*/);
+                BOOST_FOREACH (const MemoryCellPtr &dstCell, dstCells)
+                    dstCell->clearLatestWriter();
+            }
         }
     }
     return changed;
@@ -367,12 +386,19 @@ isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
 
     if (!initialStackPointer)
         return Sawyer::Nothing();
+    TreeNodePtr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
 
+    // Special case where (add SP0 0) is simplified to SP0
+    LeafNodePtr variable = expr->isLeafNode();
+    if (variable && variable->must_equal(initialStack, solver))
+        return 0;
+
+    // Otherwise the expression must be (add SP0 N) where N != 0
     InternalNodePtr inode = expr->isInternalNode();
     if (!inode || inode->get_operator() != OP_ADD || inode->nchildren()!=2)
         return Sawyer::Nothing();
 
-    LeafNodePtr variable = inode->child(0)->isLeafNode();
+    variable = inode->child(0)->isLeafNode();
     LeafNodePtr constant = inode->child(1)->isLeafNode();
     if (!constant || !constant->is_known())
         std::swap(variable, constant);
@@ -381,7 +407,6 @@ isStackAddress(const rose::BinaryAnalysis::InsnSemanticsExpr::TreeNodePtr &expr,
     if (!variable || !variable->is_variable())
         return Sawyer::Nothing();
 
-    TreeNodePtr initialStack = SymbolicSemantics::SValue::promote(initialStackPointer)->get_expression();
     if (!variable->must_equal(initialStack, solver))
         return Sawyer::Nothing();
 
@@ -428,17 +453,14 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
             BaseSemantics::SValuePtr addr = offsetAddress.get(offset);
-            int64_t nBytes = 0;
-            if (offset < 0 && offset + nRemaining > 0) {
+            int64_t nBytes = nRemaining;
+            if (offset < 0 && offset + nBytes > 0) {
                 // Never create a variable that spans memory below and above (or equal to) the initial stack pointer. The
                 // initial stack pointer is generally the boundary between local variables and function arguments (we're
                 // considering the call-return address to be an argument on machines that pass it on the stack).
                 nBytes = -offset;
-            } else if (nBytes > wordNBytes) {
-                nBytes = wordNBytes;
-            } else {
-                nBytes = nRemaining;
             }
+            nBytes = std::min(nBytes, wordNBytes);
             ASSERT_require(nBytes>0 && nBytes<=nRemaining);
             retval.push_back(StackVariable(offset, nBytes, addr));
             offset += nBytes;
@@ -473,9 +495,19 @@ State::findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer
 // Construct a new state from scratch
 State::Ptr
 TransferFunction::initialState() const {
-    BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
+    namespace BS = rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+    BS::RiscOperatorsPtr ops = cpu_->get_operators();
     State::Ptr state = State::instance(ops);
-    BaseSemantics::RegisterStateGeneric::promote(state->semanticState()->get_register_state())->initialize_large();
+    BS::RegisterStateGenericPtr regState = BS::RegisterStateGeneric::promote(state->semanticState()->get_register_state());
+
+    // Any register for which we need its initial state must be initialized rather than just sprining into existence. We could
+    // initialize all registers, but that makes output a bit verbose--users usually don't want to see values for registers that
+    // weren't accessed by the dataflow, and omitting their initialization is one easy way to hide them.
+#if 0 // [Robb Matzke 2015-01-14]
+    regState->initialize_large();
+#else
+    regState->writeRegister(STACK_POINTER_REG, ops->undefined_(STACK_POINTER_REG.get_nbits()), ops.get());
+#endif
     return state;
 }
 
