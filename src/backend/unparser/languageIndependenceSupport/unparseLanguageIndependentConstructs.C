@@ -803,7 +803,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 
             // DQ (12/1/2013): Not clear if this is helpful or not (but it communicates in the 
             // unparsed code what statements were unparse using either the AST or the token stream).
-               if ( SgProject::get_verbose() > 0 )
+               if ( SgProject::get_verbose() > 0 && (SageInterface::getProject()->get_C_only() || SageInterface::getProject()->get_Cxx_only()) )
                   {
                     string s = "/* Unparsing from the token stream stmt = " + stmt->class_name() + " */ ";
                     curprint (s);
