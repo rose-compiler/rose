@@ -81,70 +81,6 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   rdAnalyzer->getFlow()->resetDotOptions();
 }
 
-#if 0
-void rdAnalysis0(SgProject* root) {
-  RDAnalysis* rdAnalyzer=new RDAnalysis();
-  rdAnalyzer->initialize(root);
-  rdAnalyzer->initializeGlobalVariables(root);
-
-  std::string funtofind="main";
-  RoseAst completeast(root);
-  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-  rdAnalyzer->determineExtremalLabels(startFunRoot);
-  rdAnalyzer->run();
-  cout << "INFO: attaching RD-data to AST."<<endl;
-  rdAnalyzer->attachInInfoToAst("rd-analysis-in");
-  rdAnalyzer->attachOutInfoToAst("rd-analysis-out");
-
-  //printAttributes<RDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"rd-analysis-in");
-  cout << "INFO: generating and attaching UD-data to AST."<<endl;
-  createUDAstAttributeFromRDAttribute(rdAnalyzer->getLabeler(),"rd-analysis-in", "ud-analysis");
-
-  Flow* flow=rdAnalyzer->getFlow();
-  generateRessourceUsageVis(flow);
-
-  cout << "INFO: generating icfg.dot."<<endl;
-  write_file("icfg.dot", flow->toDot(rdAnalyzer->getLabeler()));
-
-  //  cout << "INFO: generating control dependence graph."<<endl;
-  //Flow cdg=rdAnalyzer->getCFAnalyzer()->controlDependenceGraph(*flow);
-
-  cout << "INFOgenerating datadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis0(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
-                                 "ud-analysis");
-  //printAttributes<UDAstAttribute>(rdAnalyzer->getLabeler(),rdAnalyzer->getVariableIdMapping(),"ud-analysis");
-  ddvis0._showSourceCode=false; // for large programs
-  ddvis0.generateDefUseDotGraph(root,"datadependencegraph.dot");
-  flow->resetDotOptions();
-
-  cout << "generating icfgdatadependencegraph.dot."<<endl;
-  DataDependenceVisualizer ddvis1(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis1.includeFlowGraphEdges(flow);
-  ddvis1.generateDefUseDotGraph(root,"icfgdatadependencegraph.dot");
-  flow->resetDotOptions();
-
-  cout << "generating icfgdatadependencegraph_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis2(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis2.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
-
-  cout << "generating icfg_clustered.dot."<<endl;
-  DataDependenceVisualizer ddvis3(rdAnalyzer->getLabeler(),
-                                 rdAnalyzer->getVariableIdMapping(),
-                                 "ud-analysis");
-  ddvis3.generateDotFunctionClusters(root,rdAnalyzer->getCFAnalyzer(),"icfg_clustered.dot",false);
-
-  cout << "INFO: annotating analysis results as comments."<<endl;
-  AstAnnotator ara(rdAnalyzer->getLabeler());
-  ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
-  ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
-}
-#endif
-
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
   if(option_fi_constanalysis) {
@@ -332,13 +268,7 @@ int main(int argc, char* argv[]) {
       cout << "Error: wrong command line options."<<endl;
       exit(1);
     }
-    cout << "INIT: Parsing and creating AST."<<endl;
-    boolOptions.registerOption("semantic-fold",false); // temporary
-    boolOptions.registerOption("post-semantic-fold",false); // temporary
-    SgProject* root = frontend(argc,argv);
-    //  AstTests::runAllTests(root);
-
-    // Command line option handling.
+     // Command line option handling.
     namespace po = boost::program_options;
     po::options_description desc
       ("analyterix V0.1\n"
@@ -363,7 +293,6 @@ int main(int argc, char* argv[]) {
       ;
   //    ("int-option",po::value< int >(),"option info")
 
-
     po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), args);
     po::notify(args);
 
@@ -372,14 +301,13 @@ int main(int argc, char* argv[]) {
       cout << desc << "\n";
       return 0;
     }
-    if (args.count("rose-help")) {
-      argv[1] = strdup("--help");
-    }
-
     if (args.count("version")) {
       cout << "analyterix version 0.1\n";
       cout << "Written by Markus Schordan 2014\n";
       return 0;
+    }
+    if (args.count("rose-help")) {
+      argv[1] = strdup("--help");
     }
     if (args.count("prefix")) {
       option_prefix=args["prefix"].as<string>().c_str();
@@ -426,9 +354,15 @@ int main(int argc, char* argv[]) {
       }
     }
 
-  if(option_stats) {
-    SPRAY::ProgramStatistics::printBasicCodeInfo(root);
-  }
+    cout << "INIT: Parsing and creating AST."<<endl;
+    boolOptions.registerOption("semantic-fold",false); // temporary
+    boolOptions.registerOption("post-semantic-fold",false); // temporary
+    SgProject* root = frontend(argc,argv);
+    //  AstTests::runAllTests(root);
+
+   if(option_stats) {
+      SPRAY::ProgramStatistics::printBasicCodeInfo(root);
+    }
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
@@ -436,6 +370,7 @@ int main(int argc, char* argv[]) {
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
   //cout<<"Labelling:\n"<<labeler->toString()<<endl;
+
 #if 0
   IOLabeler* iolabeler=new IOLabeler(root,&variableIdMapping);
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
