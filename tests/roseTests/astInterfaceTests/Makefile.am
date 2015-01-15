@@ -275,7 +275,24 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_39.C \
   inputmoveDeclarationToInnermostScope_test2015_40.C \
   inputmoveDeclarationToInnermostScope_test2015_41.C \
-  inputmoveDeclarationToInnermostScope_test2015_42.C
+  inputmoveDeclarationToInnermostScope_test2015_42.C \
+  inputmoveDeclarationToInnermostScope_test2015_43.C \
+  inputmoveDeclarationToInnermostScope_test2015_44.C \
+  inputmoveDeclarationToInnermostScope_test2015_49.C \
+  inputmoveDeclarationToInnermostScope_test2015_50.C \
+  inputmoveDeclarationToInnermostScope_test2015_51.C \
+  inputmoveDeclarationToInnermostScope_test2015_52.C \
+  inputmoveDeclarationToInnermostScope_test2015_53.C \
+  inputmoveDeclarationToInnermostScope_test2015_54.C \
+  inputmoveDeclarationToInnermostScope_test2015_55.C \
+  inputmoveDeclarationToInnermostScope_test2015_56.C \
+  inputmoveDeclarationToInnermostScope_test2015_57.C
+
+# DQ (1/11/2014): Failing test with new design.
+#  inputmoveDeclarationToInnermostScope_test2015_45.C 
+#  inputmoveDeclarationToInnermostScope_test2015_46.C 
+#  inputmoveDeclarationToInnermostScope_test2015_47.C 
+#  inputmoveDeclarationToInnermostScope_test2015_48.C 
 
 # DQ (1/11/2014): Failing test with new design.
 # inputmoveDeclarationToInnermostScope_test2014_09.C 

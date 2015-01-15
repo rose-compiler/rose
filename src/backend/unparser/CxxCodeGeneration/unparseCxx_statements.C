@@ -1451,7 +1451,7 @@ Unparse_ExprStmt::unparseNamespaceDeclarationStatement (SgStatement* stmt, SgUnp
      SgNamespaceDeclarationStatement* namespaceDeclaration = isSgNamespaceDeclarationStatement(stmt);
      ROSE_ASSERT (namespaceDeclaration != NULL);
 
-#if 1
+#if 0
      printf("In unparseNamespaceDeclarationStatement(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
      curprint("/* In unparseNamespaceDeclarationStatement() */ ");
 #endif
@@ -1622,12 +1622,12 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
           if (last_stmt != NULL)
              {
-#if 1
+#if 0
                curprint("/* last_stmt != NULL: trailing whitespace from the last statement */ ");
 #endif
             // Unparse the trailing white space of the last statement.
                unparseStatementFromTokenStream (last_stmt, stmt, e_trailing_whitespace_start, e_token_subsequence_end);
-#if 1
+#if 0
                curprint("/* last_stmt != NULL: unparse the } */ ");
 #endif
             // Unparse the final "}" for the SgNamespaceDefinitionStatement.
@@ -1635,7 +1635,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
              }
             else
              {
-#if 1
+#if 0
                curprint("/* last_stmt == NULL */ ");
 #endif
                unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
@@ -1652,10 +1652,11 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      if (saved_namespace != NULL)
           printf ("In unparseNamespaceDefinitionStatement(): reset saved_namespace = %p = %s \n",saved_namespace,saved_namespace->class_name().c_str());
 #endif
-#if 1
+#if 0
      curprint("/* Leaving unparseNamespaceDefinitionStatement() */ ");
 #endif
    }
+
 
 void
 Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, SgUnparse_Info& info)
@@ -2735,8 +2736,11 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
        else
         {
+       // DQ (1/14/2015): We need to unparse syntax instead of the initial token, becasue this can be a macro expansion
+       // (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
        // unparseStatementFromTokenStream (stmt, e_leading_whitespace_start, e_token_subsequence_start);
-          unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
+       // unparseStatementFromTokenStream (stmt, e_token_subsequence_start, e_token_subsequence_start);
+          curprint("{");
 #if 0
           curprint ("/* unparse start of SgBasicBlock */");
 #endif
@@ -2862,7 +2866,10 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("unparse last token in SgBasicBlock \n");
           curprint ("/* unparse last token in SgBasicBlock */");
 #endif
-          unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+       // DQ (1/14/2015): We need to unparse syntax instead of the initial token, becasue this can be a macro expansion
+       // (see tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_57.C).
+       // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
+          curprint("}");
         }
    }
 

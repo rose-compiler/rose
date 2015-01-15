@@ -94,6 +94,14 @@ TokenStreamSequenceToNodeMapping_key::operator== (const TokenStreamSequenceToNod
   // Allow matching to happen in the same child list (of the same parent).
   // bool result = (X.node == node) && (X.lower_bound == lower_bound) && (X.upper_bound == upper_bound);
      bool result = ((X.node == node) || (node->get_parent() == X.node->get_parent())) && (X.lower_bound == lower_bound) && (X.upper_bound == upper_bound);
+
+#if 0
+     printf ("In TokenStreamSequenceToNodeMapping_key::operator==(X): \n");
+     printf ("   --- X.node = %p = %s X.lower_bound = %d X.upper_bound = %d \n",X.node,X.node->class_name().c_str(),X.lower_bound,X.upper_bound);
+     printf ("   --- node   = %p = %s X.lower_bound = %d X.upper_bound = %d \n",node,node->class_name().c_str(),lower_bound,upper_bound);
+     printf ("   --- result = %s \n",result ? "true" : "false");
+#endif
+
      return result;
    }
 
@@ -153,6 +161,13 @@ TokenStreamSequenceToNodeMapping_key::operator< (const TokenStreamSequenceToNode
 #endif
              }
         }
+
+#if 0
+     printf ("In TokenStreamSequenceToNodeMapping_key::operator<(X): \n");
+     printf ("   --- X.node = %p = %s X.lower_bound = %d X.upper_bound = %d \n",X.node,X.node->class_name().c_str(),X.lower_bound,X.upper_bound);
+     printf ("   --- node   = %p = %s X.lower_bound = %d X.upper_bound = %d \n",node,node->class_name().c_str(),lower_bound,upper_bound);
+     printf ("   --- result = %s \n",result ? "true" : "false");
+#endif
 
 #if 0
      printf ("In TokenStreamSequenceToNodeMapping_key::operator<(): node = %p = %s X.node = %p = %s \n",node,node->class_name().c_str(),X.node,X.node->class_name().c_str());
@@ -246,7 +261,9 @@ TokenStreamSequenceToNodeMapping::createTokenInterval (SgNode* n, int input_lead
           newTokenSequence = iter->second;
           ROSE_ASSERT(newTokenSequence != NULL);
 #if 0
-          printf ("Reuse an existing TokenStreamSequenceToNodeMapping newTokenSequence = %p = %s \n",newTokenSequence,newTokenSequence->node->class_name().c_str());
+          printf ("TokenStreamSequenceToNodeMapping::createTokenInterval(): Reuse an existing TokenStreamSequenceToNodeMapping newTokenSequence = %p = %s \n",newTokenSequence,newTokenSequence->node->class_name().c_str());
+          printf ("   --- n = %p = %s \n",n,n->class_name().c_str());
+          printf ("   --- newTokenSequence->token_subsequence_start = %d newTokenSequence->token_subsequence_end = %d \n",newTokenSequence->token_subsequence_start,newTokenSequence->token_subsequence_end);
 #endif
           newTokenSequence->shared = true;
 
@@ -261,7 +278,9 @@ TokenStreamSequenceToNodeMapping::createTokenInterval (SgNode* n, int input_lead
            newTokenSequence = new TokenStreamSequenceToNodeMapping(n,input_leading_whitespace_start,input_leading_whitespace_end,input_token_subsequence_start,input_token_subsequence_end,input_trailing_whitespace_start,input_trailing_whitespace_end,input_else_whitespace_start,input_else_whitespace_end);
           ROSE_ASSERT(newTokenSequence != NULL);
 #if 0
-          printf ("Building a new TokenStreamSequenceToNodeMapping newTokenSequence = %p = %s \n",newTokenSequence,newTokenSequence->node->class_name().c_str());
+          printf ("TokenStreamSequenceToNodeMapping::createTokenInterval(): Building a new TokenStreamSequenceToNodeMapping newTokenSequence = %p = %s \n",newTokenSequence,newTokenSequence->node->class_name().c_str());
+          printf ("   --- n = %p = %s \n",n,n->class_name().c_str());
+          printf ("   --- newTokenSequence->token_subsequence_start = %d newTokenSequence->token_subsequence_end = %d \n",newTokenSequence->token_subsequence_start,newTokenSequence->token_subsequence_end);
 #endif
           newTokenSequence->shared = false;
 
@@ -1391,6 +1410,26 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                      else
                                       {
                                      // This is not any kind of nested subsequence.
+#if 0
+                                     // DQ (1/13/2015): Detect multiple references to the same token subsequence (happens for multiple or nested statements in macros).
+                                     // See inputmoveDeclarationToInnermostScope_test2015_44.C for an example.  This location does not work for this test, since the 
+                                     // target statements that nest are in a deeper level of the AST.  So I think we need a seperate traversal to address this.
+
+                                         if ( (current_token_sequence_start == previous_token_sequence_start) && (current_token_sequence_end == previous_token_sequence_end) )
+                                           {
+#if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
+                                             printf ("previous_mappingInfo = %p mappingInfo = %p \n",previous_mappingInfo,mappingInfo);
+                                             printf ("Found matching token subsequence: previous_mappingInfo->node = %p = %s IS A MATCH OF mappingInfo->node = %p = %s \n",
+                                                  previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str(),
+                                                  mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
+
+#if 0
+                                             printf ("Exiting as a test! \n");
+                                             ROSE_ASSERT(false);
+#endif
+                                           }
+#endif
                                       }
                                  }
                             }
@@ -1556,7 +1595,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 
 #define DEBUG_MACRO_HANDLING 0
-            // DQ (1/3/2014): We need to handle macro exspansions that are characterized by having the same start and end source positions (but could also be a single token statement, e.g. ";").
+            // DQ (1/3/2014): We need to handle macro expansions that are characterized by having the same start and end source positions (but could also be a single token statement, e.g. ";").
             // Unfortunately, it can also be a token for a variable reference expression and thus we have to handle this case explicitly.
 #if DEBUG_MACRO_HANDLING
                printf ("^^^^^^^^^^^ Looking for macro expansions within token subsequence mappings: \n");
@@ -2885,9 +2924,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             {
                            // Find the token sequence on the left.
                               SgNode* trailing_edge_node = childAttributes[ending_NodeSequenceWithoutTokenMapping+1].node;
-
+#if 0
                               printf ("Check if this trailing_edge_node can be used to map token sequences \n");
-
+#endif
 // #if 1
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                               printf ("ending_NodeSequenceWithoutTokenMapping = %zu childAttributes.size() = %zu trailing_edge_node = %p \n",ending_NodeSequenceWithoutTokenMapping,childAttributes.size(),trailing_edge_node);
@@ -4014,6 +4053,48 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #if 0
                               printf ("Add TokenStreamSequenceToNodeMapping into vector for n = %p = %s tokenStreamSequenceVector.size() = %zu \n",n,n->class_name().c_str(),tokenStreamSequenceVector.size());
 #endif
+                           // DQ (1/14/2015): Insert test for macro (but make sure it is not a ";").  We want to have processed this IR node, 
+                           // but we want to supress the processing of child IR nodes.  Child IR nodes could be nested statements in a complex
+                           // macro expansion for which we can't define an associated token mapping.
+                           // if ( (starting_line == ending_line) && (starting_column == ending_column) )
+                              if (start_of_token_subsequence == end_of_token_subsequence)
+                                 {
+#if 0
+                                   printf ("Detected a macro (disable processing on children) \n");
+                                   printf ("   --- statement: n = %p = %s \n",n,n->class_name().c_str());
+                                   printf ("   --- starting_line = %d starting_column = %d \n",starting_line,starting_column);
+                                   printf ("   --- ending_line   = %d ending_column   = %d \n",ending_line,ending_column);
+                                   printf ("   --- start_of_token_subsequence = %d \n",start_of_token_subsequence);
+                                   printf ("   --- end_of_token_subsequence   = %d \n",end_of_token_subsequence);
+                                   if (start_of_token_subsequence >= 0)
+                                      {
+                                        printf ("  --- tokenStream[start_of_token_subsequence]->beginning_fpi.line_num   = %d \n",tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                                        printf ("  --- tokenStream[start_of_token_subsequence]->beginning_fpi.column_num = %d \n",tokenStream[start_of_token_subsequence]->beginning_fpi.column_num);
+                                        printf ("  --- tokenStream[end_of_token_subsequence]->ending_fpi.line_num        = %d \n",tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+                                        printf ("  --- tokenStream[end_of_token_subsequence]->ending_fpi.column_num      = %d \n",tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
+                                        printf ("   --- token = %s \n",tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+                                      }
+#endif
+                                   if (start_of_token_subsequence != end_of_token_subsequence)
+                                      {
+                                        printf ("Error: start_of_token_subsequence != end_of_token_subsequence: \n");
+                                        locatedNode->get_startOfConstruct()->display("START: debug");
+                                        locatedNode->get_startOfConstruct()->display("END: debug");
+                                      }
+                                   ROSE_ASSERT(start_of_token_subsequence == end_of_token_subsequence);
+
+                                   if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str() != ";")
+                                      {
+#if 0
+                                        printf ("Reset the processing value to false (to eliminate mapping children (child statements in a macro expansion) to the token stream) \n");
+#endif
+                                        processed = false;
+                                      }
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
                             }
                            else
                             {
