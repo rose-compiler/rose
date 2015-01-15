@@ -121,13 +121,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initializeTransferFunctions();
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
-    
       
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
-#if 0
+#if 1
     intervalAnalyzer->run();
 #else
     cout << "STATUS: did not run interval analysis."<<endl;      
