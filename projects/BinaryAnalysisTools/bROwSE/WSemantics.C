@@ -88,6 +88,18 @@ public:
                     RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
                     ops->set_state(state->semanticState()->clone());
 
+#if 1 // DEBUGGING [Robb Matzke 2015-01-13]
+                    {
+                        MemoryCellListPtr memState = MemoryCellList::promote(state->semanticState()->get_memory_state());
+                        BOOST_FOREACH (const MemoryCellPtr &cell, memState->get_cells()) {
+                            std::ostringstream s1, s2;
+                            s1 <<*cell->get_address();
+                            s2 <<*cell->get_value();
+                            std::cerr <<"ROBB: " <<s1.str() <<" = " <<s2.str() <<"\n";
+                        }
+                    }
+#endif
+
                     // Stack pointer at the very start of this function.
                     const RegisterDescriptor SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
                     SValuePtr stackPtr = dfInfo.initialStates[0]->semanticState()->readRegister(SP, ops.get());
@@ -111,6 +123,9 @@ public:
                         SValuePtr value = ops->undefined_(8*var.nBytes);
                         value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
+#if 1 // DEBUGGING [Robb Matzke 2015-01-13]
+                        std::cerr <<"ROBB: name=" <<name <<"\n";
+#endif
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
@@ -180,16 +195,16 @@ WSemantics::init() {
     Wt::WContainerWidget *buttons = new Wt::WContainerWidget(wPanelCenter);
     Wt::WHBoxLayout *buttonBox = new Wt::WHBoxLayout;
     buttons->setLayout(buttonBox);
-    WToggleButton *wRegInit = new WToggleButton("/images/semantics-reg-init-16x16.png");
+    WToggleButton *wRegInit = new WToggleButton("/images/semantics-reg-top-24x24.png");
     wRegInit->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_INIT));
     buttonBox->addWidget(wRegInit);
-    WToggleButton *wRegFinal = new WToggleButton("/images/semantics-reg-final-16x16.png");
+    WToggleButton *wRegFinal = new WToggleButton("/images/semantics-reg-bottom-24x24.png");
     wRegFinal->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_FINAL));
     buttonBox->addWidget(wRegFinal);
-    WToggleButton *wMemInit = new WToggleButton("/images/semantics-mem-init-16x16.png");
+    WToggleButton *wMemInit = new WToggleButton("/images/semantics-mem-top-24x24.png");
     wMemInit->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_INIT));
     buttonBox->addWidget(wMemInit);
-    WToggleButton *wMemFinal = new WToggleButton("/images/semantics-mem-final-16x16.png");
+    WToggleButton *wMemFinal = new WToggleButton("/images/semantics-mem-bottom-24x24.png");
     wMemFinal->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_FINAL));
     buttonBox->addWidget(wMemFinal);
 

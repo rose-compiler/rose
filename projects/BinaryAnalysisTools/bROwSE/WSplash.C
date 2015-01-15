@@ -1,4 +1,5 @@
 #include <bROwSE/WSplash.h>
+#include <Wt/WImage>
 #include <Wt/WPushButton>
 #include <Wt/WText>
 
@@ -6,11 +7,10 @@ namespace bROwSE {
 
 void
 WSplash::init() {
+    new Wt::WImage("/images/banner.png", this);
     Wt::WText *wIntro = new Wt::WText(this);
     wIntro->setTextFormat(Wt::XHTMLUnsafeText);
-    wIntro->setText("<h2>Welcome to the binary ROSE on-line workbench for specimen exploration (bROwSE).</h2>"
-
-                    "<br/>"
+    wIntro->setText("<br/>"
                     "This application runs in a single web-page via Javascript and Ajax and is not RESTful&mdash;don't "
                     "use your browser's \"back\" or \"reload\" buttons unless you intend to start a new session. The "
                     "server uses the <a href=\"http://rosecompiler.org\">ROSE</a> library for all of its analysis."
