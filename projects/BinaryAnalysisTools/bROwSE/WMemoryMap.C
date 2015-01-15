@@ -139,25 +139,25 @@ WMemoryMap::instantiateTableWidgets(RowGroup &rg, size_t tableIdx) {
     // Table data
     //------------- 
 
-    rg.wDelete = new Wt::WImage("/images-nonfree/delete-icon.png");
+    rg.wDelete = new Wt::WImage("/images/delete-24x24.png");
     rg.wDelete->setToolTip("Delete this segment.");
     rg.wDelete->resize(Wt::WLength(1, Wt::WLength::FontEm), Wt::WLength(1, Wt::WLength::FontEm));
     rg.wDelete->clicked().connect(boost::bind(&WMemoryMap::startDeleteSegment, this, rg.wId));
     wTable_->elementAt(tableIdx+DataRow, DeleteColumn)->addWidget(rg.wDelete);
 
-    rg.wMove = new Wt::WImage("/images-nonfree/move-icon.png");
+    rg.wMove = new Wt::WImage("/images/move-24x24.png");
     rg.wMove->setToolTip("Move this segment to a new address.");
     rg.wMove->resize(Wt::WLength(1, Wt::WLength::FontEm), Wt::WLength(1, Wt::WLength::FontEm));
     rg.wMove->clicked().connect(boost::bind(&WMemoryMap::startMoveSegment, this, rg.wId));
     wTable_->elementAt(tableIdx+DataRow, MoveColumn)->addWidget(rg.wMove);
 
-    rg.wSplit = new Wt::WImage("/images-nonfree/split-vertical-icon.png");
+    rg.wSplit = new Wt::WImage("/images/separate-24x24.png");
     rg.wSplit->setToolTip("Split this segment into two segments.");
     rg.wSplit->resize(Wt::WLength(1, Wt::WLength::FontEm), Wt::WLength(1, Wt::WLength::FontEm));
     rg.wSplit->clicked().connect(boost::bind(&WMemoryMap::startSplitSegment, this, rg.wId));
     wTable_->elementAt(tableIdx+DataRow, SplitColumn)->addWidget(rg.wSplit);
         
-    rg.wMerge = new Wt::WImage("/images-nonfree/merge-vertical-icon.png");
+    rg.wMerge = new Wt::WImage("/images/join-24x24.png");
     rg.wMerge->setToolTip("Merge this segment with the following one.");
     rg.wMerge->resize(Wt::WLength(1, Wt::WLength::FontEm), Wt::WLength(1, Wt::WLength::FontEm));
     rg.wMerge->clicked().connect(boost::bind(&WMemoryMap::startMergeSegments, this, rg.wId));

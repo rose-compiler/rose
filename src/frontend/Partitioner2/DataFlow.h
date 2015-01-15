@@ -189,9 +189,10 @@ public:
     
     /** Returns the list of all known stack variables.  A stack variable is any memory location whose address is a constant
      *  offset from an initial stack pointer.  That is, the address has the form (add SP0 CONSTANT) where SP0 is a variable
-     *  supplied as an argument to this function.  Although memory is byte addressable and values are stored as individual
-     *  bytes in memory, this function attempts to sew related addresses back together again to produce variables that are
-     *  multiple bytes.  There are many ways to do this, all of which are heuristic. */
+     *  supplied as an argument to this function.  When CONSTANT is zero the expression is simplified to SP0, so that also is
+     *  accepted. Although memory is byte addressable and values are stored as individual bytes in memory, this function
+     *  attempts to sew related addresses back together again to produce variables that are multiple bytes.  There are many
+     *  ways to do this, all of which are heuristic. */
     StackVariables findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) const;
 
     /** Returns the list of all known local variables.  A local variable is any stack variable whose starting address is less

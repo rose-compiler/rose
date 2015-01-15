@@ -227,10 +227,11 @@ Application::init() {
 
     // Logo (reset button)
     // FIXME[Robb P. Matzke 2014-12-27]: eventually this should be a reset button
-    Wt::WImage *compassRose = new Wt::WImage("/images-nonfree/logo.jpg");
-    compassRose->setToolTip("Click here to reset the server");
-    compassRose->clicked().connect(boost::bind(killServer));
-    wGrid_->addWidget(compassRose, 0, 0);
+    Wt::WImage *wLogo = new Wt::WImage("/images/logo.png");
+    wLogo->setToolTip("Click here to reset the server");
+    wLogo->clicked().connect(boost::bind(killServer));
+    wLogo->resize(32, 32);
+    wGrid_->addWidget(wLogo, 0, 0);
     wGrid_->addWidget(new Wt::WText("bROwSE: Binary ROSE On-line Workbench for Specimen Exploration"), 0, 1);
 
     // The central region the page is a set of tabs that are visible or not depending on the context
