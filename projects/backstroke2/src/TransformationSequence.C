@@ -44,8 +44,31 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
     SgNode* operand=SgNodeHelper::getUnaryOpChild(astNode);
     transformationSequence.push_back(operand);
   }
-  if(isSgDeleteExp(astNode)) {
-    transformationSequenceCommit.push_back(astNode);
+  if(SgNewExp* newExp=isSgNewExp(astNode)) {
+    if(SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type())) {
+      SgType* arrayElementType=arrayType->get_base_type();
+      cout<<"WARNING: new["<<arrayElementType->unparseToString()<<"] operator not supported yet."<<endl;      
+    } else {
+      cout<<"WARNING: new operator not supported yet."<<endl;
+    }
+  }
+  if(SgDeleteExp* deleteExp=isSgDeleteExp(astNode)) {
+    if(deleteExp->get_is_array()) {
+      SgType* varType=deleteExp->get_variable()->get_type();
+      if(SgPointerType* pointerType=isSgPointerType(varType)) {
+        SgType* pointedToType=pointerType->get_base_type();
+        string elementTypeName="unknown";
+        if(SgClassType* classType=isSgClassType(pointedToType)) {
+          elementTypeName=classType->get_name();
+        }
+        cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;      
+      } else {
+        cerr<<"Error: operand of delete[] has non-pointer type. ROSE AST consistency error. Bailing out."<<"("<<(deleteExp->get_type()->unparseToString())<<")";
+        exit(1);
+      }
+    } else {
+      transformationSequenceCommit.push_back(astNode);
+    }
   }
 }
 
