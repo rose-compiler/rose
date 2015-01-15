@@ -5,8 +5,21 @@
 
 using namespace std;
 
+Backstroke::CodeGenerator::CodeGenerator():_commandLineOptions(0) {
+}
+
+Backstroke::CodeGenerator::CodeGenerator(CommandLineOptions* clo):_commandLineOptions(clo) {
+}
+
+void Backstroke::CodeGenerator::setCommandLineOptions(CommandLineOptions* clo) {
+  _commandLineOptions=clo;
+}
+
 void Backstroke::CodeGenerator::forwardCodeTransformation(SgFunctionDefinition* funDef) {
   TransformationSequence ts;
+  if(_commandLineOptions) {
+    ts.setShowTransformationTrace(_commandLineOptions->optionShowTransformationTrace());
+  }
   ts.create(funDef);
   ts.apply();
 }

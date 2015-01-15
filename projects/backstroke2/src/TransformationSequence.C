@@ -2,10 +2,11 @@
 #include "TransformationSequence.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
+#include "CommandLineOptions.h"
 
 using namespace std;
 
-Backstroke::TransformationSequence::TransformationSequence() {
+Backstroke::TransformationSequence::TransformationSequence():_showTransformationTrace(false) {
 }
 
 Backstroke::TransformationSequence::~TransformationSequence() {
@@ -55,6 +56,9 @@ void Backstroke::TransformationSequence::create(SgNode* node) {
 
 void Backstroke::TransformationSequence::apply() {
   for(list<SgNode*>::iterator i=transformationSequence.begin();i!=transformationSequence.end();++i) {
+    if(_showTransformationTrace) {
+      cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<": ";
+    }
     if(isSgAssignOp(*i)) {
       SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(*i));
       SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(*i));
@@ -63,7 +67,9 @@ void Backstroke::TransformationSequence::apply() {
         +", "
         +rhs->unparseToString()
         +")";
-      cout<<"DEBUG: Applying transformation assignop: "<<s<<endl;
+      if(_showTransformationTrace) {
+        cout<<"applying transformation assignop: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
+      }
       SgNodeHelper::replaceAstWithString(*i,s);
     } else {
       SgExpression* exp=isSgExpression(*i);
@@ -75,10 +81,12 @@ void Backstroke::TransformationSequence::apply() {
         } else {
           s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
         }
-        cout<<"DEBUG: Applying transformation on operand: "<<s<<endl;
+        if(_showTransformationTrace)
+          cout<<"applying transformation on operand: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
         SgNodeHelper::replaceAstWithString(*i,s);
       } else {
-        cout<<"DEBUG: Detected local variable."<<endl;
+        if(_showTransformationTrace)
+          cout<<"optimization: no transformation necessary (detected local variable: "<<exp->unparseToString()<<")"<<endl;
       }
     }
   }
@@ -125,4 +133,6 @@ bool Backstroke::TransformationSequence::isLocalVariable(SgExpression* exp) {
   return isSgVarRefExp(exp);
 }
 
-
+void Backstroke::TransformationSequence::setShowTransformationTrace(bool trace) {
+  _showTransformationTrace=trace;
+}
