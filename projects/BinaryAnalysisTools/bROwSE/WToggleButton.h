@@ -7,23 +7,27 @@
 namespace bROwSE {
 
 class WToggleButton: public Wt::WContainerWidget {
-    Wt::WImage *wImage_;
-    bool state_;
-    Wt::Signal<bool> stateChanged_;
 public:
-    explicit WToggleButton(const Wt::WLink &link, Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent), wImage_(NULL), state_(false) {
-        init(link);
-    }
-
-    bool state() const { return state_; }
-    void setState(bool b);
-    void toggle() { setState(!state()); }
-
-    Wt::Signal<bool>& stateChanged() { return stateChanged_; }
+    enum State { Normal=0, Depressed=1 };
 
 private:
-    void init(const Wt::WLink&);
+    Wt::WStackedWidget *wStack_;
+    Wt::WImage *wImageNormal_, *wImagePressed_;
+    State state_;
+    Wt::Signal<State> stateChanged_;
+public:
+    explicit WToggleButton(const Wt::WLink &normalImage, const Wt::WLink &pressedImage, Wt::WContainerWidget *parent = NULL)
+        : Wt::WContainerWidget(parent), wStack_(NULL), wImageNormal_(NULL), wImagePressed_(NULL), state_(Normal) {
+        init(normalImage, pressedImage);
+    }
+
+    State state() const { return state_; }
+    void setState(State);
+
+    Wt::Signal<State>& stateChanged() { return stateChanged_; }
+
+private:
+    void init(const Wt::WLink &normalImage, const Wt::WLink &pressedImage);
 };
 
 

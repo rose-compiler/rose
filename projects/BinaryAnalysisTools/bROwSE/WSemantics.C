@@ -8,6 +8,7 @@
 #include <Wt/WHBoxLayout>
 #include <Wt/WPanel>
 #include <Wt/WTableView>
+#include <Wt/WText>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
@@ -191,22 +192,28 @@ WSemantics::init() {
 
     Wt::WContainerWidget *wPanelCenter = new Wt::WContainerWidget(this);
 
+    // Info about what's being displayed
+    wAddress_ = new Wt::WText("No block", wPanelCenter);
+
     // The buttons to select which semantics are displayed.
     Wt::WContainerWidget *buttons = new Wt::WContainerWidget(wPanelCenter);
     Wt::WHBoxLayout *buttonBox = new Wt::WHBoxLayout;
     buttons->setLayout(buttonBox);
-    WToggleButton *wRegInit = new WToggleButton("/images/semantics-reg-top-24x24.png");
-    wRegInit->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_INIT));
-    buttonBox->addWidget(wRegInit);
-    WToggleButton *wRegFinal = new WToggleButton("/images/semantics-reg-bottom-24x24.png");
-    wRegFinal->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_FINAL));
-    buttonBox->addWidget(wRegFinal);
-    WToggleButton *wMemInit = new WToggleButton("/images/semantics-mem-top-24x24.png");
-    wMemInit->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_INIT));
-    buttonBox->addWidget(wMemInit);
-    WToggleButton *wMemFinal = new WToggleButton("/images/semantics-mem-bottom-24x24.png");
-    wMemFinal->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_FINAL));
-    buttonBox->addWidget(wMemFinal);
+    wRegInit_ = new WToggleButton("/images/semantics-reg-top-24x24.png", "/images/semantics-reg-top-pressed-24x24.png");
+    wRegInit_->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_INIT));
+    buttonBox->addWidget(wRegInit_);
+
+    wRegFinal_ = new WToggleButton("/images/semantics-reg-bottom-24x24.png", "/images/semantics-reg-bottom-pressed-24x24.png");
+    wRegFinal_->clicked().connect(boost::bind(&WSemantics::changeMode, this, REG_FINAL));
+    buttonBox->addWidget(wRegFinal_);
+
+    wMemInit_ = new WToggleButton("/images/semantics-mem-top-24x24.png", "/images/semantics-mem-top-pressed-24x24.png");
+    wMemInit_->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_INIT));
+    buttonBox->addWidget(wMemInit_);
+    
+    wMemFinal_ = new WToggleButton("/images/semantics-mem-bottom-24x24.png", "/images/semantics-mem-bottom-pressed-24x24.png");
+    wMemFinal_->clicked().connect(boost::bind(&WSemantics::changeMode, this, MEM_FINAL));
+    buttonBox->addWidget(wMemFinal_);
 
     // The table showing the semantics
     wTableView_ = new Wt::WTableView(wPanelCenter);
@@ -235,7 +242,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
     mode_ = mode;
     function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
-    if (function_) {
+    if (bblock) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
         FunctionDataFlow df = functionDataFlow(ctx_.partitioner, function_);
@@ -256,12 +263,14 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
                         model_->reload(df.finalStates[vertex.id()], mode, df);
                         break;
                 }
-                break;                                  // no need to search for futher vertex
+                wAddress_->setText(bblock->printableName());
+                return;                                 // no need to search for futher vertex
             }
         }
-    } else {
-        model_->clear();
     }
+
+    model_->clear();
+    wAddress_->setText("No block");
 }
 
 void
@@ -276,6 +285,10 @@ WSemantics::changeFunction(const P2::Function::Ptr &function) {
 
 void
 WSemantics::changeMode(Mode mode) {
+    wRegInit_ ->setState(REG_INIT ==mode ? WToggleButton::Depressed : WToggleButton::Normal);
+    wRegFinal_->setState(REG_FINAL==mode ? WToggleButton::Depressed : WToggleButton::Normal);
+    wMemInit_ ->setState(MEM_INIT ==mode ? WToggleButton::Depressed : WToggleButton::Normal);
+    wMemFinal_->setState(MEM_FINAL==mode ? WToggleButton::Depressed : WToggleButton::Normal);
     changeBasicBlock(bblock_, mode);
 }
 

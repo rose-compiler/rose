@@ -19,12 +19,16 @@ private:
     P2::BasicBlock::Ptr bblock_;
     Mode mode_;
 
+    Wt::WText *wAddress_;
+    WToggleButton *wRegInit_, *wRegFinal_, *wMemInit_, *wMemFinal_;
+
     AbstractLocationModel *model_;
     Wt::WTableView *wTableView_;
 
 public:
     explicit WSemantics(Context &ctx, Wt::WContainerWidget *parent = NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), mode_(REG_INIT), model_(NULL), wTableView_(NULL) {
+        : Wt::WContainerWidget(parent), ctx_(ctx), mode_(REG_INIT), wAddress_(NULL), wRegInit_(NULL), wRegFinal_(NULL),
+          wMemInit_(NULL), wMemFinal_(NULL), model_(NULL), wTableView_(NULL) {
         init();
     }
 
