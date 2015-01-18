@@ -271,6 +271,9 @@ TokenStreamSequenceToNodeMapping::createTokenInterval (SgNode* n, int input_lead
 
        // Add the first node to the list.
           newTokenSequence->nodeVector.push_back(n);
+#if 0
+          printf ("   --- newTokenSequence->nodeVector.size() = %zu \n",newTokenSequence->nodeVector.size());
+#endif
         }
        else
         {
@@ -1844,22 +1847,144 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // Dark tokens are defines as those tokens between the previous mappings trailing whitespace 
                       // end and the token sequence start for the current IR node.
 
+#define DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE 0
 #define DEBUG_DARK_TOKEN_FIXUP 0
 
                          ROSE_ASSERT(mappingInfo->node != NULL);
 
-                         bool fixupDarkTokenSubsequences = false;
+                      // DQ (1/17/2015): I think the logic here is backward!
+                      // bool fixupDarkTokenSubsequences = false;
+                         bool fixupDarkTokenSubsequencesForLeadingWhitespace  = true;
+                         bool fixupDarkTokenSubsequencesForTrailingWhitespace = true;
+#if 0
+                         fixupDarkTokenSubsequencesForLeadingWhitespace = false;
+#endif
+
+                      // This is required to support the dark token sequence support for trailing white space.
                          SgForStatement* forStatement = isSgForStatement(n);
                          if (forStatement != NULL && mappingInfo->node == forStatement->get_loop_body() )
                             {
-                              fixupDarkTokenSubsequences = true;
+                           // fixupDarkTokenSubsequences = true;
+                              fixupDarkTokenSubsequencesForTrailingWhitespace = false;
                             }
+
+                      // This is required to support the dark token sequence support for leading white space.
+                      // The problem here is that these statements have syntax that would have to be identified 
+                      // so that we would not inlcude it in the leading whitespace.  For now it would be simpler 
+                      // to avoid processing these cases, however it could be a problem if a dark token subsequence 
+                      // were embedded just right.
+                         SgIfStmt* ifStatement = isSgIfStmt(n);
+                      // if (ifStatement != NULL && mappingInfo->node == ifStatement->get_true_body() )
+                         if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body() || mappingInfo->node == ifStatement->get_false_body()) )
+                            {
+                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                            }
+
+                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+                         if (functionDeclaration != NULL && mappingInfo->node == functionDeclaration->get_definition() )
+                            {
+                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                            }
+
+                         if (forStatement != NULL && mappingInfo->node == forStatement->get_for_init_stmt() )
+                            {
+                              fixupDarkTokenSubsequencesForLeadingWhitespace = false;
+                            }
+
+                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
+                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
+                         if ( (switchStatement != NULL && mappingInfo->node == switchStatement->get_body()) ||
+                              (whileStatement  != NULL && mappingInfo->node == whileStatement->get_body()) )
+                            {
+                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                            }
+
 #if DEBUG_DARK_TOKEN_FIXUP
-                         printf ("fixupDarkTokenSubsequences = %s \n",fixupDarkTokenSubsequences ? "true" : "false");
+                         printf ("fixupDarkTokenSubsequencesForTrailingWhitespace = %s n = %p = %s mappingInfo->node = %p = %s \n",fixupDarkTokenSubsequencesForTrailingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
+#endif
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                         printf ("fixupDarkTokenSubsequencesForLeadingWhitespace  = %s n = %p = %s mappingInfo->node = %p = %s \n",fixupDarkTokenSubsequencesForLeadingWhitespace ? "true" : "false",n,n->class_name().c_str(),mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
 
-                         if (fixupDarkTokenSubsequences == false)
+                         if (fixupDarkTokenSubsequencesForLeadingWhitespace == true)
                             {
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                              printf ("fixupDarkTokenSubsequencesForLeadingWhitespace == true: i = %zu tokenToNodeVector.size() = %zu \n",i,tokenToNodeVector.size());
+#endif
+                           // DQ (1/17/2015): Fixup the leading white space subsequence to include the dark token subsequences.
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                              printf ("mappingInfo->leading_whitespace_start  = %d end = %d \n",mappingInfo->leading_whitespace_start,mappingInfo->leading_whitespace_end);
+                              printf ("mappingInfo->token_subsequence_start   = %d end = %d \n",mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
+                              printf ("mappingInfo->trailing_whitespace_start = %d end = %d \n",mappingInfo->trailing_whitespace_start,mappingInfo->trailing_whitespace_end);
+#endif
+                              if (i == 0)
+                                 {
+                                // DQ (1/17/2015): Adding support for tests/roseTests/astInterface/*_test2015_47.C
+                                   TokenStreamSequenceToNodeMapping* previous_mappingInfo = NULL;
+                                   if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                                      {
+                                        previous_mappingInfo = tokenStreamSequenceMap[n];
+                                      }
+
+                                   if (previous_mappingInfo != NULL)
+                                      {
+                                        int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
+                                        printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
+#endif
+                                        ROSE_ASSERT(previous_mappingInfo->token_subsequence_start >= 0);
+
+                                     // if (mappingInfo->leading_whitespace_start != -1)
+                                        if (mappingInfo->leading_whitespace_start != -1 && mappingInfo->leading_whitespace_start > previous_mappingInfo_leading_whitespace_end)
+                                           {
+                                             mappingInfo->leading_whitespace_start = previous_mappingInfo_leading_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                             printf ("   --- reset mappingInfo->leading_whitespace_start to %d \n",previous_mappingInfo_leading_whitespace_end);
+#endif
+                                           }
+                                      }
+#if 0
+                                   if (isSgBasicBlock(n) != NULL)
+                                      {
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+                                      }
+#endif
+                                 }
+                                else
+                                 {
+                                   TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
+                                   ROSE_ASSERT(previous_mappingInfo != NULL);
+
+                                   if (previous_mappingInfo != NULL)
+                                      {
+                                     // int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_start + 1;
+                                        int previous_mappingInfo_leading_whitespace_end = previous_mappingInfo->token_subsequence_end + 1;
+                                        int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                        printf ("   --- previous_mappingInfo_leading_whitespace_end = %d \n",previous_mappingInfo_leading_whitespace_end);
+                                        printf ("   --- current_mappingInfo_leading_whitespace_start = %d \n",current_mappingInfo_leading_whitespace_start);
+#endif
+                                        ROSE_ASSERT(previous_mappingInfo->token_subsequence_start >= 0);
+
+                                     // if (mappingInfo->leading_whitespace_start != -1)
+                                        if (mappingInfo->leading_whitespace_start != -1 && mappingInfo->leading_whitespace_start > previous_mappingInfo_leading_whitespace_end)
+                                           {
+                                             mappingInfo->leading_whitespace_start = previous_mappingInfo_leading_whitespace_end;
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE
+                                             printf ("   --- reset mappingInfo->leading_whitespace_start to %d \n",previous_mappingInfo_leading_whitespace_end);
+#endif
+                                          }
+                                     }
+                                 }
+                            }
+
+                      // if (fixupDarkTokenSubsequences == false)
+                         if (fixupDarkTokenSubsequencesForTrailingWhitespace == true)
+                            {
+                      // Fixup the trailing white space subsequence to include the dark token subsequences.
                          if (i == 0)
                       // if (i == tokenToNodeVector.size()-1)
                             {
@@ -3249,12 +3374,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               printf ("   --- tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
                               printf ("   --- sizeAfterNewTokenStreamSequenceToNodeMapping = %zu \n",sizeAfterNewTokenStreamSequenceToNodeMapping);
                             }
-
+#if 0
+                         printf ("starting_NodeSequenceWithoutTokenMapping = %d ending_NodeSequenceWithoutTokenMapping = %d \n",starting_NodeSequenceWithoutTokenMapping,ending_NodeSequenceWithoutTokenMapping);
+#endif
+                      // for (int k = starting_NodeSequenceWithoutTokenMapping; k < ending_NodeSequenceWithoutTokenMapping; k++)
+                      // for (int k = starting_NodeSequenceWithoutTokenMapping; k <= ending_NodeSequenceWithoutTokenMapping; k++)
                          for (int k = starting_NodeSequenceWithoutTokenMapping; k < ending_NodeSequenceWithoutTokenMapping; k++)
                             {
                            // Mark this shared and add the associated IR nodes sharing this token sequence. 
                               element->shared = true;
-#if 1
+#if 0
                               printf ("Mark as shared and add node childAttributes[k=%d].node = %p = %s \n",k,childAttributes[k].node,childAttributes[k].node->class_name().c_str());
 #endif
                               element->nodeVector.push_back(childAttributes[k].node);
@@ -3262,6 +3391,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               printf ("element->nodeVector.size() = %zu \n",element->nodeVector.size());
 #endif
                               ROSE_ASSERT(element->nodeVector.size() == 2 + (k - starting_NodeSequenceWithoutTokenMapping));
+
+                              printf ("This location is never reached! \n");
+                              ROSE_ASSERT(false);
                             }
 #if 0
                          printf ("******************** End of loop body for childrenWithoutTokenMappings ******************** \n");

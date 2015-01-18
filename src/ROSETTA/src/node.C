@@ -440,6 +440,11 @@ Grammar::setUpNodes ()
      LocatedNode.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
 
+  // DQ (1/15/2015): We need a concept of transformation restricted to the addition or deletion or transformation of the surounding comments and CPP directives.
+     LocatedNode.setDataPrototype("bool","containsTransformationToSurroundingWhitespace","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+ 
+
   // DQ (3/24/2007): Added support for tokens in the IR.
   // Token.setPredeclarationString ("HEADER_TOKEN_PREDECLARATION" , "../Grammar/LocatedNode.code");
      Token.setFunctionPrototype    ("HEADER_TOKEN", "../Grammar/LocatedNode.code");
