@@ -171,12 +171,19 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_11.C \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
-  inputmoveDeclarationToInnermostScope_14.C 
+  inputmoveDeclarationToInnermostScope_14.C \
+  inputmoveDeclarationToInnermostScope_15.C \
+  inputmoveDeclarationToInnermostScope_16.C
 
-# DQ (12/23/2014): This fails because the nonmal unparsing (without token unparsing) is failing.
-#  inputmoveDeclarationToInnermostScope_test2014_26.C
+# DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
+# inputmoveDeclarationToInnermostScope_test2014_26.C
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+
+# identity translator cannot handle them properly  
+MOVE_DECLS_TESTCODES_FAILING = \
+  inputmoveDeclarationToInnermostScope_test2014_18.C \
+  inputmoveDeclarationToInnermostScope_test2014_22.C
  
 MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
@@ -278,6 +285,10 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_42.C \
   inputmoveDeclarationToInnermostScope_test2015_43.C \
   inputmoveDeclarationToInnermostScope_test2015_44.C \
+  inputmoveDeclarationToInnermostScope_test2015_45.C \
+  inputmoveDeclarationToInnermostScope_test2015_46.C \
+  inputmoveDeclarationToInnermostScope_test2015_47.C \
+  inputmoveDeclarationToInnermostScope_test2015_48.C \
   inputmoveDeclarationToInnermostScope_test2015_49.C \
   inputmoveDeclarationToInnermostScope_test2015_50.C \
   inputmoveDeclarationToInnermostScope_test2015_51.C \
@@ -286,7 +297,9 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_54.C \
   inputmoveDeclarationToInnermostScope_test2015_55.C \
   inputmoveDeclarationToInnermostScope_test2015_56.C \
-  inputmoveDeclarationToInnermostScope_test2015_57.C
+  inputmoveDeclarationToInnermostScope_test2015_57.C \
+  inputmoveDeclarationToInnermostScope_test2015_58.C \
+  inputmoveDeclarationToInnermostScope_test2015_59.C
 
 # DQ (1/11/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2015_45.C 
@@ -332,7 +345,7 @@ DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 

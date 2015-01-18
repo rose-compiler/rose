@@ -1,18 +1,14 @@
 void foobar() 
    {
-#if 0
-     int x;
-#else
-     int z;
-#endif
-
      int a;
 
      int b;
 
+     int c;
+
      if (true) 
         {
-          b = 0;
+          c = 0;
         }
    }
 

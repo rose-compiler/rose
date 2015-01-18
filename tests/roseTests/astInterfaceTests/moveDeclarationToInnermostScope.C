@@ -13,12 +13,16 @@
  * The translator accepts a debugging option "-rose:debug", which is turned on by default in the testing.  
  * Some dot graph files will be generated for scope trees of variables for debugging purpose.
 
- * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
- *   Without this option, the tool will stop on assertion failures. 
-
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
  *  without an initializer to be safe.
+ *
+ * -rose:keep_going  will ignore assertions as much as possible (currently on skip the assertion on complex for loop initialization statement list).
+ *   Without this option, the tool will stop on assertion failures. 
+ *  
+ * -rose:identity  will turn off any transformations and act like an identity translator. Useful for debugging purposes. 
+ *
+ *
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -112,7 +116,11 @@ class visitorTraversal : public AstSimpleProcessing
   protected:
     void virtual visit (SgNode* n)
     {
-      if (isSgFunctionDeclaration(n)!=NULL){
+//      if (isSgFunctionDeclaration(n)!=NULL)
+//      This will match SgTemplateInstantiationFunctionDecl, which is not wanted.
+      if (n->variantT() == V_SgFunctionDeclaration || n->variantT() == V_SgMemberFunctionDeclaration)
+      {
+	ROSE_ASSERT (n->variantT() != V_SgTemplateInstantiationFunctionDecl);
         SgFunctionDeclaration* func = isSgFunctionDeclaration(n);  
         ROSE_ASSERT(func != NULL);
         if (func->get_definition() == NULL) return;
@@ -139,6 +147,9 @@ class visitorTraversal : public AstSimpleProcessing
         {
           SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
           ROSE_ASSERT(decl!= NULL);
+	  // skip compiler generated (frontend) declarations
+	  if (decl->get_file_info()->isCompilerGenerated())
+	    continue; 
           worklist.push(decl);
         }
 
@@ -180,7 +191,7 @@ class visitorTraversal : public AstSimpleProcessing
             if (decl_mover_conservative)
             {
               if (debug)
-                 cout<<"Using conservative moving for decl .."<<endl;
+                 cout<<"Consiering conservative moving for decl: "<<decl->get_file_info()->get_line() <<endl;
               if (null_initializer)   
                 result = moveDeclarationToInnermostScope(decl, worklist, debug);
               else
@@ -214,8 +225,16 @@ GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
 int main(int argc, char * argv[])
 
 {
+  bool isIdentity = false;
 
   vector <string> argvList (argv, argv + argc);
+  // acting like an identity translator, used for debugging
+  if (CommandlineProcessing::isOption (argvList,"-rose:identity","",true))
+  {
+    isIdentity = true;
+    cout<<"Acting as an identity translator ..."<<endl;
+  }
+ 
   // pass -rose:debug to turn on debugging mode
   if (CommandlineProcessing::isOption (argvList,"-rose:debug","",true))
   {
@@ -256,35 +275,51 @@ int main(int argc, char * argv[])
 // DQ (12/11/2014): Added output of graph after transformations.
    if (SgProject::get_verbose() > 0)
       {
+#if 0
         printf ("Generating a DOT graph of the AST \n");
         generateDOTforMultipleFile(*project);
+#endif
       }
 
   SgFilePtrList file_ptr_list = project->get_fileList();
   visitorTraversal exampleTraversal;
-  for (size_t i = 0; i<file_ptr_list.size(); i++)
-  {
-    SgFile* cur_file = file_ptr_list[i];
-    SgSourceFile* s_file = isSgSourceFile(cur_file);
-    if (s_file != NULL)
-    {
-      //exampleTraversal.traverseInputFiles(project,preorder);
-       exampleTraversal.traverseWithinFile(s_file, preorder);
-    }
-  }
+  if (!isIdentity)
+     {
+       for (size_t i = 0; i<file_ptr_list.size(); i++)
+          {
+            SgFilePtrList file_ptr_list = project->get_fileList();
+            visitorTraversal exampleTraversal;
+            for (size_t i = 0; i<file_ptr_list.size(); i++)
+               {
+                 SgFile* cur_file = file_ptr_list[i];
+                 SgSourceFile* s_file = isSgSourceFile(cur_file);
+                 if (s_file != NULL)
+                    {
+                   // exampleTraversal.traverseInputFiles(project,preorder);
+                      exampleTraversal.traverseWithinFile(s_file, preorder);
+                    }
+               }
+            string filename= SageInterface::generateProjectName(project);
+#if 0
+         // DQ (1/14/2015): This is a problem since it causes us to run out of disk space on large projects.
+            generateDOTforMultipleFile(*project);
+#endif
+          }
+     }
 
   // string filename= SageInterface::generateProjectName(project);
   // generateDOTforMultipleFile(*project);
 
    if (SgProject::get_verbose() > 0)
       {
+#if 1
         printf ("Generating a WHOLE AST DOT graph \n");
-
+        generateDOTforMultipleFile(*project);
+#endif
      // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
         const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
         generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
       }
-   
 
  // run all tests
   AstTests::runAllTests(project);
@@ -882,6 +917,12 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     SgScopeStatement* adjusted_scope = target_scope; 
     SgVariableDeclaration * decl_copy = SageInterface::deepCopy(decl);
 
+    // Liao 1/14/2015
+    // AST copy will copy the pointer to attached preprocessing information of the original declaration.
+    // We don't want this behavior since it may duplicate the troublesome #endif for each copy of the declaration
+    // A workaround is to clean this pointer
+    decl_copy->set_attachedPreprocessingInfoPtr (NULL);
+
     //bool skip = false; // in some rare case, we skip a target scope, no move to that scope (like while-stmt)
     //This won't work. The move must happen to all scopes or not at all, or dangling variable use without a declaration.
     //We must skip scopes when generating scope tree, not wait until now.
@@ -966,7 +1007,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
 	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
 	      // insert the merged decl into the list, TODO preserve the order in the list
-	      // else other cases: we simply preprent decl_copy tothe front of init_stmt
+	      // else other cases: we simply preprent decl_copy to the front of init_stmt
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
@@ -1105,9 +1146,31 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
   } //end for all scopes
 
-  // remove the original declaration , must use false to turn of auto-relocate comments
-  // TODO: investigate why default behavior adds two extra comments in the end of the code
+  // Special handing of preprocessing info.
+  // Must happen before removing decl
+  if (decl->get_attachedPreprocessingInfoPtr() != NULL)
+  {
+    // For a variable declaration to be copy/moved, the assumption is that they must have next statements (or no movement is possible)
+    // Another assumption is that the preprocessing info must be attached to the "before" position of the declaration.
+    SgStatement* next_stmt = SageInterface::getNextStatement(decl);
+    if (next_stmt== NULL)
+    {
+      cerr<<"Error. Cannot find the next statement of the declaration to be moved!"<<endl;
+      if (!tool_keep_going)
+        ROSE_ASSERT (next_stmt!= NULL);
+    }
+    else
+    { 
+      // consider things attached before, move to the same location, using preprepend  to insert it.
+       SageInterface::movePreprocessingInfo(decl, next_stmt, PreprocessingInfo::before, PreprocessingInfo::before, true); 
+    }
+  } // end if preprocessingInfo
+
+  // remove the original declaration , must use false to turn off auto-relocate comments, since it does not work correctly.
+  // TODO: fix this in SageInterface or redesign how to store comments in AST: independent vs. attachments
   SageInterface::removeStatement(decl, false);
+
+
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);

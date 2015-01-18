@@ -1,5 +1,7 @@
 int verbose;
 
+int x;
+
 void Debug_printInfo(char*);
 
 #define DEBUG_MACRO( verbose, where ) if ( verbose > 10 ) Debug_printInfo(where)

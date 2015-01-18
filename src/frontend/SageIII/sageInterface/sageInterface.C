@@ -12327,72 +12327,86 @@ StringUtility::numberToString(++breakLabelCounter),
   }
 
 
-void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
-                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
-{
-  ROSE_ASSERT(stmt_src != NULL);
-  ROSE_ASSERT(stmt_dst != NULL);
-  AttachedPreprocessingInfoType* infoList=stmt_src->getAttachedPreprocessingInfo();
-  AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
+void
+SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
+                                      PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
+   {
+     ROSE_ASSERT(stmt_src != NULL);
+     ROSE_ASSERT(stmt_dst != NULL);
+     AttachedPreprocessingInfoType* infoList = stmt_src->getAttachedPreprocessingInfo();
+     AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
 
-  if (infoList == NULL) return;
-  for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin();
-      i!=(*infoList).end();i++)
-  {
-    PreprocessingInfo * info=dynamic_cast<PreprocessingInfo *> (*i);
-    ROSE_ASSERT(info != NULL);
-
-    if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
-        (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
-        (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
-       )
-    {
-      // move all source preprocessing info if the desired source type is not specified or matching
-      // a specified desired source type
-      if ( src_position == PreprocessingInfo::undef || info->getRelativePosition()==src_position)
-      {
-        if (usePrepend)
-          // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
-          // to indicate appending or prepending by reusing the type of relative position.
-          // this is very confusing for users
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
-        else
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-
-        (*infoToRemoveList).push_back(*i);
-      }
 #if 0
-      else if (info->getRelativePosition()==src_position)
-      {
-
-        if (usePrepend)
-        {
-        }
-        else
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
-
-        (*infoToRemoveList).push_back(*i);
-      } // if src_position
+     printf ("In SageInterface::movePreprocessingInfo(): \n");
+     printf ("   --- stmt_src = %p = %s src_position = %d \n",stmt_src,stmt_src->class_name().c_str(),src_position);
+     printf ("   --- stmt_dst = %p = %s dst_position = %d \n",stmt_dst,stmt_dst->class_name().c_str(),dst_position);
 #endif
-      // adjust dst position if needed
-      if (dst_position != PreprocessingInfo::undef)
-        info->setRelativePosition(dst_position);
-    } // end if
-  }// end for
+
+     if (infoList == NULL) return;
+
+     for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end();i++)
+        {
+          PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
+          ROSE_ASSERT(info != NULL);
+
+          if ( (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIncludeDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorDefineDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorUndefDeclaration)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfdefDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfndefDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorIfDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
+               (info->getTypeOfDirective()==PreprocessingInfo::C_StyleComment)||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration )
+             )
+             {
+            // move all source preprocessing info if the desired source type is not specified or matching
+            // a specified desired source type
+               if ( src_position == PreprocessingInfo::undef || info->getRelativePosition() == src_position)
+                  {
+                    if (usePrepend)
+                      // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
+                      // to indicate appending or prepending by reusing the type of relative position.
+                      // this is very confusing for users
+                         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+                      else
+                         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+
+                 // DQ (1/15/2015): Added support to mark as transformations so that the token-based unparsing can know to NOT use the leading and trailing token stream for whitespace.
+                    info->setAsTransformation();
+                 // ROSE_ASSERT(stmt_dst->getAttachedPreprocessingInfo() != NULL);
+                 // stmt_dst->getAttachedPreprocessingInfo()->setAsTransformation();
+                    stmt_dst->set_containsTransformationToSurroundingWhitespace(true);
+
+                    (*infoToRemoveList).push_back(*i);
+                  }
+
+#if 0
+                 else if (info->getRelativePosition()==src_position)
+                  {
+
+                    if (usePrepend)
+                       {
+                       }
+                      else
+                         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+
+                    (*infoToRemoveList).push_back(*i);
+                  } // if src_position
+#endif
+
+            // adjust dst position if needed
+               if (dst_position != PreprocessingInfo::undef)
+                    info->setRelativePosition(dst_position);
+             } // end if
+        } // end for
 
   // Remove the element from the list of comments at the current astNode
-  AttachedPreprocessingInfoType::iterator j;
-  for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
-    infoList->erase( find(infoList->begin(),infoList->end(),*j) );
-
-}
+     AttachedPreprocessingInfoType::iterator j;
+     for (j = (*infoToRemoveList).begin(); j != (*infoToRemoveList).end(); j++)
+          infoList->erase( find(infoList->begin(),infoList->end(),*j) );
+   }
 
 //----------------------------
 // Sometimes, the preprocessing info attached to a declaration has to be
