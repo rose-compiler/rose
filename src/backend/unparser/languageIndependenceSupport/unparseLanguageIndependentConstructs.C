@@ -769,7 +769,9 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
   // Get atached preprocessing info
      AttachedPreprocessingInfoType *prepInfoPtr = stmt->getAttachedPreprocessingInfo();
 
-     bool unparseUsingTokenStream = false;
+  // DQ (1/18/2015): The default should always be to output the tokens from the token stream, unless we detect a transformation or this is a shared token stream.
+  // bool unparseUsingTokenStream = false;
+     bool unparseUsingTokenStream = true;
      
   // If we are skiping BOTH comments and CPP directives then there is nothing to do
      if ( info.SkipComments() && info.SkipCPPDirectives() )
@@ -798,6 +800,8 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
                   {
                     if (tokenSubsequence->shared == true)
                        {
+                         ROSE_ASSERT(tokenSubsequence->nodeVector.empty() == false);
+
                          SgStatement* last_shared_statement = isSgStatement(tokenSubsequence->nodeVector[tokenSubsequence->nodeVector.size()-1]);
                          ROSE_ASSERT(last_shared_statement != NULL);
 #if 0
@@ -805,14 +809,17 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
                          printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
                          printf ("   --- last_shared_statement = %p = %s \n",last_shared_statement,last_shared_statement->class_name().c_str());
 #endif
-                         ROSE_ASSERT(tokenSubsequence->nodeVector.empty() == false);
-
                          if (last_shared_statement == stmt)
                             {
 #if 1
                               printf ("Detected a statement associated with a shared token sequence, returing true for last shared statement. \n");
 #endif
-                              return true;
+                           // return true;
+                              unparseUsingTokenStream = true;
+                            }
+                           else
+                            {
+                              unparseUsingTokenStream = false;
                             }
 #if 0
                          printf ("Exiting as a test! \n");
@@ -1729,6 +1736,19 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 
        // Get the file and check if -rose:unparse_tokens was used then we want to try to access the token stream and output this statement directly as tokens.
           SgFile* cur_file = SageInterface::getEnclosingFileNode(stmt);
+
+       // DQ (1/18/2015): Output a message when this is not true (note: sometimes info.get_current_source_file() == NULL).
+#if 0
+          if (cur_file != info.get_current_source_file())
+             {
+                printf ("Warning: SageInterface::getEnclosingFileNode(stmt) != info.get_current_source_file() \n");
+                printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                printf ("   --- cur_file = %p = %s \n",cur_file,cur_file != NULL ? cur_file->getFileName().c_str() : "null");
+                SgSourceFile* sourceFile = info.get_current_source_file();
+                printf ("   --- info.get_current_source_file() = %p = %s \n",sourceFile,sourceFile != NULL ? sourceFile->getFileName().c_str() : "null");
+             }
+#endif
+       // ROSE_ASSERT(cur_file == info.get_current_source_file());
 #if 0
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file = %p = %s \n",cur_file,cur_file->class_name().c_str());
           printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): cur_file->get_unparse_tokens() = %s \n",cur_file->get_unparse_tokens() ? "true" : "false");
@@ -3046,7 +3066,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 #if 0
        // printf ("In unparseGlobalStmt(): declaration #%d is %p = %s = %s \n",declarationCounter++,currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
-          printf ("In unparseGlobalStmt(): declaration = %p = %s = %s \n",currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
+          printf ("\nIn unparseGlobalStmt(): declaration = %p = %s = %s \n",currentStatement,currentStatement->class_name().c_str(),SageInterface::get_name(currentStatement).c_str());
 #endif
 
           if (ROSE_DEBUG > 3)

@@ -1891,10 +1891,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
                             }
 
+                      // These statements have syntax that seperate the main construct from the construct's associated body (namely the ")" closing parenthesis).
                          SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
                          SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
                          if ( (switchStatement != NULL && mappingInfo->node == switchStatement->get_body()) ||
-                              (whileStatement  != NULL && mappingInfo->node == whileStatement->get_body()) )
+                              (whileStatement  != NULL && mappingInfo->node == whileStatement->get_body())  ||
+                              (forStatement    != NULL && mappingInfo->node == forStatement->get_loop_body()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
                             }
