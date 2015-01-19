@@ -33,8 +33,15 @@ void initialize() {
             // use FileSink or FdSink because StreamSink can't tell whether output is a tty or not.
             destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
         }
+
+        // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, so we'll
+        // disable those that we deem are too noisy for most users.  However, the insertAndAdjust might make other choices if
+        // mfacilities already has some stream inserted or the user has already called mfacilities.impset().
         mlog = Sawyer::Message::Facility("rose", destination);
-        mfacilities.insert(mlog);
+        mlog[DEBUG].disable();
+        mlog[TRACE].disable();
+        mlog[WHERE].disable();
+        mfacilities.insertAndAdjust(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
         Sawyer::Message::assertionStream = mlog[FATAL];
@@ -55,9 +62,6 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
         EditDistance::initDiagnostics();
-
-        // By default, only messages of informational importance and above are dispalyed.
-        mfacilities.control("none, >=info");
     }
 }
 

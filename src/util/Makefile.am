@@ -50,6 +50,7 @@ pkginclude_HEADERS =				\
 	ParallelSort.h                          \
 	processSupport.h			\
 	rose_getline.h				\
+	rose_override.h				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\
@@ -64,6 +65,7 @@ noinst_LTLIBRARIES += libroseSawyer.la
 libroseSawyer_la_SOURCES =			\
 	sawyer/Assert.C				\
 	sawyer/CommandLine.C			\
+	sawyer/GraphTraversal.C			\
 	sawyer/Markup.C				\
 	sawyer/MarkupPod.C			\
 	sawyer/Message.C			\
@@ -85,8 +87,10 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/Callbacks.h			\
 	sawyer/CommandLine.h			\
 	sawyer/DefaultAllocator.h		\
+	sawyer/DistinctList.h			\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
+	sawyer/GraphTraversal.h			\
 	sawyer/IndexedList.h			\
 	sawyer/Interval.h			\
 	sawyer/IntervalMap.h			\

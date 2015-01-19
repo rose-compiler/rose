@@ -324,7 +324,7 @@ struct X86InstructionSemantics {
     template<size_t operandBits, size_t shiftSignificantBits>
     WordType<operandBits> shift_semantics(X86InstructionKind kind, const WordType<operandBits> &operand,
                                           const WordType<operandBits> &source_bits, const WordType<8> &total_shift) {
-        assert(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
+        ASSERT_require(x86_shr==kind || x86_sar==kind || x86_shl==kind || x86_shld==kind || x86_shrd==kind);
 
         // The 8086 does not mask the shift count; processors starting with the 80286 (including virtual-8086 mode) do
         // mask.  The effect (other than timing) is the same either way.
@@ -333,7 +333,7 @@ struct X86InstructionSemantics {
 
         // isLargeShift is true if the (unmasked) amount by which to shift is greater than or equal to the size in
         // bits of the destination operand.
-        assert(shiftSignificantBits<8);
+        ASSERT_require(shiftSignificantBits<8);
         WordType<1> isLargeShift = policy.invert(policy.equalToZero(extract<shiftSignificantBits, 8>(total_shift)));
 
         // isOneBitShift is true if the (masked) amount by which to shift is equal to one.
@@ -2452,7 +2452,7 @@ struct X86InstructionSemantics {
 #endif
 
     void processInstruction(SgAsmX86Instruction* insn) {
-        ROSE_ASSERT(insn);
+        ASSERT_not_null(insn);
         current_instruction = insn;
         policy.startInstruction(insn);
         translate(insn);
@@ -2535,7 +2535,7 @@ struct X86InstructionSemantics {
                 processBlock(stmts, i, i + 1);
                 ++i;
             }
-            ROSE_ASSERT(i != oldI);
+            ASSERT_require(i != oldI);
         }
     }
 

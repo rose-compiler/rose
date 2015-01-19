@@ -44,7 +44,10 @@ Grammar::setUpSymbols ()
 
      NEW_TERMINAL_MACRO ( EnumSymbol,           "EnumSymbol",           "ENUM_NAME" );
      NEW_TERMINAL_MACRO ( EnumFieldSymbol,      "EnumFieldSymbol",      "FIELD_NAME" );
-     NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
+
+  // NEW_TERMINAL_MACRO ( TypedefSymbol,        "TypedefSymbol",        "TYPEDEF_NAME" );
+     NEW_TERMINAL_MACRO    ( TemplateTypedefSymbol,  "TemplateTypedefSymbol",  "TEMPLATE_TYPEDEF_NAME" );
+     NEW_NONTERMINAL_MACRO ( TypedefSymbol, TemplateTypedefSymbol, "TypedefSymbol", "TYPEDEF_NAME", true);
 
   // NEW_TERMINAL_MACRO ( MemberFunctionSymbol, "MemberFunctionSymbol", "MEMBER_FUNC_NAME" );
      NEW_TERMINAL_MACRO ( TemplateFunctionSymbol, "TemplateFunctionSymbol", "TEMPLATE_FUNC_NAME" );
@@ -332,7 +335,12 @@ Grammar::setUpSymbols ()
   // TemplateInstantiationSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" ); // [DT] 5/11/2000
      EnumSymbol.setFunctionSource           ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
      TypedefSymbol.setFunctionSource        ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
+  // DQ (11/4/2014): Added support for templated typedef (C++11 feature).
+     TemplateTypedefSymbol.setFunctionSource( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
+
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
      TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_GET_TYPE", "../Grammar/Symbol.code" );
 
@@ -364,6 +372,10 @@ Grammar::setUpSymbols ()
      EnumSymbol.setFunctionSource           ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      EnumFieldSymbol.setFunctionSource      ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TypedefSymbol.setFunctionSource        ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+
+  // DQ (11/4/2014): Added support for templated typedef (C++11 feature).
+     TemplateTypedefSymbol.setFunctionSource( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
+
      MemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
      TemplateMemberFunctionSymbol.setFunctionSource ( "SOURCE_SHORT_GET_NAME", "../Grammar/Symbol.code" );
 

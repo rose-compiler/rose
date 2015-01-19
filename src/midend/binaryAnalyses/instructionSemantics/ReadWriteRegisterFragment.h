@@ -69,7 +69,7 @@ ValueType<Len> readRegister(const RegisterDescriptor &reg) {
                 throw Exception("byte access only valid for general purpose registers");
             if (reg.get_minor()>=cur_state.registers.n_gprs)
                 throw Exception("register not implemented in semantic policy");
-            assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+            ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
             switch (reg.get_offset()) {
                 case 0:
                     return extract<0, Len>(cur_state.registers.gpr[reg.get_minor()]);
@@ -185,7 +185,7 @@ void writeRegister(const RegisterDescriptor &reg, const ValueType<Len> &value) {
                 throw Exception("byte access only valid for general purpose registers.");
             if (reg.get_minor()>=cur_state.registers.n_gprs)
                 throw Exception("register not implemented in semantic policy");
-            assert(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
+            ASSERT_require(reg.get_nbits()==8); // we had better be asking for a one-byte register (e.g., "ah", not "ax")
             switch (reg.get_offset()) {
                 case 0:
                     cur_state.registers.gpr[reg.get_minor()] =

@@ -649,6 +649,20 @@ SageBuilder::getTemplateArgumentList( SgDeclarationStatement* decl )
                break;
              }
 
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateTypedefDeclaration(decl)->get_templateSpecializationArguments());
+               break;
+             }
+
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+             {
+               templateArgumentsList = &(isSgTemplateInstantiationTypedefDeclaration(decl)->get_templateArguments());
+               break;
+             }
+
           default:
              {
                printf ("setTemplateArgumentParents(): Default reched in switch: decl = %p = %s \n",decl,decl->class_name().c_str());
@@ -700,6 +714,9 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
                break;
              }
 
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateInstantiationTypedefDeclaration:
+
        // DQ (8/12/2013): This function has to be supported when called using any kind of declaration (at least SgFunctionDeclaration and SgClassDeclaration).
        // DQ (9/16/2012): I think it should be an error to call this function for these types of declarations.
           case V_SgTemplateInstantiationDecl:
@@ -731,6 +748,13 @@ SageBuilder::getTemplateParameterList( SgDeclarationStatement* decl )
           case V_SgTemplateVariableDeclaration:
              {
                templateParameterList = &(isSgTemplateVariableDeclaration(decl)->get_templateParameters());
+               break;
+             }
+
+       // DQ (11/10/2014): Added support for template typedef declarations.
+          case V_SgTemplateTypedefDeclaration:
+             {
+               templateParameterList = &(isSgTemplateTypedefDeclaration(decl)->get_templateParameters());
                break;
              }
 
@@ -1584,26 +1608,26 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 
   // Liao 11/29/2012, for typedef struct Frame {int x;} st_frame; We have to set parent for the struct.
   // AstPostProcessing() has resetParentPointers(). But it is kind of too late.
-  if (SgClassDeclaration* base_class = isSgClassDeclaration(base_decl))
-  {
-    SgClassDeclaration* def_class = isSgClassDeclaration(base_class->get_definingDeclaration());
-    SgClassDeclaration* nondef_class = isSgClassDeclaration(base_class->get_firstNondefiningDeclaration());
-    // Dan and Liao, 12/3/2012, handle test2003_08.C nested typedef
-    if (has_defining_base)  
-    {
-      if (def_class != NULL)
-        if (def_class->get_parent() == NULL)
-          def_class->set_parent(type_decl);
-    }
-    else
-    {
-    if (nondef_class != NULL)
-      if (nondef_class->get_parent() == NULL)
-      {
-        nondef_class->set_parent(type_decl);
-      }
-    }
-  }
+     if (SgClassDeclaration* base_class = isSgClassDeclaration(base_decl))
+        {
+          SgClassDeclaration* def_class = isSgClassDeclaration(base_class->get_definingDeclaration());
+          SgClassDeclaration* nondef_class = isSgClassDeclaration(base_class->get_firstNondefiningDeclaration());
+       // Dan and Liao, 12/3/2012, handle test2003_08.C nested typedef
+          if (has_defining_base)  
+             {
+               if (def_class != NULL)
+                    if (def_class->get_parent() == NULL)
+                         def_class->set_parent(type_decl);
+             }
+            else
+             {
+               if (nondef_class != NULL)
+                    if (nondef_class->get_parent() == NULL)
+                       {
+                         nondef_class->set_parent(type_decl);
+                       }
+             }
+        }
 
   // Symbol and SgTypedefType should be associated with the first nondefining declaration
   // Create SgTypedefType
@@ -1686,6 +1710,228 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 
      return type_decl;
    }
+
+
+SgTemplateTypedefDeclaration* 
+SageBuilder::buildTemplateTypedefDeclaration_nfi(const SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base )
+   {
+  // DQ (11/2/2014): Adding support for templated typedef.
+
+     ROSE_ASSERT (base_type != NULL);
+
+#if 0
+     printf ("In buildTemplateTypedefDeclaration_nfi(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+
+     if (scope == NULL )
+        {
+          scope = SageBuilder::topScopeStack();
+        }
+
+  // We don't yet support bottom up construction for this node yet    
+     ROSE_ASSERT(scope != NULL);
+
+     SgDeclarationStatement* base_decl = NULL;
+
+  // DQ (3/20/2012): I don't remember why we need to provide the symbol for the scope of the 
+  // parent rather then the scope. But as I recall there was a special corner of C++ that 
+  // required this sort of support.
+     SgSymbol* parent_scope = NULL;
+     if (scope != NULL)
+        {
+#if 0
+          printf ("In buildTemplateTypedefDeclaration_nfi(): scope = %p = %s calling get_symbol_from_symbol_table() \n",scope,scope->class_name().c_str());
+#endif
+          ROSE_ASSERT(scope->get_parent() != NULL);
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(scope->get_parent());
+#if 0
+          printf ("declaration = %p \n",declaration);
+#endif
+          if (declaration != NULL)
+             {
+#if 0
+               printf ("Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+            // parent_scope = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+               parent_scope = declaration->search_for_symbol_from_symbol_table();
+
+               ROSE_ASSERT(parent_scope != NULL);
+             }
+        }
+
+#if 0
+     printf ("In buildTemplateTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
+#endif
+
+  // We need to add the template parameter and partial specialization support to the SgTemplateTypedefDeclaration IR node.
+     SgTemplateTypedefDeclaration* type_decl = new SgTemplateTypedefDeclaration(SgName(name), base_type, NULL, base_decl, parent_scope);
+     ROSE_ASSERT(type_decl != NULL);
+
+     ROSE_ASSERT(type_decl->get_scope() == NULL);
+
+     type_decl->set_scope(scope);
+
+     ROSE_ASSERT(type_decl->get_scope() != NULL);
+
+#if 0
+     printf ("In buildTemplateTypedefDeclaration_nfi(): After SgTemplateTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
+#endif
+
+  // DQ (3/20/2012): Comment ouly, these are always set this way. first defining is a self reference, and defining is always NULL (required for AST consistancy)).
+     type_decl->set_firstNondefiningDeclaration (type_decl);
+     type_decl->set_definingDeclaration(NULL);
+
+  // Set the source code position information.
+     setOneSourcePositionNull(type_decl);
+
+     if (scope != NULL)
+        {
+       // SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+          SgTemplateTypedefSymbol* typedef_symbol = new SgTemplateTypedefSymbol(type_decl);
+          ROSE_ASSERT(typedef_symbol);
+
+       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
+          scope->insert_symbol(SgName(name),typedef_symbol);
+          type_decl->set_scope(scope);
+
+       // DQ (3/20/2012): Comment added only: The parent is always the scope in this case, I think.
+          type_decl->set_parent(scope);
+        }
+
+#if 1
+  // We have to setup the template arguments (need specialization and partial specialization support).
+     printf ("Template parameters not setup in buildTemplateTypedefDeclaration_nfi() \n");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return type_decl;
+   }
+
+
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList templateArgumentList)
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration)
+// ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+// SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi()
+ROSE_DLL_API SgTemplateInstantiationTypedefDeclaration* 
+SageBuilder::buildTemplateInstantiationTypedefDeclaration_nfi(SgName & name, SgType* base_type, SgScopeStatement* scope, bool has_defining_base, SgTemplateTypedefDeclaration* templateTypedefDeclaration, SgTemplateArgumentPtrList & templateArgumentList)
+   {
+  // DQ (11/2/2014): Adding support for instantiation of templated typedef.
+
+#if 0
+  // Temporary fix for problems in linking with this function parameter.
+     SgName name = "ERROR_SgTemplateInstantiationTypedefDeclaration";
+     SgType* base_type = NULL;
+     SgScopeStatement* scope = NULL;
+     bool has_defining_base = false;
+     SgTemplateTypedefDeclaration* templateTypedefDeclaration = NULL;
+     
+  // Temporary fix for problems in linking with this function parameter.
+     SgTemplateArgumentPtrList templateArgumentList;
+#endif
+
+     ROSE_ASSERT (base_type != NULL);
+  // ROSE_ASSERT(templateArgumentList != NULL);
+
+#if 1
+     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+
+  // We don't yet support bottom up construction for this node yet
+     ROSE_ASSERT(scope != NULL);
+
+     SgDeclarationStatement* base_decl = NULL;
+
+  // DQ (3/20/2012): I don't remember why we need to provide the symbol for the scope of the 
+  // parent rather then the scope. But as I recall there was a special corner of C++ that 
+  // required this sort of support.
+     SgSymbol* parent_scope = NULL;
+     if (scope != NULL)
+        {
+#if 1
+          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): scope = %p = %s calling get_symbol_from_symbol_table() \n",scope,scope->class_name().c_str());
+#endif
+          ROSE_ASSERT(scope->get_parent() != NULL);
+          SgDeclarationStatement* declaration = isSgDeclarationStatement(scope->get_parent());
+#if 1
+          printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): declaration = %p \n",declaration);
+#endif
+          if (declaration != NULL)
+             {
+#if 1
+               printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());
+#endif
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+            // parent_scope = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
+               parent_scope = declaration->search_for_symbol_from_symbol_table();
+
+               ROSE_ASSERT(parent_scope != NULL);
+             }
+        }
+
+  // DQ (11/5/2014): I think this might be set afterward.
+     ROSE_ASSERT(templateTypedefDeclaration != NULL);
+
+#if 1
+     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): parent_scope = %p \n",parent_scope);
+#endif
+
+  // Calling: SgTemplateInstantiationTypedefDeclaration(SgName, SgType*, SgTypedefType*, SgDeclarationStatement*, SgSymbol*, SgTemplateTypedefDeclaration*, SgTemplateArgumentPtrList)
+     SgTypedefType* typedefType = NULL;
+     SgTemplateInstantiationTypedefDeclaration* type_decl = new SgTemplateInstantiationTypedefDeclaration(name, base_type, typedefType, base_decl, parent_scope, templateTypedefDeclaration, templateArgumentList);
+     ROSE_ASSERT(type_decl != NULL);
+
+     ROSE_ASSERT(type_decl->get_scope() == NULL);
+
+     type_decl->set_scope(scope);
+
+     ROSE_ASSERT(type_decl->get_scope() != NULL);
+
+#if 1
+     printf ("In buildTemplateInstantiationTypedefDeclaration_nfi(): After SgTemplateInstantiationTypedefDeclaration constructor: type_decl->get_scope() = %p \n",type_decl->get_scope());
+#endif
+
+  // DQ (3/20/2012): Comment ouly, these are always set this way. first defining is a self reference, and defining is always NULL (required for AST consistancy)).
+     type_decl->set_firstNondefiningDeclaration (type_decl);
+     type_decl->set_definingDeclaration(NULL);
+
+  // Set the source code position information.
+     setOneSourcePositionNull(type_decl);
+
+     if (scope != NULL)
+        {
+       // SgTypedefSymbol* typedef_symbol = new SgTypedefSymbol(type_decl);
+          SgTemplateTypedefSymbol* typedef_symbol = new SgTemplateTypedefSymbol(type_decl);
+          ROSE_ASSERT(typedef_symbol);
+
+       // DQ (5/16/2013): This is the code we want now that we have implemented the namespace support behind the scope symbol bable interface.
+          scope->insert_symbol(SgName(name),typedef_symbol);
+          type_decl->set_scope(scope);
+
+       // DQ (3/20/2012): Comment added only: The parent is always the scope in this case, I think.
+          type_decl->set_parent(scope);
+        }
+
+#if 1
+  // We have to setup the template arguments (need specialization and partial specialization support).
+     printf ("Template parameters not setup in buildTemplateTypedefDeclaration_nfi() \n");
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
+     return type_decl;
+   }
+
+
+
+
 
 //-----------------------------------------------
 // Assertion `definingDeclaration != NULL || firstNondefiningDeclaration != NULL' 
@@ -8426,6 +8672,50 @@ SgExecStatement* SageBuilder::buildExecStatement_nfi(SgExpression* executable,
     return result;
 }
 
+// MH (6/10/2014): Added async support
+SgAsyncStmt* SageBuilder::buildAsyncStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgAsyncStmt *async_stmt = new SgAsyncStmt(body);
+       ROSE_ASSERT(async_stmt);
+       body->set_parent(async_stmt);
+       setOneSourcePositionForTransformation(async_stmt);
+
+       return async_stmt;
+}
+
+// MH (6/11/2014): Added finish support
+SgFinishStmt* SageBuilder::buildFinishStmt(SgBasicBlock *body)
+{
+       ROSE_ASSERT(body != NULL);
+       SgFinishStmt *finish_stmt = new SgFinishStmt(body);
+       ROSE_ASSERT(finish_stmt);
+       body->set_parent(finish_stmt);
+       setOneSourcePositionForTransformation(finish_stmt);
+
+       return finish_stmt;
+}
+
+// MH (6/11/2014): Added at support
+SgAtStmt* SageBuilder::buildAtStmt(SgExpression *expression, SgBasicBlock *body)
+{
+       ROSE_ASSERT(expression);
+       ROSE_ASSERT(body);
+       SgAtStmt *at_stmt = new SgAtStmt(expression, body);
+       SageInterface::setSourcePosition(at_stmt);
+       expression->set_parent(at_stmt);
+       body->set_parent(at_stmt);
+
+       return at_stmt;
+}
+
+SgHereExp* SageBuilder::buildHereExpression()
+{
+       SgHereExp *here = new SgHereExp(NULL);
+       return here;
+}
+
+
 //! Build a try statement
 SgTryStmt* SageBuilder::buildTryStmt(SgStatement* body,
                                      SgCatchOptionStmt* catch0,
@@ -9558,6 +9848,144 @@ SageBuilder::buildFunctionParameterRefExp_nfi(int parameter_number, int paramete
      setOneSourcePositionNull(expr);
      return expr;
    }
+
+// DQ (9/3/2014): Adding support for C++11 Lambda expressions
+SgLambdaExp*
+SageBuilder::buildLambdaExp(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function)
+   {
+     SgLambdaExp *expr = new SgLambdaExp(lambda_capture_list,lambda_closure_class,lambda_function);
+     ROSE_ASSERT(expr != NULL);
+
+  // Set the parents
+     if (lambda_capture_list != NULL)
+        {
+          lambda_capture_list->set_parent(expr);
+        }
+
+     if (lambda_closure_class != NULL)
+        {
+          lambda_closure_class->set_parent(expr);
+        }
+
+     if (lambda_function != NULL)
+        {
+#if 1
+          lambda_function->set_parent(expr);
+#else
+          if (lambda_closure_class != NULL)
+             {
+               lambda_function->set_parent(lambda_closure_class);
+             }
+            else
+             {
+               printf ("Warning: In SageBuilder::buildLambdaExp(): lambda_closure_class == NULL: lambda_function parent not set! \n");
+             }
+#endif
+        }
+
+     setSourcePosition(expr);
+     return expr;
+   }
+
+SgLambdaExp*
+SageBuilder::buildLambdaExp_nfi(SgLambdaCaptureList* lambda_capture_list, SgClassDeclaration* lambda_closure_class, SgFunctionDeclaration* lambda_function)
+   {
+     SgLambdaExp *expr = new SgLambdaExp(lambda_capture_list,lambda_closure_class,lambda_function);
+     ROSE_ASSERT(expr != NULL);
+
+  // Set the parents
+     if (lambda_capture_list != NULL)
+        {
+          lambda_capture_list->set_parent(expr);
+        }
+
+     if (lambda_closure_class != NULL)
+        {
+          lambda_closure_class->set_parent(expr);
+        }
+
+     if (lambda_function != NULL)
+        {
+#if 1
+          lambda_function->set_parent(expr);
+#else
+          if (lambda_closure_class != NULL)
+             {
+               lambda_function->set_parent(lambda_closure_class);
+             }
+            else
+             {
+               printf ("Warning: In SageBuilder::buildLambdaExp(): lambda_closure_class == NULL: lambda_function parent not set! \n");
+             }
+#endif
+        }
+
+     setOneSourcePositionNull(expr);
+     return expr;
+   }
+
+#if 0
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable)
+   {
+      SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setSourcePosition(lambdaCapture);
+     return lambdaCapture;
+   }
+
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture_nfi(SgInitializedName* capture_variable, SgInitializedName* source_closure_variable, SgInitializedName* closure_variable)
+   {
+     SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setOneSourcePositionNull(lambdaCapture);
+     return lambdaCapture;
+   }
+#else
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable)
+   {
+      SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setSourcePosition(lambdaCapture);
+     return lambdaCapture;
+   }
+
+SgLambdaCapture*
+SageBuilder::buildLambdaCapture_nfi(SgExpression* capture_variable, SgExpression* source_closure_variable, SgExpression* closure_variable)
+   {
+     SgLambdaCapture *lambdaCapture = new SgLambdaCapture(NULL,capture_variable,source_closure_variable,closure_variable);
+     ROSE_ASSERT(lambdaCapture != NULL);
+
+     setOneSourcePositionNull(lambdaCapture);
+     return lambdaCapture;
+   }
+#endif
+
+SgLambdaCaptureList*
+SageBuilder::buildLambdaCaptureList()
+   {
+     SgLambdaCaptureList *lambdaCaptureList = new SgLambdaCaptureList(NULL);
+     ROSE_ASSERT(lambdaCaptureList != NULL);
+
+     setSourcePosition(lambdaCaptureList);
+     return lambdaCaptureList;
+   }
+
+SgLambdaCaptureList*
+SageBuilder::buildLambdaCaptureList_nfi()
+   {
+     SgLambdaCaptureList *lambdaCaptureList = new SgLambdaCaptureList(NULL);
+     ROSE_ASSERT(lambdaCaptureList != NULL);
+
+     setOneSourcePositionNull(lambdaCaptureList);
+     return lambdaCaptureList;
+   }
+
 
 
 SgNamespaceDefinitionStatement*

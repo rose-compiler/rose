@@ -4,7 +4,7 @@
  * Date : 3Apr07
  * Decription : General DB connection for MySQL
  ****************************************************/
-#include "rose.h"
+#include "sage3basic.h"                                 // every librose .C file must start with this
 #include "RoseBin_DB.h"
 #include <mysql.h>
 //#include "mysql_include/mysql.h"

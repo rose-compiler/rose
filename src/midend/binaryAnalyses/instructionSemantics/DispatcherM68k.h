@@ -50,7 +50,7 @@ public:
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const /*override*/ {
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
         return instance(ops);
     }
 
@@ -61,15 +61,15 @@ public:
         return retval;
     }
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict)/*override*/;
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
-    virtual int iproc_key(SgAsmInstruction *insn_) const /*override*/ {
+    virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         return insn->get_kind();
     }
 
-    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32) /*override*/;
+    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32) ROSE_OVERRIDE;
 
     /** Determines if an instruction should branch. */
     BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);

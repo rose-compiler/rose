@@ -196,6 +196,7 @@ public:
         c.least_ = least_;
         c.greatest_ = greatest_;
         c.anchored_ = anchored_;
+        c.maxSize_ = maxSize_;
         return c;
     }
 public:
@@ -565,8 +566,8 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
 /** A mapping from address space to values.
  *
  *  This object maps addresses (actually, intervals thereof) to values. Addresses must be an integral unsigned type but values
- *  may be any type as long as it is default constructible and copyable.  The address type is usually a type whose width is the
- *  log base 2 of the size of the address space; the value type is often unsigned 8-bit bytes.
+ *  may be any type as long as they are default constructible and copyable.  The address type is usually an integral type whose
+ *  width is the log base 2 of the size of the address space; the value type is often unsigned 8-bit bytes.
  *
  *  An address map accomplishes the mapping by inheriting from an @ref IntervalMap, whose intervals are
  *  <code>Interval<A></code> and whose values are <code>AddressSegment<A,T></code>. The @ref AddressSegment objects
@@ -578,7 +579,7 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *  that are matched within the map.  Constraints are indicated by listing them before the map I/O operation, but they do not
  *  modify the map in any way--they exist outside the map.  Constraints are combined by logical conjunction. For instance, the
  *  @ref AddressMap::next method returns the lowest address that satisfies the given constraints, or nothing.  If we wanted
- *  to search for the lowest address beteen 1000 and 1999 inclusive, that has read access but no execute access, we would
+ *  to search for the lowest address beteen 1000 and 1999 inclusive, that has read access but not write access, we would
  *  do so like this:
  *
  * @code
@@ -610,8 +611,8 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  * @endcode
  *
  *  Since all map operations take the same constraints, it is possible to rewrite the previous @c for loop so that instead of
- *  search for an address it actually reads data.  Here's a loop that prints all the data that's readable but not writable and
- *  falls between two addresses, regardless of what other segments also exist in that same interval:
+ *  searching for an address it actually reads data.  Here's a loop that prints all the data that's readable but not writable
+ *  and falls between two addresses, regardless of what other segments also exist in that same interval:
  *
  * @code
  *  static const size_t bufsz = 256;
@@ -654,7 +655,7 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *  default is to match the constraint at the lowest possible addresses. Matching at the highest addresses is useful when
  *  iterating backward.  For instance, if one wants to read up to 1024 values that end at address 1023 but is not sure how many
  *  prior addresses are readable, he could use backward matching.  This is much more efficient than the alternative of
- *  searching backward one address at a time, is is simpler than doing an explicit binary search:
+ *  searching backward one address at a time, and is simpler than doing an explicit binary search:
  *
  * @code
  *  Value buf[1024];
@@ -1132,7 +1133,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=0; map.atOrAbove(a).require(READABLE).next().assignTo(a); ++a) {
+     *  for (Address a=0; map.atOrAfter(a).require(READABLE).next().assignTo(a); ++a) {
      *      ...
      *      if (a == map.hull().greatest())
      *          break;
@@ -1153,7 +1154,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(Map::Backward()).assignTo(a); --a) {
+     *  for (Address a=map.hull().greatest(); map.atOrBelow(a).require(READABLE).next(MATCH_BACKWARD).assignTo(a); --a) {
      *      ...
      *      if (a == map.hull().least())
      *          break;
@@ -1246,7 +1247,7 @@ public:
                 Sawyer::Container::Interval<Address> interval = unmapped(minAddr, 0 /*forward*/);
                 if (interval.isEmpty())
                     return Nothing();
-                minAddr = alignUp(minAddr, alignment);
+                minAddr = alignUp(interval.least(), alignment);
                 Address maxAddr = minAddr + (nValues-1);
                 if ((nValues <= interval.size() || 0==interval.size()/*overflow*/) &&
                     minAddr >= interval.least()/*overflow*/ && maxAddr >= interval.least()/*overflow*/ &&
@@ -1266,7 +1267,7 @@ public:
             Sawyer::Container::Interval<Address> interval = unmapped(maxAddr, MATCH_BACKWARD);
             if (interval.isEmpty())
                 return Nothing();
-            Address minAddr = alignDown(maxAddr - (nValues-1), alignment);
+            Address minAddr = alignDown(interval.greatest() - (nValues-1), alignment);
             maxAddr = minAddr + (nValues-1);
             if ((nValues <= interval.size() || 0==interval.size()/*overflow*/) &&
                 minAddr >= interval.least()/*overflow*/ && maxAddr >= interval.least()/*overflow*/ &&
@@ -1282,7 +1283,7 @@ public:
     
     /** Reads data into the supplied buffer.
      *
-     *  Reads data into an arry or STL vector according to the specified constraints.  If the array is a null pointer then no
+     *  Reads data into an array or STL vector according to the specified constraints.  If the array is a null pointer then no
      *  data is read or copied and the return value indicates what addresses would have been accessed. When the buffer is an
      *  STL vector the constraints are augmented by also limiting the number of items accessed; the caller must do that
      *  explicitly for arrays. The return value is the interval of addresses that were read.
@@ -1314,7 +1315,7 @@ public:
      *
      * @code
      *  Value buf[10];
-     *  size_t nRead = map.at(999).limit(10).read(buf, Map::Backward()).size();
+     *  size_t nRead = map.at(999).limit(10).read(buf, MATCH_BACKWARD).size();
      * @endcode
      *
      * @{ */
@@ -1372,7 +1373,7 @@ public:
      *
      * @code
      *  Value buf[10] = { ... };
-     *  size_t nWritten = map.at(999).limit(10).write(buf, Map::Backward()).size();
+     *  size_t nWritten = map.at(999).limit(10).write(buf, MATCH_BACKWARD).size();
      * @endcode
      *
      * @todo FIXME[Robb Matzke 2014-09-01]: The order of values in the buffer being written by AddressMap::write when writing
@@ -1518,6 +1519,7 @@ public:
                     segment.accessibility(newAccess);
                 } else {                                // insert a new segment, replacing part of the existing one
                     Segment newSegment(segment);
+                    newSegment.accessibility(newAccess);
                     newSegment.offset(segment.offset() + toChange.least() - node.key().least());
                     newSegments.push_back(ISPair(toChange, newSegment));
                 }

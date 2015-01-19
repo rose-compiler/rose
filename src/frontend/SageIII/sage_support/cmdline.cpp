@@ -3089,6 +3089,14 @@ SgFile::usage ( int status )
 "                             Supported for C/C++, and currently only generates token \n"
 "                             stream for fortran (call parser with --tokens option)\n"
 "                             call parser with --tokens option (fortran only)\n"
+"     -rose:unparse_using_leading_and_trailing_token_mappings \n"
+"                             unparses code using original token stream and forces the output \n"
+"                             of two files representing the unparsing of each statement using \n"
+"                             the token stream mapping to the AST.  The token_leading_* file \n"
+"                             uses the mapping and the leading whitespace mapping between \n"
+"                             statements, where as the token_trailing_* file uses the mapping \n"
+"                             and the trailing whitespace mapping between statements.  Both \n"
+"                             files should be identical, and the same as the input file. \n"
 "     -rose:embedColorCodesInGeneratedCode LEVEL\n"
 "                             embed color codes into generated output for\n"
 "                               visualization of highlighted text using tview\n"
@@ -3504,6 +3512,19 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("unparse tokens testing mode ON: integerOptionForUnparseTokensTesting = %d \n",integerOptionForUnparseTokensTesting);
           set_unparse_tokens_testing(integerOptionForUnparseTokensTesting);
+        }
+
+  //
+  // DQ (11/20/2010): Added testing for mappings of tokens to the AST (using both leading and trailing whitespace mappings).
+  // Turn on the output of the testing files for the token unparsing (intenal use only).
+  //
+     set_unparse_using_leading_and_trailing_token_mappings(false);
+     ROSE_ASSERT (get_unparse_using_leading_and_trailing_token_mappings() == false);
+     if ( CommandlineProcessing::isOption(argv,"-rose:","(unparse_using_leading_and_trailing_token_mappings)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("unparse_using_leading_and_trailing_token_mappings mode ON \n");
+          set_unparse_using_leading_and_trailing_token_mappings(true);
         }
 
   //
@@ -4922,6 +4943,7 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(unparse_tokens)",1);
      int integerOption_token_tests = 0;
      optionCount = sla(argv, "-rose:", "($)^", "(unparse_tokens_testing)", &integerOption_token_tests, 1);
+     optionCount = sla(argv, "-rose:", "($)", "(unparse_using_leading_and_trailing_token_mappings)",1);
 
      optionCount = sla(argv, "-rose:", "($)", "(exit_after_parser)",1);
      optionCount = sla(argv, "-rose:", "($)", "(skip_syntax_check)",1);

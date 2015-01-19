@@ -22,14 +22,14 @@ TaintLattice::set_vertex(Vertex v) {
 }
 
 void
-TaintLattice::copy(/*const*/ Lattice *other_) /*override*/ {
+TaintLattice::copy(/*const*/ Lattice *other_) ROSE_OVERRIDE {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);
     assert(other!=NULL);
     *this = *other;
 }
 
 bool
-TaintLattice::operator==(/*const*/ Lattice *other_) /*const*/ /*override*/ {
+TaintLattice::operator==(/*const*/ Lattice *other_) /*const*/ ROSE_OVERRIDE {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);
     assert(other!=NULL);
     return vertex == other->vertex;
@@ -44,7 +44,7 @@ TaintLattice::to_string() const {
 }
 
 bool
-TaintLattice::meetUpdate(/*const*/ Lattice *other_) /*override*/ {
+TaintLattice::meetUpdate(/*const*/ Lattice *other_) ROSE_OVERRIDE {
     TaintLattice *other = dynamic_cast<TaintLattice*>(other_);
     assert(other!=NULL);
     Vertex new_vertex = std::max(vertex, other->vertex);

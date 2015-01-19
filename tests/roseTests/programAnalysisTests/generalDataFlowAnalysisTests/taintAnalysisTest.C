@@ -47,7 +47,7 @@ public:
     TaintAnalysisTest(LiveDeadVarsAnalysis *ldv_analysis): TaintAnalysis(ldv_analysis) {}
 
     bool transfer(const Function &func, const DataflowNode &node, NodeState &state,
-                  const std::vector<Lattice*> &dfInfo) /*override*/ {
+                  const std::vector<Lattice*> &dfInfo) ROSE_OVERRIDE {
         bool modified = TaintAnalysis::transfer(func, node, state, dfInfo);
         SgReturnStmt *xop = isSgReturnStmt(node.getNode());
         if (xop) {

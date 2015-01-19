@@ -3,6 +3,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
 test2012_01.C \
+test2012_02.C \
 test2012_05.C \
 test2014_02.C \
 test2014_04.C \
@@ -49,6 +50,28 @@ test2014_50.C \
 test2014_51.C \
 test2014_52.C \
 test2014_54.C \
+test2014_55.C \
+test2014_56.C \
+test2014_57.C \
+test2014_58.C \
+test2014_70.C \
+test2014_71.C \
+test2014_72.C \
+test2014_73.C \
+test2014_74.C \
+test2014_75.C \
+test2014_76.C \
+test2014_77.C \
+test2014_78.C \
+test2014_79.C \
+test2014_80.C \
+test2014_81.C \
+test2014_83.C \
+test2014_84.C \
+test2014_86.C \
+test2014_87.C \
+test2014_89.C \
+test2014_90.C \
 last.C
 
 # Failing tests:
@@ -60,9 +83,8 @@ last.C
 # test2014_46.C 
 # test2014_53.C 
 
-
+# These are incomplete non-compilable code fragments
 TESTCODE_CURRENTLY_FAILING = \
-test2012_02.C \
 test2012_03.C \
 test2012_04.C \
 test2012_06.C \
@@ -95,6 +117,9 @@ test2012_32.C \
 test2012_33.C \
 test2012_34.C \
 test2014_03.C \
+test2014_82.C \
+test2014_85.C \
+test2014_88.C \
 last.C
 
 # Note: last.C just simplifies the Makefile.am it

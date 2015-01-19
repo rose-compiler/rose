@@ -327,8 +327,8 @@ RegisterDictionary::dictionary_i8086() {
         regs->insert("f3",    x86_regclass_flags, x86_flags_status,  3,  1);
         regs->insert("f5",    x86_regclass_flags, x86_flags_status,  5,  1);
         regs->insert("f12",   x86_regclass_flags, x86_flags_status, 12,  1);
-        regs->insert("f13",   x86_regclass_flags, x86_flags_status, 12,  1);
-        regs->insert("f15",   x86_regclass_flags, x86_flags_status, 12,  1);
+        regs->insert("f13",   x86_regclass_flags, x86_flags_status, 13,  1);
+        regs->insert("f15",   x86_regclass_flags, x86_flags_status, 15,  1);
     }
     return regs;
 }

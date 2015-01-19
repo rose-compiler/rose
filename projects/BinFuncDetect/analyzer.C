@@ -281,9 +281,16 @@ pchange(size_t n0, size_t n) {
 }
 
 static void
+dumpExtents(const AddressIntervalSet &set) {
+    BOOST_FOREACH (const AddressInterval &interval, set.intervals()) {
+        std::cout <<"    " <<interval <<" " <<StringUtility::plural(interval.size(), "bytes") <<"\n";
+    }
+}
+
+static void
 statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insns, IdaInfo &ida)
 {
-    ExtentMap emap;
+    AddressIntervalSet emap;
     static int width=20;
     char tmp[128];
     int note=1;
@@ -324,9 +331,9 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     fprintf(stderr, "-------------\n");
     
     // Number of bytes disassembled (including those not assigned to any function, and counting overlaps twice)
-    ExtentMap disassembled_bytes;
+    AddressIntervalSet disassembled_bytes;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-        disassembled_bytes.insert(Extent(ii->first, ii->second->get_size()));
+        disassembled_bytes.insert(AddressInterval::baseSize(ii->first, ii->second->get_size()));
     size_t ndis0 = disassembled_bytes.size();
     fprintf(stderr, "Disassembled:                           %-*zu", width, ndis0);
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
@@ -341,11 +348,11 @@ statistics(SgAsmInterpretation *interp, const Disassembler::InstructionMap &insn
     for (IdaInfo::iterator ida_i=ida.begin(); ida_i!=ida.end(); ++ida_i) {
         emap = disassembled_bytes;
         for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii)
-            emap.erase(Extent(ii->first, ii->second->get_size()));
+            emap.erase(AddressInterval::baseSize(ii->first, ii->second->get_size()));
         size_t n = emap.size();
         if (n>0) {
             printf("[NOTE %d] Bytes disassembled by IDA[%d] (%s) but not ROSE:\n", note, ida_i->id, ida_i->name.c_str());
-            emap.dump_extents(stdout, "    ", "", false);
+            dumpExtents(emap);
             sprintf(tmp, "%zu[%d]", n, note++);
         } else {
             sprintf(tmp, "%zu", n);

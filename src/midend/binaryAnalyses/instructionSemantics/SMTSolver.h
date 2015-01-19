@@ -71,7 +71,7 @@ public:
     }
     virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(const InsnSemanticsExpr::TreeNodePtr &var) {
         InsnSemanticsExpr::LeafNodePtr ln = var->isLeafNode();
-        assert(ln && !ln->is_known());
+        ASSERT_require(ln && !ln->is_known());
         return evidence_for_variable(ln->get_name());
     }
     /** @} */

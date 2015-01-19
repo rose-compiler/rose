@@ -134,9 +134,10 @@ public:
     static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
         return Ptr(new AddressIntervalParser(valueSaver));
     }
+    static std::string docString();
 private:
     virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
-                                                        const Sawyer::CommandLine::Location &loc) /*override*/;
+                                                        const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
 };
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);
