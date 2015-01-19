@@ -44,6 +44,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
     BinaryReturnValueUsed.C					\
+    BinaryString.C						\
     BinaryTaintedFlow.C						\
     DwarfLineMapper.C
 else
@@ -110,6 +111,7 @@ pkginclude_HEADERS =					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryString.h					\
     BinaryTaintedFlow.h					\
     DwarfLineMapper.h
 
