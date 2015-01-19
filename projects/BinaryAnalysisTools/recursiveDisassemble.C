@@ -1,10 +1,12 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
-#include <rose_strtoull.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 #include <AsmFunctionIndex.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
+#include <BinaryString.h>
 #include <Disassembler.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
@@ -12,13 +14,13 @@
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Utility.h>
-
+#include <rose_strtoull.h>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stopwatch.h>
+#include <stringify.h>
 
-#include <boost/algorithm/string/predicate.hpp>
 
 // FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
 /* 
@@ -59,6 +61,7 @@ struct Settings {
     bool doListFunctionAddresses;                       // list function entry addresses
     bool doListInstructionAddresses;                    // show instruction addresses
     bool doListContainer;                               // generate information about the containers if present
+    bool doListStrings;                                 // show string constants
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
@@ -78,8 +81,9 @@ struct Settings {
           findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
           intraFunctionData(true), doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true),
           doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false),
-          doShowMap(false), doShowStats(false), doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true),
-          gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
+          doListStrings(false), doShowMap(false), doShowStats(false), doListUnused(false), assumeFunctionsReturn(true),
+          gvUseFunctionSubgraphs(true), gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false),
+          gvCallGraph(false) {}
 };
 
 // Describe and parse the command-line
@@ -296,6 +300,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     out.insert(Switch("no-list-instruction-addresses")
                .key("list-instruction-addresses")
                .intrinsicValue(false, settings.doListInstructionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-strings")
+               .intrinsicValue(true, settings.doListStrings)
+               .doc("Produce a listing of all ASCII strings.  The listing is disabled with the @s{no-list-strings} "
+                    "switch. The default is to " + std::string(settings.doListStrings?"":"not ") +
+                    "show this information."));
+    out.insert(Switch("no-list-strings")
+               .key("list-strings")
+               .intrinsicValue(false, settings.doListStrings)
                .hidden(true));
 
     out.insert(Switch("list-unused-addresses")
@@ -882,6 +896,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.doListStrings) {
+        StringFinder analyzer;
+        StringFinder::Strings strings = analyzer.findAllStrings(partitioner.memoryMap().any());
+        Stringifier charEncodingName(stringifyBinaryAnalysisStringFinderCharacterEncoding);
+        Stringifier lengthEncodingName(stringifyBinaryAnalysisStringFinderLengthEncoding);
+        BOOST_FOREACH (const StringFinder::String &string, strings.values()) {
+            std::cout <<boost::to_lower_copy(lengthEncodingName(string.lengthEncoding())) <<" "
+                      <<boost::to_lower_copy(charEncodingName(string.characterEncoding())) <<" string at "
+                      <<StringUtility::addrToString(string.address());
+            std::string s = analyzer.decode(partitioner.memoryMap(), string);
+            std::cout <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
+        }
+    }
+    
     if (settings.doListContainer && interp) {
         std::set<SgAsmGenericFile*> emittedFiles;
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
