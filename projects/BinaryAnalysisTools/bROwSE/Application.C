@@ -2,6 +2,7 @@
 
 #include <bROwSE/WAssemblyListing.h>
 #include <bROwSE/WBusy.h>
+#include <bROwSE/WCrossReferences.h>
 #include <bROwSE/WFunctionCfg.h>
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
@@ -11,6 +12,7 @@
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WSplash.h>
 #include <bROwSE/WStatus.h>
+#include <bROwSE/WStrings.h>
 #include <Disassembler.h>                               // ROSE
 #include <Partitioner2/Engine.h>                        // ROSE
 #include <Partitioner2/Modules.h>                       // ROSE
@@ -238,13 +240,25 @@ Application::init() {
     wGrid_->addWidget(instantiateMainTabs(), 1, 1);
 
     // East side is a tool pane
-    wSemantics_ = new WSemantics(ctx_);
-    wGrid_->addWidget(wSemantics_, 1, 2);
+    Wt::WContainerWidget *rightPane = new Wt::WContainerWidget;
+    wGrid_->addWidget(rightPane, 1, 2);
+
+    wSemantics_ = new WSemantics(ctx_, rightPane);
+
+    wCrossRefs_ = new WCrossReferences(rightPane);
+    wCrossRefs_->referenceClicked().connect(boost::bind(&Application::gotoReference, this, _1));
 
     // The bottom center is the status area
     wStatusBar_ = new WStatusBar;
     wStatus_->messageArrived().connect(boost::bind(&WStatusBar::appendMessage, wStatusBar_, _1));
     wGrid_->addWidget(wStatusBar_, 2, 1);
+
+    //---------
+    // Startup
+    //---------
+    
+    wPartitioner_->memoryMapProvider(wMemoryMap_);
+    showHideTabs();
 }
 
 Wt::WContainerWidget*
@@ -307,6 +321,12 @@ Application::instantiateMainTabs() {
                 tabContent = wHexDump_ = new WHexDump;
                 break;
             }
+            case StringsTab: {
+                tabName = "Strings";
+                tabContent = wStrings_ = new WStrings;
+                wStrings_->stringClicked().connect(boost::bind(&Application::updateStringCrossReferences, this, _1));
+                break;
+            }
             case StatusTab: {
                 tabName = "Status";
                 tabContent = wStatus_ = new WStatus(ctx_);
@@ -319,9 +339,6 @@ Application::instantiateMainTabs() {
         ASSERT_forbid(tabName.empty());
         wMainTabs_->addTab(tabContent, tabName);
     }
-
-    wPartitioner_->memoryMapProvider(wMemoryMap_);
-    showHideTabs();
     return mainTabContainer;
 }
 
@@ -341,6 +358,8 @@ Application::isTabAvailable(MainTab idx) {
             return currentFunction_ != NULL;
         case HexDumpTab:
             return !wHexDump_->memoryMap().isEmpty();
+        case StringsTab:
+            return !wStrings_->memoryMap().isEmpty();
         case StatusTab:
             return true;
         default:
@@ -363,6 +382,15 @@ Application::showHideTabs() {
         ASSERT_require2(someAvail, "all main tabs are hidden");
         wMainTabs_->setCurrentIndex(*someAvail);
     }
+
+    showHideTools();
+}
+
+void
+Application::showHideTools() {
+    MainTab curTab = (MainTab)wMainTabs_->currentIndex();
+    wSemantics_->setHidden(curTab != FunctionCfgTab && curTab != AssemblyTab);
+    wCrossRefs_->setHidden(curTab != StringsTab);
 }
 
 void
@@ -385,7 +413,8 @@ void
 Application::handleSpecimenPartitioned(bool done) {
     wMemoryMap_->isEditable(!done);                     // disallow memory map editing once the partitioner has run
     wFunctionList_->reload();
-    if (!done)
+    wStrings_->partitioner(ctx_.partitioner);           // updates string-code cross references
+    if (!done) 
         currentFunction_ = P2::Function::Ptr();
     showHideTabs();
 }
@@ -417,6 +446,8 @@ Application::changeTab(MainTab tab) {
             break;
         case HexDumpTab:
             break;
+        case StringsTab:
+            break;
         case StatusTab:
             wStatus_->redraw();
             break;
@@ -429,8 +460,9 @@ Application::changeTab(MainTab tab) {
     wFunctionCfg_->setHidden(FunctionCfgTab!=tab && wFunctionCfg_->function()!=currentFunction_);
     wAssembly_->setHidden(AssemblyTab!=tab && wAssembly_->function()!=currentFunction_);
 
-    // redundant when use clicked on a tab, but not otherwise
+    // redundant when user clicked on a tab, but not otherwise
     wMainTabs_->setCurrentIndex(tab);
+    showHideTools();
 }
 
 void
@@ -455,6 +487,7 @@ Application::changeFunctionDoubleClick(const P2::Function::Ptr &function) {
 void
 Application::memoryMapChanged() {
     wHexDump_->memoryMap(wMemoryMap_->memoryMap());
+    wStrings_->memoryMap(wMemoryMap_->memoryMap());
 }
 
 void
@@ -466,6 +499,22 @@ Application::showHexDumpAtAddress(rose_addr_t va) {
 void
 Application::changeBasicBlock(const P2::BasicBlock::Ptr &bb) {
     wSemantics_->changeBasicBlock(bb);
+}
+
+void
+Application::updateStringCrossReferences(size_t stringIdx) {
+    const P2::ReferenceSet &xrefs = wStrings_->crossReferences(stringIdx);
+    wCrossRefs_->refs(xrefs);
+}
+
+void
+Application::gotoReference(const P2::Reference &ref) {
+    if (P2::BasicBlock::Ptr bblock = ref.basicBlock()) {
+        if (P2::Function::Ptr function = ctx_.partitioner.basicBlockFunctionOwner(bblock)) {
+            changeFunction(function);
+            changeTab(FunctionCfgTab);
+        }
+    }
 }
 
 } // namespace

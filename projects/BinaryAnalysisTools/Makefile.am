@@ -51,6 +51,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WAddressComboBox.C		\
 	bROwSE/WAddressSpace.C			\
 	bROwSE/WBusy.C				\
+	bROwSE/WCrossReferences.C		\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\
 	bROwSE/WFunctionNavigation.C		\
@@ -63,8 +64,9 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WSemantics.C			\
 	bROwSE/WSplash.C			\
 	bROwSE/WStatus.C			\
+	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
-bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
+bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 endif
