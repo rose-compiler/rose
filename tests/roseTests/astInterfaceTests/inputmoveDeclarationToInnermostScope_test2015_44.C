@@ -1,12 +1,10 @@
 int verbose;
 
-int x;
-
-void Debug_printInfo(char*);
+void Debug_printInfo(int);
 
 #define DEBUG_MACRO( verbose, where ) if ( verbose > 10 ) Debug_printInfo(where)
 
 void foobar()
    {
-     DEBUG_MACRO(verbose,"old");
+     DEBUG_MACRO(verbose,42);
    }

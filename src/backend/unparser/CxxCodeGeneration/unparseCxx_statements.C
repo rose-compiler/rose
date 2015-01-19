@@ -2936,6 +2936,9 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
      while (if_stmt != NULL)
         {
           SgStatement *tmp_stmt = NULL;
+#if 0
+          printf ("In unparseIfStmt(): in while loop over if statements: if_stmt = %p \n",if_stmt);
+#endif
 
        // DQ (12/6/2014): Test for if we have unparsed partially using the token stream. 
        // If so then we don't want to unparse this syntax, if not then we require this syntax.
@@ -2968,9 +2971,11 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgStatement* true_body = if_stmt->get_true_body();
                if (true_body != NULL)
                   {
+                 // DQ (1/18/2015): With the denormalization of SgBasicBlock in the SgIfStmt false body we have to use the computed if_stmt and not the outer stmt.
                  // unparseStatementFromTokenStream (stmt, true_body, e_leading_whitespace_start, e_token_subsequence_start);
                  // unparseStatementFromTokenStream (stmt, true_body, e_token_subsequence_start, e_token_subsequence_start);
-                    unparseStatementFromTokenStream (stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start);
+                 // unparseStatementFromTokenStream (stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start);
+                    unparseStatementFromTokenStream (if_stmt, true_body, e_token_subsequence_start, e_leading_whitespace_start);
                   }
              }
 
@@ -3005,6 +3010,11 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint("\n/* DONE: Unparse the if true body */ \n");
 #endif
              }
+
+#if 0
+          printf ("Check for a false body \n");
+          curprint("\n/* Check for a false body */ \n");
+#endif
 
           if ( (tmp_stmt = if_stmt->get_false_body()) )
              {
@@ -3065,7 +3075,9 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint("/* DONE: Unparse the else before the false body */");
 #endif
                   }
-
+#if 0
+               printf ("In unparseIfStmt(): unparsing the false branch: tmp_stmt = %p = %s \n",tmp_stmt,tmp_stmt->class_name().c_str());
+#endif
                if_stmt = isSgIfStmt(tmp_stmt);
                if (if_stmt == NULL) 
                   {
@@ -3102,6 +3114,10 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (12/16/2008): Need to process any associated CPP directives and comments
           if (if_stmt != NULL)
              {
+#if 0
+               printf ("Calling unparseAttachedPreprocessingInfo(PreprocessingInfo::before): if_stmt = %p \n",if_stmt);
+               curprint("/* Calling unparseAttachedPreprocessingInfo(PreprocessingInfo::before) */");
+#endif
                unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
              }
         }

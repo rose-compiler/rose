@@ -299,7 +299,12 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_56.C \
   inputmoveDeclarationToInnermostScope_test2015_57.C \
   inputmoveDeclarationToInnermostScope_test2015_58.C \
-  inputmoveDeclarationToInnermostScope_test2015_59.C
+  inputmoveDeclarationToInnermostScope_test2015_59.C \
+  inputmoveDeclarationToInnermostScope_test2015_60.C \
+  inputmoveDeclarationToInnermostScope_test2015_61.C \
+  inputmoveDeclarationToInnermostScope_test2015_62.C \
+  inputmoveDeclarationToInnermostScope_test2015_63.C \
+  inputmoveDeclarationToInnermostScope_test2015_64.C
 
 # DQ (1/11/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2015_45.C 

@@ -275,7 +275,7 @@ int main(int argc, char * argv[])
 // DQ (12/11/2014): Added output of graph after transformations.
    if (SgProject::get_verbose() > 0)
       {
-#if 0
+#if 1
         printf ("Generating a DOT graph of the AST \n");
         generateDOTforMultipleFile(*project);
 #endif
@@ -312,7 +312,7 @@ int main(int argc, char * argv[])
 
    if (SgProject::get_verbose() > 0)
       {
-#if 1
+#if 0
         printf ("Generating a WHOLE AST DOT graph \n");
         generateDOTforMultipleFile(*project);
 #endif
@@ -320,6 +320,9 @@ int main(int argc, char * argv[])
         const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
         generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
       }
+
+// DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
+   SageInterface::cleanupNontransformedBasicBlockNode();
 
  // run all tests
   AstTests::runAllTests(project);
