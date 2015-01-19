@@ -103,7 +103,12 @@ using namespace std;
 using namespace SageBuilder;
 
 
-
+// DQ (1/18/2015): Define this container locally in this file only.
+namespace SageInterface
+   {
+  // DQ (1/18/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+     vector<SgBasicBlock*> addedBasicBlockNodes;
+   }
 
 void
 SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
@@ -12669,10 +12674,106 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b = SageBuilder::buildBasicBlock(b);
       fs->set_true_body(b);
       b->set_parent(fs);
+
+   // DQ (1/18/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+#if 1
+      recordNormalizations(b);
+#else
+      SgBasicBlock* bb = isSgBasicBlock(b);
+      ROSE_ASSERT(bb != NULL);
+      addedBasicBlockNodes.push_back(bb);
+#if 0
+      printf ("In SageInterface::ensureBasicBlockAsTrueBodyOfIf(): Added SgBasicBlock b = %p to addedBasicBlockNodes.size() = %zu \n",b,addedBasicBlockNodes.size());
+#endif
+#endif
     }
     ROSE_ASSERT (isSgBasicBlock(b));
     return isSgBasicBlock(b);
   }
+
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+void SageInterface::recordNormalizations(SgStatement* s)
+   {
+  // Record where normalization have been done so that we can preform denormalizations as required 
+  // for the token-based unparsing to generate minimal diffs.
+
+     SgBasicBlock* bb = isSgBasicBlock(s);
+     ROSE_ASSERT(bb != NULL);
+     addedBasicBlockNodes.push_back(bb);
+#if 1
+     printf ("In SageInterface::recordNormalizations(): Added SgBasicBlock = %p to addedBasicBlockNodes.size() = %zu \n",bb,addedBasicBlockNodes.size());
+#endif
+   }
+
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+void SageInterface::cleanupNontransformedBasicBlockNode()
+   {
+  // Remove unused basic block IR nodes added as part of normalization.
+  // This function shuld be called before the unparse step.
+
+#if 1
+     printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
+#endif
+
+     for (vector<SgBasicBlock*>::iterator i = addedBasicBlockNodes.begin(); i != addedBasicBlockNodes.end(); i++)
+        {
+          SgBasicBlock* b = *i;
+          ROSE_ASSERT(b != NULL);
+          if (b->get_statements().size() == 1)
+             {
+                printf ("This SgBasicBlock can be denormalized: b = %p \n",b);
+
+                SgStatement* parentOfBlock = isSgStatement(b->get_parent());
+                ROSE_ASSERT(parentOfBlock != NULL);
+
+                SgStatement* s = b->get_statements()[0];
+                ROSE_ASSERT(s != NULL);
+
+                switch (parentOfBlock->variantT())
+                   {
+                     case V_SgIfStmt:
+                        {
+                          SgIfStmt* ifStatement = isSgIfStmt(parentOfBlock);
+                          if (b == ifStatement->get_true_body())
+                             {
+                               ifStatement->set_true_body(s);
+                               s->set_parent(ifStatement);
+                               *i = NULL;
+                            // delete b;
+                             }
+                            else
+                             {
+                               ROSE_ASSERT(b == ifStatement->get_false_body());
+                               ifStatement->set_false_body(s);
+                               s->set_parent(ifStatement);
+                               *i = NULL;
+#if 0
+                               printf ("Error: case not handled in case V_SgIfStmt: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
+                               ROSE_ASSERT(false);
+#endif
+                             }
+                          break;
+                        }
+
+                     default:
+                        {
+                          printf ("Error: case not handled in switch: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
+                          ROSE_ASSERT(false);
+                        }
+                   }
+
+#if 0
+                printf ("Exiting as a test! \n");
+                ROSE_ASSERT(false);
+#endif
+             }
+        }
+
+#if 1
+     printf ("Leaving SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
+#endif
+   }
+
 
   SgBasicBlock* SageInterface::ensureBasicBlockAsFalseBodyOfIf(SgIfStmt* fs , bool createEmptyBody /* = true*/) {
     SgStatement* b = fs->get_false_body();
@@ -12683,6 +12784,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b = SageBuilder::buildBasicBlock(b); // This works if b is NULL as well (producing an empty block)
       fs->set_false_body(b);
       b->set_parent(fs);
+
+   // DQ (1/18/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+      recordNormalizations(b);
     }
     ROSE_ASSERT (isSgBasicBlock(b));
     return isSgBasicBlock(b);
@@ -14411,6 +14515,28 @@ SageInterface::lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::
 #if 0
      printf ("In SageInterface::lastStatementOfScopeWithTokenInfo(): scope = %p = %s \n",scope,scope->class_name().c_str());
 #endif
+
+     SgIfStmt* ifStatement = isSgIfStmt(scope);
+     if (ifStatement != NULL)
+        {
+          lastStatement = ifStatement->get_false_body();
+          if (lastStatement == NULL || (tokenStreamSequenceMap.find(lastStatement) == tokenStreamSequenceMap.end() || tokenStreamSequenceMap[lastStatement] == NULL))
+             {
+               lastStatement = ifStatement->get_true_body();
+               if (lastStatement == NULL || (tokenStreamSequenceMap.find(lastStatement) == tokenStreamSequenceMap.end() || tokenStreamSequenceMap[lastStatement] == NULL))
+                  {
+                    lastStatement = NULL;
+                  }
+             }
+
+          printf ("Note: SgIfStmt scope in SageInterface::lastStatementOfScopeWithTokenInfo(): returning lastStatement = %p \n",lastStatement);
+          if (lastStatement != NULL)
+             {
+               printf ("   --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+             }
+
+          return lastStatement;
+        }
 
      SgStatementPtrList statementList = scope->generateStatementList();
      if (statementList.rbegin() != statementList.rend())

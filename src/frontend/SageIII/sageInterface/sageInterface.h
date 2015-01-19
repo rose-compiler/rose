@@ -1961,6 +1961,13 @@ ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos)
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
 
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+//! Remove unused basic block IR nodes added as part of normalization.
+ROSE_DLL_API void cleanupNontransformedBasicBlockNode();
+
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+//! Record where normalization have been done so that we can preform denormalizations as required for the token-based unparsing to generate minimal diffs.
+ROSE_DLL_API void recordNormalizations(SgStatement* s);
 
 //! Check if a statement is a (true or false) body of a container-like parent, such as For, Upc_forall, Do-while,
 //! switch, If, Catch, OmpBodyStmt, etc

@@ -1602,9 +1602,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
             // Unfortunately, it can also be a token for a variable reference expression and thus we have to handle this case explicitly.
 #if DEBUG_MACRO_HANDLING
                printf ("^^^^^^^^^^^ Looking for macro expansions within token subsequence mappings: \n");
+            // printf ("   --- tokenToNodeVector[j=%zu]->token_subsequence_start   = %d end = %d \n",j,tokenToNodeVector[j]->token_subsequence_start,tokenToNodeVector[j]->token_subsequence_end);
 #endif
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
+#if DEBUG_MACRO_HANDLING
+                    printf ("   --- tokenToNodeVector[j=%zu]->token_subsequence_start   = %d end = %d \n",j,tokenToNodeVector[j]->token_subsequence_start,tokenToNodeVector[j]->token_subsequence_end);
+#endif
                  // This can be true for the case of a ";" (SgNullExpression in a SgExprStatement) as well as for where macros are used.
                     if (tokenToNodeVector[j]->token_subsequence_start == tokenToNodeVector[j]->token_subsequence_end)
                        {
@@ -1861,7 +1865,17 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 
                       // This is required to support the dark token sequence support for trailing white space.
-                         SgForStatement* forStatement = isSgForStatement(n);
+                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+                         if (functionDeclaration != NULL && mappingInfo->node == functionDeclaration->get_definition() )
+                            {
+                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                            }
+
+                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
+                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
+                         SgForStatement*    forStatement = isSgForStatement(n);
+                         SgIfStmt*          ifStatement = isSgIfStmt(n);
+
                          if (forStatement != NULL && mappingInfo->node == forStatement->get_loop_body() )
                             {
                            // fixupDarkTokenSubsequences = true;
@@ -1873,27 +1887,20 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // so that we would not inlcude it in the leading whitespace.  For now it would be simpler 
                       // to avoid processing these cases, however it could be a problem if a dark token subsequence 
                       // were embedded just right.
-                         SgIfStmt* ifStatement = isSgIfStmt(n);
                       // if (ifStatement != NULL && mappingInfo->node == ifStatement->get_true_body() )
                          if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body() || mappingInfo->node == ifStatement->get_false_body()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
                             }
 
-                         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
-                         if (functionDeclaration != NULL && mappingInfo->node == functionDeclaration->get_definition() )
-                            {
-                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
-                            }
-
-                         if (forStatement != NULL && mappingInfo->node == forStatement->get_for_init_stmt() )
+                      // if (forStatement != NULL && mappingInfo->node == forStatement->get_for_init_stmt() )
+                         if ( (forStatement   != NULL && mappingInfo->node == forStatement->get_for_init_stmt()) ||
+                              (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
                             }
 
                       // These statements have syntax that seperate the main construct from the construct's associated body (namely the ")" closing parenthesis).
-                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
-                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
                          if ( (switchStatement != NULL && mappingInfo->node == switchStatement->get_body()) ||
                               (whileStatement  != NULL && mappingInfo->node == whileStatement->get_body())  ||
                               (forStatement    != NULL && mappingInfo->node == forStatement->get_loop_body()) )
@@ -3471,7 +3478,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                               printf ("$$$$$$$$$$$$ Handle special case of SgIfStmt = %p and the else syntax position \n",ifStatement);
 #endif
-                              ROSE_ASSERT(i > 0);
+                           // DQ (1/18/2015): We can't always assume this with the current normalization/denormalization support for SgBasicBlocks in SgIfStmt true and false branches.
+                           // ROSE_ASSERT(i > 0);
+                              if (i > 0)
+                                 {
                               TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
                               ROSE_ASSERT(previous_mappingInfo != NULL);
 #if 0
@@ -3500,6 +3510,12 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
                               ROSE_ASSERT(false);
 #endif
+                                 }
+                                else
+                                 {
+                                   printf ("In evaluateSynthesizedAttribute(): support for else syntax: false body in SgIfStmt does not have a previous TokenStreamSequenceToNodeMapping: ignoring this case \m");
+                                   printf ("   --- false_body_statement = %p \n");
+                                 }
                             }
                        }
                   }
