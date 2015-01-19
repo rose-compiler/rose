@@ -174,15 +174,6 @@ SgValueExp::get_constant_folded_value_as_string() const
                break;
              }
 
-       // DQ (7/31/2014): Adding support for C++11 nullptr const value expressions.
-          case V_SgNullptrValExp:
-             {
-               const SgNullptrValExp* nullptrValueExpression = isSgNullptrValExp(this);
-               ROSE_ASSERT(nullptrValueExpression != NULL);
-               s = "nullptr";
-               break;
-             }
-
        // DQ (8/19/2009): Added case
           case V_SgBoolValExp:
              {
