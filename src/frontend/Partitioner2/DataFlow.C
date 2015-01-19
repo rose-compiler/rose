@@ -445,10 +445,10 @@ State::findStackVariables(const BaseSemantics::SValuePtr &initialStackPointer) c
         }
     }
 
-    // Organize the intervals into a list of abstract locations.
+    // Organize the intervals into a list of stack variables
     std::vector<StackVariable> retval;
     BOOST_FOREACH (const OffsetInterval &interval, stackWriters.intervals()) {
-        int64_t offset=interval.least();
+        int64_t offset = interval.least();
         int64_t nRemaining = interval.size();
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
@@ -491,7 +491,47 @@ State::findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer
     }
     return retval;
 }
-    
+
+std::vector<AbstractLocation>
+State::findGlobalVariables(size_t wordNBytes) const {
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+    ASSERT_require(wordNBytes>0);
+    BaseSemantics::MemoryCellListPtr memState = BaseSemantics::MemoryCellList::promote(semanticState_->get_memory_state());
+
+    // Find groups of consecutive addresses that were written to by the same instruction.  This is how we coalesce adjacent
+    // bytes into larger variables.
+    typedef Sawyer::Container::IntervalMap<AddressInterval, rose_addr_t /*writer*/> StackWriters;
+    typedef Sawyer::Container::Map<rose_addr_t, BaseSemantics::SValuePtr> SymbolicAddresses;
+    StackWriters stackWriters;
+    SymbolicAddresses symbolicAddrs;
+    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->get_cells()) {
+        ASSERT_require2(0 == cell->get_value()->get_width() % 8, "memory must be byte addressable");
+        size_t nBytes = cell->get_value()->get_width() / 8;
+        ASSERT_require(nBytes > 0);
+        if (cell->get_address()->is_number() && cell->get_address()->get_width()<=64) {
+            rose_addr_t va = cell->get_address()->get_number();
+            stackWriters.insert(AddressInterval::baseSize(va, nBytes), cell->latestWriter().orElse(0));
+            symbolicAddrs.insert(va, cell->get_address());
+        }
+    }
+
+    // Organize the intervals into a list of global variables
+    std::vector<AbstractLocation> retval;
+    BOOST_FOREACH (const AddressInterval &interval, stackWriters.intervals()) {
+        rose_addr_t va = interval.least();
+        rose_addr_t nRemaining = interval.size();
+        ASSERT_require2(nRemaining>0, "overflow");
+        while (nRemaining > 0) {
+            BaseSemantics::SValuePtr addr = symbolicAddrs.get(va);
+            rose_addr_t nBytes = std::min(nRemaining, wordNBytes);
+            retval.push_back(AbstractLocation(addr, nBytes));
+            va += nBytes;
+            nRemaining -= nBytes;
+        }
+    }
+    return retval;
+}
+
 // Construct a new state from scratch
 State::Ptr
 TransferFunction::initialState() const {
