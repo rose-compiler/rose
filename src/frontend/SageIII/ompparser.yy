@@ -96,7 +96,7 @@ corresponding C type is union name defaults to YYSTYPE.
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
-        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC IN OUT INOUT
+        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
         SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
@@ -588,16 +588,16 @@ map_clause: MAP {
                        b_within_variable_list = true;
                        if (omptype == e_map) // map data directions are not explicitly specified
                        {
-                          ompattribute->setMapVariant(e_map_inout);  omptype = e_map_inout;  
+                          ompattribute->setMapVariant(e_map_tofrom);  omptype = e_map_tofrom;  
                        }
                      } 
                      variable_list ')' { b_within_variable_list =false;} 
 
-map_clause_optseq: /* empty, default to be inout */ { ompattribute->setMapVariant(e_map_inout);  omptype = e_map_inout; /*No effect here???*/ }
+map_clause_optseq: /* empty, default to be tofrom*/ { ompattribute->setMapVariant(e_map_tofrom);  omptype = e_map_tofrom; /*No effect here???*/ }
                     | ALLOC ':' { ompattribute->setMapVariant(e_map_alloc);  omptype = e_map_alloc; } 
-                    | IN     ':' { ompattribute->setMapVariant(e_map_in); omptype = e_map_in; } 
-                    | OUT    ':' { ompattribute->setMapVariant(e_map_out); omptype = e_map_out; } 
-                    | INOUT  ':' { ompattribute->setMapVariant(e_map_inout); omptype = e_map_inout; } 
+                    | TO     ':' { ompattribute->setMapVariant(e_map_to); omptype = e_map_to; } 
+                    | FROM    ':' { ompattribute->setMapVariant(e_map_from); omptype = e_map_from; } 
+                    | TOFROM  ':' { ompattribute->setMapVariant(e_map_tofrom); omptype = e_map_tofrom; } 
                     ;
 
 simd_directive: /* # pragma */ OMP SIMD

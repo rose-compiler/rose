@@ -1370,6 +1370,16 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                        }
 #endif
 
+                 // DQ (11/10/2014): This case is required for ROSE compiling C++11 header files.
+                    case V_SgRvalueReferenceType:
+                       {
+                      // Unclear what should be checked here, for now allow this as an acceptable case.
+#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
+                         printf ("Warning: EDG 4.x specific case, found unusual case of SgTypeUnknown returned from SgFunctionCallExp::get_type() member function \n");
+#endif
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error case default in switch (callType = %s) \n",callType->sage_class_name());
@@ -3359,6 +3369,8 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                 // DQ (11/4/2014): Adding support for template typedef declarations.
+                    case V_SgTemplateTypedefSymbol:
                     case V_SgTypedefSymbol:
                        {
                          SgTypedefSymbol* typedefSymbol = isSgTypedefSymbol(symbol);
@@ -5663,15 +5675,19 @@ TestLValueExpressions::visit ( SgNode* node )
                          ROSE_ASSERT(operand != NULL);
 
 #if WARN_ABOUT_ATYPICAL_LVALUES
-                      // if (operand->get_lvalue() == true)
-                         if (operand->get_lvalue() == false)
-                            {
-                              printf ("Error for operand = %p = %s = %s in unary expression (SgMinusMinusOp or SgPlusPlusOp) = %s \n",
-                                   operand,operand->class_name().c_str(),SageInterface::get_name(operand).c_str(),expression->class_name().c_str());
-                              unaryOperator->get_startOfConstruct()->display("Error for operand: operand->get_lvalue() == true: debug");
-                            }
+                         if (operand->get_lvalue() == false) {
+                              std::cerr <<"Error for operand"
+                                        <<" (" <<operand->class_name() <<"*)" <<" = " <<SageInterface::get_name(operand)
+                                        <<" in unary " <<expression->class_name() <<" expression"
+                                        <<": operand->get_lvalue() == false but should be true\n";
+                              std::cerr <<"ancestors of (" <<operand->class_name() <<"*)" <<operand <<" are:";
+                              for (SgNode *p=operand->get_parent(); p; p=p->get_parent())
+                                  std::cerr <<" (" <<p->class_name() <<"*)" <<p;
+                              std::cerr <<"\n";
+                              unaryOperator->get_startOfConstruct()
+                                  ->display("Error for operand: operand->get_lvalue() == false: debug");
+                         }
 #endif
-                      // ROSE_ASSERT(operand->get_lvalue() == false);
                          ROSE_ASSERT(operand->get_lvalue() == true);
                          break;
                        }

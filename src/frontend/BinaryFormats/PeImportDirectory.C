@@ -64,7 +64,7 @@ SgAsmPEImportDirectory::find_import_item(const SgAsmPEImportItem *item, int hint
  *  have known addresses, and add those areas of virtual memory to the specified extent map.  This function returns the number
  *  of ILT entries that reference a Hint/Name pair. */
 size_t
-SgAsmPEImportDirectory::hintname_table_extent(ExtentMap &extent/*in,out*/) const
+SgAsmPEImportDirectory::hintname_table_extent(AddressIntervalSet &extent/*in,out*/) const
 {
     size_t retval = 0;
     const SgAsmPEImportItemPtrList &imports = get_imports()->get_vector();
@@ -72,7 +72,7 @@ SgAsmPEImportDirectory::hintname_table_extent(ExtentMap &extent/*in,out*/) const
         SgAsmPEImportItem *import = *ii;
         if (!import->get_by_ordinal() && import->get_hintname_rva().get_rva()!=0 && import->get_hintname_nalloc()>0) {
             size_t nbytes = std::min(import->get_hintname_nalloc(), import->hintname_required_size());
-            extent.insert(Extent(import->get_hintname_rva().get_va(), nbytes));
+            extent.insert(AddressInterval::baseSize(import->get_hintname_rva().get_va(), nbytes));
             ++retval;
         }
     }

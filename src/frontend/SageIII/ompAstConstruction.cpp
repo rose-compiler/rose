@@ -555,19 +555,19 @@ namespace OmpSupport
     SgOmpClause::omp_map_operator_enum result = SgOmpClause::e_omp_map_unknown;
     switch (at_op)
     {
-      case e_map_inout: 
+      case e_map_tofrom: 
         {
-          result = SgOmpClause::e_omp_map_inout;
+          result = SgOmpClause::e_omp_map_tofrom;
           break;
         }
-      case e_map_in: 
+      case e_map_to: 
         {
-          result = SgOmpClause::e_omp_map_in;
+          result = SgOmpClause::e_omp_map_to;
           break;
         }
-      case e_map_out: 
+      case e_map_from: 
         {
-          result = SgOmpClause::e_omp_map_out;
+          result = SgOmpClause::e_omp_map_from;
           break;
         }
       case e_map_alloc: 
@@ -734,7 +734,7 @@ namespace OmpSupport
   }
 
   //! Build a map clause with a given operation type from OmpAttribute
-  // map may have several variants: inout, in, out, and alloc. 
+  // map may have several variants: tofrom, to, from, and alloc. 
   // the variables for each may have dimension info 
   SgOmpMapClause* buildOmpMapClause(OmpAttribute* att, omp_construct_enum map_op)
   {

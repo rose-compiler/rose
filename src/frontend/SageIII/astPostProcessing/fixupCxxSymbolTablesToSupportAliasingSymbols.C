@@ -160,6 +160,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
+                      // DQ (11/10/2014): Added support for templated typedef symbols.
+                         case V_SgTemplateTypedefSymbol:
+
                          case V_SgEnumSymbol:
                          case V_SgVariableSymbol:
                          case V_SgTemplateClassSymbol:
@@ -206,6 +209,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               } // end for
                               break;
                            }
+
+
 #if 0 // uniform handling by code above now
                          case V_SgEnumSymbol:
                             {
