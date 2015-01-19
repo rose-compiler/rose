@@ -130,6 +130,34 @@ Partitioner::nInstructions() const {
     return nInsns;
 }
 
+CrossReferences
+Partitioner::instructionCrossReferences(const AddressIntervalSet &restriction) const {
+    CrossReferences xrefs;
+
+    struct Accumulator: AstSimpleProcessing {
+        const AddressIntervalSet &restriction;
+        CrossReferences &xrefs;
+        Reference to;
+        Accumulator(const AddressIntervalSet &restriction, CrossReferences &xrefs): restriction(restriction), xrefs(xrefs) {}
+        void target(const Reference &to) { this->to = to; }
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
+                rose_addr_t n = ival->get_absoluteValue();
+                if (restriction.exists(n))
+                    xrefs.insertMaybeDefault(Reference(n)).insert(to);
+            }
+        }
+    } accumulator(restriction, xrefs);
+
+    BOOST_FOREACH (const BasicBlock::Ptr &bblock, basicBlocks()) {
+        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            accumulator.target(Reference(bblock, insn));
+            accumulator.traverse(insn, preorder);
+        }
+    }
+    return xrefs;
+}
+
 size_t
 Partitioner::nPlaceholders() const {
     ASSERT_require(cfg_.nVertices() >= nSpecialVertices);
