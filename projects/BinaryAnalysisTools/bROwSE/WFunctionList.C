@@ -26,8 +26,8 @@ WFunctionList::init() {
                                   "will select the function.  Clicking within a bar graph zooms in, or out (with Control), "
                                   "or all the way out (with Shift-Control)."));
 
-    wAddressSpace_ = new WAddressSpace(ctx_);
-    wAddressSpace_->insertSegmentsAndFunctions();       // segments are bar0, functions are bar1
+    wAddressSpace_ = new WAddressSpace;
+    wAddressSpace_->insertSegmentsAndFunctions(ctx_.partitioner); // segments are bar0, functions are bar1
     wAddressSpace_->topGutterClicked().connect(this, &WFunctionList::selectSegmentByAddress);
     wAddressSpace_->bottomGutterClicked().connect(this, &WFunctionList::selectFunctionByAddress);
     vbox->addWidget(wAddressSpace_);
@@ -82,7 +82,7 @@ void
 WFunctionList::reload() {
     model_->reload();
     wAddressSpace_->clear();
-    wAddressSpace_->insertSegmentsAndFunctions();
+    wAddressSpace_->insertSegmentsAndFunctions(ctx_.partitioner);
     wAddressSpace_->redraw();
     function_ = P2::Function::Ptr();                    // FIXME[Robb P. Matzke 2014-12-28]: emit functionChanged(NULL)?
 }

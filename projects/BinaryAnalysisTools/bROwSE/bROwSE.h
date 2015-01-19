@@ -16,6 +16,7 @@ class WAddressComboBox;
 class WAssemblyListing;
 class WAddressSpace;
 class WBusy;
+class WCrossReferences;
 class WFunctionCfg;
 class WFunctionList;
 class WFunctionNavigation;
@@ -27,6 +28,7 @@ class WPartitioner;
 class WSemantics;
 class WStatus;
 class WStatusBar;
+class WStrings;
 class WToggleButton;
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
