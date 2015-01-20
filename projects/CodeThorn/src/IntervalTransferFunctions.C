@@ -84,8 +84,9 @@ void IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefin
       ++i) {
     SgInitializedName* formalParameterName=*i;
     assert(formalParameterName);
-    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
+    
     // TODO: element. ...
+    // VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
 
   }
 }
@@ -97,7 +98,7 @@ void IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefin
 void IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, IntervalPropertyState& element) {
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
-    VariableId varId=*i;
+    // VariableId varId=*i;
     // TODO: element.removeVariableFromState(varId);
   }
   // TODO:: return variable $r

@@ -1867,7 +1867,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
     EStatePtrSet succNodes=transitionGraph.succ(*i);
     Label originalLabel=(*i)->label();
     InputOutput originalIO=(*i)->io;
-    VariableId originalVar=(*i)->io.var;
+    VariableId originalVar=originalIO.var;
     // eliminate original input node
     transitionGraph.eliminateEState(*i);
     estateSet.erase(const_cast<EState*>(*i));
