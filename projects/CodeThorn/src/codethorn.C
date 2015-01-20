@@ -1073,8 +1073,6 @@ int main( int argc, char * argv[] ) {
                                        useConstSubstitutionRule
                                        );
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
-    RewriteStatistics dump1_stats=rewriteSystem.getRewriteStatistics();
-    dump1_stats.numArrayUpdates=arrayUpdates.size();
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
 #if 0
@@ -1176,7 +1174,6 @@ int main( int argc, char * argv[] ) {
       text<<"-1,-1";
     text<<endl;
 
-    RewriteStatistics dump1_stats=rewriteSystem.getRewriteStatistics();
     text<<"rewrite-stats, "<<rewriteSystem.getRewriteStatistics().toCsvString()<<endl;
     text<<"infinite-paths-size,"<<pstateSetSizeInf<<", "
         <<eStateSetSizeInf<<", "

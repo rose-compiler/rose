@@ -37,9 +37,10 @@ void checkLargeSets();
 void nocheck(string checkIdentifier, bool checkResult);
 void check(string checkIdentifier, bool checkResult, bool check);
 
+// intentionally global
+extern bool checkresult;
+
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
-  // intentionally global
-  extern bool checkresult;
   try {
     // checkTypes() writes into checkresult
     checkTypes();
