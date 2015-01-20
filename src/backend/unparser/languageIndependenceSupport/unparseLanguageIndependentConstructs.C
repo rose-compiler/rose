@@ -789,45 +789,56 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
 
   // DQ (1/17/2015): We need to handle shared token streams and there mappings to statements.
      SgSourceFile* sourceFile = info.get_current_source_file();
-     ROSE_ASSERT(sourceFile != NULL);
-     std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
-     if (stmt->get_containsTransformationToSurroundingWhitespace() == false)
-        {
-          if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
-             {
-               TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
-               if (tokenSubsequence != NULL)
-                  {
-                    if (tokenSubsequence->shared == true)
-                       {
-                         ROSE_ASSERT(tokenSubsequence->nodeVector.empty() == false);
 
-                         SgStatement* last_shared_statement = isSgStatement(tokenSubsequence->nodeVector[tokenSubsequence->nodeVector.size()-1]);
-                         ROSE_ASSERT(last_shared_statement != NULL);
-#if 0
-                         printf ("tokenSubsequence->nodeVector.size() = %zu \n",tokenSubsequence->nodeVector.size());
-                         printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-                         printf ("   --- last_shared_statement = %p = %s \n",last_shared_statement,last_shared_statement->class_name().c_str());
-#endif
-                         if (last_shared_statement == stmt)
+  // DQ (1/19/2015): Some new_app files demostrate that we can't assume that sourceFile != NULL.
+  // ROSE_ASSERT(sourceFile != NULL);
+
+  // DQ (1/19/2015): Skip this case when info.get_current_source_file() == NULL.
+     if (sourceFile != NULL)
+        {
+          std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
+          if (stmt->get_containsTransformationToSurroundingWhitespace() == false)
+             {
+               if (tokenStreamSequenceMap.find(stmt) != tokenStreamSequenceMap.end())
+                  {
+                    TokenStreamSequenceToNodeMapping* tokenSubsequence = tokenStreamSequenceMap[stmt];
+                    if (tokenSubsequence != NULL)
+                       {
+                         if (tokenSubsequence->shared == true)
                             {
+                              ROSE_ASSERT(tokenSubsequence->nodeVector.empty() == false);
+
+                              SgStatement* last_shared_statement = isSgStatement(tokenSubsequence->nodeVector[tokenSubsequence->nodeVector.size()-1]);
+                              ROSE_ASSERT(last_shared_statement != NULL);
+#if 0
+                              printf ("tokenSubsequence->nodeVector.size() = %zu \n",tokenSubsequence->nodeVector.size());
+                              printf ("   --- stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                              printf ("   --- last_shared_statement = %p = %s \n",last_shared_statement,last_shared_statement->class_name().c_str());
+#endif
+                              if (last_shared_statement == stmt)
+                                 {
 #if 1
-                              printf ("Detected a statement associated with a shared token sequence, returing true for last shared statement. \n");
+                                   printf ("Detected a statement associated with a shared token sequence, returing true for last shared statement. \n");
 #endif
-                           // return true;
-                              unparseUsingTokenStream = true;
-                            }
-                           else
-                            {
-                              unparseUsingTokenStream = false;
-                            }
+                                // return true;
+                                   unparseUsingTokenStream = true;
+                                 }
+                                else
+                                 {
+                                   unparseUsingTokenStream = false;
+                                 }
 #if 0
-                         printf ("Exiting as a test! \n");
-                         ROSE_ASSERT(false);
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
 #endif
+                            }
                        }
                   }
              }
+        }
+       else
+        {
+          printf ("NOTE: In Unparse_ExprStmt::unparseAttachedPreprocessingInfoUsingTokenStream(): isolated case where info.get_current_source_file() == NULL \n");
         }
 
      if (prepInfoPtr != NULL)
