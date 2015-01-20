@@ -1,4 +1,5 @@
 #include <boost/foreach.hpp>
+#include <boost/numeric/conversion/cast.hpp>
 #include <Color.h>
 #include <cmath>
 #include <cstdio>
@@ -102,10 +103,13 @@ HSV fade(const HSV &hsv, double amount) {
 
 std::string toHtml(const RGB &rgb) {
     char buf[32];
-    sprintf(buf, "#%02x%02x%02x",
-            (unsigned)round(clip(rgb.r())*255),
-            (unsigned)round(clip(rgb.g())*255),
-            (unsigned)round(clip(rgb.b())*255));
+
+    // Microsoft doesn't define round(double) in <cmath>
+    unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
+    unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
+    unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
+
+    sprintf(buf, "#%02x%02x%02x", r, g, b);
     return buf;
 }
 
