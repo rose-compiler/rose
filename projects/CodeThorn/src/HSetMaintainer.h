@@ -121,7 +121,7 @@ public:
         // found it!
         res=make_pair(iter,false);
       } else {
-        res=insert(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
+        res=this->insert(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
       }
       res2=make_pair(res.second,*res.first);
     }
@@ -150,13 +150,13 @@ public:
       //       this requires a more detailed result: pointer exists, alternate pointer with equal object exists, does not exist
       KeyType* keyPtr=new KeyType();
       *keyPtr=key;
-      res=insert(keyPtr);
+      res=this->insert(keyPtr);
     }
 #ifdef HSET_MAINTAINER_DEBUG_MODE
     std::pair<typename HSetMaintainer::iterator, bool> res1;
-    res1=insert(key);
+    res1=this->insert(key);
     std::pair<typename HSetMaintainer::iterator, bool> res2;
-    res2=insert(key);
+    res2=this->insert(key);
     if(!(res1==res2)) {
       cerr<< "Error: HsetMaintainer failed:"<<endl;
       cerr<< "res1:"<<(*res1.first).toString()<<":"<<res1.second<<endl;
