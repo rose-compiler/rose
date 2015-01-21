@@ -53,34 +53,6 @@ using namespace SageInterface;
 // MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
 namespace SageBuilder {
 
-//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
-/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
- * Doxygen is not smart enough to handle macro expansion. 
- */
-template <class T> ROSE_DLL_API T* buildUnaryExpression(SgExpression* operand = NULL);
-
-//!  Template function to build a unary expression of type T with advanced information specified such as parenthesis and file info. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp(). 
-/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
- * Doxygen is not smart enough to handle macro expansion. 
- */
-template <class T> ROSE_DLL_API T* buildUnaryExpression_nfi(SgExpression* operand);
-
-//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
-/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
- * Doxygen is not smart enough to handle macro expansion. 
- */
-template <class T> ROSE_DLL_API T* buildBinaryExpression(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
-
-//! Template function to build a binary expression of type T,with extra information for parenthesis and file info,  Instantiated functions include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(), buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
-template <class T> ROSE_DLL_API T* buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs);
-
-// DQ (1/21/2009): This is a support function called by the buildNondefiningFunctionDeclaration() and 
-// buildNondefiningMemberFunctionDeclaration() functions.  Since we constructe the function type in 
-// the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
-// a flag to specify which function type to build (bool isMemberFunction).
-//! A template function for function prototype declaration builders
-// template <class actualFunction>
-// actualFunction*
 template <class actualFunction>
 actualFunction*
 buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
@@ -5870,60 +5842,6 @@ SageBuilder::buildListExp_nfi(const std::vector<SgExpression*>& elts)
   return tuple;
 }
 
-//----------------------build unary expressions----------------------
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildUnaryExpression(SgExpression* operand)
-{ 
-  SgExpression* myoperand=operand;
-  
-#if 0
- // it is very tempting to reuse expressions during translation,
-  // so try to catch such a mistake here
-  if (operand!=NULL)
-    if (operand->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse operand of type "
-          << operand->class_name() << 
-        " when building a unary expression . Operand is being copied."<<endl;
-     ROSE_ABORT();// remind user the issue
-      myoperand = isSgExpression(deepCopy(operand));
-    }
-#endif
-  T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
-    myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
-    markLhsValues(result);
-  }
-  setOneSourcePositionForTransformation(result);
-  return result; 
-}
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
-   {
-     SgExpression* myoperand = operand;
-     T* result = new T(myoperand, NULL);
-     ROSE_ASSERT(result);   
-
-     if (myoperand != NULL) 
-        {
-          myoperand->set_parent(result);
-       // set lvalue, it asserts operand!=NULL 
-          markLhsValues(result);
-        }
-
-  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
-  // result->set_startOfConstruct(NULL);
-  // result->set_endOfConstruct(NULL);
-  // result->set_operatorPosition(NULL);
-     setSourcePosition(result);
-
-     result->set_need_paren(false);
-     return result; 
-   }
 
 #define BUILD_UNARY_DEF(suffix) \
   ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
@@ -6090,79 +6008,6 @@ SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw
    }
 
 
-//---------------------binary expressions-----------------------
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
-{
-  SgExpression* mylhs, *myrhs;
-  mylhs = lhs;
-  myrhs = rhs;
-
-#if 0 // Jeremiah complained this, sometimes users just move expressions around
- // it is very tempting to reuse expressions during translation,
-  // so try to catch such a mistake here
-  if (lhs!=NULL)
-    if (lhs->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse lhs of type "
-          << lhs->class_name() <<
-        " when building a binary expression . lhs is being copied."<<endl;
-     ROSE_ABORT();
-      mylhs = isSgExpression(deepCopy(lhs));
-    }
-
-  if (rhs!=NULL)
-    if (rhs->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse rhs of type "
-          << rhs->class_name() <<
-        " when building a binary expression . rhs is being copied."<<endl;
-     ROSE_ABORT();
-      myrhs = isSgExpression(deepCopy(rhs));
-    }
-#endif
-  T* result = new T(mylhs,myrhs, NULL);
-  ROSE_ASSERT(result);
-  if (mylhs!=NULL) 
-  {
-   mylhs->set_parent(result);
-  // set lvalue
-    markLhsValues(result);
-  }
-  if (myrhs!=NULL) myrhs->set_parent(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-
-}
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
-   {
-     SgExpression* mylhs, *myrhs;
-     mylhs = lhs;
-     myrhs = rhs;
-     T* result = new T(mylhs,myrhs, NULL);
-     ROSE_ASSERT(result);
-     if (mylhs!=NULL) 
-        {
-          mylhs->set_parent(result);
-       // set lvalue
-          markLhsValues(result);
-        }
-
-     if (myrhs!=NULL) myrhs->set_parent(result);
-
-  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
-  // result->set_startOfConstruct(NULL);
-  // result->set_endOfConstruct(NULL);
-  // result->set_operatorPosition(NULL);
-     setSourcePosition(result);
-
-     result->set_need_paren(false);
-
-     return result;
-   }
 
 #define BUILD_BINARY_DEF(suffix) \
   ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \
