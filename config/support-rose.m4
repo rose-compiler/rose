@@ -607,34 +607,6 @@ ROSE_SUPPORT_IDA
 # Setup Automake conditional in projects/AstEquivalence/Makefile.am
 AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
-# Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
-ROSE_SUPPORT_YICES
-
-# Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
-ROSE_SUPPORT_YAML
-
-# Call supporting macro to check for "--enable-i386" switch
-ROSE_SUPPORT_I386
-
-# Call supporting macro to internal Satisfiability (SAT) Solver
-ROSE_SUPPORT_SAT
-
-# Setup Automake conditional in --- (not yet ready for use)
-echo "with_sat = $with_sat"
-AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
-
-# Call supporting macro to Intel Pin Dynamic Instrumentation
-ROSE_SUPPORT_INTEL_PIN
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
-
-# Call supporting macro to DWARF (libdwarf)
-ROSE_SUPPORT_DWARF
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
-
 # Call supporting macro for libffi (Foreign Function Interface library)
 # This library is used by Peter's work on the Interpreter in ROSE.
 ROSE_SUPPORT_LIBFFI
@@ -642,19 +614,6 @@ ROSE_SUPPORT_LIBFFI
 # Setup Automake conditional in projects/interpreter/Makefile.am
 AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 
-TEST_SMT_SOLVER=""
-AC_ARG_WITH(smt-solver,
-[  --with-smt-solver=PATH	Specify the path to an SMT-LIB compatible SMT solver.  Used only for testing.],
-if test "x$with_smt_solver" = "xcheck" -o "x$with_smt_solver" = "xyes"; then
-  AC_ERROR([--with-smt-solver cannot be auto-detected])
-fi
-if test "x$with_smt_solver" != "xno"; then
-  TEST_SMT_SOLVER="$with_smt_solver"
-fi,
-)
-
-AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
-AC_SUBST(TEST_SMT_SOLVER)
 
 # DQ (3/13/2009): Trying to get Intel Pin and ROSE to both use the same version of libdwarf.
 # DQ (3/10/2009): The Dwarf support in Intel Pin conflicts with the Dwarf support in ROSE.
@@ -1577,27 +1536,8 @@ fi
 
 # ****************************************************
 #   Support for Assembly Semantics (binary analysis)
+ROSE_SUPPORT_BINARY
 # ****************************************************
-
-AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
-AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
-
-# Xen and Ether [RPM 2009-10-28]
-AC_ARG_WITH(ether,
-        [  --with-ether=PATH   prefix of Xen/Ether installation
-                      Xen is a hypervisor for running virtual machines (http://www.xen.org)
-                      Ether is a layer on top of Xen for accessing Windows XP OS-level data
-                      structures (http://ether.gtisc.gatech.edu)],
-        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
-	 if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi],
-        [with_ether=no])
-AC_SUBST(ETHER_PREFIX)
-AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
-
-# libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h)
-AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
-AC_CHECK_LIB(gcrypt,gcry_check_version)
 
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
 AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
@@ -1608,30 +1548,6 @@ fi
 
 AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
 
-# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
-# the ROSE library.
-AC_CHECK_HEADERS(pthread.h)
-
-# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
-AC_MSG_CHECKING([for thread local storage type qualifier])
-AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
-	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
-	 AC_MSG_RESULT([__thread])],
-	[AC_MSG_RESULT([not supported])])
-
-# These headers and types are needed by projects/simulator [matzke 2009-07-02]
-AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
-AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
-AC_CHECK_HEADERS([termios.h grp.h syscall.h])
-AC_CHECK_FUNCS(pipe2)
-AC_CHECK_TYPE(user_desc,
-              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
-              [],
-	      [#include <asm/ldt.h>])
-
-# Check whether PostgreSQL is supported
-AC_CHECK_HEADERS([pqxx/version.hxx])
-AC_CHECK_LIB(pqxx, PQconnectdb)
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
