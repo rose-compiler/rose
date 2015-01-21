@@ -1882,6 +1882,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               fixupDarkTokenSubsequencesForTrailingWhitespace = false;
                             }
 
+                      // DQ (1/20/2015): Adding support for the trailing whitespace of the "true" branch of an "if" statement.
+                         if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body()) )
+                            {
+                              fixupDarkTokenSubsequencesForTrailingWhitespace  = false;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+
                       // This is required to support the dark token sequence support for leading white space.
                       // The problem here is that these statements have syntax that would have to be identified 
                       // so that we would not inlcude it in the leading whitespace.  For now it would be simpler 
@@ -2072,10 +2082,32 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
                            // int current_mappingInfo_leading_whitespace_start = mappingInfo->leading_whitespace_start;
                            // int current_mappingInfo_leading_whitespace_start = mappingInfo->trailing_whitespace_end;
-                              int current_mappingInfo_token_subsequence_start = mappingInfo->token_subsequence_start;
+                              int current_mappingInfo_token_subsequence_start  = mappingInfo->token_subsequence_start;
 #if DEBUG_DARK_TOKEN_FIXUP
-                              printf ("   --- previous_mappingInfo_trailing_whitespace_end = %d \n",previous_mappingInfo_trailing_whitespace_end);
-                              printf ("   --- current_mappingInfo_token_subsequence_start  = %d \n",current_mappingInfo_token_subsequence_start);
+                              printf ("   --- (preliminary values): previous_mappingInfo_trailing_whitespace_end = %d \n",previous_mappingInfo_trailing_whitespace_end);
+                              printf ("   --- (preliminary values): current_mappingInfo_token_subsequence_start  = %d \n",current_mappingInfo_token_subsequence_start);
+#endif
+                           // DQ (1/20/2015): Adding support to compute the trailing whitespace of a true block of a SgIfStmt (accounting for the "else" syntax).
+                              if (ifStatement != NULL)
+                                 {
+                                   if (previous_mappingInfo->node == ifStatement->get_true_body() && mappingInfo->node == ifStatement->get_false_body())
+                                      {
+                                     // Reset this to a value that will skip the reset of the previous_mappingInfo->trailing_whitespace_end below.
+                                     // current_mappingInfo_token_subsequence_start = mappingInfo->else_whitespace_start;
+                                     // current_mappingInfo_token_subsequence_start = previous_mappingInfo_trailing_whitespace_end;
+                                        current_mappingInfo_token_subsequence_start = -1;
+
+                                        printf ("Need to account for the else between the true and false statements of a SgIfStmt node (reset current_mappingInfo_token_subsequence_start = %d) \n",current_mappingInfo_token_subsequence_start);
+#if 0
+                                        printf ("Exiting as a test! \n");
+                                        ROSE_ASSERT(false);
+#endif
+                                      }
+                                 }
+
+#if DEBUG_DARK_TOKEN_FIXUP
+                              printf ("   --- (final values): previous_mappingInfo_trailing_whitespace_end = %d \n",previous_mappingInfo_trailing_whitespace_end);
+                              printf ("   --- (final values): current_mappingInfo_token_subsequence_start  = %d \n",current_mappingInfo_token_subsequence_start);
 #endif
                            // if (current_mappingInfo_leading_whitespace_start < 0)
                               if (previous_mappingInfo_trailing_whitespace_end < 0)
@@ -2182,6 +2214,17 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                       // end of body for if fixupDarkTokenSubsequences == false
                             }
+
+                      // DQ (1/20/2015): Adding support for the trailing whitespace of the "true" branch of an "if" statement.
+                         if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body()) )
+                            {
+                              printf ("!!!!!!!!!!!!!!!!!!!!!!! DETECTED TRUE BLOCK OF IF STATEMENT !!!!!!!!!!!!!!!!!!!!!!! \n");
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+
 #else
                       // DQ (1/2/2015): START OF COMMENTED OUT BLOCK: We want to make sure that leading a trailing white space does not include syntax.
 

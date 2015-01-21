@@ -3120,6 +3120,12 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                unparseAttachedPreprocessingInfo(if_stmt, info, PreprocessingInfo::before);
              }
+#if 0
+          printf ("In unparseIfStmt(): END of while loop over if statements: if_stmt = %p \n",if_stmt);
+#endif
+#if 0
+          curprint("/* END of while loop in unparseIfStmt */");
+#endif
         }
 
 #if 0
