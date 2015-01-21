@@ -73,15 +73,17 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 
 #if 0	 
 	 //Print out the number of elements found for each variant in the subtree
-     for(int i = 0;  i < lengthVariantT; i++  ){
+     for(int i = 0;  i < V_SgNumVariants; i++  ){
        if(returnAttribute.nodesInSubtree[i] > 0)
-          std::cout << returnAttribute.nodesInSubtree[i] << " " << variantToName[i] << " ";
+          std::cout << returnAttribute.nodesInSubtree[i] << " " << roseGlobalVariantNameList[i] << " ";
 	 }
      std::cout << "\n\n";
 #endif
 
 	 //Write to the file specified in the config file on the commandline
-	 if(std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end())
+	 if( std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end() && 
+             astNode->get_file_info() != NULL && astNode->get_file_info()->isCompilerGenerated() == false 
+           )
 	 {
 
 	   int numTokens = 0;
@@ -117,16 +119,17 @@ CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
 		   int n_decls = 0;
 
 		   for( VariantVector::iterator iItr = stmts.begin(); 
-			   iItr != stmts.end(); ++iItr )
-			 n_stmts+=stmts[*iItr];
+			   iItr != stmts.end(); ++iItr ){
+			 n_stmts+=returnAttribute.nodesInSubtree[*iItr];
+                   }
 
 		   for( VariantVector::iterator iItr = exprs.begin(); 
 			   iItr != exprs.end(); ++iItr )
-			 n_exprs+=exprs[*iItr];
+			 n_exprs+=returnAttribute.nodesInSubtree[*iItr];
 
 		   for( VariantVector::iterator iItr = decls.begin(); 
 			   iItr != decls.end(); ++iItr )
-			 n_decls+=decls[*iItr];
+			 n_decls+=returnAttribute.nodesInSubtree[*iItr];
 
 
 		   myfile << "# FILE:" <<astNode->get_file_info()->get_filenameString();

@@ -118,6 +118,13 @@ x86dis_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 EXTRA_DIST += demos/README demos/SignAnalysisExample.h
 
 #------------------------------------------------------------------------------------------------------------------------------
+# coverage: compute read/write/execute memory coverage.
+noinst_PROGRAMS += coverage
+coverage_SOURCES = demos/coverage.C
+coverage_CPPFLAGS = $(ROSE_INCLUDES)
+coverage_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
 # demo 1: branching to an uncalled function
 noinst_PROGRAMS += demo1
 demo1_SOURCES = demos/demo1.C

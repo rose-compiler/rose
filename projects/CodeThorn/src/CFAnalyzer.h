@@ -20,7 +20,7 @@ namespace CodeThorn {
  */
 class CFAnalyzer {
  public:
-  CFAnalyzer(Labeler* l);
+  CFAnalyzer(SPRAY::Labeler* l);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);
@@ -37,7 +37,7 @@ class CFAnalyzer {
   LabelSet setOfInitialLabelsOfStmtsInBlock(SgNode* node);
   Flow flow(SgNode* node);
   Flow flow(SgNode* s1, SgNode* s2);
-  Labeler* getLabeler();
+  SPRAY::Labeler* getLabeler();
   // computes from existing intra-procedural flow graph(s) the inter-procedural call information
   InterFlow interFlow(Flow& flow); 
   void intraInterFlow(Flow&, InterFlow&);
@@ -53,10 +53,10 @@ class CFAnalyzer {
    * is called exactly once in a program.
    */
   int inlineTrivialFunctions(Flow& flow);
-  size_t deleteFunctioncCallLocalEdges(Flow& flow);
+  size_t deleteFunctionCallLocalEdges(Flow& flow);
  private:
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
-  Labeler* labeler;
+  SPRAY::Labeler* labeler;
 };    
 
 } // end of namespace CodeThorn
