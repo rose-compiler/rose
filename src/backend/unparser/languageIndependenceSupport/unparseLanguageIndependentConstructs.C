@@ -1190,7 +1190,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                        }
                   }
 #if 0
-               printf ("In unparseStatementFromTokenStream(): DONE: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               printf ("In unparseStatementFromTokenStream(): DONE with leading whitespace: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): DONE with leading whitespace: stmt = ") + stmt->class_name().c_str() + " */");
 #endif
                for (int j = tokenSubsequence->token_subsequence_start; j <= tokenSubsequence->token_subsequence_end; j++)
                   {
@@ -1208,7 +1209,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     curprint(tokenVector[j]->get_lexeme_string());
 #endif
                   }
-
+#if 0
+               printf ("In unparseStatementFromTokenStream(): DONE with token output: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+               curprint(string("\n/* In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): DONE with token output: stmt = ") + stmt->class_name().c_str() + " */");
+#endif
 #if 1
             // DQ (1/6/2014): The code here is used to close off the global scope when the token stream unparsing is used, 
             // else the global scope will be closed off by the code in the unparseGlobalScope function.
@@ -1258,6 +1262,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     SgStatementPtrList statementList = scope->generateStatementList();
                  // SgDeclarationStatement* lastDeclaration = NULL;
                     SgStatement* lastStatement = NULL;
+
+#error "DEAD CODE!"
+
                  // if (declarationList.rbegin() != declarationList.rend())
                     if (statementList.rbegin() != statementList.rend())
                        {
@@ -1387,8 +1394,10 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #endif
                   }
 #else
-               printf ("Supress the output of the trailing tokens of the last statemet in the global scope \n");
-               curprint(" /* Supress the output of the trailing tokens of the last statemet in the global scope */");
+
+#error "DEAD CODE!"
+               printf ("Supress the output of the trailing tokens of the last statement in the global scope \n");
+               curprint(" /* Supress the output of the trailing tokens of the last statement in the global scope */");
 #endif
              }
         }
