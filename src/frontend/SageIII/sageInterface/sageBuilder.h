@@ -1,7 +1,6 @@
 #ifndef ROSE_SAGE_BUILDER_INTERFACE
 #define ROSE_SAGE_BUILDER_INTERFACE
 
-
 #include <string>
 
 /*!
@@ -17,6 +16,15 @@
   \authors Chunhua Liao (last modified 2/12/2008)
   
 */
+
+#include "sageInterface.h"
+
+// forward declarations required for templated functions using those functions
+namespace SageInterface {
+  ROSE_DLL_API void setOneSourcePositionForTransformation (SgNode * root);
+  ROSE_DLL_API void setSourcePosition(SgNode* node);
+}
+
 namespace SageBuilder 
 {
 
@@ -1317,6 +1325,93 @@ ROSE_DLL_API SgUntypedFile* buildUntypedFile(SgUntypedGlobalScope* scope);
 //@}
 
 
+
+ //----------------------build unary expressions----------------------
+//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+
+template <class T> ROSE_DLL_API
+  T* buildUnaryExpression(SgExpression* operand) { 
+  SgExpression* myoperand=operand;
+  T* result = new T(myoperand, NULL);
+  ROSE_ASSERT(result);   
+  if (myoperand!=NULL) { 
+    myoperand->set_parent(result);
+    // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  SageInterface::setOneSourcePositionForTransformation(result);
+  return result; 
+ }
+ 
+//!  Template function to build a unary expression of type T with no file info. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+template <class T> ROSE_DLL_API
+T* buildUnaryExpression_nfi(SgExpression* operand) {
+  SgExpression* myoperand = operand;
+  T* result = new T(myoperand, NULL);
+  ROSE_ASSERT(result);   
+  
+  if (myoperand != NULL) {
+    myoperand->set_parent(result);
+    // set lvalue, it asserts operand!=NULL 
+    markLhsValues(result);
+  }
+  SageInterface::setSourcePosition(result);
+  
+  result->set_need_paren(false);
+  return result; 
+ }
+ 
+//---------------------binary expressions-----------------------
+
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+ template <class T> ROSE_DLL_API
+   T* buildBinaryExpression(SgExpression* lhs, SgExpression* rhs) {
+   SgExpression* mylhs, *myrhs;
+   mylhs = lhs;
+   myrhs = rhs;
+   T* result = new T(mylhs,myrhs, NULL);
+   ROSE_ASSERT(result);
+   if (mylhs!=NULL) {
+     mylhs->set_parent(result);
+     // set lvalue
+     markLhsValues(result);
+   }
+   if (myrhs!=NULL) myrhs->set_parent(result);
+   SageInterface::setOneSourcePositionForTransformation(result);
+   return result;
+ }
+ 
+//! Template function to build a binary expression of type T, taking care of parent pointers, but without file-info. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+ template <class T> ROSE_DLL_API
+   T* buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs) {
+   SgExpression* mylhs, *myrhs;
+   mylhs = lhs;
+   myrhs = rhs;
+   T* result = new T(mylhs,myrhs, NULL);
+   ROSE_ASSERT(result);
+   if (mylhs!=NULL)  {
+    mylhs->set_parent(result);
+    // set lvalue
+    markLhsValues(result);
+   }
+   if (myrhs!=NULL) myrhs->set_parent(result);
+   SageInterface::setSourcePosition(result);
+   result->set_need_paren(false);
+   
+   return result;
+ }
 
 } // end of namespace
 
