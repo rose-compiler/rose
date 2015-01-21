@@ -430,7 +430,7 @@ void
 UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnparse_Info & info )
    {
      list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
-  // printf ("compilerGeneratedStatementQueue.size() = %zu \n",compilerGeneratedStatementQueue.size());
+  // printf ("compilerGeneratedStatementQueue.size() = %" PRIuPTR " \n",compilerGeneratedStatementQueue.size());
      while (info.outputCompilerGeneratedStatements() == false && unp->compilerGeneratedStatementQueue.empty() == false)
         {
        // now output the compiler generated statements
@@ -832,7 +832,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("In unparseStatementFromTokenStream(): globalScope = %p \n",globalScope);
                     if (globalScope != NULL)
                        {
-                         printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+                         printf ("globalScope->get_declarations().size() = %" PRIuPTR " \n",globalScope->get_declarations().size());
                          for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
                             {
                               SgDeclarationStatement* decl = globalScope->get_declarations()[i];

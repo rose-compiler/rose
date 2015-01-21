@@ -943,7 +943,7 @@ SgAsmLEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entry points\n", p, w, "size", p_entries.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {
         p_entries[i]->dump(f, p, i);
     }
@@ -1006,7 +1006,7 @@ SgAsmLERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", p_entries.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {
         p_entries[i]->dump(f, p, i);
     }

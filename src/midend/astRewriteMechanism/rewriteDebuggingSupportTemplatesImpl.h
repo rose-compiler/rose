@@ -61,7 +61,7 @@ display( std::string label ) const
    {
      printf ("Inside of PrefixSynthesizedAttribute::display(%s) \n",label.c_str());
 
-     printf ("Current scope (currentScope.size() = %zu): \n",currentScope.size());
+     printf ("Current scope (currentScope.size() = %" PRIuPTR "): \n",currentScope.size());
      for (typename ListOfStatementsType::const_iterator i = currentScope.begin(); i != currentScope.end(); i++)
           (*i).display("Current Scope");
 
@@ -76,7 +76,7 @@ display( std::string label ) const
           ListOfStatementsType topOfStack = tempStack.top();
 
           char buffer[256];
-          sprintf (buffer,"counter = %d topOfStack.size() = %zu",counter,topOfStack.size());
+          sprintf (buffer,"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
           std::string displayString = buffer;
           printf ("     Display new scope: %s \n",displayString.c_str());
 
@@ -94,7 +94,7 @@ void
 MidLevelRewrite<ASTNodeCollection>::PrefixSuffixGenerationTraversal::
 display ( const ListOfStatementsType & s, std::string label ) const
    {
-     printf ("     In display(ListOfStatementsType,%s): s.size() = %zu \n",label.c_str(),s.size());
+     printf ("     In display(ListOfStatementsType,%s): s.size() = %" PRIuPTR " \n",label.c_str(),s.size());
 
 #if 1
      typename ListOfStatementsType::const_iterator j;
@@ -115,7 +115,7 @@ display ( StackOfListsType tempStack, std::string label ) const
    {
   // This function takes a stack by value and distroys it while displaying its elements
 
-     printf ("***** Display for stack of scopes (label = %s) tempStack.size() = %zu ***** \n",
+     printf ("***** Display for stack of scopes (label = %s) tempStack.size() = %" PRIuPTR " ***** \n",
           label.c_str(),tempStack.size());
 
      int counter = 0;
@@ -124,7 +124,7 @@ display ( StackOfListsType tempStack, std::string label ) const
           ListOfStatementsType topOfStack = tempStack.top();
 
           char buffer[256];
-          sprintf (buffer,"counter = %d topOfStack.size() = %zu",counter,topOfStack.size());
+          sprintf (buffer,"counter = %d topOfStack.size() = %" PRIuPTR "",counter,topOfStack.size());
           std::string displayString = buffer;
           printf ("     Display new scope: %s \n",displayString.c_str());
 #if 1

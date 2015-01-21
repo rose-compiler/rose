@@ -418,7 +418,7 @@ Dominance::apply_to_ast(const DominanceGraph &idg)
         SgAsmBlock *dom_block = get(boost::vertex_name, idg, source(*ei, idg));
         SgAsmBlock *sub_block = get(boost::vertex_name, idg, target(*ei, idg));
         if (debug) {
-            fprintf(debug, "  edge (d,s) = (%zu,%zu) = (0x%08"PRIx64", 0x%08"PRIx64")\n",
+            fprintf(debug, "  edge (d,s) = (%" PRIuPTR ",%" PRIuPTR ") = (0x%08"PRIx64", 0x%08"PRIx64")\n",
                     source(*ei, idg), target(*ei, idg), dom_block->get_address(), sub_block->get_address());
         }
         sub_block->set_immediate_dominator(dom_block);
@@ -535,20 +535,20 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         debug_dom_set(FILE *debug, size_t vertex_i, size_t idom_i,
                       const std::vector<size_t> &domsets, const std::vector<CFG_Vertex> &flowlist) {
             if (debug) {
-                fprintf(debug, "{ #%zu(%zu)", vertex_i, flowlist[vertex_i]);
+                fprintf(debug, "{ #%" PRIuPTR "(%" PRIuPTR ")", vertex_i, flowlist[vertex_i]);
                 for (size_t d=idom_i; d!=vertex_i; vertex_i=d, d=domsets[d])
-                    fprintf(debug, " #%zu(%zu)", d, flowlist[d]);
+                    fprintf(debug, " #%" PRIuPTR "(%" PRIuPTR ")", d, flowlist[d]);
                 fprintf(debug, " }");
             }
         }
     };
 
     if (debug) {
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %zu\n", start);
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_idom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
-            fprintf(debug, "  Vertex %zu is %s block of", start, func->get_entry_block()==block?"the entry":"a");
+            fprintf(debug, "  Vertex %" PRIuPTR " is %s block of", start, func->get_entry_block()==block?"the entry":"a");
             if (func->get_name().empty()) {
                 fprintf(debug, " an unnamed function");
             } else {
@@ -570,10 +570,10 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         typename boost::graph_traits<ControlFlowGraph>::vertex_iterator vi, vi_end;
         for (boost::tie(vi, vi_end)=vertices(cfg); vi!=vi_end; ++vi) {
             SgAsmBlock *block = get(boost::vertex_name, cfg, *vi);
-            fprintf(debug, "    %zu 0x%08"PRIx64" --> {", (size_t)(*vi), block?block->get_address():0);
+            fprintf(debug, "    %" PRIuPTR " 0x%08"PRIx64" --> {", (size_t)(*vi), block?block->get_address():0);
             typename boost::graph_traits<ControlFlowGraph>::out_edge_iterator ei, ei_end;
             for (boost::tie(ei, ei_end)=out_edges(*vi, cfg); ei!=ei_end; ++ei) {
-                fprintf(debug, " %zu", (size_t)target(*ei, cfg));
+                fprintf(debug, " %" PRIuPTR "", (size_t)target(*ei, cfg));
             }
             fprintf(debug, " }\n");
         }
@@ -581,7 +581,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         fprintf(debug, "  Note: notation #M(N) means CFG vertex N at position M in the flow list.\n");
         fprintf(debug, "  Flowlist: {");
         for (size_t i=0; i<flowlist.size(); i++) {
-            fprintf(debug, " #%zu(%zu)", i, (size_t)flowlist[i]);
+            fprintf(debug, " #%" PRIuPTR "(%" PRIuPTR ")", i, (size_t)flowlist[i]);
             assert((size_t)flowlist[i]<rflowlist.size());
             assert(rflowlist[flowlist[i]]==i);
         }
@@ -597,7 +597,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         for (size_t vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
             CFG_Vertex vertex = flowlist[vertex_i];
             if (debug) {
-                fprintf(debug, "    vertex #%zu(%zu)", (size_t)vertex_i, (size_t)vertex);
+                fprintf(debug, "    vertex #%" PRIuPTR "(%" PRIuPTR ")", (size_t)vertex_i, (size_t)vertex);
                 if (vertex==start) {
                     fprintf(debug, " [skipping start vertex]\n");
                 } else {
@@ -615,7 +615,7 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
                     assert(predecessor>=0 && predecessor<rflowlist.size());
                     size_t predecessor_i = rflowlist[predecessor];
                     if (debug)
-                        fprintf(debug, "      pred #%zd(%zu)", (size_t)predecessor_i, (size_t)predecessor);
+                        fprintf(debug, "      pred #%zd(%" PRIuPTR ")", (size_t)predecessor_i, (size_t)predecessor);
 
                     /* It's possible that the predecessor lies outside the part of the CFG connected to the entry node. We
                      * should not consider those predecessors. */
@@ -623,19 +623,19 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
                         if (predecessor==start) {
                             new_idom = predecessor_i;
                             if (debug) {
-                                fprintf(debug, "; new doms of #%zu(%zu) are ", vertex_i, vertex);
+                                fprintf(debug, "; new doms of #%" PRIuPTR "(%" PRIuPTR ") are ", vertex_i, vertex);
                                 debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
                             }
                         } else if (idom[predecessor_i]!=predecessor_i) {
                             if (new_idom==vertex_i) {
                                 new_idom = predecessor_i;
                                 if (debug) {
-                                    fprintf(debug, "; new doms of #%zu(%zu) are ", vertex_i, vertex);
+                                    fprintf(debug, "; new doms of #%" PRIuPTR "(%" PRIuPTR ") are ", vertex_i, vertex);
                                     debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
                                 }
                             } else {
                                 if (debug) {
-                                    fprintf(debug, "; new doms of #%zu(%zu) are intersect(", vertex_i, vertex);
+                                    fprintf(debug, "; new doms of #%" PRIuPTR "(%" PRIuPTR ") are intersect(", vertex_i, vertex);
                                     debug_dom_set(debug, vertex_i, new_idom, idom, flowlist);
                                     fprintf(debug, ", ");
                                     debug_dom_set(debug, vertex_i, predecessor_i, idom, flowlist);
@@ -678,16 +678,16 @@ Dominance::build_idom_relation_from_cfg(const ControlFlowGraph &cfg,
         fprintf(debug, "  Final dom sets:\n");
         for (size_t vertex_i=0; vertex_i<flowlist.size(); vertex_i++) {
             CFG_Vertex vertex = flowlist[vertex_i];
-            fprintf(debug, "    #%zu(%zu) has dominators ", (size_t)vertex_i, (size_t)vertex);
+            fprintf(debug, "    #%" PRIuPTR "(%" PRIuPTR ") has dominators ", (size_t)vertex_i, (size_t)vertex);
             debug_dom_set(debug, vertex_i, idom[vertex_i], idom, flowlist);
             fprintf(debug, "\n");
         }
         fprintf(debug, "  Final result:\n");
         for (size_t i=0; i<result.size(); i++) {
             if (result[i]==boost::graph_traits<ControlFlow::Graph>::null_vertex()) {
-                fprintf(debug, "    CFG vertex %zu has no immediate dominator\n", i);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has no immediate dominator\n", i);
             } else {
-                fprintf(debug, "    CFG vertex %zu has immediate dominator %zu\n", i, result[i]);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has immediate dominator %" PRIuPTR "\n", i, result[i]);
             }
         }
     }
@@ -790,11 +790,11 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
                                            RelationMap<ControlFlowGraph> &result)
 {
     if (debug) {
-        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %zu\n", start);
+        fprintf(debug, "rose::BinaryAnalysis::Dominance::build_postdom_relation_from_cfg: starting at vertex %" PRIuPTR "\n", start);
         SgAsmBlock *block = get(boost::vertex_name, cfg, start);
         SgAsmFunction *func = block ? block->get_enclosing_function() : NULL;
         if (func) {
-            fprintf(debug, "  Vertex %zu is %s block of", start, func->get_entry_block()==block?"the entry":"a");
+            fprintf(debug, "  Vertex %" PRIuPTR " is %s block of", start, func->get_entry_block()==block?"the entry":"a");
             if (func->get_name().empty()) {
                 fprintf(debug, " an unnamed function");
             } else {
@@ -810,7 +810,7 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
     std::vector<CFG_Vertex> retblocks = ControlFlow().return_blocks(cfg, start);
     if (1==retblocks.size()) {
         if (debug)
-            fprintf(debug, "  CFG has unique exit vertex %zu, block 0x%08"PRIx64"\n",
+            fprintf(debug, "  CFG has unique exit vertex %" PRIuPTR ", block 0x%08"PRIx64"\n",
                     retblocks[0],
                     get(boost::vertex_name, cfg, retblocks[0])->get_address());
         build_postdom_relation_from_cfg(cfg, start, retblocks[0], result);
@@ -832,7 +832,7 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
         for (size_t i=0; i<retblocks.size(); i++)
             add_edge(retblocks[i], unique_exit, cfg_copy);
         if (debug)
-            fprintf(debug, "  CFG has %zu exit blocks. Added unique exit vertex %zu\n", retblocks.size(), unique_exit);
+            fprintf(debug, "  CFG has %" PRIuPTR " exit blocks. Added unique exit vertex %" PRIuPTR "\n", retblocks.size(), unique_exit);
 
         // Perform the post dominance on this new CFG using the unique exit vertex.
         build_postdom_relation_from_cfg(cfg_copy, start, unique_exit, result);
@@ -850,9 +850,9 @@ Dominance::build_postdom_relation_from_cfg(const ControlFlowGraph &cfg,
         fprintf(debug, "  Final result:\n");
         for (size_t i=0; i<result.size(); i++) {
             if (result[i]==boost::graph_traits<ControlFlowGraph>::null_vertex()) {
-                fprintf(debug, "    CFG vertex %zu has no immediate post dominator\n", i);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has no immediate post dominator\n", i);
             } else {
-                fprintf(debug, "    CFG vertex %zu has immediate post dominator %zu\n", i, result[i]);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has immediate post dominator %" PRIuPTR "\n", i, result[i]);
             }
         }
     }
@@ -889,9 +889,9 @@ Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
         fprintf(debug, "  building from this relation:\n");
         for (size_t i=0; i<relmap.size(); i++) {
             if (relmap[i]==boost::graph_traits<ControlFlowGraph>::null_vertex()) {
-                fprintf(debug, "    CFG vertex %zu has no immediate dominator\n", i);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has no immediate dominator\n", i);
             } else {
-                fprintf(debug, "    CFG vertex %zu has immediate dominator %zu\n", i, relmap[i]);
+                fprintf(debug, "    CFG vertex %" PRIuPTR " has immediate dominator %" PRIuPTR "\n", i, relmap[i]);
             }
         }
     }
@@ -909,7 +909,7 @@ Dominance::build_graph_from_relation(const ControlFlowGraph &cfg,
         CFG_Vertex dominator = relmap[subordinate];
         if (dominator!=boost::graph_traits<ControlFlowGraph>::null_vertex()) {
             if (debug)
-                fprintf(debug, "  adding edge (d,s) = (%zu,%zu)\n", dominator, subordinate);
+                fprintf(debug, "  adding edge (d,s) = (%" PRIuPTR ",%" PRIuPTR ")\n", dominator, subordinate);
             add_edge(dominator, subordinate, dg);
         }
     }

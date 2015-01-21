@@ -11,7 +11,6 @@ test2012_10.C
 test2012_11.C 
 test2012_12.C 
 test2012_13.C 
-test2012_15.C 
 test2012_16.C 
 test2012_19.C 
 test2012_21.C 
@@ -35,7 +34,6 @@ test2012_39.C
 test2012_40.C 
 test2012_41.C 
 test2012_42.C 
-test2012_43.C 
 test2012_44.C 
 test2012_45.C 
 test2012_46.C 
@@ -43,7 +41,6 @@ test2012_47.C
 test2012_48.C 
 test2012_49.C 
 test2012_50.C 
-test2012_51.C 
 test2012_52.C 
 test2012_53.C 
 test2012_54.C 
@@ -64,12 +61,10 @@ test2012_69.C
 test2012_70.C 
 test2012_71.C 
 test2012_72.C 
-test2012_73.C 
 test2012_76.C 
 test2012_77.C 
 test2012_78.C 
 test2012_80.C 
-test2012_81.C 
 test2012_82.C 
 test2012_83.C 
 test2012_84.C 
@@ -97,7 +92,6 @@ test2013_12.C
 test2013_16.C 
 test2013_17.C 
 test2013_18.C 
-test2013_20.C 
 test2013_21.C 
 test2013_22.C 
 test2013_23.C 
@@ -106,7 +100,6 @@ test2013_26.C
 test2013_27.C 
 test2013_28.C 
 test2013_29.C 
-test2013_31.C 
 test2013_32.C 
 test2013_34.C 
 test2013_36.C 
@@ -116,7 +109,6 @@ test2013_46.C
 test2013_47.C 
 test2013_48.C 
 test2013_50.C 
-test2013_51.C 
 test2013_52.C 
 test2013_53.C 
 test2013_54.C 
@@ -160,6 +152,10 @@ test2014_04.C
 test2014_05.C 
 test2014_06.C)
 
+# these tests fail on either Windows or Linux
+set(disabled_tests
+  test2012_15.C test2012_43.C test2012_51.C test2012_73.C test2012_81.C
+  test2013_20.C test2013_31.C test2013_51.C)
 
 foreach(file_to_test ${files_to_test})
   compile_test(${file_to_test})

@@ -302,7 +302,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
           while (i != name_list.end() && (*i) != initializedName)
              {
 #if 0
-               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %zu \n",counter);
+               printf ("In unparseFunctionParameterDeclaration(): loop: counter = %" PRIuPTR " \n",counter);
 #endif
                counter++;
                i++;
@@ -310,7 +310,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
 
           ROSE_ASSERT(i != name_list.end());
 #if 0
-          printf ("In unparseFunctionParameterDeclaration(): counter = %zu \n",counter);
+          printf ("In unparseFunctionParameterDeclaration(): counter = %" PRIuPTR " \n",counter);
 #endif
        // SgTypePtrList & get_arguments()
           tmp_type = type_argument_list->get_arguments()[counter];
@@ -337,7 +337,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
      bool oldStyleDefinition = funcdecl_stmt->get_oldStyleDefinition();
 
 #if 0
-     printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 #if 0
@@ -591,7 +591,7 @@ Unparse_ExprStmt::unparseFunctionParameterDeclaration (
         }
 
 #if 0
-     printf ("Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint( string("\n/* Leaving unparseFunctionParameterDeclaration(): funcdecl_stmt->get_args().size() = ") + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
    }
@@ -603,7 +603,7 @@ Unparse_ExprStmt::unparseFunctionArgs(SgFunctionDeclaration* funcdecl_stmt, SgUn
      ROSE_ASSERT (funcdecl_stmt != NULL);
 
 #if 0
-     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %zu \n",funcdecl_stmt->get_args().size());
+     printf ("unparseFunctionArgs(): funcdecl_stmt->get_args().size() = %" PRIuPTR " \n",funcdecl_stmt->get_args().size());
      curprint("\n/* unparseFunctionArgs(): funcdecl_stmt->get_args().size() = " + StringUtility::numberToString((int)(funcdecl_stmt->get_args().size())) + " */ \n");
 #endif
 
@@ -785,7 +785,7 @@ Unparse_ExprStmt::unparse_helper(SgFunctionDeclaration* funcdecl_stmt, SgUnparse
           printf ("Found a template function: output the template parameters! \n");
           curprint( " /* < template parameters > */ ");
           SgTemplateArgumentPtrListPtr templateArguments = templateFunctionDeclaration->get_templateArguments();
-          printf ("Number of template arguments for instantiated template function = %zu \n",templateArguments->size());
+          printf ("Number of template arguments for instantiated template function = %" PRIuPTR " \n",templateArguments->size());
           if (templateArguments->size() > 0)
              {
              }
@@ -4374,7 +4374,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (11/28/2004): There should be at least a single variable here!
      ROSE_ASSERT(vardecl_stmt->get_variables().size() > 0);
-  // printf ("Number of variables = %zu \n",vardecl_stmt->get_variables().size());
+  // printf ("Number of variables = %" PRIuPTR " \n",vardecl_stmt->get_variables().size());
 
   // SgInitializedNamePtrList::iterator p = vardecl_stmt->get_variables().begin();
   // ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
@@ -4410,7 +4410,7 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      ROSE_ASSERT(p != vardecl_stmt->get_variables().end());
 
 #if 0
-     printf ("vardecl_stmt->get_variables().size() = %zu \n",vardecl_stmt->get_variables().size());
+     printf ("vardecl_stmt->get_variables().size() = %" PRIuPTR " \n",vardecl_stmt->get_variables().size());
      printf ("(*p)->get_using_C11_Alignas_keyword() = %s \n",(*p)->get_using_C11_Alignas_keyword() ? "true" : "false");
 #endif
 
@@ -6295,7 +6295,7 @@ void Unparse_ExprStmt::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
                statementList->push_back(ifStatement->get_true_body());
                statementList->push_back(ifStatement->get_false_body());
 #if 0
-               printf ("statementList->size() = %zu \n",statementList->size());
+               printf ("statementList->size() = %" PRIuPTR " \n",statementList->size());
 #endif
              }
             else
@@ -6869,12 +6869,12 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
 
 #if ASM_DEBUGGING
-     printf ("In unparseAsmStmt(): asmTemplate.length()      = %zu \n",(size_t)asmTemplate.length());
+     printf ("In unparseAsmStmt(): asmTemplate.length()      = %" PRIuPTR " \n",(size_t)asmTemplate.length());
 #endif
 #if 0
      for (size_t i=0; i < asmTemplate.length(); i++)
         {
-          printf ("   --- ascii value for asmTemplate[i=%zu] = %u \n",i,asmTemplate[i]);
+          printf ("   --- ascii value for asmTemplate[i=%" PRIuPTR "] = %u \n",i,asmTemplate[i]);
         }
 #endif
 
@@ -6926,11 +6926,11 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
           size_t numClobbers = asm_stmt->get_clobberRegisterList().size();
 
 #if ASM_DEBUGGING
-          printf ("In unparseAsmStmt(): numClobbers = %zu \n",numClobbers);
+          printf ("In unparseAsmStmt(): numClobbers = %" PRIuPTR " \n",numClobbers);
 #endif
 
 #if ASM_DEBUGGING
-          printf ("In unparseAsmStmt(): numOutputOperands = %zu numInputOperands = %zu numClobbers = %zu \n",numOutputOperands,numInputOperands,numClobbers);
+          printf ("In unparseAsmStmt(): numOutputOperands = %" PRIuPTR " numInputOperands = %" PRIuPTR " numClobbers = %" PRIuPTR " \n",numOutputOperands,numInputOperands,numClobbers);
 #endif
 
        // DQ (2/4/2014): Adding initializer (to make me feel better about this code).
