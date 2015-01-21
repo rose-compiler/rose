@@ -7474,7 +7474,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ROSE_ASSERT(while_stmt != NULL);
 
-#if 0
+#if 1
      printf ("In unparseWhileStmt(): info.unparsedPartiallyUsingTokenStream() = %s \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false");
      curprint("/* In unparseWhileStmt(): TOP */ ");
 #endif
@@ -7546,7 +7546,11 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
           ROSE_ASSERT(body != NULL);
 
        // unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_token_subsequence_start);
-          unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_leading_whitespace_start);
+       // unparseStatementFromTokenStream (condition, body, e_trailing_whitespace_start, e_leading_whitespace_start);
+          unparseStatementFromTokenStream (condition, e_trailing_whitespace_start, e_trailing_whitespace_end);
+
+       // Output syntax explicitly.
+          curprint(")");
 
           unparseStatement(while_stmt->get_body(), info);
 #if 0

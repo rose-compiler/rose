@@ -1742,6 +1742,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
 #define DEBUG_LEADING_AND_TRAILING_WHITESPACE 0
 
+                 // DQ (1/21/2015): Added to support to control resetting of previous_mapping trailing token sequence if we was explicitly specified to not be set in the previous iteration.
+                 // bool previous_fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                    bool previous_fixupDarkTokenSubsequencesForTrailingWhitespace = false;
+
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
@@ -1908,6 +1912,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
+                            }
+
+                      // DQ (1/21/2015): Turn this off to account for syntax between the condition and the body of a while statement.
+                      // This might be required for SgIfStmt and other compound statements as well.
+                         if ( (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
+                            {
+                              fixupDarkTokenSubsequencesForTrailingWhitespace = false;
                             }
 
                       // These statements have syntax that seperate the main construct from the construct's associated body (namely the ")" closing parenthesis).
@@ -2124,9 +2135,23 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_DARK_TOKEN_FIXUP
                                         printf ("Dark tokens fixup: Reset the previous_mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_trailing_whitespace_end);
 #endif
-                                     // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
-                                     // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
-                                        previous_mappingInfo->trailing_whitespace_end = current_mappingInfo_token_subsequence_start;
+                                     // If the previous value of fixupDarkTokenSubsequencesForTrailingWhitespace was false then skip resetting the previous_mappingInfo->trailing_whitespace_end.
+                                     // previous_mappingInfo->trailing_whitespace_end = current_mappingInfo_token_subsequence_start;
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("previous_fixupDarkTokenSubsequencesForTrailingWhitespace = %s \n",previous_fixupDarkTokenSubsequencesForTrailingWhitespace ? "true " : "false");
+#endif
+                                        if (previous_fixupDarkTokenSubsequencesForTrailingWhitespace == true)
+                                           {
+                                          // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+                                          // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
+                                             previous_mappingInfo->trailing_whitespace_end = current_mappingInfo_token_subsequence_start;
+                                           }
+                                          else
+                                           {
+#if DEBUG_DARK_TOKEN_FIXUP
+                                             printf ("Skipped reset of previous_mappingInfo->trailing_whitespace_end = %d \n",previous_mappingInfo->trailing_whitespace_end);
+#endif
+                                           }
 #if 0
                                         printf ("Exiting as a test! \n");
                                         ROSE_ASSERT(false);
@@ -2209,11 +2234,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
 
                             }
-#if 0
+#if DEBUG_DARK_TOKEN_FIXUP
                          printf ("END MAPPING i=%d: mappingInfo->token_subsequence_start = %d mappingInfo->token_subsequence_end = %d \n",i,mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
 #endif
                       // end of body for if fixupDarkTokenSubsequences == false
                             }
+
+                      // DQ (1/21/2015): Added to support to control resetting of previous_mapping trailing token sequence if we was explicitly specified to not be set in the previous iteration.
+                      // bool previous_fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
+                         previous_fixupDarkTokenSubsequencesForTrailingWhitespace = fixupDarkTokenSubsequencesForTrailingWhitespace;
 
                       // DQ (1/20/2015): Adding support for the trailing whitespace of the "true" branch of an "if" statement.
                          if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body()) )
@@ -2398,7 +2427,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    SgBasicBlock* basicBlock = isSgBasicBlock(mappingInfo->node);
                                    if (basicBlock != NULL)
                                       {
-#if 1
+#if 0
                                         printf ("$$$$$$$$$$$$ Handle special case of SgBasicBlock nested in SgStatement \n");
 #endif
                                         trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -2527,7 +2556,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         SgStatement* true_body_statement = isSgStatement(mappingInfo->node);
                                         if (true_body_statement == ifStatement->get_true_body() && ifStatement->get_false_body() != NULL)
                                            {
-#if 1
+#if 0
                                              printf ("$$$$$$$$$$$$ Handle special case of SgIfStmt = %p and the true body position \n",ifStatement);
 #endif
                                           // trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -2542,7 +2571,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         SgStatement* false_body_statement = isSgStatement(mappingInfo->node);
                                         if (false_body_statement == ifStatement->get_false_body())
                                            {
-#if 1
+#if 0
                                              printf ("$$$$$$$$$$$$ Handle special case of SgIfStmt = %p and the false body position \n",ifStatement);
 #endif
                                              trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -2801,8 +2830,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // mappings of token stream to IR nodes (or sets of IR nodes) where they could not be computed base on the source position used 
                  // in the evaluateInheritedAttribute() function (run previous to this evaluateSynthesizedAttribute() function at this point in 
                  // the AST traversal).
-#if 0
-                    printf ("In evaluateSynthesizedAttribute(): current_node_token_subsequence_start = %d current_node_token_subsequence_end = %d \n",
+#if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE || 0
+                    printf ("In evaluateSynthesizedAttribute(): process childrenWithoutTokenMappings: current_node_token_subsequence_start = %d current_node_token_subsequence_end = %d \n",
                          current_node_token_subsequence_start,current_node_token_subsequence_end);
                     printf ("   --- childrenWithoutTokenMappings.size() = %zu \n",childrenWithoutTokenMappings.size());
 #endif
@@ -3448,18 +3477,22 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(false);
                             }
 #if 0
-                         printf ("******************** End of loop body for childrenWithoutTokenMappings ******************** \n");
+                         printf ("******************** End of loop body for childrenWithoutTokenMappings (i = %d) ******************** \n",i);
 #endif
 #if 0
                          printf ("Exiting as a test! \n");
                          ROSE_ASSERT(false);
 #endif
                        }
+
+#if 0
+                    printf ("In evaluateSynthesizedAttribute(): DONE processing childrenWithoutTokenMappings: current_node_token_subsequence_start = %d current_node_token_subsequence_end = %d \n",
+                         current_node_token_subsequence_start,current_node_token_subsequence_end);
+#endif
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
-
                  // Now with the token subsequences known, we need to unify any redundant subsequences.
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
@@ -3576,6 +3609,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
      printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(n): n = %p = %s childAttributes.size() = %zu \n",n,(n != NULL) ? n->class_name().c_str() : "null",childAttributes.size());
   // printf ("Leaving evaluateSynthesizedAttribute(): building SynthesizedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
   //      start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
+#endif
+
+#if 0
+  // DQ (1/21/2015): Debugging inputemover*_test2015_90.C
+     if (isSgWhileStmt(n) != NULL)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
   // DQ (10/14/2013): Added consistancy test.
