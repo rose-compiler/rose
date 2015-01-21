@@ -330,7 +330,7 @@ SgAsmPEImportSection::unparse(std::ostream &f) const
         try {
             idir->unparse(f, this, i);
         } catch(const ShortWrite&) {
-            import_mesg("SgAsmImportSection::unparse: error: Import Directory #%zu skipped (short write)\n", i);
+            import_mesg("SgAsmImportSection::unparse: error: Import Directory #%" PRIuPTR " skipped (short write)\n", i);
         }
     }
 
@@ -354,7 +354,7 @@ SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmPESection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu\n", p, w, "ndirectories", p_import_directories->get_vector().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "ndirectories", p_import_directories->get_vector().size());
     for (size_t i=0; i<p_import_directories->get_vector().size(); i++)
         p_import_directories->get_vector()[i]->dump(f, p, i);
 

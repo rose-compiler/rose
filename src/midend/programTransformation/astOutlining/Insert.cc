@@ -325,7 +325,7 @@ insertGlobalPrototype (SgFunctionDeclaration* def,
   // Fix-up remaining prototypes.
      if (prototype != NULL)
         {
-       // printf ("In insertGlobalPrototype(): proto = %p protos.size() = %zu \n",prototype,friendFunctionPrototypeList.size());
+       // printf ("In insertGlobalPrototype(): proto = %p protos.size() = %" PRIuPTR " \n",prototype,friendFunctionPrototypeList.size());
           for (FuncDeclList_t::iterator i = friendFunctionPrototypeList.begin (); i != friendFunctionPrototypeList.end (); ++i)
              {
                SgFunctionDeclaration* proto_i = *i;
@@ -535,7 +535,7 @@ insertFriendDecls (SgFunctionDeclaration* func,
 {
   if (func && scope)
     {
-   // printf ("In insertFriendDecls(): friends list size = %zu \n",friends.size());
+   // printf ("In insertFriendDecls(): friends list size = %" PRIuPTR " \n",friends.size());
 
    // Collect a list of all classes that need a 'friend' decl.
    // The outlining target has accesses to those classes' private/protected members 

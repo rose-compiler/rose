@@ -1054,7 +1054,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
   // void testAstForUniqueNodes ( SgNode* node );
 
 #if 0
-     printf ("In StatementListInsertChild: l.size() = %zu \n",l.size());
+     printf ("In StatementListInsertChild: l.size() = %" PRIuPTR " \n",l.size());
      printf ("In StatementListInsertChild: inFront  = %s \n",inFront ? "true" : "false");
      printf ("In StatementListInsertChild: parent   = %p \n",parent);
      printf ("In StatementListInsertChild: target   = %p \n",target);
@@ -3710,7 +3710,7 @@ void
 SgStatement::insert_statement(SgStatement* target, const SgStatementPtrList& newstmtList, bool inFront)
    {
 #if 0
-      printf ("In SgStatement::insert_statement(): insert newstmtList.size() = %zu before/after target = %p = %s \n",newstmtList.size(),target,target->class_name().c_str());
+      printf ("In SgStatement::insert_statement(): insert newstmtList.size() = %" PRIuPTR " before/after target = %p = %s \n",newstmtList.size(),target,target->class_name().c_str());
 #endif
 
      SgBasicBlock* tmp = new SgBasicBlock();
@@ -5182,7 +5182,7 @@ SgScopeStatement::lookup_nontemplate_class_symbol (const SgName& n, SgTemplateAr
           ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
           const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
 #if 0
-          printf ("In SgScopeStatement::lookup_nontemplate_class_symbol(): name = %s templateArgumentsList = %p size = %zu globalNamespaceDefinitionStatement = %p = %s \n",
+          printf ("In SgScopeStatement::lookup_nontemplate_class_symbol(): name = %s templateArgumentsList = %p size = %" PRIuPTR " globalNamespaceDefinitionStatement = %p = %s \n",
                n.str(),templateArgumentsList,(templateArgumentsList != NULL ? templateArgumentsList->size() : 0),globalNamespaceDefinitionStatement,globalNamespaceDefinitionStatement->class_name().c_str());
 #endif
           return globalNamespaceDefinitionStatement->get_symbol_table()->find_nontemplate_class(n,templateArgumentsList);
@@ -6010,7 +6010,7 @@ SgScopeStatement::generateStatementList()
              }
         }
 
-  // printf ("In generateStatementList(): returnList.size() = %zu \n",returnList.size());
+  // printf ("In generateStatementList(): returnList.size() = %" PRIuPTR " \n",returnList.size());
 
      return returnList;
    }
@@ -6471,7 +6471,7 @@ SgScopeStatement::generateStatementList() const
              }
         }
 
-  // printf ("In generateStatementList(): returnList.size() = %zu \n",returnList.size());
+  // printf ("In generateStatementList(): returnList.size() = %" PRIuPTR " \n",returnList.size());
 
      return returnList;
    }
@@ -7799,7 +7799,7 @@ SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledFo
           if ( ( (appendTemplateArguments == true) && (templateArgListPtr->size() > 0) ) && (skipEmptyTemplateArgumentList == false) )
              {
 #if 0
-               printf ("In $CLASSNAME::resetTemplateName(): templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
+               printf ("In $CLASSNAME::resetTemplateName(): templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
 #endif
 
                returnName += " < ";
@@ -12802,7 +12802,7 @@ SgTemplateInstantiationDecl::post_construction_initialization()
   // in some cases is shared with other IR nodes within Sage III.  This is a bug
   // which effects the handling of defining vs. non-defining declarations.
 
-  // printf ("p_templateArguments.size() = %zu \n",p_templateArguments.size());
+  // printf ("p_templateArguments.size() = %" PRIuPTR " \n",p_templateArguments.size());
 
   // DQ (2/17/2007): Set the parents of all template arguments to the template instantiation
   // JJW (8/6/2008): p_templateArguments is not a pointer anymore
@@ -12944,7 +12944,7 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
           ROSE_ASSERT(template_name.is_null() == false);
 
 #if 0
-          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %zu get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
+          printf ("In SgTemplateInstantiationDecl::get_mangled_name(): template_name = %s get_templateArguments().size() = %" PRIuPTR " get_scope() = %p \n",template_name.str(),get_templateArguments().size(),get_scope());
 #endif
 
        // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
@@ -12988,13 +12988,13 @@ SgTemplateInstantiationDecl::get_mangled_name (void) const
        // SgName mangledName = mangleTemplate (get_templateName(),get_templateArguments(),get_scope());
           SgName mangledName = mangleTemplate(template_name,get_templateArguments(),get_scope());
 #if 0
-          printf ("After mangleTemplate(): get_templateArguments().size() = %zu mangledName = %s \n",get_templateArguments().size(),mangledName.str());
+          printf ("After mangleTemplate(): get_templateArguments().size() = %" PRIuPTR " mangledName = %s \n",get_templateArguments().size(),mangledName.str());
 #endif
           ROSE_ASSERT(get_firstNondefiningDeclaration() != NULL);
 #if 0
-          printf ("After mangleTemplate(): get_firstNondefiningDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_firstNondefiningDeclaration())->get_templateArguments().size());
+          printf ("After mangleTemplate(): get_firstNondefiningDeclaration()->get_templateArguments().size() = %" PRIuPTR " \n",isSgTemplateInstantiationDecl(get_firstNondefiningDeclaration())->get_templateArguments().size());
           if (get_definingDeclaration() != NULL)
-               printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %zu \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
+               printf ("After mangleTemplate(): get_definingDeclaration()->get_templateArguments().size() = %" PRIuPTR " \n",isSgTemplateInstantiationDecl(get_definingDeclaration())->get_templateArguments().size());
 #endif
 #if 0
           printf ("In SgTemplateInstantiationDecl::get_mangled_name(): (NOT found in cache) mangledNameString = %s get_name() = %s get_templateName() = %s \n",mangledNameString.c_str(),get_name().str(),get_templateName().str());

@@ -7159,7 +7159,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 
 #if 0
   // DQ (12/3/2011): Adding debugging support to output p_symbolSet.
-     printf ("Output the internal symbol set used for fast existence testing (p_symbolSet size = %zu): \n",p_symbolSet.size());
+     printf ("Output the internal symbol set used for fast existence testing (p_symbolSet size = %" PRIuPTR "): \n",p_symbolSet.size());
      int counter = 0;
      SgNodeSet::iterator i = p_symbolSet.begin();
      while (i != p_symbolSet.end())
@@ -7173,7 +7173,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
           i++;
           counter++;
         }
-     printf ("DONE: Output the internal symbol set used for fast existence testing (p_symbolSet size = %zu) \n",p_symbolSet.size());
+     printf ("DONE: Output the internal symbol set used for fast existence testing (p_symbolSet size = %" PRIuPTR ") \n",p_symbolSet.size());
 
 #if 0
   // DQ (12/3/2011): Debugging code...
@@ -7380,7 +7380,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
           it++;
         }
 #if 0
-     printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %zu \n",name.str(),deleteList.size());
+     printf ("In SgSymbolTable::remove_function_type( const SgName & name ): name = %s deleteList.size() = %" PRIuPTR " \n",name.str(),deleteList.size());
 #endif
 
   // Now remove the copy of the symbol from the symbol table and insert the shared symbol
@@ -8261,7 +8261,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
           std::vector<T*> templateParametersOrArgumentsListFromSymbol = getTemplateParametersOrArgumentsList<T>(symbol);
 
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
-          printf ("In SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(): templateParametersOrArgumentsList->size() = %zu templateParametersOrArgumentsListFromSymbol.size() = %zu \n",
+          printf ("In SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrArguments(): templateParametersOrArgumentsList->size() = %" PRIuPTR " templateParametersOrArgumentsListFromSymbol.size() = %" PRIuPTR " \n",
                templateParametersOrArgumentsList->size(),templateParametersOrArgumentsListFromSymbol.size());
 #endif
        // Output a message for this case, but don't make it an error.
@@ -8272,7 +8272,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
 #if 0
                if (templateParametersOrArgumentsList->size() != templateParametersOrArgumentsListFromSymbol.size())
                   {
-                    printf ("NOTE: In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): symbol = %p = %s = %s templateParametersOrArgumentsList->size() = %zu templateParametersOrArgumentsListFromSymbol.size() = %zu \n",
+                    printf ("NOTE: In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): symbol = %p = %s = %s templateParametersOrArgumentsList->size() = %" PRIuPTR " templateParametersOrArgumentsListFromSymbol.size() = %" PRIuPTR " \n",
                             symbol,symbol->class_name().c_str(),symbol->get_name().str(),templateParametersOrArgumentsList->size(),templateParametersOrArgumentsListFromSymbol.size());
                   }
 #endif
@@ -8286,11 +8286,11 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
             // Check if they are the same size...
 
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
-               printf ("In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): symbol = %p = %s templateParametersOrArgumentsList->size() = %zu templateClassInstantiation->get_templateArguments().size() = %zu \n",
+               printf ("In SgSymbolTable::hasMatchingTemplateArgumentsOrNoTemplateArguments(): symbol = %p = %s templateParametersOrArgumentsList->size() = %" PRIuPTR " templateClassInstantiation->get_templateArguments().size() = %" PRIuPTR " \n",
                        symbol,symbol->class_name().c_str(),templateParametersOrArgumentsList->size(),templateParametersOrArgumentsListFromSymbol.size());
                for (size_t i = 0; i < templateParametersOrArgumentsList->size(); i++)
                   {
-                    printf ("----- (*templateParametersOrArgumentsList)[%zu] = %p templateClassInstantiation->get_templateArguments()[%zu] = %p \n",i,(*templateParametersOrArgumentsList)[i],i,templateParametersOrArgumentsListFromSymbol[i]);
+                    printf ("----- (*templateParametersOrArgumentsList)[%" PRIuPTR "] = %p templateClassInstantiation->get_templateArguments()[%" PRIuPTR "] = %p \n",i,(*templateParametersOrArgumentsList)[i],i,templateParametersOrArgumentsListFromSymbol[i]);
                   }
 #endif
                if (templateParametersOrArgumentsList->size() == templateParametersOrArgumentsListFromSymbol.size())
@@ -8323,7 +8323,7 @@ SgSymbolTable::hasMatchingTemplateParametersOrArgumentsOrNoTemplateParametersOrA
                          for (size_t i = 0; i < templateParametersOrArgumentsList->size(); i++)
                             {
 #if DEBUG_MATCHING_TEMPLATE_ARGUMENTS
-                              printf ("----- (*templateParametersOrArgumentsList)[%zu] = %p = %s templateClassInstantiation->get_templateArguments()[%zu] = %p = %s \n",
+                              printf ("----- (*templateParametersOrArgumentsList)[%" PRIuPTR "] = %p = %s templateClassInstantiation->get_templateArguments()[%" PRIuPTR "] = %p = %s \n",
                                    i,(*templateParametersOrArgumentsList)[i],(*templateParametersOrArgumentsList)[i]->class_name().c_str(),
                                    i,templateParametersOrArgumentsListFromSymbol[i],templateParametersOrArgumentsListFromSymbol[i]->class_name().c_str());
 #endif
@@ -9628,8 +9628,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                             {
 #if 0
                               printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
-                              printf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
-                              printf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
+                              printf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
+                              printf (" --- get_aliasSymbolCausalNodeSet().size()    = %" PRIuPTR " \n",get_aliasSymbolCausalNodeSet().size());
 #endif
                               return original_aliased_symbol;
                             }
@@ -13115,7 +13115,7 @@ Sg_File_Info::set_physical_filename ( const std::string & filename )
      assert (this != NULL);
 
 #if 0
-     printf ("In Sg_File_Info::set_physical_filename(filename = %s) this = %p p_nametofileid_map.count(filename) = %zu \n",filename.c_str(),this,p_nametofileid_map.count(filename));
+     printf ("In Sg_File_Info::set_physical_filename(filename = %s) this = %p p_nametofileid_map.count(filename) = %" PRIuPTR " \n",filename.c_str(),this,p_nametofileid_map.count(filename));
 #endif
 
      if (p_nametofileid_map.count(filename) == 0)
@@ -14031,7 +14031,7 @@ SgFile::get_outputLanguageOptionName ( SgFile::outputLanguageOption_enum lang )
 #endif
           default:
              {
-               printf ("In SgFile::outputLanguageOption(): lang = %zu \n",(size_t)lang);
+               printf ("In SgFile::outputLanguageOption(): lang = %" PRIuPTR " \n",(size_t)lang);
             // printf ("In SgFile::outputLanguageOption(): lang = %d \n",lang);
                ROSE_ASSERT(false);
              }
@@ -16477,22 +16477,22 @@ SgProject::display ( const std::string & label ) const
 
      printf ("   p_outputFileName                          = %s \n",p_outputFileName.c_str());
 
-     printf ("   p_sourceFileNameList.size()               = %zu \n", p_sourceFileNameList.size());
+     printf ("   p_sourceFileNameList.size()               = %" PRIuPTR " \n", p_sourceFileNameList.size());
      printf ("   p_sourceFileNameList                      = \n      %s \n",StringUtility::listToString(p_sourceFileNameList).c_str());
 
-     printf ("   p_objectFileNameList.size()               = %zu \n", p_objectFileNameList.size());
+     printf ("   p_objectFileNameList.size()               = %" PRIuPTR " \n", p_objectFileNameList.size());
      printf ("   p_objectFileNameList                      = \n      %s \n",StringUtility::listToString(p_objectFileNameList).c_str());
 
-     printf ("   p_libraryFileList.size()                  = %zu \n", p_libraryFileList.size());
+     printf ("   p_libraryFileList.size()                  = %" PRIuPTR " \n", p_libraryFileList.size());
      printf ("   p_libraryFileList                         = \n      %s \n",StringUtility::listToString(p_libraryFileList).c_str());
 
-     printf ("   p_librarySpecifierList.size()             = %zu \n", p_librarySpecifierList.size());
+     printf ("   p_librarySpecifierList.size()             = %" PRIuPTR " \n", p_librarySpecifierList.size());
      printf ("   p_librarySpecifierList                    = \n      %s \n",StringUtility::listToString(p_librarySpecifierList).c_str());
 
-     printf ("   p_libraryDirectorySpecifierList.size()    = %zu \n", p_libraryDirectorySpecifierList.size());
+     printf ("   p_libraryDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_libraryDirectorySpecifierList.size());
      printf ("   p_libraryDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_libraryDirectorySpecifierList).c_str());
 
-     printf ("   p_includeDirectorySpecifierList.size()    = %zu \n", p_includeDirectorySpecifierList.size());
+     printf ("   p_includeDirectorySpecifierList.size()    = %" PRIuPTR " \n", p_includeDirectorySpecifierList.size());
      printf ("   p_includeDirectorySpecifierList           = \n      %s \n",StringUtility::listToString(p_includeDirectorySpecifierList).c_str());
 
      printf ("   p_compileOnly                             = %s \n",(p_compileOnly == true) ? "true" : "false");
@@ -16511,22 +16511,22 @@ SgProject::display ( const std::string & label ) const
   // printf ("   p_lookForIncludePaths                     = %s \n",(p_lookForIncludePaths == true) ? "true" : "false");
   // printf ("   p_lookForExcludePaths                     = %s \n",(p_lookForExcludePaths == true) ? "true" : "false");
 
-     printf ("   p_includePathList.size()                  = %zu \n", p_includePathList.size());
+     printf ("   p_includePathList.size()                  = %" PRIuPTR " \n", p_includePathList.size());
      printf ("   p_includePathList                         = \n      %s \n",StringUtility::listToString(p_includePathList).c_str());
 
-     printf ("   p_excludePathList.size()                  = %zu \n", p_excludePathList.size());
+     printf ("   p_excludePathList.size()                  = %" PRIuPTR " \n", p_excludePathList.size());
      printf ("   p_excludePathList                         = \n      %s \n",StringUtility::listToString(p_excludePathList).c_str());
 
-     printf ("   p_includeFileList.size()                  = %zu \n", p_includeFileList.size());
+     printf ("   p_includeFileList.size()                  = %" PRIuPTR " \n", p_includeFileList.size());
      printf ("   p_includeFileList                         = \n      %s \n",StringUtility::listToString(p_includeFileList).c_str());
 
-     printf ("   p_excludeFileList.size()                  = %zu \n", p_excludeFileList.size());
+     printf ("   p_excludeFileList.size()                  = %" PRIuPTR " \n", p_excludeFileList.size());
      printf ("   p_excludeFileList                         = \n      %s \n",StringUtility::listToString(p_excludeFileList).c_str());
 
-     printf ("   p_preincludeFileList.size()               = %zu \n", p_preincludeFileList.size());
+     printf ("   p_preincludeFileList.size()               = %" PRIuPTR " \n", p_preincludeFileList.size());
      printf ("   p_preincludeFileList                      = \n      %s \n",StringUtility::listToString(p_preincludeFileList).c_str());
 
-     printf ("   p_preincludeDirectoryList.size()          = %zu \n", p_preincludeDirectoryList.size());
+     printf ("   p_preincludeDirectoryList.size()          = %" PRIuPTR " \n", p_preincludeDirectoryList.size());
      printf ("   p_preincludeDirectoryList                 = \n      %s \n",StringUtility::listToString(p_preincludeDirectoryList).c_str());
 
   // DQ (2/4/2009): Moved from SgFile to SgProject.
@@ -16719,8 +16719,8 @@ SgUnparse_Info::SgUnparse_Info (  )
      assert(Unparse_InfoTag == variant());
      post_construction_initialization();
 
-  // printf ("p_unparse_attribute.size() = %zu \n",p_unparse_attribute.size());
-  // printf ("SgNO_UNPARSE_INFO.p_unparse_attribute.size() = %zu \n",SgNO_UNPARSE_INFO.p_unparse_attribute.size());
+  // printf ("p_unparse_attribute.size() = %" PRIuPTR " \n",p_unparse_attribute.size());
+  // printf ("SgNO_UNPARSE_INFO.p_unparse_attribute.size() = %" PRIuPTR " \n",SgNO_UNPARSE_INFO.p_unparse_attribute.size());
      assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
   // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
@@ -16878,7 +16878,7 @@ SgUnparse_Info::post_construction_initialization()
   // initiation of a unparser traversal (precisely where there 
   // is no context yet build up).
   
-  // printf ("p_structureTagProcessingList.size() = %zu \n",p_structureTagProcessingList.size());
+  // printf ("p_structureTagProcessingList.size() = %" PRIuPTR " \n",p_structureTagProcessingList.size());
      if (p_structureTagProcessingList.empty() != true)
         {
        // empty the list (using STL list's assignment operator)
@@ -17741,7 +17741,7 @@ SgUnparse_Info::display ( const std::string & label ) const
         }
 
   // DQ (1/26/2006): Modified to handle 64 bit machines
-     printf ("p_structureTagProcessingList.size()    = %zu \n", p_structureTagProcessingList.size());
+     printf ("p_structureTagProcessingList.size()    = %" PRIuPTR " \n", p_structureTagProcessingList.size());
      SgTypePtrList::iterator i;
      for (i = p_structureTagProcessingList.begin(); i != p_structureTagProcessingList.end(); i++)
         {

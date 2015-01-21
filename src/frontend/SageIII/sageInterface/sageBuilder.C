@@ -41,7 +41,7 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 
      printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.c_str());
      size_t positionOfTemplateSyntax = nameWithTemplateArguments.find('<');
-     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): positionOfTemplateSyntax = %zu \n",positionOfTemplateSyntax);
+     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): positionOfTemplateSyntax = %" PRIuPTR " \n",positionOfTemplateSyntax);
 
   // We might want to strip off trailing white space.
      std::string templateName = nameWithTemplateArguments.substr(0,positionOfTemplateSyntax);
@@ -2071,7 +2071,7 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
 #if 0
      printf ("Inside of SageBuilder::buildFunctionType(SgType,SgFunctionParameterTypeList) \n");
      printf ("Inside of SageBuilder::buildFunctionType() return_type = %s \n",return_type->get_mangled().str());
-     printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %zu \n",typeList->get_arguments().size());
+     printf ("Inside of SageBuilder::buildFunctionType() typeList->get_arguments().size() = %" PRIuPTR " \n",typeList->get_arguments().size());
 #endif
 #if 0
   // DQ (1/21/2014): Activate this test to see how we are building SgFunctionType with return type as SgFunctionType (see test2014_53.c).
@@ -2823,7 +2823,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // SgSymbol* symbol = scope->get_symbol_table()->find_symbol_by_type_of_function<actualFunction>(name,func_type);
        // func_symbol = symbol;
 #if 0
-          printf ("In buildNondefiningFunctionDeclaration_T(): name = %s func_type = %p = %s templateParameterList->size() = %zu templateArgumentsList->size() = %zu \n",
+          printf ("In buildNondefiningFunctionDeclaration_T(): name = %s func_type = %p = %s templateParameterList->size() = %" PRIuPTR " templateArgumentsList->size() = %" PRIuPTR " \n",
                nameWithTemplateArguments.str(),func_type,func_type->get_mangled().str(),
                templateParameterList != NULL ? templateParameterList->size() : 999,
                templateArgumentsList != NULL ? templateArgumentsList->size() : 999);
@@ -6628,14 +6628,14 @@ SgExprListExp * SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression
      ROSE_ASSERT(expList != NULL);
 
 #if 0
-     printf ("In SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression*>& exprs): SgExprListExp* expList = %p expList->get_expressions().size() = %zu \n",expList,expList->get_expressions().size());
+     printf ("In SageBuilder::buildExprListExp_nfi(const std::vector<SgExpression*>& exprs): SgExprListExp* expList = %p expList->get_expressions().size() = %" PRIuPTR " \n",expList,expList->get_expressions().size());
 #endif
 
      setOneSourcePositionNull(expList);
      for (size_t i = 0; i < exprs.size(); ++i)
         {
 #if 0
-          printf ("In SageBuilder::buildExprListExp_nfi(): exprs[i=%zu] = %p = %s \n",i,exprs[i],exprs[i]->class_name().c_str());
+          printf ("In SageBuilder::buildExprListExp_nfi(): exprs[i=%" PRIuPTR "] = %p = %s \n",i,exprs[i],exprs[i]->class_name().c_str());
 #endif
           appendExpression(expList, exprs[i]);
         }
@@ -13047,7 +13047,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      project->get_sourceFileNameList().push_back(inputFileName);
 
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
-  // printf ("In SageBuilder::buildFile(): sourceFilenames.size() = %zu sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
+  // printf ("In SageBuilder::buildFile(): sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 
      arglist = project->get_originalCommandLineArgumentList();
 
@@ -13082,7 +13082,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      ROSE_ASSERT(result != NULL);
 
 #if 0
-     printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
 #if 0
@@ -13122,18 +13122,18 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      if (!Outliner::use_dlopen)
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
        // DQ (3/5/2014): If we added the file above, then don't add it here since it is redundant.
           project->set_file(*result);  // equal to push_back()
 #if 0
-          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
         }
        else
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
        // Liao, 5/1/2009, 
        // if the original command line is: gcc -c -o my.o my.c and we want to  
@@ -13150,13 +13150,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
           SgFilePtrList& flist = project->get_fileList();
           flist.insert(flist.begin(),result);
 #if 0
-          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
         }
 #endif
 
 #if 0
-     printf ("In SageBuilder::buildFile(): (after project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("In SageBuilder::buildFile(): (after project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
   // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
@@ -13165,7 +13165,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      result->runFrontend(nextErrorCode);
 
 #if 0
-     printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %zu \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+     printf ("In SageBuilder::buildFile(): (after result->runFrontend()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
 #if 0
@@ -13175,7 +13175,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      project->set_frontendErrorCode(max(project->get_frontendErrorCode(), nextErrorCode));
 
   // Not sure why a warning shows up from astPostProcessing.C
-  // SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache)
+  // SgNode::get_globalMangledNameMap().size() != 0 size = %" PRIuPTR " (clearing mangled name cache)
      if (result->get_globalMangledNameMap().size() != 0) 
           result->clearGlobalMangledNameMap();
 
@@ -13336,7 +13336,7 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
         }
 
 #if 0
-     printf ("snippet_scope_list.size() = %zu \n",snippet_scope_list.size());
+     printf ("snippet_scope_list.size() = %" PRIuPTR " \n",snippet_scope_list.size());
 #endif
 
      SgGlobal* global_scope_in_target_ast = TransformationSupport::getGlobalScope(targetScope);
@@ -13821,7 +13821,7 @@ SageBuilder::getTargetFileType(SgType* snippet_type, SgScopeStatement* targetSco
 #if 0
      for (size_t i = 0; i < typeList.size(); i++)
         {
-          printf ("Input type: typeList[i=%zu] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+          printf ("Input type: typeList[i=%" PRIuPTR "] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
         }
 #endif
 
@@ -14679,7 +14679,7 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 #if 0
                for (size_t i = 0; i < typeList.size(); i++)
                   {
-                    printf ("Input type: typeList[i=%zu] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+                    printf ("Input type: typeList[i=%" PRIuPTR "] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
                   }
 #endif
             // Note that the semantics of this function is that it can return a NULL pointer (e.g. for primative types).
@@ -16250,7 +16250,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      RoseAst ast_of_copy(toInsert);
      RoseAst ast_of_original(original_before_copy);
 
-  // printf ("ast_of_copy.size() = %zu \n",ast_of_copy.size());
+  // printf ("ast_of_copy.size() = %" PRIuPTR " \n",ast_of_copy.size());
 
   // Build the iterators so that we can increment thorugh both ASTs one IR node at a time.
      RoseAst::iterator i_copy     = ast_of_copy.begin();
