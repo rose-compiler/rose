@@ -1,73 +1,12 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
-#include "sage3basic.h"
+
+// includes "sageBuilder.h"
+#include "sage3basic.h" 
 
 // We need this so that ROSE_USE_NEW_EDG_INTERFACE will be seen (set via configure).
 #include <rose_config.h>
-
-#if 0
-// DQ (6/1/2012): Note that to use the std::remove_if() STL algorithm, we have to define it before including some of these header files.
-// I worry that this code might be a problem to maintain since it is sensitive to these header file orderings.
-
-// These header files are required.
-#include <string>
-#include <algorithm>
-#include <iostream>
-#include <cctype>
-
-// bool isspace (char* c);
-
-// DQ (6/7/2012): Moved this to before the use of SageInterface::hasTemplateSyntax().
-#include "sageBuilder.h"
-
-SgName
-SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName inputNameWithTemplateArguments)
-   {
-#if 1
-   // DQ (7/27/2012): The new sematics are that template arguments are added to non template argument names 
-   // instead of removed from the name with template arguments, this is because it is a problem to remove 
-   // the template arguments from examples such as: "X<Y<Z>> operator>()" and others.
-      printf ("ERROR: This function SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments() should not be called. \n");
-      ROSE_ASSERT(false);
-
-      return "";
-#else
-  // DQ (6/1/2012): 
-     std::string nameWithTemplateArguments = inputNameWithTemplateArguments;
-
-  // ROSE_ASSERT(nameWithTemplateArguments.find('<') != std::string::npos);
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(nameWithTemplateArguments) == true);
-
-     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.c_str());
-     size_t positionOfTemplateSyntax = nameWithTemplateArguments.find('<');
-     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): positionOfTemplateSyntax = %zu \n",positionOfTemplateSyntax);
-
-  // We might want to strip off trailing white space.
-     std::string templateName = nameWithTemplateArguments.substr(0,positionOfTemplateSyntax);
-
-     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguments(): Before:" << templateName << ":End" << std::endl;
-  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-     std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguments(): After:" << std::string(templateName.begin(), newEnd) << ":End" << std::endl;
-
-     templateName = std::string(templateName.begin(), newEnd);
-
-  // ROSE_ASSERT(templateName.find('<') == std::string::npos);
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(templateName) == false);
-
-  // DQ (6/1/2012): Make sure there is no whitespace (trailing). 
-  // This will cause different mangled names to be generated.
-     ROSE_ASSERT(templateName.find(' ') == std::string::npos);
-
-     return templateName;
-#endif
-   }
-#endif
-
-
-
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "roseAdapter.h"
@@ -99,6 +38,8 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 // DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
 #define foreach BOOST_FOREACH
 
+
+
 // DQ (2/17/2013): This is a operation on the global AST that we don't need to do too often
 // depending on the grainularity sought for the debugging information.  It is done on the
 // whole AST once after construction (in edgRose.C), but is not needed more than that
@@ -108,6 +49,56 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 
 using namespace std;
 using namespace SageInterface;
+
+// MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
+namespace SageBuilder {
+
+//!  Template function to build a unary expression of type T. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp().  They are also used for the unary vararg operators (which are not technically unary operators).
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+template <class T> ROSE_DLL_API T* buildUnaryExpression(SgExpression* operand = NULL);
+
+//!  Template function to build a unary expression of type T with advanced information specified such as parenthesis and file info. Instantiated functions include:buildAddressOfOp(),buildBitComplementOp(),buildBitComplementOp(),buildMinusOp(),buildNotOp(),buildPointerDerefExp(),buildUnaryAddOp(),buildMinusMinusOp(),buildPlusPlusOp(). 
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+template <class T> ROSE_DLL_API T* buildUnaryExpression_nfi(SgExpression* operand);
+
+//! Template function to build a binary expression of type T, taking care of parent pointers, file info, lvalue, etc. Available instances include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(),buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+/*! The instantiated functions' prototypes are not shown since they are expanded using macros.
+ * Doxygen is not smart enough to handle macro expansion. 
+ */
+template <class T> ROSE_DLL_API T* buildBinaryExpression(SgExpression* lhs =NULL, SgExpression* rhs =NULL);
+
+//! Template function to build a binary expression of type T,with extra information for parenthesis and file info,  Instantiated functions include: buildAddOp(), buildAndAssignOp(), buildAndOp(), buildArrowExp(),buildArrowStarOp(), buildAssignOp(),buildBitAndOp(),buildBitOrOp(),buildBitXorOp(),buildCommaOpExp(), buildConcatenationOp(),buildDivAssignOp(), buildDivideOp(),buildDotExp(),buildEqualityOp(),buildExponentiationOp(),buildGreaterOrEqualOp(),buildGreaterThanOp(),buildIntegerDivideOp(),buildIorAssignOp(),buildLessOrEqualOp(),buildLessThanOp(),buildLshiftAssignOp(),buildLshiftOp(),buildMinusAssignOp(),buildModAssignOp(),buildModOp(),buildMultAssignOp(),buildMultiplyOp(),buildNotEqualOp(),buildOrOp(),buildPlusAssignOp(),buildPntrArrRefExp(),buildRshiftAssignOp(),buildRshiftOp(),buildScopeOp(),buildSubtractOp()buildXorAssignOp()
+template <class T> ROSE_DLL_API T* buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs);
+
+// DQ (1/21/2009): This is a support function called by the buildNondefiningFunctionDeclaration() and 
+// buildNondefiningMemberFunctionDeclaration() functions.  Since we constructe the function type in 
+// the support function and require either a SgFunctionType or SgMemberFunctionType, we need to to pass in 
+// a flag to specify which function type to build (bool isMemberFunction).
+//! A template function for function prototype declaration builders
+// template <class actualFunction>
+// actualFunction*
+template <class actualFunction>
+actualFunction*
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
+
+// DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
+//! A template function for function declaration builders
+template <class actualFunction>
+actualFunction*
+// buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+// buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration);
+buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
+
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
+
+}; // SageBuilder namespace
+
 //---------------------------------------------
 // scope stack interfaces
 //   hide actual implementation of the stack
