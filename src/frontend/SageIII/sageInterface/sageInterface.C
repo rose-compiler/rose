@@ -79,6 +79,11 @@ using namespace Rose::Frontend::Java::Ecj;
 
 #endif
 
+namespace SageInterface {
+  template<class T> void setSourcePositionToDefault( T* node );
+}
+
+
 #ifdef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "transformationSupport.h"
 #endif
@@ -5569,82 +5574,6 @@ SageInterface::lookupNamespaceSymbolInParentScopes (const SgName &  name, SgScop
 
      return symbol;
    }
-
-#if 0
-// DQ (5/2/2012): This is redundant with the more general function using the same name.
-void
-SageInterface::setSourcePosition( SgLocatedNode* locatedNode )
-   {
-  // DQ (5/1/2012): Older depricated function.
-#ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-     printf ("+++++ Depricated function setSourcePosition() (use setSourcePositionToDefault() instead) \n");
-#endif
-     setSourcePositionToDefault(locatedNode);
-   }
-#endif
-
-#if 0
-// DQ (5/3/2012): This version does not handle SgPragma and so is not used (a templaed version is implemented below).
-void
-SageInterface::setSourcePositionToDefault( SgLocatedNode* locatedNode )
-   {
-  // DQ (1/24/2009): It might be that this function is only called from the Fortran support.
-
-  // This function sets the source position to be marked as not
-  // available (since we often don't have token information)
-  // These nodes WILL be unparsed in the conde generation phase.
-
-  // The SgLocatedNode has both a startOfConstruct and endOfConstruct source position.
-     ROSE_ASSERT(locatedNode != NULL);
-
-  // We have to support this being called where the Sg_File_Info have previously been set.
-     if (locatedNode->get_endOfConstruct() == NULL && locatedNode->get_startOfConstruct() == NULL)
-        {
-       // Check the endOfConstruct first since it is most likely NULL (helpful in debugging)
-          ROSE_ASSERT(locatedNode->get_endOfConstruct()   == NULL);
-          ROSE_ASSERT(locatedNode->get_startOfConstruct() == NULL);
-
-          Sg_File_Info* start_fileInfo = Sg_File_Info::generateDefaultFileInfo();
-          Sg_File_Info* end_fileInfo   = Sg_File_Info::generateDefaultFileInfo();
-
-       // DQ (5/2/2012): I think we don't want to do this.
-          printf ("In SageInterface::setSourcePositionToDefault(): Calling setSourcePositionUnavailableInFrontend() \n");
-          start_fileInfo->setSourcePositionUnavailableInFrontend();
-          end_fileInfo->setSourcePositionUnavailableInFrontend();
-
-       // DQ (5/2/2012): I think we don't want to do this.
-          printf ("In SageInterface::setSourcePositionToDefault(): Calling setOutputInCodeGeneration() \n");
-
-       // This is required for the unparser to output the code from the AST.
-          start_fileInfo->setOutputInCodeGeneration();
-          end_fileInfo->setOutputInCodeGeneration();
-
-          locatedNode->set_startOfConstruct(start_fileInfo);
-          locatedNode->set_endOfConstruct  (end_fileInfo);
-
-          locatedNode->get_startOfConstruct()->set_parent(locatedNode);
-          locatedNode->get_endOfConstruct  ()->set_parent(locatedNode);
-        }
-       else
-        {
-       // If both the starting  and ending Sg_File_Info pointers are not NULL then both must be valid.
-       // We don't want to support partially completed source code position information.
-
-          if (locatedNode->get_startOfConstruct() == NULL)
-             {
-               printf ("ERROR: startOfConstruct not set for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-             }
-          if (locatedNode->get_endOfConstruct() == NULL)
-             {
-               printf ("ERROR: endOfConstruct not set for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
-             }
-
-          ROSE_ASSERT(locatedNode->get_endOfConstruct()   != NULL);
-          ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
-          ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL && locatedNode->get_startOfConstruct() != NULL);
-        }
-   }
-#endif
 
 template<class T>
 void
