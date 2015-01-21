@@ -2121,24 +2121,43 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
  //! Generate expression calculating the size of a linearized array
  // e.g. row_size * sizeof(double)* column_size
  static
- SgExpression * generateSizeCalculationExpression(SgType* element_type,  // element's type, used to generate sizeof(type)
+ SgExpression * generateSizeCalculationExpression(SgSymbol* sym, SgType* element_type,  // element's type, used to generate sizeof(type)
                      const std::vector < std::pair <SgExpression*, SgExpression*> >& dimensions) // dimensions of an array, [lower:length] format
- {
-   SgExpression* result =NULL;
-   ROSE_ASSERT (element_type != NULL);
-   ROSE_ASSERT (dimensions.size()>0);
+{
+  SgExpression* result =NULL;
+  ROSE_ASSERT (element_type != NULL);
+  result = buildSizeOfOp(element_type);
 
-   result = buildSizeOfOp(element_type);
-   for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = dimensions.begin(); iter != dimensions.end(); iter++)
-   {
-     std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-//     SgExpression* lower_exp = bound_pair.first;
-     SgExpression* length_exp = bound_pair.second;
-     //result = buildMultiplyOp(result,  buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)));
-     result = buildMultiplyOp(result, deepCopy(length_exp));
-   }
-   return result; 
- }                    
+  // situation 1: array section info is explicitly specified by the user code, we grab it.
+  if (dimensions.size()>0)
+  {
+    for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = dimensions.begin(); iter != dimensions.end(); iter++)
+    {
+      std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
+      //     SgExpression* lower_exp = bound_pair.first;
+      SgExpression* length_exp = bound_pair.second;
+      //result = buildMultiplyOp(result,  buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)));
+      result = buildMultiplyOp(result, deepCopy(length_exp));
+    }
+  }
+  else // situation 2: for static arrays: users do not need to specify array section info. at all. We get from arrayType
+  {
+    ROSE_ASSERT (sym!= NULL);
+    SgType* orig_type = sym->get_type();
+    SgArrayType* a_type = isSgArrayType (orig_type);
+    ROSE_ASSERT (a_type!= NULL);
+    std::vector< SgExpression * > dims = get_C_array_dimensions (a_type);
+    for (std::vector < SgExpression* >::const_iterator iter = dims.begin(); iter != dims.end(); iter++)
+    {
+      SgExpression* length_exp  = *iter; 
+      //TODO: get_C_array_dimensions returns one extra null expression somehow.
+      if (!isSgNullExpression(length_exp))
+        result = buildMultiplyOp(result, deepCopy(length_exp));
+    }
+  }
+
+  return result; 
+}                    
 
   // Check if a variable is in the clause's variable list
 // TODO: move to header
@@ -2551,7 +2570,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
      SgVariableSymbol* dev_var_size_sym = insertion_scope->lookup_variable_symbol(dev_var_size_name);
      if (dev_var_size_sym == NULL)
      {
-       SgExpression* initializer = generateSizeCalculationExpression (element_type, array_dimensions[sym]);
+       SgExpression* initializer = generateSizeCalculationExpression (sym, element_type, array_dimensions[sym]);
        dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), insertion_scope); 
        insertStatementBefore (insertion_anchor_stmt, dev_var_size_decl); 
      }
