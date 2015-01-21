@@ -2118,11 +2118,11 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
     ROSE_ASSERT (all_vars.size() == (array_syms.size() + atom_syms.size()) );
   }
 
- //! generate expression calculating the size of a linearized array
+ //! Generate expression calculating the size of a linearized array
  // e.g. row_size * sizeof(double)* column_size
  static
  SgExpression * generateSizeCalculationExpression(SgType* element_type,  // element's type, used to generate sizeof(type)
-                     const std::vector < std::pair <SgExpression*, SgExpression*> >& dimensions) // dimensions of an array
+                     const std::vector < std::pair <SgExpression*, SgExpression*> >& dimensions) // dimensions of an array, [lower:length] format
  {
    SgExpression* result =NULL;
    ROSE_ASSERT (element_type != NULL);
@@ -2132,11 +2132,10 @@ void categorizeMapClauseVariables( const SgInitializedNamePtrList & all_vars, //
    for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = dimensions.begin(); iter != dimensions.end(); iter++)
    {
      std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-     SgExpression* lower_bound = bound_pair.first;
-     SgExpression* upper_bound = bound_pair.second;
-    // * ( (upper - lower) + 1): assuming inclusive lower bound and non-inclusive upper bound
-     //result = buildMultiplyOp(result, buildAddOp( buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)), buildIntVal(1) ));
-     result = buildMultiplyOp(result,  buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)));
+//     SgExpression* lower_exp = bound_pair.first;
+     SgExpression* length_exp = bound_pair.second;
+     //result = buildMultiplyOp(result,  buildSubtractOp (deepCopy(upper_bound), deepCopy(lower_bound)));
+     result = buildMultiplyOp(result, deepCopy(length_exp));
    }
    return result; 
  }                    
