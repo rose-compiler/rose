@@ -150,8 +150,9 @@ Partitioner::instructionCrossReferences(const AddressIntervalSet &restriction) c
     } accumulator(restriction, xrefs);
 
     BOOST_FOREACH (const BasicBlock::Ptr &bblock, basicBlocks()) {
+        Function::Ptr function = basicBlockFunctionOwner(bblock);
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
-            accumulator.target(Reference(bblock, insn));
+            accumulator.target(Reference(function, bblock, insn));
             accumulator.traverse(insn, preorder);
         }
     }

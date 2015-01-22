@@ -188,6 +188,10 @@ Application::init() {
     styleSheet().addRule(".status_error", "background-color:#ffd781;");// light orange
     styleSheet().addRule(".status_fatal", "background-color:#ff8181;");// light red
 
+    // Strings table style sheet rules
+    styleSheet().addRule(".strings_oddrow", "background-color:#f9f9f9;");
+    styleSheet().addRule(".strings_matched", "background-color:#fff195;");// light yellow
+
     // So other threads can obtain a lock, modify the DOM, and then call triggerUpdate.
     enableUpdates(true);
 
@@ -505,6 +509,7 @@ void
 Application::updateStringCrossReferences(size_t stringIdx) {
     const P2::ReferenceSet &xrefs = wStrings_->crossReferences(stringIdx);
     wCrossRefs_->refs(xrefs);
+    wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->meta(stringIdx).address()));
 }
 
 void
@@ -512,7 +517,7 @@ Application::gotoReference(const P2::Reference &ref) {
     if (P2::BasicBlock::Ptr bblock = ref.basicBlock()) {
         if (P2::Function::Ptr function = ctx_.partitioner.basicBlockFunctionOwner(bblock)) {
             changeFunction(function);
-            changeTab(FunctionCfgTab);
+            changeTab(FunctionSummaryTab);
         }
     }
 }

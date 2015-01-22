@@ -15,6 +15,7 @@ public:
     enum ColumnNumber {
         AddressColumn,
         TypeColumn,
+        NameColumn,
         NColumns
     };
 
@@ -37,6 +38,8 @@ public:
                         return Wt::WString("Address");
                     case TypeColumn:
                         return Wt::WString("Type");
+                    case NameColumn:
+                        return Wt::WString("Name");
                 }
             }
         }
@@ -65,6 +68,13 @@ public:
                             return Wt::WString("func");
                     }
                     break;
+                case NameColumn:
+                    if (P2::Function::Ptr function = ref.function()) {
+                        if (!function->name().empty())
+                            return Wt::WString(StringUtility::cEscape(function->name()));
+                        return Wt::WString("f_" + StringUtility::addrToString(function->address()));
+                    }
+                    break;
             }
         }
         return boost::any();
@@ -91,7 +101,7 @@ WCrossReferences::init() {
     Wt::WContainerWidget *wPanelCenter = new Wt::WContainerWidget;
 
     // Info about what's being display
-    wAddress_ = new Wt::WText("No address", wPanelCenter);
+    wTableName_ = new Wt::WText(wPanelCenter);
 
     // Table showing the cross references
     view_ = new Wt::WTableView(wPanelCenter);
@@ -104,13 +114,19 @@ WCrossReferences::init() {
     view_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
     view_->setColumnWidth(CrossReferencesModel::AddressColumn, Wt::WLength(5, Wt::WLength::FontEm));
     view_->setColumnWidth(CrossReferencesModel::TypeColumn, Wt::WLength(3, Wt::WLength::FontEm));
+    view_->setColumnWidth(CrossReferencesModel::NameColumn, Wt::WLength(25, Wt::WLength::FontEm));
     view_->clicked().connect(boost::bind(&WCrossReferences::handleRowClicked, this, _1));
 
     // A frame to hold all the cross ref info
     Wt::WPanel *wPanel = new Wt::WPanel(this);
-    wPanel->setTitle("XRefs");
+    wPanel->setTitle("Cross References");
     wPanel->resize(300, Wt::WLength::Auto);
     wPanel->setCentralWidget(wPanelCenter);
+}
+
+void
+WCrossReferences::name(const std::string &s) {
+    wTableName_->setText(s);
 }
 
 void

@@ -44,6 +44,9 @@ private:
     Wt::WCheckBox *wAssumeFunctionsReturn_;             // how do unknown functions behave?
     Wt::WComboBox *wInterpretation_;                    // which interpretation to unparse
     Wt::WSlider *wStackDeltaDepth_;                     // max depth for interprocedural stack delta analysis
+    Wt::WCheckBox *wInterruptVector_;                   // whether to use an interrupt vector
+    Wt::WLineEdit *wInterruptVectorVa_;                 // address of an interrupt vector
+    Wt::WText *wInterruptVectorMessage_;                // messages from parsing the interrupt vector
 
     Wt::WPushButton *wParseSpecimen_;                   // causes ELF/PE files to be parsed
     Wt::WPushButton *wLoadSpecimen_;                    // causes specimen to be loaded into memory, and possibly linked
@@ -61,7 +64,8 @@ public:
           wUseConfiguration_(NULL), wIsaName_(NULL), wIsaError_(NULL), wUseSemantics_(NULL), wFollowGhostEdges_(NULL),
           wFollowGhostEdgesWarning_(NULL), wAllowDiscontiguousBlocks_(NULL), wFindDeadCode_(NULL), wDefeatPeScrambler_(NULL),
           wPeScramblerDispatchVa_(NULL), wAssumeFunctionsReturn_(NULL), wInterpretation_(NULL), wStackDeltaDepth_(NULL),
-          wParseSpecimen_(NULL), wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
+          wInterruptVector_(NULL), wInterruptVectorVa_(NULL), wInterruptVectorMessage_(NULL), wParseSpecimen_(NULL),
+          wLoadSpecimen_(NULL), wPartitionSpecimen_(NULL) {
         init();
     }
 
@@ -80,6 +84,8 @@ public:
     bool defeatPeScrambler() const;
     rose_addr_t peScramblerDispatcherVa() const;
     bool assumeFunctionsReturn() const;
+    bool interruptVector() const;
+    rose_addr_t interruptVectorVa() const;
 
     State currentState() const { return state_; }
     void changeState(State);

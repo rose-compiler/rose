@@ -53,7 +53,7 @@ public:
                 return leaf->get_value() ? "true" : "false";
             return leaf->get_bits().toHex();
         }
-        return "?";
+        return "? " + StringUtility::plural(valueBase->get_width(), "bits");
     }
 
     void reload(const P2::DataFlow::State::Ptr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {

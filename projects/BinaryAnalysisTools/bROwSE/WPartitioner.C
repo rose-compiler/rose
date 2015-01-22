@@ -108,6 +108,19 @@ WPartitioner::init() {
         wIsaError_->hide();
         wIsaName_->activated().connect(boost::bind(&WPartitioner::clearIsaError, this));
 
+        tip = "An interrupt vector contains addresses of instructions that are to be invoked when a processor "
+              "receives certain kinds of interrupts, faults, or special conditions.  Interrupt vectors are typically "
+              "present in firmware, and operating systems, but not often in user code.";
+        new Wt::WBreak(c);
+        wInterruptVector_ = new Wt::WCheckBox("Scan interrupt vector?", c);
+        wInterruptVector_->setToolTip(tip);
+        wInterruptVector_->setCheckState(Wt::Unchecked);
+        new Wt::WText("&nbsp;&nbsp;&nbsp;&nbsp;vector address: ", c);
+        wInterruptVectorVa_ = new Wt::WLineEdit(c);
+        wInterruptVectorVa_->setToolTip(tip);
+        wInterruptVectorMessage_ = new Wt::WText(c);
+        wInterruptVectorMessage_->setStyleClass("text-error");
+
         tip = "Instruction semantics enable the partitioner to reason about the effect of instructions or blocks of "
               "instructions without needing to match certain patterns.  For instance, opaque predicates can be found "
               "when semantics are enabled. Turning off semantics can make the partitioner much faster but with a slight "
@@ -460,6 +473,15 @@ WPartitioner::partitionSpecimen() {
     }
     ctx_.engine.labelAddresses(p, interp);
     ctx_.engine.postPartitionAnalyses(false);           // we do them explicitly in order to get timing info
+    if (interruptVector()) {
+        try {
+            ctx_.engine.makeInterruptVectorFunctions(p, interruptVectorVa());
+        } catch (const std::runtime_error &e) {
+            wInterruptVectorMessage_->setText(e.what());
+            return false;
+        }
+    }
+    wInterruptVectorMessage_->setText("");
 
     // Configure the progress bar. We need to add a work item here in the parent thread, although the child will quickly
     // override it with something more appropriate.
@@ -536,6 +558,18 @@ WPartitioner::peScramblerDispatcherVa() const {
 bool
 WPartitioner::assumeFunctionsReturn() const {
     return wAssumeFunctionsReturn_->checkState() == Wt::Checked;
+}
+
+bool
+WPartitioner::interruptVector() const {
+    return wInterruptVector_->checkState() == Wt::Checked;
+}
+
+rose_addr_t
+WPartitioner::interruptVectorVa() const {
+    std::string str = wInterruptVectorVa_->text().narrow();
+    rose_addr_t va = rose_strtoull(str.c_str(), NULL, 16);
+    return va;
 }
 
 } // namespace

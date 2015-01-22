@@ -1,6 +1,5 @@
 #include <bROwSE/WStrings.h>
 
-#include <BinaryString.h>                               // ROSE
 #include <boost/regex.hpp>
 #include <bROwSE/WAddressSpace.h>
 #include <stringify.h>                                  // ROSE
@@ -78,8 +77,8 @@ public:
     virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row()<rows_.size());
+        const Row &row = rows_[index.row()];
         if (Wt::DisplayRole == role) {
-            const Row &row = rows_[index.row()];
             switch (index.column()) {
                 case AddressColumn:
                     return Wt::WString(StringUtility::addrToString(row.meta.address()));
@@ -121,6 +120,11 @@ public:
                                        (row.value.size()>nCharsToDisplay?"...":""));
                 }
             }
+        } else if (Wt::StyleClassRole == role) {
+            if (row.isMatching)
+                return Wt::WString("strings_matched");
+            if (index.row() % 2)
+                return Wt::WString("strings_oddrow");
         }
         return boost::any();
     }
@@ -179,13 +183,24 @@ public:
     void updateCrossReferences(const P2::Partitioner &partitioner) {
         layoutAboutToBeChanged().emit();
 
+        // Find all possible strings
+        memoryMap(partitioner.memoryMap());
+
+        // Find all references to those strings
         AddressIntervalSet stringAddresses;
         BOOST_FOREACH (const Row &row, rows_)
             stringAddresses.insert(row.meta.address());
         xrefs_ = partitioner.instructionCrossReferences(stringAddresses);
 
-        BOOST_FOREACH (Row &row, rows_)
+        // Update reference counts and prune away non-referenced strings that overlap with code. Pruning away the
+        // non-referenced strings that overlap with code is a good way to get rid of lots of false positives.
+        std::vector<Row> keep;
+        BOOST_FOREACH (Row &row, rows_) {
             row.nrefs = xrefs_.getOrDefault(P2::Reference(row.meta.address())).size();
+            if (0!=row.nrefs || partitioner.instructionsOverlapping(row.meta.address()).empty())
+                keep.push_back(row);
+        }
+        rows_ = keep;
 
         layoutChanged().emit();
     }
@@ -211,6 +226,12 @@ WStrings::init() {
         wEntry->changed().connect(boost::bind(&WStrings::search, this, wEntry));
         Wt::WPushButton *wSubmit = new Wt::WPushButton("Search", wSearch);
         wSubmit->clicked().connect(boost::bind(&WStrings::search, this, wEntry));
+        wPrev_ = new Wt::WPushButton("Previous", wSearch);
+        wPrev_->setDisabled(true);
+        wPrev_->clicked().connect(boost::bind(&WStrings::searchNavigate, this, -1));
+        wNext_ = new Wt::WPushButton("Next", wSearch);
+        wNext_->setDisabled(true);
+        wNext_->clicked().connect(boost::bind(&WStrings::searchNavigate, this, 1));
         wSearchResults_ = new Wt::WText("", wSearch);
     }
     
@@ -226,10 +247,10 @@ WStrings::init() {
     wTableView_->setRowHeaderCount(1);                  // this must be first
     wTableView_->setHeaderHeight(28);
     wTableView_->setSortingEnabled(true);
-    wTableView_->setAlternatingRowColors(true);
+    wTableView_->setAlternatingRowColors(false);        // we do our own colors
     wTableView_->setColumnResizeEnabled(true);
     wTableView_->setSelectionBehavior(Wt::SelectRows);
-    wTableView_->setSelectionMode(Wt::ExtendedSelection);
+    wTableView_->setSelectionMode(Wt::SingleSelection);
     wTableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
     wTableView_->setColumnWidth(StringsModel::AddressColumn, Wt::WLength(6, Wt::WLength::FontEm));
     wTableView_->setColumnWidth(StringsModel::LengthEncodingColumn, Wt::WLength(7, Wt::WLength::FontEm));
@@ -242,21 +263,65 @@ WStrings::init() {
 
 void
 WStrings::search(Wt::WLineEdit *wSearch) {
-    try {
-        boost::regex re(wSearch->text().narrow());
-        Wt::WModelIndexSet selected;
-        for (size_t i=0; i<model_->rows_.size(); ++i) {
-            StringsModel::Row &row = model_->rows_[i];
-            std::string lower = boost::to_lower_copy(row.value); // simulate case-insensitive matching
-            if ((row.isMatching = boost::regex_search(lower, re, boost::regex_constants::match_perl)))
-                selected.insert(model_->index(i, 0));
+    model_->layoutAboutToBeChanged().emit();
+
+    size_t nFound = 0, firstMatch = model_->rows_.size();
+    BOOST_FOREACH (StringsModel::Row &row, model_->rows_)
+        row.isMatching = false;
+
+    if (wSearch->text().narrow().empty()) {
+        wSearchResults_->setText("");
+    } else {
+        try {
+            boost::regex re(wSearch->text().narrow());
+            for (size_t i=0; i<model_->rows_.size(); ++i) {
+                StringsModel::Row &row = model_->rows_[i];
+                std::string lower = boost::to_lower_copy(row.value); // simulate case-insensitive matching
+                if ((row.isMatching = boost::regex_search(lower, re, boost::regex_constants::match_perl))) {
+                    ++nFound;
+                    firstMatch = std::min(firstMatch, i);
+                }
+            }
+            wSearchResults_->setText(StringUtility::plural(nFound, "matches", "match"));
+        } catch (const boost::regex_error &e) {
+            wSearchResults_->setText(e.what());
         }
-        wTableView_->setSelectedIndexes(selected);
-        wSearchResults_->setText(StringUtility::plural(selected.size(), "matches"));
-    } catch (const boost::regex_error &e) {
-        wSearchResults_->setText(e.what());
-        wTableView_->setSelectedIndexes(Wt::WModelIndexSet());
     }
+
+    model_->layoutChanged().emit();
+
+    wPrev_->setDisabled(nFound<=1);
+    wNext_->setDisabled(nFound<=1);
+
+    searchNavigate(1);
+}
+
+void
+WStrings::searchNavigate(int direction) {
+    if (model_->rows_.empty())
+        return;
+
+    Wt::WModelIndexSet iset = wTableView_->selectedIndexes();
+    ASSERT_require(iset.empty() || iset.begin()->isValid());
+    size_t curIdx = iset.empty() ? (direction>=0 ? model_->rows_.size()-1 : 0) : iset.begin()->row();
+    for (size_t i=0; i<model_->rows_.size(); ++i) {
+        if (direction>=0) {
+            if (++curIdx >= model_->rows_.size())
+                curIdx = 0;
+        } else {
+            if (0==curIdx)
+                curIdx = model_->rows_.size();
+            --curIdx;
+        }
+        if (model_->rows_[curIdx].isMatching) {
+            Wt::WModelIndex newIdx = model_->index(curIdx, 0);
+            wTableView_->scrollTo(newIdx);
+            wTableView_->select(newIdx);
+            return;
+        }
+    }
+
+    wTableView_->setSelectedIndexes(Wt::WModelIndexSet());
 }
 
 const MemoryMap&
@@ -265,10 +330,7 @@ WStrings::memoryMap() const {
 }
 
 void
-WStrings::memoryMap(const MemoryMap &map) {
-    model_->memoryMap(map);
-
-    // Update the address space bars
+WStrings::redrawAddressSpace(const MemoryMap &map) {
     wAddressSpace_->insert(map, SegmentsBar);
     WAddressSpace::HeatMap &hmap = wAddressSpace_->map(StringsBar);
     WAddressSpace::HeatMap &gutter = wAddressSpace_->bottomGutterMap();
@@ -282,9 +344,16 @@ WStrings::memoryMap(const MemoryMap &map) {
 }
 
 void
+WStrings::memoryMap(const MemoryMap &map) {
+    model_->memoryMap(map);
+    redrawAddressSpace(map);
+}
+
+void
 WStrings::partitioner(const P2::Partitioner &p) {
     memoryMap(p.memoryMap());
     model_->updateCrossReferences(p);
+    redrawAddressSpace(p.memoryMap());
 }
 
 void
@@ -298,6 +367,12 @@ WStrings::crossReferences(size_t stringIdx) {
     ASSERT_require(stringIdx < model_->rows_.size());
     rose_addr_t stringVa = model_->rows_[stringIdx].meta.address();
     return model_->xrefs_.getOrDefault(P2::Reference(stringVa));
+}
+
+const rose::BinaryAnalysis::StringFinder::String&
+WStrings::meta(size_t stringIdx) {
+    ASSERT_require(stringIdx < model_->rows_.size());
+    return model_->rows_[stringIdx].meta;
 }
 
 } // namespace
