@@ -309,6 +309,9 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_74.C \
   inputmoveDeclarationToInnermostScope_test2015_75.C \
   inputmoveDeclarationToInnermostScope_test2015_76.C \
+  inputmoveDeclarationToInnermostScope_test2015_78.C \
+  inputmoveDeclarationToInnermostScope_test2015_79.C \
+  inputmoveDeclarationToInnermostScope_test2015_80.C \
   inputmoveDeclarationToInnermostScope_test2015_83.C \
   inputmoveDeclarationToInnermostScope_test2015_85.C \
   inputmoveDeclarationToInnermostScope_test2015_86.C \
@@ -368,6 +371,9 @@ $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 
 test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
+	@echo "********************************************************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
+	@echo "********************************************************************************************************************************************************************"
 
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
 
