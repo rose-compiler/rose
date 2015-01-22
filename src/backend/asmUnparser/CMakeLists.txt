@@ -7,7 +7,7 @@ add_library(roseAsmUnparser OBJECT
   AsmUnparser.C
   AsmUnparser_compat.C
   AsmFunctionIndex.C)
-add_dependencies(roseAsmUnparser rosetta_generated)
+add_dependencies(roseAsmUnparser rosetta_generated generate_stringify)
 
 install(FILES
   AsmUnparser.h AsmUnparser_compat.h AsmFunctionIndex.h
