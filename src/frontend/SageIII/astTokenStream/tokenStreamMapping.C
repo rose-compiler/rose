@@ -1256,8 +1256,13 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // if (childAttributes[i].node != NULL && tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
                     if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
                        {
+                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenStreamSequenceMap[childAttributes[i].node];
+
+                         ROSE_ASSERT(mappingInfo != NULL);
+
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                          printf ("       --- Found mapping information \n");
+                         printf ("       --- mappingInfo->token_subsequence_start = %d end = %d \n",mappingInfo->token_subsequence_start,mappingInfo->token_subsequence_end);
 #endif
 
                       // This is used to know where the compute the leading white space token information (in cases where the leading children do not have a token mapping).
@@ -1268,8 +1273,6 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                       // This is used to know where the compute the trailing white space token information (in cases where the trailing children do not have a token mapping).
                          lastChildWithTokenMapping = (int)i;
-
-                         TokenStreamSequenceToNodeMapping* mappingInfo = tokenStreamSequenceMap[childAttributes[i].node];
 
                       // DQ (1/6/2015): Adding assertion.
                          ROSE_ASSERT(mappingInfo != NULL);
@@ -1621,6 +1624,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("   --- original_end_of_token_subsequence = %d \n",original_end_of_token_subsequence);
 #endif
 
+                      // DQ (1/22/2015): Added realization that there are a few more single character statements than I realized previously (these can look like macro expansions).
+                      // Note: there are a few statements that are a single character and can be tripped up by this test (startOfConstruct() == endOfConstruct()).
+                      // Examples are: ";" and single character value expressions that are interpreted as SgExprStatement IR nodes (e.g. in "if(0)").
+
                       // SgVarRefExp* varRefExp = isSgVarRefExp(tokenToNodeVector[j]->node);
                       // if (varRefExp == NULL)
                          SgLocatedNode* tmp_locatedNode = isSgLocatedNode(tokenToNodeVector[j]->node);
@@ -1628,6 +1635,33 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_MACRO_HANDLING
                          printf ("   --- processAsMacroExpansion = %s \n",processAsMacroExpansion ? "true" : "false");
 #endif
+                      // DQ (1/22/2015): We need to account for statements that have surrounding syntax, and can be a single character statement.
+                      // SgIfStmt* ifStatement = isSgIfStmt(n);
+                      // if (ifStatement != NULL && tokenToNodeVector[j]->node == ifStatement->get_conditional())
+                      // DQ (12/26/2014): Adding support for fixing the leading white space of conditionals statements (in C++ most conditional expressions are actually statements).
+                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
+                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
+                         SgIfStmt*          ifStatement     = isSgIfStmt(n);
+                         if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL)
+                            {
+                              ROSE_ASSERT(tmp_locatedNode != NULL);
+                              SgStatement* conditionStatement = isSgStatement(tmp_locatedNode);
+                              if (conditionStatement != NULL)
+                                 {
+                                   if ( (whileStatement  != NULL && conditionStatement == whileStatement->get_condition()) ||
+                                        (switchStatement != NULL && conditionStatement == switchStatement->get_item_selector()) ||
+                                        (ifStatement     != NULL && conditionStatement == ifStatement->get_conditional()) )
+                                      {
+#if 1
+                                        printf ("$$$$$$$$$$$$ Handle special case of single character SgStatement (condition) nested in n = %p = %s \n",n,n->class_name().c_str());
+#endif
+                                     // Test inputmove*_test2015_74.C demonstrates this problem where the test in "if(0)" is a 1 token statement.
+                                     // In this case we have to skip over the ")" as well or disqualify an attempt at a better evaluation.
+                                        processAsMacroExpansion = false;
+                                      }
+                                 }
+                            }
+
                          if (processAsMacroExpansion == true)
                             {
                            // Set the ending position to be either the next statement (if it exists) or the value of original_end_of_token_subsequence.
@@ -1667,6 +1701,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            //         ( tokenStream[better_end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_ELSE ||
                            //           tokenStream[better_end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
                            //           tokenStream[better_end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                           // while ( better_end_of_token_subsequence > tokenToNodeVector[j]->token_subsequence_start && 
                               while ( better_end_of_token_subsequence > tokenToNodeVector[j]->token_subsequence_start && 
                                       ( tokenStream[better_end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_ELSE ||
                                         tokenStream[better_end_of_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
@@ -2801,7 +2836,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if 0
                                    printf ("i = %zu next_mappingInfo->token_subsequence_start = %d next_mappingInfo->token_subsequence_end = %d \n",i,next_mappingInfo->token_subsequence_start,next_mappingInfo->token_subsequence_end);
 #endif
-                                // DQ (1/2/2015): Handle the special case of "else" syntax between the true and fals bodies of the SgIfStmt.
+                                // DQ (1/2/2015): Handle the special case of "else" syntax between the true and false bodies of the SgIfStmt.
                                    bool skipUpdate = false;
                                    printf ("#################### Fix mistaken reset of trailing whitespace end position for the case of the true body of a SgIfStmt! ##################### \n");
                                    SgIfStmt* ifStatement = isSgIfStmt(n);
