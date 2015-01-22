@@ -362,6 +362,14 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
        // DQ (3/25/2014): We need the icpc/icc ‘-fp-model <arg>’  command-line compiler option to be
        // passed to the backend compiler properly.  The ‘-fp-model’ option always has a single argument.
           argument == "-fp-model" ||
+
+       // DQ (1/21/2015): -diag-disable can take a collection of optional parameters: e.g. cpu-dispatch
+          argument == "-diag-enable"  ||
+          argument == "-diag-disable" ||
+          argument == "-diag-error"   ||
+          argument == "-diag-warning" ||
+          argument == "-diag-remark"  ||
+
           false)
         {
           result = true;

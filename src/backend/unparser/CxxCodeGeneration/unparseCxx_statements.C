@@ -7474,7 +7474,7 @@ Unparse_ExprStmt::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ROSE_ASSERT(while_stmt != NULL);
 
-#if 1
+#if 0
      printf ("In unparseWhileStmt(): info.unparsedPartiallyUsingTokenStream() = %s \n",info.unparsedPartiallyUsingTokenStream() ? "true" : "false");
      curprint("/* In unparseWhileStmt(): TOP */ ");
 #endif
