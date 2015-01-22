@@ -12599,6 +12599,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfFor(SgForStatement* fs)
     b = SageBuilder::buildBasicBlock(b);
     fs->set_loop_body(b);
     b->set_parent(fs);
+
+ // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+    recordNormalizations(b);
   }
   ROSE_ASSERT (isSgBasicBlock(b));
   return isSgBasicBlock(b);
@@ -12611,6 +12614,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfCaseOption(SgCaseOptionStmt
     b = SageBuilder::buildBasicBlock(b);
     cs->set_body(b);
     b->set_parent(cs);
+
+ // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+    recordNormalizations(b);
   }
   ROSE_ASSERT (isSgBasicBlock(b));
   return isSgBasicBlock(b);
@@ -12623,6 +12629,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfDefaultOption(SgDefaultOpti
     b = SageBuilder::buildBasicBlock(b);
     cs->set_body(b);
     b->set_parent(cs);
+
+ // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+    recordNormalizations(b);
   }
   ROSE_ASSERT (isSgBasicBlock(b));
   return isSgBasicBlock(b);
@@ -12641,6 +12650,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b = SageBuilder::buildBasicBlock(b);
       fs->set_body(b);
       b->set_parent(fs);
+
+   // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+      recordNormalizations(b);
     }
     ROSE_ASSERT (isSgBasicBlock(b));
     return isSgBasicBlock(b);
@@ -12652,6 +12664,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b = SageBuilder::buildBasicBlock(b);
       fs->set_body(b);
       b->set_parent(fs);
+
+   // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+      recordNormalizations(b);
     }
     ROSE_ASSERT (isSgBasicBlock(b));
     return isSgBasicBlock(b);
@@ -12663,6 +12678,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b = SageBuilder::buildBasicBlock(b);
       fs->set_body(b);
       b->set_parent(fs);
+
+   // DQ (1/21/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
+      recordNormalizations(b);
     }
     ROSE_ASSERT (isSgBasicBlock(b));
     return isSgBasicBlock(b);
@@ -12751,6 +12769,83 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                                printf ("Error: case not handled in case V_SgIfStmt: parentOfBlock = %p = %s \n",parentOfBlock,parentOfBlock->class_name().c_str());
                                ROSE_ASSERT(false);
 #endif
+                             }
+                          break;
+                        }
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgWhileStmt:
+                        {
+                          SgWhileStmt* whileStatement = isSgWhileStmt(parentOfBlock);
+                          if (b == whileStatement->get_body())
+                             {
+                               whileStatement->set_body(s);
+                               s->set_parent(whileStatement);
+                             }
+                          break;
+                        }
+
+
+
+
+
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgSwitchStatement:
+                        {
+                          SgSwitchStatement* switchStatement = isSgSwitchStatement(parentOfBlock);
+                          if (b == switchStatement->get_body())
+                             {
+                               switchStatement->set_body(s);
+                               s->set_parent(switchStatement);
+                             }
+                          break;
+                        }
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgForStatement:
+                        {
+                          SgForStatement* forStatement = isSgForStatement(parentOfBlock);
+                          if (b == forStatement->get_loop_body())
+                             {
+                               forStatement->set_loop_body(s);
+                               s->set_parent(forStatement);
+                             }
+                          break;
+                        }
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgCaseOptionStmt:
+                        {
+                          SgCaseOptionStmt* caseOptionStatement = isSgCaseOptionStmt(parentOfBlock);
+                          if (b == caseOptionStatement->get_body())
+                             {
+                               caseOptionStatement->set_body(s);
+                               s->set_parent(caseOptionStatement);
+                             }
+                          break;
+                        }
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgDefaultOptionStmt:
+                        {
+                          SgDefaultOptionStmt* defaultOptionStatement = isSgDefaultOptionStmt(parentOfBlock);
+                          if (b == defaultOptionStatement->get_body())
+                             {
+                               defaultOptionStatement->set_body(s);
+                               s->set_parent(defaultOptionStatement);
+                             }
+                          break;
+                        }
+
+                  // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
+                     case V_SgDoWhileStmt:
+                        {
+                          SgDoWhileStmt* doWhileStatement = isSgDoWhileStmt(parentOfBlock);
+                          if (b == doWhileStatement->get_body())
+                             {
+                               doWhileStatement->set_body(s);
+                               s->set_parent(doWhileStatement);
                              }
                           break;
                         }
