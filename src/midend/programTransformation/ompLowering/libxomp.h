@@ -287,9 +287,11 @@ struct XOMP_accelerator_thread {
 struct XOMP_mapped_variable
 {
   void * address; // original variable's address
+  //TODO: support array sections
   int size; 
   void * dev_address; // the corresponding device variable's address
-  bool copyBack; // if this variable should be copied back to HOST
+  bool copyTo; // if this variable should be copied to the device first
+  bool copyBack; // if this variable should be copied back to HOST when existing the data environment
 };
 
 //! A helper function to copy a mapped variable from src to desc
