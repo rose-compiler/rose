@@ -3788,6 +3788,8 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
+		FUNC_EXCEPTION_HANDLER
+                                 = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
                 FUNC_CALL_TARGET = 0x00020000,  /**< Target of a function call instruction sequence in the CFG. When used as
                                                  *   a partitioning heuristic, the partitioner will create new functions when
@@ -3845,7 +3847,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                                                  *   functions whose content looks like a thunk. */
                 FUNC_EXPORT      = 0x80000000,  /**< Exported function. These are the functions that appear in a PE export
                                                  *   table. */
-                FUNC_DEFAULT     = 0xefff00ff,  /**< Default value for Partitioner class. */
+                FUNC_DEFAULT     = 0xefff80ff,  /**< Default value for Partitioner class. */
 
                 /*========= Miscellaneous Reasons ===========================================================================
                  * The first half of the range (1-127, inclusive) is used for algorithms defined by ROSE.  The second half is

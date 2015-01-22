@@ -484,6 +484,45 @@ Engine::makeEntryFunctions(Partitioner &partitioner, SgAsmInterpretation *interp
     return retval;
 }
 
+std::vector<Function::Ptr>
+Engine::makeInterruptVectorFunctions(Partitioner &partitioner, const AddressInterval &interruptVector) {
+    std::vector<Function::Ptr> functions;
+    if (interruptVector.isEmpty())
+        return functions;
+    Disassembler *disassembler = disassembler_ ? disassembler_ : partitioner.instructionProvider().disassembler();
+    if (!disassembler) {
+        throw std::runtime_error("cannot decode interrupt vector without architecture information");
+    } else if (dynamic_cast<DisassemblerM68k*>(disassembler)) {
+        BOOST_FOREACH (const Function::Ptr f, ModulesM68k::findInterruptFunctions(partitioner, interruptVector.least()))
+            insertUnique(functions, partitioner.attachOrMergeFunction(f), sortFunctionsByAddress);
+    } else if (1 == interruptVector.size()) {
+        throw std::runtime_error("cannot determine interrupt vector size for architecture");
+    } else {
+        size_t ptrSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+        ASSERT_require2(ptrSize % 8 == 0, "instruction pointer register size is strange");
+        size_t bytesPerPointer = ptrSize / 8;
+        size_t nPointers = interruptVector.size() / bytesPerPointer;
+        ByteOrder::Endianness byteOrder = partitioner.instructionProvider().defaultByteOrder();
+
+        for (size_t i=0; i<nPointers; ++i) {
+            rose_addr_t elmtVa = interruptVector.least() + i*bytesPerPointer;
+            uint32_t functionVa;
+            if (4 == partitioner.memoryMap().at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
+                functionVa = ByteOrder::disk_to_host(byteOrder, functionVa);
+                std::string name = "interrupt_" + StringUtility::numberToString(i) + "_handler";
+                Function::Ptr function = Function::instance(functionVa, name, SgAsmFunction::FUNC_EXCEPTION_HANDLER);
+                if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {
+                    // Multiple vector entries point to the same function, so give it a rather generic name
+                    found.get()->name("interrupt_vector_function");
+                } else {
+                    insertUnique(functions, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+                }
+            }
+        }
+    }
+    return functions;
+}
+
 // Make functions at error handling addresses
 std::vector<Function::Ptr>
 Engine::makeErrorHandlingFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {

@@ -198,6 +198,87 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     return chain;
 }
 
+std::vector<Function::Ptr>
+findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
+    std::vector<Function::Ptr> functions;
+    std::set<rose_addr_t> functionVas;
+    for (size_t i=0; i<256; ++i) {
+        rose_addr_t elmtVa = vectorVa + 4*i;
+        uint32_t functionVa;
+        if (4 == partitioner.memoryMap().at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
+            functionVa = ByteOrder::be_to_host(functionVa);
+            std::string name;
+            unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;
+            switch (i) {
+                case 0: continue; // this vector entry is the initial stack pointer, not a function address
+                case 1: name = "init_program_counter"; reasons |= SgAsmFunction::FUNC_ENTRY_POINT; break;
+                case 2: name = "access_fault_handler"; break;
+                case 3: name = "address_error_handler"; break;
+                case 4: name = "illegal_insn_handler"; break;
+                case 5: name = "integer_divide_by_zero_handler"; break;
+                case 6: name = "chk_insn_handler"; break;
+                case 7: name = "trap_insn_handler"; break;
+                case 8: name = "privilege_violation_handler"; break;
+                case 9: name = "trace_handler"; break;
+                case 10: name = "line_1010_emulator"; break;
+                case 11: name = "line_1111_emulator"; break;
+                case 12: name = "non_pc_breakpoint_debug_handler"; break;
+                case 13: name = "pc_breakpoing_debug_handler"; break;
+                case 14: name = "format_error_handler"; break;
+                case 15: name = "uninitialized_interrupt_handler"; break;
+                case 24: name = "spurious_interrupt_handler"; break;
+                case 25: name = "level_1_interrupt_autovector_handler"; break;
+                case 26: name = "level_2_interrupt_autovector_handler"; break;
+                case 27: name = "level_3_interrupt_autovector_handler"; break;
+                case 28: name = "level_4_interrupt_autovector_handler"; break;
+                case 29: name = "level_5_interrupt_autovector_handler"; break;
+                case 30: name = "level_6_interrupt_autovector_handler"; break;
+                case 31: name = "level_7_interrupt_autovector_handler"; break;
+                case 32:
+                case 33:
+                case 34:
+                case 35:
+                case 36:
+                case 37:
+                case 38:
+                case 39:
+                case 40:
+                case 41:
+                case 42:
+                case 43:
+                case 44:
+                case 45:
+                case 46:
+                case 47: name = "trap_" + StringUtility::numberToString(i-32) + "_insn_handler"; break;
+                case 48: name = "fp_branch_on_unordered_condition_handler"; break;
+                case 49: name = "fp_inexact_result_handler"; break;
+                case 50: name = "fp_divide_by_zero_handler"; break;
+                case 51: name = "fp_underflow_handler"; break;
+                case 52: name = "fp_operand_error_handler"; break;
+                case 53: name = "fp_overflow_handler"; break;
+                case 54: name = "fp_signaling_nan_handler"; break;
+                case 55: name = "fp_input_denormalized_handler"; break;
+                case 56: name = "mmu_configuration_error_handler"; break;
+                case 57: name = "mmu_illegal_operation_handler"; break;
+                case 58: name = "mmu_access_level_violation_handler"; break;
+                case 61: name = "unsupported_instruction_handler"; break;
+                default:
+                    name = "interrupt_vector_"+StringUtility::numberToString(i)+"_handler"; break;
+            }
+                        
+            Function::Ptr function = Function::instance(functionVa, name, reasons);
+            if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {
+                // Multiple vector entries point to the same function, so give it a rather generic name
+                found.get()->name("interrupt_vector_function");
+            } else {
+                insertUnique(functions, function, sortFunctionsByAddress);
+            }
+        }
+    }
+    return functions;
+}
+
+
 } // namespace
 } // namespace
 } // namespace
