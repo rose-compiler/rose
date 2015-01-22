@@ -434,6 +434,14 @@ public:
      *  Returns the list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<Function::Ptr> makeErrorHandlingFunctions(Partitioner&, SgAsmInterpretation*);
 
+    /** Make functions from an interrupt vector.
+     *
+     *  Reads the interrupt vector and builds functions for its entries.  The functions are inserted into the partitioner's
+     *  CFG/AUM.
+     *
+     *  Returns the list of such functions, some of which may have existed prior to this call. */
+    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(Partitioner&, const AddressInterval &vector);
+
     /** Make functions at import trampolines.
      *
      *  Makes a function at each import trampoline and inserts them into the specified partitioner's CFG/AUM. An import

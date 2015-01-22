@@ -53,6 +53,7 @@ struct Settings {
     rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
     bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
+    AddressInterval interruptVector;                    // table of interrupt handling functions
     bool doPostAnalysis;                                // perform post-partitioning analysis phase?
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
@@ -240,6 +241,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .key("post-analysis")
                .intrinsicValue(false, settings.doPostAnalysis)
                .hidden(true));
+
+    dis.insert(Switch("interrupt-vector")
+               .argument("addresses", P2::addressIntervalParser(settings.interruptVector))
+               .doc("A table containing addresses of functions invoked for various kinds of interrupts. " +
+                    P2::AddressIntervalParser::docString() + " The length and contents of the table is architecture "
+                    "specific, and the disassembler will use available information about the architecture to decode the "
+                    "table.  If a single address is specified, then the length of the table is architecture dependent, "
+                    "otherwise the entire table is read."));
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -793,6 +802,9 @@ int main(int argc, char *argv[]) {
 
     Stream info(mlog[INFO] <<"Disassembling and partitioning");
 
+    // Find functions for an interrupt vector.
+    engine.makeInterruptVectorFunctions(partitioner, settings.interruptVector);
+    
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
     engine.makeContainerFunctions(partitioner, interp);
