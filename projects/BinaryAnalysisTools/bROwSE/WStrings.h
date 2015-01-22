@@ -2,6 +2,8 @@
 #define bROwSE_WStrings_H
 
 #include <bROwSE/bROwSE.h>
+
+#include <BinaryString.h>                               // ROSE
 #include <Wt/WContainerWidget>
 
 namespace bROwSE {
@@ -14,13 +16,15 @@ class WStrings: public Wt::WContainerWidget {
     StringsModel *model_;
     Wt::WTableView *wTableView_;
     Wt::WText *wSearchResults_;
+    Wt::WPushButton *wNext_, *wPrev_;
     Wt::Signal<size_t> stringClicked_;
 
     enum AddressSpaceBar { SegmentsBar, StringsBar };
 
 public:
     explicit WStrings(Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), wAddressSpace_(NULL), model_(NULL), wTableView_(NULL), wSearchResults_(NULL) {
+        : Wt::WContainerWidget(parent), wAddressSpace_(NULL), model_(NULL), wTableView_(NULL), wSearchResults_(NULL),
+          wNext_(NULL), wPrev_(NULL) {
         init();
     }
 
@@ -39,10 +43,15 @@ public:
     /** Return cross reference info for a particular string. */
     const P2::ReferenceSet& crossReferences(size_t stringIdx);
 
+    /** Return string at index. */
+    const rose::BinaryAnalysis::StringFinder::String& meta(size_t stringIdx);
+
 private:
     void init();
     void search(Wt::WLineEdit*);
+    void searchNavigate(int direction);
     void selectStringByRow(const Wt::WModelIndex &idx);
+    void redrawAddressSpace(const MemoryMap&);
 };
 
 } // namespace
