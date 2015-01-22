@@ -1639,18 +1639,20 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // SgIfStmt* ifStatement = isSgIfStmt(n);
                       // if (ifStatement != NULL && tokenToNodeVector[j]->node == ifStatement->get_conditional())
                       // DQ (12/26/2014): Adding support for fixing the leading white space of conditionals statements (in C++ most conditional expressions are actually statements).
-                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
-                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
-                         SgIfStmt*          ifStatement     = isSgIfStmt(n);
-                         if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL)
+                         SgWhileStmt*       whileStatement   = isSgWhileStmt(n);
+                         SgDoWhileStmt*     doWhileStatement = isSgDoWhileStmt(n);
+                         SgSwitchStatement* switchStatement  = isSgSwitchStatement(n);
+                         SgIfStmt*          ifStatement      = isSgIfStmt(n);
+                         if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL || doWhileStatement != NULL)
                             {
                               ROSE_ASSERT(tmp_locatedNode != NULL);
                               SgStatement* conditionStatement = isSgStatement(tmp_locatedNode);
                               if (conditionStatement != NULL)
                                  {
-                                   if ( (whileStatement  != NULL && conditionStatement == whileStatement->get_condition()) ||
-                                        (switchStatement != NULL && conditionStatement == switchStatement->get_item_selector()) ||
-                                        (ifStatement     != NULL && conditionStatement == ifStatement->get_conditional()) )
+                                   if ( (whileStatement   != NULL && conditionStatement == whileStatement->get_condition()) ||
+                                        (doWhileStatement != NULL && conditionStatement == doWhileStatement->get_condition()) ||
+                                        (switchStatement  != NULL && conditionStatement == switchStatement->get_item_selector()) ||
+                                        (ifStatement      != NULL && conditionStatement == ifStatement->get_conditional()) )
                                       {
 #if 1
                                         printf ("$$$$$$$$$$$$ Handle special case of single character SgStatement (condition) nested in n = %p = %s \n",n,n->class_name().c_str());
@@ -1910,10 +1912,11 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
                             }
 
-                         SgSwitchStatement* switchStatement = isSgSwitchStatement(n);
-                         SgWhileStmt*       whileStatement  = isSgWhileStmt(n);
-                         SgForStatement*    forStatement = isSgForStatement(n);
-                         SgIfStmt*          ifStatement = isSgIfStmt(n);
+                         SgSwitchStatement* switchStatement  = isSgSwitchStatement(n);
+                         SgWhileStmt*       whileStatement   = isSgWhileStmt(n);
+                         SgForStatement*    forStatement     = isSgForStatement(n);
+                         SgIfStmt*          ifStatement      = isSgIfStmt(n);
+                         SgDoWhileStmt*     doWhileStatement = isSgDoWhileStmt(n);
 
                          if (forStatement != NULL && mappingInfo->node == forStatement->get_loop_body() )
                             {
@@ -1943,15 +1946,18 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
 
                       // if (forStatement != NULL && mappingInfo->node == forStatement->get_for_init_stmt() )
-                         if ( (forStatement   != NULL && mappingInfo->node == forStatement->get_for_init_stmt()) ||
-                              (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
+                         if ( (forStatement     != NULL && mappingInfo->node == forStatement->get_for_init_stmt()) ||
+                              (whileStatement   != NULL && mappingInfo->node == whileStatement->get_condition()) ||
+                              (doWhileStatement != NULL && mappingInfo->node == doWhileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
                             }
 
                       // DQ (1/21/2015): Turn this off to account for syntax between the condition and the body of a while statement.
                       // This might be required for SgIfStmt and other compound statements as well.
-                         if ( (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
+                      // if ( (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
+                         if ( (whileStatement   != NULL && mappingInfo->node == whileStatement->get_condition()) ||
+                              (doWhileStatement != NULL && mappingInfo->node == doWhileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForTrailingWhitespace = false;
                             }
