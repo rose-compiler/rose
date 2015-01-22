@@ -408,43 +408,12 @@ munkresCost(const dlib::matrix<double> &src, T scale, dlib::matrix<T> &dst /*out
 
 static std::vector<SgAsmFunction*>
 loadFunctions(const std::string &fileName, Disassembler *disassembler) {
-    Stream info(mlog[INFO]);
-    P2::Engine engine;
-
-    // Load the specimen into a memory map
-    SgAsmInterpretation *interp = NULL;
-    MemoryMap map;
-    if (!boost::starts_with(fileName, "map:")) {
-        info <<"parsing binary container";
-        Sawyer::Stopwatch parseTime;
-        SgBinaryComposite *file = SageBuilderAsm::buildBinaryComposite(fileName);
-        ASSERT_not_null(file);
-        interp = file->get_interpretations()->get_interpretations().back();
-        ASSERT_not_null(interp);
-        engine.interpretation(interp);
-        engine.load();
-        map = engine.memoryMap();
-        if (!disassembler) {
-            disassembler = engine.disassembler();
-            ASSERT_not_null(disassembler);
-        }
-        info <<"; completed in " <<parseTime <<" seconds\n";
-    } else {
-        map.insertFile(fileName.substr(3));
-        if (!disassembler)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-    }
-
-    // Partition instructions into functions
-    info <<"disassembling and partitioning";
-    P2::Modules::deExecuteZeros(map, 256);
-    Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner();
-    engine.runPartitioner(partitioner, interp);
-    SgAsmBlock *gblock = P2::Modules::buildGlobalBlockAst(partitioner);
-    info <<"; completed in " <<partitionTime <<" seconds\n";
-
-    return SageInterface::querySubTree<SgAsmFunction>(gblock);
+    mlog[INFO] <<"parsing \"" <<fileName <<"\"...\n";
+    P2::Engine engine;                                  // an engine drives the partitioning
+    engine.postPartitionAnalyses(false);                // not needed for this tool
+    engine.obtainDisassembler(disassembler);            // use our hint or obtain a new one
+    SgAsmBlock *gblock = engine.buildAst(fileName);     // parse, load, link, disassemble, partition, build AST
+    return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
 struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
