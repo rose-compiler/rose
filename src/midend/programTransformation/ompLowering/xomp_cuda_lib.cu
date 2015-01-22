@@ -10,8 +10,8 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
-struct DDE_data * DDE_head;
-struct DDE_data * DDE_tail;
+extern struct DDE_data * DDE_head;
+extern struct DDE_data * DDE_tail;
 
 cudaDeviceProp* xomp_cuda_prop = NULL; 
 bool xomp_verbose = false;
@@ -362,6 +362,7 @@ bool xomp_freeHost(void* hostPtr)
 #endif
 
 //------------------------------------------------------
+#if 0
 double xomp_time_stamp()
 {
   struct timeval t;
@@ -370,7 +371,7 @@ double xomp_time_stamp()
   time = t.tv_sec + 1.0e-6*t.tv_usec;
   return time;
 }
-
+#endif
 //------------------------------------------------------
 // Host side helper functions
 //--- a helper function to allocate 2-D arrays
