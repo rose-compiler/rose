@@ -142,9 +142,9 @@ namespace OmpSupport
     // 4 device map variants
     //----------------------
     e_map_alloc,
-    e_map_in,
-    e_map_out,
-    e_map_inout,
+    e_map_to,
+    e_map_from,
+    e_map_tofrom,
 
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
@@ -288,7 +288,7 @@ namespace OmpSupport
       std::vector<std::pair<std::string,SgNode* > > 
         getVariableList(omp_construct_enum);
 
-      //! Dimension information for array variables, used by map clause, such as map (inout:array[0:n][0:m])
+      //! Dimension information for array variables, used by map clause, such as map (tofrom:array[0:n][0:m])
       // We store a list (vector) of dimension bounds for each array variable
       std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions;  
       
@@ -408,7 +408,7 @@ namespace OmpSupport
       //omp_construct_enum reduction_operator;
 
       // Liao, 1/15/2013, map variant:
-      // there could be multiple map clause with the same variant type: alloc, in, out , and inout.
+      // there could be multiple map clause with the same variant type: alloc, to, from , and tofrom.
       std::vector<omp_construct_enum> map_variants; 
       //enum omp_construct_enum map_variant; 
       
