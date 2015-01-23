@@ -1948,6 +1948,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // if (forStatement != NULL && mappingInfo->node == forStatement->get_for_init_stmt() )
                          if ( (forStatement     != NULL && mappingInfo->node == forStatement->get_for_init_stmt()) ||
                               (whileStatement   != NULL && mappingInfo->node == whileStatement->get_condition()) ||
+                              (switchStatement  != NULL && mappingInfo->node == switchStatement->get_item_selector()) ||
                               (doWhileStatement != NULL && mappingInfo->node == doWhileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
@@ -1957,9 +1958,23 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // This might be required for SgIfStmt and other compound statements as well.
                       // if ( (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
                          if ( (whileStatement   != NULL && mappingInfo->node == whileStatement->get_condition()) ||
+                              (switchStatement  != NULL && mappingInfo->node == switchStatement->get_item_selector()) ||
                               (doWhileStatement != NULL && mappingInfo->node == doWhileStatement->get_condition()) )
                             {
                               fixupDarkTokenSubsequencesForTrailingWhitespace = false;
+                            }
+
+                      // DQ (1/22/2015): Turn off processing of the dark tokens in a SgCaseOptionStmt until we can eliminate the 
+                      // compiler generated SgBasicBlock used as the body.  Note that we are currenty forcing the generation of 
+                      // the body from the AST since there is no mapping from the token stream to the compiler-generated basic 
+                      // block body (if it is compiler generated).
+                         if ( isSgCaseOptionStmt(mappingInfo->node) != NULL )
+                            {
+                              printf ("disable dark token processing for the trailing while space of a SgCaseOptionStmt =  \n",mappingInfo->node);
+                              fixupDarkTokenSubsequencesForTrailingWhitespace = false;
+
+                           // DQ (1/22/2015): test2015_93.C demonstrates that we need to also turn off the processing of the leading white space as well.
+                              fixupDarkTokenSubsequencesForLeadingWhitespace  = false;
                             }
 
                       // These statements have syntax that seperate the main construct from the construct's associated body (namely the ")" closing parenthesis).

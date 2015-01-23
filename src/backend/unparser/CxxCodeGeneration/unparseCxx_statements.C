@@ -7651,6 +7651,11 @@ Unparse_ExprStmt::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseStatementFromTokenStream (item_selector, switch_body, e_trailing_whitespace_start, e_leading_whitespace_start);
         }
 
+#if 0
+     printf ("In unparseSwitchStmt(): unparse the switch body \n");
+     curprint("/* In unparseSwitchStmt() unparse the switch body */ ");
+#endif
+
   // DQ (11/5/2003): Support for skipping basic block added to support 
   //                 prefix generation for AST Rewrite Mechanism
   // if(switch_stmt->get_body())
@@ -7695,19 +7700,74 @@ Unparse_ExprStmt::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
 
           curprint(":");
+#if 0
+          if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+             {
+               unparseStatement(case_stmt->get_body(), info);
+             }
+#endif
         }
        else
         {
           SgStatement* case_body = case_stmt->get_body();
-          unparseStatementFromTokenStream (case_stmt, case_body, e_token_subsequence_start, e_leading_whitespace_start);
+       // unparseStatementFromTokenStream (case_stmt, case_body, e_token_subsequence_start, e_leading_whitespace_start);
+          if (case_body->isCompilerGenerated() == true)
+             {
+               SgBasicBlock* basicBlock = isSgBasicBlock(case_body);
+               ROSE_ASSERT(basicBlock != NULL);
+               SgStatementPtrList::iterator first = basicBlock->get_statements().begin();
+#if 0
+#if 0
+               printf ("Top of loop to find first non-transformation: *first = %p = %s \n",*first,(*first)->class_name().c_str());
+#endif
+               while (first != basicBlock->get_statements().end() && (*first)->isTransformation() == true)
+                  {
+#if 0
+                    printf ("In loop to find first non-transformation: *first = %p = %s \n",*first,(*first)->class_name().c_str());
+#endif
+                    first++;
+                  }
+
+               if (first != basicBlock->get_statements().end())
+                  {
+                    SgStatement* firstStatementOfCompilerGeneratedBlock = *first;
+                    ROSE_ASSERT(firstStatementOfCompilerGeneratedBlock != NULL);
+#if 0
+                    printf ("firstStatementOfCompilerGeneratedBlock = %p = %s \n",firstStatementOfCompilerGeneratedBlock,firstStatementOfCompilerGeneratedBlock->class_name().c_str());
+#endif
+                    unparseStatementFromTokenStream (case_stmt, firstStatementOfCompilerGeneratedBlock, e_token_subsequence_start, e_leading_whitespace_start);
+                  }
+                 else
+                  {
+                    printf("Error: no non-tranformation left in case option block (unparse the SgBasicBlock from the AST directly) \n");
+                    ROSE_ASSERT(false);
+                  }
+#if 0
+               if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
+                  {
+                    unparseStatement(case_stmt->get_body(), info);
+                  }
+#endif
+#else
+            // DQ (1/22/2015): Since there is not token information inside of a compiler-generated SgBasicBlock, we have to output the whole SgCaseOptionStmt as it's associated tokens.
+            // unparseStatementFromTokenStream (case_stmt, e_token_subsequence_start, e_token_subsequence_end);
+               unparseStatementFromTokenStream (case_stmt, e_token_subsequence_start, e_trailing_whitespace_start);
+#endif
+             }
+            else
+             {
+               unparseStatementFromTokenStream (case_stmt, case_body, e_token_subsequence_start, e_leading_whitespace_start);
+             }
         }
 
+#if 1
   // if(case_stmt->get_body())
+  // if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
      if ( (case_stmt->get_body() != NULL) && !info.SkipBasicBlock())
         {
           unparseStatement(case_stmt->get_body(), info);
         }
-
+#endif
 #if 0
      printf ("Leaving unparseCaseStmt() \n");
      curprint("/* Leaving unparseCaseStmt() */ ");
