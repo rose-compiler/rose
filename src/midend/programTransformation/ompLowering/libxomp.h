@@ -291,7 +291,7 @@ struct XOMP_mapped_variable
   int size; 
   void * dev_address; // the corresponding device variable's address
   bool copyTo; // if this variable should be copied to the device first
-  bool copyBack; // if this variable should be copied back to HOST when existing the data environment
+  bool copyFrom; // if this variable should be copied back to HOST when existing the data environment
 };
 
 //! A helper function to copy a mapped variable from src to desc
@@ -328,6 +328,15 @@ extern struct DDE_data* DDE_tail;
 //void XOMP_Device_Data_Environment_Enter();
 extern void xomp_deviceDataEnvironmentEnter();
 
+// A all-in-one wrapper to integrate three things: 1) get inherited variable 2) allocate if not found, 3) register, 
+// and 4) copy into GPU operations into one function
+//
+// Based on the CPU variable address and size, also indicate if copyin or copyback is needed.
+// The function will first try to inherit/reuse the same variable from the parent DDE. i
+// If not successful , it will allocate a new data on device, register it to the current DDE, and copy CPU values when needed.
+// The allocated or found device variable address will be returned.
+extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int size, bool copyTo, bool copyFrom);
+
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
 //void* XOMP_Device_Data_Environment_Get_Inherited_Variable (void* original_variable_address, int size);
@@ -335,7 +344,7 @@ extern void* xomp_deviceDataEnvironmentGetInheritedVariable (void* original_vari
 
 //! Add a newly mapped variable into the current DDE's new variable list
 //void XOMP_Device_Data_Environment_Add_Variable (void* var_addr, int var_size, void * dev_addr);
-extern void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copy_back);
+extern void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyTo, bool copyFrom);
 
 // Exit current DDE: deallocate device memory, delete the DDE-data node from the end of the tracking list
 //void XOMP_Device_Data_Environment_Exit();   
