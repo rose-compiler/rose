@@ -72,11 +72,14 @@ class ExprAnalyzer {
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
+  void setSkipArrayAccesses(bool skip);
+  bool getSkipArrayAccesses();
  private:
   //! evaluates an expression (whithout maintaining state information)
   //AValue pureEvalConstInt(SgNode* node,EState& estate);
   VariableIdMapping* _variableIdMapping;
   bool _skipSelectedFunctionCalls;
+  bool _skipArrayAccesses;
 };
 
 } // end of namespace CodeThorn
