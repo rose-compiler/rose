@@ -580,7 +580,9 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
   desc->address = src->address; 
   desc->size= src->size; 
   desc->dev_address = src ->dev_address; 
-  desc->copyBack= src ->copyBack; 
+   // we do not want to inherit the copy directions or map-type of parent DDE's variable
+   // OpenMP 4.0 has the reuse enclosing data and discard map-type rule.
+  //desc->copyFrom= src ->copyFrom; 
 }
 
 // create a new DDE-data node and 
@@ -669,7 +671,7 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int size)
 }
 
 //! Add a newly mapped variable into the current DDE's new variable list
-void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyBack)
+void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyTo, bool copyFrom)
 {
   // TODO: sanity check to avoid add duplicated variable or inheritable variable
   assert ( DDE_tail != NULL );
@@ -677,9 +679,29 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void *
   mapped_var-> address = var_addr; 
   mapped_var-> size = var_size; 
   mapped_var-> dev_address = dev_addr; 
-  mapped_var-> copyBack= copyBack; 
+  mapped_var-> copyTo= copyTo; 
+  mapped_var-> copyFrom= copyFrom; 
   // now move up the offset
   DDE_tail->new_variable_count ++;
+}
+
+// All-in-one function to prepare device variable
+void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int vsize, bool copy_into, bool copy_back)
+{
+  void* dev_var_address = NULL; 
+  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (original_variable_address, vsize);
+  if (dev_var_address == NULL)
+  {
+    dev_var_address = xomp_deviceMalloc(vsize);
+    xomp_deviceDataEnvironmentAddVariable (original_variable_address, vsize, dev_var_address, copy_into, copy_back);
+
+    // The spec says : reuse enclosing data and discard map-type rule.
+    // So map-type only matters when no-reuse happens
+    if (copy_into)
+      xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize);
+  }
+  assert (dev_var_address != NULL);
+  return dev_var_address;
 }
 
 // Exit current DDE: copy back values if specified, deallocate memory, delete the DDE-data node from the end of the tracking list
@@ -694,7 +716,7 @@ void xomp_deviceDataEnvironmentExit()
   {
     struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + i;
     void * dev_address = mapped_var->dev_address;
-    if (mapped_var->copyBack)
+    if (mapped_var->copyFrom)
     {
        xomp_memcpyDeviceToHost(((void *)mapped_var->address),((const void *)mapped_var->dev_address), mapped_var->size);
     }

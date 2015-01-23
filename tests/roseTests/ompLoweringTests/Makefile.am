@@ -329,7 +329,14 @@ $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 
 # a short cut to run omp-acc support test
 ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
-
+ompacc_run: ompacc_test
+	./axpy_ompacc.out && \
+	   ./collapse_2.out  && \
+           ./jacobi-ompacc2.out  && \
+           ./jacobi-ompacc-opt1.out  && \
+           ./jacobi-ompacc-opt2.out  && \
+           ./jacobi-ompacc.out  && \
+           ./matrixmultiply-ompacc.out
 
 $(PASSING_C_TEST_Executables): %.out: %.o
 	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)
