@@ -54,6 +54,7 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
+        jacobi-ompacc-v2.c \
         jacobi-ompacc-opt1.c \
         jacobi-ompacc-opt2.c
 
@@ -336,6 +337,7 @@ ompacc_run: ompacc_test
            ./jacobi-ompacc-opt1.out  && \
            ./jacobi-ompacc-opt2.out  && \
            ./jacobi-ompacc.out  && \
+           ./jacobi-ompacc-v2.out  && \
            ./matrixmultiply-ompacc.out
 
 $(PASSING_C_TEST_Executables): %.out: %.o
