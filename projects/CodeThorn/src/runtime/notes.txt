@@ -1,0 +1,13 @@
+
+new Foo is actually: new (operator new(sizeof(Foo)) Foo) 
+delete a is actually: a->~Foo(); operator delete(a);
+
+delete var; 
+==>
+delete var->~<nameOf<typeOf<var>>();
+rts.registerForCommit(var);
+
+Those "disjoint allocation/release from construct/destroy" forms are
+rare, but happen when the history of the memory doesn't follow the
+history of the object it holds. This is typically found -for example-
+in std::vector implementations.

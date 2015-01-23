@@ -382,6 +382,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                             <<" = " <<addrToString(elf_section->get_mapped_actual_va() + elf_section->get_mapped_size())
                             <<" " <<cEscape(elf_section->get_name()->get_string()) <<"\n";
             } else {
+                ASSERT_require2(retval==NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }

@@ -1,14 +1,3 @@
-#if 1
-#include <iostream>
-int main(int argc, char *argv[])
-{
-    // No longer supported because the syntactic clone detection has been partly merged with the semantic clone
-    // detection, which uses PostgreSQL via ROSE's SqlDatabase API.
-    std::cerr <<argv[0] <<": no longer supported\n";
-    return 1;
-}
-#else
-
 #include "findExactClones.h"
 #include "sqlite3x.h"
 
@@ -71,14 +60,14 @@ int main(int argc, char* argv[])
     scoped_array_with_size<VectorEntry> vectors;
     
     
-  sqlite3_connection con(database.c_str());
-
+  SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
+ 
 
 
 
   cerr << "About to delete from clusters" << endl;
   try{
-    con.executenonquery("delete from clusters");
+    tx->statement("delete from clusters")->execute();
   }
   catch(exception &ex) {
     cerr << "Exception Occurred: " << ex.what() << endl;
@@ -87,7 +76,7 @@ int main(int argc, char* argv[])
 
   cerr << "About to delete from postprocessed_clusters" << endl;
   try{
-    con.executenonquery("delete from postprocessed_clusters");
+    tx->statement("delete from postprocessed_clusters")->execute();
   }
   catch(exception &ex) {
     cerr << "Exception Occurred: " << ex.what() << endl;
@@ -95,7 +84,7 @@ int main(int argc, char* argv[])
 
   int windowSize = 0;
   int stride = 0;
-  get_run_parameters(con, windowSize, stride);
+  get_run_parameters(tx, windowSize, stride);
 
 
   
@@ -103,14 +92,17 @@ int main(int argc, char* argv[])
 
 
   try {
-    sqlite3_command(con, "create temporary table function_to_look_for(function_id integer)").executenonquery();
+    tx->statement("create temporary table function_to_look_for(function_id integer)")->execute();
   } catch (exception& ex) {cerr << "Exception Occurred 1 : " << ex.what() << endl;}
 
   try {
 
     for (size_t i=0; i < functionsThatWeAreInterestedIn.size() ; i++ )
     {
-         sqlite3_command(con, "insert into function_to_look_for(function_id) values("+boost::lexical_cast<string>(functionsThatWeAreInterestedIn[i])+")").executenonquery();
+         tx->statement( "insert into function_to_look_for(function_id) values(?)")
+            ->bind(0, boost::lexical_cast<string>(functionsThatWeAreInterestedIn[i]))->execute();
+
+
     }
 
   } catch (exception& ex) {cerr << "Exception Occurred 1 : " << ex.what() << endl;}
@@ -122,10 +114,11 @@ int main(int argc, char* argv[])
   map<string, std::vector<int> > internTable;
 
 
-  read_vector_data(con,vectors,  functionsThatWeAreInterestedIn, internTable, groupLow, groupHigh,useCounts);
+  read_vector_data(tx,vectors,  functionsThatWeAreInterestedIn, internTable, groupLow, groupHigh,useCounts);
 
-  find_exact_clones(con, stride, windowSize, functionsThatWeAreInterestedIn, numStridesThatMustBeDifferent, vectors, internTable, useCounts);
+  find_exact_clones(tx, stride, windowSize, functionsThatWeAreInterestedIn, numStridesThatMustBeDifferent, vectors, internTable, useCounts);
 
+  tx->commit();
 #if 0
   if( functionsThatWeAreInterestedIn.size() == 0 )
   {
@@ -167,4 +160,3 @@ int main(int argc, char* argv[])
   return 0;
 };
 
-#endif

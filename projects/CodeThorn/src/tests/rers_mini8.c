@@ -15,7 +15,7 @@ int calculate_output(int input1) {
   } else if(input1!=4) {
     return 23;
   } else {
-  error_1: assert(0);
+  error_0: assert(0);
   }
 }
 
