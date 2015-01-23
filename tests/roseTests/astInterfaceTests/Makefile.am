@@ -305,13 +305,17 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_62.C \
   inputmoveDeclarationToInnermostScope_test2015_63.C \
   inputmoveDeclarationToInnermostScope_test2015_64.C \
+  inputmoveDeclarationToInnermostScope_test2015_71.C \
   inputmoveDeclarationToInnermostScope_test2015_72.C \
+  inputmoveDeclarationToInnermostScope_test2015_73.C \
   inputmoveDeclarationToInnermostScope_test2015_74.C \
   inputmoveDeclarationToInnermostScope_test2015_75.C \
   inputmoveDeclarationToInnermostScope_test2015_76.C \
   inputmoveDeclarationToInnermostScope_test2015_78.C \
   inputmoveDeclarationToInnermostScope_test2015_79.C \
   inputmoveDeclarationToInnermostScope_test2015_80.C \
+  inputmoveDeclarationToInnermostScope_test2015_81.C \
+  inputmoveDeclarationToInnermostScope_test2015_82.C \
   inputmoveDeclarationToInnermostScope_test2015_83.C \
   inputmoveDeclarationToInnermostScope_test2015_85.C \
   inputmoveDeclarationToInnermostScope_test2015_86.C \
@@ -320,7 +324,8 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_89.C \
   inputmoveDeclarationToInnermostScope_test2015_90.C \
   inputmoveDeclarationToInnermostScope_test2015_91.C \
-  inputmoveDeclarationToInnermostScope_test2015_92.C 
+  inputmoveDeclarationToInnermostScope_test2015_92.C \
+  inputmoveDeclarationToInnermostScope_test2015_93.C 
 
 # DQ (1/11/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2015_45.C 
