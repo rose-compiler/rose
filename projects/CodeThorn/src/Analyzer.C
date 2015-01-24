@@ -1487,8 +1487,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             PState oldPState=*estate.pstate();
             ConstraintSet oldcset=*estate.constraints();            
             estateList.push_back(createEState(edge.target,oldPState,oldcset));            
-            cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
-            exit(1);
+            if(!getSkipArrayAccesses()) {
+              cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
+              exit(1);
+            }
           } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);
@@ -1867,7 +1869,7 @@ int Analyzer::semanticExplosionOfInputNodesFromOutputNodeConstraints() {
     EStatePtrSet succNodes=transitionGraph.succ(*i);
     Label originalLabel=(*i)->label();
     InputOutput originalIO=(*i)->io;
-    VariableId originalVar=(*i)->io.var;
+    VariableId originalVar=originalIO.var;
     // eliminate original input node
     transitionGraph.eliminateEState(*i);
     estateSet.erase(const_cast<EState*>(*i));

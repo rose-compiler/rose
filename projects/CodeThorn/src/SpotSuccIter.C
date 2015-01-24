@@ -41,7 +41,6 @@ bdd SpotSuccIter::current_acceptance_conditions() const {
 bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   bdd transCond = bddtrue;
   const EState* myTarget=t.target;
-  InputOutput io =myTarget->io; 
   AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
  
   // check if there exists a single input or output value (remove for support of symbolic analysis)

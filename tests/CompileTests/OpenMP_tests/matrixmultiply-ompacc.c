@@ -57,7 +57,9 @@ c d  x  g h  = c*e+ d*g,  c*f+ d*h
 
 int mmm()
 {
-#pragma omp target map(tofrom:c[0:N][0:M]), map(to:a[0:N][0:M],b[0:M][0:K])
+//For static arrays with known dimension info. , no array section info. is needed  
+//#pragma omp target map(tofrom:c[0:N][0:M]), map(to:a[0:N][0:M],b[0:M][0:K])
+#pragma omp target map(tofrom:c), map(to:a,b)
 #pragma omp parallel for private(i,j,k)
   for (i = 0; i < N; i++)
     for (j = 0; j < M; j++)

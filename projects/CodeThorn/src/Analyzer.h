@@ -341,6 +341,12 @@ namespace CodeThorn {
       _skipSelectedFunctionCalls=true; 
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
+    void setSkipArrayAccesses(bool skip) {
+      exprAnalyzer.setSkipArrayAccesses(skip);
+    }
+    bool getSkipArrayAccesses() {
+      return exprAnalyzer.getSkipArrayAccesses();
+    }
     ExprAnalyzer* getExprAnalyzer();
     list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
     void incIterations() {

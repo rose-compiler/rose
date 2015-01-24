@@ -11,6 +11,7 @@ backstroke2_SOURCES = \
   Timer.h Timer.cpp \
   TransformationSequence.h TransformationSequence.C \
   CodeGenerator.h CodeGenerator.C \
+  CommandLineOptions.h CommandLineOptions.C \
   Utility.h Utility.C \
   backstroke2.cpp
 backstroke2_CPPFLAGS = $(ROSE_INCLUDES) $(INCLUDES) 
