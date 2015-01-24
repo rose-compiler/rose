@@ -768,8 +768,11 @@ int main(int argc, char *argv[]) {
     if (!settings.configurationName.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
         info <<"loading configuration files";
-        size_t nItems = engine.configureFromFile(partitioner, settings.configurationName);
-        info <<"; configured " <<StringUtility::plural(nItems, "items") <<"\n";
+        partitioner.configuration().loadFromFile(settings.configurationName);
+        info <<"; configured\n";
+#if 1 // DEBUGGING [Robb P. Matzke 2015-01-23]
+        std::cout <<partitioner.configuration();
+#endif
     }
     if (false)
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose

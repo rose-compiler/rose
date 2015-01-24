@@ -403,8 +403,8 @@ public:
             info <<"loading configuration files";
             ctx_->busy->replaceWork("Loading configuration files...", 0);
             Sawyer::Stopwatch timer;
-            size_t nItems = ctx_->engine.configureFromFile(ctx_->partitioner, ctx_->settings.configurationName);
-            info <<"; " <<StringUtility::plural(nItems, "items") <<" took " <<timer <<" seconds\n";
+            ctx_->partitioner.configuration().loadFromFile(ctx_->settings.configurationName);
+            info <<"; took " <<timer <<" seconds\n";
         }
 
         // Disassemble and partition
