@@ -497,6 +497,7 @@ set( midend_src
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryDominance.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryFunctionCall.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryCallingConvention.C
+ ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryMagic.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryReturnValueUsed.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryString.C
  ${CMAKE_SOURCE_DIR}/src/midend/binaryAnalyses/BinaryTaintedFlow.C

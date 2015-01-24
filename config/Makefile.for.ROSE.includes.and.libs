@@ -101,6 +101,13 @@ if ROSE_HAVE_LIBYAML
   ROSE_YAML_LIBS_WITH_PATH = @ROSE_YAML_PREFIX@/lib/libyaml-cpp.a
 endif
 
+# libmagic for identifying file types based on magic numbers
+if ROSE_HAVE_LIBMAGIC
+  ROSE_LIBMAGIC_INCLUDES = -I@ROSE_LIBMAGIC_PREFIX@/include
+  ROSE_LIBMAGIC_LIBS = -lmagic
+  ROSE_LIBMAGIC_LIBS_WITH_PATH = -L@ROSE_LIBMAGIC_PREFIX@/lib -lmagic
+endif
+
 GLUT_LIBS = ${glut_path}
 
 # ROSE-DWARF libdwarf support
@@ -387,6 +394,7 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      $(ROSE_PYTHON_INCLUDES) \
      $(ROSE_YICES_INCLUDES) \
      $(ROSE_YAML_INCLUDES) \
+     $(ROSE_LIBMAGIC_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
      $(ROSE_WINE_INCLUDES) \
      $(VALGRIND_CFLAGS) \
@@ -442,7 +450,7 @@ ROSE_LIBS = $(top_builddir)/src/librose.la -lm  $(JAVA_JVM_LINK) \
   $(ROSE_YICES_LIBS_WITH_PATH) $(ROSE_PHP_LIBS_WITH_PATH) $(ROSE_DWARF_LIBS_WITH_PATH) \
   $(ROSE_GUI_LIBS_WITH_PATH) $(ROSE_QT_LIBS_WITH_PATH) $(ROSE_SSL_LIBS) $(ROSE_ETHER_LIBS) \
   $(ROSE_INTEL_COMPILER_MATH_LIBS) $(ROSE_ATERM_LIBS) $(ROSE_EXPERIMENTAL_OFP_LIBS) \
-  $(ROSE_YAML_LIBS_WITH_PATH)
+  $(ROSE_YAML_LIBS_WITH_PATH) $(ROSE_LIBMAGIC_LIBS_WITH_PATH)
 
 # DQ (3/13/2009): Removed this from ROSE_LIBS because libtool warnings say it should be in AM_LDFLAGS
 # (this is because it has been moved from being linked statically to being linked dynamically).
