@@ -20,6 +20,8 @@ struct FunctionDataFlow {
     P2::DataFlow::States finalStates;                   // final state for each dfCfg vertex
 };
 
+boost::filesystem::path uniquePath(const std::string &extension);
+
 size_t functionNBytes(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNInsns(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNIntervals(const P2::Partitioner&, const P2::Function::Ptr&);
