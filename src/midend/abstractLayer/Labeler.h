@@ -10,12 +10,43 @@
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
 
-using namespace std;
-
 #define NO_STATE -3
 #define NO_ESTATE -4
+#define NO_LABEL_ID -1
 
-typedef size_t Label;
+namespace SPRAY {
+
+/*! 
+  * \author Markus Schordan
+  * \date 2012, 2014.
+ */
+class Label {
+ public:
+  Label();
+  Label(size_t labelId);
+  //Copy constructor
+  Label(const Label& other);
+  //Copy assignemnt operator
+  Label& operator=(const Label& other);
+  bool operator<(const Label& other) const;
+  bool operator==(const Label& other) const;
+  bool operator!=(const Label& other) const;
+  bool operator>(const Label& other) const;
+  bool operator>=(const Label& other) const;
+  Label& operator+(int num);
+  // prefix inc operator
+  Label& operator++();
+  // postfix inc operator
+  Label operator++(int);
+  size_t getId() const;
+
+  friend std::ostream& operator<<(std::ostream& os, const Label& label);
+
+ protected:
+  size_t _labelId;
+};
+
+std::ostream& operator<<(std::ostream& os, const Label& label);
 
 /*! 
   * \author Markus Schordan
@@ -35,7 +66,7 @@ class LabelProperty {
    LabelProperty(SgNode* node, LabelType labelType);
    LabelProperty(SgNode* node, VariableIdMapping* variableIdMapping);
    LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping);
-   string toString();
+   std::string toString();
    SgNode* getNode();
    bool isFunctionCallLabel();
    bool isFunctionCallReturnLabel();
@@ -81,42 +112,17 @@ class LabelProperty {
   * \author Markus Schordan
   * \date 2012.
  */
-class LabelSet : public set<Label> {
+class LabelSet : public std::set<Label> {
  public:
+  // temporary until all sets are properly using the std:algorithms for set operations
+  LabelSet operator+(LabelSet& s2);
+  LabelSet& operator+=(LabelSet& s2);
 
-   // temporary until all sets are properly using the std:algorithms for set operations
-#if 1
-LabelSet operator+(LabelSet& s2) {
-  LabelSet result;
-  result=*this;
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    result.insert(*i2);
-  return result;
-}
-#endif
-
-LabelSet& operator+=(LabelSet& s2) {
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    insert(*i2);
-  return *this;
- }
- std::string toString() {
-   std::stringstream ss;
-   ss<<"{";
-   for(LabelSet::iterator i=begin();i!=end();++i) {
-     if(i!=begin())
-       ss<<",";
-     ss<<*i;
-   }
-   ss<<"}";
-   return ss.str();
- }
- bool isElement(Label lab) {
-   return find(lab)!=end();
- }
+  std::string toString();
+  bool isElement(Label lab);
 };
 
- typedef std::set<LabelSet> LabelSetSet;
+typedef std::set<LabelSet> LabelSetSet;
 
 /*! 
   * \author Markus Schordan
@@ -125,9 +131,9 @@ LabelSet& operator+=(LabelSet& s2) {
 class Labeler {
  public:
   Labeler();
-  static const Label NO_LABEL=-1;
+  static Label NO_LABEL;
   Labeler(SgNode* start);
-  static string labelToString(Label lab);
+  static std::string labelToString(Label lab);
   int isLabelRelevantNode(SgNode* node);
   virtual void createLabels(SgNode* node);
 
@@ -135,7 +141,7 @@ class Labeler {
      A return value of NO_LABEL means that this node has no label.
   */
   Label getLabel(SgNode* node);
-  LabelSet getLabelSet(set<SgNode*>& nodeSet);
+  LabelSet getLabelSet(std::set<SgNode*>& nodeSet);
 
   /* Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
      this can only be the case if label is errornously higher than the number of labeled nodes or NO_LABEL.
@@ -156,7 +162,8 @@ class Labeler {
   bool isFunctionCallLabel(Label lab);
   bool isFunctionCallReturnLabel(Label lab);
   bool isConditionLabel(Label lab);
-
+  bool isFirstLabelOfMultiLabeledNode(Label lab);
+  bool isSecondLabelOfMultiLabeledNode(Label lab);
   class iterator {
   public:
     iterator();
@@ -177,9 +184,9 @@ class Labeler {
  protected:
   void computeNodeToLabelMapping();
   void registerLabel(LabelProperty);
-  typedef vector<LabelProperty> LabelToLabelPropertyMapping;
+  typedef std::vector<LabelProperty> LabelToLabelPropertyMapping;
   LabelToLabelPropertyMapping mappingLabelToLabelProperty;
-  typedef  map<SgNode*,Label> NodeToLabelMapping;
+  typedef std::map<SgNode*,Label> NodeToLabelMapping;
   NodeToLabelMapping mappingNodeToLabel;
   bool _isValidMappingNodeToLabel;
   void ensureValidNodeToLabelMapping();
@@ -199,5 +206,7 @@ class IOLabeler : public Labeler {
  private:
   VariableIdMapping* _variableIdMapping;
 };
+
+} // end of namespace SPRAY
 
 #endif
