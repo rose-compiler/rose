@@ -151,6 +151,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
           int start = 0;
           int end   = 0;
 
+          bool start_reset_because_requestion_position_was_not_defined = false;
+
           switch (e_token_sequence_position_start)
              {
                case e_leading_whitespace_start:
@@ -160,6 +162,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     if (start == -1)
                        {
                          start = tokenSubsequence_1->token_subsequence_start;
+                         start_reset_because_requestion_position_was_not_defined = true;
                        }
                     ROSE_ASSERT(start >= 0);
                     break;
@@ -186,6 +189,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                     if (start == -1)
                        {
                          start = tokenSubsequence_1->token_subsequence_end + 1;
+                         start_reset_because_requestion_position_was_not_defined = true;
                        }
                     ROSE_ASSERT(start >= 0);
                     break;
@@ -199,6 +203,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
                       // DQ (1/10/2014): Make sure that we don't use data that is unavailable.
                          ROSE_ASSERT(tokenSubsequence_1->token_subsequence_end != -1);
                          start = tokenSubsequence_1->token_subsequence_end + 1;
+                         start_reset_because_requestion_position_was_not_defined = true;
                        }
                     ROSE_ASSERT(start >= 0);
                     break;
@@ -212,8 +217,19 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream (
 
           if (stmt_1 == stmt_2 && e_token_sequence_position_start == e_token_sequence_position_end)
              {
+            // DQ (1/24/2015): If the token sequence was not defined then we don't want to output any tokens.
+            // This fixes cases where we have multiple blocks closed using "}}" (see test2015_96.C).
             // This should trigger a single token to be output.
-               end = start + 1;
+            // end = start + 1;
+               if (start_reset_because_requestion_position_was_not_defined == false)
+                  {
+                    end = start + 1;
+                  }
+                 else
+                  {
+                 // This is a value that will prevent any output of tokens.
+                    end = start;
+                  }
              }
             else
              {
@@ -2712,6 +2728,11 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // unparseAttachedPreprocessingInfo(basic_stmt, info, PreprocessingInfo::before);
 
+#if 0
+     printf ("In unparseBasicBlock (stmt = %p) \n",stmt);
+     curprint ("/* In unparseBasicBlock */");
+#endif
+
   // DQ (12/15/2014): Debugging, support to detect where this is changed between the top of the block and the bottom of the block.
      bool saved_top_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
 
@@ -2871,6 +2892,11 @@ Unparse_ExprStmt::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
        // unparseStatementFromTokenStream (stmt, e_token_subsequence_end, e_token_subsequence_end);
           curprint("}");
         }
+
+#if 0
+     printf ("Leaving unparseBasicBlock (stmt = %p) \n",stmt);
+     curprint ("/* Leaving unparseBasicBlock */");
+#endif
    }
 
 
@@ -3441,14 +3467,18 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
   // if ( (tmp_stmt = for_stmt->get_loop_body()) && !info.SkipBasicBlock())
      if ( (loopBody != NULL) && !info.SkipBasicBlock())
         {
-       // printf ("Unparse the for loop body \n");
-       // curprint ( string("\n/* Unparse the for loop body */ \n";
+#if 0
+          printf ("Unparse the for loop body \n");
+          curprint("/* Unparse the for loop body */ ");
+#endif
        // unparseStatement(tmp_stmt, info);
 
           unp->cur.format(loopBody, info, FORMAT_BEFORE_NESTED_STATEMENT);
           unparseStatement(loopBody, info);
           unp->cur.format(loopBody, info, FORMAT_AFTER_NESTED_STATEMENT);
-       // curprint ( string("\n/* DONE: Unparse the for loop body */ \n";
+#if 0
+          curprint("/* DONE: Unparse the for loop body */ ");
+#endif
         }
        else
         {
