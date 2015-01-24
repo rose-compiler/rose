@@ -1601,6 +1601,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 
 #define DEBUG_MACRO_HANDLING 0
+
             // DQ (1/3/2014): We need to handle macro expansions that are characterized by having the same start and end source positions (but could also be a single token statement, e.g. ";").
             // Unfortunately, it can also be a token for a variable reference expression and thus we have to handle this case explicitly.
 #if DEBUG_MACRO_HANDLING
@@ -1654,7 +1655,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                         (switchStatement  != NULL && conditionStatement == switchStatement->get_item_selector()) ||
                                         (ifStatement      != NULL && conditionStatement == ifStatement->get_conditional()) )
                                       {
-#if 1
+#if 0
                                         printf ("$$$$$$$$$$$$ Handle special case of single character SgStatement (condition) nested in n = %p = %s \n",n,n->class_name().c_str());
 #endif
                                      // Test inputmove*_test2015_74.C demonstrates this problem where the test in "if(0)" is a 1 token statement.
@@ -2117,9 +2118,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_DARK_TOKEN_FIXUP
                                                        printf ("Dark tokens fixup: Reset test 1 the mappingInfo->trailing_whitespace_end from %d to %d \n",mappingInfo->trailing_whitespace_end,previous_mappingInfo_trailing_whitespace_end);
 #endif
+                                                    // DQ (1/23/2015): inputmove*_test2015_84.C demonstrates that this must be previous_mappingInfo_trailing_whitespace_end - 1.
                                                     // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
-                                                       mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
-                                                    // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
+                                                    // mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end;
+                                                       mappingInfo->trailing_whitespace_end = previous_mappingInfo_trailing_whitespace_end - 1;
 #if 0
                                                        printf ("Exiting as a test! \n");
                                                        ROSE_ASSERT(false);
@@ -2204,12 +2206,15 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                            {
                                              if (current_mappingInfo_token_subsequence_start > previous_mappingInfo_trailing_whitespace_end + 1)
                                                 {
-                                                  printf ("Found valid dark token sequence (%d -> %d) \n",current_mappingInfo_token_subsequence_start,previous_mappingInfo_trailing_whitespace_end);
+                                               // printf ("Found valid dark token sequence (%d -> %d) \n",current_mappingInfo_token_subsequence_start,previous_mappingInfo_trailing_whitespace_end);
+                                                  printf ("Found valid dark token sequence (%d -> %d) \n",previous_mappingInfo_trailing_whitespace_end,current_mappingInfo_token_subsequence_start);
                                                 }
                                            }
                                           else
                                            {
+#if 0
                                              printf ("previous_mappingInfo_trailing_whitespace_end not setup! \n");
+#endif
                                            }
 
                                      // if (current_mappingInfo_leading_whitespace_start + 1 > previous_mappingInfo_trailing_whitespace_end)
@@ -2354,7 +2359,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // DQ (1/20/2015): Adding support for the trailing whitespace of the "true" branch of an "if" statement.
                          if (ifStatement != NULL && (mappingInfo->node == ifStatement->get_true_body()) )
                             {
+#if 0
                               printf ("!!!!!!!!!!!!!!!!!!!!!!! DETECTED TRUE BLOCK OF IF STATEMENT !!!!!!!!!!!!!!!!!!!!!!! \n");
+#endif
 #if 0
                               printf ("Exiting as a test! \n");
                               ROSE_ASSERT(false);
