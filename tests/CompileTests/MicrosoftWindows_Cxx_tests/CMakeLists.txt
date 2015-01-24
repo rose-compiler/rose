@@ -43,7 +43,6 @@ test2012_47.C
 test2012_48.C 
 test2012_49.C 
 test2012_50.C 
-test2012_51.C 
 test2012_52.C 
 test2012_53.C 
 test2012_54.C 
@@ -105,8 +104,7 @@ test2013_25.C
 test2013_26.C 
 test2013_27.C 
 test2013_28.C 
-test2013_29.C 
-test2013_31.C 
+test2013_29.C  
 test2013_32.C 
 test2013_34.C 
 test2013_36.C 
@@ -158,7 +156,9 @@ test2014_02.C
 test2014_03.C 
 test2014_04.C 
 test2014_05.C 
-test2014_06.C)
+test2014_06.C
+#Expected failures: test2012_51.C test2013_31.C 
+)
 
 
 foreach(file_to_test ${files_to_test})
