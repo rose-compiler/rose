@@ -29,6 +29,10 @@ static std::map<SgVariableSymbol* , int> per_block_reduction_map;
 // we have to save them and insert them later when kernel launch statement is generated as part of transOmpTargetParallel
 static std::vector<SgVariableDeclaration*> per_block_declarations;
 
+// A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
+// instead of generating explicit data allocation, copy, free functions. 
+static bool useDDE = true; 
+
 #define ENABLE_XOMP 1  // Enable the middle layer (XOMP) of OpenMP runtime libraries
   //! Generate a symbol set from an initialized name list, 
   //filter out struct/class typed names
@@ -2343,9 +2347,235 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
   return result;
 }
 
+// find different map clauses from the clause list, and all array information
+// dimension map is the same for all the map clauses under the same omp target directive
+static void extractMapClauses(Rose_STL_Container<SgOmpClause*> map_clauses, 
+    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+    SgOmpMapClause** map_alloc_clause, SgOmpMapClause** map_to_clause, SgOmpMapClause** map_from_clause, SgOmpMapClause** map_tofrom_clause
+    )
+{
+  if ( map_clauses.size() == 0) return; // stop if no map clauses at all
+
+#if 0
+  // a map between original symbol and its device version (replacement) 
+  std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
+
+  // store all variables showing up in any of the map clauses
+  SgInitializedNamePtrList all_vars ;
+  if (target_data_stmt != NULL)
+    all_vars = collectClauseVariables (target_data_stmt, VariantVector(V_SgOmpMapClause)); 
+  else 
+    all_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause));
+#endif 
+  for (Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
+  {
+    SgOmpMapClause* m_cls = isSgOmpMapClause (*iter);
+    ROSE_ASSERT (m_cls != NULL);
+    if (iter == map_clauses.begin()) // retrieve once is enough
+      array_dimensions = m_cls->get_array_dimensions();
+
+    SgOmpClause::omp_map_operator_enum map_operator = m_cls->get_operation();
+    if (map_operator == SgOmpClause::e_omp_map_alloc)
+      *map_alloc_clause = m_cls;
+    else if (map_operator == SgOmpClause::e_omp_map_to)  
+      *map_to_clause = m_cls;
+    else if (map_operator == SgOmpClause::e_omp_map_from)  
+      *map_from_clause = m_cls;
+    else if (map_operator == SgOmpClause::e_omp_map_tofrom)  
+      *map_tofrom_clause = m_cls;
+    else 
+    {
+      cerr<<"Error. transOmpMapVariables() from omp_lowering.cpp: found unacceptable map operator type:"<< map_operator <<endl;
+      ROSE_ASSERT (false);
+    }
+  }  // end for
+}
+
+
+// Translated a single mapped array variable, knowing the map clauses , where to insert, etc. 
+// Only generate memory allocation, deallocation, copy, functions, not the declaration since decl involves too many variable bookkeeping.
+// This is intended to be called by a for loop going through all mapped array variables. 
+  //  Essentially, we have to decide if we need to do the following steps for each variable
+  //
+  //  Data handling: declaration, allocation, and copy
+  //    1. declared a pointer type to the device copy : pass by pointer type vs. pass by value
+  //    2. allocate device copy using the dimension bound info: for array types (pointers used for linearized arrays)
+  //    3. copy the data from CPU to the device (GPU) copy: 
+  //       
+  //    4. replace references to the CPU copies with references to the GPU copy
+  //    5. replace original multidimensional element indexing with linearized address indexing (for 2-D and more dimension arrays) 
+  //
+  //  Data handling: copy back, de-allocation
+  //    6. copy GPU_copy back to CPU variables
+  //    7. de-allocate the GPU variables
+  //
+  //   Step 1,2,3 and 6, 7 should generate statements before or after the SgOmpTargetStatement
+  //   Step 4 and 5 should change the body of the affected SgOmpParallelStatement
+  // Revised Algorithm (version 3)    1/23/2015, optionally use device data environment (DDE) functions to manage data automatically.
+  // Instead of generate explicit data allocation, copy, free functions, using the following three DDE functions:
+  //   1. xomp_deviceDataEnvironmentEnter()
+  //   2. xomp_deviceDataEnvironmentPrepareVariable ()
+  //   3. xomp_deviceDataEnvironmentExit()
+  // This is necessary to have a consistent translation for mapped data showing up in both "target data" and "target" directives.
+  // These DDE functions internally will keep track of data allocated and try to reuse enclosing data environment.
+static void generateMappedArrayMemoryHandling(
+    /* the array and the map information */
+    SgSymbol* sym, 
+    SgOmpMapClause* map_alloc_clause, SgOmpMapClause* map_to_clause, SgOmpMapClause* map_from_clause, SgOmpMapClause* map_tofrom_clause, 
+    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+    /*Where to insert generated function calls*/
+    SgBasicBlock* insertion_scope, SgStatement* insertion_anchor_stmt, 
+    bool need_generate_data_stmt
+    )
+{
+  ROSE_ASSERT (sym != NULL);
+  SgType* orig_type = sym->get_type();
+
+  // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
+  //   Element_type * _dev_var; 
+  //   e.g.: double* _dev_array; 
+  // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, to, from, or tofrom)
+
+  // TODO: is this a safe assumption here??
+  SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
+  string orig_name = (sym->get_name()).getString();
+  string dev_var_name = "_dev_"+ orig_name; 
+
+  // Step 2.1  generate linear size calculation based on array dimension info
+  // int dev_array_size = sizeof (double) *dim_size1 * dim_size2;
+  string dev_var_size_name = "_dev_" + orig_name + "_size";  
+  SgVariableDeclaration* dev_var_size_decl = NULL; 
+
+  SgVariableSymbol* dev_var_size_sym = insertion_scope->lookup_variable_symbol(dev_var_size_name);
+  if (dev_var_size_sym == NULL)
+  {
+    SgExpression* initializer = generateSizeCalculationExpression (sym, element_type, array_dimensions[sym]);
+    dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), insertion_scope); 
+    insertStatementBefore (insertion_anchor_stmt, dev_var_size_decl); 
+  }
+  else
+    dev_var_size_decl = isSgVariableDeclaration(dev_var_size_sym->get_declaration()->get_declaration());
+
+  ROSE_ASSERT (dev_var_size_decl != NULL);
+
+  // Only if we are in the mode of inserting data handling statements
+  if (!need_generate_data_stmt)
+    return; 
+
+  bool needCopyTo = false;
+  bool needCopyFrom = false;
+  if ( ((map_to_clause) && (isInClauseVariableList (map_to_clause,sym))) || 
+      ((map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))) )
+    needCopyTo = true;  
+
+  if (( (map_from_clause) && (isInClauseVariableList (map_from_clause,sym))) ||
+      ( (map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))))
+    needCopyFrom = true;  
+
+  if (useDDE)
+  { 
+
+    // a single function call does all things transparently: reuse first, if not then allocation, copy data
+    // e.g. float* _dev_u = (float*) xomp_deviceDataEnvironmentPrepareVariable ((void*)u, _dev_u_size, true, false);
+    SgExpression* copyToExp= NULL; 
+    SgExpression* copyFromExp = NULL; 
+    if (needCopyTo) copyToExp = buildBoolValExp(1);
+    else copyToExp = buildBoolValExp(0);
+
+    if (needCopyFrom) copyFromExp = buildBoolValExp(1);
+    else copyFromExp = buildBoolValExp(0);
+
+    SgExprListExp * parameters =
+      buildExprListExp(buildCastExp( buildVarRefExp(isSgVariableSymbol(sym)), buildPointerType(buildVoidType()) ), 
+          buildVarRefExp( dev_var_size_name, insertion_scope), copyToExp, copyFromExp
+          );
+
+    SgExprStatement* dde_prep_stmt = buildAssignStatement (buildVarRefExp(dev_var_name, insertion_scope),
+        buildCastExp ( buildFunctionCallExp(SgName("xomp_deviceDataEnvironmentPrepareVariable"),
+            buildPointerType(buildVoidType()),
+            parameters, 
+            insertion_scope),
+          buildPointerType(element_type)));
+    insertStatementBefore (insertion_anchor_stmt, dde_prep_stmt); 
+
+    // should not be done here. Only one call for a whole device data environment
+    // Now insert xomp_deviceDataEnvironmentEnter() before xomp_deviceDataEnvironmentPrepareVariable()
+    //SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), NULL, insertion_scope);
+   // insertStatementBefore (dde_prep_stmt, dde_enter_stmt); 
+  }
+  else
+  {
+    // Step 2.5 generate memory allocation on GPUs
+    // e.g.:  _dev_m1 = (double *)xomp_deviceMalloc (_dev_m1_size);
+    SgExprStatement* mem_alloc_stmt = buildAssignStatement(buildVarRefExp(dev_var_name, insertion_scope), 
+        buildCastExp ( buildFunctionCallExp(SgName("xomp_deviceMalloc"), 
+            buildPointerType(buildVoidType()), 
+            buildExprListExp(buildVarRefExp( dev_var_size_name, insertion_scope)),
+            insertion_scope), 
+          buildPointerType(element_type))); 
+    insertStatementBefore (insertion_anchor_stmt, mem_alloc_stmt); 
+
+    // Step 3. copy the data from CPU to GPU
+    // Only for variable in map(to:), or map(tofrom:) 
+    // e.g. xomp_memcpyHostToDevice ((void*)dev_m1, (const void*)a, array_size);
+    if (needCopyTo)
+    {
+      SgExprListExp * parameters = buildExprListExp (
+          buildCastExp(buildVarRefExp(dev_var_name, insertion_scope), buildPointerType(buildVoidType())),
+          buildCastExp(buildVarRefExp(orig_name, insertion_scope), buildPointerType(buildConstType(buildVoidType())) ),
+          buildVarRefExp(dev_var_size_name, insertion_scope)
+          );
+      SgExprStatement* mem_copy_to_stmt = buildFunctionCallStmt (SgName("xomp_memcpyHostToDevice"), 
+          buildPointerType(buildVoidType()),
+          parameters,
+          insertion_scope);
+      insertStatementBefore (insertion_anchor_stmt, mem_copy_to_stmt); 
+    }
+  }
+
+  if (useDDE)
+  { // call xomp_deviceDataEnvironmentExit() and it will automatically copy back data and deallocate.
+    //SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
+    // appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
+    // do nothing here or we will get multiple exit() for a single DDE.  
+  }
+  else 
+  { // or explicitly control copy back and deallocation
+    // Step 6. copy back data from GPU to CPU, only for variable in map(out:var_list)
+    // e.g. xomp_memcpyDeviceToHost ((void*)c, (const void*)dev_m3, array_size);
+    // Note: insert this AFTER the target directive stmt
+    // SgStatement* prev_stmt = target_parallel_stmt;
+    if (needCopyFrom)
+    {
+      SgExprListExp * parameters = buildExprListExp (
+          buildCastExp(buildVarRefExp(orig_name, insertion_scope), buildPointerType(buildVoidType()) ),
+          buildCastExp(buildVarRefExp(dev_var_name, insertion_scope), buildPointerType(buildConstType(buildVoidType()))),
+          buildVarRefExp( dev_var_size_name, insertion_scope)
+          );
+      SgExprStatement* mem_copy_back_stmt = buildFunctionCallStmt (SgName("xomp_memcpyDeviceToHost"), 
+          buildPointerType(buildVoidType()),
+          parameters, 
+          insertion_scope);
+      appendStatement(mem_copy_back_stmt, insertion_anchor_stmt->get_scope()); 
+      // prev_stmt = mem_copy_back_stmt;
+    }
+
+    // Step 7, de-allocate GPU memory
+    // e.g. xomp_freeDevice(dev_m1);
+    // Note: insert this AFTER the target directive stmt or the copy back stmt
+    SgExprStatement* mem_dealloc_stmt = 
+      buildFunctionCallStmt(SgName("xomp_freeDevice"),
+          buildBoolType(),
+          buildExprListExp(buildVarRefExp( dev_var_name,insertion_scope)),
+          insertion_scope);
+    appendStatement(mem_dealloc_stmt, insertion_anchor_stmt->get_scope()); 
+  }
+}
   
   // Liao, 2/4/2013
-  // Translate the map clause variables associated with "omp target"
+  // Translate the map clause variables associated with "omp target parallel"
+  // We only support combined "target parallel" or "parallel" immediately following "target"
+  // So we handle outlining and data handling for two directives at the same time
   // TODO: move to the header
   // Input: 
   //
@@ -2390,6 +2620,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
   //            but we need to refer to the declarations for device variables.
   //        Memory declaration, allocation, copy back-forth, de-allocation is generated within the body of the "omp target data" region.
   //            we can still try to generate them when translating "omp parallel for" under "omp target", if not yet generated before.
+  //
   void transOmpMapVariables(SgOmpTargetStatement* target_directive_stmt, //the "omp target"
                          SgOmpParallelStatement* target_parallel_stmt, //the affected "omp parallel"
                          SgBasicBlock* body_block, // the body of the affected "omp parallel"
@@ -2459,29 +2690,7 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
     else 
       all_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause));
 
-    for (Rose_STL_Container<SgOmpClause*>::const_iterator iter = map_clauses.begin(); iter != map_clauses.end(); iter++)
-     {
-       SgOmpMapClause* m_cls = isSgOmpMapClause (*iter);
-       ROSE_ASSERT (m_cls != NULL);
-       if (iter == map_clauses.begin()) // retrieve once is enough
-         array_dimensions = m_cls->get_array_dimensions();
-
-       SgOmpClause::omp_map_operator_enum map_operator = m_cls->get_operation();
-       if (map_operator == SgOmpClause::e_omp_map_alloc)
-         map_alloc_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_to)  
-         map_to_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_from)  
-         map_from_clause = m_cls;
-       else if (map_operator == SgOmpClause::e_omp_map_tofrom)  
-         map_tofrom_clause = m_cls;
-       else 
-       {
-         cerr<<"Error. transOmpMapVariables() from omp_lowering.cpp: found unacceptable map operator type:"<< map_operator <<endl;
-         ROSE_ASSERT (false);
-       }
-     }  // end for
-
+    extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
     std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
     std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
 
@@ -2505,151 +2714,81 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
    ROSE_ASSERT (insertion_scope!= NULL);
    ROSE_ASSERT (insertion_anchor_stmt!= NULL);
 
+  if (useDDE)
+  {
+    // Now insert xomp_deviceDataEnvironmentEnter() before xomp_deviceDataEnvironmentPrepareVariable()
+    SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), NULL, insertion_scope);
+    prependStatement(dde_enter_stmt, insertion_scope); 
+   }
   // handle array variables showing up in the map clauses:   
   for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
-   {
-     SgSymbol* sym = *iter; 
-     ROSE_ASSERT (sym != NULL);
-     SgType* orig_type = sym->get_type();
+  {
+    SgSymbol* sym = *iter; 
+    ROSE_ASSERT (sym != NULL);
+    SgType* orig_type = sym->get_type();
 
     // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
     //   Element_type * _dev_var; 
     //   e.g.: double* _dev_array; 
     // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, to, from, or tofrom)
- 
-     // TODO: is this a safe assumption here??
-     SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
-     string orig_name = (sym->get_name()).getString();
-     string dev_var_name = "_dev_"+ orig_name; 
-     
+
+    // TODO: is this a safe assumption here??
+    SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
+    string orig_name = (sym->get_name()).getString();
+    string dev_var_name = "_dev_"+ orig_name; 
+
     // Again, two cases: map clauses come from 1) omp target vs. 2) omp target data 
     // For the combined "omp target" + "omp parallel for " code portion
     // We generate declarations within the body of "omp target". So we don't concerned about name conflicts. 
     //
     // For "omp target data", 
-     // It is possible that there are two consecutive "omp target"+"omp parallel for" regions.
-     // So we have to check the existence of a declaration before creating a brand new one.
-     SgVariableDeclaration* dev_var_decl = NULL; 
-     SgVariableSymbol* dev_var_sym = insertion_scope ->lookup_variable_symbol(dev_var_name);
-     if (dev_var_sym == NULL)
-     {
-       need_generate_data_stmt = true; // this will trigger a set to data handling statements to be generated later on
-       dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, insertion_scope);
-       insertStatementBefore (insertion_anchor_stmt, dev_var_decl); 
-     }
-     else 
-       dev_var_decl = isSgVariableDeclaration(dev_var_sym->get_declaration()->get_declaration());
+    // It is possible that there are two consecutive "omp target"+"omp parallel for" regions.
+    // Blindly generate data handling statements will introduce redundant definition and handling. 
+    // So we have to check the existence of a declaration before creating a brand new one.
+    SgVariableDeclaration* dev_var_decl = NULL; 
+    SgVariableSymbol* dev_var_sym = insertion_scope ->lookup_variable_symbol(dev_var_name);
+    if (dev_var_sym == NULL)
+    {
+      need_generate_data_stmt = true; // this will trigger a set to data handling statements to be generated later on
+      dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, insertion_scope);
+      insertStatementBefore (insertion_anchor_stmt, dev_var_decl); 
+    }
+    else 
+      dev_var_decl = isSgVariableDeclaration(dev_var_sym->get_declaration()->get_declaration());
 
-     ROSE_ASSERT (dev_var_decl != NULL);
+    ROSE_ASSERT (dev_var_decl != NULL);
 
-     SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
-     ROSE_ASSERT (orig_sym != NULL);
-     SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
-     cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping, this is always needed to guide the outlining
+    SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
+    ROSE_ASSERT (orig_sym != NULL);
+    SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
+    cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping, this is always needed to guide the outlining
 
-     // Not all map variables from "omp target data" will be used within the current parallel region
-     // We only need to find out the used one only.
-     
-     // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
-     if (target_data_stmt != NULL)
-     {
-       if (variable_map[orig_sym])
-         all_syms.insert(new_sym);
-     }
-     else
-     {
-       all_syms.insert(new_sym);
-       ROSE_ASSERT (variable_map[orig_sym] == true);// the map variable must show up within the parallel region
-     }
+    // Not all map variables from "omp target data" will be used within the current parallel region
+    // We only need to find out the used one only.
 
-     // Step 2.1  generate linear size calculation based on array dimension info
-     // int dev_array_size = sizeof (double) *dim_size1 * dim_size2;
-     string dev_var_size_name = "_dev_" + orig_name + "_size";  
-     SgVariableDeclaration* dev_var_size_decl = NULL; 
+    // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
+    if (target_data_stmt != NULL)
+    {
+      if (variable_map[orig_sym])
+        all_syms.insert(new_sym);
+    }
+    else
+    {
+      all_syms.insert(new_sym);
+      ROSE_ASSERT (variable_map[orig_sym] == true);// the map variable must show up within the parallel region
+    }
 
-     SgVariableSymbol* dev_var_size_sym = insertion_scope->lookup_variable_symbol(dev_var_size_name);
-     if (dev_var_size_sym == NULL)
-     {
-       SgExpression* initializer = generateSizeCalculationExpression (sym, element_type, array_dimensions[sym]);
-       dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildIntType(), buildAssignInitializer(initializer), insertion_scope); 
-       insertStatementBefore (insertion_anchor_stmt, dev_var_size_decl); 
-     }
-     else
-       dev_var_size_decl = isSgVariableDeclaration(dev_var_size_sym->get_declaration()->get_declaration());
+    // generate memory allocation, copy, free function calls.
+    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, 
+        insertion_scope, insertion_anchor_stmt, need_generate_data_stmt);
+  }  // end for
 
-     ROSE_ASSERT (dev_var_size_decl != NULL);
-
-     // Step 2.5 generate memory allocation on GPUs
-     // e.g.:  _dev_m1 = (double *)xomp_deviceMalloc (_dev_m1_size);
-     if (need_generate_data_stmt) // Only if we are in the mode of inserting data handling statements
-     {
-       SgExprStatement* mem_alloc_stmt = buildAssignStatement(buildVarRefExp(dev_var_name, insertion_scope), 
-           buildCastExp ( buildFunctionCallExp(SgName("xomp_deviceMalloc"), 
-               buildPointerType(buildVoidType()), 
-               buildExprListExp(buildVarRefExp( dev_var_size_name, insertion_scope)),
-               insertion_scope), 
-             buildPointerType(element_type))); 
-       insertStatementBefore (insertion_anchor_stmt, mem_alloc_stmt); 
-     }
-
-     // Step 3. copy the data from CPU to GPU
-     // Only for variable in map(to:), or map(tofrom:) 
-     // e.g. xomp_memcpyHostToDevice ((void*)dev_m1, (const void*)a, array_size);
-     if (need_generate_data_stmt)
-     {
-       if ( ((map_to_clause) && (isInClauseVariableList (map_to_clause,sym))) || 
-           ((map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))) )
-       {
-         SgExprListExp * parameters = buildExprListExp (
-             buildCastExp(buildVarRefExp(dev_var_name, insertion_scope), buildPointerType(buildVoidType())),
-             buildCastExp(buildVarRefExp(orig_name, insertion_scope), buildPointerType(buildConstType(buildVoidType())) ),
-             buildVarRefExp(dev_var_size_name, insertion_scope)
-             );
-         SgExprStatement* mem_copy_to_stmt = buildFunctionCallStmt (SgName("xomp_memcpyHostToDevice"), 
-             buildPointerType(buildVoidType()),
-             parameters,
-             insertion_scope);
-         insertStatementBefore (insertion_anchor_stmt, mem_copy_to_stmt); 
-       }
-     }
-
-     // Step 6. copy back data from GPU to CPU, only for variable in map(out:var_list)
-     // e.g. xomp_memcpyDeviceToHost ((void*)c, (const void*)dev_m3, array_size);
-     // Note: insert this AFTER the target directive stmt
-     if (need_generate_data_stmt)
-     {
-       // SgStatement* prev_stmt = target_parallel_stmt;
-       if (( (map_from_clause) && (isInClauseVariableList (map_from_clause,sym))) ||
-           ( (map_tofrom_clause) && (isInClauseVariableList (map_tofrom_clause,sym))))
-       {
-         SgExprListExp * parameters = buildExprListExp (
-             buildCastExp(buildVarRefExp(orig_name, insertion_scope), buildPointerType(buildVoidType()) ),
-             buildCastExp(buildVarRefExp(dev_var_name, insertion_scope), buildPointerType(buildConstType(buildVoidType()))),
-             buildVarRefExp( dev_var_size_name, insertion_scope)
-             );
-         SgExprStatement* mem_copy_back_stmt = buildFunctionCallStmt (SgName("xomp_memcpyDeviceToHost"), 
-             buildPointerType(buildVoidType()),
-             parameters, 
-             insertion_scope);
-         appendStatement(mem_copy_back_stmt, insertion_anchor_stmt->get_scope()); 
-         // prev_stmt = mem_copy_back_stmt;
-       }
-     } 
-
-     // Step 7, de-allocate GPU memory
-     // e.g. xomp_freeDevice(dev_m1);
-     // Note: insert this AFTER the target directive stmt or the copy back stmt
-     if (need_generate_data_stmt)
-     {
-       SgExprStatement* mem_dealloc_stmt = 
-         buildFunctionCallStmt(SgName("xomp_freeDevice"),
-             buildBoolType(),
-             buildExprListExp(buildVarRefExp( dev_var_name,insertion_scope)),
-             insertion_scope);
-       appendStatement(mem_dealloc_stmt, insertion_anchor_stmt->get_scope()); 
-     }
-
-   }  // end for
+  // Generate a single DDE enter() call
+  if (useDDE)
+  {
+    SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
+     appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
+  }
 
    // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
    // We switch the order of 4 and 5 since we want to rewrite the subscripts before the arrays are replaced
@@ -3478,6 +3617,8 @@ std::map <SgVariableSymbol *, bool> collectVariableAppearance (SgNode* root)
   }
 
   //! Simply move the body up and remove omp target directive since nothing to be done at this level
+  // We essentially only support combined omp target parallel .... , even the code uses separated styles
+  // outlining and data handling are handled by transOmpTargetParallel()
   void transOmpTarget(SgNode * node)
   {
     ROSE_ASSERT(node != NULL );
