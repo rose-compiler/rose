@@ -1487,8 +1487,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
             PState oldPState=*estate.pstate();
             ConstraintSet oldcset=*estate.constraints();            
             estateList.push_back(createEState(edge.target,oldPState,oldcset));            
-            cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
-            exit(1);
+            if(!getSkipArrayAccesses()) {
+              cerr << "Error: array-element access on lhs of assignment not supported yet."<<endl;
+              exit(1);
+            }
           } else {
           cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
           exit(1);

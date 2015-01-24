@@ -9,7 +9,7 @@
 
 using namespace CodeThorn;
 
-ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false){
+ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -18,6 +18,14 @@ void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
 
 bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
   return _skipSelectedFunctionCalls;
+}
+
+void ExprAnalyzer::setSkipArrayAccesses(bool skip) {
+  _skipArrayAccesses=skip;
+}
+
+bool ExprAnalyzer::getSkipArrayAccesses() {
+  return _skipArrayAccesses;
 }
 
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
@@ -78,7 +86,6 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
   resList.push_back(res);
   return resList;
 }
-
 
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
@@ -379,7 +386,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         case V_SgPntrArrRefExp: {
           // assume top for array elements (array elements are not stored in state)
           //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<endl;
-          if(rhsResult.value().isTop()) {
+          if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
@@ -419,6 +426,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
               } else {
                 cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
+                cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
                 exit(1);
               }
               ROSE_ASSERT(arrayElementId.isValid());
@@ -438,6 +446,8 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
               }
             } else {
               cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
+              cerr<<"expr: "<<lhs->unparseToString()<<endl;
+              cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
               exit(1);
             }
           }

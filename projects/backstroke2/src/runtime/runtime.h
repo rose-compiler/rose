@@ -137,4 +137,35 @@ class RunTimeSystem {
    LpToRTSSMapping lp_ss_mapping;
  };
 }
+
+// template function for array operator new[size]
+template <typename ArrayElementType>
+ArrayElementType* new_array(size_t arraysize) {
+  // allocate one additional size_t for size
+  size_t* rawMemory=static_cast<size_t*>(::operator new (static_cast<size_t>(arraysize*sizeof(UserType))+1));
+  // store size
+  //cout<<"INFO: rawMemory: "<<rawMemory<<endl;
+  *rawMemory=arraysize;
+  //cout<<"INFO: stored size: "<<*rawMemory<<endl;
+  // return array-pointer (excluding size field)
+  ArrayElementType* arrayPointer=reinterpret_cast<ArrayElementType*>(rawMemory+1);
+  //cout<<"INFO: array pointer: "<<arrayPointer<<endl;
+  return arrayPointer;
+}
+
+// template function for array operator delete[]
+template <typename ArrayElementType>
+void delete_array(ArrayElementType* arrayPointer) {
+  // determine array size (platform specific)
+  std::size_t* rawMemory=reinterpret_cast<std::size_t*>(arrayPointer)-1;
+  std::size_t arraySize=*rawMemory;
+  //cout<<"INFO: determined array size: "<<arraySize<<endl;
+  if(arrayPointer != 0) {    
+    ArrayElementType *p = arrayPointer + arraySize;
+    while (p != arrayPointer)        
+      (--p)->~UserType();
+    ::operator delete [](rawMemory);
+  }
+}
+
 #endif

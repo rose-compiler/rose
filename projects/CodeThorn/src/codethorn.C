@@ -597,8 +597,10 @@ int main( int argc, char * argv[] ) {
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     boolOptions.registerOption("dump1",true);
     analyzer.setSkipSelectedFunctionCalls(true);
+    analyzer.setSkipArrayAccesses(true);
     if(numberOfThreadsToUse>1) {
-      //cerr<<"Error: multi threaded rewrite not supported yet."<<endl;
+      cerr<<"Error: multi threaded rewrite not supported yet."<<endl;
+      exit(1);
     }
   }
 
