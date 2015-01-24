@@ -7,19 +7,26 @@
 #include "AstAnnotator.h"
 #include "RoseAst.h"
 #include <iostream>
-using namespace std;
 
-AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler) {
+using namespace std;
+using namespace SPRAY;
+
+AstAnnotator::AstAnnotator(Labeler* labeler):_labeler(labeler),_variableIdMapping(0) {
+}
+AstAnnotator::AstAnnotator(Labeler* labeler, VariableIdMapping* variableIdMapping):_labeler(labeler),_variableIdMapping(variableIdMapping) {
+  ROSE_ASSERT(_variableIdMapping);
 }
 
 void AstAnnotator::annotateAstAttributesAsCommentsBeforeStatements(SgNode* node, string attributeName) {
-  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::before);
+  string analysisInfoTypeDescription="in ";
+  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::before,analysisInfoTypeDescription);
 }
 void AstAnnotator::annotateAstAttributesAsCommentsAfterStatements(SgNode* node, string attributeName) {
-  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::after);
+  string analysisInfoTypeDescription="out";
+  annotateAstAttributesAsComments(node,attributeName,PreprocessingInfo::after,analysisInfoTypeDescription);
 }
 
-void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attributeName,PreprocessingInfo::RelativePositionType posSpecifier) {
+void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attributeName,PreprocessingInfo::RelativePositionType posSpecifier, string analysisInfoTypeDescription) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgStatement* stmt=dynamic_cast<SgStatement*>(*i)) {
@@ -34,7 +41,15 @@ void AstAnnotator::annotateAstAttributesAsComments(SgNode* node, string attribut
         //cout << "@"<<stmt<<" "<<stmt->class_name()<<" FOUND LABEL: "<<_labeler->getLabel(stmt)<<endl;
         string labelString=_labeler->labelToString(_labeler->getLabel(stmt));
         string commentStart="// ";
-        insertComment(commentStart+labelString+": "+artAttribute->toString(),posSpecifier,stmt);
+        string artAttributeString;
+        if(!_variableIdMapping) {
+          artAttributeString=artAttribute->toString();
+        } else {
+          stringstream ss;
+          artAttribute->toStream(ss,_variableIdMapping);
+          artAttributeString=ss.str();
+        }
+        insertComment(commentStart+labelString+" "+analysisInfoTypeDescription+": "+artAttributeString,posSpecifier,stmt);
       }
     }
   }

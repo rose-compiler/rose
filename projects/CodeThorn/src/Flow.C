@@ -243,14 +243,22 @@ Flow::Flow():_boostified(false) {
 void Flow::boostify() {
   cout<<"STATUS: converting ICFG to boost graph representation ... "<<endl;
   edge_t e; bool b;
+  ROSE_ASSERT(!_boostified);
   for(Flow::iterator i=begin();i!=end();++i) {
-    tie(e,b)=add_edge((*i).source,(*i).target,_flowGraph);
+    tie(e,b)=add_edge((*i).source.getId(),(*i).target.getId(),_flowGraph);
     _flowGraph[e]=(*i).getTypes();
   }
   _boostified=true;
   cout<<"STATUS: converting ICFG to boost graph representation: DONE."<<endl;
 }
 
+CodeThorn::Flow Flow::reverseFlow() {
+  Flow reverseFlow;
+  for(Flow::iterator i=begin();i!=end();++i) {
+    reverseFlow.insert(Edge((*i).target,(*i).getTypes(),(*i).source));
+  }
+  return reverseFlow;
+}
 
 void Flow::resetDotOptions() {
   _dotOptionDisplayLabel=true;
@@ -318,6 +326,7 @@ string Flow::toDot(Labeler* labeler) {
   if(_dotOptionHeaderFooter)
     ss<<"digraph G {\n";
   LabelSet nlabs=nodeLabels();
+  cout<<"toDot:: Flow label-set size: "<<nlabs.size()<<endl;
   for(LabelSet::iterator i=nlabs.begin();i!=nlabs.end();++i) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
@@ -414,7 +423,7 @@ Flow Flow::outEdges(Label label) {
     // index = get(vertex_index, _flowGraph);
     GraphTraits::out_edge_iterator out_i, out_end;
     GraphTraits::edge_descriptor e;
-    for (tie(out_i, out_end) = out_edges(label, _flowGraph); 
+    for (tie(out_i, out_end) = out_edges(label.getId(), _flowGraph); 
          out_i != out_end; ++out_i) {
       e = *out_i;
       Label src = source(e, _flowGraph), targ = target(e, _flowGraph);

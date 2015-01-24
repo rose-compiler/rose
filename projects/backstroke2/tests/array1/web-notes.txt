@@ -1,0 +1,25 @@
+examples of explicit implementations for delete[]
+http://www.drdobbs.com/cpp/deallocating-objects-vs-deallocating-sto/232200120
+
+example: constructing a 2-dim array with new[]/delete[]
+http://www.cplusplus.com/forum/beginner/89634/
+
+example with load/print of array (I/O)
+http://cboard.cprogramming.com/cplusplus-programming/30039-cplusplus-code-destructor-delete-dynamically-allocated-array.html
+
+Destructor semantics (C++11)
+http://en.cppreference.com/w/cpp/language/destructor
+
+compiler specific implementations of delete[]
+http://stackoverflow.com/questions/197675/how-does-delete-know-the-size-of-the-operand-array
+http://blogs.msdn.com/b/oldnewthing/archive/2004/02/03/66660.aspx
+
+libstd++ functions
+https://gcc.gnu.org/onlinedocs/libstdc++/libstdc++-api-4.6/index.html
+modules->memory->allocators
+
+operator delete std interface:
+http://en.cppreference.com/w/cpp/memory/new/operator_delete
+
+overloading new (with proper destructor call)
+http://bytes.com/topic/c/answers/598350-overloaded-delete-does-not-calls-destructor

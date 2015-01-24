@@ -1,9 +1,9 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
 add_subdirectory(CxxCodeGeneration)
+add_subdirectory(languageIndependenceSupport)
+add_subdirectory(formatSupport)
+
 if (WIN32)
-  message ("WARNING : Fortran, Java, and PHP not supported yet on Windows")
+  message ("WARNING : Fortran and PHP not supported yet on Windows")
 else (WIN32)
   # tps (11/23/2009) commented out fortran and php for windows for now
   if(enable-fortran)
@@ -23,53 +23,42 @@ else (WIN32)
   endif()
 endif (WIN32)
 
-add_subdirectory(languageIndependenceSupport)
-add_subdirectory(formatSupport)
-
 
 ########### next target ###############
 
+add_library (unparser OBJECT
+  FortranCodeGeneration/unparseFortran_expressions.C
+  FortranCodeGeneration/unparseFortran_modfile.C
+  FortranCodeGeneration/unparseFortran_statements.C
+  FortranCodeGeneration/unparseFortran_types.C
+  JavaCodeGeneration/unparseJava_expressions.C
+  JavaCodeGeneration/unparseJava_statements.C
+  JavaCodeGeneration/unparseJava_types.C
+  CxxCodeGeneration/unparseCxx_types.C
+  CxxCodeGeneration/unparseCxx_expressions.C
+  CxxCodeGeneration/unparseCxx_statements.C
+  PHPCodeGeneration/unparsePHP.C
+  astUnparseAttribute.C
+  unparser.C
+  nameQualificationSupport.C
+  unparse_sym.C
+  IncludedFilesUnparser.C
+  formatSupport/unparseFormatHelp.C
+  formatSupport/unparse_format.C
+  languageIndependenceSupport/modified_sage_isUnaryOp.C
+  languageIndependenceSupport/unparser_opt.C
+  languageIndependenceSupport/modified_sage.C
+  languageIndependenceSupport/name_qualification_support.C
+  languageIndependenceSupport/unparse_debug.C
+  languageIndependenceSupport/unparseLanguageIndependentConstructs.C
+  X10CodeGeneration/unparseX10_expressions.C
+  X10CodeGeneration/unparseX10_statements.C
+  X10CodeGeneration/unparseX10_types.C)
+add_dependencies(unparser rosetta_generated)
 
-# tps : unparser part of ROSE component
-#add_library(unparser STATIC ${unparser_SRC})
-#add_dependencies( unparser ROSETTA )
 ########### install files ###############
 
 set(unparser_headers copy_unparser.h unparser.h unparse_sym.h
   astUnparseAttribute.h IncludedFilesUnparser.h nameQualificationSupport.h)
 
 install(FILES ${unparser_headers} DESTINATION ${INCLUDE_INSTALL_DIR})
-
-
-
-#original Makefile.am contents follow:
-
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-## SUBDIRS = CxxCodeGeneration languageIndependenceSupport formatSupport
-#SUBDIRS = CxxCodeGeneration FortranCodeGeneration PHPCodeGeneration languageIndependenceSupport formatSupport
-#
-#INCLUDES = $(ROSE_INCLUDES)
-#
-## unparser_headers = copy_unparser.h unparser.h unparse_sym.h
-#unparser_headers = unparser.h unparse_sym.h astUnparseAttribute.h
-#unparser_sources = $(unparser_headers:.h=.C)
-#
-#noinst_LTLIBRARIES = libunparse.la
-#
-#libunparse_la_SOURCES = $(unparser_sources) $(unparser_headers)
-#libunparse_la_LIBADD = 
-#
-##     formatSupport/libunparseFormatSupport.la 
-##     languageIndependenceSupport/libunparseLanguageIndependenceSupport.la 
-##     CxxCodeGeneration/libunparseCxx.la 
-##     FortranCodeGeneration/libunparseFortran.la
-#
-#include_HEADERS = $(unparser_headers)
-#
-#clean-local:
-#	rm -rf Templates.DB ii_files ti_files core
-#
-#EXTRA_DIST = unparser.docs
-#
-## eof

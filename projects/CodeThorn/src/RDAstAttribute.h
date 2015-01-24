@@ -15,15 +15,15 @@ class RDAstAttribute : public RDAstAttributeInterface {
  public:
   virtual bool isBottomElement();
   virtual VariableIdSet allVariableIds();
-  virtual LabelSet allLabels();
-  virtual LabelSet definitionsOfVariableId(VariableId varId);
-  virtual VariableIdSet variableIdsOfDefinition(Label def);
+  virtual SPRAY::LabelSet allLabels();
+  virtual SPRAY::LabelSet definitionsOfVariableId(VariableId varId);
+  virtual VariableIdSet variableIdsOfDefinition(SPRAY::Label def);
   virtual iterator begin();
   virtual iterator end();
   virtual ~RDAstAttribute();
  public:
   RDAstAttribute(RDLattice* elem);
-  void toStream(ostream& os, VariableIdMapping* vim);
+  void toStream(std::ostream& os, VariableIdMapping* vim);
   string toString();
  private:
   RDLattice* _elem;
