@@ -9,6 +9,7 @@
 #include <set>
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 /*********************
  * utility functions *

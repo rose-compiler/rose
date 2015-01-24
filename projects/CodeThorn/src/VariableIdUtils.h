@@ -10,6 +10,8 @@
 #include "VariableIdMapping.h"
 #include <set>
 
+namespace SPRAY {
+
 // some utility functions for sets of VariableId
 // 
 class VariableIdSetPrettyPrint
@@ -21,5 +23,7 @@ public:
 
 // utility function to union two VariableIdSet into rset
 void set_union(const VariableIdSet& set1, const VariableIdSet& set2, VariableIdSet& rset);
+
+}
 
 #endif

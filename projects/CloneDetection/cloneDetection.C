@@ -33,7 +33,17 @@ fileToVariantT(std::vector<std::string> variantNames){
     return variantNumbers;
 }
 
-
+//Print all variants to file for inVector and toFile options
+void
+printGlobalVariantToFile(){
+    std::ofstream myfile;
+    myfile.open("all_variants", ios::app); 
+    
+    for( unsigned int i =0; i < V_SgNumVariants; i++){
+         myfile << roseGlobalVariantNameList[i] << " "; 
+    }
+   
+}
 
 //Read all the words in a file into an vector of strings
 std::vector<std::string> 
@@ -120,107 +130,109 @@ using namespace std;
 
 
 int main( int argc, char * argv[] ) {
-
-    std::vector<std::string> argvList(argv, argv + argc);
-
-     SgProject* project = frontend(argvList);
-
-    CreateCloneDetectionVectors t;
+	//printGlobalVariantToFile();
+	std::vector<std::string> argvList(argv, argv + argc);
+	CreateCloneDetectionVectors t;
 
 
 
-    //Read in the variants which should be in the generated vector 
-    std::vector<std::string> raw_conf_filename;
-     getRoseOptionValues (argvList, OPTION_NAMESTYLEFILE, raw_conf_filename);
+	//Read in the variants which should be in the generated vector 
+	std::vector<std::string> raw_conf_filename;
+	getRoseOptionValues (argvList, OPTION_NAMESTYLEFILE, raw_conf_filename);
 
 
-     if( raw_conf_filename.size() != 1  ){
-        std::cerr << "Usage: cloneDetection -rose:clone:inVector your_filename" << std::endl;
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:inVector your_filename" << std::endl;
 		exit(1);
-     }else{
-        ROSE_ASSERT( raw_conf_filename.size() == 1);
-        for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
-            std::string filename = raw_conf_filename[i];
-            std::vector<std::string> variantNameVec = readFile(filename);           
-            std::vector<int> variantNumVec = fileToVariantT(variantNameVec);  
-            t.variantNumVec = variantNumVec;
-        }
-           
-     }
-    //Read in which variants should have a vector printed to file
-    raw_conf_filename.clear();
-    getRoseOptionValues (argvList, OPTION_VARIANTSTOVECTOR, raw_conf_filename);
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			std::string filename = raw_conf_filename[i];
+			std::vector<std::string> variantNameVec = readFile(filename);           
+			std::vector<int> variantNumVec = fileToVariantT(variantNameVec);  
+			t.variantNumVec = variantNumVec;
+		}
 
-     if( raw_conf_filename.size() != 1  ){
-        std::cerr << "Usage: cloneDetection -rose:clone:toFile your_filename" << std::endl;
-		exit(1);
-     }else{
-        ROSE_ASSERT( raw_conf_filename.size() == 1);
-        for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
-            std::string filename = raw_conf_filename[i];
-	            std::vector<std::string> variantNameVec = readFile(filename);           
-            std::vector<int> variantToWriteToFile = fileToVariantT(variantNameVec);
-            t.variantToWriteToFile = variantToWriteToFile;
-        }
-           
-     }
-
-
-	 //Find the minimum amount of tokens
+	}
+	//Read in which variants should have a vector printed to file
 	raw_conf_filename.clear();
-    getRoseOptionValues (argvList, OPTION_MINTOKENS, raw_conf_filename);
+	getRoseOptionValues (argvList, OPTION_VARIANTSTOVECTOR, raw_conf_filename);
+
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:toFile your_filename" << std::endl;
+		exit(1);
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			std::string filename = raw_conf_filename[i];
+			std::vector<std::string> variantNameVec = readFile(filename);           
+			std::vector<int> variantToWriteToFile = fileToVariantT(variantNameVec);
+			t.variantToWriteToFile = variantToWriteToFile;
+		}
+
+	}
+
+
+	//Find the minimum amount of tokens
+	raw_conf_filename.clear();
+	getRoseOptionValues (argvList, OPTION_MINTOKENS, raw_conf_filename);
 
 	int minTokens = 0;
 
-     if( raw_conf_filename.size() != 1  ){
-        std::cerr << "Usage: cloneDetection -rose:clone:minTokens $integer" << std::endl;
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:minTokens $integer" << std::endl;
 		exit(1);
-     }else{
-        ROSE_ASSERT( raw_conf_filename.size() == 1);
-        for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
-            minTokens = atoi(raw_conf_filename[i].c_str());
-        }
-           
-     }
-	 t.minTokens = minTokens;
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			minTokens = atoi(raw_conf_filename[i].c_str());
+		}
 
-	 //Find the stride
+	}
+	t.minTokens = minTokens;
+
+	//Find the stride
 	raw_conf_filename.clear();
-    getRoseOptionValues (argvList, OPTION_STRIDE, raw_conf_filename);
+	getRoseOptionValues (argvList, OPTION_STRIDE, raw_conf_filename);
 
 	int stride = 0;
 
-     if( raw_conf_filename.size() != 1  ){
-        std::cerr << "Usage: cloneDetection -rose:clone:stride $integer" << std::endl;
+	if( raw_conf_filename.size() != 1  ){
+		std::cerr << "Usage: cloneDetection -rose:clone:stride $integer" << std::endl;
 		exit(1);
-     }else{
-        ROSE_ASSERT( raw_conf_filename.size() == 1);
-        for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
-            stride = atoi(raw_conf_filename[i].c_str());
-        }
-           
-     }
+	}else{
+		ROSE_ASSERT( raw_conf_filename.size() == 1);
+		for( unsigned int i = 0 ; i < raw_conf_filename.size() ; i++   ){
+			stride = atoi(raw_conf_filename[i].c_str());
+		}
 
-	 t.stride = stride;
+	}
 
-	 for( int i=0; i < V_SgNumVariants; i++ )
-    	t.mergedVector.push_back(0);
+	t.stride = stride;
 
-
+	for( int i=0; i < V_SgNumVariants; i++ )
+		t.mergedVector.push_back(0);
 
 
-	 ostringstream filename; 
-	  filename << "vdb_" << minTokens <<
-	   "_" << stride;
+	SgProject* project = frontend(argvList);
+
+
+
+
+	ostringstream filename; 
+	filename << "vdb_" << minTokens <<
+		"_" << stride;
 	//Open the file for appending to the end
 	t.myfile.open(filename.str().c_str(), ios::app);
 
 	//Go to end of file
 
-     t.traverseInputFiles(project);
- 
+	t.traverseInputFiles(project);
 
-      t.myfile.close();
+
+	t.myfile.close();
+
+        return backend(project);
 
 }
 
