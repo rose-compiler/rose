@@ -1,13 +1,10 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
 add_subdirectory(CallGraphAnalysis)
 add_subdirectory(OAWrap)
 
 # DQ (11/25/2009) Comment out under Windows.
 if (NOT WIN32)
-message ("Commented out use of OpenAnalysis in Windows.")
-add_subdirectory(CFG)
+  message ("Commented out use of OpenAnalysis in Windows.")
+  add_subdirectory(CFG)
 endif (NOT WIN32)
 
 add_subdirectory(bitvectorDataflow)
@@ -30,52 +27,61 @@ add_subdirectory(systemDependenceGraph)
 add_subdirectory(EditDistance)
 
 
+if (NOT enable-internalFrontendDevelopment)
+  add_library(midend_pa OBJECT
+    defUseAnalysis/DefUseAnalysisAbstract.cpp
+    defUseAnalysis/DefUseAnalysis.cpp
+    defUseAnalysis/GlobalVarAnalysis.cpp
+    defUseAnalysis/LivenessAnalysis.cpp
+    defUseAnalysis/dfaToDot.cpp
+    defUseAnalysis/DefUseAnalysis_perFunction.cpp
+    graphAnalysis/RoseBin_GmlGraph.cpp
+    graphAnalysis/RoseBin_Graph.cpp
+    graphAnalysis/RoseBin_DotGraph.cpp
+    valuePropagation/ValueAnnot.C
+    valuePropagation/ValuePropagate.C
+    variableRenaming/VariableRenaming.C
+    OAWrap/OAWrap.C
+    OAWrap/SAGE2OA.C
+    CallGraphAnalysis/CallGraphDB.C
+    CallGraphAnalysis/CallGraph.C
+    CallGraphAnalysis/ClassHierarchyGraph.C
+    staticInterproceduralSlicing/MergedDependenceGraph.C
+    staticInterproceduralSlicing/ControlFlowGraph.C
+    staticInterproceduralSlicing/FunctionDependenceGraph.C
+    staticInterproceduralSlicing/ControlDependenceGraph.C
+    staticInterproceduralSlicing/DependenceGraph.C
+    staticInterproceduralSlicing/EDefUse.C
+    staticInterproceduralSlicing/DataDependenceGraph.C
+    staticInterproceduralSlicing/SlicingInfo.C
+    staticInterproceduralSlicing/CreateSlice.C
+    staticInterproceduralSlicing/CreateSliceSet.C
+    staticInterproceduralSlicing/SystemDependenceGraph.C
+    staticInterproceduralSlicing/DefUseExtension.C
+    CFG/CFG_OA.C
+    CFG/CFG_ROSE.C
+    pointerAnal/PtrAnalCFG.C
+    pointerAnal/PtrAnal.C
+    bitvectorDataflow/DataFlowAnalysis.C
+    bitvectorDataflow/ReachingDefinition.C
+    bitvectorDataflow/DefUseChain.C
+    VirtualFunctionAnalysis/VirtualFunctionAnalysis.C
+    VirtualFunctionAnalysis/PtrAliasAnalysis.C
+    VirtualFunctionAnalysis/IntraProcAliasAnalysis.C
+    VirtualFunctionAnalysis/IntraProcDataFlowAnalysis.C
+    VirtualFunctionAnalysis/InterProcDataFlowAnalysis.C
+    graphAnalysis/SB_Graph.C
+    graphAnalysis/CallGraphAnalysis.C
+    graphAnalysis/RoseSrc_CallGraphAnalysis.C
+    staticSingleAssignment/staticSingleAssignmentCalculation.C
+    staticSingleAssignment/staticSingleAssignmentQueries.C
+    staticSingleAssignment/uniqueNameTraversal.C
+    staticSingleAssignment/defsAndUsesTraversal.C
+    staticSingleAssignment/reachingDef.C
+    staticSingleAssignment/staticSingleAssignmentInterprocedural.C
+    EditDistance/EditDistance.C
+    EditDistance/TreeEditDistance.C
+  )
+  add_dependencies(midend_pa rosetta_generated)
 
-#add_library( midend_pa STATIC ${midend_pa_src} )
-#add_dependencies( midend_pa ROSETTA )
-
-########### install files ###############
-
-
-
-
-#original Makefile.am contents follow:
-
-#include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
-#
-## DQ (5/3/2007): Old version before Christian's work was added.
-##SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis
-##          valuePropagation  dominatorTreesAndDominanceFrontiers
-##          staticProgramSlicing proceduralSlicing
-#
-#SUBDIRS = CallGraphAnalysis OAWrap CFG dataflowAnalysis \
-#          valuePropagation  defUseAnalysis dominanceAnalysis \
-#          staticInterproceduralSlicing pointerAnal \
-#	  annotationLanguageParser sideEffectAnalysis distributedMemoryAnalysis \
-#          graphAnalysis
-#
-## DQ (9/6/2005): Commented out these directories since they
-## represent code that used the older graph interface and they
-## no longer compile!  These will be updated later.
-## staticProgramSlicing proceduralSlicing
-#
-### The grammar generator (ROSETTA) should use its own template repository
-#CXX_TEMPLATE_REPOSITORY_PATH = .
-#
-#clean-local:
-#	rm -rf Templates.DB ii_files ti_files cxx_templates
-#
-#distclean-local:
-#	rm -rf Templates.DB
-#
-##dist-hook:
-##	ln -s ../STL-link ${distdir}
-#
-## AUTOMAKE_OPTIONS = foreign
-#
-#EXTRA_DIST = OpenAnalysis
-#
-#
-#
-#
-#
+endif()
