@@ -211,6 +211,7 @@ roseompacc_SOURCES = roseompacc.C # a relaxed version without consistency checki
 
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+ACC_TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:openmp:nodde #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 # We only include test codes required to compile here.
 # Runnable codes are handled separatedly, 
@@ -261,13 +262,13 @@ $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
 	@$(RTH_RUN) \
 		TITLE="roseompacc $(notdir $<) [$@.passed]" \
-		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		CMD="./roseompacc$(EXEEXT) ${ACC_TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 	@$(RTH_RUN) \
 		TITLE="roseompacc $(notdir $<) [$@.passed]" \
-		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		CMD="./roseompacc$(EXEEXT) ${ACC_TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 
