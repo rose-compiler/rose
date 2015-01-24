@@ -19,6 +19,24 @@ uniquePath(const std::string &extension) {
     return boost::filesystem::path("tmp") /  boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
 }
 
+std::string
+charToString(uint8_t ch) {
+    switch (ch) {
+        //case '\0': s = "\\0"; break; //too many of these clutter up the important stuff
+        case '\a': return "\\a";
+        case '\b': return "\\b";
+        case '\t': return "\\t";
+        case '\n': return "\\n";
+        case '\v': return "\\v";
+        case '\f': return "\\f";
+        case '\r': return "\\r";
+        default:
+            if (isprint(ch))
+                return std::string(1, ch);
+    }
+    return "";
+}
+
 // Count function size in bytes and cache as the function's ATTR_NBytes attribute
 size_t
 functionNBytes(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {

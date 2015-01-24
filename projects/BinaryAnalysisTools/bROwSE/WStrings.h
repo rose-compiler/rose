@@ -12,19 +12,28 @@ class StringsModel;
 
 /** Displays information about strings found in a specimen. */
 class WStrings: public Wt::WContainerWidget {
+public:
+    enum Pane { OVERVIEW, DETAILS };
+
+    Wt::WStackedWidget *wStack_;                        // stack of overview (table) or details
+    Wt::WContainerWidget *wOverview_;                   // overview of all strings: address space, table, etc
+    WStringDetail *wDetails_;                           // details about one string
+
+    // Stuff for the overview
     WAddressSpace *wAddressSpace_;
     StringsModel *model_;
     Wt::WTableView *wTableView_;
     Wt::WText *wSearchResults_;
     Wt::WPushButton *wNext_, *wPrev_;
+
     Wt::Signal<size_t> stringClicked_;
 
     enum AddressSpaceBar { SegmentsBar, StringsBar };
 
 public:
     explicit WStrings(Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), wAddressSpace_(NULL), model_(NULL), wTableView_(NULL), wSearchResults_(NULL),
-          wNext_(NULL), wPrev_(NULL) {
+        : Wt::WContainerWidget(parent), wStack_(NULL), wOverview_(NULL), wDetails_(NULL), wAddressSpace_(NULL), model_(NULL),
+          wTableView_(NULL), wSearchResults_(NULL), wNext_(NULL), wPrev_(NULL) {
         init();
     }
 

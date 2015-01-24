@@ -22,6 +22,9 @@ struct FunctionDataFlow {
 
 boost::filesystem::path uniquePath(const std::string &extension);
 
+/** Convert a printable character to a C-escaped string.  Returns the empty string for other characters. */
+std::string charToString(uint8_t ch);
+
 size_t functionNBytes(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNInsns(const P2::Partitioner&, const P2::Function::Ptr&);
 size_t functionNIntervals(const P2::Partitioner&, const P2::Function::Ptr&);

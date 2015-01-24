@@ -27,6 +27,7 @@ public:
         FunctionCfgTab,                                 /**< Control flow graph for one function. */
         AssemblyTab,                                    /**< More traditional assembly listing. */
         HexDumpTab,                                     /**< Dump raw data bytes from anywhere in memory. */
+        MagicTab,                                       /**< Magic number identification. */
         StringsTab,                                     /**< Information about character strings in memory. */
         StatusTab,                                      /**< Complete list of all messages from ROSE, system status, etc. */
         NMainTabs
@@ -53,13 +54,14 @@ private:
     WStatusBar *wStatusBar_;                            // info across the bottom of the screen
     P2::Function::Ptr currentFunction_;                 // current function or null
     WCrossReferences *wCrossRefs_;                      // cross reference tool
+    WMagic *wMagic_;                                    // magic numbers
 
 public:
     explicit Application(const Settings &settings, const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
         : Wt::WApplication(env), ctx_(settings, specimenNames, this), wStacked_(NULL), wInteractivePhase_(NULL),
           wGrid_(NULL), wMainTabs_(NULL), wPartitioner_(NULL), wMemoryMap_(NULL), wFunctionList_(NULL),
           wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wStrings_(NULL), wAssembly_(NULL), wSemantics_(NULL),
-          wStatus_(NULL), wStatusBar_(NULL), wCrossRefs_(NULL) {
+          wStatus_(NULL), wStatusBar_(NULL), wCrossRefs_(NULL), wMagic_(NULL) {
         init();
     }
 

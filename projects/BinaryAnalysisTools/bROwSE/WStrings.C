@@ -2,11 +2,13 @@
 
 #include <boost/regex.hpp>
 #include <bROwSE/WAddressSpace.h>
+#include <bROwSE/WStringDetail.h>
 #include <stringify.h>                                  // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WLineEdit>
 #include <Wt/WPushButton>
+#include <Wt/WStackedWidget>
 #include <Wt/WTableView>
 #include <Wt/WText>
 #include <Wt/WVBoxLayout>
@@ -16,18 +18,23 @@ using namespace rose::BinaryAnalysis;
 
 namespace bROwSE {
 
+enum ColumnNumber {
+    AddressColumn,
+    CrossRefsColumn,
+    LengthEncodingColumn,
+    CharacterEncodingColumn,
+    NCharsColumn,
+    ViewColumn,
+    ValueColumn,
+    NColumns
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      StringsModel
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class StringsModel: public Wt::WAbstractTableModel {
 public:
-    enum ColumnNumber {
-        AddressColumn,
-        CrossRefsColumn,
-        LengthEncodingColumn,
-        CharacterEncodingColumn,
-        NCharsColumn,
-        ValueColumn,
-        NColumns
-    };
-
     struct Row {
         StringFinder::String meta;
         size_t nrefs;
@@ -64,6 +71,8 @@ public:
                         return Wt::WString("CharType");
                     case NCharsColumn:
                         return Wt::WString("nChars");
+                    case ViewColumn:
+                        return Wt::WString("View");
                     case ValueColumn:
                         return Wt::WString("Value");
                     default:
@@ -120,6 +129,9 @@ public:
                                        (row.value.size()>nCharsToDisplay?"...":""));
                 }
             }
+        } else if (Wt::DecorationRole == role) {
+            if (index.column() == ViewColumn)
+                return Wt::WString("/images/view-16x16.png");
         } else if (Wt::StyleClassRole == role) {
             if (row.isMatching)
                 return Wt::WString("strings_matched");
@@ -138,6 +150,9 @@ public:
 
     void sort(int column, Wt::SortOrder order) ROSE_OVERRIDE {
         ASSERT_require(column>=0 && (ColumnNumber)column < NColumns);
+        if (ViewColumn == column)
+            return;                                     // not a sortable column
+
         layoutAboutToBeChanged().emit();
         switch (column) {
             case AddressColumn:
@@ -205,11 +220,29 @@ public:
         layoutChanged().emit();
     }
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Strings widget
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                     
 void
 WStrings::init() {
+    Wt::WVBoxLayout *topVBox = new Wt::WVBoxLayout;
+    setLayout(topVBox);
+
+    wStack_ = new Wt::WStackedWidget;
+    topVBox->addWidget(wStack_);
+
+    //---------------
+    // Overview Pane
+    //---------------
+
+    ASSERT_require(OVERVIEW==0);
+    wOverview_ = new Wt::WContainerWidget;
+    wStack_->addWidget(wOverview_);
+    
     Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
-    setLayout(vbox);
+    wOverview_->setLayout(vbox);
 
     // Address Space
     wAddressSpace_ = new WAddressSpace;
@@ -235,7 +268,8 @@ WStrings::init() {
         wSearchResults_ = new Wt::WText("", wSearch);
     }
     
-    // Table
+
+    // Table. The HBoxLayout is so the table scrolls horizontally.
     Wt::WContainerWidget *wTableContainer = new Wt::WContainerWidget;
     vbox->addWidget(wTableContainer, 1 /*stretch*/);
     Wt::WHBoxLayout *hbox = new Wt::WHBoxLayout;
@@ -247,18 +281,33 @@ WStrings::init() {
     wTableView_->setRowHeaderCount(1);                  // this must be first
     wTableView_->setHeaderHeight(28);
     wTableView_->setSortingEnabled(true);
+    wTableView_->setSortingEnabled(ViewColumn, false);
     wTableView_->setAlternatingRowColors(false);        // we do our own colors
     wTableView_->setColumnResizeEnabled(true);
     wTableView_->setSelectionBehavior(Wt::SelectRows);
     wTableView_->setSelectionMode(Wt::SingleSelection);
     wTableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
-    wTableView_->setColumnWidth(StringsModel::AddressColumn, Wt::WLength(6, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(StringsModel::LengthEncodingColumn, Wt::WLength(7, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(StringsModel::CharacterEncodingColumn, Wt::WLength(5, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(StringsModel::NCharsColumn, Wt::WLength(4, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(StringsModel::ValueColumn, Wt::WLength(100, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(AddressColumn, Wt::WLength(6, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(CrossRefsColumn, Wt::WLength(4, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(LengthEncodingColumn, Wt::WLength(7, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(CharacterEncodingColumn, Wt::WLength(5, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(NCharsColumn, Wt::WLength(4, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(ViewColumn, Wt::WLength(3, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(ValueColumn, Wt::WLength(100, Wt::WLength::FontEm));
     wTableView_->clicked().connect(boost::bind(&WStrings::selectStringByRow, this, _1));
     hbox->addWidget(wTableView_);
+
+    //--------------
+    // Details Pane
+    //--------------
+
+    ASSERT_require(DETAILS==1);
+    wDetails_ = new WStringDetail;
+    wDetails_->button()->clicked().connect(boost::bind(&Wt::WStackedWidget::setCurrentIndex, wStack_, OVERVIEW));
+    wStack_->addWidget(wDetails_);
+
+
+    wStack_->setCurrentIndex(OVERVIEW);
 }
 
 void
@@ -358,8 +407,15 @@ WStrings::partitioner(const P2::Partitioner &p) {
 
 void
 WStrings::selectStringByRow(const Wt::WModelIndex &idx) {
-    if (idx.isValid())
+    if (idx.isValid()) {
+        if (idx.column() == ViewColumn) {
+            ASSERT_require(idx.row()>=0 && (size_t)idx.row()<model_->rows_.size());
+            const StringsModel::Row &row = model_->rows_[idx.row()];
+            wDetails_->changeString(row.meta, row.value);
+            wStack_->setCurrentIndex(DETAILS);
+        }
         stringClicked_.emit(idx.row());
+    }
 }
 
 const P2::ReferenceSet&
