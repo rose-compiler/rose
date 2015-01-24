@@ -289,6 +289,7 @@ set(rose_support_src
 set(rosePartitioner2_SRC ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/AddressUsageMap.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Attribute.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/BasicBlock.C
+                         ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/Config.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/ControlFlowGraph.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataBlock.C
                          ${CMAKE_SOURCE_DIR}/src/frontend/Partitioner2/DataFlow.C

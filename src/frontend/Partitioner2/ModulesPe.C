@@ -240,17 +240,11 @@ buildMayReturnLists(Partitioner &partitioner) {
     // The following functions never return to their caller
     // FIXME[Robb P. Matzke 2014-11-20]: This list needs to be expanded; I'm only listing those I've actually seen in the wild
     //      because I haven't been able to find a good list anywhere.
-    partitioner.setMayReturnBlacklisted("TerminateThread@KERNEL32.dll");
-    partitioner.setMayReturnBlacklisted("RaiseException@KERNEL32.dll");
-    partitioner.setMayReturnBlacklisted("TerminateProcess@KERNEL32.dll");
-    partitioner.setMayReturnBlacklisted("ExitProcess@KERNEL32.dll");
-}
-
-void
-buildStackDeltaList(Partitioner &partitioner) {
-    // FIXME[Robb P. Matzke 2014-12-08]: This list needs to be expanded
-    // Consider using Engine::configureFromFile instead
-    partitioner.functionStackDelta("EncodePointer@KERNEL32.dll", +8);
+    Configuration &c = partitioner.configuration();
+    c.insertMaybeFunction("TerminateThread@KERNEL32.dll").mayReturn(false);
+    c.insertMaybeFunction("RaiseException@KERNEL32.dll").mayReturn(false);
+    c.insertMaybeFunction("TerminateProcess@KERNEL32.dll").mayReturn(false);
+    c.insertMaybeFunction("ExitProcess@KERNEL32.dll").mayReturn(false);
 }
 
 void

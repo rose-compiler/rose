@@ -238,41 +238,25 @@ public:
     }
 };
 
-void
-Partitioner::functionStackDelta(const std::string &functionName, int64_t delta) {
-    if (delta == SgAsmInstruction::INVALID_STACK_DELTA) {
-        stackDeltaMap_.erase(functionName);
-    } else {
-        stackDeltaMap_.insert(functionName, delta);
-    }
-}
-
-int64_t
-Partitioner::functionStackDelta(const std::string &functionName) const {
-    int64_t delta = SgAsmInstruction::INVALID_STACK_DELTA;
-    if (!stackDeltaMap_.getOptional(functionName).assignTo(delta))
-        delta = instructionProvider_->instructionPointerRegister().get_nbits() / 8;
-    return delta;
-}
-
 BaseSemantics::SValuePtr
 Partitioner::functionStackDelta(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     const size_t bitsPerWord = instructionProvider_->instructionPointerRegister().get_nbits();
 
+    // If there's a stack delta cached in the function, just return it.
     BaseSemantics::SValuePtr retval;
     if (function->stackDelta().getOptional().assignTo(retval))
-        return retval;                                  // already cached
+        return retval;
 
     Sawyer::Message::Stream trace(mlog[TRACE]);
     SAWYER_MESG(trace) <<"functionCalculateStackDeltas(" <<function->printableName() <<")";
 
     // Use (and cache) a predetermined delta if one's available.
     BaseSemantics::RiscOperatorsPtr ops = newOperators();
-    if (Sawyer::Optional<int64_t> delta = stackDeltaMap_.getOptional(function->name())) {
+    if (Sawyer::Optional<int64_t> delta = config_.functionStackDelta(function)) {
         retval = ops->number_(bitsPerWord, *delta);
         function->stackDelta() = retval;
-        SAWYER_MESG(trace) <<"  stack delta is defined as " <<*delta <<" in a lookup table\n";
+        SAWYER_MESG(trace) <<"  stack delta is defined as " <<*delta <<" in configuration\n";
         return retval;
     }
     

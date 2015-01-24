@@ -69,9 +69,6 @@ void nameImportThunks(const Partitioner&, SgAsmInterpretation*);
 /** Build may-return white and black lists. */
 void buildMayReturnLists(Partitioner&);
 
-/** Build stack delta definitions. */
-void buildStackDeltaList(Partitioner&);
-
 /** Callback to restore PEScrambler function call edges.
  *
  *  This basic block callback is invoked each time the partitioner discovers a new instruction. It looks at the instruction's

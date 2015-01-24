@@ -211,7 +211,7 @@ findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
             unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;
             switch (i) {
                 case 0: continue; // this vector entry is the initial stack pointer, not a function address
-                case 1: name = "init_program_counter"; reasons |= SgAsmFunction::FUNC_ENTRY_POINT; break;
+                case 1: name = "reset_handler"; reasons |= SgAsmFunction::FUNC_ENTRY_POINT; break;
                 case 2: name = "access_fault_handler"; break;
                 case 3: name = "address_error_handler"; break;
                 case 4: name = "illegal_insn_handler"; break;

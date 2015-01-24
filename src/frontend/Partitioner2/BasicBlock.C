@@ -23,6 +23,11 @@ BasicBlock::init(const Partitioner *partitioner) {
 }
 
 void
+BasicBlock::clearSuccessors() {
+    successors_.clear();
+}
+
+void
 BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType type, Confidence confidence) {
     if (successor_ != NULL) {
         Semantics::SValuePtr successor = Semantics::SValue::promote(successor_);

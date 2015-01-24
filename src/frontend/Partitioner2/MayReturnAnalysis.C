@@ -40,51 +40,6 @@ Partitioner::basicBlockMayReturnReset() const {
     }
 }
 
-void
-Partitioner::setMayReturnWhitelisted(const std::string &functionName, bool state) {
-    if (state) {
-        mayReturnList_.insert(functionName, true);
-    } else {
-        mayReturnList_.erase(functionName);
-    }
-}
-
-void
-Partitioner::setMayReturnBlacklisted(const std::string &functionName, bool state) {
-    if (state) {
-        mayReturnList_.insert(functionName, false);
-    } else {
-        mayReturnList_.erase(functionName);
-    }
-}
-
-void
-Partitioner::adjustMayReturnList(const std::string &functionName, boost::tribool state) {
-    if (state==true || state==false) {
-        mayReturnList_.insert(functionName, state);
-    } else {
-        mayReturnList_.erase(functionName);
-    }
-}
-
-bool
-Partitioner::isMayReturnWhitelisted(const std::string &functionName) const {
-    return mayReturnList_.getOrElse(functionName, false);
-}
-
-bool
-Partitioner::isMayReturnBlacklisted(const std::string &functionName) const {
-    return !mayReturnList_.getOrElse(functionName, true);
-}
-
-boost::logic::tribool
-Partitioner::isMayReturnListed(const std::string &functionName, boost::logic::tribool dflt) const {
-    bool b = false;
-    if (!mayReturnList_.getOptional(functionName).assignTo(b))
-        return dflt;
-    return b;
-}
-
 Sawyer::Optional<bool>
 Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
     ASSERT_not_null(bb);
@@ -359,7 +314,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNode
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     block is owned by " <<function->printableName() <<"\n";
                     bool functionListed = false;        // function's blacklisted or whitelisted value if listed
                     if (function && function->address()==t.vertex()->value().address() &&
-                        mayReturnList_.getOptional(function->name()).assignTo(functionListed)) {
+                        config_.functionMayReturn(function).assignTo(functionListed)) {
                         // Whitelisted or blacklisted by name
                         SAWYER_MESG(debug) <<"[" <<depth <<"]     " <<function->printableName()
                                            <<" is " <<(functionListed?"whitelisted":"blacklisted") <<"\n";
