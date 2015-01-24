@@ -36,7 +36,7 @@ class AstAttributeMechanism;
 // #include "ExecGeneric.h"
 
 // This is all documented in Rva.C since doxygen can't pick of documentation from this file.
-class rose_rva_t {
+class ROSE_DLL_API rose_rva_t {
 	public:
 		rose_rva_t();
 		rose_rva_t(const rose_rva_t&);
