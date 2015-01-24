@@ -1,5 +1,6 @@
 #include <bROwSE/WHexDump.h>
 
+#include <bROwSE/FunctionUtil.h>
 #include <rose_strtoull.h>
 #include <Wt/WHBoxLayout>
 #include <Wt/WLineEdit>
@@ -216,22 +217,8 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
         } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow) {
             uint8_t byte = 0;
             std::string s;
-            if (readByte(cellAddress(row, column-asciiColumn)).assignTo(byte)) {
-                switch (byte) {
-                    //case '\0': s = "\\0"; break; //too many of these clutter up the important stuff
-                    case '\a': s = "\\a"; break;
-                    case '\b': s = "\\b"; break;
-                    case '\t': s = "\\t"; break;
-                    case '\n': s = "\\n"; break;
-                    case '\v': s = "\\v"; break;
-                    case '\f': s = "\\f"; break;
-                    case '\r': s = "\\r"; break;
-                    default:
-                        if (isgraph(byte))
-                            s = (char)byte;
-                        break;
-                }
-            }
+            if (readByte(cellAddress(row, column-asciiColumn)).assignTo(byte))
+                s = charToString(byte);
             return Wt::WString(s);
         } else if (column == sep1Column || column == sep2Column) {
             return Wt::WString("");
@@ -264,8 +251,12 @@ HexDumpModel::data(const Wt::WModelIndex &index, int role) const {
             return Wt::WString("hexdump_unmapped");
         } else if (column >= bytesColumn && column < bytesColumn + bytesPerRow && !cellAddress(row, column-bytesColumn)) {
             return Wt::WString("hexdump_unmapped");
-        } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow && !cellAddress(row, column-asciiColumn)) {
-            return Wt::WString("hexdump_unmapped");
+        } else if (column >= asciiColumn && column < asciiColumn + bytesPerRow) {
+            if (!cellAddress(row, column-asciiColumn)) {
+                return Wt::WString("hexdump_unmapped");
+            } else if (charToString(*readByte(cellAddress(row, column-asciiColumn))).empty()) {
+                return Wt::WString("hexdump_nochar");
+            }
         } else if (column == addressColumn) {
             MemoryMap::ConstNodeIterator mmIter = rowSegment(row);
             ASSERT_require(mmIter != memoryMap_.nodes().end()); // would have been caught above

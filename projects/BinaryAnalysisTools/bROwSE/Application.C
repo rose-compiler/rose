@@ -7,6 +7,7 @@
 #include <bROwSE/WFunctionList.h>
 #include <bROwSE/WFunctionSummary.h>
 #include <bROwSE/WHexDump.h>
+#include <bROwSE/WMagic.h>
 #include <bROwSE/WMemoryMap.h>
 #include <bROwSE/WPartitioner.h>
 #include <bROwSE/WSemantics.h>
@@ -174,6 +175,7 @@ Application::init() {
     styleSheet().addRule(".hexdump_evenrow", "font-family:monospace;");
     styleSheet().addRule(".hexdump_oddrow", "font-family:monospace; background-color:#f9f9f9;");
     styleSheet().addRule(".hexdump_unmapped", "background-color:black;");
+    styleSheet().addRule(".hexdump_nochar", "background-color:lightgray;");
     styleSheet().addRule(".hexdump_addr_none", "font-family:monospace;"
                          " background-color:" + toHtml(darken(Color::red, 0.25)) + ";");
     styleSheet().addRule(".hexdump_addr_r", "font-family:monospace;"
@@ -336,6 +338,11 @@ Application::instantiateMainTabs() {
                 tabContent = wHexDump_ = new WHexDump;
                 break;
             }
+            case MagicTab: {
+                tabName = "Magic";
+                tabContent = wMagic_ = new WMagic;
+                break;
+            }
             case StringsTab: {
                 tabName = "Strings";
                 tabContent = wStrings_ = new WStrings;
@@ -373,6 +380,8 @@ Application::isTabAvailable(MainTab idx) {
             return currentFunction_ != NULL;
         case HexDumpTab:
             return !wHexDump_->memoryMap().isEmpty();
+        case MagicTab:
+            return !wMagic_->memoryMap().isEmpty();
         case StringsTab:
             return !wStrings_->memoryMap().isEmpty();
         case StatusTab:
@@ -440,9 +449,11 @@ Application::changeTab(MainTab tab) {
     // Update the child before we switch to it.  Some of these operations are expensive, which is why we've delayed them until
     // we're about to make the child visible.
     switch (tab) {
-        case PartitionerTab:
-            break;
         case MemoryMapTab:
+        case PartitionerTab:
+        case HexDumpTab:
+        case MagicTab:
+        case StringsTab:
             break;
         case FunctionListTab:
             wFunctionList_->changeFunction(currentFunction_);
@@ -458,10 +469,6 @@ Application::changeTab(MainTab tab) {
         case AssemblyTab:
             wAssembly_->changeFunction(currentFunction_);
             wAssembly_->show();
-            break;
-        case HexDumpTab:
-            break;
-        case StringsTab:
             break;
         case StatusTab:
             wStatus_->redraw();
@@ -503,6 +510,7 @@ void
 Application::memoryMapChanged() {
     wHexDump_->memoryMap(wMemoryMap_->memoryMap());
     wStrings_->memoryMap(wMemoryMap_->memoryMap());
+    wMagic_->memoryMap(wMemoryMap_->memoryMap());
 }
 
 void

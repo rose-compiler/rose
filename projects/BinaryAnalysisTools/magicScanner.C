@@ -1,7 +1,6 @@
 #include <rose.h>
 
-#include <boost/algorithm/string/trim.hpp>
-#include <FileSystem.h>
+#include <BinaryMagic.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/Utility.h>
 #include <sawyer/CommandLine.h>
@@ -13,7 +12,8 @@ using namespace rose::Diagnostics;
 struct Settings {
     AddressInterval limits;                             // limits for scanning (empty implies all addresses)
     size_t step;                                        // amount by which to increment each time
-    Settings(): step(1) {}
+    size_t maxBytes;                                    // number of bytes to check at one time
+    Settings(): step(1), maxBytes(256) {}
 };
 
 static Sawyer::CommandLine::ParserResult
@@ -39,27 +39,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
     tool.insert(Switch("address")                       // sometimes the singular form is better: --address=123
                 .key("addresses")
                 .argument("interval", BinaryAnalysis::Partitioner2::addressIntervalParser(settings.limits))
-                .hidden());
+                .hidden(true));
     tool.insert(Switch("step")
                 .argument("nbytes", nonNegativeIntegerParser(settings.step))
                 .doc("Number of bytes to advance after each scan.  The default is " +
                      boost::lexical_cast<std::string>(settings.step) + "."));
+    tool.insert(Switch("limit")
+                .argument("nbytes", nonNegativeIntegerParser(settings.maxBytes))
+                .doc("Maximum number of bytes to pass to the detection functions per call.  The default is " +
+                     boost::lexical_cast<std::string>(settings.maxBytes) + ". Large values may occassionally be " +
+                     "more accurate, but small values are faster.  The ROSE library's detector also has a hard-coded " +
+                     "limit which will never be exceeded regardless of this setting."));
 
     return parser.with(gen).with(tool).parse(argc, argv).apply();
-}
-
-static std::string
-scanMagicNumbers(const FileSystem::Path &fileName) {
-    std::string cmd = "file " + fileName.string();
-    if (FILE *f = popen(cmd.c_str(), "r")) {
-        char line[1024];
-        if (fgets(line, sizeof line, f)) {
-            pclose(f);
-            return boost::trim_right_copy(std::string(line).substr(fileName.string().size()+2));
-        }
-        pclose(f);
-    }
-    return "";
 }
 
 static std::string
@@ -89,7 +81,8 @@ main(int argc, char *argv[]) {
     Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings /*in,out*/);
     std::vector<std::string> specimenNames = cmdline.unreachedArgs();
 
-    FileSystem::Path tempFileName = boost::filesystem::unique_path("/tmp/rose-%%%%-%%%%-%%%%-%%%%");
+    BinaryAnalysis::MagicNumber analyzer;
+    analyzer.maxBytesToCheck(settings.maxBytes);
 
     MemoryMap map = BinaryAnalysis::Partitioner2::Engine().load(specimenNames);
     map.dump(mlog[INFO]);
@@ -106,16 +99,14 @@ main(int argc, char *argv[]) {
         for (rose_addr_t va=limits.least();
              va<=limits.greatest() && map.atOrAfter(va).next().assignTo(va);
              va+=step, ++progress) {
-            uint8_t buffer[1024];
-            size_t nBytes = map.at(va).limit(sizeof buffer).read(buffer).size();
-            std::ofstream(tempFileName.c_str()).write((const char*)buffer, nBytes);
-            std::string magicString = scanMagicNumbers(tempFileName);
-            if (magicString!="data")                    // "file" runs home to Momma when it has nothing else to do
-                std::cout <<StringUtility::addrToString(va) <<" |" <<leadingBytes(buffer, nBytes) <<" | " <<magicString <<"\n";
+            std::string magicString = analyzer.identify(map, va);
+            if (magicString!="data") {                  // runs home to Momma when it gets confused
+                uint8_t buf[8];
+                size_t nBytes = map.at(va).limit(sizeof buf).read(buf).size();
+                std::cout <<StringUtility::addrToString(va) <<" |" <<leadingBytes(buf, nBytes) <<" | " <<magicString <<"\n";
+            }
             if (va==limits.greatest())
                 break;                                  // prevent overflow at top of address space
         }
     }
-
-    boost::filesystem::remove(tempFileName);
 }

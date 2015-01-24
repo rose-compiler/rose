@@ -67,11 +67,13 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WHexDump.C			\
 	bROwSE/WHexValueEdit.C			\
 	bROwSE/WInstructionList.C		\
+	bROwSE/WMagic.C				\
 	bROwSE/WMemoryMap.C			\
 	bROwSE/WPartitioner.C			\
 	bROwSE/WSemantics.C			\
 	bROwSE/WSplash.C			\
 	bROwSE/WStatus.C			\
+	bROwSE/WStringDetail.C			\
 	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include

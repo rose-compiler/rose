@@ -23,11 +23,13 @@ class WFunctionNavigation;
 class WFunctionSummary;
 class WHexDump;
 class WHexValueEdit;
+class WMagic;
 class WMemoryMap;
 class WPartitioner;
 class WSemantics;
 class WStatus;
 class WStatusBar;
+class WStringDetail;
 class WStrings;
 class WToggleButton;
 
