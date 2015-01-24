@@ -35,6 +35,14 @@ checkExecutionAddresses_CPPFLAGS = $(ROSE_INCLUDES)
 checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Scans memory for magic numbers
+
+bin_PROGRAMS += magicScanner
+magicScanner_SOURCES = magicScanner.C
+magicScanner_CPPFLAGS = $(ROSE_INCLUDES)
+magicScanner_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Experimental "binary ROSE on-line workbench for specimen exploration"
 
 if ROSE_USE_WT
