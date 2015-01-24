@@ -49,9 +49,14 @@ public:
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
         LeafNodePtr leaf = value->get_expression()->isLeafNode();
         if (leaf && leaf->is_known()) {
-            if (1==leaf->get_nbits())
+            if (1==leaf->get_nbits()) {
                 return leaf->get_value() ? "true" : "false";
-            return leaf->get_bits().toHex();
+            } else if (leaf->get_nbits()<=64) {
+                uint64_t v = leaf->get_value();
+                return StringUtility::toHex2(v, leaf->get_nbits());
+            } else {
+                return leaf->get_bits().toHex();
+            }
         }
         return "? " + StringUtility::plural(valueBase->get_width(), "bits");
     }
