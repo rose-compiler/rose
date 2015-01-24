@@ -85,6 +85,16 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
                   .argument("directory", anyParser(settings.docRoot))
                   .doc("Name of root directory for serving HTTP documents.  The default is \"" + settings.docRoot + "\"."));
 
+    server.insert(Switch("allow-downloads")
+                  .intrinsicValue(true, settings.allowDownloads)
+                  .doc("Allow parts of the binary specimen to be downloaded. The @s{no-allow-downloads} disables this "
+                       "features. The default is to " + std::string(settings.allowDownloads?"":"not ") + "allow downloads."));
+    server.insert(Switch("no-allow-downloads")
+                  .key("allow-downloads")
+                  .intrinsicValue(false, settings.allowDownloads)
+                  .hidden(true));
+                  
+
     Parser parser;
     parser
         .purpose("binary ROSE on-line workbench for specimen exploration")
@@ -291,6 +301,7 @@ Application::instantiateMainTabs() {
                 tabName = "Memory Map";
                 tabContent = wMemoryMap_ = new WMemoryMap;
                 wMemoryMap_->mapChanged().connect(boost::bind(&Application::memoryMapChanged, this));
+                wMemoryMap_->allowDownloads(ctx_.settings.allowDownloads);
                 break;
             }
             case FunctionListTab: {

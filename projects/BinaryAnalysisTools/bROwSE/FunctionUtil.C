@@ -14,7 +14,7 @@ using namespace rose::Diagnostics;
 namespace bROwSE {
 
 // Generates a unique path relative to the doc root (--docroot switch).
-static boost::filesystem::path
+boost::filesystem::path
 uniquePath(const std::string &extension) {
     return boost::filesystem::path("tmp") /  boost::filesystem::unique_path("ROSE-%%%%%%%%%%%%%%%%"+extension);
 }

@@ -1,11 +1,20 @@
 #include <bROwSE/WMemoryMap.h>
 
+#include <boost/algorithm/string/trim.hpp>
+#include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WHexValueEdit.h>
+#include <rose_strtoull.h>
+#include <SRecord.h>
+#include <Wt/WAnchor>
 #include <Wt/WBreak>
+#include <Wt/WButtonGroup>
 #include <Wt/WCheckBox>
 #include <Wt/WImage>
 #include <Wt/WInPlaceEdit>
+#include <Wt/WLineEdit>
+#include <Wt/WPanel>
 #include <Wt/WPushButton>
+#include <Wt/WRadioButton>
 #include <Wt/WStackedWidget>
 #include <Wt/WTable>
 #include <Wt/WText>
@@ -49,6 +58,51 @@ WMemoryMap::init() {
     wTable_->columnAt(NameColumn      )->setWidth(Wt::WLength(30, Wt::WLength::FontEm));
 
     synchronize();
+
+    // Download raw data
+    wDownloadPanel_ = new Wt::WPanel(this);
+    wDownloadPanel_->setTitle("Download mapped data");
+    wDownloadPanel_->setHidden(!allowDownloads_);
+    {
+        Wt::WContainerWidget *container = new Wt::WContainerWidget;
+        wDownloadPanel_->setCentralWidget(container);
+
+        new Wt::WText("Download from ", container);
+        wDownloadFrom_ = new Wt::WLineEdit(container);
+        wDownloadFrom_->enterPressed().connect(boost::bind(&WMemoryMap::prepareDownload, this));
+        wDownloadFrom_->setToolTip("Starting address as decimal, octal, or hexadecimal.");
+
+        new Wt::WText(" to ", container);
+        wDownloadTo_ = new Wt::WLineEdit(container);
+        wDownloadTo_->enterPressed().connect(boost::bind(&WMemoryMap::prepareDownload, this));
+        wDownloadTo_->setToolTip("Ending address, inclusive; or a plus sign followed by a size.  The value can be "
+                                 "decimal, octal, or hexadecimal.");
+
+        new Wt::WBreak(container);
+        new Wt::WText("Format as ", container);
+        wDownloadFormat_ = new Wt::WButtonGroup(container);
+        Wt::WRadioButton *button;
+        ASSERT_require(BinaryFormat==0);
+        ASSERT_require(SRecordFormat==1);
+        wDownloadFormat_->addButton((button=new Wt::WRadioButton("binary", container)));
+        button->setToolTip("Download as a raw binary file. This only works for selections where all memory addresses are mapped");
+        wDownloadFormat_->addButton((button=new Wt::WRadioButton("S-Records", container)));
+        button->setToolTip("Download as Motorola S-Records, an ASCII format that supports downloading discontiguous "
+                           "memory regions.");
+        wDownloadFormat_->setSelectedButtonIndex(BinaryFormat);
+
+        new Wt::WText("&nbsp;&nbsp;&nbsp;", container);
+        wDownloadPrepare_ = new Wt::WPushButton("Prepare", container);
+        wDownloadPrepare_->clicked().connect(boost::bind(&WMemoryMap::prepareDownload, this));
+        wDownloadPrepare_->setToolTip("Prepare the download on the server.");
+
+        new Wt::WBreak(container);
+        wDownload_ = new Wt::WAnchor("", "Download", container);
+        wDownload_->setTarget(Wt::TargetNewWindow);
+        wDownload_->hide();
+
+        wDownloadMessage_ = new Wt::WText(container);
+    }
 }
 
 void
@@ -61,6 +115,12 @@ WMemoryMap::isEditable(bool b) {
             synchronizeEdits(rowGroups_.front(), ZeroColumn);
         }
     }
+}
+
+void
+WMemoryMap::allowDownloads(bool b) {
+    allowDownloads_ = b;
+    wDownloadPanel_->setHidden(!b);
 }
 
 void
@@ -639,6 +699,88 @@ WMemoryMap::toggleAccess(Wt::WText *wId, Wt::WCheckBox *wCheckBox, unsigned acce
 void
 WMemoryMap::cancelEdit(Wt::WText *wId) {
     synchronizeEdits(rowGroup(wId), ZeroColumn);
+}
+
+void
+WMemoryMap::prepareDownload() {
+    wDownloadMessage_->setText("");
+    DownloadFormat fmt = (DownloadFormat)wDownloadFormat_->checkedId();
+    wDownload_->hide();
+
+    // Least address
+    char *rest;
+    std::string s = boost::trim_copy(wDownloadFrom_->text().narrow());
+    errno = 0;
+    rose_addr_t leastVa = rose_strtoull(s.c_str(), &rest, 0);
+    if (*rest || errno) {
+        wDownloadMessage_->setText("Invalid starting address.");
+        wDownloadMessage_->setStyleClass("text-error");
+        wDownloadMessage_->show();
+        return;
+    }
+
+    // Greatest address
+    s = boost::trim_copy(wDownloadTo_->text().narrow());
+    bool isSize = !s.empty() && s[0]=='+';
+    if (isSize)
+        s = boost::trim_copy(s.substr(1));
+    errno = 0;
+    rose_addr_t greatestVa = rose_strtoull(s.c_str(), &rest, 0);
+    if (*rest || errno) {
+        wDownloadMessage_->setText("Invalid " + std::string(isSize?"size":"ending") + " value.");
+        wDownloadMessage_->setStyleClass("text-error");
+        return;
+    }
+    if (isSize) {
+        if (0==greatestVa)
+            return;                                     // nothing to download (greatestVa is the size)
+        greatestVa += leastVa - 1;                      // convert from size to greatest address
+    }
+
+    // Sanity checks
+    if (leastVa > greatestVa) {
+        wDownloadMessage_->setText("Invalid address range (first > last).");
+        wDownloadMessage_->setStyleClass("text-error");
+        return;
+    }
+    AddressInterval addresses = AddressInterval::hull(leastVa, greatestVa);
+    if (BinaryFormat==fmt && memoryMap_.at(leastVa).limit(addresses.size()).available().size()<addresses.size()) {
+        wDownloadMessage_->setText("Some addresses the the range are not mapped.");
+        wDownloadMessage_->setStyleClass("text-error");
+        return;
+    }
+
+    // Prepare a file to download.
+    boost::filesystem::path fileName;
+    if (BinaryFormat == fmt) {
+        fileName = uniquePath(".bin");
+        std::ofstream output(fileName.c_str());
+        static uint8_t buf[8192];
+        rose_addr_t nRemaining = addresses.size();
+        rose_addr_t va = leastVa;
+        while (size_t nRead = memoryMap_.at(va).limit(std::min((rose_addr_t)(sizeof buf), nRemaining)).read(buf).size()) {
+            output.write((const char*)buf, nRead);
+            va += nRead;
+            nRemaining -= nRead;
+        }
+    } else {
+        ASSERT_require(SRecordFormat == fmt);
+        fileName = uniquePath(".srec");
+        std::ofstream output(fileName.c_str());
+        MemoryMap tmp = memoryMap_;
+        if (leastVa>0)
+            tmp.erase(AddressInterval::hull(0, leastVa-1));
+        if (greatestVa < tmp.hull().greatest())
+            tmp.erase(AddressInterval::hull(greatestVa+1, tmp.hull().greatest()));
+        rose::BinaryAnalysis::SRecord::dump(tmp, output);
+    }
+
+    wDownloadMessage_->setText(" for " + StringUtility::addrToString(leastVa) + "-" +
+                               StringUtility::addrToString(greatestVa) + " is ready.");
+    wDownloadMessage_->setStyleClass("");
+    wDownload_->setLink(fileName.string());
+    wDownload_->setTarget(Wt::TargetNewWindow);
+    wDownload_->show();
 }
 
 } // namespace
