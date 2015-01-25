@@ -3321,6 +3321,10 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
 
+#if 0
+     curprint ("/* Top of unparseForStmt */");
+#endif
+
   // curprint ( string("for ("));
   // DQ (12/5/2014): Test for if we have unparsed partially using the token stream. 
   // If so then we don't want to unparse this syntax, if not then we require this syntax.
@@ -3337,11 +3341,13 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // Not yet clear how to handle case where tmp_stmt == NULL.
           ROSE_ASSERT(tmp_stmt != NULL);
-
+#if 0
+          curprint ("/* unparse start of SgForStatement */");
+#endif
        // unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_token_subsequence_start);
           unparseStatementFromTokenStream (for_stmt, tmp_stmt, e_token_subsequence_start, e_leading_whitespace_start);
 #if 0
-          curprint ("/* unparse start of SgForStatement */");
+          curprint ("/* DONE: unparse start of SgForStatement */");
 #endif
         }
 
@@ -3359,6 +3365,7 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
        // DQ (10/8/2012): Commented out to avoid output spew.
           printf ("Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL \n");
+          curprint("/* Warning in unparseForStmt(): for_stmt->get_for_init_stmt() == NULL */\n ");
 #endif
           curprint("; ");
         }
@@ -3442,8 +3449,14 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // curprint("/* syntax from partial token unparse */ )");
        // SgStatement* loopBody = for_stmt->get_loop_body();
        // unparseStatementFromTokenStream (test_stmt, loopBody, e_trailing_whitespace_end, e_leading_whitespace_start);
+
+       // DQ (1/24/2015): Supress the output of the increment expression when it is a SgNullExpression (which does not have an associated token sequence).
+       // unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
           SgExpression *increment_expr = for_stmt->get_increment();
-          unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
+          if (isSgNullExpression(increment_expr) == NULL)
+             {
+               unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
+             }
 #if 0
           curprint("/* syntax from partial token unparse */");
 #endif

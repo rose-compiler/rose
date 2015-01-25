@@ -1222,6 +1222,65 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                int firstChildWithTokenMapping = -1;
                int lastChildWithTokenMapping  = -1;
 
+#if 1
+            // DQ (1/24/2015): Handle the case of the null for init and null test statements in "for ( ; ; )".
+               SgForStatement* forStatement = isSgForStatement(n);
+               if (forStatement != NULL)
+                  {
+                 // TokenStreamSequenceToNodeMapping* for_mappingInfo = tokenStreamSequenceMap[n];
+                 // if (for_mappingInfo != NULL)
+                    if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                       {
+                         TokenStreamSequenceToNodeMapping* for_mappingInfo      = tokenStreamSequenceMap[n];
+                         TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
+                         TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
+
+                         ROSE_ASSERT(for_mappingInfo != NULL);
+                         ROSE_ASSERT(for_init_mappingInfo != NULL);
+                         ROSE_ASSERT(for_test_mappingInfo != NULL);
+
+                         SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
+                         SgNullStatement* null_statement = isSgNullStatement(for_test_mappingInfo->node);
+                         if (previous_for_init_statement != NULL && null_statement != NULL)
+                            {
+                           // This is at least after the for_init_statement, and is a better position to start the direct search within the token stream.
+                           // This will also avoid the test statement being confused as being shared with the token stream subsequence of the for_init_statement.
+#if 0
+                              printf ("INITIAL RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
+                                   for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
+                                   for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
+#endif
+                              for_test_mappingInfo->token_subsequence_start = for_init_mappingInfo->token_subsequence_end+1;
+                              for_test_mappingInfo->token_subsequence_end   = for_test_mappingInfo->token_subsequence_start;
+
+                              int index      = for_test_mappingInfo->token_subsequence_start;
+                              int upperBound = for_mappingInfo->token_subsequence_end;
+
+                              ROSE_ASSERT(index >= 0);
+                              ROSE_ASSERT(upperBound >= 0);
+
+                              while (tokenStream[index]->p_tok_elem->token_lexeme != ";" && index < upperBound)
+                                 {
+                                   index++;
+                                 }
+                              ROSE_ASSERT(tokenStream[index]->p_tok_elem->token_lexeme == ";");
+
+                              for_test_mappingInfo->token_subsequence_start = index;
+                              for_test_mappingInfo->token_subsequence_end   = index;
+#if 0
+                              printf ("LATER RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
+                                   for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
+                                   for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
+#endif
+#if 0
+                              printf ("Detected case of SgNullStatement in test for for loop \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                  }
+#endif
+
                for (size_t i = 0; i < childAttributes.size(); i++)
                   {
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
@@ -1644,7 +1703,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          SgDoWhileStmt*     doWhileStatement = isSgDoWhileStmt(n);
                          SgSwitchStatement* switchStatement  = isSgSwitchStatement(n);
                          SgIfStmt*          ifStatement      = isSgIfStmt(n);
-                         if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL || doWhileStatement != NULL)
+                         SgForStatement*    forStatement     = isSgForStatement(n);
+                         if (whileStatement != NULL || switchStatement != NULL || ifStatement != NULL || doWhileStatement != NULL || forStatement != NULL)
                             {
                               ROSE_ASSERT(tmp_locatedNode != NULL);
                               SgStatement* conditionStatement = isSgStatement(tmp_locatedNode);
@@ -1653,6 +1713,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                    if ( (whileStatement   != NULL && conditionStatement == whileStatement->get_condition()) ||
                                         (doWhileStatement != NULL && conditionStatement == doWhileStatement->get_condition()) ||
                                         (switchStatement  != NULL && conditionStatement == switchStatement->get_item_selector()) ||
+                                        (forStatement     != NULL && conditionStatement == forStatement->get_test()) ||
                                         (ifStatement      != NULL && conditionStatement == ifStatement->get_conditional()) )
                                       {
 #if 0
@@ -2090,7 +2151,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                           // In this case their is only a single child so the first child has a trailing token sequence to fixup.
 #if DEBUG_DARK_TOKEN_FIXUP
                                           // printf ("Dark tokens fixup: i == 0: Fixup the trailing token sequence for the singleton child token sequence \n");
-                                             printf ("Dark tokens fixup: i == tokenToNodeVector.size()-1: i = %d \n",i);
+                                             printf ("Dark tokens fixup: i == tokenToNodeVector.size()-1: i = %zu \n",i);
                                              printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
                                              printf ("   --- node          = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
@@ -3933,6 +3994,10 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 #endif
                        }
 #endif
+
+                 // DQ (1/24/2015): Adding specialized for the case of "for ( ; ; )" (see test2015_97.C).
+                    bool isNullForInitStatement = false;
+
                     if (process_node == true)
                        {
 // #if 1
@@ -3943,63 +4008,112 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          printf ("BEFORE BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.column_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.column_num);
                          printf ("BEFORE BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
-                      // while ( (*start_of_token_subsequence)->beginning_fpi.line_num < starting_line && start_of_token_subsequence != end_of_token_subsequence)
-                      // while ( tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line && start_of_token_subsequence <= end_of_token_subsequence)
-                         while ( (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line || 
-                                   (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
-                                 && start_of_token_subsequence < end_of_token_subsequence)
+                      // DQ (1/24/2015): Adding specialized for the case of "for ( ; ; )" (see test2015_97.C).
+                      // This is done prior to the more general handling of special processing because it is 
+                      // more than just narrowing the established bounds.
+                         SgForInitStatement* forInitStatement = isSgForInitStatement(n);
+                         if (forInitStatement != NULL)
                             {
+                              printf ("Detected forInitStatement \n");
+                              ROSE_ASSERT(forInitStatement->get_init_stmt().empty() == false);
+                              bool isNullStatement = isSgNullStatement(forInitStatement->get_init_stmt()[0]);
+                              if (isNullStatement == true)
+                                 {
+                                   isNullForInitStatement = true;
+
+                                   printf ("Detected SgNullStatement in SgForInitStatement \n");
+                                // ROSE_ASSERT(false);
+                                 }
+                            }
+
+                      // DQ (1/24/2015): Handle the seperate case of a SgNullStatement in a SgForInitStatement.
+                         if (isNullForInitStatement == true)
+                            {
+                           // while ( (*start_of_token_subsequence)->beginning_fpi.line_num < starting_line && start_of_token_subsequence != end_of_token_subsequence)
+                           // while ( tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line && start_of_token_subsequence <= end_of_token_subsequence)
+                           // while ( (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line || 
+                           //           (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
+                           //         && start_of_token_subsequence < end_of_token_subsequence)
+                              while(tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != ";" && start_of_token_subsequence < end_of_token_subsequence)
+                                 {
 // #if 1
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
-                              printf ("TOP OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                                   printf ("TOP OF BEGIN LOOP (isNullForInitStatement == true): tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
 #endif
-                              start_of_token_subsequence++;
-                              ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
+                                   start_of_token_subsequence++;
+                                   ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
 // #if 0
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
-                              printf ("BOTTOM OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+                                   printf ("BOTTOM OF BEGIN LOOP (isNullForInitStatement == true): tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
 #endif
+                                 }
+
+                              end_of_token_subsequence = start_of_token_subsequence;
+
                             }
-// #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                         printf ("AFTER BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
-#endif
-// #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                         printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
-                         printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
-                         printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
-#endif
-                         int ending_token_line_number   = tokenStream[end_of_token_subsequence]->ending_fpi.line_num;
-                         int ending_token_column_number = tokenStream[end_of_token_subsequence]->ending_fpi.column_num;
-#if 0
-                         printf ("ending_token_line_number   = %d ending_line   = %d \n",ending_token_line_number,ending_line);
-                         printf ("ending_token_column_number = %d ending_column = %d \n",ending_token_column_number,ending_column);
-#endif
-                      // while (tokenStream[end_of_token_subsequence]->ending_fpi.line_num > ending_line && end_of_token_subsequence >= start_of_token_subsequence && end_of_token_subsequence > 0)
-                         while ( (tokenStream[end_of_token_subsequence]->ending_fpi.line_num > ending_line ||
-                                   (tokenStream[end_of_token_subsequence]->ending_fpi.line_num == ending_line && tokenStream[end_of_token_subsequence]->ending_fpi.column_num > ending_column))
-                                && end_of_token_subsequence > start_of_token_subsequence && end_of_token_subsequence > 0)
+                           else
                             {
-#if 0
-                              printf ("TOP OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+                           // while ( (*start_of_token_subsequence)->beginning_fpi.line_num < starting_line && start_of_token_subsequence != end_of_token_subsequence)
+                           // while ( tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line && start_of_token_subsequence <= end_of_token_subsequence)
+                              while ( (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num < starting_line || 
+                                        (tokenStream[start_of_token_subsequence]->beginning_fpi.line_num == starting_line && tokenStream[start_of_token_subsequence]->beginning_fpi.column_num < starting_column))
+                                      && start_of_token_subsequence < end_of_token_subsequence)
+                                 {
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
+                                   printf ("TOP OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
 #endif
-                              end_of_token_subsequence--;
-                              ROSE_ASSERT(end_of_token_subsequence >= 0);
+                                   start_of_token_subsequence++;
+                                   ROSE_ASSERT(start_of_token_subsequence <= end_of_token_subsequence);
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE && 1
+                                   printf ("BOTTOM OF BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+#endif
+                                 }
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("AFTER BEGIN LOOP: tokenStream[start_of_token_subsequence = %d]->beginning_fpi.line_num = %d \n",start_of_token_subsequence,tokenStream[start_of_token_subsequence]->beginning_fpi.line_num);
+#endif
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+                              printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
+                              printf ("BEFORE END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
+                              int ending_token_line_number   = tokenStream[end_of_token_subsequence]->ending_fpi.line_num;
+                              int ending_token_column_number = tokenStream[end_of_token_subsequence]->ending_fpi.column_num;
 #if 0
-                              printf ("BOTTOM OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+                              printf ("ending_token_line_number   = %d ending_line   = %d \n",ending_token_line_number,ending_line);
+                              printf ("ending_token_column_number = %d ending_column = %d \n",ending_token_column_number,ending_column);
+#endif
+                           // while (tokenStream[end_of_token_subsequence]->ending_fpi.line_num > ending_line && end_of_token_subsequence >= start_of_token_subsequence && end_of_token_subsequence > 0)
+                              while ( (tokenStream[end_of_token_subsequence]->ending_fpi.line_num > ending_line ||
+                                        (tokenStream[end_of_token_subsequence]->ending_fpi.line_num == ending_line && tokenStream[end_of_token_subsequence]->ending_fpi.column_num > ending_column))
+                                     && end_of_token_subsequence > start_of_token_subsequence && end_of_token_subsequence > 0)
+                                 {
+#if 0
+                                   printf ("TOP OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+#endif
+                                   end_of_token_subsequence--;
+                                   ROSE_ASSERT(end_of_token_subsequence >= 0);
+#if 0
+                                   printf ("BOTTOM OF END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+#endif
+                                 }
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+                              printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
+                              printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
+                              printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
                             }
-// #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                         printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.line_num      = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.line_num);
-                         printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->ending_fpi.column_num    = %d \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->ending_fpi.column_num);
-                         printf ("AFTER END LOOP: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
-#endif
 
 #if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
                          printf ("Before special case adjustments in evaluateInheritedAttribute(): building InheritedAttribute(start_of_token_subsequence=%d,end_of_token_subsequence=%d,processed=%s): n = %p = %s \n",
                               start_of_token_subsequence,end_of_token_subsequence,processed ? "true" : "false",n,n->class_name().c_str());
+#endif
+#if 0
+                         if (isNullForInitStatement == true)
+                            {
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+                            }
 #endif
                       // Fixup any mistakes in the processing, usually cased by bad source position information from EDG.
                       // Specific cases are:
@@ -4406,7 +4520,8 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                            // but we want to supress the processing of child IR nodes.  Child IR nodes could be nested statements in a complex
                            // macro expansion for which we can't define an associated token mapping.
                            // if ( (starting_line == ending_line) && (starting_column == ending_column) )
-                              if (start_of_token_subsequence == end_of_token_subsequence)
+                           // if (start_of_token_subsequence == end_of_token_subsequence)
+                              if (isNullForInitStatement == false && start_of_token_subsequence == end_of_token_subsequence)
                                  {
 #if 0
                                    printf ("Detected a macro (disable processing on children) \n");
@@ -4434,7 +4549,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
                                    if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str() != ";")
                                       {
-#if 0
+#if 1
                                         printf ("Reset the processing value to false (to eliminate mapping children (child statements in a macro expansion) to the token stream) \n");
 #endif
                                         processed = false;
