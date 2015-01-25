@@ -1232,13 +1232,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                        {
                          TokenStreamSequenceToNodeMapping* for_mappingInfo      = tokenStreamSequenceMap[n];
                          TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
-                         TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
+                      // TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
 
                          ROSE_ASSERT(for_mappingInfo != NULL);
                          ROSE_ASSERT(for_init_mappingInfo != NULL);
                       // ROSE_ASSERT(for_test_mappingInfo != NULL);
-                         if (for_test_mappingInfo != NULL)
+                      // if (for_test_mappingInfo != NULL)
+                         if (tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end())
                             {
+                              TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
+
                               SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
                               SgNullStatement* null_statement = isSgNullStatement(for_test_mappingInfo->node);
                               if (previous_for_init_statement != NULL && null_statement != NULL)
