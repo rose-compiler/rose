@@ -1236,45 +1236,47 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                          ROSE_ASSERT(for_mappingInfo != NULL);
                          ROSE_ASSERT(for_init_mappingInfo != NULL);
-                         ROSE_ASSERT(for_test_mappingInfo != NULL);
-
-                         SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
-                         SgNullStatement* null_statement = isSgNullStatement(for_test_mappingInfo->node);
-                         if (previous_for_init_statement != NULL && null_statement != NULL)
+                      // ROSE_ASSERT(for_test_mappingInfo != NULL);
+                         if (for_test_mappingInfo != NULL)
                             {
-                           // This is at least after the for_init_statement, and is a better position to start the direct search within the token stream.
-                           // This will also avoid the test statement being confused as being shared with the token stream subsequence of the for_init_statement.
-#if 0
-                              printf ("INITIAL RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
-                                   for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
-                                   for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
-#endif
-                              for_test_mappingInfo->token_subsequence_start = for_init_mappingInfo->token_subsequence_end+1;
-                              for_test_mappingInfo->token_subsequence_end   = for_test_mappingInfo->token_subsequence_start;
-
-                              int index      = for_test_mappingInfo->token_subsequence_start;
-                              int upperBound = for_mappingInfo->token_subsequence_end;
-
-                              ROSE_ASSERT(index >= 0);
-                              ROSE_ASSERT(upperBound >= 0);
-
-                              while (tokenStream[index]->p_tok_elem->token_lexeme != ";" && index < upperBound)
+                              SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
+                              SgNullStatement* null_statement = isSgNullStatement(for_test_mappingInfo->node);
+                              if (previous_for_init_statement != NULL && null_statement != NULL)
                                  {
-                                   index++;
-                                 }
-                              ROSE_ASSERT(tokenStream[index]->p_tok_elem->token_lexeme == ";");
+                                // This is at least after the for_init_statement, and is a better position to start the direct search within the token stream.
+                                // This will also avoid the test statement being confused as being shared with the token stream subsequence of the for_init_statement.
+#if 0
+                                   printf ("INITIAL RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
+                                        for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
+                                        for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
+#endif
+                                   for_test_mappingInfo->token_subsequence_start = for_init_mappingInfo->token_subsequence_end+1;
+                                   for_test_mappingInfo->token_subsequence_end   = for_test_mappingInfo->token_subsequence_start;
 
-                              for_test_mappingInfo->token_subsequence_start = index;
-                              for_test_mappingInfo->token_subsequence_end   = index;
+                                   int index      = for_test_mappingInfo->token_subsequence_start;
+                                   int upperBound = for_mappingInfo->token_subsequence_end;
+
+                                   ROSE_ASSERT(index >= 0);
+                                   ROSE_ASSERT(upperBound >= 0);
+
+                                   while (tokenStream[index]->p_tok_elem->token_lexeme != ";" && index < upperBound)
+                                      {
+                                        index++;
+                                      }
+                                   ROSE_ASSERT(tokenStream[index]->p_tok_elem->token_lexeme == ";");
+
+                                   for_test_mappingInfo->token_subsequence_start = index;
+                                   for_test_mappingInfo->token_subsequence_end   = index;
 #if 0
-                              printf ("LATER RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
-                                   for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
-                                   for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
+                                   printf ("LATER RESET: the for_test_mappingInfo->token_subsequence = (%d,%d) to (%d,%d) \n",
+                                        for_test_mappingInfo->token_subsequence_start,for_test_mappingInfo->token_subsequence_end,
+                                        for_init_mappingInfo->token_subsequence_end+1,for_init_mappingInfo->token_subsequence_end+1);
 #endif
 #if 0
-                              printf ("Detected case of SgNullStatement in test for for loop \n");
-                              ROSE_ASSERT(false);
+                                   printf ("Detected case of SgNullStatement in test for for loop \n");
+                                   ROSE_ASSERT(false);
 #endif
+                                 }
                             }
                        }
                   }
