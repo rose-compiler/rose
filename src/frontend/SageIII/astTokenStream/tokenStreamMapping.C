@@ -1222,7 +1222,6 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                int firstChildWithTokenMapping = -1;
                int lastChildWithTokenMapping  = -1;
 
-#if 1
             // DQ (1/24/2015): Handle the case of the null for init and null test statements in "for ( ; ; )".
                SgForStatement* forStatement = isSgForStatement(n);
                if (forStatement != NULL)
@@ -1279,7 +1278,6 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             }
                        }
                   }
-#endif
 
                for (size_t i = 0; i < childAttributes.size(); i++)
                   {
@@ -4049,7 +4047,6 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                  }
 
                               end_of_token_subsequence = start_of_token_subsequence;
-
                             }
                            else
                             {
@@ -4121,6 +4118,32 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                       //       start and end of the function name (missign the leading type and trailing function parameter list).
                       //    2) Variable declarations (missing the token for the trailing ';').
                       // These subsequences need to be fixed up on the way down (I think).
+
+                      // DQ (1/24/2015): Add support for subexpressions containing "NULL" macro.
+                         SgWhileStmt* parent_whileStatement = isSgWhileStmt(n->get_parent());
+                         if (parent_whileStatement != NULL)
+                            {
+                              SgStatement* s = isSgStatement(n);
+                              if (s != NULL && s == parent_whileStatement->get_condition())
+                                 {
+                                // Check if this needs to be extended to include macro tokens as part of a nested expression.
+#if 0
+                                   printf ("Handling NULL condition: start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
+                                   printf ("   --- tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
+                                   if (tokenStream[end_of_token_subsequence+1]->p_tok_elem->token_lexeme == "NULL")
+                                      {
+                                        end_of_token_subsequence++;
+                                      }
+#if 0
+                                   printf ("   --- After adjustment: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
+#endif
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                            }
 
                          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
                          if (functionDeclaration != NULL)
