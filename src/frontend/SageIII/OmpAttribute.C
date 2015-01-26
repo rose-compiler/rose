@@ -416,7 +416,7 @@ namespace OmpSupport
   {
     return (find(reduction_operators.begin(), reduction_operators.end(),operatorx) != reduction_operators.end());
   }
-  // Map clause's variant, alloc, in, out, inout 
+  // Map clause's variant, alloc, to, from, tofrom 
   // we store map clauses of the same variants into a single entity
   void OmpAttribute::setMapVariant(omp_construct_enum operatorx)
   {
@@ -585,9 +585,9 @@ namespace OmpSupport
       case e_schedule_runtime: result = "runtime"; break;
 
       case e_map_alloc: result = "alloc"; break;
-      case e_map_in: result = "in"; break;
-      case e_map_out: result = "out"; break;
-      case e_map_inout: result = "inout"; break;
+      case e_map_to: result = "to"; break;
+      case e_map_from: result = "from"; break;
+      case e_map_tofrom: result = "tofrom"; break;
 
       case e_simd: result = "simd"; break;
       case e_safelen: result = "safelen"; break;
@@ -959,9 +959,9 @@ namespace OmpSupport
     switch (omp_type)
     {
      case e_map_alloc: 
-     case e_map_in:
-     case e_map_out:
-     case e_map_inout:
+     case e_map_to:
+     case e_map_from:
+     case e_map_tofrom:
         result = true;
         break;
       default:
