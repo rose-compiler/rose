@@ -753,17 +753,17 @@ TreeNodePtr
 ConcatSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
     // first arg is high-order bits. Although this is nice to look at, it makes the operation a bit more difficult.
-    size_t nbits = 0;
+    size_t resultSize = 0;
     for (TreeNodes::const_iterator ti=begin; ti!=end; ++ti)
-        nbits += (*ti)->get_nbits();
-    Sawyer::Container::BitVector accumulator(nbits);
+        resultSize += (*ti)->get_nbits();
+    Sawyer::Container::BitVector accumulator(resultSize);
 
     // Copy bits into wherever they belong in the accumulator
-    for (size_t sa=nbits; begin!=end; ++begin) {
+    for (size_t sa=resultSize; begin!=end; ++begin) {
         LeafNodePtr leaf = (*begin)->isLeafNode();
         sa -= leaf->get_nbits();
         typedef Sawyer::Container::BitVector::BitRange BitRange;
-        BitRange destination = BitRange::hull(sa, sa + leaf->get_nbits() - 1);
+        BitRange destination = BitRange::baseSize(sa, leaf->get_nbits());
         accumulator.copy(destination, leaf->get_bits(), leaf->get_bits().hull());
     }
     return LeafNode::create_constant(accumulator);
@@ -835,16 +835,66 @@ ExtractSimplifier::rewrite(const InternalNode *inode) const
     if (from_node && to_node && from_node->is_known() && from==0 && to==operand->get_nbits())
         return operand;
 
-    // If the operand is a concat operation and one of the concat operands corresponds to the part we're extracting, then we
-    // can return just that part.
+    // Hoist concat operations to the outside of the extract
+    // If the operand is a concat operation then take only the parts we need.  Some examples:
+    // (extract 0 24 (concat X[24] Y[8]))  ==> (concat (extract 0 16 X) Y)
+    TreeNodes newChildren;
     InternalNodePtr ioperand = operand->isInternalNode();
-    if (ioperand && OP_CONCAT==ioperand->get_operator()) {
-        size_t offset = ioperand->get_nbits(); // most significant bits are in concat's first argument
-        for (size_t i=0; i<ioperand->nchildren() && offset>=from; ++i) {
-            offset -= ioperand->child(i)->get_nbits();
-            if (offset==from && ioperand->child(i)->get_nbits()==to-from)
-                return ioperand->child(i);
+    if (from_node && to_node && from_node->is_known() && to_node->is_known() &&
+        ioperand && OP_CONCAT==ioperand->get_operator()) {
+        size_t partAt = 0;                              // starting bit number in child
+        BOOST_REVERSE_FOREACH (const TreeNodePtr part, ioperand->get_children()) { // concatenated parts
+            size_t partEnd = partAt + part->get_nbits();
+            if (partEnd <= from) {
+                // Part is entirely left of what we need
+                partAt = partEnd;
+            } else if (partAt >= to) {
+                // Part is entirely right of what we need
+                break;
+            } else if (partAt < from && partEnd > to) {
+                // We need the middle of this part, and then we're done
+                size_t need = to-from;                  // number of bits we need
+                newChildren.push_back(InternalNode::create(need, OP_EXTRACT,
+                                                           LeafNode::create_integer(32, from-partAt),
+                                                           LeafNode::create_integer(32, to-partAt),
+                                                           part));
+                partAt = partEnd;
+                from += need;
+            } else if (partAt < from) {
+                // We need the end of the part
+                ASSERT_require(partEnd <= to);
+                size_t need = partEnd - from;
+                newChildren.push_back(InternalNode::create(need, OP_EXTRACT,
+                                                           LeafNode::create_integer(32, from-partAt),
+                                                           LeafNode::create_integer(32, part->get_nbits()),
+                                                           part));
+                partAt = partEnd;
+                from += need;
+            } else if (partEnd > to) {
+                // We need the beginning of the part
+                ASSERT_require(partAt == from);
+                size_t need = to-from;
+                newChildren.push_back(InternalNode::create(need, OP_EXTRACT,
+                                                           LeafNode::create_integer(32, 0),
+                                                           LeafNode::create_integer(32, need),
+                                                           part));
+                break;
+            } else {
+                // We need the whole part
+                ASSERT_require(partAt >= from);
+                ASSERT_require(partEnd <= to);
+                newChildren.push_back(part);
+                partAt = from = partEnd;
+            }
         }
+
+        // Concatenate all the parts.
+        if (newChildren.size() > 1) {
+            std::reverse(newChildren.begin(), newChildren.end());// high bits must be first
+            return InternalNode::create(inode->get_nbits(), OP_CONCAT, newChildren, inode->get_comment());
+        }
+        newChildren[0]->set_comment(inode->get_comment());
+        return newChildren[0];
     }
 
     // If the operand is another extract operation and we know all the limits then they can be replaced with a single extract.
@@ -1289,7 +1339,7 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
             return InternalNode::create(inode->get_nbits(), inode->get_operator(), strength, val_inode->child(1));
         }
     }
-    
+
     // If the shift amount is known to be at least as large as the value, then replace the value with a constant.
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value() >= inode->get_nbits()) {
         Sawyer::Container::BitVector result(inode->get_nbits(), newbits);
@@ -1300,6 +1350,19 @@ ShlSimplifier::rewrite(const InternalNode *inode) const
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value()==0)
         return inode->child(1);
 
+    // If the shift amount is a constant, then:
+    // (shl0[N] AMT X) ==> (concat (extract 0 N-AMT X)<hiBits> 0[AMT]<loBits>)
+    // (shl1[N] AMT X) ==> (concat (extract 0 N-AMT X)<hiBits> -1[AMT]<loBits>)
+    if (sa_leaf && sa_leaf->is_known()) {
+        ASSERT_require(sa_leaf->get_value()>0 && sa_leaf->get_value()<inode->get_nbits());// handled above
+        size_t nHiBits = inode->get_nbits() - sa_leaf->get_value();
+        TreeNodePtr hiBits = InternalNode::create(nHiBits, OP_EXTRACT,
+                                                  LeafNode::create_integer(32, 0), LeafNode::create_integer(32, nHiBits),
+                                                  inode->child(1));
+        TreeNodePtr loBits = LeafNode::create_integer(sa_leaf->get_value(), newbits?uint64_t(-1):uint64_t(0));
+        return InternalNode::create(inode->get_nbits(), OP_CONCAT, hiBits, loBits);
+    }
+    
     return TreeNodePtr();
 }
 
@@ -1336,6 +1399,20 @@ ShrSimplifier::rewrite(const InternalNode *inode) const
     if (sa_leaf && sa_leaf->is_known() && sa_leaf->get_value()==0)
         return inode->child(1);
 
+    // If the shift amount is a constant, then:
+    // (shr0[N] AMT X) ==> (concat 0[AMT]  (extract AMT N X))
+    // (shr1[N] AMT X) ==> (concat -1[AMT] (extract AMT N X))
+    if (sa_leaf && sa_leaf->is_known()) {
+        ASSERT_require(sa_leaf->get_value()>0 && sa_leaf->get_value()<inode->get_nbits());// handled above
+        size_t nLoBits = inode->get_nbits() - sa_leaf->get_value();
+        TreeNodePtr loBits = InternalNode::create(nLoBits, OP_EXTRACT,
+                                                  LeafNode::create_integer(32, sa_leaf->get_value()),
+                                                  LeafNode::create_integer(32, inode->get_nbits()),
+                                                  inode->child(1));
+        TreeNodePtr hiBits = LeafNode::create_integer(sa_leaf->get_value(), newbits?uint64_t(-1):uint64_t(0));
+        return InternalNode::create(inode->get_nbits(), OP_CONCAT, hiBits, loBits);
+    }
+    
     return TreeNodePtr();
 }
 
