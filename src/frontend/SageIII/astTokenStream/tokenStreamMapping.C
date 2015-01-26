@@ -1231,15 +1231,18 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
                        {
                          TokenStreamSequenceToNodeMapping* for_mappingInfo      = tokenStreamSequenceMap[n];
-                         TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
+                      // TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
                       // TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
 
                          ROSE_ASSERT(for_mappingInfo != NULL);
-                         ROSE_ASSERT(for_init_mappingInfo != NULL);
+                      // ROSE_ASSERT(for_init_mappingInfo != NULL);
                       // ROSE_ASSERT(for_test_mappingInfo != NULL);
                       // if (for_test_mappingInfo != NULL)
-                         if (tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end())
+                      // if (tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end())
+                         if ( ( tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end() ) &&
+                              ( tokenStreamSequenceMap.find(childAttributes[SgForStatement_for_init_stmt].node) != tokenStreamSequenceMap.end() ) )
                             {
+                              TokenStreamSequenceToNodeMapping* for_init_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_for_init_stmt].node];
                               TokenStreamSequenceToNodeMapping* for_test_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
 
                               SgForInitStatement* previous_for_init_statement = isSgForInitStatement(for_init_mappingInfo->node);
@@ -2018,7 +2021,8 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             {
                               fixupDarkTokenSubsequencesForLeadingWhitespace = false;
                             }
-
+#if 1
+                      // DQ (1/25/2015): Test disabling this for symetry with SgIfStmt.
                       // DQ (1/21/2015): Turn this off to account for syntax between the condition and the body of a while statement.
                       // This might be required for SgIfStmt and other compound statements as well.
                       // if ( (whileStatement != NULL && mappingInfo->node == whileStatement->get_condition()) )
@@ -2028,7 +2032,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                             {
                               fixupDarkTokenSubsequencesForTrailingWhitespace = false;
                             }
-
+#endif
                       // DQ (1/22/2015): Turn off processing of the dark tokens in a SgCaseOptionStmt until we can eliminate the 
                       // compiler generated SgBasicBlock used as the body.  Note that we are currenty forcing the generation of 
                       // the body from the AST since there is no mapping from the token stream to the compiler-generated basic 
@@ -4126,21 +4130,28 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
                       // DQ (1/24/2015): Add support for subexpressions containing "NULL" macro.
                          SgWhileStmt* parent_whileStatement = isSgWhileStmt(n->get_parent());
-                         if (parent_whileStatement != NULL)
+                         SgIfStmt* parent_ifStatement       = isSgIfStmt(n->get_parent());
+                      // if (parent_whileStatement != NULL)
+                         if (parent_whileStatement != NULL || parent_ifStatement)
                             {
                               SgStatement* s = isSgStatement(n);
-                              if (s != NULL && s == parent_whileStatement->get_condition())
+                           // if (s != NULL && s == parent_whileStatement->get_condition())
+                              if ( (s != NULL && parent_whileStatement != NULL && s == parent_whileStatement->get_condition()) ||
+                                   (s != NULL && parent_ifStatement    != NULL && s == parent_ifStatement->get_conditional() ) )
                                  {
                                 // Check if this needs to be extended to include macro tokens as part of a nested expression.
-#if 0
+#if 1
                                    printf ("Handling NULL condition: start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
                                    printf ("   --- tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
-                                   if (tokenStream[end_of_token_subsequence+1]->p_tok_elem->token_lexeme == "NULL")
+                                // DQ (1/25/2015): This is a more general interpretation for any macro name.  But it id only better, 
+                                // not robust for more general macro recognition, we will need boost::wave to do a better job later.
+                                // if (tokenStream[end_of_token_subsequence+1]->p_tok_elem->token_lexeme == "NULL")
+                                   if (tokenStream[end_of_token_subsequence+1]->p_tok_elem->token_id == ROSE_token_ids::C_CXX_IDENTIFIER)
                                       {
                                         end_of_token_subsequence++;
                                       }
-#if 0
+#if 1
                                    printf ("   --- After adjustment: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
 #if 0
