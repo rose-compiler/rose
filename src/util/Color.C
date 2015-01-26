@@ -105,9 +105,9 @@ std::string toHtml(const RGB &rgb) {
     char buf[32];
 
     // Microsoft doesn't define round(double) in <cmath>
-    unsigned r = boost::numeric::convert<unsigned, double>::convert(clip(rgb.r())*255);
-    unsigned g = boost::numeric::convert<unsigned, double>::convert(clip(rgb.g())*255);
-    unsigned b = boost::numeric::convert<unsigned, double>::convert(clip(rgb.b())*255);
+    unsigned r = boost::numeric::converter<unsigned, double>::convert(clip(rgb.r())*255);
+    unsigned g = boost::numeric::converter<unsigned, double>::convert(clip(rgb.g())*255);
+    unsigned b = boost::numeric::converter<unsigned, double>::convert(clip(rgb.b())*255);
 
     sprintf(buf, "#%02x%02x%02x", r, g, b);
     return buf;
