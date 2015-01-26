@@ -46,6 +46,7 @@ SUBDIRS = \
 	PowerAwareCompiler \
    taintcheck \
 	ManyCoreRuntime \
+   SMTPathFeasibility \
 	StencilManyCore \
 	ShiftCalculus \
 	Fortran_to_C \
