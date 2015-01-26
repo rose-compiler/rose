@@ -1,6 +1,7 @@
 #include <bROwSE/WStringDetail.h>
 
 #include <boost/algorithm/string/case_conv.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <stringify.h>                                  // ROSE
 #include <Wt/WBreak>
 #include <Wt/WPanel>
@@ -20,12 +21,11 @@ WStringDetail::init() {
     wValuePanel_->setTitle("String value");
 
     wStringValue_ = new Wt::WText;
-    wStringValue_->setTextFormat(Wt::PlainText);
     wValuePanel_->setCentralWidget(wStringValue_);
 }
 
 void
-WStringDetail::changeString(const StringFinder::String &meta, const std::string &value) {
+WStringDetail::changeString(const StringFinder::String &meta, std::string value) {
     using namespace rose;
     using namespace StringUtility;
 
@@ -48,7 +48,12 @@ WStringDetail::changeString(const StringFinder::String &meta, const std::string 
     title += " string occupying " + plural(meta.nBytes(), "bytes") + " at " + addrToString(meta.address());
 
     wValuePanel_->setTitle(title);
-    wStringValue_->setText(value);
+
+    value = StringUtility::htmlEscape(value);
+    boost::replace_all(value, " ", "&nbsp;");
+    boost::replace_all(value, "\n", "<br/>");
+    wStringValue_->setTextFormat(Wt::XHTMLText);
+    wStringValue_->setText("<pre style=\"white-space: nowrap;\">" + value + "</pre>");
 }
 
 } // namespace
