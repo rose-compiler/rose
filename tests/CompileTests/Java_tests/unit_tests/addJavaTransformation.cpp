@@ -477,7 +477,7 @@ int main(int argc, char **argv) {
         delete type_list;
         arguments = SageBuilder::buildExprListExp();
         function_call_exp = SageBuilder::buildFunctionCallExp(method_symbol, arguments);
-        expression = SageBuilder::buildBinaryExpression<SgDotExp>(buildVarRefExp("a", Test_class_definition), function_call_exp);
+        expression = SageBuilder::buildDotExp(buildVarRefExp("a", Test_class_definition), function_call_exp);
 
         //
         // Construct the statement  "A b = a.cheat();" and add it to the method body
@@ -498,8 +498,8 @@ int main(int argc, char **argv) {
         delete type_list;
         arguments = SageBuilder::buildExprListExp();
         function_call_exp = SageBuilder::buildFunctionCallExp(method_symbol, arguments);
-        expression = SageBuilder::buildBinaryExpression<SgDotExp>(buildVarRefExp("b", Test_class_definition), function_call_exp);
-        expression = SageBuilder::buildBinaryExpression<SgAddOp>(buildStringVal("The value of One is "), expression);
+        expression = SageBuilder::buildDotExp(buildVarRefExp("b", Test_class_definition), function_call_exp);
+        expression = SageBuilder::buildAddOp(buildStringVal("The value of One is "), expression);
 
         //
         // Retrieve the "System" class declaration; lookup the variable "out" in it. (I know that out is a member of System!)
@@ -536,7 +536,7 @@ int main(int argc, char **argv) {
         //
         // Construct the statement: "out.println(\"The value of One is \" + b.one());".
         //
-        expression = SageBuilder::buildBinaryExpression<SgDotExp>(buildVarRefExp("out", System_class_definition), function_call_exp);
+        expression = SageBuilder::buildDotExp(buildVarRefExp("out", System_class_definition), function_call_exp);
 
         //
         // Create a type expression for System, complete the statement:
@@ -546,7 +546,7 @@ int main(int argc, char **argv) {
         // and add it the the main method.
         //
         type_expression = SageBuilder::buildJavaTypeExpression(System_class_declaration -> get_type());
-        expression = SageBuilder::buildBinaryExpression<SgDotExp>(type_expression, expression);
+        expression = SageBuilder::buildDotExp(type_expression, expression);
         expression_statement = SageBuilder::buildExprStatement(expression);
         method_body -> append_statement(expression_statement);
 

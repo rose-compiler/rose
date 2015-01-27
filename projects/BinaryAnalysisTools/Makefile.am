@@ -79,6 +79,32 @@ bROwSE_server_SOURCES =				\
 bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+pkginclude_HEADERS = 				\
+        bROwSE/Application.h			\
+        bROwSE/FunctionListModel.h		\
+        bROwSE/FunctionUtil.h			\
+        bROwSE/InstructionListModel.h		\
+        bROwSE/Statistics.h			\
+        bROwSE/WAddressComboBox.h		\
+        bROwSE/WAddressSpace.h			\
+        bROwSE/WAssemblyListing.h		\
+        bROwSE/WBasicBlock.C			\
+        bROwSE/WBusy.h				\
+        bROwSE/WFunctionCfg.h			\
+        bROwSE/WFunctionList.h			\
+        bROwSE/WFunctionNavigation.h		\
+        bROwSE/WFunctionSummary.h		\
+        bROwSE/WHexDump.h			\
+        bROwSE/WHexValueEdit.h			\
+        bROwSE/WInstructionList.h		\
+        bROwSE/WMemoryMap.h			\
+        bROwSE/WPartitioner.h			\
+        bROwSE/WSemantics.h			\
+        bROwSE/WSplash.h			\
+        bROwSE/WStatus.h			\
+        bROwSE/WToggleButton.h			\
+        bROwSE/bROwSE.h
+
 endif
 
 

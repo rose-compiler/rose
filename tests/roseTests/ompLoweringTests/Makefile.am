@@ -54,8 +54,9 @@ OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
+        jacobi-ompacc-v2.c \
         jacobi-ompacc-opt1.c \
-        jacobi-ompacc-opt2.c
+        jacobi-ompacc-opt2.c 
 
 OMP_ACC_TESTCODES_CXX_REQUIRED_TO_PASS = \
         jacobi-ompacc2.cpp
@@ -202,7 +203,7 @@ TESTCODE_CURRENTLY_FAILING = \
 # we reuse the OpenMP sources files from the OpenMP compile test directory
 TEST_DIR = $(top_srcdir)/tests/CompileTests/OpenMP_tests
 # the place to find omp.h, libgomp_g.h etc
-TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering
+TEST_INCLUDES = -I$(top_srcdir)/src/frontend/SageIII -I$(top_srcdir)/src/midend/programTransformation/ompLowering -I$(top_builddir)
 
 noinst_PROGRAMS = roseomp roseompacc
 roseomp_SOURCES = roseomp.C
@@ -210,6 +211,7 @@ roseompacc_SOURCES = roseompacc.C # a relaxed version without consistency checki
 
 # this flag is used for the long list of CXX test files
 TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:verbose 2 #--edg:restrict #-rose:wave 
+ACC_TEST_FLAGS = $(TEST_INCLUDES) -rose:openmp:lowering -g --edg:no_warnings #-rose:openmp:nodde #-rose:verbose 2 #--edg:restrict #-rose:wave 
 
 # We only include test codes required to compile here.
 # Runnable codes are handled separatedly, 
@@ -260,13 +262,13 @@ $(CXX_TEST_OBJECT_REQUIRED_TO_RUN): %.o: $(TEST_DIR)/%.cpp roseomp
 $(PASSING_OMP_ACC_TEST_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.c roseompacc
 	@$(RTH_RUN) \
 		TITLE="roseompacc $(notdir $<) [$@.passed]" \
-		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		CMD="./roseompacc$(EXEEXT) ${ACC_TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 	@$(RTH_RUN) \
 		TITLE="roseompacc $(notdir $<) [$@.passed]" \
-		CMD="./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
+		CMD="./roseompacc$(EXEEXT) ${ACC_TEST_FLAGS} -rose:skipfinalCompileStep -c $<" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 
@@ -274,23 +276,6 @@ $(PASSING_OMP_ACC_TEST_CXX_CUDA_Files): rose_%.cu: $(TEST_DIR)/%.cpp roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/axpy_ompacc.c 
 #rose_matrixmultiply-ompacc.cu:roseompacc
 #	./roseompacc$(EXEEXT) ${TEST_FLAGS} -rose:skipfinalCompileStep -c $(TEST_DIR)/matrixmultiply-ompacc.c 
-
-# build executables using nvcc
-$(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
-	@$(RTH_RUN) \
-		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
-		$(TEST_EXIT_STATUS) $@.passed
-
-$(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
-	@$(RTH_RUN) \
-		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@" \
-		$(TEST_EXIT_STATUS) $@.passed
-
-
-# a short cut to run omp-acc support test
-ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
 
 #axpy_ompacc.out:rose_axpy_ompacc.cu
 #	nvcc $<  $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@
@@ -311,10 +296,15 @@ $(OMP_ACC_DIFF_FILES):$(PASSING_OMP_ACC_TEST_CUDA_Files)
 ompacc_diff_check: $(OMP_ACC_DIFF_FILES)
 
 if USE_CUDA
+
+if WITH_GOMP_OPENMP_LIB
+# we need both cuda and libgomp to run the CUDA code generated from OpenMP 4.0 code	
 cuda_PROGRAM = $(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files) 
+#without libgomp, we only generate the CUDA file, without compile it
 else
 cuda_PROGRAM =
 endif 
+endif
 
 if WITH_GOMP_OPENMP_LIB
 #-------------compile and run using GCC's runtime library--------------------------------	
@@ -324,6 +314,32 @@ PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
 MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpthread -lm
+
+# build executables using nvcc
+$(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
+	@$(RTH_RUN) \
+		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		$(TEST_EXIT_STATUS) $@.passed
+
+$(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
+	@$(RTH_RUN) \
+		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		$(TEST_EXIT_STATUS) $@.passed
+
+
+# a short cut to run omp-acc support test
+ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
+ompacc_run: ompacc_test
+	./axpy_ompacc.out && \
+	   ./collapse_2.out  && \
+           ./jacobi-ompacc2.out  && \
+           ./jacobi-ompacc-opt1.out  && \
+           ./jacobi-ompacc-opt2.out  && \
+           ./jacobi-ompacc.out  && \
+           ./jacobi-ompacc-v2.out  && \
+           ./matrixmultiply-ompacc.out
 
 $(PASSING_C_TEST_Executables): %.out: %.o
 	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)

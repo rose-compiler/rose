@@ -1,3 +1,29 @@
+set(astProcessing_SRC
+  AstPDFGeneration.C
+  AstNodeVisitMapping.C
+  AstTextAttributesHandling.C
+  AstDOTGeneration.C
+  AstProcessing.C
+  AstSimpleProcessing.C
+  Ast.C
+  AstNodePtrs.C
+  AstSuccessorsSelectors.C
+  AstAttributeMechanism.C
+  AstReverseSimpleProcessing.C
+  AstClearVisitFlags.C
+  AstTraversal.C
+  AstCombinedSimpleProcessing.C)
+
+if (NOT WIN32)
+  list(APPEND astProcessing_SRC
+    AstSharedMemoryParallelSimpleProcessing.C
+    AstRestructure.C)
+endif ()
+
+add_library(astProcessing OBJECT ${astProcessing_SRC})
+add_dependencies(astProcessing rosetta_generated)
+
+
 ########### install files ###############
 
 set(files_to_install

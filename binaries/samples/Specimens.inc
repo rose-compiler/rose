@@ -198,6 +198,7 @@ other_distributed =				\
     i386-pushfd.s				\
     i386-pxor.s					\
     i386-stmxcsr.s				\
+    i386-taintedflow1.c				\
     i386-wait.s					\
     memreadwrite.s				\
     pentium-movd.s				\

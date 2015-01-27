@@ -7,16 +7,14 @@
 #include "VariableIdMapping.h"
 
 #include <set>
-using std::set;
 #include <string>
-using std::string;
 
 #include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 
 
-typedef pair<VariableId,LabelSet> VariableIdLabelSetPair;
-typedef set<VariableIdLabelSetPair> UseDefInfo;
+typedef std::pair<VariableId,SPRAY::LabelSet> VariableIdLabelSetPair;
+typedef std::set<VariableIdLabelSetPair> UseDefInfo;
 
 /*! 
   * \author Markus Schordan
@@ -26,8 +24,8 @@ class UDAstAttribute : public AstSgNodeAttribute {
  public:
   UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery);
   VariableIdSet useVariables(VariableIdMapping& vidm);
-  LabelSet definitionsOfVariable(VariableId var);
-  void toStream(ostream& os, VariableIdMapping* vim);
+  SPRAY::LabelSet definitionsOfVariable(VariableId var);
+  void toStream(std::ostream& os, VariableIdMapping* vim);
  private:
   RDAstAttribute* _rdAttr;
   SgNode* _node;

@@ -741,17 +741,6 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 //! Set the source code positon for the subtree (including the root).
   ROSE_DLL_API void setSourcePositionAtRootAndAllChildren(SgNode *root);
 
-// DQ (5/1/2012): New function with improved name (still preserving the previous interface).
-// This function is not required once the new mechanism defining a source position mode is complete (shortly).
-//! Set subtree as a transformation.
-// void setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root);
-// void setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root);
-
-// Removed to force use of the API and permit flexability in the lower level implementation.
-//! DQ (5/1/2012): New function with improved name.
-// void setSourcePositionToDefault( SgLocatedNode* locatedNode );
-  template<class T> void setSourcePositionToDefault( T* node );
-
 //! DQ (5/1/2012): New function with improved name.
 void setSourcePositionAsTransformation(SgNode *node);
 
@@ -1685,21 +1674,13 @@ ROSE_DLL_API void appendExpression(SgExprListExp *, SgExpression*);
 ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpression*>&);
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
-// void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paralist);
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist);
-
-# if 1
-  // DQ (11/25/2011): Moved to the header file so that it could be seen as a template function.
+ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
-template <class actualFunction>
-void
-// SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
-setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
-   {
-  // DQ (11/25/2011): Modified this to be a templated function so that we can handle both 
+
+  // DQ (11/25/2011): templated function so that we can handle both 
   // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member 
   // function derived classes).
 
@@ -1740,7 +1721,6 @@ setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
           (*i)->set_declptr(func);
         }
    }
-#endif
 
 //! Set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
 ROSE_DLL_API void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);
