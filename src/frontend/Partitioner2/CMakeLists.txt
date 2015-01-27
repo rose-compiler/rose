@@ -7,7 +7,7 @@ add_library(rosePartitioner2
 		OwnedDataBlock.C Partitioner.C Semantics.C
 		StackDeltaAnalysis.C Utility.C)
 
-add_dependencies(rosePartitioner2 rosetta_generated)
+add_dependencies(rosePartitioner2 rosetta_generated generate_stringify)
 
 install(FILES AddressUsageMap.h Attribute.h BasicBlock.h BasicTypes.h
 	      ControlFlowGraph.h DataBlock.h DataFlow.h Engine.h
