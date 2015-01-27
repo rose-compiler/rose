@@ -81,7 +81,7 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateInheritedAttribute(SgNode* n, 
 MaxSourceExtents::SynthesizedAttribute
 MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* n, InheritedAttribute inheritedAttribute, SubTreeSynthesizedAttributes childAttributes )
    {
-#define DEBUG_evaluateSynthesizedAttribute 1
+#define DEBUG_evaluateSynthesizedAttribute 0
 
 #if DEBUG_evaluateSynthesizedAttribute
      printf ("\n\nIn SourceExtentsTraversal::evaluateSynthesizedAttribute(): n = %p = %s \n",n,n->class_name().c_str());
