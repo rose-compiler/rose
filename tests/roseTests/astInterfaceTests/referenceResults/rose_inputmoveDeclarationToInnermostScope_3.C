@@ -11,8 +11,8 @@ extern int g(int );
 
 void func1(int len)
 {
-/* declared once, used multiple times */
 /* declared once, used multiple times as loop index variable*/
+/* declared once, used multiple times */
   for (int i = 0; i < len; ++i) {
     int tmp;
     tmp = f(i);
@@ -29,8 +29,8 @@ void func1(int len)
 
 void func2(int len)
 {
-/* declared once, used multiple times */
 /* declared once, used multiple times as loop index variable*/
+/* declared once, used multiple times */
 {
     int tmp;
     for (int i = 0; i < len; ++i) {
