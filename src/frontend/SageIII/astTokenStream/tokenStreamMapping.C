@@ -4289,7 +4289,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                    (s != NULL && parent_ifStatement    != NULL && s == parent_ifStatement->get_conditional() ) )
                                  {
                                 // Check if this needs to be extended to include macro tokens as part of a nested expression.
-#if 1
+#if 0
                                    printf ("Handling NULL condition: start_of_token_subsequence = %d end_of_token_subsequence = %d \n",start_of_token_subsequence,end_of_token_subsequence);
                                    printf ("   --- tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
@@ -4300,7 +4300,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                       {
                                         end_of_token_subsequence++;
                                       }
-#if 1
+#if 0
                                    printf ("   --- After adjustment: tokenStream[end_of_token_subsequence = %d]->p_tok_elem->token_lexeme = %s \n",end_of_token_subsequence,tokenStream[end_of_token_subsequence]->p_tok_elem->token_lexeme.c_str());
 #endif
 #if 0
