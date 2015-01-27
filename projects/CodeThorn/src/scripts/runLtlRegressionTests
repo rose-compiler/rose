@@ -1,0 +1,86 @@
+#1/bin/bash
+
+#$1: CodeThorn's src directory
+#$2: CodeThorn's build directory
+
+SRCDIR=$1
+BUILDDIR=$2
+
+P1="Problem1"
+P2="Problem2"
+P3="Problem3"
+P4="Problem28"
+P5="Problem1T_size5_14"
+
+MAKE_CHECK="_make_check"
+
+echo ".================================."
+echo "| testing RERS ltl results (SPOT)|"
+echo "*================================*"
+
+#create a temp directory
+CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
+TEMP_DIR="make_check_log_"${CURRENT_TIME}
+mkdir ${2}/${TEMP_DIR}
+echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+
+for i in {1..5} #test all versions listed as P1,P2,... above
+do
+  for v in {1..4}  #iterate over four different versions of each RERS problem
+  do
+    case $v in  #generate version specific file
+    1) VERSION="";;
+    2) VERSION="_mod" ; eval $SRCDIR/scripts/transform_globalinputvar $SRCDIR/tests/rers/\${P${i}}.c ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c;;
+    3) VERSION="_inline" ; 
+       echo "._________________________."
+       echo "| start running Woodpecker|"
+       echo "*~~~~~~~~~~~~~~~~~~~~~~~~~*"
+       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --inline=yes --generate-transformed-code=yes ;
+       echo ".____________________________."
+       echo "| finished running Woodpecker|"
+       echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*"
+       eval mv rose_\${P${i}}_mod${MAKE_CHECK}.c ${2}/${TEMP_DIR}/\${P${i}}_inline${MAKE_CHECK}.c;;
+    4) VERSION="_opt" ; 
+       echo "._________________________."
+       echo "| start running Woodpecker|"
+       echo "*~~~~~~~~~~~~~~~~~~~~~~~~~*"
+       eval ${BUILDDIR}/woodpecker --edg:no_warnings ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c --eliminate-dead-code=yes --generate-transformed-code=yes ;
+       echo ".____________________________."
+       echo "| finished running Woodpecker|"
+       echo "*~~~~~~~~~~~~~~~~~~~~~~~~~~~~*" 
+       eval mv rose_\${P${i}}_mod${MAKE_CHECK}.c ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c;;
+    esac
+
+    #check problem specific ltl formulae and generate the results. Use one thread only for test purposes
+    eval $SRCDIR/scripts/genLtlResRegressionTest $i $v ${SRCDIR} ${2} ${2}/${TEMP_DIR} 1
+
+    #compare with regression data
+    eval diff ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv $SRCDIR/regressiondata2/\${P${i}}_ltl_results.csv >/dev/null 2>&1
+    if [ ! $? -eq 0 ] 
+    then 
+      eval echo "ERROR: RERS ltl / reachability regression data could not be correctly reproduced. Mismatch in problem\(version\): \${P${i}}${VERSION}"
+      echo "(Please look at directory <CodeThorn build dir>/src/${TEMP_DIR} for files that could not be matched)"
+      exit 1 
+    else
+      eval echo \${P${i}}${VERSION} "succesfully verified."
+    fi
+
+    #remove all temporary files generated for the tests
+    eval rm ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv
+    eval echo "file " ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv "succesfully removed."
+    case $v in
+    3) eval rm ${2}/${TEMP_DIR}/\${P${i}}_inline${MAKE_CHECK}.c ; 
+       eval echo "file " ${2}/${TEMP_DIR}/\${P${i}}${VERSION}_ltl_results_make_check.csv "succesfully removed.";;
+    4) eval rm ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c ; eval rm ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c ; 
+       eval echo "files " ${2}/${TEMP_DIR}/\${P${i}}_opt${MAKE_CHECK}.c " and " ${2}/${TEMP_DIR}/\${P${i}}_mod${MAKE_CHECK}.c "succesfully removed.";;
+    esac
+  done
+done
+
+#remove temp directory
+rm -rf ${2}/${TEMP_DIR}
+echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+    
+echo ".==============================================."
+echo "| RERS LTL tests (SPOT) completed successfully |"
+echo "*==============================================*"

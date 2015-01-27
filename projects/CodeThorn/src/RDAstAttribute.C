@@ -4,13 +4,15 @@
 #include <sstream>
 
 using namespace std;
+using namespace SPRAY;
 
 void RDAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  os<<"RD:";
   _elem->toStream(os,vim);
 }
 
 string RDAstAttribute::toString() {
-  stringstream ss; 
+  stringstream ss;
   toStream(ss,0);
   return ss.str();
 }

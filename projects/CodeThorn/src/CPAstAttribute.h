@@ -6,6 +6,8 @@
 #include "CPAstAttributeInterface.h"
 #include "AType.h"
 
+using namespace SPRAY;
+
 class VariableConstInfo;
 
 /*! 

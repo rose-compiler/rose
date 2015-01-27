@@ -196,6 +196,7 @@ public:
         c.least_ = least_;
         c.greatest_ = greatest_;
         c.anchored_ = anchored_;
+        c.maxSize_ = maxSize_;
         return c;
     }
 public:
@@ -565,8 +566,8 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
 /** A mapping from address space to values.
  *
  *  This object maps addresses (actually, intervals thereof) to values. Addresses must be an integral unsigned type but values
- *  may be any type as long as it is default constructible and copyable.  The address type is usually a type whose width is the
- *  log base 2 of the size of the address space; the value type is often unsigned 8-bit bytes.
+ *  may be any type as long as they are default constructible and copyable.  The address type is usually an integral type whose
+ *  width is the log base 2 of the size of the address space; the value type is often unsigned 8-bit bytes.
  *
  *  An address map accomplishes the mapping by inheriting from an @ref IntervalMap, whose intervals are
  *  <code>Interval<A></code> and whose values are <code>AddressSegment<A,T></code>. The @ref AddressSegment objects
@@ -610,8 +611,8 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  * @endcode
  *
  *  Since all map operations take the same constraints, it is possible to rewrite the previous @c for loop so that instead of
- *  search for an address it actually reads data.  Here's a loop that prints all the data that's readable but not writable and
- *  falls between two addresses, regardless of what other segments also exist in that same interval:
+ *  searching for an address it actually reads data.  Here's a loop that prints all the data that's readable but not writable
+ *  and falls between two addresses, regardless of what other segments also exist in that same interval:
  *
  * @code
  *  static const size_t bufsz = 256;
@@ -654,7 +655,7 @@ matchConstraints(AddressMap &amap, const AddressMapConstraints<AddressMap> &c, M
  *  default is to match the constraint at the lowest possible addresses. Matching at the highest addresses is useful when
  *  iterating backward.  For instance, if one wants to read up to 1024 values that end at address 1023 but is not sure how many
  *  prior addresses are readable, he could use backward matching.  This is much more efficient than the alternative of
- *  searching backward one address at a time, is is simpler than doing an explicit binary search:
+ *  searching backward one address at a time, and is simpler than doing an explicit binary search:
  *
  * @code
  *  Value buf[1024];
@@ -1132,7 +1133,7 @@ public:
      * @code
      *  typedef AddressMap<Address,Value> Map;
      *  Map map = ...;
-     *  for (Address a=0; map.atOrAbove(a).require(READABLE).next().assignTo(a); ++a) {
+     *  for (Address a=0; map.atOrAfter(a).require(READABLE).next().assignTo(a); ++a) {
      *      ...
      *      if (a == map.hull().greatest())
      *          break;
@@ -1246,7 +1247,7 @@ public:
                 Sawyer::Container::Interval<Address> interval = unmapped(minAddr, 0 /*forward*/);
                 if (interval.isEmpty())
                     return Nothing();
-                minAddr = alignUp(minAddr, alignment);
+                minAddr = alignUp(interval.least(), alignment);
                 Address maxAddr = minAddr + (nValues-1);
                 if ((nValues <= interval.size() || 0==interval.size()/*overflow*/) &&
                     minAddr >= interval.least()/*overflow*/ && maxAddr >= interval.least()/*overflow*/ &&
@@ -1266,7 +1267,7 @@ public:
             Sawyer::Container::Interval<Address> interval = unmapped(maxAddr, MATCH_BACKWARD);
             if (interval.isEmpty())
                 return Nothing();
-            Address minAddr = alignDown(maxAddr - (nValues-1), alignment);
+            Address minAddr = alignDown(interval.greatest() - (nValues-1), alignment);
             maxAddr = minAddr + (nValues-1);
             if ((nValues <= interval.size() || 0==interval.size()/*overflow*/) &&
                 minAddr >= interval.least()/*overflow*/ && maxAddr >= interval.least()/*overflow*/ &&
@@ -1518,6 +1519,7 @@ public:
                     segment.accessibility(newAccess);
                 } else {                                // insert a new segment, replacing part of the existing one
                     Segment newSegment(segment);
+                    newSegment.accessibility(newAccess);
                     newSegment.offset(segment.offset() + toChange.least() - node.key().least());
                     newSegments.push_back(ISPair(toChange, newSegment));
                 }

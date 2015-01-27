@@ -134,6 +134,9 @@ class RoseAst {
   // ast access function
   SgFunctionDefinition* findFunctionByName(std::string name);
 
+  // determines based on VariantT whether a ROSE-AST node is a subtype of another node type.
+  static bool isSubType(VariantT DerivedClassVariant, VariantT BaseClassVariant);
+
  protected:
   static SgNode* parent(SgNode* astNode);
  private:
