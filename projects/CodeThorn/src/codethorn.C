@@ -311,6 +311,7 @@ int main( int argc, char * argv[] ) {
     ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+    ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -420,6 +421,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
+
+  boolOptions.registerOption("print-update-infos",false);
 
   boolOptions.registerOption("minimize-states",false);
 
@@ -590,6 +593,11 @@ int main( int argc, char * argv[] ) {
       assert(i+1<argc);
         argv[i+1] = strdup("");
     }
+  }
+
+  if(args.count("print-update-infos")&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
+    cerr<<"Error: option print-update-infos must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
+    exit(1);
   }
 
   RewriteSystem rewriteSystem;
@@ -1075,6 +1083,9 @@ int main( int argc, char * argv[] ) {
                                        useConstSubstitutionRule
                                        );
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+    if(boolOptions["print-update-infos"]) {
+      speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
+    }
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
 #if 0
