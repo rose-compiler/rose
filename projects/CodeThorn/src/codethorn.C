@@ -308,7 +308,6 @@ int main( int argc, char * argv[] ) {
     ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
-    ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
@@ -404,7 +403,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
-  boolOptions.registerOption("dump1",false);
   boolOptions.registerOption("rule-const-subst",true);
 
   boolOptions.registerOption("inf-paths-only",false);
@@ -601,9 +599,7 @@ int main( int argc, char * argv[] ) {
   }
 
   RewriteSystem rewriteSystem;
-  // reset dump1 in case sorted or non-sorted is used
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
-    boolOptions.registerOption("dump1",true);
     analyzer.setSkipSelectedFunctionCalls(true);
     analyzer.setSkipArrayAccesses(true);
     if(numberOfThreadsToUse>1) {
@@ -721,10 +717,6 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
-  if(boolOptions["dump1"]) {
-    // extraction of expressions: skip function calls to selected functions (also inside expressions) for defered handling.
-    analyzer.setSkipSelectedFunctionCalls(true);
-  }
 
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
@@ -1062,7 +1054,7 @@ int main( int argc, char * argv[] ) {
   double arrayUpdateSsaNumberingRunTime=0.0;
   double sortingAndIORunTime=0.0;
   
-  if(boolOptions["dump1"]) {
+  if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
     ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
@@ -1096,7 +1088,6 @@ int main( int argc, char * argv[] ) {
 #endif
     arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
     
-    cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
     if(args.count("dump-non-sorted")) {
       string filename=args["dump-non-sorted"].as<string>();
       speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
@@ -1106,10 +1097,6 @@ int main( int argc, char * argv[] ) {
       string filename=args["dump-sorted"].as<string>();
       speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
       sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
-    }
-    if(boolOptions["dump1"]) {
-      //string filename="arrayupdates.txt";
-      //writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
     }
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }
