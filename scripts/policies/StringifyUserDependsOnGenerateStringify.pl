@@ -64,7 +64,7 @@ for my $filename (@usingFiles) {
 	pop @components;
     }
     if (!@components){
-	print STDERR "$policy_name: warning: cannot find CMakeList.txt for $filename\n";
+	print STDERR "$policy_name: warning: cannot find CMakeLists.txt for $filename\n";
     }
 }
 
