@@ -366,11 +366,13 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
 }
 
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  int cnt=0;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-    const EState* estate=arrayUpdates[i].first;
-    const PState* pstate=p_estate->pstate();
-    SgExpression* exp=arrayUpdates[i].second;
-    cout<<"UPD"<<i<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+    const EState* estate=(*i).first;
+    const PState* pstate=estate->pstate();
+    SgExpression* exp=(*i).second;
+    cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+    ++cnt;
   }
 }
 
