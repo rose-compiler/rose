@@ -45,12 +45,28 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
     transformationSequence.push_back(operand);
   }
   if(SgNewExp* newExp=isSgNewExp(astNode)) {
+    if(_showTransformationTrace) {
+      cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(newExp)<<": ";
+    }
+    string newCode="xxx";
     if(SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type())) {
       SgType* arrayElementType=arrayType->get_base_type();
-      cout<<"WARNING: new["<<arrayElementType->unparseToString()<<"] operator not supported yet."<<endl;      
+      size_t arraySize=0;
+      stringstream ss;
+      ss<<arraySize;
+      string arraySizeString=ss.str();
+      newCode="Backstroke::new_array<"+arrayElementType->unparseToString()+">"+"("+arraySizeString+")";
+      //cout<<"WARNING: new["<<arrayElementType->unparseToString()<<"] operator not supported yet."<<endl;      
     } else {
-      cout<<"WARNING: new operator not supported yet."<<endl;
+      SgType* type=newExp->get_type();
+      string newExpString=newExp->unparseToString();
+      string registerAndCast="static_cast<"+type->unparseToString()+">("+"rts.registerForCommit((void*)"+newExpString+"))";
+      newCode=registerAndCast;
     }
+    if(_showTransformationTrace) {
+      cout<<newCode<<endl;
+    }    
+    SgNodeHelper::replaceAstWithString(newExp,newCode);
   }
   if(SgDeleteExp* deleteExp=isSgDeleteExp(astNode)) {
     if(deleteExp->get_is_array()) {
@@ -61,7 +77,13 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
         if(SgClassType* classType=isSgClassType(pointedToType)) {
           elementTypeName=classType->get_name();
         }
-        cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;      
+        //cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;
+        string newCode="Backstroke::delete_array<"+elementTypeName+">()";
+        if(_showTransformationTrace) {
+          cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(deleteExp)<<": ";
+          cout<<newCode<<endl;
+        }    
+        SgNodeHelper::replaceAstWithString(deleteExp,newCode);
       } else {
         cerr<<"Error: operand of delete[] has non-pointer type. ROSE AST consistency error. Bailing out."<<"("<<(deleteExp->get_type()->unparseToString())<<")";
         exit(1);
