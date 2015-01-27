@@ -10,7 +10,7 @@ int calculate_output(int input) {
   if(input==1 && f==7) {
     f=6;
     if(f!=6) {
-    error_1: assert(0); // unreachable!
+    error_0: assert(0); // unreachable!
     }
     return 23; // W (unreachable!)
   } else if(input==1 && f==6) {
@@ -23,7 +23,7 @@ int calculate_output(int input) {
     f=3;
   } else {
     if(f==3) {
-    error_2: assert(0); // reachable
+    error_1: assert(0); // reachable
     }
   }
   if(f==2) {

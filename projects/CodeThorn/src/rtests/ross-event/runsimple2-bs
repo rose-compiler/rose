@@ -1,0 +1,67 @@
+#!/bin/bash
+
+runtime1=0
+runtime2=0
+factor=0
+
+runevaluation() {
+mpirun -np 2 ./simple2-orig --synch=3 | grep "Total run time" > result1.txt
+mpirun -np 2 ./simple2-bs --synch=3 | grep "Total run time" > result2.txt
+runtime1=`grep --only-matching '[0-9]*\.[0-9]*' result1.txt`
+runtime2=`grep --only-matching '[0-9]*\.[0-9]*' result2.txt`
+factor=`bc <<< "scale=2; ${runtime2}/${runtime1}"`
+vendorid=`lscpu | grep "Vendor ID:" | cut -b 24-50 | grep --only-matching "[a-zA-Z]*"`
+cpumhz=`lscpu | grep "^CPU MHz:" | grep '[0-9]*\.[0-9]*' --only-matching`
+cores=`lscpu | grep "^CPU(s):" | grep '[0-9][0-9]*' --only-matching`
+threadsPerCore=`lscpu | grep "^Thread(s) per core:" | grep '[0-9][0-9]*' --only-matching`
+}
+
+if [[ $# != 1 ]]; then
+  echo "usage: <command> orig|bs|compare|report|appendreport"
+  exit
+fi
+
+if [[ ! -e simple2-orig || ! -e simple2-bs ]]; then
+  echo "Compiling all model variants."
+  ./compile.simple2-bs
+fi
+
+#  --nlp=n               number of LPs per processor (default 8)
+#  --clock-rate=ts       CPU Clock Rate (default 1000000000.00)
+
+key=$1
+case $key in
+orig)
+mpirun -np 2 ./simple2-orig --synch=3
+;;
+bs)
+mpirun -np 2 ./simple2-bs --synch=3
+;;
+compare)
+runevaluation;
+echo "-----------------"
+echo "Evaluation result"
+echo "-----------------"
+echo "Original   version total run time: $runtime1 sec"
+echo "Backstroke version total run time: $runtime2 sec"
+echo "Performance penalty: $factor"
+;;
+report)
+runevaluation;
+echo "$runtime1,$runtime2,$factor,$vendorid,$cpumhz,$cores,$threadsPerCore" > evaluation-report-latest.cvs
+cat evaluation-report-latest.cvs
+;;
+appendreport)
+cat evaluation-report-latest.cvs >> evaluation-report-collection.cvs
+cat evaluation-report-collection.cvs
+;;
+*)
+echo "unknown option."
+exit
+;;
+esac
+
+#  
+#  mpirun -np 1 ./simple2 --nlp=64 --synch=1 --end=10000
+#  mpirun -np 8 ./simple2 --nlp=8 --synch=3 --end=10000
+# 659 particles, any time

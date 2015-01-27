@@ -1,3 +1,12 @@
+add_library( astVisualization OBJECT
+  astGraph.C
+  AstAttributeDOT.C
+  wholeAST.C
+  copyGraph.C
+  walrus.C)
+add_dependencies(astVisualization rosetta_generated)
+
+
 ########### install files ###############
 
 install(FILES  AstAttributeDOT.h astGraph.h astGraphTemplateImpl.h wholeAST.h
