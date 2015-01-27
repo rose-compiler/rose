@@ -6246,12 +6246,19 @@ BUILD_BINARY_DEF(VarArgStartOp)
 
 
 SgArrayType* SageBuilder::buildArrayType(SgType* base_type/*=NULL*/, SgExpression* index/*=NULL*/)
-{
-  SgArrayType* result = new SgArrayType(base_type,index);
-  ROSE_ASSERT(result); 
-  if (index!=NULL) index->set_parent(result); // important!
-  return result;
-}
+   {
+     SgArrayType* result = new SgArrayType(base_type,index);
+     ROSE_ASSERT(result); 
+
+     if (index != NULL)
+          index->set_parent(result); // important!
+
+#if 0
+     printf ("In SageBuilder::buildArrayType(): result = %p base_type = %p = %s index = %p = %s \n",result,base_type,base_type->class_name().c_str(),index,index->class_name().c_str());
+#endif
+
+     return result;
+   }
 
 SgConditionalExp* SageBuilder::buildConditionalExp(SgExpression* test, SgExpression* a, SgExpression* b)
 {
