@@ -73,6 +73,9 @@ using namespace ROSE_token_ids;
 
 #include "tokenStreamMapping.h"
 
+// DQ (1/26/2015): Added support to determine max source position extents on subtrees.
+#include "maxExtents.h"
+
 
 TokenStreamSequenceToNodeMapping_key::TokenStreamSequenceToNodeMapping_key(SgNode* n, int input_lower_bound, int input_upper_bound)
    {
@@ -3945,33 +3948,103 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                        }
 #endif
 
-
-                 // bool process_node = (start_pos->isCompilerGenerated() == false) && (isSgGlobal(n) == NULL) && (inheritedAttribute.processChildNodes == true);
-                    bool process_node = (start_pos->isCompilerGenerated() == false) && (inheritedAttribute.processChildNodes == true);
-
-                    ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
-                    process_node = (process_node == true) && (start_pos->isSameFile(inheritedAttribute.sourceFile));
-// #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                    printf ("   --- start_pos->isSameFile(inheritedAttribute.sourceFile) = %s \n",start_pos->isSameFile(inheritedAttribute.sourceFile) ? "true" : "false");
-#endif
-// #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
-                    printf ("   --- start_pos->isCompilerGenerated() = %s \n",start_pos->isCompilerGenerated() ? "true" : "false");
-                 // printf ("isSgGlobal(n) == NULL = %s \n",(isSgGlobal(n) == NULL) ? "true" : "false");
-                    printf ("   --- (after reset): inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
-#endif
                  // int starting_line   = start_pos->get_line();
                     int starting_line   = start_pos->get_physical_line();
                     int starting_column = start_pos->get_col();
                  // int ending_line     = end_pos->get_line();
                     int ending_line     = end_pos->get_physical_line();
                     int ending_column   = end_pos->get_col();
+
+                 // DQ (1/26/2015): Added as part of support for more general token mapping of subtrees with valid source position hiding behind compiler generated nodes (that have no source position).
+                    bool subtreeHasValidSourcePosition = false;
+
+                 // DQ (1/26/2015): Handle the case of compiler generated IR nodes and their possible mapping
+                 // to the token stream (e.g. because they hide non-compiler generated subtrees).
 #if 0
-                    int leading_whitespace_start  = -1;
-                    int leading_whitespace_end    = -1;
-                    int trailing_whitespace_start = -1;
-                    int trailing_whitespace_end   = -1;
+                    if ( start_pos->isCompilerGenerated() == true && 
+                         isSgFunctionParameterList(n) == NULL && isSgTemplateInstantiationDecl(n) == NULL && isSgTemplateInstantiationDefn(n) == NULL && 
+                         isSgTemplateInstantiationMemberFunctionDecl(n) == NULL && isSgCtorInitializerList(n) == NULL)
+#else
+                 // DQ (1/26/2015): Include the evaluation of the for loop increment expression (even if it is hiding behind a compiler generated IR node).
+                    bool evaluateForLoopIncrementExpression = false;
+                    SgForStatement* forStatement = isSgForStatement(n->get_parent());
+                    if (forStatement != NULL)
+                       {
+                         if (n == forStatement->get_increment())
+                            {
+                              evaluateForLoopIncrementExpression = true;
+                            }
+                       }
+#if 0
+                    printf ("evaluateForLoopIncrementExpression = %s \n",evaluateForLoopIncrementExpression ? "true" : "false");
+#endif
+                 // Although I want to include the for loop increment expression, most are just SgExprStatement.
+                 // if ( start_pos->isCompilerGenerated() == true && isSgExprStatement(n) != NULL)
+                 // if ( start_pos->isCompilerGenerated() == true && (isSgExprStatement(n) != NULL || evaluateForLoopIncrementExpression == true) )
+                    if ( start_pos->isCompilerGenerated() == true && (isSgExprStatement(n) != NULL || evaluateForLoopIncrementExpression == true) && (inheritedAttribute.processChildNodes == true) )
+#endif
+                       {
+#if 0
+                         printf ("Detected a compiler generated IR node: n = %p = %s \n",n,n->class_name().c_str());
+                         printf ("   --- n->get_parent() = %p = %s \n",n->get_parent(),n->get_parent()->class_name().c_str());
+                         printf ("Calling MaxSourceExtents::computeMaxSourceExtents(n=%p) \n",n);
+#endif
+                      // These are passed by reference to computeMaxSourceExtents().
+                         int computed_start_line   = 0;
+                         int computed_start_column = 0;
+                         int computed_end_line     = 0; 
+                         int computed_end_column   = 0;
+
+                         MaxSourceExtents::computeMaxSourceExtents(inheritedAttribute.sourceFile,n,computed_start_line,computed_start_column,computed_end_line,computed_end_column);
+                         if (computed_start_line == computed_end_line && computed_start_column == computed_end_column)
+                            {
+                           // DQ (1/26/2015): I think we would have to apply this to non-compiler generated statements to detect macros expansions (might be expensive).
+                              printf ("Detected macro after evaluate of sub-tree source positions: computed_start_line = %d computed_start_column = %d computed_end_line = %d computed_end_column = %d \n",
+                                   computed_start_line,computed_start_column,computed_end_line,computed_end_column);
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                           else
+                            {
+                              printf ("Subtree is not a macro: computed_start_line = %d computed_start_column = %d computed_end_line = %d computed_end_column = %d \n",
+                                   computed_start_line,computed_start_column,computed_end_line,computed_end_column);
+
+                              subtreeHasValidSourcePosition = true;
+                            }
+
+                         starting_line   = computed_start_line;
+                         starting_column = computed_start_column;
+                         ending_line     = computed_end_line;
+                         ending_column   = computed_end_column;
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+
+                 // bool process_node = (start_pos->isCompilerGenerated() == false) && (isSgGlobal(n) == NULL) && (inheritedAttribute.processChildNodes == true);
+                 // bool process_node = (start_pos->isCompilerGenerated() == false) && (inheritedAttribute.processChildNodes == true);
+                    bool process_node = (start_pos->isCompilerGenerated() == false || subtreeHasValidSourcePosition == true) && (inheritedAttribute.processChildNodes == true);
+
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE || 0
+                    printf ("   --- inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
+                    printf ("   --- (initial value 1) process_node = %s \n",process_node ? "true" : "false");
+#endif
+                    ROSE_ASSERT(inheritedAttribute.sourceFile != NULL);
+                 // process_node = (process_node == true) && (start_pos->isSameFile(inheritedAttribute.sourceFile));
+                    process_node = (process_node == true) && (start_pos->isSameFile(inheritedAttribute.sourceFile) || subtreeHasValidSourcePosition == true);
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE || 0
+                    printf ("   --- (initial value 2) process_node = %s \n",process_node ? "true" : "false");
+                    printf ("   --- start_pos->isSameFile(inheritedAttribute.sourceFile) = %s \n",start_pos->isSameFile(inheritedAttribute.sourceFile) ? "true" : "false");
+#endif
+// #if 1
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE || 0
+                    printf ("   --- start_pos->isCompilerGenerated() = %s \n",start_pos->isCompilerGenerated() ? "true" : "false");
+                 // printf ("isSgGlobal(n) == NULL = %s \n",(isSgGlobal(n) == NULL) ? "true" : "false");
+                    printf ("   --- (after reset): inheritedAttribute.processChildNodes = %s \n",inheritedAttribute.processChildNodes ? "true" : "false");
 #endif
                  // DQ (10/30/2013): Not clear if this should be (starting_column < ending_column) or (starting_column <= ending_column).
                  // (Yes, this fixes empty statement (SgExprStatement with SgNullExpression) handling).
@@ -3982,10 +4055,18 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                  // process_node = (process_node == true) && ( (starting_line < ending_line) || ( (starting_line == ending_line) && (starting_column < ending_column) ) );
                     process_node = (process_node == true) && ( (starting_line < ending_line) || ( (starting_line == ending_line) && (starting_column <= ending_column) ) );
 // #if 1
-#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE
+#if DEBUG_EVALUATE_INHERITATE_ATTRIBUTE || 0
+                    printf ("   --- (final value) process_node = %s \n",process_node ? "true" : "false");
                     printf ("starting_line = %d ending_line = %d starting_column = %d ending_column = %d process_node = %s \n",starting_line,ending_line,starting_column,ending_column,process_node ? "true" : "false");
 #endif
 
+                 // DQ (1/26/2015): This appears to be triggered by a SgNullStatement.
+                    if (subtreeHasValidSourcePosition == true && process_node == false)
+                       {
+                         printf ("WARNING: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false): n = %p = %s \n",n,n->class_name().c_str());
+                      // printf ("ERROR: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false) \n");
+                      // ROSE_ASSERT(false);
+                       }
 #if 1
                  // DQ (1/4/2014): commented out to test with using token based unparsing.
 
@@ -4501,6 +4582,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          SgForStatement* forStatement = isSgForStatement(locatedNode->get_parent());
                          if (forStatement != NULL && forStatement->get_increment() == expression)
                             {
+#if 0
+                              printf ("@@@@@@@@@@@@ Detected for loop increment expression: expression = %p = %s \n",expression,expression->class_name().c_str());
+#endif
                               forStatementIncrementExpression = expression;
                             }
                        }
