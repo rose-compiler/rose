@@ -269,7 +269,7 @@ void MaxSourceExtents::computeMaxSourceExtents(SgSourceFile* sourceFile, SgNode*
      end_line     = return_attribute.end_line;
      end_column   = return_attribute.end_column;
 
-#if 1
+#if 0
      printf ("In computeMaxSourceExtents(): start_line = %d start_column = %d end_line = %d end_column = %d \n",start_line,start_column,end_line,end_column);
 #endif
 #if 0
