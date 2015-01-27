@@ -48,15 +48,14 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
     if(_showTransformationTrace) {
       cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(newExp)<<": ";
     }
-    string newCode="xxx";
+    string newCode="";
     if(SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type())) {
       SgType* arrayElementType=arrayType->get_base_type();
-      size_t arraySize=0;
       stringstream ss;
+      size_t arraySize=SageInterface::getArrayElementCount(arrayType);;
       ss<<arraySize;
       string arraySizeString=ss.str();
       newCode="Backstroke::new_array<"+arrayElementType->unparseToString()+">"+"("+arraySizeString+")";
-      //cout<<"WARNING: new["<<arrayElementType->unparseToString()<<"] operator not supported yet."<<endl;      
     } else {
       SgType* type=newExp->get_type();
       string newExpString=newExp->unparseToString();
@@ -78,7 +77,7 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
           elementTypeName=classType->get_name();
         }
         //cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;
-        string newCode="Backstroke::delete_array<"+elementTypeName+">()";
+        string newCode="Backstroke::delete_array<"+elementTypeName+">("+deleteExp->get_variable()->unparseToString()+")";
         if(_showTransformationTrace) {
           cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(deleteExp)<<": ";
           cout<<newCode<<endl;
