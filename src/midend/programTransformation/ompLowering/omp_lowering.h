@@ -16,6 +16,9 @@ namespace OmpSupport
   // OpenMP version info.
   extern bool enable_accelerator;  
 
+ // A flag to control if device data environment runtime functions are used to automatically manage data as much as possible.
+ // instead of generating explicit data allocation, copy, free functions. 
+   extern  bool useDDE /* = true */;  
   //! makeDataSharingExplicit() can call some of existing functions for some work in OmpSupport namespace by Hongyi 07/16/2012
   //! TODO: add a function within the OmpSupport namespace, the function should transform the AST, so all variables' data-sharing attributes are explicitied represented in the AST. ROSE has dedicated AST nodes for OpenMP directives and the associated clauses, such as private, shared, reduction.
 
