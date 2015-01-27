@@ -48,7 +48,10 @@ add_subdirectory(support)
 ######## build main library ###########
 set(rose_util_src
   ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
+  Color.C
+  Combinatorics.C
   FileSystem.C
+  LinearCongruentialGenerator.C
   rose_getline.C
   processSupport.C
   rose_getline.C
@@ -70,7 +73,10 @@ install(TARGETS roseutil DESTINATION lib)
 
 
 ########### install files ###############
-install(FILES  Color.h FileSystem.h FormatRestorer.h setup.h processSupport.h rose_paths.h
-               compilationFileDatabase.h Map.h rose_getline.h rose_override.h rose_strtoull.h
-               roseTraceLib.c ParallelSort.h GraphUtility.h
+install(FILES 
+	      Color.h Combinatorics.h FileSystem.h FormatRestorer.h
+ 	      setup.h processSupport.h rose_paths.h
+	      compilationFileDatabase.h LinearCongruentialGenerator.h
+	      Map.h rose_getline.h rose_override.h rose_strtoull.h
+              roseTraceLib.c ParallelSort.h GraphUtility.h
         DESTINATION ${INCLUDE_INSTALL_DIR})

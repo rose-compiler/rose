@@ -26,8 +26,10 @@ noinst_LTLIBRARIES = libroseutil.la
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
 	Color.C					\
+	Combinatorics.C				\
 	compilationFileDatabase.C		\
 	FileSystem.C				\
+	LinearCongruentialGenerator.C		\
 	processSupport.C			\
 	rose_getline.C				\
 	rose_strtoull.C
@@ -46,10 +48,12 @@ libroseutil_la_LIBADD = \
 
 pkginclude_HEADERS =				\
 	Color.h					\
+	Combinatorics.h				\
 	compilationFileDatabase.h		\
 	FileSystem.h				\
 	FormatRestorer.h			\
 	GraphUtility.h				\
+	LinearCongruentialGenerator.h		\
 	Map.h					\
 	ParallelSort.h                          \
 	processSupport.h			\
