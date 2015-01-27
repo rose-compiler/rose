@@ -37,9 +37,10 @@ void checkLargeSets();
 void nocheck(string checkIdentifier, bool checkResult);
 void check(string checkIdentifier, bool checkResult, bool check);
 
+// intentionally global
+extern bool checkresult;
+
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
-  // intentionally global
-  extern bool checkresult;
   try {
     // checkTypes() writes into checkresult
     checkTypes();
@@ -104,7 +105,7 @@ void checkTypes() {
     VariableId var_tmp=variableIdMapping.createUniqueTemporaryVariableId("tmp");
     variableIdMapping.deleteUniqueTemporaryVariableId(var_tmp);
   }
-  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+
   {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR BOOLLATTICE TYPE:"<<endl;
@@ -174,8 +175,6 @@ void checkTypes() {
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-    VariableId var_z=variableIdMapping.createUniqueTemporaryVariableId("z");
-    VariableId var_a=variableIdMapping.createUniqueTemporaryVariableId("a");
 
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
@@ -600,7 +599,6 @@ void checkLanguageRestrictor(int argc, char *argv[]) {
 
 void checkLargeSets() {
   VariableIdMapping variableIdMapping;
-  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
   AType::ConstIntLattice i;
   using namespace AType;
   set<CppCapsuleConstIntLattice> cilSet;

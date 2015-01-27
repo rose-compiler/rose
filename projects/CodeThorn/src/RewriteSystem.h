@@ -30,6 +30,7 @@ class RewriteSystem {
   RewriteStatistics getStatistics();
   void resetStatistics();
   RewriteStatistics getRewriteStatistics();
+  RewriteStatistics* getRewriteStatisticsPtr() { return &dump1_stats; }
  private:
   RewriteStatistics dump1_stats;
 };

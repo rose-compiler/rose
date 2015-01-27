@@ -12,7 +12,7 @@
 using namespace std;
 using namespace SPRAY;
 
-Label Labeler::NO_LABEL=Label::Label();
+Label Labeler::NO_LABEL;
 
 Label::Label() {
     _labelId=NO_LABEL_ID;

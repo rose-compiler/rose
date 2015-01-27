@@ -1,0 +1,175 @@
+\documentclass[english,12pt, titlepage]{article}      % Specifies the document class
+\usepackage{babel}
+\usepackage{moreverb}
+\usepackage{alltt}
+\usepackage{mathptm}
+\usepackage{epsf}
+
+%\usepackage{latexsym}
+%\usepackage{rotating}
+%\usepackage{IRA,protitle}
+%\usepackage{german,amsfonts,amssymb}                                           
+\usepackage{amssymb}
+
+\newcommand{\outcomment}[1]{}
+\newcommand{\logand}{~\land~}
+\newcommand{\logor}{~\lor~}
+\newcommand{\lognot}{~\lnot}
+\newcommand{\impl}{\to}
+\newcommand{\existsone}[0]{~\exists!}
+
+\newcommand{\setunion}{\cup}
+\newcommand{\setintersect}{\cap}
+\newcommand{\setdif}{\backslash}
+
+\newcommand{\set}[1]{\{{#1}\}}
+\newcommand{\pair}[2]{({#1},{#2})}
+\newcommand{\tripel}[3]{({#1},{#2},{#3})}
+\newcommand{\quadrupel}[4]{({#1},{#2},{#3},{#4})}
+
+
+\newcommand{\cnodedef}[0]{\pair{ \set{ \pair{*}{\epsilon} } }{.} }
+\newcommand{\cnode}[0]{\diamond}
+\newcommand{\cnodeset}[0]{\set{\diamond}}
+
+\newcommand{\dach} {\symbol{94}}
+\newcommand{\deref}[1]{{#1}\dach}
+
+\newcommand{\nsubset}{\not\subset}         %\\nsubset
+\newcommand{\textflorin}{\textit{f}}       %\\textflorin
+\newcommand{\setB}{{\mathord{\mathbb B}}}  %\\setB
+\newcommand{\setC}{{\mathord{\mathbb C}}}  %\\setC
+\newcommand{\setN}{{\mathord{\mathbb N}}}  %\\setN
+\newcommand{\setQ}{{\mathord{\mathbb Q}}}  %\\setQ
+\newcommand{\setR}{{\mathord{\mathbb R}}}  %\\setR
+\newcommand{\setZ}{{\mathord{\mathbb Z}}}  %\\setZ
+\newcommand{\coloncolon}{\mathrel{::}}     %\\coloncolon
+\newcommand{\lsemantics}{\mathopen{\lbrack\mkern-3mu\lbrack}}  %\\lsemantics
+\newcommand{\rsemantics}{\mathclose{\rbrack\mkern-3mu\rbrack}} %\\rsemantics
+
+\newcommand{\forwardfunctions}{forward-functions}
+\newcommand{\reversefunctions}{reverse-functions}
+\newcommand{\commitfunctions}{commit-functions}
+
+\newcommand{\bsshortversion}{2.0}
+\newcommand{\bslongversion}{2.0.0}
+
+
+
+\title{Backstroke \bsshortversion\\ User Manual}  % Declares the document's title.
+\author{Markus Schordan}      % Declares the author's name.
+%\date{}      % Deleting this command produces today's date.
+
+\begin{document}             % End of preamble and beginning of text.
+
+\maketitle                   % Produces the title.
+
+\tableofcontents        
+\clearpage
+
+\section{Backstroke}
+
+\subsection{Introduction}
+Backstroke is a tool for generating code required to run a computation
+in reverse (backwards). It is used in the context of parallel descrete
+event simulation to generate code that allows to restore a previous
+state in execution of a simulation. The advantage of reverse code is
+that it stores less information that would be reqired if the entire
+state would be stored.
+
+Executing the Backstroke generated code instead of the original code, will
+store some additional information that is required to perform the
+computation in reverse (in comparison to the original program). The
+implemented approach is a variant of incremental state saving. The
+particular instance of incremental state saving that is implemented in
+Backstroke, restores memory in reverse. It addresses dynamic memory
+allocation and can be applied to C/C++.
+
+The generated Code of Backstroke is C++ code (also when the input code
+is pure C). The backstroke library is implemented in C++.
+
+\subsection{Conventions}
+
+Backstroke generates reverse code, separated in \forwardfunctions,
+\reversefunctions, and \commitfunctions. The functionality of reversability is
+implemented by all three functions and the Backstroke library. Backstroke currently provides exactly one mode for incremental statesaving for which Backstroke technically only
+{\em generates} the \forwardfunctions. For the \reversefunctions~ and \commitfunctions~
+generic variants exist in the backstroke library. However, those
+generic functions do require the \forwardfunctions~ to be executed in order
+to operate correctly. We will use the term ``reverse code generation'' to refer to all code that is generated and required to perform a reverse computation (including \forwardfunctions, \reversefunctions, \commitfunctions, Backstroke library), but refer specifically to \forwardfunctions~ generation, if this is technically relevant. 
+
+\section{Installation}
+
+Backstroke requires the installation of ROSE (\verb+http://www.rosecompiler.org+).
+After the installation of ROSE make the installed ROSE libraries available in \verb+LD_LIBRARY_PATH+.
+The compilation of Backstroke requires the rose library to be available. There are no other dependencies.
+
+\section{Using Backstroke}
+
+\subsection{What Backstroke Does}
+% list the exact tasks 
+
+Backstroke generates \forwardfunctions~ (from the providid original
+code). The \forwardfunctions~ execute the statements in the same order as
+the original program, but store additional information for all memory
+modiyfing operations. Memory modifying operations are all forms of
+assignment, memory allocation, and memory deallocation.
+
+The reverse-functions and commit-functions are implemented in the Backstroke
+library and only depend on the recorded information of the
+\forwardfunctions. Therefore it is sufficient to link the generated
+\forwardfunctions~ with the backstroke library. Backstroke generates the
+\forwardfunctions~ and the library is provided as part of the backstroke
+distribution.
+
+For each input file Backstroke generates one output file. The output
+file contains \forwardfunctions~ for all functions that are present in the
+input file.
+
+\subsection{What Backstroke Does Not Do}
+
+Backstroke does not perform the integration of the generated code into
+the original application. The original application must be modified by
+the user to take the generated \forwardfunctions~ into account and link with
+the backstroke library.
+
+\subsection{Invoking Backstroke}
+
+\verb+backstroke [Options] input-file output-file+
+
+\begin{description}
+\item [--ignore-external-functions]: ignore all external functions not present in the translation unit. By default backstroke will require implementations of all functions to be able to generate reverse code. For large projects, involving multiple translation units, this is not always possible. Therefore this check can be turned off.
+\item [--custom-namespace-name=$<$Name$>$]: provide customized name of namespace for generated code. Default is ``backstroke''.
+\end{description}
+
+\subsection{Integration of Backstroke Generated Code}
+
+We will show the use of Backstroke with a ROSS model. A ROSS model
+consists of code implementing an event function, some data structures,
+and calls to ROSS functions. To simplify the use of Backstroke, it is
+best to have the event function and all functions that are called by
+the event function in files separate from the simulation code.
+
+Backstroke generates all code in a separate namespace ``reverse''. For
+example, if the original function was called foo, the generated
+reverse code is in ``reverse::foo''.
+
+\section{Examples}
+
+\begin{figure}[h!]
+\begin{boxedverbatim}
+        void event(State* state) {           
+          if(state->x > 20) {
+            state -> x = 0;
+          } else {
+            state->++x;
+          }                  
+\end{boxedverbatim}
+\caption{Example of updates on a state variable.}\label{exampleprogram1}
+\end{figure}
+
+%\bibliography{backstroke}
+%\bibliographystyle{unsrt} 
+%\hyphenation{}
+\end{document}
+

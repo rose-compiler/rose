@@ -134,10 +134,10 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
      // p_expCopy is a pointer to an assignment expression (only rewriteAst changes this variable)
      if(useConstExprSubstRule) {
        int numConstExprElim=substituteConstArrayIndexExprsWithConst(variableIdMapping, exprAnalyzer,p_estate,p_expCopy);
-       rewriteSystem.getRewriteStatistics().numConstExprElim+=numConstExprElim;
+       rewriteSystem.getRewriteStatisticsPtr()->numConstExprElim+=numConstExprElim;
        rewriteSystem.rewriteCompoundAssignments(p_expCopy,variableIdMapping);
      } else {
-       rewriteSystem.getRewriteStatistics().numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
+       rewriteSystem.getRewriteStatisticsPtr()->numVariableElim+=substituteVariablesWithConst(variableIdMapping,p_pstate,p_expCopy);
        rewriteSystem.rewriteAst(p_expCopy, variableIdMapping);
      }
 #endif
@@ -535,7 +535,7 @@ void Specialization::transformArrayProgram(SgProject* root, Analyzer* analyzer) 
       if(SgPntrArrRefExp* arrAccess=isSgPntrArrRefExp(exp)) {
         ArrayElementAccessData aead(arrAccess,analyzer->getVariableIdMapping());
         ROSE_ASSERT(aead.isValid());
-        VariableId arrayVar=aead.varId;
+        //VariableId arrayVar=aead.varId;
         //cout<<"array-element: "<<variableIdMapping->variableName(arrayVar);
         if(aead.subscripts.size()==1) {
           //cout<<" ArrayIndex:"<<*aead.subscripts.begin();

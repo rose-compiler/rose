@@ -274,7 +274,7 @@ int VariableConstInfo::maxConst(VariableId varId) {
   return vri.maxIntValue();
 }
 bool VariableConstInfo::isInConstSet(VariableId varId, int varVal) {
-  VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
+  //VariableValueRangeInfo vri=createVariableValueRangeInfo(varId,*_map);
   return isConstInSet(ConstIntLattice(varVal),(*_map)[varId]).isTrue();
 }
 int VariableConstInfo::uniqueConst(VariableId varId) {

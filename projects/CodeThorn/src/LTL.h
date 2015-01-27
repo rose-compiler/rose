@@ -148,6 +148,7 @@ namespace LTL {
     virtual operator std::string () const { return id; }
     virtual void accept(BottomUpVisitor& v) const = 0;
     virtual void accept(TopDownVisitor& v, IAttr a) = 0;
+    virtual ~Expr() {}
   };
 
   class UnaryExpr : public Expr {

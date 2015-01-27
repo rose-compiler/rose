@@ -1,73 +1,12 @@
 // tps (01/14/2010) : Switching from rose.h to sage3
 // test cases are put into tests/roseTests/astInterfaceTests
 // Last modified, by Liao, Jan 10, 2008
-#include "sage3basic.h"
+
+// includes "sageBuilder.h"
+#include "sage3basic.h" 
 
 // We need this so that ROSE_USE_NEW_EDG_INTERFACE will be seen (set via configure).
 #include <rose_config.h>
-
-#if 0
-// DQ (6/1/2012): Note that to use the std::remove_if() STL algorithm, we have to define it before including some of these header files.
-// I worry that this code might be a problem to maintain since it is sensitive to these header file orderings.
-
-// These header files are required.
-#include <string>
-#include <algorithm>
-#include <iostream>
-#include <cctype>
-
-// bool isspace (char* c);
-
-// DQ (6/7/2012): Moved this to before the use of SageInterface::hasTemplateSyntax().
-#include "sageBuilder.h"
-
-SgName
-SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName inputNameWithTemplateArguments)
-   {
-#if 1
-   // DQ (7/27/2012): The new sematics are that template arguments are added to non template argument names 
-   // instead of removed from the name with template arguments, this is because it is a problem to remove 
-   // the template arguments from examples such as: "X<Y<Z>> operator>()" and others.
-      printf ("ERROR: This function SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments() should not be called. \n");
-      ROSE_ASSERT(false);
-
-      return "";
-#else
-  // DQ (6/1/2012): 
-     std::string nameWithTemplateArguments = inputNameWithTemplateArguments;
-
-  // ROSE_ASSERT(nameWithTemplateArguments.find('<') != std::string::npos);
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(nameWithTemplateArguments) == true);
-
-     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): nameWithTemplateArguments = %s \n",nameWithTemplateArguments.c_str());
-     size_t positionOfTemplateSyntax = nameWithTemplateArguments.find('<');
-     printf ("In generateTemplateNameFromTemplateNameWithTemplateArguments(): positionOfTemplateSyntax = %" PRIuPTR " \n",positionOfTemplateSyntax);
-
-  // We might want to strip off trailing white space.
-     std::string templateName = nameWithTemplateArguments.substr(0,positionOfTemplateSyntax);
-
-     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguments(): Before:" << templateName << ":End" << std::endl;
-  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-  // std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-     std::string::iterator newEnd = std::remove_if( templateName.begin(), templateName.end(), isspace );
-     std::cout << "In generateTemplateNameFromTemplateNameWithTemplateArguments(): After:" << std::string(templateName.begin(), newEnd) << ":End" << std::endl;
-
-     templateName = std::string(templateName.begin(), newEnd);
-
-  // ROSE_ASSERT(templateName.find('<') == std::string::npos);
-     ROSE_ASSERT(SageInterface::hasTemplateSyntax(templateName) == false);
-
-  // DQ (6/1/2012): Make sure there is no whitespace (trailing). 
-  // This will cause different mangled names to be generated.
-     ROSE_ASSERT(templateName.find(' ') == std::string::npos);
-
-     return templateName;
-#endif
-   }
-#endif
-
-
-
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    #include "roseAdapter.h"
@@ -99,6 +38,8 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 // DQ (3/31/2012): Is this going to be an issue for C++11 use with ROSE?
 #define foreach BOOST_FOREACH
 
+
+
 // DQ (2/17/2013): This is a operation on the global AST that we don't need to do too often
 // depending on the grainularity sought for the debugging information.  It is done on the
 // whole AST once after construction (in edgRose.C), but is not needed more than that
@@ -108,6 +49,28 @@ SageBuilder::generateTemplateNameFromTemplateNameWithTemplateArguments(SgName in
 
 using namespace std;
 using namespace SageInterface;
+
+// MS 2015: utility functions used in the implementation of SageBuilder functions, but are not exposed in the SageBuilder-Interface.
+namespace SageBuilder {
+
+template <class actualFunction>
+actualFunction*
+buildNondefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * paralist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, SgTemplateArgumentPtrList* templateArgumentsList, SgTemplateParameterPtrList* templateParameterList);
+
+// DQ (8/11/2013): Note that the specification of the SgTemplateArgumentPtrList is somewhat redundant with the required parameter first_nondefinng_declaration (I think).
+//! A template function for function declaration builders
+template <class actualFunction>
+actualFunction*
+// buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope=NULL, SgExprListExp* decoratorList = NULL, unsigned int functionConstVolatileFlags = 0);
+// buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration);
+buildDefiningFunctionDeclaration_T (const SgName & name, SgType* return_type, SgFunctionParameterList * parlist, bool isMemberFunction, SgScopeStatement* scope, SgExprListExp* decoratorList, unsigned int functionConstVolatileFlags, actualFunction* first_nondefinng_declaration, SgTemplateArgumentPtrList* templateArgumentsList);
+
+//! Function to reset scopes in SgDeclarationStatement IR nodes.
+// ROSE_DLL_API void resetDeclaration(SgDeclarationStatement* classDeclaration_copy, SgDeclarationStatement* classDeclaration_original);
+template <class T> ROSE_DLL_API void resetDeclaration(T* classDeclaration_copy, T* classDeclaration_original, SgScopeStatement* targetScope);
+
+}; // SageBuilder namespace
+
 //---------------------------------------------
 // scope stack interfaces
 //   hide actual implementation of the stack
@@ -5879,60 +5842,6 @@ SageBuilder::buildListExp_nfi(const std::vector<SgExpression*>& elts)
   return tuple;
 }
 
-//----------------------build unary expressions----------------------
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildUnaryExpression(SgExpression* operand)
-{ 
-  SgExpression* myoperand=operand;
-  
-#if 0
- // it is very tempting to reuse expressions during translation,
-  // so try to catch such a mistake here
-  if (operand!=NULL)
-    if (operand->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse operand of type "
-          << operand->class_name() << 
-        " when building a unary expression . Operand is being copied."<<endl;
-     ROSE_ABORT();// remind user the issue
-      myoperand = isSgExpression(deepCopy(operand));
-    }
-#endif
-  T* result = new T(myoperand, NULL);
-  ROSE_ASSERT(result);   
-  if (myoperand!=NULL) 
-  { 
-    myoperand->set_parent(result);
-  // set lvalue, it asserts operand!=NULL 
-    markLhsValues(result);
-  }
-  setOneSourcePositionForTransformation(result);
-  return result; 
-}
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildUnaryExpression_nfi(SgExpression* operand)
-   {
-     SgExpression* myoperand = operand;
-     T* result = new T(myoperand, NULL);
-     ROSE_ASSERT(result);   
-
-     if (myoperand != NULL) 
-        {
-          myoperand->set_parent(result);
-       // set lvalue, it asserts operand!=NULL 
-          markLhsValues(result);
-        }
-
-  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
-  // result->set_startOfConstruct(NULL);
-  // result->set_endOfConstruct(NULL);
-  // result->set_operatorPosition(NULL);
-     setSourcePosition(result);
-
-     result->set_need_paren(false);
-     return result; 
-   }
 
 #define BUILD_UNARY_DEF(suffix) \
   ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* op) \
@@ -6099,79 +6008,6 @@ SgThrowOp *SageBuilder::buildThrowOp(SgExpression *operand_i, SgThrowOp::e_throw
    }
 
 
-//---------------------binary expressions-----------------------
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildBinaryExpression(SgExpression* lhs, SgExpression* rhs)
-{
-  SgExpression* mylhs, *myrhs;
-  mylhs = lhs;
-  myrhs = rhs;
-
-#if 0 // Jeremiah complained this, sometimes users just move expressions around
- // it is very tempting to reuse expressions during translation,
-  // so try to catch such a mistake here
-  if (lhs!=NULL)
-    if (lhs->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse lhs of type "
-          << lhs->class_name() <<
-        " when building a binary expression . lhs is being copied."<<endl;
-     ROSE_ABORT();
-      mylhs = isSgExpression(deepCopy(lhs));
-    }
-
-  if (rhs!=NULL)
-    if (rhs->get_parent()!=NULL)
-    {
-      cout<<"Warning! Found an illegal attempt to reuse rhs of type "
-          << rhs->class_name() <<
-        " when building a binary expression . rhs is being copied."<<endl;
-     ROSE_ABORT();
-      myrhs = isSgExpression(deepCopy(rhs));
-    }
-#endif
-  T* result = new T(mylhs,myrhs, NULL);
-  ROSE_ASSERT(result);
-  if (mylhs!=NULL) 
-  {
-   mylhs->set_parent(result);
-  // set lvalue
-    markLhsValues(result);
-  }
-  if (myrhs!=NULL) myrhs->set_parent(result);
-  setOneSourcePositionForTransformation(result);
-  return result;
-
-}
-
-template <class T> ROSE_DLL_API
-T* SageBuilder::buildBinaryExpression_nfi(SgExpression* lhs, SgExpression* rhs)
-   {
-     SgExpression* mylhs, *myrhs;
-     mylhs = lhs;
-     myrhs = rhs;
-     T* result = new T(mylhs,myrhs, NULL);
-     ROSE_ASSERT(result);
-     if (mylhs!=NULL) 
-        {
-          mylhs->set_parent(result);
-       // set lvalue
-          markLhsValues(result);
-        }
-
-     if (myrhs!=NULL) myrhs->set_parent(result);
-
-  // DQ (11/2/2012): Modified to reflect call to function that defines source position policy.
-  // result->set_startOfConstruct(NULL);
-  // result->set_endOfConstruct(NULL);
-  // result->set_operatorPosition(NULL);
-     setSourcePosition(result);
-
-     result->set_need_paren(false);
-
-     return result;
-   }
 
 #define BUILD_BINARY_DEF(suffix) \
   ROSE_DLL_API Sg##suffix* SageBuilder::build##suffix##_nfi(SgExpression* lhs, SgExpression* rhs) \

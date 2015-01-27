@@ -16,6 +16,7 @@ namespace Backstroke {
     void reset();
     void create(SgNode*);
     void apply();
+    void setShowTransformationTrace(bool trace);
   protected:
     virtual void preOrderVisit(SgNode *astNode);
     virtual void postOrderVisit(SgNode *astNode);
@@ -24,6 +25,7 @@ namespace Backstroke {
     std::list<SgNode*> transformationSequenceCommit;
     bool isPointerType(SgNode* node);
     bool isLocalVariable(SgExpression* exp);
+    bool _showTransformationTrace;
   };
 };
 

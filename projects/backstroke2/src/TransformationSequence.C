@@ -2,10 +2,11 @@
 #include "TransformationSequence.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
+#include "CommandLineOptions.h"
 
 using namespace std;
 
-Backstroke::TransformationSequence::TransformationSequence() {
+Backstroke::TransformationSequence::TransformationSequence():_showTransformationTrace(false) {
 }
 
 Backstroke::TransformationSequence::~TransformationSequence() {
@@ -43,8 +44,31 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
     SgNode* operand=SgNodeHelper::getUnaryOpChild(astNode);
     transformationSequence.push_back(operand);
   }
-  if(isSgDeleteExp(astNode)) {
-    transformationSequenceCommit.push_back(astNode);
+  if(SgNewExp* newExp=isSgNewExp(astNode)) {
+    if(SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type())) {
+      SgType* arrayElementType=arrayType->get_base_type();
+      cout<<"WARNING: new["<<arrayElementType->unparseToString()<<"] operator not supported yet."<<endl;      
+    } else {
+      cout<<"WARNING: new operator not supported yet."<<endl;
+    }
+  }
+  if(SgDeleteExp* deleteExp=isSgDeleteExp(astNode)) {
+    if(deleteExp->get_is_array()) {
+      SgType* varType=deleteExp->get_variable()->get_type();
+      if(SgPointerType* pointerType=isSgPointerType(varType)) {
+        SgType* pointedToType=pointerType->get_base_type();
+        string elementTypeName="unknown";
+        if(SgClassType* classType=isSgClassType(pointedToType)) {
+          elementTypeName=classType->get_name();
+        }
+        cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;      
+      } else {
+        cerr<<"Error: operand of delete[] has non-pointer type. ROSE AST consistency error. Bailing out."<<"("<<(deleteExp->get_type()->unparseToString())<<")";
+        exit(1);
+      }
+    } else {
+      transformationSequenceCommit.push_back(astNode);
+    }
   }
 }
 
@@ -55,6 +79,9 @@ void Backstroke::TransformationSequence::create(SgNode* node) {
 
 void Backstroke::TransformationSequence::apply() {
   for(list<SgNode*>::iterator i=transformationSequence.begin();i!=transformationSequence.end();++i) {
+    if(_showTransformationTrace) {
+      cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<": ";
+    }
     if(isSgAssignOp(*i)) {
       SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(*i));
       SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(*i));
@@ -63,7 +90,9 @@ void Backstroke::TransformationSequence::apply() {
         +", "
         +rhs->unparseToString()
         +")";
-      cout<<"DEBUG: Applying transformation assignop: "<<s<<endl;
+      if(_showTransformationTrace) {
+        cout<<"applying transformation assignop: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
+      }
       SgNodeHelper::replaceAstWithString(*i,s);
     } else {
       SgExpression* exp=isSgExpression(*i);
@@ -75,10 +104,12 @@ void Backstroke::TransformationSequence::apply() {
         } else {
           s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
         }
-        cout<<"DEBUG: Applying transformation on operand: "<<s<<endl;
+        if(_showTransformationTrace)
+          cout<<"applying transformation on operand: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
         SgNodeHelper::replaceAstWithString(*i,s);
       } else {
-        cout<<"DEBUG: Detected local variable."<<endl;
+        if(_showTransformationTrace)
+          cout<<"optimization: no transformation necessary (detected local variable: "<<exp->unparseToString()<<")"<<endl;
       }
     }
   }
@@ -125,4 +156,6 @@ bool Backstroke::TransformationSequence::isLocalVariable(SgExpression* exp) {
   return isSgVarRefExp(exp);
 }
 
-
+void Backstroke::TransformationSequence::setShowTransformationTrace(bool trace) {
+  _showTransformationTrace=trace;
+}

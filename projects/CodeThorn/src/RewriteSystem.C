@@ -68,20 +68,20 @@ void RewriteSystem::rewriteCompoundAssignments(SgNode*& root, VariableIdMapping*
     //TODO: check whether build functions set parent pointers
     switch(root->variantT()) {
     case V_SgPlusAssignOp:
-      newExp=SageBuilder::buildBinaryExpression<SgAddOp>(lhsCopy,rhsCopy);
-      root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+      newExp=SageBuilder::buildAddOp(lhsCopy,rhsCopy);
+      root=SageBuilder::buildAssignOp(lhsCopy2,newExp);
       break;
     case V_SgDivAssignOp:
-      newExp=SageBuilder::buildBinaryExpression<SgDivideOp>(lhsCopy,rhsCopy);
-      root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+      newExp=SageBuilder::buildDivideOp(lhsCopy,rhsCopy);
+      root=SageBuilder::buildAssignOp(lhsCopy2,newExp);
       break;
     case V_SgMinusAssignOp:
-      newExp=SageBuilder::buildBinaryExpression<SgSubtractOp>(lhsCopy,rhsCopy);
-      root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+      newExp=SageBuilder::buildSubtractOp(lhsCopy,rhsCopy);
+      root=SageBuilder::buildAssignOp(lhsCopy2,newExp);
       break;
     case V_SgMultAssignOp:
-      newExp=SageBuilder::buildBinaryExpression<SgMultiplyOp>(lhsCopy,rhsCopy);
-      root=SageBuilder::buildBinaryExpression<SgAssignOp>(lhsCopy2,newExp);
+      newExp=SageBuilder::buildMultiplyOp(lhsCopy,rhsCopy);
+      root=SageBuilder::buildAssignOp(lhsCopy2,newExp);
       break;
     default: /* ignore all other cases - all other expr remain unmodified */
       ;
