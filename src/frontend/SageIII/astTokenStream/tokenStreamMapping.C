@@ -1287,6 +1287,43 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                  }
                             }
+
+                      // DQ (1/27/2015): Adjust the the for loop increment expression mapping relative to the end of the for loop test to handle
+                      // the case where this may be a prefix operator++() and compiler generated and thus not mapped accurately to the token start.
+                         if ( ( tokenStreamSequenceMap.find(childAttributes[SgForStatement_test].node) != tokenStreamSequenceMap.end() ) &&
+                              ( tokenStreamSequenceMap.find(childAttributes[SgForStatement_increment].node) != tokenStreamSequenceMap.end() ) )
+                            {
+#if 0
+                              printf ("$$$$$$$$$$ Detected for loop increment mapping (could be nodified here) \n");
+#endif
+                              TokenStreamSequenceToNodeMapping* for_test_mappingInfo      = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
+                              TokenStreamSequenceToNodeMapping* for_increment_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_increment].node];
+
+                              ROSE_ASSERT(for_test_mappingInfo != NULL);
+                              ROSE_ASSERT(for_increment_mappingInfo != NULL);
+
+                              int test_end = for_test_mappingInfo->token_subsequence_end;
+                              int increment_start = for_increment_mappingInfo->token_subsequence_start;
+                              int increment_end = for_increment_mappingInfo->token_subsequence_start;
+#if 0
+                              printf ("test_end = %d increment_start = %d increment_end = %d \n",test_end,increment_start,increment_end);
+#endif
+                              int better_start_of_token_subsequence = test_end + 1;
+
+                              while ( better_start_of_token_subsequence < increment_start && 
+                                      ( tokenStream[better_start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
+                                        tokenStream[better_start_of_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                 {
+                                   better_start_of_token_subsequence++;
+                                 }
+#if 0
+                              printf ("better_start_of_token_subsequence = %d \n",better_start_of_token_subsequence);
+#endif
+                              for_increment_mappingInfo->token_subsequence_start = better_start_of_token_subsequence;
+#if 0
+                              printf ("RESET: for_increment_mappingInfo->token_subsequence_start = %d \n",for_increment_mappingInfo->token_subsequence_start);
+#endif
+                            }
                        }
                   }
 
@@ -1950,6 +1987,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          printf ("   --- is left edge  = %s \n",(i == 0) ? "true" : "false");
                          printf ("   --- is right edge = %s \n",(i == tokenToNodeVector.size()-1) ? "true" : "false");
 #endif
+
+#if 0
+                      // DQ (1/27/2015): Debugging case of test2015_110.C (prefix operator++() used in for loop increment expression).
+                         if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
+                            {
+                              printf ("Exiting as a test! (detected for loop increment expression) \n");
+                              ROSE_ASSERT(false);
+                            }
+#endif
+
 #if 1
                       // DQ (1/2/2015): New more general mechanism, we now want to uniformally make sure that the leading and trailing whitespace does not include syntax.
                          trimLeadingWhiteSpaceFromLeft(mappingInfo,original_start_of_token_subsequence);
@@ -3008,6 +3055,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                          last_node_token_subsequence_start = token_subsequence_start;
                          last_node_token_subsequence_end   = token_subsequence_end;
+#if 0
+                      // DQ (1/27/2015): Debugging case of test2015_110.C (prefix operator++() used in for loop increment expression).
+                         if (isSgForStatement(n) != NULL && mappingInfo->node == isSgForStatement(n)->get_increment() )
+                            {
+                              printf ("Exiting as a test! (detected for loop increment expression) \n");
+                              ROSE_ASSERT(false);
+                            }
+#endif
                        }
 
                  // Find the intervals of indexes into the child array of IR nodes that don't have associated token subsequences already defined.
@@ -3774,7 +3829,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  }
                                 else
                                  {
-                                   printf ("In evaluateSynthesizedAttribute(): support for else syntax: false body in SgIfStmt does not have a previous TokenStreamSequenceToNodeMapping: ignoring this case \m");
+                                   printf ("In evaluateSynthesizedAttribute(): support for else syntax: false body in SgIfStmt does not have a previous TokenStreamSequenceToNodeMapping: ignoring this case \n");
                                    printf ("   --- false_body_statement = %p \n");
                                  }
                             }
@@ -3802,6 +3857,18 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         {
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
+        }
+#endif
+#if 0
+     SgForStatement* forStatement = isSgForStatement(n->get_parent());
+     if (forStatement != NULL)
+        {
+          if (n == forStatement->get_increment())
+             {
+            // evaluateForLoopIncrementExpression = true;
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+             }
         }
 #endif
 
@@ -4008,9 +4075,10 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                             }
                            else
                             {
+#if 0
                               printf ("Subtree is not a macro: computed_start_line = %d computed_start_column = %d computed_end_line = %d computed_end_column = %d \n",
                                    computed_start_line,computed_start_column,computed_end_line,computed_end_column);
-
+#endif
                               subtreeHasValidSourcePosition = true;
                             }
 
@@ -4672,7 +4740,7 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
 
                                    if (start_of_token_subsequence >= 0 && tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme.c_str() != ";")
                                       {
-#if 1
+#if 0
                                         printf ("Reset the processing value to false (to eliminate mapping children (child statements in a macro expansion) to the token stream) \n");
 #endif
                                         processed = false;

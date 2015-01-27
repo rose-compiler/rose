@@ -12694,15 +12694,9 @@ SgBasicBlock* SageInterface::ensureBasicBlockAsBodyOfUpcForAll(SgUpcForAllStatem
       b->set_parent(fs);
 
    // DQ (1/18/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
-#if 1
       recordNormalizations(b);
-#else
-      SgBasicBlock* bb = isSgBasicBlock(b);
-      ROSE_ASSERT(bb != NULL);
-      addedBasicBlockNodes.push_back(bb);
 #if 0
       printf ("In SageInterface::ensureBasicBlockAsTrueBodyOfIf(): Added SgBasicBlock b = %p to addedBasicBlockNodes.size() = %zu \n",b,addedBasicBlockNodes.size());
-#endif
 #endif
     }
     ROSE_ASSERT (isSgBasicBlock(b));
@@ -12718,7 +12712,7 @@ void SageInterface::recordNormalizations(SgStatement* s)
      SgBasicBlock* bb = isSgBasicBlock(s);
      ROSE_ASSERT(bb != NULL);
      addedBasicBlockNodes.push_back(bb);
-#if 1
+#if 0
      printf ("In SageInterface::recordNormalizations(): Added SgBasicBlock = %p to addedBasicBlockNodes.size() = %zu \n",bb,addedBasicBlockNodes.size());
 #endif
    }
@@ -12729,7 +12723,7 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
   // Remove unused basic block IR nodes added as part of normalization.
   // This function shuld be called before the unparse step.
 
-#if 1
+#if 0
      printf ("In SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
 #endif
 
@@ -12739,8 +12733,9 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
           ROSE_ASSERT(b != NULL);
           if (b->get_statements().size() == 1)
              {
+#if 0
                 printf ("This SgBasicBlock can be denormalized: b = %p \n",b);
-
+#endif
                 SgStatement* parentOfBlock = isSgStatement(b->get_parent());
                 ROSE_ASSERT(parentOfBlock != NULL);
 
@@ -12784,11 +12779,6 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                              }
                           break;
                         }
-
-
-
-
-
 
                   // DQ (1/21/2015): Adding support for de-normalization of while statements with normalized bodies.
                      case V_SgSwitchStatement:
@@ -12856,7 +12846,6 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
                           ROSE_ASSERT(false);
                         }
                    }
-
 #if 0
                 printf ("Exiting as a test! \n");
                 ROSE_ASSERT(false);
@@ -12864,7 +12853,7 @@ void SageInterface::cleanupNontransformedBasicBlockNode()
              }
         }
 
-#if 1
+#if 0
      printf ("Leaving SageInterface::cleanupNontransformedBasicBlockNode(): addedBasicBlockNodes.size() = %zu \n",addedBasicBlockNodes.size());
 #endif
    }
