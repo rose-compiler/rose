@@ -308,9 +308,9 @@ int main( int argc, char * argv[] ) {
     ("exploration-mode",po::value< string >(), " set mode in which state space is explored ([breadth-first], depth-first, loop-aware)")
     ("eliminate-stg-back-edges",po::value< string >(), " eliminate STG back-edges (STG becomes a tree).")
     ("spot-stg",po::value< string >(), " generate STG in SPOT-format in file [arg]")
-    ("dump1",po::value< string >(), " [experimental] generates array updates in file arrayupdates.txt")
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
+    ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
@@ -403,7 +403,6 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("rersmode",false);
   boolOptions.registerOption("rers-numeric",false);
   boolOptions.registerOption("eliminate-stg-back-edges",false);
-  boolOptions.registerOption("dump1",false);
   boolOptions.registerOption("rule-const-subst",true);
 
   boolOptions.registerOption("inf-paths-only",false);
@@ -420,6 +419,8 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("incomplete-stg",false);
+
+  boolOptions.registerOption("print-update-infos",false);
 
   boolOptions.registerOption("minimize-states",false);
 
@@ -592,10 +593,13 @@ int main( int argc, char * argv[] ) {
     }
   }
 
+  if(args.count("print-update-infos")&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
+    cerr<<"Error: option print-update-infos must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
+    exit(1);
+  }
+
   RewriteSystem rewriteSystem;
-  // reset dump1 in case sorted or non-sorted is used
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
-    boolOptions.registerOption("dump1",true);
     analyzer.setSkipSelectedFunctionCalls(true);
     analyzer.setSkipArrayAccesses(true);
     if(numberOfThreadsToUse>1) {
@@ -713,10 +717,6 @@ int main( int argc, char * argv[] ) {
   cout << "INIT: creating solver."<<endl;
   analyzer.initializeSolver1("main",root);
   analyzer.initLabeledAssertNodes(sageProject);
-  if(boolOptions["dump1"]) {
-    // extraction of expressions: skip function calls to selected functions (also inside expressions) for defered handling.
-    analyzer.setSkipSelectedFunctionCalls(true);
-  }
 
   double initRunTime=timer.getElapsedTimeInMilliSec();
 
@@ -1054,7 +1054,7 @@ int main( int argc, char * argv[] ) {
   double arrayUpdateSsaNumberingRunTime=0.0;
   double sortingAndIORunTime=0.0;
   
-  if(boolOptions["dump1"]) {
+  if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
     ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
@@ -1075,6 +1075,9 @@ int main( int argc, char * argv[] ) {
                                        useConstSubstitutionRule
                                        );
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+    if(boolOptions["print-update-infos"]) {
+      speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
+    }
     cout<<"STATUS: establishing array-element SSA numbering."<<endl;
     timer.start();
 #if 0
@@ -1085,7 +1088,6 @@ int main( int argc, char * argv[] ) {
 #endif
     arrayUpdateSsaNumberingRunTime=timer.getElapsedTimeInMilliSec();
     
-    cout<<"STATUS: generating normalized array-assignments file \"arrayupdates.txt\"."<<endl;
     if(args.count("dump-non-sorted")) {
       string filename=args["dump-non-sorted"].as<string>();
       speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, false);
@@ -1095,10 +1097,6 @@ int main( int argc, char * argv[] ) {
       string filename=args["dump-sorted"].as<string>();
       speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
       sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
-    }
-    if(boolOptions["dump1"]) {
-      //string filename="arrayupdates.txt";
-      //writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
     }
     totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }

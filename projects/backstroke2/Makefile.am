@@ -9,7 +9,8 @@ SUBDIRS=\
 
 
 EXTRA_DIST=\
-	README
+	README \
+	docs/usermanual.tex
 
 faketarget:
 	src/runtime/isstacktest.C
