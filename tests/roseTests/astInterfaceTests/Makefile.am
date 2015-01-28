@@ -172,8 +172,9 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
   inputmoveDeclarationToInnermostScope_14.C \
-  inputmoveDeclarationToInnermostScope_15.C \
-  inputmoveDeclarationToInnermostScope_16.C
+  inputmoveDeclarationToInnermostScope_15.C  \
+  inputmoveDeclarationToInnermostScope_16.C \
+  inputmoveDeclarationToInnermostScope_18.C
 
 # DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
 # inputmoveDeclarationToInnermostScope_test2014_26.C
@@ -181,7 +182,9 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
 
 # identity translator cannot handle them properly  
+# 17: shared SgArrayType issue
 MOVE_DECLS_TESTCODES_FAILING = \
+  inputmoveDeclarationToInnermostScope_17.C \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
  
@@ -213,6 +216,9 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
   inputmoveDeclarationToInnermostScope_14.C \
+  inputmoveDeclarationToInnermostScope_15.C \
+  inputmoveDeclarationToInnermostScope_16.C \
+  inputmoveDeclarationToInnermostScope_18.C \
   inputmoveDeclarationToInnermostScope_test2014_01.C \
   inputmoveDeclarationToInnermostScope_test2014_02.C \
   inputmoveDeclarationToInnermostScope_test2014_03.C \
@@ -339,12 +345,15 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_test2015_96.C \
   inputmoveDeclarationToInnermostScope_test2015_97.C \
   inputmoveDeclarationToInnermostScope_test2015_98.C \
+  inputmoveDeclarationToInnermostScope_test2015_99.C \
   inputmoveDeclarationToInnermostScope_test2015_102.C \
   inputmoveDeclarationToInnermostScope_test2015_103.C \
   inputmoveDeclarationToInnermostScope_test2015_104.C \
+  inputmoveDeclarationToInnermostScope_test2015_105.C \
   inputmoveDeclarationToInnermostScope_test2015_108.C \
   inputmoveDeclarationToInnermostScope_test2015_109.C \
-  inputmoveDeclarationToInnermostScope_test2015_110.C 
+  inputmoveDeclarationToInnermostScope_test2015_110.C \
+  inputmoveDeclarationToInnermostScope_test2015_111.C 
 
 # DQ (1/11/2014): Failing test with new design.
 #  inputmoveDeclarationToInnermostScope_test2015_45.C 

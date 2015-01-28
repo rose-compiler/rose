@@ -1294,7 +1294,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ( tokenStreamSequenceMap.find(childAttributes[SgForStatement_increment].node) != tokenStreamSequenceMap.end() ) )
                             {
 #if 0
-                              printf ("$$$$$$$$$$ Detected for loop increment mapping (could be nodified here) \n");
+                              printf ("$$$$$$$$$$ Detected for loop increment mapping (might be nodified here) \n");
 #endif
                               TokenStreamSequenceToNodeMapping* for_test_mappingInfo      = tokenStreamSequenceMap[childAttributes[SgForStatement_test].node];
                               TokenStreamSequenceToNodeMapping* for_increment_mappingInfo = tokenStreamSequenceMap[childAttributes[SgForStatement_increment].node];
@@ -1322,6 +1322,81 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               for_increment_mappingInfo->token_subsequence_start = better_start_of_token_subsequence;
 #if 0
                               printf ("RESET: for_increment_mappingInfo->token_subsequence_start = %d \n",for_increment_mappingInfo->token_subsequence_start);
+#endif
+                            }
+                       }
+                  }
+
+            // DQ (1/27/2015): Test for and handle the case of extra parenthisis around the conditional in a while statement (e.g. "while ( (i=5) ) { }").
+            // See example test code: test2015_111.C.
+               SgWhileStmt* whileStatement = isSgWhileStmt(n);
+               if (whileStatement != NULL)
+                  {
+                    if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                       {
+                         TokenStreamSequenceToNodeMapping* while_mappingInfo      = tokenStreamSequenceMap[n];
+                         if ( ( tokenStreamSequenceMap.find(childAttributes[SgWhileStmt_condition].node) != tokenStreamSequenceMap.end() ) &&
+                              ( tokenStreamSequenceMap.find(childAttributes[SgWhileStmt_body].node) != tokenStreamSequenceMap.end() ) )
+                            {
+#if 0
+                              printf ("$$$$$$$$$$ Detected while loop condition mapping (might be nodified here) \n");
+#endif
+                              TokenStreamSequenceToNodeMapping* while_condition_mappingInfo = tokenStreamSequenceMap[childAttributes[SgWhileStmt_condition].node];
+                              TokenStreamSequenceToNodeMapping* while_body_mappingInfo      = tokenStreamSequenceMap[childAttributes[SgWhileStmt_body].node];
+
+                              int while_token_index_start     = while_mappingInfo->token_subsequence_start;
+                              int while_condition_index_start = while_condition_mappingInfo->token_subsequence_start;
+                              int while_condition_index_end   = while_condition_mappingInfo->token_subsequence_end;
+                              int while_body_index_start      = while_body_mappingInfo->token_subsequence_start;
+#if 0
+                              printf ("while_token_index_start     = %d \n",while_token_index_start);
+                              printf ("while_condition_index_start = %d \n",while_condition_index_start);
+                              printf ("while_condition_index_end   = %d \n",while_condition_index_end);
+                              printf ("while_body_index_start      = %d \n",while_body_index_start);
+#endif
+                           // Start at the while_condition_index_start and iterate back to find the first "(" after the "while token" at while_token_index_start.
+                              int better_start_of_condition_token_subsequence = while_token_index_start + 1;
+
+                              bool skipped_first = false;
+                              while ( better_start_of_condition_token_subsequence < while_condition_index_start && 
+                                      ( tokenStream[better_start_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
+                                        tokenStream[better_start_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                 {
+                                   better_start_of_condition_token_subsequence++;
+                                // if (mappingInfo->leading_whitespace_start != -1 && tokenStream[mappingInfo->leading_whitespace_start]->p_tok_elem->token_lexeme == "{")
+                                   if (skipped_first == false && tokenStream[better_start_of_condition_token_subsequence]->p_tok_elem->token_lexeme == "(")
+                                      {
+                                        better_start_of_condition_token_subsequence++;
+                                        skipped_first = true;
+                                      }
+                                 }
+#if 0
+                              printf ("better_start_of_condition_token_subsequence = %d \n",better_start_of_condition_token_subsequence);
+#endif
+
+                           // Start at the while_body_index_start and iterate back to find the first ")".
+                              int better_end_of_condition_token_subsequence = while_body_index_start - 1;
+
+                              bool skipped_last = false;
+                              while ( better_end_of_condition_token_subsequence > while_condition_index_end && 
+                                      ( tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
+                                        tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                 {
+                                   better_end_of_condition_token_subsequence--;
+                                   if (skipped_last == false && tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_lexeme == ")")
+                                      {
+                                        better_end_of_condition_token_subsequence--;
+                                        skipped_last = true;
+                                      }
+                                 }
+#if 0
+                              printf ("better_end_of_condition_token_subsequence   = %d \n",better_end_of_condition_token_subsequence);
+#endif
+                              while_condition_mappingInfo->token_subsequence_start = better_start_of_condition_token_subsequence;
+                              while_condition_mappingInfo->token_subsequence_end   = better_end_of_condition_token_subsequence;
+#if 0
+                              printf ("Exiting as a test! \n");
+                              ROSE_ASSERT(false);
 #endif
                             }
                        }
@@ -3852,7 +3927,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 
 #if 0
-  // DQ (1/21/2015): Debugging inputemover*_test2015_90.C
+  // DQ (1/21/2015): Debugging inputmover*_test2015_90.C
      if (isSgWhileStmt(n) != NULL)
         {
           printf ("Exiting as a test! \n");
