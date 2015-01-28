@@ -951,6 +951,16 @@ sourcePositionInformation (SgNode* node)
              {
                ss += "no source position available\\n";
              }
+
+       // DQ (1/28/2015): Added more info to support debugging the token-stream unparsing.
+          if (locatedNode->get_containsTransformationToSurroundingWhitespace() == true)
+             {
+               ss += "containsTransformationToSurroundingWhitespace == true\\n";
+             }
+            else
+             {
+               ss += "containsTransformationToSurroundingWhitespace == false\\n";
+             }
         }
        else
         {
