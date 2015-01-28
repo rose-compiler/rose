@@ -160,11 +160,7 @@ void ModelBuilder::add(Model::model_t & model, const MFB::api_t * api) {
 
   std::set<SgFunctionSymbol *>::const_iterator it_function_symbol;
   for (it_function_symbol = api->function_symbols.begin(); it_function_symbol != api->function_symbols.end(); it_function_symbol++) {
-    if ((*it_function_symbol)->get_name().getString() == "acc_get_device_type")
-      std::cout << "MDCG see: " << (*it_function_symbol)->get_name().getString() << std::endl;
     if (model.lookup_function(*it_function_symbol) == NULL) {
-      if ((*it_function_symbol)->get_name().getString() == "acc_get_device_type")
-        std::cout << "MDCG scans: " << (*it_function_symbol)->get_name().getString() << std::endl;
       add(model, *it_function_symbol);
     }
   }
@@ -238,9 +234,6 @@ void ModelBuilder::add(Model::model_t & model, SgFunctionSymbol * function_symbo
 
   element->node->symbol = function_symbol;
 
-  if (function_symbol->get_name().getString() == "acc_get_device_type")
-    std::cout << "MDCG is trying to load: " << function_symbol->get_name().getString() << std::endl; 
-
   SgFunctionType * func_type = isSgFunctionType(function_symbol->get_type());
   assert(func_type != NULL);
 
@@ -270,9 +263,6 @@ void ModelBuilder::add(Model::model_t & model, SgFunctionSymbol * function_symbo
   setParentFromScope<Model::e_model_function>(model, element, function_symbol);
 
   model.functions.push_back(element);
-
-  if (function_symbol->get_name().getString() == "acc_get_device_type")
-    std::cout << "MDCG loaded: " << function_symbol->get_name().getString() << std::endl; 
 }
 
 void ModelBuilder::add(Model::model_t & model, SgClassSymbol * class_symbol) {
