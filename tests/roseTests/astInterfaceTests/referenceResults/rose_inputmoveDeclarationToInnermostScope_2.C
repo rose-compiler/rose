@@ -29,8 +29,8 @@ void initialize()
 
 void foo(int len,float *compression,float *vnewc,float *delvc,float *compHalfStep)
 {
-  for (int zidx = 0; zidx < len; ++zidx) {
 /* declared once, used once */
+  for (int zidx = 0; zidx < len; ++zidx) {
     float vchalf;
     compression[zidx] = (0.1 / vnewc[zidx] - 1.0);
     vchalf = (vnewc[zidx] - delvc[zidx] * 0.5);

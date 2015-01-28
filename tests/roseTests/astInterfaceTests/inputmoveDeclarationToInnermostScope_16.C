@@ -1,16 +1,16 @@
-int foobar(void)
+// Test from Dan: demonstrate preprocessing info. attached
+void foobar(int e)
 {
-  int  tone;
-  int  test;
-
-  tone = 1;
-
-  if (tone)
+#if 1
+  int x;
+#endif
+  int d;
+  if (e)
   {
-    test = 0;
+    d =0;
   }
-  else if (tone)
+  else
   {
-    test = 0;
+    d =1;
   }
 } 

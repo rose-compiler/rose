@@ -170,13 +170,15 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_13.C \
   inputmoveDeclarationToInnermostScope_14.C \
   inputmoveDeclarationToInnermostScope_15.C  \
-  inputmoveDeclarationToInnermostScope_16.C
-
+  inputmoveDeclarationToInnermostScope_16.C \
+  inputmoveDeclarationToInnermostScope_18.C
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
 
 # identity translator cannot handle them properly  
+# 17: shared SgArrayType issue
 MOVE_DECLS_TESTCODES_FAILING = \
+  inputmoveDeclarationToInnermostScope_17.C \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
  

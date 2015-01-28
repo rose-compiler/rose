@@ -12266,6 +12266,7 @@ void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement*
   AttachedPreprocessingInfoType* infoToRemoveList = new AttachedPreprocessingInfoType();
 
   if (infoList == NULL) return;
+  PreprocessingInfo* prevItem = NULL; 
   for (Rose_STL_Container<PreprocessingInfo*>::iterator i= (*infoList).begin();
       i!=(*infoList).end();i++)
   {
@@ -12289,10 +12290,21 @@ void  SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement*
       if ( src_position == PreprocessingInfo::undef || info->getRelativePosition()==src_position)
       {
         if (usePrepend)
-          // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
-          // to indicate appending or prepending by reusing the type of relative position.
-          // this is very confusing for users
-          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+        {
+          if (prevItem == NULL)
+          {  
+            // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
+            // to indicate appending or prepending by reusing the type of relative position.
+            // this is very confusing for users
+            stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+          }
+          else // there is a previous item, insert after it
+          {
+            stmt_dst->insertToAttachedPreprocessingInfo(info, prevItem);
+          }  
+
+          prevItem = info; 
+         } 
         else
           stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
 
