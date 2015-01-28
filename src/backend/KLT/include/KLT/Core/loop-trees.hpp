@@ -15,9 +15,6 @@
 
 #include <cassert>
 
-#include "sage3basic.h"
-#include "AstFromString.h"
-
 class SgProject;
 class SgExpression;
 class SgStatement;

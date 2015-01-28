@@ -9,8 +9,6 @@
 #include <list>
 #include <set>
 
-#include "sage3basic.h"
-
 class SgVariableSymbol;
 
 namespace KLT {

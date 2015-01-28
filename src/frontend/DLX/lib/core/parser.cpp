@@ -6,6 +6,8 @@
  *
  */
 
+#include "sage3basic.h"
+
 #include "DLX/Core/parser.hpp"
 #include <cstring>
 

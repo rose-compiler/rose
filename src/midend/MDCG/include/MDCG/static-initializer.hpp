@@ -17,8 +17,6 @@
 #include <sstream>
 #include <iterator>
 
-#include "sage3basic.h"
-
 namespace MDCG {
 
 /*!

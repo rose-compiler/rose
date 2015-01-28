@@ -5,6 +5,8 @@
  *
  */
 
+#include "sage3basic.h"
+
 #include "MDCG/static-initializer.hpp"
 #include "MFB/Sage/variable-declaration.hpp"
 

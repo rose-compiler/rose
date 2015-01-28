@@ -13,8 +13,6 @@
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/constructs.hpp"
 
-#include "sage3basic.h"
-
 #include <boost/filesystem.hpp>
 
 #include <vector>

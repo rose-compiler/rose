@@ -1,5 +1,6 @@
 
 #include "KLT/utils.hpp"
+#include "sage3basic.h"
 #include "AstFromString.h"
 
 namespace KLT {

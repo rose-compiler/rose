@@ -1,4 +1,5 @@
 
+#include "sage3basic.h"
 #include "KLT/Core/mfb-klt.hpp"
 
 namespace MFB {

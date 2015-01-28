@@ -4,7 +4,6 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 lib_LTLIBRARIES=libDLX-core.la
 
 libDLX_core_la_SOURCES= \
-  frontend.cpp \
   parser.cpp
 libDLX_core_la_CXXFLAGS= \
   -g \
