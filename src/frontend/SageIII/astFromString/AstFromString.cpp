@@ -1,6 +1,8 @@
 /*
  Chunhua (Leo) Liao" <liao6@llnl.gov>
  */
+
+#include "sage3basic.h"
 #include "AstFromString.h"
 #include <string>
 #include <algorithm>

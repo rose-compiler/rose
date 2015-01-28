@@ -4,7 +4,6 @@
  * Liao 4/13/2011 
  */
 
-#include "sage3basic.h"
 #include <iostream>
 #include <vector>
 
