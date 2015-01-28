@@ -1402,6 +1402,46 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                        }
                   }
 
+            // DQ (1/27/2015): Adding special support since the function prototype does not have any children that will generate mappings (except itself).
+            // So the tokenToNodeVector will be empty.
+               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+               if (functionDeclaration != NULL)
+                  {
+                    if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+                       {
+#if 0
+                         printf ("Detected function prototype: \n");
+                         functionDeclaration->get_startOfConstruct()->display("start of functionDeclaration: debug");
+                         functionDeclaration->get_endOfConstruct()->display("end of functionDeclaration: debug");
+#endif
+                         if (tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end())
+                            {
+                              TokenStreamSequenceToNodeMapping* function_protytype_mappingInfo = tokenStreamSequenceMap[n];
+                              ROSE_ASSERT(function_protytype_mappingInfo != NULL);
+
+                              int function_protype_start = function_protytype_mappingInfo->token_subsequence_start;
+                              int function_protype_end   = function_protytype_mappingInfo->token_subsequence_end;
+#if 0
+                              printf ("   --- function_protype_start = %d function_protype_end = %d \n",function_protype_start,function_protype_end);
+#endif
+                              int better_start_of_function_prototype_token_subsequence = function_protype_start + 1;
+                              while ( better_start_of_function_prototype_token_subsequence < function_protype_end && 
+                                      ( tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
+                                        tokenStream[better_start_of_function_prototype_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                 {
+                                   better_start_of_function_prototype_token_subsequence++;
+                                 }
+#if 0
+                              printf ("better_start_of_function_prototype_token_subsequence = %d \n",better_start_of_function_prototype_token_subsequence);
+#endif
+                              function_protytype_mappingInfo->token_subsequence_start = better_start_of_function_prototype_token_subsequence;
+#if 0
+                              printf ("RESET: function_protytype_mappingInfo->token_subsequence_start = %d end = %d \n",function_protytype_mappingInfo->token_subsequence_start,function_protytype_mappingInfo->token_subsequence_end);
+#endif
+                            }
+                       }
+                  }
+
                for (size_t i = 0; i < childAttributes.size(); i++)
                   {
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
@@ -1768,7 +1808,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                   }
 #if 0
             // List the IR nodes that have an identified token subsequence mapping (after removing nexted subsequence mappings).
-               printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings: \n");
+               printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings (tokenToNodeVector.size() = %zu): \n",tokenToNodeVector.size());
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
                     printf ("   --- tokenToNodeVector[j=%zu] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
@@ -3932,6 +3972,18 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         {
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
+        }
+#endif
+#if 0
+  // DQ (1/21/2015): Debugging inputmover*_test2015_90.C
+     if (isSgFunctionDeclaration(n) != NULL)
+        {
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(n);
+          if (functionDeclaration == functionDeclaration->get_firstNondefiningDeclaration())
+             {
+               printf ("Exiting as a test! (found function prototype) \n");
+               ROSE_ASSERT(false);
+             }
         }
 #endif
 #if 0
