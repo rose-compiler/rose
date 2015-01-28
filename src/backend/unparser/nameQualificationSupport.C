@@ -6597,7 +6597,8 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
      printf ("In NameQualificationTraversal::setNameQualification(): variableDeclaration->get_global_qualification_required() = %s \n",variableDeclaration->get_global_qualification_required() ? "true" : "false");
 #endif
 
-     if (qualifiedNameMapForNames.find(variableDeclaration) == qualifiedNameMapForNames.end())
+     std::map<SgNode*,std::string>::iterator it_qualifiedNameMapForNames = qualifiedNameMapForNames.find(variableDeclaration);
+     if (it_qualifiedNameMapForNames == qualifiedNameMapForNames.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Inserting qualifier for name = %s into list at SgVariableDeclaration IR node = %p = %s \n",qualifier.c_str(),variableDeclaration,variableDeclaration->class_name().c_str());
@@ -6607,8 +6608,10 @@ NameQualificationTraversal::setNameQualification(SgVariableDeclaration* variable
        else
         {
 #if 1
-          printf ("Error: name in qualifiedNameMapForNames already exists... \n");
-          ROSE_ASSERT(false);
+       // TV (07/19/2013) : It was a error. When using multi-file builder with "project wide global scope" it was failing.
+       //                   I relaxed the check to verify that the computed qualification is the same as previously...
+          printf ("Warning: name in qualifiedNameMapForNames already exists... Checking if they are equals...\n");
+          ROSE_ASSERT(it_qualifiedNameMapForNames->second == qualifier);
 #endif
         }
    }

@@ -256,17 +256,17 @@ string get_type_name(SgType* t)
                 ROSE_ASSERT(mod_type != NULL);
                 string res;
                 bool unparse_base = true;
-                if ( isSgReferenceType(mod_type->get_base_type()) ||
-                     isSgPointerType(mod_type->get_base_type()) ) {
-                    res = get_type_name(mod_type->get_base_type());
-                    unparse_base = false;
-                }
                 if (mod_type->get_typeModifier().isOpenclGlobal())
                     res = "__global " + res;
                 if (mod_type->get_typeModifier().isOpenclLocal())
                     res = "__local " + res;
                 if (mod_type->get_typeModifier().isOpenclConstant())
                     res = "__constant " + res;
+                if ( isSgReferenceType(mod_type->get_base_type()) ||
+                     isSgPointerType(mod_type->get_base_type()) ) {
+                    res = get_type_name(mod_type->get_base_type());
+                    unparse_base = false;
+                }
                 if (mod_type->get_typeModifier().haveAddressSpace()) {
                     std::ostringstream outstr;
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
@@ -2402,15 +2402,16 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
      if (info.isTypeFirstPart())
         {
        // Print the base type if this has to come first
-          if (btype_first)
-               unparseType(mod_type->get_base_type(), info);
-
           if (mod_type->get_typeModifier().isOpenclGlobal())
               curprint ( "__global ");
           if (mod_type->get_typeModifier().isOpenclLocal())
               curprint ( "__local ");
           if (mod_type->get_typeModifier().isOpenclConstant())
               curprint ( "__constant ");
+
+          if (btype_first)
+               unparseType(mod_type->get_base_type(), info);
+
           if (mod_type->get_typeModifier().haveAddressSpace()) {
               std::ostringstream outstr;
               outstr << "__attribute__((address_space(" << mod_type->get_typeModifier().get_address_space_value() << ")))";

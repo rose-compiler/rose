@@ -553,6 +553,15 @@ CommandlineProcessing::isSourceFilename ( string name )
              }
         }
 
+     for ( Rose_STL_Container<string>::iterator j = extraCppSourceFileSuffixes.begin(); j != extraCppSourceFileSuffixes.end(); j++ )
+        {
+          int jlength = (*j).size();
+          if ( (length > jlength) && (name.compare(length - jlength, jlength, *j) == 0) )
+             {
+               return true;
+             }
+        }
+
      return false;
    }
 
