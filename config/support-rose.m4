@@ -890,9 +890,6 @@ ROSE_SUPPORT_VISUALIZATION
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
 
-# support for Unified Parallel Runtime, check for CUDA and OpenCL
-ROSE_SUPPORT_UPR
-
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
 # *********************************************************************
@@ -1058,6 +1055,14 @@ if test "x$enable_candl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
+
+# *****************************************************************
+#            Accelerator Support (CUDA, OpenCL, OpenACC)
+# *****************************************************************
+
+ROSE_CHECK_CUDA
+ROSE_CHECK_OPENCL
+ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1740,18 +1745,6 @@ src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
-src/3rdPartyLibraries/UPR/Makefile
-src/3rdPartyLibraries/UPR/docs/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/doxy.conf
-src/3rdPartyLibraries/UPR/examples/Makefile
-src/3rdPartyLibraries/UPR/examples/cuda/Makefile
-src/3rdPartyLibraries/UPR/examples/opencl/Makefile
-src/3rdPartyLibraries/UPR/examples/xomp/Makefile
-src/3rdPartyLibraries/UPR/include/Makefile
-src/3rdPartyLibraries/UPR/include/UPR/Makefile
-src/3rdPartyLibraries/UPR/lib/Makefile
-src/3rdPartyLibraries/UPR/tools/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
@@ -1781,6 +1774,15 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/DLX/Makefile
+src/frontend/DLX/docs/Makefile
+src/frontend/DLX/docs/doxygen/Makefile
+src/frontend/DLX/docs/doxygen/doxy.conf
+src/frontend/DLX/include/Makefile
+src/frontend/DLX/include/DLX/Makefile
+src/frontend/DLX/include/DLX/Core/Makefile
+src/frontend/DLX/lib/Makefile
+src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
@@ -1791,7 +1793,32 @@ src/midend/programAnalysis/systemDependenceGraph/Makefile
 src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
+src/midend/MFB/Makefile
+src/midend/MFB/docs/Makefile
+src/midend/MFB/docs/doxygen/Makefile
+src/midend/MFB/docs/doxygen/doxy.conf
+src/midend/MFB/include/Makefile
+src/midend/MFB/include/MFB/Makefile
+src/midend/MFB/include/MFB/Sage/Makefile
+src/midend/MFB/lib/Makefile
+src/midend/MFB/lib/sage/Makefile
+src/midend/MDCG/Makefile
+src/midend/MDCG/docs/Makefile
+src/midend/MDCG/docs/doxygen/Makefile
+src/midend/MDCG/docs/doxygen/doxy.conf
+src/midend/MDCG/include/Makefile
+src/midend/MDCG/include/MDCG/Makefile
+src/midend/MDCG/lib/Makefile
 src/backend/Makefile
+src/backend/KLT/Makefile
+src/backend/KLT/docs/Makefile
+src/backend/KLT/docs/doxygen/Makefile
+src/backend/KLT/docs/doxygen/doxy.conf
+src/backend/KLT/include/Makefile
+src/backend/KLT/include/KLT/Makefile
+src/backend/KLT/include/KLT/Core/Makefile
+src/backend/KLT/lib/Makefile
+src/backend/KLT/lib/core/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2048,6 +2075,30 @@ projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
+projects/demos-dlx-mdcg/Makefile
+projects/demos-dlx-mdcg/include/Makefile
+projects/demos-dlx-mdcg/include/DLX/Makefile
+projects/demos-dlx-mdcg/include/DLX/Logger/Makefile
+projects/demos-dlx-mdcg/include/MDCG/Makefile
+projects/demos-dlx-mdcg/include/MDCG/Logger/Makefile
+projects/demos-dlx-mdcg/include/libLogger/Makefile
+projects/demos-dlx-mdcg/lib/Makefile
+projects/demos-dlx-mdcg/lib/dlx/Makefile
+projects/demos-dlx-mdcg/lib/dlx/logger/Makefile
+projects/demos-dlx-mdcg/lib/mdcg/Makefile
+projects/demos-dlx-mdcg/lib/mdcg/logger/Makefile
+projects/demos-dlx-mdcg/lib/liblogger/Makefile
+projects/demos-dlx-mdcg/src/Makefile
+projects/demos-dlx-mdcg/tests/Makefile
+projects/rose-tooling/Makefile
+projects/rose-tooling/include/Makefile
+projects/rose-tooling/include/DLX/Makefile
+projects/rose-tooling/include/DLX/Tooling/Makefile
+projects/rose-tooling/lib/Makefile
+projects/rose-tooling/lib/dlx/Makefile
+projects/rose-tooling/lib/dlx/tooling/Makefile
+projects/rose-tooling/src/Makefile
+projects/rose-tooling/tests/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
