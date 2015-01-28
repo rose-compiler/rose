@@ -2099,6 +2099,14 @@ projects/rose-tooling/lib/dlx/Makefile
 projects/rose-tooling/lib/dlx/tooling/Makefile
 projects/rose-tooling/src/Makefile
 projects/rose-tooling/tests/Makefile
+projects/Viz/Makefile
+projects/Viz/include/Makefile
+projects/Viz/include/Viz/Makefile
+projects/Viz/include/Viz/Traversals/Makefile
+projects/Viz/lib/Makefile
+projects/Viz/src/Makefile
+projects/Viz/tools/Makefile
+projects/Viz/examples/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
