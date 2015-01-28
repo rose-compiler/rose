@@ -365,6 +365,17 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
   }
 }
 
+void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  int cnt=0;
+  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+    const EState* estate=(*i).first;
+    const PState* pstate=estate->pstate();
+    SgExpression* exp=(*i).second;
+    cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+    ++cnt;
+  }
+}
+
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
   // 1) create vector of generated assignments (preparation for sorting)
   vector<string> assignments;

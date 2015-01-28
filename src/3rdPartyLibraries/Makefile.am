@@ -27,4 +27,11 @@ endif
 # TV (08/03/12): Need to finish integration before
 SUBDIRS += UPR
 
-EXTRA_DIST = CMakeLists.txt
+# Pei-Hung (12/17/2014): installing POCC
+if ROSE_WITH_POCC
+pocc-install:	pocc-installer.sh
+	$(srcdir)/pocc-installer.sh
+-include pocc-install
+endif
+
+EXTRA_DIST = CMakeLists.txt pocc-installer.sh

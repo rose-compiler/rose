@@ -43,6 +43,7 @@ class Specialization {
                                     RewriteSystem& rewriteSystem,
                                     bool useConstExprSubstRule=true
                                     );
+  void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
 
