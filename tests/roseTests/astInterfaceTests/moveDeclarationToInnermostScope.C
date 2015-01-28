@@ -84,6 +84,9 @@ using namespace std;
 using namespace SageInterface;
 bool debug = false;
 
+// We now use improved algorithm v2
+bool useAlgorithmV2 = true; 
+
 //! An internal flag to control moveDeclarationToInnermostScope
 // Users want to see the tool working by default
 extern bool tool_keep_going;
@@ -91,7 +94,15 @@ extern bool tool_keep_going;
 extern bool decl_mover_conservative;
 
 //! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
+
+//! An alternative algorithm: separating analysis from transformation into two phases. The move is final.
+// The downside is that 
+// 1. if any scope is not allowed, no move will happen at all. This is not desired.
+// To really improve it, I have to keep track of target scopes per scope tree, and only invalidate the move for a scope tree
+// with invalid target scope.
+// 2. if a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
+std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2(SgVariableDeclaration* decl, bool debug/*= false */);
 
 //By default ASSERT should block the execution to find issues.
 //But some users want to keep the tool going even when some assertion fails. 
@@ -115,99 +126,107 @@ class visitorTraversal : public AstSimpleProcessing
   protected:
     void virtual visit (SgNode* n)
     {
-//      if (isSgFunctionDeclaration(n)!=NULL)
-//      This will match SgTemplateInstantiationFunctionDecl, which is not wanted.
+      //      if (isSgFunctionDeclaration(n)!=NULL)
+      //      This will match SgTemplateInstantiationFunctionDecl, which is not wanted.
       if (n->variantT() == V_SgFunctionDeclaration || n->variantT() == V_SgMemberFunctionDeclaration)
       {
 	ROSE_ASSERT (n->variantT() != V_SgTemplateInstantiationFunctionDecl);
-        SgFunctionDeclaration* func = isSgFunctionDeclaration(n);  
-        ROSE_ASSERT(func != NULL);
-        if (func->get_definition() == NULL) return;
+	SgFunctionDeclaration* func = isSgFunctionDeclaration(n);  
+	ROSE_ASSERT(func != NULL);
+	if (func->get_definition() == NULL) return;
 
-        // TODO: skip things from headers. 
-        // skip compiler generated codes, mostly from template headers
-        if (func->get_file_info()->isCompilerGenerated())
-        {
-          return;
-        }
+	// TODO: skip things from headers. 
+	// skip compiler generated codes, mostly from template headers
+	if (func->get_file_info()->isCompilerGenerated())
+	{
+	  return;
+	}
 
-        SgBasicBlock* body = func->get_definition()->get_body();
-        if (body == NULL) return; 
-        // Prepare the function body: ensure body basic block for while, for, if, etc.
-         SageInterface::changeAllBodiesToBlocks (body, false);
+	SgBasicBlock* body = func->get_definition()->get_body();
+	if (body == NULL) return; 
+	// Prepare the function body: ensure body basic block for while, for, if, etc.
+	SageInterface::changeAllBodiesToBlocks (body, false);
 
-        Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
-        if (debug )
-          cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
+	Rose_STL_Container<SgNode*> var_decls= NodeQuery::querySubTree(body,V_SgVariableDeclaration);
+	if (debug )
+	  cout<<"Number of declarations to be considered = "<<var_decls.size()<<endl;
 
-        std::queue<SgVariableDeclaration* > worklist;
+	std::queue<SgVariableDeclaration* > worklist;
 
-        for (size_t i=0; i< var_decls.size(); i++)
-        {
-          SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
-          ROSE_ASSERT(decl!= NULL);
+	for (size_t i=0; i< var_decls.size(); i++)
+	{
+	  SgVariableDeclaration* decl = isSgVariableDeclaration(var_decls[i]);
+	  ROSE_ASSERT(decl!= NULL);
 	  // skip compiler generated (frontend) declarations
 	  if (decl->get_file_info()->isCompilerGenerated())
 	    continue; 
-          worklist.push(decl);
-        }
+	  worklist.push(decl);
+	}
 
-       // using a worklist instead of a fixed vector, since we will iteratively consider declarations added in the process.
-       // e.g. we insert a declaration into the true/false bodies of if statement if a target scope is a if statement.
-       // These two inserted declarations will be further considered.
-         while (!worklist.empty())
-        {    
-          SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.front());
-          ROSE_ASSERT(decl!= NULL);
-          worklist.pop();
+	// using a worklist instead of a fixed vector, since we will iteratively consider declarations added in the process.
+	// e.g. we insert a declaration into the true/false bodies of if statement if a target scope is a if statement.
+	// These two inserted declarations will be further considered.
+	while (!worklist.empty())
+	{    
+	  SgVariableDeclaration* decl = isSgVariableDeclaration(worklist.front());
+	  ROSE_ASSERT(decl!= NULL);
+	  worklist.pop();
 
-          bool result=false;
-          if (SageInterface::isStatic(decl))
-          {
-            if (debug)
-              cout<<"skipping a static variable declaration .."<<endl;
-          }
-          else
-          {
-            bool null_initializer = false;
-            SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
-            ROSE_ASSERT (init_name!= NULL);
-            SgInitializer * initor =  init_name->get_initptr();
-            if (initor == NULL) 
-              null_initializer = true;
+	  //bool result=false;
+	  if (SageInterface::isStatic(decl))
+	  {
+	    if (debug)
+	      cout<<"skipping a static variable declaration .."<<endl;
+	  }
+	  else
+	  {
+	    bool null_initializer = false;
+	    SgInitializedName* init_name = SageInterface::getFirstInitializedName (decl);
+	    ROSE_ASSERT (init_name!= NULL);
+	    SgInitializer * initor =  init_name->get_initptr();
+	    if (initor == NULL) 
+	      null_initializer = true;
 #if 0
-            else
-             {
-               SgAssignInitializer* assign_initor = isSgAssignInitializer (initor);
-               if (assign_initor != NULL)
-               {
-                 if (isSgValueExp(assign_initor->get_operand()))
-                   null_or_literal_initializer = true;
-               }
-             } 
+	    else
+	    {
+	      SgAssignInitializer* assign_initor = isSgAssignInitializer (initor);
+	      if (assign_initor != NULL)
+	      {
+		if (isSgValueExp(assign_initor->get_operand()))
+		  null_or_literal_initializer = true;
+	      }
+	    } 
 #endif
-            // conservative mode:  Only move declarations with no initializer
-            if (decl_mover_conservative)
-            {
-              if (debug)
-                 cout<<"Consiering conservative moving for decl: "<<decl->get_file_info()->get_line() <<endl;
-              if (null_initializer)   
-                result = moveDeclarationToInnermostScope(decl, worklist, debug);
-              else
-              {
-                if (debug)
-                  cout<<"Skipping a declaration since it has initializer .."<<endl;
-              }
-            }
-            else // aggressive move
-            {
+	    // conservative mode:  Only move declarations with no initializer
+	    if (decl_mover_conservative)
+	    {
+	      if (debug)
+		cout<<"Consiering conservative moving for decl: "<<decl->get_file_info()->get_line() <<endl;
+	      if (null_initializer)   
+	      {
+		if (useAlgorithmV2)
+		  moveDeclarationToInnermostScope_v2(decl, debug);
+		else
+		  moveDeclarationToInnermostScope_v1(decl, worklist, debug);
+	      }
+	      else
+	      {
+		if (debug)
+		  cout<<"Skipping a declaration since it has initializer .."<<endl;
+	      }
+	    }
+	    else // aggressive move
+	    {
 
-              if (debug)
-                 cout<<"Using aggressive moving for decl .."<<endl;
-              result = moveDeclarationToInnermostScope(decl, worklist, debug);
-            }
-          }
-        }
+	      if (debug)
+		cout<<"Using aggressive moving for decl .."<<endl;
+	      if (useAlgorithmV2)
+		moveDeclarationToInnermostScope_v2(decl, debug);
+	      else
+		moveDeclarationToInnermostScope_v1(decl, worklist, debug);
+	    }
+	  }
+	}
       } // end if
     } // end visit()
 };
@@ -821,6 +840,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
      return;
   }
 
+  //TODO, no longe need this, simply ensure BB if it is a single statement of true/false body
   scopes = processTargetScopes(scopes);
 
 #if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
@@ -1119,8 +1139,254 @@ static SgForStatement* hasALoopWithComplexInitStmt( SgVariableDeclaration* decl,
   return NULL;
 }
 
+//! A helper functions to move special scopes of target scopes into source scope trees for further consideration
+// If a target statement is a if-stmt, we should replace it with two scopes, one for its true body, the other for its false body for further consideration. 
+std::vector <SgScopeStatement *> moveSpecialScopesIntoScopeTree (const std::vector <SgScopeStatement *> &target_scopes, std::queue<Scope_Node* > &source_scope_trees)
+{
+  std::vector <SgScopeStatement*> processed_scopes;
+  for (size_t i = 0; i< target_scopes.size(); i++)
+  {
+    SgScopeStatement* target_scope = target_scopes[i];
+    if (SgIfStmt* if_stmt = isSgIfStmt (target_scope))
+    {
+      if (if_stmt->get_true_body())
+      {
+	// the normalization must have been already done at this point, or the BB will not be in the scope tree
+	//          SageInterface::ensureBasicBlockAsTrueBodyOfIf (if_stmt);
+	SgScopeStatement* true_body = isSgScopeStatement(if_stmt->get_true_body());
+	assert (true_body != NULL);
+	assert (ScopeTreeMap[true_body] != NULL);
+	source_scope_trees.push(ScopeTreeMap[true_body]);
+      }
 
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
+      if (if_stmt->get_false_body())
+      {
+	// the normalization must have been already done at this point, or the BB will not be in the scope tree
+	//          SageInterface::ensureBasicBlockAsFalseBodyOfIf (if_stmt);
+	SgScopeStatement* false_body = isSgScopeStatement(if_stmt->get_false_body());
+	assert (false_body != NULL);
+	assert (ScopeTreeMap[false_body] != NULL);
+	source_scope_trees.push(ScopeTreeMap[false_body]);
+      }
+    }
+    else
+    {
+      processed_scopes.push_back(target_scope);
+    }
+  }
+  return processed_scopes;
+}
+
+
+// For a scope tree, collect candidate target scopes
+std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclaration* decl, Scope_Node* scope_tree, bool debug)
+{
+  std::vector <SgScopeStatement *> target_scopes; 
+  // single node scope tree, move to the scope if it is different from the original decl scope
+  if ((scope_tree->children).size() == 0 )
+  {
+    if (scope_tree->scope != decl->get_scope())
+      target_scopes.push_back(scope_tree->scope);
+    return target_scopes; // otherwise duplicted scopes will be inserted.
+  }
+
+  // for a scope tree with two or more nodes  
+  Scope_Node* first_branch_node = scope_tree->findFirstBranchNode();
+
+  // Step 2: simplest case, only a single use place
+  // -----------------------------------------------------
+  // the first branch node is also the bottom node
+  if ((first_branch_node->children).size() ==0)
+  {
+    SgScopeStatement* bottom_scope = first_branch_node->scope;
+    target_scopes.push_back(bottom_scope);
+  } // end the single decl-use path case
+  else 
+  { 
+    //Step 3: multiple scopes
+    // -----------------------------------------------------
+    // there are multiple (0 to n - 1 )child scopes in which the variable is used. 
+    // if for all scope 1, 2, .., n-1
+    //  the variable is defined before being used (not live)
+    //  Then we can move the variable into each child scope
+    // Conversely, if any of scope has liveIn () for the declared variable, we cannot move
+    bool moveToMultipleScopes= true ; 
+
+    for (size_t i =1; i< (first_branch_node->children).size(); i++)
+    {
+      SgVariableSymbol * var_sym = SageInterface::getFirstVarSym (decl); 
+      ROSE_ASSERT (var_sym != NULL);
+      SgScopeStatement * current_child_scope = (first_branch_node->children[i])->scope;
+      ROSE_ASSERT (current_child_scope != NULL); 
+      if (isLiveIn (var_sym, current_child_scope))
+	moveToMultipleScopes = false;
+    }  // end for all scopes
+
+    if (moveToMultipleScopes)
+    {
+      if (debug)
+	cout<<"Found a movable declaration for multiple child scopes"<<endl;
+      for (size_t i =0; i< (first_branch_node->children).size(); i++)
+      {
+	// we try to get the bottom for each branch, not just the upper scope
+	// This is good for the case like: "if () { for (i=0;..) {}}" and if-stmt's scope is a child of the first branch scope node
+	// TODO: one branch may fork multiple branches. Should we move further down on each grandchildren branch?
+	//       Not really, we then find the common inner most scope of that branch. just simply move decl there!
+	// Another thought: A better fix: we collect all leaf nodes of the scope tree! It has nothing to do with the first branch node!
+	//       this won't work. First branch node still matters. 
+	Scope_Node* current_child_scope = first_branch_node->children[i];     
+	Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
+	SgScopeStatement * bottom_scope = bottom_node->scope;
+	ROSE_ASSERT (bottom_scope!= NULL);
+	target_scopes.push_back (bottom_scope);
+      }
+    }
+    else // we still have to move it to the innermost common scope
+    {
+      SgScopeStatement* bottom_scope = first_branch_node->scope;
+#if 0 // We no longer do the adjustment here. We delay the logic in the insertion logic. And generate two additional declarations to be considered later on
+      // special adjustment here for if-stmt as the single bottom scope  to be inserted into the var decl.
+      // we should adjust here, not any other places !!
+      // TODO may have to include other special stmt like while?
+      if (isSgIfStmt(bottom_scope))
+	bottom_scope = SageInterface::getEnclosingScope(bottom_scope, false);
+#endif 
+      if (decl->get_scope() != bottom_scope)
+      {
+	target_scopes.push_back(bottom_scope);
+      }
+    } // end else
+  } // end else multiple scopes
+  return target_scopes; 
+}
+
+// V3 algorithm: two step algorithm
+/*
+Find all bottom scopes to move into: no side effect on AST at all
+
+1. initialization: 
+  source_scope_trees: the top scope tree of the single decl in question
+2. For each tree of  source_scope_trees: populate target_scopes
+   a. single node scope tree, if diff from orig_scope, add  to target_scopes.  
+       delete the tree in any cases.  IF the same AS orig_scope, skip moving.  delete still. 
+   b. multiple nodes tree
+      i. first branch node is a bottom: push to target_scopes
+      ii. first branch has children, move down if no LIveIn between any chidren?
+          1.  move to multiple scopes: each child’s first branch → target_scopes  
+             // TODO: this can be optimized, direct add child scope should be sufficient
+           2. no move down, push first-branch scope into target_scope, if it is diff from orig_scope
+3. target_scopes to source_scope_trees transition, caused by if-stmt  void moveSomeTargetScopesToSourceScopeTrees(& target_scopes, & source_scope_tree)
+  a. find all if-stmt scopes of target_scopes, 
+  b. remove them from target_scopes
+  c. add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
+    what if no BB is stored? create a virtual scope on demand?   post process scope tree (normalize) then de-normalize: pending on the experiment of add/remove BB’s impact on token-unparsing
+4. if (!Check stop condition):   repeat 2 and 3, essentially do (2, 3) while ()
+   a. scope tree: root scopes are processed (finished) a scopelist, source_scopes becomes empty
+   b. // Implicitly ensured by 3 all target_scopes are bottom, no non-bottom scopes like if-stmt anymore
+
+Liao 1/27/2015 
+ */
+void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &target_scopes, bool debug)
+{
+  // A single original scope tree can spawn to multiple sub-trees, depending on where to start as a root
+  // Each target scope will be treated as a root to consider further search for the bottom scopes.
+  std::queue<Scope_Node* > source_scope_trees; 
+  SgVariableDeclaration * decl = declaration;
+  ROSE_ASSERT (decl != NULL);
+  // Step 1: generate a scope tree for the declaration
+  // -----------------------------------------------------
+  // Initially only one scope tree
+  Scope_Node* orig_scope_tree = generateScopeTree (decl, debug);
+  source_scope_trees.push(orig_scope_tree);
+
+  // some target scopes may not be valid one: like init-stmt scope within a for-loop, which has a list of things. 
+  // we need to screen out them and invalid the move for the associated scope tree.
+  // 
+  while (!source_scope_trees.empty())
+  {
+    Scope_Node* scope_tree = source_scope_trees.front();
+    source_scope_trees.pop(); // remove it from the queue
+
+    std::vector <SgScopeStatement *> candidate_scopes;  // per scope tree info.
+    candidate_scopes= collectCandidateTargetScopes (decl, scope_tree, debug);
+    if (candidate_scopes.size() > 0)
+    {
+      // ignore complex for init stmt for now 
+      // A single bad apple will invalidate the entire move of this scope tree
+      SgForStatement* bad_loop = hasALoopWithComplexInitStmt (declaration, candidate_scopes);
+      if (bad_loop != NULL)
+      {
+	cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
+	cerr<<"Variable declaration in question is:"<<endl;
+	declaration->get_file_info()->display();
+	cerr<<"Loop scope with complex init stmt is:"<<endl;
+	bad_loop->get_file_info()->display();
+#if 0  // We no longer assert this since the complex loops are out of our scope. Users will make sure their loops are canonical.
+	if (!tool_keep_going )
+	  ROSE_ASSERT (false);
+#endif
+	// if this scope tree is excluded from consideration because a bad apple, 
+	// we have to restore the root to target_scopes so the previous intermediate move can happen. 
+	// essentially, reverse operation of moveSpecialScopesIntoScopeTree ()
+	target_scopes.push_back(scope_tree->scope);
+      }
+      else // no bad apple?  moves can happen
+      {
+	for (size_t i =0; i<candidate_scopes.size(); i++)
+	{
+	  target_scopes.push_back(candidate_scopes[i]);
+	}
+      }
+    } // end if (candidate_scopes.size() > 0)
+
+    // target_scopes to source_scope_trees transition, caused by if-stmt
+    /*
+     * find all if-stmt scopes of target_scopes, 
+     * remove them from target_scopes
+     * add their true/false scopes into    source_scope_trees // the removed ones can be added back later for single node scope tree case.
+     * */ 
+    target_scopes = moveSpecialScopesIntoScopeTree (target_scopes, source_scope_trees);
+  }  // end while
+  // delete the original scope tree
+  orig_scope_tree->deep_delete_children ();
+  delete orig_scope_tree;
+}
+
+// Improved 2-step algorithm:
+// Step 1: iterative subalgorithm to find the real bottom scopes 
+// Step 2: copy & move source declaration to all the bottom scopes.
+// return the final scopes accepting the moved declarations.
+std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, bool debug = false)
+{
+  std::vector <SgScopeStatement *> target_scopes;
+  findFinalTargetScopes (declaration, target_scopes, debug);
+  std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
+  if (target_scopes.size() > 0)
+  {
+     // ignore complex for init stmt for now 
+    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (declaration, target_scopes);
+    if (bad_loop != NULL)
+    {
+      cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
+      cerr<<"Variable declaration in question is:"<<endl;
+      declaration->get_file_info()->display();
+      cerr<<"Loop scope with complex init stmt is:"<<endl;
+      bad_loop->get_file_info()->display();
+#if 0  // We no longer assert this since the complex loops are out of our scope. Users will make sure their loops are canonical.
+      if (!tool_keep_going )
+        ROSE_ASSERT (false);
+#endif 
+    }
+    else
+     copyMoveVariableDeclaration (declaration, target_scopes, worklist);
+  }
+  return target_scopes; 
+}
+
+// Old algorithm: iteratively find target scopes and actualy move declarations.
+// The downside is that declaration will be moved into temporary target scopes, not efficient
+// Harder to keep track of the final target scopes
+bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std::queue<SgVariableDeclaration*> &worklist, bool debug = false)
 {
   SgVariableDeclaration * decl = isSgVariableDeclaration(declaration);
   ROSE_ASSERT (decl != NULL);

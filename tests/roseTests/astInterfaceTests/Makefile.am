@@ -169,7 +169,9 @@ MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
   inputmoveDeclarationToInnermostScope_12.C \
   inputmoveDeclarationToInnermostScope_13.C \
   inputmoveDeclarationToInnermostScope_14.C \
-  inputmoveDeclarationToInnermostScope_15.C 
+  inputmoveDeclarationToInnermostScope_15.C  \
+  inputmoveDeclarationToInnermostScope_16.C
+
 
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
 
@@ -197,7 +199,7 @@ DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
-	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; xit 1; fi
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 
