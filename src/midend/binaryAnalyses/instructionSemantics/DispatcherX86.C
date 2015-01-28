@@ -698,7 +698,8 @@ struct IP_jcc: P {
 struct IP_lea: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->effectiveAddress(args[1], 32));
+        size_t nbits = asm_type_width(args[0]->get_type());
+        d->write(args[0], ops->unsignedExtend(d->effectiveAddress(args[1]), nbits));
     }
 };
 
