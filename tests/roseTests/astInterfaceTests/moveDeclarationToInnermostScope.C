@@ -941,7 +941,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
           bool old_body_is_compiler_generated = old_body->isCompilerGenerated();
           bool old_body_is_compiler_generated_fromFileInfo = old_body->get_file_info()->isCompilerGenerated();
-#if 1
+#if 0
           printf ("####### old_body = %p old_body_is_compiler_generated              = %s \n",old_body,old_body_is_compiler_generated ? "true" : "false");
        // printf ("old_body_is_compiler_generated_fromFileInfo = %s \n",old_body_is_compiler_generated_fromFileInfo ? "true" : "false");
 #endif
@@ -952,8 +952,9 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
                   {
                  // DQ (12/12/2014): Output a message about this, at least we want to decide if marking this as a  
                  // transformation should be a part of the semantics in SageInterface::prependStatement() function.
+#if 0
                     printf ("Marking this SgBasicBlock, which is compiler-generated, as a transformation \n",old_body);
-
+#endif
                  // true_body->setTransformation();
                  // true_body->get_file_info()->setTransformation();
                     old_body->get_startOfConstruct()->setTransformation();

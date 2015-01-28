@@ -1375,12 +1375,22 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
 
                            // Start at the while_body_index_start and iterate back to find the first ")".
+                           // Can't use while_body_index_start - 1, because there might not be whitespace before 
+                           // the "{" (see test2015_113.C), unless we test directly for a ")" as we do below.
                               int better_end_of_condition_token_subsequence = while_body_index_start - 1;
 
+                           // Make allowence for case of while statement with body that is not a SgBasicBlock (see test2015_90.C).
                               bool skipped_last = false;
+                              if (tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_lexeme == ")" )
+                                 {
+                                   skipped_last = true;
+                                   better_end_of_condition_token_subsequence--;
+                                 }
+
                               while ( better_end_of_condition_token_subsequence > while_condition_index_end && 
                                       ( tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_PREPROCESSING_INFO ||
                                         tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_id == C_CXX_WHITESPACE) )
+                                     // tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_lexeme == "{" ) )
                                  {
                                    better_end_of_condition_token_subsequence--;
                                    if (skipped_last == false && tokenStream[better_end_of_condition_token_subsequence]->p_tok_elem->token_lexeme == ")")
@@ -2399,7 +2409,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                           // current_mappingInfo_token_subsequence_start = previous_mappingInfo_trailing_whitespace_end;
                                              current_mappingInfo_token_subsequence_start = -1;
 
+#if DEBUG_DARK_TOKEN_FIXUP
                                              printf ("Need to account for the else between the true and false statements of a SgIfStmt node (reset current_mappingInfo_token_subsequence_start = %d) \n",current_mappingInfo_token_subsequence_start);
+#endif
 #if 0
                                              printf ("Exiting as a test! \n");
                                              ROSE_ASSERT(false);
@@ -2439,8 +2451,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                            {
                                              if (current_mappingInfo_token_subsequence_start > previous_mappingInfo_trailing_whitespace_end + 1)
                                                 {
+#if DEBUG_DARK_TOKEN_FIXUP
                                                // printf ("Found valid dark token sequence (%d -> %d) \n",current_mappingInfo_token_subsequence_start,previous_mappingInfo_trailing_whitespace_end);
                                                   printf ("Found valid dark token sequence (%d -> %d) \n",previous_mappingInfo_trailing_whitespace_end,current_mappingInfo_token_subsequence_start);
+#endif
                                                 }
                                            }
                                           else
@@ -3913,39 +3927,41 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                            // ROSE_ASSERT(i > 0);
                               if (i > 0)
                                  {
-                              TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
-                              ROSE_ASSERT(previous_mappingInfo != NULL);
+                                   TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
+                                   ROSE_ASSERT(previous_mappingInfo != NULL);
 #if 0
-                              printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
+                                   printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
 #endif
-                              ROSE_ASSERT(previous_mappingInfo->node != NULL);
+                                   ROSE_ASSERT(previous_mappingInfo->node != NULL);
 
-                           // Note that if there is a false body, then there must be a true body (so this should be easy to find as the previous child node).
-                              SgStatement* true_body_statement = isSgStatement(previous_mappingInfo->node);
-                              if (true_body_statement == ifStatement->get_true_body())
-                                 {
+                                // Note that if there is a false body, then there must be a true body (so this should be easy to find as the previous child node).
+                                   SgStatement* true_body_statement = isSgStatement(previous_mappingInfo->node);
+                                   if (true_body_statement == ifStatement->get_true_body())
+                                      {
 #if 0
-                                   printf ("Found true body: processing else syntax between true and false bodies \n");
+                                        printf ("Found true body: processing else syntax between true and false bodies \n");
 #endif
-                                   TokenStreamSequenceToNodeMapping* if_statement_mappingInfo  = tokenStreamSequenceMap[ifStatement];
-                                   TokenStreamSequenceToNodeMapping* true_body_mappingInfo     = tokenStreamSequenceMap[true_body_statement];
-                                   TokenStreamSequenceToNodeMapping* false_body_mappingInfo    = tokenStreamSequenceMap[false_body_statement];
+                                        TokenStreamSequenceToNodeMapping* if_statement_mappingInfo  = tokenStreamSequenceMap[ifStatement];
+                                        TokenStreamSequenceToNodeMapping* true_body_mappingInfo     = tokenStreamSequenceMap[true_body_statement];
+                                        TokenStreamSequenceToNodeMapping* false_body_mappingInfo    = tokenStreamSequenceMap[false_body_statement];
 
-                                   ROSE_ASSERT(if_statement_mappingInfo != NULL);
-                                   ROSE_ASSERT(true_body_mappingInfo    != NULL);
-                                   ROSE_ASSERT(false_body_mappingInfo   != NULL);
+                                        ROSE_ASSERT(if_statement_mappingInfo != NULL);
+                                        ROSE_ASSERT(true_body_mappingInfo    != NULL);
+                                        ROSE_ASSERT(false_body_mappingInfo   != NULL);
 
-                                   discoverElseSyntax(if_statement_mappingInfo,true_body_mappingInfo,false_body_mappingInfo);
-                                 }
+                                        discoverElseSyntax(if_statement_mappingInfo,true_body_mappingInfo,false_body_mappingInfo);
+                                      }
 #if 0
-                              printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
-                              ROSE_ASSERT(false);
+                                   printf ("Exiting as a test! (Handle special case of SgIfStmt = %p and the else syntax position) \n",ifStatement);
+                                   ROSE_ASSERT(false);
 #endif
                                  }
                                 else
                                  {
+#if 0
                                    printf ("In evaluateSynthesizedAttribute(): support for else syntax: false body in SgIfStmt does not have a previous TokenStreamSequenceToNodeMapping: ignoring this case \n");
                                    printf ("   --- false_body_statement = %p \n");
+#endif
                                  }
                             }
                        }
@@ -4297,15 +4313,18 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                          SgForInitStatement* forInitStatement = isSgForInitStatement(n);
                          if (forInitStatement != NULL)
                             {
+#if 0
                               printf ("Detected forInitStatement \n");
+#endif
                               ROSE_ASSERT(forInitStatement->get_init_stmt().empty() == false);
                               bool isNullStatement = isSgNullStatement(forInitStatement->get_init_stmt()[0]);
                               if (isNullStatement == true)
                                  {
                                    isNullForInitStatement = true;
-
+#if 0
                                    printf ("Detected SgNullStatement in SgForInitStatement \n");
                                 // ROSE_ASSERT(false);
+#endif
                                  }
                             }
 

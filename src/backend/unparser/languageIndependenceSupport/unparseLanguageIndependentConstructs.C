@@ -693,13 +693,47 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 #endif
           if (redundantTokenEndings.find(lastTokenIndex) != redundantTokenEndings.end())
              {
+#if 0
+               printf ("Found in redundantTokenEndings: lastTokenIndex = %d \n",lastTokenIndex);
+#endif
                std::pair<std::multimap<int,SgStatement*>::iterator,std::multimap<int,SgStatement*>::iterator> range_iterator = redundantlyMappedTokensToStatementMultimap.equal_range(lastTokenIndex);
                std::multimap<int,SgStatement*>::iterator first_iterator = range_iterator.first;
                std::multimap<int,SgStatement*>::iterator last_iterator  = range_iterator.second;
 
                std::multimap<int,SgStatement*>::iterator local_iterator = first_iterator;
+#if 1
+            // DQ (1/28/2015): Switched logic to report the first statement as not redundant, but all others as redundant.
+               if (previouslySeenStatement.find(stmt) == previouslySeenStatement.end())
+                  {
+                 // This is a previously processed statment.
+                    redundantStatement = false;
+#if 0
+                    printf ("   ---   --- Detected first use of statment = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+                 // Add all of the redundnat statement to the previouslySeenStatement (so that they will all 
+                 // trigger redundantStatement = true when used (unparsed) later).
+                    while (local_iterator != last_iterator)
+                       {
+                         SgStatement* redundant_stmt = local_iterator->second;
+#if 0
+                         printf ("   --- redundant statement for lastTokenIndex = %d redundant_stmt = %p = %s \n",lastTokenIndex,redundant_stmt,redundant_stmt->class_name().c_str());
+#endif
+                         previouslySeenStatement.insert(redundant_stmt);
+
+                         local_iterator++;
+                       }
+                  }
+                 else
+                  {
+                 // This is a previously processed statment.
+                    redundantStatement = true;
+                  }
+#else
+            // DQ (1/28/2015): This older code reported the last of the redundnat set of statement to be non-redundnat (instead of the first where the CPP directives would be located).
                while (local_iterator != last_iterator)
                   {
+                 // DQ (1/28/2015): Switched logic to report the first statement as not redundant, but all others as redundant.
+                 // SgStatement* redundant_stmt = local_iterator->second;
                     SgStatement* redundant_stmt = local_iterator->second;
 #if 0
                     printf ("   --- redundant statement for lastTokenIndex = %d redundant_stmt = %p = %s \n",lastTokenIndex,redundant_stmt,redundant_stmt->class_name().c_str());
@@ -715,18 +749,21 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
                       else
                        {
                       // We have not processed this statement, so add it to the static local map.
+#if 0
+                         printf ("   ---   --- Adding to previouslySeenStatement list: redundant_stmt = %p = %s \n",redundant_stmt,redundant_stmt->class_name().c_str());
+#endif
                          previouslySeenStatement.insert(redundant_stmt);
                        }
 
                     local_iterator++;
                   }
+#endif
              }
             else
              {
 #if 0
                printf ("Not found in redundantTokenEndings: lastTokenIndex = %d \n",lastTokenIndex);
 #endif
-#if 1
             // DQ (1/13/2015): We might need to output the last statement that has a replicated token sequence, and not the first (I think).
                if (previouslyUnparsedTokenSubsequences.find(tokenSubsequence) != previouslyUnparsedTokenSubsequences.end())
                   {
@@ -742,7 +779,6 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 #endif
                     previouslyUnparsedTokenSubsequences.insert(tokenSubsequence);
                   }
-#endif
              }
         }
        else
@@ -772,7 +808,11 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
   // DQ (1/18/2015): The default should always be to output the tokens from the token stream, unless we detect a transformation or this is a shared token stream.
   // bool unparseUsingTokenStream = false;
      bool unparseUsingTokenStream = true;
-     
+
+#if 0
+     printf ("In unparseAttachedPreprocessingInfoUsingTokenStream(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+#endif
+
   // If we are skiping BOTH comments and CPP directives then there is nothing to do
      if ( info.SkipComments() && info.SkipCPPDirectives() )
         {
@@ -817,7 +857,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
 #endif
                               if (last_shared_statement == stmt)
                                  {
-#if 1
+#if 0
                                    printf ("Detected a statement associated with a shared token sequence, returing true for last shared statement. \n");
 #endif
                                 // return true;
@@ -834,6 +874,15 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingToken
                             }
                        }
                   }
+             }
+            else
+             {
+#if 0
+               printf ("NOTE: In Unparse_ExprStmt::unparseAttachedPreprocessingInfoUsingTokenStream(): containsTransformationToSurroundingWhitespace == true \n");
+               curprint("/* In UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfoUsingTokenStream(): containsTransformationToSurroundingWhitespace == true */");
+#endif
+            // This is set below.
+            // unparseUsingTokenStream = false;
              }
         }
        else

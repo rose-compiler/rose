@@ -2101,7 +2101,7 @@ SgProject::parse()
                     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
                        {
                       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 1
+#if 0
                          printf ("Building token stream mapping map! \n");
 #endif
                       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -2110,12 +2110,12 @@ SgProject::parse()
                          buildTokenStreamMapping(sourceFile);
                        }
 #if 1
-                    if ( SgProject::get_verbose() >= 0 )
+                    if ( SgProject::get_verbose() > 0 )
                        {
-                         printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
+                         printf ("In parse(): SgTokenPtrList token_list: token_list.size() = %zu \n",sourceFile->get_token_list().size());
                        }
 #endif
-#if 1
+#if 0
                     printf ("DONE: Building token stream mapping map! \n");
 #endif
                   }
