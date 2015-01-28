@@ -185,11 +185,8 @@ jserver_start(JvmT* je)
 void 
 jserver_destroy()
 {
-    
-    JavaVM*  jvm = get_jvm();
-    if (jvm != NULL) {
-         /* Destroy the Java VM.  */
-         jvm->DestroyJavaVM();
+    if( je.jvm != NULL  ){
+         je.jvm->DestroyJavaVM();
     }
 }
 
