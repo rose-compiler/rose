@@ -150,7 +150,9 @@ test2014_02.C
 test2014_03.C 
 test2014_04.C 
 test2014_05.C 
-test2014_06.C)
+test2014_06.C
+#Expected failures: test2012_51.C test2013_31.C 
+)
 
 # these tests fail on either Windows or Linux
 set(disabled_tests

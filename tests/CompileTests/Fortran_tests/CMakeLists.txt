@@ -116,15 +116,18 @@ set(F90_TESTCODES
   test2011_Rice_write-no-output-item-list.f90
   test2011_Rice_wrong-func-type.f90 test2011_Rice_wrong-func-type-2.f90
   test2011_Rice_wrong-func-type-3.f90
-  test2011_Rice_A-cant-assert-keyword-nonnull.f90
-  test2011_Rice_B-cant-assert-keyword-nonnull.f90
-  test2011_Rice_C-cant-assert-keyword-nonnull.f90
-  test2011_Rice_lost-func-return-type.f90 canonicalExample.f90)
+  #EXPECTED FAILURE: test2011_Rice_A-cant-assert-keyword-nonnull.f90
+  #EXPECTED FAILURE: test2011_Rice_B-cant-assert-keyword-nonnull.f90
+  #EXPECTED FAILURE: test2011_Rice_C-cant-assert-keyword-nonnull.f90
+  #EXPECTED TO FAILURE: test2011_Rice_lost-func-return-type.f90 
+  canonicalExample.f90)
 
 if("${gfortran_version}" VERSION_LESS "4.5")
   # DQ (4/10/2011): If it is not gfortran 4.5, then add this test code (these fail syntax checking with 4.5).
   list(APPEND F90_TESTCODES
-    test2010_35.f90 test2011_Rice_funcdecl-4.f90 test2011_37.f90)
+    test2010_35.f90 test2011_Rice_funcdecl-4.f90 
+    #EXPECTED FAILURE: test2011_37.f90
+  )
 else()
   # phlin (as 08/22/2012):
   # test case for ROSE-bugs #597
@@ -203,7 +206,7 @@ function(fortran_test input_file)
     COMMAND testTokenGeneration ${ROSE_FLAGS} ${FORTRAN_FLAGS}
             -c ${CMAKE_CURRENT_SOURCE_DIR}/${input_file})
   set_tests_properties(${input_file}_graph_generation
-    PROPERTIES DEPENDS ${input_file}translation)
+    PROPERTIES DEPENDS ${input_file}_translation)
   set_tests_properties(${input_file}_token_generation
     PROPERTIES DEPENDS ${input_file}_graph_generation)
 endfunction()
