@@ -12349,6 +12349,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
 
      if (infoList == NULL) return;
 
+     PreprocessingInfo* prevItem = NULL; 
      for (Rose_STL_Container<PreprocessingInfo*>::iterator i = (*infoList).begin(); i != (*infoList).end();i++)
         {
           PreprocessingInfo * info = dynamic_cast<PreprocessingInfo*> (*i);
@@ -12371,12 +12372,26 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                if ( src_position == PreprocessingInfo::undef || info->getRelativePosition() == src_position)
                   {
                     if (usePrepend)
-                      // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
-                      // to indicate appending or prepending by reusing the type of relative position.
-                      // this is very confusing for users
-                         stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+                       {
+                      // Liao (1/27/2015):  modification to fix oder of CPP directives when a list of them are moved.
+                         if (prevItem == NULL)
+                            {
+                           // addToAttachedPreprocessingInfo() is poorly designed, the last parameter is used
+                           // to indicate appending or prepending by reusing the type of relative position.
+                           // this is very confusing for users
+                              stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::before);
+                            }
+                           else // there is a previous item, insert after it
+                            {
+                              stmt_dst->insertToAttachedPreprocessingInfo(info, prevItem);
+                            }
+
+                         prevItem = info; 
+                       }
                       else
+                       {
                          stmt_dst->addToAttachedPreprocessingInfo(info,PreprocessingInfo::after);
+                       }
 
                  // DQ (1/15/2015): Added support to mark as transformations so that the token-based unparsing can know to NOT use the leading and trailing token stream for whitespace.
                     info->setAsTransformation();

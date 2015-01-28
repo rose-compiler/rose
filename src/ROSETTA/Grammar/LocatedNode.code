@@ -34,9 +34,14 @@ HEADER_START
           $CLASSNAME( const $CLASSNAME & X ); /* until we know what to do with it */
 
      public:
-       // [MK] Member function to attach PreprocessingInfo object to the node
+       // [MK] Member function to 
+       // ! attach PreprocessingInfo object to the node. It can only prepend or append the info. to the existing list of preprocessing info.
        // void addToAttachedPreprocessingInfo(PreprocessingInfo *prepInfoPtr);
           void addToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo::RelativePositionType locationInList = PreprocessingInfo::after );
+
+        // Liao 1/27/2015
+        //! Insert prepInfo After (or before if last parameter is false) an anchor info ptr  in the list of preprocessing info attached to the current node. This is useful to insert things in the middle.   
+          void insertToAttachedPreprocessingInfo( PreprocessingInfo *prepInfoPtr, PreprocessingInfo* anchorInfoPtr, bool insertAfter = true);
 
        // DQ (2/6/2003):
        /*! \brief Interface function to implement original SAGE interface to
@@ -1112,6 +1117,29 @@ SgLocatedNode::addToAttachedPreprocessingInfo(
                ROSE_ASSERT(false);
         }
    }
+// Liao 1/27/2015   
+// Insert prepInfo right after (or before) an existing anchor info in the preprocessing info list
+void
+SgLocatedNode::insertToAttachedPreprocessingInfo(
+     PreprocessingInfo *prepInfoPtr,
+     PreprocessingInfo *anchorInfoPtr,
+     bool insertAfter /*= true*/
+     )
+   {
+     ROSE_ASSERT(prepInfoPtr != NULL);
+     ROSE_ASSERT(anchorInfoPtr != NULL);
+    // This function assumes the list already exists 
+     ROSE_ASSERT (p_attachedPreprocessingInfoPtr != NULL);
+  
+    AttachedPreprocessingInfoType::iterator anchor_iter = find(
+                  p_attachedPreprocessingInfoPtr->begin(), p_attachedPreprocessingInfoPtr->end(), anchorInfoPtr);
+
+     if (insertAfter )
+             p_attachedPreprocessingInfoPtr->insert(anchor_iter+1,prepInfoPtr);
+      else      
+             p_attachedPreprocessingInfoPtr->insert(anchor_iter, prepInfoPtr);
+  }
+
 
 // [MK] Member function to return attached PreprocessingInfo objects
 AttachedPreprocessingInfoType*&
