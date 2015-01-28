@@ -8,7 +8,7 @@ namespace Backstroke {
     CommandLineOptions();
     void process(int argc, char* argv[]);
     bool optionRoseAstCheck();
-    bool optionShowRoseFileNodeInfo();
+    bool optionStatusMessages();
     bool optionShowTransformationTrace();
     bool isFinished();
     bool isError();
@@ -16,7 +16,7 @@ namespace Backstroke {
     bool _optionVersion;
     bool _optionRoseHelp;
     bool _optionRoseAstCheck;
-    bool _optionShowRoseFileNodeInfo;
+    bool _optionStatusMessages;
     bool _optionShowTransformationTrace;
     bool _isFinished;
   };

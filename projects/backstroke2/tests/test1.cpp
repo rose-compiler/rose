@@ -26,13 +26,6 @@ List *create_iter(int n) {
 
 // inserts an element into an ascending
 // ordered list
-// SagivRepsWilhelm98: insert
-// changed second parameter:
-//   was: pointer to existing elem
-//   now: key used to create new elem
-// changed return type:
-//   was: void
-//   now: List* to head of list
 List* insert_iter(List* head, int k) {
   List* cur;
   List* tail;

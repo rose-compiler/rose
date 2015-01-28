@@ -13,7 +13,7 @@ Backstroke::TransformationSequence::~TransformationSequence() {
 }
 
 void Backstroke::TransformationSequence::reset() {
-  transformationSequence.clear();
+  transformationSequenceList.clear();
 }
 
 void Backstroke::TransformationSequence::preOrderVisit(SgNode *astNode) {
@@ -24,7 +24,7 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
   if(isSgAssignOp(astNode)) {
     SgNode* lhs;
     lhs=SgNodeHelper::getLhs(astNode);
-    transformationSequence.push_back(lhs);
+    transformationSequenceList.push_back(make_pair(TRANSOP_ASSIGNMENT,lhs));
   }
   if(isSgPlusAssignOp(astNode)
      || isSgMinusAssignOp(astNode)
@@ -38,57 +38,26 @@ void Backstroke::TransformationSequence::postOrderVisit(SgNode *astNode) {
      || isSgRshiftAssignOp(astNode) // >>=
      ) {
     SgNode* lhs=SgNodeHelper::getLhs(astNode);
-    transformationSequence.push_back(lhs);
+    transformationSequenceList.push_back(make_pair(TRANSOP_ASSIGNMENT,lhs));
   }
   if(isSgPlusPlusOp(astNode) || isSgMinusMinusOp(astNode)) {
     SgNode* operand=SgNodeHelper::getUnaryOpChild(astNode);
-    transformationSequence.push_back(operand);
+    transformationSequenceList.push_back(make_pair(TRANSOP_ASSIGNMENT,operand));
   }
+
   if(SgNewExp* newExp=isSgNewExp(astNode)) {
-    if(_showTransformationTrace) {
-      cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(newExp)<<": ";
-    }
-    string newCode="";
-    if(SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type())) {
-      SgType* arrayElementType=arrayType->get_base_type();
-      stringstream ss;
-      size_t arraySize=SageInterface::getArrayElementCount(arrayType);;
-      ss<<arraySize;
-      string arraySizeString=ss.str();
-      newCode="Backstroke::new_array<"+arrayElementType->unparseToString()+">"+"("+arraySizeString+")";
+    if(isSgArrayType(newExp->get_specified_type())) {
+      transformationSequenceList.push_back(make_pair(TRANSOP_MEM_ALLOC_ARRAY,newExp));
     } else {
-      SgType* type=newExp->get_type();
-      string newExpString=newExp->unparseToString();
-      string registerAndCast="static_cast<"+type->unparseToString()+">("+"rts.registerForCommit((void*)"+newExpString+"))";
-      newCode=registerAndCast;
+      transformationSequenceList.push_back(make_pair(TRANSOP_MEM_ALLOC,newExp));
     }
-    if(_showTransformationTrace) {
-      cout<<newCode<<endl;
-    }    
-    SgNodeHelper::replaceAstWithString(newExp,newCode);
   }
+
   if(SgDeleteExp* deleteExp=isSgDeleteExp(astNode)) {
     if(deleteExp->get_is_array()) {
-      SgType* varType=deleteExp->get_variable()->get_type();
-      if(SgPointerType* pointerType=isSgPointerType(varType)) {
-        SgType* pointedToType=pointerType->get_base_type();
-        string elementTypeName="unknown";
-        if(SgClassType* classType=isSgClassType(pointedToType)) {
-          elementTypeName=classType->get_name();
-        }
-        //cout<<"WARNING: delete[] type("<<elementTypeName<<") operator not supported yet"<<endl;
-        string newCode="Backstroke::delete_array<"+elementTypeName+">("+deleteExp->get_variable()->unparseToString()+")";
-        if(_showTransformationTrace) {
-          cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(deleteExp)<<": ";
-          cout<<newCode<<endl;
-        }    
-        SgNodeHelper::replaceAstWithString(deleteExp,newCode);
-      } else {
-        cerr<<"Error: operand of delete[] has non-pointer type. ROSE AST consistency error. Bailing out."<<"("<<(deleteExp->get_type()->unparseToString())<<")";
-        exit(1);
-      }
+      transformationSequenceList.push_back(make_pair(TRANSOP_MEM_DELETE_ARRAY,deleteExp));
     } else {
-      transformationSequenceCommit.push_back(astNode);
+      transformationSequenceList.push_back(make_pair(TRANSOP_MEM_DELETE,astNode));
     }
   }
 }
@@ -99,71 +68,149 @@ void Backstroke::TransformationSequence::create(SgNode* node) {
 }
 
 void Backstroke::TransformationSequence::apply() {
-  for(list<SgNode*>::iterator i=transformationSequence.begin();i!=transformationSequence.end();++i) {
+  for(TransformationSequenceList::iterator i=transformationSequenceList.begin();i!=transformationSequenceList.end();++i) {
     if(_showTransformationTrace) {
-      cout<<"TRACE: "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<": ";
+      cout<<"TRACE: "<<SgNodeHelper::sourceLineColumnToString((*i).second)<<": ";
     }
-    if(isSgAssignOp(*i)) {
-      SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(*i));
-      SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(*i));
-      ROSE_ASSERT(lhs && rhs);
-      string s=string("rts.assign(&(")+lhs->unparseToString()+")"
-        +", "
-        +rhs->unparseToString()
-        +")";
-      if(_showTransformationTrace) {
-        cout<<"applying transformation assignop: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
-      }
-      SgNodeHelper::replaceAstWithString(*i,s);
-    } else {
-      SgExpression* exp=isSgExpression(*i);
-      ROSE_ASSERT(exp);
-      if(!isLocalVariable(exp)) {
-        string s;
-        if(isPointerType(exp->get_type())) {
-          s=string("(*rts.avpushptr((void**)&(")+exp->unparseToString()+")))";
-        } else {
-          s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
+    TransformationOperation op=(*i).first;
+    SgNode* ast=(*i).second;
+    ROSE_ASSERT(ast);
+    
+    switch(op) {
+    case TRANSOP_ASSIGNMENT: {
+      if(isSgAssignOp(ast)) {
+        SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(ast));
+        SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(ast));
+        ROSE_ASSERT(lhs && rhs);
+        string s=string("rts.assign(&(")+lhs->unparseToString()+")"
+          +", "
+          +rhs->unparseToString()
+          +")";
+        if(_showTransformationTrace) {
+          cout<<"transformation: assignop: "<<(ast)->unparseToString()<<" ==> "<<s<<endl;
         }
-        if(_showTransformationTrace)
-          cout<<"applying transformation on operand: "<<(*i)->unparseToString()<<" ==> "<<s<<endl;
-        SgNodeHelper::replaceAstWithString(*i,s);
+        SgNodeHelper::replaceAstWithString(ast,s);
       } else {
-        if(_showTransformationTrace)
-          cout<<"optimization: no transformation necessary (detected local variable: "<<exp->unparseToString()<<")"<<endl;
+        SgExpression* exp=isSgExpression(ast);
+        ROSE_ASSERT(exp);
+        if(!isLocalVariable(exp)) {
+          string s;
+          if(isPointerType(exp->get_type())) {
+            s=string("(*rts.avpushptr((void**)&(")+exp->unparseToString()+")))";
+          } else {
+            s=string("(*rts.avpush(&(")+exp->unparseToString()+")))";
+          }
+          if(_showTransformationTrace)
+            cout<<"transformation: "<<(ast)->unparseToString()<<" ==> "<<s<<endl;
+          SgNodeHelper::replaceAstWithString(ast,s);
+        } else {
+          if(_showTransformationTrace)
+            cout<<"optimization: detected local variable "<<exp->unparseToString()<<endl;
+        }
       }
+      break;
     }
-  }
-  for(list<SgNode*>::iterator i=transformationSequenceCommit.begin();i!=transformationSequenceCommit.end();++i) {
-    // split delete operation in: 1) destructor call, 2) register for commit
-    // TODO: implement as proper AST manipulation
-    SgNode* operand=SgNodeHelper::getFirstChild(*i);
-    SgExpression* deleteOperand=isSgExpression(operand);
-    SgType* deleteOperandType=deleteOperand->get_type();
-    //SgType* deleteOperandType2=deleteOperandType->findBaseType();
-    SgDeclarationStatement* decl=deleteOperandType->getAssociatedDeclaration();
-    string typeName;
-    string destructorCall;
-    if(SgClassDeclaration* classDecl=isSgClassDeclaration(decl)) {
-      SgSymbol* symbol=classDecl->get_symbol_from_symbol_table();
-      SgName name=symbol->get_name();
-      typeName=name;
-      destructorCall=string(operand->unparseToString())+"->"+"~"+typeName+"();";
-    } else {
-      if(SgExpression* exp=isSgExpression(operand)) {
-        typeName=exp->get_type()->unparseToString();
-        typeName.erase(typeName.size()-1); // remove trailing "*" (must be pointer)
-        cout<<"INFO: delete on non-class type "<<typeName<<endl;
-        destructorCall="";
+    case TRANSOP_MEM_ALLOC: {
+      SgNewExp* newExp=isSgNewExp(ast);
+      ROSE_ASSERT(newExp);
+      SgPointerType* pointerType=isSgPointerType(newExp->get_type());
+      ROSE_ASSERT(pointerType);
+      string newExpString=newExp->unparseToString();
+      string typenameForCast;
+      SgType* type=pointerType->get_base_type();
+      if(SgClassType* classType=isSgClassType(type)) {
+        typenameForCast=classType->get_name();
       } else {
-        cerr<<"Error: unknown operand or type in delete operation."<<endl;
-        exit(1);
+        typenameForCast=type->unparseToString();
       }
+      string registerAndCast="static_cast<"+typenameForCast+"*"+">("+"rts.registerForCommit((void*)"+newExpString+"))";
+      string newCode=registerAndCast;
+      if(_showTransformationTrace) {
+        cout<<"transformation: "<<newExp->unparseToString()<<" ==> "<<newCode<<endl;
+      }
+      SgNodeHelper::replaceAstWithString(newExp,newCode);
+      break;
+    }
+      
+    case TRANSOP_MEM_ALLOC_ARRAY: {
+      SgNewExp* newExp=isSgNewExp(ast);
+      ROSE_ASSERT(newExp);
+      SgArrayType* arrayType=isSgArrayType(newExp->get_specified_type());
+      ROSE_ASSERT(arrayType);
+      SgType* arrayElementType=arrayType->get_base_type();
+      stringstream ss;
+      size_t arraySize=SageInterface::getArrayElementCount(arrayType);;
+      ss<<arraySize;
+      string arraySizeString=ss.str();
+      string arrayElementTypeString=arrayElementType->unparseToString();
+      string newCode="reinterpret_cast<"+arrayElementTypeString+"*>(rts.allocateArray("+arraySizeString+",sizeof("+arrayElementTypeString+")";
+      if(_showTransformationTrace) {
+        cout<<"transformation: "<<newExp->unparseToString()<<" ==> "<<newCode<<endl;
+      }
+      SgNodeHelper::replaceAstWithString(newExp,newCode);
+      break;
     }
 
-    string registerCall=string("rts.registerForCommit((void*)")+operand->unparseToString()+")";
-    string code=destructorCall+registerCall;
-    SgNodeHelper::replaceAstWithString(*i,code);
+    case TRANSOP_MEM_DELETE: {
+      // split delete operation in: 1) destructor call, 2) register for commit
+      // TODO: implement as proper AST manipulation
+      SgNode* operand=SgNodeHelper::getFirstChild(ast);
+      SgExpression* deleteOperand=isSgExpression(operand);
+      SgType* deleteOperandType=deleteOperand->get_type();
+      //SgType* deleteOperandType2=deleteOperandType->findBaseType();
+      SgDeclarationStatement* decl=deleteOperandType->getAssociatedDeclaration();
+      string typeName;
+      string destructorCall;
+      if(SgClassDeclaration* classDecl=isSgClassDeclaration(decl)) {
+        SgSymbol* symbol=classDecl->get_symbol_from_symbol_table();
+        SgName name=symbol->get_name();
+        typeName=name;
+        destructorCall=string(operand->unparseToString())+"->"+"~"+typeName+"();";
+      } else {
+        if(SgExpression* exp=isSgExpression(operand)) {
+          typeName=exp->get_type()->unparseToString();
+          typeName.erase(typeName.size()-1); // remove trailing "*" (must be pointer)
+          //cout<<"INFO: delete on non-class type "<<typeName<<endl;
+          destructorCall="";
+        } else {
+          cerr<<"Error: unknown operand or type in delete operation."<<endl;
+          exit(1);
+        }
+      }
+      string registerCall=string("rts.registerForCommit((void*)")+operand->unparseToString()+")";
+      string newCode=destructorCall+registerCall;
+      if(_showTransformationTrace) {
+        cout<<"transformation: "<<ast->unparseToString()<<" ==> "<<newCode<<endl;
+      }
+      SgNodeHelper::replaceAstWithString(ast,newCode);
+      break;
+    }
+    case TRANSOP_MEM_DELETE_ARRAY: {
+      SgDeleteExp* deleteExp=dynamic_cast<SgDeleteExp*>(ast);
+      ROSE_ASSERT(deleteExp);
+      SgType* varType=deleteExp->get_variable()->get_type();
+      if(SgPointerType* pointerType=isSgPointerType(varType)) {
+        SgType* pointedToType=pointerType->get_base_type();
+        string elementTypeName="unknown";
+        if(SgClassType* classType=isSgClassType(pointedToType)) {
+          elementTypeName=classType->get_name();
+        }
+        string deleteExpressionString=deleteExp->get_variable()->unparseToString();
+        string newCode="(Backstroke::callArrayElementDestructors<"+elementTypeName+">("+deleteExpressionString+")"+",rts.registerArrayDeallocation((void*)"+deleteExpressionString+"))";
+        if(_showTransformationTrace) {
+          cout<<"transformation: "<<deleteExp->unparseToString()<<" ==> "<<newCode<<endl;
+        }    
+        SgNodeHelper::replaceAstWithString(deleteExp,newCode);
+      } else {
+        cerr<<"Error: operand of delete[] has non-pointer type. ROSE AST consistency error. Bailing out."<<"("<<(deleteExp->get_type()->unparseToString())<<")";
+        exit(1);
+      }
+      break;
+    }
+    default:
+      cerr<<"Error: unsupported transformation operation."<<endl;
+      exit(1);
+    }
   }
 }
 
