@@ -11,7 +11,7 @@ boost::program_options::variables_map args;
 Backstroke::CommandLineOptions::CommandLineOptions(): _optionVersion(false),
                                                       _optionRoseHelp(false),
                                                       _optionRoseAstCheck(false),
-                                                      _optionShowRoseFileNodeInfo(false),
+                                                      _optionStatusMessages(false),
                                                       _optionShowTransformationTrace(false),
                                                       _isFinished(false) {
 }
@@ -33,8 +33,8 @@ Backstroke::CommandLineOptions::optionRoseAstCheck() {
 }
 
 bool
-Backstroke::CommandLineOptions::optionShowRoseFileNodeInfo() {
-  return _optionShowRoseFileNodeInfo;
+Backstroke::CommandLineOptions::optionStatusMessages() {
+  return _optionStatusMessages;
 }
 
 bool
@@ -54,10 +54,10 @@ Backstroke::CommandLineOptions::process(int argc, char* argv[]) {
     ("supported options");
   
   desc.add_options()
-    ("rose-help", "show help for compiler frontend options.")
+    ("rose-help", "show ROSE help for compiler frontend options.")
     ("rose-ast-check", "perform consistency test of ROSE AST.")
-    ("rose-show-file-node-info", "show project and file node dumps (using display()).")
-    ("show-transformation-trace", "shows a trace of all transformations performed to obtain reverse code.")
+    ("trace", "shows a trace of all transformations performed to obtain reverse code.")
+    ("status-messages,s", "print status messages while processing input file.")
     ("help,h", "produce this help message.")
     ("version,v", "display the backstroke2 version number.")
     ;
@@ -78,16 +78,16 @@ Backstroke::CommandLineOptions::process(int argc, char* argv[]) {
   if (args.count("rose-ast-check")) {
     _optionRoseAstCheck=true;
   }
+  if (args.count("status-messages")) {
+    _optionStatusMessages=true;
+  }
   if (args.count("version")) {
     _optionVersion=true;
     _isFinished=true;
-    cout << "version 2.0 alpha\n";
-    cout << "Written by Markus Schordan 2014\n";
+    cout << "version 2.0.0\n";
+    cout << "Written by Markus Schordan 2014,2015.\n";
   }
-  if(args.count("rose-show-file-node-info")) {
-    _optionShowRoseFileNodeInfo=true;
-  }
-  if (args.count("show-transformation-trace")) {
+  if (args.count("trace")) {
     _optionShowTransformationTrace=true;
   }
     
