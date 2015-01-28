@@ -7,6 +7,7 @@
 #include <Partitioner2/Semantics.h>
 
 #include <sawyer/Cached.h>
+#include <sawyer/Map.h>
 #include <sawyer/Optional.h>
 #include <sawyer/SharedPointer.h>
 
@@ -38,14 +39,23 @@ public:
     private:
         Semantics::SValuePtr expr_;
         EdgeType type_;
+        Confidence confidence_;
     public:
-        explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL)
-            : expr_(expr), type_(type) {}
+        explicit Successor(const Semantics::SValuePtr &expr, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED)
+            : expr_(expr), type_(type), confidence_(confidence) {}
+
         /** Symbolic expression for the successor address. */
         const Semantics::SValuePtr& expr() const { return expr_; }
 
         /** Type of successor. */
         EdgeType type() const { return type_; }
+
+        /** Confidence level of this successor.  Did we prove that this is a successor, or only assume it is?
+         *
+         * @{ */
+        Confidence confidence() const { return confidence_; }
+        void confidence(Confidence c) { confidence_ = c; }
+        /** @} */
     };
 
     /** All successors in no particular order. */
@@ -57,27 +67,37 @@ private:
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BaseSemantics::DispatcherPtr dispatcher_;           // How instructions are dispatched (null if no instructions)
     BaseSemantics::RiscOperatorsPtr operators_;         // Risc operators even if we're not using a dispatcher
-    BaseSemantics::StatePtr initialState_;              // Initial state for semantics (null if no instructions)
+    BaseSemantics::StatePtr initialState_;              // Initial state for semantics (null if dropped semantics)
     bool usingDispatcher_;                              // True if dispatcher's state is up-to-date for the final instruction
     Sawyer::Optional<BaseSemantics::StatePtr> optionalPenultimateState_; // One level of undo information
     std::vector<DataBlock::Ptr> dblocks_;               // Data blocks owned by this basic block, sorted
 
+    // When a basic block gets lots of instructions some operations become slow due to the linear nature of the instruction
+    // list. Therefore, we also keep a mapping from instruction address to position in the list. The mapping is only used when
+    // the bigBlock size is reached.
+    static const size_t bigBlock_ = 200;
+    typedef Sawyer::Container::Map<rose_addr_t, size_t> InsnAddrMap;
+    InsnAddrMap insnAddrMap_;                           // maps instruction address to index in insns_ vector
+
     // The following members are caches either because their value is seldom needed and expensive to compute, or because
     // the value is best computed at a higher layer than a single basic block (e.g., in the partitioner) yet it makes the
     // most sense to store it here. Make sure clearCache() resets these to initial values.
-    // FIXME[Robb P. Matzke 2014-08-13]: eventually we may want to support user-defined cache entries
     Sawyer::Cached<Successors> successors_;             // control flow successors out of final instruction
     Sawyer::Cached<std::set<rose_addr_t> > ghostSuccessors_;// non-followed successors from opaque predicates, all insns
     Sawyer::Cached<bool> isFunctionCall_;               // is this block semantically a function call?
     Sawyer::Cached<bool> isFunctionReturn_;             // is this block semantically a return from the function?
-    Sawyer::Cached<BaseSemantics::SValuePtr> stackDelta_;// change in stack pointer from beginning to end of block
+    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaIn_;// intra-function stack delta at entrance to basic block
+    Sawyer::Cached<BaseSemantics::SValuePtr> stackDeltaOut_;// intra-function stack delta at exit from basic block
+    Sawyer::Cached<bool> mayReturn_;                    // a function return is reachable from this basic block in the CFG
 
     void clearCache() const {
         successors_.clear();
         ghostSuccessors_.clear();
         isFunctionCall_.clear();
         isFunctionReturn_.clear();
-        stackDelta_.clear();
+        stackDeltaIn_.clear();
+        stackDeltaOut_.clear();
+        mayReturn_.clear();
     }
 
 
@@ -218,9 +238,21 @@ public:
     //                                  Semantics
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Determines whether semantics have been dropped.
+     *
+     *  Returns true if a basic block's semantics have been dropped and a dispatcher is available. Always returns false if a
+     *  dispatcher is not available. */
+    bool isSemanticsDropped() const { return dispatcher_ && !initialState_; }
+
+    /** Determines whether a semantics error was encountered.
+     *
+     *  Returns true if an error was encountered in the block's instruction semantics.  Always returns false if a dispatcher is
+     *  not available or if semantics have been dropped. */
+    bool isSemanticsError() const { return dispatcher_ && initialState_ && !usingDispatcher_; }
+
     /** Return the initial semantic state.
      *
-     *  A null pointer is returned if this basic block has no instructions. */
+     *  A null pointer is returned if this basic block's semantics have been dropped. */
     const BaseSemantics::StatePtr& initialState() const { return initialState_; }
 
     /** Return the final semantic state.
@@ -236,6 +268,18 @@ public:
      *  that was used.  The register dictionary can be employed to obtain names for the registers in the semantic
      *  states. A null dispatcher is returned if this basic block is empty. */
     const BaseSemantics::DispatcherPtr& dispatcher() const { return dispatcher_; }
+
+    /** Drops semantic information.
+     *
+     *  This function deletes semantic information for the basic block and can be used to save space.  The partitioner can be
+     *  configured to drop semantic information when a basic block is attached to the CFG. */
+    void dropSemantics();
+
+    /** Undrop semantics.
+     *
+     *  This is the inverse of dropSemantics.  If semantics have been dropped then they will be recalculated if possible. If
+     *  semantics have not been dropped then nothing happens. */
+    void undropSemantics();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -263,11 +307,13 @@ public:
     /** Insert a new successor.
      *
      *  Inserts a new successor into the cached successor list.  If the successor is already present then it is not added
-     *  again (the comparison uses structural equivalance).
+     *  again (the comparison uses structural equivalance).  Both the expression and the edge type are significant when
+     *  comparing. For instance, it is permissible to have a function call edge and a call-return edge that both point to the
+     *  fall-through address.
      *
      *  @{ */
-    void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL);
-    void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL);
+    void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
+    void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     /** @} */
 
 
@@ -292,9 +338,19 @@ public:
 
     /** Stack delta.
      *
-     *  The stack delta is a symbolic expression created by subtracting the initial stack pointer register from the final
-     *  stack pointer register.  This value is typically computed in the partitioner and cached in the basic block. */
-    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
+     *  The stack delta is the value of the stack pointer at this basic block minus the value at the entrance to the
+     *  function. See @ref Partitioner::basicBlockStackDelta for details about how it is computed and what it means.
+     *
+     * @{ */
+    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaIn() const { return stackDeltaIn_; }
+    const Sawyer::Cached<BaseSemantics::SValuePtr>& stackDeltaOut() const { return stackDeltaOut_; }
+    /** @} */
+
+    /** May-return property.
+     *
+     *  This property holds a Boolean that indicates whether a function-return basic block is reachable from this basic
+     *  block.  In other words, if control enters this basic block, might the top stack frame eventually be popped? */
+    const Sawyer::Cached<bool>& mayReturn() const { return mayReturn_; }
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

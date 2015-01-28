@@ -39,12 +39,70 @@ checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 if ROSE_USE_WT
 
-bin_PROGRAMS += bROwSE
-bROwSE_SOURCES = bROwSE.C
-bROwSE_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include
-bROwSE_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+bin_PROGRAMS += bROwSE-server
+bROwSE_server_SOURCES =				\
+	bROwSE/Application.C			\
+	bROwSE/WAssemblyListing.C		\
+	bROwSE/bROwSE.C				\
+	bROwSE/FunctionListModel.C		\
+	bROwSE/FunctionUtil.C			\
+	bROwSE/InstructionListModel.C		\
+	bROwSE/Statistics.C			\
+	bROwSE/WAddressComboBox.C		\
+	bROwSE/WAddressSpace.C			\
+	bROwSE/WBusy.C				\
+	bROwSE/WFunctionCfg.C			\
+	bROwSE/WFunctionList.C			\
+	bROwSE/WFunctionNavigation.C		\
+	bROwSE/WFunctionSummary.C		\
+	bROwSE/WHexDump.C			\
+	bROwSE/WHexValueEdit.C			\
+	bROwSE/WInstructionList.C		\
+	bROwSE/WMemoryMap.C			\
+	bROwSE/WPartitioner.C			\
+	bROwSE/WSemantics.C			\
+	bROwSE/WSplash.C			\
+	bROwSE/WStatus.C			\
+	bROwSE/WToggleButton.C
+bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
+bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+pkginclude_HEADERS = 				\
+        bROwSE/Application.h			\
+        bROwSE/FunctionListModel.h		\
+        bROwSE/FunctionUtil.h			\
+        bROwSE/InstructionListModel.h		\
+        bROwSE/Statistics.h			\
+        bROwSE/WAddressComboBox.h		\
+        bROwSE/WAddressSpace.h			\
+        bROwSE/WAssemblyListing.h		\
+        bROwSE/WBasicBlock.C			\
+        bROwSE/WBusy.h				\
+        bROwSE/WFunctionCfg.h			\
+        bROwSE/WFunctionList.h			\
+        bROwSE/WFunctionNavigation.h		\
+        bROwSE/WFunctionSummary.h		\
+        bROwSE/WHexDump.h			\
+        bROwSE/WHexValueEdit.h			\
+        bROwSE/WInstructionList.h		\
+        bROwSE/WMemoryMap.h			\
+        bROwSE/WPartitioner.h			\
+        bROwSE/WSemantics.h			\
+        bROwSE/WSplash.h			\
+        bROwSE/WStatus.h			\
+        bROwSE/WToggleButton.h			\
+        bROwSE/bROwSE.h
 
 endif
+
+
+#------------------------------------------------------------------------------------------------------------------------
+# Find paths in the CFG
+
+bin_PROGRAMS += findPath
+findPath_SOURCES = findPath.C
+findPath_CPPFLAGS = $(ROSE_INCLUDES)
+findPath_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # find similar functions in two specimens

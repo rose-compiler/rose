@@ -14,11 +14,14 @@ libPartitioner_la_SOURCES =			\
 	BasicBlock.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\
+	DataFlow.C				\
 	Engine.C				\
 	Exception.C				\
 	Function.C				\
 	FunctionCallGraph.C			\
+	GraphViz.C				\
 	InstructionProvider.C			\
+	MayReturnAnalysis.C			\
 	Modules.C				\
 	ModulesElf.C				\
 	ModulesM68k.C				\
@@ -27,4 +30,5 @@ libPartitioner_la_SOURCES =			\
 	OwnedDataBlock.C			\
 	Partitioner.C				\
 	Semantics.C				\
+	StackDeltaAnalysis.C			\
 	Utility.C

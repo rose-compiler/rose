@@ -88,15 +88,15 @@ Sawyer::Message::Facility mlog;
 
 // Template function to build a control flow graph whose vertices are either instructions or basic blocks
 template<class SageNode>
-void buildControlFlowGraph(SgNode *ast, Sawyer::Container::Graph<SageNode*, int> &cfg /*out*/);
+void buildControlFlowGraph(SgNode *ast, Sawyer::Container::Graph<SageNode*> &cfg /*out*/);
 
 template<>
-void buildControlFlowGraph<SgAsmInstruction>(SgNode *ast, Sawyer::Container::Graph<SgAsmInstruction*, int> &cfg /*out*/) {
+void buildControlFlowGraph<SgAsmInstruction>(SgNode *ast, Sawyer::Container::Graph<SgAsmInstruction*> &cfg /*out*/) {
     ControlFlow().build_insn_cfg_from_ast(ast, cfg);
 }
 
 template<>
-void buildControlFlowGraph<SgAsmBlock>(SgNode *ast, Sawyer::Container::Graph<SgAsmBlock*, int> &cfg /*out*/) {
+void buildControlFlowGraph<SgAsmBlock>(SgNode *ast, Sawyer::Container::Graph<SgAsmBlock*> &cfg /*out*/) {
     ControlFlow().build_block_cfg_from_ast(ast, cfg);
 }
 
@@ -118,9 +118,8 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // Control flow graph.  Any graph implementing the Boost Graph Library API is permissible. We use Sawyer's implementation
     // because it has a nicer interface for the rest of this file to use.  We could use basic blocks or instructions as the
     // vertices.  The edge value is irrelevant -- we don't use them.
-    // FIXME[Robb P. Matzke 2014-06-02]: edge type could be "void", but Sawyer doesn't specialize for that yet
     mlog[TRACE] <<"Obtaining control flow graph...\n";
-    typedef Sawyer::Container::Graph<SageNode*, int> CFG;
+    typedef Sawyer::Container::Graph<SageNode*> CFG;
     CFG cfg;
     buildControlFlowGraph(specimen, cfg);
 

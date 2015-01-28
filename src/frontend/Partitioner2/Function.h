@@ -1,10 +1,12 @@
 #ifndef ROSE_Partitioner2_Function_H
 #define ROSE_Partitioner2_Function_H
 
+#include <BaseSemantics2.h>
 #include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/DataBlock.h>
 
+#include <sawyer/Cached.h>
 #include <sawyer/Map.h>
 #include <sawyer/SharedPointer.h>
 
@@ -44,6 +46,15 @@ private:
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
     bool isFrozen_;                                     // true if function is represented by the CFG
 
+    // The following members are caches either because their value is seldom needed and expensive to compute, or because the
+    // value is best computed at a higher layer (e.g., in the partitioner) yet it makes the most sense to store it here. Make
+    // sure clearCache() resets these to initial values.
+    Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr> stackDelta_;// net change in stack pointer
+
+    void clearCache() {
+        stackDelta_.clear();
+    }
+    
 protected:
     // Use instance() instead
     explicit Function(rose_addr_t entryVa, const std::string &name, unsigned reasons)
@@ -96,6 +107,7 @@ public:
      *  specified address is already part of the function then it is not added a second time. */
     void insertBasicBlock(rose_addr_t bblockVa) {       // no-op if exists
         ASSERT_forbid(isFrozen_);
+        clearCache();
         bblockVas_.insert(bblockVa);
     }
 
@@ -107,6 +119,7 @@ public:
     void eraseBasicBlock(rose_addr_t bblockVa) {        // no-op if not existing
         ASSERT_forbid(isFrozen_);
         ASSERT_forbid2(bblockVa==entryVa_, "function entry block cannot be removed");
+        clearCache();
         bblockVas_.erase(bblockVa);
     }
 
@@ -134,8 +147,25 @@ public:
      *  a frozen state; detaching a function from the CFG thaws it. */
     bool isFrozen() const { return isFrozen_; }
 
+    /** True if function is a thunk.
+     *
+     *  This function is a thunk if it is marked as such in its reason codes via @ref SgAsmFunction::FUNC_THUNK and it has
+     *  exactly one basic block.
+     *
+     *  See also, @ref Partitioner::functionThunkTarget that is a stronger predicate and also returns the address of the thunk
+     *  target. */
+    bool isThunk() const;
+
     /** Number of basic blocks in the function. */
     size_t nBasicBlocks() const { return bblockVas_.size(); }
+
+    /** Stack delta.
+     *
+     *  The stack delta is the net change in the stack pointer between the entrance to the function and its return.
+     *  See @ref Partitioner::functionStackDelta for details about how it is computed and what it means.
+     *
+     * @{ */
+    const Sawyer::Cached<InstructionSemantics2::BaseSemantics::SValuePtr>& stackDelta() const { return stackDelta_; }
 
     /** A printable name for the function.  Returns a string like 'function 0x10001234 "main"'.  The function name is not
      *  included if the name is empty. */

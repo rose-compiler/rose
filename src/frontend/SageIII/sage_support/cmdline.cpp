@@ -7,6 +7,7 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage3basic.h"
 #include "cmdline.h"
 #include "keep_going.h"
 #include "Diagnostics.h"                                // rose::Diagnostics

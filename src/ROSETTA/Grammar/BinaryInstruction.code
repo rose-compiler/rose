@@ -101,6 +101,8 @@ HEADER_INTERPRETATION_END
 
 HEADER_BINARY_INSTRUCTION_START
         public:
+		static const int64_t INVALID_STACK_DELTA;
+
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinInEdges(const VirtualBinCFG::AuxiliaryInformation* info);
@@ -171,14 +173,14 @@ HEADER_INTEGER_VALUE_EXPRESSION_START
                 uint64_t get_value() const { return get_absoluteValue(); }
 
                 // These are deprecated; use CamelCase versions instead [Robb P. Matzke 2014-07-21]
-                size_t get_significant_bits() const ROSE_DEPRECATED;
-                void make_relative_to(SgNode*) ROSE_DEPRECATED;
-                uint64_t get_base_address() const ROSE_DEPRECATED;
-                uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED;
-                void set_absolute_value(uint64_t) ROSE_DEPRECATED;
-                int64_t get_signed_value() const ROSE_DEPRECATED;
-                int64_t get_relative_value() const ROSE_DEPRECATED;
-                void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED;
+                size_t get_significant_bits() const ROSE_DEPRECATED("use get_significantBits");
+                void make_relative_to(SgNode*) ROSE_DEPRECATED("use makeRelativeTo");
+                uint64_t get_base_address() const ROSE_DEPRECATED("use get_baseAddress");
+                uint64_t get_absolute_value(size_t nbits=0) const ROSE_DEPRECATED("use get_absoluteValue");
+                void set_absolute_value(uint64_t) ROSE_DEPRECATED("use set_absoluteValue");
+                int64_t get_signed_value() const ROSE_DEPRECATED("use set_signedValue");
+                int64_t get_relative_value() const ROSE_DEPRECATED("use get_relativeValue");
+                void set_relative_value(int64_t, size_t nbits=64) ROSE_DEPRECATED("use set_relativeValue");
 HEADER_INTEGER_VALUE_EXPRESSION_END
 
 

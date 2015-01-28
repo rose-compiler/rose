@@ -53,10 +53,10 @@ public:
 
     /** Arguments passed to the callback. */
     struct Args {
-        const Partitioner *partitioner;                 /**< Partitioner requesting basic block successors. */
+        const Partitioner &partitioner;                 /**< Partitioner requesting basic block successors. */
         BasicBlock::Ptr bblock;                         /**< Basic block whose successors are to be computed. */
         Results &results;                               /**< Results to control basic block discovery. */
-        Args(const Partitioner *partitioner, const BasicBlock::Ptr &bblock, Results &results)
+        Args(const Partitioner &partitioner, const BasicBlock::Ptr &bblock, Results &results)
             : partitioner(partitioner), bblock(bblock), results(results) {}
     };
 
@@ -88,7 +88,7 @@ public:
      *  address easier to write, but matchers that match at additional locations must explicitly check those other
      *  locations with the same conditions (FIXME[Robb P. Matzke 2014-08-04]: perhaps we should pass those conditions as an
      *  argument). */
-    virtual bool match(const Partitioner*, rose_addr_t anchor) = 0;
+    virtual bool match(const Partitioner&, rose_addr_t anchor) = 0;
 };
 
 
@@ -97,25 +97,31 @@ public:
  *  A function prologue is a pattern of bytes or instructions that typically mark the beginning of a function.  For
  *  instance, many x86-based functions start with "PUSH EBX; MOV EBX, ESP" while many M68k functions begin with a single
  *  LINK instruction affecting the A6 register.  A subclass must implement the @ref match method that does the actual
- *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref function method to
- *  obtain a function object.
+ *  pattern matching.  If the @ref match method returns true, then the partitioner will call the @ref functions method to
+ *  obtain the new function objects.
  *
  *  The matcher will be called only with anchor addresses that are mapped with execute permission and which are not a
  *  starting address of any instruction in the CFG.  The matcher should ensure similar conditions are met for any
- *  additional addresses, especially the address returned by @ref functionVa. */
+ *  additional addresses. */
 class FunctionPrologueMatcher: public InstructionMatcher {
 public:
     /** Shared-ownership pointer. The partitioner never explicitly frees matchers. Their pointers are copied when
      *  partitioners are copied. */
     typedef Sawyer::SharedPointer<FunctionPrologueMatcher> Ptr;
 
-    /** Returns the function for the previous successful match.  If the previous call to @ref match returned true then this
-     *  method should return a function for the matched function prologue.  Although the function returned by this method
-     *  is often at the same address as the anchor for the match, it need not be.  For instance, a matcher could match
-     *  against some amount of padding followed the instructions for setting up the stack frame, in which case it might
-     *  choose to return a function that starts at the stack frame setup instructions and includes the padding as static
-     *  data. The partitioner will never call @ref function without first having called @ref match. */
-    virtual Function::Ptr function() const = 0;
+    /** Returns the function(s) for the previous successful match.
+     *
+     *  If the previous call to @ref match returned true then this method should return at least one function for the matched
+     *  function prologue.  Although the function returned by this method is often at the same address as the anchor for the
+     *  match, it need not be.  For instance, a matcher could match against some amount of padding followed the instructions
+     *  for setting up the stack frame, in which case it might choose to return a function that starts at the stack frame setup
+     *  instructions and includes the padding as static data.
+     *
+     *  Multiple functions can be created. For instance, if the matcher matches a thunk then two functions will likely be
+     *  created: the thunk itself, and the function to which it points.
+     *
+     *  The partitioner will never call @ref function without first having called @ref match. */
+    virtual std::vector<Function::Ptr> functions() const = 0;
 };
 
 
@@ -136,7 +142,7 @@ public:
      *  then the return value is the starting address for the padding and must be less than @p anchor. When no match is found
      *  then @p anchor is returned. The size of the matched padding is always <code>anchor-retval</code> where @c retval is
      *  the returned value. */
-    virtual rose_addr_t match(const Partitioner*, rose_addr_t anchor) = 0;
+    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,6 +150,16 @@ public:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Modules {
+
+/** Convert system function names to ROSE canonical form.
+ *
+ *  ROSE always stores library function names as "function@library" with the reasoning that the function name is typically more
+ *  important than the library name and storing them this way leads to better presentation in sorted lists.  This function
+ *  recognizes and converts the form "library.dll:function" and will convert "KERNEL32.dll:EncodePointer" to
+ *  "EncodePointer@KERNEL32.dll"
+ *
+ * @sa ModulesPe::systemFunctionName and possibly other OS-specific formatters. */
+std::string canonicalFunctionName(const std::string&);
 
 /** Follow basic block ghost edges.
  *
@@ -254,12 +270,55 @@ public:
     virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
 };
 
+/** Convenient place to attach a debugger.
+ *
+ *  See @ref docString for full documentation. */
+class Debugger: public CfgAdjustmentCallback {
+public:
+    struct Settings {
+        AddressInterval where;                          // what basic block(s) should we monitor (those starting within)
+        Trigger::Settings when;                         // once found, which event triggers
+    };
+private:
+    Settings settings_;
+    Trigger trigger_;
+protected:
+    Debugger(const Settings &settings): settings_(settings), trigger_(settings.when) {}
+public:
+    static Ptr instance(const Settings &settings) { return Ptr(new Debugger(settings)); }
+    static Ptr instance(const std::string &config);
+    static Ptr instance(const std::vector<std::string> &args);
+    static Sawyer::CommandLine::SwitchGroup switches(Settings&);
+    static std::string docString();
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    void debug(rose_addr_t, const BasicBlock::Ptr&);
+};
+
 /** Remove execute permissions for zeros.
  *
  *  Scans memory to find consecutive zero bytes and removes execute permission from them.  Returns the set of addresses whose
  *  access permissions were changed.  Only occurrences of at least @p threshold consecutive zeros are changed. If @p threshold
  *  is zero then nothing happens. */
 AddressIntervalSet deExecuteZeros(MemoryMap &map /*in,out*/, size_t threshold);
+
+/** Give labels to addresses that are symbols.
+ *
+ *  Scans the specified binary container and labels those virtual addresses that correspond to symbols.  This function does not
+ *  create any functions in the partitioner, it only gives names to certain addresses.  If the same address is labeled more
+ *  than once by symbols with different names then one name is chosen arbitrarily.
+ *
+ * @{ */
+void labelSymbolAddresses(Partitioner&, SgAsmGenericHeader*);
+void labelSymbolAddresses(Partitioner&, SgAsmInterpretation*);
+/** @} */
+
+/** Give labels to string constants.
+ *
+ *  Finds integer constants that are the address if a C-style NUL-terminated ASCII string and adds a comment to the constant
+ *  (if it had none previously) to describe the string. All instructions that are attached to the CFG/AUM are processed. The
+ *  instructions are modified by attaching the comment, but the comments are not added to the partitioners address name map. */
+void nameStrings(const Partitioner&);
 
 /** Finds functions for which symbols exist.
  *
@@ -271,6 +330,71 @@ std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmGenericH
 std::vector<Function::Ptr> findSymbolFunctions(const Partitioner&, SgAsmInterpretation*);
 size_t findSymbolFunctions(const Partitioner&, SgAsmGenericHeader*, std::vector<Function::Ptr>&);
 /** @} */
+
+/** Gives names to constants in instructions.
+ *
+ *  Scans the entire list of attached instructions and give each constant integer expression a name if the value of the
+ *  expression happens to be an address that has a name. */
+void nameConstants(const Partitioner&);
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                  Partitioner conversion to AST
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Build AST for basic block.
+ *
+ *  Builds and returns an AST for the specified basic block. The basic block must not be a null pointer, but it need not be in
+ *  the CFG.  If the basic block has no instructions then it would violate ROSE's invariants, so a null pointer is returned
+ *  instead; however, if @p relaxed is true then an IR node is returned anyway. */
+SgAsmBlock* buildBasicBlockAst(const Partitioner&, const BasicBlock::Ptr&, bool relaxed=false);
+
+/** Build AST for data block.
+ *
+ *  Builds and returns an AST for the specified data block.  The data block must not be a null pointer, but it need not be in
+ *  the CFG.  If @p relaxed is true then IR nodes are created even if they would violate some ROSE invariant, otherwise invalid
+ *  data blocks are ignored and a null pointer is returned for them. */
+SgAsmBlock* buildDataBlockAst(const Partitioner&, const DataBlock::Ptr&, bool relaxed=false);
+
+/** Build AST for function.
+ *
+ *  Builds and returns an AST for the specified function.  The function must not be a null pointer, but it need not be in the
+ *  CFG.  The function will have children created only for its basic blocks that exist in the CFG (otherwise the partitioner
+ *  doesn't know about them).  If no children were created then the returned function IR node violates ROSE's invariants, so a
+ *  null pointer is returned instead; however, if @p relaxed is true then an IR node is returned anyway. */
+SgAsmFunction* buildFunctionAst(const Partitioner&, const Function::Ptr&, bool relaxed=false);
+
+/** Builds the global block AST.
+ *
+ *  A global block's children are all the functions contained in the AST, which in turn contain SgAsmBlock IR nodes for the
+ *  basic blocks, which in turn contain instructions.  If no functions exist in the CFG then the returned node would violate
+ *  ROSE's invariants, so a null pointer is returned instead; however, if @p relaxed is true then the IR node is returned
+ *  anyway. */
+SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
+
+/** Builds an AST from the CFG.
+ *
+ *  Builds an abstract syntax tree from the control flow graph.  The returned SgAsmBlock will have child functions; each
+ *  function (SgAsmFunction) will have child basic blocks; each basic block (SgAsmBlock) will have child instructions.  If @p
+ *  relaxed is true then all IR nodes in the returned tree will satisfy ROSE's invariants concerning them at the expense of not
+ *  including certain things in the AST; otherwise, when @p relaxed is true, the AST will be as complete as possible but may
+ *  violate some invariants.
+ *
+ *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
+ *  interpretation allows more fixups to occur. */
+SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool relaxed=false);
+
+/** Fixes pointers in the AST.
+ *
+ *  Traverses the AST to find SgAsmIntegerValueExpressions and changes absolute values to relative values.  If such an
+ *  expression is the starting address of a function then the expression will point to that function; else if the expression is
+ *  the starting address of a basic block then the expression will point to that basic block; else if the expression is the
+ *  starting address of an instruction then the expression will point to that instruction; else if the expression evaluates to
+ *  an address inside a mapped section, then the expression will become relative to the start of the best section. Pointers
+ *  into sections are only created if an interpretation is specified. */
+void fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp=NULL);
+
+
 
 } // namespace
 
