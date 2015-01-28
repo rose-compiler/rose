@@ -1,0 +1,74 @@
+{
+  "graph": {
+    "color":   "black",
+    "style":   "",
+    "rankdir": "TB",
+    "ranksep": 1
+  },
+
+  "edge": {
+    "default": {
+      "label":      "",
+      "color":      "",
+      "style":      "",
+      "min_len":    1,
+      "pen_width":  1,
+      "constraint": true
+    }
+  },
+
+  "cluster": {
+    "default": {
+      "label":     "",
+      "color":     "black",
+      "style":     "",
+      "pen_width": 1
+    },
+    "map": {
+      "prefix": {
+        "label":     "",
+        "color":     "black",
+        "style":     "",
+        "pen_width": 1
+      }
+    }
+  },
+
+  "node": {
+    "map": {
+      "SgNode": {
+        "label":      "",
+        "color":      "black",
+        "style":      "filled",
+        "shape":      "box",
+        "fill_color": "white",
+        "pen_width":  1
+      },
+      "SgLocatedNode": {
+        "label":      "",
+        "color":      "black",
+        "style":      "filled",
+        "shape":      "box",
+        "fill_color": "gray",
+        "pen_width":  1
+      },
+      "SgStatement": {
+        "label":      "",
+        "color":      "black",
+        "style":      "filled",
+        "shape":      "oval",
+        "fill_color": "red",
+        "pen_width":  1
+      },
+      "SgExpression": {
+        "label":      "",
+        "color":      "black",
+        "style":      "filled",
+        "shape":      "box",
+        "fill_color": "green",
+        "pen_width":  1
+      }
+    }
+  }
+}
+
