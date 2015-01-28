@@ -37,8 +37,9 @@
  *  For efficiency, we save only a single scope node  if there are multiple uses in the same scope. 
  *  Also for two use scopes with enclosing relationship, we only store the outer scope in the scope tree and trim the rest. 
  *
- *  Algorithm:
+ *  Algorithm V1 :
  *    Save the scope of the declaration int DS
+ *
  *    Step 1: create a scope tree first, with trimming 
  *    Pre-order traversal to find all references to the declaration
  *    For each reference place
@@ -71,6 +72,11 @@
  *     New declarations are added into the worklist during the duplication/insertion process.
  *     The entire process terminate when the worklist becomes empty.      
  *
+ * Algorithm V2: further optimization on top of v1
+ *    for analysis-move, we find all bottom scopes at once and only do move once after that
+ *    This eliminates the intermediate moving of declarations and is much more efficient. 
+ *    Details for how to do the iterative analysis can be found at comments for findFinalTargetScopes ()
+ *
  *  //TODO optimize efficiency for multiple declarations
  * //TODO move to a separated source file or even namespace
 */
@@ -97,11 +103,10 @@ extern bool decl_mover_conservative;
 bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
 
 //! An alternative algorithm: separating analysis from transformation into two phases. The move is final.
-// The downside is that 
-// 1. if any scope is not allowed, no move will happen at all. This is not desired.
-// To really improve it, I have to keep track of target scopes per scope tree, and only invalidate the move for a scope tree
-// with invalid target scope.
-// 2. if a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
+// Improved 2-step algorithm:
+// Step 1: iterative subalgorithm to find the real bottom scopes 
+// Step 2: copy & move source declaration to all the bottom scopes.
+// return the final scopes accepting the moved declarations.
 std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2(SgVariableDeclaration* decl, bool debug/*= false */);
 
 //By default ASSERT should block the execution to find issues.
@@ -1288,11 +1293,11 @@ std::vector <SgScopeStatement *> collectCandidateTargetScopes (SgVariableDeclara
   return target_scopes; 
 }
 
-// V3 algorithm: two step algorithm
+// V2 algorithm: two step algorithm
 /*
 Find all bottom scopes to move into: no side effect on AST at all
 
-1. initialization: 
+1. Initialization: 
   source_scope_trees: the top scope tree of the single decl in question
 2. For each tree of  source_scope_trees: populate target_scopes
    a. single node scope tree, if diff from orig_scope, add  to target_scopes.  
@@ -1303,7 +1308,7 @@ Find all bottom scopes to move into: no side effect on AST at all
           1.  move to multiple scopes: each child’s first branch → target_scopes  
              // TODO: this can be optimized, direct add child scope should be sufficient
            2. no move down, push first-branch scope into target_scope, if it is diff from orig_scope
-3. target_scopes to source_scope_trees transition, caused by if-stmt  void moveSomeTargetScopesToSourceScopeTrees(& target_scopes, & source_scope_tree)
+3. Target_scopes to source_scope_trees transition, caused by if-stmt  void moveSomeTargetScopesToSourceScopeTrees(& target_scopes, & source_scope_tree)
   a. find all if-stmt scopes of target_scopes, 
   b. remove them from target_scopes
   c. add their true/false scopes into   source_scope_trees // the removed ones can be added back later for single node scope tree case. 
@@ -1312,6 +1317,13 @@ Find all bottom scopes to move into: no side effect on AST at all
    a. scope tree: root scopes are processed (finished) a scopelist, source_scopes becomes empty
    b. // Implicitly ensured by 3 all target_scopes are bottom, no non-bottom scopes like if-stmt anymore
 
+Amendment to the algorithm before:
+
+ 1. if any scope is not allowed, no move will happen at all. This is not desired since some intermediate moves still should happen.
+ To support it, I build candidate target scopes for each scope tree, and only invalidate a single scope tree
+ with invalid target scope. Other target scopes of valid scope trees are preserved. 
+
+ 2. if a source-scope tree is invalidated, it should be returned to the target_scope (back track!!) to preserve previous move.
 Liao 1/27/2015 
  */
 void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgScopeStatement *> &target_scopes, bool debug)
@@ -1391,22 +1403,7 @@ std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2 (SgVariableD
   std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
-     // ignore complex for init stmt for now 
-    SgForStatement* bad_loop = hasALoopWithComplexInitStmt (declaration, target_scopes);
-    if (bad_loop != NULL)
-    {
-      cerr<<"Error: SageInterface::moveDeclarationToInnermostScope() gives up moving a variable decl due to a complex target loop scope"<<endl;
-      cerr<<"Variable declaration in question is:"<<endl;
-      declaration->get_file_info()->display();
-      cerr<<"Loop scope with complex init stmt is:"<<endl;
-      bad_loop->get_file_info()->display();
-#if 0  // We no longer assert this since the complex loops are out of our scope. Users will make sure their loops are canonical.
-      if (!tool_keep_going )
-        ROSE_ASSERT (false);
-#endif 
-    }
-    else
-     copyMoveVariableDeclaration (declaration, target_scopes, worklist);
+    copyMoveVariableDeclaration (declaration, target_scopes, worklist);
   }
   return target_scopes; 
 }
