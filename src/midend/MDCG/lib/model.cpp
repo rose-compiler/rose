@@ -605,90 +605,90 @@ void toDot(
   std::set<void *> processed_nodes;
   std::set<void *> described_nodes;
 
-  out << "subgraph cluster_variable {" << std::endl;
-  out << "  label = \"Variables\";" << std::endl;
+//  out << "subgraph cluster_variable {" << std::endl;
+//  out << "  label = \"Variables\";" << std::endl;
   std::set<Model::variable_t>::const_iterator it_variable;
   for (it_variable = variable_set.begin(); it_variable != variable_set.end(); it_variable++)
     toDotLabelNode<Model::e_model_variable>(out, *it_variable, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_function {" << std::endl;
-  out << "  label = \"Functions\";" << std::endl;
+//  out << "subgraph cluster_function {" << std::endl;
+//  out << "  label = \"Functions\";" << std::endl;
   std::set<Model::function_t>::const_iterator it_function;
   for (it_function = function_set.begin(); it_function != function_set.end(); it_function++)
     toDotLabelNode<Model::e_model_function>(out, *it_function, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_field {" << std::endl;
-  out << "  label = \"Fields\";" << std::endl;
+//  out << "subgraph cluster_field {" << std::endl;
+//  out << "  label = \"Fields\";" << std::endl;
   std::set<Model::field_t>::const_iterator it_field;
   for (it_field = field_set.begin(); it_field != field_set.end(); it_field++)
     toDotLabelNode<Model::e_model_field>(out, *it_field, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_method {" << std::endl;
-  out << "  label = \"Methods\";" << std::endl;
+//  out << "subgraph cluster_method {" << std::endl;
+//  out << "  label = \"Methods\";" << std::endl;
   std::set<Model::method_t>::const_iterator it_method;
   for (it_method = method_set.begin(); it_method != method_set.end(); it_method++)
     toDotLabelNode<Model::e_model_method>(out, *it_method, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_type {" << std::endl;
-  out << "  label = \"Types\";" << std::endl;
+//  out << "subgraph cluster_type {" << std::endl;
+//  out << "  label = \"Types\";" << std::endl;
   std::set<Model::type_t>::const_iterator it_type;
   for (it_type = type_set.begin(); it_type != type_set.end(); it_type++)
     toDotLabelNode<Model::e_model_type>(out, *it_type, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_class {" << std::endl;
-  out << "  label = \"Classes\";" << std::endl;
+//  out << "subgraph cluster_class {" << std::endl;
+//  out << "  label = \"Classes\";" << std::endl;
   std::set<Model::class_t>::const_iterator it_class;
   for (it_class = class_set.begin(); it_class != class_set.end(); it_class++)
     toDotLabelNode<Model::e_model_class>(out, *it_class, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-//out << "subgraph cluster_namespace {" << std::endl;
-//out << "  label = \"Namespaces\";" << std::endl;
+//  out << "subgraph cluster_namespace {" << std::endl;
+//  out << "  label = \"Namespaces\";" << std::endl;
   std::set<Model::namespace_t>::const_iterator it_namespace;
   for (it_namespace = namespace_set.begin(); it_namespace != namespace_set.end(); it_namespace++)
     toDotLabelNode<Model::e_model_namespace>(out, *it_namespace, described_nodes);
-//out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_variable {" << std::endl;
-  out << "  label = \"Variables\";" << std::endl;
+//  out << "subgraph cluster_variable {" << std::endl;
+//  out << "  label = \"Variables\";" << std::endl;
   for (it_variable = variable_set.begin(); it_variable != variable_set.end(); it_variable++)
     toDotNode<Model::e_model_variable>(out, *it_variable, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_function {" << std::endl;
-  out << "  label = \"Functions\";" << std::endl;
+//  out << "subgraph cluster_function {" << std::endl;
+//  out << "  label = \"Functions\";" << std::endl;
   for (it_function = function_set.begin(); it_function != function_set.end(); it_function++)
     toDotNode<Model::e_model_function>(out, *it_function, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_field {" << std::endl;
-  out << "  label = \"Fields\";" << std::endl;
+//  out << "subgraph cluster_field {" << std::endl;
+//  out << "  label = \"Fields\";" << std::endl;
   for (it_field = field_set.begin(); it_field != field_set.end(); it_field++)
     toDotNode<Model::e_model_field>(out, *it_field, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_method {" << std::endl;
-  out << "  label = \"Methods\";" << std::endl;
+//  out << "subgraph cluster_method {" << std::endl;
+//  out << "  label = \"Methods\";" << std::endl;
   for (it_method = method_set.begin(); it_method != method_set.end(); it_method++)
     toDotNode<Model::e_model_method>(out, *it_method, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_type {" << std::endl;
-  out << "  label = \"Types\";" << std::endl;
+//  out << "subgraph cluster_type {" << std::endl;
+//  out << "  label = \"Types\";" << std::endl;
   for (it_type = type_set.begin(); it_type != type_set.end(); it_type++)
     toDotNode<Model::e_model_type>(out, *it_type, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
-  out << "subgraph cluster_class {" << std::endl;
-  out << "  label = \"Classes\";" << std::endl;
+//  out << "subgraph cluster_class {" << std::endl;
+//  out << "  label = \"Classes\";" << std::endl;
   for (it_class = class_set.begin(); it_class != class_set.end(); it_class++)
     toDotNode<Model::e_model_class>(out, *it_class, processed_nodes, described_nodes);
-  out << "}" << std::endl;
+//  out << "}" << std::endl;
 
 //out << "subgraph cluster_namespace {" << std::endl;
 //out << "  label = \"Namespaces\";" << std::endl;

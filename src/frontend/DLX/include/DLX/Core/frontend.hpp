@@ -43,7 +43,13 @@ class Frontend {
     directives_ptr_set_t graph_entry;
     directives_ptr_set_t graph_final;
 
+    directive_t * getDirective(SgLocatedNode *) const;
+    SgLocatedNode * getNode(directive_t * directive) const;
+
   protected:
+    std::map<SgLocatedNode *, directive_t *> translation_map;
+    std::map<directive_t *, SgLocatedNode *> rtranslation_map;
+
     static generic_construct_t * parseConstruct(std::string & directive_str);
     static generic_clause_t    * parseClause(std::string & directive_str);
     static directive_t         * parse(std::string & directive_str, SgLocatedNode * directive_node);
@@ -67,7 +73,7 @@ class Frontend {
       Directives::clause_t<language_t, kind> * clause
     );
 
-    bool build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map);
+    bool build_graph();
 
 /*! @} */
 
@@ -136,10 +142,22 @@ typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::parse(std
 }
 
 template <class language_tpl>
+typename Frontend<language_tpl>::directive_t * Frontend<language_tpl>::getDirective(SgLocatedNode * node) const {
+  typename std::map<SgLocatedNode *, directive_t *>::const_iterator it_directive = translation_map.find(node);
+  if (it_directive != translation_map.end()) return it_directive->second;
+  else return NULL;
+}
+
+template <class language_tpl>
+SgLocatedNode * Frontend<language_tpl>::getNode(directive_t * directive) const {
+  typename std::map<directive_t *, SgLocatedNode *>::const_iterator it_rdirective = rtranslation_map.find(directive);
+  if (it_rdirective != rtranslation_map.end()) return it_rdirective->second;
+  else return NULL;
+}
+
+template <class language_tpl>
 bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
   // FIXME C/C++ only
-
-  std::map<SgLocatedNode *, directive_t *> translation_map;
 
   std::vector<SgPragmaDeclaration *> pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(node);
   std::vector<SgPragmaDeclaration *>::iterator it_pragma_decl;
@@ -147,12 +165,15 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     SgPragmaDeclaration * pragma_decl = *it_pragma_decl;
     assert(pragma_decl != NULL);
 
-//  SageInterface::replaceMacroCallsWithExpandedStrings(pragma_decl);
+//  TODO : SageInterface::replaceMacroCallsWithExpandedStrings(pragma_decl);
 
-    std::string directive_string = pragma_decl->get_pragma()->get_pragma();
-    directive_t * directive = parse(directive_string, pragma_decl);
-    if (directive != NULL)
+    typename std::map<SgLocatedNode *, directive_t *>::iterator it_directive = translation_map.find(pragma_decl);
+    if (it_directive == translation_map.end()) {
+      std::string directive_string = pragma_decl->get_pragma()->get_pragma();
+      directive_t * directive = parse(directive_string, pragma_decl);
       translation_map.insert(std::pair<SgLocatedNode *, directive_t *>(pragma_decl, directive));
+      rtranslation_map.insert(std::pair<directive_t *, SgLocatedNode *>(directive, pragma_decl));
+    }
   }
 
   typename std::map<SgLocatedNode *, directive_t *>::const_iterator it;
@@ -161,7 +182,7 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     directives.push_back(it->second);
   }
 
-  assert(build_graph(translation_map));
+  assert(build_graph());
  
   return true;
 }
