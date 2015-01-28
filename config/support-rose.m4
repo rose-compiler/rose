@@ -670,6 +670,9 @@ ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_VECTORIZATION
 
+# Pei-Hung (12/17/2014): Adding support for POCC.
+ROSE_SUPPORT_POCC
+
 ROSE_SUPPORT_PHP
 
 AM_CONDITIONAL(ROSE_USE_PHP,test ! "$with_php" = no)
@@ -2025,6 +2028,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/PolyOpt2/Makefile
+projects/PolyOpt2/polyopt/Makefile
+projects/PolyOpt2/src/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
