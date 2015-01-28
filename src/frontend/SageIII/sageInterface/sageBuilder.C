@@ -31,7 +31,7 @@
 
 #ifndef USE_CMAKE
 // DQ (3/8/2014): Make this conditionally compiled based on when CMake is not used because the libraries are not configured yet.
-// DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeperateFileInNewTargetAst()
+// DQ (2/27/2014): We need this feature to support the function: fixupCopyOfAstFromSeparateFileInNewTargetAst()
 #include "RoseAst.h"
 #endif
 
@@ -14228,7 +14228,8 @@ SageBuilder::resetDeclaration(T* classDeclaration_copy, T* classDeclaration_orig
 
 
 void 
-SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope, SgNode* node_copy, SgNode* node_original /*, std::map<SgNode*,SgNode*> & translationMap */)
+SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertionPoint, bool insertionPointIsScope,
+                                                           SgNode* node_copy, SgNode* node_original)
    {
   // This function fixes up invidual IR nodes to be consistant in the context of the target AST 
   // where the node is inserted and at the point specified by insertionPoint.  In this function,
@@ -16012,7 +16013,8 @@ SageBuilder::fixupCopyOfNodeFromSeperateFileInNewTargetAst(SgStatement* insertio
 
 
 void 
-SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertionPoint, bool insertionPointIsScope, SgStatement *toInsert, SgStatement* original_before_copy /*, std::map<SgNode*,SgNode*> & translationMap */)
+SageBuilder::fixupCopyOfAstFromSeparateFileInNewTargetAst(SgStatement *insertionPoint, bool insertionPointIsScope,
+                                                          SgStatement *toInsert, SgStatement* original_before_copy)
    {
   // The semantics of the copy is that it will have been disconnected from the snippet AST in a few ways,
   // Namely the root of the copy of the snippet's AST will have been set with a NULL parent, and then
@@ -16022,11 +16024,6 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      ROSE_ASSERT(insertionPoint != NULL);
      ROSE_ASSERT(toInsert != NULL);
      ROSE_ASSERT(original_before_copy != NULL);
-
-#if 0
-     printf ("Inside of fixupCopyOfAstFromSeperateFileInNewTargetAst(): insertionPoint = %p = %s toInsert = %p = %s \n",insertionPoint,insertionPoint->class_name().c_str(),toInsert,toInsert->class_name().c_str());
-     printf ("   --- original_before_copy = %p = %s \n",original_before_copy,original_before_copy->class_name().c_str());
-#endif
 
   // DQ (3/30/2014): Turn this on to support finding symbols in base classes (in Java).
   // Will be turned off at the base of this function (since we only only want to use it for the AST fixup, currently).
@@ -16092,29 +16089,15 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
      RoseAst::iterator i_copy     = ast_of_copy.begin();
      RoseAst::iterator i_original = ast_of_original.begin();
 
-#if 0
-     printf ("i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
-     (*i_copy)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_copy: debug");
-     (*i_original)->get_file_info()->display("In fixupCopyOfAstFromSeperateFileInNewTargetAst(): i_original: debug");
-     SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(original_before_copy);
-     if (functionDeclaration != NULL)
-        {
-          printf ("In of fixupCopyOfAstFromSeperateFileInNewTargetAst(): functionDeclaration = %s \n",functionDeclaration->get_name().str());
-        }
-#endif
-
   // Iterate of the copy of the snippet's AST.
      while (i_copy != ast_of_copy.end())
         {
-#if 0
-          printf ("***** fixupCopyOfAstFromSeperateFileInNewTargetAst(): *i_copy     = %p = %s \n",*i_copy,(*i_copy)->class_name().c_str());
-          printf ("***** fixupCopyOfAstFromSeperateFileInNewTargetAst(): *i_original = %p = %s \n",*i_original,(*i_original)->class_name().c_str());
-#endif
        // DQ (2/28/2014): This is a problem for some of the test codes (TEST   store/load heap string [test7a] and [test7a])
        // ROSE_ASSERT((*i_copy)->variantT() == (*i_original)->variantT());
           if ((*i_copy)->variantT() != (*i_original)->variantT())
              {
-               printf ("ERROR: return from fixupCopyOfAstFromSeperateFileInNewTargetAst(): (*i_copy)->variantT() != (*i_original)->variantT() \n");
+               printf ("ERROR: return from fixupCopyOfAstFromSeparateFileInNewTargetAst(): "
+                       "(*i_copy)->variantT() != (*i_original)->variantT() \n");
 #if 1
                printf ("Making this an error! \n");
                ROSE_ASSERT(false);
@@ -16123,7 +16106,7 @@ SageBuilder::fixupCopyOfAstFromSeperateFileInNewTargetAst(SgStatement *insertion
              }
 
        // Operate on individual IR nodes.
-          fixupCopyOfNodeFromSeperateFileInNewTargetAst(insertionPoint,insertionPointIsScope,*i_copy,*i_original /*,translationMap */);
+          fixupCopyOfNodeFromSeparateFileInNewTargetAst(insertionPoint, insertionPointIsScope, *i_copy, *i_original);
 
           i_copy++;
 

@@ -666,8 +666,8 @@ SgAsmPEFileHeader::reallocate()
                 p_e_nsections++;
         }
 
-        rose_addr_t header_size = ALIGN_UP(p_section_table->get_offset() + p_section_table->get_size(),
-                                           p_e_file_align>0 ? p_e_file_align : 1);
+        rose_addr_t header_size = alignUp(p_section_table->get_offset() + p_section_table->get_size(),
+                                          (rose_addr_t)(p_e_file_align>0 ? p_e_file_align : 1));
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
          * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute
