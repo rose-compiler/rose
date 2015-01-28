@@ -142,7 +142,8 @@ void Backstroke::TransformationSequence::apply() {
       size_t arraySize=SageInterface::getArrayElementCount(arrayType);;
       ss<<arraySize;
       string arraySizeString=ss.str();
-      string newCode="Backstroke::new_array<"+arrayElementType->unparseToString()+">"+"("+arraySizeString+")";
+      string arrayElementTypeString=arrayElementType->unparseToString();
+      string newCode="reinterpret_cast<"+arrayElementTypeString+"*>(rts.allocateArray("+arraySizeString+",sizeof("+arrayElementTypeString+")";
       if(_showTransformationTrace) {
         cout<<"transformation: "<<newExp->unparseToString()<<" ==> "<<newCode<<endl;
       }
@@ -194,7 +195,8 @@ void Backstroke::TransformationSequence::apply() {
         if(SgClassType* classType=isSgClassType(pointedToType)) {
           elementTypeName=classType->get_name();
         }
-        string newCode="Backstroke::delete_array<"+elementTypeName+">("+deleteExp->get_variable()->unparseToString()+")";
+        string deleteExpressionString=deleteExp->get_variable()->unparseToString();
+        string newCode="(Backstroke::callArrayElementDestructors<"+elementTypeName+">("+deleteExpressionString+")"+",rts.registerArrayDeallocation((void*)"+deleteExpressionString+"))";
         if(_showTransformationTrace) {
           cout<<"transformation: "<<deleteExp->unparseToString()<<" ==> "<<newCode<<endl;
         }    

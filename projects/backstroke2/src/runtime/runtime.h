@@ -107,6 +107,15 @@ class RunTimeSystem {
   uintptr_t prog_stack_bottom;
   uintptr_t prog_stack_local; // can be set to function stack (default: same as stack_bottom)
   uintptr_t prog_stack_max;
+
+  // alloc functions
+  void* allocateArray(size_t arraySize, size_t ArrayElementTypeSize);
+
+  // dealloc functions
+  // also requires callArrayElementDestructors(ArrayElementType* arrayPointer) to be called
+  void registerArrayDeallocation(void* rawMemoryPtr);
+  void deallocateArray(void* rawMemoryPtr);
+
 };
 
  typedef RunTimeSystem RunTimeStateStorage;
@@ -136,26 +145,10 @@ class RunTimeSystem {
  private:
    LpToRTSSMapping lp_ss_mapping;
  };
-}
-
-// template function for array operator new[size]
-template <typename ArrayElementType>
-ArrayElementType* new_array(size_t arraysize) {
-  // allocate one additional size_t for size
-  size_t* rawMemory=static_cast<size_t*>(::operator new (static_cast<size_t>(arraysize*sizeof(UserType))+1));
-  // store size
-  //cout<<"INFO: rawMemory: "<<rawMemory<<endl;
-  *rawMemory=arraysize;
-  //cout<<"INFO: stored size: "<<*rawMemory<<endl;
-  // return array-pointer (excluding size field)
-  ArrayElementType* arrayPointer=reinterpret_cast<ArrayElementType*>(rawMemory+1);
-  //cout<<"INFO: array pointer: "<<arrayPointer<<endl;
-  return arrayPointer;
-}
 
 // template function for array operator delete[]
 template <typename ArrayElementType>
-void delete_array(ArrayElementType* arrayPointer) {
+void callArrayElementDestructors(ArrayElementType* arrayPointer) {
   // determine array size (platform specific)
   std::size_t* rawMemory=reinterpret_cast<std::size_t*>(arrayPointer)-1;
   std::size_t arraySize=*rawMemory;
@@ -164,8 +157,12 @@ void delete_array(ArrayElementType* arrayPointer) {
     ArrayElementType *p = arrayPointer + arraySize;
     while (p != arrayPointer)        
       (--p)->~UserType();
-    ::operator delete [](rawMemory);
+    //::operator delete [](rawMemory);
   }
 }
+
+} // end of namespace Backstroke
+
+
 
 #endif
