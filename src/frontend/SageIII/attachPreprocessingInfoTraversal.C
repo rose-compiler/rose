@@ -268,7 +268,7 @@ AttachPreprocessingInfoTreeTrav::iterateOverListAndInsertPreviouslyUninsertedEle
 #endif
 
 #if 0
-     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentFileId = %d currentListOfAttributes->get_filenameIdSet().size() = %zu \n",currentFileId,currentListOfAttributes->get_filenameIdSet().size());
+     printf ("In iterateOverListAndInsertPreviouslyUninsertedElementsAppearingBeforeLineNumber(): currentFileId = %d currentListOfAttributes->get_filenameIdSet().size() = %" PRIuPTR " \n",currentFileId,currentListOfAttributes->get_filenameIdSet().size());
 
      set<int>::iterator i = currentListOfAttributes->get_filenameIdSet().begin();
      while (i != currentListOfAttributes->get_filenameIdSet().end())
@@ -753,7 +753,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
                     returnListOfAttributes->set_rawTokenStream(lex_token_stream);
                     ROSE_ASSERT(returnListOfAttributes->get_rawTokenStream() != NULL);
 
-                 // printf ("Fortran Token List Size: returnListOfAttributes->get_rawTokenStream()->size() = %zu \n",returnListOfAttributes->get_rawTokenStream()->size());
+                 // printf ("Fortran Token List Size: returnListOfAttributes->get_rawTokenStream()->size() = %" PRIuPTR " \n",returnListOfAttributes->get_rawTokenStream()->size());
 
                  // DQ (11/23/2008): This is the new support to collect CPP directives and comments from Fortran applications.
                  // printf ("Calling collectPreprocessorDirectivesAndCommentsForAST() to collect CPP directives for fileNameForDirectivesAndComments = %s \n",fileNameForDirectivesAndComments.c_str());
@@ -860,7 +860,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
 #if 0
           printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of CPP directives and comments = %d): \n",returnListOfAttributes->size());
-          printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of tokens = %zu): \n",tokenList.size());
+          printf ("In AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(): Output token list (number of tokens = %" PRIuPTR "): \n",tokenList.size());
 #endif
 #if 0
        // Debugging output for token handling.
@@ -1128,7 +1128,7 @@ AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute ( SgNode *n, AttachP
             // Put the ROSEAttributesList into the ROSEAttributesListContainer (an stl map)
                filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = currentListOfAttributes;
 #if 0
-               printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+               printf ("In AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute(): filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
              }
             else
@@ -1633,7 +1633,7 @@ AttachPreprocessingInfoTreeTrav::evaluateSynthesizedAttribute(
                             file->get_preprocessorDirectivesAndCommentsList()->addList(filename,inheritedAttribute.currentListOfAttributes);
 #else
                          // DQ (1/21/2008): Original code
-                         // printf ("Delete Fortran Token List Size: currentListOfAttributes->get_rawTokenStream()->size() = %zu \n",currentListOfAttributes->get_rawTokenStream()->size());
+                         // printf ("Delete Fortran Token List Size: currentListOfAttributes->get_rawTokenStream()->size() = %" PRIuPTR " \n",currentListOfAttributes->get_rawTokenStream()->size());
                          // delete inheritedAttribute.currentListOfAttributes;
                          // delete currentListOfAttributes;
                             ROSE_ASSERT(attributeMapForAllFiles.find(currentFileNameId) != attributeMapForAllFiles.end());

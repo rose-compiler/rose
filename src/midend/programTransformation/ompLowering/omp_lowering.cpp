@@ -2587,7 +2587,9 @@ static void generateMappedArrayMemoryHandling(
     appendStatement(mem_dealloc_stmt, insertion_anchor_stmt->get_scope()); 
   }
 }
-  
+
+// trans OpenMP map variables
+// return all generated or remaining variables to be passed to the outliner  
   // Liao, 2/4/2013
   // Translate the map clause variables associated with "omp target parallel"
   // We only support combined "target parallel" or "parallel" immediately following "target"
@@ -2641,24 +2643,213 @@ static void generateMappedArrayMemoryHandling(
   //       To simplify the handling, we assume
   //         1. Both "target data"  and "target parallel for " should have map() clauses
   //         2. Using DDE, the translation is simplified as is identical for both directive
-  void transOmpMapVariables(SgOmpTargetStatement* target_directive_stmt, //the "omp target"
-                         SgOmpParallelStatement* target_parallel_stmt, //the affected "omp parallel"
-                         SgBasicBlock* body_block, // the body of the affected "omp parallel"
-                         ASTtools::VarSymSet_t & all_syms, // collect all generated or remaining variables to be passed to the outliner
-                         ASTtools::VarSymSet_t & addressOf_syms // generated or remaining variables should be passed by using their addresses
-                         )
+ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_parallel_stmt  // either "target data" or "target parallel" statement
+                   ) 
+{
+  ASTtools::VarSymSet_t all_syms;
+  ROSE_ASSERT  (target_data_or_target_parallel_stmt !=NULL);
+  ROSE_ASSERT  (all_syms.size() == 0); // it should be empty
+
+  SgOmpParallelStatement* target_parallel_stmt = NULL; 
+  SgOmpTargetStatement* target_directive_stmt = NULL;
+  SgOmpTargetDataStatement * target_data_stmt = NULL; 
+
+
+  target_parallel_stmt = isSgOmpParallelStatement(target_data_or_target_parallel_stmt);
+  target_data_stmt = isSgOmpTargetDataStatement(target_data_or_target_parallel_stmt);
+ 
+  // the parallel directive must be combined with target directive
+  if (target_parallel_stmt != NULL)
   {
+   // must be a parallel region directly under "omp target"
+    SgNode* parent = target_parallel_stmt->get_parent();
+    ROSE_ASSERT (parent != NULL);
+   if (isSgBasicBlock(parent)) //skip the possible block in between
+      parent = parent->get_parent();
+    target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
+  }
+
+  // collect map clauses and their variables 
+  // ----------------------------------------------------------
+  // Some notes for the relevant AST input: 
+  // we store a map clause for each variant/operator (alloc, to, from, and tofrom), so there should be up to 4 SgOmpMapClause.
+  //    SgOmpClause::omp_map_operator_enum
+  // each map clause has 
+  //   a variable list (SgVarRefExp), accessible through get_variables()
+  //   a pointer to array_dimensions, accessible through get_array_dimensions(). the array_dimensions is identical among all map clause of a same "omp target"
+  //     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions
+
+  Rose_STL_Container<SgOmpClause*> map_clauses; 
+  if (target_data_stmt)
+     map_clauses = getClause(target_data_stmt, V_SgOmpMapClause);
+  else if (target_directive_stmt)
+     map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
+  else 
+    ROSE_ASSERT (false);
+
+  if ( map_clauses.size() == 0) return all_syms; // stop if no map clauses at all
+
+  // store each time of map clause explicitly
+  SgOmpMapClause* map_alloc_clause = NULL;
+  SgOmpMapClause* map_to_clause = NULL;
+  SgOmpMapClause* map_from_clause = NULL;
+  SgOmpMapClause* map_tofrom_clause = NULL;
+  // dimension map is the same for all the map clauses under the same omp target directive
+  std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
+
+  // a map between original symbol and its device version : used for variable replacement 
+  std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
+
+  // store all variables showing up in any of the map clauses
+  SgInitializedNamePtrList all_mapped_vars ;
+  if (target_data_stmt)
+    all_mapped_vars = collectClauseVariables (target_data_stmt, VariantVector(V_SgOmpMapClause)); 
+  else if (target_directive_stmt)
+    all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
+
+  extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
+  std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
+  std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
+
+  // categorize the variables:
+  categorizeMapClauseVariables (all_mapped_vars, array_dimensions, array_syms, atom_syms);
+
+  // set the scope and anchor statement we will focus on based on the availability of an enclosing target data region
+  SgBasicBlock* insertion_scope = NULL; // the body 
+  SgStatement* insertion_anchor_stmt = NULL; // the single statement within the body
+ if (target_data_stmt != NULL)
+ {
+   // at this point, the body should already be normalized to be a BB
+   SgBasicBlock * body_block = ensureBasicBlockAsBodyOfOmpBodyStmt(target_data_stmt);
+   ROSE_ASSERT (body_block!= NULL);
+
+   SgStatement* target_data_child_stmt = NULL;
+   // We cannot assert this since the body of "omp target data" may already be expanded as part of a previous translation    
+   //    ROSE_ASSERT( (target_data_stmt_body->get_statements()).size() ==1);
+   target_data_child_stmt = (body_block->get_statements())[0];
+
+   insertion_scope = body_block;
+   insertion_anchor_stmt = target_data_child_stmt;
+ }
+  else if (target_directive_stmt != NULL)
+  {
+   insertion_scope= isSgBasicBlock(target_directive_stmt->get_body());
+   insertion_anchor_stmt = target_parallel_stmt;
+  }
+
+  ROSE_ASSERT (insertion_scope!= NULL);
+  ROSE_ASSERT (insertion_anchor_stmt!= NULL);
+
+  // collect used variables in the insertion scope
+  std::map <SgVariableSymbol *, bool> variable_map = collectVariableAppearance (insertion_scope);
+
+  // Now insert xomp_deviceDataEnvironmentEnter() before xomp_deviceDataEnvironmentPrepareVariable()
+  SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), NULL, insertion_scope);
+  prependStatement(dde_enter_stmt, insertion_scope); 
+
+  // handle array variables showing up in the map clauses:   
+  for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
+  {
+    SgSymbol* sym = *iter; 
+    ROSE_ASSERT (sym != NULL);
+    SgType* orig_type = sym->get_type();
+
+    // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
+    //   Element_type * _dev_var; 
+    //   e.g.: double* _dev_array; 
+    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, to, from, or tofrom)
+
+    // TODO: is this a safe assumption here??
+    SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
+    string orig_name = (sym->get_name()).getString();
+    string dev_var_name = "_dev_"+ orig_name; 
+
+    SgVariableDeclaration* dev_var_decl = NULL; 
+    dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, insertion_scope);
+    insertStatementBefore (insertion_anchor_stmt, dev_var_decl); 
+    ROSE_ASSERT (dev_var_decl != NULL);
+
+    SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
+    ROSE_ASSERT (orig_sym != NULL);
+    SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
+    cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping, this is always needed to guide the outlining
+
+    // Not all map variables from "omp target data" will be used within the current parallel region
+    // We only need to find out the used one only.
+
+    // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
+    // we assume AST is normalized and all target regions have explicit and correct map() clauses
+    // Still some transformation like loop collapse will change the variables
+        if (variable_map[orig_sym])
+          all_syms.insert(new_sym);
+    // generate memory allocation, copy, free function calls.
+    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, 
+        insertion_scope, insertion_anchor_stmt, true);
+  }  // end for
+
+  // Generate a single DDE enter() call
+  SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
+  appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
+
+  // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
+  // We switch the order of 4 and 5 since we want to rewrite the subscripts before the arrays are replaced
+  rewriteArraySubscripts (insertion_scope, array_syms); 
+
+  // Step 4. replace references to old with new variables, 
+  replaceVariableReferences (insertion_scope , cpu_gpu_var_map);
+
+  // TODO handle scalar, separate or merged into previous loop ?
+
+  // store remaining variables so outliner can readily use this information
+  // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (to|from|alloc|tofrom)
+  // for a scalar, two cases: to vs. from | tofrom
+  // if in only, pass by value is good
+  // if either from or tofrom:  
+  // two possible solutions:
+  // 1) we need to treat it as an array of size 1 or any other choices. TODO!!
+  //  we also have to replace the reference to scalar to the array element access: be cautious about using by value (a) vs. using by address  (&a)
+  // 2) try to still pass by value, but copy the final value back to the CPU version 
+  // right now we assume they are not on from|tofrom, until we face a real input applications with map(from:scalar_a)
+  // For all scalars, we directly copy them into all_syms for now
+  for (std::set<SgSymbol*> ::iterator iter = atom_syms.begin(); iter != atom_syms.end(); iter ++)
+  {
+    SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
+    if (variable_map[var_sym] == true) // we should only collect map variables which show up in the current parallel region
+      all_syms.insert (var_sym);
+  }
+  return all_syms;
+} // end transOmpMapVariables() for omp target data's map clauses for now
+
+
+// old version: kept to occasionally see previous translation results.
+// generating explicit data handling function calls
+ void transOmpMapVariables_v1(
+                         SgOmpParallelStatement* target_parallel_stmt, //the "omp parallel" with enclosing "omp target", or combined "target parallel"
+                         ASTtools::VarSymSet_t & all_syms // collect all generated or remaining variables to be passed to the outliner
+                        )
+  {
     ROSE_ASSERT (target_parallel_stmt!= NULL);
-    ROSE_ASSERT (body_block!= NULL);
     
+   // must be a parallel region directly under "omp target"
+    SgNode* parent = target_parallel_stmt->get_parent();
+    ROSE_ASSERT (parent != NULL);
+   if (isSgBasicBlock(parent)) //skip the possible block in between
+      parent = parent->get_parent();
+    SgOmpTargetStatement* target_directive_stmt = isSgOmpTargetStatement(parent);
+    ROSE_ASSERT (target_directive_stmt != NULL);
+
+   // at this point, the body must be a BB now.
+   SgBasicBlock* body_block = isSgBasicBlock(target_parallel_stmt->get_body()); // the body of the affected "omp parallel"
+    ROSE_ASSERT (body_block!= NULL);
    // we should use inner scope , instead of the scope of target-directive-stmt.
    // this will avoid name collisions when there are multiple "omp target" within one big scope
-    SgScopeStatement* top_scope = isSgScopeStatement(target_directive_stmt->get_body()); 
-    ROSE_ASSERT (top_scope!= NULL);
-    ROSE_ASSERT (isSgBasicBlock (top_scope));
+    SgScopeStatement* target_directive_body = isSgScopeStatement(target_directive_stmt->get_body()); 
+    ROSE_ASSERT (target_directive_body != NULL);
+    ROSE_ASSERT (isSgBasicBlock (target_directive_body));
 
     std::map <SgVariableSymbol *, bool> variable_map = collectVariableAppearance (target_parallel_stmt);
+#if 1
     // two cases: map variables are provided by 
     // case 1: "omp target" 
     // case 2: "omp target data"
@@ -2675,7 +2866,7 @@ static void generateMappedArrayMemoryHandling(
         //    ROSE_ASSERT( (target_data_stmt_body->get_statements()).size() ==1);
         target_data_child_stmt = (target_data_stmt_body->get_statements())[0];
       }
-
+#endif
     // collect map clauses and their variables 
     // ----------------------------------------------------------
     // Some notes for the relevant AST input: 
@@ -2685,14 +2876,15 @@ static void generateMappedArrayMemoryHandling(
     //   a variable list (SgVarRefExp), accessible through get_variables()
     //   a pointer to array_dimensions, accessible through get_array_dimensions(). the array_dimensions is identical among all map clause of a same "omp target"
     //     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions
-    
     Rose_STL_Container<SgOmpClause*> map_clauses; 
+#if 1
     if (target_data_stmt != NULL && !useDDE)
     {
       map_clauses = getClause(target_data_stmt, V_SgOmpMapClause);
     }
     else   
-      map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
+#endif
+     map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
 
     if ( map_clauses.size() == 0) return; // stop if no map clauses at all
 
@@ -2709,10 +2901,12 @@ static void generateMappedArrayMemoryHandling(
     
     // store all variables showing up in any of the map clauses
     SgInitializedNamePtrList all_mapped_vars ;
+#if 1
     if (target_data_stmt != NULL && !useDDE)
       all_mapped_vars = collectClauseVariables (target_data_stmt, VariantVector(V_SgOmpMapClause)); 
     else 
-      all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause));
+#endif
+  all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause));
 
     extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
     std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
@@ -2725,14 +2919,16 @@ static void generateMappedArrayMemoryHandling(
    SgBasicBlock* insertion_scope = NULL; // the body 
    SgStatement* insertion_anchor_stmt = NULL; // the single statement within the body
    bool need_generate_data_stmt  = false; // We don't always need to generate the declaration, allocation, copy, de-allocation of device data.
+#if 1
    if (target_data_stmt != NULL && !useDDE)
    {
      insertion_scope = target_data_stmt_body;
      insertion_anchor_stmt = target_data_child_stmt;
    } 
    else
+#endif
    {
-     insertion_scope = isSgBasicBlock(top_scope);
+     insertion_scope = isSgBasicBlock(target_directive_body);
      insertion_anchor_stmt = target_parallel_stmt;
    }
    ROSE_ASSERT (insertion_scope!= NULL);
@@ -2789,7 +2985,7 @@ static void generateMappedArrayMemoryHandling(
 
     // Not all map variables from "omp target data" will be used within the current parallel region
     // We only need to find out the used one only.
-
+#if 1
     // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
     if (target_data_stmt != NULL && !useDDE)
     {
@@ -2797,6 +2993,7 @@ static void generateMappedArrayMemoryHandling(
         all_syms.insert(new_sym);
     }
     else
+#endif
     {
       all_syms.insert(new_sym);
       ROSE_ASSERT (variable_map[orig_sym] == true);// the map variable must show up within the parallel region
@@ -2811,7 +3008,7 @@ static void generateMappedArrayMemoryHandling(
   if (useDDE)
   {
     SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
-     appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
+    appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
   }
 
    // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
@@ -2823,6 +3020,7 @@ static void generateMappedArrayMemoryHandling(
 
    // TODO handle scalar, separate or merged into previous loop ?
     
+   // prepare things  for outliner: 
   // store remaining variables so outliner can readily use this information
    // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (to|from|alloc|tofrom)
    // for a scalar, two cases: to vs. from | tofrom
@@ -2842,158 +3040,6 @@ static void generateMappedArrayMemoryHandling(
    }
 
   } // end transOmpMapVariables()
-
-
-  // A dedicated one for map variables associated with "target data"
-  // TODO merge with the other transOmpMapVariables() function later
-  // Only used when useDDE is true 
-  void transOmpMapVariables(SgOmpTargetDataStatement* target_data_stmt) //the "omp target data"
-//                         SgOmpParallelStatement* target_parallel_stmt, //the affected "omp parallel"
-//                         SgBasicBlock* body_block, // the body of the affected "omp parallel"
-//                         ASTtools::VarSymSet_t & all_syms, // collect all generated or remaining variables to be passed to the outliner
-//                         ASTtools::VarSymSet_t & addressOf_syms // generated or remaining variables should be passed by using their addresses
-  {
-    ROSE_ASSERT (target_data_stmt != NULL);
-    // at this point, the body should already be normalized to be a BB
-    SgBasicBlock * body_block = ensureBasicBlockAsBodyOfOmpBodyStmt(target_data_stmt);
-    ROSE_ASSERT (body_block!= NULL);
-    
-   // we should use inner scope , instead of the scope of target--stmt.
-   // this will avoid name collisions when there are multiple "omp target" within one big scope
-    SgScopeStatement* top_scope = body_block;
-    ROSE_ASSERT (top_scope!= NULL);
-    ROSE_ASSERT (isSgBasicBlock (top_scope));
-
-//    std::map <SgVariableSymbol *, bool> variable_map = collectVariableAppearance (target_parallel_stmt);
-    SgStatement* target_data_child_stmt = NULL;
-    // We cannot assert this since the body of "omp target data" may already be expanded as part of a previous translation    
-    //    ROSE_ASSERT( (target_data_stmt_body->get_statements()).size() ==1);
-    target_data_child_stmt = (body_block->get_statements())[0];
-
-    // collect map clauses and their variables 
-    // ----------------------------------------------------------
-    // Some notes for the relevant AST input: 
-    // we store a map clause for each variant/operator (alloc, to, from, and tofrom), so there should be up to 4 SgOmpMapClause.
-    //    SgOmpClause::omp_map_operator_enum
-    // each map clause has 
-    //   a variable list (SgVarRefExp), accessible through get_variables()
-    //   a pointer to array_dimensions, accessible through get_array_dimensions(). the array_dimensions is identical among all map clause of a same "omp target"
-    //     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions
-    
-    Rose_STL_Container<SgOmpClause*> map_clauses; 
-    map_clauses = getClause(target_data_stmt, V_SgOmpMapClause);
-    if ( map_clauses.size() == 0) return; // stop if no map clauses at all
-
-    // store each time of map clause explicitly
-    SgOmpMapClause* map_alloc_clause = NULL;
-    SgOmpMapClause* map_to_clause = NULL;
-    SgOmpMapClause* map_from_clause = NULL;
-    SgOmpMapClause* map_tofrom_clause = NULL;
-    // dimension map is the same for all the map clauses under the same omp target directive
-    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions; 
-
-   // a map between original symbol and its device version (replacement) 
-   std::map <SgVariableSymbol*, SgVariableSymbol*>  cpu_gpu_var_map; 
-    
-    // store all variables showing up in any of the map clauses
-    SgInitializedNamePtrList all_mapped_vars ;
-    all_mapped_vars = collectClauseVariables (target_data_stmt, VariantVector(V_SgOmpMapClause)); 
-
-    extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
-    std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
-    std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
-
-   // categorize the variables:
-   categorizeMapClauseVariables (all_mapped_vars, array_dimensions, array_syms, atom_syms);
-
-   // set the scope and anchor statement we will focus on based on the availability of an enclosing target data region
-   SgBasicBlock* insertion_scope = NULL; // the body 
-   SgStatement* insertion_anchor_stmt = NULL; // the single statement within the body
-//   bool need_generate_data_stmt  = false; // We don't always need to generate the declaration, allocation, copy, de-allocation of device data.
-   insertion_scope = body_block;
-   insertion_anchor_stmt = target_data_child_stmt;
-
-   ROSE_ASSERT (insertion_scope!= NULL);
-   ROSE_ASSERT (insertion_anchor_stmt!= NULL);
-
-   // Now insert xomp_deviceDataEnvironmentEnter() before xomp_deviceDataEnvironmentPrepareVariable()
-   SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), NULL, insertion_scope);
-   prependStatement(dde_enter_stmt, insertion_scope); 
-
-  // handle array variables showing up in the map clauses:   
-  for (std::set<SgSymbol*>::const_iterator iter = array_syms.begin(); iter != array_syms.end(); iter ++)
-  {
-    SgSymbol* sym = *iter; 
-    ROSE_ASSERT (sym != NULL);
-    SgType* orig_type = sym->get_type();
-
-    // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
-    //   Element_type * _dev_var; 
-    //   e.g.: double* _dev_array; 
-    // I believe that all array variables need allocations on GPUs, regardless their map operations (alloc, to, from, or tofrom)
-
-    // TODO: is this a safe assumption here??
-    SgType* element_type = orig_type->findBaseType(); // recursively strip away non-base type to get the bottom type
-    string orig_name = (sym->get_name()).getString();
-    string dev_var_name = "_dev_"+ orig_name; 
-
-    SgVariableDeclaration* dev_var_decl = NULL; 
-    dev_var_decl = buildVariableDeclaration(dev_var_name, buildPointerType(element_type), NULL, insertion_scope);
-    insertStatementBefore (insertion_anchor_stmt, dev_var_decl); 
-    ROSE_ASSERT (dev_var_decl != NULL);
-
-    SgVariableSymbol* orig_sym = isSgVariableSymbol(sym);
-    ROSE_ASSERT (orig_sym != NULL);
-    SgVariableSymbol* new_sym = getFirstVarSym(dev_var_decl);
-    cpu_gpu_var_map[orig_sym]= new_sym; // store the mapping, this is always needed to guide the outlining
-
-    // Not all map variables from "omp target data" will be used within the current parallel region
-    // We only need to find out the used one only.
-
-    // linearized array pointers should be directly passed to the outliner later on, without adding & operator in front of them
-//    if (variable_map[orig_sym])
-//      all_syms.insert(new_sym);
-    // generate memory allocation, copy, free function calls.
-    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, 
-        insertion_scope, insertion_anchor_stmt, true);
-  }  // end for
-
-  // Generate a single DDE enter() call
-  SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
-  appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
-
-  // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
-  // We switch the order of 4 and 5 since we want to rewrite the subscripts before the arrays are replaced
-  rewriteArraySubscripts (body_block, array_syms); 
-
-   // Step 4. replace references to old with new variables, 
-    replaceVariableReferences (body_block, cpu_gpu_var_map);
-
-   // TODO handle scalar, separate or merged into previous loop ?
-    
-#if 0 // no concern to outliner at this stage. unlike when we handle map() with "target parallel"
-  // store remaining variables so outliner can readily use this information
-   // for pointers to linearized arrays, they should passed by their original form, not using & operator, regardless the map operator types (to|from|alloc|tofrom)
-   // for a scalar, two cases: to vs. from | tofrom
-   // if in only, pass by value is good
-   // if either from or tofrom:  
-   // two possible solutions:
-   // 1) we need to treat it as an array of size 1 or any other choices. TODO!!
-   //  we also have to replace the reference to scalar to the array element access: be cautious about using by value (a) vs. using by address  (&a)
-   // 2) try to still pass by value, but copy the final value back to the CPU version 
-   // right now we assume they are not on from|tofrom, until we face a real input applications with map(from:scalar_a)
-   // For all scalars, we directly copy them into all_syms for now
-   for (std::set<SgSymbol*> ::iterator iter = atom_syms.begin(); iter != atom_syms.end(); iter ++)
-   {
-     SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
-     if (variable_map[var_sym] == true) // we should only collect map variables which show up in the current parallel region
-     all_syms.insert (var_sym);
-   }
-#endif
-
-  } // end transOmpMapVariables() for omp target data's map clauses for now
-
-
 
   // Translate a parallel region under "omp target"
   /*
@@ -3063,8 +3109,17 @@ static void generateMappedArrayMemoryHandling(
     transOmpVariables (target, body_block);
 
     ASTtools::VarSymSet_t all_syms; // all generated or remaining variables to be passed to the outliner
+  // This addressOf_syms does not apply to CUDA kernel generation: since we cannot use pass-by-reference for CUDA kernel.
+  // If we want to copy back value, we have to use memory copy  since they are in two different memory spaces. 
     ASTtools::VarSymSet_t addressOf_syms; // generated or remaining variables should be passed by using their addresses
-    transOmpMapVariables (target_directive_stmt, target, body_block, all_syms, addressOf_syms);
+
+    if (!useDDE)
+    {   
+      //transOmpMapVariables (target_directive_stmt, target, body_block, all_syms); //, addressOf_syms);
+      transOmpMapVariables_v1 (target, all_syms); //, addressOf_syms);
+    } else
+      all_syms = transOmpMapVariables (target); //, addressOf_syms);
+
     ASTtools::VarSymSet_t per_block_reduction_syms; // translation generated per block reduction symbols with name like _dev_per_block within the enclosed for loop
 
     // collect possible per block reduction variables introduced by transOmpTargetLoop()
@@ -3173,6 +3228,9 @@ static void generateMappedArrayMemoryHandling(
     for (ASTtools::VarSymSet_t::const_iterator iter = all_syms.begin(); iter != all_syms.end(); iter ++)
     {
       const SgVariableSymbol * current_symbol = *iter;
+  // this addressOf_syms does not apply to CUDA kernel generation: since we cannot use pass-by-reference for CUDA kernel.
+  // If we want to copy back value, we have to use memory copy  since they are in two different memory spaces. 
+  // So all variables should use original form in this context. 
       if (addressOf_syms.find(current_symbol) == addressOf_syms.end()) // not found in Address Of variable set
         varsUsingOriginalForm.insert (current_symbol->get_declaration());
     }

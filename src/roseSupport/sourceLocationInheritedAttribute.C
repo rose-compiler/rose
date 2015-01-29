@@ -318,7 +318,7 @@ display( const string s ) const
      printf ("     localScope                     = %p \n",localScope);
      printf ("     currentFunctionBasicBlockScope = %p \n",currentFunctionBasicBlockScope);
 
-     printf ("     scopeList (number of scopes = %zu): \n",scopeList.size());
+     printf ("     scopeList (number of scopes = %" PRIuPTR "): \n",scopeList.size());
      unsigned int i = 0;
      for (i = 0; i < scopeList.size(); i++)
         {
@@ -327,7 +327,7 @@ display( const string s ) const
         }
      printf ("\n");
 
-     printf ("     statementList (number of statements = %zu): \n",statementList.size());
+     printf ("     statementList (number of statements = %" PRIuPTR "): \n",statementList.size());
      for (i = 0; i < statementList.size(); i++)
         {
           ROSE_ASSERT (statementList[i] != NULL);
@@ -396,8 +396,8 @@ getCurrentStatementInScope( SgScopeStatement* targetScope ) const
   // int targetStatementDepth = scopeDepth+1;
 
 #if 1
-     printf ("In SourceLocationInheritedAttribute::getCurrentStatementInScope(): scopeDepth = %d  scopeList.size()     = %zu \n",scopeDepth,scopeList.size());
-     printf ("In SourceLocationInheritedAttribute::getCurrentStatementInScope(): scopeDepth = %d  statementList.size() = %zu \n",scopeDepth,statementList.size());
+     printf ("In SourceLocationInheritedAttribute::getCurrentStatementInScope(): scopeDepth = %d  scopeList.size()     = %" PRIuPTR " \n",scopeDepth,scopeList.size());
+     printf ("In SourceLocationInheritedAttribute::getCurrentStatementInScope(): scopeDepth = %d  statementList.size() = %" PRIuPTR " \n",scopeDepth,statementList.size());
      printf ("##### Find the associated current statement in the target scope: \n");
 #endif
 

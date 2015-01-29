@@ -158,7 +158,7 @@ SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s \"%s\"\n", p, w, "name", p_name->get_string(true).c_str());
     fprintf(f, "%s%-*s %u\n", p, w, "type", p_type);
     if (p_payload.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_payload.size());
+        fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_payload.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_payload);
     }
 }
