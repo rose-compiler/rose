@@ -9,16 +9,15 @@
 #include <string>
 #include <cmath>
 
-#include "SgNodeHelper.h"
-
-#include "Timer.h"
-
 #include "limits.h"
 #include "assert.h"
+
+#include "SgNodeHelper.h"
 
 #include "CommandLineOptions.h"
 #include "CodeGenerator.h"
 #include "Utility.h"
+#include "Timer.h"
 
 using namespace std;
 using namespace Backstroke;
