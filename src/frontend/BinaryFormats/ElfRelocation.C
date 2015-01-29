@@ -158,7 +158,7 @@ SgAsmElfRelocEntry::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmElfSymbo
 
     /* Auxiliary data */
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, ".extra", p_extra.size());
+        fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, ".extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }

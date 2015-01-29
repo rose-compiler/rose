@@ -2128,7 +2128,7 @@ list<SgName> generateQualifierList (const SgName &classNameWithQualification) {
         lastPosition = position+1;
         position = original_classNameString.find('.', lastPosition);
         if (SgProject::get_verbose() > 0)
-            printf ("lastPosition = %zu position = %zu \n", lastPosition, position);
+            printf ("lastPosition = %" PRIuPTR " position = %" PRIuPTR " \n", lastPosition, position);
     }
 
     string className = original_classNameString.substr(lastPosition, position - lastPosition);
@@ -2148,7 +2148,7 @@ list<SgName> generateQualifierList (const SgName &classNameWithQualification) {
     returnList.push_back(name);
 
     if (SgProject::get_verbose() > 0)
-        printf ("returnList.size() = %zu \n", returnList.size());
+        printf ("returnList.size() = %" PRIuPTR " \n", returnList.size());
 
     return returnList;
 }

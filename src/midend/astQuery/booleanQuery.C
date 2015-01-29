@@ -106,7 +106,7 @@ BooleanQuery::evaluateSynthesizedAttribute (
   // computing the expected size allows use to check for some sorts of errors
      for (i = synthesizedAttributeList.begin(); i != synthesizedAttributeList.end(); i++)
         {
-       // printf ("In BooleanQueryAssemblyFunction: Looping through the list of SynthesizedAttributeListElements: size of attributeList = %zu \n",synthesizedAttributeList.size());
+       // printf ("In BooleanQueryAssemblyFunction: Looping through the list of SynthesizedAttributeListElements: size of attributeList = %" PRIuPTR " \n",synthesizedAttributeList.size());
 
 #if 1
           printf ("boolean value = %s \n",(*i == true) ? "TRUE" : "FALSE");
@@ -119,7 +119,7 @@ BooleanQuery::evaluateSynthesizedAttribute (
           (*i).sort();
           returnList.merge(*i);
 
-       // printf ("Inside of loop: returnList size() = %zu \n",returnList.size());
+       // printf ("Inside of loop: returnList size() = %" PRIuPTR " \n",returnList.size());
 #endif
         }
 

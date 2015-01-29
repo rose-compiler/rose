@@ -442,7 +442,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      if (nodeReferenceToType != NULL)
         {
 #if 0
-          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
           if (i != SgNode::get_globalTypeNameMap().end())
@@ -1639,7 +1639,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
 #if 0
-                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %zu \n",classdefn_stmt, classdefn_stmt->get_members().size());
+                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %" PRIuPTR " \n",classdefn_stmt, classdefn_stmt->get_members().size());
 #endif
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
                     while (pp != classdefn_stmt->get_members().end())
