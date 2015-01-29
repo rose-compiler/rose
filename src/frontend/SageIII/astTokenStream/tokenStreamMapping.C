@@ -2214,7 +2214,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                       // block body (if it is compiler generated).
                          if ( isSgCaseOptionStmt(mappingInfo->node) != NULL )
                             {
-                              printf ("disable dark token processing for the trailing while space of a SgCaseOptionStmt =  \n",mappingInfo->node);
+#if DEBUG_DARK_TOKEN_FIXUP
+                              printf ("disable dark token processing for the trailing while space of a SgCaseOptionStmt = %p \n",mappingInfo->node);
+#endif
                               fixupDarkTokenSubsequencesForTrailingWhitespace = false;
 
                            // DQ (1/22/2015): test2015_93.C demonstrates that we need to also turn off the processing of the leading white space as well.
@@ -2287,6 +2289,43 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                  {
                                    TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
                                    ROSE_ASSERT(previous_mappingInfo != NULL);
+
+                                // DQ (1/28/2015): Added assertion.
+                                   int temp_i = i;
+                                   if (previous_mappingInfo->node == mappingInfo->node)
+                                      {
+                                     // This is likely a shared token sequence and we need to go back one more.
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE || 0
+                                        printf ("WARNING: (in leading whitespace computation): previous_mappingInfo->node == mappingInfo->node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+                                        printf ("   --- This is likely a shared token sequence and we need to go back one more to define the previous_mappingInfo = %p node = %p \n",previous_mappingInfo,previous_mappingInfo->node);
+#endif
+                                        while (temp_i >= 1 && previous_mappingInfo->node == mappingInfo->node)
+                                           {
+                                             previous_mappingInfo = tokenToNodeVector[temp_i-1];
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE || 0
+                                             printf ("In loop looking for different node: temp_i = %d previous_mappingInfo = %p node = %p = %s \n",
+                                                  temp_i,previous_mappingInfo,previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
+#endif
+                                             temp_i--;
+
+                                             ROSE_ASSERT(previous_mappingInfo != NULL);
+                                           }
+#if DEBUG_DARK_TOKEN_FIXUP_FOR_LEADING_WHITESPACE || 0
+                                        printf ("   --- temp_i = %d \n",temp_i);
+#endif
+                                        if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
+                                           {
+                                             printf ("WARNING: (in leading whitespace computation): Need logic to look at the outer scope! \n");
+                                          // ROSE_ASSERT(false);
+                                           }
+                                      }
+
+                                // DQ (1/28/2015): Added assertion.
+                                   if (previous_mappingInfo->node == mappingInfo->node)
+                                      {
+                                        printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+                                      }
+                                // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
 
                                    if (previous_mappingInfo != NULL)
                                       {
@@ -2385,11 +2424,50 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 // This is the first case to fixup.
                                    TokenStreamSequenceToNodeMapping* previous_mappingInfo = tokenToNodeVector[i-1];
                                    ROSE_ASSERT(previous_mappingInfo != NULL);
+
+                                // DQ (1/28/2015): Added assertion.
+                                   int temp_i = i;
+                                   if (previous_mappingInfo->node == mappingInfo->node)
+                                      {
+                                     // This is likely a shared token sequence and we need to go back one more.
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("WARNING: (in trailing whitespace computation): previous_mappingInfo->node == mappingInfo->node = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+                                        printf ("   --- This is likely a shared token sequence and we need to go back one more to define the previous_mappingInfo = %p node = %p \n",previous_mappingInfo,previous_mappingInfo->node);
+#endif
+                                        while (temp_i >= 1 && previous_mappingInfo->node == mappingInfo->node)
+                                           {
+                                             previous_mappingInfo = tokenToNodeVector[temp_i-1];
+#if DEBUG_DARK_TOKEN_FIXUP
+                                             printf ("In loop looking for different node: temp_i = %d previous_mappingInfo = %p node = %p \n",temp_i,previous_mappingInfo,previous_mappingInfo->node);
+#endif
+                                             temp_i--;
+
+                                             ROSE_ASSERT(previous_mappingInfo != NULL);
+                                           }
+#if DEBUG_DARK_TOKEN_FIXUP
+                                        printf ("   --- temp_i = %d \n",temp_i);
+#endif
+                                        if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
+                                           {
+                                             printf ("WARNING: (in trailing whitespace computation): Need logic to look at the outer scope! \n");
+                                          // ROSE_ASSERT(false);
+                                           }
+                                      }
+
+                                   ROSE_ASSERT(previous_mappingInfo != NULL);
 #if DEBUG_DARK_TOKEN_FIXUP
                                    printf ("Dark tokens fixup: i != 0: i = %d \n",i);
                                    printf ("   --- previous node = %p = %s \n",previous_mappingInfo->node,previous_mappingInfo->node->class_name().c_str());
                                    printf ("   --- node          = %p = %s \n",mappingInfo->node,mappingInfo->node->class_name().c_str());
+                                   printf ("   --- previous_mappingInfo = %p mappingInfo = %p \n",previous_mappingInfo,mappingInfo);
 #endif
+                                // DQ (1/28/2015): Added assertion.
+                                   if (previous_mappingInfo->node == mappingInfo->node)
+                                      {
+                                        printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+                                      }
+                                // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
+
                                 // int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
                                    int previous_mappingInfo_trailing_whitespace_end = previous_mappingInfo->trailing_whitespace_end;
                                 // int current_mappingInfo_leading_whitespace_start = mappingInfo->leading_whitespace_start;
