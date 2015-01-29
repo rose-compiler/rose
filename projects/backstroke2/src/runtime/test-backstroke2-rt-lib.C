@@ -1,6 +1,6 @@
 #include <iostream>
 #include <cassert>
-#include "runtime.h"
+#include "backstroke2-rt-lib.h"
 
 using namespace Backstroke;
 using namespace std;

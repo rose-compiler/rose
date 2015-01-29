@@ -1,5 +1,5 @@
-#ifndef BACKSTROKE_RUNTIMESYSTEM
-#define BACKSTROKE_RUNTIMESYSTEM
+#ifndef BACKSTROKE_RT_LIB
+#define BACKSTROKE_RT_LIB
 
 #include <stack>
 #include <queue>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#include <ross.h>
+#include "ross.h"
 
 namespace Backstroke {
 
@@ -22,7 +22,7 @@ namespace Backstroke {
     tw_stime _simTime;
   };
   
-#include "runtime_macros.h"
+#include "backstroke2-rt-lib-macros.h"
 
 class RunTimeSystem {
  private:

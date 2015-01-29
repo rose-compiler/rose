@@ -9,15 +9,17 @@ MOSTLYCLEANFILES =
 TEST_DIR = $(srcdir)
 
 test_SPECIMEN = $(TEST_DIR)/test1.cpp \
-                $(TEST_DIR)/test2.cpp
+                $(TEST_DIR)/test2.cpp \
+                $(TEST_DIR)/test3.cpp
 
 EXTRA_DIST += $(test_SPECIMEN)
 
 BACKSTROKE2_EXE=$(top_builddir)/projects/backstroke2/src/backstroke2
 
 backstroke2.passed:
-	for testno in 1 2; do \
-	echo " Test No: $${testno} " ; \
+	@echo "Checking backstroke2 ..."
+	@for testno in 1 2 3; do \
+	echo "Test $${testno} " ; \
 	$(BACKSTROKE2_EXE) -rose:skipfinalCompileStep -I$(srcdir)/../src/runtime $(srcdir)/test$${testno}.cpp ; \
 	done
 
