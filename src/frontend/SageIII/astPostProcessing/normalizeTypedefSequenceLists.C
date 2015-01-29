@@ -117,8 +117,8 @@ normalizeTypedefSequenceLists()
      ROSE_MemoryUsage memoryUsageD;
      printf ("Test D: memory_usage = %f \n",memoryUsageD.getMemoryUsageMegabytes());
 
-     printf ("***** SgTypedefSeq::numberOfNodes() = %zu ***** \n",SgTypedefSeq::numberOfNodes());
-     printf ("***** t1.typedefSeqMap.size() = %zu ***** \n",t1.typedefSeqMap.size());
+     printf ("***** SgTypedefSeq::numberOfNodes() = %" PRIuPTR " ***** \n",SgTypedefSeq::numberOfNodes());
+     printf ("***** t1.typedefSeqMap.size() = %" PRIuPTR " ***** \n",t1.typedefSeqMap.size());
 #endif
 #endif
 
@@ -208,7 +208,7 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
 #if 0
      if (listSize > 0)
         {
-          printf ("Visiting typedefSeq = %p list.size() = %zu \n",typedefSeq,listSize);
+          printf ("Visiting typedefSeq = %p list.size() = %" PRIuPTR " \n",typedefSeq,listSize);
         }
 #endif
 
@@ -231,7 +231,7 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
                printf ("Insert masterList into typedefSeqMap using key \n");
                printf ("   key = ");
                for (size_t i = 0; i < key.IRnodeList.size(); i++)
-                  printf ("%zu (%s) ",key[i],Cxx_GrammarTerminalNames[key[i]].name.c_str());
+                  printf ("%" PRIuPTR " (%s) ",key[i],Cxx_GrammarTerminalNames[key[i]].name.c_str());
                printf ("\n");
 #endif
             // Build an empty list to support the assignment to add a new SgTypePtrList element to the map.
@@ -281,14 +281,14 @@ NormalizeTypedefSequenceLists::visit (SgNode* node)
                     localList.push_back(typedefType);
 #endif
                  // printf ("pointer to master list in map = %p \n",&(typedefSeqMap[key]));
-                 // printf ("size of master list in map = %zu size of map = %zu \n",typedefSeqMap[key].size(),typedefSeqMap.size());
+                 // printf ("size of master list in map = %" PRIuPTR " size of map = %" PRIuPTR " \n",typedefSeqMap[key].size(),typedefSeqMap.size());
                   }
              }
 #if 0
        // Output the information accumulated in the typedefSeqMap
           printf ("   typedefSeqMap[key = ");
           for (size_t i = 0; i < key.IRnodeList.size(); i++)
-               printf ("%zu (%s) ",key[i],Cxx_GrammarTerminalNames[key[i]].name.c_str());
+               printf ("%" PRIuPTR " (%s) ",key[i],Cxx_GrammarTerminalNames[key[i]].name.c_str());
           printf ("] = ");
           for (size_t i = 0; i < typedefSeqMap[key].size(); i++)
                printf ("%p ",typedefSeqMap[key][i]);
@@ -338,7 +338,7 @@ NormalizeTypedefSequenceLists_CopyList::visit (SgNode* node)
      NormalizeTypedefSequenceLists::key_t key = NormalizeTypedefSequenceLists::generateKey(typedefSeq);
 
      std::vector<SgType*> & listOfTypes = typedefSeqMap[key];
-  // printf ("typedefSeq->get_typedefs().size() = %zu listOfTypes.size() = %zu \n",typedefSeq->get_typedefs().size(),listOfTypes.size());
+  // printf ("typedefSeq->get_typedefs().size() = %" PRIuPTR " listOfTypes.size() = %" PRIuPTR " \n",typedefSeq->get_typedefs().size(),listOfTypes.size());
 
   // typedefSeq->get_typedefs() = typedefSeqMap[key];
   // typedefSeqMap[key];

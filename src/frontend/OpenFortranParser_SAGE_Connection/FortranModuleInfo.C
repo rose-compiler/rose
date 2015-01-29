@@ -111,7 +111,7 @@ FortranModuleInfo::getModule(string modName)
      size_t numberOfModules_before = moduleNameAstMap.size();
 
 #if 0
-     printf ("In FortranModuleInfo::getModule(%s): numberOfModules_before = %zu \n",modName.c_str(),numberOfModules_before);
+     printf ("In FortranModuleInfo::getModule(%s): numberOfModules_before = %" PRIuPTR " \n",modName.c_str(),numberOfModules_before);
 #endif
 
   // DQ (10/1/2010): STL Maps should not be used this way (a side-effect is that it adds a null entry to the map).
@@ -189,7 +189,7 @@ FortranModuleInfo::getModule(string modName)
        // There should only be a single module defined in the associated *.rmod file.
           if (moduleDeclarationList.size() != 1)
              {
-               printf ("Error: moduleDeclarationList.size() = %zu \n",moduleDeclarationList.size());
+               printf ("Error: moduleDeclarationList.size() = %" PRIuPTR " \n",moduleDeclarationList.size());
              }
           ROSE_ASSERT(moduleDeclarationList.size() == 1);
 

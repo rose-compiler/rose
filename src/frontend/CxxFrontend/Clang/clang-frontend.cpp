@@ -3,6 +3,7 @@
 
 #include "clang-frontend-private.hpp"
 
+#include "sage3basic.h"
 #include "rose_config.h"
 
 extern bool roseInstallPrefix(std::string&);

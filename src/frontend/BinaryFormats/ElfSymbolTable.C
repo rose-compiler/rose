@@ -190,7 +190,7 @@ SgAsmElfSymbol::dump(FILE *f, const char *prefix, ssize_t idx, SgAsmGenericSecti
     }
 
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
@@ -362,7 +362,7 @@ SgAsmElfSymbolSection::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     SgAsmElfSection::dump(f, p, -1);
     fprintf(f, "%s%-*s = %s\n", p, w, "is_dynamic", p_is_dynamic ? "yes" : "no");
-    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "ElfSymbol.size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         SgAsmGenericSection *section = get_file()->get_section_by_id(p_symbols->get_symbols()[i]->get_st_shndx());
         p_symbols->get_symbols()[i]->dump(f, p, i, section);

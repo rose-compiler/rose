@@ -420,8 +420,8 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 
      printf ("This is a copy of funbody_raw = %p to build funbody_copy = %p \n",funbody_raw,funbody_copy);
 
-     printf ("funbody_raw->get_statements().size()  = %zu \n",funbody_raw->get_statements().size());
-     printf ("funbody_copy->get_statements().size() = %zu \n",funbody_copy->get_statements().size());
+     printf ("funbody_raw->get_statements().size()  = %" PRIuPTR " \n",funbody_raw->get_statements().size());
+     printf ("funbody_copy->get_statements().size() = %" PRIuPTR " \n",funbody_copy->get_statements().size());
 
      printf ("funbody_raw->get_symbol_table()->size()  = %d \n",(int)funbody_raw->get_symbol_table()->size());
      printf ("funbody_copy->get_symbol_table()->size() = %d \n",(int)funbody_copy->get_symbol_table()->size());
