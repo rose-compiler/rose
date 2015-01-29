@@ -74,11 +74,12 @@ static SgNode* gNode;
 static SgExpression* current_exp = NULL;
 bool b_within_variable_list  = false;  // a flag to indicate if the program is now processing a list of variables
 
+// We now follow the OpenMP 4.0 standard's C-style array section syntax: [lower-bound:length] or just [length]
 // the latest variable symbol being parsed, used to help parsing the array dimensions associated with array symbol
 // such as a[0:n][0:m]
 static SgVariableSymbol* array_symbol; 
 static SgExpression* lower_exp = NULL;
-static SgExpression* upper_exp = NULL;
+static SgExpression* length_exp = NULL;
 
 %}
 
@@ -990,7 +991,7 @@ dimension_field_seq : dimension_field
                     | dimension_field_seq dimension_field
                     ;
 dimension_field: '[' expression {lower_exp = current_exp; } 
-                 ':' expression { upper_exp = current_exp;
+                 ':' expression { length_exp = current_exp;
                       assert (array_symbol != NULL);
                       SgType* t = array_symbol->get_type();
                       bool isPointer= (isSgPointerType(t) != NULL );
@@ -1000,10 +1001,12 @@ dimension_field: '[' expression {lower_exp = current_exp; }
                         std::cerr<<"Error. ompparser.yy expects a pointer or array type."<<std::endl;
                         std::cerr<<"while seeing "<<t->class_name()<<std::endl;
                       }
-                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, upper_exp));
+                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, length_exp));
                       } 
                   ']'
                ;
+
+               
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);

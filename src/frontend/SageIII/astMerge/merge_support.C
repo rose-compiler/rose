@@ -46,7 +46,7 @@ copyAST ( SgNode* node )
 void
 displaySet ( const set<SgNode*> & inputSet, const std::string & label )
    {
-     printf ("In displaySet(inputSet.size() = %zu, label = %s) \n",inputSet.size(),label.c_str());
+     printf ("In displaySet(inputSet.size() = %" PRIuPTR ", label = %s) \n",inputSet.size(),label.c_str());
      set<SgNode*>::const_iterator i = inputSet.begin();
      while ( i != inputSet.end() )
         {

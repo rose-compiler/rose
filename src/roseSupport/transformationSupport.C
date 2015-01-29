@@ -1685,7 +1685,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                      // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);
@@ -1765,7 +1765,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                      // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);
@@ -1849,7 +1849,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                         printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                         printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);

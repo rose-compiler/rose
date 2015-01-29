@@ -4,7 +4,7 @@
 #include "Labeler.h"
 
 namespace DFAstAttributeConversion {
-  void createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName);
+  void createUDAstAttributeFromRDAttribute(SPRAY::Labeler* labeler, std::string rdAttributeName, std::string udAttributeName);
 }
 
 #endif

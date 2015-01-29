@@ -1,6 +1,8 @@
 /*
  Chunhua (Leo) Liao" <liao6@llnl.gov>
  */
+
+#include "sage3basic.h"
 #include "AstFromString.h"
 #include <string>
 #include <algorithm>
@@ -118,9 +120,10 @@ namespace AstFromString
     // or the match is revoked, e.g: "parallel1" match sub str "parallel" but 
     // the trail is not legal
     // TODO: any other characters?
+    //     TV (12/22/2013) : added ',' as legal trail.
     if (checkTrail)
     {
-      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')')
+      if (*c_char!=' '&&*c_char!='\0'&&*c_char!='\n'&&*c_char!='\t' &&*c_char!='!' &&*c_char!='(' &&*c_char!=')' &&*c_char!=',')
       {
         result = false;
         c_char = old_char;
@@ -186,8 +189,9 @@ namespace AstFromString
 
     // check tail to ensure digit sequence is independent (not part of another identifier)
     // but it can be followed by space ',' '[' '{' etc.
+    // cannot be followed by '.' => floating point
     // TODO other cases??
-    if (afs_is_letter())
+    if (afs_is_letter() || *c_char == '.')
     {
       c_char = old_char;
       return false;
@@ -197,6 +201,74 @@ namespace AstFromString
     *result = atoi(buffer);
     return true;
   }
+
+  bool afs_match_double_const(double * result) {
+    char buffer[OFS_MAX_LEN];
+    const char* old_char = c_char;
+
+    afs_skip_whitespace();
+
+    if (!afs_is_digit()) {
+      c_char = old_char;
+      return false;
+    }
+
+    int i=0;
+    do {
+      buffer[i] = *c_char;
+      i++;
+      c_char++;
+    } while (afs_is_digit());
+    buffer[i]='\0';
+
+    *result = atoi(buffer);
+
+    if (*c_char == '.') {
+      c_char++;
+
+      double decimals = 1;
+      i=0;
+      do {
+        buffer[i] = *c_char;
+        i++;
+        c_char++;
+        decimals /= 10;
+      } while (afs_is_digit());
+      buffer[i]='\0';
+
+      if (i > 0) *result += (atoi(buffer) * decimals);
+    }
+
+    if (*c_char == 'e' || *c_char == 'E') {
+      c_char++;
+
+      double exponent = 1;
+      if (*c_char == '-') {
+        exponent = -1;
+        c_char++;
+      }
+
+      if (!afs_is_digit()) {
+        c_char = old_char;
+        return false;
+      }
+
+      i=0;
+      do {
+        buffer[i] = *c_char;
+        i++;
+        c_char++;
+      } while (afs_is_digit());
+      buffer[i]='\0';
+
+      exponent *= pow(10., atoi(buffer));
+
+      *result *= exponent;
+    }
+
+    return true;
+  }
+
   // Try to retrieve a possible name identifier from the head
   // store the result in buffer
   /*
@@ -241,12 +313,13 @@ namespace AstFromString
  // DQ (8/16/2013): Updated use of new API for symbol table support.
  // SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope);
     SgSymbol* sym = lookupSymbolInParentScopes(buffer, c_scope,NULL,NULL);
-
+/* TV (02/25/2014) : remove type as when it find something it asserts (I had an issue with 'i' recognized as 'int'...)
     // type?
     SgTypeTable * gtt = SgNode::get_globalTypeTable();
     assert (gtt != NULL);
     SgType* t = gtt->lookup_type(SgName(buffer)); 
     //assert (!(sym &&t)); // can be both a type or a variable? TODO global type table stores variables and their type info.!!??
+*/
     if (sym) 
     {
       assert (sym!=NULL);
@@ -261,8 +334,11 @@ namespace AstFromString
           ref_exp = buildFunctionRefExp(isSgFunctionSymbol(sym));
           c_parsed_node = ref_exp;  
           break;
+        case V_SgEnumFieldSymbol:
+          c_parsed_node = SageBuilder::buildEnumVal(isSgEnumFieldSymbol(sym));
+          break;
         case V_SgLabelSymbol:
-          c_parsed_node = isSgLabelSymbol(sym);;  
+          c_parsed_node = isSgLabelSymbol(sym);
           break;
         default:
           {
@@ -270,15 +346,17 @@ namespace AstFromString
             assert(false);
           }
       }
-    } 
+    }
+/* TV (02/25/2014) : remove type as when it find something it asserts (I had an issue with 'i' recognized as 'int'...)
     else  if (t)
     {
       assert (0); // TODO global type table stores variables and their type info.It does not store type names !!!!??
       c_parsed_node = t;
     }
+*/
     else
     {
-      //printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
+      printf("cannot recognize an identifier:^%s^ not a variable ref, not a type ref.\n",buffer);
       //c_parsed_node = NULL;
       //assert(0);
       //c_char = old_char;
@@ -305,6 +383,7 @@ namespace AstFromString
   {
     bool result = false;
     int int_result;
+    double dbl_result;
     const char* old_char = c_char;
     if (afs_match_integer_const (&int_result))
     {
@@ -312,13 +391,16 @@ namespace AstFromString
       //   cout<<"debug:building int val exp:"<<int_result<<endl;
       c_parsed_node = buildIntVal (int_result);
     }
+    else if (afs_match_double_const(&dbl_result)) {
+      result = true;
+      c_parsed_node = buildDoubleVal (dbl_result);
+    }    
     // TODO add other types of C constant
 
     if (result == false)
       c_char = old_char;
     return result;
   }
-
 
   /*
      primary_expression
@@ -834,47 +916,47 @@ namespace AstFromString
   ;
 
 */
-  bool afs_match_type_specifier()
+  bool afs_match_type_specifier(bool checkTrail)
   {
     bool result = false;
     const char* old_char = c_char;
 
-    if (afs_match_substr("void"))
+    if (afs_match_substr("void", checkTrail))
     {
       c_parsed_node = buildVoidType();
       result = true;
     }
-    else if (afs_match_substr("char"))
+    else if (afs_match_substr("char", checkTrail))
     {
       c_parsed_node = buildCharType();
       result = true;
     }
-    else if (afs_match_substr("short"))
+    else if (afs_match_substr("short", checkTrail))
     {
       c_parsed_node = buildShortType();
       result = true;
     }
-    else if (afs_match_substr("int"))
+    else if (afs_match_substr("int", checkTrail))
     {
       c_parsed_node = buildIntType();
       result = true;
     }
-    else if (afs_match_substr("long"))
+    else if (afs_match_substr("long", checkTrail))
     {
       c_parsed_node = buildLongType();
       result = true;
     }
-    else if (afs_match_substr("float"))
+    else if (afs_match_substr("float", checkTrail))
     {
       c_parsed_node = buildFloatType();
       result = true;
     }
-    else if (afs_match_substr("double"))
+    else if (afs_match_substr("double", checkTrail))
     {
       c_parsed_node = buildDoubleType();
       result = true;
     }
-    else if (afs_match_substr("signed"))
+    else if (afs_match_substr("signed", checkTrail))
     {
       // ROSE does not have a dedicated node for signed or unsigned. 
       // we abuse SgTypeSignedLongLong SgTypeUnSignedLongLong to represent them
@@ -883,7 +965,7 @@ namespace AstFromString
       c_parsed_node = buildSignedLongLongType();
       result = true;
     }
-    else if (afs_match_substr("unsigned"))
+    else if (afs_match_substr("unsigned", checkTrail))
     {
       c_parsed_node = buildUnsignedLongLongType();
       result = true;
@@ -2605,4 +2687,51 @@ jump_statement
     return result;
   }
 
+  bool afs_match_declaration() {
+    const char* old_char = c_char;
+
+    if (!afs_match_type_name()) {
+      c_char = old_char;
+      return false;
+    }
+    SgType * type = isSgType(c_parsed_node);
+    assert(type != NULL);
+
+    if (!afs_match_identifier()) {
+      c_char = old_char;
+      return false;
+    }
+    SgName * ident = isSgName(c_parsed_node);
+    assert(ident != NULL);
+
+    afs_skip_whitespace();
+
+    SgInitializer * init = NULL;
+    if (afs_match_char('=')) {
+
+      if (!afs_match_additive_expression()) {
+        c_char = old_char;
+        assert(false);
+        return false;
+      }
+      SgExpression * expr = isSgExpression(c_parsed_node);
+      assert(expr != NULL);
+      init = SageBuilder::buildAssignInitializer(expr);
+    }
+
+    afs_skip_whitespace();
+
+    if (!afs_match_char(';')) {
+      c_char = old_char;
+      return false;
+    }
+
+    SgScopeStatement * scope = getScope(c_sgnode);
+    assert (scope != NULL);
+    c_parsed_node = SageBuilder::buildVariableDeclaration(*ident, type, init, scope);
+
+    return true;
+  }
+
 } // end namespace AstFromString
+

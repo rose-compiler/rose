@@ -16,7 +16,8 @@ namespace br_stl {
 #define USE_SET_CHAINS
 
 // hash set class
-template<class Key, class hashFun>
+// EqualToPred is not used in this implementation
+  template<class Key, class hashFun, typename DummyEqualToPred>
 class HSet {
  public:
     typedef size_t size_type;
@@ -36,7 +37,7 @@ class HSet {
     friend class iterator;
 
     class iterator {
-      friend class HSet<Key, hashFun>;
+      friend class HSet<Key, hashFun, DummyEqualToPred>;
       private:
        typename chain_type::iterator current;
        typedef std::forward_iterator_tag iterator_category;
@@ -359,6 +360,7 @@ class HSet {
        }
        return max;
      }
+
      //MS:2012
      double load_factor() {
        return (double)count/(double)v.size();
@@ -367,29 +369,29 @@ class HSet {
 
 // binary operators
 
-template<class Key, class hashFun>
-HSet<Key, hashFun> operator+(const HSet<Key, hashFun>& S1, 
-                             const HSet<Key, hashFun>& S2) { 
-     HSet<Key, hashFun> result = S1;
+  template<class Key, class hashFun, typename DummyPred>
+    HSet<Key, hashFun, DummyPred> operator+(const HSet<Key, hashFun, DummyPred>& S1, 
+                             const HSet<Key, hashFun, DummyPred>& S2) { 
+    HSet<Key, hashFun, DummyPred> result = S1;
      return result += S2;
 }
 
-template<class Key, class hashFun>
-HSet<Key, hashFun> operator*(const HSet<Key, hashFun>& S1, 
-                             const HSet<Key, hashFun>& S2) { 
-     HSet<Key, hashFun> result = S1;
+template<class Key, class hashFun, typename DummyPred>
+HSet<Key, hashFun, DummyPred> operator*(const HSet<Key, hashFun, DummyPred>& S1, 
+                             const HSet<Key, hashFun, DummyPred>& S2) { 
+     HSet<Key, hashFun, DummyPred> result = S1;
      return result *= S2;
 }
-template<class Key, class hashFun>
-HSet<Key, hashFun> operator-(const HSet<Key, hashFun>& S1, 
-                             const HSet<Key, hashFun>& S2) { 
-     HSet<Key, hashFun> result = S1;
+template<class Key, class hashFun, typename DummyPred>
+HSet<Key, hashFun, DummyPred> operator-(const HSet<Key, hashFun, DummyPred>& S1, 
+                             const HSet<Key, hashFun, DummyPred>& S2) { 
+     HSet<Key, hashFun, DummyPred> result = S1;
      return result -= S2;
 }
-template<class Key, class hashFun>
-HSet<Key, hashFun> operator^(const HSet<Key, hashFun>& S1, 
-                             const HSet<Key, hashFun>& S2) { 
-     HSet<Key, hashFun> result = S1;
+template<class Key, class hashFun, typename DummyPred>
+HSet<Key, hashFun, DummyPred> operator^(const HSet<Key, hashFun, DummyPred>& S1, 
+                             const HSet<Key, hashFun, DummyPred>& S2) { 
+     HSet<Key, hashFun, DummyPred> result = S1;
      return result ^= S2;
 }
 

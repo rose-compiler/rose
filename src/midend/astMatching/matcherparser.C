@@ -1902,13 +1902,6 @@ char tempfilename[30];
 char *output_filename = tempfilename;
 MatchOperationList* matchOperationsSequence;
 
-void MSG(char* s)
-{
-#ifdef TEST 
-    printf("%s",s);
-#endif
-}
-
 #ifndef NDEBUG
 #ifndef YYDEBUG
 #define YYDEBUG 1

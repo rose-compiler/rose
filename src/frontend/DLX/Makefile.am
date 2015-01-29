@@ -1,0 +1,3 @@
+
+SUBDIRS = docs include lib
+

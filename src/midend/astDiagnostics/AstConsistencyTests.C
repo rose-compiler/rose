@@ -214,13 +214,13 @@ AstTests::runAllTests(SgProject* sageProject)
                     SgGlobal* globalScope = sourceFile->get_globalScope();
                     ROSE_ASSERT(globalScope != NULL);
                     size_t maxCollisions = globalScope->get_symbol_table()->maxCollisions();
-                    printf ("Symbol Table Statistics: sourceFile = %zu maxCollisions = %zu \n",i,maxCollisions);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " maxCollisions = %" PRIuPTR " \n",i,maxCollisions);
 
                     float load_factor     = globalScope->get_symbol_table()->get_table()->load_factor();
-                    printf ("Symbol Table Statistics: sourceFile = %zu load_factor = %f \n",i,load_factor);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " load_factor = %f \n",i,load_factor);
 
                     float max_load_factor = globalScope->get_symbol_table()->get_table()->max_load_factor();
-                    printf ("Symbol Table Statistics: sourceFile = %zu max_load_factor = %f \n",i,max_load_factor);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " max_load_factor = %f \n",i,max_load_factor);
                   }
              }
         }
@@ -5988,8 +5988,8 @@ TestForDisconnectedAST::test(SgNode * node)
 
           if (AST_set.size() != All_IR_Nodes_set.size())
              {
-               printf ("AST_set          = %zu \n",AST_set.size());
-               printf ("All_IR_Nodes_set = %zu \n",All_IR_Nodes_set.size());
+               printf ("AST_set          = %" PRIuPTR " \n",AST_set.size());
+               printf ("All_IR_Nodes_set = %" PRIuPTR " \n",All_IR_Nodes_set.size());
              }
         }
 

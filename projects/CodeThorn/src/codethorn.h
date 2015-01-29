@@ -29,6 +29,9 @@ public:
     void initialize();
 };
 
+void printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, 
+                               string title = "state transition system computed");
+
 } // end of namespace CodeThorn
 
 #endif

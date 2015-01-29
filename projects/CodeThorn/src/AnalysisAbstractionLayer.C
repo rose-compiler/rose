@@ -6,6 +6,8 @@
 #include "addressTakenAnalysis.h"
 #include "defUseQuery.h"
 
+using namespace SPRAY;
+
 VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
@@ -20,7 +22,7 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
 VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
-  cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
+  //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
     setOfUsedVars.insert(variableIdMapping->variableId(*i));
@@ -50,7 +52,7 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   //cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
   extractVariableIdSetFromVarsInfo(resultSet,defVarsInfo);
   ROSE_ASSERT(defVarsInfo.first.size()==resultSet.size());
-  ROSE_ASSERT(defVarsInfo.first.size()<=1);
+  //ROSE_ASSERT(defVarsInfo.first.size()<=1);
   return resultSet;
 }
 

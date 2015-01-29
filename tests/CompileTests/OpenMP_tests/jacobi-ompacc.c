@@ -1,3 +1,4 @@
+// Naive version without any optimizations
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>

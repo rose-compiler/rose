@@ -5,7 +5,8 @@
 // Non-windows support should used boost filesystem 2 if using GNU version less than 4.7.
 #ifndef _MSC_VER
 // #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+// Liao, 1/24/2015. Not sure why GCC version is checked when we are taling about boost filesystem version. bumped up to 9 so gcc 4.8 can be supported  (<8 does not include 8!!, another mental bump!)
+#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
   #define BOOST_FILESYSTEM_VERSION 2
 #endif
 #else
@@ -56,8 +57,8 @@ public:
 
 // DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
 #ifndef _MSC_VER
-// #if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+// #if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
+#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
  // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
     static string getFileName(const string& aPath) {
         path boostPath(aPath);
@@ -132,7 +133,7 @@ public:
 #ifndef _MSC_VER
 // DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
 // #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
          // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
             relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
 #else
@@ -147,7 +148,7 @@ public:
             while (toPathIterator != boostToPath.end()) {
 #ifndef _MSC_VER
 // #if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
+#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
              // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
                 relativePath += pathDelimiter + *toPathIterator;
 #else

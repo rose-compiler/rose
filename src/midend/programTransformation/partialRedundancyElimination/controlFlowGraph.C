@@ -51,8 +51,8 @@ PRE::makeCfg ( SgFunctionDefinition* n, PRE::ControlFlowGraph& graph )
 void
 PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
    {
-  // printf ("In addEdgeInsertionPoints: controlflow.graph.vertices().size()     = %zu \n",controlflow.graph.vertices().size());
-  // printf ("In addEdgeInsertionPoints: controlflow.edge_insertion_point.size() = %zu \n",controlflow.edge_insertion_point.size());
+  // printf ("In addEdgeInsertionPoints: controlflow.graph.vertices().size()     = %" PRIuPTR " \n",controlflow.graph.vertices().size());
+  // printf ("In addEdgeInsertionPoints: controlflow.edge_insertion_point.size() = %" PRIuPTR " \n",controlflow.edge_insertion_point.size());
 
      VertexIter i = controlflow.graph.vertices().begin(), iend = controlflow.graph.vertices().end();
      for (; i != iend; ++i)
@@ -69,7 +69,7 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
           int out_edge_count = distance(out, outend);
           SgStatement* expr_parent = 0;
 
-       // printf ("stmts.size() = %zu last_stmt = %p expr_parent = %p \n",stmts.size(),last_stmt,expr_parent);
+       // printf ("stmts.size() = %" PRIuPTR " last_stmt = %p expr_parent = %p \n",stmts.size(),last_stmt,expr_parent);
 
        // Wouldn't this make more sense as a while loop?
           for (vector<SgNode*>::const_iterator j = stmts.begin(); j != stmts.end(); ++j)
@@ -279,8 +279,8 @@ PRE::addEdgeInsertionPoints(PRE::ControlFlowGraph& controlflow)
              }
         }
 
-  // printf ("Leaving addEdgeInsertionPoints: controlflow.graph.vertices().size()     = %zu \n",controlflow.graph.vertices().size());
-  // printf ("Leaving addEdgeInsertionPoints: controlflow.edge_insertion_point.size() = %zu \n",controlflow.edge_insertion_point.size());
+  // printf ("Leaving addEdgeInsertionPoints: controlflow.graph.vertices().size()     = %" PRIuPTR " \n",controlflow.graph.vertices().size());
+  // printf ("Leaving addEdgeInsertionPoints: controlflow.edge_insertion_point.size() = %" PRIuPTR " \n",controlflow.edge_insertion_point.size());
    }
 
 
