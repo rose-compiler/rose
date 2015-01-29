@@ -3019,7 +3019,7 @@ SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType() const
 
      SgTypePtrList & functionTypeArguments = functionParameterTypeList->get_arguments();
 
-     printf ("functionTypeArguments.size() = %zu \n",functionTypeArguments.size());
+     printf ("functionTypeArguments.size() = %" PRIuPTR " \n",functionTypeArguments.size());
      ROSE_ASSERT(positionInList < functionTypeArguments.size());
 
      SgType* tmp_thisParametersType = functionTypeArguments[positionInList];
@@ -3495,14 +3495,14 @@ SgTemplateParameterVal::get_template_parameter_name() const
         }
 
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
-  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %" PRIuPTR " \n",templateParameters.size());
 
   // if (template_parameter_position >= (long int)(templateParameters.size()))
      if (template_parameter_position >= numberOfTemplateParameters)
         {
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
-       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
-          printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
+       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %" PRIuPTR " \n",templateParameters.size());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %" PRIuPTR " \n",numberOfTemplateParameters);
         }
 
      printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");

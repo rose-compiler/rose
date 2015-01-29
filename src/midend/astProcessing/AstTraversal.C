@@ -48,7 +48,7 @@ list<SgNode*> AstCycleTest::determineCycle(list<SgNode*>& l, SgNode* node)
      list<SgNode*> cycle;
      cycle.push_front(node);
 #if 0
-     printf ("In AstCycleTest::determineCycle(l,node = %p = %s) l.size() = %zu \n",node,node->class_name().c_str(),l.size());
+     printf ("In AstCycleTest::determineCycle(l,node = %p = %s) l.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),l.size());
 #endif
      for (list<SgNode*>::reverse_iterator i = l.rbegin(); i != l.rend(); i++)
         {
@@ -110,12 +110,12 @@ AstCycleTest::setChildrenContainer(SgNode* node, std::vector<SgNode*>& c)
      for (std::vector<SgNode*>::iterator i=c.begin();i!=c.end();i++)
         {
 #if 0
-          printf ("for node = %p = %s list c.size() = %zu \n",node,node->class_name().c_str(),c.size());
+          printf ("for node = %p = %s list c.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),c.size());
 #endif
           if (*i != NULL)
              {
 #if 0
-               printf ("Calling determineCycle(activeNodes = %zu, *i = %p = %s) \n",activeNodes.size(),*i,(*i)->class_name().c_str());
+               printf ("Calling determineCycle(activeNodes = %" PRIuPTR ", *i = %p = %s) \n",activeNodes.size(),*i,(*i)->class_name().c_str());
 #endif
                list<SgNode*> cycle = determineCycle(activeNodes,*i);
                if (cycle.size() > 0)

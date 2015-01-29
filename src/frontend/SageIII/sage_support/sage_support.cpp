@@ -1715,6 +1715,10 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
    {
   // printf ("In the SgSourceFile constructor \n");
 
+     this->p_package = NULL;
+     this->p_import_list = NULL;
+     this->p_class_list = NULL;
+
      set_globalScope(NULL);
 
   // DQ (6/15/2011): Added scope to hold unhandled declarations (see test2011_80.C).

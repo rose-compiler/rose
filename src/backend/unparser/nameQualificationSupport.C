@@ -466,7 +466,7 @@ NameQualificationTraversal::evaluateTemplateInstantiationDeclaration ( SgDeclara
                ROSE_ASSERT(templateInstantiationDeclaration != NULL);
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
             // printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p \n",templateInstantiationDeclaration);
-               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %zu \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
+               printf ("$$$$$$$$$ --- templateInstantiationDeclaration = %p templateInstantiationDeclaration->get_templateArguments().size() = %" PRIuPTR " \n",templateInstantiationDeclaration,templateInstantiationDeclaration->get_templateArguments().size());
 #endif
             // Evaluate all template arguments.
                evaluateNameQualificationForTemplateArgumentList (templateInstantiationDeclaration->get_templateArguments(),currentScope,positionStatement);
@@ -2345,7 +2345,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("\n\n*********************************************************************************************************************\n");
-     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
+     printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*********************************************************************************************************************\n");
 
      printf ("In NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): currentScope = %p = %s positionStatement = %p = %s \n",
@@ -2499,7 +2499,7 @@ NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList (Sg
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
      printf ("*****************************************************************************************************************************\n");
-     printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %zu recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
+     printf ("Leaving NameQualificationTraversal::evaluateNameQualificationForTemplateArgumentList(): templateArgumentList.size() = %" PRIuPTR " recursiveDepth = %d \n",templateArgumentList.size(),recursiveDepth);
      printf ("*****************************************************************************************************************************\n\n");
 #endif
    }
@@ -2903,7 +2903,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
              {
                if (SgProject::get_verbose() > 0)
                   {
-                    printf ("Warning: type names should not be this long...(unless this is boost) typeNameString.length() = %zu \n",typeNameString.length());
+                    printf ("Warning: type names should not be this long...(unless this is boost) typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                   }
 #if 0
             // DQ (6/30/2013): Allow the output of an example so that we can verify that this make 
@@ -2925,7 +2925,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // if (typeNameString.length() > 10000)
                if (typeNameString.length() > 40000)
                   {
-                    printf ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %zu \n",typeNameString.length());
+                    printf ("Error: type names should not be this long... (even in boost, I think) typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                     ROSE_ASSERT(false);
                   }
 #if 0
@@ -2940,7 +2940,7 @@ NameQualificationTraversal::traverseType ( SgType* type, SgNode* nodeReferenceTo
             // DQ (1/30/2013): Print out the long name that previously violated our initial limits.
                if (typeNameString.length() > 10000)
                   {
-                    printf ("WARNING: extremely long type name found: typeNameString.length() = %zu \n",typeNameString.length());
+                    printf ("WARNING: extremely long type name found: typeNameString.length() = %" PRIuPTR " \n",typeNameString.length());
                     printf ("typeNameString = %s \n",typeNameString.c_str());
                   }
 #endif
@@ -3033,7 +3033,7 @@ NameQualificationTraversal::traverseTemplatedFunction(SgFunctionRefExp* function
        // if (functionNameString.length() > 2000)
           if (functionNameString.length() > 5000)
              {
-               printf ("Error: function names should not be this long... functionNameString.length() = %zu \n",functionNameString.length());
+               printf ("Error: function names should not be this long... functionNameString.length() = %" PRIuPTR " \n",functionNameString.length());
 #if 1
                printf ("Error: function names should not be this long... functionNameString          = \n%s \n",functionNameString.c_str());
 #endif
@@ -3117,7 +3117,7 @@ NameQualificationTraversal::traverseTemplatedMemberFunction(SgMemberFunctionRefE
        // if (memberFunctionNameString.length() > 4000)
           if (memberFunctionNameString.length() > 8000)
              {
-               printf ("Error: function names should not be this long... memberFunctionNameString.length() = %zu \n",memberFunctionNameString.length());
+               printf ("Error: function names should not be this long... memberFunctionNameString.length() = %" PRIuPTR " \n",memberFunctionNameString.length());
 #if 1
                printf ("Error: function names should not be this long... memberFunctionNameString = \n%s \n",memberFunctionNameString.c_str());
 #endif
@@ -3220,7 +3220,7 @@ NameQualificationTraversal::skipNameQualificationIfNotProperlyDeclaredWhereDecla
      if (referencedNameSet.find(declarationToSearchForInReferencedNameSet) == referencedNameSet.end())
         {
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %zu \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
+          printf ("   --- $$$$$$$$$$ NOT Found: declaration %p = %s in referencedNameSet referencedNameSet.size() = %" PRIuPTR " \n",declaration,declaration->class_name().c_str(),referencedNameSet.size());
 #endif
           skipNameQualification = true;
         }
@@ -3366,7 +3366,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgBaseClassPtrList & baseClassList = classDefinition->get_inheritances();
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("!!!!! Evaluate the derived classes: are they visible --- baseClassList.size() = %zu \n",baseClassList.size());
+          printf ("!!!!! Evaluate the derived classes: are they visible --- baseClassList.size() = %" PRIuPTR " \n",baseClassList.size());
 #endif
 #if 0
           string declaration_name = classDefinition->get_declaration()->unparseToString();
@@ -5359,7 +5359,7 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgSymbolTable::get_aliasSymbolCausalNodeSet().insert(n);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
-          printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): Added SgAliasSymbols causal node = %p = %s to SgSymbolTable::p_aliasSymbolCausalNodeSet size = %zu \n",
+          printf ("In NameQualificationTraversal::evaluateInheritedAttribute(): Added SgAliasSymbols causal node = %p = %s to SgSymbolTable::p_aliasSymbolCausalNodeSet size = %" PRIuPTR " \n",
                n,n->class_name().c_str(),SgSymbolTable::get_aliasSymbolCausalNodeSet().size());
 #endif
         }
@@ -5820,7 +5820,7 @@ NameQualificationTraversal::setNameQualification(SgFunctionRefExp* functionRefEx
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           printf ("Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",functionRefExp,functionRefExp->get_qualified_name_prefix().str());
-          printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+          printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
 #endif
         }
        else
@@ -7271,7 +7271,7 @@ NameQualificationTraversal::depthOfGlobalNameQualification(SgDeclarationStatemen
              {
                depthOfNameQualification++;
 #if 0
-               printf ("Incrementing depthOfNameQualification = %zu \n",depthOfNameQualification);
+               printf ("Incrementing depthOfNameQualification = %" PRIuPTR " \n",depthOfNameQualification);
 #endif
              }
 
@@ -7282,7 +7282,7 @@ NameQualificationTraversal::depthOfGlobalNameQualification(SgDeclarationStatemen
         }
 
 #if 0
-     printf ("In depthOfGlobalNameQualification(): depthOfNameQualification = %zu \n",depthOfNameQualification);
+     printf ("In depthOfGlobalNameQualification(): depthOfNameQualification = %" PRIuPTR " \n",depthOfNameQualification);
 #endif
 
      return depthOfNameQualification;

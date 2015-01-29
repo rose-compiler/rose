@@ -211,7 +211,7 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                        }
                       else
                        {
-                         printf ("declarationMap[firstNondefiningDeclaration]->size() = %zu \n",declarationMap[firstNondefiningDeclaration]->size());
+                         printf ("declarationMap[firstNondefiningDeclaration]->size() = %" PRIuPTR " \n",declarationMap[firstNondefiningDeclaration]->size());
 
                          printf ("decl                             = %p = %s = %s \n",decl,decl->class_name().c_str(),get_name(decl).c_str());
                          printf ("decl->get_parent()               = %p = %s = %s \n",decl->get_parent(),decl->get_parent()->class_name().c_str(),get_name(decl->get_parent()).c_str());
@@ -346,7 +346,7 @@ SageInterface::DeclarationSets::isLocatedInDefiningScope(SgDeclarationStatement*
 
 #if DEBUG_LOCATED_IN_DEFINING_SCOPE
      printf ("In DeclarationSets::isLocatedInDefiningScope(): decl = %p = %s \n",decl,decl->class_name().c_str());
-     printf ("   --- declarationSet->size()                        = %zu \n",declarationSet->size());
+     printf ("   --- declarationSet->size()                        = %" PRIuPTR " \n",declarationSet->size());
 #endif
 
      SgDeclarationStatement* associatedDeclaration = NULL;
@@ -927,7 +927,7 @@ SageInterface::astIntersection ( SgNode* original, SgNode* copy, SgCopyHelp* hel
              }
 
           if (SgProject::get_verbose() > 0)
-               printf ("IR nodes different between the original AST and the copy of the AST = %zu \n",tmp_AST_original.size());
+               printf ("IR nodes different between the original AST and the copy of the AST = %" PRIuPTR " \n",tmp_AST_original.size());
 
           for (int j = 0; j < (int)tmp_AST_original.size(); j++)
              {
@@ -2674,7 +2674,7 @@ SageInterface::isOverloaded ( SgFunctionDeclaration* functionDeclaration )
           SgDeclarationStatementPtrList & memberList = classDefinition->get_members();
 #if 0
        // DQ (10/11/2007): Fix this function better by checking for more than one member function declaration in the class definition.
-          printf ("   memberList.size() = %zu \n",memberList.size());
+          printf ("   memberList.size() = %" PRIuPTR " \n",memberList.size());
 #endif
           for (SgDeclarationStatementPtrList::iterator i = memberList.begin(); i != memberList.end(); i++)
              {
@@ -3124,7 +3124,7 @@ SageInterface::rebuildSymbolTable ( SgScopeStatement* scope )
              }
           ROSE_ASSERT(symbolTable->size() == 0);
 #if 0
-          printf ("Symbol Table from %p = %s of size = %zu \n",scope,scope->class_name().c_str(),symbolTable->size());
+          printf ("Symbol Table from %p = %s of size = %" PRIuPTR " \n",scope,scope->class_name().c_str(),symbolTable->size());
           symbolTable->print("Called from SageInterface::rebuildSymbolTable()");
 #endif
         }
@@ -3904,8 +3904,8 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      SgSymbolTable* this_symbolTable = this_scope->get_symbol_table();
      SgSymbolTable* copy_symbolTable = copy_scope->get_symbol_table();
 #if 0
-     printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %zu \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
-     printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %zu \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
+     printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %" PRIuPTR " \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
+     printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %" PRIuPTR " \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
 #endif
 
   // DQ (3/4/2009): For now just output a warning, but this might be a more serious problem.
@@ -3915,8 +3915,8 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
         {
           if (SgProject::get_verbose() > 0)
               {
-               printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %zu \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
-               printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %zu \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
+               printf ("Before fixup: this scope = %p = %s this_symbolTable->get_table()->size() = %" PRIuPTR " \n",this_scope,this_scope->class_name().c_str(),this_symbolTable->get_table()->size());
+               printf ("Before fixup: copy scope = %p = %s copy_symbolTable->get_table()->size() = %" PRIuPTR " \n",copy_scope,copy_scope->class_name().c_str(),copy_symbolTable->get_table()->size());
                printf ("Warning the symbols tables in these different scopes are different sizes \n");
              }
         }
@@ -4003,7 +4003,7 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 
 #if 0
      printf ("Output the replacementMap: \n");
-  // printf ("replacementMap.size() = %zu \n",replacementMap.size());
+  // printf ("replacementMap.size() = %" PRIuPTR " \n",replacementMap.size());
      ReplacementMapTraversal::displayReplacementMap(replacementMap);
 
      printf ("\n\n************************************************************\n");
@@ -4019,8 +4019,8 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
      displaySet(intermediateDeleteSet,"After fixupTraversal");
 
-     printf ("After fixup: this_symbolTable->get_table()->size() = %zu \n",this_symbolTable->get_table()->size());
-     printf ("After fixup: copy_symbolTable->get_table()->size() = %zu \n",copy_symbolTable->get_table()->size());
+     printf ("After fixup: this_symbolTable->get_table()->size() = %" PRIuPTR " \n",this_symbolTable->get_table()->size());
+     printf ("After fixup: copy_symbolTable->get_table()->size() = %" PRIuPTR " \n",copy_symbolTable->get_table()->size());
 #endif
 
   // DQ (3/1/2009): find a case where this code is tested.
@@ -5979,7 +5979,7 @@ SageInterface::setSourcePositionAtRootAndAllChildren(SgNode *root)
      Rose_STL_Container <SgNode*> nodeList = NodeQuery::querySubTree(root,V_SgNode);
 
 #if 0
-     printf ("In setSourcePositionAtRootAndAllChildren(): nodeList.size() = %zu \n",nodeList.size());
+     printf ("In setSourcePositionAtRootAndAllChildren(): nodeList.size() = %" PRIuPTR " \n",nodeList.size());
 #endif
 
      for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
@@ -7270,7 +7270,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
              {
                vector<int> captureList;
 #if REMOVE_STATEMENT_DEBUG
-               printf ("Found attached comments (removing %p = %s): comments->size() = %zu \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
+               printf ("Found attached comments (removing %p = %s): comments->size() = %" PRIuPTR " \n",targetStmt,targetStmt->class_name().c_str(),comments->size());
 #endif
 
              // Liao 10/28/2010. relinking AST statements may be achieved by remove it and attach it to somewhere else.
@@ -7293,7 +7293,7 @@ void SageInterface::removeStatement(SgStatement* targetStmt, bool autoRelocatePr
                   }
 
 #if REMOVE_STATEMENT_DEBUG
-               printf ("captureList.size() = %zu \n",captureList.size());
+               printf ("captureList.size() = %" PRIuPTR " \n",captureList.size());
 #endif
 
                if (captureList.empty() == false)
@@ -7401,7 +7401,7 @@ SageInterface::moveCommentsToNewStatement(SgStatement* sourceStatement, const ve
      for (size_t n = 0; n < indexList.size(); n++)
         {
 #if REMOVE_STATEMENT_DEBUG
-          printf ("Erase entry from comments list on comments->size() %zu \n",comments->size());
+          printf ("Erase entry from comments list on comments->size() %" PRIuPTR " \n",comments->size());
 #endif
           bool modifiedList = false;
           AttachedPreprocessingInfoType::iterator k = comments->begin();
@@ -10168,8 +10168,8 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
         {
 #if 0
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-          printf ("In appendStatementList(): stmts[i = %zu] = %p = %s \n",i,stmts[i],stmts[i]->class_name().c_str());
-       // printf ("In appendStatementList(): stmts[i = %zu]->get_parent() = %p \n",i,stmts[i]->get_parent());
+          printf ("In appendStatementList(): stmts[i = %" PRIuPTR "] = %p = %s \n",i,stmts[i],stmts[i]->class_name().c_str());
+       // printf ("In appendStatementList(): stmts[i = %" PRIuPTR "]->get_parent() = %p \n",i,stmts[i]->get_parent());
 #endif
 #endif
         appendStatement(stmts[i], scope); // Liao 5/15/2013, defer the logic of checking parent pointers to appendStatement()
@@ -10178,14 +10178,14 @@ SageInterface::appendStatementList(const std::vector<SgStatement*>& stmts, SgSco
              {
 #if 0
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION
-               printf ("   --- In appendStatementList(): stmts[i = %zu] will be added to scope (because stmts[i]->get_parent() != NULL (= %p = %s) \n",i,stmts[i]->get_parent(),stmts[i]->get_parent()->class_name().c_str());
+               printf ("   --- In appendStatementList(): stmts[i = %" PRIuPTR "] will be added to scope (because stmts[i]->get_parent() != NULL (= %p = %s) \n",i,stmts[i]->get_parent(),stmts[i]->get_parent()->class_name().c_str());
 #endif
 #endif
                appendStatement(stmts[i], scope);
              }
             else
              {
-               printf ("   --- WARNING: In appendStatementList(): stmts[i = %zu] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
+               printf ("   --- WARNING: In appendStatementList(): stmts[i = %" PRIuPTR "] not added to scope (because stmts[i]->get_parent() == NULL) \n",i);
              }
 #endif        
         }
@@ -10348,7 +10348,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
         {
           vector<int> captureList;
 #if 0
-          printf ("Found attached comments (at %p = %s, inserting %p = %s insertBefore = %s): comments->size() = %zu \n",
+          printf ("Found attached comments (at %p = %s, inserting %p = %s insertBefore = %s): comments->size() = %" PRIuPTR " \n",
                targetStmt,targetStmt->class_name().c_str(),newStmt,newStmt->class_name().c_str(),insertBefore ? "true" : "false",comments->size());
 #endif
        // DQ (9/17/2010): Assert that the new statement being inserted has no attached comments or CPP directives.
@@ -10383,7 +10383,7 @@ void SageInterface::insertStatement(SgStatement *targetStmt, SgStatement* newStm
                commentIndex++;
              }
 
-       // printf ("captureList.size() = %zu \n",captureList.size());
+       // printf ("captureList.size() = %" PRIuPTR " \n",captureList.size());
           if (captureList.empty() == false)
              {
             // Remove these comments and/or CPP directives and put them into the previous statement (marked to be output after the statement).
@@ -11612,7 +11612,7 @@ void SageInterface::fixFunctionDeclaration(SgFunctionDeclaration* stmt, SgScopeS
           {
             SgTemplateParameterPtrList & templateParameterList = tfunc->get_templateParameters();
 #if 0
-            printf ("In SageInterface::fixStatement(): templateParameterList.size() = %zu \n",templateParameterList.size());
+            printf ("In SageInterface::fixStatement(): templateParameterList.size() = %" PRIuPTR " \n",templateParameterList.size());
 #endif
          // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type());
          // func_symbol = scope->lookup_template_function_symbol (func->get_name(), func->get_type(),NULL);
@@ -13664,7 +13664,7 @@ void CollectDependentDeclarationsTraversal::addDeclaration(SgDeclarationStatemen
                alreadySavedDeclarations.insert(dependentDeclaration);
 #if 0
                printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
-               printf ("############### ADDING dependentDeclaration = %p = %s to alreadySavedDeclarations set (size = %zu) \n",
+               printf ("############### ADDING dependentDeclaration = %p = %s to alreadySavedDeclarations set (size = %" PRIuPTR ") \n",
                     dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
 #endif
             // DQ (2/21/2009): Added assertions (will be inforced in SageInterface::appendStatementWithDependentDeclaration()).
@@ -13674,7 +13674,7 @@ void CollectDependentDeclarationsTraversal::addDeclaration(SgDeclarationStatemen
              {
 #if 0
                printf ("In CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
-               printf ("############### EXISTING dependentDeclaration = %p = %s found in alreadySavedDeclarations set (size = %zu) \n",
+               printf ("############### EXISTING dependentDeclaration = %p = %s found in alreadySavedDeclarations set (size = %" PRIuPTR ") \n",
                     dependentDeclaration,dependentDeclaration->class_name().c_str(),alreadySavedDeclarations.size());
 #endif
              }
@@ -13785,7 +13785,7 @@ CollectDependentDeclarationsTraversal::visit(SgNode *astNode)
           printf ("\n\nIn CollectDependentDeclarationsTraversal::visit(): astNode = %p = %s = %s \n",astNode,astNode->class_name().c_str(),SageInterface::get_name(astNode).c_str());
        // fileInfo->display("In CollectDependentDeclarationsTraversal::visit()");
           int counter = 0;
-          printf ("alreadySavedDeclarations.size() = %zu \n",alreadySavedDeclarations.size());
+          printf ("alreadySavedDeclarations.size() = %" PRIuPTR " \n",alreadySavedDeclarations.size());
           for (set<SgDeclarationStatement*>::iterator i = alreadySavedDeclarations.begin(); i != alreadySavedDeclarations.end(); i++)
              {
                printf ("alreadySavedDeclarations %d: %p = %s \n",counter++,*i,(*i)->class_name().c_str());
@@ -14179,7 +14179,7 @@ SageInterface::isPrefixOperator( SgExpression* exp )
         }
 
 #if 0
-     printf ("In SageInterface::isPrefixOperator(): functionName = %s numberOfOperands = %zu (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str(),numberOfOperands);
+     printf ("In SageInterface::isPrefixOperator(): functionName = %s numberOfOperands = %" PRIuPTR " (might have to check the return type to distinguish the deref operator from the multiply operator) \n",functionName.str(),numberOfOperands);
 #endif
 
      if (isPrefixOperatorName(functionName) == true)
@@ -14292,7 +14292,7 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
 //     vector<SgDeclarationStatement*> dependentDeclarations = getDependentDeclarations(stmt);
 
 #if 0
-     printf ("Output the dependentDeclarations: dependentDeclarations.size() = %zu \n",dependentDeclarations.size());
+     printf ("Output the dependentDeclarations: dependentDeclarations.size() = %" PRIuPTR " \n",dependentDeclarations.size());
      outputDeclarationList(dependentDeclarations);
 #endif
 #if 0
@@ -14465,7 +14465,7 @@ generateCopiesOfDependentDeclarations (const  vector<SgDeclarationStatement*>& d
      printf ("****************************************************** \n");
      printf ("*** DONE: Make all copies of dependentDeclarations *** \n");
      printf ("****************************************************** \n");
-     printf ("copiesOfDependentDeclarations.size() = %zu \n",copiesOfDependentDeclarations.size());
+     printf ("copiesOfDependentDeclarations.size() = %" PRIuPTR " \n",copiesOfDependentDeclarations.size());
 #endif
 
   // The mapping of copies to original declarations should be 1-to-1.
@@ -14498,7 +14498,7 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
         {
           SgDeclarationStatement* d = locallyDependentDeclarationList[i];
 #if 0
-          printf ("locallyDependentDeclarationList[%zu] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
+          printf ("locallyDependentDeclarationList[%" PRIuPTR "] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
 #endif
           vector<SgDeclarationStatement*>::iterator j = find(dependentDeclarationList.begin(),dependentDeclarationList.end(),d);
           if (j != dependentDeclarationList.end())
@@ -14506,7 +14506,7 @@ declarationContainsDependentDeclarations( SgDeclarationStatement* decl, vector<S
             // These identified declaration must be output as members of the class when it is output in the separate header file.
             // infact ODR may require that the whole class be output! Actually I think we don't have any chioce here!
 #if 0
-               printf ("Found a dependent declaration buried in the class definition: locallyDependentDeclarationList[%zu] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
+               printf ("Found a dependent declaration buried in the class definition: locallyDependentDeclarationList[%" PRIuPTR "] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
 #endif
                returnValue = true;
              }
@@ -14750,7 +14750,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
           SgDeclarationStatement* d                   = dependentDeclarationList[i]; // copies of dependent declarations
           SgDeclarationStatement* originalDeclaration = dependentDeclarationList_inOriginalFile[i];
 #if 0
-          printf ("declarationList[%zu] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
+          printf ("declarationList[%" PRIuPTR "] = %p = %s = %s \n",i,d,d->class_name().c_str(),SageInterface::get_name(d).c_str());
           printf ("originalDeclaration = %p \n",originalDeclaration);
 
           d->get_file_info()->display("SageInterface::appendStatementWithDependentDeclaration()");
@@ -14922,7 +14922,7 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
 #if 0
   // The replacementMap should include the symbols associated with the dependentDeclarationList
   // and the outlined function (so dependentDeclarationList.size() + 1).
-     printf ("replacementMap.size() = %zu dependentDeclarationList.size() = %zu \n",replacementMap.size(),dependentDeclarationList.size());
+     printf ("replacementMap.size() = %" PRIuPTR " dependentDeclarationList.size() = %" PRIuPTR " \n",replacementMap.size(),dependentDeclarationList.size());
   // ROSE_ASSERT(replacementMap.size() == dependentDeclarationList.size() + 1);
 #endif
    }
@@ -17323,7 +17323,7 @@ CollectSourceSequenceNumbers::visit ( SgNode* astNode )
         {
           unsigned int source_sequence_number = fileInfo->get_source_sequence_number();
 #if 0
-          printf ("In CollectSourceSequenceNumbers::visit(): source_sequence_number = %zu \n",source_sequence_number);
+          printf ("In CollectSourceSequenceNumbers::visit(): source_sequence_number = %" PRIuPTR " \n",source_sequence_number);
 #endif
           sourceSequenceSet.insert(source_sequence_number);
         }
@@ -17672,7 +17672,7 @@ SageInterface::isStructurallyEquivalentAST( SgNode* tree1, SgNode* tree2 )
      RoseAst ast_of_copy(tree1);
      RoseAst ast_of_original(tree2);
 
-  // printf ("ast_of_copy.size() = %zu \n",ast_of_copy.size());
+  // printf ("ast_of_copy.size() = %" PRIuPTR " \n",ast_of_copy.size());
 
   // Build the iterators so that we can increment thorugh both ASTs one IR node at a time.
      RoseAst::iterator i_copy     = ast_of_copy.begin();

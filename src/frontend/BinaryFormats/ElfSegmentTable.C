@@ -103,7 +103,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
-    fprintf(f, "%s%-*s = %zu\n",                             p, w, "index",  p_index);
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n",                             p, w, "index",  p_index);
     fprintf(f, "%s%-*s = 0x%08x = %s\n",                     p, w, "type",   p_type,  to_string(p_type).c_str());
     fprintf(f, "%s%-*s = 0x%08x ",                           p, w, "flags",  p_flags);
     fputc(p_flags & PF_RPERM ? 'r' : '-', f);
@@ -120,7 +120,7 @@ SgAsmElfSegmentTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "memsz",  p_memsz, p_memsz);
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n",           p, w, "align",  p_align, p_align);
     if (p_extra.size()>0) {
-        fprintf(f, "%s%-*s = %zu bytes\n", p, w, "extra", p_extra.size());
+        fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n", p, w, "extra", p_extra.size());
         hexdump(f, 0, std::string(p)+"extra at ", p_extra);
     }
 }
