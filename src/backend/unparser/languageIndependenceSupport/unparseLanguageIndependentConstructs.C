@@ -2363,7 +2363,9 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // if (scope == NULL && globalScope == NULL)
           if (scope == NULL && globalScope == NULL && functionDefinition == NULL)
              {
+#if 0
                printf ("Warning: parent of stmt = %p = %s is not a scope \n",stmt,stmt->class_name().c_str());
+#endif
              }
        // ROSE_ASSERT(scope != NULL || globalScope != NULL);
 
