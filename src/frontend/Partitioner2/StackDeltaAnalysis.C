@@ -1,99 +1,31 @@
 #include "sage3basic.h"
 
 #include <BinaryDataFlow.h>
+#include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/DistinctList.h>
-#include <sawyer/GraphTraversal.h>
 #include <sawyer/ProgressBar.h>
 #include <sawyer/SharedPointer.h>
 
 using namespace rose::Diagnostics;
+namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-// Vertex type for the CFG used by dataflow.
-struct DfCfgVertex {
-    enum Type { BBLOCK, CALLRET, FUNCRET, INDET };      // INDET means we have no info about the basic block
-    Type type;
-    BasicBlock::Ptr bblock;                             // attached to BBLOCK vertices
-    std::vector<Function::Ptr> callees;                 // attached to CALLRET vertices
-    bool hasNonFunctionCallee;                          // if some callee is not a function (and not stored in "callees")
-    explicit DfCfgVertex(Type type, const BasicBlock::Ptr &bblock = BasicBlock::Ptr())
-        : type(type), bblock(bblock), hasNonFunctionCallee(false) {}
-};
-
-// Control flow graph used by dataflow analysis. See buildDfCfg for details.
-typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
-
-// Build the CFG that will be used for dataflow analysis.  The dfCfg will contain vertices and edges within a single function
-// and only those which are reachable from the starting vertex.  It does so by using a depth-first traversal of the whole CFG
-// and trimming away E_FUNCTION_CALL and E_FUNCTION_XFER edges.  Additionally, an E_CALL_RETURN edge in the CFG becomes an
-// edge-vertex-edge sequence in the dfCfg, where the vertex is of type CALLRET.  The transfer function handles CALLRET vertices
-// in a special way since they have no instructions.  Also, any basic block which is a function return block will be rewritten
-// so its only outgoing edge is to a special FUNCRET vertex, which is a common method for handling dataflow in functions that
-// can return from multiple locations.
-static DfCfg
-buildDfCfg(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeIterator &startVertex,
-           const Partitioner &partitioner) {
-    using namespace Sawyer::Container;
-    using namespace Sawyer::Container::Algorithm;
-    Sawyer::Container::Map<size_t, DfCfg::VertexNodeIterator> vmap;
-    DfCfg dfCfg;
-    DfCfg::VertexNodeIterator functionReturnVertex = dfCfg.vertices().end();
-    for (DepthFirstForwardGraphTraversal<const ControlFlowGraph> t(cfg, startVertex, ENTER_EVENTS|LEAVE_EDGE); t; ++t) {
-        if (t.event() == ENTER_VERTEX) {
-            ControlFlowGraph::ConstVertexNodeIterator v1 = t.vertex();
-            if (v1->value().type() == V_BASIC_BLOCK) {
-                DfCfg::VertexNodeIterator v2 = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::BBLOCK, v1->value().bblock()));
-                vmap.insert(v1->id(), v2);
-                if (partitioner.basicBlockIsFunctionReturn(v1->value().bblock())) {
-                    if (functionReturnVertex == dfCfg.vertices().end())
-                        functionReturnVertex = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::FUNCRET));
-                    dfCfg.insertEdge(v2, functionReturnVertex);
-                    t.skipChildren();
-                }
-            } else {
-                DfCfg::VertexNodeIterator v2 = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::INDET));
-                vmap.insert(v1->id(), v2);
-            }
-        } else if (t.event() == ENTER_EDGE) {
-            if (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_XFER)
-                t.skipChildren();
-        } else {
-            ASSERT_require(t.event() == LEAVE_EDGE);
-            ControlFlowGraph::ConstEdgeNodeIterator edge = t.edge();
-            DfCfg::VertexNodeIterator source = vmap.getOrElse(edge->source()->id(), dfCfg.vertices().end());
-            DfCfg::VertexNodeIterator target = vmap.getOrElse(edge->target()->id(), dfCfg.vertices().end());
-            if (source!=dfCfg.vertices().end() && target!=dfCfg.vertices().end()) {
-                if (edge->value().type() == E_CALL_RETURN) {
-                    DfCfg::VertexNodeIterator crv = dfCfg.insertVertex(DfCfgVertex(DfCfgVertex::CALLRET));
-                    dfCfg.insertEdge(source, crv);
-                    dfCfg.insertEdge(crv, target);
-                    ControlFlowGraph::ConstVertexNodeIterator cfgCaller = t.edge()->source();
-                    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &callEdge, cfgCaller->outEdges()) {
-                        Function::Ptr callee;
-                        if (callEdge.value().type()==E_CALL_RETURN)
-                            continue;                   // we're only interested in the function calls
-                        if (callEdge.value().type()==E_FUNCTION_CALL && callEdge.target()->value().type() == V_BASIC_BLOCK)
-                            callee = callEdge.target()->value().function();
-                        if (callee) {
-                            crv->value().callees.push_back(callee);
-                        } else {
-                            // calls something for which we won't be able to get a stack delta, such as indeterminate vertex
-                            crv->value().hasNonFunctionCallee = true;
-                        }
-                    }
-                } else {
-                    dfCfg.insertEdge(source, target);
-                }
-            }
-        }
+// Determines when to perform interprocedural dataflow.  We want stack delta analysis to be interprocedural only if the called
+// function has no stack delta.
+struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
+    const Partitioner &partitioner;
+    InterproceduralPredicate(const Partitioner &partitioner): partitioner(partitioner) {}
+    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeNodeIterator &callEdge) {
+        ASSERT_require(callEdge != cfg.edges().end());
+        ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
+        Function::Ptr function = callEdge->target()->value().function();
+        return function && !function->stackDelta().getOptional().orDefault();
     }
-    return dfCfg;
-}
-
+};
+            
 // Association between dataflow variables and their values.  We're only interested in the register state because the stack
 // pointer is seldom spilled to memory by normal functions, and using only registers simplifies things substantially. For
 // instance, a machine has a finite number of registers, so there's no need to build a variable list before we run the
@@ -232,27 +164,19 @@ public:
     }
 
     // Required by dataflow engine: compute new output state given a vertex and input state.
-    State::Ptr operator()(const DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
+    State::Ptr operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
         State::Ptr retval = State::promote(incomingState->clone());
-        DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
+        P2::DataFlow::DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
         ASSERT_require(vertex != dfCfg.vertices().end());
-        if (DfCfgVertex::CALLRET == vertex->value().type) {
+        if (P2::DataFlow::DfCfgVertex::FAKED_CALL == vertex->value().type()) {
             // Adjust the stack pointer as if the function call returned.  If we know the function delta then use it, otherwise
             // assume it just pops the return value.
-            BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr delta;
-            if (!vertex->value().hasNonFunctionCallee) {
-                for (size_t i=0; i<vertex->value().callees.size(); ++i) {
-                    Function::Ptr callee = vertex->value().callees[i];
-                    BaseSemantics::SValuePtr calleeDelta = callee->stackDelta().getOptional().orDefault();
-                    if (0==i) {
-                        delta = calleeDelta;
-                    } else {
-                        State::mergeSValues(delta, calleeDelta, ops);
-                    }
-                }
-            }
+            if (P2::Function::Ptr callee = vertex->value().callee())
+                delta = callee->stackDelta().getOptional().orDefault();
 
+            // Update the result state
+            BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr newStack;
             if (delta) {
                 BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
@@ -264,8 +188,7 @@ public:
                 BaseSemantics::SValuePtr oldStack = incomingState->readRegister(STACK_POINTER_REG, ops.get());
                 newStack = ops->add(oldStack, callRetAdjustment_);
             } else {
-                // We don't know the callee's delta, or there was more than one and they weren't consistent with each other.
-                // Therefore we don't know how to adjust the delta for the callee's effect.
+                // We don't know the callee's delta, therefore we don't know how to adjust the delta for the callee's effect.
                 newStack = ops->undefined_(STACK_POINTER_REG.get_nbits());
             }
             ASSERT_not_null(newStack);
@@ -275,23 +198,23 @@ public:
             // assume that the callee doesn't have any effect on registers except the stack pointer.
             retval->writeRegister(STACK_POINTER_REG, newStack, ops.get());
 
-        } else if (DfCfgVertex::FUNCRET == vertex->value().type) {
+        } else if (P2::DataFlow::DfCfgVertex::FUNCRET == vertex->value().type()) {
             // Identity semantics; this vertex just merges all the various return blocks in the function.
 
-        } else if (DfCfgVertex::INDET == vertex->value().type) {
+        } else if (P2::DataFlow::DfCfgVertex::INDET == vertex->value().type()) {
             // We don't know anything about the vertex, therefore we don't know anything about its semantics
             retval->clear();
 
         } else {
             // Build a new state using the retval created above, then execute instructions to update it.
-            ASSERT_require(vertex->value().type == DfCfgVertex::BBLOCK);
+            ASSERT_require(vertex->value().type() == P2::DataFlow::DfCfgVertex::BBLOCK);
             BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr addrProtoval = ops->get_state()->get_memory_state()->get_addr_protoval();
             BaseSemantics::SValuePtr valProtoval = ops->get_state()->get_memory_state()->get_val_protoval();
             BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state()->create(addrProtoval, valProtoval);
             BaseSemantics::StatePtr fullState = ops->get_state()->create(retval, memState);
             ops->set_state(fullState);
-            BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock->instructions()) {
+            BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
                 BaseSemantics::SValuePtr v = ops->readRegister(STACK_POINTER_REG);
                 if (v->is_number() && v->get_width() <= 64) {
                     int64_t delta = IntegerOps::signExtend2<uint64_t>(v->get_number(), v->get_width(), 64);
@@ -360,36 +283,40 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
         SAWYER_MESG(mlog[DEBUG]) <<"  using stack delta default (" <<(bitsPerWord/8) <<") for non-existing function\n";
         return retval;
     }
-    DfCfg dfCfg = buildDfCfg(cfg_, cfgStart, *this);
-    DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
+    InterproceduralPredicate ip(*this);
+    P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(*this, cfg_, cfgStart, ip);
+#if 1 // DEBUGGING [Robb P. Matzke 2015-01-06]
+    if (function->address() == 0x080480cf) {
+        std::ofstream graphViz("x.dot");
+        P2::DataFlow::dumpDfCfg(graphViz, dfCfg);
+    }
+#endif
+    P2::DataFlow::DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
-    DataFlow df(cpu);
+    BinaryAnalysis::DataFlow df(cpu);
 
     // Dump the CFG for debugging
     if (mlog[DEBUG]) {
         using namespace Sawyer::Container::Algorithm;
-        BOOST_FOREACH (const DfCfg::VertexNode &vertex, dfCfg.vertices()) {
+        BOOST_FOREACH (const P2::DataFlow::DfCfg::VertexNode &vertex, dfCfg.vertices()) {
             mlog[DEBUG] <<"  Vertex #" <<vertex.id() <<" [";
-            if (BasicBlock::Ptr bb = vertex.value().bblock)
+            if (BasicBlock::Ptr bb = vertex.value().bblock())
                 mlog[DEBUG] <<" " <<bb->printableName();
-            if (vertex.value().type == DfCfgVertex::CALLRET) {
-                mlog[DEBUG] <<" call-ret";
-            } else if (vertex.value().type == DfCfgVertex::FUNCRET) {
+            if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FAKED_CALL) {
+                mlog[DEBUG] <<" faked call to " <<
+                    (vertex.value().callee() ? vertex.value().callee()->printableName() : std::string("indeterminate"));
+            } else if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FUNCRET) {
                 mlog[DEBUG] <<" func-ret";
-            } else if (vertex.value().type == DfCfgVertex::INDET) {
+            } else if (vertex.value().type() == P2::DataFlow::DfCfgVertex::INDET) {
                 mlog[DEBUG] <<" indeterminate";
             }
             mlog[DEBUG] <<" ]\n";
-            if (BasicBlock::Ptr bb = vertex.value().bblock) {
+            if (BasicBlock::Ptr bb = vertex.value().bblock()) {
                 BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
                     mlog[DEBUG] <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
             }
-            BOOST_FOREACH (const Function::Ptr &callee, vertex.value().callees)
-                mlog[DEBUG] <<"      returns from " <<callee->printableName() <<"\n";
-            if (vertex.value().hasNonFunctionCallee)
-                mlog[DEBUG] <<"      returns from indeterminate\n";
             mlog[DEBUG] <<"    successor vertices {";
-            BOOST_FOREACH (const DfCfg::EdgeNode &edge, vertex.outEdges())
+            BOOST_FOREACH (const P2::DataFlow::DfCfg::EdgeNode &edge, vertex.outEdges())
                 mlog[DEBUG] <<" " <<edge.target()->id();
             mlog[DEBUG] <<" }\n";
         }
@@ -398,7 +325,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     // Run the dataflow until it reaches a fixed point or fails.  The nature of the state (finite number of registers) and
     // merge function (values form a lattice merged in one direction) ensures that the analysis reaches a fixed point.
     TransferFunction xfer(cpu, instructionProvider_->stackPointerRegister());
-    typedef DataFlow::Engine<DfCfg, State::Ptr, TransferFunction> Engine;
+    typedef BinaryAnalysis::DataFlow::Engine<P2::DataFlow::DfCfg, State::Ptr, TransferFunction> Engine;
     Engine engine(dfCfg, xfer);
     try {
         engine.runToFixedPoint(dfCfgStart->id(), xfer.initialState());
@@ -418,9 +345,9 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
 
     // Reset the cached stack delta for all basic blocks
     bool branchedToIndeterminate = false;
-    typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<DfCfg> Traversal;
+    typedef Sawyer::Container::Algorithm::DepthFirstForwardVertexTraversal<P2::DataFlow::DfCfg> Traversal;
     for (Traversal t(dfCfg, dfCfgStart); t; ++t) {
-        if (t.vertex()->value().type == DfCfgVertex::INDET)
+        if (t.vertex()->value().type() == P2::DataFlow::DfCfgVertex::INDET)
             branchedToIndeterminate = true;
 
         // Get incoming and outgoing stack pointer for the vertex
@@ -442,11 +369,11 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
             deltaOut = ops->undefined_(deltaOut->get_width());
 
         // Cache results
-        if (BasicBlock::Ptr bb = t.vertex()->value().bblock) {
+        if (BasicBlock::Ptr bb = t.vertex()->value().bblock()) {
             bb->stackDeltaIn() = deltaIn;
             bb->stackDeltaOut() = deltaOut;
         }
-        if (DfCfgVertex::FUNCRET == t.vertex()->value().type)
+        if (P2::DataFlow::DfCfgVertex::FUNCRET == t.vertex()->value().type())
             retval = deltaIn;
     }
 
