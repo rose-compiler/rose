@@ -1,23 +1,22 @@
-// Consider using $ROSE/src/util/FileSystem.h since that one is documented and uses a proper path type.
+// Consider using $ROSE/src/util/FileSystem.h since that one is documented and uses a proper path type and supports both
+// version 2 and version 3 of boost::filesystem.
+
+// UNDER NO CIRCUMSTANCES SHOULD BOOST_FILESYSTEM_VERSION BE SET!!!
+//
+// The boost::filesystem version is not dependent on which compiler we're using, but rather which version
+// of boost is installed.  Hard-coding a boost version number based on the compiler version has a couple of problems:
+//  1. We don't know whether that filesystem version is available on a user's machine since ROSE supports multiple
+//     versions of boost (e.g., filesystem 3 is not available before boost 1.44)
+//  2. It pollutes things for the user, who might not want the version we select here (e.g., most users of recent
+//     versions of boost will almost certainly want version 3, not the version 2 we select).
+// Therefore, we should never select a filesystem version explicitly here, but rather be prepared to handle any version
+// that is installed.  If ROSE cannot support a particular version of boost::filesystem on a particular architecture with a
+// particular file then that should be documented where we state which versions of boost are supported, and possibly
+// checked during configuration. [Matzke 11/17/2014]: 
 
 #include "rose_config.h"
-
-// DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
-// DQ (2/10/2014): I have fixed boost filesystem 3 issues so we now want to avoid specifying this explicitly if possible.
-// Non-windows support should used boost filesystem 2 if using GNU version less than 4.7.
-#ifndef _MSC_VER
-// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
-// Liao, 1/24/2015. Not sure why GCC version is checked when we are taling about boost filesystem version. bumped up to 9 so gcc 4.8 can be supported  (<8 does not include 8!!, another mental bump!)
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
-  #define BOOST_FILESYSTEM_VERSION 2
-#endif
-#else
-// Windows support should be using boost file system 2 (for now).
-  #define BOOST_FILESYSTEM_VERSION 2
-#endif
-
+#include <FileSystem.h>
 #include <boost/filesystem.hpp>
-
 #include <string>
 
 using namespace std;
@@ -26,6 +25,7 @@ using namespace boost::filesystem;
 class FileHelper {
 public:
 
+    // This is initialized in src/frontend/SageIII/sage_support/sage_support.cpp, not FileHelper.C
     static const string pathDelimiter;
 
     static void ensureParentFolderExists(const string& path) {
@@ -57,29 +57,9 @@ public:
         return boostPath.parent_path().string();
     }
 
-// DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
-#ifndef _MSC_VER
-// #if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
- // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
     static string getFileName(const string& aPath) {
-        path boostPath(aPath);
-        return boostPath.filename();
+        return rose::FileSystem::toString(path(aPath).filename());
     }
-#else
-    static string getFileName(const string& aPath) {
-        path boostPath(aPath);
-     // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
-        return boostPath.filename().generic_string();
-    }
-#endif
-#else
- // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
-    static string getFileName(const string& aPath) {
-        path boostPath(aPath);
-        return boostPath.filename();
-    }
-#endif
 
     static string makeAbsoluteNormalizedPath(const string& path, const string& workingDirectory) {
         if (!isAbsolutePath(path)) {
@@ -114,61 +94,7 @@ public:
     //Assumes that both arguments are absolute and normalized.
     //Argument toPath can be either a folder or a file.
     static string getRelativePath(const string& fromFolder, const string& toPath) {
-        string relativePath;
-        path boostFromFolder(fromFolder);
-        path boostToPath(toPath);
-        path::const_iterator fromFolderIterator = boostFromFolder.begin();
-        path::const_iterator toPathIterator = boostToPath.begin();
-        //Move over the common part of the paths.
-        while (fromFolderIterator != boostFromFolder.end() && toPathIterator != boostToPath.end() && 
-                (*fromFolderIterator).compare(*toPathIterator) == 0) {
-            fromFolderIterator++;
-            toPathIterator++;
-        }
-        //All remaining path elements of fromFolder are translated into moves up.
-        while (fromFolderIterator != boostFromFolder.end()) {
-            relativePath += ".." + pathDelimiter;
-            fromFolderIterator++;
-        }
-        //All remaining path elements of toPath are appended to the relative path.
-        if (toPathIterator != boostToPath.end()) {
-#ifndef _MSC_VER
-// DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
-// #if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
-         // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
-            relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
-#else
-         // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
-            relativePath += toPathIterator->generic_string(); //The first path element comes without the leading path delimiter
-#endif
-#else
-         // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
-            relativePath += *toPathIterator; //The first path element comes without the leading path delimiter
-#endif
-            toPathIterator++;
-            while (toPathIterator != boostToPath.end()) {
-#ifndef _MSC_VER
-// #if (defined(_MSC_VER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 7)))
-#if (defined(BACKEND_CXX_IS_INTEL_COMPILER) || ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 9)))
-             // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
-                relativePath += pathDelimiter + *toPathIterator;
-#else
-             // DQ (2/10/2014): I think this is the BOOST_FILESYSTEM_VERSION 3 fix.
-                relativePath += pathDelimiter + toPathIterator->generic_string();
-#endif
-#else
-             // DQ (2/10/2014): I think this is the older BOOST_FILESYSTEM_VERSION 2 specific code.
-                relativePath += pathDelimiter + *toPathIterator;
-#endif
-                toPathIterator++;
-            }                
-        } else if (relativePath.length() > 0) { //If any moves up were added, remove the trailing path delimiter
-            relativePath.erase(--relativePath.end());
-        } else { //If nothing was added to the relative path, then fromFolder and toPath are equal and relative path is the current folder.
-            relativePath = ".";
-        }
-        return relativePath;
+        return rose::FileSystem::toString(rose::FileSystem::makeRelative(toPath, fromFolder));
     }
     
     static bool fileExists(const string& fullFileName) {
@@ -228,10 +154,7 @@ public:
     }
 
     static bool endsWith(const string& str1, const string& str2) { //checks that str1 ends with str2
-        if (str1.size() < str2.size()) {
-            return false;
-        }
-        return str1.compare(str1.size() - str2.size(), str2.size(), str2) == 0;
+        return boost::ends_with(str1, str2);
     }
 
 };
