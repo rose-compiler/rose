@@ -9,6 +9,7 @@ the cmake file needs to list \"generate_stringify\" as a dependency. The
 following source files appear to use stringify but apparently lack the
 dependency on generate_stringify:\n";
 
+BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
 use Policies;
