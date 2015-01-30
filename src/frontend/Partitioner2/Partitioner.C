@@ -1171,6 +1171,7 @@ Partitioner::vertexName(const ControlFlowGraph::VertexNode &vertex) {
         case V_UNDISCOVERED:
             return "undiscovered<" + StringUtility::numberToString(vertex.id()) + ">";
     }
+    ASSERT_not_reachable("invalid vertex type");
 }
 
 std::string
