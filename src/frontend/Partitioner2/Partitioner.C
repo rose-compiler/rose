@@ -1151,6 +1151,13 @@ Partitioner::vertexName(const ControlFlowGraph::VertexNode &vertex) {
     }
 }
 
+std::string
+Partitioner::vertexName(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+    if (vertex != cfg_.vertices().end())
+        return vertexName(*vertex);
+    return "no-vertex";
+}
+
 // class method
 std::string
 Partitioner::vertexNameEnd(const ControlFlowGraph::VertexNode &vertex) {
@@ -1187,6 +1194,13 @@ Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) {
     return retval + vertexName(*edge.target());
 }
 
+std::string
+Partitioner::edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+    if (edge != cfg_.edges().end())
+        return edgeNameDst(*edge);
+    return "no-edge";
+}
+
 // class method
 std::string
 Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
@@ -1211,6 +1225,13 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
     return retval;
 }
 
+std::string
+Partitioner::edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+    if (edge != cfg_.edges().end())
+        return edgeNameSrc(*edge);
+    return "no-edge";
+}
+
 // class method
 std::string
 Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
@@ -1232,6 +1253,13 @@ Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
             break;
     }
     return retval + "-> " + vertexName(*edge.target());
+}
+
+std::string
+Partitioner::edgeName(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+    if (edge != cfg_.edges().end())
+        return edgeName(*edge);
+    return "no-edge";
 }
 
 void
@@ -1318,6 +1346,16 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
                 out <<*delta <<"\n";
             } else {
                 out <<"not computed\n";
+            }
+
+            // may-return?
+            out <<prefix <<"  may eventually return to caller? ";
+            if (computeProperties)
+                basicBlockOptionalMayReturn(vertex);
+            if (bb->mayReturn().getOptional().assignTo(b)) {
+                out <<(b ? "yes" : "no") <<"\n";
+            } else {
+                out <<"unknown\n";
             }
         }
         

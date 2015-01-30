@@ -175,6 +175,8 @@ Engine::createGenericPartitioner() {
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
     p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
     p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+    ModulesPe::buildMayReturnLists(p);
+    ModulesElf::buildMayReturnLists(p);
     return p;
 }
 
@@ -185,6 +187,8 @@ Engine::createTunedPartitioner() {
         Partitioner p = createBarePartitioner();
         p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
         p.basicBlockCallbacks().append(ModulesM68k::SwitchSuccessors::instance());
+        ModulesPe::buildMayReturnLists(p);
+        ModulesElf::buildMayReturnLists(p);
         return p;
     }
     
@@ -198,6 +202,8 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
+        ModulesPe::buildMayReturnLists(p);
+        ModulesElf::buildMayReturnLists(p);
         return p;
     }
 

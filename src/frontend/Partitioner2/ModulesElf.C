@@ -179,6 +179,11 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     return functions;
 }
 
+void
+buildMayReturnLists(Partitioner &p) {
+    p.setMayReturnBlacklisted("abort@plt");
+    p.setMayReturnBlacklisted("_exit@plt");
+}
 
 } // namespace
 } // namespace

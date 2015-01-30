@@ -43,7 +43,8 @@ public:
     size_t nBytesMatched() const { return nBytesMatched_; }
 };
 
-
+/** Build may-return white and black lists. */
+void buildMayReturnLists(Partitioner&);
 
 } // namespace
 } // namespace

@@ -19,6 +19,7 @@ libPartitioner_la_SOURCES =			\
 	Function.C				\
 	FunctionCallGraph.C			\
 	InstructionProvider.C			\
+	MayReturnAnalysis.C			\
 	Modules.C				\
 	ModulesElf.C				\
 	ModulesM68k.C				\
