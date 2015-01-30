@@ -289,18 +289,19 @@ public:
     }
     
     /** Reads a NUL-terminated string from the memory map.  Reads data beginning at @p startVa in the memory map and
-     *  continuing until one of the following conditions:
-     *    <ul>
-     *      <li>The return value contains the @p desired number of characters.</li>
-     *      <li>The next character to be read is a NUL character.</li>
-     *      <li>A @p validChar function is specified but the next character causes it to return zero.</li>
-     *      <li>An @p invalidChar function is specified and the next character causes it to return non-zero.</li>
-     *    </ul>
+     *  continuing until one of the following conditions is met:
+     *
+     *  @li The desired number of characters has been read (returns empty string)
+     *  @li The next character is the termination character (defaults to NUL)
+     *  @li An @p invalidChar function is specified and the next character causes it to return true (returns empty string)
+     *  @li A validChar function is specified and the next character causes it to return false (returns empty string)
+     *
+     *  The empty string is returned unless the terminator character is encountered.
      *
      *  The @p validChar and @p invalidChar take an integer argument and return an integer value so that the C character
      *  classification functions from <ctype.h> can be used directly. */
     std::string readString(rose_addr_t startVa, size_t desired, int(*validChar)(int)=NULL, int(*invalidChar)(int)=NULL,
-                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0, char terminator='\0') const;
 
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
