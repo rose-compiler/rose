@@ -7,6 +7,7 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage3basic.h"
 #include "sage_support.h"
 #include "dwarfSupport.h"
 #include "keep_going.h"
