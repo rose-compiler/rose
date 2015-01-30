@@ -50,7 +50,6 @@ if ROSE_USE_WT
 bin_PROGRAMS += bROwSE-server
 bROwSE_server_SOURCES =				\
 	bROwSE/Application.C			\
-	bROwSE/WAssemblyListing.C		\
 	bROwSE/bROwSE.C				\
 	bROwSE/FunctionListModel.C		\
 	bROwSE/FunctionUtil.C			\
@@ -58,6 +57,7 @@ bROwSE_server_SOURCES =				\
 	bROwSE/Statistics.C			\
 	bROwSE/WAddressComboBox.C		\
 	bROwSE/WAddressSpace.C			\
+	bROwSE/WAssemblyListing.C		\
 	bROwSE/WBusy.C				\
 	bROwSE/WCrossReferences.C		\
 	bROwSE/WFunctionCfg.C			\

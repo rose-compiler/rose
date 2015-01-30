@@ -61,6 +61,8 @@ MagicNumber::identify(const MemoryMap &map, rose_addr_t va) const {
     return magic_buffer(details_->cookie, buf, nBytes);
 #elif defined(BOOST_WINDOWS)
     throw std::runtime_error("magic number identification is not supported on Microsoft Windows");
+#elif BOOST_FILESYSTEM_VERSION == 2
+    throw std::runtime_error("MagicNumber::identify must have either libmagic or boost::filesystem version 3");
 #else
     // We can maybe still do it, but this will be much, much slower.  We copy some specimen memory into a temporary file, then
     // run the unix file(1) command on it, then delete the temp file.
