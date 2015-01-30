@@ -44,6 +44,7 @@ install(
     BinaryDataFlow.h
     BinaryDominance.h
     BinaryFunctionCall.h
+    BinaryMagic.h
     BinaryPointerDetection.h
     BinaryString.h
     BinaryTaintedFlow.h
