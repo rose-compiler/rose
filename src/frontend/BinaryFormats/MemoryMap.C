@@ -1,5 +1,3 @@
-#define BOOST_FILESYSTEM_VERSION 3
-
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
