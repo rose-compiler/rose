@@ -624,6 +624,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
 
     ControlFlowGraph::ConstVertexNodeIterator bblockVertex = partitioner.findPlaceholder(bb->address());
     SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
+    ast->set_comment(bb->comment());
     unsigned reasons = 0;
 
     // Is this block an entry point for a function?
@@ -778,6 +779,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     SgAsmFunction *ast = SageBuilderAsm::buildFunction(function->address(), children);
     ast->set_reason(reasons);
     ast->set_name(function->name());
+    ast->set_comment(function->comment());
     ast->set_may_return(mayReturn);
     ast->set_stackDelta(stackDelta);
     return ast;

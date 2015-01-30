@@ -338,7 +338,10 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
             retval->pop();                                              // case: user wants to terminate at prior insn
             goto done;
         }
-        
+
+        if (config_.basicBlockFinalInstructionVa(startVa).orElse(va+1)==va) // case: terminated by configuration
+            goto done;
+
         if (basicBlockIsFunctionCall(retval))                           // case: bb looks like a function call
             goto done;
         BasicBlock::Successors successors = basicBlockSuccessors(retval);
@@ -366,6 +369,20 @@ Partitioner::discoverBasicBlockInternal(rose_addr_t startVa) const {
         va = successorVa;
     }
 done:
+
+    // We're terminating the basic block.  If the configuration specifies successors for this block at this instruction then
+    // use them instead of what we might have already calculated.
+    if (!retval->instructions().empty()) {
+        rose_addr_t finalInsnVa = retval->instructions().back()->get_address();
+        if (config_.basicBlockFinalInstructionVa(startVa).orElse(finalInsnVa+1)==finalInsnVa) {
+            retval->clearSuccessors();
+            size_t nBits = instructionProvider_->instructionPointerRegister().get_nbits();
+            std::set<rose_addr_t> successorVas = config_.basicBlockSuccessorVas(startVa);
+            BOOST_FOREACH (rose_addr_t successorVa, successorVas)
+                retval->insertSuccessor(successorVa, nBits);
+        }
+    }
+    
     retval->freeze();
     return retval;
 }
@@ -440,6 +457,9 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
                                "placeholder " + StringUtility::addrToString(placeholder->value().address()) +
                                " already holds a different basic block");
     }
+
+    if (!config_.basicBlockComment(bblock->address()).empty())
+        bblock->comment(config_.basicBlockComment(bblock->address()));
 
     bblock->freeze();
 
@@ -1615,8 +1635,15 @@ Partitioner::attachFunction(const Function::Ptr &function) {
             throw FunctionError(function, functionName(function) + " is already attached with a different function pointer");
         ASSERT_require(function->isFrozen());
     } else {
+        // Give the function a name and comment.
+        if (!config_.functionName(function->address()).empty())
+            function->name(config_.functionName(function->address()));          // forced name from configuration
         if (function->name().empty())
-            function->name(addressName(function->address()));
+            function->name(config_.functionDefaultName(function->address()));   // default name if function has none
+        if (function->name().empty())
+            function->name(addressName(function->address()));                   // use address name if nothing else
+        if (function->comment().empty())
+            function->comment(config_.functionComment(function));
 
         // Insert function into the table, and make sure all its basic blocks see that they're owned by the function.
         functions_.insert(function->address(), function);

@@ -41,6 +41,7 @@ public:
 private:
     rose_addr_t entryVa_;                               // entry address; destination for calls to this function
     std::string name_;                                  // optional function name
+    std::string comment_;                               // optional multi-line, plain-text, commment
     unsigned reasons_;                                  // reason bits from SgAsmFunction::FunctionReason
     std::set<rose_addr_t> bblockVas_;                   // addresses of basic blocks
     std::vector<DataBlock::Ptr> dblocks_;               // data blocks owned by this function, sorted by starting address
@@ -83,6 +84,15 @@ public:
      *  @{ */
     const std::string& name() const { return name_; }
     void name(const std::string &name) { name_ = name; }
+    /** @} */
+
+    /** Optional function comment.
+     *
+     *  Comments are multi-line, plain-text (not HTML), ASCII.
+     *
+     * @{ */
+    const std::string& comment() const { return comment_; }
+    void comment(const std::string &s) { comment_ = s; }
     /** @} */
 
     /** Function reasons.  These are SgAsmFunction::FunctionReason bits.

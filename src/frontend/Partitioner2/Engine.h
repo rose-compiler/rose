@@ -204,17 +204,6 @@ public:
      *  load. */
     virtual Partitioner createTunedPartitioner();
 
-    /** Configure partitioner from YAML files.
-     *
-     *  Configures the partitioner according to the specified configuration file.  If the name is a directory then the
-     *  directory is searched recursively for configuration files.
-     *
-     *  Configuration files whose names end with ".json" are JSON configuration files whose format is defined by Carnegie
-     *  Mellon University's Software Engineering Institute.
-     *
-     *  Returns the number of configuration items processed. Throws an <code>std::runtime_error</code> for errors. */
-    virtual size_t configureFromFile(Partitioner&, const FileSystem::Path&);
-
 private:
     virtual void checkCreatePartitionerPrerequisites() const;
     
