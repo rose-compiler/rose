@@ -1555,6 +1555,7 @@ Unparse_ExprStmt::unparseNamespaceDefinitionStatement ( SgStatement* stmt, SgUnp
      ROSE_ASSERT (namespaceDefinition != NULL);
 
 #if 0
+     printf ("In unparseNamespaceDefinitionStatement() \n");
      curprint("/* In unparseNamespaceDefinitionStatement() */ ");
 #endif
 
@@ -1709,6 +1710,7 @@ Unparse_ExprStmt::unparseNamespaceAliasDeclarationStatement (SgStatement* stmt, 
      curprint ( namespaceAliasDeclaration->get_namespaceDeclaration()->get_name().str());
      curprint ( string(";\n"));
    }
+
 
 void
 Unparse_ExprStmt::unparseUsingDirectiveStatement (SgStatement* stmt, SgUnparse_Info& info)
