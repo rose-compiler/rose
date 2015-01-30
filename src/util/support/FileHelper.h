@@ -1,3 +1,5 @@
+// Consider using $ROSE/src/util/FileSystem.h since that one is documented and uses a proper path type.
+
 #include "rose_config.h"
 
 // DQ (3/8/2014): Adding use of BACKEND_CXX_IS_INTEL_COMPILER to support Intel compiler for backend use.
