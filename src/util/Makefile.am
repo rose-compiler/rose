@@ -25,6 +25,7 @@ noinst_LTLIBRARIES = libroseutil.la
 
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
+	Color.C					\
 	Combinatorics.C				\
 	compilationFileDatabase.C		\
 	FileSystem.C				\
@@ -46,6 +47,7 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 pkginclude_HEADERS =				\
+	Color.h					\
 	Combinatorics.h				\
 	compilationFileDatabase.h		\
 	FileSystem.h				\
@@ -53,7 +55,7 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
-	ParallelSort.h                          \
+	ParallelSort.h				\
 	processSupport.h			\
 	rose_getline.h				\
 	rose_override.h				\
