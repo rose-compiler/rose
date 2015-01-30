@@ -45,6 +45,7 @@ install(
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryPointerDetection.h
+    BinaryString.h
     BinaryTaintedFlow.h
     dataflowanalyses/InterruptAnalysis.h
     dataflowanalyses/RoseBin_DataFlowAbstract.h

@@ -35,6 +35,7 @@ add_library(midend OBJECT
   binaryAnalyses/BinaryFunctionCall.C
   binaryAnalyses/BinaryCallingConvention.C
   binaryAnalyses/BinaryReturnValueUsed.C
+  binaryAnalyses/BinaryString.C
   binaryAnalyses/BinaryTaintedFlow.C
   binaryAnalyses/DwarfLineMapper.C
   binaryAnalyses/GraphAlgorithms.C
