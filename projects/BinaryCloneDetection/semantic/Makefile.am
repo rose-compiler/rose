@@ -9,7 +9,7 @@ TEST_TARGETS=
 
 SYNTACTIC = $(top_srcdir)/projects/BinaryCloneDetection/syntactic
 
-noinst_HEADERS = CloneDetectionLib.h RunTests.h
+noinst_HEADERS = CloneDetectionLib.h RunTests.h compute_signature_vector.h
 
 noinst_LTLIBRARIES = libCloneDetection.la
 libCloneDetection_la_SOURCES = CloneDetectionLib.C
