@@ -11,6 +11,7 @@
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/InstructionProvider.h>
 #include <Partitioner2/Modules.h>
+#include <Partitioner2/Reference.h>
 
 #include <sawyer/Callbacks.h>
 #include <sawyer/IntervalSet.h>
@@ -569,6 +570,12 @@ public:
      *  and no semantics.  If an instruction was previously returned for this address (including the "unknown" instruction)
      *  then that same instruction will be returned this time. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const ROSE_FINAL;
+
+    /** Cross references.
+     *
+     *  Scans all attached instructions looking for constants mentioned in the instructions and builds a mapping from those
+     *  constants back to the instructions.  Only constants present in the @p restriction set are considered. */
+    CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const ROSE_FINAL;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
