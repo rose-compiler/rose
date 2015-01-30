@@ -13,94 +13,13 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
-// Borrowed with permission from Robb's Beenav navigation software [Robb P. Matzke 2014-12-02]
-GraphViz::HsvColor::HsvColor(const RgbColor &rgb) {
-    double hi = std::max(std::max(rgb.r, rgb.g), rgb.b);
-    double lo = std::min(std::min(rgb.r, rgb.g), rgb.b);
-    v = (hi+lo)/2.0;
-    if (hi==lo) {
-        h = s = 0.0;
-    } else {
-        double delta = hi-lo;
-        s = v > 0.5 ? delta / (2.0-hi-lo) : delta / (hi+lo);
-        if (hi==rgb.r) {
-            h = (rgb.g-rgb.b)/delta + (rgb.g<rgb.b ? 6 : 0);
-        } else if (hi==rgb.g) {
-            h = (rgb.b-rgb.r)/delta + 2;
-        } else {
-            h = (rgb.r-rgb.g)/delta + 4;
-        }
-        h /= 6.0;
-    }
-}
 
-// Borrowed with permission from Robb's Beenav navigation software [Robb P. Matzke 2014-12-02]
-static double
-rgb_from_hue(double p, double q, double t)
-{
-    if (t<0)
-        t += 1.0;
-    if (t>1)
-        t -= 1.0;
-    if (t < 1/6.0)
-        return p + (q-p) * 6 * t;
-    if (t < 0.5)
-        return q;
-    if (t < 2/3.0)
-        return p + (q-p) * (2/3.0 - t) * 6;
-    return p;
-}
-
-// Borrowed with permission from Robb's Beenav navigation software [Robb P. Matzke 2014-12-02]
-GraphViz::RgbColor::RgbColor(const HsvColor &hsv) {
-    if (0.0==hsv.v) {
-        r = g = b = 0;
-    } else {
-        double q = hsv.v < 0.5 ? hsv.v * (1+hsv.s) : hsv.v + hsv.s - hsv.v*hsv.s;
-        double p = 2.0 * hsv.v - q;
-        r = rgb_from_hue(p, q, hsv.h+1/3.0);
-        g = rgb_from_hue(p, q, hsv.h);
-        b = rgb_from_hue(p, q, hsv.h-1/3.0);
-    }
-}
-
-GraphViz::HsvColor
-GraphViz::HsvColor::invert() const {
-    return HsvColor(h, s, (1-v));
-}
-
-GraphViz::RgbColor
-GraphViz::RgbColor::invert() const {
-    return HsvColor(*this).invert();
-}
-
-static double limitColor(double x) {
-    return std::max(0.0, std::min(x, 1.0));
-}
-
-std::string
-GraphViz::RgbColor::toString() const {
-    std::stringstream ss;
-    mfprintf(ss)("#%02x%02x%02x",
-                 (unsigned)round(limitColor(r)*255),
-                 (unsigned)round(limitColor(g)*255),
-                 (unsigned)round(limitColor(b)*255));
-    return ss.str();
-}
-
-std::string
-GraphViz::HsvColor::toString() const {
-    return RgbColor(*this).toString();
-}
 
 // Make an edge color from a background color. Backgrounds tend to be too light for edges, and inverting the color would be too
 // dark to be distinguishable from black on such a fine line.
-static GraphViz::RgbColor
-makeEdgeColor(const GraphViz::RgbColor &bg) {
-    GraphViz::HsvColor hsv = bg;
-    hsv.s = 1.0;
-    hsv.v = 0.5;
-    return hsv;
+static Color::HSV
+makeEdgeColor(const Color::HSV &bg) {
+    return Color::HSV(bg.h(), 1.0, 0.5, 1.0);
 }
 
 std::string
@@ -256,16 +175,16 @@ GraphViz::vertexAttributes(const Partitioner &partitioner, const ControlFlowGrap
 
         if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
             attr.insert("style", "filled");
-            attr.insert("fillcolor", funcEnterColor_.toString());
+            attr.insert("fillcolor", funcEnterColor_.toHtml());
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (partitioner.basicBlockIsFunctionReturn(bb)) {
                 attr.insert("style", "filled");
-                attr.insert("fillcolor", funcReturnColor_.toString());
+                attr.insert("fillcolor", funcReturnColor_.toHtml());
             }
         }
     } else {
         attr.insert("style", "filled");
-        attr.insert("fillcolor", warningColor_.toString());
+        attr.insert("fillcolor", warningColor_.toHtml());
     }
 
     return attr;
@@ -339,11 +258,11 @@ GraphViz::edgeAttributes(const Partitioner &partitioner, const ControlFlowGraph:
     Attributes attr;
 
     if (edge->value().type() == E_FUNCTION_RETURN) {
-        attr.insert("color", makeEdgeColor(funcReturnColor_).toString());
+        attr.insert("color", makeEdgeColor(funcReturnColor_).toHtml());
     } else if (edge->target() == partitioner.indeterminateVertex()) {
-        attr.insert("color", makeEdgeColor(warningColor_).toString());
+        attr.insert("color", makeEdgeColor(warningColor_).toHtml());
     } else if (edge->value().type() == E_FUNCTION_CALL) {
-        attr.insert("color", makeEdgeColor(funcEnterColor_).toString());
+        attr.insert("color", makeEdgeColor(funcEnterColor_).toHtml());
     } else if (edge->source()->value().type() == V_BASIC_BLOCK && edge->target()->value().type() == V_BASIC_BLOCK &&
                edge->source()->value().bblock() &&
                edge->source()->value().bblock()->fallthroughVa() != edge->target()->value().address()) {
@@ -425,7 +344,7 @@ GraphViz::functionAttributes(const Partitioner &partitioner, const Function::Ptr
     ASSERT_not_null(function);
     Attributes attr;
     attr.insert("style", "filled");
-    attr.insert("fillcolor", subgraphColor().toString());
+    attr.insert("fillcolor", subgraphColor().toHtml());
     return attr;
 }
 

@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_GraphViz_H
 
 #include <ostream>
+#include <Color.h>
 #include <Partitioner2/ControlFlowGraph.h>
 
 namespace rose {
@@ -10,25 +11,6 @@ namespace Partitioner2 {
 
 class GraphViz {
 public:
-    struct HsvColor;
-
-    struct RgbColor {
-        double r, g, b;                                 // assume alpha is always 1.0
-        RgbColor(double r, double g, double b): r(r), g(g), b(b) {}
-        RgbColor(uint8_t r, uint8_t g, uint8_t b): r(r/255.0), g(g/255.0), b(b/255.0) {}
-        RgbColor(const HsvColor&);                      // implicit
-        std::string toString() const;                   // returns HTML color spec like #56abff
-        RgbColor invert() const;                        // invert value in HSV space
-    };
-
-    struct HsvColor {
-        double h, s, v;                                 // always in the range [0..1]
-        HsvColor(double h, double s, double v): h(h), s(s), v(v) {}
-        HsvColor(const RgbColor&);                      // implicit
-        std::string toString() const;                   // returns HTML color spec like #56abff
-        HsvColor invert() const;                        // invert value without changing hue or saturation
-    };
-
     typedef Sawyer::Container::Map<std::string, std::string> Attributes;
     
 private:
@@ -40,10 +22,10 @@ private:
     bool showInstructionAddresses_;                     // if instructions are shown, show addresses too?
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
-    HsvColor subgraphColor_;                            // background color for function subgraphs
-    HsvColor funcEnterColor_;                           // background color for function entrance blocks
-    HsvColor funcReturnColor_;                          // background color for function return blocks
-    HsvColor warningColor_;                             // background color for special nodes and warnings
+    Color::HSV subgraphColor_;                          // background color for function subgraphs
+    Color::HSV funcEnterColor_;                         // background color for function entrance blocks
+    Color::HSV funcReturnColor_;                        // background color for function return blocks
+    Color::HSV warningColor_;                           // background color for special nodes and warnings
     Attributes defaultNodeAttributes_;                  // default attributes for graph nodes (CFG vertices and other)
     Attributes defaultEdgeAttributes_;                  // default attributes for graph edges
 
@@ -160,8 +142,8 @@ public:
     /** Property: color to use for function subgraph background.
      *
      * @{ */
-    const HsvColor& subgraphColor() const { return subgraphColor_; }
-    void subgraphColor(const HsvColor &bg) { subgraphColor_ = bg; }
+    const Color::HSV& subgraphColor() const { return subgraphColor_; }
+    void subgraphColor(const Color::HSV &bg) { subgraphColor_ = bg; }
     /** @} */
 
     /** Property: color to use for background of function entrance nodes.
@@ -170,22 +152,22 @@ public:
      *  in HSV space (keeping the same hue and saturation).
      *
      * @{ */
-    const HsvColor& funcEnterColor() const { return funcEnterColor_; }
-    void funcEnterColor(const HsvColor &bg) { funcEnterColor_ = bg; }
+    const Color::HSV& funcEnterColor() const { return funcEnterColor_; }
+    void funcEnterColor(const Color::HSV &bg) { funcEnterColor_ = bg; }
     /** @} */
 
     /** Property: color to use for background of function return nodes.
      *
      * @{ */
-    const HsvColor& funcReturnColor() const { return funcReturnColor_; }
-    void funcReturnColor(const HsvColor &bg) { funcReturnColor_ = bg; }
+    const Color::HSV& funcReturnColor() const { return funcReturnColor_; }
+    void funcReturnColor(const Color::HSV &bg) { funcReturnColor_ = bg; }
     /** @} */
 
     /** Property: color to use for background of special nodes and for warnings.
      *
      * @{ */
-    const HsvColor& warningColor() const { return warningColor_; }
-    void warningColor(const HsvColor &bg) { warningColor_ = bg; }
+    const Color::HSV& warningColor() const { return warningColor_; }
+    void warningColor(const Color::HSV &bg) { warningColor_ = bg; }
     /** @} */
 
     /** Dump entire control flow graph.
