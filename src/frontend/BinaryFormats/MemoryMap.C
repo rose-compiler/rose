@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
+#include "FileSystem.h"
 #include "MemoryMap.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
@@ -16,6 +17,7 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 
@@ -119,7 +121,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 size_t
 MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, std::string segmentName) {
     if (segmentName.empty())
-        segmentName = boost::filesystem::path(fileName).filename().string();
+        segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
     Segment segment = Segment::fileInstance(fileName, READABLE | (writable?WRITABLE:0), segmentName);
     AddressInterval fileInterval = AddressInterval::baseSize(startVa, segment.buffer()->size());
     insert(fileInterval, segment);
@@ -240,7 +242,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     std::string fileName = s;
     if (fileName.size()!=strlen(fileName.c_str()))
         throw insertFileError(locatorString, "invalid file name");
-    std::string segmentName = boost::filesystem::path(fileName).filename().string();
+    std::string segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
 
     //-------------------------------- 
     // Open the file and read the data
