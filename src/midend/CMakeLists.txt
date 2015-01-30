@@ -29,15 +29,16 @@ add_library(midend OBJECT
   astQuery/nodeQuery.C
   astSnippet/Snippet.C
   binaryAnalyses/AbstractLocation.C
+  binaryAnalyses/binary_analysis.C)
+  binaryAnalyses/BinaryCallingConvention.C
   binaryAnalyses/BinaryControlFlow.C
   binaryAnalyses/BinaryDataFlow.C
   binaryAnalyses/BinaryDominance.C
   binaryAnalyses/BinaryFunctionCall.C
-  binaryAnalyses/BinaryCallingConvention.C
+  binaryAnalyses/BinaryMagic.C
   binaryAnalyses/BinaryReturnValueUsed.C
   binaryAnalyses/BinaryString.C
   binaryAnalyses/BinaryTaintedFlow.C
   binaryAnalyses/DwarfLineMapper.C
   binaryAnalyses/GraphAlgorithms.C
-  binaryAnalyses/binary_analysis.C)
 add_dependencies(midend rosetta_generated generate_stringify)
