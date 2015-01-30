@@ -2238,6 +2238,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 5:/*SYS_ACCEPT*/
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "accept", "dpp");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "socketpair", "dddp");
@@ -2248,6 +2255,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 10: /* SYS_RECV */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 14:/*SYS_SETSOCKOPT*/
+            if (20==t->get_process()->mem_read(a, t->syscall_arg(1), 20)) {
+                t->syscall_enter(a, "setsockopt", "dddpd");
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -2294,6 +2308,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_enter(a, "recvmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 18:/*SYS_ACCEPT4*/
+            if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_enter(a, "accept4", "dppd");
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -2396,43 +2417,75 @@ sys_socketpair(RSIM_Thread *t, int family, int type, int protocol, uint32_t sock
 static void
 sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 {
-    sockaddr_32 guest;
-    if (sizeof(guest)!=t->get_process()->mem_read(&guest, addr_va, sizeof guest)) {
+    uint8_t addr[4096];
+    if (addrlen==0 || addrlen>sizeof addr) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (addrlen != t->get_process()->mem_read(addr, addr_va, addrlen)) {
         t->syscall_return(-EFAULT);
         return;
     }
-
-    switch (guest.sa_family) {
-        case AF_UNIX: {
-            bool error;
-            std::string filename = t->get_process()->read_string(addr_va+2, 0, &error);
-            if (error) {
-                t->syscall_return(-EFAULT);
-                return;
-            }
-            size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
-            char host[host_sz];
-            uint16_t fam = guest.sa_family;
-            memcpy(host+0, &fam, 2);
-            strcpy(host+2, filename.c_str());
-#ifdef SYS_socketcall /* i686 */
-            ROSE_ASSERT(4==sizeof(int));
-            int a[3];
-            a[0] = fd;
-            a[1] = (uint32_t)host;
-            a[2] = host_sz;
-            int result = syscall(SYS_socketcall, 3/*SYS_CONNECT*/, a);
-#else /* amd64 */
-            int result = syscall(SYS_connect, fd, host, host_sz);
+    
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[3];
+    a[0] = fd;
+    a[1] = (uint32_t)addr;
+    a[2] = addrlen;
+    int result = syscall(SYS_socketcall, 3 /*SYS_CONNECT*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_connect, fd, addr, addrlen);
 #endif
-            t->syscall_return(-1==result ? -errno : result);
-            break;
-        }
 
-        default:
-            t->syscall_return(-EINVAL);
-            break;
+    if (-1 == result) {
+        t->syscall_return(-errno); 
+        return;
     }
+    
+    t->syscall_return(result);
+}
+
+static void
+sys_accept4(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen_va, uint32_t flags)
+{
+    uint8_t addr[4096];
+    uint32_t addrlen = 0;
+    if (addr_va != 0 && addrlen_va != 0) {
+        if (4!=t->get_process()->mem_read(&addrlen, addrlen_va, 4)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        if (addrlen > sizeof addr) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+    }
+
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[4];
+    a[0] = fd;
+    a[1] = addr_va ? (uint32_t)addr : 0;
+    a[2] = addrlen_va ? (uint32_t)&addrlen : 0;
+    a[3] = flags;
+    int result = syscall(SYS_socketcall, 18 /*SYS_ACCEPT4*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_accept4, fd, addr_va?addr:NULL, addrlen_va?&addrlen:NULL, flags);
+#endif
+    if (-1 == result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (addr_va != 0 && addrlen_va != 0) {
+        if (addrlen != t->get_process()->mem_write(addr, addr_va, addrlen)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    }
+
+    t->syscall_return(result);
 }
 
 static void
@@ -2620,9 +2673,43 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 }
 
 static void
+sys_setsockopt(RSIM_Thread *t, int fd, int level, int optname, uint32_t optval_va, uint32_t optsz) {
+    uint8_t optval[4096];
+    if (optsz<0 || optsz>sizeof optval) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (optval_va && optsz!=t->get_process()->mem_read(optval, optval_va, optsz)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    
+    // FIXME[Robb P. Matzke 2015-01-27]: some of these option values might need to be converted from the 32-bit guest to the
+    // 64-bit host format.
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[5];
+    a[0] = fd;
+    a[1] = level;
+    a[2] = optname;
+    a[3] = optval_va ? (uint32_t)optval : 0;
+    a[4] = optsz;
+    int result = syscall(SYS_socketcall, 14 /*SYS_SETSOCKOPT*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_setsockopt, fd, level, optname, optval_va?optval:NULL, optsz);
+#endif
+    if (-1 == result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    
+    t->syscall_return(result);
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
-    /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
+    /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
      * Linux kernel. See linux/net/socket.c. */
     uint32_t a[6];
     switch (t->syscall_arg(0)) {
@@ -2662,6 +2749,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 5: { /* SYS_ACCEPT */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_accept4(t, a[0], a[1], a[2], 0);
+            }
+            break;
+        }
+            
         case 8: { /* SYS_SOCKETPAIR */
             if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_return(-EFAULT);
@@ -2680,6 +2776,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 14: { /* SYS_SETSOCKOPT */
+            if (20!=t->get_process()->mem_read(a, t->syscall_arg(1), 20)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_setsockopt(t, a[0], a[1], a[2], a[3], a[4]);
+            }
+            break;
+        }
+            
         case 16: {/* SYS_SENDMSG */
             if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_return(-EFAULT);
@@ -2698,16 +2803,23 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
-        case 5: /* SYS_ACCEPT */
+        case 18: { /* SYS_ACCEPT4 */
+            if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_accept4(t, a[0], a[1], a[2], a[3]);
+            }
+            break;
+        }
+            
+
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
         case 9: /* SYS_SEND */
         case 11: /* SYS_SENDTO */
         case 12: /* SYS_RECVFROM */
         case 13: /* SYS_SHUTDOWN */
-        case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
-        case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
             break;
