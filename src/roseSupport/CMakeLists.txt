@@ -37,7 +37,7 @@ add_library(roseSupport OBJECT
   transformationSupport.C optionDeclaration.C
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
   utility_functions.C memoryUsage.C threadSupport.C IncludeDirective.C
-  SqlDatabase.C LinearCongruentialGenerator.C Combinatorics.C Diagnostics.C
+  SqlDatabase.C Diagnostics.C
   ${CMAKE_CURRENT_BINARY_DIR}/stringify.C)
 add_dependencies(roseSupport rosetta_generated generate_stringify)
 
@@ -52,9 +52,7 @@ install(FILES  transformationSupport.h
                threadSupport.h
                IncludeDirective.h
                callbacks.h
-               Combinatorics.h
                Diagnostics.h
-               LinearCongruentialGenerator.h
                SqlDatabase.h
                utility_functionsImpl.C
                ${CMAKE_CURRENT_BINARY_DIR}/stringify.h
