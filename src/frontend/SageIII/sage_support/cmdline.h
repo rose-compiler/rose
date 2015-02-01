@@ -26,9 +26,7 @@ namespace Cmdline {
   extern ROSE_DLL_API int verbose;
 
   void
-  makeSysIncludeList(
-      const Rose_STL_Container<string> &dirs,
-      Rose_STL_Container<string> &result);
+  makeSysIncludeList(const Rose_STL_Container<string> &dirs, Rose_STL_Container<string> &result, bool using_nostdinc_option = false);
 
   //! Convert `-I <path>` to `-I<path>`
   //

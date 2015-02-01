@@ -1089,6 +1089,9 @@ test_common_configure_test_with_link_part_3.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:verbose 0 -I$(srcdir) conftest.C -o conftest_configure_test_part_3
 	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) conftest.C -o conftest_configure_test_part_3" $(top_srcdir)/scripts/test_exit_status $@
 
+testOption:
+	$(TEST_TRANSLATOR) -rose:verbose 0 -nostdinc -c $(srcdir)/test2015_08.C
+
 $(TEST_TRANSLATOR):
 	cd ../..; $(MAKE) testTranslator
 

@@ -1886,7 +1886,7 @@ SgProject::parse()
         }
 #else
   // The goal in this version of the code is to seperate the construction of the SgFile objects 
-  // from the invocation of the fronend on each of the SgFile objects.  In general this allows
+  // from the invocation of the frontend on each of the SgFile objects.  In general this allows
   // the comilation to reference the other SgFile objects on an as needed basis as part of running
   // the frontend.  This is importnat from the optimization of Java.
      std::vector<SgFile*> vectorOfFiles;
@@ -4697,7 +4697,9 @@ SgSourceFile::build_C_and_Cxx_AST( vector<string> argv, vector<string> inputComm
      frontEndCommandLineString = std::string(argv[0]) + std::string(" ") + CommandlineProcessing::generateStringFromArgList(inputCommandLine,false,false);
 
      if ( get_verbose() > 1 )
-          printf ("Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        {
+          printf ("In build_C_and_Cxx_AST(): Before calling edg_main: frontEndCommandLineString = %s \n",frontEndCommandLineString.c_str());
+        }
 
      int c_cxx_argc = 0;
      char **c_cxx_argv = NULL;
