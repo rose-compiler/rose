@@ -110,10 +110,17 @@ makeAbsolute(const Path &path, const Path &root) {
                      makeAbsolute(root).relative_path() / path.relative_path();
         }
     } else {
-        if (path.has_root_directory()) {
-            retval = makeAbsolute(root).root_name() / path;
+        Path absoluteRoot;
+        if (root.has_root_directory()) {
+            absoluteRoot = root;
         } else {
-            retval = makeAbsolute(root) / path;
+            absoluteRoot = makeAbsolute(root);
+        }
+
+        if (path.has_root_directory()) {
+            retval = absoluteRoot.root_name() / path;
+        } else {
+            retval = absoluteRoot / path;
         }
     }
     return makeNormal(retval);
