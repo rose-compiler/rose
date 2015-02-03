@@ -105,6 +105,19 @@ existsUnique(const Container &container, const Value &item, Comparator cmp) {
     return true;
 }
 
+// Retrieve an item from a sorted container
+template<class Container, class Value, class Comparator>
+Sawyer::Optional<Value>
+getUnique(const Container &container, const Value &item, Comparator cmp) {
+    if (item==NULL)
+        return Sawyer::Nothing();
+    ASSERT_require(isSorted(container, cmp, true));     // unique, sorted items
+    typename Container::const_iterator lb = lowerBound(container, item, cmp);
+    if (lb==container.end() || cmp(*lb, item) || cmp(item, *lb))
+        return Sawyer::Nothing();
+    return *lb;
+}
+
 std::ostream& operator<<(std::ostream&, const AddressUser&);
 std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);

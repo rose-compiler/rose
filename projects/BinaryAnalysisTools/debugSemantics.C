@@ -506,11 +506,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
         std::cout <<unparseInstructionWithAddress(insn) <<"\n";
         try {
             dispatcher->processInstruction(insn);
-            if (settings.showStates)
-                std::cout <<(*ops+formatter) <<"\n";
         } catch (const BaseSemantics::Exception &e) {
             std::cout <<e <<"\n";
         }
+        if (settings.showStates)
+            std::cout <<(*ops+formatter) <<"\n";
     }
 }
 

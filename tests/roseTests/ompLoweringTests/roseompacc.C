@@ -23,9 +23,15 @@ int main(int argc, char * argv[])
   if(CommandlineProcessing::isOption (argvList,
         "-rose:openmp:",
         "nodde",
+        true) ||
+  CommandlineProcessing::isOption (argvList,
+        "--rose:openmp:",
+        "nodde",
         true))
+ 
   {
     OmpSupport::useDDE = false;
+    cout<<"OpenMP Lowering is set to turn off the use of DDE (Device Data Environment) functions ..."<<endl;
   }
 
   SgProject *project = frontend (argvList);

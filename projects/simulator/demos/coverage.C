@@ -9,7 +9,7 @@
 
 // Use partitoner version 2?  It's faster, better quality results, and has analysis-oriented data structures. As of Dec 2014
 // it's still under development and might require Robb's m68k branch for the latest features.
-//#define USE_PARTITIONER_2
+#define USE_PARTITIONER_2
 
 #ifdef USE_PARTITIONER_2
 #include <Partitioner2/Engine.h>                        // New API for partitioning instructions into functions
@@ -262,7 +262,7 @@ main(int argc, char *argv[], char *envp[]) {
     SgAsmBlock *gblock = engine.buildAst(partitioner);
 
     // Since we're not destroying the partitioner, we should make sure its progress message is cleaned up.
-    P2::mlog[Diagnostics::MARCH] <<"\n";
+    P2::mlog[Diagnostics::MARCH] <<"done partitioning\n";
 #else
     // The simulator uses Partitioner version 1, so there's a simple wrapper for it.
     SgAsmBlock *gblock = sim.get_process()->disassemble();
@@ -272,12 +272,21 @@ main(int argc, char *argv[], char *envp[]) {
     // $ROSE_SRC/projects/BinaryAnalysisTools has some good stuff, like recursiveDisassemble and bROwSE.  Try running them with
     // "--help" for details.  For instance,
     //   $ recursiveDisassemble --isa=i386 @x-index
-    if (1)
+    if (0)
         AsmUnparser().unparse(std::cout, gblock);
 
     // Print a list of functions we found.
-    if (1)
+    if (0)
         std::cout <<AsmFunctionIndex(gblock);
+
+    // Number of AST nodes
+    struct AstSize: AstSimpleProcessing {
+        size_t nNodes;
+        AstSize(): nNodes(0) {}
+        void visit(SgNode *) { ++nNodes; }
+    } sizer;
+    sizer.traverse(gblock, preorder);
+    std::cout <<"Interpretation global block contains " <<plural(sizer.nNodes, "nodes") <<"\n";
     
 
     //---------- 

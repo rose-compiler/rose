@@ -9,5 +9,5 @@ namespace BinaryAnalysis {
 } // namespace
 } // namespace
 
-std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap*) { abort(); }
-void AsmUnparser::initDiagnostics() {}
+std::string unparseExpression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*) { abort(); }
+void rose::BinaryAnalysis::AsmUnparser::initDiagnostics() {}
