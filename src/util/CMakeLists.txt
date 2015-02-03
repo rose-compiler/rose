@@ -1,21 +1,8 @@
-
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
-
-add_subdirectory(stringSupport)
-add_subdirectory(commandlineProcessing)
-add_subdirectory(support)
-add_subdirectory(graphs)
-add_subdirectory(sawyer)
-
-#############################################################################
-#Generating "rose_paths.C"
-#############################################################################
+######## Generate rose_paths.C #########
 file( REMOVE ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp )
 file( WRITE  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "\#include <string> \n\n" )
-#file( APPEND ${ROSE_TOP_BINARY_DIR}/test.txt we have ${CMAKE_Fortran_COMPILER} )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* Use the same header file to declare these variables as is used to reference them so that they will be globally available (and not local). */\n" )
 file( APPEND  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "\#include \"rose_paths.h\" \n\n" )
-
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "/* These paths will be absolute or relative depending on how the configure script is called (called with an absolute or relative path). */\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "ROSE_UTIL_API const std::string ROSE_GFORTRAN_PATH          = \"${CMAKE_Fortran_COMPILER}\";\n" )
 file( APPEND ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp "ROSE_UTIL_API const std::string ROSE_AUTOMAKE_TOP_SRCDIR    = \"${ROSE_TOP_SRC_DIR}\";\n" )
@@ -46,18 +33,50 @@ execute_process(
           ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp
           ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C
 )
-#	@@echo "@PACKAGE_VERSION@" | sed 's/\([0-9]\)\([a-z]\)/\1_\2/g' | tr .a-j _0-9 | awk -F_ '{printf "%02d%02d%02d%02d\n", $$1, $$2, $$3, $$4}' | sed 's/^0*//' | sed 's/.*/const int ROSE_NUMERIC_VERSION = \0;/' >> src/util/rose_paths.C
-execute_process(
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different
-  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C.tmp
-  ${ROSE_TOP_BINARY_DIR}/src/util/rose_paths.C
+
+# needed to properly define ROSE_UTIL_API
+add_definitions(-DROSE_UTIL_EXPORTS)
+
+######## build sub libraries ##########
+add_subdirectory(commandlineProcessing)
+add_subdirectory(graphs)
+add_subdirectory(sawyer)
+add_subdirectory(stringSupport)
+add_subdirectory(support)
+
+
+######## build main library ###########
+set(rose_util_src
+  ${CMAKE_BINARY_DIR}/src/util/rose_paths.C
+  Color.C
+  Combinatorics.C
+  FileSystem.C
+  LinearCongruentialGenerator.C
+  rose_getline.C
+  processSupport.C
+  rose_getline.C
+  rose_strtoull.C
+  $<TARGET_OBJECTS:util_commandlineProcessing>
+  $<TARGET_OBJECTS:util_sawyer>
+  $<TARGET_OBJECTS:util_stringSupport>
+  $<TARGET_OBJECTS:util_support>
+  $<TARGET_OBJECTS:util_graphs>
 )
-########### next target ###############
+add_library(roseutil SHARED ${rose_util_src})
+if (WIN32)
+  target_link_libraries(roseutil shlwapi.lib psapi.lib)
+endif()
+#set_target_properties(roseutil PROPERTIES
+#  DEFINE_SYMBOL ROSE_UTIL_EXPORTS
+#)
+install(TARGETS roseutil DESTINATION lib)
 
 
 ########### install files ###############
-
-install(FILES  FormatRestorer.h setup.h processSupport.h rose_paths.h
-               compilationFileDatabase.h Map.h rose_getline.h rose_override.h rose_strtoull.h
-               roseTraceLib.c ParallelSort.h GraphUtility.h
+install(FILES 
+	      Color.h Combinatorics.h FileSystem.h FormatRestorer.h
+ 	      setup.h processSupport.h rose_paths.h
+	      compilationFileDatabase.h LinearCongruentialGenerator.h
+	      Map.h rose_getline.h rose_override.h rose_strtoull.h
+              roseTraceLib.c ParallelSort.h GraphUtility.h
         DESTINATION ${INCLUDE_INSTALL_DIR})

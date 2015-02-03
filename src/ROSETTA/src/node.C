@@ -230,7 +230,7 @@ Grammar::setUpNodes ()
   // DQ (3/14/2007): Added IR support for binaries
      Terminal & AsmNode = *lookupTerminal(terminalList, "AsmNode");
 
-  // printf ("nonTerminalList.size() = %zu \n",nonTerminalList.size());
+  // printf ("nonTerminalList.size() = %" PRIuPTR " \n",nonTerminalList.size());
 
   // DQ (4/20/2014): Adding more support for ATerm library.
      NEW_TERMINAL_MACRO (Aterm, "Aterm", "ATERM" );

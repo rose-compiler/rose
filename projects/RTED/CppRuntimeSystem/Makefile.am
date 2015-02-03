@@ -68,7 +68,7 @@ endif
 bin_PROGRAMS  = RuntimeSystemCppTest
 
 RuntimeSystemCppTest_SOURCES = test.cpp
-RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la
+RuntimeSystemCppTest_LDADD   = libCppRuntimeSystem.la $(ROSE_LIBS)
 
 
 include_HEADERS = rted_iface_structs.h \

@@ -4,6 +4,9 @@
 #include "RDLattice.h"
 #include "SetAlgo.h"
 
+using namespace std;
+using namespace SPRAY;
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -78,7 +81,7 @@ void RDLattice::erasePair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::eraseAllPairsWithVariableId(VariableId var) {
+void RDLattice::removeAllPairsWithVariableId(VariableId var) {
   RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
     if(var==(*i).second) {
@@ -108,19 +111,26 @@ void RDLattice::setBot() {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::combine(RDLattice& b) {
-  if(b.isBot())
+void RDLattice::combine(Lattice& b) {
+  RDLattice* other=dynamic_cast<RDLattice*>(&b);
+  ROSE_ASSERT(other);
+  if(b.isBot()) {
     return;
-  for(RDLattice::iterator i=b.begin();i!=b.end();++i) {
+  }
+  for(RDLattice::iterator i=other->begin();i!=other->end();++i) {
     rdSet.insert(*i);
   }
   _bot=false;
 }
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-bool RDLattice::approximatedBy(RDLattice& b) {
+bool RDLattice::approximatedBy(Lattice& b0) {
+  RDLattice& b=dynamic_cast<RDLattice&>(b0);
+  if(isBot()&&b.isBot())
+    return true;
   if(isBot()) {
     return true;
   } else {
@@ -137,6 +147,7 @@ bool RDLattice::approximatedBy(RDLattice& b) {
   }
   return true;
 }
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

@@ -81,7 +81,7 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     freeSpace = freeSpace & mappableArea;
     if (freeSpace.isEmpty())
         throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
-    rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);
+    rose_addr_t map_base_va = alignUp(freeSpace.least(), maximum_alignment);
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
@@ -382,6 +382,7 @@ BinaryLoaderElf::find_section_by_preferred_va(SgAsmGenericHeader* header, rose_a
                             <<" = " <<addrToString(elf_section->get_mapped_actual_va() + elf_section->get_mapped_size())
                             <<" " <<cEscape(elf_section->get_name()->get_string()) <<"\n";
             } else {
+                ASSERT_require2(retval==NULL, "there should be only one matching section");
                 retval = elf_section;
             }
         }

@@ -25,7 +25,7 @@ SgGraph::computeEdgeSet( SgGraphNode* node )
 
 
 
-  // printf ("In SgGraph::computeEdgeSet(node=%p=%d) p_node_index_to_edge_multimap.size() = %zu \n",node,node->get_index(),p_node_index_to_edge_multimap.size());
+  // printf ("In SgGraph::computeEdgeSet(node=%p=%d) p_node_index_to_edge_multimap.size() = %" PRIuPTR " \n",node,node->get_index(),p_node_index_to_edge_multimap.size());
 
      typedef std::pair<rose_graph_integer_edge_hash_multimap::const_iterator,rose_graph_integer_edge_hash_multimap::const_iterator> equal_range_type;
      equal_range_type equal_range_pair = p_node_index_to_edge_multimap.equal_range(node->get_index());
@@ -404,14 +404,14 @@ SgIncidenceDirectedGraph::addDirectedEdge( SgDirectedGraphEdge* edge )
 #endif
                   
        // Initialize the node index --> SgGraphEdge* multimap.
-       // printf ("In SgGraph::addEdge(): Insert edge %p = (%d,%d) on node %d (p_node_index_to_edge_multimap size = %zu) \n",edge,node_index_first,node_index_second,node_index_first,p_node_index_to_edge_multimap.size());
+       // printf ("In SgGraph::addEdge(): Insert edge %p = (%d,%d) on node %d (p_node_index_to_edge_multimap size = %" PRIuPTR ") \n",edge,node_index_first,node_index_second,node_index_first,p_node_index_to_edge_multimap.size());
 
        // p_node_index_to_edge_multimap.insert(std::pair<int,SgGraphEdge*>(node_index_first,edge));
        //   p_node_index_to_edge_multimap.insert(rose_graph_integer_edge_hash_multimap::value_type(node_index_first,edge));
           get_node_index_to_edge_multimap_edgesOut().insert(pair<int,SgDirectedGraphEdge*>(node_index_first,edge));
           get_node_index_to_edge_multimap_edgesIn().insert(pair<int,SgDirectedGraphEdge*>(node_index_second,edge));
 
-       // printf ("    After adding edge (p_node_index_to_edge_multimap size = %zu) bucket_count() = %zu \n",p_node_index_to_edge_multimap.size(),p_node_index_to_edge_multimap.bucket_count());
+       // printf ("    After adding edge (p_node_index_to_edge_multimap size = %" PRIuPTR ") bucket_count() = %" PRIuPTR " \n",p_node_index_to_edge_multimap.size(),p_node_index_to_edge_multimap.bucket_count());
 
        // Adding the label to the label map (we might decide to not put empty labels into the map).
           if (edge->get_name().empty() == false)
@@ -560,7 +560,7 @@ SgGraph::display_node_index_to_edge_multimap() const
      rose_graph_integer_edge_hash_multimap::const_iterator i = p_node_index_to_edge_multimap.begin();
      while (i != p_node_index_to_edge_multimap.end())
         {
-          printf ("   node index: i->first = %d SgGraphEdge: i->second = %p = %d count(i->first) = %zu \n",i->first,i->second,i->second->get_index(),p_node_index_to_edge_multimap.count(i->first));
+          printf ("   node index: i->first = %d SgGraphEdge: i->second = %p = %d count(i->first) = %" PRIuPTR " \n",i->first,i->second,i->second->get_index(),p_node_index_to_edge_multimap.count(i->first));
           i++;
         }
 // #endif
@@ -580,7 +580,7 @@ SgGraph::resize_hash_maps( size_t numberOfNodes, size_t numberOfEdges )
   // input specified size is used (I think)).  The reduces the hash collisions
   // and improves the performance of usign the hash table.
 
-  // printf ("Inside of SgGraph::resize_hash_maps(numberOfNodes = %zu numberOfEdges = %zu): \n",numberOfNodes,numberOfEdges);
+  // printf ("Inside of SgGraph::resize_hash_maps(numberOfNodes = %" PRIuPTR " numberOfEdges = %" PRIuPTR "): \n",numberOfNodes,numberOfEdges);
 
 // #ifdef ROSE_USE_NEW_GRAPH_NODES
   // For maps and multimaps which deal with edges, make those hash 
@@ -648,7 +648,7 @@ SgGraph::memory_usage()
      memory_usage += p_string_to_node_index_multimap.size() * sizeof(rose_graph_string_integer_hash_multimap::value_type);
 // #endif
 
-     printf ("Inside of SgGraph::memory_usage(): memory_usage = %zu \n",memory_usage);
+     printf ("Inside of SgGraph::memory_usage(): memory_usage = %" PRIuPTR " \n",memory_usage);
 
      return memory_usage;
    }
@@ -732,7 +732,7 @@ SgGraph::generateSpanningTree()
      boost::kruskal_minimum_spanning_tree(rose_BGL_graph, std::back_inserter(rose_spanning_tree));
   // printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
 
-     printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
+     printf ("rose_spanning_tree.size() = %" PRIuPTR " \n",rose_spanning_tree.size());
 #endif
 
 #if 0
@@ -794,7 +794,7 @@ SgGraph::generateSpanningTree()
      boost::kruskal_minimum_spanning_tree(rose_BGL_graph, std::back_inserter(rose_spanning_tree));
   // printf ("DONE: Computing the kruskal_minimum_spanning_tree() \n");
 
-     printf ("rose_spanning_tree.size() = %zu \n",rose_spanning_tree.size());
+     printf ("rose_spanning_tree.size() = %" PRIuPTR " \n",rose_spanning_tree.size());
 #endif
 
 #if 1
@@ -834,7 +834,7 @@ SgIncidenceDirectedGraph::computeEdgeSetIn( SgGraphNode* node )
 
      std::set<SgDirectedGraphEdge*> returnSet;
 
-  // printf ("In SgIncidenceDirectedGraph::computeEdgeSetIn(node=%p=%d) p_node_index_to_edge_multimap_edgesIn.size() = %zu \n",node,node->get_index(),p_node_index_to_edge_multimap_edgesIn.size());
+  // printf ("In SgIncidenceDirectedGraph::computeEdgeSetIn(node=%p=%d) p_node_index_to_edge_multimap_edgesIn.size() = %" PRIuPTR " \n",node,node->get_index(),p_node_index_to_edge_multimap_edgesIn.size());
 
      typedef std::pair<rose_graph_integer_edge_hash_multimap::const_iterator,rose_graph_integer_edge_hash_multimap::const_iterator> equal_range_type;
      equal_range_type equal_range_pair = p_node_index_to_edge_multimap_edgesIn.equal_range(node->get_index());
@@ -886,7 +886,7 @@ SgIncidenceDirectedGraph::computeEdgeSetOut( SgGraphNode* node )
 
      std::set<SgDirectedGraphEdge*> returnSet;
 
-  // printf ("In SgIncidenceDirectedGraph::computeEdgeSetOut(node=%p=%d) p_node_index_to_edge_multimap_edgesOut.size() = %zu \n",node,node->get_index(),p_node_index_to_edge_multimap_edgesOut.size());
+  // printf ("In SgIncidenceDirectedGraph::computeEdgeSetOut(node=%p=%d) p_node_index_to_edge_multimap_edgesOut.size() = %" PRIuPTR " \n",node,node->get_index(),p_node_index_to_edge_multimap_edgesOut.size());
 
      typedef std::pair<rose_graph_integer_edge_hash_multimap::const_iterator,rose_graph_integer_edge_hash_multimap::const_iterator> equal_range_type;
      equal_range_type equal_range_pair = p_node_index_to_edge_multimap_edgesOut.equal_range(node->get_index());

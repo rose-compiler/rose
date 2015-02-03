@@ -451,11 +451,11 @@ SgAsmGenericStrtab::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s =", p, w, "dont_free");
     for (size_t i=0; i<p_storage_list.size(); ++i) {
         if (p_storage_list[i] == p_dont_free)
-            fprintf(f, " p_storage_list[%zu]", i);
+            fprintf(f, " p_storage_list[%" PRIuPTR "]", i);
     }
     fputc('\n', f);
     
-    fprintf(f, "%s%-*s = %zu strings\n", p, w, "referenced", p_storage_list.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " strings\n", p, w, "referenced", p_storage_list.size());
     for (size_t i=0; i<p_storage_list.size(); i++) {
         p_storage_list[i]->dump(f, p, i);
     }

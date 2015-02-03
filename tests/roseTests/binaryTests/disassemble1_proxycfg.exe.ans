@@ -1,15 +1,15 @@
 using this memory map for disassembly:
     va 0x01000000 + 0x00000200 = 0x01000200 r--- at buffer aap   + 0x00000000 proxycfg.exe(PE File Header)
-    va 0x01000200 + 0x00000200 = 0x01000400 r--p at anon aao     + 0x00000000 proxycfg.exe(PE File Header)
+    va 0x01000200 + 0x00000200 = 0x01000400 r--p at buffer aao   + 0x00000000 proxycfg.exe(PE File Header)
     va 0x01001000 + 0x00000a00 = 0x01001a00 r-x- at buffer aar   + 0x00000400 proxycfg.exe(.text)
-    va 0x01002000 + 0x00000020 = 0x01002020 rw-p at anon aat     + 0x00000000 proxycfg.exe(.bss)
+    va 0x01002000 + 0x00000020 = 0x01002020 rw-p at buffer aat   + 0x00000000 proxycfg.exe(.bss)
     va 0x01003000 + 0x00000200 = 0x01003200 rw-- at buffer aav   + 0x00000e00 proxycfg.exe(.data)
     va 0x01004000 + 0x00000600 = 0x01004600 r--- at buffer aax   + 0x00001000 proxycfg.exe(.idata)
     va 0x01005000 + 0x00000e00 = 0x01005e00 r--- at buffer aaz   + 0x00001600 proxycfg.exe(.rsrc)
 
 
 0x01001169: ================================== Function (function call) unknown name
-0x01001169: Called by 0x010015f0
+0x01001169: Called by 0x010015ee
 
 0x01001169: Basic block reasons: entry point, graph-1
 0x01001169: Predecessor blocks: 0x0100169e<<Func>>
@@ -33,22 +33,14 @@ using this memory map for disassembly:
 
 0x0100117a: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x0100117a
 
-0x0100117f: ================================== Function (function call) unknown name
-0x0100117f: Called by 0x01001493
-0x0100117f: Called by 0x0100150b
-0x0100117f: Called by 0x010015f0
-0x0100117f: This function calls 0x01001181
+0x0100117f: ================================== Function (function call, pattern) unknown name
+0x0100117f: Called by 0x01001491
+0x0100117f: Called by 0x01001509
+0x0100117f: Called by 0x010015ee
 
 0x0100117f: Basic block reasons: entry point, graph-1
 0x0100117f: Predecessor blocks: 0x010014c4<<Func>>, 0x01001528<<Func>>, 0x01001642<<Func>>
 0x0100117f: 8b ff                   |..      |   mov    edi, edi
-0x0100117f: Successor blocks: 0x01001181<<Func>>
-
-0x01001181: ================================== Function (pattern) unknown name
-0x01001181: Called by 0x0100117f
-
-0x01001181: Basic block reasons: entry point, graph-1
-0x01001181: Predecessor blocks: 0x0100117f<<Func>>
 0x01001181: 55                      |U       |   push   ebp
 0x01001182: 8b ec                   |..      |   mov    ebp, esp
 0x01001184: 51                      |Q       |   push   ecx
@@ -62,8 +54,8 @@ using this memory map for disassembly:
 0x01001195: Successor blocks: 0x01001197, 0x010011cb
 
 0x01001197: Basic block reasons: graph-1
-0x01001197: Predecessor blocks: 0x01001181
-0x01001197: Dominator block: 0x01001181
+0x01001197: Predecessor blocks: 0x0100117f
+0x01001197: Dominator block: 0x0100117f
 0x01001197: 81 ff 98 2f 00 00       |.../..  |   cmp    edi, 0x00002f98<12184>
 0x0100119d: 77 2c                   |w,      |   ja     0x010011cb<<Insn>>
 0x0100119d: Successor blocks: 0x0100119f, 0x010011cb
@@ -106,8 +98,8 @@ using this memory map for disassembly:
 0x010011c9: Successor blocks: 0x010011d9
 
 0x010011cb: Basic block reasons: graph-1
-0x010011cb: Predecessor blocks: 0x01001181, 0x01001197
-0x010011cb: Dominator block: 0x01001181
+0x010011cb: Predecessor blocks: 0x0100117f, 0x01001197
+0x010011cb: Dominator block: 0x0100117f
 0x010011cb: 56                      |V       |   push   esi
 0x010011cc: 56                      |V       |   push   esi
 0x010011cd: 8d 45 fc                |.E.     |   lea    eax, [ebp + 0xfc<-4>]
@@ -120,7 +112,7 @@ using this memory map for disassembly:
 
 0x010011d9: Basic block reasons: graph-1
 0x010011d9: Predecessor blocks: 0x010011bb, 0x010011cb
-0x010011d9: Dominator block: 0x01001181
+0x010011d9: Dominator block: 0x0100117f
 0x010011d9: ff 15 48 41 00 01       |..HA..  |   call   DWORD PTR ds:[0x01004148<IAT+0x3c>]
 0x010011d9: Successor blocks: 0x010011df, unknown
 
@@ -156,25 +148,17 @@ using this memory map for disassembly:
 
 0x010011f5: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x010011f5
 
-0x010011fa: ================================== Function (function call) unknown name
-0x010011fa: Called by 0x01001493
-0x010011fa: Called by 0x0100150b
-0x010011fa: Called by 0x010015f0
-0x010011fa: Called by 0x010016ae
-0x010011fa: This function calls 0x010011fc
+0x010011fa: ================================== Function (function call, pattern) unknown name
+0x010011fa: Called by 0x01001491
+0x010011fa: Called by 0x01001509
+0x010011fa: Called by 0x010015ee
+0x010011fa: Called by 0x010016ac
+0x010011fa: This function calls 0x010018f4
+0x010011fa: This function calls 0x01001900
 
 0x010011fa: Basic block reasons: entry point, graph-1
-0x010011fa: Predecessor blocks: 0x010014d5<<Func>>, 0x010014f1<<Func>>, 0x0100153b<<Func>>, 0x0100155f<<Func>>, 0x01001587<<Func>>, 0x01001597<<Func>>, 0x010015a8<<Func>>, 0x010015c4<<Func>>, 0x010015f0<<Func>>, 0x01001600<<Func>>, 0x01001654<<Func>>, 0x0100167e<<Func>>, 0x0100175e<<Func>>
+0x010011fa: Predecessor blocks: 0x010014d5<<Func>>, 0x010014f1<<Func>>, 0x0100153b<<Func>>, 0x0100155f<<Func>>, 0x01001587<<Func>>, 0x01001597<<Func>>, 0x010015a8<<Func>>, 0x010015c4<<Func>>, 0x010015ee<<Func>>, 0x01001600<<Func>>, 0x01001654<<Func>>, 0x0100167e<<Func>>, 0x0100175e<<Func>>
 0x010011fa: 8b ff                   |..      |   mov    edi, edi
-0x010011fa: Successor blocks: 0x010011fc<<Func>>
-
-0x010011fc: ================================== Function (pattern) unknown name
-0x010011fc: Called by 0x010011fa
-0x010011fc: This function calls 0x010018f4
-0x010011fc: This function calls 0x01001900
-
-0x010011fc: Basic block reasons: entry point, graph-1
-0x010011fc: Predecessor blocks: 0x010011fa<<Func>>
 0x010011fc: 55                      |U       |   push   ebp
 0x010011fd: 8b ec                   |..      |   mov    ebp, esp
 0x010011ff: 83 ec 1c                |...     |   sub    esp, 0x1c
@@ -196,8 +180,8 @@ using this memory map for disassembly:
 0x01001221: Successor blocks: 0x01001227, unknown
 
 0x01001227: Basic block reasons: graph-1
-0x01001227: Predecessor blocks: 0x010011fc
-0x01001227: Dominator block: 0x010011fc
+0x01001227: Predecessor blocks: 0x010011fa
+0x01001227: Dominator block: 0x010011fa
 0x01001227: 3b c6                   |;.      |   cmp    eax, esi
 0x01001229: 89 75 f8                |.u.     |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], esi
 0x0100122c: 0f 84 a9 00 00 00       |......  |   je     0x010012db<<Insn>>
@@ -384,21 +368,13 @@ using this memory map for disassembly:
 
 0x010012de: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x010012de
 
-0x010012e3: ================================== Function (function call) unknown name
-0x010012e3: Called by 0x010013f2
-0x010012e3: This function calls 0x010012e5
+0x010012e3: ================================== Function (function call, pattern) unknown name
+0x010012e3: Called by 0x010013f0
+0x010012e3: This function calls 0x01001900
 
 0x010012e3: Basic block reasons: entry point, graph-1
 0x010012e3: Predecessor blocks: 0x01001426<<Func>>, 0x0100143d<<Func>>
 0x010012e3: 8b ff                   |..      |   mov    edi, edi
-0x010012e3: Successor blocks: 0x010012e5<<Func>>
-
-0x010012e5: ================================== Function (pattern) unknown name
-0x010012e5: Called by 0x010012e3
-0x010012e5: This function calls 0x01001900
-
-0x010012e5: Basic block reasons: entry point, graph-1
-0x010012e5: Predecessor blocks: 0x010012e3<<Func>>
 0x010012e5: 55                      |U       |   push   ebp
 0x010012e6: 8b ec                   |..      |   mov    ebp, esp
 0x010012e8: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
@@ -410,15 +386,15 @@ using this memory map for disassembly:
 0x010012f3: Successor blocks: 0x010012f5, 0x010012f9
 
 0x010012f5: Basic block reasons: graph-1
-0x010012f5: Predecessor blocks: 0x010012e5
-0x010012f5: Dominator block: 0x010012e5
+0x010012f5: Predecessor blocks: 0x010012e3
+0x010012f5: Dominator block: 0x010012e3
 0x010012f5: 33 c0                   |3.      |   xor    eax, eax
 0x010012f7: eb 3c                   |.<      |   jmp    0x01001335<<Insn>>
 0x010012f7: Successor blocks: 0x01001335
 
 0x010012f9: Basic block reasons: graph-1
-0x010012f9: Predecessor blocks: 0x010012e5
-0x010012f9: Dominator block: 0x010012e5
+0x010012f9: Predecessor blocks: 0x010012e3
+0x010012f9: Dominator block: 0x010012e3
 0x010012f9: 53                      |S       |   push   ebx
 0x010012fa: 56                      |V       |   push   esi
 0x010012fb: 8b 35 2c 41 00 01       |.5,A..  |   mov    esi, DWORD PTR ds:[0x0100412c<IAT+0x20>]
@@ -485,7 +461,7 @@ using this memory map for disassembly:
 
 0x01001335: Basic block reasons: graph-1
 0x01001335: Predecessor blocks: 0x010012f5, 0x01001333
-0x01001335: Dominator block: 0x010012e5
+0x01001335: Dominator block: 0x010012e3
 0x01001335: 5f                      |_       |   pop    edi
 0x01001336: 5d                      |]       |   pop    ebp
 0x01001337: c2 08 00                |...     |   ret    0x0008
@@ -493,20 +469,12 @@ using this memory map for disassembly:
 
 0x0100133a: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x0100133a
 
-0x0100133f: ================================== Function (function call) unknown name
-0x0100133f: Called by 0x010015f0
-0x0100133f: This function calls 0x01001341
+0x0100133f: ================================== Function (function call, pattern) unknown name
+0x0100133f: Called by 0x010015ee
 
 0x0100133f: Basic block reasons: entry point, graph-1
 0x0100133f: Predecessor blocks: 0x0100160c<<Func>>
 0x0100133f: 8b ff                   |..      |   mov    edi, edi
-0x0100133f: Successor blocks: 0x01001341<<Func>>
-
-0x01001341: ================================== Function (pattern) unknown name
-0x01001341: Called by 0x0100133f
-
-0x01001341: Basic block reasons: entry point, graph-1
-0x01001341: Predecessor blocks: 0x0100133f<<Func>>
 0x01001341: 55                      |U       |   push   ebp
 0x01001342: 8b ec                   |..      |   mov    ebp, esp
 0x01001344: 53                      |S       |   push   ebx
@@ -524,8 +492,8 @@ using this memory map for disassembly:
 0x01001360: Successor blocks: 0x01001362, 0x010013a3
 
 0x01001362: Basic block reasons: graph-1
-0x01001362: Predecessor blocks: 0x01001341
-0x01001362: Dominator block: 0x01001341
+0x01001362: Predecessor blocks: 0x0100133f
+0x01001362: Dominator block: 0x0100133f
 0x01001362: 57                      |W       |   push   edi
 0x01001363: 8b 7d 0c                |.}.     |   mov    edi, DWORD PTR ss:[ebp + 0x0c]
 0x01001366: eb 30                   |.0      |   jmp    0x01001398<<Insn>>
@@ -594,8 +562,8 @@ using this memory map for disassembly:
 0x010013a2: Successor blocks: 0x010013a3
 
 0x010013a3: Basic block reasons: graph-1
-0x010013a3: Predecessor blocks: 0x01001341, 0x010013a2
-0x010013a3: Dominator block: 0x01001341
+0x010013a3: Predecessor blocks: 0x0100133f, 0x010013a2
+0x010013a3: Dominator block: 0x0100133f
 0x010013a3: 5e                      |^       |   pop    esi
 0x010013a4: 5b                      |[       |   pop    ebx
 0x010013a5: 5d                      |]       |   pop    ebp
@@ -669,22 +637,14 @@ using this memory map for disassembly:
 
 0x010013eb: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x010013eb
 
-0x010013f0: ================================== Function (function call) unknown name
-0x010013f0: Called by 0x01001493
-0x010013f0: This function calls 0x010013f2
+0x010013f0: ================================== Function (function call, pattern) unknown name
+0x010013f0: Called by 0x01001491
+0x010013f0: This function calls 0x010012e3
+0x010013f0: This function calls 0x010018f4
 
 0x010013f0: Basic block reasons: entry point, graph-1
-0x010013f0: Predecessor blocks: 0x01001493<<Func>>
+0x010013f0: Predecessor blocks: 0x01001491<<Func>>
 0x010013f0: 8b ff                   |..      |   mov    edi, edi
-0x010013f0: Successor blocks: 0x010013f2<<Func>>
-
-0x010013f2: ================================== Function (pattern) unknown name
-0x010013f2: Called by 0x010013f0
-0x010013f2: This function calls 0x010012e3
-0x010013f2: This function calls 0x010018f4
-
-0x010013f2: Basic block reasons: entry point, graph-1
-0x010013f2: Predecessor blocks: 0x010013f0<<Func>>
 0x010013f2: 55                      |U       |   push   ebp
 0x010013f3: 8b ec                   |..      |   mov    ebp, esp
 0x010013f5: 83 ec 0c                |...     |   sub    esp, 0x0c
@@ -703,8 +663,8 @@ using this memory map for disassembly:
 0x0100140a: Successor blocks: 0x0100140c, 0x0100141c
 
 0x0100140c: Basic block reasons: graph-1
-0x0100140c: Predecessor blocks: 0x010013f2
-0x0100140c: Dominator block: 0x010013f2
+0x0100140c: Predecessor blocks: 0x010013f0
+0x0100140c: Dominator block: 0x010013f0
 0x0100140c: 49                      |I       |   dec    ecx
 0x0100140d: 49                      |I       |   dec    ecx
 0x0100140e: 74 0c                   |t.      |   je     0x0100141c<<Insn>>
@@ -720,8 +680,8 @@ using this memory map for disassembly:
 0x01001418: Successor blocks: 0x0100141c
 
 0x0100141c: Basic block reasons: graph-1
-0x0100141c: Predecessor blocks: 0x010013f2, 0x0100140c, 0x01001410
-0x0100141c: Dominator block: 0x010013f2
+0x0100141c: Predecessor blocks: 0x010013f0, 0x0100140c, 0x01001410
+0x0100141c: Dominator block: 0x010013f0
 0x0100141c: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
 0x0100141f: 8b 46 04                |.F.     |   mov    eax, DWORD PTR ds:[esi + 0x04]
 0x01001422: 85 c0                   |..      |   test   eax, eax
@@ -850,24 +810,16 @@ using this memory map for disassembly:
 
 0x0100148c: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x0100148c
 
-0x01001491: ================================== Function (function call) unknown name
-0x01001491: Called by 0x010015f0
-0x01001491: Called by 0x010016ae
-0x01001491: This function calls 0x01001493
+0x01001491: ================================== Function (function call, pattern) unknown name
+0x01001491: Called by 0x010015ee
+0x01001491: Called by 0x010016ac
+0x01001491: This function calls 0x0100117f
+0x01001491: This function calls 0x010011fa
+0x01001491: This function calls 0x010013f0
 
 0x01001491: Basic block reasons: entry point, graph-1
 0x01001491: Predecessor blocks: 0x0100168b<<Func>>, 0x01001720<<Func>>
 0x01001491: 8b ff                   |..      |   mov    edi, edi
-0x01001491: Successor blocks: 0x01001493<<Func>>
-
-0x01001493: ================================== Function (pattern) unknown name
-0x01001493: Called by 0x01001491
-0x01001493: This function calls 0x0100117f
-0x01001493: This function calls 0x010011fa
-0x01001493: This function calls 0x010013f0
-
-0x01001493: Basic block reasons: entry point, graph-1
-0x01001493: Predecessor blocks: 0x01001491<<Func>>
 0x01001493: 55                      |U       |   push   ebp
 0x01001494: 8b ec                   |..      |   mov    ebp, esp
 0x01001496: 83 ec 0c                |...     |   sub    esp, 0x0c
@@ -890,8 +842,8 @@ using this memory map for disassembly:
 0x010014b9: Successor blocks: 0x010013f0<<Func>>, 0x010014be
 
 0x010014be: Basic block reasons: graph-1
-0x010014be: Predecessor blocks: 0x01001493
-0x010014be: Dominator block: 0x01001493
+0x010014be: Predecessor blocks: 0x01001491
+0x010014be: Dominator block: 0x01001491
 0x010014be: 8b f8                   |..      |   mov    edi, eax
 0x010014c0: 85 ff                   |..      |   test   edi, edi
 0x010014c2: 74 2d                   |t-      |   je     0x010014f1<<Insn>>
@@ -973,22 +925,14 @@ using this memory map for disassembly:
 
 0x01001504: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x01001504
 
-0x01001509: ================================== Function (function call) unknown name
-0x01001509: Called by 0x010015f0
-0x01001509: This function calls 0x0100150b
+0x01001509: ================================== Function (function call, pattern) unknown name
+0x01001509: Called by 0x010015ee
+0x01001509: This function calls 0x0100117f
+0x01001509: This function calls 0x010011fa
 
 0x01001509: Basic block reasons: entry point, graph-1
 0x01001509: Predecessor blocks: 0x01001676<<Func>>, 0x01001699<<Func>>
 0x01001509: 8b ff                   |..      |   mov    edi, edi
-0x01001509: Successor blocks: 0x0100150b<<Func>>
-
-0x0100150b: ================================== Function (pattern) unknown name
-0x0100150b: Called by 0x01001509
-0x0100150b: This function calls 0x0100117f
-0x0100150b: This function calls 0x010011fa
-
-0x0100150b: Basic block reasons: entry point, graph-1
-0x0100150b: Predecessor blocks: 0x01001509<<Func>>
 0x0100150b: 55                      |U       |   push   ebp
 0x0100150c: 8b ec                   |..      |   mov    ebp, esp
 0x0100150e: 83 ec 0c                |...     |   sub    esp, 0x0c
@@ -999,8 +943,8 @@ using this memory map for disassembly:
 0x01001516: Successor blocks: 0x0100151c, unknown
 
 0x0100151c: Basic block reasons: graph-1
-0x0100151c: Predecessor blocks: 0x0100150b
-0x0100151c: Dominator block: 0x0100150b
+0x0100151c: Predecessor blocks: 0x01001509
+0x0100151c: Dominator block: 0x01001509
 0x0100151c: 83 f8 01                |...     |   cmp    eax, 0x01
 0x0100151f: 74 3e                   |t>      |   je     0x0100155f<<Insn>>
 0x0100151f: Successor blocks: 0x01001521, 0x0100155f
@@ -1209,27 +1153,19 @@ using this memory map for disassembly:
 
 0x010015e9: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x010015e9
 
-0x010015ee: ================================== Function (function call) unknown name
+0x010015ee: ================================== Function (function call, pattern) unknown name
 0x010015ee: Called by 0x01001774
-0x010015ee: This function calls 0x010015f0
+0x010015ee: This function calls 0x01001169
+0x010015ee: This function calls 0x0100117f
+0x010015ee: This function calls 0x010011fa
+0x010015ee: This function calls 0x0100133f
+0x010015ee: This function calls 0x01001491
+0x010015ee: This function calls 0x01001509
+0x010015ee: This function calls 0x010016ac
 
 0x010015ee: Basic block reasons: entry point, graph-1
 0x010015ee: Predecessor blocks: 0x01001880<<Func>>
 0x010015ee: 8b ff                   |..      |   mov    edi, edi
-0x010015ee: Successor blocks: 0x010015f0<<Func>>
-
-0x010015f0: ================================== Function (pattern) unknown name
-0x010015f0: Called by 0x010015ee
-0x010015f0: This function calls 0x01001169
-0x010015f0: This function calls 0x0100117f
-0x010015f0: This function calls 0x010011fa
-0x010015f0: This function calls 0x0100133f
-0x010015f0: This function calls 0x01001491
-0x010015f0: This function calls 0x01001509
-0x010015f0: This function calls 0x010016ac
-
-0x010015f0: Basic block reasons: entry point, graph-1
-0x010015f0: Predecessor blocks: 0x010015ee<<Func>>
 0x010015f0: 55                      |U       |   push   ebp
 0x010015f1: 8b ec                   |..      |   mov    ebp, esp
 0x010015f3: 83 ec 10                |...     |   sub    esp, 0x10
@@ -1238,8 +1174,8 @@ using this memory map for disassembly:
 0x010015fb: Successor blocks: 0x010011fa<<Func>>, 0x01001600
 
 0x01001600: Basic block reasons: graph-1
-0x01001600: Predecessor blocks: 0x010015f0
-0x01001600: Dominator block: 0x010015f0
+0x01001600: Predecessor blocks: 0x010015ee
+0x01001600: Dominator block: 0x010015ee
 0x01001600: c7 04 24 11 27 00 00    |..$.'.. |   mov    DWORD PTR ss:[esp], 0x00002711<10001>
 0x01001607: e8 ee fb ff ff          |.....   |   call   0x010011fa<<Func>>
 0x01001607: Successor blocks: 0x010011fa<<Func>>, 0x0100160c
@@ -1419,24 +1355,16 @@ using this memory map for disassembly:
 
 0x010016a7: cc cc cc cc cc          |.....   | 5-byte padding beginning at 0x010016a7
 
-0x010016ac: ================================== Function (function call) unknown name
-0x010016ac: Called by 0x010015f0
-0x010016ac: This function calls 0x010016ae
+0x010016ac: ================================== Function (function call, pattern) unknown name
+0x010016ac: Called by 0x010015ee
+0x010016ac: This function calls 0x010011fa
+0x010016ac: This function calls 0x01001491
+0x010016ac: This function calls 0x010018f4
+0x010016ac: This function calls 0x01001900
 
 0x010016ac: Basic block reasons: entry point, graph-1
 0x010016ac: Predecessor blocks: 0x01001636<<Func>>
 0x010016ac: 8b ff                   |..      |   mov    edi, edi
-0x010016ac: Successor blocks: 0x010016ae<<Func>>
-
-0x010016ae: ================================== Function (pattern) unknown name
-0x010016ae: Called by 0x010016ac
-0x010016ae: This function calls 0x010011fa
-0x010016ae: This function calls 0x01001491
-0x010016ae: This function calls 0x010018f4
-0x010016ae: This function calls 0x01001900
-
-0x010016ae: Basic block reasons: entry point, graph-1
-0x010016ae: Predecessor blocks: 0x010016ac<<Func>>
 0x010016ae: 55                      |U       |   push   ebp
 0x010016af: 8b ec                   |..      |   mov    ebp, esp
 0x010016b1: 83 ec 18                |...     |   sub    esp, 0x18
@@ -1455,8 +1383,8 @@ using this memory map for disassembly:
 0x010016cb: Successor blocks: 0x010016d0, 0x01001900<<Func>>
 
 0x010016d0: Basic block reasons: graph-1
-0x010016d0: Predecessor blocks: 0x010016ae
-0x010016d0: Dominator block: 0x010016ae
+0x010016d0: Predecessor blocks: 0x010016ac
+0x010016d0: Dominator block: 0x010016ac
 0x010016d0: 8b f8                   |..      |   mov    edi, eax
 0x010016d2: 85 ff                   |..      |   test   edi, edi
 0x010016d4: 59                      |Y       |   pop    ecx
@@ -1875,9 +1803,9 @@ using this memory map for disassembly:
 0x010018ee: cc cc cc cc cc cc       |......  | 6-byte padding beginning at 0x010018ee
 
 0x010018f4: ================================== Function (function call, thunk) unknown name
-0x010018f4: Called by 0x010011fc
-0x010018f4: Called by 0x010013f2
-0x010018f4: Called by 0x010016ae
+0x010018f4: Called by 0x010011fa
+0x010018f4: Called by 0x010013f0
+0x010018f4: Called by 0x010016ac
 
 0x010018f4: Basic block reasons: entry point, graph-1
 0x010018f4: Predecessor blocks: 0x010012d0<<Func>>, 0x0100146c<<Func>>, 0x0100147b<<Func>>, 0x0100174d<<Func>>
@@ -1887,12 +1815,12 @@ using this memory map for disassembly:
 0x010018fa: cc cc cc cc cc cc       |......  | 6-byte padding beginning at 0x010018fa
 
 0x01001900: ================================== Function (function call, thunk) unknown name
-0x01001900: Called by 0x010011fc
-0x01001900: Called by 0x010012e5
-0x01001900: Called by 0x010016ae
+0x01001900: Called by 0x010011fa
+0x01001900: Called by 0x010012e3
+0x01001900: Called by 0x010016ac
 
 0x01001900: Basic block reasons: entry point, graph-1
-0x01001900: Predecessor blocks: 0x0100129b<<Func>>, 0x0100130c<<Func>>, 0x010016ae<<Func>>
+0x01001900: Predecessor blocks: 0x0100129b<<Func>>, 0x0100130c<<Func>>, 0x010016ac<<Func>>
 0x01001900: ff 25 a8 41 00 01       |.%.A..  |   jmp    DWORD PTR ds:[0x010041a8<IAT+0x9c>]
 0x01001900: Successor blocks: none
 

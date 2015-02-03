@@ -5,6 +5,7 @@
 #include <boost/graph/graphviz.hpp>
 using namespace std;
 using namespace boost; 
+using namespace SPRAY;
 
 namespace CodeThorn {
 
@@ -58,7 +59,7 @@ class Edge {
  bool operator<(const Edge& e1, const Edge& e2);
 
 /*! 
-  * \author Markus Schordan
+ * \author Markus Schordan
   * \date 2012.
  */
  class Flow : public set<Edge> {
@@ -104,6 +105,9 @@ class Edge {
   typedef graph_traits<FlowGraph>::vertex_descriptor vertex_t;
   typedef graph_traits<FlowGraph>::edge_descriptor edge_t;
   void boostify();
+  //! inverts all edges in the graph. The root node is updated. This operation is only successful if
+  //! the original graph had exactly one final node (which becomes the start node of the new graph).
+  Flow reverseFlow();
 
  private:
   bool _dotOptionDisplayLabel;

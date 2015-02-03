@@ -263,6 +263,7 @@ SgAsmX86Instruction::getSuccessors(bool *complete) {
         case x86_unknown_instruction: {
             /* Instructions having unknown successors */
             *complete = false;
+            break;
         }
 
         default: {
