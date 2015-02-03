@@ -577,8 +577,13 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
   assert (src != NULL);
   assert (desc != NULL);
 
-  desc->address = src->address; 
-  desc->size= src->size; 
+  desc->address = src->address;
+  int i;
+  for(i = 0; i < desc->nDim; ++i) 
+  {
+    desc->size[i]= src->size[i]; 
+    desc->offset[i]= src->offset[i]; 
+  }
   desc->dev_address = src ->dev_address; 
    // we do not want to inherit the copy directions or map-type of parent DDE's variable
    // OpenMP 4.0 has the reuse enclosing data and discard map-type rule.
@@ -650,7 +655,7 @@ void xomp_deviceDataEnvironmentEnter()
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
-void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int size)
+void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
 {
   void * dev_address = NULL; 
   assert (orig_var != NULL);
@@ -661,23 +666,40 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int size)
   for (i = 0; i < DDE_tail->inherited_variable_count; i++)
   {
     struct XOMP_mapped_variable* cur_var = DDE_tail->inherited_variables + i; 
-    if (cur_var->address == orig_var && cur_var->size == size)
+    if (cur_var->address == orig_var)
     {
       dev_address = cur_var-> dev_address;
-      break;
+      int i;
+      int matched = 1;
+      for(i=0; i < cur_var->nDim; ++i)
+      {
+        if(cur_var->size[i] != size[i])
+           matched = 0;
+      }
+      if(matched)
+        break;
     }
   } 
   return dev_address; 
 }
 
 //! Add a newly mapped variable into the current DDE's new variable list
-void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyTo, bool copyFrom)
+void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, void * dev_addr, bool copyTo, bool copyFrom)
 {
   // TODO: sanity check to avoid add duplicated variable or inheritable variable
   assert ( DDE_tail != NULL );
   struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + DDE_tail->new_variable_count ;
-  mapped_var-> address = var_addr; 
-  mapped_var-> size = var_size; 
+  mapped_var-> address = var_addr;
+  mapped_var-> size = (int*)malloc(sizeof(int) * nDim); 
+  mapped_var-> offset = (int*)malloc(sizeof(int) * nDim); 
+  mapped_var-> DimSize = (int*)malloc(sizeof(int) * nDim); 
+  int i;
+  for(i = 0; i < nDim; ++i)
+  { 
+    mapped_var-> size[i] = var_size[i]; 
+    mapped_var-> offset[i] = var_offset[i]; 
+    mapped_var-> DimSize[i] = var_dim[i]; 
+  }
   mapped_var-> dev_address = dev_addr; 
   mapped_var-> copyTo= copyTo; 
   mapped_var-> copyFrom= copyFrom; 
@@ -685,20 +707,60 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void *
   DDE_tail->new_variable_count ++;
 }
 
-// All-in-one function to prepare device variable
-void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int vsize, bool copy_into, bool copy_back)
+void xomp_memdistHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
 {
+  int offset_src;
+  int offset_dest;
+  assert (ndim <= 3);
+  if(ndim == 1)
+  {
+     xomp_memcpyHostToDevice((char*)dest, (char*)src+voffset[0], vsize[0]);
+  }
+  else  if(ndim == 2)
+  {
+     int j;
+     for(j=0; j < vsize[1]; ++j)
+     {
+       offset_src  = voffset[1] + (j + voffset[1]) * vDimSize[0];
+       offset_dest = j  * vsize[0];
+       xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+     } 
+  }
+  else  if(ndim == 3)
+  {
+     int i,j;
+     for(j=0; j < vsize[2]; ++j)
+     {
+       offset_src = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2])) - vDimSize[0];
+       offset_dest = vsize[1] * (j * vsize[2]) - vsize[0];
+       for(i=0; i < vsize[1]; ++i)
+       {
+         offset_src  += vDimSize[0];
+         offset_dest += vsize[0];
+         xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       } 
+     }
+  }
+}
+
+// All-in-one function to prepare device variable
+void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int* vsize, int* voffset, int* vDimSize, int nDim, bool copy_into, bool copy_back)
+{
+  // currently only handle one dimension
   void* dev_var_address = NULL; 
   dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (original_variable_address, vsize);
   if (dev_var_address == NULL)
   {
-    dev_var_address = xomp_deviceMalloc(vsize);
-    xomp_deviceDataEnvironmentAddVariable (original_variable_address, vsize, dev_var_address, copy_into, copy_back);
+    dev_var_address = xomp_deviceMalloc(vsize[0]);
+    xomp_deviceDataEnvironmentAddVariable (original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
 
     // The spec says : reuse enclosing data and discard map-type rule.
     // So map-type only matters when no-reuse happens
     if (copy_into)
-      xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize);
+    {
+      xomp_memdistHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim);
+    //  xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize[0]);
+    }
   }
   assert (dev_var_address != NULL);
   return dev_var_address;
@@ -718,7 +780,7 @@ void xomp_deviceDataEnvironmentExit()
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memcpyDeviceToHost(((void *)mapped_var->address),((const void *)mapped_var->dev_address), mapped_var->size);
+       xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
     xomp_freeDevice (dev_address); //TODO Will this work without type info? Looks so!
