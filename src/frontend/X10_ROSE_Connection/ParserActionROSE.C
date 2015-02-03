@@ -4260,7 +4260,7 @@ JNIEXPORT void JNICALL cactionBinaryExpressionEnd(JNIEnv *env, jclass, jint x10_
         printf ("Build an Binary Expression End \n");
 
     // These are the operator code values directly from ECJ.
-    enum ops {
+    enum ops {                                          // NO_STRINGIFY
         ERROR_OPERATOR       = 0, // This is not a ECJ value 
         AND                  = 2,
         DIVIDE               = 9, 
