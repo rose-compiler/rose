@@ -256,17 +256,17 @@ string get_type_name(SgType* t)
                 ROSE_ASSERT(mod_type != NULL);
                 string res;
                 bool unparse_base = true;
-                if ( isSgReferenceType(mod_type->get_base_type()) ||
-                     isSgPointerType(mod_type->get_base_type()) ) {
-                    res = get_type_name(mod_type->get_base_type());
-                    unparse_base = false;
-                }
                 if (mod_type->get_typeModifier().isOpenclGlobal())
                     res = "__global " + res;
                 if (mod_type->get_typeModifier().isOpenclLocal())
                     res = "__local " + res;
                 if (mod_type->get_typeModifier().isOpenclConstant())
                     res = "__constant " + res;
+                if ( isSgReferenceType(mod_type->get_base_type()) ||
+                     isSgPointerType(mod_type->get_base_type()) ) {
+                    res = get_type_name(mod_type->get_base_type());
+                    unparse_base = false;
+                }
                 if (mod_type->get_typeModifier().haveAddressSpace()) {
                     std::ostringstream outstr;
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
@@ -442,7 +442,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      if (nodeReferenceToType != NULL)
         {
 #if 0
-          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
           if (i != SgNode::get_globalTypeNameMap().end())
@@ -1639,7 +1639,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
 #if 0
-                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %zu \n",classdefn_stmt, classdefn_stmt->get_members().size());
+                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %" PRIuPTR " \n",classdefn_stmt, classdefn_stmt->get_members().size());
 #endif
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
                     while (pp != classdefn_stmt->get_members().end())
@@ -2402,15 +2402,16 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
      if (info.isTypeFirstPart())
         {
        // Print the base type if this has to come first
-          if (btype_first)
-               unparseType(mod_type->get_base_type(), info);
-
           if (mod_type->get_typeModifier().isOpenclGlobal())
               curprint ( "__global ");
           if (mod_type->get_typeModifier().isOpenclLocal())
               curprint ( "__local ");
           if (mod_type->get_typeModifier().isOpenclConstant())
               curprint ( "__constant ");
+
+          if (btype_first)
+               unparseType(mod_type->get_base_type(), info);
+
           if (mod_type->get_typeModifier().haveAddressSpace()) {
               std::ostringstream outstr;
               outstr << "__attribute__((address_space(" << mod_type->get_typeModifier().get_address_space_value() << ")))";

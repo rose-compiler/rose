@@ -1172,21 +1172,21 @@ BEGIN NORMAL;
 
 <NORMAL>"<" {
 #if DEBUG_LEX_PASS
-     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+     printf("%s is a whitespace token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
 #endif
      add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
    }
 
 <NORMAL>">" {
 #if DEBUG_LEX_PASS
-     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+     printf("%s is a whitespace token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
 #endif
      add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_SYNTAX);
    }
 
 <NORMAL>{whitespace} { 
 #if DEBUG_LEX_PASS
-     printf("%s is a whitespace token (length = %zu) \n",yytext,strlen(yytext));
+     printf("%s is a whitespace token (length = %" PRIuPTR ") \n",yytext,strlen(yytext));
 #endif
      add_token(yytext,preproc_line_num,preproc_column_num,C_CXX_WHITESPACE);
    }
@@ -1604,7 +1604,7 @@ ROSEAttributesList *getPreprocessorDirectives( std::string fileName )
 
 #if DEBUG_LEX_PASS
      printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream() = %p \n",preprocessorInfoList->get_rawTokenStream());
-     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %zu \n",preprocessorInfoList->get_rawTokenStream()->size());
+     printf ("In getPreprocessorDirectives(): preprocessorInfoList->get_rawTokenStream()->size() = %" PRIuPTR " \n",preprocessorInfoList->get_rawTokenStream()->size());
 #endif
 
      return preprocessorInfoList;

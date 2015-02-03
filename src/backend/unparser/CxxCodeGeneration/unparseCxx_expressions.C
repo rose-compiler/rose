@@ -174,10 +174,10 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
           case TYPE_TRAIT_BUILTIN_OPERATOR: { unparseTypeTraitBuiltinOperator(expr, info); break; }
 
        // DQ (9/4/2013): Added support for compund literals.
-          case COMPOUND_LITERAL:               { unparseCompoundLiteral(expr, info); break; }
+          case COMPOUND_LITERAL:        { unparseCompoundLiteral(expr, info); break; }
 
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
-          case TYPE_EXPRESSION:  { unparseTypeExpression(expr, info); break; }
+          case TYPE_EXPRESSION:         { unparseTypeExpression(expr, info); break; }
 
        // DQ (7/24/2014): Added more general support for type expressions (required for C11 generic macro support.
           case FUNCTION_PARAMETER_REF_EXP:  { unparseFunctionParameterRefExpression(expr, info); break; }
@@ -191,6 +191,8 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
 
+          case LAMBDA_EXP:              { unparseLambdaExpression(expr, info); break; }
+
           default:
              {
             // printf ("Default reached in switch statement for unparsing expressions! expr = %p = %s \n",expr,expr->class_name().c_str());
@@ -199,6 +201,112 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
                break;
              }
         }
+   }
+
+
+void
+Unparse_ExprStmt::unparseLambdaExpression(SgExpression* expr, SgUnparse_Info& info)
+   {
+     SgLambdaExp* lambdaExp = isSgLambdaExp(expr);
+     ROSE_ASSERT(lambdaExp != NULL);
+
+     curprint(" [");
+
+     if (lambdaExp->get_capture_default() == true)
+        {
+          curprint("=,");
+        }
+
+     if (lambdaExp->get_default_is_by_reference() == true)
+        {
+          curprint("&,");
+        }
+
+     ROSE_ASSERT(lambdaExp->get_lambda_capture_list() != NULL);
+     size_t bound = lambdaExp->get_lambda_capture_list()->get_capture_list().size();
+     for (size_t i = 0; i < bound; i++)
+        {
+          SgLambdaCapture* lambdaCapture = lambdaExp->get_lambda_capture_list()->get_capture_list()[i];
+          ROSE_ASSERT(lambdaCapture != NULL);
+
+          if (lambdaCapture->get_capture_variable() != NULL)
+             {
+               if (lambdaCapture->get_capture_by_reference() == true)
+                  {
+                    curprint("&");
+                  }
+
+               unp->u_exprStmt->unparseExpression(lambdaCapture->get_capture_variable(),info);
+             }
+
+          if (i < bound-1)
+             {
+               curprint(",");
+             }
+        }
+     curprint("] ");
+
+     SgFunctionDeclaration* lambdaFunction =  lambdaExp->get_lambda_function();
+     ROSE_ASSERT(lambdaFunction != NULL);
+     ROSE_ASSERT(lambdaFunction->get_firstNondefiningDeclaration() != NULL);
+     ROSE_ASSERT(lambdaFunction->get_definingDeclaration() != NULL);
+
+#if 0
+     printf ("lambdaFunction                                    = %p = %s \n",lambdaFunction,lambdaFunction->class_name().c_str());
+     printf ("lambdaFunction->get_firstNondefiningDeclaration() = %p = %s \n",lambdaFunction->get_firstNondefiningDeclaration(),lambdaFunction->get_firstNondefiningDeclaration()->class_name().c_str());
+     printf ("lambdaFunction->get_definingDeclaration()         = %p = %s \n",lambdaFunction->get_definingDeclaration(),lambdaFunction->get_definingDeclaration()->class_name().c_str());
+#endif
+
+     if (lambdaExp->get_has_parameter_decl() == true)
+        {
+       // Output the function parameters
+          curprint("(");
+          unparseFunctionArgs(lambdaFunction,info);
+          curprint(")");
+        }
+
+     if (lambdaExp->get_is_mutable() == true)
+        {
+          curprint(" mutable ");
+        }
+
+#if 0
+     if (lambdaFunction->get_is_mutable() == true)
+        {
+          curprint(" throw() ");
+        }
+#else
+#if 0
+     printf ("Lambda function throw keyword not yet supported! \n");
+#endif
+#endif
+
+     if (lambdaExp->get_explicit_return_type() == true)
+        {
+          curprint(" -> ");
+          ROSE_ASSERT(lambdaFunction != NULL);
+          ROSE_ASSERT(lambdaFunction->get_type() != NULL);
+          SgType* returnType = lambdaFunction->get_type()->get_return_type();
+          ROSE_ASSERT(returnType != NULL);
+          unp->u_type->unparseType(returnType,info);
+        }
+
+
+
+  // Use a new SgUnparse_Info object to support supression of the SgThisExp where compiler generated.
+  // This is required because the function is internally a member function but can't explicitly refer 
+  // to a "this" expression.
+     SgUnparse_Info ninfo(info);
+     ninfo.set_supressImplicitThisOperator();
+
+  // Output the function definition
+     ROSE_ASSERT(lambdaFunction->get_definition() != NULL);
+     unparseStatement(lambdaFunction->get_definition()->get_body(), ninfo);
+
+#if 0
+     printf ("Exitng as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
@@ -335,7 +443,7 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
      if (!templateArgListPtr.empty())
         {
-       // printf ("templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
+       // printf ("templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
 
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -491,7 +599,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #endif
 
 #if 0
-     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
 
      SgUnparse_Info ninfo(info);
@@ -520,7 +628,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -1236,8 +1344,10 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 #endif
             // unp->u_exprStmt->unparseExpression(templateArgument->get_expression(),newInfo);
 
+            // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-               curprint("/* varadic template argument */ ...");
+            // curprint("/* varadic template argument */ ...");
+               curprint("/* varadic template argument */ ");
 
                break;
              }
@@ -1881,7 +1991,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         {
        // See test2005_02.C for an example of where this logic is required fro constructors.
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
-          printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+          printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
@@ -2072,7 +2182,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                     SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                     printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
-                    printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+                    printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
                     printf ("In unparseFuncRef(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
@@ -2195,18 +2305,18 @@ partOfArrowOperatorChain(SgExpression* expr)
 
   // DQ (4/9/2013): This fails for test2006_92.C.
   // ROSE_ASSERT(possibleFunctionCall != NULL);
-     bool parent_is_a_function_call                    = false;
-     bool parent_function_call_uses_operator_syntax    = false;
+//   bool parent_is_a_function_call                    = false;
+//   bool parent_function_call_uses_operator_syntax    = false;
      bool parent_function_is_overloaded_arrow_operator = false;
-     bool parent_function_call_is_compiler_generated   = false;
+//   bool parent_function_call_is_compiler_generated   = false;
      if (possibleParentFunctionCall != NULL)
         {
           SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleParentFunctionCall);
           if (functionCallExp != NULL)
              {
-               parent_is_a_function_call                  = true;
-               parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-               parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
+//             parent_is_a_function_call                  = true;
+//             parent_function_call_uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
+//             parent_function_call_is_compiler_generated = functionCallExp->isCompilerGenerated();
 #if 1
             // DQ (7/5/2014): Add code to detect use of overloaded "operator->" as a special case.
                SgExpression* rhs = binary_op->get_rhs_operand();
@@ -2300,11 +2410,11 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      ROSE_ASSERT(possibleFunctionCall != NULL);
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
      bool uses_operator_syntax = false;
-     bool is_compiler_generated = false;
+//   bool is_compiler_generated = false;
      if (functionCallExp != NULL)
         {
           uses_operator_syntax  = functionCallExp->get_uses_operator_syntax();
-          is_compiler_generated = functionCallExp->isCompilerGenerated();
+//        is_compiler_generated = functionCallExp->isCompilerGenerated();
 
 #if 0
        // DQ (8/28/2014): It is a bug in GNU 4.4.7 to use the non-operator syntax of a user-defined conversion operator.
@@ -2398,7 +2508,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      if (nodeReferenceToFunction != NULL)
         {
 #if 0
-          printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+          printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
@@ -2840,7 +2950,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if 0
                               printf ("In unparseMFuncRefSupport(): nameQualifier = %s \n",nameQualifier.str());
-                              printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+                              printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
                               printf ("In unparseMFuncRefSupport(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                            // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
@@ -2945,7 +3055,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          curprint("/* In unparseMFuncRefSupport(): function name is NOT output */ \n");
 #endif
 #if MFuncRefSupport_DEBUG
-                         printf ("In unparseMFuncRefSupport(): mfd->get_args().size() = %zu \n",mfd->get_args().size());
+                         printf ("In unparseMFuncRefSupport(): mfd->get_args().size() = %" PRIuPTR " \n",mfd->get_args().size());
 #endif
                       // DQ (11/17/2013): We need to distinguish between unary and binary overloaded operators (for member 
                       // functions a unary operator has zero arguments, and a binary operator has a single argument).
@@ -3163,7 +3273,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 #endif
 #if 0
           printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
-          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %" PRIuPTR " \n",str_val->get_value().length());
           printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
 #endif
           curprint(s);
@@ -5545,7 +5655,7 @@ containsIncludeDirective(SgLocatedNode* locatedNode)
 static void
 removeIncludeDirective(SgLocatedNode* locatedNode)
    {
-     bool returnResult = false;
+//   bool returnResult = false;
      AttachedPreprocessingInfoType* comments = locatedNode->getAttachedPreprocessingInfo();
      AttachedPreprocessingInfoType includeDirectiveList;
 
@@ -5578,7 +5688,7 @@ removeIncludeDirective(SgLocatedNode* locatedNode)
 #if 0
                          printf ("Found cpp include directive \n");
 #endif
-                         returnResult = true;
+//                       returnResult = true;
                          includeDirectiveList.push_back(*i);
                        }
                   }
@@ -5747,7 +5857,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
      for (size_t index = 0; index < list.size(); index ++)
         {
-          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%zu] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
+          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%" PRIuPTR "] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
           printOutComments(list[index]);
         }
 #endif
@@ -5787,7 +5897,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
             else
              {
 #if 0
-               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
+               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %" PRIuPTR "] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
 #endif
@@ -5838,7 +5948,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
             else
              {
 #if 0
-               printf ("In unparseCompInit(): (comp_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",comp_init,index,list[index],list[index]->class_name().c_str());
+               printf ("In unparseCompInit(): (comp_init = %p) list[index = %" PRIuPTR "] = %p = %s is from another file so its subtree will not be output in the generated code \n",comp_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
         }
@@ -5884,7 +5994,7 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
             // trim the trailing "A::" from the end of the nameQualifier.
                size_t temp_nameQualifier_last  = temp_nameQualifier.find_last_not_of("::");
 #if 0
-               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %zu \n",temp_nameQualifier_last);
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %" PRIuPTR " \n",temp_nameQualifier_last);
 #endif
                if (temp_nameQualifier_last != string::npos)
                   {
