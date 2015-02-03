@@ -2114,7 +2114,7 @@ trace_back_through_parent_scopes_lookup_variable_symbol(const SgName & variableN
           }
 
           if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-               printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified variable (for %s) in any outer symbol table: astNameStack.size() = %zu \n",variableName.str(),astNameStack.size());
+               printf ("Warning: trace_back_through_parent_scopes_lookup_variable_symbol(): could not locate the specified variable (for %s) in any outer symbol table: astNameStack.size() = %" PRIuPTR " \n",variableName.str(),astNameStack.size());
        // printf ("astNameStack.front() = %p = %s = %s \n",astNameStack.front(),astNameStack.front()->class_name().c_str(),SageInterface::get_name(astNameStack.front()).c_str());
 
           if (astNameStack.empty() == false)
@@ -2336,7 +2336,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                printf ("structureScope = %p = %s name = %s \n",structureScope,structureScope->class_name().c_str(),name.c_str());
 #endif
 #if 0
-               printf ("Output the symbol table at the structureScope (debugging i = %zu): \n",i);
+               printf ("Output the symbol table at the structureScope (debugging i = %" PRIuPTR "): \n",i);
                structureScope->get_symbol_table()->print("Output the symbol table at the current scope");
 #endif
 
@@ -2429,7 +2429,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                            else
                             {
 #if 0
-                               printf ("########## This is reference has not been seen previously: name = %s qualifiedNameList.size() = %zu \n",name.c_str(),qualifiedNameList.size());
+                               printf ("########## This is reference has not been seen previously: name = %s qualifiedNameList.size() = %" PRIuPTR " \n",name.c_str(),qualifiedNameList.size());
 #endif
                            // Nothing was found, so we can return variableSymbol as NULL.
                            // Note: types could be buried (modules defined in modules), but they are not likely a part of multi-part references (in Fortran).
@@ -2476,13 +2476,13 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
                  // This should be the last iteration!
                     if (i != (qualifiedNameList.size() - 1))
                        {
-                         printf ("WARNING: i != (qualifiedNameList.size() - 1) for LANL_POP code only! (i = %zu qualifiedNameList.size() = %zu) \n",i,qualifiedNameList.size());
+                         printf ("WARNING: i != (qualifiedNameList.size() - 1) for LANL_POP code only! (i = %" PRIuPTR " qualifiedNameList.size() = %" PRIuPTR ") \n",i,qualifiedNameList.size());
 
                       // Debugging...
                          printf ("Leaving trace_back_through_parent_scopes_lookup_member_variable_symbol(): \n");
                          for (size_t i = 0; i < returnSymbolList.size(); i++)
                             {
-                               printf ("--- returnSymbolList[%zu] = %p = %s = %s \n",i,returnSymbolList[i],returnSymbolList[i]->class_name().c_str(),returnSymbolList[i]->get_name().str());
+                               printf ("--- returnSymbolList[%" PRIuPTR "] = %p = %s = %s \n",i,returnSymbolList[i],returnSymbolList[i]->class_name().c_str(),returnSymbolList[i]->get_name().str());
                             }
                        }
 
@@ -2506,7 +2506,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
           printf ("Leaving trace_back_through_parent_scopes_lookup_member_variable_symbol(): \n");
           for (size_t i = 0; i < returnSymbolList.size(); i++)
              {
-               printf ("--- returnSymbolList[%zu] = %p = %s \n",i,returnSymbolList[i],returnSymbolList[i]->class_name().c_str());
+               printf ("--- returnSymbolList[%" PRIuPTR "] = %p = %s \n",i,returnSymbolList[i],returnSymbolList[i]->class_name().c_str());
              }
         }
 #endif
@@ -2524,7 +2524,7 @@ trace_back_through_parent_scopes_lookup_member_variable_symbol(const std::vector
   // if (returnSymbolList.size() != qualifiedNameList.size())
      if (qualifiedNameList.size() > 1 && returnSymbolList.size() != qualifiedNameList.size())
         {
-          printf ("Error: returnSymbolList.size() = %zu qualifiedNameList.size() = %zu \n",returnSymbolList.size(),qualifiedNameList.size());
+          printf ("Error: returnSymbolList.size() = %" PRIuPTR " qualifiedNameList.size() = %" PRIuPTR " \n",returnSymbolList.size(),qualifiedNameList.size());
         }
   // ROSE_ASSERT(returnSymbolList.size() == qualifiedNameList.size());
      ROSE_ASSERT(qualifiedNameList.size() == 1 || returnSymbolList.size() == qualifiedNameList.size());
@@ -2556,7 +2556,7 @@ buildImplicitVariableDeclaration( const SgName & variableName )
      astTypeStack.push_front(intrinsicType);
 
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-          printf ("Calling buildVariableDeclaration to build an implicitly defined variable: name = %s type = %s astNameStack.size() = %zu \n",variableName.str(),intrinsicType->class_name().c_str(),astNameStack.size());
+          printf ("Calling buildVariableDeclaration to build an implicitly defined variable: name = %s type = %s astNameStack.size() = %" PRIuPTR " \n",variableName.str(),intrinsicType->class_name().c_str(),astNameStack.size());
 
      ROSE_ASSERT(astTypeStack.empty() == false);
      SgType* type = astTypeStack.front();
@@ -2874,7 +2874,7 @@ buildDerivedTypeStatementAndDefinition (string name, SgScopeStatement* scope)
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
              {
-            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
+            // printf ("astNameStack.size() = %" PRIuPTR " \n",astNameStack.size());
                if (astNameStack.empty() == false)
                   {
                     string type_attribute_string = astNameStack.front()->text;
@@ -2975,7 +2975,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      ROSE_ASSERT(variableDeclaration != NULL);
 
      if ( SgProject::get_verbose() > DEBUG_COMMENT_LEVEL )
-          printf ("In buildVariableDeclaration(): variableDeclaration = %p being built astNodeStack.size() = %zu \n",variableDeclaration,astNodeStack.size());
+          printf ("In buildVariableDeclaration(): variableDeclaration = %p being built astNodeStack.size() = %" PRIuPTR " \n",variableDeclaration,astNodeStack.size());
 
   // Now the toke list has all the tokens from the start to the end (except the type, which never was a token, not sure what to do about that).
   // setSourcePosition(variableDeclaration,tokenList);
@@ -2997,7 +2997,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
      ROSE_ASSERT(variableDeclaration->get_variables().empty() == true);
      ROSE_ASSERT(astNodeStack.empty() == false);
 
-  // printf ("astNodeStack.size() = %zu \n",astNodeStack.size());
+  // printf ("astNodeStack.size() = %" PRIuPTR " \n",astNodeStack.size());
 
      SgInitializedName* firstInitializedNameForSourcePosition = NULL;
      SgInitializedName* lastInitializedNameForSourcePosition  = NULL;
@@ -3146,7 +3146,7 @@ buildVariableDeclaration (Token_t * label, bool buildingImplicitVariable )
 
           if (astAttributeSpecStack.front() == AttrSpec_PUBLIC || astAttributeSpecStack.front() == AttrSpec_PRIVATE)
              {
-            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
+            // printf ("astNameStack.size() = %" PRIuPTR " \n",astNameStack.size());
                if (astNameStack.empty() == false)
                   {
                     string type_attribute_string = astNameStack.front()->text;
@@ -3942,7 +3942,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
 
      attributeSpecificationStatement->set_attribute_kind(kind);
 
-  // printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %zu \n",astNameStack.size());
+  // printf ("In buildAttributeSpecificationStatement(): astNameStack.size() = %" PRIuPTR " \n",astNameStack.size());
 
   // DQ (9/11/2010): Added support for F2003 "protected" statement.
      if (kind == SgAttributeSpecificationStatement::e_protectedStatement)
@@ -4018,7 +4018,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
             // printf ("Push %s onto attributeSpecificationStatement name_list \n",name.c_str());
                attributeSpecificationStatement->get_name_list().push_back(name);
 
-            // printf ("In loop: attributeSpecificationStatement->get_name_list().size() = %zu \n",attributeSpecificationStatement->get_name_list().size());
+            // printf ("In loop: attributeSpecificationStatement->get_name_list().size() = %" PRIuPTR " \n",attributeSpecificationStatement->get_name_list().size());
 
                astNameStack.pop_front();
              }
@@ -4100,7 +4100,7 @@ buildAttributeSpecificationStatement ( SgAttributeSpecificationStatement::attrib
              }
         }
 
-  // printf ("attributeSpecificationStatement->get_name_list().size() = %zu \n",attributeSpecificationStatement->get_name_list().size());
+  // printf ("attributeSpecificationStatement->get_name_list().size() = %" PRIuPTR " \n",attributeSpecificationStatement->get_name_list().size());
 
      astScopeStack.front()->append_statement(attributeSpecificationStatement);     
 
@@ -4158,7 +4158,7 @@ setDeclarationAttributeSpec ( SgDeclarationStatement* variableDeclaration, int a
        // This maps to a C/C++ modifier setting.
           case AttrSpec_PUBLIC:
                variableDeclaration->get_declarationModifier().get_accessModifier().setPublic();
-            // printf ("astNameStack.size() = %zu \n",astNameStack.size());
+            // printf ("astNameStack.size() = %" PRIuPTR " \n",astNameStack.size());
 
             // DQ (10/24/2010): Verify that the name on the astNameStack is "PUBLIC" and then pop the token from the stack.
 
@@ -4742,7 +4742,7 @@ generateFunctionCall( Token_t* nameToken )
      printf ("\n\n\n\n############### In generateFunctionCall() ################# \n");
      for (size_t i = 0; i < argList.size(); i++)
         {
-          printf ("argList[%zu] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
+          printf ("argList[%" PRIuPTR "] = %s \n",i,SageInterface::get_name(argList[i]).c_str());
         }
 #endif
 #if 0
@@ -6055,13 +6055,13 @@ fixup_forward_type_declarations()
 #endif
      Rose_STL_Container<SgNode*> typeList = NodeQuery::generateListOfTypes(currentScope);
 #if 0
-     printf ("typeList.size() = %zu \n",typeList.size());
+     printf ("typeList.size() = %" PRIuPTR " \n",typeList.size());
 #endif
 
      for (size_t i = 0; i < typeList.size(); i++)
         {
 #if 0
-          printf ("typeList[%zu] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
+          printf ("typeList[%" PRIuPTR "] = %p = %s \n",i,typeList[i],typeList[i]->class_name().c_str());
 #endif
           SgTypeDefault* defaultType = isSgTypeDefault(typeList[i]);
           if (defaultType != NULL)
@@ -6121,7 +6121,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
   // variable it will be on top of the stack.  so this might be a better thing to handle AFTER the
   // initializer has been consumed...
      vector<int> savedAttributes;
-  // printf ("In processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("In processAttributeSpecStack(): astAttributeSpecStack.size() = %" PRIuPTR " \n",astAttributeSpecStack.size());
 
      std::list<int>::iterator i = astAttributeSpecStack.begin();
   // while (astAttributeSpecStack.empty() == false)
@@ -6437,7 +6437,7 @@ processAttributeSpecStack(bool hasArraySpec, bool hasInitialization)
              }
         }
 
-  // printf ("Leaving processAttributeSpecStack(): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("Leaving processAttributeSpecStack(): astAttributeSpecStack.size() = %" PRIuPTR " \n",astAttributeSpecStack.size());
    }
 
 
@@ -6478,7 +6478,7 @@ convertBaseTypeToArrayWhereAppropriate()
   // DQ (1/20/2011): Refactored the code below so it could be called from R443 as well as R504.
      bool hasArraySpec      = false;
      bool hasInitialization = false;
-  // printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()) calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %zu \n",astAttributeSpecStack.size());
+  // printf ("In convertBaseTypeToArrayWhereAppropriate (called by R504 (list__begin) c_action_entity_decl_list__begin()) calling processAttributeSpecStack(false,false): astAttributeSpecStack.size() = %" PRIuPTR " \n",astAttributeSpecStack.size());
      processAttributeSpecStack(hasArraySpec,hasInitialization);
 
   // Note that if there are array or pointer attributes to process then processAttributeSpecStack() 

@@ -375,10 +375,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
-     if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
+  // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
+     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 0
+#if 1
           printf ("Building token stream mapping map! \n");
 #endif
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -389,11 +390,11 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #if 1
           if ( SgProject::get_verbose() > 0 )
              {
-               printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %zu \n",file->get_token_list().size());
+               printf ("In Unparser::unparseFile(): SgTokenPtrList token_list: token_list.size() = %" PRIuPTR " \n",file->get_token_list().size());
              }
 #endif
 
-#if 0
+#if 1
           printf ("DONE: Building token stream mapping map! \n");
 #endif
         }
@@ -667,7 +668,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
      string fileNameForTokenStream = file->getFileName();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -675,7 +676,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
 #if 0
-     printf ("filePreprocInfo->getList().size() = %zu \n",filePreprocInfo->getList().size());
+     printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
   // We should at least have the current files CPP/Comment/Token information (even if it is an empty file).
@@ -685,7 +686,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
 #if 0
-     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
+     printf ("Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      while (map_iterator != filePreprocInfo->getList().end())
         {
@@ -694,7 +695,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
           map_iterator++;
         }
-     printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %zu) \n",filePreprocInfo->getList().size());
+     printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
 #endif
 
   // std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = mapFilenameToAttributes.find(fileNameForTokenStream);
@@ -720,7 +721,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
 #if 0
      printf ("Output token list (number of CPP directives and comments = %d): \n",existingListOfAttributes->size());
-     printf ("Output token list (number of tokens = %zu): \n",tokenList.size());
+     printf ("Output token list (number of tokens = %" PRIuPTR "): \n",tokenList.size());
 #endif
 
 #if 0
@@ -833,7 +834,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // DQ (10/27/2013): Use a different filename for the output of the raw token stream (not associated with individual statements).
      string outputFilename = "rose_raw_tokens_" + file->get_sourceFileNameWithoutPath();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFileUsingTokenStream(): Output tokens stream to file: %s \n",outputFilename.c_str());
 #endif
 
@@ -2480,6 +2481,15 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
        // And finally we need to close the file (to flush everything out!)
           ROSE_OutputFile.close();
 
+       // Invoke post-output user-defined callbacks if any.  We must pass the absolute output name because the build system may
+       // have changed directories by now and the callback might need to know how this name compares to the top of the build
+       // tree.
+          if (unparseHelp != NULL) {
+              rose::FileSystem::Path fullOutputName = rose::FileSystem::makeAbsolute(outputFilename);
+              UnparseFormatHelp::PostOutputCallback::Args args(file, fullOutputName);
+              unparseHelp->postOutputCallbacks.apply(true, args);
+          }
+
        // DQ (3/19/2014): If -rose:noclobber_if_different_output, then test the generated file against the original file.
           if (trigger_file_comparision == true)
              {
@@ -2511,7 +2521,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
 
                     if ( SgProject::get_verbose() > 0 )
                        {
-                         printf ("   --- files are the same size = %zu (checking contents) \n",filesize);
+                         printf ("   --- files are the same size = %" PRIuPTR " (checking contents) \n",filesize);
                        }
 
                      size_t counter = 0;
@@ -2539,7 +2549,7 @@ unparseFile ( SgFile* file, UnparseFormatHelp *unparseHelp, UnparseDelegate* unp
                        {
                          size_t saved_filesize       = file_size(saved_output_file);
                          size_t alternative_filesize = file_size(alternative_output_file);
-                         printf ("   --- files are not the same size saved_filesize = %zu alternative_filesize = %zu \n",saved_filesize,alternative_filesize);
+                         printf ("   --- files are not the same size saved_filesize = %" PRIuPTR " alternative_filesize = %" PRIuPTR " \n",saved_filesize,alternative_filesize);
                        }
 
                     files_are_identical = false;

@@ -1,3 +1,5 @@
+#include "sage3basic.h"
+
 #include "SRecord.h"
 #include "Diagnostics.h"
 #include "StringUtility.h"

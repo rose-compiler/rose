@@ -1,0 +1,93 @@
+/*!
+ * \defgroup grp_rose ROSE
+ * @{
+ *   \defgroup grp_dlx DLX
+ *   @{
+ *     \defgroup grp_dlx_core Core
+ *     @{
+ *       \defgroup grp_dlx_core_directives Directives
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_core_frontend Frontend
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_core_compiler Compiler
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_core_specific DLX Specific
+ *       @{
+ *       @}
+ *     @}
+ *     \defgroup grp_dlx_openacc OpenACC
+ *     @{
+ *       \defgroup grp_dlx_openacc_language Language
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_openacc_directives Directives
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_openacc_frontend Frontend
+ *       @{
+ *       @}
+ *       \defgroup grp_dlx_openacc_compiler Compiler
+ *       @{
+ *       @}
+ *     @}
+ *   @}
+ * @}
+ */
+
+/*!
+ * \addtogroup grp_dlx
+ * @{
+ *
+ * \section sec_dlx_intro Introduction
+ *
+ * Directive-based Language eXtension (DLX) is a module to build parser and compiler for language constructed around compiler directives.
+ * It is a template library.
+ *
+ * \subsection sec_dlx_core_language Language
+ *
+ * \todo Provide a formal definition a what a language is...
+ *
+ * \subsection sec_dlx_core_directives Directives
+ *
+ * \note Details: \ref grp_dlx_core_directives
+ *
+ * \subsection sec_dlx_core_frontend Frontend
+ *
+ * \note Details: \ref grp_dlx_core_frontend
+ *
+ * \subsection sec_dlx_core_compiler Compiler
+ *
+ * \note Details: \ref grp_dlx_core_compiler
+ *
+ * \subsection sec_dlx_core_specific DLX Specific
+ *
+ * \note Details: \ref grp_dlx_core_specific
+ *
+ * Some methods and structures have to be implemented specifically for each DLX.
+ *
+ * \section sec_dlx_openacc OpenACC
+ * 
+ * Implementation of OpenACC 2.0. Description of the language and needed template specialization. 
+ *
+ * \subsection sec_dlx_openacc_language Language
+ *
+ * \note Details: \ref grp_dlx_openacc_language
+ *
+ * \subsection sec_dlx_openacc_directives Directives
+ *
+ * \note Details: \ref grp_dlx_openacc_directives
+ *
+ * \subsection sec_dlx_openacc_frontend Frontend
+ *
+ * \note Details: \ref grp_dlx_openacc_frontend
+ *
+ * \subsection sec_dlx_openacc_compiler Compiler
+ *
+ * \note Details: \ref grp_dlx_openacc_compiler
+ *
+ * @}
+ */
+

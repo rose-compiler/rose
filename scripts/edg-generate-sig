@@ -110,7 +110,7 @@ find=
 fetch="$manifest"
 generate=
 hasher=generate_edg_hash
-ntries=500
+ntries=1
 progress=
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -286,10 +286,38 @@ else
     # Diagnostics
     if [ "$sig" = "" ]; then
 	(
-	    echo "$myname: could not find a reasonable version of the EDG binary."
-	    echo "$myname: include the following information in your bug report:"
+	    if [ $ntries -eq 1 ]; then
+		echo "$myname: could not find an exact version of the EDG binary."
+	    else
+		echo "$myname: could not find a close enough version of the EDG binary."
+	    fi
+
+	    echo "EDG is the C/C++ compiler used by ROSE and is not distributed in"
+	    echo "source form unless you obtain a license from the Edison Design Group."
+	    echo "The ROSE team routinely compiles EDG and makes versions available for"
+	    echo "download and linking with ROSE.  The binary version of EDG must be"
+	    echo "compatible with the version of ROSE with which it is being linked, and"
+	    echo "we use hashes to compute the EDG binary version number from its ROSE"
+	    echo -n "dependecies. "
+
+	    if [ $ntries -eq 1 ]; then
+		echo "We could not find a version of EDG that is an exact match"
+		echo "for your version of ROSE.  If you're feeling lucky, you can try extending"
+		echo "the search and choosing a close match, but there is no guarantee that"
+		echo "the chosen binary EDG will be compatible with your version of ROSE--be"
+		echo "ready for strange behavior, core dumps, etc.  You can perform an extended"
+		echo "search by using the --ntries=N switch for this script ($myname)."
+	    else
+		echo "We could not find a close version of EDG within $ntries tries."
+	    fi
+
+
+	    echo "$myname: the following information is relevant:"
 	    echo "    Time          = $(date)"
 	    echo "    ROSE src dir  = $ROSE_SRC"
+	    echo -n "    nTries        = $ntries"
+	    [ $ntries -eq 1 ] || echo -n " (caveat emptor)"
+	    echo
 	    if is_git_repo; then
 		echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
 	    else

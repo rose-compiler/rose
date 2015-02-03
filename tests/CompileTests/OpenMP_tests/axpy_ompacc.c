@@ -1,4 +1,5 @@
 // Experimental test input for Accelerator directives
+//  simplest scalar*vector operations
 // Liao 1/15/2013
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,7 +34,7 @@ void axpy_ompacc(REAL* x, REAL* y, int n, REAL a) {
    we also need to let the runtime know what the target device is so the runtime will chose the right function to call if the code are generated 
    #pragma omp target device (gpu0) map(x, y) 
 */
-#pragma omp target device (gpu0) map(inout: y[0:n]) map(in: x[0:n],a,n)
+#pragma omp target device (gpu0) map(tofrom: y[0:n]) map(to: x[0:n],a,n)
 #pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
     y[i] += a * x[i];

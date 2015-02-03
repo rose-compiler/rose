@@ -20,9 +20,12 @@ namespace Diagnostics {
 Sawyer::Message::DestinationPtr destination;
 Sawyer::Message::PrefixPtr mprefix;
 Sawyer::Message::Facility mlog;
+static bool isInitialized_ = false;
 
 void initialize() {
     if (!isInitialized()) {
+        isInitialized_ = true;
+
         // Allow libsawyer to initialize itself if necessary.  Among other things, this makes Saywer::Message::merr actually
         // point to something.  This is also the place where one might want to assign some other message plumbing to
         // rose::Diagnostics::destination (such as sending messages to additional locations).
@@ -66,7 +69,7 @@ void initialize() {
 }
 
 bool isInitialized() {
-    return destination!=NULL;
+    return isInitialized_;
 }
 
 StreamPrintf mfprintf(std::ostream &stream) {

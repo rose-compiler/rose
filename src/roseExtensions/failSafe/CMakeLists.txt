@@ -1,4 +1,4 @@
-include_directories(${KDE4_INCLUDES} ${KDE4_INCLUDE_DIR} ${QT_INCLUDES} )
+add_library(failsafe OBJECT failSafePragma.C)
+add_dependencies(failsafe rosetta_generated)
 
 install(FILES failSafePragma.h DESTINATION ${INCLUDE_INSTALL_DIR})
-

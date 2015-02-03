@@ -200,8 +200,8 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2010_151.f90 \
      test2010_152.f90 \
      test2010_153.f90 \
-     test2010_154.f90 \
      test2010_155.f90 \
+     test2010_154.f90 \
      test2010_156.f90 \
      test2010_158.f90 \
      test2010_159.f90 \
@@ -297,6 +297,9 @@ F90_TESTCODES_REQUIRED_TO_PASS = \
      test2011_Rice_wrong-func-type.f90 \
      test2011_Rice_wrong-func-type-2.f90 \
      canonicalExample.f90 
+
+# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this seperately).
+#    test2010_154.f90 
 
 
 # SKW 8/21/2011: these test fails with gfortran 4.1.2, but there is no 'ROSE_USING_GFORTRAN_VERSION_4_1_2'
@@ -722,6 +725,8 @@ F90_TESTCODES_REQUIRED_TO_PASS += \
      test2011_75.f90 \
      test2011_76.f90 
 
+# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this seperately).
+#    test2010_107.f90 
 
 # DQ (3/4/13): Failing test for edg4x branch
 # test2010_48.f90 
@@ -782,6 +787,9 @@ F03_TESTCODES_REQUIRED_TO_PASS += \
      test2010_106.f03 \
      test2010_171.f03 \
      test2011_74.f03
+
+# DQ (11/11/2014): These test fail due to changes to support C++11 work (need to look into this seperately).
+#     test2010_106.f03 
 
 
 # #######################

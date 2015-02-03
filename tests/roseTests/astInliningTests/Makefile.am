@@ -13,18 +13,43 @@ inlineEverything_SOURCES = inlineEverything.C
 inlineEverything_CPPFLAGS = $(ROSE_INCLUDES)
 inlineEverything_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
-inlineEverything_specimens = 									\
-   pass16.C pass1.C pass2.C pass3.C pass4.C pass5.C pass6.C pass7.C pass8.C pass9.C pass10.C	\
-   pass11.C pass12.C pass13.C pass14.C pass15.C pass17.C pass18.C pass19.C pass20.C pass21.C
-EXTRA_DIST += $(inlineEverything_specimens)
+# The specimens are named so that the number between the "_" and next "." is the number of function calls that
+# we expect this specimen to inline.
+inlineEverything_specimens =			\
+	specimen01_1.C				\
+	specimen02_1.C				\
+	specimen03_1.C				\
+	specimen04_1.C				\
+	specimen05_1.C				\
+	specimen06_1.C				\
+	specimen07_1.C				\
+	specimen08_1.C				\
+	specimen09_1.C				\
+	specimen10_1.C				\
+	specimen11_3.C				\
+	specimen12_3.C				\
+	specimen13_1.C				\
+	specimen14_1.C				\
+	specimen15_1.C				\
+	specimen16_4.C				\
+	specimen17_10.C				\
+	specimen18_1.C				\
+	specimen19_1.C				\
+	specimen20_1.C				\
+	specimen21_1.C				\
+	specimen22_1.C
+
+EXTRA_DIST += $(inlineEverything_specimens) inlineEverything.conf
 
 inlineEverything_test_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_specimens)))
 TEST_TARGETS += $(inlineEverything_test_targets)
-$(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything
-	@$(RTH_RUN) \
-		USE_SUBDIR=yes \
-		CMD="$$(pwd)/inlineEverything -rose:verbose 0 $(abspath $<) -o a.out && ./a.out" \
-		$(TEST_EXIT_STATUS) $@
+$(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything inlineEverything.conf
+	@$(RTH_RUN)												\
+		TITLE="inlineEverything $< [$@]"								\
+		SPECIMEN="$(abspath $<)"									\
+		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
+		TRANSLATOR="$$(pwd)/inlineEverything"								\
+		$(srcdir)/inlineEverything.conf $@
 
 #------------------------------------------------------------------------------------------------------------------------
 # additional tests not executed by "make check"

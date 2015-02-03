@@ -1,3 +1,37 @@
+add_library(midend_binary OBJECT
+  RoseBin_CallGraphAnalysis.cpp
+  RoseBin_FlowAnalysis.cpp
+  RoseBin_DataFlowAnalysis.cpp
+  RoseBin_CompareAnalysis.cpp
+  RoseBin_printInstructions.cpp
+  RoseBin_ControlFlowAnalysis.cpp
+  dataflowanalyses/RoseBin_Emulate.cpp
+  dataflowanalyses/RoseBin_DataFlowAbstract.cpp
+  dataflowanalyses/RoseBin_VariableAnalysis.cpp
+  dataflowanalyses/InterruptAnalysis.cpp
+  dataflowanalyses/RoseBin_DefUseAnalysis.cpp
+  instructionSemantics/BaseSemantics2.C
+  instructionSemantics/DataFlowSemantics2.C
+  instructionSemantics/DispatcherM68k.C
+  instructionSemantics/DispatcherPowerpc.C
+  instructionSemantics/DispatcherX86.C
+  instructionSemantics/findConstants.C
+  instructionSemantics/FindRegisterDefs.C
+  instructionSemantics/InsnSemanticsExpr.C
+  instructionSemantics/IntervalSemantics.C
+  instructionSemantics/IntervalSemantics2.C
+  instructionSemantics/LlvmSemantics2.C
+  instructionSemantics/NullSemantics2.C
+  instructionSemantics/MultiSemantics2.C
+  instructionSemantics/PartialSymbolicSemantics.C
+  instructionSemantics/PartialSymbolicSemantics2.C
+  instructionSemantics/SMTSolver.C
+  instructionSemantics/SymbolicSemantics.C
+  instructionSemantics/SymbolicSemantics2.C
+  instructionSemantics/TraceSemantics2.C
+  instructionSemantics/YicesSolver.C)
+add_dependencies(midend_binary rosetta_generated generate_stringify)
+
 ########### install files ###############
 
 install(
@@ -10,7 +44,9 @@ install(
     BinaryDataFlow.h
     BinaryDominance.h
     BinaryFunctionCall.h
+    BinaryMagic.h
     BinaryPointerDetection.h
+    BinaryString.h
     BinaryTaintedFlow.h
     dataflowanalyses/InterruptAnalysis.h
     dataflowanalyses/RoseBin_DataFlowAbstract.h

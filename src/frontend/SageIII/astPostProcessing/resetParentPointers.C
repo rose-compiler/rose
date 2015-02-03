@@ -466,7 +466,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
   // scopes.  This is handled in the get_scope() function which is called by the get_qualified_name() function.
 
   // ROSE_ASSERT(templateArgListPtr != NULL);
-  // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %zu ### \n",templateArgListPtr->size());
+  // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %" PRIuPTR " ### \n",templateArgListPtr->size());
      SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
      while (i != templateArgListPtr.end())
         {
@@ -694,7 +694,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
           i++;
         }
 
-  // printf ("### Leaving resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %zu ### \n",templateArgListPtr->size());
+  // printf ("### Leaving resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %" PRIuPTR " ### \n",templateArgListPtr->size());
    }
 
 

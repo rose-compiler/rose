@@ -23,7 +23,7 @@ RiscOperators::LinePrefix::operator()(FILE *f)
         sep = " ";
     }
     if (f && cur_insn) {
-        fprintf(f, "%sinsn@%s[%zu]", sep, StringUtility::addrToString(cur_insn->get_address()).c_str(), ninsns-1);
+        fprintf(f, "%sinsn@%s[%" PRIuPTR "]", sep, StringUtility::addrToString(cur_insn->get_address()).c_str(), ninsns-1);
         sep = " ";
     }
     if (*sep)
@@ -57,7 +57,7 @@ const BaseSemantics::SValuePtr &
 RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, const std::string &what)
 {
     if (a==NULL || a->get_width()!=nbits)
-        mesg.mesg("expected %s to be %zu bits wide; see documentation for this RISC operator!",
+        mesg.mesg("expected %s to be %" PRIuPTR " bits wide; see documentation for this RISC operator!",
                   (what.empty()?std::string("result"):what).c_str(), nbits);
     return a;
 }
@@ -99,7 +99,7 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
                       const BaseSemantics::SValuePtr &c, size_t d)
 {
     check_subdomain();
-    mesg.multipart(operator_name, "%s(%s, %s, %s, %zu)",
+    mesg.multipart(operator_name, "%s(%s, %s, %s, %" PRIuPTR ")",
                    operator_name.c_str(), register_name(a).c_str(), toString(b).c_str(), toString(c).c_str(), d);
 }
 
@@ -123,14 +123,14 @@ RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn)
 void
 RiscOperators::before(const std::string &operator_name, size_t a)
 {
-    mesg.multipart(operator_name, "%s(%zu)", operator_name.c_str(), a);
+    mesg.multipart(operator_name, "%s(%" PRIuPTR ")", operator_name.c_str(), a);
     check_subdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, size_t a, uint64_t b)
 {
-    mesg.multipart(operator_name, "%s(%zu, %"PRIu64")", operator_name.c_str(), a, b);
+    mesg.multipart(operator_name, "%s(%" PRIuPTR ", %"PRIu64")", operator_name.c_str(), a, b);
     check_subdomain();
 }
 
@@ -144,14 +144,14 @@ RiscOperators::before(const std::string &operator_name, const BaseSemantics::SVa
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b)
 {
-    mesg.multipart(operator_name, "%s(%s, %zu)", operator_name.c_str(), toString(a).c_str(), b);
+    mesg.multipart(operator_name, "%s(%s, %" PRIuPTR ")", operator_name.c_str(), toString(a).c_str(), b);
     check_subdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b, size_t c)
 {
-    mesg.multipart(operator_name, "%s(%s, %zu, %zu)", operator_name.c_str(), toString(a).c_str(), b, c);
+    mesg.multipart(operator_name, "%s(%s, %" PRIuPTR ", %" PRIuPTR ")", operator_name.c_str(), toString(a).c_str(), b, c);
     check_subdomain();
 }
 

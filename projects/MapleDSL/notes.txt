@@ -1,0 +1,16 @@
+
+The file Lap2D_example.mw is the Maple worksheet.
+It can be read using "xmaple"
+
+I have read in Lap2D_example.mw and generated a
+file: Lap2D_example.txt, which I hope will be 
+useful as a template for the Maple DSL work.
+
+While in xmaple I was able to generate the
+C code and Fortran code for the associated 
+discretization.  
+
+The goal is to generate Maple code from ROSE
+and for the 2D laplacian this would be:
+   Lap2D := w -> DPDMx(w)+DPDMy(w):
+

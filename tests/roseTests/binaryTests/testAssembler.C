@@ -78,6 +78,13 @@ assemble_all(SgAsmInterpretation *interp)
     delete assembler;
 }
 
+class MyUnparser: public AsmUnparser {
+public:
+    MyUnparser() {
+        insn_callbacks.pre.erase(&insnStackDelta);
+    }
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -122,7 +129,7 @@ main(int argc, char *argv[])
     for (size_t i=0; i<interps.size(); ++i) {
         std::cout <<"\n\n\n==================== Interpretation Listing ====================\n\n";
         interps[i]->get_map()->dump(stdout);
-        AsmUnparser unparser;
+        MyUnparser unparser;
         unparser.set_organization(AsmUnparser::ORGANIZED_BY_ADDRESS);
         unparser.unparse(std::cout, interps[i]);
         assemble_all(interps[i]);

@@ -160,6 +160,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               break;
                             }
 
+                      // DQ (11/10/2014): Added support for templated typedef symbols.
+                         case V_SgTemplateTypedefSymbol:
+
                          case V_SgEnumSymbol:
                          case V_SgVariableSymbol:
                          case V_SgTemplateClassSymbol:
@@ -206,6 +209,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                               } // end for
                               break;
                            }
+
+
 #if 0 // uniform handling by code above now
                          case V_SgEnumSymbol:
                             {
@@ -450,14 +455,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
           printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
 #endif
 #if ALIAS_SYMBOL_DEBUGGING
-          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %zu \n",mangledNamespaceName.str(),namespaceMap.size());
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %" PRIuPTR " \n",mangledNamespaceName.str(),namespaceMap.size());
 #endif
           std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
           if (i != namespaceMap.end())
              {
                std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %zu \n",namespaceVector.size());
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %" PRIuPTR " \n",namespaceVector.size());
 #endif
             // Testing each entry...
                for (size_t j = 0; j < namespaceVector.size(); j++)
@@ -587,7 +592,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #error "DEAD CODE"
 
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("namespaceMap.size() = %zu \n",namespaceMap.size());
+               printf ("namespaceMap.size() = %" PRIuPTR " \n",namespaceMap.size());
 #endif
              }
         }

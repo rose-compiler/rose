@@ -81,7 +81,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
             } else {
                 result = StringUtility::numberToString(v);
             }
-            if (labels) {
+            if (expr->get_comment().empty() && labels) {
                 AsmUnparser::LabelMap::const_iterator li = labels->find(v);
                 if (li!=labels->end())
                     result = StringUtility::appendAsmComment(result, li->second);
@@ -93,6 +93,7 @@ static std::string unparsePowerpcExpression(SgAsmExpression* expr, const AsmUnpa
         }
     }
     result = StringUtility::appendAsmComment(result, expr->get_replacement());
+    result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }
 

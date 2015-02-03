@@ -205,7 +205,7 @@ MangledNameMapTraversal::shareableIRnode ( const SgNode* node )
 void
 MangledNameMapTraversal::displayMagledNameMap ( MangledNameMapTraversal::MangledNameMapType & m )
    {
-     printf ("In MangledNameMapTraversal::displayMagledNameMap(): size() = %zu \n",m.size());
+     printf ("In MangledNameMapTraversal::displayMagledNameMap(): size() = %" PRIuPTR " \n",m.size());
      MangledNameMapType::iterator i = m.begin();
      while (i != m.end())
         {

@@ -1,3 +1,4 @@
+// Naive version without any optimizations
 #include <stdio.h>
 #include <math.h>
 #include <assert.h>
@@ -194,16 +195,16 @@ void jacobi( )
     /* Copy new solution into old */
 // Must split the omp for into two parallel for regions since the translation focuses on parallel to generate the outlined kernel
 // We need two CUDA kernels for implementing global synchronization so we have to have two omp parallel directives!!
-//#pragma omp target map(in:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
+//#pragma omp target map(to:n, m, omega, ax, ay, u[0:n][0:m],f[0:n][0:m]) map(alloc:uold[0:n][0:m])
 //#pragma omp parallel
 //    {
-#pragma omp target map(in:n, m, u[0:n][0:m]) map(out:uold[0:n][0:m])
+#pragma omp target map(to:n, m, u[0:n][0:m]) map(from:uold[0:n][0:m])
 #pragma omp parallel for private(j,i)
       for(i=0;i<n;i++)   
         for(j=0;j<m;j++)
           uold[i][j] = u[i][j]; 
 
-#pragma omp target map(in:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(out:u[0:n][0:m])
+#pragma omp target map(to:n, m, omega, ax, ay, b, f[0:n][0:m], uold[0:n][0:m]) map(from:u[0:n][0:m])
 #pragma omp parallel for private(resid,j,i) reduction(+:error) // nowait
       for (i=1;i<(n-1);i++)  
         for (j=1;j<(m-1);j++)   

@@ -1551,6 +1551,14 @@ GrammarString::containerElementTypeString(Terminal & node) const
                returnString = "SgAsmElfSymverDefinedAux";
                goto done;
              }
+
+       // DQ (12/10/2014): We need to add this to C++11 IR node to support code generation for the ATerms support.
+          if (typenameString == "SgLambdaCapturePtrList")
+             {
+               returnString = "SgLambdaCapture";
+               goto done;
+             }
+
 #if 0
           if (typenameString == "SgAsmElfSymverDefinedAuxList")
              {

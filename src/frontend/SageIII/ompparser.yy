@@ -74,11 +74,12 @@ static SgNode* gNode;
 static SgExpression* current_exp = NULL;
 bool b_within_variable_list  = false;  // a flag to indicate if the program is now processing a list of variables
 
+// We now follow the OpenMP 4.0 standard's C-style array section syntax: [lower-bound:length] or just [length]
 // the latest variable symbol being parsed, used to help parsing the array dimensions associated with array symbol
 // such as a[0:n][0:m]
 static SgVariableSymbol* array_symbol; 
 static SgExpression* lower_exp = NULL;
-static SgExpression* upper_exp = NULL;
+static SgExpression* length_exp = NULL;
 
 %}
 
@@ -96,7 +97,7 @@ corresponding C type is union name defaults to YYSTYPE.
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
         FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
-        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC IN OUT INOUT
+        TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
         SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
         '(' ')' ',' ':' '+' '*' '-' '&' '^' '|' LOGAND LOGOR SHLEFT SHRIGHT PLUSPLUS MINUSMINUS PTR_TO '.'
         LE_OP2 GE_OP2 EQ_OP2 NE_OP2 RIGHT_ASSIGN2 LEFT_ASSIGN2 ADD_ASSIGN2
@@ -588,16 +589,16 @@ map_clause: MAP {
                        b_within_variable_list = true;
                        if (omptype == e_map) // map data directions are not explicitly specified
                        {
-                          ompattribute->setMapVariant(e_map_inout);  omptype = e_map_inout;  
+                          ompattribute->setMapVariant(e_map_tofrom);  omptype = e_map_tofrom;  
                        }
                      } 
                      variable_list ')' { b_within_variable_list =false;} 
 
-map_clause_optseq: /* empty, default to be inout */ { ompattribute->setMapVariant(e_map_inout);  omptype = e_map_inout; /*No effect here???*/ }
+map_clause_optseq: /* empty, default to be tofrom*/ { ompattribute->setMapVariant(e_map_tofrom);  omptype = e_map_tofrom; /*No effect here???*/ }
                     | ALLOC ':' { ompattribute->setMapVariant(e_map_alloc);  omptype = e_map_alloc; } 
-                    | IN     ':' { ompattribute->setMapVariant(e_map_in); omptype = e_map_in; } 
-                    | OUT    ':' { ompattribute->setMapVariant(e_map_out); omptype = e_map_out; } 
-                    | INOUT  ':' { ompattribute->setMapVariant(e_map_inout); omptype = e_map_inout; } 
+                    | TO     ':' { ompattribute->setMapVariant(e_map_to); omptype = e_map_to; } 
+                    | FROM    ':' { ompattribute->setMapVariant(e_map_from); omptype = e_map_from; } 
+                    | TOFROM  ':' { ompattribute->setMapVariant(e_map_tofrom); omptype = e_map_tofrom; } 
                     ;
 
 simd_directive: /* # pragma */ OMP SIMD
@@ -990,7 +991,7 @@ dimension_field_seq : dimension_field
                     | dimension_field_seq dimension_field
                     ;
 dimension_field: '[' expression {lower_exp = current_exp; } 
-                 ':' expression { upper_exp = current_exp;
+                 ':' expression { length_exp = current_exp;
                       assert (array_symbol != NULL);
                       SgType* t = array_symbol->get_type();
                       bool isPointer= (isSgPointerType(t) != NULL );
@@ -1000,10 +1001,12 @@ dimension_field: '[' expression {lower_exp = current_exp; }
                         std::cerr<<"Error. ompparser.yy expects a pointer or array type."<<std::endl;
                         std::cerr<<"while seeing "<<t->class_name()<<std::endl;
                       }
-                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, upper_exp));
+                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, length_exp));
                       } 
                   ']'
                ;
+
+               
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);
