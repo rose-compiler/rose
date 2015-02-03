@@ -95,7 +95,7 @@ corresponding C type is union name defaults to YYSTYPE.
 
 /*Some operators have a suffix 2 to avoid name conflicts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
-        FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
+        FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE DIST_DATA BLOCK DUPLICATE CYCLIC
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
         SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
@@ -974,19 +974,19 @@ variable_list : ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
               | variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
               ;
 
-/* in C++ (we use the C++ version) */ 
+/* */ 
 variable_list : id_expression_opt_dimension
               | variable_list ',' id_expression_opt_dimension
               ;
 
-id_expression_opt_dimension: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; } dimension_field_optseq
+id_expression_opt_dimension: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; } dimension_field_optseq id_expression_opt_dist_data
                            ;
 
 /* Parse optional dimension information associated with map(a[0:n][0:m]) Liao 1/22/2013 */
 dimension_field_optseq: /* empty */
                       | dimension_field_seq
                       ;
-
+/* sequence of dimension fields */
 dimension_field_seq : dimension_field
                     | dimension_field_seq dimension_field
                     ;
@@ -1005,8 +1005,25 @@ dimension_field: '[' expression {lower_exp = current_exp; }
                       } 
                   ']'
                ;
+/*Optional data distribution clause: dist_data(dim1_policy, dim2_policy, dim3_policy)*/
+/* mixed keyword or variable parsing is tricky TODO */
+id_expression_opt_dist_data: /* empty */
+                           | DIST_DATA '(' dist_policy_seq ')'
+                           ;
+/* one or more dimensions, each has a policy*/
+dist_policy_seq: dist_policy_per_dim
+               | dist_policy_seq ',' dist_policy_per_dim
+               ;
+/*reset current_exp to avoid leaving stale values*/
+dist_policy_per_dim: DUPLICATE  { ompattribute->appendDistDataPolicy(array_symbol, e_duplicate, NULL); }
+                   | BLOCK dist_size_opt { ompattribute->appendDistDataPolicy(array_symbol, e_block, current_exp );  current_exp = NULL;}
+                   | CYCLIC dist_size_opt { ompattribute->appendDistDataPolicy(array_symbol, e_cyclic, current_exp ); current_exp = NULL;}
+                   ;
+/*Optional (exp) for some policy */                   
+dist_size_opt: /*empty*/ {current_exp = NULL;}
+             | '(' expression ')'
+             ;
 
-               
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);
