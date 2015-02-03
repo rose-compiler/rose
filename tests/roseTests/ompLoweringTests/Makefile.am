@@ -52,6 +52,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         collapse_2.c\
         axpy_ompacc.c \
+        axpy_ompacc3.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
         jacobi-ompacc-v2.c \
@@ -330,6 +331,7 @@ $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 
 
 # a short cut to run omp-acc support test
+#	./axpy_ompacc3.out TODO: real data distribution example
 ompacc_test:$(PASSING_OMP_ACC_TEST_EXE_Files) $(PASSING_OMP_ACC_TEST_CXX_EXE_Files)
 ompacc_run: ompacc_test
 	./axpy_ompacc.out && \
