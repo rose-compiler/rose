@@ -9,16 +9,15 @@
 #include <string>
 #include <cmath>
 
-#include "SgNodeHelper.h"
-
-#include "Timer.h"
-
 #include "limits.h"
 #include "assert.h"
+
+#include "SgNodeHelper.h"
 
 #include "CommandLineOptions.h"
 #include "CodeGenerator.h"
 #include "Utility.h"
+#include "Timer.h"
 
 using namespace std;
 using namespace Backstroke;
@@ -30,18 +29,18 @@ int main(int argc, char* argv[]) {
     if(clo.isFinished()) {
       return 0;
     } else {
-      cout << "STATUS: Parsing and creating AST."<<endl;
+      if(clo.optionStatusMessages())
+        cout << "STATUS: Parsing and creating AST."<<endl;
       SgProject* root = frontend(argc,argv);
       if(clo.optionRoseAstCheck()) {
         AstTests::runAllTests(root);
       }
-      if(clo.optionShowRoseFileNodeInfo()) {
-        Utility::printRoseInfo(root);
-      }
-      cout << "STATUS: Generating reverse code."<<endl;
+      if(clo.optionStatusMessages())
+        cout << "STATUS: Generating reverse code."<<endl;
       Backstroke::CodeGenerator g(&clo);
       g.generateCode(root);
-      cout << "STATUS: finished."<<endl;
+      if(clo.optionStatusMessages())
+        cout << "STATUS: finished."<<endl;
     }
   } catch(char* str) {
     cerr << "Exception raised: " << str << endl;

@@ -1,4 +1,4 @@
-#include "runtime.h"
+#include "backstroke2-rt-lib.h"
 
 #include <pthread.h>
 #include <iostream>
@@ -214,3 +214,23 @@ bool Backstroke::RunTimeSystem::is_stack_ptr(void *ptr) {
 size_t Backstroke::RunTimeSystem::currentEventLength() {
   return currentEventRecord->stack_bitype.size();
 }
+
+void* Backstroke::RunTimeSystem::allocateArray(size_t arraySize, size_t arrayElementTypeSize) {
+  // allocate one additional size_t for size
+  size_t* rawMemory=static_cast<size_t*>(::operator new (static_cast<size_t>(arraySize*arrayElementTypeSize)+1));
+  // store size
+  *rawMemory=arraySize;
+  // return array-pointer (excluding size field)
+  void* arrayPointer=reinterpret_cast<void*>(rawMemory+1);
+  //cout<<"INFO: array pointer: "<<arrayPointer<<endl;
+  return arrayPointer;
+ }
+
+void Backstroke::RunTimeSystem::registerArrayDeallocation(void* rawMemoryPtr) {
+  // TODO: register array ptr (for deallocateArray-call in case of commit)
+}
+
+void Backstroke::RunTimeSystem::deallocateArray(void* rawMemoryPtr) {
+  ::operator delete[](rawMemoryPtr);
+}
+

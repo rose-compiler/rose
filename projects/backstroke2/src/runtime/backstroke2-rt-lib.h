@@ -1,5 +1,5 @@
-#ifndef BACKSTROKE_RUNTIMESYSTEM
-#define BACKSTROKE_RUNTIMESYSTEM
+#ifndef BACKSTROKE_RT_LIB
+#define BACKSTROKE_RT_LIB
 
 #include <stack>
 #include <queue>
@@ -9,7 +9,7 @@
 
 using namespace std;
 
-#include <ross.h>
+#include "ross.h"
 
 namespace Backstroke {
 
@@ -22,7 +22,7 @@ namespace Backstroke {
     tw_stime _simTime;
   };
   
-#include "runtime_macros.h"
+#include "backstroke2-rt-lib-macros.h"
 
 class RunTimeSystem {
  private:
@@ -107,6 +107,15 @@ class RunTimeSystem {
   uintptr_t prog_stack_bottom;
   uintptr_t prog_stack_local; // can be set to function stack (default: same as stack_bottom)
   uintptr_t prog_stack_max;
+
+  // alloc functions
+  void* allocateArray(size_t arraySize, size_t ArrayElementTypeSize);
+
+  // dealloc functions
+  // also requires callArrayElementDestructors(ArrayElementType* arrayPointer) to be called
+  void registerArrayDeallocation(void* rawMemoryPtr);
+  void deallocateArray(void* rawMemoryPtr);
+
 };
 
  typedef RunTimeSystem RunTimeStateStorage;
@@ -136,5 +145,24 @@ class RunTimeSystem {
  private:
    LpToRTSSMapping lp_ss_mapping;
  };
+
+// template function for array operator delete[]
+template <typename ArrayElementType>
+void callArrayElementDestructors(ArrayElementType* arrayPointer) {
+  // determine array size (platform specific)
+  std::size_t* rawMemory=reinterpret_cast<std::size_t*>(arrayPointer)-1;
+  std::size_t arraySize=*rawMemory;
+  //cout<<"INFO: determined array size: "<<arraySize<<endl;
+  if(arrayPointer != 0) {    
+    ArrayElementType *p = arrayPointer + arraySize;
+    while (p != arrayPointer)        
+      (--p)->~UserType();
+    //::operator delete [](rawMemory);
+  }
 }
+
+} // end of namespace Backstroke
+
+
+
 #endif
