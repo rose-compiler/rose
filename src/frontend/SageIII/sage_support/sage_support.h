@@ -14,7 +14,8 @@
  *  1. Move #includes into .cpp file if they are not needed here.
  *---------------------------------------------------------------------------*/
 // tps (01/14/2010) : Switching from rose.h to sage3.
-#include "sage3basic.h"
+// sage3basic.h should not be included by librose header files, only by .C files per policy. [Robb P. Matzke 2015-01-07]
+//#include "sage3basic.h"
 
 #include "rose_paths.h"
 #include "astPostProcessing.h"
