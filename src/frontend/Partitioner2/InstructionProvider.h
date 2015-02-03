@@ -66,7 +66,6 @@ public:
     void disableDisassembler() { useDisassembler_ = false; }
     /** @} */
 
-
     /** Returns the instruction at the specified virtual address, or null.
      *
      *  If the virtual address is non-executable then a null pointer is returned, otherwise either a valid instruction or an
@@ -74,6 +73,12 @@ public:
      *  disassembled, including the case when the first byte of a multi-byte instruction is executable but the remaining bytes
      *  are not executable. */
     SgAsmInstruction* operator[](rose_addr_t va) const;
+
+    /** Insert an instruction into the cache.
+     *
+     *  This instruction provider saves a pointer to the instruction without taking ownership.  If an instruction already
+     *  exists at the new instruction's address then the new instruction replaces the old instruction. */
+    void insert(SgAsmInstruction*);
 
     /** Returns the disassembler.
      *
