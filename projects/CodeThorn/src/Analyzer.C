@@ -1560,6 +1560,16 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   }
   // create empty state
   PState emptyPState;
+  // TODO1: add formal paramters of solo-function
+  // SgFunctionDefinition* startFunRoot: node of function
+  // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
+    VariableId varId=variableIdMapping.variableId(*i);
+    ROSE_ASSERT(varId.isValid());
+    // initialize all formal parameters of function (of extremal label) with top
+    emptyPState[varId]=AType::CppCapsuleConstIntLattice(AType::Top());
+  }
   const PState* emptyPStateStored=processNew(emptyPState);
   assert(emptyPStateStored);
   cout << "INIT: Empty state(stored): "<<emptyPStateStored->toString()<<endl;
@@ -1568,6 +1578,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
+
   EState estate(startLabel,emptyPStateStored,emptycsetstored);
   
   if(SgProject* project=isSgProject(root)) {
@@ -1596,10 +1607,6 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   } else {
     cout << "INIT: no global scope.";
   }    
-
-  // TODO1: add formal paramters of solo-function
-  // SgFunctionDefinition* startFunRoot: node of function
-  // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
 
   const EState* currentEState=processNew(estate);
   assert(currentEState);
