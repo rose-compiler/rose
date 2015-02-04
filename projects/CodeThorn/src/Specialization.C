@@ -5,6 +5,97 @@
 #include <map>
 
 using namespace std;
+using namespace SPRAY;
+
+ConstReporter::~ConstReporter() {
+}
+
+SpecializationConstReporter::SpecializationConstReporter(VariableIdMapping* variableIdMapping, VariableId var, int constInt) {
+    _variableIdMapping=variableIdMapping;
+    _variableId=var;
+    _constInt=constInt;
+  }
+
+VariableId SpecializationConstReporter::getVariableId() {
+  return _variableId;
+}
+
+bool SpecializationConstReporter::isConst(SgNode* node) {
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(node)) {
+    if(_variableIdMapping->variableId(varRefExp)==getVariableId()) {
+      _varRefExp=varRefExp;
+      return true;
+    }
+  }
+  return false;
+}
+
+SgVarRefExp* SpecializationConstReporter::getVarRefExp() {
+  return _varRefExp;
+}
+int SpecializationConstReporter::getConstInt() {
+  return _constInt;
+}
+
+
+PStateConstReporter::PStateConstReporter(const PState* pstate, VariableIdMapping* variableIdMapping) {
+    _pstate=pstate;
+    _variableIdMapping=variableIdMapping;
+  }
+
+VariableId PStateConstReporter::getVariableId() {
+  return _variableIdMapping->variableId(_varRefExp);
+}
+
+bool PStateConstReporter::isConst(SgNode* node) {
+  if(SgVarRefExp* varRefExp=isSgVarRefExp(node)) {
+    _varRefExp=varRefExp;
+    VariableId varRefId=getVariableId();
+    return _pstate->varIsConst(varRefId);
+  }
+  return false;
+}
+
+SgVarRefExp* PStateConstReporter::getVarRefExp() {
+  return _varRefExp;
+}
+int PStateConstReporter::getConstInt() {
+  VariableId varRefId=_variableIdMapping->variableId(_varRefExp);
+  AValue varVal=_pstate->varValue(varRefId);
+  ROSE_ASSERT(varVal.isConstInt());
+  int varIntValue=varVal.getIntValue();
+  return varIntValue;
+}
+
+int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
+  std::list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+  for(std::list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
+    std::string funName=SgNodeHelper::getFunctionName(*i);
+    if(funNameToFind==funName) {
+      _specializedFunctionRootNode=*i;
+      VariableId varId=determineVariableIdToSpecialize(*i,param,variableIdMapping);
+      return substituteVariablesWithConst(*i, variableIdMapping, varId, constInt);
+    }
+  }
+  return 0;
+}
+
+VariableId Specialization::determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping) {
+  VariableId variableId;
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
+  int paramCnt=0;
+  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
+    if(paramCnt==param) {
+      SgInitializedName* initName=*i;
+      return variableIdMapping->variableId(initName);
+    }
+    else
+      paramCnt++;
+  }
+
+  // TODO
+  return variableId;
+}
 
 int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root) {
   typedef pair<SgExpression*,int> SubstitutionPair;
@@ -45,20 +136,31 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
    return numConstExprElim;
  }
 
- int Specialization::substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+int Specialization::substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+  ConstReporter* constReporter=new PStateConstReporter(pstate,variableIdMapping);
+  int numOfSubstitutions=substituteVariablesWithConst(node, constReporter);
+  delete constReporter;
+  return numOfSubstitutions;
+}
+
+int Specialization::substituteVariablesWithConst(SgNode* node, VariableIdMapping* variableIdMapping, VariableId variableId, int constInt) {
+  ConstReporter* constReporter=new SpecializationConstReporter(variableIdMapping,variableId,constInt);
+  int numOfSubstitutions=substituteVariablesWithConst(node, constReporter);
+  delete constReporter;
+  return numOfSubstitutions;
+}
+
+int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* constReporter) {
    typedef pair<SgExpression*,int> SubstitutionPair;
    typedef list<SubstitutionPair > SubstitutionList;
    SubstitutionList substitutionList;
    RoseAst ast(node);
    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-     if(SgVarRefExp* varRef=isSgVarRefExp(*i)) {
-       VariableId varRefId=variableIdMapping->variableId(varRef);
-       if(pstate->varIsConst(varRefId)) {
-         AValue varVal=pstate->varValue(varRefId);
-         int varIntValue=varVal.getIntValue();
-         SubstitutionPair p=make_pair(varRef,varIntValue);
-         substitutionList.push_back(p);
-       }
+     if(constReporter->isConst(*i)) {
+       int varIntValue=constReporter->getConstInt();
+       SgVarRefExp* varRefExp=constReporter->getVarRefExp();
+       SubstitutionPair p=make_pair(varRefExp,varIntValue);
+       substitutionList.push_back(p);
      }
    }
    for(SubstitutionList::iterator i=substitutionList.begin(); i!=substitutionList.end(); ++i) {
