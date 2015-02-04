@@ -4,6 +4,13 @@
 #include <cmath>
 #include <cstdio>
 
+#ifdef _MSC_VER
+#include <float.h>                              // for _isnan
+#define isnan(x) _isnan(x)
+#else
+using std::isnan;
+#endif
+
 namespace rose {
 namespace Color {
 
