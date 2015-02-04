@@ -237,13 +237,13 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
       if(actualParams.size()==3) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
         if(!varRefExp) {
-             cerr<<"Error: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-             exit(1);
+             cerr<<"Warning: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+             return 0;
         }
         return varRefExp;
       } else {
-        cerr<<"Error: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-        exit(1);
+        cerr<<"Warning: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        return 0;
       }
     }
   }
