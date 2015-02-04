@@ -975,6 +975,7 @@ namespace OmpSupport
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
           target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
         }
       }
       else if (c_clause == e_map)
@@ -987,6 +988,7 @@ namespace OmpSupport
           omp_construct_enum rop = *iter;
           SgOmpClause* sgclause = buildOmpMapClause(att, rop);
           target->get_clauses().push_back(sgclause);
+          sgclause->set_parent(target);
         }
       }
       else 
@@ -1224,6 +1226,7 @@ namespace OmpSupport
             SgOmpClause* sgclause = buildOmpNonReductionClause(att, c_clause);
             ROSE_ASSERT(sgclause != NULL);
             first_stmt->get_clauses().push_back(sgclause);
+            sgclause->set_parent(first_stmt);
             break;
           }
           // unique clauses allocated to omp for
@@ -1247,6 +1250,7 @@ namespace OmpSupport
             ROSE_ASSERT(sgclause != NULL);
             // TODO parallel workshare 
             isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+            sgclause->set_parent(second_stmt);
             break;
           }
         case e_reduction: //special handling for reduction
@@ -1260,6 +1264,7 @@ namespace OmpSupport
               SgOmpClause* sgclause = buildOmpReductionClause(att, rop);
               ROSE_ASSERT(sgclause != NULL);
               isSgOmpClauseBodyStatement(second_stmt)->get_clauses().push_back(sgclause);
+              sgclause->set_parent(second_stmt);
             }
             break;
           }

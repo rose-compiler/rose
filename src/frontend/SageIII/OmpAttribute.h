@@ -146,6 +146,13 @@ namespace OmpSupport
     e_map_from,
     e_map_tofrom,
 
+    // experimental dist_data clause dist_data(dim1_policy, dim2_policy, dim3_policy)
+    // A policy can be block(n), cyclic(n), or duplicate
+    e_dist_data, 
+    e_duplicate, 
+    e_block,
+    e_cyclic,
+
     // experimental SIMD directive, phlin 8/5/2013
     e_simd,
     e_safelen,
@@ -295,6 +302,11 @@ namespace OmpSupport
       //! Find the relevant clauses for a variable 
       std::vector<enum omp_construct_enum> get_clauses(const std::string& variable);
 
+      //! Insert dist_data policy for one dimension of an array into its policy vector (duplicate, block(n), cyclic(4)) (up to size 3)
+      bool appendDistDataPolicy(SgVariableSymbol* array_symbol, omp_construct_enum dist_data_policy, SgExpression* size_exp = NULL);
+
+     std::vector < std::pair < omp_construct_enum, SgExpression*> > getDistDataPolicy (SgVariableSymbol* array_symbol); 
+       
       //!--------Expressions -----------------------------
       //! Add an expression to a clause
       void addExpression(omp_construct_enum targetConstruct, const std::string& expString, SgExpression*    sgexp=NULL); 
@@ -423,6 +435,13 @@ namespace OmpSupport
       // A reverse map from a variable to the clauses the variable appears
       std::map<std::string, std::vector<omp_construct_enum> > var_clauses;
 
+      // dist_data (dim1_policy, dim2_policy, dim3_policy) for mapped arrays
+      // we use std::map <variable, policy_vector> to represent this.
+      // the policy vector contains up to three pair of (policy, optional size)
+      // e.g.  map(x[0:n][0:m] dist_data(duplicate, block(2)))
+      // -----------------------------------
+      std::map <SgVariableSymbol* ,  std::vector < std::pair<omp_construct_enum, SgExpression*> >   >  dist_data_policies; 
+      
       // expressions ----------------------
       // e.g.: if (exp), num_threads(exp), schedule(,exp), collapse(exp)
       std::map<omp_construct_enum, std::pair<std::string, SgExpression*> > expressions;
@@ -456,10 +475,14 @@ namespace OmpSupport
 
       //! Convert entire directives and clauses to string ,
       // invoke OmpSupport::toString() to stringify the enumerate type internally
+      // some variables have the optional dist_data policy
       std::string toOpenMPString(omp_construct_enum omp_type);
 
       //! Convert a variable list to x,y,z ,without parenthesis.
-      std::string toOpenMPString(std::vector<std::pair<std::string,SgNode* > >);
+      std::string toOpenMPString(std::vector<std::pair<std::string,SgNode* > > varList, bool checkDistPolicy = false);
+
+      //! Convert dist_data() for an array symbol, return empty string if no dimension policies in input
+      std::string toOpenMPString (std::vector < std::pair <omp_construct_enum, SgExpression*> > dim_policies);
   }; // end class OmpAttribute
 
 
