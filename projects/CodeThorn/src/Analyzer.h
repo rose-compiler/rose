@@ -108,7 +108,7 @@ namespace CodeThorn {
     void initAstNodeInfo(SgNode* node);
     bool isActiveGlobalTopify();
     static string nodeToString(SgNode* node);
-    void initializeSolver1(std::string functionToStartAt,SgNode* root);
+    void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
     

@@ -693,9 +693,9 @@ int main( int argc, char * argv[] ) {
     int constInt=option_specialize_fun_const;
     int numSubst=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
     cout<<"STATUS: number of variable uses specialized: "<<numSubst<<endl;
-    root=speci.getSpecializedFunctionRootNode();
+    //root=speci.getSpecializedFunctionRootNode();
     sageProject->unparse(0,0);
-    exit(0);
+    //exit(0);
   }
 
 
@@ -759,9 +759,9 @@ int main( int argc, char * argv[] ) {
 
   cout << "INIT: creating solver."<<endl;
   if(option_specialize_fun_name!="") {
-    analyzer.initializeSolver1(option_specialize_fun_name,root);
+    analyzer.initializeSolver1(option_specialize_fun_name,root,true);
   } else {
-    analyzer.initializeSolver1("main",root);
+    analyzer.initializeSolver1("main",root,false);
   }
   analyzer.initLabeledAssertNodes(sageProject);
 
