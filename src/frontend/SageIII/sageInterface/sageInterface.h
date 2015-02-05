@@ -942,6 +942,8 @@ get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname);
 ROSE_DLL_API bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
+//! Collect variable references in array types. The default NodeQuery::querySubTree() will miss variables referenced in array type's index list. e.g. double *buffer = new double[numItems] ;
+ROSE_DLL_API int collectVariableReferencesInArrayTypes (SgLocatedNode* root, Rose_STL_Container<SgNode*> & currentVarRefList);
 //! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
  * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense.
@@ -1179,6 +1181,8 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
+//! Collect all variable references in a subtree
+  void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
@@ -1894,12 +1898,13 @@ ROSE_DLL_API void removeUnusedLabels(SgNode* top);
 //! Remove consecutive labels
 ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
 
-//! Merge a variable assignment statement into a matching variable declaration statement
+//! Merge a variable assignment statement into a matching variable declaration statement. Callers should make sure the merge is semantically correct (by not introducing compilation errors). This function simply does the merge transformation, without eligibility check.
 /*!
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
+ *  The original assignment stmt will be removed by default
  */
-ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt);
+ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
 
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
