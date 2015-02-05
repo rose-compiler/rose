@@ -86,6 +86,8 @@ public:
     typedef Sawyer::Container::NullBuffer<Address, Value> NullBuffer;
     typedef Sawyer::Container::StaticBuffer<Address, Value> StaticBuffer;
     typedef Sawyer::Container::SegmentPredicate<Address, Value> SegmentPredicate;
+    typedef Sawyer::Container::AddressMapConstraints<Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > Constraints;
+    typedef Sawyer::Container::AddressMapConstraints<const Sawyer::Container::AddressMap<rose_addr_t, uint8_t> > ConstConstraints;
 
 private:
     ByteOrder::Endianness endianness_;

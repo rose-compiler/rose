@@ -1,9 +1,0 @@
-#  --nlp=n               number of LPs per processor (default 8)
-#  --clock-rate=ts       CPU Clock Rate (default 1000000000.00)
-./compile.simple2
-mpirun -np 2 ./simple2 --synch=3
-
-#  
-#  mpirun -np 1 ./simple2 --nlp=64 --synch=1 --end=10000
-#  mpirun -np 8 ./simple2 --nlp=8 --synch=3 --end=10000
-# 659 particles, any time

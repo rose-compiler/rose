@@ -27,6 +27,7 @@ public:
 private:
     RegisterDescriptor reg_;
     Address addr_;
+    size_t nBytes_;                                     // size of memory location, or zero if unknown
     const RegisterDictionary *regdict_;
 
 public:
@@ -34,26 +35,28 @@ public:
      *
      *  Constructs an abstract location that does not refer to any location.  The @ref isValid method will return true for such
      *  objects. */
-    AbstractLocation(): regdict_(NULL) {}
+    AbstractLocation(): nBytes_(0), regdict_(NULL) {}
 
     /** Copy constructor. */
-    AbstractLocation(const AbstractLocation &other): reg_(other.reg_), addr_(other.addr_), regdict_(other.regdict_) {}
+    AbstractLocation(const AbstractLocation &other)
+        : reg_(other.reg_), addr_(other.addr_), nBytes_(other.nBytes_), regdict_(other.regdict_) {}
 
     /** Register referent.
      *
      *  Constructs an abstract location that refers to a register. */
     explicit AbstractLocation(const RegisterDescriptor &reg, const RegisterDictionary *regdict=NULL)
-        : reg_(reg), regdict_(regdict) {}
+        : reg_(reg), nBytes_(0), regdict_(regdict) {}
 
     /** Memory referent.
      *
      *  Constructs an abstract location that refers to a memory location. */
-    explicit AbstractLocation(const Address &addr): addr_(addr), regdict_(NULL) {}
+    explicit AbstractLocation(const Address &addr, size_t nBytes=0): addr_(addr), nBytes_(nBytes), regdict_(NULL) {}
 
     /** Assignment operator. */
     AbstractLocation& operator=(const AbstractLocation &other) {
         reg_ = other.reg_;
         addr_ = other.addr_;
+        nBytes_ = other.nBytes_;
         regdict_ = other.regdict_;
         return *this;
     }
@@ -88,6 +91,12 @@ public:
      *  Returns the memory address to which this abstract location refers.  When called for an abstract location for which @ref
      *  isAddress returns false, the return value is a null pointer. */
     const Address getAddress() const { return addr_; }
+
+    /** Returns size of memory location in bytes.
+     *
+     *  Returns the size of the memory location in bytes if known, otherwise zero.  It is not valid to call this for an
+     *  abstract location that points to a register since registers are not always a multiple of the byte size. */
+    size_t nBytes() const { ASSERT_require(isAddress()); return nBytes_; }
 
     /** True if two abstract locations could be aliases.
      *

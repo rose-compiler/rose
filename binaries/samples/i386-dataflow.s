@@ -4,6 +4,9 @@
 ;;; Dataflow tests
 _start:	jmp start
 
+global1:
+	RESD 1
+
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; An if/else where both sides do the same thing
 ifTest1:
@@ -188,6 +191,84 @@ whileMem1:
 	ret
 
 ;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Conditional assignment to a program argument
+ifGlobal1:
+	test eax, eax
+	je .endif
+
+	mov dword [global1], 1
+.endif:
+	;; assert arg_4 == 1
+	ret
+
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; An if/else statement that makes the same assignment on both sides
+ifGlobal2:
+	test eax, eax
+	je .else
+
+	mov dword [global1], 1
+	jmp .endif
+.else:
+	mov dword [global1], 1
+.endif:
+	;; assert arg_4 == 1
+	ret
+
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; An if/else statement that makes a different assignment on each side
+ifGlobal3:
+	test eax, eax
+	je .else
+
+	mov dword [global1], 1
+	jmp .endif
+.else:
+	mov dword [global1], 2
+.endif:
+	;; assert arg_4 == unknown
+	ret
+
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; A loop whose body is executed at least once and which always does the
+;;; same thing.
+doGlobal1:
+.loop:
+	mov dword [global1], 1
+	cmp eax, 10
+	jne .loop
+
+	;; assert arg_4 == 1
+	ret
+	
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; A loop whose body is executed at least once and which does something
+;;; different each time.
+doGlobal2:
+.loop:
+	inc ebx
+	mov dword [global1], ebx
+	cmp eax, 10
+	jne .loop
+
+	;; assert arg_4 == unknown
+	ret
+	
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; A loop that makes the same assignment every time, but might not be executed.
+whileGlobal1:
+.loop:
+	cmp eax, 10
+	je .end
+
+	mov dword [global1], 1
+	inc eax
+	jmp .loop
+.end:
+	;; assert arg_4 == unknown
+	ret
+	
+;;; ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 stackAlloc1:
 	push ebp
 	mov ebp,esp
@@ -273,6 +354,30 @@ start:
 	mov ebx, [esp+8]
 	
 	call whileMem1
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call ifGlobal1
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call ifGlobal2
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call ifGlobal3
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call doGlobal1
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call doGlobal2
+	mov eax, [esp+4]
+	mov ebx, [esp+8]
+	
+	call whileGlobal1
 	mov eax, [esp+4]
 	mov ebx, [esp+8]
 	

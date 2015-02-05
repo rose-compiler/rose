@@ -1,10 +1,12 @@
 #include <rose.h>
 #include <rosePublicConfig.h>
-#include <rose_strtoull.h>
+
+#include <boost/algorithm/string/predicate.hpp>
 #include <AsmFunctionIndex.h>
 #include <AsmUnparser.h>
 #include <BinaryControlFlow.h>
 #include <BinaryLoader.h>
+#include <BinaryString.h>
 #include <Disassembler.h>
 #include <Partitioner2/Engine.h>
 #include <Partitioner2/GraphViz.h>
@@ -12,13 +14,13 @@
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Utility.h>
-
+#include <rose_strtoull.h>
 #include <sawyer/Assert.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 #include <sawyer/Stopwatch.h>
+#include <stringify.h>
 
-#include <boost/algorithm/string/predicate.hpp>
 
 // FIXME[Robb P. Matzke 2014-08-24]: These matchers still need to be implemented:
 /* 
@@ -39,6 +41,12 @@ namespace P2 = Partitioner2;
 
 static const rose_addr_t NO_ADDRESS(-1);
 
+enum FunctionSelector {
+    ALL_FUNCTIONS,                                      // select all functions
+    CALLED_FUNCTIONS,                                   // select called functions
+    CONSTADDR_FUNCTIONS,                                // select functions having address mentioned by instructions
+};
+
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
@@ -51,6 +59,7 @@ struct Settings {
     rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
     bool intraFunctionCode;                             // suck up unused addresses as intra-function code
     bool intraFunctionData;                             // suck up unused addresses as intra-function data
+    AddressInterval interruptVector;                    // table of interrupt handling functions
     bool doPostAnalysis;                                // perform post-partitioning analysis phase?
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
@@ -59,9 +68,12 @@ struct Settings {
     bool doListFunctionAddresses;                       // list function entry addresses
     bool doListInstructionAddresses;                    // show instruction addresses
     bool doListContainer;                               // generate information about the containers if present
+    bool doListStrings;                                 // show string constants
     bool doShowMap;                                     // show the memory map
     bool doShowStats;                                   // show some statistics
     bool doListUnused;                                  // list unused addresses
+    FunctionSelector selectFunctions;                   // which functions should be shown
+    bool selectFunctionsInverted;                       // invert sense of selectFunctions?
     bool assumeFunctionsReturn;                         // do functions usually return to their caller?
     std::vector<std::string> triggers;                  // debugging aids
     std::string gvBaseName;                             // base name for GraphViz files
@@ -78,8 +90,9 @@ struct Settings {
           findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
           intraFunctionData(true), doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true),
           doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false),
-          doShowMap(false), doShowStats(false), doListUnused(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true),
-          gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
+          doListStrings(false), doShowMap(false), doShowStats(false), doListUnused(false), selectFunctions(ALL_FUNCTIONS),
+          selectFunctionsInverted(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true), gvShowInstructions(true),
+          gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
 };
 
 // Describe and parse the command-line
@@ -237,8 +250,32 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(false, settings.doPostAnalysis)
                .hidden(true));
 
+    dis.insert(Switch("interrupt-vector")
+               .argument("addresses", P2::addressIntervalParser(settings.interruptVector))
+               .doc("A table containing addresses of functions invoked for various kinds of interrupts. " +
+                    P2::AddressIntervalParser::docString() + " The length and contents of the table is architecture "
+                    "specific, and the disassembler will use available information about the architecture to decode the "
+                    "table.  If a single address is specified, then the length of the table is architecture dependent, "
+                    "otherwise the entire table is read."));
+
     // Switches for output
     SwitchGroup out("Output switches");
+
+    out.insert(Switch("select-functions")
+               .argument("how", enumParser(settings.selectFunctions)
+                         ->with("all", ALL_FUNCTIONS)
+                         ->with("called", CALLED_FUNCTIONS)
+                         ->with("constaddr", CONSTADDR_FUNCTIONS))
+               .doc("Determines which functions to use for certain other operations.  The values are \"all\", the default; "
+                    "\"called\", to select only those functions that are called; and \"constaddr\", to select those "
+                    "functions whose entry address is mentioned as a constant in some instruction.  Any operation that "
+                    "uses this filter is documented as such.  See also, @s{select-functions-invert}."));
+
+    out.insert(Switch("select-functions-invert")
+               .argument("bool", booleanParser(settings.selectFunctionsInverted), "true")
+               .doc("Inverts the sense of the @s{select-functions} switch.  For instance, inverting \"@s{select-functions} "
+                    "called\" will select all functions that are not statically called."));
+
     out.insert(Switch("list-asm")
                .intrinsicValue(true, settings.doListAsm)
                .doc("Produce an assembly listing.  This is the default; it can be turned off with @s{no-list-asm}."));
@@ -268,7 +305,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(true, settings.doListFunctions)
                .doc("Produce a table of contents showing all the functions that were detected.  The @s{no-list-functions} "
                     "switch disables this.  The default is to " + std::string(settings.doListFunctions?"":"not ") +
-                    "show this information."));
+                    "show this information. See @s{select-functions}."));
     out.insert(Switch("no-list-functions")
                .key("list-functions")
                .intrinsicValue(false, settings.doListFunctions)
@@ -278,7 +315,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .intrinsicValue(true, settings.doListFunctionAddresses)
                .doc("Produce a listing of function entry addresses, one address per line in hexadecimal format. Each address "
                     "is followed by the word \"existing\" or \"missing\" depending on whether a non-empty basic block exists "
-                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-addresses}."));
+                    "in the CFG for the function entry address.  The listing is disabled with @s{no-list-function-addresses}. "
+                    "See also, @s{select-functions}."));
     out.insert(Switch("no-list-function-addresses")
                .key("list-function-addresses")
                .intrinsicValue(false, settings.doListFunctionAddresses)
@@ -296,6 +334,16 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     out.insert(Switch("no-list-instruction-addresses")
                .key("list-instruction-addresses")
                .intrinsicValue(false, settings.doListInstructionAddresses)
+               .hidden(true));
+
+    out.insert(Switch("list-strings")
+               .intrinsicValue(true, settings.doListStrings)
+               .doc("Produce a listing of all ASCII strings.  The listing is disabled with the @s{no-list-strings} "
+                    "switch. The default is to " + std::string(settings.doListStrings?"":"not ") +
+                    "show this information."));
+    out.insert(Switch("no-list-strings")
+               .key("list-strings")
+               .intrinsicValue(false, settings.doListStrings)
                .hidden(true));
 
     out.insert(Switch("list-unused-addresses")
@@ -670,6 +718,69 @@ emitFunctionCallGraph(const P2::Partitioner &partitioner, const Settings &settin
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Analysis
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Convert partitioner data to ROSE AST.
+static SgAsmBlock *
+buildAst(P2::Engine &engine, const P2::Partitioner &partitioner) {
+    static SgAsmBlock *gblock = NULL;
+    if (NULL==gblock)
+        gblock = engine.buildAst(partitioner);
+    return gblock;
+}
+
+// Returns all constants found in instructions.
+static std::set<rose_addr_t>
+findInstructionConstants(P2::Engine &engine, const P2::Partitioner &partitioner) {
+    struct T1: AstSimpleProcessing {
+        std::set<rose_addr_t> constants;
+        void visit(SgNode *node) {
+            if (SgAsmIntegerValueExpression *ive = isSgAsmIntegerValueExpression(node))
+                constants.insert(ive->get_absoluteValue());
+        }
+    } t1;
+    t1.traverse(buildAst(engine, partitioner), preorder);
+    return t1.constants;
+}
+
+// Returns functions that have callers (or not).
+static std::vector<P2::Function::Ptr>
+findCalledFunctions(const P2::Partitioner &partitioner, bool selectCalledFunctions) {
+    std::vector<P2::Function::Ptr> retval;
+    P2::FunctionCallGraph cg = partitioner.functionCallGraph();
+    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        bool isCalled = !cg.callers(function).empty();
+        if ((selectCalledFunctions && isCalled) || (!selectCalledFunctions && !isCalled))
+            retval.push_back(function);
+    }
+    return retval;
+}
+
+// Returns a list of selected functions.
+static std::vector<P2::Function::Ptr>
+selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Settings &settings) {
+    std::vector<P2::Function::Ptr> retval;
+    switch (settings.selectFunctions) {
+        case ALL_FUNCTIONS:
+            return settings.selectFunctionsInverted ? retval : partitioner.functions();
+        case CALLED_FUNCTIONS:
+            return findCalledFunctions(partitioner, !settings.selectFunctionsInverted);
+        case CONSTADDR_FUNCTIONS: {
+            std::set<rose_addr_t> constants = findInstructionConstants(engine, partitioner);
+            BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+                bool isConstant = constants.find(function->address()) != constants.end();
+                if ((isConstant && !settings.selectFunctionsInverted) || (!isConstant && settings.selectFunctionsInverted))
+                    retval.push_back(function);
+            }
+            return retval;
+        }
+    }
+    ASSERT_not_implemented("function selection criteria is not implemented yet");
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
@@ -745,8 +856,11 @@ int main(int argc, char *argv[]) {
     if (!settings.configurationName.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
         info <<"loading configuration files";
-        size_t nItems = engine.configureFromFile(partitioner, settings.configurationName);
-        info <<"; configured " <<StringUtility::plural(nItems, "items") <<"\n";
+        partitioner.configuration().loadFromFile(settings.configurationName);
+        info <<"; configured\n";
+#if 0 // DEBUGGING [Robb P. Matzke 2015-01-23]
+        std::cout <<partitioner.configuration();
+#endif
     }
     if (false)
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
@@ -779,6 +893,9 @@ int main(int argc, char *argv[]) {
 
     Stream info(mlog[INFO] <<"Disassembling and partitioning");
 
+    // Find functions for an interrupt vector.
+    engine.makeInterruptVectorFunctions(partitioner, settings.interruptVector);
+    
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
     engine.makeContainerFunctions(partitioner, interp);
@@ -814,7 +931,6 @@ int main(int argc, char *argv[]) {
     }
     
     info <<"; completed in " <<partitionTime <<" seconds.\n";
-    SgAsmBlock *globalBlock = NULL;
 
     //-------------------------------------------------------------- 
     // The rest of main() is just about showing the results...
@@ -834,6 +950,8 @@ int main(int argc, char *argv[]) {
         std::cout <<"Executable bytes not covered by CFG: " <<(nMapped-partitioner.nBytes()) <<"\n";
     }
 
+    std::vector<P2::Function::Ptr> selectedFunctions = selectFunctions(engine, partitioner, settings);
+
     if (settings.doListCfg) {
         std::cout <<"Final control flow graph:\n";
         partitioner.dumpCfg(std::cout, "  ", true);
@@ -842,10 +960,26 @@ int main(int argc, char *argv[]) {
     emitControlFlowGraphs(partitioner, settings);
     emitFunctionCallGraph(partitioner, settings);
 
+    // List selected functions.  This is a bit convoluted because the function lister (AsmFunctionIndex) operates on an AST,
+    // but our function selection uses Partitioner2 data structures.
     if (settings.doListFunctions) {
-        if (!globalBlock)
-            globalBlock = engine.buildAst(partitioner);
-        std::cout <<AsmFunctionIndex(globalBlock);
+        std::set<rose_addr_t> selectedVas;
+        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions)
+            selectedVas.insert(function->address());
+        AsmFunctionIndex index;
+        struct T1: AstSimpleProcessing {
+            AsmFunctionIndex &index;
+            const std::set<rose_addr_t> &selectedVas;
+            T1(AsmFunctionIndex &index, const std::set<rose_addr_t> &selectedVas): index(index), selectedVas(selectedVas) {}
+            void visit(SgNode *node) {
+                if (SgAsmFunction *function = isSgAsmFunction(node)) {
+                    if (selectedVas.find(function->get_entry_va()) != selectedVas.end())
+                        index.add_function(function);
+                }
+            }
+        } t1(index, selectedVas);
+        t1.traverse(buildAst(engine, partitioner), preorder);
+        std::cout <<index;
     }
 
     if (settings.doListAum) {
@@ -862,7 +996,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListFunctionAddresses) {
-        BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions()) {
+        BOOST_FOREACH (P2::Function::Ptr function, selectedFunctions) {
             rose_addr_t entryVa = function->address();
             P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(entryVa);
             std::cout <<partitioner.functionName(function) <<": "
@@ -882,6 +1016,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    if (settings.doListStrings) {
+        StringFinder analyzer;
+        StringFinder::Strings strings = analyzer.findAllStrings(partitioner.memoryMap().any());
+        Stringifier charEncodingName(stringifyBinaryAnalysisStringFinderCharacterEncoding);
+        Stringifier lengthEncodingName(stringifyBinaryAnalysisStringFinderLengthEncoding);
+        BOOST_FOREACH (const StringFinder::String &string, strings.values()) {
+            std::cout <<boost::to_lower_copy(lengthEncodingName(string.lengthEncoding())) <<" "
+                      <<boost::to_lower_copy(charEncodingName(string.characterEncoding())) <<" string at "
+                      <<StringUtility::addrToString(string.address());
+            std::string s = analyzer.decode(partitioner.memoryMap(), string);
+            std::cout <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
+        }
+    }
+    
     if (settings.doListContainer && interp) {
         std::set<SgAsmGenericFile*> emittedFiles;
         BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
@@ -900,13 +1048,12 @@ int main(int argc, char *argv[]) {
 
     // Build the AST and unparse it.
     if (settings.doListAsm) {
-        if (!globalBlock)
-            globalBlock = engine.buildAst(partitioner);
+        SgAsmBlock *gblock = buildAst(engine, partitioner);
         AsmUnparser unparser;
         unparser.set_registers(disassembler->get_registers());
-        unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(globalBlock));
+        unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
         unparser.staticDataDisassembler.init(disassembler);
-        unparser.unparse(std::cout, globalBlock);
+        unparser.unparse(std::cout, gblock);
     }
 
 #if 0 // DEBUGGING [Robb P. Matzke 2014-08-23]

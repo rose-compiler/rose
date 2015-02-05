@@ -22,9 +22,6 @@
 
 #include <algorithm>
 
-// DQ (2/10/2014): We now want to avoid specifying this explicitly if possible.
-// #define BOOST_FILESYSTEM_VERSION 2
-
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>

@@ -422,6 +422,27 @@ SageBuilder::getGlobalScopeFromScopeStack()
      return tempScope;
    }
 
+bool SageBuilder::isInScopeStack(SgScopeStatement * scope) {
+  std::list<SgScopeStatement *>::const_iterator it_scope_stack = ScopeStack.begin();
+  while (it_scope_stack != ScopeStack.end()) {
+    if (*it_scope_stack == scope) return true;
+    it_scope_stack++;
+  }
+  return false;
+}
+
+std::string SageBuilder::stringFromScopeStack() {
+  std::ostringstream res;
+
+  std::list<SgScopeStatement *>::const_iterator it_scope_stack = ScopeStack.begin();
+  while (it_scope_stack != ScopeStack.end()) {
+    res << *it_scope_stack << " = " << (*it_scope_stack)->class_name() << std::endl;
+    it_scope_stack++;
+  }
+
+  return res.str();
+}
+
 bool SageBuilder::emptyScopeStack()
    {
      return ScopeStack.empty();
@@ -2057,10 +2078,6 @@ SageBuilder::buildFunctionType(SgType* return_type, SgFunctionParameterTypeList*
   // for the case of a SgMemberFunctionType (or at least not without more work).
      SgName typeName = SgFunctionType::get_mangled(return_type, typeList);
 
-#if 0
-     printf("[SageBuilder::buildFunctionType] return_type = %p (%s), mangled name = %s\n", return_type, return_type->class_name().c_str(), typeName.getString().c_str());
-#endif
-
      SgFunctionType* funcType = isSgFunctionType(fTable->lookup_function_type(typeName));
 
 #if 0
@@ -2892,6 +2909,17 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
                     ROSE_ASSERT(false);
                   }
              }
+
+          // TV (2/5/14): Found symbol might come from another file, in this case we need to insert it in the current scope. 
+          //              Can only happen when scope is a global scope
+             ROSE_ASSERT(scope != NULL);
+             if (  isSgGlobal(scope) != NULL
+                && scope != func_symbol->get_scope()
+                && !SageInterface::isAncestor(scope, func_symbol->get_scope())
+                && !scope->symbol_exists(nameWithTemplateArguments, func_symbol)
+             ) {
+               scope->insert_symbol(nameWithTemplateArguments, func_symbol);
+             }
         }
 #endif
 
@@ -3304,11 +3332,13 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
        // func->set_firstNondefiningDeclaration(prevDecl->get_firstNondefiningDeclaration());
           func->set_firstNondefiningDeclaration(nondefiningDeclaration);
           func->set_definingDeclaration(prevDecl->get_definingDeclaration());
+
 #if 0
           printf ("In buildNondefiningFunctionDeclaration_T(): Setting new function (func = %p) to have firstNondefiningDeclaration = %p definingDeclaration = %p \n",func,func->get_firstNondefiningDeclaration(),func->get_definingDeclaration());
 #endif
        // DQ (3/8/2012): Added assertion.
           ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
+          assert(func->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table() != NULL);
 
        // DQ (3/8/2012): If this is the redundant function prototype then we have to look
        // at the first defining declaration since only it will have an associated symbol.
@@ -3317,7 +3347,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
              {
                ROSE_ASSERT(nondefiningDeclaration != NULL);
                ROSE_ASSERT(func->get_firstNondefiningDeclaration() == nondefiningDeclaration);
-               ROSE_ASSERT(nondefiningDeclaration->get_symbol_from_symbol_table() != NULL);
              }
 
        // DQ (12/14/2011): Added test.
@@ -3550,10 +3579,6 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (const SgName & XXX_name, SgT
           func->get_declarationModifier().get_typeModifier().setRestrict();
         }
 
-#if 0
-     printf ("[Build Non-defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", func, func->get_name().getString().c_str(), func->get_type(), scope);
-#endif
-
   // DQ (8/19/2013): Added assertion that is tested and which fails for test_3 of the RoseExample_tests directory (in edgRose.C).
   // This fails for everything.... not sure why...
   // ROSE_ASSERT(func->get_symbol_from_symbol_table() != NULL);
@@ -3598,8 +3623,6 @@ SageBuilder::buildNondefiningFunctionDeclaration (const SgFunctionDeclaration* f
   {
     // ROSE_ASSERT(returnFunction->get_parent() != NULL);
     ROSE_ASSERT(returnFunction->get_firstNondefiningDeclaration() != NULL);
-    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
-    ROSE_ASSERT(TransformationSupport::getSourceFile(returnFunction->get_scope()) == TransformationSupport::getSourceFile(returnFunction->get_firstNondefiningDeclaration()));
   }
 
   return returnFunction;
@@ -4301,6 +4324,9 @@ SageBuilder::buildDefiningMemberFunctionDeclaration (const SgName & name, SgType
      ctor->set_definingDeclaration(ctor);
      ctor->set_firstNondefiningDeclaration(ctor);
 
+//     if (result->get_associatedClassDeclaration() == NULL && first_nondefining_declaration != NULL && first_nondefining_declaration->get_associatedClassDeclaration() != NULL)
+//       result->set_associatedClassDeclaration(first_nondefining_declaration->get_associatedClassDeclaration());
+
   // DQ (1/4/2009): Error checking
      ROSE_ASSERT(result->get_associatedClassDeclaration() != NULL);
 #if 0
@@ -4364,7 +4390,7 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
                isSgTemplateInstantiationFunctionDecl(first_nondefining_declaration)->get_templateArguments() :
                isSgTemplateInstantiationMemberFunctionDecl(first_nondefining_declaration)->get_templateArguments();
 
-          ROSE_ASSERT(*templateArgumentsList == templateArgumentsList_from_first_nondefining_declaration);
+          ROSE_ASSERT(SageInterface::templateArgumentListEquivalence(*templateArgumentsList, templateArgumentsList_from_first_nondefining_declaration));
         }
 
      SgTemplateParameterPtrList* templateParameterList = NULL;
@@ -4840,10 +4866,6 @@ SageBuilder::buildDefiningFunctionDeclaration_T(const SgName & XXX_name, SgType*
         {
           defining_func->get_declarationModifier().get_typeModifier().setRestrict();
         }
-
-#if 0
-     printf ("[Build Defining Funct Tpl] decl = %p, name = %s, type = %p, scope = %p\n", defining_func, defining_func->get_name().getString().c_str(), defining_func->get_type(), scope);
-#endif
 
      return defining_func;
    }
@@ -5467,6 +5489,17 @@ SgEnumVal* SageBuilder::buildEnumVal_nfi(int value, SgEnumDeclaration* decl, SgN
 
      return enumVal;
    }
+
+SgEnumVal* SageBuilder::buildEnumVal(SgEnumFieldSymbol * sym) {
+  SgInitializedName * init_name = sym->get_declaration();
+  assert(init_name != NULL);
+  SgAssignInitializer * assign_init = isSgAssignInitializer(init_name->get_initptr());
+  assert(assign_init != NULL);
+  SgEnumVal * enum_val = isSgEnumVal(assign_init->get_operand_i());
+  assert(enum_val != NULL);
+  enum_val = isSgEnumVal(SageInterface::copyExpression(enum_val));
+  return enum_val;
+}
 
 SgLongDoubleVal* SageBuilder::buildLongDoubleVal(long double value /*= 0.0*/)
 {
@@ -10199,6 +10232,7 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
 #if 0
                printf ("BEFORE scope->insert_symbol(): scope = %p = %s nameWithTemplateArguments = %s mysymbol = %p = %s \n",scope,scope->class_name().c_str(),nameWithTemplateArguments.str(),mysymbol,mysymbol->class_name().c_str());
 #endif
+
             // scope->insert_symbol(name, mysymbol);
                scope->insert_symbol(nameWithTemplateArguments, mysymbol);
 
@@ -10220,11 +10254,14 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
             // not include name qualification on template arguments.
             // DQ (12/27/2011): Added new test.
             // ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(name) != NULL);
-               ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
+            // TV (07/01/2013): this assertion fail when building basic class (buildTemplateInstantiation = false , templateArgumentsList = NULL) 
+            // ROSE_ASSERT(scope->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
 
             // DQ (6/9/2013): Added test to make sure that symbols only reference non-defining declarations.
                SgClassSymbol* temp_classSymbol = nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
-               ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
+            // TV (07/01/2013): temp_classSymbol can be NULL, but lookup_class_symbol return a symbol
+            // ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
+               ROSE_ASSERT(temp_classSymbol == NULL || temp_classSymbol->get_declaration()->get_definition() == NULL);
              }
 
           ROSE_ASSERT(mysymbol != NULL);
@@ -10252,11 +10289,13 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
   // DQ (8/22/2012): Use the template arguments to further disambiguate names that would not include name qualification on template arguments.
   // DQ (12/27/2011): Added new test.
   // ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(name) != NULL);
-     ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
+  // TV (07/01/2013): this assertion fail when building basic class (buildTemplateInstantiation = false , templateArgumentsList = NULL) 
+  // ROSE_ASSERT(nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList) != NULL);
 
   // DQ (6/9/2013): Added test to make sure that symbols only reference non-defining declarations.
      SgClassSymbol* temp_classSymbol = nondefdecl->get_scope()->lookup_nontemplate_class_symbol(nameWithTemplateArguments,templateArgumentsList);
-     ROSE_ASSERT(temp_classSymbol->get_declaration()->get_definition() == NULL);
+  // TV (07/01/2013): temp_classSymbol can be NULL, but lookup_class_symbol return a symbol
+     ROSE_ASSERT(temp_classSymbol == NULL || temp_classSymbol->get_declaration()->get_definition() == NULL);
 
      return nondefdecl;
    }
@@ -12901,7 +12940,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
         }
 
   // DQ (4/15/2010): Turn on verbose mode
-     arglist.push_back("-rose:verbose 2");
+  // arglist.push_back("-rose:verbose 2");
 
   // This handles the case where the original command line may have referenced multiple files.
      Rose_STL_Container<string> fileList = CommandlineProcessing::generateSourceFilenames(arglist,/* binaryMode = */ false);
@@ -15007,7 +15046,8 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
 
                     ROSE_ASSERT(targetScope->lookup_function_symbol(name,functionType) != NULL);
 
-                    ROSE_ASSERT(functionDeclaration_copy_firstNondefining->get_scope() == targetScope);
+                 // TV (10/22/2014): Might not be the case as we now have a project wide global scope
+                 // ROSE_ASSERT(functionDeclaration_copy_firstNondefining->get_scope() == targetScope);
 
                     ROSE_ASSERT(functionDeclaration_copy_firstNondefining == functionDeclaration_copy_firstNondefining->get_firstNondefiningDeclaration());
 
@@ -15234,7 +15274,8 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
                          ROSE_ASSERT(scope == targetScope);
                       // enumDeclaration_copy->set_scope(scope);
 #else
-                         ROSE_ASSERT(enumDeclaration->get_scope() == targetScope);
+                      // TV (10/22/2014): Might not be the case as we now have a project wide global scope
+                      // ROSE_ASSERT(enumDeclaration->get_scope() == targetScope);
 #endif
                        }
 
@@ -15971,8 +16012,8 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
                          ROSE_ASSERT(new_associatedEnumDeclaration_copy != NULL);
 
                       // If this is false then in means that we should have built a new SgEnumSymbol instead of reusing the existing one from the snippet.
-                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);
-                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
+                         ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original);// TV (10/22/2014): with project wide global scope this will always be false because 'symbol' is resolve to the first-non-defn-decl in original scope
+                      // ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_firstNondefiningDeclaration());
                          ROSE_ASSERT(new_associatedEnumDeclaration_copy != associatedEnumDeclaration_original->get_definingDeclaration());
 
                          enumVal_copy->set_declaration(new_associatedEnumDeclaration_copy);

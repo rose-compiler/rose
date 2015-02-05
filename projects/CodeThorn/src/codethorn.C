@@ -101,6 +101,8 @@ void CodeThornLanguageRestrictor::initialize() {
   //more general test codes
   setAstNodeVariant(V_SgPointerDerefExp, true);
   setAstNodeVariant(V_SgNullExpression, true);
+  setAstNodeVariant(V_SgSizeOfOp,true);
+
 }
 
 
@@ -314,6 +316,9 @@ int main( int argc, char * argv[] ) {
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
+    ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
+    ("specialize-fun-param", po::value< int >(), "function parameter [arg] to be specialized (starting with 0)")
+    ("specialize-fun-const", po::value< int >(), "specialize function param with const [arg]")
     ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
     ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
@@ -564,6 +569,25 @@ int main( int argc, char * argv[] ) {
     analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
   }
 
+  string option_specialize_fun_name="";
+  int option_specialize_fun_param=-1;
+  int option_specialize_fun_const=0;
+  if(args.count("specialize-fun-name")) {
+    option_specialize_fun_name = args["specialize-fun-name"].as<string>();
+  }
+  if(args.count("specialize-fun-param")) {
+    option_specialize_fun_param = args["specialize-fun-param"].as<int>();
+  }
+  if(args.count("specialize-fun-const")) {
+    option_specialize_fun_const = args["specialize-fun-const"].as<int>();
+  }
+
+  if((args.count("specialize-fun-name")||args.count("specialize-fun-param")||args.count("specialize-fun-const"))
+     && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-const"))) {
+    cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
+    exit(1);
+  }
+
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
     if (string(argv[i]) == "--csv-assert" 
@@ -585,6 +609,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--check-ltl-sol"
         || string(argv[i])=="--ltl-in-alphabet"
         || string(argv[i])=="--ltl-out-alphabet"
+        || string(argv[i])=="--specialize-fun-name"
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
@@ -654,7 +679,25 @@ int main( int argc, char * argv[] ) {
     return 0;
   }
 
+
   SgNode* root=sageProject;
+
+  if(option_specialize_fun_name!="")
+  {
+    Specialization speci;
+    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<", parameter: "<<option_specialize_fun_param<<", const: "<<option_specialize_fun_const<<endl;
+    string funNameToFind=option_specialize_fun_name;
+    int param=option_specialize_fun_param;
+    VariableIdMapping variableIdMapping;
+    variableIdMapping.computeVariableSymbolMapping(sageProject);
+    int constInt=option_specialize_fun_const;
+    int numSubst=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
+    cout<<"STATUS: number of variable uses specialized: "<<numSubst<<endl;
+    root=speci.getSpecializedFunctionRootNode();
+    sageProject->unparse(0,0);
+    exit(0);
+  }
+
 
   if(args.count("rewrite")) {
     VariableIdMapping variableIdMapping;
@@ -715,7 +758,11 @@ int main( int argc, char * argv[] ) {
   }
 
   cout << "INIT: creating solver."<<endl;
-  analyzer.initializeSolver1("main",root);
+  if(option_specialize_fun_name!="") {
+    analyzer.initializeSolver1(option_specialize_fun_name,root);
+  } else {
+    analyzer.initializeSolver1("main",root);
+  }
   analyzer.initLabeledAssertNodes(sageProject);
 
   double initRunTime=timer.getElapsedTimeInMilliSec();

@@ -51,6 +51,9 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
       this->subscripts.push_back(subscriptint->get_value());
     }
   }
-  ROSE_ASSERT(this->subscripts.size()>0);
+  if(this->subscripts.size()==0) {
+    cerr<<"Error: could not determine constant array index. Array-element-access expression: "<<ref->unparseToString()<<endl;
+    exit(1);
+  }
 }
 

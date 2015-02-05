@@ -3168,6 +3168,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                SgSourceFile* sourceFile = TransformationSupport::getSourceFile(funcdecl_stmt);
                printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 #endif
+
                if (firstNondefiningFunction != NULL)
                   {
                     ROSE_ASSERT(TransformationSupport::getSourceFile(funcdecl_stmt) != NULL);
@@ -3186,6 +3187,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(funcdecl_stmt = %p)->getFileName()            = %s \n",funcdecl_stmt,TransformationSupport::getSourceFile(funcdecl_stmt)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName() = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                        }
+                 // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/30/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // declaration with definition and then call SageInterface::insertStatementBefore() to insert the copied
                  // ast into a different file.  Granted, this isn't a robust way to copy code from one AST into another
@@ -3206,6 +3208,7 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction = %p)->getFileName()   = %s \n",firstNondefiningFunction,TransformationSupport::getSourceFile(firstNondefiningFunction)->getFileName().c_str());
                          printf ("TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope() = %p)->getFileName() = %s \n",firstNondefiningFunction->get_scope(),TransformationSupport::getSourceFile(firstNondefiningFunction->get_scope())->getFileName().c_str());
                        }
+                 // TV (07/01/2013) : prevent separated generation of decl and defn over an header file and a source file
                  // RPM (12/10/2013): Commented out because this fails for astSnippetTests which deep-copy a function
                  // forward declaration and SageInterface::insertStatementBefore() the decl into a different file. The
                  // copied-and-inserted declaration is unparsed correctly if this assert is commented out.

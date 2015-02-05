@@ -10,6 +10,7 @@
 #include <Wt/WTableView>
 #include <Wt/WText>
 
+using namespace rose::BinaryAnalysis;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace bROwSE {
@@ -48,11 +49,16 @@ public:
         SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(valueBase);
         LeafNodePtr leaf = value->get_expression()->isLeafNode();
         if (leaf && leaf->is_known()) {
-            if (1==leaf->get_nbits())
+            if (1==leaf->get_nbits()) {
                 return leaf->get_value() ? "true" : "false";
-            return leaf->get_bits().toHex();
+            } else if (leaf->get_nbits()<=64) {
+                uint64_t v = leaf->get_value();
+                return StringUtility::toHex2(v, leaf->get_nbits());
+            } else {
+                return leaf->get_bits().toHex();
+            }
         }
-        return "?";
+        return "? " + StringUtility::plural(valueBase->get_width(), "bits");
     }
 
     void reload(const P2::DataFlow::State::Ptr &state, WSemantics::Mode mode, const FunctionDataFlow &dfInfo) {
@@ -91,12 +97,13 @@ public:
 
 #if 1 // DEBUGGING [Robb Matzke 2015-01-13]
                     {
+                        std::cerr <<"ROBB: full memory state (reverse chronological order):\n";
                         MemoryCellListPtr memState = MemoryCellList::promote(state->semanticState()->get_memory_state());
                         BOOST_FOREACH (const MemoryCellPtr &cell, memState->get_cells()) {
                             std::ostringstream s1, s2;
                             s1 <<*cell->get_address();
                             s2 <<*cell->get_value();
-                            std::cerr <<"ROBB: " <<s1.str() <<" = " <<s2.str() <<"\n";
+                            std::cerr <<"        " <<s1.str() <<" = " <<s2.str() <<"\n";
                         }
                     }
 #endif
@@ -124,15 +131,27 @@ public:
                         SValuePtr value = ops->undefined_(8*var.nBytes);
                         value = ops->readMemory(SS, var.address, value, ops->boolean_(true));
                         std::string valueStr = toString(value);
-#if 1 // DEBUGGING [Robb Matzke 2015-01-13]
-                        std::cerr <<"ROBB: name=" <<name <<"\n";
-#endif
                         if (!valueStr.empty())
                             locValPairs_.push_back(LocationValue(name, valueStr));
                     }
 
                     // Global variables
-                    // FIXME[Robb P. Matzke 2015-01-13]: not implemented yet
+                    ASSERT_require(SP.get_nbits() % 8 == 0);
+                    const size_t wordNBytes = SP.get_nbits() / 8;
+                    BOOST_FOREACH (const AbstractLocation &var, state->findGlobalVariables(wordNBytes)) {
+                        if (var.isAddress() && var.nBytes()>0 &&
+                            var.getAddress()->is_number() && var.getAddress()->get_width()<=64) {
+                            rose_addr_t va = var.getAddress()->get_number();
+                            std::string name = ctx_.partitioner.addressName(va);
+                            if (name.empty())
+                                name = StringUtility::addrToString(va);
+                            SValuePtr value = ops->undefined_(8*var.nBytes());
+                            value = ops->readMemory(SS, var.getAddress(), value, ops->boolean_(true));
+                            std::string valueStr = toString(value);
+                            if (!valueStr.empty())
+                                locValPairs_.push_back(LocationValue(name, valueStr));
+                        }
+                    }
                     break;
                 }
             }
@@ -154,7 +173,7 @@ public:
             if (Wt::DisplayRole == role) {
                 switch (column) {
                     case LocationColumn:
-                        return Wt::WString("ALoc");
+                        return Wt::WString("Location");
                     case ValueColumn:
                         return Wt::WString("Value");
                     default:
@@ -190,7 +209,7 @@ void
 WSemantics::init() {
     model_ = new AbstractLocationModel(ctx_);
 
-    Wt::WContainerWidget *wPanelCenter = new Wt::WContainerWidget(this);
+    Wt::WContainerWidget *wPanelCenter = new Wt::WContainerWidget;
 
     // Info about what's being displayed
     wAddress_ = new Wt::WText("No block", wPanelCenter);
@@ -224,13 +243,13 @@ WSemantics::init() {
     wTableView_->setAlternatingRowColors(true);
     wTableView_->setColumnResizeEnabled(true);
     wTableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
-    wTableView_->setColumnWidth(0, Wt::WLength(3, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(1, Wt::WLength(5, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(0, Wt::WLength(10, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(1, Wt::WLength(15, Wt::WLength::FontEm));
 
     // A frame to hold all the semantics info
     Wt::WPanel *wPanel = new Wt::WPanel(this);
     wPanel->setTitle("Semantics");
-    wPanel->resize(200, Wt::WLength::Auto);
+    wPanel->resize(300, Wt::WLength::Auto);
     wPanel->setCentralWidget(wPanelCenter);
 }
 

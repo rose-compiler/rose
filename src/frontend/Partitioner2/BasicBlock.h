@@ -64,6 +64,7 @@ public:
 private:
     bool isFrozen_;                                     // True when the object becomes read-only
     rose_addr_t startVa_;                               // Starting address, perhaps redundant with insns_[0]->p_address
+    std::string comment_;                               // Mutli-line plain-text comment
     std::vector<SgAsmInstruction*> insns_;              // Instructions in the order they're executed
     BaseSemantics::DispatcherPtr dispatcher_;           // How instructions are dispatched (null if no instructions)
     BaseSemantics::RiscOperatorsPtr operators_;         // Risc operators even if we're not using a dispatcher
@@ -137,6 +138,15 @@ public:
      *
      *  Returns true if read-only, false otherwise. */
     bool isFrozen() const { return isFrozen_; }
+
+    /** Comment.
+     *
+     *  A basic block may have a multi-line, plain-text comment.
+     *
+     * @{ */
+    const std::string& comment() const { return comment_; }
+    void comment(const std::string &s) { comment_ = s; }
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -315,6 +325,9 @@ public:
     void insertSuccessor(const BaseSemantics::SValuePtr&, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     void insertSuccessor(rose_addr_t va, size_t nBits, EdgeType type=E_NORMAL, Confidence confidence=ASSUMED);
     /** @} */
+
+    /** Clear all successor information. */
+    void clearSuccessors();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

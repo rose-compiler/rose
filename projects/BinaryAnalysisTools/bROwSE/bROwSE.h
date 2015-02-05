@@ -16,17 +16,21 @@ class WAddressComboBox;
 class WAssemblyListing;
 class WAddressSpace;
 class WBusy;
+class WCrossReferences;
 class WFunctionCfg;
 class WFunctionList;
 class WFunctionNavigation;
 class WFunctionSummary;
 class WHexDump;
 class WHexValueEdit;
+class WMagic;
 class WMemoryMap;
 class WPartitioner;
 class WSemantics;
 class WStatus;
 class WStatusBar;
+class WStringDetail;
+class WStrings;
 class WToggleButton;
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
@@ -36,12 +40,13 @@ static const rose_addr_t NO_ADDRESS(-1);
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
+    bool allowDownloads;                                // should the server allow file downloads?
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
     std::string docRoot;                                // document root directory for HTTP server
     std::string configurationName;                      // name of config file or directory containing such
     Settings()
-        : deExecuteZeros(0), httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
+        : deExecuteZeros(0), allowDownloads(true), httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

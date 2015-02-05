@@ -1,11 +1,9 @@
 // Consider using $ROSE/src/util/FileSystem.h since that one is documented and uses a proper path type and supports both
 // version 2 and version 3 of boost::filesystem.
 
-#include "rose_config.h"
-#include <FileSystem.h>
-
-
-// RPM (11/17/2014): The boost::filesystem version is not dependent on which compiler we're using, but rather which version
+// UNDER NO CIRCUMSTANCES SHOULD BOOST_FILESYSTEM_VERSION BE SET!!!
+//
+// The boost::filesystem version is not dependent on which compiler we're using, but rather which version
 // of boost is installed.  Hard-coding a boost version number based on the compiler version has a couple of problems:
 //  1. We don't know whether that filesystem version is available on a user's machine since ROSE supports multiple
 //     versions of boost (e.g., filesystem 3 is not available before boost 1.44)
@@ -14,11 +12,12 @@
 // Therefore, we should never select a filesystem version explicitly here, but rather be prepared to handle any version
 // that is installed.  If ROSE cannot support a particular version of boost::filesystem on a particular architecture with a
 // particular file then that should be documented where we state which versions of boost are supported, and possibly
-// checked during configuration.
-// FIXME[Robb P. Matzke 2014-11-17]: cmake is adding -DBOOST_FILESYSTEM_VERSION=2 to command-lines with the same issues.
+// checked during configuration. [Matzke 11/17/2014]: 
+
+#include "rose_config.h"
+#include <FileSystem.h>
 
 #include <boost/filesystem.hpp>
-
 #include <string>
 
 using namespace std;
@@ -59,7 +58,7 @@ public:
         return boostPath.parent_path().string();
     }
 
-    static string getFileName(const string &aPath) {
+    static string getFileName(const string& aPath) {
         return rose::FileSystem::toString(path(aPath).filename());
     }
 

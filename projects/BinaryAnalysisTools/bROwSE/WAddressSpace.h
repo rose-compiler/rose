@@ -28,7 +28,6 @@ public:
     };
 
 private:
-    Context &ctx_;
     MyPainterWidget *painterWidget_;
     int barWidth_;                                      // length of the bar graph
     int horizontalMargin_;                              // size of horizontal margins
@@ -55,8 +54,8 @@ private:
     Wt::Signal<rose_addr_t, size_t, Wt::WMouseEvent> barGraphClicked_;
 
 public:
-    WAddressSpace(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), painterWidget_(NULL),
+    explicit WAddressSpace(Wt::WContainerWidget *parent=NULL)
+        : Wt::WContainerWidget(parent), painterWidget_(NULL),
           barWidth_(980), horizontalMargin_(10),
           topMargin_(2), topGutterHeight_(8), barHeight_(30), bottomGutterHeight_(8), bottomMargin_(2),
           topGutterArrowWidth_(3), bottomGutterArrowWidth_(3),
@@ -67,7 +66,7 @@ public:
     /** Initialize with segment and function information.
      *
      *  The top bar represents the memory segments and the second (bottom) bar represents all functions. */
-    void insertSegmentsAndFunctions();
+    void insertSegmentsAndFunctions(const P2::Partitioner&);
 
     /** Property: bar graph size.
      *

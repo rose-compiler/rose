@@ -35,6 +35,14 @@ checkExecutionAddresses_CPPFLAGS = $(ROSE_INCLUDES)
 checkExecutionAddresses_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Scans memory for magic numbers
+
+bin_PROGRAMS += magicScanner
+magicScanner_SOURCES = magicScanner.C
+magicScanner_CPPFLAGS = $(ROSE_INCLUDES)
+magicScanner_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Experimental "binary ROSE on-line workbench for specimen exploration"
 
 if ROSE_USE_WT
@@ -42,7 +50,6 @@ if ROSE_USE_WT
 bin_PROGRAMS += bROwSE-server
 bROwSE_server_SOURCES =				\
 	bROwSE/Application.C			\
-	bROwSE/WAssemblyListing.C		\
 	bROwSE/bROwSE.C				\
 	bROwSE/FunctionListModel.C		\
 	bROwSE/FunctionUtil.C			\
@@ -50,7 +57,9 @@ bROwSE_server_SOURCES =				\
 	bROwSE/Statistics.C			\
 	bROwSE/WAddressComboBox.C		\
 	bROwSE/WAddressSpace.C			\
+	bROwSE/WAssemblyListing.C		\
 	bROwSE/WBusy.C				\
+	bROwSE/WCrossReferences.C		\
 	bROwSE/WFunctionCfg.C			\
 	bROwSE/WFunctionList.C			\
 	bROwSE/WFunctionNavigation.C		\
@@ -58,13 +67,16 @@ bROwSE_server_SOURCES =				\
 	bROwSE/WHexDump.C			\
 	bROwSE/WHexValueEdit.C			\
 	bROwSE/WInstructionList.C		\
+	bROwSE/WMagic.C				\
 	bROwSE/WMemoryMap.C			\
 	bROwSE/WPartitioner.C			\
 	bROwSE/WSemantics.C			\
 	bROwSE/WSplash.C			\
 	bROwSE/WStatus.C			\
+	bROwSE/WStringDetail.C			\
+	bROwSE/WStrings.C			\
 	bROwSE/WToggleButton.C
-bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(WT_PREFIX)/include
+bROwSE_server_CPPFLAGS = -I$(ROSE_INCLUDES) -I$(top_builddir)/src/roseSupport -I$(WT_PREFIX)/include
 bROwSE_server_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 pkginclude_HEADERS = 				\

@@ -9,7 +9,7 @@
 
 // Use partitoner version 2?  It's faster, better quality results, and has analysis-oriented data structures. As of Dec 2014
 // it's still under development and might require Robb's m68k branch for the latest features.
-//#define USE_PARTITIONER_2
+#define USE_PARTITIONER_2
 
 #ifdef USE_PARTITIONER_2
 #include <Partitioner2/Engine.h>                        // New API for partitioning instructions into functions

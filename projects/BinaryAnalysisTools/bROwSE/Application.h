@@ -27,6 +27,8 @@ public:
         FunctionCfgTab,                                 /**< Control flow graph for one function. */
         AssemblyTab,                                    /**< More traditional assembly listing. */
         HexDumpTab,                                     /**< Dump raw data bytes from anywhere in memory. */
+        MagicTab,                                       /**< Magic number identification. */
+        StringsTab,                                     /**< Information about character strings in memory. */
         StatusTab,                                      /**< Complete list of all messages from ROSE, system status, etc. */
         NMainTabs
     };
@@ -45,18 +47,21 @@ private:
     WFunctionSummary *wFunctionSummary_;                // summary info for one function at a time
     WFunctionCfg *wFunctionCfg_;                        // control flow graph for one function at a time
     WHexDump *wHexDump_;                                // raw data from anywhere in memory
+    WStrings *wStrings_;                                // info about character strings found in memory
     WAssemblyListing *wAssembly_;                       // traditional assembly listing
     WSemantics *wSemantics_;                            // semantic information
     WStatus *wStatus_;                                  // info for the "Status" tab
     WStatusBar *wStatusBar_;                            // info across the bottom of the screen
     P2::Function::Ptr currentFunction_;                 // current function or null
+    WCrossReferences *wCrossRefs_;                      // cross reference tool
+    WMagic *wMagic_;                                    // magic numbers
 
 public:
     explicit Application(const Settings &settings, const std::vector<std::string> &specimenNames, const Wt::WEnvironment &env)
         : Wt::WApplication(env), ctx_(settings, specimenNames, this), wStacked_(NULL), wInteractivePhase_(NULL),
           wGrid_(NULL), wMainTabs_(NULL), wPartitioner_(NULL), wMemoryMap_(NULL), wFunctionList_(NULL),
-          wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wAssembly_(NULL), wSemantics_(NULL),
-          wStatus_(NULL), wStatusBar_(NULL) {
+          wFunctionSummary_(NULL), wFunctionCfg_(NULL), wHexDump_(NULL), wStrings_(NULL), wAssembly_(NULL), wSemantics_(NULL),
+          wStatus_(NULL), wStatusBar_(NULL), wCrossRefs_(NULL), wMagic_(NULL) {
         init();
     }
 
@@ -72,6 +77,7 @@ private:
     bool isTabAvailable(MainTab);
 
     void showHideTabs();
+    void showHideTools();
 
     void handleSpecimenParsed(bool done);
     void handleSpecimenLoaded(bool done);
@@ -89,6 +95,10 @@ private:
     void memoryMapChanged();
 
     void changeBasicBlock(const P2::BasicBlock::Ptr&);
+
+    void updateStringCrossReferences(size_t stringIdx);
+
+    void gotoReference(const P2::Reference&);
 };
 
 } // namespace

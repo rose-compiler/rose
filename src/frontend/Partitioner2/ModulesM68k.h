@@ -38,6 +38,12 @@ public:
     virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
 };
 
+/** Find functions for an interrupt vector.
+ *
+ *  M68k interrupt vectors have 256 4-byte addresses, for a total of 1024 bytes.  This function, when given an interrupt vector
+ *  base address, will read the memory and create up to 256 new functions. */
+std::vector<Function::Ptr> findInterruptFunctions(const Partitioner&, rose_addr_t vectorVa);
+
 } // namespace
 } // namespace
 } // namespace

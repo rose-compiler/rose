@@ -205,6 +205,11 @@ public:
      *  considered to be the first argument of the function. */
     StackVariables findFunctionArguments(const BaseSemantics::SValuePtr &initialStackPointer) const;
 
+    /** Returns a list of global variables.  The returned abstract locations all point to memory. The @p wordNBytes is the
+     *  maximum size for any returned variable; larger units of memory written to by the same instruction will be broken into
+     *  smaller variables. */
+    std::vector<AbstractLocation> findGlobalVariables(size_t wordNBytes) const;
+    
 public:
     bool merge(const Ptr &other);                       // merge other into this, returning true iff changed
     bool mergeDefiners(BaseSemantics::SValuePtr &dstValue /*in,out*/, const BaseSemantics::SValuePtr &srcValue) const;

@@ -55,7 +55,7 @@ pkginclude_HEADERS =				\
 	GraphUtility.h				\
 	LinearCongruentialGenerator.h		\
 	Map.h					\
-	ParallelSort.h                          \
+	ParallelSort.h				\
 	processSupport.h			\
 	rose_getline.h				\
 	rose_override.h				\

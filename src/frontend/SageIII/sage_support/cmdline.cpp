@@ -5584,7 +5584,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool enable_cuda   = CommandlineProcessing::isOption(argv,"-","cuda",true) || get_Cuda_only();
      bool enable_opencl = CommandlineProcessing::isOption(argv,"-","opencl",true) || get_OpenCL_only();
 
-     string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
+     string header_path = findRoseSupportPathFromBuild("include-staging", "include/edg");
      
      if (enable_cuda || enable_opencl) {
         Rose::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);

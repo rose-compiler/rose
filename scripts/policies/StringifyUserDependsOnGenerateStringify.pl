@@ -9,6 +9,7 @@ the cmake file needs to list \"generate_stringify\" as a dependency. The
 following source files appear to use stringify but apparently lack the
 dependency on generate_stringify:\n";
 
+BEGIN {push @INC, $1 if $0 =~ /(.*)\//}
 use strict;
 use FileLister;
 use Policies;
@@ -64,7 +65,7 @@ for my $filename (@usingFiles) {
 	pop @components;
     }
     if (!@components){
-	print STDERR "$policy_name: warning: cannot find CMakeList.txt for $filename\n";
+	print STDERR "$policy_name: warning: cannot find CMakeLists.txt for $filename\n";
     }
 }
 

@@ -5,12 +5,14 @@
 #include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/BasicTypes.h>
+#include <Partitioner2/Config.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
 #include <Partitioner2/FunctionCallGraph.h>
 #include <Partitioner2/InstructionProvider.h>
 #include <Partitioner2/Modules.h>
+#include <Partitioner2/Reference.h>
 
 #include <sawyer/Callbacks.h>
 #include <sawyer/IntervalSet.h>
@@ -287,19 +289,11 @@ public:
         Thunk(const BasicBlock::Ptr &bblock, rose_addr_t target): bblock(bblock), target(target) {}
     };
 
-    /** Information about may-return whitelist and blacklist.
-     *
-     *  The map keys are the function names that are present in the lists. The values are true if the function is whitelisted
-     *  and false if blacklisted. */
-    typedef Sawyer::Container::Map<std::string, bool> MayReturnList;
-
-    /** Default stack deltas based on function names. */
-    typedef Sawyer::Container::Map<std::string, int64_t> StackDeltaMap;
-
     /** Map address to name. */
     typedef Sawyer::Container::Map<rose_addr_t, std::string> AddressNameMap;
     
 private:
+    Configuration config_;                              // configuration information about functions, blocks, etc.
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
@@ -310,10 +304,8 @@ private:
     bool isReportingProgress_;                          // Emit automatic progress reports?
     Functions functions_;                               // List of all attached functions by entry address
     bool useSemantics_;                                 // If true, then use symbolic semantics to reason about things
-    MayReturnList mayReturnList_;                       // White/black list by name for whether functions may return to caller
     bool autoAddCallReturnEdges_;                       // Add E_CALL_RETURN edges when blocks are attached to CFG?
     bool assumeFunctionsReturn_;                        // Assume that unproven functions return to caller?
-    StackDeltaMap stackDeltaMap_;                       // Stack deltas defined for certain functions by name
     size_t stackDeltaInterproceduralLimit_;             // Max depth of call stack when computing stack deltas
     AddressNameMap addressNames_;                       // Names for various addresses
     bool basicBlockSemanticsAutoDrop_;                  // Conserve memory by dropping semantics for attached basic blocks?
@@ -370,6 +362,7 @@ public:
     }
     Partitioner& operator=(const Partitioner &other) {
         Attribute::StoredValues::operator=(other);
+        config_ = other.config_;
         instructionProvider_ = other.instructionProvider_;
         memoryMap_ = other.memoryMap_;
         cfg_ = other.cfg_;
@@ -380,10 +373,8 @@ public:
         isReportingProgress_ = other.isReportingProgress_;
         functions_ = other.functions_;
         useSemantics_ = other.useSemantics_;
-        mayReturnList_ = other.mayReturnList_;
         autoAddCallReturnEdges_ = other.autoAddCallReturnEdges_;
         assumeFunctionsReturn_ = other.assumeFunctionsReturn_;
-        stackDeltaMap_ = other.stackDeltaMap_;
         stackDeltaInterproceduralLimit_ = other.stackDeltaInterproceduralLimit_;
         addressNames_ = other.addressNames_;
         basicBlockSemanticsAutoDrop_ = other.basicBlockSemanticsAutoDrop_;
@@ -408,6 +399,15 @@ public:
 
     /** Reset CFG/AUM to initial state. */
     void clear() ROSE_FINAL;
+
+    /** Configuration information.
+     *
+     *  The configuration holds information about functions and basic blocks which is used to provide default values and such.
+     *
+     * @{ */
+    Configuration& configuration() { return config_; }
+    const Configuration& configuration() const { return config_; }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner CFG queries
@@ -569,6 +569,12 @@ public:
      *  and no semantics.  If an instruction was previously returned for this address (including the "unknown" instruction)
      *  then that same instruction will be returned this time. */
     SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const ROSE_FINAL;
+
+    /** Cross references.
+     *
+     *  Scans all attached instructions looking for constants mentioned in the instructions and builds a mapping from those
+     *  constants back to the instructions.  Only constants present in the @p restriction set are considered. */
+    CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const ROSE_FINAL;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -859,11 +865,11 @@ public:
      *  @li The instruction is an "unknown" instruction. The instruction provider returns an unknown instruction if it isn't
      *      able to disassemble an instruction at the specified address but the address is mapped with execute permission and
      *      the address was properly aligned.  The partitioner treats this "unknown" instruction as a valid instruction with
-     *      indeterminate successors and no semantics.
+     *      indeterminate successors (see below) and no semantics.
      *
      *  @li Note: at this point the user-defined basic block successors callbacks are invoked. They can query characteristics
-     *      of the basic block, adjust the basic block successor cache and other characteristics of the block, and write values
-     *      into a results structure that is used by some of the subsequent block termination conditions.
+     *      of the basic block, adjust the basic block successor cache (see below) and other characteristics of the block, and
+     *      write values into a results structure that is used by some of the subsequent block termination conditions.
      *
      *  @li The instruction has a concrete successor address that is an address of a non-initial instruction in this
      *      block. Basic blocks cannot have a non-initial instruction with more than one incoming edge, therefore we've already
@@ -875,10 +881,13 @@ public:
      *      steady state faster, but could result in basic blocks that are smaller than optimal. (The current algorithm uses
      *      method A.)
      *
-     *  @li The user-defined basic block callbacks indicated that the block should be terminated.  If the successors set the @c
+     *  @li The user-defined basic block callbacks indicated that the block should be terminated.  If the callback set the @c
      *      terminate member of the @c results output argument to @ref BasicBlockCallback::TERMINATE_NOW or @ref
      *      BasicBlockCallback::TERMINATE_PRIOR, then the current instruction either becomes the final instruction of the basic
      *      block, or the prior instruction becomes the final instruction.
+     *
+     *  @li The instruction is the final instruction of the basic block according to configuration information for that block.
+     *      The basic block is terminated at this instruction.
      *
      *  @li The instruction causes this basic block to look like a function call.  This instruction becomes the final
      *      instruction of the basic block and when the block is inserted into the CFG/AUM the edge will be marked as a
@@ -908,6 +917,20 @@ public:
      *      longer opaque in the new block.  Eventually if the new block is attached to the CFG/AUM then the conflict block
      *      will be truncated.  When there is no conflict block then this instruction becomes the final instruction of the
      *      basic block.
+     *
+     *  @section successors Calculation of control flow successors
+     *
+     *  The basic block has a list of successor addresses and control flow edge types, but these are not added to the
+     *  partitioner's CFG until the basic block is attached. A basic block's successor list can come from three places:
+     *
+     *  @li A block's successor list is initialized according to the final instruction. This list can be based on instruction
+     *      pattern or semantic information for the entire block up to that point.
+     *
+     *  @li Basic block callbacks are allowed to adjust or replace the block's successor list.
+     *
+     *  @li If the configuration file has a successor list then that list is used.  The list only applies if the configuration
+     *      for the basic block also specifies a final instruction address and that address matches the current final
+     *      instruction of the basic block.
      *
      *  @{ */
     BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const ROSE_FINAL;
@@ -1080,47 +1103,6 @@ public:
      *  This function is const because it doesn't modify the CFG/AUM; it only removes the may-return property from all the
      *  CFG/AUM basic blocks. */
     void basicBlockMayReturnReset() const ROSE_FINAL;
-
-    /** Adjust may-return blacklist and whitelist.
-     *
-     *  The @ref setMayReturnWhitelisted will add (or remove if @p state is false) the function name from the whitelist. It
-     *  will erase the name from the blacklist if added to the whitelist, but will never add the name to the blacklist.
-     *
-     *  The @ref setMayReturnBlacklisted will add (or remove if @p state if false) the function name from the blacklist. It
-     *  will erase the name from the whitelist if added to the blacklist, but will never add the name to the whitelist.
-     *
-     *  The @ref adjustMayReturnList will add the name to the whitelist when @p state is true, or to the blacklist when @p
-     *  state if false, or to neither list when @p state is <code>boost::indeterminate</code>. It erases the name from those
-     *  lists to which it wasn't added.
-     *
-     * @{ */
-    void setMayReturnWhitelisted(const std::string &functionName, bool state=true) ROSE_FINAL;
-    void setMayReturnBlacklisted(const std::string &functionName, bool state=true) ROSE_FINAL;
-    void adjustMayReturnList(const std::string &functionName, boost::tribool state) ROSE_FINAL;
-    /** @} */
-
-    /** Query may-return blacklist and whitelist.
-     *
-     *  The @ref isMayReturnWhitelisted returns true if and only if @p functionName is present in the whitelist.
-     *
-     *  The @ref isMayReturnBlacklisted returns true if and only if @p functionName is present in the blacklist.
-     *
-     *  The @ref isMayReturnListed consults either the whitelist or blacklist depending on the value of @p dflt.  If @p dflt is
-     *  true then this method returns false if @p functionName is blacklisted and true otherwise. If @p dflt is false then this
-     *  method returns true if @p functionName is whitelisted and false otherwise.  If @p dflt is indeterminate then returns
-     *  true if whitelisted, false if blacklisted, or indeterminate if not listed at all.
-     *
-     * @{ */
-    bool isMayReturnWhitelisted(const std::string &functionName) const ROSE_FINAL;
-    bool isMayReturnBlacklisted(const std::string &functionName) const ROSE_FINAL;
-    boost::logic::tribool isMayReturnListed(const std::string &functionName, boost::logic::tribool dflt=true) const ROSE_FINAL;
-    /** @} */
-
-    /** The may-return listed names.
-     *
-     *  Returns a map indicating whether names are whitelisted or blacklisted.  The map keys are the registered function names
-     *  and the map values are true for whitelisted and false for blacklisted. */
-    const MayReturnList& mayReturnList() const ROSE_FINAL { return mayReturnList_; }
 
 private:
     // Per-vertex data used during may-return analysis
@@ -1495,26 +1477,11 @@ public:
      *
      *  Since this analysis is based on data flow, which is based on a control flow graph, the function must be attached to the
      *  CFG/AUM and all its basic blocks must also exist in the CFG/AUM.  Also, the @ref basicBlockStackDelta method must be
-     *  non-null for each reachable block in the function. */
+     *  non-null for each reachable block in the function.
+     *
+     *  If the configuration information specifies a stack delta for this function then that delta is used instead of
+     *  performing any analysis. */
     BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const ROSE_FINAL;
-
-    /** Assign explicit stack delta based on function name.
-     *
-     *  Define a function (by name) to have a specific stack delta.  This is only needed for specimens that call library
-     *  functions that are not linked in at the time of analysis and which use callee-cleanup ABI.  The default for functions
-     *  that are not listed here is to assume a stack delta equal to the word size (i.e., assume the function pops a return
-     *  address off the stack which was pushed there by the caller).
-     *
-     *  The @p functionName should include the library part if applicable, as in "EncodePointer@KERNEL32.dll".
-     *
-     *  If @p delta is SgAsmInstruction::INVALID_STACK_DELTA then the record is removed from the table.  Deltas are specified
-     *  in terms of number of bytes.  When querying the delta for a name which is not present in the table, the default is
-     *  returned.
-     *
-     * @{ */
-    void functionStackDelta(const std::string &functionName, int64_t delta) ROSE_FINAL;
-    int64_t functionStackDelta(const std::string &functionName) const ROSE_FINAL;
-    /** @} */
 
     /** Stack delta analysis for all functions. */
     void allFunctionStackDelta() const ROSE_FINAL;

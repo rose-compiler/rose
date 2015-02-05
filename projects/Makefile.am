@@ -46,7 +46,6 @@ SUBDIRS = \
 	PowerAwareCompiler \
    taintcheck \
 	ManyCoreRuntime \
-   SMTPathFeasibility \
 	StencilManyCore \
 	ShiftCalculus \
 	Fortran_to_C \
@@ -178,6 +177,8 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
+SUBDIRS += demos-dlx-mdcg
+SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

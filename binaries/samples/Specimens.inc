@@ -120,6 +120,7 @@ elf_exe_x86_specimens =				\
     i386-fnstsw					\
     i386-fst					\
     i386-int3					\
+    i386-lea					\
     i386-mixed					\
     i386-mul					\
     i386-nologin				\
@@ -191,6 +192,7 @@ other_distributed =				\
     i386-fnstsw.s				\
     i386-fst.s					\
     i386-int3.s					\
+    i386-lea.s					\
     i386-mixed.s				\
     i386-mul.s					\
     i386-overlap.s				\

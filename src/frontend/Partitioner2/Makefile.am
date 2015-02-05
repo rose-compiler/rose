@@ -12,6 +12,7 @@ libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
 	Attribute.C				\
 	BasicBlock.C				\
+	Config.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\
 	DataFlow.C				\
@@ -29,6 +30,7 @@ libPartitioner_la_SOURCES =			\
 	ModulesX86.C				\
 	OwnedDataBlock.C			\
 	Partitioner.C				\
+	Reference.C				\
 	Semantics.C				\
 	StackDeltaAnalysis.C			\
 	Utility.C

@@ -35,6 +35,11 @@ public:
         NHeaderRows = 1                                 /**< Number of header rows. */
     };
 
+    enum DownloadFormat {
+        BinaryFormat,                                   /**< Download data as binary. */
+        SRecordFormat                                   /**< Download data as Motorola S-Records. */
+    };
+
 private:
     // A group of table rows corresponding to one memory segment
     struct RowGroup {
@@ -50,7 +55,6 @@ private:
         Wt::WContainerWidget *wDeleteConfirm;           // confirmation for deleting a segment
         Wt::WContainerWidget *wMergeConfirm;            // confirmation for merging two segments
         WHexValueEdit *wMoveSegment;                    // where to move this segment
-
         RowGroup()                                      // only defined for std::vector's sake
             : segmentVa(0), wId(NULL),
               wDelete(NULL), wSplit(NULL), wMerge(NULL), wMove(NULL),
@@ -68,10 +72,18 @@ private:
     };
 
 private:
+    bool allowDownloads_;                               // should downloads be allowed?
     MemoryMap memoryMap_;                               // the memory map being manipulated
     Wt::WTable *wTable_;
     bool isEditable_;                                   // can entries be edited?
     Wt::Signal<> mapChanged_;                           // emitted when the memory map changes
+    Wt::WPanel *wDownloadPanel_;                        // holds all the following download stuff
+    Wt::WLineEdit *wDownloadFrom_;                      // starting address for downloads
+    Wt::WLineEdit *wDownloadTo_;                        // ending address or +size for downloads
+    Wt::WButtonGroup *wDownloadFormat_;                 // what format to download
+    Wt::WPushButton *wDownloadPrepare_;                 // prepare the download on the server
+    Wt::WAnchor *wDownload_;                            // download the prepared file
+    Wt::WText *wDownloadMessage_;                       // messages for download progress, errors, etc.
 
     // Information about each segment in the table. We use a list rather than a vector because a list's iterators are stable
     // over insertion and we want to be able to take a reference to a RowGroup and not have it change from under us.  The row
@@ -81,7 +93,9 @@ private:
 
 public:
     explicit WMemoryMap(const MemoryMap &map = MemoryMap(), Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), memoryMap_(map), wTable_(NULL), isEditable_(true) {
+        : Wt::WContainerWidget(parent), allowDownloads_(true), memoryMap_(map), wTable_(NULL), isEditable_(true),
+          wDownloadPanel_(NULL), wDownloadFrom_(NULL), wDownloadTo_(NULL), wDownloadFormat_(NULL), wDownloadPrepare_(NULL),
+          wDownload_(NULL), wDownloadMessage_(NULL) {
         init();
     }
 
@@ -90,6 +104,9 @@ public:
 
     bool isEditable() const { return isEditable_; }
     void isEditable(bool b);
+
+    bool allowDownloads() const { return allowDownloads_; }
+    void allowDownloads(bool b);
 
     Wt::Signal<>& mapChanged() { return mapChanged_; }
 
@@ -149,6 +166,8 @@ private:
 
     // Stop editing hex value.
     void cancelEdit(Wt::WText *wId);
+
+    void prepareDownload();
 };
 
 } // namespace
