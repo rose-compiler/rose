@@ -1510,12 +1510,14 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
 }
 
 void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+  ROSE_ASSERT(root);
   resetInputSequenceIterator();
   std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
   startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
+    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
+    exit(1);
   } else {
     std::cerr << "INFO: starting at function '"<<funtofind<<"'."<<endl;
   }
