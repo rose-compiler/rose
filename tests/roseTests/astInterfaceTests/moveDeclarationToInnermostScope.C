@@ -10,9 +10,10 @@
  * ********************************************************************************************** 
  *  User instructions: 
  *
- * The translator accepts a debugging option "-rose:debug", which is turned on by default in the testing.  
- * Some dot graph files will be generated for scope trees of variables for debugging purpose.
-
+ * The translator accepts the following options: 
+ * -rose:debug, which is turned on by default in the testing.  
+ *             Some dot graph files will be generated for scope trees of variables for debugging purpose.
+ *
  * -rose:aggressive  : turn on the aggressive mode, which will move declarations with initializers, and across loop boundaries.   
  *  A warning message will be sent out if the move crosses a loop boundary.  Without this option, the tool only moves a declaration 
  *  without an initializer to be safe.
@@ -22,7 +23,7 @@
  *  
  * -rose:identity  will turn off any transformations and act like an identity translator. Useful for debugging purposes. 
  *
- *
+ * -rose:merge_decl_assign  will merge the moved declaration with an immediately followed assignment. 
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -74,6 +75,7 @@
  *
  * Algorithm V2: further optimization on top of v1
  *    for analysis-move, we find all bottom scopes at once and only do move once after that
+ *    the scope trees are the new worklist now.
  *    This eliminates the intermediate moving of declarations and is much more efficient. 
  *    Details for how to do the iterative analysis can be found at comments for findFinalTargetScopes ()
  *
@@ -107,13 +109,13 @@ bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<
 // Step 1: iterative subalgorithm to find the real bottom scopes 
 // Step 2: copy & move source declaration to all the bottom scopes.
 // return the final scopes accepting the moved declarations.
-std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2(SgVariableDeclaration* decl, bool debug/*= false */);
+//std::vector <SgVariableDeclaration*> 
+void moveDeclarationToInnermostScope_v2(SgVariableDeclaration* decl, std::vector <SgVariableDeclaration*>& my_inserted_decls, bool debug/*= false */);
 
 //By default ASSERT should block the execution to find issues.
 //But some users want to keep the tool going even when some assertion fails. 
 //This is only supported by moveDeclarationToInnermostScope() and associated functions for now
 bool tool_keep_going = false;
-
 
 // Like any other compiler-based tools. We do things conservatively by default.
 // Declarations with initializers will not be moved
@@ -121,10 +123,153 @@ bool tool_keep_going = false;
 // sends out warning if it crosses a loop boundaries in between. 
 bool decl_mover_conservative = true;
 
+// a global variable storing inserted declaration per input file processed
+static  std::vector <SgVariableDeclaration* > inserted_decls; 
+//! If we further merge a naked variable declaration (without initialization) with a followed variable assignment within the same scope
+bool merge_decl_assign = false; 
+
 // store scope of var ref used in array types. There is no easy way to find it by AST traversal.
 //  e.g. double *buffer = new double[numItems] ; // numItems is referenced. But cannot get its scope. We store SgConstructorInitialzer for it to establish its scope info.
 // TODO: report this issue to Dan.
 static std::map <SgVarRefExp *, SgExpression*> specialVarRefScopeExp; 
+
+
+//! Check if a statement is an assignment to a variable 
+//TODO : move to SageInterface ?
+static bool isAssignmentStmtOf(SgStatement * stmt, SgInitializedName* init_name)
+{
+  bool rt = false;
+
+  ROSE_ASSERT (stmt != NULL);
+  ROSE_ASSERT (init_name != NULL);
+  if (SgExprStatement* exp_stmt = isSgExprStatement(stmt))
+  {
+    if (SgAssignOp * assign_op = isSgAssignOp (exp_stmt->get_expression()))
+    {
+       if (SgVarRefExp* var_exp = isSgVarRefExp (assign_op->get_lhs_operand()) )
+      {
+         if (var_exp->get_symbol()->get_declaration() == init_name)
+          rt = true;
+      }
+    }
+  }
+  return rt; 
+}
+/*
+We cannot simply merge a declaration at a location A with an assignment at a location B.
+This is essentially moving one statement across some code region so liveness or side effect analysis info. is needed for safety.
+If the assignment's right hand operand uses any variable declared or written somewhere between A and B, 
+we cannot move it up and merge it with the declaration.
+
+int i=0
+int tmp =10;
+i = myarray[tmp]; // this cannot be moved up
+
+Consider only right hand is not enough, the variable declared on left side must be in the set by default.
+
+     int j;
+   {
+// initially built into scope tree, later trimmed. 
+          j = 0;
+        }
+//this should trigger trimming the previous path 
+      j = 2; // this cannot be moved up ??
+
+
+The best solution is liveness analysis (or side effect analysis).
+An approximation being used now is to not move when there is any references to variables used by the assignment (either lhs or rhs).
+*/
+static  bool isMergeable (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+{
+  bool rt = false;
+  ROSE_ASSERT (decl != NULL);
+  ROSE_ASSERT (assign_stmt != NULL);
+  std::vector <SgStatement* > stmts_in_middle ;
+  SgStatement* next_stmt = SageInterface::getNextStatement (decl);
+  while (next_stmt != assign_stmt && next_stmt != NULL)
+  {
+    stmts_in_middle.push_back(next_stmt);
+    next_stmt = SageInterface::getNextStatement (next_stmt);  
+  }  
+
+  if (next_stmt == NULL)
+  {
+    cout<<"Error in isMergeable (decl, assign_stmt): assign_stmt is not one of next statements for decl!"<<endl;
+    ROSE_ASSERT (false);
+  } 
+
+  // collect all variables used in between
+  // We must use SgInitializedName instead of SgVarRefExp since a declaration in between has only SgInitializedName. 
+  std::set<SgVariableSymbol* > usedSymbolsInBetween; 
+
+  std::vector <SgVarRefExp* > usedVarRefsInRhs;
+  std::set<SgVariableSymbol* > usedSymbolsInAssignment; 
+
+  std::set<SgVariableSymbol* > intersectSymbols; 
+
+  // 1. Collect symbols used in between
+  // TODO wrap into a SageInterface function: query both SgVarRefExp (including these used in types) and SgInitializedName
+  for (size_t i=0; i< stmts_in_middle.size(); i++)
+  {
+    std::vector<SgVarRefExp*> varRefsInBetween; 
+   // collect variable references first 
+    SageInterface::collectVarRefs (stmts_in_middle[i], varRefsInBetween);
+    // convert varRef to SgInitializedName 
+     for (size_t j = 0; j< varRefsInBetween.size(); j++)
+        usedSymbolsInBetween.insert (varRefsInBetween[j]->get_symbol());
+
+   // collect initialized name also for declarations
+    if (SgVariableDeclaration* mid_decl = isSgVariableDeclaration (stmts_in_middle[i]))
+      usedSymbolsInBetween.insert(SageInterface::getFirstVarSym(mid_decl));
+  }
+
+  // 2. collect symbols used by assign_op's rhs and lhs (must consider both sides!)
+  SageInterface::collectVarRefs ( isSgAssignOp(assign_stmt->get_expression())->get_rhs_operand(), usedVarRefsInRhs);
+  for (size_t k=0; k< usedVarRefsInRhs.size(); k++)
+    usedSymbolsInAssignment.insert (usedVarRefsInRhs[k]->get_symbol());
+  usedSymbolsInAssignment.insert (SageInterface::getFirstVarSym (decl));
+
+ // intersection is not NULL, cannot merge or move across the area using the variable
+  set_intersection(usedSymbolsInBetween.begin(), usedSymbolsInBetween.end(), usedSymbolsInAssignment.begin(), usedSymbolsInAssignment.end(),
+                    inserter (intersectSymbols, intersectSymbols.begin()));
+  if (intersectSymbols.size() == 0 )
+    rt = true;
+ 
+  return rt; 
+}
+
+
+// for each decl in the declaration vector, 
+// if it has no initialization, we find the first followed assignment within the same scope and merge the assignment into the decl as an initializer
+static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDeclaration*> decls)
+{
+  for (size_t i = 0; i< decls.size(); i++)
+  {
+    SgVariableDeclaration* current_decl = decls[i];
+    ROSE_ASSERT (current_decl != NULL);
+    SgInitializedName* init_name = SageInterface::getFirstInitializedName (current_decl);
+    ROSE_ASSERT (init_name!= NULL);
+    SgInitializer * initor =  init_name->get_initptr();
+    if (initor == NULL)
+    { 
+      SgStatement* next_stmt = SageInterface::getNextStatement(current_decl);
+#if  1
+      while (next_stmt)
+      {
+         if (isAssignmentStmtOf (next_stmt, init_name) )
+         {  
+           if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
+               SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+             next_stmt = NULL; // We stop when the first match is found
+         } 
+         else
+           next_stmt = SageInterface::getNextStatement(next_stmt);
+      } 
+#endif
+    } // end if null initializer
+  } // end for
+}
+
 
 class visitorTraversal : public AstSimpleProcessing
 {
@@ -210,7 +355,7 @@ class visitorTraversal : public AstSimpleProcessing
 	      if (null_initializer)   
 	      {
 		if (useAlgorithmV2)
-		  moveDeclarationToInnermostScope_v2(decl, debug);
+		  moveDeclarationToInnermostScope_v2(decl, inserted_decls, debug);
 		else
 		  moveDeclarationToInnermostScope_v1(decl, worklist, debug);
 	      }
@@ -226,13 +371,14 @@ class visitorTraversal : public AstSimpleProcessing
 	      if (debug)
 		cout<<"Using aggressive moving for decl .."<<endl;
 	      if (useAlgorithmV2)
-		moveDeclarationToInnermostScope_v2(decl, debug);
+		moveDeclarationToInnermostScope_v2(decl, inserted_decls, debug);
 	      else
 		moveDeclarationToInnermostScope_v1(decl, worklist, debug);
 	    }
-	  }
-	}
-      } // end if
+
+	  } // end if non-static 
+	} // end while (worklist)
+      } // end if function
     } // end visit()
 };
 
@@ -262,13 +408,18 @@ int main(int argc, char * argv[])
     cout<<"Turing on the keep going model, ignore assertions as much as possible..."<<endl;
   }
 
+  if (CommandlineProcessing::isOption (argvList,"-rose:merge_decl_assign","",true))
+  {
+    merge_decl_assign = true;
+    cout<<"Turing on the merge feature, merge decl with assign when possible ..."<<endl;
+  }
+
   // ROSE base does not use this option. remove it after use.
   if (CommandlineProcessing::isOption (argvList,"-rose:aggressive","",true)) 
   {
     decl_mover_conservative = false;
     cout<<"Turing on the aggressive model, allowing moving declarations with initializers and cross loop boundaries, but will send out warnings..."<<endl;
   }
-
 
   SgProject *project = frontend (argvList);
 
@@ -282,8 +433,14 @@ int main(int argc, char * argv[])
       SgSourceFile* s_file = isSgSourceFile(cur_file);
       if (s_file != NULL)
       {
-	//exampleTraversal.traverseInputFiles(project,preorder);
-	exampleTraversal.traverseWithinFile(s_file, preorder);
+        inserted_decls.clear(); // For each file, reset this.
+        //exampleTraversal.traverseInputFiles(project,preorder);
+        exampleTraversal.traverseWithinFile(s_file, preorder);
+        if (inserted_decls.size()>0 && merge_decl_assign)
+        {
+          collectiveMergeDeclarationAndAssignment (inserted_decls);
+        }
+
       }
     }
     string filename= SageInterface::generateProjectName(project);
@@ -820,15 +977,20 @@ static bool isReferencedByLoopHeader (SgVariableSymbol* s, SgForStatement * for_
   return symbolMap[s]; 
 }
 
-// Move a single declaration into multiple scopes. 
+// Copy/Move a single declaration into multiple scopes. 
 // For each target scope:
-// 1. Copy the decl to be local decl , 
+// 1. Copy the decl to a new decl , 
 // 2. Insert into the target_scopes, 
 // 3. Replace variable references to the new copies
-// Finally, erase the original decl 
+// 4. Finally, erase the original decl 
+//
+// Simply move won't work when there are more than one scopes to move into. 
 //
 // if the target scope is a For loop && the variable is index variable,  merge the decl to be for( int i=.., ...).
-void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::queue<SgVariableDeclaration*> &worklist)
+// Accumulate the set of inserted declarations.
+//std::vector<SgVariableDeclaration* > 
+void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgScopeStatement*> scopes, std::queue<SgVariableDeclaration*> &worklist, 
+ std::vector<SgVariableDeclaration* > & inserted_copied_decls)
 {
   ROSE_ASSERT (decl!= NULL);
   ROSE_ASSERT (scopes.size() != 0);
@@ -838,24 +1000,18 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
   ROSE_ASSERT (sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
 
+//  std::vector<SgVariableDeclaration* >  inserted_copied_decls; 
+
+#if 1 // TODO we should make sure target scopes are all legitimate at this point
   // when we adjust first branch node  (if-stmt with both true and false body )in the scope tree, we may backtrack to the decl's scope 
   // We don't move anything in this case.
   if ((scopes.size()==1) && (scopes[0] == decl->get_scope()))
   {
-     return;
+     return ; //inserted_copied_decls;
   }
-
+#endif
   //TODO, no longe need this, simply ensure BB if it is a single statement of true/false body
   scopes = processTargetScopes(scopes);
-
-#if 0 //TODO: this is tricky, we have to modify the scope tree to backtrack this. 
-  // For aggressive mode, skip moving if the move will cross some boundaries
-  for (size_t i = 0; i< scopes.size(); i++)
-  {
-    SgScopeStatement* target_scope = scopes[i]; 
-    ROSE_ASSERT (target_scope != decl->get_scope());
-  } 
-#endif
 
   for (size_t i = 0; i< scopes.size(); i++)
   {
@@ -863,7 +1019,9 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
     ROSE_ASSERT (target_scope != decl->get_scope());
 
     SgScopeStatement* adjusted_scope = target_scope; 
-    SgVariableDeclaration * decl_copy = SageInterface::deepCopy(decl);
+    SgVariableDeclaration * decl_copy =  NULL; // we may not want to actually make copies here until the copy will really be inserted into AST
+    
+    decl_copy = SageInterface::deepCopy(decl);
 
     // Liao 1/14/2015
     // AST copy will copy the pointer to attached preprocessing information of the original declaration.
@@ -880,6 +1038,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
       case V_SgBasicBlock:
         {
           SageInterface::prependStatement (decl_copy, adjusted_scope);
+          inserted_copied_decls.push_back(decl_copy); 
           break;
         }
       case V_SgForStatement:
@@ -914,13 +1073,16 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 	    {
 	      ROSE_ASSERT (assign_op != NULL);
 	      stmt_list.clear();
-
-	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt);
+              // SageInterface::removeStatement() cannot handle this case, we remove it on our own
+	      SageInterface::mergeDeclarationAndAssignment (decl_copy, exp_stmt, false);
+              SageInterface::deepDelete (exp_stmt);
 	      // insert the merged decl into the list, TODO preserve the order in the list
 	      // else other cases: we simply preprent decl_copy to the front of init_stmt
 	      stmt_list.insert (stmt_list.begin(),  decl_copy);
 	      decl_copy->set_parent(stmt->get_for_init_stmt());
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
+              // we already merged with assignment, we skip it so it won't be considered again?
+              inserted_copied_decls.push_back(decl_copy);
 
 	    }
 	    // TODO: it can be SgCommanOpExp
@@ -946,6 +1108,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
             SgBasicBlock* loop_body = SageInterface::ensureBasicBlockAsBodyOfFor (stmt);
             adjusted_scope = loop_body;
             SageInterface::prependStatement (decl_copy, adjusted_scope);
+            inserted_copied_decls.push_back(decl_copy);
           }
           break;
         }
@@ -1077,11 +1240,11 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
   // TODO: fix this in SageInterface or redesign how to store comments in AST: independent vs. attachments
   SageInterface::removeStatement(decl, false);
 
-
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
   //orig_scope->remove_symbol(sym);
   //delete i_name;
+//  return inserted_copied_decls;
 }
 
 //! Check if a variable (symbol) is live in for a scope
@@ -1393,19 +1556,20 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
 }
 
 // Improved 2-step algorithm:
-// Step 1: iterative subalgorithm to find the real bottom scopes 
+// Step 1: iterative algorithm to find the real bottom scopes 
 // Step 2: copy & move source declaration to all the bottom scopes.
 // return the final scopes accepting the moved declarations.
-std::vector <SgScopeStatement *> moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, bool debug = false)
+//std::vector <SgVariableDeclaration*> 
+void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std::vector <SgVariableDeclaration*>& my_inserted_decls, bool debug = false)
 {
+//  std::vector <SgVariableDeclaration* > inserted_decl; 
   std::vector <SgScopeStatement *> target_scopes;
   findFinalTargetScopes (declaration, target_scopes, debug);
   std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
-    copyMoveVariableDeclaration (declaration, target_scopes, worklist);
+    copyMoveVariableDeclaration (declaration, target_scopes, worklist, my_inserted_decls);
   }
-  return target_scopes; 
 }
 
 // Old algorithm: iteratively find target scopes and actualy move declarations.
@@ -1477,7 +1641,8 @@ bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std:
         Scope_Node* bottom_node = current_child_scope -> findFirstBranchNode ();
         SgScopeStatement * bottom_scope = bottom_node->scope;
         ROSE_ASSERT (bottom_scope!= NULL);
-        target_scopes.push_back (bottom_scope);
+        if (bottom_scope != decl->get_scope())
+         target_scopes.push_back (bottom_scope);
       }
     }
     else // we still have to move it to the innermost common scope
@@ -1514,7 +1679,7 @@ bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* declaration, std:
 #endif 
     }
     else
-      copyMoveVariableDeclaration (decl, target_scopes, worklist);
+      copyMoveVariableDeclaration (decl, target_scopes, worklist, inserted_decls);
     scope_tree->deep_delete_children ();
     delete scope_tree;
     return true;
