@@ -217,7 +217,8 @@ CloneDetection_SPECIMENS =			\
 	tests/quicksort.C			\
 	tests/shellsort.C			\
 	tests/simple001.C			\
-	tests/simple002.C
+	tests/simple002.C			\
+	tests/simple003.C
 
 #-----------------------------------------------------------------------------------------------------------------------------
 # A very simple test to ensure that basic things are working

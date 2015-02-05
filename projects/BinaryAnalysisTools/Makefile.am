@@ -90,6 +90,7 @@ pkginclude_HEADERS = 				\
         bROwSE/WAssemblyListing.h		\
         bROwSE/WBasicBlock.C			\
         bROwSE/WBusy.h				\
+	bROwSE/WCrossReferences.h		\
         bROwSE/WFunctionCfg.h			\
         bROwSE/WFunctionList.h			\
         bROwSE/WFunctionNavigation.h		\
@@ -97,11 +98,14 @@ pkginclude_HEADERS = 				\
         bROwSE/WHexDump.h			\
         bROwSE/WHexValueEdit.h			\
         bROwSE/WInstructionList.h		\
+	bROwSE/WMagic.h				\
         bROwSE/WMemoryMap.h			\
         bROwSE/WPartitioner.h			\
         bROwSE/WSemantics.h			\
         bROwSE/WSplash.h			\
         bROwSE/WStatus.h			\
+	bROwSE/WStrings.h			\
+	bROwSE/WStringsDetail.h			\
         bROwSE/WToggleButton.h			\
         bROwSE/bROwSE.h
 
