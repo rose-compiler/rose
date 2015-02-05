@@ -14,7 +14,6 @@
 // particular file then that should be documented where we state which versions of boost are supported, and possibly
 // checked during configuration. [Matzke 11/17/2014]: 
 
-#include "rose_config.h"
 #include <FileSystem.h>
 
 #include <boost/filesystem.hpp>
