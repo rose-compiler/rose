@@ -65,7 +65,7 @@ void SgAsmElfNoteEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfNoteSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportDirectory::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmPEImportSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
-bool SgAsmPEImportSection::reallocate(){}
+bool SgAsmPEImportSection::reallocate() { return false; }
 void SgAsmElfSectionTableEntry::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfSectionTable::dump(FILE *f, const char *prefix, ssize_t idx) const {}
 void SgAsmElfStringSection::dump(FILE *f, const char *prefix, ssize_t idx) const {}
@@ -174,6 +174,7 @@ std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::iname_ty
 std::ostream & operator<< ( std::ostream & os, const SgAsmNERelocEntry::osfixup_type & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const RegisterDescriptor & x ) { return os; }
 std::ostream & operator<< ( std::ostream & os, const rose_rva_t & x ) { return os; }
+std::ostream& operator<<(std::ostream &os, const AddressIntervalSet&) { return os; }
 
 bool SgAsmDOSFileHeader::reallocate() { return false; }
 void SgAsmPEStringSection::set_size(rose_addr_t) {}
@@ -241,8 +242,8 @@ bool SgAsmElfSymbolSection::reallocate() { return false; }
 rose_addr_t SgAsmElfSymverSection::calculate_sizes(size_t*, size_t*, size_t*, size_t*) const { return 0;}
 
 void SgAsmGenericSection::set_size(rose_addr_t) {}
-SgAsmGenericString* SgAsmElfNoteEntry::get_name() const {}
-SgAsmGenericString* SgAsmGenericSymbol::get_name() const {}
+SgAsmGenericString* SgAsmElfNoteEntry::get_name() const { return NULL; }
+SgAsmGenericString* SgAsmGenericSymbol::get_name() const { return NULL; }
 
 rose_rva_t::rose_rva_t() {
     addr = 0;

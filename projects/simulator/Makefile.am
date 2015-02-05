@@ -110,6 +110,8 @@ x86dis_SOURCES = x86dis.C
 x86dis_CPPFLAGS = $(ROSE_INCLUDES)
 x86dis_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+# Useful tool for debugging syscalls.  This cannot be compiled automatically. See instructions in source code.
+EXTRA_DIST += debug.c
 
 ###############################################################################################################################
 #  DEMOS
