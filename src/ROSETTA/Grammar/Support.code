@@ -15604,6 +15604,10 @@ SgProject::initialization()
   // DQ (9/18/2011): Added support for using more constant AST to select to use or not use frontend specific constant folding.
      p_frontendConstantFolding = false;
 
+  // TV (07/18/2013): Initialise the global GlobalScope for multiple flie handeling
+     p_globalScopeAcrossFiles = new SgGlobal(Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode());
+     p_globalScopeAcrossFiles->set_parent(this);
+
   // DQ (9/15/2013): Adding support to handle output of files into the same directory as the source file.
   // This avoids some subtle issues in how header files are resolved by the backend compiler.
   // See documentation in src/ROSETTA/src/support.C.
@@ -15626,8 +15630,6 @@ SgProject::initialization()
      p_noclobber_if_different_output_file = false;
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
-  // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
-     p_globalScopeAcrossFiles = NULL;
    }
 
 

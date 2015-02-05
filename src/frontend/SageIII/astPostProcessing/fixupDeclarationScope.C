@@ -56,7 +56,8 @@ void fixupAstDeclarationScope( SgNode* node )
                ROSE_ASSERT(associatedScope != NULL);
 
             // DQ (6/11/2013): This is triggered by namespace definition scopes that are different 
-            // due to re-entrant namespace declarations.  We should maybe be fix this.
+            // due to re-entrant namespace declarations.  We should maybe fix this.
+            // TV (7/22/13): This is also triggered when for global scope accross files.
                if (associatedScope != correctScope)
                   {
                  // DQ (1/30/2014): Cleaning up some output spew.

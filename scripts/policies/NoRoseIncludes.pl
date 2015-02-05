@@ -2,7 +2,7 @@
 # DO NOT DISABLE without first checking with a ROSE core developer
 
 # Please do not increase this limit! Only decrease it.
-my $allowedFailures = 77;
+my $allowedFailures = 75;
 
 
 
@@ -25,7 +25,12 @@ that don't begin with "ROSE_".  If the header needs configuration symbols then
 include <rosePublicConfig.h> into the header instead; otherwise include
 "rose_config.h" into the ROSE library .C file instead.
 
-The following files violate this policy:
+The following files violate this policy. Some of these violations may have
+existed prior to this check, and you have triggered this failure by introducing
+at least one new violation. Our goal is to ultimately eliminate all of these
+violations so the list is more relevant to you.  It does not matter which
+violation(s) you fix to get back below the threshold -- if you have time and
+are feeling generous, fix a few! Thank you.
 EOF
 
 
