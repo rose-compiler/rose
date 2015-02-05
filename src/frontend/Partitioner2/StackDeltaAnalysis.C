@@ -220,7 +220,8 @@ public:
             BaseSemantics::RiscOperatorsPtr ops = cpu_->get_operators();
             BaseSemantics::SValuePtr addrProtoval = ops->get_state()->get_memory_state()->get_addr_protoval();
             BaseSemantics::SValuePtr valProtoval = ops->get_state()->get_memory_state()->get_val_protoval();
-            BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state()->create(addrProtoval, valProtoval);
+            BaseSemantics::MemoryStatePtr memState = ops->get_state()->get_memory_state()->clone();
+            memState->clear();
             BaseSemantics::StatePtr fullState = ops->get_state()->create(retval, memState);
             ops->set_state(fullState);
             BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
