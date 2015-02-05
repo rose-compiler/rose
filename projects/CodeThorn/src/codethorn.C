@@ -318,10 +318,8 @@ int main( int argc, char * argv[] ) {
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
-    ("specialize-fun-param", po::value< int >(), "function parameter [arg] to be specialized (starting with 0)")
-    ("specialize-fun-const", po::value< int >(), "specialize function param with const [arg]")
-    ("specialize-fun-param2", po::value< int >(), "function parameter [arg] to be specialized (starting with 0)")
-    ("specialize-fun-const2", po::value< int >(), "specialize function param with const [arg]")
+    ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
+    ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
     ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
     ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
@@ -574,60 +572,49 @@ int main( int argc, char * argv[] ) {
   }
 
   string option_specialize_fun_name="";
-  int option_specialize_fun_param=-1;
-  int option_specialize_fun_const=0;
+  vector<int> option_specialize_fun_param_list;
+  vector<int> option_specialize_fun_const_list;
   if(args.count("specialize-fun-name")) {
     option_specialize_fun_name = args["specialize-fun-name"].as<string>();
   }
   if(args.count("specialize-fun-param")) {
-    option_specialize_fun_param = args["specialize-fun-param"].as<int>();
+    option_specialize_fun_param_list=args["specialize-fun-param"].as< vector<int> >();
+    option_specialize_fun_const_list=args["specialize-fun-const"].as< vector<int> >();
   }
-  if(args.count("specialize-fun-const")) {
-    option_specialize_fun_const = args["specialize-fun-const"].as<int>();
-  }
-  // experimental, need to generalize this to n parameters
-  int option_specialize_fun_param2=-1;
-  int option_specialize_fun_const2=0;
-  if(args.count("specialize-fun-param2")) {
-    option_specialize_fun_param2 = args["specialize-fun-param2"].as<int>();
-  }
-  if(args.count("specialize-fun-const2")) {
-    option_specialize_fun_const2 = args["specialize-fun-const2"].as<int>();
-  }
+  //cout<<"DEBUG: "<<"specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
   if((args.count("specialize-fun-name")||args.count("specialize-fun-param")||args.count("specialize-fun-const"))
-     && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-const"))) {
+     && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-param"))) {
     cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
     exit(1);
   }
 
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]) == "--csv-assert" 
-        || string(argv[i])=="--csv-stats" 
-        || string(argv[i])=="--csv-assert-live"
-        || string(argv[i])=="--threads" 
-        || string(argv[i])=="--display-diff"
-        || string(argv[i])=="--input-values"
-        || string(argv[i])=="--ltl-verifier"
-        || string(argv[i])=="--dot-io-stg"
-        || string(argv[i])=="--verify"
-        || string(argv[i])=="--csv-ltl"
-        || string(argv[i])=="--spot-stg"
-        || string(argv[i])=="--dump-sorted"
-        || string(argv[i])=="--dump-non-sorted"
-        || string(argv[i])=="--limit-to-fragment"
-        || string(argv[i])=="--check-ltl"
-        || string(argv[i])=="--csv-spot-ltl"
-        || string(argv[i])=="--check-ltl-sol"
-        || string(argv[i])=="--ltl-in-alphabet"
-        || string(argv[i])=="--ltl-out-alphabet"
-        || string(argv[i])=="--specialize-fun-name"
+    if (string(argv[i]).find("--csv-assert")==0
+        || string(argv[i]).find("--csv-stats")==0
+        || string(argv[i]).find("--csv-assert-live")==0
+        || string(argv[i]).find("--threads" )==0
+        || string(argv[i]).find("--display-diff")==0
+        || string(argv[i]).find("--input-values")==0
+        || string(argv[i]).find("--ltl-verifier")==0
+        || string(argv[i]).find("--dot-io-stg")==0
+        || string(argv[i]).find("--verify")==0
+        || string(argv[i]).find("--csv-ltl")==0
+        || string(argv[i]).find("--spot-stg")==0
+        || string(argv[i]).find("--dump-sorted")==0
+        || string(argv[i]).find("--dump-non-sorted")==0
+        || string(argv[i]).find("--limit-to-fragment")==0
+        || string(argv[i]).find("--check-ltl")==0
+        || string(argv[i]).find("--csv-spot-ltl")==0
+        || string(argv[i]).find("--check-ltl-sol")==0
+        || string(argv[i]).find("--ltl-in-alphabet")==0
+        || string(argv[i]).find("--ltl-out-alphabet")==0
+        || string(argv[i]).find("--specialize-fun-name")==0
+        || string(argv[i]).find("--specialize-fun-param")==0
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
-      assert(i+1<argc);
-        argv[i+1] = strdup("");
     }
   }
 
@@ -692,32 +679,26 @@ int main( int argc, char * argv[] ) {
     return 0;
   }
 
-
   SgNode* root=sageProject;
+  ROSE_ASSERT(root);
 
+  int numSubst=0;
   if(option_specialize_fun_name!="")
   {
     Specialization speci;
-    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<", parameter "<<option_specialize_fun_param<<" = "<<option_specialize_fun_const;
-    if(option_specialize_fun_param>=0) {
-      cout<<" parameter "<<option_specialize_fun_param2<<" = "<<option_specialize_fun_const2;
-    }
-    cout<<endl;
+    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
     string funNameToFind=option_specialize_fun_name;
-    int param=option_specialize_fun_param;
-    int param2=option_specialize_fun_param2;
     VariableIdMapping variableIdMapping;
     variableIdMapping.computeVariableSymbolMapping(sageProject);
 
-    int constInt=option_specialize_fun_const;
-    int constInt2=option_specialize_fun_const2;
-
-    int numSubst=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
-    if(param2>=0) {
-      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param2, constInt2, &variableIdMapping);
+    for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
+      int param=option_specialize_fun_param_list[i];
+      int constInt=option_specialize_fun_const_list[i];
+      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
     }
-    cout<<"STATUS: number of variable uses specialized: "<<numSubst<<endl;
+
+    cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
     //root=speci.getSpecializedFunctionRootNode();
     sageProject->unparse(0,0);
     //exit(0);
