@@ -1,4 +1,4 @@
-#include "rose.h"
+#include "sage3basic.h"
 
 // This file contains the function definitions required within ROSE if Binary Analysis 
 // support is NOT enabled.  In each case I can't eliminate the function (usually the 
