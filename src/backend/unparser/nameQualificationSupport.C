@@ -7308,6 +7308,12 @@ NameQualificationTraversal::setNameQualificationSupport(SgScopeStatement* scope,
                     SgClassDefinition* classDefinition = isSgClassDefinition(scope);
                     if (classDefinition != NULL)
                        {
+                         if (classDefinition->get_declaration()->get_isUnNamed() == false)
+                            {
+                              SgClassDeclaration* classDeclaration = classDefinition->get_declaration();
+                              printf ("Error: class should be marked as unnamed: classDeclaration = %p = %s \n",classDeclaration,classDeclaration->class_name().c_str());
+                              printf ("   --- classDeclaration name = %s \n",classDeclaration->get_name().str());
+                            }
                          ROSE_ASSERT(classDefinition->get_declaration()->get_isUnNamed() == true);
                        }
 #if 0

@@ -3700,6 +3700,43 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Cxx_only(false);
         }
 
+// DQ (2/4/2015): There are a large collection of -std=<options>, we are only supporting a subset.
+// For the GNU 4.8.1 compiler they are:
+//    -std=f2003                  Conform to the ISO Fortran 2003 standard
+//    -std=f2008                  Conform to the ISO Fortran 2008 standard
+//    -std=f2008ts                Conform to the ISO Fortran 2008 standard
+//    -std=f95                    Conform to the ISO Fortran 95 standard
+//    -std=gnu                    Conform to nothing in particular
+//    -std=legacy                 Accept extensions to support legacy code
+//    -std=c++03                  Conform to the ISO 1998 C++ standard revised by
+//    -std=c++0x                  Deprecated in favor of -std=c++11
+//    -std=c++11                  Conform to the ISO 2011 C++ standard
+//    -std=c++1y                  Conform to the ISO 201y(7?) C++ draft standard
+//    -std=c++98                  Conform to the ISO 1998 C++ standard revised by
+//    -std=c11                    Conform to the ISO 2011 C standard (experimental
+//    -std=c1x                    Deprecated in favor of -std=c11
+//    -std=c89                    Conform to the ISO 1990 C standard
+//    -std=c90                    Conform to the ISO 1990 C standard
+//    -std=c99                    Conform to the ISO 1999 C standard
+//    -std=c9x                    Deprecated in favor of -std=c99
+//    -std=gnu++03                Conform to the ISO 1998 C++ standard revised by
+//    -std=gnu++0x                Deprecated in favor of -std=gnu++11
+//    -std=gnu++11                Conform to the ISO 2011 C++ standard with GNU
+//    -std=gnu++1y                Conform to the ISO 201y(7?) C++ draft standard
+//    -std=gnu++98                Conform to the ISO 1998 C++ standard revised by
+//    -std=gnu11                  Conform to the ISO 2011 C standard with GNU
+//    -std=gnu1x                  Deprecated in favor of -std=gnu11
+//    -std=gnu89                  Conform to the ISO 1990 C standard with GNU
+//    -std=gnu90                  Conform to the ISO 1990 C standard with GNU
+//    -std=gnu99                  Conform to the ISO 1999 C standard with GNU
+//    -std=gnu9x                  Deprecated in favor of -std=gnu99
+//    -std=iso9899:1990           Conform to the ISO 1990 C standard
+//    -std=iso9899:199409         Conform to the ISO 1990 C standard as amended in
+//    -std=iso9899:1999           Conform to the ISO 1999 C standard
+//    -std=iso9899:199x           Deprecated in favor of -std=iso9899:1999
+//    -std=iso9899:2011           Conform to the ISO 2011 C standard (experimental
+
+
   // DQ (9/3/2013): We need to support -std=c99 explicitly (makes a difference for asm test codes).
      if ( CommandlineProcessing::isOption(argv,"-std=","(c89)",true) == true )
         {
@@ -3813,6 +3850,190 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           set_Cxx_only(false);
         }
 
+#if 0
+  // DQ (2/4/2015): Note that the use of "++" is a problem for the CommandlineProcessing::isOption() function's regex engin (I think).
+  // The larger point is that these options with "++" are not being recognized, so we will have to search for "-std=c++11" directly 
+  // using other means.
+
+  // DQ (2/4/2015): We need to support -std=c++11 explicitly.
+     set_Cxx11_only(false);
+     ROSE_ASSERT (get_Cxx11_only() == false);
+  // if ( CommandlineProcessing::isOption(argv,"-std=","(c++11)",true) == true )
+     if ( CommandlineProcessing::isOption(argv,"-std=","c++11",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Cxx11 mode ON \n");
+          set_Cxx11_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+
+       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+          set_C_only(false);
+        }
+
+  // DQ (2/4/2015): We need to support -std=gnu++11 explicitly.
+     set_Cxx11_gnu_only(false);
+     ROSE_ASSERT (get_C11_gnu_only() == false);
+     if ( CommandlineProcessing::isOption(argv,"-std=","(gnu++11)",true) == true )
+        {
+          if ( SgProject::get_verbose() >= 1 )
+               printf ("Cxx11 mode ON \n");
+          set_Cxx11_only(true);
+          set_Cxx11_gnu_only(true);
+
+       // Set gnu specific level of C99 support to false.
+       // set_C11_gnu_only(false);
+
+       // DQ (7/31/2013): If we turn on C99, then turn off C89.
+          set_C89_only(false);
+          set_C89_gnu_only(false);
+          set_C99_only(false);
+          set_C99_gnu_only(false);
+
+       // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+          set_C_only(false);
+        }
+#else
+  // DQ (2/4/2015): This is a more direct means of testing for the "-std=c++11" and "-std=gnu++11" 
+  // options since "++" is a problem in our default mechanism.
+     set_Cxx11_only(false);
+     set_Cxx11_gnu_only(false);
+     set_Cxx14_only(false);
+     set_Cxx14_gnu_only(false);
+     for (unsigned int i = 1; i < argv.size(); i++)
+        {
+#if 0
+          cout << "  argv[" << i << "]= " << argv[i] << endl;
+#endif
+          if (argv[i] == "-std=c++11")
+             {
+#if 0
+               printf ("Identified this = %p -std=c++11 via more direct command line argument evaluation \n",this);
+#endif
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Cxx11 mode ON \n");
+               set_Cxx11_only(true);
+               set_Cxx11_gnu_only(false);
+
+            // Set gnu specific level of C99 support to false.
+            // set_Cxx11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+               set_C_only(false);
+
+               ROSE_ASSERT(get_Cxx11_only() == true);
+             }
+
+          if (argv[i] == "-std=gnu++11")
+             {
+#if 0
+               printf ("Identified -std=gnu++11 via more direct command line argument evaluation \n");
+#endif
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Cxx11 mode ON \n");
+               set_Cxx11_only(true);
+               set_Cxx11_gnu_only(true);
+
+            // Set gnu specific level of C99 support to false.
+            // set_C11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+               set_C_only(false);
+
+               ROSE_ASSERT(get_Cxx11_gnu_only() == true);
+             }
+
+          if (argv[i] == "-std=c++14")
+             {
+#if 1
+               printf ("Identified -std=c++14 via more direct command line argument evaluation (not yet supported) \n");
+            // ROSE_ASSERT(false);
+#endif
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Cxx14 mode ON \n");
+               set_Cxx14_only(true);
+               set_Cxx14_gnu_only(false);
+
+            // Set gnu specific level of C99 support to false.
+               set_Cxx11_only(false);
+               set_Cxx11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+               set_C14_only(false);
+               set_C14_gnu_only(false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+               set_C_only(false);
+
+               ROSE_ASSERT(get_Cxx14_only() == true);
+             }
+
+          if (argv[i] == "-std=gnu++14")
+             {
+#if 0
+               printf ("Identified -std=gnu++14 via more direct command line argument evaluation (not yet supported) \n");
+#endif
+               if ( SgProject::get_verbose() >= 1 )
+                    printf ("Cxx14 mode ON \n");
+               set_Cxx14_only(true);
+               set_Cxx14_gnu_only(true);
+
+            // Set gnu specific level of C99 support to false.
+               set_Cxx11_only(false);
+               set_Cxx11_gnu_only(false);
+
+            // DQ (7/31/2013): If we turn on C99, then turn off C89.
+               set_C89_only(false);
+               set_C89_gnu_only(false);
+               set_C99_only(false);
+               set_C99_gnu_only(false);
+               set_C11_only(false);
+               set_C11_gnu_only(false);
+               set_C14_only(false);
+               set_C14_gnu_only(false);
+
+            // DQ (2/1/2015): I think that explicit specificiation of C mode should turn off C mode!
+               set_C_only(false);
+
+               ROSE_ASSERT(get_Cxx14_gnu_only() == true);
+             }
+        }
+#endif
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
   //
   // C11 only option (turns on EDG c11 options (using the edg --c11 option).
   //
@@ -3869,9 +4090,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
   // C++11 only option (turns on EDG --c++11 option currently).
   //
-     set_Cxx11_only(false);
-     set_Cxx0x_only(false);
-     ROSE_ASSERT (get_Cxx11_only() == false);
+  // DQ (2/4/2015): This could have been set by the -std=c++11 option above (so we can turn it off here).
+  // set_Cxx11_only(false); 
+  // set_Cxx0x_only(false);
+  // ROSE_ASSERT (get_Cxx11_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx11|Cxx11_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -3888,10 +4110,11 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   //
   // C++14 only option (turns on EDG --c++14 option currently).
   //
-     set_Cxx14_only(false);
+  // DQ (2/4/2015): This could have been set by the -std=c++14 option above (so we can turn it off here).
+  // set_Cxx14_only(false);
   // set_Cxx11_only(false);
-     set_Cxx0x_only(false);
-     ROSE_ASSERT (get_Cxx14_only() == false);
+  // set_Cxx0x_only(false);
+  // ROSE_ASSERT (get_Cxx14_only() == false);
      if ( CommandlineProcessing::isOption(argv,"-rose:","(Cxx14|Cxx14_only)",true) == true )
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -5733,7 +5956,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 #if 0
        // display("SgFile::buildCompilerCommandLineOptions()");
 
-          printf ("In build_EDG_CommandLine(): \n");
+          printf ("In build_EDG_CommandLine(): this = %p \n",this);
           printf ("   --- C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
           printf ("   --- C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
           printf ("   --- Fortran compiler          = %s \n",BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH);
@@ -5950,6 +6173,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--c99");
         }
 
+#if 0
+     printf ("In build_EDG_CommandLine(): this = %p get_C11_only() = %s \n",this,get_C11_only() ? "true" : "false");
+#endif
      if (get_C11_only() == true)
         {
        // DQ (4/20/2014): With EDG 4.9 we now have support for the --c11 option.
@@ -5988,7 +6214,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 
 #if 0
-     printf ("In build_EDG_CommandLine(): get_Cxx11_only() = %s \n",get_Cxx11_only() ? "true" : "false");
+     printf ("In build_EDG_CommandLine(): this = %p get_Cxx11_only() = %s \n",this,get_Cxx11_only() ? "true" : "false");
 #endif
      if (get_Cxx11_only() == true)
         {

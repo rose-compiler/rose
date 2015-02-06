@@ -115,6 +115,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (6/20/2013): Added alignof operator to support C/C++ extensions (used in EDG 4.7).
           case ALIGNOF_OP:            { unparseAlignOfOp(expr, info); break; }
 
+       // DQ (2/5/2015): Added missing C++11 support.
+          case NOEXCEPT_OP:           { unparseNoexceptOp(expr, info); break; }
+
           case TYPEID_OP:               { unparseTypeIdOp(expr, info); break; }
           case NOT_OP:                  { unparseNotOp(expr, info); break; }
           case DEREF_OP:                { unparseDerefOp(expr, info); break; }
@@ -4754,6 +4757,25 @@ Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
         }
      curprint ( ")");
+   }
+
+
+void
+Unparse_ExprStmt::unparseNoexceptOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgNoexceptOp* noexcept_op = isSgNoexceptOp(expr);
+     ROSE_ASSERT(noexcept_op != NULL);
+
+#if 0
+     printf ("In unparseNoexceptOp(expr = %p): \n",expr);
+#endif
+
+     curprint("noexcept(");
+
+     ROSE_ASSERT(noexcept_op->get_operand_expr() != NULL);
+     unparseExpression(noexcept_op->get_operand_expr(), info);
+
+     curprint(")");
    }
 
 

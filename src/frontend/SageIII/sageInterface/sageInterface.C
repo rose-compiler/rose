@@ -189,9 +189,11 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                  // DQ (4/17/2014): This is required for the EDG version 4.8 and I don't know why.
                  // Currently the priority is to pass our existing tests.
                  // An idea is that this is sharing introduced as a result of the use of default parameters.
-#if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
-                    ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
-#else
+
+// DQ (2/5/2015): Comment out this constraint to make this a more general test to try out a new solution for the GNU 4.8.1 compiler. This works well!
+// #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER > 6)
+//                  ignore_error = ignore_error || (isSgTemplateInstantiationDecl(decl) != NULL);
+// #else
                  // DQ (7/2/2014): I am seeing that this is required for a new application using GNU 4.4.7.
                  // It allows a boost issue specific to a revisited SgTypedefDeclaration pass, but I still
                  // don't understand the problem.  so this needs a better fix.
@@ -204,7 +206,15 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
                                                      (decl->get_parent() != NULL && isSgTemplateMemberFunctionDeclaration(decl->get_parent()->get_parent()) != NULL) );
 
                     ignore_error = ignore_error || (isSgTypedefDeclaration(decl) != NULL) || (isSgTemplateInstantiationDecl(decl) != NULL) || (isInTemplateDeclaration == true);
-#endif
+
+                 // DQ (2/5/2015): We need to ignore the case of un-named classes (or maybe those classes 
+                 // from unnamed classes with lambda member functions).  See test2015_13.C for an example.
+                 // Or maybe these should have been added to the declarationMap in the front-end?
+                    if (isSgClassDeclaration(decl) != NULL)
+                       {
+                         ignore_error = ignore_error || (isSgClassDeclaration(decl)->get_isUnNamed() == true);
+                       }
+// #endif
 
                     if (ignore_error == true)
                        {
@@ -238,6 +248,9 @@ SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
 
                          firstNondefiningDeclaration->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): firstNondefiningDeclaration: debug");
                          decl->get_file_info()->display("declarationMap.find(firstNondefiningDeclaration) != declarationMap.end(): decl: debug");
+
+                      // DQ (2/5/2015): This is a problem for EDG 4.9 code using the GNU 4.8.1 compiler 
+                      // and maybe related to C++11 support (commented out assertion as a test).
 #if 1
                          printf ("Can not ignore this error \n");
                          ROSE_ASSERT(false);
