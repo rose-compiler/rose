@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "sage3basic.h"
 #include "cmdline.h"
 #include "commandline_processing.h"
 
