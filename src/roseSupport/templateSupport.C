@@ -1,5 +1,6 @@
+#if 0
 
-#include "rose.h"
+#include "sage3basic.h"
 
 #include "templateSupport.h"
 
@@ -10,7 +11,6 @@ using namespace std;
 
 #error "DEAD CODE"
 
-#if 0
 // DQ (10/11/2007): This is no longer used!
 
 
@@ -654,13 +654,3 @@ fixupInstantiatedTemplates ( SgProject* project )
    }
 
 #endif
-
-
-
-
-
-
-
-
-
-

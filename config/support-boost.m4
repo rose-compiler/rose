@@ -94,12 +94,12 @@ if test \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.48" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.49" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.50" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.51" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.52" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.53"
+   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48" \
+   -o "x$rose_boost_version" = "x104900" -o "x$_version" = "x1.49" \
+   -o "x$rose_boost_version" = "x105000" -o "x$_version" = "x1.50" \
+   -o "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
+   -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
+   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53"
 then
     echo "Reasonable version of Boost found!"
 else
