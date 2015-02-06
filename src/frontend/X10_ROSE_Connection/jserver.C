@@ -3,12 +3,12 @@
  * http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/jniTOC.html
  * http://java.sun.com/docs/books/jni/html/invoke.html
  */
+#include "sage3basic.h"
 #include <string.h>
 #include <string>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "sage3basic.h"
 #include "cmdline.h"
 #include "commandline_processing.h"
 
