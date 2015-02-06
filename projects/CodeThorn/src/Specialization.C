@@ -252,9 +252,9 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
     if(numProcessedArrayUpdates%100==0) {
       cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
+    rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
     arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
   }    
-  
 }
 
 
@@ -480,11 +480,13 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
 
 int Specialization::verifyUpdateSequenceRaceConditions(std::vector<VariableId> iterationVars, VariableId parallelIterationVar, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
+  stringstream ss;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     const PState* pstate=estate->pstate();
     SgExpression* exp=(*i).second;
-    cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+    // intentionally not used (temporary placeholder)
+    ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
     ++cnt;
   }
   return 0;
