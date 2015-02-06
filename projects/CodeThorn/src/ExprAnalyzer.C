@@ -385,11 +385,12 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgPntrArrRefExp: {
           // assume top for array elements (array elements are not stored in state)
-          //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<endl;
+          //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
           if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
             res.result=AType::Top();
             res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
             resultList.push_back(res);
+            break;
           } else {
             if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
               const PState* pstate=estate.pstate();
