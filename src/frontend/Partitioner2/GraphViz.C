@@ -342,10 +342,27 @@ GraphViz::dumpInterFunctionOutEdges(std::ostream &out, const Partitioner &partit
     for (ControlFlowGraph::ConstEdgeNodeIterator edge=partitioner.cfg().edges().begin();
          edge!=partitioner.cfg().edges().end(); ++edge) {
 
-        if ((edge->source()->value().type() == V_BASIC_BLOCK && edge->source()->value().function() == function) &&
-            (edge->target()->value().type() != V_BASIC_BLOCK || edge->target()->value().function() != function)) {
-            dumpEdge(out, partitioner, edge);
+        // Prune edge based on its source
+        Function::Ptr source;
+        if (edge->source()->value().type() == V_BASIC_BLOCK)
+            source = edge->source()->value().function();
+        if (function == NULL) {
+            // select this edge
+        } else if (source != function) {
+            continue;                                   // not a caller in which we're interested
+        } else if (source == NULL) {
+            continue;                                   // edge doesn't come from any function
         }
+
+        // Prune edge based on its target
+        if (edge->target()->value().type() == V_BASIC_BLOCK) {
+            Function::Ptr target = edge->target()->value().function();
+            if (target == function || target == source)
+                continue;                               // function self edge
+        }
+
+        // Edge looks good, so emit it
+        dumpEdge(out, partitioner, edge);
     }
 }
 
