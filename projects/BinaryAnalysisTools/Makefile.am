@@ -105,7 +105,7 @@ pkginclude_HEADERS = 				\
         bROwSE/WSplash.h			\
         bROwSE/WStatus.h			\
 	bROwSE/WStrings.h			\
-	bROwSE/WStringsDetail.h			\
+	bROwSE/WStringDetail.h			\
         bROwSE/WToggleButton.h			\
         bROwSE/bROwSE.h
 

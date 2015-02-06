@@ -252,6 +252,8 @@ public:
         VertexStates outgoingState_;                    // outgoing data flow state per CFG vertex ID
         typedef Sawyer::Container::DistinctList<size_t> WorkList;
         WorkList workList_;                             // CFG vertex IDs to be visited, last in first out w/out duplicates
+        size_t maxIterations_;                          // max number of iterations to allow
+        size_t nIterations_;                            // number of iterations since last reset
 
     public:
         /** Constructor.
@@ -260,7 +262,7 @@ public:
          *  transfer function.  The control flow graph is incorporated into the engine by reference; the transfer functor is
          *  copied. */
         Engine(const CFG &cfg, TransferFunction &xfer)
-            : cfg_(cfg), xfer_(xfer) {}
+            : cfg_(cfg), xfer_(xfer), maxIterations_(-1), nIterations_(0) {}
 
         /** Reset engine to initial state.
          *
@@ -276,7 +278,23 @@ public:
             outgoingState_.resize(cfg_.nVertices());
             workList_.clear();
             workList_.pushBack(startVertexId);
+            nIterations_ = 0;
         }
+
+        /** Max number of iterations to allow.
+         *
+         *  Allow N number of calls to runOneIteration.  When the limit is exceeded an <code>std::runtime_error</code> is
+         *  thrown.
+         *
+         * @{ */
+        size_t maxIterations() const { return maxIterations_; }
+        void maxIterations(size_t n) { maxIterations_ = n; }
+        /** @} */
+
+        /** Number of iterations run.
+         *
+         *  The number of times runOneIteration was called since the last reset. */
+        size_t nIterations() const { return nIterations_; }
         
         /** Runs one iteration.
          *
@@ -285,6 +303,10 @@ public:
         bool runOneIteration() {
             using namespace Diagnostics;
             if (!workList_.isEmpty()) {
+                if (++nIterations_ > maxIterations_) {
+                    throw std::runtime_error("dataflow max iterations reached"
+                                             " (max=" + StringUtility::numberToString(maxIterations_) + ")");
+                }
                 size_t cfgVertexId = workList_.popFront();
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";

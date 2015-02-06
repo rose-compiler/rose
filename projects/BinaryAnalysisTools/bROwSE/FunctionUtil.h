@@ -15,6 +15,7 @@ struct Box { int x, y, dx, dy; };
 typedef Sawyer::Container::Map<rose_addr_t, Box> CfgVertexCoords;
 
 struct FunctionDataFlow {
+    std::string error;
     P2::DataFlow::DfCfg dfCfg;                          // control flow graph used for dataflow
     P2::DataFlow::States initialStates;                 // initial state for each dfCfg vertex
     P2::DataFlow::States finalStates;                   // final state for each dfCfg vertex

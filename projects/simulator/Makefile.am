@@ -120,6 +120,13 @@ EXTRA_DIST += debug.c
 EXTRA_DIST += demos/README demos/SignAnalysisExample.h
 
 #------------------------------------------------------------------------------------------------------------------------------
+# ports_opened: list IP ports that are opened
+noinst_PROGRAMS += ports_opened
+ports_opened_SOURCES = demos/ports_opened.C
+ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
+ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------------
 # coverage: compute read/write/execute memory coverage.
 noinst_PROGRAMS += coverage
 coverage_SOURCES = demos/coverage.C

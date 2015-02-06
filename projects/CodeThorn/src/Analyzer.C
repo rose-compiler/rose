@@ -1492,8 +1492,10 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               exit(1);
             }
           } else {
-          cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-          exit(1);
+            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "expr: "<< lhs->unparseToString()<<endl;
+            cerr << "type: "<<lhs->class_name()<<endl;
+            exit(1);
           }
         }
       }
@@ -1507,13 +1509,17 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
   return elistify(newEState);
 }
 
-void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
+void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly) {
+  ROSE_ASSERT(root);
   resetInputSequenceIterator();
   std::string funtofind=functionToStartAt;
   RoseAst completeast(root);
   startFunRoot=completeast.findFunctionByName(funtofind);
   if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; exit(1);
+    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
+    exit(1);
+  } else {
+    std::cerr << "INFO: starting at function '"<<funtofind<<"'."<<endl;
   }
   cout << "INIT: Initializing AST node info."<<endl;
   initAstNodeInfo(root);
@@ -1526,7 +1532,12 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   cfanalyzer=new CFAnalyzer(labeler);
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
-  flow=cfanalyzer->flow(root);
+
+  if(oneFunctionOnly)
+    flow=cfanalyzer->flow(startFunRoot);
+  else
+    flow=cfanalyzer->flow(root);
+
   cout << "STATUS: Building CFGs finished."<<endl;
   if(boolOptions["reduce-cfg"]) {
     int cnt;
@@ -1536,10 +1547,14 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
     cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
   }
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
-  InterFlow interFlow=cfanalyzer->interFlow(flow);
-  cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
-  cfanalyzer->intraInterFlow(flow,interFlow);
-  cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
+  if(!oneFunctionOnly) {
+    cout<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;
+  } else {
+    InterFlow interFlow=cfanalyzer->interFlow(flow);
+    cout << "INIT: Inter-Flow OK. (size: " << interFlow.size()*2 << " edges)"<<endl;
+    cfanalyzer->intraInterFlow(flow,interFlow);
+    cout << "INIT: IntraInter-CFG OK. (size: " << flow.size() << " edges)"<<endl;
+  }
 
   if(boolOptions["reduce-cfg"]) {
     int cnt=cfanalyzer->inlineTrivialFunctions(flow);
@@ -1547,6 +1562,16 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   }
   // create empty state
   PState emptyPState;
+  // TODO1: add formal paramters of solo-function
+  // SgFunctionDefinition* startFunRoot: node of function
+  // estate=analyzeVariableDeclaration(SgVariableDeclaration*,estate,estate.label());
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
+    VariableId varId=variableIdMapping.variableId(*i);
+    ROSE_ASSERT(varId.isValid());
+    // initialize all formal parameters of function (of extremal label) with top
+    emptyPState[varId]=AType::CppCapsuleConstIntLattice(AType::Top());
+  }
   const PState* emptyPStateStored=processNew(emptyPState);
   assert(emptyPStateStored);
   cout << "INIT: Empty state(stored): "<<emptyPStateStored->toString()<<endl;
@@ -1555,6 +1580,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root) {
   const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
   Label startLabel=cfanalyzer->getLabel(startFunRoot);
   transitionGraph.setStartLabel(startLabel);
+
   EState estate(startLabel,emptyPStateStored,emptycsetstored);
   
   if(SgProject* project=isSgProject(root)) {
