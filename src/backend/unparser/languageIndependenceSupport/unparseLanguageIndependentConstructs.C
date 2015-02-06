@@ -6670,6 +6670,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
   // operator precedence a static data members on each expression IR node, and this function could 
   // and likely should use the values that are set there to avoud some level of redundancy.
 
+  // DQ (2/5/2015): Added note from google search for precedence of the noexcept operator.
+  // The standard itself doesn't specify precedence levels. They are derived from the grammar.
+  // const_cast, static_cast, dynamic_cast, reinterpret_cast, typeid, sizeof..., noexcept and 
+  // alignof are not included since they are never ambiguous. 
+
 #if PRINT_DEVELOPER_WARNINGS
      printf ("This is a redundant mechanism for computing the precedence of expressions \n");
 #endif
@@ -6783,6 +6788,9 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (6/20/2013): Added support for __alignof__ operator.
           case V_SgAlignOfOp:        // return 15;
+
+       // DQ (2/5/2015): Need to define the precedence of this new C++11 operator.
+          case V_SgNoexceptOp:        // return 15;
                                      precedence_value = 15; break;
 
 

@@ -6560,6 +6560,42 @@ SgAlignOfOp* SageBuilder::buildAlignOfOp_nfi(SgExpression* exp/*= NULL*/)
      return result;
    }
 
+//! Build noexcept operator expression with an expression parameter
+SgNoexceptOp* SageBuilder::buildNoexceptOp(SgExpression* exp/*= NULL*/)
+   {
+  // SgType* exp_type =NULL;
+  // if (exp) exp_type = exp->get_type();
+
+     SgNoexceptOp* result = new SgNoexceptOp(exp);
+     ROSE_ASSERT(result);
+     if (exp)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionForTransformation(result);
+     return result;
+   }
+
+//! Build noexcept operator expression with an expression parameter
+SgNoexceptOp* SageBuilder::buildNoexceptOp_nfi(SgExpression* exp/*= NULL*/)
+   {
+  // SgType* exp_type =NULL;
+  // if (exp) exp_type = exp->get_type();
+
+     SgNoexceptOp* result = new SgNoexceptOp(exp);
+     ROSE_ASSERT(result);
+     if (exp)
+        {
+          exp->set_parent(result);
+          markLhsValues(result);
+        }
+
+     setOneSourcePositionNull(result);
+     return result;
+   }
+
 //! Build __alignof__() expression with a type parameter
 SgAlignOfOp* SageBuilder::buildAlignOfOp(SgType* type /* = NULL*/)
    {

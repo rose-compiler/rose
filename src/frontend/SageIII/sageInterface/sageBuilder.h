@@ -679,7 +679,7 @@ ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer( SgMemberFun
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 
 //! Build sizeof() expression with an expression parameter
-ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp= NULL);
+ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 
 //! Build sizeof() expression with a type parameter
@@ -687,12 +687,16 @@ ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
 //! Build __alignof__() expression with an expression parameter
-ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgExpression* exp= NULL);
+ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
 
 //! Build __alignof__() expression with a type parameter
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
+
+//! Build noecept operator expression with an expression parameter
+ROSE_DLL_API SgNoexceptOp* buildNoexceptOp(SgExpression* exp = NULL);
+ROSE_DLL_API SgNoexceptOp* buildNoexceptOp_nfi(SgExpression* exp);
 
 // DQ (7/18/2011): Added support for SgJavaInstanceOfOp
 //! This is part of Java specific operator support.
