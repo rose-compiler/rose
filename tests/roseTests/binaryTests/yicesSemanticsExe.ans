@@ -550,7 +550,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -617,7 +617,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -684,7 +684,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -751,7 +751,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -818,7 +818,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -2826,7 +2826,7 @@ init mem:
       value = { defs={} expr=(extract[8] 0[32] 8[32] v3[32]) }
       flags = { rdonly }
 
-0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -3647,7 +3647,7 @@ memory:
       flags = { }
 init mem:
 
-0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -3784,7 +3784,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
     ax      = { defs={0x0804839f} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -3848,7 +3848,7 @@ init mem:
       value = { defs={} expr=(extract[8] 0[32] 8[32] v0[32]) }
       flags = { rdonly }
 
-0x080483a4: mov    edx, DWORD PTR ds:[eax]
+0x080483a4: mov    edx, dword ds:[eax]
 registers:
     ax      = { defs={0x0804839f} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -4183,7 +4183,7 @@ registers:
 memory:
 init mem:
 
-0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
 registers:
     ax      = { defs={0x080483b0} expr=(add[32] v0[32] 4[32]) }
     cx      = { defs={} expr=v1[32] }
@@ -4326,7 +4326,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
     ax      = { defs={0x080483ba} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -4390,7 +4390,7 @@ init mem:
       value = { defs={} expr=(extract[8] 0[32] 8[32] v0[32]) }
       flags = { rdonly }
 
-0x080483bf: mov    edx, DWORD PTR ds:[eax]
+0x080483bf: mov    edx, dword ds:[eax]
 registers:
     ax      = { defs={0x080483ba} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -4621,7 +4621,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -5017,7 +5017,7 @@ memory:
       flags = { }
 init mem:
 
-0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
 registers:
     ax      = { defs={0x080483d0,0x080483d6} expr=(bv-or[32] (concat[32] 0[8] (extract[24] 8[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m46[8] (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495f9[32] (extract[8] 8[32] 16[32] v47[32])) 0x080495f9[32])))) (concat[32] 0[16] (extract[16] 16[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m48[8] (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495fa[32] (extract[8] 16[32] 24[32] v47[32])) 0x080495fa[32])))) (concat[32] 0[24] (extract[8] 24[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m49[8] (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495fb[32] (extract[8] 24[32] 32[32] v47[32])) 0x080495fb[32])))) (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] m50[8] (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495f8[32] (extract[8] 0[32] 8[32] v47[32])) 0x080495f8[32]))) }
     cx      = { defs={} expr=v1[32] }
@@ -5599,7 +5599,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -6169,7 +6169,7 @@ memory:
       flags = { }
 init mem:
 
-0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    dword ss:[esp + 0x04], edx
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -6245,7 +6245,7 @@ memory:
       flags = { }
 init mem:
 
-0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    dword ss:[esp], 0x0000000a
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -6875,7 +6875,7 @@ memory:
       flags = { }
 init mem:
 
-0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -7429,7 +7429,7 @@ memory:
       flags = { }
 init mem:
 
-0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -7596,7 +7596,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    dword ss:[esp], 0x00000000
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -7931,7 +7931,7 @@ memory:
       flags = { }
 init mem:
 
-0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -8019,7 +8019,7 @@ init mem:
       value = { defs={} expr=(extract[8] 0[32] 8[32] v47[32]) }
       flags = { rdonly }
 
-0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -8234,7 +8234,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    dword ss:[esp], 0x00000000
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -9399,7 +9399,7 @@ registers:
 memory:
 init mem:
 
-0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8} expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v0[32] -224[32])) v0[32] -223[32])) }
     cx      = { defs={} expr=v1[32] }
@@ -11085,7 +11085,7 @@ init mem:
       value = { defs={} expr=(extract[8] 0[32] 8[32] v3[32]) }
       flags = { rdonly }
 
-0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
     ax      = { defs={0x0804852e,0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543} expr=(asr[32] 2[5] (add[32] (invert[32] (add[32] v3[32] 4282[32])) v3[32] 4283[32])) }
     cx      = { defs={} expr=v1[32] }
@@ -11688,7 +11688,7 @@ registers:
 memory:
 init mem:
 
-0x08048560: call   DWORD PTR ds:[esi]
+0x08048560: call   dword ds:[esi]
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -11871,7 +11871,7 @@ registers:
 memory:
 init mem:
 
-0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi
 registers:
     ax      = { defs={} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }
@@ -12853,7 +12853,7 @@ memory:
       flags = { }
 init mem:
 
-0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
 registers:
     ax      = { defs={0x08048580,0x08048583,0x0804858c} expr=(bv-or[32] (concat[32] 0[8] (extract[24] 8[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] m46[8] (add[32] v4[32] -5[32]) (extract[8] 24[32] 32[32] v3[32])) (add[32] v4[32] -6[32]) (extract[8] 16[32] 24[32] v3[32])) (add[32] v4[32] -7[32]) (extract[8] 8[32] 16[32] v3[32])) (add[32] v4[32] -8[32]) (extract[8] 0[32] 8[32] v3[32])) (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495e9[32] (extract[8] 8[32] 16[32] v47[32])) 0x080495e9[32])))) (concat[32] 0[16] (extract[16] 16[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] m48[8] (add[32] v4[32] -5[32]) (extract[8] 24[32] 32[32] v3[32])) (add[32] v4[32] -6[32]) (extract[8] 16[32] 24[32] v3[32])) (add[32] v4[32] -7[32]) (extract[8] 8[32] 16[32] v3[32])) (add[32] v4[32] -8[32]) (extract[8] 0[32] 8[32] v3[32])) (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495ea[32] (extract[8] 16[32] 24[32] v47[32])) 0x080495ea[32])))) (concat[32] 0[24] (extract[8] 24[32] 32[32] (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] m49[8] (add[32] v4[32] -5[32]) (extract[8] 24[32] 32[32] v3[32])) (add[32] v4[32] -6[32]) (extract[8] 16[32] 24[32] v3[32])) (add[32] v4[32] -7[32]) (extract[8] 8[32] 16[32] v3[32])) (add[32] v4[32] -8[32]) (extract[8] 0[32] 8[32] v3[32])) (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495eb[32] (extract[8] 24[32] 32[32] v47[32])) 0x080495eb[32])))) (uextend[32] 32[32] (read[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] (write[8] m50[8] (add[32] v4[32] -5[32]) (extract[8] 24[32] 32[32] v3[32])) (add[32] v4[32] -6[32]) (extract[8] 16[32] 24[32] v3[32])) (add[32] v4[32] -7[32]) (extract[8] 8[32] 16[32] v3[32])) (add[32] v4[32] -8[32]) (extract[8] 0[32] 8[32] v3[32])) (add[32] v4[32] -1[32]) (extract[8] 24[32] 32[32] v5[32])) (add[32] v4[32] -2[32]) (extract[8] 16[32] 24[32] v5[32])) (add[32] v4[32] -3[32]) (extract[8] 8[32] 16[32] v5[32])) (add[32] v4[32] -4[32]) (extract[8] 0[32] 8[32] v5[32])) 0x080495e8[32] (extract[8] 0[32] 8[32] v47[32])) 0x080495e8[32]))) }
     cx      = { defs={} expr=v1[32] }
@@ -13484,7 +13484,7 @@ init mem:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080485a5: mov    eax, DWORD PTR ds:[ebx]
+0x080485a5: mov    eax, dword ds:[ebx]
 registers:
     ax      = { defs={0x080485a5} expr=v0[32] }
     cx      = { defs={} expr=v1[32] }

@@ -64,21 +64,21 @@ static std::string x86TypeToPtrName(SgAsmType* ty) {
 
     if (SgAsmIntegerType *it = isSgAsmIntegerType(ty)) {
         switch (it->get_nBits()) {
-            case 8: return "BYTE";
-            case 16: return "WORD";
-            case 32: return "DWORD";
-            case 64: return "QWORD";
+            case 8: return "byte";
+            case 16: return "word";
+            case 32: return "dword";
+            case 64: return "qword";
         }
     } else if (SgAsmFloatType *ft = isSgAsmFloatType(ty)) {
         switch (ft->get_nBits()) {
-            case 32: return "FLOAT";
-            case 64: return "DOUBLE";
-            case 80: return "LDOUBLE";
+            case 32: return "float";
+            case 64: return "double";
+            case 80: return "ldouble";
         }
     } else if (ty == SageBuilderAsm::buildTypeVector(2, SageBuilderAsm::buildTypeU64())) {
-        return "DQWORD";
+        return "dqword";
     } else if (SgAsmVectorType *vt = isSgAsmVectorType(ty)) {
-        return "V" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
+        return "v" + StringUtility::numberToString(vt->get_nElmts()) + x86TypeToPtrName(vt->get_elmtType());
     }
     ASSERT_not_reachable("unhandled type: " + ty->toString());
 }
@@ -107,7 +107,7 @@ std::string unparseX86Expression(SgAsmExpression *expr, const AsmUnparser::Label
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
             if (!leaMode) {
-                result += x86TypeToPtrName(mr->get_type()) + " PTR " +
+                result += x86TypeToPtrName(mr->get_type()) + " " +
                           (mr->get_segment() ? unparseX86Expression(mr->get_segment(), labels, registers, false) + ":" : "");
             }
             result += "[" + unparseX86Expression(mr->get_address(), labels, registers, false) + "]";

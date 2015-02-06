@@ -277,7 +277,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]
 == PartialSymbolic ==
 registers:
   eip          = v197[32]
@@ -302,7 +302,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]
 == PartialSymbolic ==
 registers:
   eip          = v200[32]
@@ -327,7 +327,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]
 == PartialSymbolic ==
 registers:
   eip          = v203[32]
@@ -352,7 +352,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]
 == PartialSymbolic ==
 registers:
   eip          = v206[32]
@@ -377,7 +377,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]
 == PartialSymbolic ==
 registers:
   eip          = v209[32]
@@ -1597,7 +1597,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]
 == PartialSymbolic ==
 registers:
   edx          = v267[32]
@@ -2051,7 +2051,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
 == PartialSymbolic ==
 registers:
   esp          = v453-0xc[32]
@@ -2150,7 +2150,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
 == PartialSymbolic ==
 registers:
   eax          = v526[32]
@@ -2175,7 +2175,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x080483a4: mov    edx, DWORD PTR ds:[eax]
+0x080483a4: mov    edx, dword ds:[eax]
 == PartialSymbolic ==
 registers:
   eax          = v526[32]
@@ -2372,7 +2372,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
 == PartialSymbolic ==
 registers:
   eax          = v577+0x4[32]
@@ -2475,7 +2475,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
 == PartialSymbolic ==
 registers:
   eax          = v602[32]
@@ -2500,7 +2500,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x080483bf: mov    edx, DWORD PTR ds:[eax]
+0x080483bf: mov    edx, dword ds:[eax]
 == PartialSymbolic ==
 registers:
   eax          = v602[32]
@@ -2638,7 +2638,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
 == PartialSymbolic ==
 registers:
   eip          = 0x80483cc[32]
@@ -2826,7 +2826,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
 == PartialSymbolic ==
 registers:
   eax          = v733[32]
@@ -3236,7 +3236,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
 == PartialSymbolic ==
 registers:
   esp          = v788[32]
@@ -3522,7 +3522,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    dword ss:[esp + 0x04], edx
 == PartialSymbolic ==
 registers:
   edx          = 0x8048480[32]
@@ -3576,7 +3576,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    dword ss:[esp], 0x0000000a
 == PartialSymbolic ==
 registers:
   edx          = 0x8048480[32]
@@ -3974,7 +3974,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
   esp          = v843-0xc[32]
@@ -4271,7 +4271,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
   esp          = v873-0xc[32]
@@ -4381,7 +4381,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    dword ss:[esp], 0x00000000
 == PartialSymbolic ==
 registers:
   esp          = v896[32]
@@ -4539,7 +4539,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
 == PartialSymbolic ==
 registers:
   esp          = v899-0xc[32]
@@ -4595,7 +4595,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 == PartialSymbolic ==
 registers:
   esp          = v899-0xc[32]
@@ -4725,7 +4725,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    dword ss:[esp], 0x00000000
 == PartialSymbolic ==
 registers:
   esp          = v971[32]
@@ -5365,7 +5365,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax
 == PartialSymbolic ==
 registers:
   eax          = 0x0[32]
@@ -6418,7 +6418,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax
 == PartialSymbolic ==
 registers:
   eax          = 0x0[32]
@@ -6816,7 +6816,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048560: call   DWORD PTR ds:[esi]
+0x08048560: call   dword ds:[esi]
 == PartialSymbolic ==
 registers:
   eax          = v1121[32]
@@ -6953,7 +6953,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi
 == PartialSymbolic ==
 registers:
   ebp          = v1204[32]
@@ -7625,7 +7625,7 @@ registers:
   fpstatus_top = 0[3]
 memory:
 
-0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
 == PartialSymbolic ==
 registers:
   eax          = v1290[32]
@@ -7951,7 +7951,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080485a5: mov    eax, DWORD PTR ds:[ebx]
+0x080485a5: mov    eax, dword ds:[ebx]
 == PartialSymbolic ==
 registers:
   eax          = v1395[32]
