@@ -9620,7 +9620,7 @@ bool SageInterface::isAssignmentStatement(SgNode* s, SgExpression** lhs/*=NULL*/
  *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
  *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
  */
-bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt)
+bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt /*= true*/)
 {
   bool rt= true;
   ROSE_ASSERT(decl != NULL);   
@@ -9653,11 +9653,62 @@ bool SageInterface::mergeDeclarationAndAssignment (SgVariableDeclaration* decl, 
 
   // Everything looks fine now. Do the merge.
   SgExpression * rhs_copy = SageInterface::copyExpression(assign_op->get_rhs_operand());
-  SageInterface::deepDelete (assign_stmt);
+  // removeStatement() does not support removing a statement which is not inside a container.
+  // But sometimes we do need to remove such a statement and replace it with a new one.
+  // As a workaround, we allow users to optionally disabling removing here and handle the removal on their own.
+  // TODO: improve removeStatement() which uses low level rewritting. 
+  if (removeAssignStmt)
+    SageInterface::removeStatement (assign_stmt);
+//  SageInterface::deepDelete (assign_stmt);
   SgAssignInitializer * initor = SageBuilder::buildAssignInitializer (rhs_copy);
   decl_var->set_initptr(initor);
   initor->set_parent(decl_var);  
 
+  return rt;
+}
+
+void SageInterface::collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* > & result)
+{
+  ROSE_ASSERT (root != NULL);    
+//  std::vector<SgVarRefExp* > result; 
+
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(root, V_SgVarRefExp);
+  // AST query won't find variables used in types
+  collectVariableReferencesInArrayTypes (root, nodeList);
+
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp(*i);
+    ROSE_ASSERT (vRef != NULL);
+    result.push_back(vRef);
+  } 
+}
+
+int SageInterface::collectVariableReferencesInArrayTypes(SgLocatedNode* root, Rose_STL_Container<SgNode*> & currentVarRefList)
+{
+  int rt = 0;
+  ROSE_ASSERT (root != NULL);
+  Rose_STL_Container<SgNode*> constructorList= NodeQuery::querySubTree(root, V_SgConstructorInitializer);
+  for (size_t i =0; i< constructorList.size(); i++)
+  {
+    SgConstructorInitializer * c_init = isSgConstructorInitializer (constructorList[i]);
+    if (SgArrayType* a_type = isSgArrayType(c_init->get_expression_type()))
+    {
+      Rose_STL_Container<SgNode*> varList = NodeQuery::querySubTree (a_type->get_index(),V_SgVarRefExp);
+      for (size_t j =0 ; j< varList.size(); j++)
+      {
+        SgVarRefExp* var_exp =  isSgVarRefExp(varList[j]) ;
+//        if (debug)
+//        {
+//          cout<<"Found a var ref in array type:"<<var_exp->get_symbol()->get_name()<<endl;
+//        }
+        currentVarRefList.push_back(var_exp);
+//TODO: these variable references do have special scopes, how to communicate to users?
+//        specialVarRefScopeExp[var_exp] = c_init ;
+        rt ++;
+      }
+    }
+  }
   return rt;
 }
 
