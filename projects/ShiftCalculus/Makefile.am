@@ -67,6 +67,9 @@ test9: shiftCalculusCompiler
 test10: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/laplacian_lite_v3.cpp
 
+test11: shiftCalculusCompiler
+	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
+
 # Note that test1 and test3 are zero dimensional stencils that are not supported for code generation yet.
 # test2 is including STL and other library code
 # test4 is a version of test2 which excludes STL and library code (and it thus smaller to work with but the same API).
