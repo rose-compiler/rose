@@ -20,6 +20,7 @@ EDGBIN_NAME_PREFIX=roseBinaryEDG-@ROSE_EDG_MAJOR_VERSION_NUMBER@-@ROSE_EDG_MINOR
 EDGBIN_NAME_SUFFIX=$(build_triplet_without_redhat)-$(GENERATED_COMPILER_NAME_AND_VERSION_SUFFIX)
 
 if ROSE_HAS_EDG_SOURCE
+
 ###############################################################################################################################
 # We have the EDG source code (ROSE_HAS_EDG_SOURCE)
 ###############################################################################################################################
@@ -59,9 +60,8 @@ binary_edg_tarball: $(EDGBIN_THIS_NAME).tar.gz
 .PHONY: upload_edg_binary
 upload_edg_binary: $(EDGBIN_DESTINATIONS)
 
-
-
 else
+
 ###############################################################################################################################
 # We don't have the EDG source code (!ROSE_HAS_EDG_SOURCE)
 ###############################################################################################################################
@@ -71,20 +71,37 @@ else
 # We use the edg-generate-sig script to choose the best version from a list of available versions.  If there's a version
 # number (SHA1) already stored in the bincompat-sig file in the top of the source tree then edg-generate-sig will use
 # that rather than doing a bunch of git commands.
-EDGBIN_SIGNATURE:=$(shell $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress)
-EDGBIN_BEST_NAME:=$(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
+
+# Be sure to use '=' and not ':=' because these need to expand after we've created edg-generate-sig.output
+EDGBIN_SIGNATURE = $(shell cat edg-generate-sig.output 2>/dev/null)
+EDGBIN_BEST_NAME = $(EDGBIN_NAME_PREFIX)-$(EDGBIN_NAME_SUFFIX)-$(EDGBIN_SIGNATURE)
+
+# This one must be named "EDGBIN_NTRIES" because it's mentioned in an error message from the edg-generate-sig script.
+# Users are directed to override this variable with a higher value (caveat emptor) if an EDG version cannot be found.
+EDGBIN_NTRIES = 1
 
 all-am: EDG/libroseEDG.la
+
+# Run the edg-generate-sig script to find an appropriate version number.  We cannot use make's $(shell...) function because
+# it sometimes discards standard error and doesn't cause make to fail if the command fails.  If edg-generate-sig fails then
+# remove the edg-generate-sig.output file so that re-running make will fail the same way next time.
+edg-generate-sig.output:
+	@if ! $$(cd $(top_srcdir) && pwd)/scripts/edg-generate-sig --find --progress --ntries=$(EDGBIN_NTRIES) >$@; then \
+	    rm -f $@ ; \
+	    exit 1; \
+	fi
 
 # Try to get the EDG binary tarball if we don't have it.  Team members might be able to get it from a local directory,
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball.  Note, we can't have two make targets with the same name even if they are in separate parts
 # of an automake 'if' statement; so we add a 'download-' prefix to this one.
-download-$(EDGBIN_BEST_NAME).tar.gz:
-	@test -n "$(EDGBIN_SIGNATURE)" || ( \
-      echo "[FATAL] Invalid EDG binary compatibility signature '$(EDGBIN_SIGNATURE)' in filename '$(EDGBIN_BEST_NAME)'. Please contact rose-public@nersc.gov to troubleshoot this error message." && \
-      exit 1);
-		wget -O "$@" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
+download-$(EDGBIN_BEST_NAME).tar.gz: edg-generate-sig.output
+	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then \
+	    echo "Invalid EDG binary compatibility signature "$(EDGBIN_SIGNATURE)" in filename '$(EDGBIN_BEST_NAME)'." >&2; \
+	    echo "Please contact rose-public@nersc.gov to troubleshoot this error message." >&2; \
+	    exit 1; \
+	fi
+	wget -O "$@" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
 EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
@@ -99,6 +116,7 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 installdir = ${datadir}
 
 endif
+
 ###############################################################################################################################
 # Stuff that's common to both uploading and downloading EDG tarballs
 ###############################################################################################################################

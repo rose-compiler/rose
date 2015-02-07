@@ -132,6 +132,10 @@ protected:
         }
 
         StatePtr operator()(size_t cfgVertex, const StatePtr &in);
+
+        StatePtr operator()(const StatePtr &in) {
+            return in->copy();
+        }
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -12,6 +12,7 @@
 #include "StateRepresentations.h"
 #include "VariableIdMapping.h"
 #include "AType.h"
+#include "AstTerm.h"
 
 using namespace std;
 
@@ -67,14 +68,18 @@ class ExprAnalyzer {
   static bool variable(SgNode* node,VariableName& varName);
   //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
   bool variable(SgNode* node,VariableId& varId);
+
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { _variableIdMapping=variableIdMapping; }
   void setSkipSelectedFunctionCalls(bool skip);
   bool getSkipSelectedFunctionCalls();
+  void setSkipArrayAccesses(bool skip);
+  bool getSkipArrayAccesses();
  private:
   //! evaluates an expression (whithout maintaining state information)
   //AValue pureEvalConstInt(SgNode* node,EState& estate);
   VariableIdMapping* _variableIdMapping;
   bool _skipSelectedFunctionCalls;
+  bool _skipArrayAccesses;
 };
 
 } // end of namespace CodeThorn

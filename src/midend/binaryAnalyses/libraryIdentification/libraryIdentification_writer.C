@@ -274,7 +274,7 @@ LibraryIdentification::FlattenAST::visit(SgNode* n)
        // Always update the endAddress (and add the length of the last instruction)
           endAddress = instructionAddress + opCodeString.size();
 
-          printf ("asmInstruction->get_mnemonic() = %s size = %zu \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
+          printf ("asmInstruction->get_mnemonic() = %s size = %" PRIuPTR " \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
         }
 
      SgAsmValueExpression* asmExpression = isSgAsmValueExpression(n);
@@ -310,7 +310,7 @@ LibraryIdentification::FlattenAST_AndResetImmediateValues::evaluateSynthesizedAt
 #if 0
   // Debugging code
      if (localResult.rangeList.size() > 0)
-          printf ("localResult.rangeList.size() = %zu \n",localResult.rangeList.size());
+          printf ("localResult.rangeList.size() = %" PRIuPTR " \n",localResult.rangeList.size());
 #endif
 
      SgAsmInstruction* asmInstruction = isSgAsmInstruction(n);
@@ -336,7 +336,7 @@ LibraryIdentification::FlattenAST_AndResetImmediateValues::evaluateSynthesizedAt
        // Always update the endAddress (and add the length of the last instruction)
           endAddress = instructionAddress + opCodeString.size();
 
-          printf ("asmInstruction->get_mnemonic() = %s size = %zu \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
+          printf ("asmInstruction->get_mnemonic() = %s size = %" PRIuPTR " \n",asmInstruction->get_mnemonic().c_str(),opCodeString.size());
 
           std::vector<std::pair<unsigned char,unsigned char> >::iterator k = localResult.rangeList.begin();
           while (k != localResult.rangeList.end())
@@ -415,7 +415,7 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
      printf ("Synthesized attribute traverse the AST for this function to generate byte stream, node = %p \n",node);
      t.traverse(node);
 #endif
-     printf ("DONE: Traverse the AST for this function to generate byte stream s.size() = %zu \n",s.size());
+     printf ("DONE: Traverse the AST for this function to generate byte stream s.size() = %" PRIuPTR " \n",s.size());
 
      size_t startAddress = t.startAddress;
      size_t endAddress   = t.endAddress;
@@ -472,12 +472,12 @@ LibraryIdentification::generateOpCodeVector(SgAsmInterpretation* asmInterpretati
           endOffset = me2.value().offset() + endAddress - me2.key().least();
 #endif
 
-          printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %zu, end = %zu) \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
+          printf ("---- function %p addresses: (start = %p, end = %p) file offsets: (start = %" PRIuPTR ", end = %" PRIuPTR ") \n",node,(void*)startAddress,(void*)endAddress,startOffset,endOffset);
 
           size_t lengthOfOpcodeVectorByAddress = endAddress - startAddress;
           size_t lengthOfOpcodeVectorBySize    = s.size();
 
-          printf ("---- lengthOfOpcodeVectorByAddress = %zu lengthOfOpcodeVectorBySize = %zu \n",lengthOfOpcodeVectorByAddress,lengthOfOpcodeVectorBySize);
+          printf ("---- lengthOfOpcodeVectorByAddress = %" PRIuPTR " lengthOfOpcodeVectorBySize = %" PRIuPTR " \n",lengthOfOpcodeVectorByAddress,lengthOfOpcodeVectorBySize);
 
        // DQ (7/11/2009): See the email from Robb (7/10/2009) for an explaination of why this is an inapropriate 
        // thing to assert (I think it used to be fine under the previous implementation)

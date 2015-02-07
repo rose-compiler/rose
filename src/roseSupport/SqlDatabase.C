@@ -1089,6 +1089,26 @@ Statement::execute_int()
     return i.get<int>(0);
 }
 
+double
+Statement::execute_double()
+{
+    iterator i = begin();
+    if (i==end())
+        throw Exception("statement did not return any rows\n" + StringUtility::prefixLines(impl->sql, "  sql: ") + "\n",
+                        impl->tranx->impl->conn, impl->tranx, shared_from_this());
+    return i.get<double>(0);
+}
+
+std::string
+Statement::execute_string()
+{
+    iterator i = begin();
+    if (i==end())
+        throw Exception("statement did not return any rows\n" + StringUtility::prefixLines(impl->sql, "  sql: ") + "\n",
+                        impl->tranx->impl->conn, impl->tranx, shared_from_this());
+    return i.get<std::string>(0);
+}
+
 void
 Statement::set_debug(FILE *debug)
 {

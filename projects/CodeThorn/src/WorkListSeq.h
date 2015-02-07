@@ -1,5 +1,5 @@
-#ifndef WORKLIST_H
-#define WORKLIST_H
+#ifndef WORKLISTSEQ_H
+#define WORKLISTSEQ_H
 
 /*************************************************************
  * Copyright: (C) 2012 by Markus Schordan                    *

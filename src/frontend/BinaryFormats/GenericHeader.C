@@ -337,25 +337,25 @@ SgAsmGenericHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     /* Base virtual address and entry addresses */
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "base_va", get_base_va(), get_base_va());
-    fprintf(f, "%s%-*s = %zu entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entry points\n", p, w, "entry_rva.size", p_entry_rvas.size());
     for (size_t i = 0; i < p_entry_rvas.size(); i++) {
         char label[64];
-        sprintf(label, "entry_rva[%zu]", i);
+        sprintf(label, "entry_rva[%" PRIuPTR "]", i);
         rose_addr_t entry_rva = p_entry_rvas[i].get_rva();
         fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, label, entry_rva, entry_rva);
         SgAsmGenericSectionPtrList sections = get_file()->get_sections();
         dump_containing_sections(f, std::string(p)+label, entry_rva, sections);
     }
 
-    fprintf(f, "%s%-*s = %zu sections\n", p, w, "section", p_sections->get_sections().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " sections\n", p, w, "section", p_sections->get_sections().size());
     for (size_t i=0; i<p_sections->get_sections().size(); i++) {
         SgAsmGenericSection *section = p_sections->get_sections()[i];
         char label[1024];
-        sprintf(label, "section[%zu]", i);
+        sprintf(label, "section[%" PRIuPTR "]", i);
         fprintf(f, "%s%-*s = [%d] \"%s\"\n", p, w, label, section->get_id(), section->get_name()->get_string(true).c_str());
     }
     
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "DLL.size", p_dlls->get_dlls().size());
     for (size_t i = 0; i < p_dlls->get_dlls().size(); i++)
         p_dlls->get_dlls()[i]->dump(f, p, i);
 }

@@ -33,6 +33,10 @@ foreach(file_to_test ${ROSE__CXX_TESTS})
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests/${file_to_test})
 
+  set_tests_properties(testInterproceduralCFG_Cxx_${file_to_test}
+    PROPERTIES DEPENDS testStaticCFG_Cxx_${file_to_test} )
+ 
+
 endforeach()
 
 set(C_FILES
@@ -90,6 +94,10 @@ foreach(input_file ${C_FILES})
       -I${CMAKE_CURRENT_SOURCE_DIR}/../Cxx_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
 
+  set_tests_properties(testStaticCFG_C_${file_to_test}
+    PROPERTIES DEPENDS testInterproceduralCFG_C_${file_to_test} )
+ 
+
 endforeach()
 
 set(C99_FILES
@@ -117,6 +125,9 @@ foreach(input_file ${C99_FILES})
     COMMAND testInterproceduralCFG ${ROSE_FLAGS}
       -I${CMAKE_CURRENT_SOURCE_DIR}/../C99_tests ${TESTCODE_INCLUDES}
       -c ${CMAKE_CURRENT_BINARY_DIR}/${file_to_test})
+
+  set_tests_properties(testInterproceduralCFG_C99_${file_to_test}
+    PROPERTIES DEPENDS testStaticCFG_C99_${file_to_test} )
 
 endforeach()
 
@@ -165,6 +176,10 @@ if(enable-fortran)
       COMMAND testInterproceduralCFG ${ROSE_FLAGS} -rose:f90
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
 
+    set_tests_properties(testInterproceduralCFG_f90_${file_to_test}
+      PROPERTIES DEPENDS testStaticCFG_f90_${file_to_test} )
+
+
   endforeach()
 
   set(F77_FILES
@@ -194,6 +209,11 @@ if(enable-fortran)
       COMMAND testInterproceduralCFG ${ROSE_FLAGS} -rose:f77
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
 
+
+    set_tests_properties(testStaticCFG_f77_${file_to_test}
+      PROPERTIES DEPENDS testInterproceduralCFG_f77_${file_to_test} )
+
+
   endforeach()
 
   set(F03_FILES
@@ -215,6 +235,10 @@ if(enable-fortran)
       COMMAND testInterproceduralCFG ${ROSE_FLAGS} -rose:skip_syntax_check
         -rose:skipfinalCompileStep -rose:f2003
         -c ${CMAKE_CURRENT_SOURCE_DIR}/../Fortran_tests/${file_to_test})
+
+    set_tests_properties(testStaticCFG_f03_${file_to_test}
+        PROPERTIES DEPENDS testInterproceduralCFG_f03_${file_to_test} )
+
 
   endforeach()
 endif()

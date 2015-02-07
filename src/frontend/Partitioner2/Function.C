@@ -14,15 +14,20 @@ Function::insertDataBlock(const DataBlock::Ptr &dblock) {
         throw Exception(printableName() + " is frozen or attached to the CFG/AUM");
     if (dblock==NULL)
         return false;
-    return insertUnique(dblocks_, dblock, sortDataBlocks);
+    bool retval = insertUnique(dblocks_, dblock, sortDataBlocks);
+    if (retval)
+        clearCache();
+    return retval;
 }
 
 void
 Function::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock) {
         std::vector<DataBlock::Ptr>::iterator lb = std::lower_bound(dblocks_.begin(), dblocks_.end(), dblock, sortDataBlocks);
-        if (lb!=dblocks_.end() && (*lb)==dblock)
+        if (lb!=dblocks_.end() && (*lb)==dblock) {
             dblocks_.erase(lb);
+            clearCache();
+        }
     }
 }
 
@@ -32,6 +37,15 @@ Function::printableName() const {
     if (!name_.empty())
         s += " \"" + StringUtility::cEscape(name_) + "\"";
     return s;
+}
+
+bool
+Function::isThunk() const {
+    if (0 == (reasons_ & SgAsmFunction::FUNC_THUNK))
+        return false;
+    if (bblockVas_.size() != 1)
+        return false;
+    return true;
 }
 
 
