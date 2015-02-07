@@ -12,6 +12,9 @@ using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
+enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
+typedef vector< pair< VariableId, IterVarType> > IterationVariables;
+
 struct EStateExprInfo {
   const EState* first;
   SgExpression* second;
@@ -81,7 +84,7 @@ class Specialization {
                                     bool useConstExprSubstRule=true
                                     );
   // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(std::vector<VariableId> iterationVars, VariableId parallelIterationVar, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
+  int verifyUpdateSequenceRaceConditions(IterationVariables iterationVars, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
@@ -90,6 +93,7 @@ class Specialization {
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
 
  private:
+  string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
 

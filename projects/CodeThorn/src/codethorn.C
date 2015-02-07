@@ -29,9 +29,12 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 #include "Specialization.h"
+#include <map>
 
 // test
 #include "Evaluator.h"
+
+using namespace std;
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
@@ -58,6 +61,33 @@ list<SgExpression*> exprRootList(SgNode *node) {
     }
   }
   return exprList;
+}
+
+typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
+
+// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
+ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
+  cout<<"PROGRAM:"<<root->unparseToString()<<endl;
+  ForStmtToOmpPragmaMap map;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
+      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
+      cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
+      string keyWord="omp";
+      if(foundPragmaKeyWord==keyWord) {
+        RoseAst::iterator j=i;
+        j.skipChildrenOnForward();
+        ++j;
+        if(SgForStatement* forStmt=isSgForStatement(*j)) {
+          map[forStmt]=pragmaDecl;
+        } else {
+          cout<<"DEBUG: NOT a forstmt: "<<(*i)->unparseToString()<<endl;
+        }
+      }
+    }
+  }
+  return map;
 }
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
@@ -105,6 +135,31 @@ void CodeThornLanguageRestrictor::initialize() {
 
 }
 
+bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragmaMap) {
+  while(!isSgForStatement(node)||isSgProject(node))
+    node=node->get_parent();
+  ROSE_ASSERT(!isSgProject(node));
+  // assuming only omp parallel for exist
+  return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
+}
+
+IterationVariables determineIterationVars(SgNode* root, VariableIdMapping* variableIdMapping) {
+  cout<<"DEBUG: determine iteration vars."<<endl;
+  ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
+  cout<<"DEBUG: found "<<forStmtToPragmaMap.size()<<" omp loops."<<endl;
+  RoseAst ast(root);
+  AstMatching m;
+  string matchexpression="$FORSTMT=SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+  MatchResult r=m.performMatching(matchexpression,root);
+  IterationVariables iterVars;
+  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+    SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
+    ROSE_ASSERT(node);
+    //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
+    iterVars.push_back(make_pair(variableIdMapping->variableId(node),isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ));
+  }
+  return iterVars;
+}
 
 class TermRepresentation : public DFAstAttribute {
 public:
@@ -683,6 +738,8 @@ int main( int argc, char * argv[] ) {
 
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
+  VariableIdMapping variableIdMapping;
+  variableIdMapping.computeVariableSymbolMapping(sageProject);
 
   int numSubst=0;
   if(option_specialize_fun_name!="")
@@ -691,8 +748,6 @@ int main( int argc, char * argv[] ) {
     cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
     string funNameToFind=option_specialize_fun_name;
-    VariableIdMapping variableIdMapping;
-    variableIdMapping.computeVariableSymbolMapping(sageProject);
 
     for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
       int param=option_specialize_fun_param_list[i];
@@ -708,8 +763,6 @@ int main( int argc, char * argv[] ) {
 
 
   if(args.count("rewrite")) {
-    VariableIdMapping variableIdMapping;
-    variableIdMapping.computeVariableSymbolMapping(sageProject);
     rewriteSystem.resetStatistics();
     rewriteSystem.rewriteAst(root, &variableIdMapping,true,false,true);
     cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
@@ -1104,11 +1157,13 @@ int main( int argc, char * argv[] ) {
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
 
     if(boolOptions["verify-update-sequence-race-conditions"]) {
-      std::vector<VariableId> iterationVars;
+      SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
+      IterationVariables iterationVars=determineIterationVars(root,&variableIdMapping);
+      cout<<"DEBUG: number of iteration vars: "<<iterationVars.size()<<endl;
 
       timer.start();
-      verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(iterationVars,parallelIterationVar,arrayUpdates,analyzer.getVariableIdMapping());
+      verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(iterationVars,arrayUpdates,analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
     }
 

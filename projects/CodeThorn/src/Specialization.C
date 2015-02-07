@@ -478,9 +478,32 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
   }
 }
 
-int Specialization::verifyUpdateSequenceRaceConditions(std::vector<VariableId> iterationVars, VariableId parallelIterationVar, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+string Specialization::iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping) {
+  stringstream ss;
+  bool exists=false;
+  for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
+    if(i!=iterationVars.begin())
+      ss<<", ";
+    ss<<variableIdMapping->variableName((*i).first);
+    if((*i).second) {
+      ss<<"[par]";
+      exists=true;
+    }
+  }
+#if 0
+  if(!exists) {
+    cerr<<"Error: iterVarsAndParVarToString:: parallel iteration var is not an iteration variable."<<endl;
+    cerr<<"Variable: "<<variableIdMapping->variableName(parallelIterationVar)<<endl;
+    exit(1);
+  }
+#endif
+  return ss.str();
+}
+
+int Specialization::verifyUpdateSequenceRaceConditions(IterationVariables iterationVars, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   stringstream ss;
+  cout<<"STATUS: check race conditions: "<<iterVarsToString(iterationVars,variableIdMapping)<<endl;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     const PState* pstate=estate->pstate();
