@@ -187,7 +187,7 @@ MOVE_DECLS_TESTCODES_FAILING = \
   inputmoveDeclarationToInnermostScope_17.C \
   inputmoveDeclarationToInnermostScope_test2014_18.C \
   inputmoveDeclarationToInnermostScope_test2014_22.C
- 
+
 MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
@@ -196,6 +196,10 @@ MOVE_DECLS_TESTCODES_CURRENTLY_FAILING =
 
 MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
 MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+
+MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
+MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+
 
 PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
@@ -396,15 +400,27 @@ MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix 
 PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
    $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) 
 
-
+PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
+   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
+   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
 
 REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
 MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+
+MOVE_MERGE_DECLS_DIFF_FILES=$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
 DIFF=diff
 #$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
 $(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
 	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+$(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation with merge by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
 
 test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 
@@ -413,7 +429,13 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
 	@echo "********************************************************************************************************************************************************************"
 
+# test both diff cases
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+
+# only move , no merge
 move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
+# both move and merge
+move_merge_decls_diff_check: $(MOVE_MERGE_DECLS_DIFF_FILES)
 
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
@@ -728,82 +750,11 @@ $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDec
 $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
 		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
-$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
-		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+$(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
-
-#rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug"  \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostScope_4.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:aggressive" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-# test keep going first
-#rose_inputmoveDeclarationToInnermostScope_9.C: inputmoveDeclarationToInnermostScope_9.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-#rose_inputmoveDeclarationToInnermostScope_10.C: inputmoveDeclarationToInnermostScope_10.C moveDeclarationToInnermostScope
-#	@$(RTH_RUN) \
-#		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-#		FLAGS="$(TEST_CXXFLAGS) -rose:debug -rose:keep_going" \
-#		INPUT=$(abspath $<) \
-#		$(srcdir)/astInterface.conf $@.passed
-#
-
+$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
@@ -907,7 +858,8 @@ unit-tests:
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples) unit-tests move_decls_diff_check
+# move_decls_diff_check move_merge_decls_diff_check
+check-local: $(generatedCodeExamples) move_diff_check 
 
 clean-local:
 	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
