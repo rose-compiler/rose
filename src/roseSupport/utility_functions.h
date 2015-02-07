@@ -48,6 +48,9 @@ ROSE_DLL_API SgProject* frontendShell ( const std::vector<std::string>& argv);
 // objects to control the formatting of code generation and the use of alternative code generation
 // techniques (e.g. copy-based code generation).
 // int backend ( SgProject* project );
+//
+// WARNING: If a non-null unparseFormatHelp is specified then backend will unconditionally delete it.  Therefore, the caller
+// must have allocated it on the heap or else strange errors will result.
 ROSE_DLL_API int backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp = NULL, UnparseDelegate* unparseDelagate = NULL );
 
 // DQ (8/24/2009): This backend calls the backend compiler using the original input source file list.

@@ -9,8 +9,6 @@
 #include <set>
 #include <string>
 
-using namespace std;
-
 namespace SgNodeHelper {
 
 /*! \brief Functions for simplifying access to SgNode information
@@ -45,13 +43,13 @@ namespace SgNodeHelper {
   std::string sourceLineColumnToString(SgNode* node);
 
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
-  vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
+  std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
 
   /*! computes a list representing the nesting structure of classes (including structs and unions). 
     It traverses the AST upwards and collects SgClassDeclaration(s) only. This covers nested classes, nested structs, and nested unions,
     and combinations of those. 
   */
-  list<SgClassDeclaration*> classDeclarationNestingSequence(SgDeclarationStatement*);
+  std::list<SgClassDeclaration*> classDeclarationNestingSequence(SgDeclarationStatement*);
 
   /*! computes for a given node at which scope nesting level this node is in its AST */
   int scopeNestingLevel(SgNode* node);
@@ -81,6 +79,9 @@ namespace SgNodeHelper {
   //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
   SgNode* getCond(SgNode* node);
 
+  //! returns the string representing the condition (removes trailing ';')
+  std::string unparseCond(SgNode* node);
+
   //! returns the root node representing the AST of the true branch of If, CondOperator.
   SgNode* getTrueBranch(SgNode* node);
 
@@ -97,10 +98,10 @@ namespace SgNodeHelper {
   SgNode* getLastOfBlock(SgNode* node);
 
   //! returns the label name of a SgLabelStatement without trailing ":"
-  string getLabelName(SgNode* node);
+  std::string getLabelName(SgNode* node);
 
   //! returns function name of SgFunctionDefinition, SgFunctionDeclaration, SgFunctionCall.
-  string getFunctionName(SgNode* node);
+  std::string getFunctionName(SgNode* node);
 
   /*! This is a lookup function currently not available in ROSE: It
      determines for a given function-call-expression its corresponding
@@ -159,7 +160,7 @@ namespace SgNodeHelper {
   SgSymbol* getSymbolOfInitializedName(SgInitializedName* initName);
 
   //! returns name of symbol as string
-  string symbolToString(SgSymbol* symbol);
+  std::string symbolToString(SgSymbol* symbol);
 
   /*! \brief Creates a long unique variable name for a given node of type SgVariableDeclaration or SgVarRefExp
 
@@ -168,7 +169,7 @@ namespace SgNodeHelper {
      In case of global scope functionName is empty, giving a string: $$scopeLevel$varName 
      Note: this function only considers C-functions. Classes are recognized.
   */
-  string uniqueLongVariableName(SgNode* node);
+  std::string uniqueLongVariableName(SgNode* node);
 
   /*! \brief returns a set of SgNode where each node is a break node, but
      properly excludes all nested loops. 
@@ -185,7 +186,7 @@ namespace SgNodeHelper {
      (=relevant) loop. This function can be used for:
      SgWhile,SgDoWhile,SgForStatement, SgSwitch.
   */
-  set<SgNode*> LoopRelevantBreakStmtNodes(SgNode* node);
+  std::set<SgNode*> LoopRelevantBreakStmtNodes(SgNode* node);
 
   //! returns the first child of an arbitrary AST node (throws exception if numChildren==0)
   SgNode* getFirstChild(SgNode* node);
@@ -200,7 +201,7 @@ namespace SgNodeHelper {
   SgType* getFunctionReturnType(SgNode* node);
 
   //! returns the set of all local variable-declarations of a function
-  set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
+  std::set<SgVariableDeclaration*> localVariableDeclarationsOfFunction(SgFunctionDefinition* funDef);
 
   //! returns the child of SgExprStatement (which is guaranteed to be unique and to exist)
   SgNode* getExprStmtChild(SgNode* node);
@@ -220,13 +221,13 @@ namespace SgNodeHelper {
    * unparsed program fragments which contain doublequoted strings to a dot file (used by nodeToString).
    * This function also replaces <,<=,>=,> with the corresponding HTML codes.
    */
-  string doubleQuotedEscapedString(string s1);
+  std::string doubleQuotedEscapedString(std::string s1);
 
   /*!
     Same as doubleQuotedEscapedString but also replaces <,<=,>=,> with the corresponding HTML codes.
     This is required when printing program code inside HTML tables of a dot file.
   */
-  string doubleQuotedEscapedHTMLString(string s1);
+  std::string doubleQuotedEscapedHTMLString(std::string s1);
 
   //! checks whether a SgVariableSymbol is representing a variable in
   //a forward declaration. This case no declaration for the variable
@@ -237,7 +238,7 @@ namespace SgNodeHelper {
   SgVariableSymbol* isFunctionParameterVariableSymbol(SgNode* node);
 
   //! returns a string representing the node (excluding the subtree)
-  string nodeToString(SgNode* node);
+  std::string nodeToString(SgNode* node);
 
   //! return lhs of a binary node (if it is not a binary node it throws an exception)
   SgNode* getLhs(SgNode* node);
@@ -251,25 +252,25 @@ namespace SgNodeHelper {
   SgNode* getParent(SgNode* node);
 
   /*! searches in the provided Project for SgGlobal nodes */
-  list<SgGlobal*> listOfSgGlobal(SgProject* project);
+  std::list<SgGlobal*> listOfSgGlobal(SgProject* project);
 
   /*! identifies the list of global variables
      Note: static/external can be resolved by further processing those objects
    */
-  list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
+  std::list<SgVariableDeclaration*> listOfGlobalVars(SgProject* project);
   /*! identifies the list of global variables
      Note: static/external can be resolved by further processing those objects
    */
-  list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
+  std::list<SgVariableDeclaration*> listOfGlobalVars(SgGlobal* global);
 
-  list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* SgProject);
-  list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
+  std::list<SgFunctionDefinition*> listOfFunctionDefinitions(SgProject* SgProject);
+  std::list<SgVarRefExp*> listOfUsedVarsInFunctions(SgProject* SgProject);
 
   /*! identifies the list of SgFunctionDefinitions in global scope
      Functions/methods of classes are NOT included in this list.
      Note: static/external can be resolved by further processing those objects
   */
-  list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
+  std::list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
   /*!
     checks whether the expression 'node' represents an assignment to an array's element
@@ -277,11 +278,30 @@ namespace SgNodeHelper {
   */
   bool isArrayElementAssignment(SgNode* node);
   bool isFloatingPointAssignment(SgNode* exp);
+  bool isArrayAccess(SgNode* node);
+  bool isPointerVariable(SgVarRefExp* var);
+
+  // checks for float, double, long double
   bool isFloatingPointType(SgType* type);
 
-  // this function replaces expressions e1 by expression e2. Currently is uses the SageInterface::rewriteExpression function
-  // but wraps around some addtional checks that significantly improve performance of the replace operation.
+  // determines whether decl declares an array
+  bool isArrayDeclaration(SgVariableDeclaration* decl);
+
+  // determines whether decl is an array or a struct
+  bool isAggregateDeclaration(SgVariableDeclaration* decl);
+
+  // returns the list of initializers of an array or struct (e.g. for int a[]={1,2,3} it return the list 1,2,3)
+  SgExpressionPtrList& getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl);
+
+  /* replaces expression e1 by expression e2. Currently it uses the SageInterface::rewriteExpression function
+     but wraps around some addtional checks that significantly improve performance of the replace operation.
+  */
   void replaceExpression(SgExpression* e1, SgExpression* e2, bool mode=false);
+
+  /* replaces the ast with root 'node' with the string 's'. The string is attached to the AST and the unparser uses
+     string s instead of unparsing this substree. This function can be used to generate C++ extensions.
+  */
+  void replaceAstWithString(SgNode* node, std::string s);
 
   //! Provides functions which match a certain AST pattern and return a pointer to a node of interest inside that pattern.
   namespace Pattern {

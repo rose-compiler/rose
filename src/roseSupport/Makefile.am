@@ -28,8 +28,6 @@ libroseSupport_la_SOURCES =			\
 	threadSupport.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
-	LinearCongruentialGenerator.C		\
-	Combinatorics.C				\
 	Diagnostics.C
 
 nodist_libroseSupport_la_SOURCES =		\
@@ -47,8 +45,6 @@ pkginclude_HEADERS =				\
 	threadSupport.h				\
 	IncludeDirective.h			\
 	SqlDatabase.h				\
-	LinearCongruentialGenerator.h		\
-	Combinatorics.h				\
 	Diagnostics.h
 
 # DQ (10/11/2007): This used to be part of the template instationation mechanism, but it was 

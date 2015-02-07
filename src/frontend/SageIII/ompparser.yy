@@ -74,11 +74,12 @@ static SgNode* gNode;
 static SgExpression* current_exp = NULL;
 bool b_within_variable_list  = false;  // a flag to indicate if the program is now processing a list of variables
 
+// We now follow the OpenMP 4.0 standard's C-style array section syntax: [lower-bound:length] or just [length]
 // the latest variable symbol being parsed, used to help parsing the array dimensions associated with array symbol
 // such as a[0:n][0:m]
 static SgVariableSymbol* array_symbol; 
 static SgExpression* lower_exp = NULL;
-static SgExpression* upper_exp = NULL;
+static SgExpression* length_exp = NULL;
 
 %}
 
@@ -94,7 +95,7 @@ corresponding C type is union name defaults to YYSTYPE.
 
 /*Some operators have a suffix 2 to avoid name conflicts with ROSE's existing types, We may want to reuse them if it is proper. Liao*/
 %token  OMP PARALLEL IF NUM_THREADS ORDERED SCHEDULE STATIC DYNAMIC GUIDED RUNTIME SECTIONS SINGLE NOWAIT SECTION
-        FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE
+        FOR MASTER CRITICAL BARRIER ATOMIC FLUSH TARGET UPDATE DIST_DATA BLOCK DUPLICATE CYCLIC
         THREADPRIVATE PRIVATE COPYPRIVATE FIRSTPRIVATE LASTPRIVATE SHARED DEFAULT NONE REDUCTION COPYIN 
         TASK TASKWAIT UNTIED COLLAPSE AUTO DECLARE DATA DEVICE MAP ALLOC TO FROM TOFROM
         SIMD SAFELEN ALIGNED LINEAR UNIFORM ALIGNED INBRANCH NOTINBRANCH 
@@ -973,24 +974,24 @@ variable_list : ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; }
               | variable_list ',' ID_EXPRESSION { if (!addVar((const char*)$3)) YYABORT; }
               ;
 
-/* in C++ (we use the C++ version) */ 
+/* */ 
 variable_list : id_expression_opt_dimension
               | variable_list ',' id_expression_opt_dimension
               ;
 
-id_expression_opt_dimension: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; } dimension_field_optseq
+id_expression_opt_dimension: ID_EXPRESSION { if (!addVar((const char*)$1)) YYABORT; } dimension_field_optseq id_expression_opt_dist_data
                            ;
 
 /* Parse optional dimension information associated with map(a[0:n][0:m]) Liao 1/22/2013 */
 dimension_field_optseq: /* empty */
                       | dimension_field_seq
                       ;
-
+/* sequence of dimension fields */
 dimension_field_seq : dimension_field
                     | dimension_field_seq dimension_field
                     ;
 dimension_field: '[' expression {lower_exp = current_exp; } 
-                 ':' expression { upper_exp = current_exp;
+                 ':' expression { length_exp = current_exp;
                       assert (array_symbol != NULL);
                       SgType* t = array_symbol->get_type();
                       bool isPointer= (isSgPointerType(t) != NULL );
@@ -1000,10 +1001,29 @@ dimension_field: '[' expression {lower_exp = current_exp; }
                         std::cerr<<"Error. ompparser.yy expects a pointer or array type."<<std::endl;
                         std::cerr<<"while seeing "<<t->class_name()<<std::endl;
                       }
-                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, upper_exp));
+                      ompattribute->array_dimensions[array_symbol].push_back( std::make_pair (lower_exp, length_exp));
                       } 
                   ']'
                ;
+/*Optional data distribution clause: dist_data(dim1_policy, dim2_policy, dim3_policy)*/
+/* mixed keyword or variable parsing is tricky TODO */
+id_expression_opt_dist_data: /* empty */
+                           | DIST_DATA '(' dist_policy_seq ')'
+                           ;
+/* one or more dimensions, each has a policy*/
+dist_policy_seq: dist_policy_per_dim
+               | dist_policy_seq ',' dist_policy_per_dim
+               ;
+/*reset current_exp to avoid leaving stale values*/
+dist_policy_per_dim: DUPLICATE  { ompattribute->appendDistDataPolicy(array_symbol, e_duplicate, NULL); }
+                   | BLOCK dist_size_opt { ompattribute->appendDistDataPolicy(array_symbol, e_block, current_exp );  current_exp = NULL;}
+                   | CYCLIC dist_size_opt { ompattribute->appendDistDataPolicy(array_symbol, e_cyclic, current_exp ); current_exp = NULL;}
+                   ;
+/*Optional (exp) for some policy */                   
+dist_size_opt: /*empty*/ {current_exp = NULL;}
+             | '(' expression ')'
+             ;
+
 %%
 int yyerror(const char *s) {
     printf("%s!\n", s);
