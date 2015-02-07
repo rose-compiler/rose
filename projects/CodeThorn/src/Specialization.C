@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "Specialization.h"
 
@@ -504,14 +503,72 @@ int Specialization::verifyUpdateSequenceRaceConditions(IterationVariables iterat
   int cnt=0;
   stringstream ss;
   cout<<"STATUS: check race conditions: "<<iterVarsToString(iterationVars,variableIdMapping)<<endl;
+  VariableId parVariable;
+  for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
+    if((*i).second==ITERVAR_PAR)
+      parVariable=(*i).first;
+  }
+  // no parallel iter-var implies that the program is a sequential program. Therefore no race conditions exist.
+  if(!parVariable.isValid()) {
+    return 0;
+  }
+
+  // race check
+  // union w-set_i = empty
+  // union r-set_i intersect union w-set_j = empty, i!=j.
+  // VariableIdSet computeWSet(VariableId,UpdateSequence)
+  // VariableIdSet computeRSet(VariableId,UpdateSequence)
+  // int<set> computeValues(VariableId,UpdateSequence)
+  // xxxx
+  ArrayElementAccessDataSet writeArrayAccessSet;
+  VariableIdSet writeVarIdSet;
+  ArrayElementAccessDataSet readArrayAccessSet;
+  VariableIdSet readVarIdSet;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     const PState* pstate=estate->pstate();
     SgExpression* exp=(*i).second;
     // intentionally not used (temporary placeholder)
+
+    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+
+    //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
+    // read-set
+    RoseAst rhsast(rhs);
+    for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+      if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+        j.skipChildrenOnForward();
+        ArrayElementAccessData access(useRef,variableIdMapping);
+        readArrayAccessSet.insert(access);
+      } // if array
+      // this can be rewritten once it is clear that the element type of an array is properly reported by isFloatingPointExpr(exp)
+      else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+        ROSE_ASSERT(useRef);
+        j.skipChildrenOnForward();
+        VariableId varId=variableIdMapping->variableId(useRef);
+        readVarIdSet.insert(varId);
+      } else {
+        //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+      }
+    }
+    if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+      ArrayElementAccessData access(arr,variableIdMapping);
+      writeArrayAccessSet.insert(access);
+    } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+      VariableId varId=variableIdMapping->variableId(var);
+      writeVarIdSet.insert(varId);
+    } else {
+      cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+      exit(1);
+    }
+
     ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
     ++cnt;
   }
+  cout<<"DEBUG: read-array-access:"<<readArrayAccessSet.size()<<" read-var-access:"<<readVarIdSet.size()<<endl;
+
   return 0;
 }
 
