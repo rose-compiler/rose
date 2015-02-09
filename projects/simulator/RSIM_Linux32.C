@@ -4103,7 +4103,10 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 {
     RSIM_Process *p = t->get_process();
 
-    if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
+
+    // Flags are documented at http://linux.die.net/man/2/clone and elsewhere
+    if ((flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) || // linux 2.5.32 through 2.5.48
+        (flags == (CLONE_PARENT_SETTID | SIGCHLD))) {                       // linux 2.5.49 and later
 
         /* Apply process pre-fork callbacks */
         p->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, p, RSIM_Callbacks::ProcessCallback::FORK, true);
@@ -4113,23 +4116,46 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
          * actions, wait and post the simulator's global semaphore. */
         t->atfork_prepare();
         pid_t pid = fork();
+        bool isParent = pid != -1 && pid != 0;
+        bool isChild = pid == 0;
+        uint32_t childTid32 = isParent ? pid : getpid();
 
-        if (0!=pid) {
+#if 1 // DEBUGGING [Robb P. Matzke 2015-02-09]
+        if (isChild && 0 == access("./x86sim-stop-at-fork", F_OK)) {
+            p->get_memory().dump(std::cerr, "childmem: ");
+            std::cerr <<"simulator: new process " <<childTid32 <<" stopped immediately after creation\n";
+            raise(SIGSTOP);
+        }
+#endif
+
+        if (isParent) {
             t->atfork_parent();
-        } else {
+        } else if (isChild) {
             t->atfork_child();
+        }
 
-            /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
-             * thread-aware library. */
-            if (0!=(flags & CLONE_CHILD_SETTID) && child_tls_va) {
-                uint32_t pid32 = getpid();
-                size_t nwritten = p->mem_write(&pid32, child_tls_va, 4);
-                ROSE_ASSERT(4==nwritten);
-            }
-            if (0!=(flags & CLONE_CHILD_CLEARTID))
-                t->clear_child_tid = parent_tid_va;
+        // CLONE_CHILD_SETTID: Store child thread ID at location ctid in child memory.
+        if (isChild && 0 != (flags & CLONE_CHILD_SETTID) && child_tls_va) {
+            size_t nwritten = p->mem_write(&childTid32, child_tls_va, 4);
+            ROSE_ASSERT(4==nwritten);
+        }
 
-            /* Return register values in child */
+        // CLONE_CHILD_CLEARTID: Erase child thread ID at location ctid in child memory when the child exits, and do a wakeup
+        // on the futex at that address. The address involved may be changed by the set_tid_address(2) system call. This is
+        // used by threading libraries.
+        if (isChild && 0!=(flags & CLONE_CHILD_CLEARTID))
+            t->clear_child_tid = parent_tid_va;
+
+        // CLONE_PARENT_SETTID: Store child thread ID at location ptid in parent and child memory. (In Linux 2.5.32-2.5.48
+        // there was a flag CLONE_SETTID that did this.)
+        if ((isParent || isChild) && 0 != (flags & CLONE_PARENT_SETTID) && parent_tid_va) {
+            size_t nwritten = p->mem_write(&childTid32, parent_tid_va, 4);
+            ROSE_ASSERT(4==nwritten);
+        }
+
+        // Return register values in child
+        // does not work for linux 2.6.32; perhaps this was only necessary for 2.5.32-2.5.48? [Robb P. Matzke 2015-02-09]
+        if (isChild && flags==(CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD)) {
             pt_regs_32 regs;
             regs.bx = t->policy.readRegister<32>(t->policy.reg_ebx).known_value();
             regs.cx = t->policy.readRegister<32>(t->policy.reg_ecx).known_value();
@@ -4147,10 +4173,12 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
             regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
             if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
-
-            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
         }
-        
+
+        // Callbacks
+        if (isChild)
+            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
+
         return -1==pid ? -errno : pid;
         
     } else if (flags == (CLONE_VM |
