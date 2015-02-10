@@ -68,6 +68,7 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/Exception.h		\
 	Partitioner2/Function.h			\
 	Partitioner2/FunctionCallGraph.h	\
+	Partitioner2/GraphViz.h			\
 	Partitioner2/InstructionProvider.h	\
 	Partitioner2/Modules.h			\
 	Partitioner2/ModulesElf.h		\
@@ -76,5 +77,6 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/ModulesX86.h		\
 	Partitioner2/OwnedDataBlock.h		\
 	Partitioner2/Partitioner.h		\
+	Partitioner2/Reference.h		\
 	Partitioner2/Semantics.h		\
 	Partitioner2/Utility.h
