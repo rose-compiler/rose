@@ -567,8 +567,18 @@ int Specialization::verifyUpdateSequenceRaceConditions(IterationVariables iterat
     ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
     ++cnt;
   }
+  cout<<"DEBUG: R-SET: ";
+  for(ArrayElementAccessDataSet::const_iterator i=readArrayAccessSet.begin();i!=readArrayAccessSet.end();++i) {
+    cout<<(*i).toString(variableIdMapping)<<" ";
+  }
+  cout<<endl;
+  cout<<"DEBUG: W-SET: ";
+  for(ArrayElementAccessDataSet::const_iterator i=writeArrayAccessSet.begin();i!=writeArrayAccessSet.end();++i) {
+    cout<<(*i).toString(variableIdMapping)<<" ";
+  }
+  cout<<endl;
   cout<<"DEBUG: read-array-access:"<<readArrayAccessSet.size()<<" read-var-access:"<<readVarIdSet.size()<<endl;
-
+  cout<<"DEBUG: write-array-access:"<<writeArrayAccessSet.size()<<" write-var-access:"<<writeVarIdSet.size()<<endl;
   return 0;
 }
 
