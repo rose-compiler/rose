@@ -34,8 +34,8 @@ template <class First, class Second, char sep>
 struct CollectPair : public std::pair<First, Second>
 {
  public:
-   std::pair<First, Second>::first;
-   std::pair<First, Second>::second;
+   using std::pair<First, Second>::first;
+   using std::pair<First, Second>::second;
    CollectPair() {}
    CollectPair( const std::pair<First,Second>& that) : std::pair<First, Second>(that) {}
    bool read( std::istream& in) ;
@@ -48,8 +48,8 @@ template <class First, class Second, char sep, char sel>
 struct SelectPair : public std::pair<First, Second>
 {
  public:
-   std::pair<First, Second>::first;
-   std::pair<First, Second>::second;
+   using std::pair<First, Second>::first;
+   using std::pair<First, Second>::second;
 
    SelectPair() {}
    SelectPair( const std::pair<First,Second>& that) : std::pair<First, Second>(that) {}
@@ -77,7 +77,7 @@ template <class Member,char sep, char left, char right>
 class SetDescriptor : public std::set<Member>
     {
       public:
-        std::set<Member>::end;
+        using std::set<Member>::end;
         void push_back( const Member& n)
          { this->insert(n); }
         bool is_member( const Member& n)
@@ -117,7 +117,7 @@ class MapDescriptor : public std::map< Key,Member>
                   return std::map< Key,Member>::const_iterator ::operator*();
             }
      };
-     std::map< Key,Member>::end;
+     using std::map< Key,Member>::end;
 
      void push_back( const std::pair<Key, Member>& n )
          { this->operator[](n.first) = n.second;  }

@@ -113,10 +113,10 @@ template <class Stmt, class Interface>
 class SymbolicConstBoundAnalysis : public SymbolicBoundAnalysis<Stmt,Interface> 
 {
  protected:
-  SymbolicBoundAnalysis<Stmt,Interface>::result;
-  SymbolicBoundAnalysis<Stmt,Interface>::ances;
-  SymbolicBoundAnalysis<Stmt,Interface>::iface;
-  SymbolicBoundAnalysis<Stmt,Interface>::node;
+  using SymbolicBoundAnalysis<Stmt,Interface>::result;
+  using SymbolicBoundAnalysis<Stmt,Interface>::ances;
+  using SymbolicBoundAnalysis<Stmt,Interface>::iface;
+  using SymbolicBoundAnalysis<Stmt,Interface>::node;
  private:
   void VisitVar( const SymbolicVar& var)
    { result = GetConstBound(var); }
