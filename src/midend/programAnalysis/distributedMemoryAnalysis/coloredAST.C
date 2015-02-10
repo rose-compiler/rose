@@ -1,7 +1,7 @@
 // Distributed memory traversal demo application.
 // Author: Gergo Barany
 // $Id: coloredAST.C,v 1.1 2008/01/08 02:55:52 dquinlan Exp $
-#include <rose.h>
+#include <sage3basic.h>
 #include "DistributedMemoryAnalysis.h"
 
 

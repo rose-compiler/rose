@@ -1,8 +1,8 @@
 // This is a small example of how to use the distributed memory traversal mechanism. It computes a list of function
 // definitions in a program and outputs their names, their depth in the AST, and the ID of the process that found it.
 
+#include <sage3basic.h>
 #include <mpi.h>
-#include <rose.h>
 #include "functionNames.h"
 
 

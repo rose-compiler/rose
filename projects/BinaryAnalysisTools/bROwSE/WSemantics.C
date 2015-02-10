@@ -265,7 +265,12 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
         FunctionDataFlow df = functionDataFlow(ctx_.partitioner, function_);
-
+        if (!df.error.empty()) {
+            wAddress_->setText("Error: " + df.error);
+        } else {
+            wAddress_->setText("No block");
+        }
+        
         const RegisterDescriptor &SP = ctx_.partitioner.instructionProvider().stackPointerRegister();
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
         BaseSemantics::SValuePtr initialStackPointer = df.initialStates[0]->semanticState()->readRegister(SP, ops.get());
@@ -282,14 +287,14 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
                         model_->reload(df.finalStates[vertex.id()], mode, df);
                         break;
                 }
-                wAddress_->setText(bblock->printableName());
+                if (df.error.empty())
+                    wAddress_->setText(bblock->printableName());
                 return;                                 // no need to search for futher vertex
             }
         }
     }
 
     model_->clear();
-    wAddress_->setText("No block");
 }
 
 void

@@ -127,7 +127,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]
 registers:
   eip          [writer=0x080482f0] = v14217[32]
   fpstatus_top = 0x0[3]
@@ -140,7 +140,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]
 registers:
   eip          [writer=0x08048300] = v14496[32]
   fpstatus_top = 0x0[3]
@@ -153,7 +153,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]
 registers:
   eip          [writer=0x08048310] = v14775[32]
   fpstatus_top = 0x0[3]
@@ -166,7 +166,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]
 registers:
   eip          [writer=0x08048320] = v15054[32]
   fpstatus_top = 0x0[3]
@@ -179,7 +179,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]
 registers:
   eip          [writer=0x08048330] = v15333[32]
   fpstatus_top = 0x0[3]
@@ -752,7 +752,7 @@ memory:
   addr=(add[32] esp_0[32] 0x00000001[32]) value=(extract[8] 0x00000008[32] 0x00000010[32] v16597[32])
   addr=esp_0[32] value=(extract[8] 0x00000000[32] 0x00000008[32] v16597[32])
 
-0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]
 registers:
   edx          [writer=0x08048375] = v16650[32]
   ebx          [writer=0x0804836f] = {defs={0x0804836f}, expr=(add[32] v16597[32] 0x0000135a<4954>[32])}
@@ -959,7 +959,7 @@ memory:
   addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048390 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048390 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
 registers:
   esp          [writer=0x08048393] = {defs={0x08048390,0x08048393}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
   ebp          [writer=0x08048391] = {defs={0x08048390}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
@@ -1000,7 +1000,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
   eax          [writer=0x0804839f] = v17923[32]
   eip          [writer=0x0804839f] = {defs={0x0804839f}, expr=0x080483a4<134513572>[32]}
@@ -1011,7 +1011,7 @@ memory:
   addr={defs={0x0804839f}, expr=0x080496f1<134518513>[32]} value=(extract[8] 0x00000008[32] 0x00000010[32] v17923[32])
   addr={defs={0x0804839f}, expr=0x080496f0<134518512>[32]} value=(extract[8] 0x00000000[32] 0x00000008[32] v17923[32])
 
-0x080483a4: mov    edx, DWORD PTR ds:[eax]
+0x080483a4: mov    edx, dword ds:[eax]
 registers:
   eax          [writer=0x0804839f] = v17923[32]
   edx          [writer=0x080483a4] = v17940[32]
@@ -1093,7 +1093,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
 registers:
   eax          [writer=0x080483b0] = {defs={0x080483b0}, expr=(add[32] eax_0[32] 0x00000004[32])}
   eip          [writer=0x080483b3] = {defs={0x080483b3}, expr=0x080483b8<134513592>[32]}
@@ -1135,7 +1135,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
+0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
 registers:
   eax          [writer=0x080483ba] = v18566[32]
   eip          [writer=0x080483ba] = {defs={0x080483ba}, expr=0x080483bf<134513599>[32]}
@@ -1146,7 +1146,7 @@ memory:
   addr={defs={0x080483ba}, expr=0x080496f1<134518513>[32]} value=(extract[8] 0x00000008[32] 0x00000010[32] v18566[32])
   addr={defs={0x080483ba}, expr=0x080496f0<134518512>[32]} value=(extract[8] 0x00000000[32] 0x00000008[32] v18566[32])
 
-0x080483bf: mov    edx, DWORD PTR ds:[eax]
+0x080483bf: mov    edx, dword ds:[eax]
 registers:
   eax          [writer=0x080483ba] = v18566[32]
   edx          [writer=0x080483bf] = v18583[32]
@@ -1209,7 +1209,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
 registers:
   eip          [writer=0x080483c5] = {defs={0x080483c5}, expr=0x080483cc<134513612>[32]}
   fpstatus_top = 0x0[3]
@@ -1290,7 +1290,7 @@ memory:
   addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x080483d0 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x080483d0}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x080483d0 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
+0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
 registers:
   eax          [writer=0x080483d6] = v19242[32]
   esp          [writer=0x080483d3] = {defs={0x080483d0,0x080483d3}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
@@ -1454,7 +1454,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
 registers:
   eip          [writer=0x080483e8] = {defs={0x080483e8}, expr=0x080483ef<134513647>[32]}
   fpstatus_top = 0x0[3]
@@ -1571,7 +1571,7 @@ memory:
   addr={defs={0x08048410}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048410 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048410}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048410 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    dword ss:[esp + 0x04], edx
 registers:
   edx          [writer=0x08048411] = {defs={0x08048411}, expr=0x08048480<134513792>[32]}
   esp          [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32])}
@@ -1594,7 +1594,7 @@ memory:
   addr={defs={0x08048410}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048410 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048410}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048410 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    dword ss:[esp], 0x0000000a
 registers:
   edx          [writer=0x08048411] = {defs={0x08048411}, expr=0x08048480<134513792>[32]}
   esp          [writer=0x0804841b] = {defs={0x08048410,0x08048418,0x0804841b}, expr=(bv-and[32] (add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32]) 0xfffffff0<4294967280>[32])}
@@ -1762,7 +1762,7 @@ memory:
   addr={defs={0x08048440}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048440 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048440}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048440 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          [writer=0x08048443] = {defs={0x08048440,0x08048443}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
   ebp          [writer=0x08048441] = {defs={0x08048440}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
@@ -1892,7 +1892,7 @@ memory:
   addr={defs={0x08048460}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048460 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048460}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048460 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          [writer=0x08048463] = {defs={0x08048460,0x08048463}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
   ebp          [writer=0x08048461] = {defs={0x08048460}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
@@ -1943,7 +1943,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    dword ss:[esp], 0x00000000
 registers:
   eip          [writer=0x08048472] = {defs={0x08048472}, expr=0x08048479<134513785>[32]}
   fpstatus_top = 0x0[3]
@@ -2012,7 +2012,7 @@ memory:
   addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
 registers:
   esp          [writer=0x08048483] = {defs={0x08048480,0x08048483}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
   ebp          [writer=0x08048481] = {defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
@@ -2038,7 +2038,7 @@ memory:
   addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048480 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048480 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
 registers:
   esp          [writer=0x08048483] = {defs={0x08048480,0x08048483}, expr=(add[32] esp_0[32] 0xfffffff4<4294967284,-12>[32])}
   ebp          [writer=0x08048481] = {defs={0x08048480}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
@@ -2105,7 +2105,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    dword ss:[esp], 0x00000000
 registers:
   eip          [writer=0x08048498] = {defs={0x08048498}, expr=0x0804849f<134513823>[32]}
   fpstatus_top = 0x0[3]
@@ -2380,7 +2380,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
   eax          [writer=0x080484d8] = {defs={0x080484ca,0x080484d0,0x080484d6,0x080484d8}, expr=(asr[32] 0x02[5] (add[32] (invert[32] (add[32] ebx_0[32] 0xffffff20<4294967072,-224>[32])) ebx_0[32] 0xffffff21<4294967073,-223>[32]))}
   edx          [writer=0x080484d0] = {defs={0x080484d0}, expr=(add[32] ebx_0[32] 0xffffff20<4294967072,-224>[32])}
@@ -2833,7 +2833,7 @@ memory:
   addr=(add[32] esp_0[32] 0x00000001[32]) value=(extract[8] 0x00000008[32] 0x00000010[32] v24811[32])
   addr=esp_0[32] value=(extract[8] 0x00000000[32] 0x00000008[32] v24811[32])
 
-0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax
 registers:
   eax          [writer=0x08048543] = {defs={0x0804852f,0x08048535,0x0804853b,0x08048541,0x08048543}, expr=(asr[32] 0x02[5] (add[32] (invert[32] (add[32] v24811[32] 0x000010ba<4282>[32])) v24811[32] 0x000010bb<4283>[32]))}
   edx          [writer=0x0804853b] = {defs={0x0804852f,0x0804853b}, expr=(add[32] v24811[32] 0x000010ba<4282>[32])}
@@ -2981,7 +2981,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x08048560: call   DWORD PTR ds:[esi]
+0x08048560: call   dword ds:[esi]
 registers:
   esp          [writer=0x08048560] = {defs={0x08048560}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])}
   esi          [writer=0x08048554] = {defs={0x0804854f,0x08048554}, expr=(extract[32] 0x00000000[32] 0x00000020[32] (add[40] (sextend[40] 0x00000028[32] edx_0[32]) (umul[40] eax_0[32] 0x04[8])))}
@@ -3033,7 +3033,7 @@ registers:
   fpstatus_top = 0x0[3]
 memory:
 
-0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi
 registers:
   esi          [writer=0x08048563] = {defs={0x08048563}, expr=(add[32] esi_0[32] 0xfffffffc<4294967292,-4>[32])}
   edi          [writer=0x08048562] = {defs={0x08048562}, expr=(add[32] edi_0[32] 0x00000001[32])}
@@ -3325,7 +3325,7 @@ memory:
   addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffd<4294967293,-3>[32])} writer=0x08048580 value=(extract[8] 0x00000008[32] 0x00000010[32] ebp_0[32])
   addr={defs={0x08048580}, expr=(add[32] esp_0[32] 0xfffffffc<4294967292,-4>[32])} writer=0x08048580 value=(extract[8] 0x00000000[32] 0x00000008[32] ebp_0[32])
 
-0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
+0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
 registers:
   eax          [writer=0x0804858c] = v26737[32]
   ebx          [writer=0x08048587] = {defs={0x08048587}, expr=0x080495e8<134518248>[32]}
@@ -3458,7 +3458,7 @@ memory:
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080485a5: mov    eax, DWORD PTR ds:[ebx]
+0x080485a5: mov    eax, dword ds:[ebx]
 registers:
   eax          [writer=0x080485a5] = v27381[32]
   eip          [writer=0x080485a5] = {defs={0x080485a5}, expr=0x080485a7<134514087>[32]}

@@ -94,7 +94,7 @@ public:
      *
      * @{ */
     virtual SgAsmInterpretation* parse(const std::vector<std::string> &fileNames);
-    SgAsmInterpretation* parse(const std::string &fileName) ROSE_FINAL {
+    SgAsmInterpretation* parse(const std::string &fileName) /*final*/ {
         return parse(std::vector<std::string>(1, fileName));
     }
     /** @} */
@@ -119,7 +119,7 @@ public:
      *
      * @{ */
     virtual MemoryMap load(const std::vector<std::string> &fileNames = std::vector<std::string>());
-    MemoryMap load(const std::string &fileName) ROSE_FINAL { return load(std::vector<std::string>(1, fileName)); }
+    MemoryMap load(const std::string &fileName) /*FINAL*/ { return load(std::vector<std::string>(1, fileName)); }
     /** @} */
 
 
@@ -129,8 +129,8 @@ public:
      *  functions. Returns the partitioner that was used and which contains the results.
      *
      * @{ */
-    Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) ROSE_FINAL;
-    Partitioner partition(const std::string &fileName) ROSE_FINAL { return partition(std::vector<std::string>(1, fileName)); }
+    Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
+    Partitioner partition(const std::string &fileName) /*final*/ { return partition(std::vector<std::string>(1, fileName)); }
     virtual Partitioner partition(SgAsmInterpretation*);
     /** @} */
 
@@ -141,9 +141,9 @@ public:
      *  partition all at once, returning a final AST.
      *
      * @{ */
-    SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) ROSE_FINAL;
-    SgAsmBlock* buildAst(const std::string &fileName) ROSE_FINAL { return buildAst(std::vector<std::string>(1, fileName)); }
-    SgAsmBlock* buildAst(SgAsmInterpretation*) ROSE_FINAL;
+    SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
+    SgAsmBlock* buildAst(const std::string &fileName) /*final*/ { return buildAst(std::vector<std::string>(1, fileName)); }
+    SgAsmBlock* buildAst(SgAsmInterpretation*) /*final*/;
     virtual SgAsmBlock* buildAst(const Partitioner&);
     /** @} */
     
@@ -220,7 +220,7 @@ public:
      *  aren't really the beginning of functions.
      *
      * @{ */
-    bool dataMentionedFunctionSearch() const ROSE_FINAL { return dataMentionedFunctionSearch_; }
+    bool dataMentionedFunctionSearch() const /*final*/ { return dataMentionedFunctionSearch_; }
     virtual void dataMentionedFunctionSearch(bool b) { dataMentionedFunctionSearch_ = b; }
     /** @} */
 
@@ -229,7 +229,7 @@ public:
      *  If true, then look for code that's surrounded by a function and add it to that function.
      *
      * @{ */
-    bool intraFunctionCodeSearch() const ROSE_FINAL { return intraFunctionCodeSearch_; }
+    bool intraFunctionCodeSearch() const /*final*/ { return intraFunctionCodeSearch_; }
     virtual void intraFunctionCodeSearch(bool b) { intraFunctionCodeSearch_ = b; }
     /** @} */
 
@@ -239,7 +239,7 @@ public:
      *  code at those addresses, also following the new CFG edges recursively to find additional code.
      *
      * @{ */
-    bool opaquePredicateSearch() const ROSE_FINAL { return opaquePredicateSearch_; }
+    bool opaquePredicateSearch() const /*final*/ { return opaquePredicateSearch_; }
     virtual void opaquePredicateSearch(bool b) { opaquePredicateSearch_ = b; }
     /** @} */
 
@@ -249,7 +249,7 @@ public:
      *  sure that function may-return and stack-delta results are all computed.
      *
      * @{ */
-    bool postPartitionAnalyses() const ROSE_FINAL { return postPartitionAnalyses_; }
+    bool postPartitionAnalyses() const /*final*/ { return postPartitionAnalyses_; }
     virtual void postPartitionAnalyses(bool b) { postPartitionAnalyses_ = b; }
     /** @} */
     
@@ -260,7 +260,7 @@ public:
      *  remain consistent with the interpretation.
      *
      * @{ */
-    SgAsmInterpretation* interpretation() const ROSE_FINAL { return interp_; }
+    SgAsmInterpretation* interpretation() const /*final*/ { return interp_; }
     virtual void interpretation(SgAsmInterpretation *i) { interp_ = i; }
     /** @} */
 
@@ -273,7 +273,7 @@ public:
      * @sa obtainLoader
      *
      * @{ */
-    BinaryLoader* loader() const ROSE_FINAL { return loader_; }
+    BinaryLoader* loader() const /*final*/ { return loader_; }
     virtual void loader(BinaryLoader *l) { loader_ = l; }
     /** @} */
 
@@ -289,8 +289,8 @@ public:
      *  The return value is a non-const reference so that the map can be manipulated directly if desired.
      *
      * @{ */
-    MemoryMap& memoryMap() ROSE_FINAL { return map_; }
-    const MemoryMap& memoryMap() const ROSE_FINAL { return map_; }
+    MemoryMap& memoryMap() /*final*/ { return map_; }
+    const MemoryMap& memoryMap() const /*final*/ { return map_; }
     virtual void memoryMap(const MemoryMap &m) { map_ = m; }
     /** @} */
 
@@ -302,7 +302,7 @@ public:
      * @sa obtainDisassembler
      *
      * @{ */
-    Disassembler *disassembler() const ROSE_FINAL { return disassembler_; }
+    Disassembler *disassembler() const /*final*/ { return disassembler_; }
     virtual void disassembler(Disassembler *d) { disassembler_ = d; }
     /** @} */
 

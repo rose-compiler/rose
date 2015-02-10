@@ -1494,7 +1494,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         // Show some basic block properties
         if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (bb->finalState()==NULL)
-                out <<prefix <<"  semantics failed\n";
+                out <<prefix <<"  no semantics (discarded already, or failed)\n";
 
             // call semantics?
             out <<prefix <<"  is function call? ";

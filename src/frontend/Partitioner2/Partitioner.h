@@ -395,10 +395,10 @@ public:
     /** Initialize partitioner diagnostic streams.
      *
      *  This is normally called as part of @ref rose::Diagnostics::initialize. */
-    static void initDiagnostics() ROSE_FINAL;
+    static void initDiagnostics();
 
     /** Reset CFG/AUM to initial state. */
-    void clear() ROSE_FINAL;
+    void clear() /*final*/;
 
     /** Configuration information.
      *
@@ -415,8 +415,8 @@ public:
 public:
     /** Returns the instruction provider.
      *  @{ */
-    InstructionProvider& instructionProvider() ROSE_FINAL { return *instructionProvider_; }
-    const InstructionProvider& instructionProvider() const ROSE_FINAL { return *instructionProvider_; }
+    InstructionProvider& instructionProvider() /*final*/ { return *instructionProvider_; }
+    const InstructionProvider& instructionProvider() const /*final*/ { return *instructionProvider_; }
     /** @} */
 
     /** Returns the memory map.
@@ -426,25 +426,27 @@ public:
      *  memory anymore.
      *
      *  @{ */
-    const MemoryMap& memoryMap() const ROSE_FINAL { return memoryMap_; }
-    MemoryMap& memoryMap() ROSE_FINAL { return memoryMap_; }
+    const MemoryMap& memoryMap() const /*final*/ { return memoryMap_; }
+    MemoryMap& memoryMap() /*final*/ { return memoryMap_; }
     /** @} */
 
     /** Returns true if address is executable. */
-    bool addressIsExecutable(rose_addr_t va) const { return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists(); }
+    bool addressIsExecutable(rose_addr_t va) const /*final*/ {
+        return memoryMap_.at(va).require(MemoryMap::EXECUTABLE).exists();
+    }
 
     /** Returns the number of bytes represented by the CFG.  This is a constant time operation. */
-    size_t nBytes() const ROSE_FINAL { return aum_.size(); }
+    size_t nBytes() const /*final*/ { return aum_.size(); }
 
     /** Returns the special "undiscovered" vertex.
      *
      *  The incoming edges for this vertex originate from the basic block placeholder vertices.
      *
      * @{ */
-    ControlFlowGraph::VertexNodeIterator undiscoveredVertex() ROSE_FINAL {
+    ControlFlowGraph::VertexNodeIterator undiscoveredVertex() /*final*/ {
         return undiscoveredVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator undiscoveredVertex() const ROSE_FINAL {
+    ControlFlowGraph::ConstVertexNodeIterator undiscoveredVertex() const /*final*/ {
         return undiscoveredVertex_;
     }
     /** @} */
@@ -457,10 +459,10 @@ public:
      *  Indeterminate successors result from, among other things, indirect jump instructions, like x86 "JMP [EAX]".
      *
      * @{ */
-    ControlFlowGraph::VertexNodeIterator indeterminateVertex() ROSE_FINAL {
+    ControlFlowGraph::VertexNodeIterator indeterminateVertex() /*final*/ {
         return indeterminateVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator indeterminateVertex() const ROSE_FINAL {
+    ControlFlowGraph::ConstVertexNodeIterator indeterminateVertex() const /*final*/ {
         return indeterminateVertex_;
     }
     /** @} */
@@ -472,10 +474,10 @@ public:
      *  memory which is not mapped or memory which is mapped without execute permission.
      *
      *  @{ */
-    ControlFlowGraph::VertexNodeIterator nonexistingVertex() ROSE_FINAL {
+    ControlFlowGraph::VertexNodeIterator nonexistingVertex() /*final*/ {
         return nonexistingVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator nonexistingVertex() const ROSE_FINAL {
+    ControlFlowGraph::ConstVertexNodeIterator nonexistingVertex() const /*final*/ {
         return nonexistingVertex_;
     }
     /** @} */
@@ -484,23 +486,23 @@ public:
      *
      *  Returns the global control flow graph. The CFG should not be modified by the caller except through the partitioner's
      *  own API. */
-    const ControlFlowGraph& cfg() const ROSE_FINAL { return cfg_; }
+    const ControlFlowGraph& cfg() const /*final*/ { return cfg_; }
 
     /** Returns the address usage map.
      *
      *  Returns the global address usage map.  The AUM should not be modified by the caller except through the paritioner's own
      *  API. */
-    const AddressUsageMap& aum() const ROSE_FINAL { return aum_; }
+    const AddressUsageMap& aum() const /*final*/ { return aum_; }
 
     /** Returns the address usage map for a single function. */
-    AddressUsageMap aum(const Function::Ptr&) const ROSE_FINAL;
+    AddressUsageMap aum(const Function::Ptr&) const /*final*/;
 
     /** Determine all ghost successors in the control flow graph.
      *
      *  The return value is a list of basic block ghost successors for which no basic block or basic block placeholder exists.
      *
      *  @sa basicBlockGhostSuccessors */
-    std::set<rose_addr_t> ghostSuccessors() const ROSE_FINAL;
+    std::set<rose_addr_t> ghostSuccessors() const /*final*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner instruction operations
@@ -509,7 +511,7 @@ public:
     /** Returns the number of instructions attached to the CFG/AUM.
      *
      *  This statistic is computed in time linearly proportional to the number of basic blocks in the control flow graph. */
-    size_t nInstructions() const ROSE_FINAL;
+    size_t nInstructions() const /*final*/;
 
     /** Determines whether an instruction is attached to the CFG/AUM.
      *
@@ -518,10 +520,10 @@ public:
      *  basic block is only represented by a placeholder in the CFG; such a basic block is said to be "undiscovered".
      *
      *  @{ */
-    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const ROSE_FINAL {
+    Sawyer::Optional<AddressUser> instructionExists(rose_addr_t startVa) const /*final*/ {
         return aum_.instructionExists(startVa);
     }
-    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const ROSE_FINAL {
+    Sawyer::Optional<AddressUser> instructionExists(SgAsmInstruction *insn) const /*final*/ {
         return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
     }
     /** @} */
@@ -532,7 +534,7 @@ public:
      *  the specified address interval. An instruction overlaps the interval if any of its bytes are within the interval.
      *
      *  The returned list of instructions are sorted by their starting address. */
-    std::vector<SgAsmInstruction*> instructionsOverlapping(const AddressInterval&) const ROSE_FINAL;
+    std::vector<SgAsmInstruction*> instructionsOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns instructions that span an entire address interval.
      *
@@ -540,7 +542,7 @@ public:
      *  interval.  An instruction spans the interval if the set of addresses for all its bytes are a superset of the interval.
      *
      *  The returned list of instructions are sorted by their starting address. */
-    std::vector<SgAsmInstruction*> instructionsSpanning(const AddressInterval&) const ROSE_FINAL;
+    std::vector<SgAsmInstruction*> instructionsSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns instructions that are fully contained in an address interval.
      *
@@ -549,14 +551,14 @@ public:
      *  instruction must be a subset of the specified interval.
      *
      *  The returned list of instructions are sorted by their starting address. */
-    std::vector<SgAsmInstruction*> instructionsContainedIn(const AddressInterval&) const ROSE_FINAL;
+    std::vector<SgAsmInstruction*> instructionsContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the address interval for an instruction.
      *
      *  Returns the minimal interval describing from where the instruction was disassembled.  An instruction always exists in a
      *  contiguous region of memory, therefore the return value is a single interval rather than a set of intervals. If a null
      *  pointer is specified then an empty interval is returned. */
-    AddressInterval instructionExtent(SgAsmInstruction*) const ROSE_FINAL;
+    AddressInterval instructionExtent(SgAsmInstruction*) const /*final*/;
 
     /** Discover an instruction.
      *
@@ -568,13 +570,13 @@ public:
      *  then a special 1-byte "unknown" instruction is returned; such instructions have indeterminate control flow successors
      *  and no semantics.  If an instruction was previously returned for this address (including the "unknown" instruction)
      *  then that same instruction will be returned this time. */
-    SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const ROSE_FINAL;
+    SgAsmInstruction* discoverInstruction(rose_addr_t startVa) const /*final*/;
 
     /** Cross references.
      *
      *  Scans all attached instructions looking for constants mentioned in the instructions and builds a mapping from those
      *  constants back to the instructions.  Only constants present in the @p restriction set are considered. */
-    CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const ROSE_FINAL;
+    CrossReferences instructionCrossReferences(const AddressIntervalSet &restriction) const /*final*/;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -588,7 +590,7 @@ public:
      *  point to a discovered basic block are not represented in the AUM since a placeholder has no instructions.
      *
      *  This is a constant-time operation. */
-    size_t nPlaceholders() const ROSE_FINAL;
+    size_t nPlaceholders() const /*final*/;
 
     /** Determines whether a basic block placeholder exists in the CFG.
      *
@@ -596,7 +598,7 @@ public:
      *  placeholder may or may not point to a discovered basic block.
      *
      *  @sa findPlaceholder */
-    bool placeholderExists(rose_addr_t startVa) const ROSE_FINAL;
+    bool placeholderExists(rose_addr_t startVa) const /*final*/;
 
     /** Find the CFG vertex for a basic block placeholder.
      *  
@@ -606,12 +608,12 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    ControlFlowGraph::VertexNodeIterator findPlaceholder(rose_addr_t startVa) ROSE_FINAL {
+    ControlFlowGraph::VertexNodeIterator findPlaceholder(rose_addr_t startVa) /*final*/ {
         if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
             return *found;
         return cfg_.vertices().end();
     }
-    ControlFlowGraph::ConstVertexNodeIterator findPlaceholder(rose_addr_t startVa) const ROSE_FINAL {
+    ControlFlowGraph::ConstVertexNodeIterator findPlaceholder(rose_addr_t startVa) const /*final*/ {
         if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
             return *found;
         return cfg_.vertices().end();
@@ -632,7 +634,7 @@ public:
      *
      *  This method returns a pointer to either the existing placeholder (which may already point to an attached basic block)
      *  or the new placeholder. */
-    ControlFlowGraph::VertexNodeIterator insertPlaceholder(rose_addr_t startVa) ROSE_FINAL;
+    ControlFlowGraph::VertexNodeIterator insertPlaceholder(rose_addr_t startVa) /*final*/;
 
     /** Remove a basic block placeholder from the CFG/AUM.
      *
@@ -645,8 +647,8 @@ public:
      *  returned.
      *
      *  @{ */
-    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeholder) ROSE_FINAL;
-    BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa) ROSE_FINAL;
+    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeholder) /*final*/;
+    BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa) /*final*/;
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -664,7 +666,7 @@ public:
      *  @sa basicBlockDropSemantics
      *
      * @{ */
-    bool basicBlockSemanticsAutoDrop() const ROSE_FINAL { return basicBlockSemanticsAutoDrop_; }
+    bool basicBlockSemanticsAutoDrop() const /*final*/ { return basicBlockSemanticsAutoDrop_; }
     void basicBlockSemanticsAutoDrop(bool b) { basicBlockSemanticsAutoDrop_ = b; }
     /** @} */
 
@@ -674,7 +676,7 @@ public:
      *  BasicBlock::dropSemantics. It can be recomputed later if necessary.
      *
      *  @sa basicBlockSemanticsAutoDrop */
-    void basicBlockDropSemantics() const ROSE_FINAL;
+    void basicBlockDropSemantics() const /*final*/;
 
     /** Returns the number of basic blocks attached to the CFG/AUM.
      *
@@ -682,14 +684,14 @@ public:
      *  discovered basic block.
      *
      *  This operation is linear in the number of vertices in the CFG.  Consider using @ref nPlaceholders instead. */
-    size_t nBasicBlocks() const ROSE_FINAL;
+    size_t nBasicBlocks() const /*final*/;
 
     /** Returns all basic blocks attached to the CFG.
      *
      *  The returned list contains distinct basic blocks sorted by their starting address.
      *
      * @sa basicBlocksOverlapping, @ref basicBlocksSpanning, @ref basicBlocksContainedIn */
-    std::vector<BasicBlock::Ptr> basicBlocks() const ROSE_FINAL;
+    std::vector<BasicBlock::Ptr> basicBlocks() const /*final*/;
 
     /** Determines whether a discovered basic block exists in the CFG/AUM.
      *
@@ -710,8 +712,8 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const ROSE_FINAL;
-    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const ROSE_FINAL;
+    BasicBlock::Ptr basicBlockExists(rose_addr_t startVa) const /*final*/;
+    BasicBlock::Ptr basicBlockExists(const BasicBlock::Ptr&) const /*final*/;
     /** @} */
 
     /** Returns basic blocks that overlap with specified address interval.
@@ -721,7 +723,7 @@ public:
      *  with the specified interval.  An instruction overlaps the interval if any of its bytes are within the interval.
      *
      *  The returned list of basic blocks are sorted by their starting address. */
-    std::vector<BasicBlock::Ptr> basicBlocksOverlapping(const AddressInterval&) const ROSE_FINAL;
+    std::vector<BasicBlock::Ptr> basicBlocksOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns basic blocks that span an entire address interval.
      *
@@ -731,7 +733,7 @@ public:
      *  specified interval.
      *
      *  The returned list of basic blocks are sorted by their starting address. */
-    std::vector<BasicBlock::Ptr> basicBlocksSpanning(const AddressInterval&) const ROSE_FINAL;
+    std::vector<BasicBlock::Ptr> basicBlocksSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns basic blocks that are fully contained in an address interval.
      *
@@ -740,13 +742,13 @@ public:
      *  basic block's instructions must be a subset of the specified interval.
      *
      *  The returned list of basic blocks are sorted by their starting address. */
-    std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const ROSE_FINAL;
+    std::vector<BasicBlock::Ptr> basicBlocksContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the basic block that contains a specific instruction address.
      *
      *  Returns the basic block that contains an instruction that starts at the specified address, or null if no such
      *  instruction or basic block exists in the CFG/AUM. */
-    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const ROSE_FINAL;
+    BasicBlock::Ptr basicBlockContainingInstruction(rose_addr_t insnVa) const /*final*/;
 
     /** Returns the addresses used by basic block instructions.
      *
@@ -755,17 +757,17 @@ public:
      *  requirement in ROSE.  ROSE only requires that the global control flow graph has edges that enter at only the initial
      *  instruction of the basic block and exit only from its final instruction.  The instructions need not be contiguous or
      *  non-overlapping. */
-    AddressIntervalSet basicBlockInstructionExtent(const BasicBlock::Ptr&) const ROSE_FINAL;
+    AddressIntervalSet basicBlockInstructionExtent(const BasicBlock::Ptr&) const /*final*/;
 
     /** Returns the addresses used by basic block data.
      *
      *  Returns an interval set which is the union of the extents for each data block referenced by this basic block. */
-    AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const ROSE_FINAL;
+    AddressIntervalSet basicBlockDataExtent(const BasicBlock::Ptr&) const /*final*/;
 
     /** Returns the function that owns a basic block.
      *
      *  Returns the function that owns this basic block in the CFG, or null if no function owns it. */
-    Function::Ptr basicBlockFunctionOwner(const BasicBlock::Ptr&) const ROSE_FINAL;
+    Function::Ptr basicBlockFunctionOwner(const BasicBlock::Ptr&) const /*final*/;
 
     /** Returns the list of functions that own the specified basic blocks.
      *
@@ -774,8 +776,8 @@ public:
      *  any function.
      *
      * @{ */
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const ROSE_FINAL;
-    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const ROSE_FINAL;
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const /*final*/;
+    std::vector<Function::Ptr> basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr>&) const /*final*/;
     /** @} */
 
     /** Detach a basic block from the CFG/AUM.
@@ -800,9 +802,9 @@ public:
      *  In order to completely remove a basic block, including its placeholder, use @ref eraseBasicBlock.
      *
      *  @{ */
-    BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa) ROSE_FINAL;
-    BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock) ROSE_FINAL;
-    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder) ROSE_FINAL;
+    BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa) /*final*/;
+    BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock) /*final*/;
+    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder) /*final*/;
     /** @} */
 
     /** Truncate an attached basic-block.
@@ -816,7 +818,7 @@ public:
      *
      *  The return value is the vertex for the new placeholder. */
     ControlFlowGraph::VertexNodeIterator truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &basicBlock,
-                                                            SgAsmInstruction *insn) ROSE_FINAL;
+                                                            SgAsmInstruction *insn) /*final*/;
 
     /** Attach a basic block to the CFG/AUM.
      *
@@ -846,8 +848,8 @@ public:
      *  basic block.
      *
      *  @{ */
-    void attachBasicBlock(const BasicBlock::Ptr&) ROSE_FINAL;
-    void attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&) ROSE_FINAL;
+    void attachBasicBlock(const BasicBlock::Ptr&) /*final*/;
+    void attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&) /*final*/;
     /** @} */
 
     /** Discover instructions for a detached basic block.
@@ -933,8 +935,8 @@ public:
      *      instruction of the basic block.
      *
      *  @{ */
-    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const ROSE_FINAL;
-    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator &placeholder) const ROSE_FINAL;
+    BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const /*final*/;
+    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator &placeholder) const /*final*/;
     /** @} */
 
     /** Determine successors for a basic block.
@@ -945,7 +947,7 @@ public:
      *
      *  The basic block need not be complete or attached to the CFG/AUM. A basic block that has no instructions has no
      *  successors. */
-    BasicBlock::Successors basicBlockSuccessors(const BasicBlock::Ptr&) const ROSE_FINAL;
+    BasicBlock::Successors basicBlockSuccessors(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determines concrete successors for a basic block.
      *
@@ -953,7 +955,7 @@ public:
      *  non-concrete values are removed from the list.  The optional @p isComplete argument is set to true or false depending
      *  on whether the set of returned concrete successors represents the complete set of successors (true) or some member in
      *  the complete set is not concrete (false). */
-    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&, bool *isComplete=NULL) const ROSE_FINAL;
+    std::vector<rose_addr_t> basicBlockConcreteSuccessors(const BasicBlock::Ptr&, bool *isComplete=NULL) const /*final*/;
 
     /** Determine ghost successors for a basic block.
      *
@@ -970,14 +972,14 @@ public:
      *
      *  @todo Perhaps we need to represent these as edges rather than successors so that we also know which instruction they're
      *  originating from since they can originate from anywhere in the basic block. */
-    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlock::Ptr&) const ROSE_FINAL;
+    std::set<rose_addr_t> basicBlockGhostSuccessors(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determine if a basic block looks like a function call.
      *
      *  If the basic block appears to be a function call by some analysis then this function returns true.  The analysis may
      *  use instruction semantics to look at the stack, it may look at the kind of instructions in the block, it may look for
      *  patterns at the callee address if known, etc. The basic block caches the result of this analysis. */
-    bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const ROSE_FINAL;
+    bool basicBlockIsFunctionCall(const BasicBlock::Ptr&) const /*final*/;
 
     /** Determine if a basic block looks like a function return.
      *
@@ -987,7 +989,7 @@ public:
      *
      *  @todo Partitioner::basicBlockIsFunctionReturn does not currently detect callee-cleanup returns because the return
      *  address is not the last thing popped from the stack. FIXME[Robb P. Matzke 2014-09-15] */
-    bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const ROSE_FINAL;
+    bool basicBlockIsFunctionReturn(const BasicBlock::Ptr&) const /*final*/;
 
     /** Return the stack delta expression.
      *
@@ -1024,15 +1026,15 @@ public:
      *  @sa functionStackDelta and @ref allFunctionStackDelta
      *
      * @{ */
-    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const ROSE_FINAL;
-    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const ROSE_FINAL;
+    BaseSemantics::SValuePtr basicBlockStackDeltaIn(const BasicBlock::Ptr&) const /*final*/;
+    BaseSemantics::SValuePtr basicBlockStackDeltaOut(const BasicBlock::Ptr&) const /*final*/;
     /** @} */
 
     /** Clears all cached stack deltas.
      *
      *  Causes all stack deltas for basic blocks and functions that are attached to the CFG/AUM to be forgotten.  This is
      *  useful if one needs to recompute deltas in light of new information. */
-    void forgetStackDeltas() const ROSE_FINAL;
+    void forgetStackDeltas() const /*final*/;
 
     /** Property: max depth for inter-procedural stack delta analysis.
      *
@@ -1093,16 +1095,16 @@ public:
      *  are indicated by returning nothing.
      *
      * @{ */
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const ROSE_FINAL;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const /*final*/;
 
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&) const ROSE_FINAL;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&) const /*final*/;
     /** @} */
 
     /** Clear all may-return properties.
      *
      *  This function is const because it doesn't modify the CFG/AUM; it only removes the may-return property from all the
      *  CFG/AUM basic blocks. */
-    void basicBlockMayReturnReset() const ROSE_FINAL;
+    void basicBlockMayReturnReset() const /*final*/;
 
 private:
     // Per-vertex data used during may-return analysis
@@ -1138,12 +1140,12 @@ public:
     /** Returns the number of data blocks attached to the CFG/AUM.
      *
      *  This is a relatively expensive operation compared to querying the number of basic blocks or functions. */
-    size_t nDataBlocks() const ROSE_FINAL;
+    size_t nDataBlocks() const /*final*/;
 
     /** Determine if a data block is attached to the CFG/AUM.
      *
      *  Returns true if this data block is attached to the CFG/AUM and false if not attached. */
-    bool dataBlockExists(const DataBlock::Ptr&) const ROSE_FINAL;
+    bool dataBlockExists(const DataBlock::Ptr&) const /*final*/;
 
     /** Find an existing data block.
      *
@@ -1151,7 +1153,7 @@ public:
      *  The first choice is to return the smallest data block that spans the entire interval; second choice is the largest
      *  block that contains the first byte of the interval.  If there is a tie in sizes then the block with the highest
      *  starting address wins.  If no suitable data block can be found then the null pointer is returned. */
-    DataBlock::Ptr findBestDataBlock(const AddressInterval&) const ROSE_FINAL;
+    DataBlock::Ptr findBestDataBlock(const AddressInterval&) const /*final*/;
 
     /** Attach a data block to the CFG/AUM.
      *
@@ -1159,13 +1161,13 @@ public:
      *  ownership count of zero since none of its owners are attached (otherwise the data block would also have been
      *  already attached). Multiple data blocks having the same address can be attached. It is an error to supply a null
      *  pointer. */
-    void attachDataBlock(const DataBlock::Ptr&) ROSE_FINAL;
+    void attachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Detaches a data block from the CFG/AUM.
      *
      *  The specified data block is detached from the CFG/AUM and thawed, and returned so it can be modified.  It is an error
      *  to attempt to detach a data block which is owned by attached basic blocks or attached functions. */
-    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) ROSE_FINAL;
+    DataBlock::Ptr detachDataBlock(const DataBlock::Ptr&) /*final*/;
 
     /** Returns data blocks that overlap with specified address interval.
      *
@@ -1174,7 +1176,7 @@ public:
      *  marked as padding in the data block type.
      *
      *  The returned list of data blocks are sorted by their starting address. */
-    std::vector<DataBlock::Ptr> dataBlocksOverlapping(const AddressInterval&) const ROSE_FINAL;
+    std::vector<DataBlock::Ptr> dataBlocksOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns data blocks that span an entire address interval.
      *
@@ -1183,7 +1185,7 @@ public:
      *  data block type.
      *
      *  The returned list of data blocks are sorted by their starting address. */
-    std::vector<DataBlock::Ptr> dataBlocksSpanning(const AddressInterval&) const ROSE_FINAL;
+    std::vector<DataBlock::Ptr> dataBlocksSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns data blocks that are fully contained in an address interval.
      *
@@ -1192,18 +1194,18 @@ public:
      *  in the data block type.
      *
      *  The returned list of data blocks are sorted by their starting address. */
-    std::vector<DataBlock::Ptr> dataBlocksContainedIn(const AddressInterval&) const ROSE_FINAL;
+    std::vector<DataBlock::Ptr> dataBlocksContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the addresses used by a data block.
      *
      *  Returns an address interval describing all addresses of the data block, even if they are unused or marked as padding
      *  in the data block type.  Since all addresses are returned, the extent of a data block is always contiguous. */
-    AddressInterval dataBlockExtent(const DataBlock::Ptr&) const ROSE_FINAL;
+    AddressInterval dataBlockExtent(const DataBlock::Ptr&) const /*final*/;
 
     /** Returns the list of all attached data blocks.
      *
      *  Returns a sorted list of distinct data blocks that are attached to the CFG/AUM. */
-    std::vector<DataBlock::Ptr> dataBlocks() const ROSE_FINAL;
+    std::vector<DataBlock::Ptr> dataBlocks() const /*final*/;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1213,7 +1215,7 @@ public:
     /** Returns the number of functions attached to the CFG/AUM.
      *
      *  This is a constant-time operation. */
-    size_t nFunctions() const ROSE_FINAL { return functions_.size(); }
+    size_t nFunctions() const /*final*/ { return functions_.size(); }
 
     /** Determines whether a function exists in the CFG/AUM.
      *
@@ -1226,10 +1228,10 @@ public:
      *  actual function object.
      *
      *  @{ */
-    Function::Ptr functionExists(rose_addr_t startVa) const ROSE_FINAL {
+    Function::Ptr functionExists(rose_addr_t startVa) const /*final*/ {
         return functions_.getOptional(startVa).orDefault();
     }
-    Function::Ptr functionExists(const Function::Ptr &function) const ROSE_FINAL {
+    Function::Ptr functionExists(const Function::Ptr &function) const /*final*/ {
         if (function!=NULL) {
             Function::Ptr found = functionExists(function->address());
             if (found==function)
@@ -1242,7 +1244,7 @@ public:
     /** All functions attached to the CFG/AUM.
      *
      *  Returns a vector of distinct functions sorted by their entry address. */
-    std::vector<Function::Ptr> functions() const ROSE_FINAL;
+    std::vector<Function::Ptr> functions() const /*final*/;
 
     /** Returns functions that overlap with specified address interval.
      *
@@ -1251,7 +1253,7 @@ public:
      *  that overlaps with the interval.
      *
      *  The returned list of funtions are sorted by their entry address. */
-    std::vector<Function::Ptr> functionsOverlapping(const AddressInterval&) const ROSE_FINAL;
+    std::vector<Function::Ptr> functionsOverlapping(const AddressInterval&) const /*final*/;
 
     /** Returns functions that span an entire address interval.
      *
@@ -1261,7 +1263,7 @@ public:
      *  blocks is a superset of the specified interval.
      *
      *  The returned list of functions are sorted by their starting address. */
-    std::vector<Function::Ptr> functionsSpanning(const AddressInterval&) const ROSE_FINAL;
+    std::vector<Function::Ptr> functionsSpanning(const AddressInterval&) const /*final*/;
 
     /** Returns functions that are fully contained in an address interval.
      *
@@ -1270,14 +1272,14 @@ public:
      *  basic blocks and data blocks must be a subset of the specified interval.
      *
      *  The returned list of functions are sorted by their starting address. */
-    std::vector<Function::Ptr> functionsContainedIn(const AddressInterval&) const ROSE_FINAL;
+    std::vector<Function::Ptr> functionsContainedIn(const AddressInterval&) const /*final*/;
 
     /** Returns the addresses used by a function.
      *
      *  Returns an interval set which is the union of the addresses of the function's basic blocks and data blocks.  Most
      *  functions are contiguous in memory and can be represented by a single address interval, but this is not a
      *  requirement in ROSE. */
-    AddressIntervalSet functionExtent(const Function::Ptr&) const ROSE_FINAL;
+    AddressIntervalSet functionExtent(const Function::Ptr&) const /*final*/;
     
     /** Attaches a function to the CFG/AUM.
      *
@@ -1296,8 +1298,8 @@ public:
      *  consistent state.
      *
      *  @{ */
-    size_t attachFunction(const Function::Ptr&) ROSE_FINAL;
-    size_t attachFunctions(const Functions&) ROSE_FINAL;
+    size_t attachFunction(const Function::Ptr&) /*final*/;
+    size_t attachFunctions(const Functions&) /*final*/;
     /** @} */
 
     /** Attaches or merges a function into the CFG/AUM.
@@ -1306,7 +1308,7 @@ public:
      *  attachFunction.  Otherwise, this method attempts to merge the specified function into an existing function.  In any
      *  case, it returns a pointer to the function in the CFG/AUM (the existing one, or the new one). If the merge is not
      *  possible, then an exception is thrown. */
-    Function::Ptr attachOrMergeFunction(const Function::Ptr&) ROSE_FINAL;
+    Function::Ptr attachOrMergeFunction(const Function::Ptr&) /*final*/;
 
     /** Create placeholders for function basic blocks.
      *
@@ -1322,8 +1324,8 @@ public:
      *  Wouldn't its basic blocks already also be attached? [Robb P. Matzke 2014-08-15]
      *
      *  @{ */
-    size_t attachFunctionBasicBlocks(const Functions&) ROSE_FINAL;
-    size_t attachFunctionBasicBlocks(const Function::Ptr&) ROSE_FINAL;
+    size_t attachFunctionBasicBlocks(const Functions&) /*final*/;
+    size_t attachFunctionBasicBlocks(const Function::Ptr&) /*final*/;
     /** @} */
 
     /** Detaches a function from the CFG/AUM.
@@ -1337,7 +1339,7 @@ public:
      *
      *  Detaching a function from the CFG/AUM does not change the function other than thawing it so it can be modified by the
      *  user directly through its API. Attempting to detach a function that is already detached has no effect. */
-    void detachFunction(const Function::Ptr&) ROSE_FINAL;
+    void detachFunction(const Function::Ptr&) /*final*/;
 
     /** Attach a data block into an attached or detached function.
      *
@@ -1347,12 +1349,12 @@ public:
      *  as we learn more about how it is accessed.
      *
      *  Returns the data block that has been attached to the function. */
-    DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes) ROSE_FINAL;
+    DataBlock::Ptr attachFunctionDataBlock(const Function::Ptr&, rose_addr_t startVa, size_t nBytes) /*final*/;
 
     /** Attach a data block to an attached or detached function.
      *
      *  Causes the specified function to become an owner of the specified data block. */
-    void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) ROSE_FINAL;
+    void attachFunctionDataBlock(const Function::Ptr&, const DataBlock::Ptr&) /*final*/;
 
     /** Finds the function that owns the specified basic block.
      *
@@ -1369,8 +1371,8 @@ public:
      *  the partitioner does not necessarily know about them.
      *
      *  @{ */
-    Function::Ptr findFunctionOwningBasicBlock(rose_addr_t bblockVa) const ROSE_FINAL;
-    Function::Ptr findFunctionOwningBasicBlock(const BasicBlock::Ptr&) const ROSE_FINAL;
+    Function::Ptr findFunctionOwningBasicBlock(rose_addr_t bblockVa) const /*final*/;
+    Function::Ptr findFunctionOwningBasicBlock(const BasicBlock::Ptr&) const /*final*/;
     /** @} */
 
     /** Finds functions that own specified basic blocks.
@@ -1380,8 +1382,8 @@ public:
      *  and returns a collection of distinct function pointers.
      *
      *  @{ */
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t>&) const ROSE_FINAL;
-    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const ROSE_FINAL;
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<rose_addr_t>&) const /*final*/;
+    std::vector<Function::Ptr> findFunctionsOwningBasicBlocks(const std::vector<BasicBlock::Ptr>&) const /*final*/;
     /** @} */
 
     /** Scans the CFG to find function calls.
@@ -1391,7 +1393,7 @@ public:
      *  created functions are added to the CFG/AUM.
      *
      *  See also @ref discoverFunctionEntryVertices which returns a superset of the functions returned by this method. */
-    std::vector<Function::Ptr> discoverCalledFunctions() const ROSE_FINAL;
+    std::vector<Function::Ptr> discoverCalledFunctions() const /*final*/;
 
     /** Scans the CFG to find function entry basic blocks.
      *
@@ -1402,7 +1404,7 @@ public:
      *  The returned function pointers are sorted by function entry address.
      *
      *  See also @ref discoverFunctionCalls which returns a subset of the functions returned by this method. */
-    std::vector<Function::Ptr> discoverFunctionEntryVertices() const ROSE_FINAL;
+    std::vector<Function::Ptr> discoverFunctionEntryVertices() const /*final*/;
 
     /** True if function is a thunk.
      *
@@ -1411,7 +1413,7 @@ public:
      *  exactly one basic block, and the basic block has exactly one successor, and the successor is concrete.
      *
      *  As a side effect, the basic block's outgoing edge type is changed to E_FUNCTION_XFER. */
-    Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const ROSE_FINAL;
+    Sawyer::Optional<Thunk> functionIsThunk(const Function::Ptr&) const /*final*/;
 
     /** Adds basic blocks to a function.
      *
@@ -1442,27 +1444,27 @@ public:
      *  @{ */
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
                                        EdgeList *inwardInterFunctionEdges /*out*/,
-                                       EdgeList *outwardInterFunctionEdges /*out*/) ROSE_FINAL;
+                                       EdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
                                        ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                       ConstEdgeList *outwardInterFunctionEdges /*out*/) const ROSE_FINAL;
+                                       ConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
                                        std::vector<size_t> &inwardInterFunctionEdges /*out*/,
-                                       std::vector<size_t> &outwardInterFunctionEdges /*out*/) const ROSE_FINAL;
+                                       std::vector<size_t> &outwardInterFunctionEdges /*out*/) const /*final*/;
     /** @} */
 
     /** Returns ghost successors for a single function.
      *
      *  Returns the set of basic block starting addresses that are naive successors for the basic blocks of a function but
      *  which are not actual control flow successors due to the presence of opaque predicates. */
-    std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const ROSE_FINAL;
+    std::set<rose_addr_t> functionGhostSuccessors(const Function::Ptr&) const /*final*/;
 
     /** Returns a function call graph.
      *
      *  If @p allowParallelEdges is true then the returned call graph will have one edge for each function call and each edge
      *  will have a count of one.  Otherwise multiple calls between the same pair of functions are coalesced into single edges
      *  with non-unit counts in the call graph. */
-    FunctionCallGraph functionCallGraph(bool allowParallelEdges = true) const ROSE_FINAL;
+    FunctionCallGraph functionCallGraph(bool allowParallelEdges = true) const /*final*/;
 
     /** Stack delta analysis for one function.
      *
@@ -1481,19 +1483,19 @@ public:
      *
      *  If the configuration information specifies a stack delta for this function then that delta is used instead of
      *  performing any analysis. */
-    BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const ROSE_FINAL;
+    BaseSemantics::SValuePtr functionStackDelta(const Function::Ptr &function) const /*final*/;
 
     /** Stack delta analysis for all functions. */
-    void allFunctionStackDelta() const ROSE_FINAL;
+    void allFunctionStackDelta() const /*final*/;
 
     /** May-return analysis for one function.
      *
      *  Determines if a function can possibly return to its caller. This is a simple wrapper around @ref
      *  basicBlockOptionalMayReturn invoked on the function's entry block. See that method for details. */
-    Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const ROSE_FINAL;
+    Sawyer::Optional<bool> functionOptionalMayReturn(const Function::Ptr &function) const /*final*/;
 
     /** May-return analysis for all functions. */
-    void allFunctionMayReturn() const ROSE_FINAL;
+    void allFunctionMayReturn() const /*final*/;
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1515,8 +1517,8 @@ public:
      * @endcode
      *
      *  @{ */
-    CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() ROSE_FINAL { return cfgAdjustmentCallbacks_; }
-    const CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() const ROSE_FINAL { return cfgAdjustmentCallbacks_; }
+    CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() /*final*/ { return cfgAdjustmentCallbacks_; }
+    const CfgAdjustmentCallbacks& cfgAdjustmentCallbacks() const /*final*/ { return cfgAdjustmentCallbacks_; }
     /** @} */
 
     /** Callbacks for adjusting basic block during discovery.
@@ -1525,8 +1527,8 @@ public:
      *  See @ref BasicBlockCallback and @ref discoverBasicBlock for details.
      *
      *  @{ */
-    BasicBlockCallbacks& basicBlockCallbacks() ROSE_FINAL { return basicBlockCallbacks_; }
-    const BasicBlockCallbacks& basicBlockCallbacks() const ROSE_FINAL { return basicBlockCallbacks_; }
+    BasicBlockCallbacks& basicBlockCallbacks() /*final*/ { return basicBlockCallbacks_; }
+    const BasicBlockCallbacks& basicBlockCallbacks() const /*final*/ { return basicBlockCallbacks_; }
     /** @} */
 
 public:
@@ -1535,8 +1537,8 @@ public:
      *  @sa nextFunctionPrologue
      *
      *  @{ */
-    FunctionPrologueMatchers& functionPrologueMatchers() ROSE_FINAL { return functionPrologueMatchers_; }
-    const FunctionPrologueMatchers& functionPrologueMatchers() const ROSE_FINAL { return functionPrologueMatchers_; }
+    FunctionPrologueMatchers& functionPrologueMatchers() /*final*/ { return functionPrologueMatchers_; }
+    const FunctionPrologueMatchers& functionPrologueMatchers() const /*final*/ { return functionPrologueMatchers_; }
     /** @} */
 
     /** Finds the next function by searching for a function prologue.
@@ -1556,14 +1558,14 @@ public:
      *  thunk and the function to which it points.  In any case, the first function is the primary one.
      *
      *  If no match is found then an empty vector is returned. */
-    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa) ROSE_FINAL;
+    std::vector<Function::Ptr> nextFunctionPrologue(rose_addr_t startVa) /*final*/;
 
 public:
     /** Ordered list of function padding matchers.
      *
      * @{ */
-    FunctionPaddingMatchers& functionPaddingMatchers() ROSE_FINAL { return functionPaddingMatchers_; }
-    const FunctionPaddingMatchers& functionPaddingMatchers() const ROSE_FINAL { return functionPaddingMatchers_; }
+    FunctionPaddingMatchers& functionPaddingMatchers() /*final*/ { return functionPaddingMatchers_; }
+    const FunctionPaddingMatchers& functionPaddingMatchers() const /*final*/ { return functionPaddingMatchers_; }
     /** @} */
 
     /** Finds function padding.
@@ -1571,7 +1573,7 @@ public:
      *  Scans backward from the specified function's entry address by invoking each function padding matcher in the order
      *  returned by @ref functionPaddingMatchers until one of them finds some padding.  Once found, a data block is created and
      *  returned.  If no padding is found then the null pointer is returned. */
-    DataBlock::Ptr matchFunctionPadding(const Function::Ptr&) ROSE_FINAL;
+    DataBlock::Ptr matchFunctionPadding(const Function::Ptr&) /*final*/;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Partitioner miscellaneous
@@ -1587,7 +1589,7 @@ public:
      *  instructions are shown for each basic block. If @p computeProperties is set then various properties are computed and
      *  cached rather than only consulting the cache. */
     void dumpCfg(std::ostream&, const std::string &prefix="", bool showBlocks=true,
-                 bool computeProperties=true) const ROSE_FINAL;
+                 bool computeProperties=true) const /*final*/;
 
     /** Output CFG as GraphViz.
      *
@@ -1601,47 +1603,47 @@ public:
      *  This is only a simple wrapper around @ref GraphViz::dumpInterval. That API has many more options than are presented by
      *  this method. */
     void cfgGraphViz(std::ostream&, const AddressInterval &restrict = AddressInterval::whole(),
-                     bool showNeighbors=true) const ROSE_FINAL;
+                     bool showNeighbors=true) const /*final*/;
 
     /** Name of a vertex.
      *
      *  @{ */
-    static std::string vertexName(const ControlFlowGraph::VertexNode&) ROSE_FINAL;
-    std::string vertexName(const ControlFlowGraph::ConstVertexNodeIterator&) const ROSE_FINAL;
+    static std::string vertexName(const ControlFlowGraph::VertexNode&) /*final*/;
+    std::string vertexName(const ControlFlowGraph::ConstVertexNodeIterator&) const /*final*/;
     /** @} */
 
     /** Name of last instruction in vertex. */
-    static std::string vertexNameEnd(const ControlFlowGraph::VertexNode&) ROSE_FINAL;
+    static std::string vertexNameEnd(const ControlFlowGraph::VertexNode&) /*final*/;
 
     /** Name of an incoming edge.
      *
      * @{ */
-    static std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) ROSE_FINAL;
-    std::string edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator&) const ROSE_FINAL;
+    static std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) /*final*/;
+    std::string edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
     /** @} */
 
     /** Name of an outgoing edge.
      *
      * @{ */
-    static std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) ROSE_FINAL;
-    std::string edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator&) const ROSE_FINAL;
+    static std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) /*final*/;
+    std::string edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
     /** @} */
 
     /** Name of an edge.
      *
      * @{ */
-    static std::string edgeName(const ControlFlowGraph::EdgeNode&) ROSE_FINAL;
-    std::string edgeName(const ControlFlowGraph::ConstEdgeNodeIterator&) const ROSE_FINAL;
+    static std::string edgeName(const ControlFlowGraph::EdgeNode&) /*final*/;
+    std::string edgeName(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
     /** @} */
 
     /** Name of a basic block. */
-    static std::string basicBlockName(const BasicBlock::Ptr&) ROSE_FINAL;
+    static std::string basicBlockName(const BasicBlock::Ptr&) /*final*/;
 
     /** Name of a data block. */
-    static std::string dataBlockName(const DataBlock::Ptr&) ROSE_FINAL;
+    static std::string dataBlockName(const DataBlock::Ptr&) /*final*/;
 
     /** Name of a function */
-    static std::string functionName(const Function::Ptr&) ROSE_FINAL;
+    static std::string functionName(const Function::Ptr&) /*final*/;
 
     /** Enable or disable progress reports.
      *
@@ -1649,9 +1651,9 @@ public:
      *  user to create a report nonetheless.
      *
      *  @{ */
-    void enableProgressReports(bool b=true) ROSE_FINAL { isReportingProgress_ = b; }
-    void disableProgressReports() ROSE_FINAL { isReportingProgress_ = false; }
-    bool isReportingProgress() const ROSE_FINAL { return isReportingProgress_; }
+    void enableProgressReports(bool b=true) /*final*/ { isReportingProgress_ = b; }
+    void disableProgressReports() /*final*/ { isReportingProgress_ = false; }
+    bool isReportingProgress() const /*final*/ { return isReportingProgress_; }
     /** @} */
 
     /** Use or not use symbolic semantics.
@@ -1660,9 +1662,9 @@ public:
      *  basic block.  When false, more naive but faster methods are used.
      *
      *  @{ */
-    void enableSymbolicSemantics(bool b=true) ROSE_FINAL { useSemantics_ = b; }
-    void disableSymbolicSemantics() ROSE_FINAL { useSemantics_ = false; }
-    bool usingSymbolicSemantics() const ROSE_FINAL { return useSemantics_; }
+    void enableSymbolicSemantics(bool b=true) /*final*/ { useSemantics_ = b; }
+    void disableSymbolicSemantics() /*final*/ { useSemantics_ = false; }
+    bool usingSymbolicSemantics() const /*final*/ { return useSemantics_; }
     /** @} */
 
     /** Property: Insert (or not) function call return edges.
@@ -1684,8 +1686,8 @@ public:
      *  a later time to determine if a call-return edge should be inserted, and it delays the decision as long as possible.
      *
      * @{ */
-    void autoAddCallReturnEdges(bool b) ROSE_FINAL { autoAddCallReturnEdges_ = b; }
-    bool autoAddCallReturnEdges() const ROSE_FINAL { return autoAddCallReturnEdges_; }
+    void autoAddCallReturnEdges(bool b) /*final*/ { autoAddCallReturnEdges_ = b; }
+    bool autoAddCallReturnEdges() const /*final*/ { return autoAddCallReturnEdges_; }
     /** @} */
 
     /** Property: Assume (or not) that function calls return.
@@ -1700,8 +1702,8 @@ public:
      *  return.
      *
      * @{ */
-    void assumeFunctionsReturn(bool b) ROSE_FINAL { assumeFunctionsReturn_ = b; }
-    bool assumeFunctionsReturn() const ROSE_FINAL { return assumeFunctionsReturn_; }
+    void assumeFunctionsReturn(bool b) /*final*/ { assumeFunctionsReturn_ = b; }
+    bool assumeFunctionsReturn() const /*final*/ { return assumeFunctionsReturn_; }
     /** @} */
 
     /** Property: Name for address.
@@ -1711,9 +1713,9 @@ public:
      *  its entry address, then the function is given that name.
      *
      * @{ */
-    void addressName(rose_addr_t, const std::string&) ROSE_FINAL;
-    const std::string& addressName(rose_addr_t va) const ROSE_FINAL { return addressNames_.getOrDefault(va); }
-    const AddressNameMap& addressNames() const ROSE_FINAL { return addressNames_; }
+    void addressName(rose_addr_t, const std::string&) /*final*/;
+    const std::string& addressName(rose_addr_t va) const /*final*/ { return addressNames_.getOrDefault(va); }
+    const AddressNameMap& addressNames() const /*final*/ { return addressNames_; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1726,13 +1728,13 @@ private:
 
 public:
     // Non-shared pointer to SMT solver
-    SMTSolver *smtSolver() const ROSE_FINAL { return solver_; }
+    SMTSolver *smtSolver() const /*final*/ { return solver_; }
 
     // Obtain a new RiscOperators along with new states
-    BaseSemantics::RiscOperatorsPtr newOperators() const ROSE_FINAL;
+    BaseSemantics::RiscOperatorsPtr newOperators() const /*final*/;
 
     // Obtain a new instruction semantics dispatcher initialized with the partitioner's semantic domain and a fresh state.
-    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const ROSE_FINAL;
+    BaseSemantics::DispatcherPtr newDispatcher(const BaseSemantics::RiscOperatorsPtr&) const /*final*/;
 
 private:
     // Convert a CFG vertex iterator from one partitioner to another.  This is called during copy construction when the source

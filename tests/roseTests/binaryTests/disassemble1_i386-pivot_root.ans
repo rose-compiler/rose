@@ -4,23 +4,35 @@ using this memory map for disassembly:
     va 0x08048114 + 0x00000013 = 0x08048127 r--p at buffer aaf   + 0x00000000 i386-pivot_root(.interp)
     va 0x08048127 + 0x00000001 = 0x08048128 r-xp at buffer aab   + 0x00000127 i386-pivot_root(LOAD#2)
     va 0x08048128 + 0x00000020 = 0x08048148 r--p at buffer aah   + 0x00000000 i386-pivot_root(.note.ABI-tag)
-    va 0x08048148 + 0x000000f0 = 0x08048238 r--- at buffer aar   + 0x00000148 i386-pivot_root(.dynsym+.gnu.liblist+.hash)
+    va 0x08048148 + 0x00000038 = 0x08048180 r--- at buffer aan   + 0x00000148 i386-pivot_root(.hash)
+    va 0x08048180 + 0x00000090 = 0x08048210 r--- at buffer aap   + 0x00000180 i386-pivot_root(.dynsym)
+    va 0x08048210 + 0x00000028 = 0x08048238 r--- at buffer aar   + 0x00000210 i386-pivot_root(.gnu.liblist)
     va 0x08048238 + 0x00000050 = 0x08048288 r-xp at buffer aab   + 0x00000238 i386-pivot_root(LOAD#2)
     va 0x08048288 + 0x00000012 = 0x0804829a r--- at buffer aat   + 0x00000288 i386-pivot_root(.gnu.version)
     va 0x0804829a + 0x00000002 = 0x0804829c r-xp at buffer aab   + 0x0000029a i386-pivot_root(LOAD#2)
-    va 0x0804829c + 0x00000050 = 0x080482ec r--- at buffer aaz   + 0x0000029c i386-pivot_root(.gnu.version_r+.rel.dyn+.rel.plt)
+    va 0x0804829c + 0x00000020 = 0x080482bc r--- at buffer aav   + 0x0000029c i386-pivot_root(.gnu.version_r)
+    va 0x080482bc + 0x00000010 = 0x080482cc r--- at buffer aax   + 0x000002bc i386-pivot_root(.rel.dyn)
+    va 0x080482cc + 0x00000020 = 0x080482ec r--- at buffer aaz   + 0x000002cc i386-pivot_root(.rel.plt)
     va 0x080482ec + 0x00000017 = 0x08048303 r-x- at buffer abb   + 0x000002ec i386-pivot_root(.init)
     va 0x08048303 + 0x00000001 = 0x08048304 r-xp at buffer aab   + 0x00000303 i386-pivot_root(LOAD#2)
-    va 0x08048304 + 0x0000023a = 0x0804853e r-x- at buffer abh   + 0x00000304 i386-pivot_root(.fini+.plt+.text)
+    va 0x08048304 + 0x00000050 = 0x08048354 r-x- at buffer abd   + 0x00000304 i386-pivot_root(.plt)
+    va 0x08048354 + 0x000001d0 = 0x08048524 r-x- at buffer abf   + 0x00000354 i386-pivot_root(.text)
+    va 0x08048524 + 0x0000001a = 0x0804853e r-x- at buffer abh   + 0x00000524 i386-pivot_root(.fini)
     va 0x0804853e + 0x00000002 = 0x08048540 r-xp at buffer aab   + 0x0000053e i386-pivot_root(LOAD#2)
     va 0x08048540 + 0x0000002f = 0x0804856f r--- at buffer abj   + 0x00000540 i386-pivot_root(.rodata)
     va 0x0804856f + 0x00000001 = 0x08048570 r-xp at buffer aab   + 0x0000056f i386-pivot_root(LOAD#2)
     va 0x08048570 + 0x00000004 = 0x08048574 r--- at buffer abl   + 0x00000570 i386-pivot_root(.eh_frame)
     va 0x08048574 + 0x00000a8c = 0x08049000 r-xp at buffer aab   + 0x00000574 i386-pivot_root(LOAD#2)
     va 0x08049000 + 0x00000574 = 0x08049574 rw-p at buffer aaj   + 0x00000000 i386-pivot_root(LOAD#3)
-    va 0x08049574 + 0x00000014 = 0x08049588 rw-- at buffer abr   + 0x00000574 i386-pivot_root(.ctors+.dtors+.jcr)
+    va 0x08049574 + 0x00000008 = 0x0804957c rw-- at buffer abn   + 0x00000574 i386-pivot_root(.ctors)
+    va 0x0804957c + 0x00000008 = 0x08049584 rw-- at buffer abp   + 0x0000057c i386-pivot_root(.dtors)
+    va 0x08049584 + 0x00000004 = 0x08049588 rw-- at buffer abr   + 0x00000584 i386-pivot_root(.jcr)
     va 0x08049588 + 0x000000c8 = 0x08049650 rw-p at buffer aal   + 0x00000000 i386-pivot_root(.dynamic)
-    va 0x08049650 + 0x00000034 = 0x08049684 rw-- at buffer acb   + 0x00000650 i386-pivot_root(.bss+.data+.dynbss+.got+.got.plt)
+    va 0x08049650 + 0x00000004 = 0x08049654 rw-- at buffer abt   + 0x00000650 i386-pivot_root(.got)
+    va 0x08049654 + 0x0000001c = 0x08049670 rw-- at buffer abv   + 0x00000654 i386-pivot_root(.got.plt)
+    va 0x08049670 + 0x0000000c = 0x0804967c rw-- at buffer abx   + 0x00000670 i386-pivot_root(.data)
+    va 0x0804967c + 0x00000004 = 0x08049680 rw-- at buffer abz   + 0x0000067c i386-pivot_root(.dynbss)
+    va 0x08049680 + 0x00000004 = 0x08049684 rw-- at buffer acb   + 0x00000680 i386-pivot_root(.bss)
     va 0x08049684 + 0x0000008a = 0x0804970e r--- at buffer acd   + 0x00000684 i386-pivot_root(.dynstr)
     va 0x0804970e + 0x00000002 = 0x08049710 rw-p at buffer aaj   + 0x0000070e i386-pivot_root(LOAD#3)
     va 0x08049710 + 0x000000cc = 0x080497dc r--- at buffer acf   + 0x00000710 i386-pivot_root(.gnu.conflict)
@@ -32,7 +44,7 @@ using this memory map for disassembly:
 
 0x08048314: Basic block reasons: entry point, graph-1
 0x08048314: Predecessor blocks: 0x08048455<<Func>>
-0x08048314: ff 25 60 96 04 08       |.%`...  |   jmp    DWORD PTR ds:[0x08049660<.got.plt+0x0c>]
+0x08048314: ff 25 60 96 04 08       |.%`...  |   jmp    dword ds:[0x08049660<.got.plt+0x0c>]
 0x08048314: Successor blocks: unknown
 
 0x0804831a: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -45,7 +57,7 @@ using this memory map for disassembly:
 
 0x08048324: Basic block reasons: entry point, graph-1
 0x08048324: Predecessor blocks: 0x08048411<<Func>>
-0x08048324: ff 25 64 96 04 08       |.%d...  |   jmp    DWORD PTR ds:[0x08049664<.got.plt+0x10>]
+0x08048324: ff 25 64 96 04 08       |.%d...  |   jmp    dword ds:[0x08049664<.got.plt+0x10>]
 0x08048324: Successor blocks: unknown
 
 0x0804832a: 68 08 00 00 00 e9 d0 ff |h.......|
@@ -58,7 +70,7 @@ using this memory map for disassembly:
 
 0x08048334: Basic block reasons: entry point, graph-1
 0x08048334: Predecessor blocks: 0x08048435<<Func>>
-0x08048334: ff 25 68 96 04 08       |.%h...  |   jmp    DWORD PTR ds:[0x08049668<.got.plt+0x14>]
+0x08048334: ff 25 68 96 04 08       |.%h...  |   jmp    dword ds:[0x08049668<.got.plt+0x14>]
 0x08048334: Successor blocks: unknown
 
 0x0804833a: 68 10 00 00 00 e9 c0 ff |h.......|
@@ -71,7 +83,7 @@ using this memory map for disassembly:
 
 0x08048344: Basic block reasons: entry point, graph-1
 0x08048344: Predecessor blocks: 0x08048354<<Func>>
-0x08048344: ff 25 6c 96 04 08       |.%l...  |   jmp    DWORD PTR ds:[0x0804966c<.got.plt+0x18>]
+0x08048344: ff 25 6c 96 04 08       |.%l...  |   jmp    dword ds:[0x0804966c<.got.plt+0x18>]
 0x08048344: Successor blocks: unknown
 
 0x0804834a: 68 18 00 00 00 e9 b0 ff |h.......|
@@ -119,7 +131,7 @@ using this memory map for disassembly:
 0x08048381: 5b                      |[       |   pop    ebx
 0x08048382: 81 c3 d3 12 00 00       |......  |   add    ebx, 0x000012d3<4819>
 0x08048388: 52                      |R       |   push   edx
-0x08048389: 8b 83 fc ff ff ff       |......  |   mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048389: 8b 83 fc ff ff ff       |......  |   mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
 0x0804838f: 85 c0                   |..      |   test   eax, eax
 0x08048391: 74 02                   |t.      |   je     0x08048395<<Insn>>
 0x08048391: Successor blocks: 0x08048393, 0x08048395
@@ -148,7 +160,7 @@ using this memory map for disassembly:
 0x0804839c: 55                      |U       |   push   ebp
 0x0804839d: 89 e5                   |..      |   mov    ebp, esp
 0x0804839f: 83 ec 08                |...     |   sub    esp, 0x08
-0x080483a2: 80 3d 80 96 04 08 00    |.=..... |   cmp    BYTE PTR ds:[0x08049680<.bss>], 0x00
+0x080483a2: 80 3d 80 96 04 08 00    |.=..... |   cmp    byte ds:[0x08049680<.bss>], 0x00
 0x080483a9: 74 0f                   |t.      |   je     0x080483ba<<Insn>>
 0x080483a9: Successor blocks: 0x080483ab, 0x080483ba
 
@@ -165,15 +177,15 @@ using this memory map for disassembly:
 0x080483b0: Predecessor blocks: 0x080483ba
 0x080483b0: Dominator block: 0x080483ba
 0x080483b0: 83 c0 04                |...     |   add    eax, 0x04
-0x080483b3: a3 78 96 04 08          |.x...   |   mov    DWORD PTR ds:[0x08049678<.data+8>], eax
+0x080483b3: a3 78 96 04 08          |.x...   |   mov    dword ds:[0x08049678<.data+8>], eax
 0x080483b8: ff d2                   |..      |   call   edx
 0x080483b8: Successor blocks: 0x080483ba, unknown
 
 0x080483ba: Basic block reasons: graph-2
 0x080483ba: Predecessor blocks: 0x0804839c, 0x080483b0
 0x080483ba: Dominator block: 0x0804839c
-0x080483ba: a1 78 96 04 08          |.x...   |   mov    eax, DWORD PTR ds:[0x08049678<.data+8>]
-0x080483bf: 8b 10                   |..      |   mov    edx, DWORD PTR ds:[eax]
+0x080483ba: a1 78 96 04 08          |.x...   |   mov    eax, dword ds:[0x08049678<.data+8>]
+0x080483bf: 8b 10                   |..      |   mov    edx, dword ds:[eax]
 0x080483c1: 85 d2                   |..      |   test   edx, edx
 0x080483c3: 75 eb                   |u.      |   jne    0x080483b0<<Insn>>
 0x080483c3: Successor blocks: 0x080483b0, 0x080483c5
@@ -181,7 +193,7 @@ using this memory map for disassembly:
 0x080483c5: Basic block reasons: graph-2
 0x080483c5: Predecessor blocks: 0x080483ba
 0x080483c5: Dominator block: 0x080483ba
-0x080483c5: c6 05 80 96 04 08 01    |....... |   mov    BYTE PTR ds:[0x08049680<.bss>], 0x01
+0x080483c5: c6 05 80 96 04 08 01    |....... |   mov    byte ds:[0x08049680<.bss>], 0x01
 0x080483c5: Successor blocks: 0x080483cc
 
 0x080483cc: Basic block reasons: graph-2
@@ -201,7 +213,7 @@ using this memory map for disassembly:
 0x080483d0: 55                      |U       | (data)   push   ebp
 0x080483d1: 89 e5                   |..      | (data)   mov    ebp, esp
 0x080483d3: 83 ec 08                |...     | (data)   sub    esp, 0x08
-0x080483d6: a1 84 95 04 08          |.....   | (data)   mov    eax, DWORD PTR ds:[0x08049584]
+0x080483d6: a1 84 95 04 08          |.....   | (data)   mov    eax, dword ds:[0x08049584]
 0x080483db: 85 c0                   |..      | (data)   test   eax, eax
 0x080483dd: 74 19                   |t.      | (data)   je     0x080483f8
 0x080483df: b8 00 00 00 00          |.....   | (data)   mov    eax, 0x00000000
@@ -228,20 +240,20 @@ using this memory map for disassembly:
 0x080483fd: 89 e5                   |..      |   mov    ebp, esp
 0x080483ff: 83 ec 18                |...     |   sub    esp, 0x18
 0x08048402: 83 e4 f0                |...     |   and    esp, 0xf0<-16>
-0x08048405: 8b 55 0c                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0x0c]
+0x08048405: 8b 55 0c                |.U.     |   mov    edx, dword ss:[ebp + 0x0c]
 0x08048408: 83 ec 10                |...     |   sub    esp, 0x10
-0x0804840b: 83 7d 08 03             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x03
+0x0804840b: 83 7d 08 03             |.}..    |   cmp    dword ss:[ebp + 0x08], 0x03
 0x0804840f: 74 24                   |t$      |   je     0x08048435<<Insn>>
 0x0804840f: Successor blocks: 0x08048411, 0x08048435
 
 0x08048411: Basic block reasons: graph-2
 0x08048411: Predecessor blocks: 0x080483fc
 0x08048411: Dominator block: 0x080483fc
-0x08048411: 8b 02                   |..      |   mov    eax, DWORD PTR ds:[edx]
-0x08048413: c7 44 24 04 48 85 04 08 |.D$.H...|   mov    DWORD PTR ss:[esp + 0x04], 0x08048548<.rodata+8>
-0x0804841b: 89 44 24 08             |.D$.    |   mov    DWORD PTR ss:[esp + 0x08], eax
-0x0804841f: a1 7c 96 04 08          |.|...   |   mov    eax, DWORD PTR ds:[0x0804967c<.dynbss>]
-0x08048424: 89 04 24                |..$     |   mov    DWORD PTR ss:[esp], eax
+0x08048411: 8b 02                   |..      |   mov    eax, dword ds:[edx]
+0x08048413: c7 44 24 04 48 85 04 08 |.D$.H...|   mov    dword ss:[esp + 0x04], 0x08048548<.rodata+8>
+0x0804841b: 89 44 24 08             |.D$.    |   mov    dword ss:[esp + 0x08], eax
+0x0804841f: a1 7c 96 04 08          |.|...   |   mov    eax, dword ds:[0x0804967c<.dynbss>]
+0x08048424: 89 04 24                |..$     |   mov    dword ss:[esp], eax
 0x08048427: e8 f8 fe ff ff          |.....   |   call   0x08048324<fprintf@plt>
 0x08048427: Successor blocks: 0x08048324<fprintf@plt>, 0x0804842c
 
@@ -262,11 +274,11 @@ using this memory map for disassembly:
 0x08048435: Basic block reasons: graph-2
 0x08048435: Predecessor blocks: 0x080483fc
 0x08048435: Dominator block: 0x080483fc
-0x08048435: 8b 42 08                |.B.     |   mov    eax, DWORD PTR ds:[edx + 0x08]
-0x08048438: 89 44 24 08             |.D$.    |   mov    DWORD PTR ss:[esp + 0x08], eax
-0x0804843c: 8b 42 04                |.B.     |   mov    eax, DWORD PTR ds:[edx + 0x04]
-0x0804843f: c7 04 24 d9 00 00 00    |..$.... |   mov    DWORD PTR ss:[esp], 0x000000d9
-0x08048446: 89 44 24 04             |.D$.    |   mov    DWORD PTR ss:[esp + 0x04], eax
+0x08048435: 8b 42 08                |.B.     |   mov    eax, dword ds:[edx + 0x08]
+0x08048438: 89 44 24 08             |.D$.    |   mov    dword ss:[esp + 0x08], eax
+0x0804843c: 8b 42 04                |.B.     |   mov    eax, dword ds:[edx + 0x04]
+0x0804843f: c7 04 24 d9 00 00 00    |..$.... |   mov    dword ss:[esp], 0x000000d9
+0x08048446: 89 44 24 04             |.D$.    |   mov    dword ss:[esp + 0x04], eax
 0x0804844a: e8 e5 fe ff ff          |.....   |   call   0x08048334<syscall@plt>
 0x0804844a: Successor blocks: 0x08048334<syscall@plt>, 0x0804844f
 
@@ -281,7 +293,7 @@ using this memory map for disassembly:
 0x08048455: Basic block reasons: graph-2
 0x08048455: Predecessor blocks: 0x0804844f
 0x08048455: Dominator block: 0x0804844f
-0x08048455: c7 04 24 64 85 04 08    |..$d... |   mov    DWORD PTR ss:[esp], 0x08048564<.rodata+0x24>
+0x08048455: c7 04 24 64 85 04 08    |..$d... |   mov    dword ss:[esp], 0x08048564<.rodata+0x24>
 0x0804845c: e8 b3 fe ff ff          |.....   |   call   0x08048314<perror@plt>
 0x0804845c: Successor blocks: 0x08048314<perror@plt>, 0x08048461
 
@@ -328,7 +340,7 @@ using this memory map for disassembly:
 0x0804847d: e8 6a fe ff ff          |.j...   | (data)   call   0x080482ec
 0x08048482: 8d 83 20 ff ff ff       |.. ...  | (data)   lea    eax, [ebx + 0xffffff20<-224>]
 0x08048488: 8d 93 20 ff ff ff       |.. ...  | (data)   lea    edx, [ebx + 0xffffff20<-224>]
-0x0804848e: 89 45 f0                |.E.     | (data)   mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x0804848e: 89 45 f0                |.E.     | (data)   mov    dword ss:[ebp + 0xf0<-16>], eax
 0x08048491: 29 d0                   |).      | (data)   sub    eax, edx
 0x08048493: 31 f6                   |1.      | (data)   xor    esi, esi
 0x08048495: c1 f8 02                |...     | (data)   sar    eax, 0x02
@@ -336,8 +348,8 @@ using this memory map for disassembly:
 0x0804849a: 73 16                   |s.      | (data)   jae    0x080484b2
 0x0804849c: 89 d7                   |..      | (data)   mov    edi, edx
 0x0804849e: 89 f6                   |..      | (data)   mov    esi, esi
-0x080484a0: ff 14 b2                |...     | (data)   call   DWORD PTR ds:[edx + esi*0x04]
-0x080484a3: 8b 4d f0                |.M.     | (data)   mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x080484a0: ff 14 b2                |...     | (data)   call   dword ds:[edx + esi*0x04]
+0x080484a3: 8b 4d f0                |.M.     | (data)   mov    ecx, dword ss:[ebp + 0xf0<-16>]
 0x080484a6: 29 f9                   |).      | (data)   sub    ecx, edi
 0x080484a8: 46                      |F       | (data)   inc    esi
 0x080484a9: c1 f9 02                |...     | (data)   sar    ecx, 0x02
@@ -367,7 +379,7 @@ using this memory map for disassembly:
 0x080484e2: 8d 70 ff                |.p.     | (data)   lea    esi, [eax + 0xff<-1>]
 0x080484e5: eb 05                   |..      | (data)   jmp    0x080484ec
 0x080484e7: 90                      |.       | (data)   nop    
-0x080484e8: ff 14 b7                |...     | (data)   call   DWORD PTR ds:[edi + esi*0x04]
+0x080484e8: ff 14 b7                |...     | (data)   call   dword ds:[edi + esi*0x04]
 0x080484eb: 4e                      |N       | (data)   dec    esi
 0x080484ec: 83 fe ff                |...     | (data)   cmp    esi, 0xff<-1>
 0x080484ef: 75 f7                   |u.      | (data)   jne    0x080484e8

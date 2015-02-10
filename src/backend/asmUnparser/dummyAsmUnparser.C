@@ -6,8 +6,12 @@
 // Dummy declaration for the rose::BinaryAnalysis namespace
 namespace rose {
 namespace BinaryAnalysis {
+
 } // namespace
 } // namespace
 
-std::string unparseExpression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*) { abort(); }
+std::string unparseExpression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*) {
+    abort();
+}
+
 void rose::BinaryAnalysis::AsmUnparser::initDiagnostics() {}

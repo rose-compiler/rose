@@ -242,11 +242,11 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
 void
 State::init() {
-    BaseSemantics::SValuePtr protoval = ops_->get_protoval();
-    const RegisterDictionary *regdict = ops_->get_state()->get_register_state()->get_register_dictionary();
-    BaseSemantics::RegisterStatePtr regs = ops_->get_state()->get_register_state()->create(protoval, regdict);
-    BaseSemantics::MemoryStatePtr mem = ops_->get_state()->get_memory_state()->create(protoval, protoval);
-    semanticState_ = ops_->get_state()->create(regs, mem);
+    // clone+clear might be slower than creating a new state from scratch, but its simpler and it makes sure that any other
+    // state configuration that might be present (like pointers to memory maps) will be initialized properly regardless of the
+    // state subtype.
+    semanticState_ = ops_->get_state()->clone();
+    semanticState_->clear();
 }
 
 std::ostream&

@@ -70,7 +70,7 @@ std::string unparseMipsExpression(SgAsmExpression *expr, const AsmUnparser::Labe
 
         case V_SgAsmMemoryReferenceExpression: {
             SgAsmMemoryReferenceExpression* mr = isSgAsmMemoryReferenceExpression(expr);
-            result = mipsTypeToPtrName(mr->get_type()) + " PTR [" +
+            result = mipsTypeToPtrName(mr->get_type()) + " [" +
                      unparseMipsExpression(mr->get_address(), labels, registers) + "]";
             break;
         }
