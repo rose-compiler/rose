@@ -530,7 +530,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
     const EState* estate=(*i).first;
     const PState* pstate=estate->pstate();
     SgExpression* exp=(*i).second;
-    // intentionally not used (temporary placeholder)
 
     SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
     SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
