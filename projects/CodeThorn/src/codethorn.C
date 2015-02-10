@@ -143,22 +143,30 @@ bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragma
   return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
 }
 
-IterationVariables determineIterationVars(SgNode* root, VariableIdMapping* variableIdMapping) {
-  cout<<"DEBUG: determine iteration vars."<<endl;
+LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping) {
+  cout<<"DEBUG: loop info set and determine iteration vars."<<endl;
   ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
   cout<<"DEBUG: found "<<forStmtToPragmaMap.size()<<" omp loops."<<endl;
   RoseAst ast(root);
   AstMatching m;
   string matchexpression="$FORSTMT=SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
   MatchResult r=m.performMatching(matchexpression,root);
-  IterationVariables iterVars;
+  LoopInfoSet loopInfoSet;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
     SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
     ROSE_ASSERT(node);
     //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
-    iterVars.push_back(make_pair(variableIdMapping->variableId(node),isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ));
+    LoopInfo loopInfo;
+    loopInfo.iterationVarId=variableIdMapping->variableId(node);
+    loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
+    loopInfo.forStmt=isSgForStatement((*i)["$FORSTMT"]);
+    const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
+    ROSE_ASSERT(stmtList.size()==1);
+    loopInfo.initStmt=stmtList[0];
+    loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
+    loopInfoSet.push_back(loopInfo);
   }
-  return iterVars;
+  return loopInfoSet;
 }
 
 class TermRepresentation : public DFAstAttribute {
@@ -1159,7 +1167,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["verify-update-sequence-race-conditions"]) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
-      IterationVariables iterationVars=determineIterationVars(root,&variableIdMapping);
+      LoopInfoSet iterationVars=determineLoopInfoSet(root,&variableIdMapping);
       cout<<"DEBUG: number of iteration vars: "<<iterationVars.size()<<endl;
 
       timer.start();

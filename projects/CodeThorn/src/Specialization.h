@@ -13,7 +13,16 @@ using namespace SPRAY;
 using namespace CodeThorn;
 
 enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
+struct LoopInfo {
+  VariableId iterationVarId;
+  IterVarType iterationVarType;
+  SgStatement* initStmt;
+  SgExpression* condExpr;
+  SgForStatement* forStmt;
+};
+
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
+typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;
@@ -84,7 +93,7 @@ class Specialization {
                                     bool useConstExprSubstRule=true
                                     );
   // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(IterationVariables iterationVars, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
+  int verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);

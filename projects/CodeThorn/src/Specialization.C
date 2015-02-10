@@ -499,14 +499,16 @@ string Specialization::iterVarsToString(IterationVariables iterationVars, Variab
   return ss.str();
 }
 
-int Specialization::verifyUpdateSequenceRaceConditions(IterationVariables iterationVars, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   stringstream ss;
-  cout<<"STATUS: check race conditions: "<<iterVarsToString(iterationVars,variableIdMapping)<<endl;
+  cout<<"STATUS: check race conditions: "<<endl;
   VariableId parVariable;
-  for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
-    if((*i).second==ITERVAR_PAR)
-      parVariable=(*i).first;
+  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
+    if((*i).iterationVarType==ITERVAR_PAR) {
+      parVariable=(*i).iterationVarId;
+      cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+    }
   }
   // no parallel iter-var implies that the program is a sequential program. Therefore no race conditions exist.
   if(!parVariable.isValid()) {
