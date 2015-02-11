@@ -160,10 +160,14 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
     loopInfo.iterationVarId=variableIdMapping->variableId(node);
     loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
     loopInfo.forStmt=isSgForStatement((*i)["$FORSTMT"]);
-    const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
-    ROSE_ASSERT(stmtList.size()==1);
-    loopInfo.initStmt=stmtList[0];
-    loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
+    if(loopInfo.forStmt) {
+      const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
+      ROSE_ASSERT(stmtList.size()==1);
+      loopInfo.initStmt=stmtList[0];
+      loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
+    } else {
+      cerr<<"WARNING: no for statement found."<<endl;
+    }
     loopInfoSet.push_back(loopInfo);
   }
   return loopInfoSet;

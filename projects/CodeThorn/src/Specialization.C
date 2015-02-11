@@ -252,7 +252,7 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
       cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
     rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
-    arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
+    arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);
   }    
 }
 

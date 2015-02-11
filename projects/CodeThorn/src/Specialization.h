@@ -7,6 +7,7 @@
 #include "Analyzer.h"
 #include "ExprAnalyzer.h"
 #include "RewriteSystem.h"
+#include <iostream>
 
 using namespace std;
 using namespace SPRAY;
@@ -26,10 +27,13 @@ typedef vector< LoopInfo > LoopInfoSet;
 
 struct EStateExprInfo {
   const EState* first;
+  SgExpression* originalExpr;
   SgExpression* second;
   bool mark;
+  SgForStatement* forLoop;
 EStateExprInfo():first(0),second(0),mark(false){}
-EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
+EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* transformedExp):first(estate),originalExpr(originalExpr),second(transformedExp),mark(false),forLoop(0){
+}
 };
 
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
