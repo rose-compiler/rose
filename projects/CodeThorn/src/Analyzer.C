@@ -1547,7 +1547,7 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
     cout << "INIT: CFG reduction OK. (eliminated "<<cnt<<" empty condition nodes)"<<endl;
   }
   cout << "INIT: Intra-Flow OK. (size: " << flow.size() << " edges)"<<endl;
-  if(!oneFunctionOnly) {
+  if(oneFunctionOnly) {
     cout<<"INFO: analyzing one function only. No inter-procedural flow."<<endl;
   } else {
     InterFlow interFlow=cfanalyzer->interFlow(flow);
