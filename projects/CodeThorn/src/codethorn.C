@@ -67,7 +67,7 @@ typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
 ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
-  cout<<"PROGRAM:"<<root->unparseToString()<<endl;
+  //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
   ForStmtToOmpPragmaMap map;
   RoseAst ast(root);
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
@@ -149,7 +149,7 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
   cout<<"DEBUG: found "<<forStmtToPragmaMap.size()<<" omp loops."<<endl;
   RoseAst ast(root);
   AstMatching m;
-  string matchexpression="$FORSTMT=SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+  string matchexpression="$FORSTMT=SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|$FORSTMT=SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
   MatchResult r=m.performMatching(matchexpression,root);
   LoopInfoSet loopInfoSet;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
@@ -159,7 +159,17 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
     LoopInfo loopInfo;
     loopInfo.iterationVarId=variableIdMapping->variableId(node);
     loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
-    loopInfo.forStmt=isSgForStatement((*i)["$FORSTMT"]);
+    SgNode* forNode=(*i)["$FORSTMT"];
+    // WORKAROUND 1
+    // TODO: investigate why the for pointer is not stored in the same match-result
+    if(forNode==0) {
+      forNode=node; // init
+      while(!isSgForStatement(forNode)||isSgProject(forNode))
+        forNode=forNode->get_parent();
+    }
+    ROSE_ASSERT(!isSgProject(forNode));
+
+    loopInfo.forStmt=isSgForStatement(forNode);
     if(loopInfo.forStmt) {
       const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
       ROSE_ASSERT(stmtList.size()==1);
@@ -167,6 +177,11 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
       loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
     } else {
       cerr<<"WARNING: no for statement found."<<endl;
+      if(forNode) {
+        cerr<<"for-loop:"<<forNode->unparseToString()<<endl;
+      } else {
+        cerr<<"for-loop: 0"<<endl;
+      }
     }
     loopInfoSet.push_back(loopInfo);
   }
