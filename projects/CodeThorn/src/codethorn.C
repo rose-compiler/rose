@@ -73,7 +73,7 @@ ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
   for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
     if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
       string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
-      cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
+      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
       if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
         RoseAst::iterator j=i;
         j.skipChildrenOnForward();

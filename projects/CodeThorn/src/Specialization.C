@@ -554,7 +554,7 @@ bool LoopInfo::isInAssociatedLoop(const EState* estate) {
 }
 
 // will use std algo instead
-bool accessSetintersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
+bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
   for(ArrayElementAccessDataSet::iterator i=set1.begin();i!=set1.end();++i) {
     if(set2.find(*i)!=set2.end())
       return true;
@@ -562,10 +562,11 @@ bool accessSetintersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSe
   return false;
 }
 
+// returns the number of race conditions detected (0 or 1 as of now)
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   stringstream ss;
-  cout<<"STATUS: check race conditions: "<<endl;
+  cout<<"STATUS: checking race conditions."<<endl;
   VariableId parVariable;
   VariableIdSet allIterVars;
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
@@ -653,6 +654,8 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
         }
       } // array sequence iter
 
+      // to be utilized later for more detailed output
+#if 0
       for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
           imap!=indexToReadWriteDataMap.end();
           ++imap) {
@@ -683,18 +686,12 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
         cout<<endl;
         cout<<"DEBUG: read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
         cout<<"DEBUG: write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
-      }
+      } // imap
+#endif
 
-      // perform the check now:
-      // outerVarIndexSet=indexSetofOutVars();
-      //
-      // foreach value of par-variable do
-      //   vector<Index> v.add(ArrayElementAccessDataSet);
-      // for i in 0..v.size()-1 do
-      //   for j in i+1..v.size()-1 do
-      //     if(check(v[i],v[j])==false
-      //       return false
-      // return true;
+      // perform the check now
+      // 1) compute vector if index-vectors for each outer-var-vector
+      // 2) check each index-vector. For each iteration of each par-loop iteration then.
       
       typedef set<int> ParVariableValueSet;
       ParVariableValueSet parVariableValueSet;
@@ -713,41 +710,42 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
         }
         ROSE_ASSERT(outVarIndex.size()<index.size());
         // last index of index of par-variable
-        int parVariableValue=index[index.size()-1];
+        //int parVariableValue=index[index.size()-1];
         checkMap[outVarIndex].push_back(index);
       }
-      cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
+      //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
 
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
         ThreadVector threadVectorToCheck=(*miter).second;
-        cout<<"DEBUG: to check: "<<threadVectorToCheck.size()<<endl;
+        //cout<<"DEBUG: to check: "<<threadVectorToCheck.size()<<endl;
         for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
           ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
           for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
             ThreadVector::iterator tv2b=tv2;
             ++tv2b;
             if(tv2b!=threadVectorToCheck.end()) {
-              ArrayElementAccessDataSet rset=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
-#if 1
-              cout<<"INFO: checking!!! :)"<<endl;
+              ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
+              ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
               // check intersect(rset,wset)
-              if(accessSetintersect(wset,rset)) {
+              if(accessSetIntersect(wset,rset2)) {
                 // verification failed
-                cout<<"INFO: race condition detected."<<endl;
-                return 0;
+                cout<<"INFO: race condition detected (wset1,rset2)."<<endl;
+                return 1;
               } 
-#endif
+              if(accessSetIntersect(wset,wset2)) {
+                // verification failed
+                cout<<"INFO: race condition detected (wset1,wset2)."<<endl;
+                return 1;
+              }
             }
           }
         }
       }
     } // if parallel loop
   } // foreach loop
-
-
-  return 1;
+  return 0;
 }
 
 void Specialization::writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting) {
