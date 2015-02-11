@@ -499,87 +499,125 @@ string Specialization::iterVarsToString(IterationVariables iterationVars, Variab
   return ss.str();
 }
 
+void LoopInfo::computeLoopLabelSet(Labeler* labeler) {
+  ROSE_ASSERT(forStmt);
+  RoseAst ast(forStmt);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(labeler->isLabelRelevantNode(*i)) {
+      // use getLabelSet to also include callreturn nodes
+      loopLabelSet.insert(labeler->getLabel(*i));
+    }
+  }
+}
+
+bool LoopInfo::isInAssociatedLoop(const EState* estate) {
+  Label lab=estate->label();
+  ROSE_ASSERT(forStmt);
+  return loopLabelSet.find(lab)!=loopLabelSet.end();
+}
+
 int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   stringstream ss;
   cout<<"STATUS: check race conditions: "<<endl;
   VariableId parVariable;
-  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
-    if((*i).iterationVarType==ITERVAR_PAR) {
-      parVariable=(*i).iterationVarId;
+  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
+    if((*lis).iterationVarType==ITERVAR_PAR) {
+      parVariable=(*lis).iterationVarId;
       cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
-    }
-  }
-  // no parallel iter-var implies that the program is a sequential program. Therefore no race conditions exist.
-  if(!parVariable.isValid()) {
-    return 0;
-  }
 
-  // race check
-  // union w-set_i = empty
-  // union r-set_i intersect union w-set_j = empty, i!=j.
-  // VariableIdSet computeWSet(VariableId,UpdateSequence)
-  // VariableIdSet computeRSet(VariableId,UpdateSequence)
-  // int<set> computeValues(VariableId,UpdateSequence)
-  // xxxx
-  ArrayElementAccessDataSet writeArrayAccessSet;
-  VariableIdSet writeVarIdSet;
-  ArrayElementAccessDataSet readArrayAccessSet;
-  VariableIdSet readVarIdSet;
-  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-    const EState* estate=(*i).first;
-    const PState* pstate=estate->pstate();
-    SgExpression* exp=(*i).second;
+      // race check
+      // union w-set_i = empty
+      // union r-set_i intersect union w-set_j = empty, i!=j.
+      // VariableIdSet computeWSet(VariableId,UpdateSequence)
+      // VariableIdSet computeRSet(VariableId,UpdateSequence)
+      // int<set> computeValues(VariableId,UpdateSequence)
+      // xxxx
+#if 0
+      ArrayElementAccessDataSet writeArrayAccessSet;
+      VariableIdSet writeVarIdSet;
+      ArrayElementAccessDataSet readArrayAccessSet;
+      VariableIdSet readVarIdSet;
+#endif
+      IndexToReadWriteDataMap indexToReadWriteDataMap;
+      for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+        const EState* estate=(*i).first;
+        const PState* pstate=estate->pstate();
+        SgExpression* exp=(*i).second;
+        IndexVector index;
+        index.push_back(pstate->varValue(parVariable).getIntValue());
+        
+        if((*lis).isInAssociatedLoop(estate)) {
+          SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+          SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+          ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+        
+          //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
+          // read-set
+          RoseAst rhsast(rhs);
+          for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+            if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+              j.skipChildrenOnForward();
+              ArrayElementAccessData access(useRef,variableIdMapping);
+              indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
+            } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+              ROSE_ASSERT(useRef);
+              j.skipChildrenOnForward();
+              VariableId varId=variableIdMapping->variableId(useRef);
+              indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
+            } else {
+              //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+            }
+          }
+          if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+            ArrayElementAccessData access(arr,variableIdMapping);
+            indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+          } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+            VariableId varId=variableIdMapping->variableId(var);
+            indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+          } else {
+            cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+            exit(1);
+          }
+        
+          ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+          ++cnt;
+        }
+      } // array sequence iter
 
-    SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
-    SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
-    ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+          imap!=indexToReadWriteDataMap.end();
+          ++imap) {
+        //        cout<<"DEBUG: INDEX: "<<(*imap).first<<" R-SET: ";
+        IndexVector index=(*imap).first;
 
-    //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
-    // read-set
-    RoseAst rhsast(rhs);
-    for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
-      if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
-        j.skipChildrenOnForward();
-        ArrayElementAccessData access(useRef,variableIdMapping);
-        readArrayAccessSet.insert(access);
-      } // if array
-      // this can be rewritten once it is clear that the element type of an array is properly reported by isFloatingPointExpr(exp)
-      else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
-        ROSE_ASSERT(useRef);
-        j.skipChildrenOnForward();
-        VariableId varId=variableIdMapping->variableId(useRef);
-        readVarIdSet.insert(varId);
-      } else {
-        //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+        cout<<"DEBUG: INDEX: ";
+        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+          if(iv!=index.begin())
+            cout<<",";
+          cout<<*iv;
+        }
+        cout<<" R-SET: ";
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
+          cout<<(*i).toString(variableIdMapping)<<" ";
+        }
+        cout<<endl;
+        cout<<"DEBUG: INDEX: ";
+        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+          if(iv!=index.begin())
+            cout<<",";
+          cout<<*iv;
+        }
+        cout<<" W-SET: ";
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
+          cout<<(*i).toString(variableIdMapping)<<" ";
+        }
+        cout<<endl;
+        cout<<"DEBUG: read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
+        cout<<"DEBUG: write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
       }
-    }
-    if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
-      ArrayElementAccessData access(arr,variableIdMapping);
-      writeArrayAccessSet.insert(access);
-    } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
-      VariableId varId=variableIdMapping->variableId(var);
-      writeVarIdSet.insert(varId);
-    } else {
-      cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
-      exit(1);
-    }
-
-    ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
-    ++cnt;
-  }
-  cout<<"DEBUG: R-SET: ";
-  for(ArrayElementAccessDataSet::const_iterator i=readArrayAccessSet.begin();i!=readArrayAccessSet.end();++i) {
-    cout<<(*i).toString(variableIdMapping)<<" ";
-  }
-  cout<<endl;
-  cout<<"DEBUG: W-SET: ";
-  for(ArrayElementAccessDataSet::const_iterator i=writeArrayAccessSet.begin();i!=writeArrayAccessSet.end();++i) {
-    cout<<(*i).toString(variableIdMapping)<<" ";
-  }
-  cout<<endl;
-  cout<<"DEBUG: read-array-access:"<<readArrayAccessSet.size()<<" read-var-access:"<<readVarIdSet.size()<<endl;
-  cout<<"DEBUG: write-array-access:"<<writeArrayAccessSet.size()<<" write-var-access:"<<writeVarIdSet.size()<<endl;
+    } // if parallel loop
+  } // foreach loop
   return 0;
 }
 

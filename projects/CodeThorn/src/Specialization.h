@@ -20,6 +20,9 @@ struct LoopInfo {
   SgStatement* initStmt;
   SgExpression* condExpr;
   SgForStatement* forStmt;
+  void computeLoopLabelSet(Labeler* labeler);
+  bool isInAssociatedLoop(const EState* estate);
+  LabelSet loopLabelSet;
 };
 
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
@@ -37,6 +40,16 @@ EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* tr
 };
 
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
+
+struct ReadWriteData {
+  ArrayElementAccessDataSet writeArrayAccessSet;
+  VariableIdSet writeVarIdSet;
+  ArrayElementAccessDataSet readArrayAccessSet;
+  VariableIdSet readVarIdSet;
+};
+
+typedef vector<int> IndexVector;
+typedef map<IndexVector,ReadWriteData> IndexToReadWriteDataMap;
 
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 

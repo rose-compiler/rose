@@ -143,7 +143,7 @@ bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragma
   return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
 }
 
-LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping) {
+LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
   cout<<"DEBUG: loop info set and determine iteration vars."<<endl;
   ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
   cout<<"DEBUG: found "<<forStmtToPragmaMap.size()<<" omp loops."<<endl;
@@ -175,6 +175,7 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
       ROSE_ASSERT(stmtList.size()==1);
       loopInfo.initStmt=stmtList[0];
       loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
+      loopInfo.computeLoopLabelSet(labeler);
     } else {
       cerr<<"WARNING: no for statement found."<<endl;
       if(forNode) {
@@ -1186,7 +1187,7 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["verify-update-sequence-race-conditions"]) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
-      LoopInfoSet iterationVars=determineLoopInfoSet(root,&variableIdMapping);
+      LoopInfoSet iterationVars=determineLoopInfoSet(root,&variableIdMapping, analyzer.getLabeler());
       cout<<"DEBUG: number of iteration vars: "<<iterationVars.size()<<endl;
 
       timer.start();
