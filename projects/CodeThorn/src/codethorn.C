@@ -74,8 +74,7 @@ ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
     if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
       string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
       cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
-      string keyWord="omp";
-      if(foundPragmaKeyWord==keyWord) {
+      if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
         RoseAst::iterator j=i;
         j.skipChildrenOnForward();
         ++j;
@@ -176,6 +175,7 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
       loopInfo.initStmt=stmtList[0];
       loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
       loopInfo.computeLoopLabelSet(labeler);
+      loopInfo.computeOuterLoopsVarIds(variableIdMapping);
     } else {
       cerr<<"WARNING: no for statement found."<<endl;
       if(forNode) {

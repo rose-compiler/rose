@@ -499,6 +499,43 @@ string Specialization::iterVarsToString(IterationVariables iterationVars, Variab
   return ss.str();
 }
 
+VariableId LoopInfo::iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping) {
+  VariableId varId;
+  AstMatching m;
+  // operator '#' is used to ensure no nested loop is matched ('#' cuts off subtrees of 4th element (loop body)).
+  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+  MatchResult r=m.performMatching(matchexpression,forStmt);
+  if(r.size()>1) {
+    //ROSE_ASSERT(r.size()==1);
+    for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+      SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
+      varId=variableIdMapping->variableId(node);
+      return varId;
+    }
+  } else {
+    cout<<"WARNING: no match!"<<endl;
+  }
+  return varId;
+}
+
+void LoopInfo::computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping) {
+  ROSE_ASSERT(forStmt);
+  // compute outer loops
+  SgNode* node=forStmt;
+  while(!isSgFunctionDefinition(node)) {
+    node=node->get_parent();
+    if(SgForStatement* outerForStmt=isSgForStatement(node)) {
+      VariableId iterVarId=iterationVariableId(outerForStmt,variableIdMapping);
+      if(iterVarId.isValid()) {
+        outerLoopsVarIds.insert(iterVarId);
+      } else {
+        cout<<"WARNING: no iter variable detected."<<endl;
+        cout<<forStmt->unparseToString()<<endl;
+      }
+    }
+  }
+}
+
 void LoopInfo::computeLoopLabelSet(Labeler* labeler) {
   ROSE_ASSERT(forStmt);
   RoseAst ast(forStmt);
@@ -521,6 +558,10 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
   stringstream ss;
   cout<<"STATUS: check race conditions: "<<endl;
   VariableId parVariable;
+  VariableIdSet allIterVars;
+  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
+    allIterVars.insert((*lis).iterationVarId);
+  }
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     if((*lis).iterationVarType==ITERVAR_PAR) {
       parVariable=(*lis).iterationVarId;
@@ -533,20 +574,37 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
       // VariableIdSet computeRSet(VariableId,UpdateSequence)
       // int<set> computeValues(VariableId,UpdateSequence)
       // xxxx
-#if 0
-      ArrayElementAccessDataSet writeArrayAccessSet;
-      VariableIdSet writeVarIdSet;
-      ArrayElementAccessDataSet readArrayAccessSet;
-      VariableIdSet readVarIdSet;
-#endif
       IndexToReadWriteDataMap indexToReadWriteDataMap;
       for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
         const EState* estate=(*i).first;
         const PState* pstate=estate->pstate();
         SgExpression* exp=(*i).second;
         IndexVector index;
-        index.push_back(pstate->varValue(parVariable).getIntValue());
-        
+
+
+        // use all vars for indexing or only outer+par loop variables
+#ifdef USE_ALL_ITER_VARS
+        for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
+          VariableId otherVarId=*ol;
+          ROSE_ASSERT(otherVarId.isValid());
+          if(!pstate->varValue(otherVarId).isTop()) {
+            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+            index.push_back(otherIntVal);
+          }
+        }
+#else
+        for(VariableIdSet::iterator ol=(*lis).outerLoopsVarIds.begin();ol!=(*lis).outerLoopsVarIds.end();++ol) {
+          VariableId otherVarId=*ol;
+          ROSE_ASSERT(otherVarId.isValid());
+          if(!pstate->varValue(otherVarId).isTop()) {
+            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+            index.push_back(otherIntVal);
+          }
+        }
+        int parIntVal=pstate->varValue(parVariable).getIntValue();
+        index.push_back(parIntVal);
+#endif
+          
         if((*lis).isInAssociatedLoop(estate)) {
           SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
           SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));

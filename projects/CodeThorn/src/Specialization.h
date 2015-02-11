@@ -20,9 +20,12 @@ struct LoopInfo {
   SgStatement* initStmt;
   SgExpression* condExpr;
   SgForStatement* forStmt;
+  VariableIdSet outerLoopsVarIds;
+  void computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping);
   void computeLoopLabelSet(Labeler* labeler);
   bool isInAssociatedLoop(const EState* estate);
   LabelSet loopLabelSet;
+  static VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
 };
 
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
