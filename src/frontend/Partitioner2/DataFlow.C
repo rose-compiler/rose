@@ -523,7 +523,7 @@ State::findGlobalVariables(size_t wordNBytes) const {
         ASSERT_require2(nRemaining>0, "overflow");
         while (nRemaining > 0) {
             BaseSemantics::SValuePtr addr = symbolicAddrs.get(va);
-            rose_addr_t nBytes = std::min(nRemaining, wordNBytes);
+            rose_addr_t nBytes = std::min(nRemaining, (rose_addr_t)wordNBytes);
             retval.push_back(AbstractLocation(addr, nBytes));
             va += nBytes;
             nRemaining -= nBytes;
