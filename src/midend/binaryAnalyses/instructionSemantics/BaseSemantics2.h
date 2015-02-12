@@ -11,6 +11,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/IntervalMap.h>
 #include <sawyer/Map.h>
+#include <sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -444,19 +445,17 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  that defines the interface.  See the rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
 class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
-public:
-    long nrefs__; // shouldn't really be public, but need efficient reference from various Pointer<> classes
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Normal, protected, C++ constructors
 protected:
-    explicit SValue(size_t nbits): nrefs__(0), width(nbits) {}  // hot
-    SValue(const SValue &other): nrefs__(0), width(other.width) {}
+    explicit SValue(size_t nbits): width(nbits) {}  // hot
+    SValue(const SValue &other): width(other.width) {}
 
 public:
-    virtual ~SValue() { ASSERT_require(0==nrefs__); } // hot
+    virtual ~SValue() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Allocating static constructor.  None are needed--this class is abstract.
@@ -520,6 +519,18 @@ public:
 
     /** Returns true if two values must be equal.  The SMT solver is optional for many subclasses. */
     virtual bool must_equal(const SValuePtr &other, SMTSolver *solver=NULL) const = 0;
+
+    /** Returns true if concrete non-zero. This is not virtual since it can be implemented in terms of @ref is_number and @ref
+     *  get_number. */
+    bool isTrue() const {
+        return is_number() && get_number()!=0;
+    }
+
+    /** Returns true if concrete zero.  This is not virtual since it can be implemented in terms of @ref is_number and @ref
+     *  get_number. */
+    bool isFalse() const {
+        return is_number() && get_number()==0;
+    }
 
     /** Print a value to a stream using default format. The value will normally occupy a single line and not contain leading
      *  space or line termination.  See also, with_format().
@@ -1226,25 +1237,24 @@ typedef boost::shared_ptr<class MemoryCell> MemoryCellPtr;
  *  Each memory cell has an address and a value. MemoryCell objects are used by the MemoryCellList to represent a memory
  *  state. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
-protected:
-    SValuePtr address;                                  /**< Address of memory cell. */
-    SValuePtr value;                                    /**< Value stored at that address. */
-    boost::optional<rose_addr_t> latest_writer;         /**< Optional address for most recent writer of this cell's value. */
+    SValuePtr address_;                                 // Address of memory cell.
+    SValuePtr value_;                                   // Value stored at that address.
+    Sawyer::Optional<rose_addr_t> latestWriter_;        // Optional address for most recent writer of this cell's value.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     MemoryCell(const SValuePtr &address, const SValuePtr &value)
-        : address(address), value(value) {
+        : address_(address), value_(value) {
         ASSERT_not_null(address);
         ASSERT_not_null(value);
     }
 
     // deep-copy cell list so modifying this new one doesn't alter the existing one
     MemoryCell(const MemoryCell &other) {
-        address = other.address->copy();
-        value = other.value->copy();
-        latest_writer = other.latest_writer;
+        address_ = other.address_->copy();
+        value_ = other.value_->copy();
+        latestWriter_ = other.latestWriter_;
     }
 
 public:
@@ -1289,28 +1299,39 @@ public:
 public:
     /** Accessor for the memory cell address.
      * @{ */
-    virtual SValuePtr get_address() const { return address; }
+    virtual SValuePtr get_address() const { return address_; }
     virtual void set_address(const SValuePtr &addr) {
         ASSERT_not_null(addr);
-        address = addr;
+        address_ = addr;
     }
     /** @}*/
 
     /** Accessor for the value stored at a memory location.
      * @{ */
-    virtual SValuePtr get_value() const { return value; }
+    virtual SValuePtr get_value() const { return value_; }
     virtual void set_value(const SValuePtr &v) {
         ASSERT_not_null(v);
-        value = v;
+        value_ = v;
     }
     /** @}*/
 
     /** Accessor for the last writer for a memory location.  Each memory cell is able to store an optional virtual address to
      *  describe the most recent instruction that wrote to this memory location.
      * @{ */
-    virtual boost::optional<rose_addr_t> get_latest_writer() const { return latest_writer; }
-    virtual void set_latest_writer(rose_addr_t writer_va) { latest_writer = writer_va; }
-    virtual void clear_latest_writer() { latest_writer = boost::optional<rose_addr_t>(); }
+    virtual boost::optional<rose_addr_t> get_latest_writer() const ROSE_DEPRECATED("use latestWriter instead") {
+        return latestWriter_ ? boost::optional<rose_addr_t>(*latestWriter_) : boost::optional<rose_addr_t>();
+    }
+    virtual void set_latest_writer(rose_addr_t writer_va) ROSE_DEPRECATED("use latestWriter instead") {
+        latestWriter_ = writer_va;
+    }
+    virtual void clear_latest_writer() ROSE_DEPRECATED("use clearLatestWriter instead") {
+        latestWriter_ = Sawyer::Nothing();
+    }
+
+    virtual Sawyer::Optional<rose_addr_t> latestWriter() const { return latestWriter_; }
+    virtual void latestWriter(rose_addr_t writerVa) { latestWriter_ = writerVa; }
+    virtual void latestWriter(const Sawyer::Optional<rose_addr_t> w) { latestWriter_ = w; }
+    virtual void clearLatestWriter() { latestWriter_ = Sawyer::Nothing(); }
     /** @} */
 
     /** Determines whether two memory cells can alias one another.  Two cells may alias one another if it is possible that
@@ -1994,19 +2015,30 @@ public:
      * the operand, although this can be safely truncated to the log-base-2 + 1 width. */
     virtual SValuePtr mostSignificantSetBit(const SValuePtr &a) = 0;
 
-    /** Rotate bits to the left. The return value will have the same width as operand @p a. */
+    /** Rotate bits to the left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
+     *  handles it naturally. */
     virtual SValuePtr rotateLeft(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Rotate bits to the right. The return value will have the same width as operand @p a. */
+    /** Rotate bits to the right. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. The behavior is modulo the width of @p a regardles of whether the implementation makes that a special case or
+     *  handles it naturally. */
     virtual SValuePtr rotateRight(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted left. The return value will have the same width as operand @p a. */
+    /** Returns arg shifted left. The return value will have the same width as operand @p a.  The @p nbits is interpreted as
+     *  unsigned. New bits shifted into the value are zero. If @p nbits is equal to or larger than the width of @p a then the
+     *  result is zero. */
     virtual SValuePtr shiftLeft(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted right logically (no sign bit). The return value will have the same width as operand @p a. */
+    /** Returns arg shifted right logically (no sign bit). The return value will have the same width as operand @p a. The @p
+     *  nbits is interpreted as unsigned. New bits shifted into the value are zero. If  @p nbits is equal to or larger than the
+     *  width of @p a then the result is zero. */
     virtual SValuePtr shiftRight(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
-    /** Returns arg shifted right arithmetically (with sign bit). The return value will have the same width as operand @p a. */
+    /** Returns arg shifted right arithmetically (with sign bit). The return value will have the same width as operand @p
+     *  a. The @p nbits is interpreted as unsigned. New bits shifted into the value are the same as the most significant bit
+     *  (the "sign bit"). If @p nbits is equal to or larger than the width of @p a then the result has all bits cleared or all
+     *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2021,6 +2053,10 @@ public:
      *  condition is unknown. The @p condition must be one bit wide; the widths of @p a and @p b must be equal; the return
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
+
+    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of @ref
+     * subtract and @ref equalToZero. */
+    SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2040,6 +2076,10 @@ public:
     /** Adds two integers of equal size.  The width of @p a and @p b must be equal; the return value will have the same width
      * as @p a and @p b. */
     virtual SValuePtr add(const SValuePtr &a, const SValuePtr &b) = 0;
+
+    /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
+     * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
+    SValuePtr subtract(const SValuePtr &subtrahand, const SValuePtr &minuend);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do

@@ -81,7 +81,7 @@ BinaryLoaderElf::rebase(MemoryMap *map, SgAsmGenericHeader *header, const SgAsmG
     freeSpace = freeSpace & mappableArea;
     if (freeSpace.isEmpty())
         throw MemoryMap::NoFreeSpace("no free specimen memory", map, 0);
-    rose_addr_t map_base_va = ALIGN_UP(freeSpace.least(), maximum_alignment);
+    rose_addr_t map_base_va = alignUp(freeSpace.least(), (rose_addr_t)maximum_alignment);
 
     // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
     // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.

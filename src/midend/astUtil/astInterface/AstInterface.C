@@ -1,5 +1,5 @@
+#include <sage3basic.h>
 #include "AstInterface.h"
-#include <rose.h>
 #include "AstInterface_ROSE.h"
 #include <stdlib.h>
 #include <iostream>
@@ -9,6 +9,8 @@
 
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
+#include "unparser.h"
+#include "unparser_opt.h"
 
 #ifdef _MSC_VER
 #include <io.h>
@@ -1712,6 +1714,30 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         l = decl->get_parameterList();
       break;
     }
+ // Liao 2/6/2015, try to extend to support Fortran
+  case V_SgProgramHeaderStatement:
+  {
+    SgProgramHeaderStatement* decl = isSgProgramHeaderStatement(d);
+      if (returntype != 0)
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+      if (name != 0) 
+        *name =  string(decl->get_name().str());
+      if (paramtype != 0 || params != 0) 
+        l = decl->get_parameterList();
+      break;
+  } 
+  case V_SgProcedureHeaderStatement:
+  {
+    SgProcedureHeaderStatement* decl = isSgProcedureHeaderStatement(d);
+      if (returntype != 0)
+        *returntype = AstNodeTypeImpl(decl->get_type()->get_return_type());
+      if (name != 0) 
+        *name =  string(decl->get_name().str());
+      if (paramtype != 0 || params != 0) 
+        l = decl->get_parameterList();
+      break;
+  } 
+ 
   case V_SgMemberFunctionDeclaration:
     {
       SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(d);

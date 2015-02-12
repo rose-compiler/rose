@@ -553,15 +553,18 @@ MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) co
 
 std::string
 MemoryMap::readString(rose_addr_t va, size_t desired, int(*validChar)(int), int(*invalidChar)(int),
-                      unsigned requiredPerms, unsigned prohibitedPerms) const
+                      unsigned requiredPerms, unsigned prohibitedPerms, char terminator) const
 {
     std::vector<uint8_t> buf(desired, 0);
     size_t nread = at(va).require(requiredPerms).prohibit(prohibitedPerms).read(buf).size();
     for (size_t i=0; i<nread; ++i) {
-        if (0==buf[i] || (validChar && !validChar(buf[i])) || (invalidChar && invalidChar(buf[i])))
-            nread = i;
+        if (buf[i] == terminator)
+            return std::string(buf.begin(), buf.begin()+i);
+
+        if ((invalidChar && invalidChar(buf[i])) || (validChar && !validChar(buf[i])))
+            return "";
     }
-    return std::string(buf.begin(), buf.begin()+nread);
+    return "";
 }
 
 void

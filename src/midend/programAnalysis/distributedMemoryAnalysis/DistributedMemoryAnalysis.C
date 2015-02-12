@@ -2,8 +2,8 @@
 // Author: Gergo Barany
 // $Id: DistributedMemoryAnalysis.C,v 1.1 2008/01/08 02:55:52 dquinlan Exp $
 
+#include <sage3basic.h>
 #include <mpi.h>
-#include <rose.h>
 #include "DistributedMemoryAnalysis.h"
 
 void initializeDistributedMemoryProcessing(int *argc, char ***argv)

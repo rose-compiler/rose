@@ -2101,7 +2101,7 @@ JNIEXPORT void JNICALL Java_x10rose_visit_JNI_cactionBinaryExpressionEnd(JNIEnv 
         printf ("Build an Binary Expression End \n");
 
     // These are the operator code values directly from ECJ.
-    enum ops {
+    enum ops {                                          // NO_STRINGIFY
         ERROR_OPERATOR       = 0, // This is not a ECJ value 
         AND                  = 2,
         DIVIDE               = 9,

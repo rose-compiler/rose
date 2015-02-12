@@ -6,12 +6,18 @@ using this memory map for disassembly:
     va 0x0040023c + 0x00000004 = 0x00400240 r-xp at buffer aab   + 0x0000023c x86-64-ctrlaltdel(LOAD#2)
     va 0x00400240 + 0x0000004c = 0x0040028c r--- at buffer aap   + 0x00000240 x86-64-ctrlaltdel(.hash)
     va 0x0040028c + 0x00000004 = 0x00400290 r-xp at buffer aab   + 0x0000028c x86-64-ctrlaltdel(LOAD#2)
-    va 0x00400290 + 0x00000178 = 0x00400408 r--- at buffer aat   + 0x00000290 x86-64-ctrlaltdel(.dynsym+.gnu.liblist)
+    va 0x00400290 + 0x00000150 = 0x004003e0 r--- at buffer aar   + 0x00000290 x86-64-ctrlaltdel(.dynsym)
+    va 0x004003e0 + 0x00000028 = 0x00400408 r--- at buffer aat   + 0x000003e0 x86-64-ctrlaltdel(.gnu.liblist)
     va 0x00400408 + 0x00000072 = 0x0040047a r-xp at buffer aab   + 0x00000408 x86-64-ctrlaltdel(LOAD#2)
     va 0x0040047a + 0x0000001c = 0x00400496 r--- at buffer aav   + 0x0000047a x86-64-ctrlaltdel(.gnu.version)
     va 0x00400496 + 0x00000002 = 0x00400498 r-xp at buffer aab   + 0x00000496 x86-64-ctrlaltdel(LOAD#2)
-    va 0x00400498 + 0x00000140 = 0x004005d8 r--- at buffer abb   + 0x00000498 x86-64-ctrlaltdel(.gnu.version_r+.rela.dyn+.rela.plt)
-    va 0x004005d8 + 0x0000034e = 0x00400926 r-x- at buffer abj   + 0x000005d8 x86-64-ctrlaltdel(.fini+.init+.plt+.text)
+    va 0x00400498 + 0x00000020 = 0x004004b8 r--- at buffer aax   + 0x00000498 x86-64-ctrlaltdel(.gnu.version_r)
+    va 0x004004b8 + 0x00000030 = 0x004004e8 r--- at buffer aaz   + 0x000004b8 x86-64-ctrlaltdel(.rela.dyn)
+    va 0x004004e8 + 0x000000f0 = 0x004005d8 r--- at buffer abb   + 0x000004e8 x86-64-ctrlaltdel(.rela.plt)
+    va 0x004005d8 + 0x00000018 = 0x004005f0 r-x- at buffer abd   + 0x000005d8 x86-64-ctrlaltdel(.init)
+    va 0x004005f0 + 0x000000b0 = 0x004006a0 r-x- at buffer abf   + 0x000005f0 x86-64-ctrlaltdel(.plt)
+    va 0x004006a0 + 0x00000278 = 0x00400918 r-x- at buffer abh   + 0x000006a0 x86-64-ctrlaltdel(.text)
+    va 0x00400918 + 0x0000000e = 0x00400926 r-x- at buffer abj   + 0x00000918 x86-64-ctrlaltdel(.fini)
     va 0x00400926 + 0x00000002 = 0x00400928 r-xp at buffer aab   + 0x00000926 x86-64-ctrlaltdel(LOAD#2)
     va 0x00400928 + 0x00000095 = 0x004009bd r--- at buffer abl   + 0x00000928 x86-64-ctrlaltdel(.rodata)
     va 0x004009bd + 0x00000003 = 0x004009c0 r-xp at buffer aab   + 0x000009bd x86-64-ctrlaltdel(LOAD#2)
@@ -20,9 +26,15 @@ using this memory map for disassembly:
     va 0x004009f0 + 0x000000b4 = 0x00400aa4 r--- at buffer abn   + 0x000009f0 x86-64-ctrlaltdel(.eh_frame)
     va 0x00400aa4 + 0x0000055c = 0x00401000 r-xp at buffer aab   + 0x00000aa4 x86-64-ctrlaltdel(LOAD#2)
     va 0x00500000 + 0x00000aa8 = 0x00500aa8 rw-p at buffer aal   + 0x00000000 x86-64-ctrlaltdel(LOAD#3)
-    va 0x00500aa8 + 0x00000028 = 0x00500ad0 rw-- at buffer abt   + 0x00000aa8 x86-64-ctrlaltdel(.ctors+.dtors+.jcr)
+    va 0x00500aa8 + 0x00000010 = 0x00500ab8 rw-- at buffer abp   + 0x00000aa8 x86-64-ctrlaltdel(.ctors)
+    va 0x00500ab8 + 0x00000010 = 0x00500ac8 rw-- at buffer abr   + 0x00000ab8 x86-64-ctrlaltdel(.dtors)
+    va 0x00500ac8 + 0x00000008 = 0x00500ad0 rw-- at buffer abt   + 0x00000ac8 x86-64-ctrlaltdel(.jcr)
     va 0x00500ad0 + 0x00000190 = 0x00500c60 rw-p at buffer aan   + 0x00000000 x86-64-ctrlaltdel(.dynamic)
-    va 0x00500c60 + 0x00000098 = 0x00500cf8 rw-- at buffer acd   + 0x00000c60 x86-64-ctrlaltdel(.bss+.data+.dynbss+.got+.got.plt)
+    va 0x00500c60 + 0x00000008 = 0x00500c68 rw-- at buffer abv   + 0x00000c60 x86-64-ctrlaltdel(.got)
+    va 0x00500c68 + 0x00000068 = 0x00500cd0 rw-- at buffer abx   + 0x00000c68 x86-64-ctrlaltdel(.got.plt)
+    va 0x00500cd0 + 0x00000018 = 0x00500ce8 rw-- at buffer abz   + 0x00000cd0 x86-64-ctrlaltdel(.data)
+    va 0x00500ce8 + 0x00000008 = 0x00500cf0 rw-- at buffer acb   + 0x00000ce8 x86-64-ctrlaltdel(.dynbss)
+    va 0x00500cf0 + 0x00000008 = 0x00500cf8 rw-- at buffer acd   + 0x00000cf0 x86-64-ctrlaltdel(.bss)
     va 0x00500cf8 + 0x000000b5 = 0x00500dad r--- at buffer acf   + 0x00000cf8 x86-64-ctrlaltdel(.dynstr)
     va 0x00500dad + 0x00000003 = 0x00500db0 rw-p at buffer aal   + 0x00000dad x86-64-ctrlaltdel(LOAD#3)
     va 0x00500db0 + 0x00000180 = 0x00500f30 r--- at buffer ach   + 0x00000db0 x86-64-ctrlaltdel(.gnu.conflict)
@@ -62,8 +74,8 @@ using this memory map for disassembly:
 
 0x004005f0: ff 35 7a 06 10 00 ff 25 |.5z....%|
 0x004005f8: 7c 06 10 00 90 90 90 90 ||.......| 16 bytes untyped data beginning at 0x004005f0
-0x004005f0: ff 35 7a 06 10 00       |.5z...  | (data)   push   QWORD PTR ds:[rip + 0x000000000010067a]
-0x004005f6: ff 25 7c 06 10 00       |.%|...  | (data)   jmp    QWORD PTR ds:[rip + 0x000000000010067c]
+0x004005f0: ff 35 7a 06 10 00       |.5z...  | (data)   push   qword ds:[rip + 0x000000000010067a]
+0x004005f6: ff 25 7c 06 10 00       |.%|...  | (data)   jmp    qword ds:[rip + 0x000000000010067c]
 0x004005fc: 90                      |.       | (data)   nop    
 0x004005fd: 90                      |.       | (data)   nop    
 0x004005fe: 90                      |.       | (data)   nop    
@@ -74,7 +86,7 @@ using this memory map for disassembly:
 
 0x00400600: Basic block reasons: entry point, graph-1
 0x00400600: Predecessor blocks: 0x00400793<<Func>>
-0x00400600: ff 25 7a 06 10 00       |.%z...  |   jmp    QWORD PTR ds:[rip + 0x000000000010067a]
+0x00400600: ff 25 7a 06 10 00       |.%z...  |   jmp    qword ds:[rip + 0x000000000010067a]
 0x00400600: Successor blocks: unknown
 
 0x00400606: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -87,7 +99,7 @@ using this memory map for disassembly:
 
 0x00400610: Basic block reasons: entry point, graph-1
 0x00400610: Predecessor blocks: 0x004006a0<<Func>>
-0x00400610: ff 25 72 06 10 00       |.%r...  |   jmp    QWORD PTR ds:[rip + 0x0000000000100672]
+0x00400610: ff 25 72 06 10 00       |.%r...  |   jmp    qword ds:[rip + 0x0000000000100672]
 0x00400610: Successor blocks: unknown
 
 0x00400616: 68 01 00 00 00 e9 d0 ff |h.......|
@@ -100,7 +112,7 @@ using this memory map for disassembly:
 
 0x00400620: Basic block reasons: entry point, graph-1
 0x00400620: Predecessor blocks: 0x00400830<<Func>>
-0x00400620: ff 25 6a 06 10 00       |.%j...  |   jmp    QWORD PTR ds:[rip + 0x000000000010066a]
+0x00400620: ff 25 6a 06 10 00       |.%j...  |   jmp    qword ds:[rip + 0x000000000010066a]
 0x00400620: Successor blocks: unknown
 
 0x00400626: 68 02 00 00 00 e9 c0 ff |h.......|
@@ -113,7 +125,7 @@ using this memory map for disassembly:
 
 0x00400630: Basic block reasons: entry point, graph-1
 0x00400630: Predecessor blocks: 0x004007bc<<Func>>
-0x00400630: ff 25 62 06 10 00       |.%b...  |   jmp    QWORD PTR ds:[rip + 0x0000000000100662]
+0x00400630: ff 25 62 06 10 00       |.%b...  |   jmp    qword ds:[rip + 0x0000000000100662]
 0x00400630: Successor blocks: unknown
 
 0x00400636: 68 03 00 00 00 e9 b0 ff |h.......|
@@ -126,7 +138,7 @@ using this memory map for disassembly:
 
 0x00400640: Basic block reasons: entry point, graph-1
 0x00400640: Predecessor blocks: 0x00400819<<Func>>
-0x00400640: ff 25 5a 06 10 00       |.%Z...  |   jmp    QWORD PTR ds:[rip + 0x000000000010065a]
+0x00400640: ff 25 5a 06 10 00       |.%Z...  |   jmp    qword ds:[rip + 0x000000000010065a]
 0x00400640: Successor blocks: unknown
 
 0x00400646: 68 04 00 00 00 e9 a0 ff |h.......|
@@ -139,7 +151,7 @@ using this memory map for disassembly:
 
 0x00400650: Basic block reasons: entry point, graph-1
 0x00400650: Predecessor blocks: 0x00400760<<Func>>
-0x00400650: ff 25 52 06 10 00       |.%R...  |   jmp    QWORD PTR ds:[rip + 0x0000000000100652]
+0x00400650: ff 25 52 06 10 00       |.%R...  |   jmp    qword ds:[rip + 0x0000000000100652]
 0x00400650: Successor blocks: unknown
 
 0x00400656: 68 05 00 00 00 e9 90 ff |h.......|
@@ -152,7 +164,7 @@ using this memory map for disassembly:
 
 0x00400660: Basic block reasons: entry point, graph-1
 0x00400660: Predecessor blocks: 0x00400789<<Func>>
-0x00400660: ff 25 4a 06 10 00       |.%J...  |   jmp    QWORD PTR ds:[rip + 0x000000000010064a]
+0x00400660: ff 25 4a 06 10 00       |.%J...  |   jmp    qword ds:[rip + 0x000000000010064a]
 0x00400660: Successor blocks: unknown
 
 0x00400666: 68 06 00 00 00 e9 80 ff |h.......|
@@ -165,7 +177,7 @@ using this memory map for disassembly:
 
 0x00400670: Basic block reasons: entry point, graph-1
 0x00400670: Predecessor blocks: 0x004007b5<<Func>>
-0x00400670: ff 25 42 06 10 00       |.%B...  |   jmp    QWORD PTR ds:[rip + 0x0000000000100642]
+0x00400670: ff 25 42 06 10 00       |.%B...  |   jmp    qword ds:[rip + 0x0000000000100642]
 0x00400670: Successor blocks: unknown
 
 0x00400676: 68 07 00 00 00 e9 70 ff |h.....p.|
@@ -179,7 +191,7 @@ using this memory map for disassembly:
 
 0x00400680: Basic block reasons: entry point, graph-1
 0x00400680: Predecessor blocks: 0x004007d2<<Func>>, 0x00400812<<Func>>
-0x00400680: ff 25 3a 06 10 00       |.%:...  |   jmp    QWORD PTR ds:[rip + 0x000000000010063a]
+0x00400680: ff 25 3a 06 10 00       |.%:...  |   jmp    qword ds:[rip + 0x000000000010063a]
 0x00400680: Successor blocks: unknown
 
 0x00400686: 68 08 00 00 00 e9 60 ff |h.....`.|
@@ -192,7 +204,7 @@ using this memory map for disassembly:
 
 0x00400690: Basic block reasons: entry point, graph-1
 0x00400690: Predecessor blocks: 0x0040077a<<Func>>
-0x00400690: ff 25 32 06 10 00       |.%2...  |   jmp    QWORD PTR ds:[rip + 0x0000000000100632]
+0x00400690: ff 25 32 06 10 00       |.%2...  |   jmp    qword ds:[rip + 0x0000000000100632]
 0x00400690: Successor blocks: unknown
 
 0x00400696: 68 09 00 00 00 e9 50 ff |h.....P.|
@@ -245,7 +257,7 @@ using this memory map for disassembly:
 0x004006cc: Basic block reasons: entry point, graph-2
 0x004006cc: Predecessor blocks: 0x004005d8<<Func>>
 0x004006cc: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x004006d0: 48 8b 05 89 05 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000100589]
+0x004006d0: 48 8b 05 89 05 10 00    |H...... |   mov    rax, qword ds:[rip + 0x0000000000100589]
 0x004006d7: 48 85 c0                |H..     |   test   rax, rax
 0x004006da: 74 02                   |t.      |   je     0x00000000004006de<<Insn>>
 0x004006da: Successor blocks: 0x004006dc, 0x004006de
@@ -273,7 +285,7 @@ using this memory map for disassembly:
 
 0x004006f0: Basic block reasons: fragment, graph-2; 72% code likelihood
 0x004006f0: Predecessor blocks: 0x00400918<<Func>>
-0x004006f0: 80 3d f9 05 10 00 00    |.=..... |   cmp    BYTE PTR ds:[rip + 0x00000000001005f9], 0x00
+0x004006f0: 80 3d f9 05 10 00 00    |.=..... |   cmp    byte ds:[rip + 0x00000000001005f9], 0x00
 0x004006f7: 55                      |U       |   push   rbp
 0x004006f8: 48 89 e5                |H..     |   mov    rbp, rsp
 0x004006fb: 74 10                   |t.      |   je     0x000000000040070d<<Func>>
@@ -297,7 +309,7 @@ using this memory map for disassembly:
 0x00400700: Basic block reasons: entry point, graph-2
 0x00400700: Predecessor blocks: 0x004006ff<<Func>>, 0x0040070d<<Func>>
 0x00400700: 48 83 c0 08             |H...    |   add    rax, 0x08
-0x00400704: 48 89 05 d5 05 10 00    |H...... |   mov    QWORD PTR ds:[rip + 0x00000000001005d5], rax
+0x00400704: 48 89 05 d5 05 10 00    |H...... |   mov    qword ds:[rip + 0x00000000001005d5], rax
 0x0040070b: ff d2                   |..      |   call   rdx
 0x0040070b: Successor blocks: 0x0040070d<<Func>>, unknown
 
@@ -309,8 +321,8 @@ using this memory map for disassembly:
 
 0x0040070d: Basic block reasons: fragment, graph-2; 72% code likelihood
 0x0040070d: Predecessor blocks: 0x004006f0<<Func>>, 0x00400700<<Func>>
-0x0040070d: 48 8b 05 cc 05 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x00000000001005cc]
-0x00400714: 48 8b 10                |H..     |   mov    rdx, QWORD PTR ds:[rax]
+0x0040070d: 48 8b 05 cc 05 10 00    |H...... |   mov    rax, qword ds:[rip + 0x00000000001005cc]
+0x00400714: 48 8b 10                |H..     |   mov    rdx, qword ds:[rax]
 0x00400717: 48 85 d2                |H..     |   test   rdx, rdx
 0x0040071a: 75 e4                   |u.      |   jne    0x0000000000400700<<Func>>
 0x0040071a: Successor blocks: 0x00400700<<Func>>, 0x0040071c<<Func>>
@@ -321,7 +333,7 @@ using this memory map for disassembly:
 
 0x0040071c: Basic block reasons: fragment, graph-2; 72% code likelihood
 0x0040071c: Predecessor blocks: 0x0040070d<<Func>>
-0x0040071c: c6 05 cd 05 10 00 01    |....... |   mov    BYTE PTR ds:[rip + 0x00000000001005cd], 0x01
+0x0040071c: c6 05 cd 05 10 00 01    |....... |   mov    byte ds:[rip + 0x00000000001005cd], 0x01
 0x0040071c: Successor blocks: 0x00400723<<Func>>
 
 0x00400723: ================================== Function (graph) unknown name
@@ -343,7 +355,7 @@ using this memory map for disassembly:
 0x00400730: Basic block reasons: entry point, graph-2
 0x00400730: Predecessor blocks: 0x004005e1<<Func>>, 0x00400725<<Func>>
 0x00400730: 55                      |U       |   push   rbp
-0x00400731: 48 83 3d 8f 03 10 00 00 |H.=.....|   cmp    QWORD PTR ds:[rip + 0x000000000010038f], 0x00
+0x00400731: 48 83 3d 8f 03 10 00 00 |H.=.....|   cmp    qword ds:[rip + 0x000000000010038f], 0x00
 0x00400739: 48 89 e5                |H..     |   mov    rbp, rsp
 0x0040073c: 74 16                   |t.      |   je     0x0000000000400754<<Func>>
 0x0040073c: Successor blocks: 0x0040073e<<Func>>, 0x00400754<<Func>>
@@ -470,7 +482,7 @@ using this memory map for disassembly:
 0x004007bc: Basic block reasons: graph-1
 0x004007bc: Predecessor blocks: 0x004007b5
 0x004007bc: Dominator block: 0x004007b5
-0x004007bc: 48 8b 3d 25 05 10 00    |H.=%... |   mov    rdi, QWORD PTR ds:[rip + 0x0000000000100525]
+0x004007bc: 48 8b 3d 25 05 10 00    |H.=%... |   mov    rdi, qword ds:[rip + 0x0000000000100525]
 0x004007c3: 48 89 c6                |H..     |   mov    rsi, rax
 0x004007c6: 31 c0                   |1.      |   xor    eax, eax
 0x004007c8: e8 63 fe ff ff          |.c...   |   call   0x0000000000400630<fprintf@plt>
@@ -491,7 +503,7 @@ using this memory map for disassembly:
 0x004007d7: Basic block reasons: graph-1
 0x004007d7: Predecessor blocks: 0x004007a6
 0x004007d7: Dominator block: 0x004007a6
-0x004007d7: 4c 8b 45 08             |L.E.    |   mov    r8, QWORD PTR ds:[rbp + 0x08]
+0x004007d7: 4c 8b 45 08             |L.E.    |   mov    r8, qword ds:[rbp + 0x08]
 0x004007db: be 66 09 40 00          |.f.@.   |   mov    esi, 0x00400966<<StaticData@0x00400928>+0x3e>
 0x004007e0: b9 05 00 00 00          |.....   |   mov    ecx, 0x00000005
 0x004007e5: fc                      |.       |   cld    
@@ -578,10 +590,10 @@ using this memory map for disassembly:
 0x00400840: This function calls 0x004005d8
 
 0x00400840: Basic block reasons: entry point, graph-2
-0x00400840: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
-0x00400845: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
+0x00400840: 48 89 5c 24 e8          |H.\$.   |   mov    qword ds:[rsp + 0xe8<-24>], rbx
+0x00400845: 4c 89 64 24 f8          |L.d$.   |   mov    qword ds:[rsp + 0xf8<-8>], r12
 0x0040084a: 4c 8d 25 57 02 10 00    |L.%W... |   lea    r12, [rip + 0x0000000000100257]
-0x00400851: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
+0x00400851: 48 89 6c 24 f0          |H.l$.   |   mov    qword ds:[rsp + 0xf0<-16>], rbp
 0x00400856: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x0040085a: 31 db                   |1.      |   xor    ebx, ebx
 0x0040085c: e8 77 fd ff ff          |.w...   |   call   0x00000000004005d8<<Func>>
@@ -606,7 +618,7 @@ using this memory map for disassembly:
 0x00400877: Basic block reasons: graph-2
 0x00400877: Predecessor blocks: 0x00400874, 0x0040087b
 0x00400877: Dominator block: 0x00400874
-0x00400877: 41 ff 14 dc             |A...    |   call   QWORD PTR ds:[r12 + rbx*0x08]
+0x00400877: 41 ff 14 dc             |A...    |   call   qword ds:[r12 + rbx*0x08]
 0x00400877: Successor blocks: 0x0040087b, unknown
 
 0x0040087b: Basic block reasons: graph-2
@@ -620,9 +632,9 @@ using this memory map for disassembly:
 0x00400883: Basic block reasons: graph-2
 0x00400883: Predecessor blocks: 0x00400861, 0x0040087b
 0x00400883: Dominator block: 0x00400861
-0x00400883: 48 8b 1c 24             |H..$    |   mov    rbx, QWORD PTR ds:[rsp]
-0x00400887: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, QWORD PTR ds:[rsp + 0x08]
-0x0040088c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, QWORD PTR ds:[rsp + 0x10]
+0x00400883: 48 8b 1c 24             |H..$    |   mov    rbx, qword ds:[rsp]
+0x00400887: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, qword ds:[rsp + 0x08]
+0x0040088c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, qword ds:[rsp + 0x10]
 0x00400891: 48 83 c4 18             |H...    |   add    rsp, 0x18
 0x00400895: c3                      |.       |   ret    
 0x00400895: Successor blocks: unknown
@@ -648,7 +660,7 @@ using this memory map for disassembly:
 0x004008b7: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x004008bb: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x004008bf: eb 07                   |..      | (data)   jmp    0x00000000004008c8
-0x004008c1: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
+0x004008c1: ff 54 dd 00             |.T..    | (data)   call   qword ds:[rbp + rbx*0x08 + 0x00]
 0x004008c5: 48 ff cb                |H..     | (data)   dec    rbx
 0x004008c8: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x004008cc: 75 f3                   |u.      | (data)   jne    0x00000000004008c1
@@ -670,7 +682,7 @@ using this memory map for disassembly:
 0x004008e4: 53                      |S       |   push   rbx
 0x004008e5: 48 c7 c3 a8 0a 50 00    |H....P. |   mov    rbx, 0x00500aa8<.ctors>
 0x004008ec: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x004008f0: 48 8b 05 b1 01 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x00000000001001b1]
+0x004008f0: 48 8b 05 b1 01 10 00    |H...... |   mov    rax, qword ds:[rip + 0x00000000001001b1]
 0x004008f0: Successor blocks: 0x004008f7
 
 0x004008f7: Basic block reasons: graph-2
@@ -693,7 +705,7 @@ using this memory map for disassembly:
 0x00400906: Basic block reasons: graph-2
 0x00400906: Predecessor blocks: 0x00400900
 0x00400906: Dominator block: 0x00400900
-0x00400906: 48 8b 03                |H..     |   mov    rax, QWORD PTR ds:[rbx]
+0x00400906: 48 8b 03                |H..     |   mov    rax, qword ds:[rbx]
 0x00400906: Successor blocks: 0x00400909
 
 0x00400909: Basic block reasons: graph-2
@@ -726,7 +738,7 @@ using this memory map for disassembly:
 0x00400925: Successor blocks: unknown
 
 0x00400926: Basic block reasons: fragment, CFG head; 72% code likelihood
-0x00400926: 00 00                   |..      |   add    BYTE PTR ds:[rax], al
+0x00400926: 00 00                   |..      |   add    byte ds:[rax], al
 0x00400926: Successor blocks: none
 
 0x00400928: 01 00 02 00 2f 75 73 72 |..../usr|
@@ -948,399 +960,399 @@ using this memory map for disassembly:
 0x00400fe8: 1c 00 00 00 00 00 00 00 |........|
 0x00400ff0: 01 00 00 00 00 00 00 00 |........|
 0x00400ff8: 01 00 00 00 05 00 00 00 |........| 1752 bytes untyped data beginning at 0x00400928
-0x00400928: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x0040092a: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[rax]
+0x00400928: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x0040092a: 02 00                   |..      | (data)   add    al, byte ds:[rax]
 0x0040092d: 75 73                   |us      | (data)   jne    0x00000000004009a2
 0x0040092f: 72 2f                   |r/      | (data)   jb     0x0000000000400960
 0x00400931: 73 68                   |sh      | (data)   jae    0x000000000040099b
 0x00400934: 72 65                   |re      | (data)   jb     0x000000000040099b
 0x00400937: 6c                      |l       | (data)   insb   
 0x00400938: 6f                      |o       | (data)   outsd  
-0x00400939: 63 61 6c                |cal     | (data)   movsxd esp, DWORD PTR ds:[rcx + 0x6c]
-0x0040093c: 65 00 75 74             |e.ut    | (data)   add    BYTE PTR gs:[rbp + 0x74], dh
-0x00400940: 69 6c 2d 6c 69 6e 75 78 |il-linux| (data)   imul   ebp, DWORD PTR ds:[rbp + rbp + 0x6c], 0x78756e69
-0x00400948: 00 55 73                |.Us     | (data)   add    BYTE PTR ds:[rbp + 0x73], dl
-0x0040094c: 67 65 3a 20             |ge:     | (data)   cmp    ah, BYTE PTR gs:[rax]
-0x00400950: 63 74 72 6c             |ctrl    | (data)   movsxd esi, DWORD PTR ds:[rdx + rsi*0x02 + 0x6c]
+0x00400939: 63 61 6c                |cal     | (data)   movsxd esp, dword ds:[rcx + 0x6c]
+0x0040093c: 65 00 75 74             |e.ut    | (data)   add    byte gs:[rbp + 0x74], dh
+0x00400940: 69 6c 2d 6c 69 6e 75 78 |il-linux| (data)   imul   ebp, dword ds:[rbp + rbp + 0x6c], 0x78756e69
+0x00400948: 00 55 73                |.Us     | (data)   add    byte ds:[rbp + 0x73], dl
+0x0040094c: 67 65 3a 20             |ge:     | (data)   cmp    ah, byte gs:[rax]
+0x00400950: 63 74 72 6c             |ctrl    | (data)   movsxd esi, dword ds:[rdx + rsi*0x02 + 0x6c]
 0x00400955: 6c                      |l       | (data)   insb   
 0x00400956: 74 64                   |td      | (data)   je     0x00000000004009bc
 0x00400958: 65 6c                   |el      | (data)   insb   
-0x0040095a: 20 68 61                | ha     | (data)   and    BYTE PTR ds:[rax + 0x61], ch
+0x0040095a: 20 68 61                | ha     | (data)   and    byte ds:[rax + 0x61], ch
 0x0040095d: 72 64                   |rd      | (data)   jb     0x00000000004009c3
 0x0040095f: 7c 73                   ||s      | (data)   jl     0x00000000004009d4
 0x00400961: 6f                      |o       | (data)   outsd  
 0x00400962: 66 74 0a                |ft.     | (data)   je     0x000000000040096f
-0x00400965: 00 68 61                |.ha     | (data)   add    BYTE PTR ds:[rax + 0x61], ch
+0x00400965: 00 68 61                |.ha     | (data)   add    byte ds:[rax + 0x61], ch
 0x00400968: 72 64                   |rd      | (data)   jb     0x00000000004009ce
-0x0040096a: 00 73 6f                |.so     | (data)   add    BYTE PTR ds:[rbx + 0x6f], dh
+0x0040096a: 00 73 6f                |.so     | (data)   add    byte ds:[rbx + 0x6f], dh
 0x0040096d: 66 74 00                |ft.     | (data)   je     0x0000000000400970
-0x00400970: 63 74 72 6c             |ctrl    | (data)   movsxd esi, DWORD PTR ds:[rdx + rsi*0x02 + 0x6c]
+0x00400970: 63 74 72 6c             |ctrl    | (data)   movsxd esi, dword ds:[rdx + rsi*0x02 + 0x6c]
 0x00400975: 6c                      |l       | (data)   insb   
 0x00400976: 74 64                   |td      | (data)   je     0x00000000004009dc
 0x00400978: 65 6c                   |el      | (data)   insb   
-0x0040097a: 3a 20                   |:       | (data)   cmp    ah, BYTE PTR ds:[rax]
+0x0040097a: 3a 20                   |:       | (data)   cmp    ah, byte ds:[rax]
 0x0040097c: 72 65                   |re      | (data)   jb     0x00000000004009e3
 0x0040097f: 6f                      |o       | (data)   outsd  
 0x00400980: 6f                      |o       | (data)   outsd  
 0x00400981: 74 00                   |t.      | (data)   je     0x0000000000400983
-0x00400983: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400985: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400987: 00 59 6f                |.Yo     | (data)   add    BYTE PTR ds:[rcx + 0x6f], bl
+0x00400983: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400985: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400987: 00 59 6f                |.Yo     | (data)   add    byte ds:[rcx + 0x6f], bl
 0x0040098a: 75 20                   |u       | (data)   jne    0x00000000004009ac
 0x0040098c: 6d                      |m       | (data)   insd   
 0x0040098d: 75 73                   |us      | (data)   jne    0x0000000000400a02
 0x0040098f: 74 20                   |t       | (data)   je     0x00000000004009b1
-0x00400992: 65 20 72 6f             |e ro    | (data)   and    BYTE PTR gs:[rdx + 0x6f], dh
+0x00400992: 65 20 72 6f             |e ro    | (data)   and    byte gs:[rdx + 0x6f], dh
 0x00400996: 6f                      |o       | (data)   outsd  
 0x00400997: 74 20                   |t       | (data)   je     0x00000000004009b9
 0x00400999: 74 6f                   |to      | (data)   je     0x0000000000400a0a
-0x0040099b: 20 73 65                | se     | (data)   and    BYTE PTR ds:[rbx + 0x65], dh
+0x0040099b: 20 73 65                | se     | (data)   and    byte ds:[rbx + 0x65], dh
 0x0040099e: 74 20                   |t       | (data)   je     0x00000000004009c0
 0x004009a0: 74 68                   |th      | (data)   je     0x0000000000400a0a
-0x004009a2: 65 20 43 74             |e Ct    | (data)   and    BYTE PTR gs:[rbx + 0x74], al
+0x004009a2: 65 20 43 74             |e Ct    | (data)   and    byte gs:[rbx + 0x74], al
 0x004009a6: 72 6c                   |rl      | (data)   jb     0x0000000000400a14
 0x004009a8: 2d 41 6c 74 2d          |-Alt-   | (data)   sub    eax, 0x2d746c41
 0x004009ad: 44 65 6c                |Del     | (data)   insb   
-0x004009b0: 20 62 65                | be     | (data)   and    BYTE PTR ds:[rdx + 0x65], ah
+0x004009b0: 20 62 65                | be     | (data)   and    byte ds:[rdx + 0x65], ah
 0x004009b3: 68 61 76 69 6f          |havio   | (data)   push   0x6f697661
 0x004009b8: 75 72                   |ur      | (data)   jne    0x0000000000400a2c
-0x004009ba: 2e 0a 00                |...     | (data)   or     al, BYTE PTR ds:[rax]
-0x004009bd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009bf: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x004009c1: 1b 03                   |..      | (data)   sbb    eax, DWORD PTR ds:[rbx]
-0x004009c3: 3b 2c 00                |;,.     | (data)   cmp    ebp, DWORD PTR ds:[rax + rax]
-0x004009c6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x004009ba: 2e 0a 00                |...     | (data)   or     al, byte ds:[rax]
+0x004009bd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009bf: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x004009c1: 1b 03                   |..      | (data)   sbb    eax, dword ds:[rbx]
+0x004009c3: 3b 2c 00                |;,.     | (data)   cmp    ebp, dword ds:[rax + rax]
+0x004009c6: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x004009c8: 04 00                   |..      | (data)   add    al, 0x00
-0x004009ca: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x004009ca: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x004009cc: a0 fd ff ff 48 00 00 00 |....H...|
-0x004009d4: 70                      |p       | (data)   mov    al, BYTE PTR ds:[0x7000000048fffffd<8070450533472665597>]
-0x004009d7: ff 70 00                |.p.     | (data)   push   QWORD PTR ds:[rax + 0x00]
-0x004009da: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x004009d4: 70                      |p       | (data)   mov    al, byte ds:[0x7000000048fffffd<8070450533472665597>]
+0x004009d7: ff 70 00                |.p.     | (data)   push   qword ds:[rax + 0x00]
+0x004009da: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x004009dc: 80 fe ff                |...     | (data)   cmp    dh, 0xff<-1>
-0x004009df: ff a0 00 00 00 e0       |......  | (data)   jmp    QWORD PTR ds:[rax + 0xe0000000]
+0x004009df: ff a0 00 00 00 e0       |......  | (data)   jmp    qword ds:[rax + 0xe0000000]
 0x004009e7: ff c0                   |..      | (data)   inc    eax
-0x004009e9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009eb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009ed: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009ef: 00 14 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], dl
-0x004009f2: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009f4: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009f6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x004009f8: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x004009fa: 01 78 10                |.x.     | (data)   add    DWORD PTR ds:[rax + 0x10], edi
+0x004009e9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009eb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009ed: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009ef: 00 14 00                |...     | (data)   add    byte ds:[rax + rax], dl
+0x004009f2: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009f4: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009f6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x004009f8: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x004009fa: 01 78 10                |.x.     | (data)   add    dword ds:[rax + 0x10], edi
 0x004009fd: 0c 07                   |..      | (data)   or     al, 0x07
-0x004009ff: 08 90 01 00 00 00       |......  | (data)   or     BYTE PTR ds:[rax + 0x00000001], dl
-0x00400a05: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a07: 00 24 00                |.$.     | (data)   add    BYTE PTR ds:[rax + rax], ah
-0x00400a0a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x004009ff: 08 90 01 00 00 00       |......  | (data)   or     byte ds:[rax + 0x00000001], dl
+0x00400a05: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a07: 00 24 00                |.$.     | (data)   add    byte ds:[rax + rax], ah
+0x00400a0a: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a0c: 1c 00                   |..      | (data)   sbb    al, 0x00
-0x00400a0e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a12: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400a15: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a0e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a12: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400a15: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a17: 00 ca                   |..      | (data)   add    dl, cl
-0x00400a19: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a1b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a1d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a1f: 00 41 0e                |.A.     | (data)   add    BYTE PTR ds:[rcx + 0x0e], al
-0x00400a22: 10 86 02 49 0e 18       |...I..  | (data)   adc    BYTE PTR ds:[rsi + 0x180e4902], al
-0x00400a28: 83 03 4b                |..K     | (data)   add    DWORD PTR ds:[rbx], 0x4b
-0x00400a2c: 20 00                   | .      | (data)   and    BYTE PTR ds:[rax], al
-0x00400a2e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a19: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a1b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a1d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a1f: 00 41 0e                |.A.     | (data)   add    byte ds:[rcx + 0x0e], al
+0x00400a22: 10 86 02 49 0e 18       |...I..  | (data)   adc    byte ds:[rsi + 0x180e4902], al
+0x00400a28: 83 03 4b                |..K     | (data)   add    dword ds:[rbx], 0x4b
+0x00400a2c: 20 00                   | .      | (data)   and    byte ds:[rax], al
+0x00400a2e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a30: 14 00                   |..      | (data)   adc    al, 0x00
-0x00400a32: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a34: 44 00 00                |D..     | (data)   add    BYTE PTR ds:[rax], r8b
-0x00400a37: 00 30                   |.0      | (data)   add    BYTE PTR ds:[rax], dh
-0x00400a39: 08 40 00                |.@.     | (data)   or     BYTE PTR ds:[rax + 0x00], al
-0x00400a3c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a3e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a32: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a34: 44 00 00                |D..     | (data)   add    byte ds:[rax], r8b
+0x00400a37: 00 30                   |.0      | (data)   add    byte ds:[rax], dh
+0x00400a39: 08 40 00                |.@.     | (data)   or     byte ds:[rax + 0x00], al
+0x00400a3c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a3e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a40: 05 00 00 00 00          |.....   | (data)   add    eax, 0x00000000
-0x00400a45: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a47: 00 14 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], dl
-0x00400a4a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a4c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a4e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a50: 01 7a 52                |.zR     | (data)   add    DWORD PTR ds:[rdx + 0x52], edi
-0x00400a53: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
+0x00400a45: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a47: 00 14 00                |...     | (data)   add    byte ds:[rax + rax], dl
+0x00400a4a: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a4c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a4e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a50: 01 7a 52                |.zR     | (data)   add    dword ds:[rdx + 0x52], edi
+0x00400a53: 00 01                   |..      | (data)   add    byte ds:[rcx], al
 0x00400a55: 78 10                   |x.      | (data)   js     0x0000000000400a67
-0x00400a57: 01 1b                   |..      | (data)   add    DWORD PTR ds:[rbx], ebx
+0x00400a57: 01 1b                   |..      | (data)   add    dword ds:[rbx], ebx
 0x00400a59: 0c 07                   |..      | (data)   or     al, 0x07
-0x00400a5b: 08 90 01 00 00 1c       |......  | (data)   or     BYTE PTR ds:[rax + 0x1c000001], dl
-0x00400a61: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a63: 00 1c 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], bl
-0x00400a66: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a5b: 08 90 01 00 00 1c       |......  | (data)   or     byte ds:[rax + 0x1c000001], dl
+0x00400a61: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a63: 00 1c 00                |...     | (data)   add    byte ds:[rax + rax], bl
+0x00400a66: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a68: d8 fd                   |..      | (data)   fdivr  st(0), st(5)
-0x00400a6b: ff 56 00                |.V.     | (data)   call   QWORD PTR ds:[rsi + 0x00]
-0x00400a6e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a70: 00 4a 8c                |.J.     | (data)   add    BYTE PTR ds:[rdx + 0x8c<-116>], cl
-0x00400a73: 02 83 04 50 0e 20       |...P.   | (data)   add    al, BYTE PTR ds:[rbx + 0x200e5004]
-0x00400a79: 86 03                   |..      | (data)   xchg   BYTE PTR ds:[rbx], al
-0x00400a7b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a7d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a7f: 00 1c 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], bl
-0x00400a82: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a6b: ff 56 00                |.V.     | (data)   call   qword ds:[rsi + 0x00]
+0x00400a6e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a70: 00 4a 8c                |.J.     | (data)   add    byte ds:[rdx + 0x8c<-116>], cl
+0x00400a73: 02 83 04 50 0e 20       |...P.   | (data)   add    al, byte ds:[rbx + 0x200e5004]
+0x00400a79: 86 03                   |..      | (data)   xchg   byte ds:[rbx], al
+0x00400a7b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a7d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a7f: 00 1c 00                |...     | (data)   add    byte ds:[rax + rax], bl
+0x00400a82: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a84: 3c 00                   |<.      | (data)   cmp    al, 0x00
-0x00400a86: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a86: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400a88: 18 fe                   |..      | (data)   sbb    dh, bh
-0x00400a8c: 39 00                   |9.      | (data)   cmp    DWORD PTR ds:[rax], eax
-0x00400a8e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400a90: 00 41 0e                |.A.     | (data)   add    BYTE PTR ds:[rcx + 0x0e], al
-0x00400a93: 10 86 02 52 0e 18       |...R..  | (data)   adc    BYTE PTR ds:[rsi + 0x180e5202], al
-0x00400a99: 83 03 4c                |..L     | (data)   add    DWORD PTR ds:[rbx], 0x4c
-0x00400a9d: 20 00                   | .      | (data)   and    BYTE PTR ds:[rax], al
-0x00400a9f: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400aa1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400aa3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400aa5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400a8c: 39 00                   |9.      | (data)   cmp    dword ds:[rax], eax
+0x00400a8e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400a90: 00 41 0e                |.A.     | (data)   add    byte ds:[rcx + 0x0e], al
+0x00400a93: 10 86 02 52 0e 18       |...R..  | (data)   adc    byte ds:[rsi + 0x180e5202], al
+0x00400a99: 83 03 4c                |..L     | (data)   add    dword ds:[rbx], 0x4c
+0x00400a9d: 20 00                   | .      | (data)   and    byte ds:[rax], al
+0x00400a9f: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400aa1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400aa3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400aa5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400aa7: 00 ff                   |..      | (data)   add    bh, bh
-0x00400aaf: ff 00                   |..      | (data)   inc    DWORD PTR ds:[rax]
-0x00400ab1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ab3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ab5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400aaf: ff 00                   |..      | (data)   inc    dword ds:[rax]
+0x00400ab1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ab3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ab5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400ab7: 00 ff                   |..      | (data)   add    bh, bh
-0x00400abf: ff 00                   |..      | (data)   inc    DWORD PTR ds:[rax]
-0x00400ac1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ac3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ac5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ac7: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ac9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400acb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400acd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400acf: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400ad1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ad3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ad5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ad7: 00 24 00                |.$.     | (data)   add    BYTE PTR ds:[rax + rax], ah
-0x00400ada: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400adc: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ade: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400abf: ff 00                   |..      | (data)   inc    dword ds:[rax]
+0x00400ac1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ac3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ac5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ac7: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ac9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400acb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400acd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400acf: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400ad1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ad3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ad5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ad7: 00 24 00                |.$.     | (data)   add    byte ds:[rax + rax], ah
+0x00400ada: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400adc: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ade: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400ae0: 0c 00                   |..      | (data)   or     al, 0x00
-0x00400ae2: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ae4: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ae6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ae8: d8 05 40 00 00 00       |..@...  | (data)   fadd   FLOAT PTR ds:[rip + 0x0000000000000040]
-0x00400aee: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ae2: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ae4: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ae6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ae8: d8 05 40 00 00 00       |..@...  | (data)   fadd   float ds:[rip + 0x0000000000000040]
+0x00400aee: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400af0: 0d 00 00 00 00          |.....   | (data)   or     eax, 0x00000000
-0x00400af5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400af7: 00 18                   |..      | (data)   add    BYTE PTR ds:[rax], bl
-0x00400af9: 09 40 00                |.@.     | (data)   or     DWORD PTR ds:[rax + 0x00], eax
-0x00400afc: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400afe: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400af5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400af7: 00 18                   |..      | (data)   add    byte ds:[rax], bl
+0x00400af9: 09 40 00                |.@.     | (data)   or     dword ds:[rax + 0x00], eax
+0x00400afc: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400afe: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400b00: 04 00                   |..      | (data)   add    al, 0x00
-0x00400b02: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b04: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b06: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b08: 40 02 40 00             |@.@.    | (data)   add    al, BYTE PTR ds:[rax + 0x00]
-0x00400b0c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b0e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400b02: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b04: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b06: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b08: 40 02 40 00             |@.@.    | (data)   add    al, byte ds:[rax + 0x00]
+0x00400b0c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b0e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400b10: 05 00 00 00 00          |.....   | (data)   add    eax, 0x00000000
-0x00400b15: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400b15: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400b17: 00 f8                   |..      | (data)   add    al, bh
 0x00400b19: 0c 50                   |.P      | (data)   or     al, 0x50
-0x00400b1b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b1d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b1f: 00 06                   |..      | (data)   add    BYTE PTR ds:[rsi], al
-0x00400b21: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b23: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b25: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b27: 00 90 02 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004002<16386>], dl
-0x00400b2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b2f: 00 0a                   |..      | (data)   add    BYTE PTR ds:[rdx], cl
-0x00400b31: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b33: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b35: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b37: 00 99 00 00 00 00       |......  | (data)   add    BYTE PTR ds:[rcx + 0x00000000], bl
-0x00400b3d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b3f: 00 0b                   |..      | (data)   add    BYTE PTR ds:[rbx], cl
-0x00400b41: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b43: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b45: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b47: 00 18                   |..      | (data)   add    BYTE PTR ds:[rax], bl
-0x00400b49: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b4b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b4d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b4f: 00 15 00 00 00 00       |......  | (data)   add    BYTE PTR ds:[rip + 0x0000000000000000], dl
-0x00400b55: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b57: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b59: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b5b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b5d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b5f: 00 03                   |..      | (data)   add    BYTE PTR ds:[rbx], al
-0x00400b61: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b63: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b65: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b67: 00 68 0c                |.h.     | (data)   add    BYTE PTR ds:[rax + 0x0c], ch
+0x00400b1b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b1d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b1f: 00 06                   |..      | (data)   add    byte ds:[rsi], al
+0x00400b21: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b23: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b25: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b27: 00 90 02 40 00 00       |...@..  | (data)   add    byte ds:[rax + 0x00004002<16386>], dl
+0x00400b2d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b2f: 00 0a                   |..      | (data)   add    byte ds:[rdx], cl
+0x00400b31: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b33: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b35: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b37: 00 99 00 00 00 00       |......  | (data)   add    byte ds:[rcx + 0x00000000], bl
+0x00400b3d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b3f: 00 0b                   |..      | (data)   add    byte ds:[rbx], cl
+0x00400b41: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b43: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b45: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b47: 00 18                   |..      | (data)   add    byte ds:[rax], bl
+0x00400b49: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b4b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b4d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b4f: 00 15 00 00 00 00       |......  | (data)   add    byte ds:[rip + 0x0000000000000000], dl
+0x00400b55: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b57: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b59: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b5b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b5d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b5f: 00 03                   |..      | (data)   add    byte ds:[rbx], al
+0x00400b61: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b63: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b65: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b67: 00 68 0c                |.h.     | (data)   add    byte ds:[rax + 0x0c], ch
 0x00400b6a: 50                      |P       | (data)   push   rax
-0x00400b6b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b6d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b6f: 00 02                   |..      | (data)   add    BYTE PTR ds:[rdx], al
-0x00400b71: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b73: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b75: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400b6b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b6d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b6f: 00 02                   |..      | (data)   add    byte ds:[rdx], al
+0x00400b71: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b73: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b75: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400b77: 00 f0                   |..      | (data)   add    al, dh
-0x00400b79: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b7b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b7d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b7f: 00 14 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], dl
-0x00400b82: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b84: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b86: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b89: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b8b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b8d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b8f: 00 17                   |..      | (data)   add    BYTE PTR ds:[rdi], dl
-0x00400b91: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b93: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b95: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400b79: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b7b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b7d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b7f: 00 14 00                |...     | (data)   add    byte ds:[rax + rax], dl
+0x00400b82: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b84: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b86: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b89: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b8b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b8d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b8f: 00 17                   |..      | (data)   add    byte ds:[rdi], dl
+0x00400b91: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b93: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b95: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400b97: 00 e8                   |..      | (data)   add    al, ch
 0x00400b99: 04 40                   |.@      | (data)   add    al, 0x40
-0x00400b9b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b9d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400b9f: 00 07                   |..      | (data)   add    BYTE PTR ds:[rdi], al
-0x00400ba1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ba3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ba5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ba7: 00 b8 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004<16388>], bh
-0x00400bad: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400baf: 00 08                   |..      | (data)   add    BYTE PTR ds:[rax], cl
-0x00400bb1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bb3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bb5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bb7: 00 30                   |.0      | (data)   add    BYTE PTR ds:[rax], dh
-0x00400bb9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bbb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bbd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bbf: 00 09                   |..      | (data)   add    BYTE PTR ds:[rcx], cl
-0x00400bc1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bc3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bc5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bc7: 00 18                   |..      | (data)   add    BYTE PTR ds:[rax], bl
-0x00400bc9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bcb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bcd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400b9b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b9d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400b9f: 00 07                   |..      | (data)   add    byte ds:[rdi], al
+0x00400ba1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ba3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ba5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ba7: 00 b8 04 40 00 00       |...@..  | (data)   add    byte ds:[rax + 0x00004004<16388>], bh
+0x00400bad: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400baf: 00 08                   |..      | (data)   add    byte ds:[rax], cl
+0x00400bb1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bb3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bb5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bb7: 00 30                   |.0      | (data)   add    byte ds:[rax], dh
+0x00400bb9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bbb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bbd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bbf: 00 09                   |..      | (data)   add    byte ds:[rcx], cl
+0x00400bc1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bc3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bc5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bc7: 00 18                   |..      | (data)   add    byte ds:[rax], bl
+0x00400bc9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bcb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bcd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400bcf: 00 fe                   |..      | (data)   add    dh, bh
-0x00400bd2: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400bd5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bd7: 00 98 04 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004004<16388>], bl
-0x00400bdd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400bd2: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400bd5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bd7: 00 98 04 40 00 00       |...@..  | (data)   add    byte ds:[rax + 0x00004004<16388>], bl
+0x00400bdd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400bdf: 00 ff                   |..      | (data)   add    bh, bh
-0x00400be2: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400be5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400be7: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400be9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400beb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bed: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400be2: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400be5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400be7: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400be9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400beb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bed: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400bef: 00 f0                   |..      | (data)   add    al, dh
-0x00400bf2: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400bf5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400bf7: 00 7a 04                |.z.     | (data)   add    BYTE PTR ds:[rdx + 0x04], bh
-0x00400bfa: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400bfd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400bf2: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400bf5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400bf7: 00 7a 04                |.z.     | (data)   add    byte ds:[rdx + 0x04], bh
+0x00400bfa: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400bfd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400bff: 00 f9                   |..      | (data)   add    cl, bh
-0x00400c02: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400c05: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c02: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400c05: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c07: 00 e0                   |..      | (data)   add    al, ah
-0x00400c09: 03 40 00                |.@.     | (data)   add    eax, DWORD PTR ds:[rax + 0x00]
-0x00400c0c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c0e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c09: 03 40 00                |.@.     | (data)   add    eax, dword ds:[rax + 0x00]
+0x00400c0c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c0e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c10: f7 fd                   |..      | (data)   idiv   ebp
-0x00400c12: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400c15: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c17: 00 28                   |.(      | (data)   add    BYTE PTR ds:[rax], ch
-0x00400c19: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c1b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c1d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c12: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400c15: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c17: 00 28                   |.(      | (data)   add    byte ds:[rax], ch
+0x00400c19: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c1b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c1d: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c1f: 00 f8                   |..      | (data)   add    al, bh
-0x00400c22: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400c25: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c27: 00 b0 0d 50 00 00       |...P..  | (data)   add    BYTE PTR ds:[rax + 0x0000500d<20493>], dh
-0x00400c2d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c22: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400c25: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c27: 00 b0 0d 50 00 00       |...P..  | (data)   add    byte ds:[rax + 0x0000500d<20493>], dh
+0x00400c2d: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c2f: 00 f6                   |..      | (data)   add    dh, dh
 0x00400c31: fd                      |.       | (data)   std    
-0x00400c32: ff 6f 00                |.o.     | (data)   farJmp QWORD PTR ds:[rdi + 0x00]
-0x00400c35: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c37: 00 80 01 00 00 00       |......  | (data)   add    BYTE PTR ds:[rax + 0x00000001], al
-0x00400c3d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c3f: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c41: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c43: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c45: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c47: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c49: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c4b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c4d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c4f: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c51: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c53: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c55: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c57: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c59: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c5b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c5d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c5f: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c61: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c63: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c65: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c32: ff 6f 00                |.o.     | (data)   farJmp qword ds:[rdi + 0x00]
+0x00400c35: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c37: 00 80 01 00 00 00       |......  | (data)   add    byte ds:[rax + 0x00000001], al
+0x00400c3d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c3f: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c41: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c43: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c45: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c47: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c49: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c4b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c4d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c4f: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c51: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c53: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c55: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c57: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c59: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c5b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c5d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c5f: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c61: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c63: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c65: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c67: 00 d0                   |..      | (data)   add    al, dl
-0x00400c69: 0a 50 00                |.P.     | (data)   or     dl, BYTE PTR ds:[rax + 0x00]
-0x00400c6c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c6e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c72: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400c75: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c77: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c79: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c7b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c7d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c7f: 00 10                   |..      | (data)   add    BYTE PTR ds:[rax], dl
+0x00400c69: 0a 50 00                |.P.     | (data)   or     dl, byte ds:[rax + 0x00]
+0x00400c6c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c6e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c72: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400c75: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c77: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c79: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c7b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c7d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c7f: 00 10                   |..      | (data)   add    byte ds:[rax], dl
 0x00400c81: 0d b9 06 30 00          |...0.   | (data)   or     eax, 0x003006b9
-0x00400c86: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400c86: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400c88: 20 c3                   | .      | (data)   and    bl, al
 0x00400c8a: b1 06                   |..      | (data)   mov    cl, 0x06
-0x00400c8c: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400c8e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400c90: d0 08                   |..      | (data)   ror    BYTE PTR ds:[rax], 0x01
+0x00400c8c: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400c8e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400c90: d0 08                   |..      | (data)   ror    byte ds:[rax], 0x01
 0x00400c92: bc 06 30 00 00          |..0..   | (data)   mov    esp, 0x00003006<12294>
 0x00400c97: 00 f0                   |..      | (data)   add    al, dh
-0x00400c99: 84 b4 06 30 00 00 00    |...0... | (data)   test   BYTE PTR ds:[rsi + rax + 0x00000030], dh
+0x00400c99: 84 b4 06 30 00 00 00    |...0... | (data)   test   byte ds:[rsi + rax + 0x00000030], dh
 0x00400ca0: 90                      |.       | (data)   nop    
-0x00400ca1: 88 b5 06 30 00 00       |...0..  | (data)   mov    BYTE PTR ds:[rbp + 0x00003006<12294>], dh
-0x00400ca7: 00 70 56                |.pV     | (data)   add    BYTE PTR ds:[rax + 0x56], dh
+0x00400ca1: 88 b5 06 30 00 00       |...0..  | (data)   mov    byte ds:[rbp + 0x00003006<12294>], dh
+0x00400ca7: 00 70 56                |.pV     | (data)   add    byte ds:[rax + 0x56], dh
 0x00400caa: b2 06                   |..      | (data)   mov    dl, 0x06
-0x00400cac: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400cae: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cb0: d0 b3 b2 06 30 00       |....0.  | (data)   shl    BYTE PTR ds:[rbx + 0x003006b2], 0x01
-0x00400cb6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cb8: 20 87 b2 06 30 00       | ...0.  | (data)   and    BYTE PTR ds:[rdi + 0x003006b2], al
-0x00400cbe: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cc0: 20 0c b3                | ..     | (data)   and    BYTE PTR ds:[rbx + rsi*0x04], cl
-0x00400cc4: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400cc6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400cac: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400cae: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cb0: d0 b3 b2 06 30 00       |....0.  | (data)   shl    byte ds:[rbx + 0x003006b2], 0x01
+0x00400cb6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cb8: 20 87 b2 06 30 00       | ...0.  | (data)   and    byte ds:[rdi + 0x003006b2], al
+0x00400cbe: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cc0: 20 0c b3                | ..     | (data)   and    byte ds:[rbx + rsi*0x04], cl
+0x00400cc4: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400cc6: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400cc8: e0 86                   |..      | (data)   loopnz 0x0000000000400c50
 0x00400cca: b2 06                   |..      | (data)   mov    dl, 0x06
-0x00400ccc: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400cce: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cd0: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cd2: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cd4: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cd6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cd8: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cda: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cdc: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cde: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ce0: c0 0a 50                |..P     | (data)   ror    BYTE PTR ds:[rdx], 0x50
-0x00400ce3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ce5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ce7: 00 80 f6 d2 06 30       |.....0  | (data)   add    BYTE PTR ds:[rax + 0x3006d2f6], al
-0x00400ced: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cef: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cf1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cf3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cf5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400cf7: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ccc: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400cce: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cd0: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cd2: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cd4: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cd6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cd8: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cda: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cdc: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cde: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ce0: c0 0a 50                |..P     | (data)   ror    byte ds:[rdx], 0x50
+0x00400ce3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ce5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ce7: 00 80 f6 d2 06 30       |.....0  | (data)   add    byte ds:[rax + 0x3006d2f6], al
+0x00400ced: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cef: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cf1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cf3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cf5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400cf7: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400cf9: 5f                      |_       | (data)   pop    rdi
 0x00400cfa: 4a 76 5f                |Jv_     | (data)   jbe    0x0000000000400d5c
 0x00400cfd: 52                      |R       | (data)   push   rdx
 0x00400cfe: 65 67 69 73 74 65 72 43 |egisterC|
-0x00400d06: 6c                      |l       | (data)   imul   esi, DWORD PTR gs:[rbx + 0x74], 0x6c437265
+0x00400d06: 6c                      |l       | (data)   imul   esi, dword gs:[rbx + 0x74], 0x6c437265
 0x00400d08: 73 73                   |ss      | (data)   jae    0x0000000000400d7d
 0x00400d0a: 65 73 00                |es.     | (data)   jae    0x0000000000400d0d
 0x00400d0d: 5f                      |_       | (data)   pop    rdi
@@ -1353,45 +1365,45 @@ using this memory map for disassembly:
 0x00400d17: 72 74                   |rt      | (data)   jb     0x0000000000400d8d
 0x00400d19: 5f                      |_       | (data)   pop    rdi
 0x00400d1a: 5f                      |_       | (data)   pop    rdi
-0x00400d1b: 00 6c 69 62             |.lib    | (data)   add    BYTE PTR ds:[rcx + rbp*0x02 + 0x62], ch
-0x00400d1f: 63 2e                   |c.      | (data)   movsxd ebp, DWORD PTR ds:[rsi]
+0x00400d1b: 00 6c 69 62             |.lib    | (data)   add    byte ds:[rcx + rbp*0x02 + 0x62], ch
+0x00400d1f: 63 2e                   |c.      | (data)   movsxd ebp, dword ds:[rsi]
 0x00400d21: 73 6f                   |so      | (data)   jae    0x0000000000400d92
-0x00400d23: 2e 36 00 67 65          |.6.ge   | (data)   add    BYTE PTR ds:[rdi + 0x65], ah
+0x00400d23: 2e 36 00 67 65          |.6.ge   | (data)   add    byte ds:[rdi + 0x65], ah
 0x00400d28: 74 65                   |te      | (data)   je     0x0000000000400d8f
 0x00400d2a: 75 69                   |ui      | (data)   jne    0x0000000000400d95
-0x00400d2c: 64 00 70 65             |d.pe    | (data)   add    BYTE PTR fs:[rax + 0x65], dh
+0x00400d2c: 64 00 70 65             |d.pe    | (data)   add    byte fs:[rax + 0x65], dh
 0x00400d30: 72 72                   |rr      | (data)   jb     0x0000000000400da4
 0x00400d32: 6f                      |o       | (data)   outsd  
 0x00400d33: 72 00                   |r.      | (data)   jb     0x0000000000400d35
 0x00400d35: 66 70 72                |fpr     | (data)   jo     0x0000000000400daa
-0x00400d38: 69 6e 74 66 00 64 63    |intf.dc | (data)   imul   ebp, DWORD PTR ds:[rsi + 0x74], 0x63640066
+0x00400d38: 69 6e 74 66 00 64 63    |intf.dc | (data)   imul   ebp, dword ds:[rsi + 0x74], 0x63640066
 0x00400d3f: 67 65 74 74             |gett    | (data)   je     0x0000000000400db7
 0x00400d43: 65 78 74                |ext     | (data)   js     0x0000000000400dba
-0x00400d46: 00 72 65                |.re     | (data)   add    BYTE PTR ds:[rdx + 0x65], dh
+0x00400d46: 00 72 65                |.re     | (data)   add    byte ds:[rdx + 0x65], dh
 0x00400d4a: 6f                      |o       | (data)   outsd  
 0x00400d4b: 6f                      |o       | (data)   outsd  
 0x00400d4c: 74 00                   |t.      | (data)   je     0x0000000000400d4e
 0x00400d4e: 73 65                   |se      | (data)   jae    0x0000000000400db5
 0x00400d50: 74 6c                   |tl      | (data)   je     0x0000000000400dbe
 0x00400d52: 6f                      |o       | (data)   outsd  
-0x00400d53: 63 61 6c                |cal     | (data)   movsxd esp, DWORD PTR ds:[rcx + 0x6c]
-0x00400d56: 65 00 73 74             |e.st    | (data)   add    BYTE PTR gs:[rbx + 0x74], dh
+0x00400d53: 63 61 6c                |cal     | (data)   movsxd esp, dword ds:[rcx + 0x6c]
+0x00400d56: 65 00 73 74             |e.st    | (data)   add    byte gs:[rbx + 0x74], dh
 0x00400d5a: 64 65 72 72             |derr    | (data)   jb     0x0000000000400dd0
-0x00400d5e: 00 65 78                |.ex     | (data)   add    BYTE PTR ds:[rbp + 0x78], ah
-0x00400d61: 69 74 00 62 69 6e 64 74 |it.bindt| (data)   imul   esi, DWORD PTR ds:[rax + rax + 0x62], 0x74646e69
+0x00400d5e: 00 65 78                |.ex     | (data)   add    byte ds:[rbp + 0x78], ah
+0x00400d61: 69 74 00 62 69 6e 64 74 |it.bindt| (data)   imul   esi, dword ds:[rax + rax + 0x62], 0x74646e69
 0x00400d69: 65 78 74                |ext     | (data)   js     0x0000000000400de0
 0x00400d6c: 64 6f                   |do      | (data)   outsd  
 0x00400d6e: 6d                      |m       | (data)   insd   
-0x00400d70: 69 6e 00 5f 5f 6c 69    |in.__li | (data)   imul   ebp, DWORD PTR ds:[rsi + 0x00], 0x696c5f5f
-0x00400d78: 63 5f 73                |c_s     | (data)   movsxd ebx, DWORD PTR ds:[rdi + 0x73]
+0x00400d70: 69 6e 00 5f 5f 6c 69    |in.__li | (data)   imul   ebp, dword ds:[rsi + 0x00], 0x696c5f5f
+0x00400d78: 63 5f 73                |c_s     | (data)   movsxd ebx, dword ds:[rdi + 0x73]
 0x00400d7b: 74 61                   |ta      | (data)   je     0x0000000000400dde
 0x00400d7d: 72 74                   |rt      | (data)   jb     0x0000000000400df3
 0x00400d7f: 5f                      |_       | (data)   pop    rdi
 0x00400d80: 6d                      |m       | (data)   insd   
-0x00400d82: 69 6e 00 47 4c 49 42    |in.GLIB | (data)   imul   ebp, DWORD PTR ds:[rsi + 0x00], 0x42494c47
+0x00400d82: 69 6e 00 47 4c 49 42    |in.GLIB | (data)   imul   ebp, dword ds:[rsi + 0x00], 0x42494c47
 0x00400d89: 43 5f                   |C_      | (data)   pop    r15
-0x00400d8b: 32 2e                   |2.      | (data)   xor    ch, BYTE PTR ds:[rsi]
-0x00400d8d: 32 2e                   |2.      | (data)   xor    ch, BYTE PTR ds:[rsi]
+0x00400d8b: 32 2e                   |2.      | (data)   xor    ch, byte ds:[rsi]
+0x00400d8d: 32 2e                   |2.      | (data)   xor    ch, byte ds:[rsi]
 0x00400d8f: 35 00 2f 6c 69          |5./li   | (data)   xor    eax, 0x696c2f00
 0x00400d95: 36 34 2f                |64/     | (data)   xor    al, 0x2f
 0x00400d98: 6c                      |l       | (data)   insb   
@@ -1400,239 +1412,239 @@ using this memory map for disassembly:
 0x00400da1: 78 38                   |x8      | (data)   js     0x0000000000400ddb
 0x00400da3: 36 2d 36 34 2e 73       |6-64.s  | (data)   sub    eax, 0x732e3436
 0x00400da9: 6f                      |o       | (data)   outsd  
-0x00400daa: 2e 32 00                |.2.     | (data)   xor    al, BYTE PTR ds:[rax]
-0x00400dad: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400daf: 00 80 ec d2 06 30       |.....0  | (data)   add    BYTE PTR ds:[rax + 0x3006d2ec], al
-0x00400db5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400db7: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400db9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dbb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dbd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400daa: 2e 32 00                |.2.     | (data)   xor    al, byte ds:[rax]
+0x00400dad: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400daf: 00 80 ec d2 06 30       |.....0  | (data)   add    byte ds:[rax + 0x3006d2ec], al
+0x00400db5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400db7: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400db9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dbb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dbd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400dbf: 00 e0                   |..      | (data)   add    al, ah
-0x00400dc7: ff 88 ec d2 06 30       |.....0  | (data)   dec    DWORD PTR ds:[rax + 0x3006d2ec]
-0x00400dcd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dcf: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400dd1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dd3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dd5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400dc7: ff 88 ec d2 06 30       |.....0  | (data)   dec    dword ds:[rax + 0x3006d2ec]
+0x00400dcd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dcf: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400dd1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dd3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dd5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400dd7: 00 f8                   |..      | (data)   add    al, bh
-0x00400ddf: ff 08                   |..      | (data)   dec    DWORD PTR ds:[rax]
+0x00400ddf: ff 08                   |..      | (data)   dec    dword ds:[rax]
 0x00400de1: ed                      |.       | (data)   in     eax, dx
-0x00400de2: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
-0x00400de4: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400de6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400de8: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400dea: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dec: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dee: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400de2: d2 06                   |..      | (data)   rol    byte ds:[rsi], cl
+0x00400de4: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400de6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400de8: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400dea: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dec: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dee: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400df0: e8 ff ff ff ff          |.....   | (data)   call   0x0000000000400df4
-0x00400df7: ff 80 ed d2 06 30       |.....0  | (data)   inc    DWORD PTR ds:[rax + 0x3006d2ed]
-0x00400dfd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400dff: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400e01: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e03: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e05: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400df7: ff 80 ed d2 06 30       |.....0  | (data)   inc    dword ds:[rax + 0x3006d2ed]
+0x00400dfd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400dff: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400e01: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e03: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e05: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e07: 00 d8                   |..      | (data)   add    al, bl
-0x00400e0f: ff 08                   |..      | (data)   dec    DWORD PTR ds:[rax]
+0x00400e0f: ff 08                   |..      | (data)   dec    dword ds:[rax]
 0x00400e11: ee                      |.       | (data)   out    dx, al
-0x00400e12: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
-0x00400e14: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400e16: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e18: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400e1a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e1c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e1e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e12: d2 06                   |..      | (data)   rol    byte ds:[rsi], cl
+0x00400e14: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400e16: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e18: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400e1a: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e1c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e1e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e20: b8 ff ff ff ff          |.....   | (data)   mov    eax, 0xffffffff<-1>
-0x00400e27: ff 30                   |.0      | (data)   push   QWORD PTR ds:[rax]
+0x00400e27: ff 30                   |.0      | (data)   push   qword ds:[rax]
 0x00400e29: ee                      |.       | (data)   out    dx, al
-0x00400e2a: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
-0x00400e2c: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400e2e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e30: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400e32: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e34: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e36: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e2a: d2 06                   |..      | (data)   rol    byte ds:[rsi], cl
+0x00400e2c: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400e2e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e30: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400e32: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e34: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e36: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e38: c0 ff ff                |...     | (data)   sar    bh, 0xff<-1>
-0x00400e3f: ff 80 ee d2 06 30       |.....0  | (data)   inc    DWORD PTR ds:[rax + 0x3006d2ee]
-0x00400e45: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e47: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400e49: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e4b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e4d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e3f: ff 80 ee d2 06 30       |.....0  | (data)   inc    dword ds:[rax + 0x3006d2ee]
+0x00400e45: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e47: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400e49: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e4b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e4d: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e4f: 00 f0                   |..      | (data)   add    al, dh
-0x00400e57: ff a0 ee d2 06 30       |.....0  | (data)   jmp    QWORD PTR ds:[rax + 0x3006d2ee]
-0x00400e5d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e5f: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400e61: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e63: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e65: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e57: ff a0 ee d2 06 30       |.....0  | (data)   jmp    qword ds:[rax + 0x3006d2ee]
+0x00400e5d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e5f: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400e61: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e63: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e65: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e67: 00 c8                   |..      | (data)   add    al, cl
-0x00400e6f: ff a8 ee d2 06 30       |.....0  | (data)   farJmp QWORD PTR ds:[rax + 0x3006d2ee]
-0x00400e75: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e77: 00 01                   |..      | (data)   add    BYTE PTR ds:[rcx], al
-0x00400e79: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e7b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e7d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e6f: ff a8 ee d2 06 30       |.....0  | (data)   farJmp qword ds:[rax + 0x3006d2ee]
+0x00400e75: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e77: 00 01                   |..      | (data)   add    byte ds:[rcx], al
+0x00400e79: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e7b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e7d: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e7f: 00 e8                   |..      | (data)   add    al, ch
 0x00400e81: 0c 50                   |.P      | (data)   or     al, 0x50
-0x00400e83: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e85: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e83: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e85: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e87: 00 e0                   |..      | (data)   add    al, ah
 0x00400e89: ee                      |.       | (data)   out    dx, al
-0x00400e8a: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
-0x00400e8c: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400e8e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e90: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400e92: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e94: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400e96: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400e8a: d2 06                   |..      | (data)   rol    byte ds:[rsi], cl
+0x00400e8c: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400e8e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e90: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400e92: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e94: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400e96: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400e98: b0 ff                   |..      | (data)   mov    al, 0xff<-1>
-0x00400e9f: ff 20                   |.       | (data)   jmp    QWORD PTR ds:[rax]
+0x00400e9f: ff 20                   |.       | (data)   jmp    qword ds:[rax]
 0x00400ea1: ef                      |.       | (data)   out    dx, eax
-0x00400ea2: d2 06                   |..      | (data)   rol    BYTE PTR ds:[rsi], cl
-0x00400ea4: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400ea6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ea8: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400eaa: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400eac: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400eae: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ea2: d2 06                   |..      | (data)   rol    byte ds:[rsi], cl
+0x00400ea4: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400ea6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ea8: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400eaa: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400eac: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400eae: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400eb0: d0 ff                   |..      | (data)   sar    bh, 0x01
-0x00400eb7: ff b0 4f d1 05 30       |..O..0  | (data)   push   QWORD PTR ds:[rax + 0x3005d14f]
-0x00400ebd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ebf: 00 07                   |..      | (data)   add    BYTE PTR ds:[rdi], al
-0x00400ec1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ec3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ec5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400eb7: ff b0 4f d1 05 30       |..O..0  | (data)   push   qword ds:[rax + 0x3005d14f]
+0x00400ebd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ebf: 00 07                   |..      | (data)   add    byte ds:[rdi], al
+0x00400ec1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ec3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ec5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400ec7: 00 f0                   |..      | (data)   add    al, dh
 0x00400ec9: b8 b6 06 30 00          |...0.   | (data)   mov    eax, 0x003006b6
-0x00400ece: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ece: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400ed0: b8 4f d1 05 30          |.O..0   | (data)   mov    eax, 0x3005d14f
-0x00400ed5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ed7: 00 07                   |..      | (data)   add    BYTE PTR ds:[rdi], al
-0x00400ed9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400edb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400edd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ed5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ed7: 00 07                   |..      | (data)   add    byte ds:[rdi], al
+0x00400ed9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400edb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400edd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400edf: 00 f0                   |..      | (data)   add    al, dh
 0x00400ee1: b5 b6                   |..      | (data)   mov    ch, 0xb6<-74>
-0x00400ee4: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400ee6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ee8: c0 4f d1 05             |.O..    | (data)   ror    BYTE PTR ds:[rdi + 0xd1<-47>], 0x05
-0x00400eec: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400eee: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ef1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ef3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ef5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400ee4: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400ee6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ee8: c0 4f d1 05             |.O..    | (data)   ror    byte ds:[rdi + 0xd1<-47>], 0x05
+0x00400eec: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400eee: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ef1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ef3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ef5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400ef7: 00 c0                   |..      | (data)   add    al, al
 0x00400ef9: b2 b6                   |..      | (data)   mov    dl, 0xb6<-74>
-0x00400efc: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400efe: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400efc: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400efe: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400f00: c8 4f d1 05             |.O..    | (data)   enter  0xd14f<-11953>, 0x05
-0x00400f04: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400f06: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f09: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f0b: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f0d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f0f: 00 a0 bc b6 06 30       |.....0  | (data)   add    BYTE PTR ds:[rax + 0x3006b6bc], ah
-0x00400f15: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400f04: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400f06: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f09: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f0b: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f0d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f0f: 00 a0 bc b6 06 30       |.....0  | (data)   add    byte ds:[rax + 0x3006b6bc], ah
+0x00400f15: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400f17: 00 d0                   |..      | (data)   add    al, dl
-0x00400f19: 4f d1 05 30 00 00 00    |O..0... | (data)   rol    QWORD PTR ds:[rip + 0x0000000000000030], 0x01
-0x00400f21: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f23: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f25: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f27: 00 10                   |..      | (data)   add    BYTE PTR ds:[rax], dl
+0x00400f19: 4f d1 05 30 00 00 00    |O..0... | (data)   rol    qword ds:[rip + 0x0000000000000030], 0x01
+0x00400f21: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f23: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f25: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f27: 00 10                   |..      | (data)   add    byte ds:[rax], dl
 0x00400f29: 95                      |.       | (data)   xchg   ebp, eax
 0x00400f2a: b6 06                   |..      | (data)   mov    dh, 0x06
-0x00400f2c: 30 00                   |0.      | (data)   xor    BYTE PTR ds:[rax], al
-0x00400f2e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f30: 63 74 72 6c             |ctrl    | (data)   movsxd esi, DWORD PTR ds:[rdx + rsi*0x02 + 0x6c]
+0x00400f2c: 30 00                   |0.      | (data)   xor    byte ds:[rax], al
+0x00400f2e: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f30: 63 74 72 6c             |ctrl    | (data)   movsxd esi, dword ds:[rdx + rsi*0x02 + 0x6c]
 0x00400f35: 6c                      |l       | (data)   insb   
 0x00400f36: 74 64                   |td      | (data)   je     0x0000000000400f9c
 0x00400f38: 65 6c                   |el      | (data)   insb   
 0x00400f3e: 75 67                   |ug      | (data)   jne    0x0000000000400fa7
-0x00400f40: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f42: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400f40: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f42: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400f44: ee                      |.       | (data)   out    dx, al
-0x00400f45: d3 73 dc                |.s.     | (data)   shl    DWORD PTR ds:[rbx + 0xdc<-36>], cl
+0x00400f45: d3 73 dc                |.s.     | (data)   shl    dword ds:[rbx + 0xdc<-36>], cl
 0x00400f48: 7f 45                   |.E      | (data)   jg     0x0000000000400f8f
-0x00400f4a: 4c 46 02 01             |LF..    | (data)   add    r8b, BYTE PTR ds:[rcx]
-0x00400f4e: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400f50: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f52: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f54: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f56: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f58: 02 00                   |..      | (data)   add    al, BYTE PTR ds:[rax]
-0x00400f5a: 3e 00 01                |>..     | (data)   add    BYTE PTR ds:[rcx], al
-0x00400f5d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f5f: 00 a0 06 40 00 00       |...@..  | (data)   add    BYTE PTR ds:[rax + 0x00004006<16390>], ah
-0x00400f65: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f67: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[rax + 0x00], al
-0x00400f6a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f6c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f6e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400f4a: 4c 46 02 01             |LF..    | (data)   add    r8b, byte ds:[rcx]
+0x00400f4e: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400f50: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f52: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f54: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f56: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f58: 02 00                   |..      | (data)   add    al, byte ds:[rax]
+0x00400f5a: 3e 00 01                |>..     | (data)   add    byte ds:[rcx], al
+0x00400f5d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f5f: 00 a0 06 40 00 00       |...@..  | (data)   add    byte ds:[rax + 0x00004006<16390>], ah
+0x00400f65: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f67: 00 40 00                |.@.     | (data)   add    byte ds:[rax + 0x00], al
+0x00400f6a: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f6c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f6e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400f70: e0 0d                   |..      | (data)   loopnz 0x0000000000400f7f
-0x00400f72: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f74: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f76: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f78: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f7a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f7c: 40 00 38                |@.8     | (data)   add    BYTE PTR ds:[rax], dil
-0x00400f7f: 00 08                   |..      | (data)   add    BYTE PTR ds:[rax], cl
-0x00400f81: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[rax + 0x00], al
-0x00400f84: 1b 00                   |..      | (data)   sbb    eax, DWORD PTR ds:[rax]
-0x00400f86: 1a 00                   |..      | (data)   sbb    al, BYTE PTR ds:[rax]
-0x00400f89: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f8b: 00 05 00 00 00 40       |.....@  | (data)   add    BYTE PTR ds:[rip + 0x0000000040000000], al
-0x00400f91: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f93: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f95: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f97: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[rax + 0x00], al
-0x00400f9a: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400f9d: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400f9f: 00 40 00                |.@.     | (data)   add    BYTE PTR ds:[rax + 0x00], al
-0x00400fa2: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400fa5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400f72: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f74: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f76: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f78: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f7a: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f7c: 40 00 38                |@.8     | (data)   add    byte ds:[rax], dil
+0x00400f7f: 00 08                   |..      | (data)   add    byte ds:[rax], cl
+0x00400f81: 00 40 00                |.@.     | (data)   add    byte ds:[rax + 0x00], al
+0x00400f84: 1b 00                   |..      | (data)   sbb    eax, dword ds:[rax]
+0x00400f86: 1a 00                   |..      | (data)   sbb    al, byte ds:[rax]
+0x00400f89: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f8b: 00 05 00 00 00 40       |.....@  | (data)   add    byte ds:[rip + 0x0000000040000000], al
+0x00400f91: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f93: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f95: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f97: 00 40 00                |.@.     | (data)   add    byte ds:[rax + 0x00], al
+0x00400f9a: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400f9d: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400f9f: 00 40 00                |.@.     | (data)   add    byte ds:[rax + 0x00], al
+0x00400fa2: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400fa5: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400fa7: 00 c0                   |..      | (data)   add    al, al
-0x00400fa9: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400fab: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fad: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400fa9: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400fab: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fad: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400faf: 00 c0                   |..      | (data)   add    al, al
-0x00400fb1: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400fb3: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fb5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fb7: 00 08                   |..      | (data)   add    BYTE PTR ds:[rax], cl
-0x00400fb9: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fbb: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fbd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fbf: 00 03                   |..      | (data)   add    BYTE PTR ds:[rbx], al
-0x00400fc1: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fc3: 00 04 00                |...     | (data)   add    BYTE PTR ds:[rax + rax], al
-0x00400fc6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fc8: 00 02                   |..      | (data)   add    BYTE PTR ds:[rdx], al
-0x00400fca: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fcc: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fce: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fd0: 00 02                   |..      | (data)   add    BYTE PTR ds:[rdx], al
-0x00400fd2: 40 00 00                |@..     | (data)   add    BYTE PTR ds:[rax], al
-0x00400fd5: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fd7: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fd9: 02 40 00                |.@.     | (data)   add    al, BYTE PTR ds:[rax + 0x00]
-0x00400fdc: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fde: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400fb1: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400fb3: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fb5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fb7: 00 08                   |..      | (data)   add    byte ds:[rax], cl
+0x00400fb9: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fbb: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fbd: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fbf: 00 03                   |..      | (data)   add    byte ds:[rbx], al
+0x00400fc1: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fc3: 00 04 00                |...     | (data)   add    byte ds:[rax + rax], al
+0x00400fc6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fc8: 00 02                   |..      | (data)   add    byte ds:[rdx], al
+0x00400fca: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fcc: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fce: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fd0: 00 02                   |..      | (data)   add    byte ds:[rdx], al
+0x00400fd2: 40 00 00                |@..     | (data)   add    byte ds:[rax], al
+0x00400fd5: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fd7: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fd9: 02 40 00                |.@.     | (data)   add    al, byte ds:[rax + 0x00]
+0x00400fdc: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fde: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400fe0: 1c 00                   |..      | (data)   sbb    al, 0x00
-0x00400fe2: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fe4: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fe6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400fe2: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fe4: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fe6: 00 00                   |..      | (data)   add    byte ds:[rax], al
 0x00400fe8: 1c 00                   |..      | (data)   sbb    al, 0x00
-0x00400fea: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fec: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400fee: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ff0: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400ff2: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ff4: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ff6: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ff8: 01 00                   |..      | (data)   add    DWORD PTR ds:[rax], eax
-0x00400ffa: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x00400ffd: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00400fea: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fec: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400fee: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ff0: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400ff2: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ff4: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ff6: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ff8: 01 00                   |..      | (data)   add    dword ds:[rax], eax
+0x00400ffa: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x00400ffd: 00 00                   |..      | (data)   add    byte ds:[rax], al
 
 
 

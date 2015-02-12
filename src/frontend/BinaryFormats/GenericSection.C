@@ -76,14 +76,14 @@ SgAsmGenericSection::align()
 
     if (get_file_alignment()>0) {
         rose_addr_t old_offset = get_offset();
-        rose_addr_t new_offset = ALIGN_UP(old_offset, get_file_alignment());
+        rose_addr_t new_offset = alignUp(old_offset, get_file_alignment());
         set_offset(new_offset);
         changed = changed ? true : (old_offset!=new_offset);
     }
 
     if (is_mapped() && get_mapped_alignment()>0) {
         rose_addr_t old_rva = get_mapped_preferred_rva();
-        rose_addr_t new_rva = ALIGN_UP(old_rva, get_mapped_alignment());
+        rose_addr_t new_rva = alignUp(old_rva, get_mapped_alignment());
         set_mapped_preferred_rva(new_rva);
         changed = changed ? true : (old_rva!=new_rva);
     }
@@ -401,22 +401,16 @@ SgAsmGenericSection::read_content_str(rose_addr_t abs_offset, bool strict)
 std::string
 SgAsmGenericSection::read_content_local_str(rose_addr_t rel_offset, bool strict)
 {
-    static char *buf=NULL;
-    static size_t nalloc=0;
-    size_t nused=0;
-
+    std::string retval;
     while (1) {
-        if (nused >= nalloc) {
-            nalloc = std::max((size_t)32, 2*nalloc);
-            buf = (char*)realloc(buf, nalloc);
-            ROSE_ASSERT(buf!=NULL);
+        char ch;
+        if (read_content_local(rel_offset+retval.size(), &ch, 1, strict)) {
+            if ('\0'==ch)
+                return retval;
+            retval += ch;
+        } else {
+            return retval;
         }
-
-        unsigned char byte;
-        read_content_local(rel_offset+nused, &byte, 1, strict);
-        if (!byte)
-            return std::string(buf, nused);
-        buf[nused++] = byte;
     }
 }
 

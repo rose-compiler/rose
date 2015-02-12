@@ -232,7 +232,7 @@ class DoublyLinkedListWrap
     };
     class const_iterator : public Iterator
     { public:
-      Iterator::CurrentPtr;
+      using Iterator::CurrentPtr;
       const_iterator(const Iterator& that) : Iterator(that) {}
       const_iterator() : Iterator() {}
       const_iterator(const DoublyLinkedListWrap<T> &l) : Iterator(l) {}
@@ -247,7 +247,7 @@ class DoublyLinkedListWrap
     };
     class iterator : public Iterator
     { public:
-      Iterator::CurrentPtr;
+      using Iterator::CurrentPtr;
       iterator(const Iterator& that) : Iterator(that) {}
       iterator() : Iterator() {}
       iterator(const DoublyLinkedListWrap<T> &l) : Iterator(l) {}

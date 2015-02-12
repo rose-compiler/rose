@@ -101,6 +101,8 @@ void CodeThornLanguageRestrictor::initialize() {
   //more general test codes
   setAstNodeVariant(V_SgPointerDerefExp, true);
   setAstNodeVariant(V_SgNullExpression, true);
+  setAstNodeVariant(V_SgSizeOfOp,true);
+
 }
 
 
@@ -311,9 +313,13 @@ int main( int argc, char * argv[] ) {
     ("dump-sorted",po::value< string >(), " [experimental] generates sorted array updates in file <file>")
     ("dump-non-sorted",po::value< string >(), " [experimental] generates non-sorted array updates in file <file>")
     ("print-update-infos",po::value< string >(), "[experimental] print information about array updates on stdout")
+    ("verify-update-sequence-race-conditions",po::value< string >(), "[experimental] check race conditions of update sequence")
     ("rule-const-subst",po::value< string >(), " [experimental] use const-expr substitution rule <arg>")
     ("limit-to-fragment",po::value< string >(), "the argument is used to find fragments marked by two prgagmas of that '<name>' and 'end<name>'")
     ("rewrite","rewrite AST applying all rewrite system rules.")
+    ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
+    ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
+    ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
     ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
     ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
@@ -421,6 +427,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("incomplete-stg",false);
 
   boolOptions.registerOption("print-update-infos",false);
+  boolOptions.registerOption("verify-update-sequence-race-conditions",false);
 
   boolOptions.registerOption("minimize-states",false);
 
@@ -564,37 +571,55 @@ int main( int argc, char * argv[] ) {
     analyzer.setVariableValueThreshold(args["variable-value-threshold"].as<int>());
   }
 
+  string option_specialize_fun_name="";
+  vector<int> option_specialize_fun_param_list;
+  vector<int> option_specialize_fun_const_list;
+  if(args.count("specialize-fun-name")) {
+    option_specialize_fun_name = args["specialize-fun-name"].as<string>();
+  }
+  if(args.count("specialize-fun-param")) {
+    option_specialize_fun_param_list=args["specialize-fun-param"].as< vector<int> >();
+    option_specialize_fun_const_list=args["specialize-fun-const"].as< vector<int> >();
+  }
+  //cout<<"DEBUG: "<<"specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
+
+  if((args.count("specialize-fun-name")||args.count("specialize-fun-param")||args.count("specialize-fun-const"))
+     && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-param"))) {
+    cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
+    exit(1);
+  }
+
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
-    if (string(argv[i]) == "--csv-assert" 
-        || string(argv[i])=="--csv-stats" 
-        || string(argv[i])=="--csv-assert-live"
-        || string(argv[i])=="--threads" 
-        || string(argv[i])=="--display-diff"
-        || string(argv[i])=="--input-values"
-        || string(argv[i])=="--ltl-verifier"
-        || string(argv[i])=="--dot-io-stg"
-        || string(argv[i])=="--verify"
-        || string(argv[i])=="--csv-ltl"
-        || string(argv[i])=="--spot-stg"
-        || string(argv[i])=="--dump-sorted"
-        || string(argv[i])=="--dump-non-sorted"
-        || string(argv[i])=="--limit-to-fragment"
-        || string(argv[i])=="--check-ltl"
-        || string(argv[i])=="--csv-spot-ltl"
-        || string(argv[i])=="--check-ltl-sol"
-        || string(argv[i])=="--ltl-in-alphabet"
-        || string(argv[i])=="--ltl-out-alphabet"
+    if (string(argv[i]).find("--csv-assert")==0
+        || string(argv[i]).find("--csv-stats")==0
+        || string(argv[i]).find("--csv-assert-live")==0
+        || string(argv[i]).find("--threads" )==0
+        || string(argv[i]).find("--display-diff")==0
+        || string(argv[i]).find("--input-values")==0
+        || string(argv[i]).find("--ltl-verifier")==0
+        || string(argv[i]).find("--dot-io-stg")==0
+        || string(argv[i]).find("--verify")==0
+        || string(argv[i]).find("--csv-ltl")==0
+        || string(argv[i]).find("--spot-stg")==0
+        || string(argv[i]).find("--dump-sorted")==0
+        || string(argv[i]).find("--dump-non-sorted")==0
+        || string(argv[i]).find("--limit-to-fragment")==0
+        || string(argv[i]).find("--check-ltl")==0
+        || string(argv[i]).find("--csv-spot-ltl")==0
+        || string(argv[i]).find("--check-ltl-sol")==0
+        || string(argv[i]).find("--ltl-in-alphabet")==0
+        || string(argv[i]).find("--ltl-out-alphabet")==0
+        || string(argv[i]).find("--specialize-fun-name")==0
+        || string(argv[i]).find("--specialize-fun-param")==0
         ) {
       // do not confuse ROSE frontend
       argv[i] = strdup("");
-      assert(i+1<argc);
-        argv[i+1] = strdup("");
     }
   }
 
-  if(args.count("print-update-infos")&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
-    cerr<<"Error: option print-update-infos must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
+  if((args.count("print-update-infos")||args.count("verify-update-sequence-race-conditions"))&&(args.count("dump-sorted")==0 && args.count("dump-non-sorted")==0)) {
+    cerr<<"Error: option print-update-infos/verify-update-sequence-race-conditions must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
     exit(1);
   }
 
@@ -655,6 +680,30 @@ int main( int argc, char * argv[] ) {
   }
 
   SgNode* root=sageProject;
+  ROSE_ASSERT(root);
+
+  int numSubst=0;
+  if(option_specialize_fun_name!="")
+  {
+    Specialization speci;
+    cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
+
+    string funNameToFind=option_specialize_fun_name;
+    VariableIdMapping variableIdMapping;
+    variableIdMapping.computeVariableSymbolMapping(sageProject);
+
+    for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
+      int param=option_specialize_fun_param_list[i];
+      int constInt=option_specialize_fun_const_list[i];
+      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
+    }
+
+    cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+    //root=speci.getSpecializedFunctionRootNode();
+    sageProject->unparse(0,0);
+    //exit(0);
+  }
+
 
   if(args.count("rewrite")) {
     VariableIdMapping variableIdMapping;
@@ -715,7 +764,11 @@ int main( int argc, char * argv[] ) {
   }
 
   cout << "INIT: creating solver."<<endl;
-  analyzer.initializeSolver1("main",root);
+  if(option_specialize_fun_name!="") {
+    analyzer.initializeSolver1(option_specialize_fun_name,root,true);
+  } else {
+    analyzer.initializeSolver1("main",root,false);
+  }
   analyzer.initLabeledAssertNodes(sageProject);
 
   double initRunTime=timer.getElapsedTimeInMilliSec();
@@ -1054,6 +1107,7 @@ int main( int argc, char * argv[] ) {
   double arrayUpdateSsaNumberingRunTime=0.0;
   double sortingAndIORunTime=0.0;
   
+  int updateSequenceRaceConditions=-1;
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
     ArrayUpdatesSequence arrayUpdates;
@@ -1075,6 +1129,11 @@ int main( int argc, char * argv[] ) {
                                        useConstSubstitutionRule
                                        );
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+    if(boolOptions["verify-update-sequence-race-conditions"]) {
+      std::vector<VariableId> iterationVars;
+      VariableId parallelIterationVar;
+      updateSequenceRaceConditions=speci.verifyUpdateSequenceRaceConditions(iterationVars,parallelIterationVar,arrayUpdates,analyzer.getVariableIdMapping());
+    }
     if(boolOptions["print-update-infos"]) {
       speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
     }
@@ -1172,6 +1231,17 @@ int main( int argc, char * argv[] ) {
       text<<analyzer.getIterations()<<","<<analyzer.getApproximatedIterations();
     else
       text<<"-1,-1";
+    text<<endl;
+
+    // -1: test not performed, 0 (no race conditions), >0: race conditions exist
+    text<<"parallelism-stats,";
+    if(updateSequenceRaceConditions==-1) {
+      text<<"sequential";
+    } else if(updateSequenceRaceConditions==0) {
+      text<<"pass";
+    } else {
+      text<<"fail";
+    }
     text<<endl;
 
     text<<"rewrite-stats, "<<rewriteSystem.getRewriteStatistics().toCsvString()<<endl;

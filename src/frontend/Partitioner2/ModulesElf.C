@@ -50,14 +50,14 @@ findErrorHandlingFunctions(SgAsmInterpretation *interp) {
 
 
 bool
-PltEntryMatcher::match(const Partitioner *partitioner, rose_addr_t anchor) {
+PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     nBytesMatched_ = 0;
-    SgAsmInstruction *insn = partitioner->discoverInstruction(anchor);
+    SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
     SgAsmX86Instruction *insnX86 = isSgAsmX86Instruction(insn);
 
     // FIXME[Robb P. Matzke 2014-08-23]: Only i386 is supported for now
     static bool warned = false;
-    const RegisterDescriptor REG_IP = partitioner->instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_IP = partitioner.instructionProvider().instructionPointerRegister();
     if (insn && !insnX86 && !warned && REG_IP.get_nbits()!=32) {
         mlog[WARN] <<"ModulesElf::pltEntryMatcher does not yet support this ISA\n";
         warned = true;
@@ -114,7 +114,7 @@ findPltFunctions(const Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, 
     while (pltOffset<plt->get_mapped_size()) {
         PltEntryMatcher matcher(elfHeader->get_base_va() + gotplt->get_mapped_preferred_rva());
         rose_addr_t pltEntryVa = plt->get_mapped_actual_va() + pltOffset;
-        if (!matcher.match(&partitioner, pltEntryVa)) {
+        if (!matcher.match(partitioner, pltEntryVa)) {
             ++pltOffset;
             continue;
         }
@@ -179,6 +179,47 @@ findPltFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     return functions;
 }
 
+void
+buildMayReturnLists(Partitioner &p) {
+    // Most of these were obtained by searching for "noreturn" in all the header files on Debian Squeeze.
+    // Please keep this list alphabetical (ignoring leading underscores).
+    Configuration &c = p.configuration();
+
+    c.insertMaybeFunction("abort@plt").mayReturn(false);
+    c.insertMaybeFunction("abort@plt").mayReturn(false);
+    c.insertMaybeFunction("__assert@plt").mayReturn(false);
+    c.insertMaybeFunction("__assert_fail@plt").mayReturn(false);
+    c.insertMaybeFunction("__assert_perror_fail@plt").mayReturn(false);
+    c.insertMaybeFunction("err@plt").mayReturn(false);
+    c.insertMaybeFunction("errx@plt").mayReturn(false);
+    c.insertMaybeFunction("_exit@plt").mayReturn(false);
+    c.insertMaybeFunction("_Exit@plt").mayReturn(false);
+    c.insertMaybeFunction("exit@plt").mayReturn(false);
+    c.insertMaybeFunction("__longjmp_chk@plt").mayReturn(false);
+    c.insertMaybeFunction("longjmp@plt").mayReturn(false);
+    c.insertMaybeFunction("pthread_exit@plt").mayReturn(false);
+    c.insertMaybeFunction("quick_exit@plt").mayReturn(false);
+    c.insertMaybeFunction("__pthread_unwind_next@plt").mayReturn(false);
+    c.insertMaybeFunction("rethrow_exception@plt").mayReturn(false);
+    c.insertMaybeFunction("siglongjmp@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_bad_alloc@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_bad_cast@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_bad_exception@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_bad_typeid@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_domain_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_invalid_argument@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_ios_failure@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_length_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_logic_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_out_of_range@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_overflow_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_range_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_runtime_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_system_error@plt").mayReturn(false);
+    c.insertMaybeFunction("__throw_underflow_error@plt").mayReturn(false);
+    c.insertMaybeFunction("verr@plt").mayReturn(false);
+    c.insertMaybeFunction("verrx@plt").mayReturn(false);
+}
 
 } // namespace
 } // namespace

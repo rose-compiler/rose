@@ -93,7 +93,7 @@ class TypeAnnotCollection
   virtual void read_descriptor( const TypeDescriptor& targetname, 
                                 const std::string& annot, std::istream& in);
  protected:
-  TypeCollection<Descriptor>::typemap;
+  using TypeCollection<Descriptor>::typemap;
  public:
   void add_annot( const TypeDescriptor& name, const Descriptor& d)
       {
