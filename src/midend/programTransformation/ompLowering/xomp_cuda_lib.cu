@@ -744,7 +744,7 @@ void xomp_memdistHostToDevice(void* dest, void* src, int* vsize, int* voffset, i
 }
 
 // All-in-one function to prepare device variable
-void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int* vsize, int* voffset, int* vDimSize, int nDim, bool copy_into, bool copy_back)
+void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
 {
   // currently only handle one dimension
   void* dev_var_address = NULL; 

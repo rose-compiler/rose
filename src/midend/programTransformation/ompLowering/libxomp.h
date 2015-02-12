@@ -338,7 +338,7 @@ extern void xomp_deviceDataEnvironmentEnter();
 // The function will first try to inherit/reuse the same variable from the parent DDE. i
 // If not successful , it will allocate a new data on device, register it to the current DDE, and copy CPU values when needed.
 // The allocated or found device variable address will be returned.
-extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int* size, int* offset, int* vDimSize, int nDim, bool copyTo, bool copyFrom);
+extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* size, int* offset, int* vDimSize, bool copyTo, bool copyFrom);
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not

@@ -2550,9 +2550,9 @@ static void generateMappedArrayMemoryHandling(
 //cout<<"Debug: inserting var ref to be preserved:"<<sym->get_name()<<"@"<<host_var_ref <<endl;    
 
     SgExprListExp * parameters =
-      buildExprListExp(buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ), 
+      buildExprListExp(buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(array_dimensions[sym].size()), 
           buildVarRefExp( dev_var_size_name, insertion_scope), buildVarRefExp( dev_var_offset_name, insertion_scope),
-          buildVarRefExp( dev_var_offset_name, insertion_scope), buildIntVal(array_dimensions[sym].size()), copyToExp, copyFromExp
+          buildVarRefExp( dev_var_offset_name, insertion_scope), copyToExp, copyFromExp
           );
 
     SgExprStatement* dde_prep_stmt = buildAssignStatement (buildVarRefExp(dev_var_name, insertion_scope),
