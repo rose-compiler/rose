@@ -143,14 +143,14 @@ bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragma
 }
 
 LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
-  cout<<"DEBUG: loop info set and determine iteration vars."<<endl;
+  cout<<"INFO: loop info set and determine iteration vars."<<endl;
   ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
-  cout<<"DEBUG: found "<<forStmtToPragmaMap.size()<<" omp loops."<<endl;
+  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
+  LoopInfoSet loopInfoSet;
   RoseAst ast(root);
   AstMatching m;
-  string matchexpression="$FORSTMT=SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|$FORSTMT=SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp),..)";
   MatchResult r=m.performMatching(matchexpression,root);
-  LoopInfoSet loopInfoSet;
   for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
     SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
     ROSE_ASSERT(node);
@@ -158,7 +158,7 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
     LoopInfo loopInfo;
     loopInfo.iterationVarId=variableIdMapping->variableId(node);
     loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
-    SgNode* forNode=(*i)["$FORSTMT"];
+    SgNode* forNode=0; //(*i)["$FORSTMT"];
     // WORKAROUND 1
     // TODO: investigate why the for pointer is not stored in the same match-result
     if(forNode==0) {
@@ -167,7 +167,11 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
         forNode=forNode->get_parent();
     }
     ROSE_ASSERT(!isSgProject(forNode));
-
+#if 0
+    cout<<"DEBUG: FOR-ITER-VAR:"<<variableIdMapping->variableName(loopInfo.iterationVarId)<<":";
+    cout<<"TYPE:"<<loopInfo.iterationVarType<<":";
+    cout<<forNode->unparseToString()<<endl<<"---------------------------------"<<endl;
+#endif
     loopInfo.forStmt=isSgForStatement(forNode);
     if(loopInfo.forStmt) {
       const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
@@ -186,6 +190,8 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
     }
     loopInfoSet.push_back(loopInfo);
   }
+  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
+  cout<<"INFO: found "<<Specialization::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
 }
 
@@ -705,7 +711,6 @@ int main( int argc, char * argv[] ) {
     cerr<<"Error: option print-update-infos/verify-update-sequence-race-conditions must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
     exit(1);
   }
-
   RewriteSystem rewriteSystem;
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     analyzer.setSkipSelectedFunctionCalls(true);
@@ -742,6 +747,8 @@ int main( int argc, char * argv[] ) {
   double frontEndRunTime=timer.getElapsedTimeInMilliSec();
   cout << "INIT: Parsing and creating AST: finished."<<endl;
   
+  analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+
   if(boolOptions["run-rose-tests"]) {
     cout << "INIT: Running ROSE AST tests."<<endl;
     // Run internal consistency tests on AST
@@ -766,8 +773,8 @@ int main( int argc, char * argv[] ) {
 
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
-  VariableIdMapping variableIdMapping;
-  variableIdMapping.computeVariableSymbolMapping(sageProject);
+  //VariableIdMapping variableIdMapping;
+  //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
   int numSubst=0;
   if(option_specialize_fun_name!="")
@@ -780,7 +787,7 @@ int main( int argc, char * argv[] ) {
     for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
       int param=option_specialize_fun_param_list[i];
       int constInt=option_specialize_fun_const_list[i];
-      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
+      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
     }
 
     cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
@@ -792,7 +799,7 @@ int main( int argc, char * argv[] ) {
 
   if(args.count("rewrite")) {
     rewriteSystem.resetStatistics();
-    rewriteSystem.rewriteAst(root, &variableIdMapping,true,false,true);
+    rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
     cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
     sageProject->unparse(0,0);
     cout<<"STATUS: generated rewritten program."<<endl;
@@ -804,11 +811,11 @@ int main( int argc, char * argv[] ) {
   lr.checkProgram(root);
   timer.start();
 
-  cout << "INIT: Running variable<->symbol mapping check."<<endl;
+  //cout << "INIT: Running variable<->symbol mapping check."<<endl;
   //VariableIdMapping varIdMap;
-  analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
-  analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
-  cout << "STATUS: Variable<->Symbol mapping created."<<endl;
+  //analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
+  //analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+  //cout << "STATUS: Variable<->Symbol mapping created."<<endl;
 #if 0
   if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
     cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
@@ -1187,11 +1194,11 @@ int main( int argc, char * argv[] ) {
     if(boolOptions["verify-update-sequence-race-conditions"]) {
       SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
-      LoopInfoSet iterationVars=determineLoopInfoSet(root,&variableIdMapping, analyzer.getLabeler());
-      cout<<"DEBUG: number of iteration vars: "<<iterationVars.size()<<endl;
-
+      LoopInfoSet loopInfoSet=determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
+      cout<<"DEBUG: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       timer.start();
-      verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(iterationVars,arrayUpdates,analyzer.getVariableIdMapping());
+      verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
     }
 

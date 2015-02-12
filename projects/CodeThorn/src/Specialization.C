@@ -6,6 +6,17 @@
 using namespace std;
 using namespace SPRAY;
 
+int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping) {
+  int checkParLoopNum=0;
+  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
+    if((*i).iterationVarType==ITERVAR_PAR) {
+      checkParLoopNum++;
+      //cout<<"DEBUG: PAR-VAR:"<<variableIdMapping->variableName((*i).iterationVarId)<<endl;
+    }
+  }
+  return checkParLoopNum;
+}
+
 ConstReporter::~ConstReporter() {
 }
 
@@ -563,27 +574,26 @@ bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSe
 }
 
 // returns the number of race conditions detected (0 or 1 as of now)
-int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   stringstream ss;
   cout<<"STATUS: checking race conditions."<<endl;
-  VariableId parVariable;
+  cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
+
   VariableIdSet allIterVars;
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     allIterVars.insert((*lis).iterationVarId);
   }
   for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
     if((*lis).iterationVarType==ITERVAR_PAR) {
+      VariableId parVariable;
       parVariable=(*lis).iterationVarId;
       cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
 
       // race check
-      // union w-set_i = empty
-      // union r-set_i intersect union w-set_j = empty, i!=j.
-      // VariableIdSet computeWSet(VariableId,UpdateSequence)
-      // VariableIdSet computeRSet(VariableId,UpdateSequence)
-      // int<set> computeValues(VariableId,UpdateSequence)
-      // xxxx
+      // intersect w-set_i = empty
+      // w-set_i intersect r-set_j = empty, i!=j.
+
       IndexToReadWriteDataMap indexToReadWriteDataMap;
       for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
         const EState* estate=(*i).first;
@@ -689,12 +699,14 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
       } // imap
 #endif
 
+      cout<<"DEBUG: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
+
       // perform the check now
       // 1) compute vector if index-vectors for each outer-var-vector
       // 2) check each index-vector. For each iteration of each par-loop iteration then.
       
-      typedef set<int> ParVariableValueSet;
-      ParVariableValueSet parVariableValueSet;
+      //typedef set<int> ParVariableValueSet;
+      //ParVariableValueSet parVariableValueSet;
       // MAP: par-variable-val -> vector of IndexVectors with this par-variable-val
       typedef vector<IndexVector> ThreadVector;
       typedef map<IndexVector,ThreadVector > CheckMapType;
@@ -704,11 +716,17 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
           ++imap) {
         IndexVector index=(*imap).first;
         IndexVector outVarIndex;
-        ROSE_ASSERT(index.size()>0);
-        for(size_t iv1=0;iv1<index.size()-1;iv1++) {
-          outVarIndex.push_back(index[iv1]);
+        // if index.size()==0, it will analyze the loop independet of outer loops
+        if(index.size()>0) {
+          ROSE_ASSERT(index.size()>0);
+          for(size_t iv1=0;iv1<index.size()-1;iv1++) {
+            outVarIndex.push_back(index[iv1]);
+          }
+          ROSE_ASSERT(outVarIndex.size()<index.size());
+        } else {
+          // nothing to check
+          continue;
         }
-        ROSE_ASSERT(outVarIndex.size()<index.size());
         // last index of index of par-variable
         //int parVariableValue=index[index.size()-1];
         checkMap[outVarIndex].push_back(index);
@@ -716,6 +734,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
       //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
 
+      cout<<"DEBUG 2: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
         ThreadVector threadVectorToCheck=(*miter).second;
@@ -743,6 +762,7 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet loopInfoSet, 
           }
         }
       }
+      cout<<"DEBUG 3: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
     } // if parallel loop
   } // foreach loop
   return 0;
