@@ -1,4 +1,4 @@
-
+#include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
 SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * decl) {
