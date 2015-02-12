@@ -600,8 +600,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
         const PState* pstate=estate->pstate();
         SgExpression* exp=(*i).second;
         IndexVector index;
-
-
         // use all vars for indexing or only outer+par loop variables
 #ifdef USE_ALL_ITER_VARS
         for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
@@ -616,12 +614,12 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
         for(VariableIdSet::iterator ol=(*lis).outerLoopsVarIds.begin();ol!=(*lis).outerLoopsVarIds.end();++ol) {
           VariableId otherVarId=*ol;
           ROSE_ASSERT(otherVarId.isValid());
-          if(!pstate->varValue(otherVarId).isTop()) {
+          if(!pstate->varValue(otherVarId).isTop()&&pstate->varValue(otherVarId).isConstInt()) {
             int otherIntVal=pstate->varValue(otherVarId).getIntValue();
             index.push_back(otherIntVal);
           }
         }
-        if(!pstate->varValue(parVariable).isTop()) {
+        if(!pstate->varValue(parVariable).isTop()&&pstate->varValue(parVariable).isConstInt()) {
           int parIntVal=pstate->varValue(parVariable).getIntValue();
           index.push_back(parIntVal);
         }
@@ -699,8 +697,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       } // imap
 #endif
 
-      cout<<"DEBUG: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
-
       // perform the check now
       // 1) compute vector if index-vectors for each outer-var-vector
       // 2) check each index-vector. For each iteration of each par-loop iteration then.
@@ -734,7 +730,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
       //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
       // perform the check now
 
-      cout<<"DEBUG 2: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
       for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
         IndexVector outerVarIndexVector=(*miter).first;
         ThreadVector threadVectorToCheck=(*miter).second;
@@ -762,7 +757,6 @@ int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet,
           }
         }
       }
-      cout<<"DEBUG 3: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
     } // if parallel loop
   } // foreach loop
   return 0;
