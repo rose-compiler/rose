@@ -1492,10 +1492,11 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               exit(1);
             }
           } else {
-            cerr << "Error: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
+            cerr << "Warning: transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
             cerr << "expr: "<< lhs->unparseToString()<<endl;
             cerr << "type: "<<lhs->class_name()<<endl;
-            exit(1);
+            cerr << "performing no update of state!"<<endl;
+            //exit(1);
           }
         }
       }
