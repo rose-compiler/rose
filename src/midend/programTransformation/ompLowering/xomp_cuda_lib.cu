@@ -707,7 +707,43 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* 
   DDE_tail->new_variable_count ++;
 }
 
-void xomp_memdistHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+{
+  int offset_src;
+  int offset_dest;
+  assert (ndim <= 3);
+  if(ndim == 1)
+  {
+     xomp_memcpyDeviceToHost((char*)dest, (char*)src+voffset[0], vsize[0]);
+  }
+  else  if(ndim == 2)
+  {
+     int j;
+     for(j=0; j < vsize[1]; ++j)
+     {
+       offset_dest  = voffset[1] + (j + voffset[1]) * vDimSize[0];
+       offset_src = j  * vsize[0];
+       xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+     } 
+  }
+  else  if(ndim == 3)
+  {
+     int i,j;
+     for(j=0; j < vsize[2]; ++j)
+     {
+       offset_dest = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2])) - vDimSize[0];
+       offset_src = vsize[1] * (j * vsize[2]) - vsize[0];
+       for(i=0; i < vsize[1]; ++i)
+       {
+         offset_dest  += vDimSize[0];
+         offset_src += vsize[0];
+         xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       } 
+     }
+  }
+}
+
+void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
 {
   int offset_src;
   int offset_dest;
@@ -758,7 +794,7 @@ void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address,
     // So map-type only matters when no-reuse happens
     if (copy_into)
     {
-      xomp_memdistHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim);
+      xomp_memScatterHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim);
     //  xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize[0]);
     }
   }
@@ -780,7 +816,8 @@ void xomp_deviceDataEnvironmentExit()
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
+       xomp_memScatterHostToDevice(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DunSuze, mapped_var->nDim);
+       //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
     xomp_freeDevice (dev_address); //TODO Will this work without type info? Looks so!
