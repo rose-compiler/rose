@@ -357,6 +357,8 @@ analyterix_LDADD = -lrose
 analyterix_SOURCES = \
   addressTakenAnalysis.C \
   addressTakenAnalysis.h \
+  AliasAnalysis.h \
+  AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAbstractionLayer.h \
   AstTerm.C \
