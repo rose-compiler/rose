@@ -1573,13 +1573,13 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 void
 Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
                          bool showNeighbors) const {
-    GraphViz gv;
+    GraphViz gv(*this);
     gv.useFunctionSubgraphs(true);
     gv.showReturnEdges(false);
     gv.showInstructions(true);
     gv.showInNeighbors(showNeighbors);
     gv.showOutNeighbors(showNeighbors);
-    gv.dumpCfgInterval(out, *this, restrict);
+    gv.emitIntervalGraph(out, restrict);
 }
 
 std::vector<Function::Ptr>

@@ -102,12 +102,14 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         fileName = uniquePath(".dot");
         boost::filesystem::path tmpName = uniquePath(".dot");
         std::ofstream out(tmpName.string().c_str());
-        P2::GraphViz graphViz;
+        P2::GraphViz graphViz(partitioner);
+        graphViz.defaultGraphAttributes().insert("overlap", "scale");
+        graphViz.useFunctionSubgraphs(false);
         graphViz.showInstructions(true);
         graphViz.showInstructionAddresses(false);
         graphViz.defaultNodeAttributes().insert("fontsize", "10");
         graphViz.defaultEdgeAttributes().insert("fontsize", "10");
-        graphViz.dumpCfgFunction(out, partitioner, function);
+        graphViz.emitFunctionGraph(out, function);
         out.close();
         std::string dotCmd = "dot " + tmpName.string() + " > " + fileName.string();
         system(dotCmd.c_str());
