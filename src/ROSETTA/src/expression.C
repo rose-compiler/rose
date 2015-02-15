@@ -1341,17 +1341,26 @@ Grammar::setUpExpressions ()
      FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/14/2015): This can't be a part of the AST (so can't be defined in a traversal), since types
+  // are never traversed.
   // DQ (11/10/2014): We need to store an explicit type pointer in this IR node so that we can support
   // the get_type() function called from any expression that might have this kind of IR node in its subtree.
+  // FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
+  //                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/2/2014): Adding support for C++11 lambda expresions.
      LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
      LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/15/2015): This will call cycles in the AST if it is allowed to be defined in the AST traversal.
+  // LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+  //             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
-                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",

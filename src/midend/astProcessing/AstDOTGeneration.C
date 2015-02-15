@@ -119,8 +119,62 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                std::string rawFileName         = node->get_file_info()->get_raw_filename();
                std::string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
                if (filenameWithoutPath == targetFileName)
+                  {
                     ia.skipSubTree = true;
+                  }
+#if 0
+            // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
+            // handle visualization of selected portions of large files.
+
+            // DQ (2/12/2015): Test skipping instantiated templates since this frequently makes 
+            // the generated dot file too large to be visualized. Ultimately this should be 
+            // some sort of optional behavior.
+               SgTemplateInstantiationDecl*               templateInstantationClassDeclaration          = isSgTemplateInstantiationDecl(node);
+               SgTemplateInstantiationFunctionDecl*       templateInstantationFunctionDeclaration       = isSgTemplateInstantiationFunctionDecl(node);
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
+               SgTemplateMemberFunctionDeclaration*       templateMemberFunctionDeclaration             = isSgTemplateMemberFunctionDeclaration(node);
+
+               if (templateInstantationClassDeclaration != NULL || 
+                   templateInstantationFunctionDeclaration != NULL || 
+                   templateInstantationMemberFunctionDeclaration != NULL ||
+                   templateMemberFunctionDeclaration != NULL)
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
              }
+
+#if 0
+       // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
+          if (templateInstantationMemberFunctionDeclaration != NULL)
+             {
+             }
+#endif
+#if 1
+       // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
+       // I think we need to have a mechanism to support this so that we can better handle visualization 
+       // of selected portions of large files.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+          if (functionDeclaration != NULL)
+             {
+#if 0
+               printf ("DOT file generation: functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
+#endif
+#if 0
+               if (functionDeclaration->get_name() != "makeStencils")
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
+#if 0
+               if (functionDeclaration->get_name() != "main")
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
+             }
+#endif
         }
 
   // We might not want to increment the trace position information for

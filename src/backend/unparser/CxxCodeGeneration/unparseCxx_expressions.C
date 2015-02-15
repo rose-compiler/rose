@@ -319,10 +319,15 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
    {
      ROSE_ASSERT(expr != NULL);
 
-     printf ("In unparseFunctionParameterRefExpression = %p = %s) \n",expr,expr->class_name().c_str());
-
      SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
      ROSE_ASSERT(functionParameterRefExp != NULL);
+
+#if 0
+     printf ("In unparseFunctionParameterRefExpression = %p = %s \n",functionParameterRefExp,functionParameterRefExp->class_name().c_str());
+     printf ("   --- functionParameterRefExp->get_parameter_number()    = %d \n",functionParameterRefExp->get_parameter_number());
+     printf ("   --- functionParameterRefExp->get_parameter_levels_up() = %d \n",functionParameterRefExp->get_parameter_levels_up());
+     printf ("   --- functionParameterRefExp->get_parameter_type()      = %p \n",functionParameterRefExp->get_parameter_type());
+#endif
 
 #if 0
      if (functionParameterRefExp->get_base_expression() != NULL)
@@ -335,7 +340,14 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
           unp->u_type->unparseType(functionParameterRefExp->get_base_type(),info);
         }
 #else
-     unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+  // unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+
+  // DQ (2/14/2015): We at least require this sort of funcationality for C++11 test2015_13.C.
+  // if (functionParameterRefExp->get_parameter_levels_up() == 0)
+     if (functionParameterRefExp->get_parameter_number() == 0 && functionParameterRefExp->get_parameter_levels_up() == 0)
+        {
+          unp->u_exprStmt->curprint("this ");
+        }
 #endif
 
 #if 0
@@ -657,7 +669,21 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & 
 
                if (i != templateArgListPtr.end())
                   {
-                    unp->u_exprStmt->curprint(" , ");
+                 // unp->u_exprStmt->curprint(" , ");
+
+                 // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
+                    if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                       {
+                      // This should be the last template parameter, we I am not verifying this.
+#if 0
+                         printf ("In unparseTemplateArgumentList(): Need to supress the trailing \",\" \n");
+#endif
+                       }
+                      else
+                       {
+                         unp->u_exprStmt->curprint(" , ");
+                       }
+
                   }
              }
 
@@ -1482,9 +1508,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
             // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-            // curprint("/* varadic template argument */ ...");
-               curprint("/* varadic template argument */ ");
-
+#if 0
+               curprint("/* varadic template argument */ ...");
+#else
+            // DQ (2/7/2015): Supress the comment from being output.
+            // curprint("/* varadic template argument */ ");
+#endif
                break;
              }
 
