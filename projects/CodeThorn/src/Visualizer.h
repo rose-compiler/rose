@@ -55,6 +55,10 @@ class Visualizer {
   string transitionGraphDotHtmlNode(Label lab);
   string transitionGraphToDot();
   string transitionGraphWithIOToDot();
+  // used for displaying abstract ("topified") transition graphs.
+  string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
+                                    bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
+  string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
   string foldedTransitionGraphToDot();
   string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
  private:

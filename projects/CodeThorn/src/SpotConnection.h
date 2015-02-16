@@ -12,6 +12,7 @@
 //CodeThorn includes
 #include "StateRepresentations.h"
 #include "SpotTgba.h"
+#include "PropertyValueTable.h"
 
 //SPOT includes
 #include "ltlparse/public.hh"
@@ -70,13 +71,17 @@ namespace CodeThorn {
       //an initilaization that reads in a text file with ltl formulae (RERS 2014 format). Extracts the behaviorProperties
       // and creates an ltlResults table of the respective size (all results initialized to be "unknown").
       void init(std::string ltl_formulae_file);
-      //Takes a CodeThorn STG as a model and checks for all ltl formulae loaded into this SpotConnection object wether the model
-      // satisfies them. Writes results into the "ltlResults" member of this object.
+      //Takes a CodeThorn STG as a model and checks for all ltl formulae loaded into this SpotConnection object wether or not the model
+      // satisfies them. Writes results into the "ltlResults" member of this object, only checks properties for which no results exist yet.
       // "inVals" and "outVals" refer to the input and output alphabet of the ltl formulae to be checked.
-      // (currently taken out of effect: If "withCounterExample" is selected, there will be a third column for falsified formulae with a corresonding
-      // input sequence.)
+      // (If "withCounterExample" is selected, there will be a third column for falsified formulae with a corresonding
+      // counterexample input sequence. If "spuriousNoAnswers" is set to true, falsified properties will be reported also for STGs 
+      // that are not precise.)
       void checkLtlProperties(TransitionGraph& stg,
-					std::set<int> inVals, std::set<int> outVals, bool withCounterExample = 0);
+					std::set<int> inVals, std::set<int> outVals, bool withCounterExample, bool spuriousNoAnswers);
+      // similar to "checkLtlProperties" above, but only checks a single property (property id specified as a parameter)
+      void checkSingleProperty(int propertyNum, TransitionGraph& stg,
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers);
       //takes a SPOT TGBA text file and a file containing LTL formulae plus expected solutions (see RERS solutions examples).
       // utilizes the SPOT library to check whether the expected solutions are correct on the given model tgba.
       // deprecated, the interfaced version below is now used.
@@ -88,6 +93,8 @@ namespace CodeThorn {
 					std::set<int> inVals, std::set<int> outVals);
       //returns a copy of the current LTL result table. returned object needs to be deleted by calling function.
       PropertyValueTable* getLtlResults();
+      //resets the LTL results table to all unknown properties.
+      void resetLtlResults();
 
     private:
       //Removes every "WU" in a string with 'W". Necessary because only accepts this syntax.
@@ -103,6 +110,9 @@ namespace CodeThorn {
       // takes a text file of RERS solutions and parses the formulae with their corresponding solutions (true/false)
       ltlData* parseSolutions(istream& input);
 
+      // check a single LTL property and update the results table
+      void checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg, 
+                                                     bool withCounterexample, bool spuriousNoAnswers);
       //returns true if the given model_tgba satisfies the ltl formula ltl_string. returns false otherwise. 
       // The dict parameter is the model_tgba's dictionary of atomic propsitions. ce_ptr is an out parameter 
       // for a counter-example in case one is found by SPOT.
@@ -128,7 +138,7 @@ namespace CodeThorn {
       std::list<LtlProperty>* getUnknownFormulae();
       
       //a list of all properties 
-      std::list<LtlProperty> behaviorProperties;
+      std::list<LtlProperty> behaviorProperties; 
       //a container for the results of the LTL property evaluation
       PropertyValueTable* ltlResults;
   };

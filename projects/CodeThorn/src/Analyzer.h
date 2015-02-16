@@ -162,7 +162,7 @@ namespace CodeThorn {
     void pruneLeavesRec();
     // connects start, input, output and worklist states according to possible paths in the transition graph. 
     // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
-    void reduceGraphInOutWorklistOnly(bool reduceIn=true, bool reduceOut=true);
+    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
     // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
     // stores results in PropertyValueTable "reachabilityResults".
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
@@ -187,11 +187,13 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
-    //returns a list of transitions representing existing paths from "startState" to all possible input/output/worklist states (no output -> output)
-    // the returned set has to be deleted by the calling function.
-    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
-    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
-                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
+    //returns a list of transitions representing existing paths from "startState" to all possible input/output/error states (no output -> output)
+    // collection of transitions to worklist states currently disabled. the returned set has to be deleted by the calling function.
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* startState, 
+								      bool includeIn, bool includeOut, bool includeErr);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState, 
+                                                            	      boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
+								      bool includeIn, bool includeOut, bool includeErr);
     // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
@@ -218,8 +220,8 @@ namespace CodeThorn {
     void storeStgBackup();
     //load previous backup of the transitionGraph, storing the current version as a backup instead
     void swapStgWithBackup();
-    //reset the analyzer to now use solver 8 (includes choosing solver8-specific analyzer settings)
-    void resetAnalyzerToSolver8(EState* startEState);
+    //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
+    void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -305,6 +307,7 @@ namespace CodeThorn {
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
+    const EState* getLatestErrorEState() {return _latestErrorEState;}
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
@@ -328,6 +331,7 @@ namespace CodeThorn {
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
     void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
@@ -378,12 +382,14 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
     long int _maxTransitionsForcedTop;
+    long int _maxIterationsForcedTop;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
-    const EState* _latestOutputEstate;
+    const EState* _latestOutputEState;
+    const EState* _latestErrorEState;
     bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;

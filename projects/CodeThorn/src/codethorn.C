@@ -300,8 +300,10 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
+    ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit).")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
+    ("dot-io-forced-top-stg", po::value< string >(), "output STG with explicit I/O node information in dot file. Groups abstract states together. [arg]")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
@@ -326,6 +328,7 @@ int main( int argc, char * argv[] ) {
     ("ltl-in-alphabet",po::value< string >(),"specify an input alphabet used by the LTL formulae (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(),"specify an output alphabet used by the LTL formulae (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("io-reduction", po::value< int >(), "(work in progress) reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
+    ("keep-error-states",  po::value< string >(), "Do not reduce error states for the LTL analysis. [=yes|no]")
     ("no-input-input",  po::value< string >(), "remove transitions where one input states follows another without any output in between. Removal occurs before the LTL check. [=yes|no]")
     ("with-counterexamples", po::value< string >(), "adds counterexample traces to the analysis results. Applies to reachable assertions (work in progress) and falsified LTL properties. [=yes|no]")
     ("with-assert-counterexamples", po::value< string >(), "report counterexamples leading to failing assertion states (work in progress) [=yes|no]")
@@ -333,7 +336,8 @@ int main( int argc, char * argv[] ) {
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
-    ("incomplete-stg", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
+    ("cegar-prefix-ltl",po::value< int >(),"Select an LTL property that should be checked using the cegar-prefix mode (between 0 and 99).")
+    ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
     ;
@@ -410,6 +414,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("std-io-only",false);
   boolOptions.registerOption("std-in-only",false);
   boolOptions.registerOption("std-out-only",false);
+  boolOptions.registerOption("keep-error-states",false);
   boolOptions.registerOption("no-input-input",false);
 
   boolOptions.registerOption("with-counterexamples",false);
@@ -419,19 +424,34 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("check-ltl-counterexamples",false); 
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
-  boolOptions.registerOption("incomplete-stg",false);
+  boolOptions.registerOption("set-stg-incomplete",false);
 
   boolOptions.registerOption("minimize-states",false);
 
   boolOptions.processOptions();
+
+  Analyzer analyzer;
+  global_analyzer=&analyzer;
+
+  if (args.count("cegar-prefix-ltl")) {
+    analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
+    boolOptions.registerOption("no-input-input",true);
+    boolOptions.registerOption("with-ltl-counterexamples",true);
+    boolOptions.registerOption("counterexamples-with-output",true);
+    cout << "STATUS: cegar prefix mode activated (with it LTL counterexamples that include output states)." << endl;
+    cout << "STATUS: cegar prefix mode: will remove input state --> input state transitions in the approximated STG. " << endl;
+  }
 
   if (boolOptions["counterexamples-with-output"]) {
     boolOptions.registerOption("with-ltl-counterexamples",true);
   }
 
   if (boolOptions["check-ltl-counterexamples"]) {
+    boolOptions.registerOption("no-input-input",true);
     boolOptions.registerOption("with-ltl-counterexamples",true);
     boolOptions.registerOption("counterexamples-with-output",true);
+    cout << "STATUS: option check-ltl-counterexamples activated (analyzing counterexamples, returning those that are not spurious.)" << endl;
+    cout << "STATUS: option check-ltl-counterexamples: activates LTL counterexamples with output. Removes input state --> input state transitions in the approximated STG. " << endl;
   }
 
   if(boolOptions["print-all-options"]) {
@@ -449,9 +469,6 @@ int main( int argc, char * argv[] ) {
     else
       return 0;
   }
-
-  Analyzer analyzer;
-  global_analyzer=&analyzer;
   
   string option_pragma_name;
   if (args.count("limit-to-fragment")) {
@@ -523,6 +540,11 @@ int main( int argc, char * argv[] ) {
   if(args.count("max-transitions-forced-top")) {
     analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
   }
+
+  if(args.count("max-iterations-forced-top")) {
+    analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
+  }
+
   if(boolOptions["minimize-states"]) {
     analyzer.setMinimizeStates(true);
   }
@@ -573,6 +595,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--input-values"
         || string(argv[i])=="--ltl-verifier"
         || string(argv[i])=="--dot-io-stg"
+        || string(argv[i])=="--dot-io-forced-top-stg"
         || string(argv[i])=="--verify"
         || string(argv[i])=="--csv-ltl"
         || string(argv[i])=="--spot-stg"
@@ -869,6 +892,7 @@ int main( int argc, char * argv[] ) {
   double stdIoOnlyTime = 0;
 
   if(boolOptions["inf-paths-only"]) {
+    assert (!boolOptions["keep-error-states"]);
     cout << "STATUS: recursively removing all leaves."<<endl;
     timer.start();
     analyzer.pruneLeavesRec();
@@ -890,19 +914,19 @@ int main( int argc, char * argv[] ) {
   
   if(boolOptions["std-in-only"]) {
     cout << "STATUS: reducing STG to Input-states."<<endl;
-    analyzer.reduceGraphInOutWorklistOnly(true,false);
+    analyzer.reduceGraphInOutWorklistOnly(true,false,boolOptions["keep-error-states"]);
   }
 
   if(boolOptions["std-out-only"]) {
     cout << "STATUS: reducing STG to output-states."<<endl;
-    analyzer.reduceGraphInOutWorklistOnly(false,true);
+    analyzer.reduceGraphInOutWorklistOnly(false,true,boolOptions["keep-error-states"]);
   }
 
   if(boolOptions["std-io-only"]) {
     cout << "STATUS: bypassing all non standard I/O states."<<endl;
     timer.start();
     //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
-    analyzer.reduceGraphInOutWorklistOnly(true,true);
+    analyzer.reduceGraphInOutWorklistOnly(true,true,boolOptions["keep-error-states"]);
     stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
   }
 
@@ -913,7 +937,7 @@ int main( int argc, char * argv[] ) {
   if (args.count("check-ltl")) {
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
-      if (!boolOptions["inf-paths-only"]) {
+      if (!boolOptions["inf-paths-only"] && !boolOptions["keep-error-states"]) {
         cout << "STATUS: recursively removing all leaves (due to RERS-mode)."<<endl;
         timer.start();
         analyzer.pruneLeavesRec();
@@ -936,19 +960,14 @@ int main( int argc, char * argv[] ) {
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode)."<<endl;
         timer.start();
         //analyzer.removeNonIOStates();  //old version, works correclty but has a long execution time
-        analyzer.reduceGraphInOutWorklistOnly();
+        analyzer.reduceGraphInOutWorklistOnly(true, true, boolOptions["keep-error-states"]);
         stdIoOnlyTime = timer.getElapsedTimeInMilliSec();
-
-        eStateSetSizeIoOnly = (analyzer.getTransitionGraph())->estateSet().size();
-        transitionGraphSizeIoOnly = (analyzer.getTransitionGraph())->size();
-        cout << "STATUS: number of transitions remaining after reduction to I/O/(worklist) states only: " << transitionGraphSizeIoOnly << endl;
-        cout << "STATUS: number of states remaining after reduction to I/O/(worklist) states only: " <<eStateSetSizeIoOnly << endl;
+        printStgSize(analyzer.getTransitionGraph(), "after reducing non-I/O states");
       }
     }
     if(boolOptions["no-input-input"]) {  //delete transitions that indicate two input states without an output in between
       analyzer.removeInputInputTransitions();
-      transitionGraphSizeIoOnly = (analyzer.getTransitionGraph())->size();
-      cout << "STATUS: number of transitions remaining after removing input->input transitions: " << transitionGraphSizeIoOnly << endl;
+      printStgSize(analyzer.getTransitionGraph(), "after reducing input->input transitions");
     }
     bool withCounterexample = false;
     if(boolOptions["with-counterexamples"] || boolOptions["with-ltl-counterexamples"]) {  //output a counter-example input sequence for falsified formulae
@@ -969,22 +988,33 @@ int main( int argc, char * argv[] ) {
       ltlOutAlphabet=Parse::integerSet(setstring);
       cout << "STATUS: LTL output alphabet explicitly selected: "<< setstring << endl;
     }
-    cout << "STATUS: generating LTL results"<<endl;
+    PropertyValueTable* ltlResults;
     SpotConnection spotConnection(ltl_filename);
-    spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample);
-    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
-    PropertyValueTable* ltlResults = spotConnection.getLtlResults();
-
+    if (!args.count("cegar-prefix-ltl")) {
+      cout << "STATUS: generating LTL results"<<endl;
+      bool spuriousNoAnswers = false;
+      if (boolOptions["check-ltl-counterexamples"]) {
+        spuriousNoAnswers = true;
+      }
+      spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+      spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+      ltlResults = spotConnection.getLtlResults();
+    } else {
+      CounterexampleAnalyzer ceAnalyzer(&analyzer);
+      int property = args["cegar-prefix-ltl"].as<int>();
+      ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+      printStgSize(analyzer.getTransitionGraph(), "model resulting from cegar prefix mode");
+    }
     if (boolOptions["check-ltl-counterexamples"]) {
       cout << "STATUS: checking for spurious counterexamples..."<<endl;
-      CounterexampleAnalyzer ceAnalyzer(analyzer);
+      CounterexampleAnalyzer ceAnalyzer(&analyzer);
       RefinementConstraints constraintManager(analyzer.getFlow(), analyzer.getLabeler(), 
                 analyzer.getExprAnalyzer(), analyzer.getCFAnalyzer(), analyzer.getVariableIdMapping());
       for (unsigned int i = 0; i < ltlResults->size(); i++) {
         //only check counterexamples
         if (ltlResults->getPropertyValue(i) == PROPERTY_VALUE_NO) {
           std::string counterexample = ltlResults->getCounterexample(i);
-          CEAnalysisResult ceAnalysisResult = ceAnalyzer.analyzeCounterexample(counterexample);
+          CEAnalysisResult ceAnalysisResult = ceAnalyzer.analyzeCounterexample(counterexample, NULL, true, true);
           if (ceAnalysisResult.analysisResult == CE_TYPE_SPURIOUS) {
             //reset property to unknown
             ltlResults->setCounterexample(i, "");
@@ -1270,6 +1300,16 @@ int main( int argc, char * argv[] ) {
     cout << "=============================================================="<<endl;
   }
 
+  if (args.count("dot-io-forced-top-stg")) {
+    string filename=args["dot-io-forced-top-stg"].as<string>();
+    cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
+    string dotFile="digraph G {\n";
+    dotFile+=visualizer.abstractTransitionGraphToDot();
+    dotFile+="}\n";
+    write_file(filename, dotFile);
+    cout << "=============================================================="<<endl;
+  }
+
   if (args.count("spot-stg")) {
     string filename=args["spot-stg"].as<string>();
     cout << "generating spot IO STG file:"<<filename<<endl;
@@ -1374,6 +1414,19 @@ int main( int argc, char * argv[] ) {
     return 1;
  }
   return 0;
+}
+
+void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment) {
+  long inStates = model->numberOfObservableStates(true, false, false);
+  long outStates = model->numberOfObservableStates(false, true, false);
+  long errStates = model->numberOfObservableStates(false, false, true);
+  cout << "STATUS: STG size";
+  if (optionalComment != "") {
+    cout << " (" << optionalComment << ")"; 
+  }
+  cout << ". #transitions: " << model->size();
+  cout << ", #states: " << model->estateSet().size() 
+       << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)" << endl;
 }
 
 //currently not used. conceived due to different statistics after LTL evaluation that could be printed in the same way as above.
