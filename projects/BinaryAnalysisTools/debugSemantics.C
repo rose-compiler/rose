@@ -430,7 +430,7 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
         }
     } else {
         // There are many more combinations where the operators class need not be the same as the value or state classes. We
@@ -455,14 +455,14 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
             if (settings.valueClassName != settings.opsClassName)
-                mlog[WARN] <<" value=" <<settings.valueClassName;
+                ::mlog[WARN] <<" value=" <<settings.valueClassName;
             if (settings.rstateClassName != settings.opsClassName)
-                mlog[WARN] <<" rstate=" <<settings.rstateClassName;
+                ::mlog[WARN] <<" rstate=" <<settings.rstateClassName;
             if (settings.mstateClassName != settings.opsClassName)
-                mlog[WARN] <<" mstate=" <<settings.mstateClassName;
-            mlog[WARN] <<" cannot be tested\n";
+                ::mlog[WARN] <<" mstate=" <<settings.mstateClassName;
+            ::mlog[WARN] <<" cannot be tested\n";
         }
     }
 }
@@ -517,8 +517,8 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
 int
 main(int argc, char *argv[]) {
     Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ::mlog = Sawyer::Message::Facility("tool");
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line to load, disassemble, and partition the specimen
     Settings settings;
