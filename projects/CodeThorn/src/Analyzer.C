@@ -340,16 +340,7 @@ void Analyzer::addToWorkList(const EState* estate) {
       if(isLoopCondLabel(estate->label())) {
         estateWorkList.push_back(estate);
         //cout<<"DEBUG: push to WorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
-#if 0 // previous version
-        if(_curr_iteration_cnt==0 && _next_iteration_cnt==0) {
-          _curr_iteration_cnt=1; // initialization
-        } else {
-          _next_iteration_cnt++;
-        }
-#endif
-#if 1 // new version
         _next_iteration_cnt++;
-#endif
       } else {
         estateWorkList.push_front(estate);
       }
@@ -377,21 +368,6 @@ bool Analyzer::isActiveGlobalTopify() {
     }
   }
   return false;
-#if 0 //previous version
-  if(_maxTransitionsForcedTop==-1)
-    return false;
-  if(_topifyModeActive) {
-    return true;
-  } else {
-    if((long int)transitionGraph.size()>=_maxTransitionsForcedTop) {
-      _topifyModeActive=true;
-      eventGlobalTopifyTurnedOn();
-      boolOptions.registerOption("rers-binary",false);
-      return true;
-    }
-  }
-  return false;
-#endif
 }
 
 void Analyzer::eventGlobalTopifyTurnedOn() {
@@ -531,7 +507,6 @@ const EState* Analyzer::popWorkList() {
       estateWorkList.pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
         //cout<<"DEBUG: popFromWorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
-#if 1 //new version
         if(_curr_iteration_cnt==0) {
           _curr_iteration_cnt= (_next_iteration_cnt - 1);
           _next_iteration_cnt=0;
@@ -540,16 +515,6 @@ const EState* Analyzer::popWorkList() {
         } else {
           _curr_iteration_cnt--;
         }
-#endif
-#if 0 //previous version
-        _curr_iteration_cnt--;
-        if(_curr_iteration_cnt==0) {
-          _curr_iteration_cnt=_next_iteration_cnt;
-          _next_iteration_cnt=0;
-          incIterations();
-          cout<<"STATUS: Started analyzing loop iteration "<<_iterations<<"-"<<_approximated_iterations<<endl;
-        }
-#endif
       }
     }
   }
@@ -1019,7 +984,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               PState newPstate  = _pstate;
               newPstate[globalVarIdByName("output")]=CodeThorn::AType::CppCapsuleConstIntLattice(rers_result);
               EState _eState=createEState(edge.target,newPstate,_cset,_io);
-              //EState _eState=createEState(edge.target,_pstate,_cset,_io); //previous version
               return elistify(_eState);
             }
             RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
@@ -2838,7 +2802,6 @@ void Analyzer::runSolver5() {
               }
               
               // record reachability
-              //int assertCode=reachabilityAssertCode(currentEStatePtr); //previous version
               int assertCode;
               if(boolOptions["rers-binary"]) {
                 assertCode=reachabilityAssertCode(newEStatePtr);

@@ -300,10 +300,10 @@ int main( int argc, char * argv[] ) {
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
     ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
-    ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit).")
+    ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
     ("dot-io-stg", po::value< string >(), "output STG with explicit I/O node information in dot file [arg]")
-    ("dot-io-forced-top-stg", po::value< string >(), "output STG with explicit I/O node information in dot file. Groups abstract states together. [arg]")
+    ("dot-io-stg-forced-top", po::value< string >(), "output STG with explicit I/O node information in dot file. Groups abstract states together. [arg]")
     ("stderr-like-failed-assert", po::value< string >(), "treat output on stderr similar to a failed assert [arg] (default:no)")
     ("rersmode", po::value< string >(), "sets several options such that RERS-specifics are utilized and observed.")
     ("rers-numeric", po::value< string >(), "print rers I/O values as raw numeric numbers.")
@@ -542,6 +542,19 @@ int main( int argc, char * argv[] ) {
   }
 
   if(args.count("max-iterations-forced-top")) {
+    bool notSupported=false;
+    if (!args.count("exploration-mode")) {
+      notSupported=true;
+    } else {
+      string explorationMode=args["exploration-mode"].as<string>();
+      if(explorationMode!="loop-aware") {
+        notSupported=true;
+      }
+    }
+    if(notSupported) {
+      cout << "Error: \"max-iterations-forced-top\" mode currently requires \"--exploration-mode=loop-aware\"." << endl;
+      exit(1);
+    }
     analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
   }
 
@@ -595,7 +608,7 @@ int main( int argc, char * argv[] ) {
         || string(argv[i])=="--input-values"
         || string(argv[i])=="--ltl-verifier"
         || string(argv[i])=="--dot-io-stg"
-        || string(argv[i])=="--dot-io-forced-top-stg"
+        || string(argv[i])=="--dot-io-stg-forced-top"
         || string(argv[i])=="--verify"
         || string(argv[i])=="--csv-ltl"
         || string(argv[i])=="--spot-stg"
@@ -1300,8 +1313,8 @@ int main( int argc, char * argv[] ) {
     cout << "=============================================================="<<endl;
   }
 
-  if (args.count("dot-io-forced-top-stg")) {
-    string filename=args["dot-io-forced-top-stg"].as<string>();
+  if (args.count("dot-io-stg-forced-top")) {
+    string filename=args["dot-io-stg-forced-top"].as<string>();
     cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
     string dotFile="digraph G {\n";
     dotFile+=visualizer.abstractTransitionGraphToDot();
