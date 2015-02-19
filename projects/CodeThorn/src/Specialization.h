@@ -7,20 +7,52 @@
 #include "Analyzer.h"
 #include "ExprAnalyzer.h"
 #include "RewriteSystem.h"
+#include <iostream>
 
 using namespace std;
 using namespace SPRAY;
 using namespace CodeThorn;
 
+enum IterVarType { ITERVAR_SEQ, ITERVAR_PAR };
+struct LoopInfo {
+  VariableId iterationVarId;
+  IterVarType iterationVarType;
+  SgStatement* initStmt;
+  SgExpression* condExpr;
+  SgForStatement* forStmt;
+  VariableIdSet outerLoopsVarIds;
+  void computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping);
+  void computeLoopLabelSet(Labeler* labeler);
+  bool isInAssociatedLoop(const EState* estate);
+  LabelSet loopLabelSet;
+  static VariableId iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping);
+};
+
+typedef vector< pair< VariableId, IterVarType> > IterationVariables;
+typedef vector< LoopInfo > LoopInfoSet;
+
 struct EStateExprInfo {
   const EState* first;
+  SgExpression* originalExpr;
   SgExpression* second;
   bool mark;
+  SgForStatement* forLoop;
 EStateExprInfo():first(0),second(0),mark(false){}
-EStateExprInfo(const EState* estate,SgExpression* exp):first(estate),second(exp),mark(false){}
+EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* transformedExp):first(estate),originalExpr(originalExpr),second(transformedExp),mark(false),forLoop(0){
+}
 };
 
 typedef vector<EStateExprInfo> ArrayUpdatesSequence;
+
+struct ReadWriteData {
+  ArrayElementAccessDataSet writeArrayAccessSet;
+  VariableIdSet writeVarIdSet;
+  ArrayElementAccessDataSet readArrayAccessSet;
+  VariableIdSet readVarIdSet;
+};
+
+typedef vector<int> IndexVector;
+typedef map<IndexVector,ReadWriteData> IndexToReadWriteDataMap;
 
 enum SAR_MODE { SAR_SUBSTITUTE, SAR_SSA };
 
@@ -81,15 +113,16 @@ class Specialization {
                                     bool useConstExprSubstRule=true
                                     );
   // computes number of race conditions in update sequence (0:OK, >0:race conditions exist).
-  int verifyUpdateSequenceRaceConditions(std::vector<VariableId> iterationVars, VariableId parallelIterationVar, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
+  int verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   void writeArrayUpdatesToFile(ArrayUpdatesSequence& arrayUpdates, string filename, SAR_MODE sarMode, bool performSorting);
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   // specializes function with name funNameToFind and replace variable of parameter param with constInt
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
-
+  static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
  private:
+  string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
   int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, ExprAnalyzer* exprAnalyzer, const EState* estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
 

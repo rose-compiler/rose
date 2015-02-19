@@ -442,7 +442,9 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
                 return listify(res);
               } else {
                 cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
-                cerr<<"array-element-id: "<<arrayElementId.toString()<<endl;
+                cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+                cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+                cerr<<"AST: "<<node->unparseToString()<<endl;
                 exit(1);
               }
             } else {
