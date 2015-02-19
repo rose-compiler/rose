@@ -15,6 +15,8 @@ Diagnostics::Facility mlog;
 typedef std::set<P2::ControlFlowGraph::ConstVertexNodeIterator> CfgVertexSet;
 typedef std::set<P2::ControlFlowGraph::ConstEdgeNodeIterator> CfgEdgeSet;
 
+enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
+
 // Settings from the command-line
 struct Settings {
     std::string isaName;                                // instruction set architecture name
@@ -22,14 +24,17 @@ struct Settings {
     std::vector<std::string> endVertices;               // addresses or function names where paths should end
     std::vector<std::string> avoidVertices;             // vertices to avoid in any path
     std::vector<std::string> avoidEdges;                // edges to avoid in any path (even number of vertex addresses)
-    bool findAllForwardPaths;                           // do not limit number of paths returned?
+    size_t expansionDepthLimit;                         // max function call depth when expanding function calls
+    size_t vertexVisitLimit;                            // max times a vertex can appear in a path
     bool showInstructions;                              // show instructions in paths
-    Settings(): beginVertex("_start"), findAllForwardPaths(false), showInstructions(false) {}
+    Settings()
+        : beginVertex("_start"), expansionDepthLimit(4), vertexVisitLimit(1), showInstructions(false) {}
 };
+static Settings settings;
 
 // Describe and parse the command-line
 static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings)
+parseCommandLine(int argc, char *argv[])
 {
     using namespace Sawyer::CommandLine;
 
@@ -91,22 +96,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     "the source and target vertices.  A vertex can be either an address or a function name (see "
                     "@s{begin})."));
 
-    cfg.insert(Switch("all-forward-paths")
-               .intrinsicValue(true, settings.findAllForwardPaths)
-               .doc("This switch will cause all forward paths to be found which do not contain cycles.  This can produce "
-                    "a very large number of paths and consume lots of memory. For instance, there are 1024 paths through "
-                    "code with \"if\" statements nested to a depth of just 10. " +
-                    std::string(settings.findAllForwardPaths ? "This is the default." :
-                                "The default is to prune the number of possible paths by visiting each vertex only once "
-                                "(other than the initial and final vertices).") +
-                    " The @s{first-forward-paths} is the opposite of this switch."));
-    cfg.insert(Switch("first-forward-paths")
-               .key("all-forward-paths")
-               .intrinsicValue(false, settings.findAllForwardPaths)
-               .doc("Returns the set of paths such that no vertex appears in more than one path unless that vertex "
-                    "is the first or last vertex of the path (all paths contain the same first and last vertex). This "
-                    "switch is the opposite of @s{all-forward-paths}."));
+    cfg.insert(Switch("expansion-depth")
+               .argument("n", nonNegativeIntegerParser(settings.expansionDepthLimit))
+               .doc("Maximum function call depth when expanding paths through function calls.  The default is " +
+                    StringUtility::numberToString(settings.expansionDepthLimit) + "."));
 
+    cfg.insert(Switch("vertex-visits")
+               .argument("n", nonNegativeIntegerParser(settings.vertexVisitLimit))
+               .doc("Max number of times a vertex can appear in a single path for some level of function call.  A value "
+                    "of one means that the path will contain no back-edges. A value of two will typically allow one "
+                    "iteration for each loop. The default is " +
+                    StringUtility::numberToString(settings.vertexVisitLimit) + "."));
 
     //--------------------------- 
     SwitchGroup out("Output switches");
@@ -171,27 +171,58 @@ edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourc
                                vertexForInstruction(partitioner, targetNameOrVa));
 }
 
-#if 0 // [Robb P. Matzke 2015-02-06]
 // Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some
-// path that originates at the beginVertex and reaches the endEdge.
+// path that originates at the beginVertex and reaches some endVertex.
 std::vector<bool>
-significantEdges(const P2::Partitioner &partitioner,
-                 P2::ControlFlowGraph::ConstVertexNodeIterator beginVertex,
-                 P2::ControlFlowGraph::ConstEdgeNodeIterator endEdge) {
+findSignificantEdges(const P2::Partitioner &partitioner,
+                     P2::ControlFlowGraph::ConstVertexNodeIterator beginVertex, const CfgVertexSet &endVertices,
+                     const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
     using namespace Sawyer::Container::Algorithm;
 
-    // Mark edges that are reachable with a forward traversal from the starting vertex
+    // Mark edges that are reachable with a forward traversal from the starting vertex, avoiding certain vertices and edges.
     std::vector<bool> forwardReachable(partitioner.cfg().nEdges(), false);
-    typedef DepthFirstForwardEdgeTraversal<const P2::ControlFlowGraph> ForwardTraversal;
-    for (ForwardTraversal t(partitioner.cfg(), beginVertex); t; ++t)
-        forwardReachable[t->id()] = true;
+    typedef DepthFirstForwardGraphTraversal<const P2::ControlFlowGraph> ForwardTraversal;
+    for (ForwardTraversal t(partitioner.cfg(), beginVertex, ENTER_EVENTS); t; ++t) {
+        switch (t.event()) {
+            case ENTER_VERTEX:
+                if (avoidVertices.find(t.vertex()) != avoidVertices.end())
+                    t.skipChildren();
+                break;
+            case ENTER_EDGE:
+                if (avoidEdges.find(t.edge()) != avoidEdges.end()) {
+                    t.skipChildren();
+                } else {
+                    forwardReachable[t.edge()->id()] = true;
+                }
+                break;
+            default:
+                break;
+        }
+    }
 
-    // Mark edges that are reachable with a backward traversal from the ending edge
+    // Mark edges that are reachable with a backward traversal from any ending vertex, avoiding certain vertices and edges.
     std::vector<bool> significant(partitioner.cfg().nEdges(), false);
-    typedef DepthFirstReverseEdgeTraversal<const P2::ControlFlowGraph> ReverseTraversal;
-    for (ReverseTraversal t(partitioner.cfg(), endEdge); t; ++t)
-        significant[t->id()] = forwardReachable[t->id()];
-
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &endVertex, endVertices) {
+        typedef DepthFirstReverseGraphTraversal<const P2::ControlFlowGraph> ReverseTraversal;
+        for (ReverseTraversal t(partitioner.cfg(), endVertex, ENTER_EVENTS); t; ++t) {
+            switch (t.event()) {
+                case ENTER_VERTEX:
+                    if (avoidVertices.find(t.vertex()) != avoidVertices.end())
+                        t.skipChildren();
+                    break;
+                case ENTER_EDGE:
+                    if (avoidEdges.find(t.edge()) != avoidEdges.end()) {
+                        t.skipChildren();
+                    } else if (forwardReachable[t.edge()->id()]) {
+                        significant[t.edge()->id()] = true;
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+    
 #if 1 // DEBUGGING [Robb P. Matzke 2014-10-24]
     for (size_t i=0; i<significant.size(); ++i) {
         const P2::ControlFlowGraph::EdgeNode &edge = *partitioner.cfg().findEdge(i);
@@ -207,7 +238,6 @@ significantEdges(const P2::Partitioner &partitioner,
 
     return significant;
 }
-#endif
 
 class CfgPath {
 public:
@@ -244,7 +274,7 @@ public:
 
 // Print a CFG path
 void
-showVertex(std::ostream &out, const P2::ControlFlowGraph::ConstVertexNodeIterator &vertex, const Settings &settings) {
+showVertex(std::ostream &out, const P2::ControlFlowGraph::ConstVertexNodeIterator &vertex) {
     if (vertex->value().type() == P2::V_BASIC_BLOCK) {
         out <<"  " <<StringUtility::addrToString(vertex->value().address());
         if (P2::Function::Ptr function = vertex->value().function())
@@ -260,15 +290,15 @@ showVertex(std::ostream &out, const P2::ControlFlowGraph::ConstVertexNodeIterato
 }
 
 void
-showPath(std::ostream &out, const P2::Partitioner &partitioner, const CfgPath &path, const Settings &settings) {
+showPath(std::ostream &out, const P2::Partitioner &partitioner, const CfgPath &path) {
     out <<"Path (" <<StringUtility::plural(path.edges().size(), "edges") <<"):\n";
     if (path.isEmpty()) {
         out <<" empty\n";
     } else {
-        showVertex(out, path.firstVertex(), settings);
+        showVertex(out, path.firstVertex());
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, path.edges()) {
             out <<"    edge " <<partitioner.edgeName(edge) <<"\n";
-            showVertex(out, edge->target(), settings);
+            showVertex(out, edge->target());
         }
     }
 }
@@ -279,8 +309,9 @@ showPath(std::ostream &out, const P2::Partitioner &partitioner, const CfgPath &p
  *  reached in each case), but not passing through any of the @p avoidVertices or @p avoidEdges.  Function calls are skipped
  *  over if the call does not reach any @p endVertex. */
 std::vector<CfgPath>
-findForwardPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex,
-                 const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
+findPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex,
+          const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges,
+          FollowCalls followCalls, const std::vector<bool> &significantEdges = std::vector<bool>()) {
     ASSERT_forbid(beginVertex == partitioner.cfg().vertices().end());
     std::vector<CfgPath> paths;
     if (endVertices.empty())
@@ -295,12 +326,22 @@ findForwardPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph:
     if (beginVertex->nOutEdges() == 0)
         return paths;
 
+    if (mlog[DEBUG]) {
+        std::string beginName;
+        if (beginVertex->value().type() == P2::V_BASIC_BLOCK) {
+            if (P2::Function::Ptr function = beginVertex->value().function())
+                beginName = function->printableName();
+        }
+        if (beginName.empty())
+            beginName = "vertex " + partitioner.vertexName(beginVertex);
+        mlog[DEBUG] <<"findPaths: begin=" <<beginName <<"\n";
+    }
+
     // Edges in the current path
     std::list<P2::ControlFlowGraph::ConstEdgeNodeIterator> pathEdges;
     pathEdges.push_back(beginVertex->outEdges().begin());
 
     // Vertices visited by the current path. pathEdges.back()->target() is not ever counted in these totals.
-    static const size_t vertexVisitLimit = 2;           // max times a vertex can appear on a single path
     std::vector<size_t> visitingVertex(partitioner.cfg().nVertices(), 0);
     visitingVertex[beginVertex->id()] = 1;
 
@@ -308,7 +349,11 @@ findForwardPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph:
     // allowed to visit each vertex. Therefore, we do it by hand.
     while (!pathEdges.empty()) {
         P2::ControlFlowGraph::ConstVertexNodeIterator nextVertex = pathEdges.back()->target();
-        if (visitingVertex[nextVertex->id()] >= vertexVisitLimit) {
+        if (!significantEdges.empty() && !significantEdges[pathEdges.back()->id()]) {
+            // this edge cannot be on a valid path -- we proved that earlier
+        } else if (followCalls==SINGLE_FUNCTION && pathEdges.back()->value().type() == P2::E_FUNCTION_CALL) {
+            // don't follow function calls
+        } else if (visitingVertex[nextVertex->id()] >= settings.vertexVisitLimit) {
             // don't visit the vertex again
         } else if (avoidVertices.find(nextVertex) != avoidVertices.end()) {
             // don't visit this vertex even once!
@@ -370,13 +415,54 @@ findFunctionReturns(const P2::Partitioner &partitioner, const P2::ControlFlowGra
     return endVertices;
 }
 
+std::string
+edgeName(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge) {
+    std::string s;
+    if (edge == partitioner.cfg().edges().end())
+        return "end";
+    if (edge->value().type() == P2::E_FUNCTION_CALL || edge->value().type() == P2::E_FUNCTION_XFER) {
+        s = edge->value().type() == P2::E_FUNCTION_CALL ? "call" : "xfer";
+        if (edge->source()->value().type() == P2::V_BASIC_BLOCK && edge->source()->value().function())
+            s += " from " + edge->source()->value().function()->printableName();
+        s += " at " + partitioner.vertexName(edge->source());
+        if (edge->target()->value().type() == P2::V_BASIC_BLOCK && edge->target()->value().function()) {
+            s += " to " + edge->target()->value().function()->printableName();
+        } else {
+            s += " to " + partitioner.vertexName(edge->target());
+        }
+    } else {
+        s = partitioner.edgeName(edge);
+    }
+    return s;
+}
+
+void
+showCallStack(std::ostream &out, const P2::Partitioner &partitioner,
+              const std::vector<P2::ControlFlowGraph::ConstVertexNodeIterator> &callStack) {
+    if (callStack.empty()) {
+        out <<"call stack: empty\n";
+    } else {
+        out <<"call stack:\n";
+        for (size_t i=0; i<callStack.size(); ++i) {
+            out <<"  #" <<i <<": ";
+            out <<partitioner.vertexName(callStack[i]);
+            if (callStack[i] != partitioner.cfg().vertices().end() &&
+                callStack[i]->value().type() == P2::V_BASIC_BLOCK &&
+                callStack[i]->value().function())
+                out <<" in " <<callStack[i]->value().function()->printableName();
+            out <<"\n";
+        }
+    }
+}
+
 /** Expands function calls in a path.
  *
  *  Any function call in a path that was skipped over because the call to the function does not directly reach an endVertex is
  *  expanded by replacing that vertex of the path with all possible non-cyclic paths through the called function. */
 std::vector<CfgPath>
 expandPath(const P2::Partitioner &partitioner, const CfgPath &toExpand,
-           const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
+           const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges,
+           std::vector<P2::ControlFlowGraph::ConstVertexNodeIterator> &callStack) {
     std::vector<CfgPath> retval;
     if (toExpand.isEmpty())
         return retval;
@@ -387,28 +473,56 @@ expandPath(const P2::Partitioner &partitioner, const CfgPath &toExpand,
 
     retval.push_back(CfgPath());
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator edge, toExpand.edges()) {
-        if (edge->value().type() == P2::E_CALL_RETURN) {
+        if (edge->value().type() == P2::E_CALL_RETURN && callStack.size() < settings.expansionDepthLimit) {
             // This vertex represents a function that was skipped over.  Recursively expand all paths through that function and
             // then join them with the return value. If the return value has N paths and the callee has M paths then the new
             // return value will have N*M paths.  Also, we must handle the case of multiple callees (i.e., indirect call).
             BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &call, findFunctionCalls(edge->source())) {
-                CfgVertexSet returns = findFunctionReturns(partitioner, call->target());
-                std::vector<CfgPath> calleePaths = findForwardPaths(partitioner, call->target(), returns,
-                                                                    avoidVertices, avoidEdges);
-                std::vector<CfgPath> newRetval;
-                BOOST_FOREACH (const CfgPath &oldPath, retval) {
-                    BOOST_FOREACH (const CfgPath &calleePath, calleePaths) {
-                        std::vector<CfgPath> expandedCalleePaths = expandPath(partitioner, calleePath, avoidVertices, avoidEdges);
-                        BOOST_FOREACH (const CfgPath &expandedCalleePath, expandedCalleePaths) {
-                            CfgPath path = oldPath;
-                            path.append(call);
-                            path.append(expandedCalleePath);
-                            path.append(edge);
-                            newRetval.push_back(path);
+                if (std::find(callStack.begin(), callStack.end(), call->target()) != callStack.end()) {
+                    // This is a recursive call to the function. We need to break the recursion to prevent this from running
+                    // forever. We do so by not expanding the function call -- we treat it like a regular path node instead.
+                    if (mlog[WARN]) {
+                        mlog[WARN] <<"expandPath: recursive edge " <<edgeName(partitioner, edge) <<" avoided\n";
+                        showCallStack(mlog[WARN], partitioner, callStack);
+                    }
+                    BOOST_FOREACH (CfgPath &path, retval)
+                        path.append(edge);
+
+                } else {
+                    // Find all paths through the called function
+                    CfgVertexSet returns = findFunctionReturns(partitioner, call->target());
+                    std::vector<CfgPath> calleePaths = findPaths(partitioner, call->target(), returns,
+                                                                 avoidVertices, avoidEdges, SINGLE_FUNCTION);
+                    if (calleePaths.empty()) {
+                        if (mlog[WARN]) {
+                            mlog[WARN] <<"expandPath: no paths through " <<edgeName(partitioner, call) <<"\n";
+                            showCallStack(mlog[WARN], partitioner, callStack);
                         }
+                        BOOST_FOREACH (CfgPath &path, retval)
+                            path.append(edge);
+                    } else {
+                        std::vector<CfgPath> newRetval;
+                        BOOST_FOREACH (const CfgPath &oldPath, retval) {
+                            BOOST_FOREACH (const CfgPath &calleePath, calleePaths) {
+                                callStack.push_back(call->target());
+                                std::vector<CfgPath> expandedCalleePaths = expandPath(partitioner, calleePath,
+                                                                                      avoidVertices, avoidEdges, callStack);
+                                ASSERT_require(!callStack.empty());
+                                ASSERT_require(callStack.back() == call->target());
+                                callStack.pop_back();
+                                BOOST_FOREACH (const CfgPath &expandedCalleePath, expandedCalleePaths) {
+                                    CfgPath path = oldPath;
+                                    path.append(call);
+                                    path.append(expandedCalleePath);
+                                    path.append(edge);
+                                    newRetval.push_back(path);
+                                }
+                            }
+                        }
+                        std::swap(retval, newRetval);
+                        SAWYER_MESG(mlog[DEBUG]) <<"expandPath: depth=" <<callStack.size() <<", npaths=" <<retval.size() <<"\n";
                     }
                 }
-                retval = newRetval;
             }
         } else {
             // This is not a call, so add it to each of the retval paths
@@ -417,6 +531,13 @@ expandPath(const P2::Partitioner &partitioner, const CfgPath &toExpand,
         }
     }
     return retval;
+}
+
+std::vector<CfgPath>
+expandPath(const P2::Partitioner &partitioner, const CfgPath &toExpand,
+           const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
+    std::vector<P2::ControlFlowGraph::ConstVertexNodeIterator> callStack;
+    return expandPath(partitioner, toExpand, avoidVertices, avoidEdges, callStack);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -428,8 +549,7 @@ int main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse the command-line
-    Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv).unreachedArgs();
     P2::Engine engine;
     if (!settings.isaName.empty())
         engine.disassembler(Disassembler::lookup(settings.isaName));
@@ -492,21 +612,27 @@ int main(int argc, char *argv[]) {
     if (!avoidEdges.empty()) {
         mlog[INFO] <<"avoiding the following edges:";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, avoidEdges)
-            mlog[INFO] <<" " <<partitioner.edgeName(edge) <<";";
+            mlog[INFO] <<" " <<edgeName(partitioner, edge) <<";";
         mlog[INFO] <<"\n";
     }
 
-    std::vector<CfgPath> paths = findForwardPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
+    // Finding paths in the global CFG can be slow because the depth-first search can spend a huge amount of time exploring
+    // parts of the CFG that are irrelevant. Therefore, we first compute an edge-reachability vector with a faster algorithm
+    // that doesn't find paths, and use the reachability vector to restrict the first phase of path searching.
+    std::vector<bool> significantEdges = findSignificantEdges(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
+    std::vector<CfgPath> paths = findPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
+                                           FOLLOW_CALLS, significantEdges);
     mlog[INFO] <<"found " <<StringUtility::plural(paths.size(), "basic paths") <<"\n";
+
     BOOST_FOREACH (const CfgPath &path, paths) {
 #if 1 // DEBUGGING [Robb P. Matzke 2015-02-11]
         std::cout <<"Unexpanded ";
-        showPath(std::cout, partitioner, path, settings);
+        showPath(std::cout, partitioner, path);
 #endif
         std::vector<CfgPath> expandedPaths = expandPath(partitioner, path, avoidVertices, avoidEdges);
         std::cout <<"Expands to " <<StringUtility::plural(expandedPaths.size(), "paths") <<"\n";
         BOOST_FOREACH (const CfgPath &expandedPath, expandedPaths) {
-            showPath(std::cout, partitioner, expandedPath, settings);
+            showPath(std::cout, partitioner, expandedPath);
         }
     }
 }
