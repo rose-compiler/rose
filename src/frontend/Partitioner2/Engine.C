@@ -146,6 +146,15 @@ Engine::partition(SgAsmInterpretation *interp) {
     return partitioner;
 }
 
+void
+Engine::partition(Partitioner &partitioner) {
+    if (map_.isEmpty())
+        load(std::vector<std::string>());
+    if (!obtainDisassembler())
+        throw std::runtime_error("no disassembler available for partitioning");
+    runPartitioner(partitioner, interp_);
+}
+
 SgAsmBlock*
 Engine::buildAst(const std::vector<std::string> &fileNames) {
     Partitioner partitioner = partition(fileNames);
@@ -179,6 +188,7 @@ Partitioner
 Engine::createBarePartitioner() {
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    p.enableSymbolicSemantics(useSemantics_);
 
     // Build the may-return blacklist and/or whitelist.  This could be made specific to the type of interpretation being
     // processed, but there's so few functions that we'll just plop them all into the lists.
