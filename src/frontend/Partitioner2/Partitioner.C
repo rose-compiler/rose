@@ -852,17 +852,6 @@ Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
     return delta;
 }
 
-void
-Partitioner::forgetStackDeltas() const {
-    BOOST_FOREACH (const BasicBlock::Ptr &bb, basicBlocks()) {
-        bb->stackDeltaIn().clear();
-        bb->stackDeltaOut().clear();
-    }
-    BOOST_FOREACH (const Function::Ptr &func, functions()) {
-        func->stackDelta().clear();
-    }
-}
-
 std::vector<SgAsmInstruction*>
 Partitioner::instructionsOverlapping(const AddressInterval &interval) const {
     return aum_.overlapping(interval, AddressUsers::selectBasicBlocks).instructions();

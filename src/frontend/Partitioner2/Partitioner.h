@@ -1033,8 +1033,12 @@ public:
     /** Clears all cached stack deltas.
      *
      *  Causes all stack deltas for basic blocks and functions that are attached to the CFG/AUM to be forgotten.  This is
-     *  useful if one needs to recompute deltas in light of new information. */
+     *  useful if one needs to recompute deltas in light of new information.
+     *
+     * @{ */
     void forgetStackDeltas() const /*final*/;
+    void forgetStackDeltas(const Function::Ptr&) const /*final*/;
+    /** @} */
 
     /** Property: max depth for inter-procedural stack delta analysis.
      *
@@ -1043,8 +1047,8 @@ public:
      *  the actual dataflow implementation.
      *
      * @{ */
-    size_t stackDeltaInterproceduralLimit() const { return stackDeltaInterproceduralLimit_; }
-    void stackDeltaInterproceduralLimit(size_t n) { stackDeltaInterproceduralLimit_ = std::max(size_t(1), n); }
+    size_t stackDeltaInterproceduralLimit() const /*final*/ { return stackDeltaInterproceduralLimit_; }
+    void stackDeltaInterproceduralLimit(size_t n) /*final*/ { stackDeltaInterproceduralLimit_ = std::max(size_t(1), n); }
     /** @} */
 
     /** Determine if part of the CFG can pop the top stack frame.
