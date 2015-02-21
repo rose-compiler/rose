@@ -11,6 +11,7 @@ add_library(midend_binary OBJECT
   dataflowanalyses/InterruptAnalysis.cpp
   dataflowanalyses/RoseBin_DefUseAnalysis.cpp
   instructionSemantics/BaseSemantics2.C
+  instructionSemantics/ConcreteSemantics2.C
   instructionSemantics/DataFlowSemantics2.C
   instructionSemantics/DispatcherM68k.C
   instructionSemantics/DispatcherPowerpc.C
@@ -58,6 +59,7 @@ install(
     GraphAlgorithms.h
     instructionSemantics/BaseSemantics2.h
     instructionSemantics/BaseSemantics.h
+    instructionSemantics/ConcreteSemantics2.h
     instructionSemantics/DataFlowSemantics2.h
     instructionSemantics/DispatcherM68k.h
     instructionSemantics/DispatcherPowerpc.h
