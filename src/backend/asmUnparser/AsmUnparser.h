@@ -1010,7 +1010,7 @@ protected:
 
     /** Details for line prefixes. See line_prefix(). */
     struct LinePrefix {
-        LinePrefix(): format("0x%08"PRIx64": "), address(0) {}
+        LinePrefix(): format("0x%08" PRIx64": "), address(0) {}
         std::string format;             /**< Printf-style format string. This may contain a format for a uint64_t address. */
         rose_addr_t address;            /**< Address to use when generating a prefix string. */
     } lineprefix;

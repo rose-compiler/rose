@@ -151,7 +151,7 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
              {
              }
 #endif
-#if 1
+#if 0
        // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
        // I think we need to have a mechanism to support this so that we can better handle visualization 
        // of selected portions of large files.
@@ -161,14 +161,9 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
 #if 0
                printf ("DOT file generation: functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
 #endif
-#if 0
-               if (functionDeclaration->get_name() != "makeStencils")
-                  {
-                    ia.skipSubTree = true;
-                  }
-#endif
-#if 0
-               if (functionDeclaration->get_name() != "main")
+#if 1
+               if (functionDeclaration->get_name() != "main" &&
+                   functionDeclaration->get_name() != "makeStencils")
                   {
                     ia.skipSubTree = true;
                   }

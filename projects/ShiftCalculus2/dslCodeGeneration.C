@@ -57,9 +57,9 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
         {
           SgFunctionCallExp* functionCallExp = stencilOperatorFunctionCallList[i];
           ROSE_ASSERT(functionCallExp != NULL);
-
+#if 0
           printf ("processing functionCallExp = %p \n",functionCallExp);
-
+#endif
           SgStatement* associatedStatement = TransformationSupport::getStatement(functionCallExp);
           ROSE_ASSERT(associatedStatement != NULL);
 
@@ -79,31 +79,31 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           SgVarRefExp* stencilVarRefExp = isSgVarRefExp(stencilExpression);
           ROSE_ASSERT(stencilVarRefExp != NULL);
 
-       // RectMDArray (destination)
-          SgExpression* destinationArrayReferenceExpression = argumentList->get_expressions()[1];
-          SgVarRefExp* destinationArrayVarRefExp = isSgVarRefExp(destinationArrayReferenceExpression);
-          ROSE_ASSERT(destinationArrayVarRefExp != NULL);
-
        // RectMDArray (source)
-          SgExpression* sourceArrayReferenceExpression = argumentList->get_expressions()[2];
+          SgExpression* sourceArrayReferenceExpression = argumentList->get_expressions()[1];
           SgVarRefExp* sourceArrayVarRefExp = isSgVarRefExp(sourceArrayReferenceExpression);
           ROSE_ASSERT(sourceArrayVarRefExp != NULL);
+
+       // RectMDArray (destination)
+          SgExpression* destinationArrayReferenceExpression = argumentList->get_expressions()[2];
+          SgVarRefExp* destinationArrayVarRefExp = isSgVarRefExp(destinationArrayReferenceExpression);
+          ROSE_ASSERT(destinationArrayVarRefExp != NULL);
 
        // Box
           SgExpression* boxReferenceExpression = argumentList->get_expressions()[3];
           SgVarRefExp* boxVarRefExp = isSgVarRefExp(boxReferenceExpression);
           ROSE_ASSERT(boxVarRefExp != NULL);
-
+#if 0
           printf ("DONE: processing inputs to stencil operator \n");
-
+#endif
           ROSE_ASSERT(stencilVarRefExp->get_symbol() != NULL);
           SgInitializedName* stencilInitializedName = stencilVarRefExp->get_symbol()->get_declaration();
           ROSE_ASSERT(stencilInitializedName != NULL);
 
           string stencilName = stencilInitializedName->get_name();
-
+#if 0
           printf ("stencilName = %s \n",stencilName.c_str());
-
+#endif
           std::map<std::string,StencilFSM*> & stencilMap = traversal.get_stencilMap();
           
           ROSE_ASSERT(stencilMap.find(stencilName) != stencilMap.end());
@@ -114,11 +114,11 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
        // DQ (2/8/2015): Moved out of loop.
           int stencilDimension = stencilFSM->stencilDimension();
           ROSE_ASSERT(stencilDimension > 0);
-
+#if 0
        // These are computed values.
           printf ("Stencil dimension = %d \n",stencilDimension);
           printf ("Stencil width     = %d \n",stencilFSM->stencilWidth());
-
+#endif
           std::vector<std::pair<StencilOffsetFSM,double> > & stencilPointList = stencilFSM->stencilPointList;
 
        // This is the scope where the stencil operator is evaluated.
@@ -144,22 +144,8 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           SgStatement* lastStatement = associatedStatement;
           if (generateLowlevelCode == true)
              {
-#if 1
                SgVariableDeclaration* sourceDataPointerVariableDeclaration = buildDataPointer("sourceDataPointer",sourceVariableSymbol,outerScope);
-#else
-            // Optionally build a pointer variable so that we can optionally support a C style indexing for the DTEC DSL blocks.
-               SgExpression* sourcePointerExp = buildMemberFunctionCall(sourceVariableSymbol,"getPointer",NULL,false);
-               ROSE_ASSERT(sourcePointerExp != NULL);
-               SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(sourcePointerExp);
-               ROSE_ASSERT(assignInitializer != NULL);
 
-            // Build the variable declaration for the pointer to the data.
-               string sourcePointerName = "sourceDataPointer";
-               SgVariableDeclaration* sourceDataPointerVariableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(sourcePointerName,SageBuilder::buildPointerType(SageBuilder::buildDoubleType()),assignInitializer,outerScope);
-               ROSE_ASSERT(sourceDataPointerVariableDeclaration != NULL);
-#endif
-
-            // SageInterface::insertStatementAfter(associatedStatement,forStatementScope,autoMovePreprocessingInfo);
                SageInterface::insertStatementAfter(associatedStatement,sourceDataPointerVariableDeclaration,autoMovePreprocessingInfo);
 
                SgVariableDeclaration* destinationDataPointerVariableDeclaration = buildDataPointer("destinationDataPointer",destinationVariableSymbol,outerScope);
@@ -173,7 +159,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
              }
 
           SgBasicBlock* innerLoopBody = NULL;
-       // SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,sourceVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
+
           SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
           ROSE_ASSERT(innerLoopBody != NULL);
 
@@ -184,7 +170,6 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           associatedStatement->get_file_info()->setCompilerGenerated();
 
        // Form an array of AST subtrees to represent the different points in the stencil.
-       // vector<SgFunctionCallExp*> stencilSubTreeArray;
           vector<SgExpression*> stencilSubTreeArray;
           for (size_t j = 0; j < stencilPointList.size(); j++)
              {

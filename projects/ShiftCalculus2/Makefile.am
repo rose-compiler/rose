@@ -8,6 +8,8 @@ INCLUDES = $(ROSE_INCLUDES)
 
 bin_PROGRAMS = shiftCalculusCompiler 
 
+CPPFLAGS += -std=c++11
+
 shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C lowLevelCodeGeneration.C
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h

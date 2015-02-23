@@ -135,7 +135,8 @@ DSL_Support::buildMemberFunctionCall(SgExpression* expressionRoot, const string 
      SgFunctionCallExp* memberFunctionCall = NULL;
 
 #if 0
-     printf ("In DSL_Support::buildMemberFunctionCall(): expressionRoot = %p = %s memberFunctionName = %s expression = %p \n",expressionRoot,expressionRoot->class_name().c_str(),memberFunctionName.c_str(),expression);
+     printf ("In DSL_Support::buildMemberFunctionCall(): expressionRoot = %p = %s memberFunctionName = %s expression = %p isOperator = %s \n",
+          expressionRoot,expressionRoot->class_name().c_str(),memberFunctionName.c_str(),expression,isOperator ? "true" : "false");
 #endif
 
   // Need to get the symbol for the member function "operator[]" in the RectMDArray<TDest> template class instantiation.
@@ -150,6 +151,7 @@ DSL_Support::buildMemberFunctionCall(SgExpression* expressionRoot, const string 
   // SgClassType* classType = isSgClassType(expressionRoot->get_type());
   // Available values to strip (we only select a subset): STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE
      SgClassType* classType = isSgClassType(expressionRoot->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE|SgType::STRIP_REFERENCE_TYPE|SgType::STRIP_TYPEDEF_TYPE));
+
      if (classType == NULL)
         {
           printf ("Error: classType == NULL: expressionRoot->get_type() = %p \n",expressionRoot->get_type());
@@ -173,7 +175,9 @@ DSL_Support::buildMemberFunctionCall(SgExpression* expressionRoot, const string 
   // We need the class definition scope so that we can look up the member function "operator[]".
      SgClassDefinition* classDefinition = definingClassDeclaration->get_definition();
      ROSE_ASSERT(classDefinition != NULL);
-
+#if 0
+     printf ("classDeclaration->get_name() = %s classDefinition = %p = %s \n",classDeclaration->get_name().str(),classDefinition,classDefinition->class_name().c_str());
+#endif
   // For the moment we will assume this is not a overloaded operator.
   // SgMemberFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_nontemplate_member_function_symbol("opearator[]");
   // SgFunctionSymbol* functionSymbol = classDefinition->lookup_function_symbol("operator[]");
@@ -181,6 +185,9 @@ DSL_Support::buildMemberFunctionCall(SgExpression* expressionRoot, const string 
      if (functionSymbol == NULL)
         {
           printf ("Error: function not found in classDeclaration = %s symbol table: memberFunctionName = %s \n",classDeclaration->get_name().str(),memberFunctionName.c_str());
+
+       // Debugging the missing symbol which we expected in the symbol table.
+       // classDefinition->get_symbol_table()->print();
         }
      ROSE_ASSERT(functionSymbol != NULL);
   // SgMemberFunctionSymbol* memberFunctionSymbol = classDefinition->lookup_function_symbol("opearator[]");
@@ -280,7 +287,6 @@ DSL_Support::detectVariableDeclarationOfSpecificType (SgNode* astNode, const str
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclarationForPoint);
 #if 0
           printf ("initializedName->get_name() = %s initializedName->get_type() = %s \n",initializedName->get_name().str(),initializedName->get_type()->class_name().c_str());
-       // printf ("initializedName->get_type() = %s \n",initializedName->get_type()->class_name().c_str());
 #endif
           SgClassType* classType = isSgClassType(initializedName->get_type());
 #if 0
@@ -329,7 +335,10 @@ DSL_Support::detectVariableDeclarationOfSpecificType (SgNode* astNode, const str
 
 
 SgFunctionCallExp* 
-DSL_Support::detectMemberFunctionOfSpecificClassType(SgNode* astNode, SgInitializedName* & initializedNameUsedToCallMemberFunction, const string & className, bool isTemplateClass, const string & memberFunctionName, bool isTemplateFunctionInstantiation)
+DSL_Support::detectMemberFunctionOfSpecificClassType(
+     SgNode* astNode, SgInitializedName* & initializedNameUsedToCallMemberFunction, 
+     const string & className, bool isTemplateClass, const string & memberFunctionName, 
+     bool isTemplateFunctionInstantiation)
    {
   // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
 

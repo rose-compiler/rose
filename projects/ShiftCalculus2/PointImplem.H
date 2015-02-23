@@ -17,6 +17,12 @@ inline Point getZeros()
     }
   return Point(zeros);
 };
+inline Point getBasisV(int idir)
+{
+  Point retval = getZeros();
+  retval[idir] = 1;
+  return retval;
+}
 // Point getUnitv(int a_dir)
 // {
 //   assert((a_dir < DIM) && (a_dir >= 0));
@@ -36,13 +42,13 @@ Point::Point(const int a_tuple[DIM])
       m_tuple[j]=a_tuple[j];
     }
 };
-// Point::Point(const array<int,DIM> a_tuple)
-// {
-//   for (int j = 0; j < DIM; j++)
-//     {
-//       m_tuple[j]=a_tuple[j];
-//     }
-// };
+Point::Point(const array<int,DIM> a_tuple)
+{
+  for (int j = 0; j < DIM; j++)
+    {
+      m_tuple[j]=a_tuple[j];
+    }
+};
 Point::Point(const Point& a_pt)
 {
   *this = a_pt;

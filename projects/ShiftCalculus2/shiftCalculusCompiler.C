@@ -10,7 +10,14 @@
 
 #include "dslCodeGeneration.h"
 
+#include "VariableIdMapping.h"
+
 #define DEBUG_USING_DOT_GRAPHS 1
+
+using namespace SPRAY; 
+
+VariableIdMapping variableIdMapping;
+
 
 int main( int argc, char * argv[] )
    {
@@ -31,6 +38,45 @@ int main( int argc, char * argv[] )
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);
+
+     try
+        {
+          variableIdMapping.computeVariableSymbolMapping(project);
+        }
+     catch(char* str)
+        {
+          cout << "*Exception raised: " << str << endl;
+        } 
+     catch(const char* str) 
+        {
+          cout << "Exception raised: " << str << endl;
+        } 
+     catch(string str)
+        {
+          cout << "Exception raised: " << str << endl;
+        }
+
+  // variableIdMapping.toStream(cout);
+
+#if 1
+     printf ("variableIdMapping.getVariableIdSet().size() = %zu \n",variableIdMapping.getVariableIdSet().size());
+     ROSE_ASSERT(variableIdMapping.getVariableIdSet().size() > 0);
+#endif
+
+#if 0
+     printf ("Exiting as a test after calling variableIdMapping.computeVariableSymbolMapping(project) \n");
+     ROSE_ASSERT(false);
+#endif
+
+#if 0
+     printf ("Calling constant folding \n");
+     ConstantFolding::constantFoldingOptimization(project,false);
+
+#if 0
+     printf ("Exiting as a test after calling ConstantFolding::constantFoldingOptimization() \n");
+     ROSE_ASSERT(false);
+#endif
+#endif
 
   // DQ (2/8/2015): Find the associated SgFile so we can restrict processing to the current file.
      ROSE_ASSERT(project->get_fileList().empty() == false);
@@ -64,7 +110,7 @@ int main( int argc, char * argv[] )
   // Call the traversal starting at the project (root) node of the AST
   // Detection_SynthesizedAttribute result = shiftCalculus_DetectionTraversal.traverse(project,inheritedAttribute);
      Detection_SynthesizedAttribute result = shiftCalculus_DetectionTraversal.traverseWithinFile(firstFile,inheritedAttribute);
-#if 1
+#if 0
      printf ("Stencil Operator was transformed: %s \n",result.get_stencilOperatorTransformed() ? "true" : "false");
 #endif
      ROSE_ASSERT(result.get_stencilOperatorTransformed() == false);
@@ -72,10 +118,16 @@ int main( int argc, char * argv[] )
 #if 1
      printf ("DONE: Call the Detection traversal starting at the project (root) node of the AST \n");
 #endif
-#if 1
+#if 0
      shiftCalculus_DetectionTraversal.display();
 #endif
-#if 1
+#if DEBUG_USING_DOT_GRAPHS
+  // generateDOTforMultipleFile(*project);
+  // generateDOT(*project,"_before_transformation");
+     AstDOTGeneration astdotgen_2;
+     astdotgen_2.generateWithinFile(firstFile,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,"_after_DSL_detection");
+#endif
+#if 0
      printf ("Exiting after the initial traversal to detect the stencil useage. \n");
      ROSE_ASSERT(false);
 #endif
@@ -84,7 +136,8 @@ int main( int argc, char * argv[] )
      StencilEvaluation_InheritedAttribute inheritedAttribute_stencilEval;
 
   // Define the traversal
-     StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal(shiftCalculus_DetectionTraversal);
+  // StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal(shiftCalculus_DetectionTraversal);
+     StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal;
 
 #if 1
      printf ("Call the StencilEvaluation traversal starting at the project (root) node of the AST \n");
@@ -93,7 +146,8 @@ int main( int argc, char * argv[] )
   // Call the traversal starting at the project (root) node of the AST
   // StencilEvaluation_SynthesizedAttribute result_stencilEval = shiftCalculus_StencilEvaluationTraversal.traverse(project,inheritedAttribute_stencilEval);
      StencilEvaluation_SynthesizedAttribute result_stencilEval = shiftCalculus_StencilEvaluationTraversal.traverseWithinFile(firstFile,inheritedAttribute_stencilEval);
-#if 1
+
+#if 0
      printf ("Stencil Evaluation was transformed: %s \n",result_stencilEval.get_stencilOperatorTransformed() ? "true" : "false");
 #endif
      ROSE_ASSERT(result_stencilEval.get_stencilOperatorTransformed() == false);
@@ -101,14 +155,21 @@ int main( int argc, char * argv[] )
 #if 1
      printf ("DONE: Call the StencilEvaluation traversal starting at the project (root) node of the AST \n");
 #endif
-
+#if 1
      shiftCalculus_StencilEvaluationTraversal.displayStencil("After evaluation of stencil");
+#endif
+#if DEBUG_USING_DOT_GRAPHS
+  // generateDOTforMultipleFile(*project);
+  // generateDOT(*project,"_before_transformation");
+     AstDOTGeneration astdotgen_3;
+     astdotgen_3.generateWithinFile(firstFile,DOTGeneration<SgNode*>::TOPDOWNBOTTOMUP,"_after_DSL_evaluation");
+#endif
 
 #if 1
      printf ("Call generateStencilCode to generate example code \n");
 #endif
 
-#if 1
+#if 0
      printf ("Exiting after the second traversal to evaluate the stencils. \n");
      ROSE_ASSERT(false);
 #endif
@@ -119,6 +180,11 @@ int main( int argc, char * argv[] )
 
 #if 1
      printf ("DONE: Call generateStencilCode to generate example code \n");
+#endif
+
+#if 0
+     printf ("Exiting after call to generateStencilCode() \n");
+     ROSE_ASSERT(false);
 #endif
 
   // AST consistency tests (optional for users, but this enforces more of our tests)

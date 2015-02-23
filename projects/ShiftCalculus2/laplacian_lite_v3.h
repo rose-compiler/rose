@@ -272,6 +272,10 @@ template <class T=double, unsigned int C=1, unsigned char D=1, unsigned char E=1
        // not for public use.  but can't make C++ template friends do what I want
           std::shared_ptr<T>& m_aliasData() {return m_data;}
           T* m_aliasPtr() {return m_rawPtr;}
+
+       // DQ (2/22/2015): I want this specific interface.
+          T* getPointer() {return m_rawPtr;}
+
      private:
           std::shared_ptr<T> m_data;
           T*  m_rawPtr;
@@ -313,7 +317,7 @@ template <class T> class Stencil
           void setDestRefratio(Point a_pt){m_destRefratio = a_pt;};
           void setSrcRefratio(Point a_pt){m_srcRefratio = a_pt;}; 
           void setDestShift(Point a_pt){m_destShift = a_pt;};
-          Stencil makeInterpStencil(RectMDArray<Stencil>){};
+          Stencil makeInterpStencil(RectMDArray<Stencil>){ return *this; };
 
        // This is the secrect sauce of making a Stencil into an operator, using C++ forwarding.
        // A real extended DSL would allow us to use right-binding for operator(), but standard C++ cannot
@@ -325,6 +329,10 @@ template <class T> class Stencil
 
           static void apply(const Stencil<T>& a_stencil,const RectMDArray<T>& a_phi,RectMDArray<T>& a_lofPhi,const Box& a_bx);
           static void apply2(const Stencil<T>& a_stencil,const RectMDArray<T>& a_phi,RectMDArray<T>& a_lofPhi,const Box& a_bx);
+
+       // DQ (2/15/2015): Added operator+=() to support clearer updates of an existing object for compile-time analysis.
+       // Stencil<T> operator+= (const Stencil<T> a_stencil) const;
+          Stencil<T> operator+= (const Stencil<T> a_stencil);
 
      private:
           vector<T> m_coef;

@@ -1,7 +1,8 @@
 #ifndef _SHIFT_H_
 #define _SHIFT_H_
+#include "SPACE.H"
 #include "Point.H"
-//#include<array>
+#include <array>
 
 using namespace std;
 class Shift
@@ -15,27 +16,26 @@ public:
   inline int getExp(int dir){return m_shift[dir];};
   Point m_shift;
   inline void print(){m_shift.print();};
-
-// DQ: Added assignment operator for Shift class.
-// Shift operator= (const Shift & x);
 };
+
+////  Implementation
 inline Shift getUnitShift(){return Shift(getOnes());};
-// inline array<Shift,DIM> getShiftVec()
-// {
-//   array<Shift,DIM> ret;
-//   for (int dir = 0; dir < DIM; dir++)
-//     {
-//       ret[dir] = Shift(getUnitv(dir));
-//     }
-//   return ret;
-// };
-// inline Shift operator^(array<Shift,DIM> a_shiftvec,Point a_exp)
-// {
-//   Shift ret;
-//   for (int dir = 0; dir < DIM; dir++)
-//     {
-//       ret = ret * Shift((a_shiftvec[dir].m_shift)*a_exp[dir]);
-//     }
-//   return ret; 
-// }
+inline array<Shift,DIM> getShiftVec()
+{
+  array<Shift,DIM> ret;
+  for (int dir = 0; dir < DIM; dir++)
+    {
+      ret[dir] = Shift(getUnitv(dir));
+    }
+  return ret;
+};
+inline Shift operator^(array<Shift,DIM> a_shiftvec,Point a_exp)
+{
+  Shift ret;
+  for (int dir = 0; dir < DIM; dir++)
+    {
+      ret = ret * Shift((a_shiftvec[dir].m_shift)*a_exp[dir]);
+    }
+  return ret; 
+}
 #endif

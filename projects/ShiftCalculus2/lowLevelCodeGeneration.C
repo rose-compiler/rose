@@ -65,14 +65,17 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
      arraySizeNameList.push_back("arraySize_X");
      arraySizeNameList.push_back("arraySize_Y");
 
+#if 0
+  // We are now supported 3D stencils.
      if (stencilDimension != 2)
         {
           printf ("Sorry, code generation only implemented and tested for 2D stencils at present: stencilDimension = %d \n",stencilDimension);
           ROSE_ASSERT(false);
         }
+#endif
+
   // This fails for the 0D identity stencil specification.
      ROSE_ASSERT(stencilDimension > 0);
-
 
      for (int k = 0; k < stencilDimension; k++)
         {
@@ -309,11 +312,138 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
                returnExpression = dataReferenceExpression;
              }          
         }
+#if 0
        else
         {
           printf ("Error: Dimensions other than 2 not yet supported! \n");
           ROSE_ASSERT(false);
         }
+#endif
+
+     if (stencilDimension == 3)
+        {
+#if 0
+          printf ("In buildStencilPoint(): Building stencil point for 3D stencil: stencilCoeficient = %3.2f \n",stencilCoeficient);
+#endif
+          ROSE_ASSERT(indexVariableSymbol_X != NULL);
+          ROSE_ASSERT(indexVariableSymbol_Y != NULL);
+          ROSE_ASSERT(indexVariableSymbol_Z != NULL);
+
+          ROSE_ASSERT(arraySizeVariableSymbol_X != NULL);
+          ROSE_ASSERT(arraySizeVariableSymbol_Y != NULL);
+
+       // We need to generate the linearized index expression for the "double RectMDArray::operator[](int index)".  To do this
+       // we need an expresion for the x_axis_size (and for y_axis_size for 3D stencils).
+
+       // SgVarRefExp* variableVarRefExp    = SageBuilder::buildVarRefExp(variableSymbol);
+          SgVarRefExp* indexVarRefExp_Z     = SageBuilder::buildVarRefExp(indexVariableSymbol_Z);
+          SgVarRefExp* arraySizeVarRefExp_Y = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_Y);
+          SgVarRefExp* indexVarRefExp_Y     = SageBuilder::buildVarRefExp(indexVariableSymbol_Y);
+          SgVarRefExp* arraySizeVarRefExp_X = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_X);
+          SgVarRefExp* indexVarRefExp_X     = SageBuilder::buildVarRefExp(indexVariableSymbol_X);
+
+       // For the index expression.
+          SgExpression* expression = NULL;
+          if (stencilOffsetFSM->offsetValues[0] == 0 && stencilOffsetFSM->offsetValues[1] == 0 && stencilOffsetFSM->offsetValues[2] == 0)
+             {
+            // This is a center point in the stencil
+            // We want to generate: source[(k*axis_y_size)+j*axis_x_size+i]
+            // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), indexVarRefExp_X);
+               expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Z,arraySizeVarRefExp_Y),SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), indexVarRefExp_X) );
+             }
+            else
+             {
+            // This is a stencil point offset from the center of the stencil (so it has a binary operator associated with the index expression).
+
+            // We want to generate: "source[(j + offset_x)*axis_x_size+i + offset_y]"
+               if (stencilOffsetFSM->offsetValues[0] == 0 && stencilOffsetFSM->offsetValues[1] != 0 && stencilOffsetFSM->offsetValues[2] == 0)
+                  {
+                    SgExpression* offsetValue_Y = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[1]);
+                 // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                    expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(stencilOffsetFSM->offsetValues[0] != 0 || stencilOffsetFSM->offsetValues[2] != 0);
+
+                    if (stencilOffsetFSM->offsetValues[0] == 0 && stencilOffsetFSM->offsetValues[1] == 0 && stencilOffsetFSM->offsetValues[2] != 0)
+                       {
+                         SgExpression* offsetValue_Z = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[2]);
+                      // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                         expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Z,offsetValue_Z),arraySizeVarRefExp_Y),
+                                                              SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), indexVarRefExp_X));
+                       }
+                      else
+                       {
+                         ROSE_ASSERT(stencilOffsetFSM->offsetValues[0] != 0);
+
+                         if (stencilOffsetFSM->offsetValues[0] != 0 && stencilOffsetFSM->offsetValues[1] == 0 && stencilOffsetFSM->offsetValues[2] == 0)
+                            {
+                              SgExpression* offsetValue_X = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[0]);
+                           // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                              expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Z,arraySizeVarRefExp_Y),
+                                                                   SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), 
+                                                                                           SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X)));
+                            }
+                           else
+                            {
+                           // This is still an opportunity to handle the case where either one of the offset axis is zero.
+
+                           // This has to be the more general case.
+                              ROSE_ASSERT(stencilOffsetFSM->offsetValues[0] != 0);
+                              ROSE_ASSERT(stencilOffsetFSM->offsetValues[1] != 0);
+                              ROSE_ASSERT(stencilOffsetFSM->offsetValues[2] != 0);
+
+                              SgExpression* offsetValue_X = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[0]);
+                              SgExpression* offsetValue_Y = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[1]);
+                              SgExpression* offsetValue_Z = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[2]);
+                           // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                              expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Z,offsetValue_Z),arraySizeVarRefExp_Y),
+                                                                   SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), 
+                                                                                           SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X)));
+                            }
+                       }
+                  }
+             }
+
+          SgExpression* dataReferenceExpression = NULL;
+          if (generateLowlevelCode == true)
+             {
+               SgVarRefExp* arrayPointerVarRefExp = SageBuilder::buildVarRefExp(variableSymbol);
+               SgPntrArrRefExp* arrayRefExp       = SageBuilder::buildPntrArrRefExp(arrayPointerVarRefExp,expression);
+               dataReferenceExpression = arrayRefExp;
+             }
+            else
+             {
+               SgFunctionCallExp* functionCallExp = buildMemberFunctionCall(variableSymbol,"operator[]",expression,true);
+               dataReferenceExpression = functionCallExp;
+             }
+
+       // If stencilCoeficient == 1.0 then don't build the SgMultiplyOp (I will handle this better later).
+          if (stencilCoeficient < 0.99999 || stencilCoeficient > 1.00001)
+             {
+            // Build the value expression for the coeficient.
+               SgDoubleVal* doubleVal = SageBuilder::buildDoubleVal(stencilCoeficient);
+
+            // Build the expression to multiply the array reference (using "operator[]" member function) times the stencil coeficient.
+            // SgMultiplyOp* multiplyOp = SageBuilder::buildMultiplyOp(functionCallExp,doubleVal);
+               SgMultiplyOp* multiplyOp = SageBuilder::buildMultiplyOp(dataReferenceExpression,doubleVal);
+               returnExpression = multiplyOp;
+             }
+            else
+             {
+            // This is the case where stencilCoeficient == 1.0 (but I want to avoid equality comparisions of floating point values).
+            // returnExpression = functionCallExp;
+               returnExpression = dataReferenceExpression;
+             }          
+        }
+#if 0
+       else
+        {
+          printf ("Error: Dimensions other than 3 not yet supported! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
 
 #if 1
      if (returnExpression == NULL)

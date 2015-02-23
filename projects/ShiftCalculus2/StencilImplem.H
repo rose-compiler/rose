@@ -1,3 +1,4 @@
+#include "CH_Timer.H"
 #include "Box.H"
 template <class TCoef> 
 Stencil<TCoef>::Stencil(){};
@@ -15,21 +16,6 @@ Stencil<TCoef>::Stencil(pair<Shift,TCoef> a_pair,
 };
 
 template <class TCoef> 
-Stencil<TCoef>::Stencil(vector<pair<Shift,TCoef> > a_vec,
-                                   Point a_destRefratio,
-                                   Shift a_destShift,
-                                   Point a_srcRefratio)
-{
-  for (int k; k < a_vec.size();k++)
-    {
-      m_coef = a_vec[k].second;
-      m_offsets = a_vec[k].first.m_shift;
-    }
-  m_destRefratio = a_destRefratio;
-  m_srcRefratio = a_srcRefratio;
-  m_destShift = a_destShift;
-};
-template <class TCoef> 
 Stencil<TCoef>::Stencil(vector<TCoef> a_vecT,
                         vector<Point> a_vecPt,
                         Point a_destRefratio,
@@ -43,6 +29,7 @@ Stencil<TCoef>::Stencil(vector<TCoef> a_vecT,
   m_destShift = a_destShift;
  
 };
+
 template <class TCoef> 
 Stencil<TCoef> Stencil<TCoef>::operator+
 (const Stencil<TCoef> a_stencil) const
@@ -52,7 +39,7 @@ Stencil<TCoef> Stencil<TCoef>::operator+
     {
       cout << "error - trying to add two stencils with different"
            << " LHS shifts / ratios" << endl;
-      //      abort();
+      abort();
     }
   vector<TCoef> newCoefs = a_stencil.m_coef;
   vector<Point> newOffsets = a_stencil.m_offsets;
@@ -81,6 +68,7 @@ Stencil<TCoef> Stencil<TCoef>::operator+
     }
   return Stencil(newCoefs,newOffsets,m_destRefratio,m_destShift,m_srcRefratio);
 };
+
 template <class TCoef> 
 Stencil<TCoef> Stencil<TCoef>::operator*
 (const Stencil<TCoef> a_stencil) const
@@ -94,7 +82,7 @@ Stencil<TCoef> Stencil<TCoef>::operator*
       bool isThere = false;
       for (int l2 = 0;l2 < a_stencil.m_coef.size();l2++)
         {
-          if (a_stencil.m_offsets[l2] == loc)
+          if (a_stencil.m_offset[l2] == loc)
             {
               isThere = true;
               locThere = l2;
@@ -112,6 +100,7 @@ Stencil<TCoef> Stencil<TCoef>::operator*
     }
   return Stencil(newCoefs,newOffsets,m_destRefratio,m_destShift,m_srcRefratio);
 };
+
 template <class TCoef>
 void Stencil<TCoef>::operator*=(const TCoef& a_coef)
 {

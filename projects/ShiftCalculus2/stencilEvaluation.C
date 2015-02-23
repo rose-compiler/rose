@@ -17,6 +17,21 @@
 
 #include "dslSupport.h"
 
+using namespace SPRAY; 
+
+extern VariableIdMapping variableIdMapping;
+
+// Controls output of debugging information as compile-time evaluation is done using 
+// the Shift Calculus operations.
+#define DEBUG_SHIFT_CALCULUS 0
+
+// Define stencil DSL evaluation using more complete use of the variable ID mapping
+// initial use was for the Stencil variables only.
+// #define USING_VARIABLE_ID_MAPPING 1
+
+#define DEBUG_DSL_ATTRIBUTES 0
+
+
 using namespace std;
 
 using namespace DSL_Support;
@@ -75,14 +90,15 @@ StencilEvaluation_SynthesizedAttribute::get_stencilOperatorTransformed()
    }
 
 
-
+#if 0
 StencilEvaluationTraversal::StencilEvaluationTraversal(DetectionTraversal & previousTraversal)
    {
-#if 1
+#if 0
      printf ("In StencilEvaluationTraversal constructor: previousTraversal.get_stencilInputInitializedNameList().size() = %zu \n",previousTraversal.get_stencilInputInitializedNameList().size());
 #endif
-     stencilInputInitializedNameList = previousTraversal.get_stencilInputInitializedNameList();
-#if 1
+  // stencilInputInitializedNameList = previousTraversal.get_stencilInputInitializedNameList();
+
+#if 0
      printf ("In StencilEvaluationTraversal constructor: previousTraversal.get_stencilInputInitializedNameList().size() = %zu \n",previousTraversal.get_stencilInputInitializedNameList().size());
      for (size_t i = 0; i < stencilInputInitializedNameList.size(); i++)
         {
@@ -91,14 +107,22 @@ StencilEvaluationTraversal::StencilEvaluationTraversal(DetectionTraversal & prev
 #endif
 
   // Copy the names of the SgInitializedNames associated with Stencil Operators.
-     stencilOperatorInitializedNameList = previousTraversal.get_stencilOperatorInitializedNameList();
+  // stencilOperatorInitializedNameList = previousTraversal.get_stencilOperatorInitializedNameList();
 
   // Copy the locations where stencil operators are called.
-     stencilOperatorFunctionCallList = previousTraversal.get_stencilOperatorFunctionCallList();
+  // stencilOperatorFunctionCallList = previousTraversal.get_stencilOperatorFunctionCallList();
 
-#if 1
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
+#endif
+   }
+#endif
+
+StencilEvaluationTraversal::StencilEvaluationTraversal()
+   {
+#if 1
+     printf ("In StencilEvaluationTraversal constructor: \n");
 #endif
    }
 
@@ -117,536 +141,290 @@ StencilEvaluationTraversal::get_stencilMap()
    }
 
 
+// Names used to attach attributes to the AST.
+const string dsl_value_string = "dsl_value";
+const string StencilEvaluationTraversal::PointValue   = dsl_value_string;
+const string StencilEvaluationTraversal::IntegerValue = dsl_value_string;
+const string StencilEvaluationTraversal::DoubleValue  = dsl_value_string;
+const string StencilEvaluationTraversal::ShiftValue   = dsl_value_string;
+const string StencilEvaluationTraversal::ArrayValue   = dsl_value_string;
+const string StencilEvaluationTraversal::StencilValue = dsl_value_string;
+
+const string StencilEvaluationTraversal::BoxValue         = dsl_value_string;
+const string StencilEvaluationTraversal::RectMDArrayValue = dsl_value_string;
+
+// static data member
+std::map<SPRAY::VariableId,DSL_ValueAttribute*> StencilEvaluationTraversal::dslValueState;
+
 
 StencilEvaluation_InheritedAttribute
 StencilEvaluationTraversal::evaluateInheritedAttribute (SgNode* astNode, StencilEvaluation_InheritedAttribute inheritedAttribute )
    {
-#if 1
-     printf ("In evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#if 0
+     printf ("In StencilEvaluationTraversal::evaluateInheritedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
-     bool foundPairShiftDoubleConstructor = false;
-
-  // This is for stencil specifications using vectors of points to represent offsets (not finished).
-  // bool foundVariableDeclarationForStencilInput = false;
-
-     double stencilCoeficientValue = 0.0;
-
-  // StencilOffsetFSM offset;
-     StencilOffsetFSM* stencilOffsetFSM = NULL;
-
-  // We want to interogate the SgAssignInitializer, but we need to generality in the refactored function to use any SgInitializer (e.g. SgConstructorInitializer, etc.).
-     SgInitializedName* initializedName = detectVariableDeclarationOfSpecificType (astNode,"Point");
-
-     if (initializedName != NULL)
+     SgForStatement* forStatement = isSgForStatement(astNode);
+     if (forStatement != NULL)
         {
-       // This is the code that is specific to the DSL (e.g. the semantics of getZeros() and getUnitv() functions).
-       // So this may be the limit of what can be refactored to common DSL support code.
-       // Or I can maybe do a second pass at atempting to refactor more code later.
-
-          string name = initializedName->get_name();
-
-          SgInitializer* initializer = initializedName->get_initptr();
-
-          SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
-          if (assignInitializer != NULL)
+          ForLoopOperator_Attribute* forLoopAttribute = dynamic_cast<ForLoopOperator_Attribute*>(forStatement->getAttribute(DetectionTraversal::ForLoopOperator));
+          if (forLoopAttribute != NULL)
              {
-               SgExpression* exp = assignInitializer->get_operand();
-               ROSE_ASSERT(exp != NULL);
-               SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(exp);
-               if (functionCallExp != NULL)
-                  {
-                    SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(functionCallExp->get_function());
-                    if (functionRefExp != NULL)
-                       {
-                         SgFunctionSymbol* functionSymbol = functionRefExp->get_symbol();
-                         ROSE_ASSERT(functionSymbol != NULL);
-                         string functionName = functionSymbol->get_name();
+               SgInitializedName* indexVariable = SageInterface::getLoopIndexVariable(forStatement);
+               ROSE_ASSERT(indexVariable != NULL);
+
+               printf ("In StencilEvaluationTraversal::evaluateInheritedAttribute(): Identified the DSL ForLoopOperator: indexVariable = %p = %s \n",indexVariable,indexVariable->get_name().str());
+
+               IntegerValue_Attribute* integerValue_Attribute = new IntegerValue_Attribute();
+               add_dslValueAttribute(indexVariable,integerValue_Attribute);
+
+               ROSE_ASSERT(get_dslValueAttribute(indexVariable) != NULL);
+
+            // I am assuming that the DSL semantics are that the initializer is 0.
+               integerValue_Attribute->value = 0;
+
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
+               printf ("Compile-time evaluation of loop index is set to 0: integerValue_Attribute->value = %d \n",integerValue_Attribute->value);
+               printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #if 0
-                         printf ("functionName = %s \n",functionName.c_str());
-#endif
-                         if (functionName == "getZeros")
-                            {
-                           // We leverage the semantics of known functions used to initialize "Point" objects ("getZeros" initialized the Point object to be all zeros).
-                           // In a stencil this will be the center point from which all other points will have non-zero offsets.
-                           // For a common centered difference discretization this will be the center point of the stencil.
-#if 0
-                              printf ("Identified and interpreting the semantics of getZeros() function \n");
-#endif
-                              stencilOffsetFSM = new StencilOffsetFSM(0,0,0);
-                              ROSE_ASSERT(stencilOffsetFSM != NULL);
-                            }
-
-                         if (functionName == "getUnitv")
-                            {
-                           // We leverage the semantics of known functions used to initialize "Point" objects 
-                           // ("getUnitv" initializes the Point object to be a unit vector for a specific input dimention).
-                           // In a stencil this will be an ofset from the center point.
-#if 0
-                              printf ("Identified and interpreting the semantics of getUnitv() function \n");
-#endif
-                           // Need to get the dimention argument.
-                              SgExprListExp* argumentList = functionCallExp->get_args();
-                              ROSE_ASSERT(argumentList != NULL);
-                           // This function has a single argument.
-                              ROSE_ASSERT(argumentList->get_expressions().size() == 1);
-                              SgExpression* functionArg = argumentList->get_expressions()[0];
-                              ROSE_ASSERT(functionArg != NULL);
-                              SgIntVal* intVal = isSgIntVal(functionArg);
-                           // ROSE_ASSERT(intVal != NULL);
-                              if (intVal != NULL)
-                                 {
-                                   int value = intVal->get_value();
-#if 0
-                                   printf ("value = %d \n",value);
-#endif
-                                   switch(value)
-                                      {
-                                        case 0: stencilOffsetFSM = new StencilOffsetFSM(1,0,0); break;
-                                        case 1: stencilOffsetFSM = new StencilOffsetFSM(0,1,0); break;
-                                        case 2: stencilOffsetFSM = new StencilOffsetFSM(0,0,1); break;
-
-                                        default:
-                                           {
-                                             printf ("Error: default reached in switch: value = %d (for be value of 0, 1, or 2) \n",value);
-                                             ROSE_ASSERT(false);
-                                           }
-                                      }
-
-                                   ROSE_ASSERT(stencilOffsetFSM != NULL);
-
-                                // End of test for intVal != NULL
-                                 }
-                                else
-                                 {
-#if 0
-                                   printf ("functionArg = %p = %s \n",functionArg,functionArg->class_name().c_str());
-#endif
-                                 }
-                            }
-
-                          // ROSE_ASSERT(stencilOffsetFSM != NULL);
-                       }
-                  }
-             }
-
-           if (stencilOffsetFSM != NULL)
-             {
-            // Put the FSM into the map.
-#if 0
-               printf ("Put the stencilOffsetFSM = %p into the StencilOffsetMap using key = %s \n",stencilOffsetFSM,name.c_str());
-#endif
-               ROSE_ASSERT(StencilOffsetMap.find(name) == StencilOffsetMap.end());
-
-            // We have a choice of syntax to add the element to the map.
-            // StencilOffsetMap.insert(pair<string,StencilOffsetFSM*>(name,stencilOffsetFSM));
-               StencilOffsetMap[name] = stencilOffsetFSM;
-             }
-
-       // new StencilOffsetFSM();
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
-
-  // Recognize member function calls on "Point" objects so that we can trigger events on those associated finite state machines.
-     bool isTemplateClass = false;
-     bool isTemplateFunctionInstantiation = false;
-     SgInitializedName* initializedNameUsedToCallMemberFunction = NULL;
-     SgFunctionCallExp* functionCallExp = detectMemberFunctionOfSpecificClassType(astNode,initializedNameUsedToCallMemberFunction,"Point",isTemplateClass,"operator*=",isTemplateFunctionInstantiation);
-     if (functionCallExp != NULL)
-        {
-       // This is the DSL specific part (capturing the semantics of operator*= with specific integer values).
-
-       // The name of the variable off of which the member function is called (variable has type "Point").
-          ROSE_ASSERT(initializedNameUsedToCallMemberFunction != NULL);
-          string name = initializedNameUsedToCallMemberFunction->get_name();
-
-       // Need to get the dimention argument.
-          SgExprListExp* argumentList = functionCallExp->get_args();
-          ROSE_ASSERT(argumentList != NULL);
-       // This function has a single argument.
-          ROSE_ASSERT(argumentList->get_expressions().size() == 1);
-          SgExpression* functionArg = argumentList->get_expressions()[0];
-          ROSE_ASSERT(functionArg != NULL);
-          SgIntVal* intVal = isSgIntVal(functionArg);
-
-          bool usingUnaryMinus = false;
-          if (intVal == NULL)
-             {
-               SgMinusOp* minusOp = isSgMinusOp(functionArg);
-               if (minusOp != NULL)
-                  {
-#if 0
-                    printf ("Using SgMinusOp on stencil constant \n");
-#endif
-                    usingUnaryMinus = true;
-                    intVal = isSgIntVal(minusOp->get_operand());
-                  }
-             }
-
-          ROSE_ASSERT(intVal != NULL);
-          int value = intVal->get_value();
-
-          if (usingUnaryMinus == true)
-             {
-               value *= -1;
-             }
-#if 0
-          printf ("value = %d \n",value);
-#endif
-       // Look up the stencil offset finite state machine
-          ROSE_ASSERT(StencilOffsetMap.find(name) != StencilOffsetMap.end());
-          StencilOffsetFSM* stencilOffsetFSM = StencilOffsetMap[name];
-          ROSE_ASSERT(stencilOffsetFSM != NULL);
-#if 0
-          printf ("We have found the StencilOffsetFSM associated with the StencilOffset named %s \n",name.c_str());
-#endif
-#if 0
-          stencilOffsetFSM->display("before multiply event");
-#endif
-          if (value == -1)
-             {
-            // Execute the event on the finte state machine to accumulate the state.
-               stencilOffsetFSM->operator*=(-1);
-             }
-            else
-             {
-               printf ("Error: constant value other than -1 are not supported \n");
+               printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
-             }
-#if 0
-          stencilOffsetFSM->display("after multiply event");
 #endif
-        }
-
-  // Detection of "pair<Shift,double>(xdir,ident)" defined as an event in the stencil finite machine model.
-  // Actually, it is the Stencil that is create using the "pair<Shift,double>(xdir,ident)" that should be the 
-  // event so we first detect the SgConstructorInitializer.  There is not other code similar to this which 
-  // has to test for the template arguments, so this has not yet refactored into the dslSupport.C file.
-  // I will do this later since this is general support that could be resused in other DSL compilers.
-     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(astNode);
-     if (constructorInitializer != NULL)
-        {
-       // DQ (10/20/2014): This can sometimes be NULL.
-       // ROSE_ASSERT(constructorInitializer->get_class_decl() != NULL);
-          SgClassDeclaration* classDeclaration = constructorInitializer->get_class_decl();
-       // ROSE_ASSERT(classDeclaration != NULL);
-          if (classDeclaration != NULL)
-             {
-#if 0
-          printf ("constructorInitializer = %p class name    = %s \n",constructorInitializer,classDeclaration->get_name().str());
-#endif
-          SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classDeclaration);
-       // ROSE_ASSERT(templateInstantiationDecl != NULL);
-#if 0
-          if (templateInstantiationDecl != NULL)
-             {
-               printf ("constructorInitializer = %p name = %s template name = %s \n",constructorInitializer,templateInstantiationDecl->get_name().str(),templateInstantiationDecl->get_templateName().str());
-             }
-#endif
-
-       // if (classDeclaration->get_name() == "pair")
-          if (templateInstantiationDecl != NULL && templateInstantiationDecl->get_templateName() == "pair")
-             {
-            // Look at the template parameters.
-#if 0
-               printf ("Found template instantiation for pair \n");
-#endif
-               SgTemplateArgumentPtrList & templateArgs = templateInstantiationDecl->get_templateArguments();
-               if (templateArgs.size() == 2)
-                  {
-                 // Now look at the template arguments and check that they represent the pattern that we are looking for in the AST.
-                 // It is not clear now flexible we should be, at present shift/coeficent pairs must be specified exactly one way.
-
-                    SgType* type_0 = templateArgs[0]->get_type();
-                    SgType* type_1 = templateArgs[1]->get_type();
-
-                    if ( type_0 != NULL && type_1 != NULL)
-                       {
-                         SgClassType* classType_0 = isSgClassType(type_0);
-                      // ROSE_ASSERT(classType_0 != NULL);
-                         if (classType_0 != NULL)
-                            {
-                         SgClassDeclaration* classDeclarationType_0 = isSgClassDeclaration(classType_0->get_declaration());
-                         ROSE_ASSERT(classDeclarationType_0 != NULL);
-#if 0
-                         printf ("templateArgs[0]->get_name() = %s \n",classDeclarationType_0->get_name().str());
-                         printf ("templateArgs[1]->get_type()->class_name() = %s \n",type_1->class_name().c_str());
-#endif
-                         bool foundShiftExpression   = false;
-                         bool foundStencilCoeficient = false;
-
-                      // We might want to be more flexiable about the type of the 2nd parameter (allow SgTypeFloat, SgTypeComplex, etc.).
-                         if (classDeclarationType_0->get_name() == "Shift" && type_1->variant() == V_SgTypeDouble)
-                            {
-                           // Found a pair<Shift,double> input for a stencil.
-#if 0
-                              printf ("##### Found a pair<Shift,double>() input for a stencil input \n");
-#endif
-                           // *****************************************************************************************************
-                           // Look at the first parameter to the pair<Shift,double>() constructor.
-                           // *****************************************************************************************************
-                              SgExpression* stencilOffset = constructorInitializer->get_args()->get_expressions()[0];
-                              ROSE_ASSERT(stencilOffset != NULL);
-#if 0
-                              printf ("stencilOffset = %p = %s \n",stencilOffset,stencilOffset->class_name().c_str());
-#endif
-                              SgConstructorInitializer* stencilOffsetConstructorInitializer = isSgConstructorInitializer(stencilOffset);
-                              if (stencilOffsetConstructorInitializer != NULL)
-                                 {
-                                // This is the case of a Shift being constructed implicitly from a Point (doing so more directly would be easier to make sense of in the AST).
-#if 0
-                                   printf ("!!!!! Looking for the stencil offset \n");
-#endif
-                                   ROSE_ASSERT(stencilOffsetConstructorInitializer->get_class_decl() != NULL);
-                                   SgClassDeclaration* stencilOffsetClassDeclaration = stencilOffsetConstructorInitializer->get_class_decl();
-                                   ROSE_ASSERT(stencilOffsetClassDeclaration != NULL);
-#if 0
-                                   printf ("stencilOffsetConstructorInitializer = %p class name    = %s \n",stencilOffsetConstructorInitializer,stencilOffsetClassDeclaration->get_name().str());
-                                   printf ("stencilOffsetConstructorInitializer = %p class = %p = %s \n",stencilOffsetConstructorInitializer,stencilOffsetClassDeclaration,stencilOffsetClassDeclaration->class_name().c_str());
-#endif
-                                // This should not be a template instantiation (the Shift is defined to be a noo-template class declaration, not a template class declaration).
-                                   SgTemplateInstantiationDecl* stencilOffsetTemplateInstantiationDecl = isSgTemplateInstantiationDecl(stencilOffsetClassDeclaration);
-                                   ROSE_ASSERT(stencilOffsetTemplateInstantiationDecl == NULL);
-
-                                   if (stencilOffsetClassDeclaration != NULL && stencilOffsetClassDeclaration->get_name() == "Shift")
-                                      {
-                                     // Now we know that the type associated with the first template parameter is associated with the class "Shift".
-                                     // But we need so also now what the first parametr is associate with the constructor initializer, since it will
-                                     // be the name of the variable used to interprete the stencil offset (and the name of the variable will be the 
-                                     // key into the map of finite machine models used to accumulate the state of the stencil offsets that we accumulate
-                                     // to build the stencil.
-
-                                     // Now we need the value of the input (computed using it's fine state machine).
-                                        SgExpression* inputToShiftConstructor = stencilOffsetConstructorInitializer->get_args()->get_expressions()[0];
-                                        ROSE_ASSERT(inputToShiftConstructor != NULL);
-                                        SgConstructorInitializer* inputToShiftConstructorInitializer = isSgConstructorInitializer(inputToShiftConstructor);
-                                        if (stencilOffsetConstructorInitializer != NULL)
-                                           {
-                                             SgExpression* inputToPointConstructor = inputToShiftConstructorInitializer->get_args()->get_expressions()[0];
-                                             ROSE_ASSERT(inputToPointConstructor != NULL);
-
-                                          // This should be a SgVarRefExp (if we strictly follow the stencil specification rules (which are not written down yet).
-                                             SgVarRefExp* inputToPointVarRefExp = isSgVarRefExp(inputToPointConstructor);
-                                             if (inputToPointVarRefExp != NULL)
-                                                {
-#if 0
-                                                  printf ("Found varRefExp in bottom of chain of constructors \n");
-#endif
-                                                  SgVariableSymbol* variableSymbolForOffset = isSgVariableSymbol(inputToPointVarRefExp->get_symbol());
-                                                  ROSE_ASSERT(variableSymbolForOffset != NULL);
-                                                  SgInitializedName* initializedNameForOffset = variableSymbolForOffset->get_declaration();
-                                                  ROSE_ASSERT(initializedNameForOffset != NULL);
-                                                  SgInitializer* initializer = initializedNameForOffset->get_initptr();
-                                                  ROSE_ASSERT(initializer != NULL);
-#if 0
-                                                  printf ("Found initializedName: name = %s in bottom of chain of constructors: initializer = %p = %s \n",initializedNameForOffset->get_name().str(),initializer,initializer->class_name().c_str());
-#endif
-                                               // Record the name to be used as a key into the map of "StencilOffset" finite state machines.
-
-                                                  SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
-                                                  ROSE_ASSERT(assignInitializer != NULL);
-
-                                                  string name = initializedNameForOffset->get_name();
-                                               // Look up the current state in the finite state machine for the "Point".
-
-                                               // Check that this is a previously defined stencil offset.
-                                                  ROSE_ASSERT(StencilOffsetMap.find(name) != StencilOffsetMap.end());
-                                               // StencilOffsetFSM* stencilOffsetFSM = StencilOffsetMap[name];
-                                                  stencilOffsetFSM = StencilOffsetMap[name];
-                                                  ROSE_ASSERT(stencilOffsetFSM != NULL);
-#if 0
-                                                  printf ("We have found the StencilOffsetFSM associated with the StencilOffset named %s \n",name.c_str());
-#endif
-#if 0
-                                                  printf ("Exiting as a test! \n");
-                                                  ROSE_ASSERT(false);
-#endif
-                                                }
-                                               else
-                                                {
-                                                  printf ("What is this expression: inputToPointConstructor = %p = %s \n",inputToPointConstructor,inputToPointConstructor->class_name().c_str());
-                                                  ROSE_ASSERT(false);
-                                                }
-                                           }
-#if 0
-                                        printf ("Found Shift type \n");
-#endif
-                                        foundShiftExpression = true;
-                                      }
-#if 0
-                                   printf ("Exiting as a test! \n");
-                                   ROSE_ASSERT(false);
-#endif
-                                 }
-                                else
-                                 {
-                                // This case for the specification of a Shift in the first argument is not yet supported (need an example of this).
-                                   printf ("This case of using a shift is not a part of what is supported \n");
-                                 }
-
-                           // *****************************************************************************************************
-                           // Look at the second parameter to the pair<Shift,double>(first_parameter,second_parameter) constructor.
-                           // *****************************************************************************************************
-                              SgExpression* stencilCoeficent = constructorInitializer->get_args()->get_expressions()[1];
-                              ROSE_ASSERT(stencilCoeficent != NULL);
-
-                              SgVarRefExp* stencilCoeficentVarRefExp = isSgVarRefExp(stencilCoeficent);
-                              if (stencilCoeficentVarRefExp != NULL)
-                                 {
-                                // Handle the case where this is a constant SgVarRefExp and the value is available in the declaration.
-                                   SgVariableSymbol* variableSymbolForConstant = isSgVariableSymbol(stencilCoeficentVarRefExp->get_symbol());
-                                   ROSE_ASSERT(variableSymbolForConstant != NULL);
-                                   SgInitializedName* initializedNameForConstant = variableSymbolForConstant->get_declaration();
-                                   ROSE_ASSERT(initializedNameForConstant != NULL);
-                                   SgInitializer* initializer = initializedNameForConstant->get_initptr();
-                                   if (initializer == NULL)
-                                      {
-                                        initializedNameForConstant->get_file_info()->display("initializer == NULL: initializedNameForConstant");
-                                        stencilCoeficentVarRefExp->get_file_info()->display("initializer == NULL: stencilCoeficentVarRefExp");
-                                      }
-                                   ROSE_ASSERT(initializer != NULL);
-
-                                   SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
-                                   ROSE_ASSERT(assignInitializer != NULL);
-
-                                   SgValueExp* valueExp = isSgValueExp(assignInitializer->get_operand());
-
-                                   bool usingUnaryMinus = false;
-                                // ROSE_ASSERT(valueExp != NULL);
-                                   if (valueExp == NULL)
-                                      {
-                                        SgExpression* operand = assignInitializer->get_operand();
-                                        SgMinusOp* minusOp = isSgMinusOp(operand);
-                                        if (minusOp != NULL)
-                                           {
-#if 0
-                                             printf ("Using SgMinusOp on stencil constant \n");
-#endif
-                                             usingUnaryMinus = true;
-                                             valueExp = isSgValueExp(minusOp->get_operand());
-                                           }
-                                      }
-
-                                   SgDoubleVal* doubleVal = isSgDoubleVal(valueExp);
-                                // ROSE_ASSERT(doubleVal != NULL);
-                                   double value = 0.0;
-                                   if (doubleVal == NULL)
-                                      {
-                                     // Call JP's function to evaluate the constant expression.
-                                        ROSE_ASSERT(valueExp == NULL);
-                                        ROSE_ASSERT(stencilCoeficent != NULL);
-                                        DSL_Support::const_numeric_expr_t const_expression = DSL_Support::evaluateConstNumericExpression(stencilCoeficent);
-                                        if (const_expression.hasValue_ == true)
-                                           {
-                                             ROSE_ASSERT(const_expression.isIntOnly_ == false);
-                                             value = const_expression.value_;
-
-                                             printf ("const expression evaluated to value = %4.2f \n",value);
-                                           }
-                                          else
-                                           {
-                                             printf ("constnat value expression could not be evaluated to a constant \n");
-                                             ROSE_ASSERT(false);
-                                           }
-                                      }
-                                     else
-                                      {
-#if 1
-                                        printf ("SgDoubleVal value = %f \n",doubleVal->get_value());
-#endif
-                                        value = (usingUnaryMinus == false) ? doubleVal->get_value() : -(doubleVal->get_value());
-                                      }
-#if 1
-                                   printf ("Stencil coeficient = %f \n",value);
-#endif
-                                   foundStencilCoeficient = true;
-
-                                   stencilCoeficientValue = value;
-                                 }
-                                else
-                                 {
-                                // When we turn on constant folding in the frontend we eveluate directly to a SgDoubleVal.
-                                   SgDoubleVal* doubleVal = isSgDoubleVal(stencilCoeficent);
-                                   if (doubleVal != NULL)
-                                      {
-                                        ROSE_ASSERT(doubleVal != NULL);
-#if 0
-                                        printf ("SgDoubleVal value = %f \n",doubleVal->get_value());
-#endif
-                                        double value = doubleVal->get_value();
-#if 0
-                                        printf ("Stencil coeficient = %f \n",value);
-#endif
-                                        foundStencilCoeficient = true;
-
-                                        stencilCoeficientValue = value;
-                                      }
-                                     else
-                                      {
-                                        printf ("Error: second parameter in pair for stencil is not a SgVarRefExp (might be explicit value not yet supported) \n");
-                                        printf ("   --- stencilCoeficent = %p = %s \n",stencilCoeficent,stencilCoeficent->class_name().c_str());
-                                        ROSE_ASSERT(false);
-                                      }
-                                 }
-                            }
-#if 0
-                         printf ("foundShiftExpression   = %s \n",foundShiftExpression   ? "true" : "false");
-                         printf ("foundStencilCoeficient = %s \n",foundStencilCoeficient ? "true" : "false");
-#endif
-                         if (foundShiftExpression == true && foundStencilCoeficient == true)
-                            {
-#if 0
-                              printf ("Found pair<Shift,double>() constructor expression! \n");
-#endif
-                              foundPairShiftDoubleConstructor = true;
-                            }
-
-                         // End of test for classType_0 != NULL
-                            }
-                       }
-                  }
-             }
-            else
-             {
-#if 0
-               printf ("This is not a SgConstructorInitializer for the pair templated class \n");
-#endif
-             }
-
-          // End of test for classDeclaration != NULL
              }
         }
 
-#if 0
-     printf ("foundPairShiftDoubleConstructor = %s \n",foundPairShiftDoubleConstructor ? "true" : "false");
-#endif
 
-     if (foundPairShiftDoubleConstructor == true)
-        {
-       // This is the recognition of an event for one of the finite state machines we implement to evaluate the stencil at compile time.
-#if 0
-          printf ("In evaluateInheritedAttribute(): found pair<Shift,double>() constructor expression! \n");
-          printf ("   --- stencilOffsetFSM       = %p \n",stencilOffsetFSM);
-          printf ("   --- stencilCoeficientValue = %f \n",stencilCoeficientValue);
-#endif
-          ROSE_ASSERT(stencilOffsetFSM != NULL);
-
-          inheritedAttribute.stencilOffsetFSM       = stencilOffsetFSM;
-          inheritedAttribute.stencilCoeficientValue = stencilCoeficientValue;
-
-#if 0
-          printf ("Exiting as a test! \n");
-          ROSE_ASSERT(false);
-#endif
-        }
 
   // Construct the return attribute from the modified input attribute.
      return StencilEvaluation_InheritedAttribute(inheritedAttribute);
    }
 
+bool
+StencilEvaluationTraversal::isVariable ( SgNode* node )
+   {
+     return isSgVarRefExp(node) || isSgInitializedName(node);
+   }
+
+VariableId
+StencilEvaluationTraversal::getVariableId ( SgNode* node )
+   {
+     VariableId varId;
+
+     SgVarRefExp* varRefExp = isSgVarRefExp(node);
+     SgInitializedName* initializedName = isSgInitializedName(node);
+     if (varRefExp != NULL || initializedName != NULL)
+        {
+          if (varRefExp != NULL)
+             {
+               varId = variableIdMapping.variableId(varRefExp);
+             }
+            else
+             {
+               if (initializedName != NULL)
+                  {
+                    varId = variableIdMapping.variableId(initializedName);
+                  }
+                 else
+                  {
+                    printf ("Error: input what neither a SgVarRefExp nor SgInitializedName: node = %p = %s \n",node,node->class_name().c_str());
+                    ROSE_ASSERT(false);
+                  }
+             }
+        }
+
+     return varId;
+   }
+
+
+void
+StencilEvaluationTraversal::add_dslValueAttribute ( SgNode* node, DSL_ValueAttribute* dslValueAttribute )
+   {
+     ROSE_ASSERT(node != NULL);
+     ROSE_ASSERT(dslValueAttribute != NULL);
+
+     if (isVariable(node) == true)
+        {
+          VariableId varId = getVariableId(node);
+#if 0
+          int varIdCode = varId.getIdCode();
+          printf ("Add dsl attribute into dslValueState map: varIdCode = %d = %s (but using the VariableId) \n",varIdCode,variableIdMapping.variableName(varId).c_str());
+#endif
+          ROSE_ASSERT(dslValueState.find(varId) == dslValueState.end());
+          dslValueState[varId] = dslValueAttribute;
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("Need to handle the case where node is not a SgVarRefExp: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+       // All value strings are the same.
+          if (node->getAttribute(dsl_value_string) != NULL)
+             {
+               printf ("Error: node = %p = %s already has an attribute (so it is a mistake to add another one) \n",node,node->class_name().c_str());
+             }
+          ROSE_ASSERT(node->getAttribute(dsl_value_string) == NULL);
+
+          node->addNewAttribute(dsl_value_string,dslValueAttribute);
+
+          ROSE_ASSERT(node->getAttribute(dsl_value_string) != NULL);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+   }
+
+
+DSL_ValueAttribute*
+StencilEvaluationTraversal::get_dslValueAttribute ( SgNode* node  )
+   {
+     DSL_ValueAttribute* dslValueAttribute = NULL;
+
+     ROSE_ASSERT(node != NULL);
+
+     if (isVariable(node) == true)
+        {
+          VariableId varId = getVariableId(node);
+#if 0
+          int varIdCode = varId.getIdCode();
+          printf ("Get dsl attribute from dslValueState map: varIdCode = %d = %s (but using the VariableId) \n",varIdCode,variableIdMapping.variableName(varId).c_str());
+#endif
+       // DQ (2/21/2015): This appears to fail for the case of the DSL ForLoop index (because the
+       // nested traversal used a different dslValueMap, this is not fixed to be a static map).
+       // ROSE_ASSERT(dslValueState.find(varId) != dslValueState.end());
+          if (dslValueState.find(varId) != dslValueState.end())
+             {
+               dslValueAttribute = dslValueState[varId];
+               ROSE_ASSERT(dslValueAttribute != NULL);
+             }
+            else
+             {
+#if 0
+               printf ("In get_dslValueAttribute(node = %p = %s): returing dslValueAttribute == NULL \n",node,node->class_name().c_str());
+#endif
+               dslValueAttribute = NULL;
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+#if 0
+          printf ("Need to handle the case where node is not a SgVarRefExp: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+       // All value strings are the same.
+       // It might be that this case should look for the DSL_ValueAttribute directly on the input node as an attached attribute.
+       // dslValueAttribute = dynamic_cast<DSL_ValueAttribute*>(node->getAttribute(PointValue));
+          dslValueAttribute = dynamic_cast<DSL_ValueAttribute*>(node->getAttribute(dsl_value_string));
+
+          ROSE_ASSERT(dslValueAttribute != NULL);
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
+     return dslValueAttribute;
+   }
+
+
+// Note that these could now be just a single template function.
+PointValue_Attribute*
+StencilEvaluationTraversal::get_PointValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     PointValue_Attribute* valueAttribute = dynamic_cast<PointValue_Attribute*>(get_dslValueAttribute(node));
+
+  // DQ (2/22/2015): To support nested traversals (evaluation), we have to allow this function to return NULL pointer.
+  // ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+StencilValue_Attribute*
+StencilEvaluationTraversal::get_StencilValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     StencilValue_Attribute* valueAttribute = dynamic_cast<StencilValue_Attribute*>(get_dslValueAttribute(node));
+     ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+ArrayValue_Attribute*
+StencilEvaluationTraversal::get_ArrayValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     ArrayValue_Attribute* valueAttribute = dynamic_cast<ArrayValue_Attribute*>(get_dslValueAttribute(node));
+     ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+ShiftValue_Attribute*
+StencilEvaluationTraversal::get_ShiftValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     ShiftValue_Attribute* valueAttribute = dynamic_cast<ShiftValue_Attribute*>(get_dslValueAttribute(node));
+     ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+IntegerValue_Attribute*
+StencilEvaluationTraversal::get_IntegerValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     IntegerValue_Attribute* valueAttribute = dynamic_cast<IntegerValue_Attribute*>(get_dslValueAttribute(node));
+     ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+DoubleValue_Attribute*
+StencilEvaluationTraversal::get_DoubleValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     DoubleValue_Attribute* valueAttribute = dynamic_cast<DoubleValue_Attribute*>(get_dslValueAttribute(node));
+     ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+BoxValue_Attribute*
+StencilEvaluationTraversal::get_BoxValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     BoxValue_Attribute* valueAttribute = dynamic_cast<BoxValue_Attribute*>(get_dslValueAttribute(node));
+  // ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
+
+RectMDArrayValue_Attribute*
+StencilEvaluationTraversal::get_RectMDArrayValueAttribute ( SgNode* node )
+   {
+  // This function is type specific and calls the lower level support function: get_dslValueAttribute().
+
+     RectMDArrayValue_Attribute* valueAttribute = dynamic_cast<RectMDArrayValue_Attribute*>(get_dslValueAttribute(node));
+  // ROSE_ASSERT(valueAttribute != NULL);
+
+     return valueAttribute;
+   }
 
 
 
@@ -660,194 +438,822 @@ StencilEvaluationTraversal::evaluateSynthesizedAttribute (SgNode* astNode, Stenc
      printf ("In StencilEvaluationTraversal::evaluateSynthesizedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 #endif
 
-     bool foundStencilOffsetFSM = false;
-     SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(astNode);
-     if (constructorInitializer != NULL && inheritedAttribute.stencilOffsetFSM != NULL)
+  // Look for DSL attributes so that we can support compile-time evaluation of DSL abstractions.
+     AstAttributeMechanism* astAttributeContainer = astNode->get_attributeMechanism();
+     if (astAttributeContainer != NULL)
         {
 #if 0
-          printf ("Found pair<Shift,double>(x,y): set then in the synthesizedAttribute: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
-#endif
-          return_synthesizedAttribute.stencilOffsetFSM       = inheritedAttribute.stencilOffsetFSM;
-          return_synthesizedAttribute.stencilCoeficientValue = inheritedAttribute.stencilCoeficientValue;
-#if 0
-          printf ("return_synthesizedAttribute.stencilCoeficientValue = %f \n",return_synthesizedAttribute.stencilCoeficientValue);
-#endif
-          foundStencilOffsetFSM = true;
-        }
-
-  // There should only be a single child set with a pair<Shift,double>(x,y) object.
-     for (size_t i = 0; i < synthesizedAttributeList.size(); i++)
-        {
-          if (synthesizedAttributeList[i].stencilOffsetFSM != NULL)
+       // This assertion fails for a nested traversal because some IR nodes will have been given a "dsl_value" 
+       // attribute and thus there will be IR nodes with 2 attributes. Note: the nested traversal happens in 
+       // the evaluation of the DSL for loop construct.
+       // I think there should only be one DSL attribute, in the future we can support more on a single IR node.
+          if (astAttributeContainer->size() != 1)
              {
-            // Check that the return_synthesizedAttribute.stencilOffsetFSM has not already been set.
-            // This could happend if we allows nesting of pair<Shift,double>(x,y) within itself (not allowed).
-#if 0
-               printf ("synthesizedAttributeList[i].stencilOffsetFSM != NULL \n");
+               printf ("WARNING: astAttributeContainer->size() != 1: astAttributeContainer->size() = %d \n",astAttributeContainer->size());
+             }
+       // ROSE_ASSERT(astAttributeContainer->size() == 1);
 #endif
-            // ROSE_ASSERT(foundStencilOffsetFSM == false);
-               if (foundStencilOffsetFSM == false)
+       // Loop over all the attributes at this IR node
+          for (AstAttributeMechanism::iterator i = astAttributeContainer->begin(); i != astAttributeContainer->end(); i++)
+             {
+               AstAttribute* attribute = i->second;
+               ROSE_ASSERT(attribute != NULL);
+ 
+               DSL_Attribute* dslAstAttribute = dynamic_cast<DSL_Attribute*>(attribute);
+               ROSE_ASSERT(dslAstAttribute != NULL);
+
+#define DEBUG_DSL_CHILDREN 0
+
+#if DEBUG_DSL_CHILDREN
+               printf ("Identified dslAstAttribute in evaluateSynthesizedAttribute(): astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+            // printf ("   --- return_synthesizedAttribute.dslChildren.size() = %zu \n",return_synthesizedAttribute.dslChildren.size());
+               printf ("   --- dslAstAttribute->toString()         = %s \n",dslAstAttribute->toString().c_str());
+               printf ("   --- dslAstAttribute->dslChildren.size() = %zu \n",dslAstAttribute->dslChildren.size());
+#endif
+               for (vector<SgNode*>::iterator j = dslAstAttribute->dslChildren.begin(); j != dslAstAttribute->dslChildren.end(); j++)
                   {
-#if 0
-                    printf ("foundStencilOffsetFSM == false \n");
+                    SgNode* child = *j;
+                    ROSE_ASSERT(child != NULL);
+#if DEBUG_DSL_CHILDREN
+                    printf ("   --- --- child = %p = %s \n",child,child->class_name().c_str());
 #endif
-                 // ROSE_ASSERT(return_synthesizedAttribute.stencilOffsetFSM == NULL);
-                    if (return_synthesizedAttribute.stencilOffsetFSM == NULL)
+                  }
+
+               Point_Attribute* pointAstAttribute = dynamic_cast<Point_Attribute*>(dslAstAttribute);
+               if (pointAstAttribute != NULL)
+                  {
+                 // Set the value of the point in the attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a Point_Attribute \n");
+#endif
+                 // PointValue_Attribute* pointValue_Attribute = new PointValue_Attribute();
+                 // ROSE_ASSERT(pointValue_Attribute != NULL);
+                 // add_dslValueAttribute(astNode,pointValue_Attribute);
+                 // PointValue_Attribute* pointValue_Attribute = dynamic_cast<PointValue_Attribute*>(astNode->getAttribute(PointValue));
+                    PointValue_Attribute* pointValue_Attribute = get_PointValueAttribute(astNode);
+#if 0
+                    printf ("pointValue_Attribute = %p \n",pointValue_Attribute);
+#endif
+                    if (pointValue_Attribute == NULL)
                        {
-#if 0
-                         printf ("return_synthesizedAttribute.stencilOffsetFSM != NULL \n");
-#endif
-                         return_synthesizedAttribute.stencilOffsetFSM = synthesizedAttributeList[i].stencilOffsetFSM;
-                         return_synthesizedAttribute.stencilCoeficientValue = synthesizedAttributeList[i].stencilCoeficientValue;
+                         pointValue_Attribute = new PointValue_Attribute();
+                         ROSE_ASSERT(pointValue_Attribute != NULL);
+                      // astNode->addNewAttribute(PointValue,pointValue_Attribute);
+                         add_dslValueAttribute(astNode,pointValue_Attribute);
                        }
 
-                    foundStencilOffsetFSM = true;
-                  }
-             }
-        }
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 1);
+                    SgNode* childNode = dslAstAttribute->dslChildren[0];
+                    ROSE_ASSERT(childNode != NULL);
+                    PointValue_Attribute* child_pointValue_Attribute = get_PointValueAttribute(childNode);
 
-  // This allows us to find the variables of type vector<Point> and vector<double> used as an alternative way
-  // to specify a stencil (using the Stencil constructor that takes these variables as input arguments).
-  // It relies upon a previous traversal to have identified the inputs to Stencil constructor.
-  // This support is incomplete while I focus on the alternative approach to the specification of the stencil
-  // using intremental union of a stencil with a pair<Shift,double>() template instantiation.
-     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(astNode);
-     if (variableDeclaration != NULL)
-        {
-       // Get the SgInitializedName from the SgVariableDeclaration.
-          SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
+                 // Assign the child attribute value to the attribute value on the current astNode.
+                    pointValue_Attribute->value = child_pointValue_Attribute->value;
 #if 0
-          printf ("In evaluateInheritedAttribute(): case SgInitializedName from variable declaration: initializedName = %p name = %s \n",initializedName,initializedName->get_name().str());
-#endif
-          bool foundStencilDeclaration = false;
-          if (find(stencilInputInitializedNameList.begin(),stencilInputInitializedNameList.end(),initializedName) != stencilInputInitializedNameList.end())
-             {
-#if 0
-               printf ("Found declaration associated with stencil input: initializedName = %p = %s name = %s \n",initializedName,initializedName->class_name().c_str(),initializedName->get_name().str());
-#endif
-            // Build the finite state machine for the stencil and add it to the map using the name (in SgInitializedName) as a key.
-            // For now we assume that the stencil specification is using the default construction.
-               if (initializedName->get_initptr() != NULL)
-                  {
-                    printf ("FIXME: This declaration of a stencil appears to have constrcutor arguments (this not the default constuctor as interprest below). \n");
-#if 0
+                    printf ("Exiting as a test! \n");
                     ROSE_ASSERT(false);
 #endif
                   }
 
-               foundStencilDeclaration = true;
-             }
-            else
-             {
-            // Verify that this is a Stencil declaration.
-               SgClassType* classType = isSgClassType(initializedName->get_type());
-               if (classType != NULL)
+               Array_Attribute* arrayAstAttribute = dynamic_cast<Array_Attribute*>(dslAstAttribute);
+               if (arrayAstAttribute != NULL)
                   {
-                 // Check if this is associated with a template instantiation.
-                    SgTemplateInstantiationDecl* templateInstantiationDecl = isSgTemplateInstantiationDecl(classType->get_declaration());
-                    if (templateInstantiationDecl != NULL)
+                 // Set the value of the point in the attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a Array_Attribute \n");
+#endif
+                    ArrayValue_Attribute* arrayValue_Attribute = new ArrayValue_Attribute();
+                    ROSE_ASSERT(arrayValue_Attribute != NULL);
+                    add_dslValueAttribute(astNode,arrayValue_Attribute);
+
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 1);
+                    SgNode* childNode = dslAstAttribute->dslChildren[0];
+                    ROSE_ASSERT(childNode != NULL);
+                    ArrayValue_Attribute* child_arrayValue_Attribute = get_ArrayValueAttribute(childNode);
+
+                 // Assign the child attribute value to the attribute value on the current astNode.
+                    arrayValue_Attribute->value = child_arrayValue_Attribute->value;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               Stencil_Attribute* stencilAstAttribute = dynamic_cast<Stencil_Attribute*>(dslAstAttribute);
+               if (stencilAstAttribute != NULL)
+                  {
+                 // Set the value of the stencil in the attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a Stencil_Attribute \n");
+#endif
+                    StencilValue_Attribute* stencilValue_Attribute = new StencilValue_Attribute();
+                    ROSE_ASSERT(stencilValue_Attribute != NULL);
+                    add_dslValueAttribute(astNode,stencilValue_Attribute);
+
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 1);
+                    SgNode* childNode = dslAstAttribute->dslChildren[0];
+                    ROSE_ASSERT(childNode != NULL);
+                    StencilValue_Attribute* child_stencilValue_Attribute = get_StencilValueAttribute(childNode);
+
+                 // Assign the child attribute value to the attribute value on the current astNode.
+                    stencilValue_Attribute->value = child_stencilValue_Attribute->value;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               OperatorZero_Attribute* operatorZeroAstAttribute = dynamic_cast<OperatorZero_Attribute*>(dslAstAttribute);
+               if (operatorZeroAstAttribute != NULL)
+                  {
+                 // return the Zero valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a OperatorZero_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                    PointValue_Attribute* pointValue_Attribute = new PointValue_Attribute();
+                    ROSE_ASSERT(pointValue_Attribute != NULL);
+
+                    astNode->addNewAttribute(PointValue,pointValue_Attribute);
+
+                 // Compute the constant value returned by the associated operator abstraction.
+                    pointValue_Attribute->value = getZeros();
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("After call to getZeros() operator \n");
+                    pointValue_Attribute->value.print();
+#endif
+                  }
+
+               OperatorOnes_Attribute* operatorOnesAstAttribute = dynamic_cast<OperatorOnes_Attribute*>(dslAstAttribute);
+               if (operatorOnesAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a OperatorOnes_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                    PointValue_Attribute* pointValue_Attribute = new PointValue_Attribute();
+                    ROSE_ASSERT(pointValue_Attribute != NULL);
+
+                    astNode->addNewAttribute(PointValue,pointValue_Attribute);
+
+                 // Compute the constant value returned by the associated operator abstraction.
+                    pointValue_Attribute->value = getOnes();
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("After call to getOnes() operator \n");
+                    pointValue_Attribute->value.print();
+#endif
+                  }
+
+               OperatorUnit_Attribute* operatorUnitAstAttribute = dynamic_cast<OperatorUnit_Attribute*>(dslAstAttribute);
+               if (operatorUnitAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a OperatorUnit_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                 // PointValue_Attribute* pointValue_Attribute = new PointValue_Attribute();
+                 // ROSE_ASSERT(pointValue_Attribute != NULL);
+                 // astNode->addNewAttribute(PointValue,pointValue_Attribute);
+
+                 // DQ (2/21/2015): Because we call this traversal recursively, this needs to check for an existing attribute (and reuse it).
+                    PointValue_Attribute* pointValue_Attribute = dynamic_cast<PointValue_Attribute*>(astNode->getAttribute(PointValue));
+                    if (pointValue_Attribute == NULL)
                        {
+                         pointValue_Attribute = new PointValue_Attribute();
+                         ROSE_ASSERT(pointValue_Attribute != NULL);
+                      // astNode->addNewAttribute(PointValue,pointValue_Attribute);
+                         add_dslValueAttribute(astNode,pointValue_Attribute);
+                       }
+
+                 // This value need to be interpreted (later).
+                 // int dimension = 0;
+
+                 // Find the associated value attribute for the input paramter.
+                    printf ("Find the associated value attribute for the input paramter \n");
+
+                    SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+                    ROSE_ASSERT(functionCallExp != NULL);
+
+                    ROSE_ASSERT(functionCallExp->get_args() != NULL);
+                    ROSE_ASSERT(functionCallExp->get_args()->get_expressions().size() == 1);
+                    SgExpression* functionArgument = functionCallExp->get_args()->get_expressions()[0];
+                    ROSE_ASSERT(functionArgument != NULL);
+
+                    SgVarRefExp* varRefExp = isSgVarRefExp(functionArgument);
+                    ROSE_ASSERT(varRefExp != NULL);
+
+                    SgVariableSymbol* varRefExp_symbol = varRefExp->get_symbol();
+                    ROSE_ASSERT(varRefExp_symbol != NULL);
 #if 0
-                         printf ("case SgTemplateInstaiationDecl: class name = %s \n",classType->get_name().str());
-                         printf ("case SgTemplateInstaiationDecl: templateInstantiationDecl->get_templateName() = %s \n",templateInstantiationDecl->get_templateName().str());
+                    printf ("varRefExp = %p = %s \n",varRefExp,varRefExp_symbol->get_name().str());
 #endif
-                         if (templateInstantiationDecl->get_templateName() == "Stencil")
+                    IntegerValue_Attribute* integerValue_Attribute = get_IntegerValueAttribute(varRefExp);
+                    ROSE_ASSERT(integerValue_Attribute != NULL);
+
+                    int dimension = integerValue_Attribute->value;
+#if 0
+                    printf ("Calling getUnitv(dimension): dimension = %d \n",dimension);
+#endif
+                 // Compute the constant value returned by the associated operator abstraction.
+                    pointValue_Attribute->value = getUnitv(dimension);
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("After call to getUnitv(dimension = %d) operator \n",dimension);
+                    pointValue_Attribute->value.print();
+#endif
+                  }
+
+               OperatorCarot_Attribute* operatorCarotAstAttribute = dynamic_cast<OperatorCarot_Attribute*>(dslAstAttribute);
+               if (operatorCarotAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a OperatorCarot_Attribute \n");
+#endif
+                 // DQ (2/22/2015): Check for existing attribute to support nested evaluation.
+                    ShiftValue_Attribute* shiftValue_Attribute = dynamic_cast<ShiftValue_Attribute*>(astNode->getAttribute(ShiftValue));
+                    if (shiftValue_Attribute == NULL)
+                       {
+                      // Add a dsl_value attribute.
+                         shiftValue_Attribute = new ShiftValue_Attribute();
+                         add_dslValueAttribute(astNode,shiftValue_Attribute);
+                       }
+
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 2);
+                    SgNode* childNode_lhs = dslAstAttribute->dslChildren[0];
+                    SgNode* childNode_rhs = dslAstAttribute->dslChildren[1];
+                    ROSE_ASSERT(childNode_lhs != NULL);
+                    ROSE_ASSERT(childNode_rhs != NULL);
+
+                    ArrayValue_Attribute* child_lhs_arrayValue_Attribute = get_ArrayValueAttribute(childNode_lhs);
+                    PointValue_Attribute* child_rhs_pointValue_Attribute = get_PointValueAttribute(childNode_rhs);
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("Before call to operator^(): child_rhs_pointValue_Attribute->value: \n");
+                    child_rhs_pointValue_Attribute->value.print();
+#endif
+                    shiftValue_Attribute->value = operator^(child_lhs_arrayValue_Attribute->value,child_rhs_pointValue_Attribute->value);
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("After call to operator^(): shiftValue_Attribute->value: \n");
+                    shiftValue_Attribute->value.print();
+#endif
+                  }
+               
+               PointOperatorMultiply_Attribute* pointOperatorMultiplyAstAttribute = dynamic_cast<PointOperatorMultiply_Attribute*>(dslAstAttribute);
+               if (pointOperatorMultiplyAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a PointOperatorMultiply_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                 // PointValue_Attribute* pointValue_Attribute = new PointValue_Attribute();
+                 // add_dslValueAttribute(astNode,pointValue_Attribute);
+
+                 // DQ (2/21/2015): Because we call this traversal recursively, this needs to check for an existing attribute (and reuse it).
+                    PointValue_Attribute* pointValue_Attribute = dynamic_cast<PointValue_Attribute*>(astNode->getAttribute(PointValue));
+                    if (pointValue_Attribute == NULL)
+                       {
+                         pointValue_Attribute = new PointValue_Attribute();
+                         ROSE_ASSERT(pointValue_Attribute != NULL);
+                      // astNode->addNewAttribute(PointValue,pointValue_Attribute);
+                         add_dslValueAttribute(astNode,pointValue_Attribute);
+                       }
+
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 2);
+                    SgNode* childNode_lhs = dslAstAttribute->dslChildren[0];
+                    SgNode* childNode_rhs = dslAstAttribute->dslChildren[1];
+                    ROSE_ASSERT(childNode_lhs != NULL);
+                    ROSE_ASSERT(childNode_rhs != NULL);
+#if 0
+                    printf ("Processing PointOperatorMultiply: childNode_lhs = %p = %s childNode_rhs = %p = %s \n",childNode_lhs,childNode_lhs->class_name().c_str(),childNode_rhs,childNode_rhs->class_name().c_str());
+#endif
+                 // Find the point value attribute on the child (one of these is a scalar).
+                 // PointValue_Attribute* child_lhs_pointValue_Attribute = dynamic_cast<PointValue_Attribute*>(childNode_lhs->getAttribute(PointValue));
+                 // PointValue_Attribute* child_rhs_pointValue_Attribute = dynamic_cast<PointValue_Attribute*>(childNode_rhs->getAttribute(PointValue));
+
+                    PointValue_Attribute* child_lhs_pointValue_Attribute = get_PointValueAttribute(childNode_lhs);
+#if 0
+                    printf ("childNode_lhs = %p = %s \n",childNode_lhs,childNode_lhs->class_name().c_str());
+                    printf ("child_lhs_pointValue_Attribute = %p \n",child_lhs_pointValue_Attribute);
+#endif
+                    int value = 42;
+                    SgValueExp* valueExp = isSgValueExp(childNode_rhs);
+                    if (valueExp != NULL)
+                       {
+                         SgIntVal* integerValue = isSgIntVal(valueExp);
+                         if (integerValue != NULL)
                             {
-#if 0
-                              printf ("This is verified to be associated with the Stencil template class \n");
-#endif
-                              foundStencilDeclaration = true;
+                              value = integerValue->get_value();
+                            }
+                           else
+                            {
+                              printf ("Error: childNode_rhs not yet evaluated to an integer constant (using value 42): childNode_rhs = %p = %s \n",childNode_rhs,childNode_rhs->class_name().c_str());
+                              value = 42;
                             }
                        }
-                  }
-             }
+                      else
+                       {
+                         printf ("Error: childNode_rhs not yet constant evaluated using value 42: childNode_rhs = %p = %s \n",childNode_rhs,childNode_rhs->class_name().c_str());
+                         value = 42;
+                       }
 
-          if (foundStencilDeclaration == true)
-             {
-               string name = initializedName->get_name();
-               ROSE_ASSERT(stencilMap.find(name) == stencilMap.end());
-            // stencilMap[name] = new StencilFSM();
-               StencilFSM* stencilFSM = new StencilFSM();
-               ROSE_ASSERT(stencilFSM != NULL);
-               stencilMap[name] = stencilFSM;
-               ROSE_ASSERT(stencilMap.find(name) != stencilMap.end());
-#if 0
-               printf ("Added StencilFSM to stencilMap using name = %s \n",name.c_str());
-#endif
-#if 0
-               printf ("Trigger an event on the stencilFSM ========================== %p \n",stencilFSM);
-               printf ("   --- Use the return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
-#endif
-               if (return_synthesizedAttribute.stencilOffsetFSM != NULL)
+                 // ROSE_ASSERT(child_pointValue_Attribute != NULL);
+
+                    if (child_lhs_pointValue_Attribute != NULL)
+                       {
+                      // Call the associated operator and assign result to this attribute.
+                         pointValue_Attribute->value = child_lhs_pointValue_Attribute->value * value;
+                       }
+                      else
+                       {
+                         printf ("child_pointValue_Attribute == NULL: childNode_lhs = %p = %s \n",childNode_lhs,childNode_lhs->class_name().c_str());
+                         printf ("child_pointValue_Attribute == NULL: childNode_rhs = %p = %s \n",childNode_rhs,childNode_rhs->class_name().c_str());
+                         ROSE_ASSERT(false);
+                       }
+                  }
+
+               ScalarShiftOperatorMultiply_Attribute* scalarShiftOperatorMultiplyAstAttribute = dynamic_cast<ScalarShiftOperatorMultiply_Attribute*>(dslAstAttribute);
+               if (scalarShiftOperatorMultiplyAstAttribute != NULL)
                   {
-                 // Trigger the event to add the stencil offset to the stencil.
-                 // Trigger the event on the finite state machine using the elements saved in the synthesized attribute.
-                    StencilFSM stencil_rhs (*(return_synthesizedAttribute.stencilOffsetFSM),return_synthesizedAttribute.stencilCoeficientValue);
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a ScalarShiftOperatorMultiply_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                 // StencilValue_Attribute* stencilValue_Attribute = new StencilValue_Attribute();
+                 // ROSE_ASSERT(stencilValue_Attribute != NULL);
+                 // astNode->addNewAttribute(StencilValue,stencilValue_Attribute);
+                 // DQ (2/22/2015): Check for existing attribute to support nested evaluation.
+                    StencilValue_Attribute* stencilValue_Attribute = dynamic_cast<StencilValue_Attribute*>(astNode->getAttribute(StencilValue));
+                    if (stencilValue_Attribute == NULL)
+                       {
+                      // Add a dsl_value attribute.
+                         stencilValue_Attribute = new StencilValue_Attribute();
+                         add_dslValueAttribute(astNode,stencilValue_Attribute);
+                       }
+#if 0
+                    printf ("Adding (StencilValue) stencilValue_Attribute = %p \n",stencilValue_Attribute);
+#endif
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 2);
+                    SgNode* childNode_lhs = dslAstAttribute->dslChildren[0];
+                    SgNode* childNode_rhs = dslAstAttribute->dslChildren[1];
+                    ROSE_ASSERT(childNode_lhs != NULL);
+                    ROSE_ASSERT(childNode_rhs != NULL);
+#if 0
+                    printf ("childNode_lhs = %p = %s \n",childNode_lhs,childNode_lhs->class_name().c_str());
+                    printf ("childNode_rhs = %p = %s \n",childNode_rhs,childNode_rhs->class_name().c_str());
+#endif
 
-                 // This reproduces the same semantics in our finite state machine as the Stencil class's operator+()
-                 // in the stencil specification. but this permits use to accumulate the state at compile time.
-                    stencilFSM->operator+(stencil_rhs);
+#if 0
+                 // DQ (2/22/2015):
+                 // This version of the code does not work yet because it will require the constant propagation (coming shortly).
+                 // The reason is that the lhs DoubleValue_Attribute is associated with a C++ constant and not a DSL specific 
+                 // constant.
 
-                 // We have now used these values so avoid letting then be used again.
-                    return_synthesizedAttribute.stencilOffsetFSM       = NULL;
-                    return_synthesizedAttribute.stencilCoeficientValue = 0.0;
+                    DoubleValue_Attribute* child_lhs_doubleValue_Attribute = get_DoubleValueAttribute(childNode_lhs);
+                    ShiftValue_Attribute*  child_rhs_shiftValue_Attribute  = get_ShiftValueAttribute(childNode_rhs);
+
+                    ROSE_ASSERT(child_lhs_doubleValue_Attribute != NULL);
+                    ROSE_ASSERT(child_rhs_shiftValue_Attribute  != NULL);
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("Calling Stencil operator*(double,Shift & X): with lhs double value and rhs Shift value \n");
+                    printf ("child_lhs_doubleValue_Attribute->value = %f \n",child_lhs_doubleValue_Attribute->value);
+                    child_rhs_shiftValue_Attribute->value.print();
+#endif
+
+                    stencilValue_Attribute->value = child_lhs_doubleValue_Attribute->value * child_rhs_shiftValue_Attribute->value;
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("resulting stencilValue_Attribute->value: calling stencilDump() \n");
+                    stencilValue_Attribute->value.stencilDump();
+#endif
+#else
+                 // DQ (2/22/2015):
+                 // This is the only correct version of the code until we have better constant propagation in place (March 4th, 2015).
+                 // printf ("############### This could/should call the refactored code! ############### \n");
+
+                    DoubleValue_Attribute* child_lhs_doubleValue_Attribute = dynamic_cast<DoubleValue_Attribute*>(childNode_lhs->getAttribute(DoubleValue));
+                    ShiftValue_Attribute*  child_rhs_shiftValue_Attribute  = dynamic_cast<ShiftValue_Attribute*>(childNode_rhs->getAttribute(ShiftValue));
+#if 0
+                    printf ("child_lhs_doubleValue_Attribute = %p \n",child_lhs_doubleValue_Attribute);
+                    printf ("child_rhs_shiftValue_Attribute  = %p \n",child_rhs_shiftValue_Attribute);
+#endif
+                    if (child_lhs_doubleValue_Attribute != NULL && child_rhs_shiftValue_Attribute != NULL)
+                       {
+                      // Call the associated operator and assign result to this attribute.
+#if DEBUG_SHIFT_CALCULUS
+                         printf ("Calling Stencil operator*(double,Shift & X): with lhs double value and rhs Shift value \n");
+                         printf ("child_lhs_doubleValue_Attribute->value = %f \n",child_lhs_doubleValue_Attribute->value);
+                         child_rhs_shiftValue_Attribute->value.print();
+#endif
+                         stencilValue_Attribute->value = child_lhs_doubleValue_Attribute->value * child_rhs_shiftValue_Attribute->value;
+
+#if DEBUG_SHIFT_CALCULUS
+                         printf ("resulting stencilValue_Attribute->value: calling stencilDump() \n");
+                         stencilValue_Attribute->value.stencilDump();
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                      else
+                       {
+                         printf ("child_lhs_doubleValue_Attribute == NULL: childNode_lhs = %p = %s \n",childNode_lhs,childNode_lhs->class_name().c_str());
+                         printf ("child_rhs_shiftValue_Attribute  == NULL: childNode_rhs = %p = %s \n",childNode_rhs,childNode_rhs->class_name().c_str());
+
+                         ROSE_ASSERT(child_lhs_doubleValue_Attribute  != NULL);
+                         ROSE_ASSERT(child_rhs_shiftValue_Attribute != NULL);
+
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+                       }
+#endif
+#if 0
+                    printf ("Need to compute the stencil value for astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               StencilUpdate_Attribute* stencilUpdateAstAttribute = dynamic_cast<StencilUpdate_Attribute*>(dslAstAttribute);
+               if (stencilUpdateAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a stencilUpdate_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                 // StencilValue_Attribute* stencilValue_Attribute = new StencilValue_Attribute();
+                 // add_dslValueAttribute(astNode,stencilValue_Attribute);
+                 // DQ (2/22/2015): Check for existing attribute to support nested evaluation.
+                    StencilValue_Attribute* stencilValue_Attribute = dynamic_cast<StencilValue_Attribute*>(astNode->getAttribute(StencilValue));
+                    if (stencilValue_Attribute == NULL)
+                       {
+                      // Add a dsl_value attribute.
+                         stencilValue_Attribute = new StencilValue_Attribute();
+                         add_dslValueAttribute(astNode,stencilValue_Attribute);
+                       }
+
+                    ROSE_ASSERT(dslAstAttribute->dslChildren.size() == 2);
+                    SgNode* childNode_lhs = dslAstAttribute->dslChildren[0];
+                    SgNode* childNode_rhs = dslAstAttribute->dslChildren[1];
+                    ROSE_ASSERT(childNode_lhs != NULL);
+                    ROSE_ASSERT(childNode_rhs != NULL);
+
+                    StencilValue_Attribute* child_lhs_stencilValue_Attribute = get_StencilValueAttribute(childNode_lhs);
+                    StencilValue_Attribute* child_rhs_stencilValue_Attribute = get_StencilValueAttribute(childNode_rhs);
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("resulting child_lhs_stencilValue_Attribute->value: calling stencilDump() \n");
+                    child_lhs_stencilValue_Attribute->value.stencilDump();
+                    printf ("resulting child_rhs_stencilValue_Attribute->value: calling stencilDump() \n");
+                    child_rhs_stencilValue_Attribute->value.stencilDump();
+#endif
+                    stencilValue_Attribute->value = child_lhs_stencilValue_Attribute->value + child_rhs_stencilValue_Attribute->value;
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("resulting stencilValue_Attribute->value: calling stencilDump() \n");
+                    stencilValue_Attribute->value.stencilDump();
+#endif
+                 // Copy the side effects back the the StencilValue_Attribute on the SgInitializedName.
+                    child_lhs_stencilValue_Attribute->value = stencilValue_Attribute->value;
+
+#if DEBUG_SHIFT_CALCULUS
+                    printf ("\n##### After copy back to update the stencil variable: child_lhs_stencilValue_Attribute->value: calling stencilDump() \n");
+                    child_lhs_stencilValue_Attribute->value.stencilDump();
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               OperatorShiftVec_Attribute* operatorShiftVecAstAttribute = dynamic_cast<OperatorShiftVec_Attribute*>(dslAstAttribute);
+               if (operatorShiftVecAstAttribute != NULL)
+                  {
+                 // return the ShiftVec valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a OperatorShiftVec_Attribute \n");
+#endif
+                 // Add a dsl_value attribute.
+                    ArrayValue_Attribute* shiftVecValue_Attribute = new ArrayValue_Attribute();
+#if 1
+                    printf ("Adding (ShiftVecValue) shiftVecValue_Attribute = %p \n",shiftVecValue_Attribute);
+#endif
+                    ROSE_ASSERT(shiftVecValue_Attribute != NULL);
+
+                    astNode->addNewAttribute(ArrayValue,shiftVecValue_Attribute);
+
+                 // Compute the constant value returned by the associated operator abstraction.
+                    shiftVecValue_Attribute->value = getShiftVec();
+                  }
+
+               ConstantExpression_Attribute* constantExpressionAstAttribute = dynamic_cast<ConstantExpression_Attribute*>(dslAstAttribute);
+               if (constantExpressionAstAttribute != NULL)
+                  {
+                 // return the Ones valued vector in the synthesized attribute?
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a ConstantExpression_Attribute \n");
+#endif
+                 // Since this is a const expression we want to get the constant. I will get the 
+                 // new version of the constant propogation analysis on March 4th 2015. Until 
+                 // then I will take the short cut of grabing the constant value directly for
+                 // the few cases where I need this to support the DSL.
+
+                    SgValueExp* valueExp = NULL;
+                    SgVarRefExp* varRefExp = isSgVarRefExp(astNode);
+                 // ROSE_ASSERT(varRefExp != NULL);
+                    if (varRefExp != NULL)
+                       {
+                         SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                         ROSE_ASSERT(variableSymbol != NULL);
+
+                         SgInitializedName* initializedName = variableSymbol->get_declaration();
+                         ROSE_ASSERT(initializedName != NULL);
+#if 0
+                         printf ("The constant value needs to be retrieved from the constant initializedName's initializer = %p \n",initializedName->get_initptr());
+#endif
+                         SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializedName->get_initptr());
+                         ROSE_ASSERT(assignInitializer != NULL);
+
+                         SgExpression* initializationExpression = assignInitializer->get_operand();
+                         ROSE_ASSERT(initializationExpression != NULL);
+#if 0
+                         printf ("The constant value needs to be retrieved from the initializationExpression = %p = %s \n",initializationExpression,initializationExpression->class_name().c_str());
+#endif
+                         valueExp = isSgValueExp(initializationExpression);
+                         ROSE_ASSERT(valueExp != NULL);
+                       }
+                      else
+                       {
+#if 0
+                         printf ("case Detected a ConstantExpression_Attribute: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
+                         valueExp = isSgValueExp(astNode);
+                         ROSE_ASSERT(valueExp != NULL);
+                       }
+
+                    ROSE_ASSERT(valueExp != NULL);
+
+                    SgDoubleVal* doubleVal = isSgDoubleVal(valueExp);
+                    if (valueExp != NULL && doubleVal == NULL)
+                       {
+                         int value = SageInterface::getIntegerConstantValue(valueExp);
+
+                      // DQ (2/21/2015): Because we call this traversal recursively, this needs to check for an existing attribute (and reuse it).
+                      // IntegerValue_Attribute* value_Attribute = new IntegerValue_Attribute();
+                      // ROSE_ASSERT(value_Attribute != NULL);
+                      // astNode->addNewAttribute(IntegerValue,value_Attribute);
+                         IntegerValue_Attribute* value_Attribute = dynamic_cast<IntegerValue_Attribute*>(astNode->getAttribute(IntegerValue));
+                         if (value_Attribute == NULL)
+                            {
+                              value_Attribute = new IntegerValue_Attribute();
+                              ROSE_ASSERT(value_Attribute != NULL);
+                              astNode->addNewAttribute(IntegerValue,value_Attribute);
+                            }
+                         
+                      // Compute the constant value returned by the associated operator abstraction.
+                         value_Attribute->value = value;
+#if 0
+                         printf ("Adding (IntegerValue) value_Attribute = %p value = %d \n",value_Attribute,value);
+#endif
+                       }
+                      else
+                       {
+                      // Handle floating point valued constants.
+#if 0
+                         printf ("floating point valued identified: astNode = %p = %s \n",astNode,astNode->class_name().c_str());
+#endif
+                         ROSE_ASSERT(doubleVal != NULL);
+                         double value = doubleVal->get_value();
+
+                      // DQ (2/22/2015): We need to allow for nested traversals (evaluations) so there might already be an attribute available.
+                      // DoubleValue_Attribute* value_Attribute = new DoubleValue_Attribute();
+                      // ROSE_ASSERT(value_Attribute != NULL);
+                      // astNode->addNewAttribute(DoubleValue,value_Attribute);
+                         DoubleValue_Attribute* value_Attribute = dynamic_cast<DoubleValue_Attribute*>(astNode->getAttribute(DoubleValue));
+                         if (value_Attribute == NULL)
+                            {
+                              value_Attribute = new DoubleValue_Attribute();
+                              ROSE_ASSERT(value_Attribute != NULL);
+                              astNode->addNewAttribute(DoubleValue,value_Attribute);
+                            }
+
+                      // Compute the constant value returned by the associated operator abstraction.
+                         value_Attribute->value = value;
+#if 0
+                         printf ("Adding (DoubleValue) value_Attribute = %p value = %f \n",value_Attribute,value);
+#endif
+                       }
+#if 0
+                    printf ("Exiting as a test at the end of the processing of the ConstantExpression_Attribute \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               ForLoopOperator_Attribute* forLoopOperatorAstAttribute = dynamic_cast<ForLoopOperator_Attribute*>(dslAstAttribute);
+               if (forLoopOperatorAstAttribute != NULL)
+                  {
+                 // This is the loop over all dimensions so that we can support stencils of 1D, 2D and 3D.  This step requires interpretation of
+                 // the loop semantics, else we will only support 1D loop semantics.  I want to debug the 1D stencil support before moving
+                 // to support the interprestaion of the loop body required for 2D and 3D stencil semantics.  The interpreation is just 
+                 // a reevluation of the loop body using a different value for the index variable (so it uses the same infrastructure, namely 
+                 // a nested traversal on the loop body with the loop index value updated).
+
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a ForLoopOperator_Attribute \n");
+#endif
+                 // Evaluate the block again by incrementing the value of the index variable.
+                    SgForStatement* forStatement = isSgForStatement(astNode);
+                    ROSE_ASSERT(forStatement != NULL);
+
+                    SgInitializedName* indexVariable = SageInterface::getLoopIndexVariable(forStatement);
+                    ROSE_ASSERT(indexVariable != NULL);
+
+                    printf ("Idendified the indexVariable = %p = %s \n",indexVariable,indexVariable->get_name().str());
+
+                    IntegerValue_Attribute* loopIndexValueAttribute = get_IntegerValueAttribute(indexVariable);
+                    ROSE_ASSERT(loopIndexValueAttribute != NULL);
+
+                    SgStatement* loopBody = forStatement->get_loop_body();
+                    ROSE_ASSERT(loopBody != NULL);
+
+                 // Build the inherited attribute
+                    StencilEvaluation_InheritedAttribute inheritedAttribute_stencilEval;
+
+                 // Define the traversal
+                 // StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal();
+                    StencilEvaluationTraversal shiftCalculus_StencilEvaluationTraversal;
+
+                    SgExprStatement* testExprStatement = isSgExprStatement(forStatement->get_test());
+                    ROSE_ASSERT(testExprStatement != NULL);
+
+                 // SgExpression* testExpression = forStatement->get_test();
+                    SgExpression* testExpression = testExprStatement->get_expression();
+                    ROSE_ASSERT(testExpression != NULL);
+                    SgBinaryOp* binaryOperator = isSgBinaryOp(testExpression);
+                    ROSE_ASSERT(binaryOperator != NULL);
+
+                    ROSE_ASSERT(isSgLessThanOp(binaryOperator) != NULL);
+
+                 // This is the expression "dim < DIM", the rhs is a constant integer value.
+                    SgIntVal* integerValue = isSgIntVal(binaryOperator->get_rhs_operand());
+                    ROSE_ASSERT(integerValue != NULL);
+
+                    int upperBound = integerValue->get_value();
+
+                    printf ("get the upper bound value = %d \n",upperBound);
+
+                    for (int i = 1; i < upperBound; i++)
+                       {
+#if 1
+                         printf ("@@@@@@@@@@@@@@@@@@@@@@@ START OF DSL FOR LOOP @@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+                         loopIndexValueAttribute->value = i;
+#if 1
+                         printf ("Nested call the StencilEvaluation traversal starting at the SgForStatement node of the AST: loop index = %d \n",loopIndexValueAttribute->value);
+#endif
+                      // Call the traversal starting at the project (root) node of the AST
+                      // StencilEvaluation_SynthesizedAttribute result_stencilEval = shiftCalculus_StencilEvaluationTraversal.traverse(project,inheritedAttribute_stencilEval);
+                      // StencilEvaluation_SynthesizedAttribute result_stencilEval = shiftCalculus_StencilEvaluationTraversal.traverse(loopBody,inheritedAttribute_stencilEval);
+                         shiftCalculus_StencilEvaluationTraversal.traverse(loopBody,inheritedAttribute_stencilEval);
+#if 1
+                         printf ("@@@@@@@@@@@@@@@@@@@@@@@ END OF DSL FOR LOOP @@@@@@@@@@@@@@@@@@@@@@@@ \n");
+                      // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               StencilApplyOperator_Attribute* stencilApplyOperatorAstAttribute = dynamic_cast<StencilApplyOperator_Attribute*>(dslAstAttribute);
+               if (stencilApplyOperatorAstAttribute != NULL)
+                  {
+                 // At this point we have a well-defined stencil operator, array abstractions, and a box domain on which to apply the stencil.
+                 // Now we just have to translate the our ROSE DSL specific data structures so that we can support the compile-time code generation.
+
+#if DEBUG_DSL_ATTRIBUTES
+                    printf ("   --- Detected a StencilApplyOperator_Attribute \n");
+#endif
+#if 0
+                    printf ("Evaluate the input arguments to the stencil apply operator \n");
+#endif
+                    SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(astNode);
+                    ROSE_ASSERT(functionCallExp != NULL);
+
+                    ROSE_ASSERT(functionCallExp->get_args() != NULL);
+                    ROSE_ASSERT(functionCallExp->get_args()->get_expressions().size() == 4);
+                    SgExpression* stencilArgument = functionCallExp->get_args()->get_expressions()[0];
+                    ROSE_ASSERT(stencilArgument != NULL);
+
+                    SgVarRefExp* stencilVarRefExp = isSgVarRefExp(stencilArgument);
+                    ROSE_ASSERT(stencilVarRefExp != NULL);
+
+                    StencilValue_Attribute* child_stencilValue_Attribute = get_StencilValueAttribute(stencilVarRefExp);
+                    ROSE_ASSERT(child_stencilValue_Attribute != NULL);
+
+// #if DEBUG_SHIFT_CALCULUS
+#if 1
+                    printf ("In stencil apply operator child_stencilValue_Attribute->value: calling stencilDump() \n");
+                    child_stencilValue_Attribute->value.stencilDump();
+#endif
+
+#if 1
+                 // These DSL abstractions are not meant to be evaluated at compile-time.
+                    SgExpression* rectMDArrayArgument_src = functionCallExp->get_args()->get_expressions()[1];
+                    ROSE_ASSERT(rectMDArrayArgument_src != NULL);
+                    SgVarRefExp* rectMDArrayVarRefExp_src = isSgVarRefExp(rectMDArrayArgument_src);
+                    ROSE_ASSERT(rectMDArrayVarRefExp_src != NULL);
+                    RectMDArrayValue_Attribute* child_rectMDArrayValue_src_Attribute = get_RectMDArrayValueAttribute(rectMDArrayVarRefExp_src);
+
+                    SgExpression* rectMDArrayArgument_dest = functionCallExp->get_args()->get_expressions()[2];
+                    ROSE_ASSERT(rectMDArrayArgument_dest != NULL);
+                    SgVarRefExp* rectMDArrayVarRefExp_dest = isSgVarRefExp(rectMDArrayArgument_dest);
+                    ROSE_ASSERT(rectMDArrayVarRefExp_dest != NULL);
+                    RectMDArrayValue_Attribute* child_rectMDArrayValue_dest_Attribute = get_RectMDArrayValueAttribute(rectMDArrayVarRefExp_dest);
+
+                 // Because these are not evaluated at compile-time, we don't have or need value attributes.
+                    ROSE_ASSERT(child_rectMDArrayValue_src_Attribute == NULL);
+                    ROSE_ASSERT(child_rectMDArrayValue_dest_Attribute == NULL);
+#endif
+#if 1
+                 // These DSL abstractions are not meant to be evaluated at compile-time.
+                    SgExpression* boxArgument = functionCallExp->get_args()->get_expressions()[3];
+                    ROSE_ASSERT(boxArgument != NULL);
+                    SgVarRefExp* boxVarRefExp = isSgVarRefExp(boxArgument);
+                    ROSE_ASSERT(boxVarRefExp != NULL);
+                    BoxValue_Attribute* child_boxValue_Attribute = get_BoxValueAttribute(boxVarRefExp);
+
+                 // Because this is not evaluated at compile-time, we don't have or need a value attribute.
+                    ROSE_ASSERT(child_boxValue_Attribute == NULL);
+#endif
+
+                 // Recode this as a stencil operator for the code generation phase.
+                    stencilOperatorFunctionCallList.push_back(functionCallExp);
+
+
+                    string stencilName = stencilVarRefExp->get_symbol()->get_name();
+                    printf ("stencilName = %s \n",stencilName.c_str());
+
+
+                 // stencilMap[stencilName] = new StencilFSM();
+                    StencilFSM* stencilFSM = new StencilFSM();
+                    ROSE_ASSERT(stencilFSM != NULL);
+
+                    stencilMap[stencilName] = stencilFSM;
+
+                 // Interpret the Shift Calculus stencil to build the StencilFSM
+                    Stencil<double> & stencil = child_stencilValue_Attribute->value;
+                    for (size_t k = 0; k < stencil.m_coef.size(); k++)
+                       {
+#if 0
+                         cout << k << " , "<< stencil.m_coef[k] << " , ";
+                         for (int dir = 0;dir < DIM; dir++)
+                            {
+                              cout << stencil.m_offsets[k][dir] << " ";
+                            }
+                         cout << " ; " ;
+#endif
+                         printf ("add stencil element: k = %d \n",k);
+
+                         stencilFSM->stencilPointList.push_back(std::pair<StencilOffsetFSM,double>(StencilOffsetFSM(stencil.m_offsets[k][0],stencil.m_offsets[k][1],stencil.m_offsets[k][2]),stencil.m_coef[k]));
+
+                       }
+#if 0
+                    printf ("Do the translation to the ROSE DSL data structures so that we can support code generation phase. \n");
+                    ROSE_ASSERT(false);
+#endif
                   }
 #if 0
-               stencilFSM->display("after FSM stencil default construction plus union event: StencilEvaluationTraversal::evaluateSynthesizedAttribute()");
-#endif
-#if 0
-               printf ("Exiting as a test! \n");
-               ROSE_ASSERT(false);
+               if (dslAstAttribute->dslChildren.empty() == false)
+                  {
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+                  }
 #endif
              }
-        }
 
-  // Recognize member function calls on "Stencil" objects so that we can trigger events on those associated finite state machines.
-     bool isTemplateClass = true;
-     bool isTemplateFunctionInstantiation = true;
-     SgInitializedName* initializedNameUsedToCallMemberFunction = NULL;
-     SgFunctionCallExp* functionCallExp = detectMemberFunctionOfSpecificClassType(astNode,initializedNameUsedToCallMemberFunction,"Stencil",isTemplateClass,"operator+",isTemplateFunctionInstantiation);
-     if (return_synthesizedAttribute.stencilOffsetFSM != NULL && functionCallExp != NULL)
-        {
-       // This is the DSL specific part of the synthesized attribute evaluation.
-
-          ROSE_ASSERT(initializedNameUsedToCallMemberFunction != NULL);
-          string name = initializedNameUsedToCallMemberFunction->get_name();
 #if 0
-          printf ("This is verified to be the operator+ member function of the Stencil templated class (so this corresponds to an event in the Stencil finite state machine) \n");
-          printf ("   --- stencil object name = %s \n",name.c_str());
-#endif
-       // Lookup the stencil FSM in the map of stencil FSMs using the name as the key.
-          ROSE_ASSERT(stencilMap.find(name) != stencilMap.end());
-          StencilFSM* stencilFSM = stencilMap[name];
-          ROSE_ASSERT(stencilFSM != NULL);
-#if 0
-          printf ("Trigger an event on the stencilFSM ========================== %p \n",stencilFSM);
-          printf ("   --- Use the return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
-#endif
-       // Make sure we have the input parameter for the stencil's finite state machine.
-          ROSE_ASSERT(return_synthesizedAttribute.stencilOffsetFSM != NULL);
-
-       // Trigger the event on the finite state machine using the elements saved in the synthesized attribute.
-          StencilFSM stencil_rhs (*(return_synthesizedAttribute.stencilOffsetFSM),return_synthesizedAttribute.stencilCoeficientValue);
-
-       // This reproduces the same semantics in our finite state machine as the Stencil class's operator+()
-       // in the stencil specification. but this permits use to accumulate the state at compile time.
-          stencilFSM->operator+(stencil_rhs);
-
-       // We have now used these values so avoid letting then be used again.
-          return_synthesizedAttribute.stencilOffsetFSM       = NULL;
-          return_synthesizedAttribute.stencilCoeficientValue = 0.0;
-#if 0
-          stencilFSM->display("after FSM stencil union event: StencilEvaluationTraversal::evaluateSynthesizedAttribute()");
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
         }
 
 #if 0
-     printf ("Leaving StencilEvaluationTraversal::evaluateSynthesizedAttribute(): return_synthesizedAttribute.stencilOffsetFSM = %p \n",return_synthesizedAttribute.stencilOffsetFSM);
-#endif
-#if 0
-     printf ("Leaving StencilEvaluationTraversal::evaluateSynthesizedAttribute(): return_synthesizedAttribute.stencilCoeficientValue = %f \n",return_synthesizedAttribute.stencilCoeficientValue);
+     printf ("Leaving StencilEvaluationTraversal::evaluateSynthesizedAttribute(): return_synthesizedAttribute \n");
 #endif
 
      return return_synthesizedAttribute;

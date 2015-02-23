@@ -13685,7 +13685,15 @@ void SageInterface::replaceSubexpressionWithStatement(SgExpression* from, Statem
       case V_SgUnsignedLongVal: return isSgUnsignedLongVal(expr)->get_value();
       case V_SgLongLongIntVal: return isSgLongLongIntVal(expr)->get_value();
       case V_SgUnsignedLongLongIntVal: return isSgUnsignedLongLongIntVal(expr)->get_value();
-      default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
+
+   // DQ (2/18/2015): Make this a better error message.
+   // default: ROSE_ASSERT (!"Bad kind in getIntegerConstantValue");
+      default: 
+         {
+           printf ("ERROR: In SageInterface::getIntegerConstantValue(): default reached: expr = %p = %s \n",expr,expr->class_name().c_str());
+           ROSE_ASSERT (false);
+         }
+      
     }
 
     ROSE_ASSERT (!"Bad kind return in getIntegerConstantValue");
