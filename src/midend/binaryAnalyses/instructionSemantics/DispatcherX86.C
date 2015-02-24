@@ -222,10 +222,12 @@ struct IP_adc: P {
 struct IP_add: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits), d->read(args[1], nbits),
-                                                            false, ops->boolean_(false));
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0]), d->read(args[1]), false, ops->boolean_(false));
+            d->write(args[0], result);
+        }
     }
 };
 
@@ -233,13 +235,20 @@ struct IP_add: P {
 struct IP_and: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = ops->and_(d->read(args[0], nbits), d->read(args[1], nbits));
-        d->setFlagsForResult(result);
-        d->write(args[0], result);
-        ops->writeRegister(d->REG_OF, ops->boolean_(false));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            if (b->get_width() < a->get_width())
+                b = ops->signExtend(b, a->get_width());
+            BaseSemantics::SValuePtr result = ops->and_(a, b);
+            d->setFlagsForResult(result);
+            d->write(args[0], result);
+            ops->writeRegister(d->REG_OF, ops->boolean_(false));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        }
     }
 };
 
