@@ -1329,9 +1329,16 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
 }
 
 SValuePtr
-Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
+Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/)
 {
     ASSERT_not_null(e);
+    if (0 == value_nbits) {
+        SgAsmType *expr_type = e->get_type();
+        ASSERT_not_null(expr_type);
+        value_nbits = expr_type->get_nBits();
+        ASSERT_require(value_nbits != 0);
+    }
+
     SValuePtr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         retval = operators->readRegister(re->get_descriptor());
