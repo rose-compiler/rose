@@ -2251,8 +2251,9 @@ protected:
     // Prototypical constructor
     Dispatcher(): regdict(NULL) {}
 
-    explicit Dispatcher(const RiscOperatorsPtr &ops): operators(ops), regdict(NULL) {
+    Dispatcher(const RiscOperatorsPtr &ops, const RegisterDictionary *regs): operators(ops), regdict(regs) {
         ASSERT_not_null(operators);
+        ASSERT_not_null(regs);
     }
 
 public:
@@ -2269,7 +2270,7 @@ public:
     // Virtual constructors
 public:
     /** Virtual constructor. */
-    virtual DispatcherPtr create(const RiscOperatorsPtr &ops) const = 0;
+    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, const RegisterDictionary *regs=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
@@ -2310,20 +2311,26 @@ public:
 
     /** Get a pointer to the state object. The state is stored in the RISC operators object, so this is just here for
      *  convenience. */
-    virtual StatePtr get_state() const { return operators->get_state(); }
+    virtual StatePtr get_state() const { return operators ? operators->get_state() : StatePtr(); }
 
     /** Return the prototypical value.  The prototypical value comes from the RISC operators object. */
-    virtual SValuePtr get_protoval() const { return operators->get_protoval(); }
+    virtual SValuePtr get_protoval() const { return operators ? operators->get_protoval() : SValuePtr(); }
 
     /** Returns the instruction that is being processed. The instruction comes from the get_insn() method of the RISC operators
      *  object. */
-    virtual SgAsmInstruction *get_insn() const { return operators->get_insn(); }
+    virtual SgAsmInstruction *get_insn() const { return operators ? operators->get_insn() : NULL; }
 
     /** Return a new undefined semantic value. */
-    virtual SValuePtr undefined_(size_t nbits) const { return operators->undefined_(nbits); }
+    virtual SValuePtr undefined_(size_t nbits) const {
+        ASSERT_not_null(operators);
+        return operators->undefined_(nbits);
+    }
 
     /** Return a semantic value representing a number. */
-    virtual SValuePtr number_(size_t nbits, uint64_t number) const { return operators->number_(nbits, number); }
+    virtual SValuePtr number_(size_t nbits, uint64_t number) const {
+        ASSERT_not_null(operators);
+        return operators->number_(nbits, number);
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods related to registers
@@ -2339,7 +2346,7 @@ public:
      *  The register dictionary should not be changed after a dispatcher is instantiated because the dispatcher's constructor
      *  may query the dictionary and cache the resultant register descriptors.
      * @{ */
-    virtual const RegisterDictionary *get_register_dictionary() {
+    virtual const RegisterDictionary *get_register_dictionary() const {
         return regdict;
     }
     virtual void set_register_dictionary(const RegisterDictionary *regdict) {
@@ -2377,10 +2384,11 @@ public:
     virtual SValuePtr effectiveAddress(SgAsmExpression*, size_t nbits=0);
 
     /** Reads an R-value expression.  The expression can be a constant, register reference, or memory reference.  The width of
-     *  the returned value is specified by the @p value_nbits argument.  The width of the address passed to lower-level memory
-     *  access functions is specified by @p addr_nbits.  If @p addr_nbits is zero then the natural width of the effective
-     *  address is passed to lower level functions. */
-    virtual SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32);
+     *  the returned value is specified by the @p value_nbits argument, and if this argument is zero then the width of the
+     *  expression type is used.  The width of the address passed to lower-level memory access functions is specified by @p
+     *  addr_nbits.  If @p addr_nbits is zero then the natural width of the effective address is passed to lower level
+     *  functions. */
+    virtual SValuePtr read(SgAsmExpression*, size_t value_nbits=0, size_t addr_nbits=32);
 
     /** Writes to an L-value expression. The expression can be a register or memory reference.  The width of the address passed
      *  to lower-level memory access functions is specified by @p addr_nbits.  If @p addr_nbits is zero then the natural width

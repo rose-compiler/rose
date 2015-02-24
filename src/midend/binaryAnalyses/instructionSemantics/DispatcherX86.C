@@ -1575,41 +1575,43 @@ void
 DispatcherX86::regcache_init()
 {
     if (regdict) {
-        REG_EAX = findRegister("eax", 32);
-        REG_EBX = findRegister("ebx", 32);
-        REG_ECX = findRegister("ecx", 32);
-        REG_EDX = findRegister("edx", 32);
-        REG_EDI = findRegister("edi", 32);
-        REG_EIP = findRegister("eip", 32);
-        REG_ESI = findRegister("esi", 32);
-        REG_ESP = findRegister("esp", 32);
-        REG_EBP = findRegister("ebp", 32);
-
-        REG_AX  = findRegister("ax", 16);
-        REG_CX  = findRegister("cx", 16);
-        REG_DX  = findRegister("dx", 16);
-
-        REG_AL  = findRegister("al", 8);
-        REG_AH  = findRegister("ah", 8);
-
-        REG_EFLAGS= findRegister("eflags", 32);
-        REG_AF  = findRegister("af", 1);
-        REG_CF  = findRegister("cf", 1);
-        REG_DF  = findRegister("df", 1);
-        REG_OF  = findRegister("of", 1);
-        REG_PF  = findRegister("pf", 1);
-        REG_SF  = findRegister("sf", 1);
-        REG_ZF  = findRegister("zf", 1);
-
-        REG_DS = findRegister("ds", 16);
-        REG_ES = findRegister("es", 16);
-        REG_SS = findRegister("ss", 16);
-
-        REG_ST0 = findRegister("st0", 80);
-        REG_FPSTATUS = findRegister("fpstatus", 16);
-        REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
-        REG_FPCTL = findRegister("fpctl", 16);
-        REG_MXCSR = findRegister("mxcsr", 32);
+        switch (processorMode()) {
+            case x86_processor_64:
+                // fall through...
+            case x86_processor_32:
+                REG_EAX = findRegister("eax", 32);
+                REG_EBX = findRegister("ebx", 32);
+                REG_ECX = findRegister("ecx", 32);
+                REG_EDX = findRegister("edx", 32);
+                REG_EDI = findRegister("edi", 32);
+                REG_EIP = findRegister("eip", 32);
+                REG_ESI = findRegister("esi", 32);
+                REG_ESP = findRegister("esp", 32);
+                REG_EBP = findRegister("ebp", 32);
+                REG_EFLAGS= findRegister("eflags", 32);
+                REG_ST0 = findRegister("st0", 80);
+                REG_FPSTATUS = findRegister("fpstatus", 16);
+                REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
+                REG_FPCTL = findRegister("fpctl", 16);
+                REG_MXCSR = findRegister("mxcsr", 32);
+                // fall through...
+            case x86_processor_16:
+                REG_AX  = findRegister("ax", 16);
+                REG_CX  = findRegister("cx", 16);
+                REG_DX  = findRegister("dx", 16);
+                REG_AL  = findRegister("al", 8);
+                REG_AH  = findRegister("ah", 8);
+                REG_AF  = findRegister("af", 1);
+                REG_CF  = findRegister("cf", 1);
+                REG_DF  = findRegister("df", 1);
+                REG_OF  = findRegister("of", 1);
+                REG_PF  = findRegister("pf", 1);
+                REG_SF  = findRegister("sf", 1);
+                REG_ZF  = findRegister("zf", 1);
+                REG_DS = findRegister("ds", 16);
+                REG_ES = findRegister("es", 16);
+                REG_SS = findRegister("ss", 16);
+        }
     }
 }
 

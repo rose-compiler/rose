@@ -12,10 +12,12 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 protected:
     // prototypical constructor
-    DispatcherM68k() {}
-
-    explicit DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
+    DispatcherM68k() {
         set_register_dictionary(RegisterDictionary::dictionary_coldfire_emac());
+    }
+
+    DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, regs ? regs : RegisterDictionary::dictionary_coldfire_emac()) {
         regcache_init();
         iproc_init();
     }
@@ -45,13 +47,16 @@ public:
     }
 
     /** Constructor. */
-    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherM68kPtr(new DispatcherM68k(ops));
+    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs=NULL) {
+        return DispatcherM68kPtr(new DispatcherM68k(ops, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (!regs)
+            regs = get_register_dictionary();
+        return instance(ops, regs);
     }
 
     /** Dynamic cast to DispatcherM68kPtr with assertion. */

@@ -20,10 +20,12 @@ typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {
 protected:
     // prototypical constructor
-    DispatcherPowerpc() {}
-
-    explicit DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
+    DispatcherPowerpc() {
         set_register_dictionary(RegisterDictionary::dictionary_powerpc());
+    }
+
+    DispatcherPowerpc(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, regs ? regs : RegisterDictionary::dictionary_powerpc()) {
         regcache_init();
         iproc_init();
     }
@@ -48,13 +50,16 @@ public:
     }
     
     /** Constructor. */
-    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherPowerpcPtr(new DispatcherPowerpc(ops));
+    static DispatcherPowerpcPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs=NULL) {
+        return DispatcherPowerpcPtr(new DispatcherPowerpc(ops, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (!regs)
+            regs = get_register_dictionary();
+        return instance(ops, regs);
     }
 
     /** Dynamic cast to a DispatcherPowerpcPtr with assertion. */

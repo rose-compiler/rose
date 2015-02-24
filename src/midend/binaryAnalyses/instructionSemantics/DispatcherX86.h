@@ -11,12 +11,17 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
+    X86ProcessorMode processorMode_;
+
     // Prototypical constructor
-    DispatcherX86() {}
+    DispatcherX86(): processorMode_(x86_processor_32) {
+        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
+    }
 
     // Normal constructor
-    explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, regs ? regs : RegisterDictionary::dictionary_pentium4()),
+          processorMode_(x86_processor_32) {
         regcache_init();
         iproc_init();
     }
@@ -45,13 +50,17 @@ public:
     }
 
     /** Constructor. */
-    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherX86Ptr(new DispatcherX86(ops));
+    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops,
+                                     const RegisterDictionary *regs=NULL) {
+        return DispatcherX86Ptr(new DispatcherX86(ops, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (NULL==regs)
+            regs = get_register_dictionary();
+        return instance(ops, regs);
     }
 
     /** Dynamic cast to a DispatcherX86Ptr with assertion. */
@@ -60,6 +69,13 @@ public:
         assert(retval!=NULL);
         return retval;
     }
+
+    /** CPU mode of operation.
+     *
+     * @{ */
+    X86ProcessorMode processorMode() const { return processorMode_; }
+    void processorMode(X86ProcessorMode m) { processorMode_ = m; }
+    /** @} */
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 

@@ -177,6 +177,8 @@ RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegP
 SValuePtr
 RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
 {
+    ASSERT_require(reg.is_valid());
+
     // Fast case: the state does not store this register or any register that might overlap with this register.
     Registers::iterator ri = registers.find(reg);
     if (ri==registers.end()) {

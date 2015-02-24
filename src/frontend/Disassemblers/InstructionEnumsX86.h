@@ -5,32 +5,37 @@
 
 #include "AssemblerX86Init.h"   /* A big enum whose members are all possible x86 instructions. */
 
+/** Processor mode. */
+enum X86ProcessorMode {
+    x86_processor_16,                                   /**< 16-bit processor. */
+    x86_processor_32,                                   /**< Compatibility/Legacy mode (32-bit). */
+    x86_processor_64,                                   /**< 64-bit mode. */
+};
+
 /** Intel x86 instruction size constants. */
-enum X86InstructionSize 
-{
-  x86_insnsize_none,
-  x86_insnsize_16,              /**< Instruction is for a 16-bit architecture. */
-  x86_insnsize_32,              /**< Instruction is for a 32-bit architecture. */
-  x86_insnsize_64               /**< Instruction is for a 64-bit architecture. */
+enum X86InstructionSize {
+    x86_insnsize_none,
+    x86_insnsize_16,                                    /**< Instruction is for a 16-bit architecture. */
+    x86_insnsize_32,                                    /**< Instruction is for a 32-bit architecture. */
+    x86_insnsize_64                                     /**< Instruction is for a 64-bit architecture. */
 };
 
 /** Intel x86 major register numbers */
-enum X86RegisterClass 
-{
-  x86_regclass_gpr,             /**< Minors are X86GeneralPurposeRegister (ax,cx,dx,bx,sp,bp,si,di,r8..r15) */
-  x86_regclass_segment,         /**< Minors are X86SegmentRegister (es,cs,ss,ds,fs,gs) */
-  x86_regclass_cr,              /**< Control registers; Minors are 0-4, 8 */
-  x86_regclass_dr,              /**< Debug registers; Minors are 0-7 */
-  x86_regclass_st,              /**< Floating point stack or MM registers; Minors are 0-7 */
-  x86_regclass_xmm,             /**< 128-bit xmmN; Minors are 0-7. */
-  x86_regclass_ip,              /**< Instruction pointer; Only allowed minor is zero. */
-  x86_regclass_flags            /**< Status flags. */
+enum X86RegisterClass {
+    x86_regclass_gpr,                                   /**< Minors are X86GeneralPurposeRegister
+                                                         *   (ax,cx,dx,bx,sp,bp,si,di,r8..r15) */
+    x86_regclass_segment,                               /**< Minors are X86SegmentRegister (es,cs,ss,ds,fs,gs) */
+    x86_regclass_cr,                                    /**< Control registers; Minors are 0-4, 8 */
+    x86_regclass_dr,                                    /**< Debug registers; Minors are 0-7 */
+    x86_regclass_st,                                    /**< Floating point stack or MM registers; Minors are 0-7 */
+    x86_regclass_xmm,                                   /**< 128-bit xmmN; Minors are 0-7. */
+    x86_regclass_ip,                                    /**< Instruction pointer; Only allowed minor is zero. */
+    x86_regclass_flags                                  /**< Status flags. */
 };
 
 /** Intel x86 segment registers. */
-enum X86SegmentRegister 
-{
-    x86_segreg_es       = 0,    // Numbering is based on Intel documentation
+enum X86SegmentRegister {
+    x86_segreg_es       = 0,                            // Numbering is based on Intel documentation
     x86_segreg_cs       = 1,
     x86_segreg_ss       = 2,
     x86_segreg_ds       = 3,
@@ -40,9 +45,8 @@ enum X86SegmentRegister
 };
 
 /** Intel x86 general purpose registers */
-enum X86GeneralPurposeRegister 
-{
-    x86_gpr_ax          = 0,    // Numbering is based on Intel documentation
+enum X86GeneralPurposeRegister {
+    x86_gpr_ax          = 0,                            // Numbering is based on Intel documentation
     x86_gpr_cx          = 1,
     x86_gpr_dx          = 2,
     x86_gpr_bx          = 3,
@@ -83,8 +87,7 @@ enum X86Flags {
 };
 
 /** Intel x86 status flags. These are the bit offsets in the x86_flags_status register. */
-enum X86Flag 
-{
+enum X86Flag {
     x86_flag_cf         = 0,
     x86_flag_pf         = 2,
     x86_flag_af         = 4,
@@ -115,24 +118,37 @@ enum X86BranchPrediction
 /** Intel x86 instruction repeat prefix. */
 enum X86RepeatPrefix 
 {
-    x86_repeat_none,            /**< No repeat prefix */
-    x86_repeat_repne,           /**< Repeat not equal prefix 0xf2 */
-    x86_repeat_repe             /**< Repeat equal prefix 0xf3 */
+    x86_repeat_none,                                    /**< No repeat prefix */
+    x86_repeat_repne,                                   /**< Repeat not equal prefix 0xf2 */
+    x86_repeat_repe                                     /**< Repeat equal prefix 0xf3 */
 };
 
-#if 0
-/** DEPRECATED.  This enum was once used to hold the same information that's now held by the offset and nbits data members of
- *  the RegisterDescriptor struct, except it was able to describe only predetermined parts of the physical register.  Do not
- *  use this enum. Instead, use RegisterDescriptor or pass an actual offset and size.  Deprecated 2010-10-11. */
-enum X86PositionInRegister {
-    x86_regpos_unknown,         /**< DEPRECATED unknown (error or unitialized value) */
-    x86_regpos_low_byte,        /**< DEPRECATED 1st byte of register (bits 0-7), only for GPRs */
-    x86_regpos_high_byte,       /**< DEPRECATED 2nd byte of register (bits 8-15), only for ax,bx,cx,dx */
-    x86_regpos_word,            /**< DEPRECATED 16 bit part of register, only for GPRs, CR0, CR8? */
-    x86_regpos_dword,           /**< DEPRECATED lower 32 bit part of register, only for GPRs */
-    x86_regpos_qword,           /**< DEPRECATED lower 64 bit part of register, only for GPRs */
-    x86_regpos_all              /**< DEPRECATED the full register is used (default value), only value allowed for segregs and st */
+/** Protected mode exceptions. These strange names come directly from the Intel documentation, section 3.1.1.11 in the
+ * Instruction Set Reference. */
+enum X86Exception {
+    x86_exception_de,                                   /**< Divide error. DIV and IDIV instructions. */
+    x86_exception_db,                                   /**< Debug. Any code or data reference. */
+    x86_exception_bp,                                   /**< Breakpoint. INT 3 instruction. */
+    x86_exception_of,                                   /**< Overflow. INTO instruction. */
+    x86_exception_br,                                   /**< BOUND range exceeded. BOUND instruction. */
+    x86_exception_ud,                                   /**< Invalid opcode. UD2 insn or reserved opcode. */
+    x86_exception_nm,                                   /**< Device not available (no math coproc). Floating-point or
+                                                         *   WAIT/FWAIT insn. */
+    x86_exception_df,                                   /**< Double fault. Any insn that can generate an exception, or NMI,
+                                                         *   INTR instruction.*/
+    x86_exception_ts,                                   /**< Invalid TSS. Task switch or TSS access. */
+    x86_exception_np,                                   /**< Segment not present. Loading segment regs or accessing system
+                                                         *   segments. */
+    x86_exception_ss,                                   /**< Stack segment fault. Stack operations and SS register loads. */
+    x86_exception_gp,                                   /**< General protection. Any memory reference and other protection
+                                                         *   checks. */
+    x86_exception_pf,                                   /**< Page fault. Any memory reference. */
+    x86_exception_mf,                                   /**< Floating point error (math fault). Floating-point or WAIT/FWAIT
+                                                         *   instruction. */
+    x86_exception_ac,                                   /**< Alignment check. Any data reference in memory. */
+    x86_exception_mc,                                   /**< Machine check. Model-dependent machine check errors. */
+    x86_exception_xm,                                   /**< SIMD floating-point numeric error. SSE/SSE2/SSE3 floating-point
+                                                         *   instructions. */
 };
-#endif
 
 #endif
