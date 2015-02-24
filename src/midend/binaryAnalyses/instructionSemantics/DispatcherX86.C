@@ -261,24 +261,28 @@ struct IP_bitscan: P {
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->undefined_(1));
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr op = d->read(args[1], nbits);
-        BaseSemantics::SValuePtr isZero = ops->equalToZero(op);
-        ops->writeRegister(d->REG_ZF, isZero);
-        BaseSemantics::SValuePtr bitno;
-        ASSERT_require(insn->get_kind()==kind);
-        switch (kind) {
-            case x86_bsf: bitno = ops->leastSignificantSetBit(op); break;
-            case x86_bsr: bitno = ops->mostSignificantSetBit(op); break;
-            default: ASSERT_not_reachable("instruction kind not handled");
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_OF, ops->undefined_(1));
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
+            ops->writeRegister(d->REG_CF, ops->undefined_(1));
+            size_t nbits = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr src = d->read(args[1], nbits);
+            BaseSemantics::SValuePtr isZero = ops->equalToZero(src);
+            ops->writeRegister(d->REG_ZF, isZero);
+            BaseSemantics::SValuePtr bitno;
+            ASSERT_require(insn->get_kind()==kind);
+            switch (kind) {
+                case x86_bsf: bitno = ops->leastSignificantSetBit(src); break;
+                case x86_bsr: bitno = ops->mostSignificantSetBit(src); break;
+                default: ASSERT_not_reachable("instruction kind not handled");
+            }
+            BaseSemantics::SValuePtr result = ops->ite(isZero, ops->undefined_(nbits), bitno);
+            d->write(args[0], result);
         }
-        BaseSemantics::SValuePtr result = ops->ite(isZero, d->read(args[0], nbits), bitno);
-        d->write(args[0], result);
     }
 };
 
