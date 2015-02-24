@@ -86,20 +86,31 @@ public:
 struct IP_aaa: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
-        BaseSemantics::SValuePtr incAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
-        ops->writeRegister(d->REG_AX, 
-                           ops->concat(ops->add(ops->ite(incAh, ops->number_(4, 6), ops->number_(4, 0)),
-                                                ops->extract(d->readRegister(d->REG_AL), 0, 4)),
-                                       ops->concat(ops->number_(4, 0),
-                                                   ops->add(ops->ite(incAh, ops->number_(8, 1), ops->number_(8, 0)),
-                                                            d->readRegister(d->REG_AH)))));
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, incAh);
-        ops->writeRegister(d->REG_CF, incAh);
+        if (d->processorMode() == x86_processor_16) {
+            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+        } else if (d->processorMode() == x86_processor_32) {
+            if (insn->get_lockPrefix()) {
+                ops->interrupt(x86_exception_ud, 0);
+            } else {
+                BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
+                BaseSemantics::SValuePtr incAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
+                ops->writeRegister(d->REG_AX, 
+                                   ops->concat(ops->add(ops->ite(incAh, ops->number_(4, 6), ops->number_(4, 0)),
+                                                        ops->extract(d->readRegister(d->REG_AL), 0, 4)),
+                                               ops->concat(ops->number_(4, 0),
+                                                           ops->add(ops->ite(incAh, ops->number_(8, 1), ops->number_(8, 0)),
+                                                                    d->readRegister(d->REG_AH)))));
+                ops->writeRegister(d->REG_OF, ops->undefined_(1));
+                ops->writeRegister(d->REG_SF, ops->undefined_(1));
+                ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+                ops->writeRegister(d->REG_PF, ops->undefined_(1));
+                ops->writeRegister(d->REG_AF, incAh);
+                ops->writeRegister(d->REG_CF, incAh);
+            }
+        } else {
+            ASSERT_require(d->processorMode() == x86_processor_64);
+            ops->interrupt(x86_exception_ud, 0);
+        }
     }
 };
 
@@ -107,31 +118,57 @@ struct IP_aaa: P {
 struct IP_aad: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
-        BaseSemantics::SValuePtr ah = d->readRegister(d->REG_AH);
-        BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
-        BaseSemantics::SValuePtr newAl = ops->add(al, ops->extract(ops->unsignedMultiply(ah, divisor), 0, 8));
-        ops->writeRegister(d->REG_AX, ops->concat(newAl, ops->number_(8, 0)));
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->undefined_(1));
-        d->setFlagsForResult(newAl);
+        if (d->processorMode() == x86_processor_16) {
+            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+        } else if (d->processorMode() == x86_processor_32) {
+            if (insn->get_lockPrefix()) {
+                ops->interrupt(x86_exception_ud, 0);
+            } else {
+                BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
+                BaseSemantics::SValuePtr ah = d->readRegister(d->REG_AH);
+                BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
+                BaseSemantics::SValuePtr newAl = ops->add(al, ops->extract(ops->unsignedMultiply(ah, divisor), 0, 8));
+                ops->writeRegister(d->REG_AX, ops->concat(newAl, ops->number_(8, 0)));
+                ops->writeRegister(d->REG_OF, ops->undefined_(1));
+                ops->writeRegister(d->REG_AF, ops->undefined_(1));
+                ops->writeRegister(d->REG_CF, ops->undefined_(1));
+                d->setFlagsForResult(newAl);
+            }
+        } else {
+            ASSERT_require(d->processorMode() == x86_processor_64);
+            ops->interrupt(x86_exception_ud, 0);
+        }
     }
 };
 
 // ASCII adjust AX after multiply
+// AAM                  -- implied immediate value is 0x0a and stored explicitly as an argument
+// AAM ib               -- immediate values other than 0x0a
 struct IP_aam: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
-        BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
-        BaseSemantics::SValuePtr newAh = ops->unsignedDivide(al, divisor);
-        BaseSemantics::SValuePtr newAl = ops->unsignedModulo(al, divisor);
-        ops->writeRegister(d->REG_AX, ops->concat(newAl, newAh));
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->undefined_(1));
-        d->setFlagsForResult(newAl);
+        if (d->processorMode() == x86_processor_16) {
+            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+        } else if (d->processorMode() == x86_processor_32) {
+            BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
+            if (insn->get_lockPrefix()) {
+                ops->interrupt(x86_exception_ud, 0);
+            } else if (divisor->is_number() && divisor->get_number()==0) {
+                ops->interrupt(x86_exception_de, 0);
+            } else {
+                BaseSemantics::SValuePtr al = d->readRegister(d->REG_AL);
+                BaseSemantics::SValuePtr newAh = ops->unsignedDivide(al, divisor);
+                BaseSemantics::SValuePtr newAl = ops->unsignedModulo(al, divisor);
+                ops->writeRegister(d->REG_AX, ops->concat(newAl, newAh));
+                ops->writeRegister(d->REG_OF, ops->undefined_(1));
+                ops->writeRegister(d->REG_AF, ops->undefined_(1));
+                ops->writeRegister(d->REG_CF, ops->undefined_(1));
+                d->setFlagsForResult(newAl);
+            }
+        } else {
+            ASSERT_require(d->processorMode() == x86_processor_64);
+            ops->interrupt(x86_exception_ud, 0);
+        }
     }
 };
 
@@ -139,20 +176,31 @@ struct IP_aam: P {
 struct IP_aas: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
-        BaseSemantics::SValuePtr decAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
-        ops->writeRegister(d->REG_AX, 
-                           ops->concat(ops->add(ops->ite(decAh, ops->number_(4, -6), ops->number_(4, 0)),
-                                                ops->extract(d->readRegister(d->REG_AL), 0, 4)),
-                                       ops->concat(ops->number_(4, 0),
-                                                   ops->add(ops->ite(decAh, ops->number_(8, -1), ops->number_(8, 0)),
-                                                            d->readRegister(d->REG_AH)))));
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, decAh);
-        ops->writeRegister(d->REG_CF, decAh);
+        if (d->processorMode() == x86_processor_16) {
+            throw BaseSemantics::Exception("16-bit processor not implemented", insn);
+        } else if (d->processorMode() == x86_processor_32) {
+            if (insn->get_lockPrefix()) {
+                ops->interrupt(x86_exception_ud, 0);
+            } else {
+                BaseSemantics::SValuePtr nybble = ops->extract(d->readRegister(d->REG_AL), 0, 4);
+                BaseSemantics::SValuePtr decAh = ops->or_(d->readRegister(d->REG_AF), d->greaterOrEqualToTen(nybble));
+                ops->writeRegister(d->REG_AX, 
+                                   ops->concat(ops->add(ops->ite(decAh, ops->number_(4, -6), ops->number_(4, 0)),
+                                                        ops->extract(d->readRegister(d->REG_AL), 0, 4)),
+                                               ops->concat(ops->number_(4, 0),
+                                                           ops->add(ops->ite(decAh, ops->number_(8, -1), ops->number_(8, 0)),
+                                                                    d->readRegister(d->REG_AH)))));
+                ops->writeRegister(d->REG_OF, ops->undefined_(1));
+                ops->writeRegister(d->REG_SF, ops->undefined_(1));
+                ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+                ops->writeRegister(d->REG_PF, ops->undefined_(1));
+                ops->writeRegister(d->REG_AF, decAh);
+                ops->writeRegister(d->REG_CF, decAh);
+            }
+        } else {
+            ASSERT_require(d->processorMode() == x86_processor_64);
+            ops->interrupt(x86_exception_ud, 0);
+        }
     }
 };
 
