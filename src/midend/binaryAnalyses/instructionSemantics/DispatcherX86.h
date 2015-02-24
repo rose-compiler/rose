@@ -126,9 +126,9 @@ public:
     /** Adds two values and adjusts flags.  This method can be used for subtraction if @p b is two's complement and @p
      *  invertCarries is set.  If @p cond is supplied, then the addition and flag adjustments are conditional.
      * @{ */
-    virtual BaseSemantics::SValuePtr doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+    virtual BaseSemantics::SValuePtr doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                                                     bool invertCarries, const BaseSemantics::SValuePtr &carryIn);
-    virtual BaseSemantics::SValuePtr doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+    virtual BaseSemantics::SValuePtr doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                                                     bool invertCarries, const BaseSemantics::SValuePtr &carryIn,
                                                     const BaseSemantics::SValuePtr &cond);
     /** @}*/

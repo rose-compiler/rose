@@ -208,10 +208,13 @@ struct IP_aas: P {
 struct IP_adc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits), d->read(args[1], nbits),
-                                                            false, d->readRegister(d->REG_CF));
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0]), d->read(args[1]),
+                                                                false, d->readRegister(d->REG_CF));
+            d->write(args[0], result);
+        }
     }
 };
 
@@ -1867,10 +1870,15 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
 }
 
 BaseSemantics::SValuePtr
-DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                               bool invertCarries, const BaseSemantics::SValuePtr &carryIn)
 {
-    ASSERT_require(a->get_width()==b->get_width());
+    if (a->get_width() > b->get_width()) {
+        b = operators->signExtend(b, a->get_width());
+    } else if (a->get_width() < b->get_width()) {
+        a = operators->signExtend(a, b->get_width());
+    }
+
     ASSERT_require(1==carryIn->get_width());
     size_t nbits = a->get_width();
     BaseSemantics::SValuePtr carries;
@@ -1885,11 +1893,16 @@ DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSeman
 }
 
 BaseSemantics::SValuePtr
-DispatcherX86::doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+DispatcherX86::doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                               bool invertCarries, const BaseSemantics::SValuePtr &carryIn,
                               const BaseSemantics::SValuePtr &cond)
 {
-    ASSERT_require(a->get_width()==b->get_width());
+    if (a->get_width() > b->get_width()) {
+        b = operators->signExtend(b, a->get_width());
+    } else if (a->get_width() < b->get_width()) {
+        a = operators->signExtend(a, b->get_width());
+    }
+
     ASSERT_require(1==carryIn->get_width());
     ASSERT_require(cond!=NULL && cond->get_width()==1);
     size_t nbits = a->get_width();
