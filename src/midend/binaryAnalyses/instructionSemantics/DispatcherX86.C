@@ -290,66 +290,94 @@ struct IP_bitscan: P {
 struct IP_bittest: P {
     const X86InstructionKind kind;
     IP_bittest(X86InstructionKind k): kind(k) {
-        ASSERT_require(x86_bt==k || x86_btr==k || x86_bts==k);
+        ASSERT_require(x86_bt==k || x86_btr==k || x86_bts==k || x86_btc==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(insn->get_kind()==kind);
-        // All flags except CF are undefined
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
-                
-        if (isSgAsmMemoryReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
-            // Special case allowing multi-word offsets into memory
-            SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0]);
-            BaseSemantics::SValuePtr addr = d->effectiveAddress(mre, 32);
-            size_t nbits = asm_type_width(args[1]->get_type());
-            BaseSemantics::SValuePtr bitnum = d->read(args[1], nbits);
-            BaseSemantics::SValuePtr adjustedAddr = ops->add(addr, ops->signExtend(ops->extract(bitnum, 3, nbits), 32));
-            BaseSemantics::SValuePtr dflt = ops->undefined_(8);
-            BaseSemantics::SValuePtr val = ops->readMemory(d->segmentRegister(mre), adjustedAddr, dflt, ops->boolean_(true));
-            BaseSemantics::SValuePtr bitval = ops->extract(ops->shiftRight(val, ops->extract(bitnum, 0, 3)), 0, 1);
-            ops->writeRegister(d->REG_CF, bitval);
-            BaseSemantics::SValuePtr result;
+        if (insn->get_lockPrefix() && (x86_bt==kind || !isSgAsmMemoryReferenceExpression(args[0]))) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(args[0])) {
+            const size_t addrSize = d->REG_anyIP.get_nbits();
+            BaseSemantics::SValuePtr bitBase = ops->unsignedExtend(d->effectiveAddress(mre), addrSize);
+            BaseSemantics::SValuePtr bitOffset = ops->signExtend(d->read(args[1]), addrSize);
+
+            // Byte offset from bitBase address is signed. If negative, the bit is at the previous memory address. E.g.:
+            //   if bitBase==100 && bitOffset==+13 then cf = mem[101] & (1<<5);
+            //   if bitBase==100 && bitOffset==-13 then cf = mem[99] & (1<<5)
+            // Notice that the bit offset within a byte is always positive (i.e., |bitOffset|%8) and that in the second
+            // example (for bitOffset==-13) the bit offset within the memory byte is 5, not 3.  This information comes from
+            // the Intel Instruction Set Reference and has not been tested by us. [Robb P. Matzke 2015-02-24]
+            BaseSemantics::SValuePtr byteOffset = ops->shiftRightArithmetic(bitOffset, ops->number_(8, 3));
+            BaseSemantics::SValuePtr addr = ops->add(bitBase, byteOffset);
+            BaseSemantics::SValuePtr byte = ops->readMemory(d->segmentRegister(mre), addr, ops->undefined_(8),
+                                                            ops->boolean_(true));
+            BaseSemantics::SValuePtr shiftAmount =
+                ops->ite(ops->extract(bitOffset, bitOffset->get_width()-1, bitOffset->get_width()),
+                         ops->extract(ops->negate(bitOffset), 0, 3), // bitOffset is negative
+                         ops->extract(bitOffset, 0, 3));             // bitOffset is positive
+            BaseSemantics::SValuePtr bit = ops->extract(ops->shiftRight(byte, shiftAmount), 0, 1);
             switch (kind) {
-                case x86_bt:
+                case x86_bt:                            // test only
                     break;
-                case x86_btr:
-                    result = ops->and_(val, ops->invert(ops->rotateLeft(ops->number_(8, 1), ops->extract(bitnum, 0, 3))));
-                    ops->writeMemory(d->segmentRegister(mre), adjustedAddr, result, ops->boolean_(true));
+                case x86_btr:                           // clear bit
+                    byte = ops->and_(byte, ops->invert(ops->shiftLeft(ops->number_(8, 1), shiftAmount)));
+                    ops->writeMemory(d->segmentRegister(mre), addr, byte, ops->boolean_(true));
                     break;
-                case x86_bts:
-                    result = ops->or_(val, ops->rotateLeft(ops->number_(8, 1), ops->extract(bitnum, 0, 3)));
-                    ops->writeMemory(d->segmentRegister(mre), adjustedAddr, result, ops->boolean_(true));
+                case x86_bts:                           // set bit
+                    byte = ops->or_(byte, ops->shiftLeft(ops->number_(8, 1), shiftAmount));
+                    ops->writeMemory(d->segmentRegister(mre), addr, byte, ops->boolean_(true));
+                    break;
+                case x86_btc:                           // complement bit
+                    byte = ops->xor_(byte, ops->shiftLeft(ops->number_(8, 1), shiftAmount));
+                    ops->writeMemory(d->segmentRegister(mre), addr, byte, ops->boolean_(true));
                     break;
                 default:
                     ASSERT_not_reachable("instruction kind not handled");
             }
+            ops->writeRegister(d->REG_CF, bit);
+            ops->writeRegister(d->REG_OF, ops->undefined_(1));
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
         } else {
-            // Simple case
-            size_t nbits = asm_type_width(args[0]->get_type());
-            BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
-            BaseSemantics::SValuePtr bitnum = ops->extract(d->read(args[1], nbits), 0, 32==nbits?5:4);
-            BaseSemantics::SValuePtr bitval = ops->extract(ops->shiftRight(op0, bitnum), 0, 1);
-            ops->writeRegister(d->REG_CF, bitval);
-            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValuePtr bits = d->read(args[0]);
+            BaseSemantics::SValuePtr bitOffset = d->read(args[1]);
+            size_t log2modulo;
+            switch (bits->get_width()) {
+                case 16: log2modulo = 4; break;
+                case 32: log2modulo = 5; break;
+                case 64: log2modulo = 6; break;
+                default: ASSERT_not_reachable("invalid width for first operand");
+            }
+            ASSERT_require(bitOffset->get_width() >= log2modulo);
+            BaseSemantics::SValuePtr shiftAmount = ops->extract(bitOffset, 0, log2modulo);
+            BaseSemantics::SValuePtr bit = ops->extract(ops->shiftRight(bits, shiftAmount), 0, 1);
             switch (kind) {
-                case x86_bt:
+                case x86_bt:                            // test only
                     break;
-                case x86_btr:
-                    result = ops->and_(op0, ops->invert(ops->rotateLeft(ops->number_(nbits, 1), bitnum)));
-                    d->write(args[0], result);
+                case x86_btr:                           // clear bit
+                    bits = ops->and_(bits, ops->invert(ops->shiftLeft(ops->number_(bits->get_width(), 1), shiftAmount)));
+                    d->write(args[0], bits);
                     break;
-                case x86_bts:
-                    result = ops->or_(op0, ops->rotateLeft(ops->number_(nbits, 1), bitnum));
-                    d->write(args[0], result);
+                case x86_bts:                           // set bit
+                    bits = ops->or_(bits, ops->shiftLeft(ops->number_(bits->get_width(), 1), shiftAmount));
+                    d->write(args[0], bits);
+                    break;
+                case x86_btc:                           // complement bit
+                    bits = ops->xor_(bits, ops->shiftLeft(ops->number_(bits->get_width(), 1), shiftAmount));
+                    d->write(args[0], bits);
                     break;
                 default:
                     ASSERT_not_reachable("instruction kind not handled");
             }
+            ops->writeRegister(d->REG_CF, bit);
+            ops->writeRegister(d->REG_OF, ops->undefined_(1));
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
         }
     }
 };
@@ -1479,6 +1507,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_bsr,          new X86::IP_bitscan(x86_bsr));
     iproc_set(x86_bswap,        new X86::IP_bswap);
     iproc_set(x86_bt,           new X86::IP_bittest(x86_bt));
+    iproc_set(x86_btc,          new X86::IP_bittest(x86_btc));
     iproc_set(x86_btr,          new X86::IP_bittest(x86_btr));
     iproc_set(x86_bts,          new X86::IP_bittest(x86_bts));
     iproc_set(x86_call,         new X86::IP_call);
