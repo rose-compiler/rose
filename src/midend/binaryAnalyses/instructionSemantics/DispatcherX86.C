@@ -37,8 +37,9 @@ public:
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        operators->writeRegister(dispatcher->REG_EIP, operators->add(operators->number_(32, insn->get_address()),
-                                                                     operators->number_(32, insn->get_size())));
+        size_t nBits = dispatcher->REG_anyIP.get_nbits();
+        operators->writeRegister(dispatcher->REG_anyIP, operators->add(operators->number_(nBits, insn->get_address()),
+                                                                       operators->number_(nBits, insn->get_size())));
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         check_arg_width(dispatcher.get(), insn, operands);
         p(dispatcher.get(), operators.get(), insn, operands);
@@ -376,8 +377,8 @@ struct IP_call: P {
             throw BaseSemantics::Exception("size not implemented", insn);
         BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
-        ops->writeMemory(d->REG_SS, newSp, d->readRegister(d->REG_EIP), ops->boolean_(true));
-        ops->writeRegister(d->REG_EIP, ops->filterCallTarget(d->read(args[0], 32)));
+        ops->writeMemory(d->REG_SS, newSp, d->readRegister(d->REG_anyIP), ops->boolean_(true));
+        ops->writeRegister(d->REG_anyIP, ops->filterCallTarget(d->read(args[0], d->REG_anyIP.get_nbits())));
         ops->writeRegister(d->REG_ESP, newSp);
     }
 };
@@ -540,7 +541,7 @@ struct IP_hlt: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         ops->hlt();
-        ops->writeRegister(d->REG_EIP, ops->number_(32, insn->get_address()));
+        ops->writeRegister(d->REG_anyIP, ops->number_(d->REG_anyIP.get_nbits(), insn->get_address()));
     }
 };
 
@@ -733,7 +734,7 @@ struct IP_int: P {
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        ops->writeRegister(d->REG_EIP, ops->filterIndirectJumpTarget(d->read(args[0], 32)));
+        ops->writeRegister(d->REG_anyIP, ops->filterIndirectJumpTarget(d->read(args[0], d->REG_anyIP.get_nbits())));
     }
 };
 
@@ -749,8 +750,8 @@ struct IP_jcc: P {
         assert_args(insn, args, 1);
         ASSERT_require(insn->get_kind()==kind);
         BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
-        ops->writeRegister(d->REG_EIP,
-                           ops->ite(cond, d->read(args[0], 32), d->readRegister(d->REG_EIP)));
+        ops->writeRegister(d->REG_anyIP,
+                           ops->ite(cond, d->read(args[0], d->REG_anyIP.get_nbits()), d->readRegister(d->REG_anyIP)));
     }
 };
 
@@ -840,7 +841,9 @@ struct IP_loop: P {
             default:
                 ASSERT_not_reachable("instruction type not handled");
         }
-        ops->writeRegister(d->REG_EIP, ops->ite(doLoop, d->read(args[0], 32), d->readRegister(d->REG_EIP)));
+        ops->writeRegister(d->REG_anyIP, ops->ite(doLoop,
+                                                  d->read(args[0], d->REG_anyIP.get_nbits()),
+                                                  d->readRegister(d->REG_anyIP)));
     }
 };
 
@@ -1200,8 +1203,9 @@ struct IP_ret: P {
         BaseSemantics::SValuePtr extraBytes = (args.size()==1 ? d->read(args[0], 32) : ops->number_(32, 0));
         BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
         BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->add(ops->number_(32, 4), extraBytes));
-        ops->writeRegister(d->REG_EIP, ops->filterReturnTarget(ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32),
-                                                                               ops->boolean_(true))));
+        ops->writeRegister(d->REG_anyIP, ops->filterReturnTarget(ops->readMemory(d->REG_SS, oldSp,
+                                                                                 ops->undefined_(d->REG_anyIP.get_nbits()),
+                                                                                 ops->boolean_(true))));
         ops->writeRegister(d->REG_ESP, newSp);
     }
 };
@@ -1644,7 +1648,6 @@ DispatcherX86::regcache_init()
                 REG_ECX = findRegister("ecx", 32);
                 REG_EDX = findRegister("edx", 32);
                 REG_EDI = findRegister("edi", 32);
-                REG_EIP = findRegister("eip", 32);
                 REG_ESI = findRegister("esi", 32);
                 REG_ESP = findRegister("esp", 32);
                 REG_EBP = findRegister("ebp", 32);
@@ -1672,6 +1675,9 @@ DispatcherX86::regcache_init()
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
         }
+
+        REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
+        REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
     }
 }
 
@@ -1872,10 +1878,10 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
                                     operators->invert(operators->readRegister(REG_ZF)));
             break;
     }
-    operators->writeRegister(REG_EIP,
+    operators->writeRegister(REG_anyIP,
                              operators->ite(again,
-                                            operators->number_(32, insn_va),    // repeat
-                                            operators->readRegister(REG_EIP))); // exit loop
+                                            operators->number_(REG_anyIP.get_nbits(), insn_va),    // repeat
+                                            operators->readRegister(REG_anyIP))); // exit loop
 }
 
 BaseSemantics::SValuePtr

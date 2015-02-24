@@ -35,8 +35,14 @@ protected:
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
      *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     *
+     *  Register names like REG_anyAX have sizes that depend on the architecture: 16 bits for 16-bit architectures, 32 bits for
+     *  32-bit architectures, etc.  The other register names have specific sizes--such as REG_EAX being 32 bits--and are
+     *  defined only on architectures that support them.
+     *
      * @{ */
-    RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_EIP, REG_ESI, REG_ESP, REG_EBP;
+    RegisterDescriptor REG_anyIP, REG_anySP;
+    RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP;
     RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
     RegisterDescriptor REG_DS, REG_ES, REG_SS;
