@@ -72,6 +72,37 @@ MemoryState::allocatePage(rose_addr_t va) {
                 MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_)));
 }
 
+void
+MemoryState::memoryMap(const MemoryMap &map, Sawyer::Optional<unsigned> padAccess) {
+    map_ = map;
+    rose_addr_t va = 0;
+    while (map_.atOrAfter(va).next().assignTo(va)) {
+        rose_addr_t pageVa = alignDown(va, pageSize_);
+
+        // Mapped area must begin at a page boundary.
+        if (pageVa < va) {
+            unsigned acc = padAccess ? *padAccess : map_.get(va).accessibility();
+            map_.insert(AddressInterval::hull(pageVa, va-1),
+                        MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(va-pageVa), 0, acc, "padding"));
+        }
+
+        // Mapped area must end at the last byte before a page boundary.
+        if (AddressInterval unused = map_.unmapped(va)) {
+            va = unused.least();
+            rose_addr_t nextPageVa = alignUp(va, pageSize_);
+            if (nextPageVa > va) {
+                unsigned acc = padAccess ? *padAccess : map_.get(va-1).accessibility();
+                map_.insert(AddressInterval::hull(va, nextPageVa-1),
+                            MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(nextPageVa-va), 0, acc, "padding"));
+                va = nextPageVa - 1;
+            }
+        } else {
+            break;
+        }
+        ++va;
+    }
+}
+
 BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemantics::SValuePtr &dflt_,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
