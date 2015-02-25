@@ -201,14 +201,14 @@ librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB)
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)
 else
 librose_la_LIBADD = $(BOOST_LDFLAGS) $(libroseLibraries) $(JAVA_JVM_FLAGS) $(LIB_QT) -lm $(RT_LIBS) \
           $(BOOST_DATE_TIME_LIB) \
           $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) \
           $(BOOST_PROGRAM_OPTIONS_LIB) $(BOOST_REGEX_LIB) \
           $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB) \
-          $(BOOST_WAVE_LIB) \
+          $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB)\
           -L$(top_builddir)/src/3rdPartyLibraries/libharu-2.1.0/src -lhpdf \
           $(OPT_SQLITE3_LDFLAGS) \
           $(OPT_MYSQL_LDFLAGS) $(ROSE_ATERM_LIBS)
