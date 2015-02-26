@@ -12,6 +12,34 @@
 using namespace std;
 using namespace SPRAY;
 
+size_t
+VariableIdMapping::getArrayElementCount(SgArrayType* t) {
+  ROSE_ASSERT(t);
+  size_t result=0; 
+  SgExpression * indexExp =  t->get_index();
+  
+  // assume dimension default to 0 if not specified ,such as a[] 
+  if (indexExp == NULL) {
+    // no index expression, check for initializer size (only correct for one-dimensional case)
+    result = 0;
+  } else  { 
+    SgUnsignedLongVal * valExp = isSgUnsignedLongVal(indexExp);
+    SgIntVal * valExpInt = isSgIntVal(indexExp);
+    if (valExp)
+      result = valExp->get_value(); 
+    if(valExpInt) 
+      result = valExpInt->get_value(); 
+  }
+  
+  // consider multi dimensional case 
+  SgArrayType* arraybase = isSgArrayType(t->get_base_type());
+  if (arraybase) {
+    result = result * getArrayElementCount(arraybase);
+  }
+  return result;
+}
+
+
 VariableIdMapping::VariableIdMapping():modeVariableIdForEachArrayElement(false) {
 }
 
@@ -53,7 +81,7 @@ void VariableIdMapping::toStream(ostream& os) {
       <<","<<SgNodeHelper::symbolToString(mappingVarIdToSym[i])
       <<","<<SgNodeHelper::uniqueLongVariableName(mappingVarIdToSym[i])
       <<endl;
-    assert(mappingSymToVarId[mappingVarIdToSym[i]]==i);
+    ROSE_ASSERT(modeVariableIdForEachArrayElement?true:mappingSymToVarId[mappingVarIdToSym[i]]==i);
   }
 }
 
@@ -241,10 +269,23 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
         if(sym) {
           found=true;
           if(modeVariableIdForEachArrayElement && SgNodeHelper::isArrayDeclaration(varDecl)) {
-            //cout<<"INFO: found array decl: size: ";
-            SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
-            arraySize=initList.size();
+            SgNode* initName0=varDecl->get_traversalSuccessorByIndex(1); // get-InitializedName
+            ROSE_ASSERT(initName0);
+            SgInitializedName* initName=isSgInitializedName(initName0);
+            ROSE_ASSERT(initName);
+            SgType* type=initName->get_type();
+            if(SgArrayType* arrayType=isSgArrayType(type)) {
+              cout<<"DEBUG: found array type."<<endl;
+              // returns 0 if type does not contain size
+              arraySize=getArrayElementCount(arrayType);
+            }
+            if(arraySize==0) {
+              // if type does not specify type then the initializer length defines the length
+              SgExpressionPtrList& initList=SgNodeHelper::getInitializerListOfAggregateDeclaration(varDecl);
+              arraySize=initList.size();
+            }
             //cout<<arraySize<<" : "<<varDecl->unparseToString()<<endl;
+            //cout<<"INFO: found array decl: size: "<<arraySize;
             registerNewArraySymbol(sym,arraySize);
             symbolSet.insert(sym);
             found=false;
