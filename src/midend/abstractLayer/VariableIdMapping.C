@@ -275,7 +275,7 @@ void VariableIdMapping::computeVariableSymbolMapping(SgProject* project) {
             ROSE_ASSERT(initName);
             SgType* type=initName->get_type();
             if(SgArrayType* arrayType=isSgArrayType(type)) {
-              cout<<"DEBUG: found array type."<<endl;
+              //cout<<"DEBUG: found array type."<<endl;
               // returns 0 if type does not contain size
               arraySize=getArrayElementCount(arrayType);
             }
