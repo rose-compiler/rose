@@ -1,4 +1,4 @@
-
+#include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
 SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
