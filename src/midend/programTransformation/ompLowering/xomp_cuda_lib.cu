@@ -816,7 +816,7 @@ void xomp_deviceDataEnvironmentExit()
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memScatterHostToDevice(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DunSuze, mapped_var->nDim);
+       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
        //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
