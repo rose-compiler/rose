@@ -220,6 +220,8 @@ Engine::createGenericPartitioner() {
 
 Partitioner
 Engine::createTunedPartitioner() {
+    obtainDisassembler();
+
     if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
