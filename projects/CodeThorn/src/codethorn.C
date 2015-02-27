@@ -409,6 +409,8 @@ int main( int argc, char * argv[] ) {
     ("specialize-fun-name", po::value< string >(), "function of name [arg] to be specialized")
     ("specialize-fun-param", po::value< vector<int> >(), "function parameter number to be specialized (starting at 1)")
     ("specialize-fun-const", po::value< vector<int> >(), "constant [arg], the param is to be specialized to.")
+    ("specialize-fun-varinit", po::value< vector<string> >(), "variable name of which the initialization is to be specialized (overrides any initializer expression)")
+    ("specialize-fun-varinit-const", po::value< vector<int> >(), "constant [arg], the variable initialization is to be specialized to.")
     ("iseq-file", po::value< string >(), "compute input sequence and generate file [arg]")
     ("iseq-length", po::value< int >(), "set length [arg] of input sequence to be computed.")
     ("iseq-random-num", po::value< int >(), "select random search and number of paths.")
@@ -663,6 +665,8 @@ int main( int argc, char * argv[] ) {
   string option_specialize_fun_name="";
   vector<int> option_specialize_fun_param_list;
   vector<int> option_specialize_fun_const_list;
+  vector<string> option_specialize_fun_varinit_list;
+  vector<int> option_specialize_fun_varinit_const_list;
   if(args.count("specialize-fun-name")) {
     option_specialize_fun_name = args["specialize-fun-name"].as<string>();
   }
@@ -670,14 +674,26 @@ int main( int argc, char * argv[] ) {
     option_specialize_fun_param_list=args["specialize-fun-param"].as< vector<int> >();
     option_specialize_fun_const_list=args["specialize-fun-const"].as< vector<int> >();
   }
-  //cout<<"DEBUG: "<<"specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
 
-  if((args.count("specialize-fun-name")||args.count("specialize-fun-param")||args.count("specialize-fun-const"))
-     && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-param"))) {
-    cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
-    exit(1);
+  if(args.count("specialize-fun-param")) {
+    option_specialize_fun_varinit_list=args["specialize-fun-varinit"].as< vector<int> >();
+    option_specialize_fun_varinit_const_list=args["specialize-fun-varinit-const"].as< vector<int> >();
   }
 
+  //cout<<"DEBUG: "<<"specialize-params:"<<option_specialize_fun_const_list.size()<<endl;
+
+  if(args.count("specialize-fun-name")) {
+    if((args.count("specialize-fun-param")||args.count("specialize-fun-const"))
+       && !(args.count("specialize-fun-name")&&args.count("specialize-fun-param")&&args.count("specialize-fun-param"))) {
+      cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-param=NUM --specialize-fun-const=NUM must be used together."<<endl;
+      exit(1);
+    }
+    if((args.count("specialize-fun-varinit")||args.count("specialize-fun-varinit-const"))
+       && !(args.count("specialize-fun-varinit")&&args.count("specialize-fun-varinit-const"))) {
+      cout<<"Error: options --specialize-fun-name=NAME --specialize-fun-varinit=NAME --specialize-fun-const=NUM must be used together."<<endl;
+      exit(1);
+    }
+  }
   // clean up string-options in argv
   for (int i=1; i<argc; ++i) {
     if (string(argv[i]).find("--csv-assert")==0
