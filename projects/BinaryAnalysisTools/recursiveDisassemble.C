@@ -661,7 +661,7 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
             mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
         } else {
             mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
-            P2::GraphViz gv(partitioner);
+            P2::GraphViz::CfgEmitter gv(partitioner);
             gv.defaultGraphAttributes().insert("overlap", "scale");
             gv.useFunctionSubgraphs(false);             // since we're dumping only one function
             gv.showInstructions(settings.gvShowInstructions);
@@ -679,7 +679,7 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
             mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
         } else {
             mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
-            P2::GraphViz gv(partitioner);
+            P2::GraphViz::CfgEmitter gv(partitioner);
             gv.defaultGraphAttributes().insert("overlap", "scale");
             gv.useFunctionSubgraphs(settings.gvUseFunctionSubgraphs);
             gv.showInstructions(settings.gvShowInstructions);
@@ -695,7 +695,7 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
             mlog[ERROR] <<"cannot write to CFG file \"" <<fileName <<"\"\n";
         } else {
             mlog[INFO] <<"generating CFG GraphViz file: " <<fileName <<"\n";
-            P2::GraphViz gv(partitioner);
+            P2::GraphViz::CfgEmitter gv(partitioner);
             gv.defaultGraphAttributes().insert("overlap", "scale");
             gv.useFunctionSubgraphs(settings.gvUseFunctionSubgraphs);
             gv.showInstructions(settings.gvShowInstructions);
@@ -715,7 +715,7 @@ emitFunctionCallGraph(const P2::Partitioner &partitioner, const Settings &settin
         mlog[ERROR] <<"cannot write to CG file \"" <<fileName <<"\"\n";
     } else {
         mlog[INFO] <<"generating call graph: " <<fileName <<"\n";
-        P2::GraphViz gv(partitioner);
+        P2::GraphViz::CgEmitter gv(partitioner);
         gv.defaultGraphAttributes().insert("overlap", "scale");
         gv.emitCallGraph(out);
     }
@@ -1060,7 +1060,7 @@ int main(int argc, char *argv[]) {
         unparser.unparse(std::cout, gblock);
     }
 
-#if 1 // [Robb P. Matzke 2015-02-06]: dead code example
+#if 0 // [Robb P. Matzke 2015-02-06]: dead code example
     std::cout <<"Unreachable code (basic blocks with no incoming edges):\n";
     BOOST_FOREACH (const P2::ControlFlowGraph::VertexNode &vertex, partitioner.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK && vertex.nInEdges() == 0) {

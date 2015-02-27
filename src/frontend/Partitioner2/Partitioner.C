@@ -1562,7 +1562,7 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
 void
 Partitioner::cfgGraphViz(std::ostream &out, const AddressInterval &restrict,
                          bool showNeighbors) const {
-    GraphViz gv(*this);
+    GraphViz::CfgEmitter gv(*this);
     gv.useFunctionSubgraphs(true);
     gv.showReturnEdges(false);
     gv.showInstructions(true);

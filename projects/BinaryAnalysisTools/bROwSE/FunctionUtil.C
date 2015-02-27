@@ -102,7 +102,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         fileName = uniquePath(".dot");
         boost::filesystem::path tmpName = uniquePath(".dot");
         std::ofstream out(tmpName.string().c_str());
-        P2::GraphViz graphViz(partitioner);
+        P2::GraphViz::CfgEmitter graphViz(partitioner);
         graphViz.defaultGraphAttributes().insert("overlap", "scale");
         graphViz.useFunctionSubgraphs(false);
         graphViz.showInstructions(true);

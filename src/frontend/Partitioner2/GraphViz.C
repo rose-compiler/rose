@@ -12,8 +12,14 @@ using namespace Sawyer::Container::Algorithm;
 namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
+namespace GraphViz {
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Utilities
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const size_t NO_ID = -1;
 
 // Make an edge color from a background color. Backgrounds tend to be too light for edges, and inverting the color would be too
 // dark to be distinguishable from black on such a fine line.
@@ -22,133 +28,130 @@ makeEdgeColor(const Color::HSV &bg) {
     return Color::HSV(bg.h(), 1.0, 0.5, 1.0);
 }
 
-GraphViz::GraphViz(const Partitioner &partitioner)
-    : partitioner_(partitioner),
-      vertexOrganization_(partitioner.cfg().nVertices()),
-      edgeOrganization_(partitioner.cfg().nEdges()),
-      useFunctionSubgraphs_(true),
-      showReturnEdges_(true),
-      showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
-      showInNeighbors_(true),
-      showOutNeighbors_(true),
-      subgraphColor_(0, 0, 0.95),                   // light grey
+std::string
+toString(const Attributes &attrs) {
+    std::string retval;
+    BOOST_FOREACH (const Attributes::Node &attr, attrs.nodes())
+        retval += (retval.empty()?"":" ") + escape(attr.key()) + "=" + escape(attr.value());
+    return retval;
+}
+
+std::string
+quotedEscape(const std::string &s) {
+    std::string retval;
+    for (size_t i=0; i<s.size(); ++i) {
+        if ('\n'==s[i]) {
+            retval += "\\n";
+        } else if ('"'==s[i]) {
+            retval += "\\\"";
+        } else {
+            retval += s[i];
+        }
+    }
+    return retval;
+}
+
+std::string
+htmlEscape(const std::string &s) {
+    std::string retval;
+    for (size_t i=0; i<s.size(); ++i) {
+        if ('\n'==s[i]) {
+            retval += "<br/>";
+        } else if ('<'==s[i]) {
+            retval += "&lt;";
+        } else if ('>'==s[i]) {
+            retval += "&gt;";
+        } else if ('&'==s[i]) {
+            retval += "&amp;";
+        } else {
+            retval += s[i];
+        }
+    }
+    return retval;
+}
+
+bool
+isId(const std::string &s) {
+    if (s.empty())
+        return false;
+    if (isalpha(s[0])) {
+        BOOST_FOREACH (char ch, s) {
+            if (!isalnum(ch) || '_'==ch)
+                return false;
+        }
+        return true;
+    }
+    if (isdigit(s[0])) {
+        BOOST_FOREACH (char ch, s) {
+            if (!isdigit(ch))
+                return false;
+        }
+        return true;
+    }
+    return false;
+}
+
+std::string
+escape(const std::string &s) {
+    if (s.empty())
+        return "\"\"";
+    if (isId(s))
+        return s;
+    if ('<'==s[0]) {
+        int depth = 0;
+        BOOST_FOREACH (char ch, s) {
+            if ('<'==ch) {
+                ++depth;
+            } else if ('>'==ch) {
+                if (--depth < 0)
+                    break;
+            }
+        }
+        if (0==depth)
+            return "<" + htmlEscape(s) + ">";
+    }
+    return "\"" + quotedEscape(s) + "\"";
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      CfgEmitter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CfgEmitter::CfgEmitter(const Partitioner &partitioner)
+    : BaseEmitter<ControlFlowGraph>(partitioner.cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
+      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
+      showInNeighbors_(true), showOutNeighbors_(true),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
       warningColor_(0, 1.0, 0.80)                   // light red
     {}
 
+CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g)
+    : BaseEmitter<ControlFlowGraph>(g), partitioner_(partitioner), useFunctionSubgraphs_(true),
+      showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
+      showInNeighbors_(true), showOutNeighbors_(true),
+      funcEnterColor_(0.33, 1.0, 0.9),              // light green
+      funcReturnColor_(0.67, 1.0, 0.9),             // light blue
+      warningColor_(0, 1.0, 0.80)                   // light red
+    {}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Graph emitters
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------------------------------
+//                                      CfgEmitter selectors
+//----------------------------------------------------------------------------------------------------------------------------
 
-void
-GraphViz::emit(std::ostream &out) const {
-    vmap_.clear();
-    out <<"digraph CFG {\n";
-    out <<" graph [ " <<toString(defaultGraphAttributes_) <<" ];\n";
-    out <<" node  [ " <<toString(defaultNodeAttributes_) <<" ];\n";
-    out <<" edge  [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
-
-    typedef std::map<std::string /*subgraph name*/, std::string/*subgraph content*/> Subgraphs;
-    Subgraphs subgraphs;
-
-    // Emit vertices to subgraphs
-    for (ControlFlowGraph::ConstVertexNodeIterator vertex=partitioner_.cfg().vertices().begin();
-         vertex!=partitioner_.cfg().vertices().end(); ++vertex) {
-        const Organization &org = vertexOrganization(vertex);
-        if (org.isSelected()) {
-            std::ostringstream ss;
-            emitVertex(ss, vertex, org);
-            subgraphs[org.subgraph()] += ss.str();
-        }
-    }
-
-    // Emit edges to subgraphs
-    for (ControlFlowGraph::ConstEdgeNodeIterator edge=partitioner_.cfg().edges().begin();
-         edge!=partitioner_.cfg().edges().end(); ++edge) {
-        const Organization &org = edgeOrganization(edge);
-        if (org.isSelected() &&
-            vertexOrganization(edge->source()).isSelected() && vertexOrganization(edge->target()).isSelected()) {
-            std::ostringstream ss;
-            emitEdge(ss, edge, org);
-            subgraphs[org.subgraph()] += ss.str();
-        }
-    }
-
-    // Emit subgraphs to output
-    BOOST_FOREACH (const Subgraphs::value_type &node, subgraphs) {
-        const std::string &subgraphName = node.first;
-        const std::string &subgraphContent = node.second;
-        if (subgraphName.empty()) {
-            out <<subgraphContent;
-        } else {
-            out <<"\nsubgraph cluster_" <<subgraphName <<" {"
-                <<" label=" <<subgraphOrganization(subgraphName).label()
-                <<" href=" <<escape(subgraphName)
-                <<toString(subgraphOrganization(subgraphName).attributes()) <<" ]\n"
-                <<subgraphContent
-                <<"}\n";
-        }
-    }
-
-    // Emit pseudo edges
-    BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {
-        if (vertexOrganization(edge.src).isSelected() && vertexOrganization(edge.dst).isSelected()) {
-            out <<vmap_[edge.src] <<" -> " <<vmap_[edge.dst]
-                <<" [ label=" <<escape(edge.label) <<" ];\n";
-        }
-    }
-    
-    out <<"}\n";
-}
-
-void
-GraphViz::emitCallGraph(std::ostream &out) const {
-    typedef FunctionCallGraph::Graph CG;
-    FunctionCallGraph cg = partitioner_.functionCallGraph(false); // parallel edges are compressed
-    out <<"digraph CG {\n";
-    out <<" graph [ " <<toString(defaultGraphAttributes_) <<" ];\n";
-    out <<" node  [ " <<toString(defaultNodeAttributes_) <<" ];\n";
-    out <<" edge  [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
-
-    BOOST_FOREACH (const CG::VertexNode &vertex, cg.graph().vertices()) {
-        const Function::Ptr &function = vertex.value();
-        out <<vertex.id() <<" [ label=" <<functionLabel(function) <<" "
-            <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
-            <<toString(functionAttributes(function)) <<" ]\n";
-    }
-
-    BOOST_FOREACH (const CG::EdgeNode &edge, cg.graph().edges()) {
-        std::string label;
-        switch (edge.value().type()) {
-            case E_FUNCTION_CALL: label = "calls";  break;
-            case E_FUNCTION_XFER: label = "xfers";  break;
-            default:              label = "others"; break;
-        }
-        label = StringUtility::plural(edge.value().count(), label);
-        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<" [ label=\"" <<label <<"\" ];\n";
-    }
-    
-    out <<"}\n";
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Selectors
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-GraphViz&
-GraphViz::selectWholeGraph() {
+CfgEmitter&
+CfgEmitter::selectWholeGraph() {
     subgraphOrganization().clear();
     selectNone();
     selectAll();
 
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         vertexOrganization(vertex).label(vertexLabelDetailed(vertex));
         vertexOrganization(vertex).attributes(vertexAttributes(vertex));
     }
 
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, partitioner_.cfg().edges()) {
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, graph_.edges()) {
         edgeOrganization(edge).label(edgeLabel(edge));
         edgeOrganization(edge).attributes(edgeAttributes(edge));
     }
@@ -161,8 +164,8 @@ GraphViz::selectWholeGraph() {
     return *this;
 }
 
-GraphViz&
-GraphViz::selectFunctionGraph(const Function::Ptr &function) {
+CfgEmitter&
+CfgEmitter::selectFunctionGraph(const Function::Ptr &function) {
     ASSERT_not_null(function);
     subgraphOrganization().clear();
     selectNone();
@@ -180,8 +183,8 @@ GraphViz::selectFunctionGraph(const Function::Ptr &function) {
     return *this;
 }
 
-GraphViz&
-GraphViz::selectIntervalGraph(const AddressInterval &interval) {
+CfgEmitter&
+CfgEmitter::selectIntervalGraph(const AddressInterval &interval) {
     subgraphOrganization().clear();
     selectNone();
     selectInterval(interval);
@@ -195,25 +198,13 @@ GraphViz::selectIntervalGraph(const AddressInterval &interval) {
 }
 
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------------------------------
 //                                      Low-level selectors
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------------------------------
 
 void
-GraphViz::selectAllVertices(bool b) {
-    BOOST_FOREACH (Organization &org, vertexOrganization_)
-        org.select(b);
-}
-
-void
-GraphViz::selectAllEdges(bool b) {
-    BOOST_FOREACH (Organization &org, edgeOrganization_)
-        org.select(b);
-}
-
-void
-GraphViz::selectInterval(const AddressInterval &interval) {
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+CfgEmitter::selectInterval(const AddressInterval &interval) {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         if (vertex.value().type() == V_BASIC_BLOCK && interval.isContaining(vertex.value().address())) {
             Organization &org = vertexOrganization(vertex);
             org.select();
@@ -222,7 +213,7 @@ GraphViz::selectInterval(const AddressInterval &interval) {
         }
     }
 
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, partitioner_.cfg().edges()) {
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, graph_.edges()) {
         if (vertexOrganization(edge.source()).isSelected() && vertexOrganization(edge.target()).isSelected()) {
             Organization &org = edgeOrganization(edge);
             if (!org.isSelected()) {
@@ -235,10 +226,10 @@ GraphViz::selectInterval(const AddressInterval &interval) {
 }
 
 void
-GraphViz::selectIntraFunction(const Function::Ptr &function) {
+CfgEmitter::selectIntraFunction(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want all vertices that belong to the function, including those
     // not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         if (owningFunction(vertex) == function) {
             if (!vertexOrganization(vertex).isSelected()) {
                 vertexOrganization(vertex).select();
@@ -257,10 +248,10 @@ GraphViz::selectIntraFunction(const Function::Ptr &function) {
 }
 
 void
-GraphViz::selectFunctionCallees(const Function::Ptr &function) {
+CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == function) {
             BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.outEdges()) {
                 if (isInterFunctionEdge(edge)) {
@@ -299,10 +290,10 @@ struct CallInfo {
 };
     
 void
-GraphViz::selectFunctionCallers(const Function::Ptr &callee) {
+CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         if (vertexOrganization(vertex).isSelected() && owningFunction(vertex) == callee) {
             // Are there edges coming into this vertex from outside this function?
             typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
@@ -339,7 +330,7 @@ GraphViz::selectFunctionCallers(const Function::Ptr &callee) {
                 Function::Ptr callerFunc = partitioner_.functionExists(callNode.key());
                 ASSERT_not_null(callerFunc);
                 ControlFlowGraph::ConstVertexNodeIterator caller = partitioner_.findPlaceholder(callerFunc->address());
-                ASSERT_require(caller != partitioner_.cfg().vertices().end());
+                ASSERT_require(caller != graph_.vertices().end());
 
                 Organization &org = vertexOrganization(caller);
                 if (!org.isSelected()) {
@@ -357,15 +348,15 @@ GraphViz::selectFunctionCallers(const Function::Ptr &callee) {
                 if (callInfo.nOthers)
                     label += (label.empty()?"":"\n") + StringUtility::plural(callInfo.nOthers, "others");
 
-                pseudoEdges_.push_back(PseudoEdge(caller, partitioner_.cfg().findVertex(vertex.id()), label));
+                pseudoEdges_.push_back(PseudoEdge(caller, graph_.findVertex(vertex.id()), label));
             }
         }
     }
 }
 
 void
-GraphViz::deselectReturnEdges() {
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, partitioner_.cfg().edges()) {
+CfgEmitter::deselectReturnEdges() {
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, graph_.edges()) {
         if (edgeOrganization(edge).isSelected() && edge.value().type() == E_FUNCTION_RETURN) {
             // If we're removing the last edge to a vertex then remove the vertex also.
             edgeOrganization(edge).select(false);
@@ -381,12 +372,12 @@ GraphViz::deselectReturnEdges() {
 }
 
 void
-GraphViz::selectNeighbors(bool selectIn, bool selectOut) {
+CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
     if (!selectIn && !selectOut)
         return;
 
     std::vector<ControlFlowGraph::ConstVertexNodeIterator> needed;
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, partitioner_.cfg().edges()) {
+    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, graph_.edges()) {
         if ((selectOut && vertexOrganization(edge.source()).isSelected() && !vertexOrganization(edge.target()).isSelected()) ||
             (selectIn  && !vertexOrganization(edge.source()).isSelected() && vertexOrganization(edge.target()).isSelected())) {
             if (!edgeOrganization(edge).isSelected()) {
@@ -411,169 +402,19 @@ GraphViz::selectNeighbors(bool selectIn, bool selectOut) {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Low-level emitters
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// dump vertex only if it isn't selected and hasn't been already dumped
-size_t
-GraphViz::emitVertex(std::ostream &out, const ControlFlowGraph::ConstVertexNodeIterator &vertex,
-                     const Organization &org) const {
-    size_t id = NO_ID;
-    if (org.isSelected() && !vmap_.getOptional(vertex).assignTo(id)) {
-        id = vmap_.size();
-        out <<id <<" [ label=" <<org.label() <<" ";
-        if (vertex->value().type() == V_BASIC_BLOCK)
-            out <<"href=\"" <<StringUtility::addrToString(vertex->value().address()) <<"\" ";
-        out <<toString(org.attributes()) <<" ];\n";
-        vmap_.insert(vertex, id);
-    }
-    return id;
-}
-
-// emit an edge if it hasn't been emitted already. The vertices must have been emitted already also.
-void
-GraphViz::emitEdge(std::ostream &out, const ControlFlowGraph::ConstEdgeNodeIterator &edge, const Organization &org) const {
-    ASSERT_require2(vmap_.exists(edge->source()), "edge source vertex has not yet been emitted");
-    ASSERT_require2(vmap_.exists(edge->target()), "edge target vertex has not yet been emitted");
-
-    out <<vmap_[edge->source()] <<" -> " <<vmap_[edge->target()]
-        <<" [ label=" <<org.label()
-        <<toString(org.attributes()) <<" ];\n";
-}
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Organization
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-const GraphViz::Organization&
-GraphViz::vertexOrganization(size_t vertexId) const {
-    ASSERT_require(vertexId < vertexOrganization_.size());
-    return vertexOrganization_[vertexId];
-}
-
-GraphViz::Organization&
-GraphViz::vertexOrganization(size_t vertexId) {
-    ASSERT_require(vertexId < vertexOrganization_.size());
-    return vertexOrganization_[vertexId];
-}
-
-const GraphViz::Organization&
-GraphViz::edgeOrganization(size_t edgeId) const {
-    ASSERT_require(edgeId < edgeOrganization_.size());
-    return edgeOrganization_[edgeId];
-}
-
-GraphViz::Organization&
-GraphViz::edgeOrganization(size_t edgeId) {
-    ASSERT_require(edgeId < edgeOrganization_.size());
-    return edgeOrganization_[edgeId];
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Utilities
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// class method
-std::string
-GraphViz::quotedEscape(const std::string &s) {
-    std::string retval;
-    for (size_t i=0; i<s.size(); ++i) {
-        if ('\n'==s[i]) {
-            retval += "\\n";
-        } else if ('"'==s[i]) {
-            retval += "\\\"";
-        } else {
-            retval += s[i];
-        }
-    }
-    return retval;
-}
-
-// class method
-std::string
-GraphViz::htmlEscape(const std::string &s) {
-    std::string retval;
-    for (size_t i=0; i<s.size(); ++i) {
-        if ('\n'==s[i]) {
-            retval += "<br/>";
-        } else if ('<'==s[i]) {
-            retval += "&lt;";
-        } else if ('>'==s[i]) {
-            retval += "&gt;";
-        } else if ('&'==s[i]) {
-            retval += "&amp;";
-        } else {
-            retval += s[i];
-        }
-    }
-    return retval;
-}
-
-// class method
-bool
-GraphViz::isId(const std::string &s) {
-    if (s.empty())
-        return false;
-    if (isalpha(s[0])) {
-        BOOST_FOREACH (char ch, s) {
-            if (!isalnum(ch) || '_'==ch)
-                return false;
-        }
-        return true;
-    }
-    if (isdigit(s[0])) {
-        BOOST_FOREACH (char ch, s) {
-            if (!isdigit(ch))
-                return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-// class method
-std::string
-GraphViz::escape(const std::string &s) {
-    if (s.empty())
-        return "\"\"";
-    if (isId(s))
-        return s;
-    if ('<'==s[0]) {
-        int depth = 0;
-        BOOST_FOREACH (char ch, s) {
-            if ('<'==ch) {
-                ++depth;
-            } else if ('>'==ch) {
-                if (--depth < 0)
-                    break;
-            }
-        }
-        if (0==depth)
-            return "<" + htmlEscape(s) + ">";
-    }
-    return "\"" + quotedEscape(s) + "\"";
-}
-
-// class method
-std::string
-GraphViz::toString(const Attributes &attrs) {
-    std::string retval;
-    BOOST_FOREACH (const Attributes::Node &attr, attrs.nodes())
-        retval += (retval.empty()?"":" ") + escape(attr.key()) + "=" + escape(attr.value());
-    return retval;
-}
+//----------------------------------------------------------------------------------------------------------------------------
+//                                      CfgEmitter utilities
+//----------------------------------------------------------------------------------------------------------------------------
 
 // class method
 Function::Ptr
-GraphViz::owningFunction(const ControlFlowGraph::VertexNode &v) {
+CfgEmitter::owningFunction(const ControlFlowGraph::VertexNode &v) {
     return v.value().type() == V_BASIC_BLOCK ? v.value().function() : Function::Ptr();
 }
 
 // class method
 bool
-GraphViz::isInterFunctionEdge(const ControlFlowGraph::EdgeNode &edge) {
+CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::EdgeNode &edge) {
     if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER)
         return true;
     if (edge.source() == edge.target())
@@ -582,8 +423,8 @@ GraphViz::isInterFunctionEdge(const ControlFlowGraph::EdgeNode &edge) {
 }
 
 void
-GraphViz::assignFunctionSubgraphs() {
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, partitioner_.cfg().vertices()) {
+CfgEmitter::assignFunctionSubgraphs() {
+    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, graph_.vertices()) {
         Organization &org = vertexOrganization(vertex);
         Function::Ptr function;
         if (org.isSelected() && org.subgraph().empty() && (function=owningFunction(vertex))) {
@@ -599,18 +440,18 @@ GraphViz::assignFunctionSubgraphs() {
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Formatting
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//----------------------------------------------------------------------------------------------------------------------------
+//                                      CfgEmitter formatting
+//----------------------------------------------------------------------------------------------------------------------------
 
 std::string
-GraphViz::vertexLabel(const ControlFlowGraph::VertexNode &v) const {
-    return vertexLabel(partitioner_.cfg().findVertex(v.id()));
+CfgEmitter::vertexLabel(const ControlFlowGraph::VertexNode &v) const {
+    return vertexLabel(graph_.findVertex(v.id()));
 }
 
 std::string
-GraphViz::vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
-    ASSERT_require(vertex != partitioner_.cfg().vertices().end());
+CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+    ASSERT_require(vertex != graph_.vertices().end());
     switch (vertex->value().type()) {
         case V_BASIC_BLOCK:
             if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
@@ -631,13 +472,13 @@ GraphViz::vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator &vertex) c
 }
 
 std::string
-GraphViz::vertexLabelDetailed(const ControlFlowGraph::VertexNode &v) const {
-    return vertexLabelDetailed(partitioner_.cfg().findVertex(v.id()));
+CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::VertexNode &v) const {
+    return vertexLabelDetailed(graph_.findVertex(v.id()));
 }
 
 std::string
-GraphViz::vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
-    ASSERT_require(vertex != partitioner_.cfg().vertices().end());
+CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+    ASSERT_require(vertex != graph_.vertices().end());
     BasicBlock::Ptr bb;
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
         std::string s;
@@ -669,14 +510,14 @@ GraphViz::vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator &v
     return vertexLabel(vertex);
 }
 
-GraphViz::Attributes
-GraphViz::vertexAttributes(const ControlFlowGraph::VertexNode &v) const {
-    return vertexAttributes(partitioner_.cfg().findVertex(v.id()));
+Attributes
+CfgEmitter::vertexAttributes(const ControlFlowGraph::VertexNode &v) const {
+    return vertexAttributes(graph_.findVertex(v.id()));
 }
 
-GraphViz::Attributes
-GraphViz::vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
-    ASSERT_require(vertex != partitioner_.cfg().vertices().end());
+Attributes
+CfgEmitter::vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+    ASSERT_require(vertex != graph_.vertices().end());
     Attributes attr;
     attr.insert("shape", "box");
 
@@ -692,6 +533,9 @@ GraphViz::vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator &vert
                 attr.insert("fillcolor", funcReturnColor_.toHtml());
             }
         }
+
+        attr.insert("href", StringUtility::addrToString(vertex->value().address()));
+
     } else {
         attr.insert("style", "filled");
         attr.insert("fillcolor", warningColor_.toHtml());
@@ -701,13 +545,13 @@ GraphViz::vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator &vert
 }
 
 std::string
-GraphViz::edgeLabel(const ControlFlowGraph::EdgeNode &e) const {
-    return edgeLabel(partitioner_.cfg().findEdge(e.id()));
+CfgEmitter::edgeLabel(const ControlFlowGraph::EdgeNode &e) const {
+    return edgeLabel(graph_.findEdge(e.id()));
 }
 
 std::string
-GraphViz::edgeLabel(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
-    ASSERT_require(edge != partitioner_.cfg().edges().end());
+CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+    ASSERT_require(edge != graph_.edges().end());
     std::string s;
     switch (edge->value().type()) {
         case E_FUNCTION_CALL:
@@ -735,14 +579,14 @@ GraphViz::edgeLabel(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
     return "\"" + s + "\"";
 }
 
-GraphViz::Attributes
-GraphViz::edgeAttributes(const ControlFlowGraph::EdgeNode &e) const {
-    return edgeAttributes(partitioner_.cfg().findEdge(e.id()));
+Attributes
+CfgEmitter::edgeAttributes(const ControlFlowGraph::EdgeNode &e) const {
+    return edgeAttributes(graph_.findEdge(e.id()));
 }
 
-GraphViz::Attributes
-GraphViz::edgeAttributes(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
-    ASSERT_require(edge != partitioner_.cfg().edges().end());
+Attributes
+CfgEmitter::edgeAttributes(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+    ASSERT_require(edge != graph_.edges().end());
     Attributes attr;
 
     if (edge->value().type() == E_FUNCTION_RETURN) {
@@ -763,14 +607,41 @@ GraphViz::edgeAttributes(const ControlFlowGraph::ConstEdgeNodeIterator &edge) co
 }
 
 std::string
-GraphViz::functionLabel(const Function::Ptr &function) const {
+CfgEmitter::functionLabel(const Function::Ptr &function) const {
     if (function)
         return "\"" + quotedEscape(function->printableName()) + "\"";
     return "\"\"";
 }
 
-GraphViz::Attributes
-GraphViz::functionAttributes(const Function::Ptr &function) const {
+Attributes
+CfgEmitter::functionAttributes(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    Attributes attr;
+    attr.insert("style", "filled");
+    attr.insert("fillcolor", subgraphColor().toHtml());
+    attr.insert("href", StringUtility::addrToString(function->address()));
+    return attr;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Function call graph
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CgEmitter::CgEmitter(const Partitioner &partitioner)
+    : partitioner_(partitioner), cg_(partitioner.functionCallGraph(false/*no parallel edges*/)) {
+    graph(cg_.graph());
+}
+
+std::string
+CgEmitter::functionLabel(const Function::Ptr &function) const {
+    if (function)
+        return "\"" + quotedEscape(function->printableName()) + "\"";
+    return "\"\"";
+}
+
+Attributes
+CgEmitter::functionAttributes(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     Attributes attr;
     attr.insert("style", "filled");
@@ -778,6 +649,37 @@ GraphViz::functionAttributes(const Function::Ptr &function) const {
     return attr;
 }
 
+void
+CgEmitter::emitCallGraph(std::ostream &out) const {
+    typedef FunctionCallGraph::Graph CG;
+    out <<"digraph CG {\n";
+    out <<" graph [ " <<toString(defaultGraphAttributes_) <<" ];\n";
+    out <<" node  [ " <<toString(defaultNodeAttributes_) <<" ];\n";
+    out <<" edge  [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
+
+    BOOST_FOREACH (const CG::VertexNode &vertex, graph_.vertices()) {
+        const Function::Ptr &function = vertex.value();
+        out <<vertex.id() <<" [ label=" <<functionLabel(function) <<" "
+            <<"href=\"" <<StringUtility::addrToString(function->address()) <<"\" "
+            <<toString(functionAttributes(function)) <<" ]\n";
+    }
+
+    BOOST_FOREACH (const CG::EdgeNode &edge, graph_.edges()) {
+        std::string label;
+        switch (edge.value().type()) {
+            case E_FUNCTION_CALL: label = "calls";  break;
+            case E_FUNCTION_XFER: label = "xfers";  break;
+            default:              label = "others"; break;
+        }
+        label = StringUtility::plural(edge.value().count(), label);
+        out <<edge.source()->id() <<" -> " <<edge.target()->id() <<" [ label=\"" <<label <<"\" ];\n";
+    }
+    
+    out <<"}\n";
+}
+
+
+} // namespace
 } // namespace
 } // namespace
 } // namespace
