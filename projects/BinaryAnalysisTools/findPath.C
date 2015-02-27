@@ -2,6 +2,8 @@
 #include <rose_strtoull.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
+#include <Partitioner2/GraphViz.h>
+#include <sawyer/BiMap.h>
 #include <sawyer/GraphTraversal.h>
 
 using namespace rose;
@@ -14,6 +16,11 @@ Diagnostics::Facility mlog;
 
 typedef std::set<P2::ControlFlowGraph::ConstVertexNodeIterator> CfgVertexSet;
 typedef std::set<P2::ControlFlowGraph::ConstEdgeNodeIterator> CfgEdgeSet;
+
+/** Map vertices from global-CFG to path-CFG. */
+typedef Sawyer::Container::BiMap<P2::ControlFlowGraph::ConstVertexNodeIterator,
+                                 P2::ControlFlowGraph::ConstVertexNodeIterator> VMap;
+
 
 enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
 
@@ -171,18 +178,21 @@ edgeForInstructions(const P2::Partitioner &partitioner, const std::string &sourc
                                vertexForInstruction(partitioner, targetNameOrVa));
 }
 
-// Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some
-// path that originates at the beginVertex and reaches some endVertex.
+/** Finds edges that can be part of some path.
+ *
+ *  Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some path that
+ *  originates at the @p beginVertex and reaches some vertex in @p endVertices but is not a member of @p avoidEdges and is not
+ *  incident to any vertex in @p avoidVertices. */
 std::vector<bool>
-findSignificantEdges(const P2::Partitioner &partitioner,
+findSignificantEdges(const P2::ControlFlowGraph &graph,
                      P2::ControlFlowGraph::ConstVertexNodeIterator beginVertex, const CfgVertexSet &endVertices,
                      const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
     using namespace Sawyer::Container::Algorithm;
 
     // Mark edges that are reachable with a forward traversal from the starting vertex, avoiding certain vertices and edges.
-    std::vector<bool> forwardReachable(partitioner.cfg().nEdges(), false);
+    std::vector<bool> forwardReachable(graph.nEdges(), false);
     typedef DepthFirstForwardGraphTraversal<const P2::ControlFlowGraph> ForwardTraversal;
-    for (ForwardTraversal t(partitioner.cfg(), beginVertex, ENTER_EVENTS); t; ++t) {
+    for (ForwardTraversal t(graph, beginVertex, ENTER_EVENTS); t; ++t) {
         switch (t.event()) {
             case ENTER_VERTEX:
                 if (avoidVertices.find(t.vertex()) != avoidVertices.end())
@@ -201,10 +211,10 @@ findSignificantEdges(const P2::Partitioner &partitioner,
     }
 
     // Mark edges that are reachable with a backward traversal from any ending vertex, avoiding certain vertices and edges.
-    std::vector<bool> significant(partitioner.cfg().nEdges(), false);
+    std::vector<bool> significant(graph.nEdges(), false);
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &endVertex, endVertices) {
         typedef DepthFirstReverseGraphTraversal<const P2::ControlFlowGraph> ReverseTraversal;
-        for (ReverseTraversal t(partitioner.cfg(), endVertex, ENTER_EVENTS); t; ++t) {
+        for (ReverseTraversal t(graph, endVertex, ENTER_EVENTS); t; ++t) {
             switch (t.event()) {
                 case ENTER_VERTEX:
                     if (avoidVertices.find(t.vertex()) != avoidVertices.end())
@@ -222,22 +232,321 @@ findSignificantEdges(const P2::Partitioner &partitioner,
             }
         }
     }
-    
-#if 1 // DEBUGGING [Robb P. Matzke 2014-10-24]
-    for (size_t i=0; i<significant.size(); ++i) {
-        const P2::ControlFlowGraph::EdgeNode &edge = *partitioner.cfg().findEdge(i);
-        if (significant[i] &&
-            edge.source()->value().type()==P2::V_BASIC_BLOCK &&
-            edge.target()->value().type()==P2::V_BASIC_BLOCK) {
-            std::cerr <<"edge " <<StringUtility::addrToString(edge.source()->value().address())
-                      <<":" <<StringUtility::addrToString(edge.target()->value().address())
-                      <<"<" <<i <<"> is significant\n";
-        }
-    }
-#endif
-
     return significant;
 }
+
+/** Insert one graph into another.
+ *
+ *  The @p vmap is updated with the mapping of vertices from source to destination. Upon return,
+ *  <code>vmap[srcVertex->id()]</code> will point to the same vertex in the destination graph. */
+void
+insert(P2::ControlFlowGraph &dst, const P2::ControlFlowGraph &src, VMap &vmap /*out*/) {
+    BOOST_FOREACH (P2::ControlFlowGraph::VertexNode vertex, src.vertices())
+        vmap.insert(src.findVertex(vertex.id()), dst.insertVertex(vertex.value()));
+    BOOST_FOREACH (P2::ControlFlowGraph::EdgeNode edge, src.edges())
+        dst.insertEdge(vmap.forward()[edge.source()], vmap.forward()[edge.target()], edge.value());
+}
+
+/** Remove edges and vertices that cannot be on the paths.
+ *
+ *  Removes those edges that aren't reachable in both forward and reverse directions from the begin and end vertices,
+ *  respectively. Vertices must belong to the paths-CFG. Erased vertices are also removed from @p vmap. */
+void
+eraseUnreachable(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginPathVertex,
+                 const CfgVertexSet &endPathVertices, VMap &vmap /*in,out*/) {
+    if (beginPathVertex == paths.vertices().end()) {
+        paths.clear();
+        vmap.clear();
+        return;
+    }
+    ASSERT_require(paths.isValidVertex(beginPathVertex));
+
+    // Find edges that are reachable -- i.e., those that are part of a valid path
+    CfgVertexSet avoidVertices;
+    CfgEdgeSet avoidEdges;
+    std::vector<bool> goodEdges = findSignificantEdges(paths, beginPathVertex, endPathVertices, avoidVertices, avoidEdges);
+
+    // Remove edges that are not on any path. We do this in two steps since edge ID numbers are not erase-stable.
+    CfgEdgeSet badEdges;
+    for (size_t i=0; i<goodEdges.size(); ++i) {
+        if (!goodEdges[i])
+            badEdges.insert(paths.findEdge(i));
+    }
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, badEdges)
+        paths.eraseEdge(edge);
+
+    // Remove vertices that have no edges, except don't remove the start vertex yet.
+    P2::ControlFlowGraph::ConstVertexNodeIterator vertex=paths.vertices().begin();
+    while (vertex!=paths.vertices().end()) {
+        if (vertex->degree()==0 && vertex!=beginPathVertex) {
+            vmap.eraseTarget(vertex);
+            vertex = paths.eraseVertex(vertex);
+        } else {
+            ++vertex;
+        }
+    }
+
+    // If all that's left is the start vertex and the start vertex by itself is not a valid path, then remove it.
+    if (paths.nVertices()==1 && endPathVertices.find(beginPathVertex)==endPathVertices.end()) {
+        paths.clear();
+        vmap.clear();
+    }
+}
+
+/** Remove edges and vertices that cannot be on the paths.
+ *
+ *  Removes those edges that aren't reachable in both forward and reverse directions from the begin and end vertices,
+ *  respectively. Vertices must belong to the global-CFG. Erased vertices are also removed from @p vmap. */
+void
+eraseUnreachable(const P2::Partitioner &partitioner, P2::ControlFlowGraph &paths /*in,out*/,
+                 const P2::ControlFlowGraph::ConstVertexNodeIterator &beginGlobalVertex,
+                 const CfgVertexSet &endGlobalVertices, VMap &vmap /*in,out*/) {
+    ASSERT_require(partitioner.cfg().isValidVertex(beginGlobalVertex));
+    if (!vmap.forward().exists(beginGlobalVertex)) {
+        paths.clear();
+        vmap.clear();
+        return;
+    }
+    P2::ControlFlowGraph::ConstVertexNodeIterator beginVertex = vmap.forward()[beginGlobalVertex];
+    ASSERT_require(paths.isValidVertex(beginVertex));
+
+    CfgVertexSet endVertices;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &globalVertex, endGlobalVertices) {
+        ASSERT_require(partitioner.cfg().isValidVertex(globalVertex));
+        if (vmap.forward().exists(globalVertex)) {
+            P2::ControlFlowGraph::ConstVertexNodeIterator vertex = vmap.forward()[globalVertex];
+            ASSERT_require(paths.isValidVertex(vertex));
+            endVertices.insert(vertex);
+        }
+    }
+    eraseUnreachable(paths, beginVertex, endVertices, vmap);
+}
+            
+/** Compute all paths.
+ *
+ *  Computes all paths from @p beginVertex to any @p endVertices that does not go through any @p avoidVertices or @p
+ *  avoidEdges. The paths are returned as a CFG so that cycles can be represented. A CFG can represent an exponential number of
+ *  paths. The paths-CFG is formed by taking the global CFG and removing all @p avoidVertices and @p avoidEdges, any edge that
+ *  cannot appear on a path from the @p beginVertex to any @p endVertices, and any vertex that has degree zero provided it is
+ *  not the beginVertex.
+ *
+ *  If the returned graph is empty then no paths were found.  If the returned graph has a vertex but no edges then the vertex
+ *  serves as both the begin and end of the path (i.e., a single path of unit length).  The @p vmap is updated to indicate the
+ *  mapping from global-CFG vertices in the returned graph. */
+P2::ControlFlowGraph
+findPathsNoCalls(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex,
+                 const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges,
+                 VMap &vmap /*out*/) {
+    ASSERT_require(beginVertex != partitioner.cfg().vertices().end());
+    ASSERT_require2(beginVertex == partitioner.cfg().findVertex(beginVertex->id()), "beginVertex does not belong to global CFG");
+
+    vmap.clear();
+    P2::ControlFlowGraph paths;
+    std::vector<bool> goodEdges = findSignificantEdges(partitioner.cfg(), beginVertex, endVertices, avoidVertices, avoidEdges);
+    BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, partitioner.cfg().edges()) {
+        if (goodEdges[edge.id()]) {
+            if (!vmap.forward().exists(edge.source()))
+                vmap.insert(edge.source(), paths.insertVertex(edge.source()->value()));
+            if (!vmap.forward().exists(edge.target()))
+                vmap.insert(edge.target(), paths.insertVertex(edge.target()->value()));
+            paths.insertEdge(vmap.forward()[edge.source()], vmap.forward()[edge.target()], edge.value());
+        }
+    }
+    if (!vmap.forward().exists(beginVertex) &&
+        endVertices.find(beginVertex)!=endVertices.end() &&
+        avoidVertices.find(beginVertex)==avoidVertices.end()) {
+        vmap.insert(beginVertex, paths.insertVertex(beginVertex->value()));
+    }
+    return paths;
+}
+
+/** Find called functions.
+ *
+ *  Given some vertex in the global CFG, return the vertices representing the functions that are called. */
+CfgVertexSet
+findCalledFunctions(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &callSite) {
+    ASSERT_require(callSite != partitioner.cfg().vertices().end());
+    ASSERT_require2(callSite == partitioner.cfg().findVertex(callSite->id()), "callSite vertex must belong to global CFG");
+    CfgVertexSet retval;
+    BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, callSite->outEdges()) {
+        if (edge.value().type() == P2::E_FUNCTION_CALL)
+            retval.insert(partitioner.cfg().findVertex(edge.target()->id()));
+    }
+    return retval;
+}
+
+/** Find function return vertices.
+ *
+ *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
+CfgVertexSet
+findFunctionReturns(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex) {
+    CfgVertexSet endVertices;
+    typedef DepthFirstForwardEdgeTraversal<const P2::ControlFlowGraph> Traversal;
+    for (Traversal t(partitioner.cfg(), beginVertex); t; ++t) {
+        if (t->value().type() == P2::E_FUNCTION_RETURN) {
+            endVertices.insert(t->source());
+            t.skipChildren();                           // found a function return edge
+        } else if (t->value().type() == P2::E_FUNCTION_CALL) { // not E_FUNCTION_XFER
+            t.skipChildren();                           // stay in this function
+        }
+    }
+    return endVertices;
+}
+
+/** Replace a call-return edge with a function call.
+ *
+ *  The @p cretEdge must be of type E_CALL_RETURN, which signifies that a function call from the source vertex can return to
+ *  the target vertex.  The called function is inserted into the path-CFG and edges are created to represent the call to the
+ *  function and the return from the function. */
+void
+insertCallee(P2::ControlFlowGraph &paths, const P2::ControlFlowGraph::ConstEdgeNodeIterator &cretEdge,
+             const P2::Partitioner &partitioner, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
+    ASSERT_require(paths.isValidEdge(cretEdge));
+    ASSERT_require(cretEdge->value().type() == P2::E_CALL_RETURN);
+
+    P2::ControlFlowGraph::ConstVertexNodeIterator callSite = cretEdge->source();
+    P2::ControlFlowGraph::ConstVertexNodeIterator pathRetTgt = cretEdge->target();
+    ASSERT_require2(callSite->value().type() == P2::V_BASIC_BLOCK, "only basic blocks can call functions");
+
+    // A basic block might call multiple functions if calling through a pointer.
+    CfgVertexSet callees = findCalledFunctions(partitioner, partitioner.findPlaceholder(callSite->value().address()));
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &callee, callees) {
+        if (callee->value().type() == P2::V_INDETERMINATE) {
+            // This is a call to some indeterminate location. Just copy another indeterminate vertex into the
+            // paths-CFG. Normally a CFG will have only one indeterminate vertex and it will have no outgoing edges, but the
+            // paths-CFG is different.
+            P2::ControlFlowGraph::ConstVertexNodeIterator indet = paths.insertVertex(P2::CfgVertex(P2::V_INDETERMINATE));
+            paths.insertEdge(callSite, indet, P2::CfgEdge(P2::E_FUNCTION_CALL));
+            paths.insertEdge(indet, pathRetTgt, P2::CfgEdge(P2::E_FUNCTION_RETURN));
+            mlog[WARN] <<"indeterminate function call from " <<callSite->value().bblock()->printableName() <<"\n";
+        } else {
+            // Call to a normal function.
+            ASSERT_require2(callee->value().type() == P2::V_BASIC_BLOCK, "non-basic block callees not implemented yet");
+            std::string calleeName = callee->value().function() ? callee->value().function()->printableName() :
+                                     callee->value().bblock()->printableName();
+
+            // Find all paths through the callee
+            VMap vmap1;                                     // relates global CFG to calleePaths
+            CfgVertexSet returns = findFunctionReturns(partitioner, callee);
+            P2::ControlFlowGraph calleePaths = findPathsNoCalls(partitioner, callee, returns, avoidVertices, avoidEdges, vmap1);
+            if (calleePaths.isEmpty())
+                mlog[WARN] <<calleeName <<" has no paths that return\n";
+
+            // Insert the callee into the paths CFG
+            VMap vmap2;                                     // relates calleePaths to paths
+            insert(paths, calleePaths, vmap2);
+            VMap vmap(vmap1, vmap2);                        // composite map from global-CFG to paths-CFG
+
+            // Make an edge from call site to the entry block of the callee in the paths CFG
+            if (vmap.forward().exists(callee)) {
+                P2::ControlFlowGraph::ConstVertexNodeIterator pathStart = vmap.forward()[callee];
+                paths.insertEdge(callSite, pathStart, P2::CfgEdge(P2::E_FUNCTION_CALL));
+            }
+
+            // Make edges from the callee's return statements back to the return point in the caller
+            BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexNodeIterator ret, returns) {
+                if (vmap.forward().exists(ret)) {
+                    P2::ControlFlowGraph::ConstVertexNodeIterator pathRetSrc = vmap.forward()[ret];
+                    paths.insertEdge(pathRetSrc, pathRetTgt, P2::CfgEdge(P2::E_FUNCTION_RETURN));
+                }
+            }
+        }
+    }
+}
+
+P2::ControlFlowGraph::ConstEdgeNodeIterator
+findFirstCallReturnEdge(const P2::ControlFlowGraph &graph, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex) {
+    ASSERT_require(graph.isValidVertex(beginVertex));
+    typedef BreadthFirstForwardEdgeTraversal<const P2::ControlFlowGraph> Traversal;
+    for (Traversal t(graph, beginVertex); t; ++t) {
+        if (t->value().type() == P2::E_CALL_RETURN)
+            return t.edge();
+    }
+    return graph.edges().end();
+}
+
+void
+robb(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex,
+     const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
+    // vertex.
+    Stream info(mlog[INFO] <<"finding top-level paths");
+    VMap vmap;                                          // relates global CFG vertices to path vertices
+    P2::ControlFlowGraph paths = findPathsNoCalls(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges, vmap);
+    if (!vmap.forward().exists(beginVertex)) {
+        mlog[WARN] <<"no paths found\n";
+        return;
+    }
+    P2::ControlFlowGraph::ConstVertexNodeIterator beginPath = vmap.forward()[beginVertex];
+    info <<"; " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // Inline calls to functions. We must do this because in order to calculate the feasibility of a path we must know the
+    // effect of calling the function.
+    info <<"inlining function call paths";
+    CfgVertexSet calleeAvoidVertices = avoidVertices;
+    calleeAvoidVertices.insert(endVertices.begin(), endVertices.end());
+    for (size_t nSubst=0; nSubst<settings.expansionDepthLimit; ++nSubst) {
+        P2::ControlFlowGraph::ConstEdgeNodeIterator callRetEdge = findFirstCallReturnEdge(paths, beginPath);
+        if (callRetEdge == paths.edges().end())
+            break;
+        P2::ControlFlowGraph::ConstVertexNodeIterator callReturnTarget = callRetEdge->target();
+        insertCallee(paths, callRetEdge, partitioner, calleeAvoidVertices, avoidEdges);
+        paths.eraseEdge(callRetEdge); callRetEdge = paths.edges().end();
+
+        // If there are no edges coming into the return point and the return point is not the begin vertex, then the
+        // return point is now unreachable. We need to prune away all parts of the paths-CFG that are not part of a
+        // valid path.
+        if (callReturnTarget->nInEdges()==0)
+            eraseUnreachable(partitioner, paths, beginVertex, endVertices, vmap);
+    }
+    if (!vmap.forward().exists(beginVertex)) {
+        mlog[WARN] <<"no paths found\n";
+        return;
+    }
+    info <<"; " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+
+
+    //------------------------------------------------------------------------------------------------------------------------
+    // Produce some output.
+    info <<"producing GraphViz output";
+    Color::HSV entryColor(0.15, 1.0, 0.6);              // bright yellow
+    Color::HSV exitColor(0.088, 1.0, 0.6);              // bright orange
+
+    // Show the results as a GraphViz file
+    P2::GraphViz::CfgEmitter gv(partitioner, paths);
+#if 1 // [Robb P. Matzke 2015-02-26]: makes dot slow
+    gv.defaultGraphAttributes().insert("overlap", "scale");
+    gv.useFunctionSubgraphs(true);
+    gv.showInstructions(true);
+    gv.showInstructionAddresses(true);
+    gv.showInstructionStackDeltas(false);
+#else
+    gv.useFunctionSubgraphs(false);
+    gv.showInstructions(false);
+#endif
+    gv.selectWholeGraph();
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &endVertex, endVertices) {
+        if (vmap.forward().exists(endVertex))
+            gv.vertexOrganization(vmap.forward()[endVertex]).attributes().insert("fillcolor", exitColor.toHtml());
+    }
+    if (vmap.forward().exists(beginVertex))
+        gv.vertexOrganization(vmap.forward()[beginVertex]).attributes().insert("fillcolor", entryColor.toHtml());
+    gv.emit(std::cout);
+    info <<"; done\n";
+}
+
+
+
+    
+
+
+
+
 
 class CfgPath {
 public:
@@ -397,24 +706,6 @@ findFunctionCalls(const P2::ControlFlowGraph::ConstVertexNodeIterator &caller) {
     return calls;
 }
 
-/** Find function return vertices.
- *
- *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
-CfgVertexSet
-findFunctionReturns(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &beginVertex) {
-    CfgVertexSet endVertices;
-    typedef DepthFirstForwardEdgeTraversal<const P2::ControlFlowGraph> Traversal;
-    for (Traversal t(partitioner.cfg(), beginVertex); t; ++t) {
-        if (t->value().type() == P2::E_FUNCTION_RETURN) {
-            endVertices.insert(t->source());
-            t.skipChildren();                           // found a function return edge
-        } else if (t->value().type() == P2::E_FUNCTION_CALL) { // not E_FUNCTION_XFER
-            t.skipChildren();                           // stay in this function
-        }
-    }
-    return endVertices;
-}
-
 std::string
 edgeName(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge) {
     std::string s;
@@ -557,7 +848,18 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Disassemble and partition
-    P2::Partitioner partitioner = engine.partition(specimenNames);
+    Stream info(mlog[INFO] <<"disassembling");
+    engine.postPartitionAnalyses(false);
+    engine.load(specimenNames);
+#if 0 // [Robb P. Matzke 2015-02-27]
+    // Removing write access (if semantics is enabled) makes it so more indirect jumps have known successors even if those
+    // successors are only a subset of what's possible at runtime.
+    engine.memoryMap().any().changeAccess(0, MemoryMap::WRITABLE);
+#endif
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
+    partitioner.enableSymbolicSemantics(true);
+    engine.partition(partitioner);
+    info <<"; done\n";
 
     // Find vertex at which all paths begin
     P2::ControlFlowGraph::ConstVertexNodeIterator beginVertex = vertexForInstruction(partitioner, settings.beginVertex);
@@ -616,10 +918,14 @@ int main(int argc, char *argv[]) {
         mlog[INFO] <<"\n";
     }
 
+#if 1 // [Robb P. Matzke 2015-02-25]
+    robb(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
+#else
     // Finding paths in the global CFG can be slow because the depth-first search can spend a huge amount of time exploring
     // parts of the CFG that are irrelevant. Therefore, we first compute an edge-reachability vector with a faster algorithm
     // that doesn't find paths, and use the reachability vector to restrict the first phase of path searching.
-    std::vector<bool> significantEdges = findSignificantEdges(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
+    std::vector<bool> significantEdges = findSignificantEdges(partitioner.cfg(), beginVertex, endVertices, avoidVertices,
+                                                              avoidEdges);
     std::vector<CfgPath> paths = findPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
                                            FOLLOW_CALLS, significantEdges);
     mlog[INFO] <<"found " <<StringUtility::plural(paths.size(), "basic paths") <<"\n";
@@ -635,4 +941,5 @@ int main(int argc, char *argv[]) {
             showPath(std::cout, partitioner, expandedPath);
         }
     }
+#endif
 }
