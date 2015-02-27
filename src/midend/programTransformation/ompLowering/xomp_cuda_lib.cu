@@ -692,7 +692,8 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* 
   mapped_var-> address = var_addr;
   mapped_var-> size = (int*)malloc(sizeof(int) * nDim); 
   mapped_var-> offset = (int*)malloc(sizeof(int) * nDim); 
-  mapped_var-> DimSize = (int*)malloc(sizeof(int) * nDim); 
+  mapped_var-> DimSize = (int*)malloc(sizeof(int) * nDim);
+  mapped_var->nDim = nDim; 
   int i;
   for(i = 0; i < nDim; ++i)
   { 
