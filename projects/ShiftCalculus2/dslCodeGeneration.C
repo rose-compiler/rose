@@ -18,6 +18,10 @@ using namespace std;
 
 using namespace DSL_Support;
 
+//We don't generate cuda code by default
+bool b_gen_cuda = false;
+// an internal variable to store the generated serial loop nests.
+static SgForStatement* temp_for_loop_nest = NULL; 
 
 void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLowlevelCode)
    {
