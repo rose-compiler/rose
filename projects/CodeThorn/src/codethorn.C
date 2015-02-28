@@ -710,8 +710,8 @@ int main( int argc, char * argv[] ) {
     option_specialize_fun_const_list=args["specialize-fun-const"].as< vector<int> >();
   }
 
-  if(args.count("specialize-fun-param")) {
-    option_specialize_fun_varinit_list=args["specialize-fun-varinit"].as< vector<int> >();
+  if(args.count("specialize-fun-varinit")) {
+    option_specialize_fun_varinit_list=args["specialize-fun-varinit"].as< vector<string> >();
     option_specialize_fun_varinit_const_list=args["specialize-fun-varinit-const"].as< vector<int> >();
   }
 
@@ -841,8 +841,17 @@ int main( int argc, char * argv[] ) {
       int constInt=option_specialize_fun_const_list[i];
       numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
     }
-
     cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
+    int numInit=0;
+    cout<<"DEBUG: var init spec: "<<endl;
+    for(size_t i=0;i<option_specialize_fun_varinit_list.size();i++) {
+      string varInit=option_specialize_fun_varinit_list[i];
+      int varInitConstInt=option_specialize_fun_varinit_const_list[i];
+      cout<<"DEBUG: checking for varInitName nr "<<i<<" var:"<<varInit<<" Const:"<<varInitConstInt<<endl;
+      numInit+=speci.specializeFunction(sageProject,funNameToFind, -1, 0, varInit, varInitConstInt,analyzer.getVariableIdMapping());
+    }
+    cout<<"STATUS: specialization: number of variable-inits replaced with constant: "<<numInit<<endl;
+
     //root=speci.getSpecializedFunctionRootNode();
     sageProject->unparse(0,0);
     //exit(0);
