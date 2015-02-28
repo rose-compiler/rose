@@ -72,18 +72,24 @@ test11: shiftCalculusCompiler
 
 rose_laplacian_lite.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
+rose_laplacian_lite_v2.cu: shiftCalculusCompiler
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output $@ $(srcdir)/laplacian_lite_v2.cpp
+rose_laplacian_lite_v3.cu: shiftCalculusCompiler
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 # Note that test1 and test3 are zero dimensional stencils that are not supported for code generation yet.
 # test2 is including STL and other library code
 # test4 is a version of test2 which excludes STL and library code (and it thus smaller to work with but the same API).
 # test5 - test8 test subsets of the stencil specification.
 localTests: test4 test2 test5 test6 test7 test8 
 
+cudaTests: rose_laplacian_lite.cu 
+#rose_laplacian_lite_v2.cu rose_laplacian_lite_v3.cu
 
 check-local:
 	@echo "Tests for Shift Calculus examples."
 #	@$(MAKE) $(PASSING_TEST_Output)
 	@$(MAKE) $(PASSING_REGRESSION_TEST_Output)
-	@$(MAKE) localTests rose_laplacian_lite.cu
+	@$(MAKE) localTests cudaTests
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: make check rule complete (terminated normally) ********"
 	@echo "********************************************************************************************"
