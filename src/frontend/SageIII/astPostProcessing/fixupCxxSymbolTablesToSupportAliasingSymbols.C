@@ -373,7 +373,8 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #if 0
                     printf ("Building a SgAliasSymbol \n");
 #endif
-                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+                 // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol);
                     ROSE_ASSERT(aliasSymbol != NULL);
 
                  // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
