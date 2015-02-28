@@ -4531,6 +4531,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
    {
      assert (p_symbol_table != NULL);
 
+#if 0
+     printf ("TOP SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
   // DQ (5/9/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4586,6 +4590,8 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 #endif
         }
 
+#if 0
+  // DQ (2/27/2015): This is the problem that is causing test2014_83.C, test2014_88.C, test2014_89.C, and test2014_90.C to fail in the development branch.
   // TV (7/18/2013): If this is a Global Scope then insert an alias in the project wide Global Scope
   // TODO: Check that the symbol have project wide visibility (static function in C)
      const SgGlobal * global_scope = isSgGlobal(this);
@@ -4598,6 +4604,7 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
          globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
        }
      }
+#endif
 
 #if 0
      ROSE_ASSERT(s != NULL);
@@ -4654,7 +4661,15 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
         }
 #endif
 
+#if 0
+     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
      p_symbol_table->insert(n,s);
+
+#if 0
+     printf ("Leaving SgScopeStatement::insert_symbol() \n");
+#endif
    }
 
 void
