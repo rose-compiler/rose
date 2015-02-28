@@ -29,9 +29,12 @@
 #include "AnalysisAbstractionLayer.h"
 #include "ArrayElementAccessData.h"
 #include "Specialization.h"
+#include <map>
 
 // test
 #include "Evaluator.h"
+
+using namespace std;
 
 namespace po = boost::program_options;
 using namespace CodeThorn;
@@ -58,6 +61,32 @@ list<SgExpression*> exprRootList(SgNode *node) {
     }
   }
   return exprList;
+}
+
+typedef map<SgForStatement*,SgPragmaDeclaration*> ForStmtToOmpPragmaMap;
+
+// finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
+ForStmtToOmpPragmaMap createOmpPragmaForStmtMap(SgNode* root) {
+  //cout<<"PROGRAM:"<<root->unparseToString()<<endl;
+  ForStmtToOmpPragmaMap map;
+  RoseAst ast(root);
+  for(RoseAst::iterator i=ast.begin(); i!=ast.end();++i) {
+    if(SgPragmaDeclaration* pragmaDecl=isSgPragmaDeclaration(*i)) {
+      string foundPragmaKeyWord=SageInterface::extractPragmaKeyword(pragmaDecl);
+      //cout<<"DEBUG: PRAGMAKEYWORD:"<<foundPragmaKeyWord<<endl;
+      if(foundPragmaKeyWord=="omp"||foundPragmaKeyWord=="simd") {
+        RoseAst::iterator j=i;
+        j.skipChildrenOnForward();
+        ++j;
+        if(SgForStatement* forStmt=isSgForStatement(*j)) {
+          map[forStmt]=pragmaDecl;
+        } else {
+          cout<<"DEBUG: NOT a forstmt: "<<(*i)->unparseToString()<<endl;
+        }
+      }
+    }
+  }
+  return map;
 }
 
 // finds the list of pragmas (in traversal order) with the prefix 'prefix' (e.g. '#pragma omp parallel' is found for prefix 'omp')
@@ -105,6 +134,66 @@ void CodeThornLanguageRestrictor::initialize() {
 
 }
 
+bool isInsideOmpParallelFor(SgNode* node, ForStmtToOmpPragmaMap& forStmtToPragmaMap) {
+  while(!isSgForStatement(node)||isSgProject(node))
+    node=node->get_parent();
+  ROSE_ASSERT(!isSgProject(node));
+  // assuming only omp parallel for exist
+  return forStmtToPragmaMap.find(isSgForStatement(node))!=forStmtToPragmaMap.end();
+}
+
+LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapping, Labeler* labeler) {
+  cout<<"INFO: loop info set and determine iteration vars."<<endl;
+  ForStmtToOmpPragmaMap forStmtToPragmaMap=createOmpPragmaForStmtMap(root);
+  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
+  LoopInfoSet loopInfoSet;
+  RoseAst ast(root);
+  AstMatching m;
+  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp),..)";
+  MatchResult r=m.performMatching(matchexpression,root);
+  for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+    SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
+    ROSE_ASSERT(node);
+    //cout<<"DEBUG: MATCH: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
+    LoopInfo loopInfo;
+    loopInfo.iterationVarId=variableIdMapping->variableId(node);
+    loopInfo.iterationVarType=isInsideOmpParallelFor(node,forStmtToPragmaMap)?ITERVAR_PAR:ITERVAR_SEQ;
+    SgNode* forNode=0; //(*i)["$FORSTMT"];
+    // WORKAROUND 1
+    // TODO: investigate why the for pointer is not stored in the same match-result
+    if(forNode==0) {
+      forNode=node; // init
+      while(!isSgForStatement(forNode)||isSgProject(forNode))
+        forNode=forNode->get_parent();
+    }
+    ROSE_ASSERT(!isSgProject(forNode));
+#if 0
+    cout<<"DEBUG: FOR-ITER-VAR:"<<variableIdMapping->variableName(loopInfo.iterationVarId)<<":";
+    cout<<"TYPE:"<<loopInfo.iterationVarType<<":";
+    cout<<forNode->unparseToString()<<endl<<"---------------------------------"<<endl;
+#endif
+    loopInfo.forStmt=isSgForStatement(forNode);
+    if(loopInfo.forStmt) {
+      const SgStatementPtrList& stmtList=loopInfo.forStmt->get_init_stmt();
+      ROSE_ASSERT(stmtList.size()==1);
+      loopInfo.initStmt=stmtList[0];
+      loopInfo.condExpr=loopInfo.forStmt->get_test_expr();
+      loopInfo.computeLoopLabelSet(labeler);
+      loopInfo.computeOuterLoopsVarIds(variableIdMapping);
+    } else {
+      cerr<<"WARNING: no for statement found."<<endl;
+      if(forNode) {
+        cerr<<"for-loop:"<<forNode->unparseToString()<<endl;
+      } else {
+        cerr<<"for-loop: 0"<<endl;
+      }
+    }
+    loopInfoSet.push_back(loopInfo);
+  }
+  cout<<"INFO: found "<<forStmtToPragmaMap.size()<<" omp/simd loops."<<endl;
+  cout<<"INFO: found "<<Specialization::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
+  return loopInfoSet;
+}
 
 class TermRepresentation : public DFAstAttribute {
 public:
@@ -427,7 +516,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("incomplete-stg",false);
 
   boolOptions.registerOption("print-update-infos",false);
-  boolOptions.registerOption("verify-update-sequence-race-conditions",false);
+  boolOptions.registerOption("verify-update-sequence-race-conditions",true);
 
   boolOptions.registerOption("minimize-states",false);
 
@@ -622,7 +711,6 @@ int main( int argc, char * argv[] ) {
     cerr<<"Error: option print-update-infos/verify-update-sequence-race-conditions must be used together with option --dump-non-sorted or --dump-sorted."<<endl;
     exit(1);
   }
-
   RewriteSystem rewriteSystem;
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     analyzer.setSkipSelectedFunctionCalls(true);
@@ -653,10 +741,14 @@ int main( int argc, char * argv[] ) {
 
   // Build the AST used by ROSE
   cout << "INIT: Parsing and creating AST: started."<<endl;
+  timer.stop();
+  timer.start();
   SgProject* sageProject = frontend(argc,argv);
   double frontEndRunTime=timer.getElapsedTimeInMilliSec();
   cout << "INIT: Parsing and creating AST: finished."<<endl;
   
+  analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+
   if(boolOptions["run-rose-tests"]) {
     cout << "INIT: Running ROSE AST tests."<<endl;
     // Run internal consistency tests on AST
@@ -681,6 +773,8 @@ int main( int argc, char * argv[] ) {
 
   SgNode* root=sageProject;
   ROSE_ASSERT(root);
+  //VariableIdMapping variableIdMapping;
+  //variableIdMapping.computeVariableSymbolMapping(sageProject);
 
   int numSubst=0;
   if(option_specialize_fun_name!="")
@@ -689,13 +783,11 @@ int main( int argc, char * argv[] ) {
     cout<<"STATUS: specializing function: "<<option_specialize_fun_name<<endl;
 
     string funNameToFind=option_specialize_fun_name;
-    VariableIdMapping variableIdMapping;
-    variableIdMapping.computeVariableSymbolMapping(sageProject);
 
     for(size_t i=0;i<option_specialize_fun_param_list.size();i++) {
       int param=option_specialize_fun_param_list[i];
       int constInt=option_specialize_fun_const_list[i];
-      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, &variableIdMapping);
+      numSubst+=speci.specializeFunction(sageProject,funNameToFind, param, constInt, analyzer.getVariableIdMapping());
     }
 
     cout<<"STATUS: specialization: number of variable-uses replaced with constant: "<<numSubst<<endl;
@@ -706,10 +798,8 @@ int main( int argc, char * argv[] ) {
 
 
   if(args.count("rewrite")) {
-    VariableIdMapping variableIdMapping;
-    variableIdMapping.computeVariableSymbolMapping(sageProject);
     rewriteSystem.resetStatistics();
-    rewriteSystem.rewriteAst(root, &variableIdMapping,true,false,true);
+    rewriteSystem.rewriteAst(root,analyzer.getVariableIdMapping() ,true,false,true);
     cout<<"Rewrite statistics:"<<endl<<rewriteSystem.getStatistics().toString()<<endl;
     sageProject->unparse(0,0);
     cout<<"STATUS: generated rewritten program."<<endl;
@@ -721,11 +811,11 @@ int main( int argc, char * argv[] ) {
   lr.checkProgram(root);
   timer.start();
 
-  cout << "INIT: Running variable<->symbol mapping check."<<endl;
+  //cout << "INIT: Running variable<->symbol mapping check."<<endl;
   //VariableIdMapping varIdMap;
-  analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
-  analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
-  cout << "STATUS: Variable<->Symbol mapping created."<<endl;
+  //analyzer.getVariableIdMapping()->setModeVariableIdForEachArrayElement(true);
+  //analyzer.getVariableIdMapping()->computeVariableSymbolMapping(sageProject);
+  //cout << "STATUS: Variable<->Symbol mapping created."<<endl;
 #if 0
   if(!analyzer.getVariableIdMapping()->isUniqueVariableSymbolMapping()) {
     cerr << "WARNING: Variable<->Symbol mapping not bijective."<<endl;
@@ -843,10 +933,6 @@ int main( int argc, char * argv[] ) {
     cout<<"STATUS: eliminated "<<numElim<<" STG back edges."<<endl;
   }
 
-  timer.start();
-  // LTL run time measurements missing
-  double ltlRunTime=timer.getElapsedTimeInMilliSec();
-
   // TODO: reachability in presence of semantic folding
   //  if(boolOptions["semantic-fold"] || boolOptions["post-semantic-fold"]) {
     analyzer.reachabilityResults.printResultsStatistics();
@@ -880,33 +966,7 @@ int main( int argc, char * argv[] ) {
 
   long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
 
-  double totalRunTime=frontEndRunTime+initRunTime+ analysisRunTime+ltlRunTime;
-
-  cout <<color("white");
-  cout << "=============================================================="<<endl;
-  cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
-  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
-  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
-  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
-  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
-  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
-  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
-  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
-  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
-    cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
-  }
-
-  cout << "=============================================================="<<endl;
-  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
-  cout << "=============================================================="<<endl;
-  cout <<color("normal");
-  //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
+  double totalRunTime=frontEndRunTime+initRunTime+analysisRunTime;
 
   long pstateSetSizeInf = 0;
   long eStateSetSizeInf = 0;
@@ -1106,14 +1166,14 @@ int main( int argc, char * argv[] ) {
   double arrayUpdateExtractionRunTime=0.0;
   double arrayUpdateSsaNumberingRunTime=0.0;
   double sortingAndIORunTime=0.0;
+  double verifyUpdateSequenceRaceConditionRunTime=0.0;
   
-  int updateSequenceRaceConditions=-1;
+  int verifyUpdateSequenceRaceConditionsResult=-1;
   if(args.count("dump-sorted")>0 || args.count("dump-non-sorted")>0) {
     Specialization speci;
     ArrayUpdatesSequence arrayUpdates;
     cout<<"STATUS: performing array analysis on STG."<<endl;
     cout<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
-    timer.start();
 
     Label fragmentStartLabel=Labeler::NO_LABEL;
     if(fragmentStartNode!=0) {
@@ -1123,17 +1183,25 @@ int main( int argc, char * argv[] ) {
     }
     
     bool useConstSubstitutionRule=boolOptions["rule-const-subst"];
+    timer.start();
     speci.extractArrayUpdateOperations(&analyzer,
                                        arrayUpdates,
                                        rewriteSystem,
                                        useConstSubstitutionRule
                                        );
     arrayUpdateExtractionRunTime=timer.getElapsedTimeInMilliSec();
+
     if(boolOptions["verify-update-sequence-race-conditions"]) {
-      std::vector<VariableId> iterationVars;
+      SgNode* root=analyzer.startFunRoot;
       VariableId parallelIterationVar;
-      updateSequenceRaceConditions=speci.verifyUpdateSequenceRaceConditions(iterationVars,parallelIterationVar,arrayUpdates,analyzer.getVariableIdMapping());
+      LoopInfoSet loopInfoSet=determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
+      cout<<"DEBUG: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      Specialization::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
+      timer.start();
+      verifyUpdateSequenceRaceConditionsResult=speci.verifyUpdateSequenceRaceConditions(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
+      verifyUpdateSequenceRaceConditionRunTime=timer.getElapsedTimeInMilliSec();
     }
+
     if(boolOptions["print-update-infos"]) {
       speci.printUpdateInfos(arrayUpdates,analyzer.getVariableIdMapping());
     }
@@ -1157,10 +1225,36 @@ int main( int argc, char * argv[] ) {
       speci.writeArrayUpdatesToFile(arrayUpdates, filename, SAR_SSA, true);
       sortingAndIORunTime=timer.getElapsedTimeInMilliSec();
     }
-    totalRunTime+=arrayUpdateExtractionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
+    totalRunTime+=arrayUpdateExtractionRunTime+verifyUpdateSequenceRaceConditionRunTime+arrayUpdateSsaNumberingRunTime+sortingAndIORunTime;
   }
 
   double overallTime =totalRunTime + totalInputTracesTime + totalLtlRunTime;
+
+  // MS: all measurements are available here. We can print any information also on screen.
+  cout <<color("white");
+  cout << "=============================================================="<<endl;
+  cout <<color("normal")<<"STG generation and assertion analysis complete"<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of stdin-estates        : "<<color("cyan")<<numOfStdinEStates<<color("white")<<endl;
+  cout << "Number of stdoutvar-estates    : "<<color("cyan")<<numOfStdoutVarEStates<<color("white")<<endl;
+  cout << "Number of stdoutconst-estates  : "<<color("cyan")<<numOfStdoutConstEStates<<color("white")<<endl;
+  cout << "Number of stderr-estates       : "<<color("cyan")<<numOfStderrEStates<<color("white")<<endl;
+  cout << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
+  cout << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  cout << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
+  cout << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  cout << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
+  if(analyzer.getNumberOfThreadsToUse()==1 && analyzer.getSolver()==5 && analyzer.getExplorationMode()==Analyzer::EXPL_LOOP_AWARE) {
+    cout << "Number of iterations           : "<<analyzer.getIterations()<<"-"<<analyzer.getApproximatedIterations()<<endl;
+  }
+  cout << "=============================================================="<<endl;
+  cout << "Memory total         : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
+  cout << "Time total           : "<<color("green")<<readableruntime(totalRunTime)<<color("white")<<endl;
+  cout << "=============================================================="<<endl;
+  cout <<color("normal");
+  //printAnalyzerStatistics(analyzer, totalRunTime, "STG generation and assertion analysis complete");
 
   if(args.count("csv-stats")) {
     string filename=args["csv-stats"].as<string>().c_str();
@@ -1183,7 +1277,7 @@ int main( int argc, char * argv[] ) {
         <<readableruntime(frontEndRunTime)<<", "
         <<readableruntime(initRunTime)<<", "
         <<readableruntime(analysisRunTime)<<", "
-        <<readableruntime(ltlRunTime)<<", "
+        <<readableruntime(verifyUpdateSequenceRaceConditionRunTime)<<", "
         <<readableruntime(arrayUpdateExtractionRunTime)<<", "
         <<readableruntime(arrayUpdateSsaNumberingRunTime)<<", "
         <<readableruntime(sortingAndIORunTime)<<", "
@@ -1200,7 +1294,7 @@ int main( int argc, char * argv[] ) {
         <<frontEndRunTime<<", "
         <<initRunTime<<", "
         <<analysisRunTime<<", "
-        <<ltlRunTime<<", "
+        <<verifyUpdateSequenceRaceConditionRunTime<<", "
         <<arrayUpdateExtractionRunTime<<", "
         <<arrayUpdateSsaNumberingRunTime<<", "
         <<sortingAndIORunTime<<", "
@@ -1235,9 +1329,9 @@ int main( int argc, char * argv[] ) {
 
     // -1: test not performed, 0 (no race conditions), >0: race conditions exist
     text<<"parallelism-stats,";
-    if(updateSequenceRaceConditions==-1) {
+    if(verifyUpdateSequenceRaceConditionsResult==-1) {
       text<<"sequential";
-    } else if(updateSequenceRaceConditions==0) {
+    } else if(verifyUpdateSequenceRaceConditionsResult==0) {
       text<<"pass";
     } else {
       text<<"fail";

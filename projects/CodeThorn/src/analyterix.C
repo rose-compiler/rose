@@ -32,6 +32,7 @@
 #include "defUseQuery.h"
 #include "Timer.h"
 #include "AnalysisAbstractionLayer.h"
+#include "AliasAnalysis.h"
 
 #include <vector>
 #include <set>

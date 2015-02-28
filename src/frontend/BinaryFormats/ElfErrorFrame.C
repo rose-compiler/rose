@@ -293,8 +293,10 @@ SgAsmElfEHFrameSection::parse()
             record_size = disk_to_host(fhdr->get_sex(), u64_disk);
             length_field_size += 8;                     // length field size is both "length" and "extended length"
         }
-        if (0==record_size)
+        if (0==record_size) {
+            record_offset += length_field_size;
             break;
+        }
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
         read_content_local(at, &u32_disk, 4); at += 4;
