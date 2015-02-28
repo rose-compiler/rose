@@ -7085,6 +7085,11 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
    {
   // For simplicity, there is only a single insert member function to put a symbol into the symbol table.
 
+#if 0
+     printf ("********** In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s \n",
+          nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),sp,sp->class_name().c_str());
+#endif
+
   // DQ (2/14/2007): Added assertion!
      assert(this != NULL);
 
@@ -7344,6 +7349,11 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                assert(false);
              }
         }
+#endif
+
+#if 0
+     printf ("********** Leaving SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s \n",
+          nm.str(),sp,this,this->class_name().c_str(),this->get_parent(),this->get_parent()->class_name().c_str(),sp,sp->class_name().c_str());
 #endif
    }
 
@@ -9628,6 +9638,8 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                             {
 #if 0
                               printf ("Found causal node for SgAliasSymbol: aliasedSymbol = %p original_aliased_symbol = %p = %s \n",aliasedSymbol,original_aliased_symbol,original_aliased_symbol->class_name().c_str());
+                              ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
+                              printf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
                               printf (" --- aliasedSymbol->get_causal_nodes().size() = %" PRIuPTR " \n",aliasedSymbol->get_causal_nodes().size());
                               printf (" --- get_aliasSymbolCausalNodeSet().size()    = %" PRIuPTR " \n",get_aliasSymbolCausalNodeSet().size());
 #endif
@@ -9639,7 +9651,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                            // yet in the traversal of the AST represented by the symbol tabel query at this point.
                               original_aliased_symbol = NULL;
 #if 0
-                              printf ("associated causal nodes not seen yet in traversal of AST: \n",aliasedSymbol->get_causal_nodes().size());
+                              printf ("associated causal nodes not seen yet in traversal of AST: \n");
                               for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
                                  {
                                    printf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());
