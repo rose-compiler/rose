@@ -4596,23 +4596,8 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
      const SgGlobal * global_scope = isSgGlobal(this);
      if (global_scope != NULL) 
         {
-
        // DQ (2/28/2015): Original code.
        // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
-
-          SgAliasSymbol* aliasSymbol = NULL;
-
-       // DQ (2/28/2015): We need to handle the case where the input symbol "s" is a SgAliasSymbol.
-          SgAliasSymbol* tmp_aliasSymbol = isSgAliasSymbol(s);
-          if (tmp_aliasSymbol != NULL)
-             {
-            // Call the copy constructor in this case (maybe this detail should be buried into the semantics of the SgAliasSymbol constructor call).
-               aliasSymbol = new SgAliasSymbol(*tmp_aliasSymbol);
-             }
-            else
-             {
-               aliasSymbol = new SgAliasSymbol(s);
-             }
 
           SgProject * project = SageInterface::getProject(global_scope);
           if (project != NULL) 
@@ -4620,17 +4605,39 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
                SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
                assert(globalScopeAcrossFiles != NULL);
 
-            // DQ (2/28/2015): Added assertion.
-               ROSE_ASSERT(global_scope != globalScopeAcrossFiles);
+            // DQ (2/28/2015): Added assertion (fails for snippet injection and for some java support).
+            // ROSE_ASSERT(global_scope != globalScopeAcrossFiles);
+               if (global_scope != globalScopeAcrossFiles)
+                  {
+                 // DQ (2/28/2015): We need to handle the case where the input symbol "s" is a SgAliasSymbol.
+                    SgAliasSymbol* aliasSymbol = NULL;
+                    SgAliasSymbol* tmp_aliasSymbol = isSgAliasSymbol(s);
+                    if (tmp_aliasSymbol != NULL)
+                       {
+                      // Call the copy constructor in this case (maybe this detail should be buried into the semantics of the SgAliasSymbol constructor call).
+                         aliasSymbol = new SgAliasSymbol(*tmp_aliasSymbol);
+                       }
+                      else
+                       {
+                         aliasSymbol = new SgAliasSymbol(s);
+                       }
 #if 0
-               printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
+                    printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",
+                         aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
 #endif
-               globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+                    globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+                  }
+                 else
+                  {
+#if 1
+                    printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
+#endif
+                  }
              }
             else
              {
 #if 0
-               printf ("In SgScopeStatement::insert_symbol(): project == NULL: This leaks a SgAliasSymbol! \n");
+               printf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
 #endif
              }
         }
