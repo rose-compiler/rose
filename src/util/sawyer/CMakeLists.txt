@@ -1,6 +1,6 @@
 add_library(util_sawyer OBJECT
   Assert.C CommandLine.C GraphTraversal.C Markup.C MarkupPod.C
-  Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C)
+  Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C Synchronization.C)
 
 install(FILES
     Access.h AddressMap.h AddressSegment.h AllocatingBuffer.h Assert.h
