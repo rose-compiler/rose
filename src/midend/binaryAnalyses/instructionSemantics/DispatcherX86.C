@@ -387,7 +387,9 @@ struct IP_bswap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         size_t nbits = asm_type_width(args[0]->get_type());
-        if (16 == nbits) {
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (16 == nbits) {
             // Intel ref manual says "When the BSWAP instruction references a 16-bit register, the result is
             // undefined".
             d->write(args[0], ops->undefined_(16));
