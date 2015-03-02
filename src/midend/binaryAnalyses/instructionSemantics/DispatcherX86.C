@@ -407,13 +407,21 @@ struct IP_bswap: P {
 struct IP_call: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
-        ops->writeMemory(d->REG_SS, newSp, d->readRegister(d->REG_anyIP), ops->boolean_(true));
-        ops->writeRegister(d->REG_anyIP, ops->filterCallTarget(d->read(args[0], d->REG_anyIP.get_nbits())));
-        ops->writeRegister(d->REG_ESP, newSp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr targetVa = ops->unsignedExtend(d->read(args[0]), d->REG_anyIP.get_nbits());
+            
+            // Push return address onto stack
+            size_t nBytesPush = d->REG_anyIP.get_nbits() >> 3;
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(d->REG_anySP.get_nbits(), -nBytesPush));
+            ops->writeMemory(d->REG_SS, newSp, d->readRegister(d->REG_anyIP), ops->boolean_(true));
+            ops->writeRegister(d->REG_anySP, newSp);;
+            
+            // Branch
+            ops->writeRegister(d->REG_anyIP, ops->filterCallTarget(targetVa));
+        }
     }
 };
 
