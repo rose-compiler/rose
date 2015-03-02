@@ -67,8 +67,10 @@ DisassemblerX86::init(size_t wordsize)
      * used instead of the default we set here. */
     X86ProcessorMode procMode;
     const RegisterDictionary *regdict = NULL;
+    size_t addrWidth = 0;
     switch (wordsize) {
         case 2:
+            addrWidth = 16;
             insnSize = x86_insnsize_16;
             regdict = RegisterDictionary::dictionary_i286();
             REG_IP = *regdict->lookup("ip");
@@ -77,6 +79,7 @@ DisassemblerX86::init(size_t wordsize)
             procMode = x86_processor_16;
             break;
         case 4:
+            addrWidth = 32;
             insnSize = x86_insnsize_32;
             regdict = RegisterDictionary::dictionary_pentium4();
             REG_IP = *regdict->lookup("eip");
@@ -85,6 +88,7 @@ DisassemblerX86::init(size_t wordsize)
             procMode = x86_processor_32;
             break;
         case 8:
+            addrWidth = 64;
             insnSize = x86_insnsize_64;
             regdict = RegisterDictionary::dictionary_amd64();
             REG_IP = *regdict->lookup("rip");
@@ -95,9 +99,8 @@ DisassemblerX86::init(size_t wordsize)
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
-    InstructionSemantics2::DispatcherX86Ptr d = InstructionSemantics2::DispatcherX86::instance();
-    d->processorMode(procMode);
-    d->set_register_dictionary(regdict);
+    InstructionSemantics2::DispatcherX86Ptr d = InstructionSemantics2::DispatcherX86::instance(addrWidth, regdict);
+    d->set_register_dictionary(regdict);                // so register cache is initialized
     p_proto_dispatcher = d; 
 
     set_registers(regdict);

@@ -143,7 +143,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
     // rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
     BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
-    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps); // assuming the specimen is x86-based
+    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
 #if 0
     // The initial state can be modified if you like.  Here we use a constant for the stack pointer.
     symbolicOps->writeRegister(cpu->REG_ESP, symbolicOps->number_(32, 0x02800000)); // arbitrary

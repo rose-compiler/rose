@@ -361,9 +361,9 @@ analyze_interp(SgAsmInterpretation *interp)
         if (do_trace) {
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
             trace->set_stream(stdout);
-            dispatcher = DispatcherX86::instance(trace);
+            dispatcher = DispatcherX86::instance(trace, 32);
         } else {
-            dispatcher = DispatcherX86::instance(operators);
+            dispatcher = DispatcherX86::instance(operators, 32);
         }
         operators->set_solver(make_solver());
 

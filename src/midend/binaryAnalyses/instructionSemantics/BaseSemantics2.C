@@ -1063,6 +1063,7 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
+    ASSERT_not_null(addr);
     ASSERT_require(!byte_restricted || value->get_width()==8);
     MemoryCellPtr cell = protocell->create(addr, value);
     cells.push_front(cell);
@@ -1080,6 +1081,7 @@ MemoryCellList::CellList
 MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
                      bool &short_circuited/*out*/) const
 {
+    ASSERT_not_null(addr);
     short_circuited = false;
     CellList retval;
     MemoryCellPtr tmpcell = protocell->create(addr, valOps->undefined_(nbits));
@@ -1129,6 +1131,12 @@ RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
 /*******************************************************************************************************************************
  *                                      Dispatcher
  *******************************************************************************************************************************/
+
+void
+Dispatcher::addressWidth(size_t nBits) {
+    ASSERT_require2(nBits==addrWidth_ || addrWidth_==0, "address width cannot be changed once it is set");
+    addrWidth_ = nBits;
+}
 
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
@@ -1252,6 +1260,8 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
 SValuePtr
 Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
 {
+    if (0==nbits)
+        nbits = addressWidth();
     BaseSemantics::SValuePtr retval;
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
@@ -1261,12 +1271,6 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
-        if (0==nbits)
-            nbits = std::max(lhs->get_width(), rhs->get_width());
-        if (lhs->get_width() < nbits)
-            lhs = operators->signExtend(lhs, nbits);
-        if (rhs->get_width() < nbits)
-            rhs = operators->signExtend(rhs, nbits);
         retval = operators->add(lhs, rhs);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
@@ -1277,14 +1281,11 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     }
 
     ASSERT_not_null(retval);
-    if (nbits!=0) {
-        if (retval->get_width() < nbits) {
-            retval = operators->signExtend(retval, nbits);
-        } else if (retval->get_width() > nbits) {
-            retval = operators->extract(retval, 0, nbits);
-        }
+    if (retval->get_width() < nbits) {
+        retval = operators->signExtend(retval, nbits);
+    } else if (retval->get_width() > nbits) {
+        retval = operators->extract(retval, 0, nbits);
     }
-
     return retval;
 }
 

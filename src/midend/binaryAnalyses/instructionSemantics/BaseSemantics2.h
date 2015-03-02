@@ -1,4 +1,4 @@
-#ifndef Rose_BaseSemantics2_H
+#ifndef Rose_BaseSemantics2_H 
 #define Rose_BaseSemantics2_H
 
 #include "Registers.h"
@@ -813,7 +813,7 @@ public:
     // Methods first defined at this level of the class hierarchy
 public:
     /** Initialize all registers of the dictionary.  When the dictionary contains overlapping registers, only the largest
-     *  registers are initialized. For example, on a 32-bit x86 architecture, EAX would be initialized but not AX, AH, or AL;
+     *  registers are initialized. For example, on a 32-bit x86 architecture EAX would be initialized but not AX, AH, or AL;
      *  requesting AX, AH, or AL will return part of the initial EAX value. */
     virtual void initialize_large();
 
@@ -2238,7 +2238,8 @@ public:
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
 protected:
     RiscOperatorsPtr operators;
-    const RegisterDictionary *regdict;          /**< See set_register_dictionary(). */
+    const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
+    size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
     // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
@@ -2249,9 +2250,14 @@ protected:
     // Real constructors
 protected:
     // Prototypical constructor
-    Dispatcher(): regdict(NULL) {}
+    Dispatcher(): regdict(NULL), addrWidth_(0) {}
 
-    Dispatcher(const RiscOperatorsPtr &ops, const RegisterDictionary *regs): operators(ops), regdict(regs) {
+    // Prototypical constructor
+    Dispatcher(size_t addrWidth, const RegisterDictionary *regs)
+        : regdict(regs), addrWidth_(addrWidth) {}
+
+    Dispatcher(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : operators(ops), regdict(regs), addrWidth_(addrWidth) {
         ASSERT_not_null(operators);
         ASSERT_not_null(regs);
     }
@@ -2270,7 +2276,7 @@ public:
     // Virtual constructors
 public:
     /** Virtual constructor. */
-    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, const RegisterDictionary *regs=NULL) const = 0;
+    virtual DispatcherPtr create(const RiscOperatorsPtr &ops, size_t addrWidth=0, const RegisterDictionary *regs=NULL) const = 0;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to process instructions
@@ -2360,6 +2366,16 @@ public:
      *  @p allowMissing is false or true, respectively. */
     virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false);
 
+    /** Property: Width of memory addresses.
+     *
+     *  This property defines the width of memory addresses. All memory reads and writes (and any other defined memory
+     *  operations) should pass address expressions that are this width.  The address width cannot be changed once it's set.
+     *
+     * @{ */
+    size_t addressWidth() const { return addrWidth_; }
+    void addressWidth(size_t nbits);
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
 public:
@@ -2388,12 +2404,12 @@ public:
      *  expression type is used.  The width of the address passed to lower-level memory access functions is specified by @p
      *  addr_nbits.  If @p addr_nbits is zero then the natural width of the effective address is passed to lower level
      *  functions. */
-    virtual SValuePtr read(SgAsmExpression*, size_t value_nbits=0, size_t addr_nbits=32);
+    virtual SValuePtr read(SgAsmExpression*, size_t value_nbits=0, size_t addr_nbits=0);
 
     /** Writes to an L-value expression. The expression can be a register or memory reference.  The width of the address passed
      *  to lower-level memory access functions is specified by @p addr_nbits.  If @p addr_nbits is zero then the natural width
      *  of the effective address is passed to lower level functions. */
-    virtual void write(SgAsmExpression*, const SValuePtr &value, size_t addr_nbits=32);
+    virtual void write(SgAsmExpression*, const SValuePtr &value, size_t addr_nbits=0);
 };
 
 /*******************************************************************************************************************************

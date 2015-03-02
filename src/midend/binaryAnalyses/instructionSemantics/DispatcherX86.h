@@ -14,14 +14,18 @@ protected:
     X86ProcessorMode processorMode_;
 
     // Prototypical constructor
-    DispatcherX86(): processorMode_(x86_processor_32) {
-        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
-    }
+    DispatcherX86()
+        : BaseSemantics::Dispatcher(32, registersForProcessorMode(x86_processor_32)), processorMode_(x86_processor_32) {}
+
+    // Prototypical constructor
+    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, registersForProcessorMode(processorModeForAddressWidth(addrWidth))),
+          processorMode_(processorModeForAddressWidth(addrWidth)) {}
 
     // Normal constructor
-    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, regs ? regs : RegisterDictionary::dictionary_pentium4()),
-          processorMode_(x86_processor_32) {
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, registersForProcessorMode(processorModeForAddressWidth(addrWidth))),
+          processorMode_(processorModeForAddressWidth(addrWidth)) {
         regcache_init();
         iproc_init();
     }
@@ -55,18 +59,26 @@ public:
         return DispatcherX86Ptr(new DispatcherX86);
     }
 
+    /** Construct a prototyipcal dispatcher. Construct a prototypical dispatcher with a specified address size. The only thing
+     * this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
+    static DispatcherX86Ptr instance(size_t addrWidth, const RegisterDictionary *regs=NULL) {
+        return DispatcherX86Ptr(new DispatcherX86(addrWidth, regs));
+    }
+
     /** Constructor. */
-    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops,
+    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
                                      const RegisterDictionary *regs=NULL) {
-        return DispatcherX86Ptr(new DispatcherX86(ops, regs));
+        return DispatcherX86Ptr(new DispatcherX86(ops, addrWidth, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops,
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
                                                 const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (0==addrWidth)
+            addrWidth = addressWidth();
         if (NULL==regs)
             regs = get_register_dictionary();
-        return instance(ops, regs);
+        return instance(ops, addrWidth, regs);
     }
 
     /** Dynamic cast to a DispatcherX86Ptr with assertion. */
@@ -95,7 +107,7 @@ public:
         return insn->get_kind();
     }
 
-    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=32) ROSE_OVERRIDE;
+    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
     /** Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
@@ -172,6 +184,34 @@ public:
 
     /** Pop the top item from the floating point stack. */
     virtual void popFloatingPoint();
+
+private:
+    static X86ProcessorMode processorModeForAddressWidth(size_t addrWidth) {
+        switch (addrWidth) {
+            case 16: return x86_processor_16;
+            case 32: return x86_processor_32;
+            case 64: return x86_processor_64;
+        }
+        ASSERT_not_reachable("invalid address width: " + StringUtility::numberToString(addrWidth));
+    }
+
+    static size_t addressWidthForProcessorMode(X86ProcessorMode proc) {
+        switch (proc) {
+            case x86_processor_16: return 16;
+            case x86_processor_32: return 32;
+            case x86_processor_64: return 64;
+        }
+        ASSERT_not_reachable("invalid x86 processor type");
+    }
+
+    static const RegisterDictionary *registersForProcessorMode(X86ProcessorMode proc) {
+        switch (proc) {
+            case x86_processor_16: return RegisterDictionary::dictionary_i286();
+            case x86_processor_32: return RegisterDictionary::dictionary_pentium4();
+            case x86_processor_64: return RegisterDictionary::dictionary_amd64();
+        }
+        ASSERT_not_reachable("invalid x86 processor type");
+    }
 };
         
 } // namespace
