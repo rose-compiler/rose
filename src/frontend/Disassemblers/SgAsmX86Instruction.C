@@ -77,7 +77,8 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops);
+        const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
         SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -87,7 +88,6 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
-        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
         SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
         if (eip->is_number()) {
             rose_addr_t target_va = eip->get_number();
@@ -106,6 +106,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
+        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
         SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth), esp->boolean_(true)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
@@ -135,8 +136,9 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops);
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -146,7 +148,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
         // Look at the top of the stack
         const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(dispatcher->REG_anySP),
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(SP),
                                                         ops->get_protoval()->undefined_(ipWidth),
                                                         ops->get_protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
