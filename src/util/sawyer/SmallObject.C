@@ -2,5 +2,5 @@
 #include <sawyer/Sawyer.h>
 
 namespace Sawyer {
-SAWYER_EXPORT PoolAllocator SmallObject::allocator_;
+SAWYER_EXPORT SynchronizedPoolAllocator SmallObject::allocator_;
 } // namespace
