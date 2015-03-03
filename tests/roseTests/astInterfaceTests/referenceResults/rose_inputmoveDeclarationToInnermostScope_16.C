@@ -9,7 +9,7 @@ void foobar(int e)
     int d;
     d = 0;
   }
-  else {
+   else {
     int d;
     d = 1;
   }

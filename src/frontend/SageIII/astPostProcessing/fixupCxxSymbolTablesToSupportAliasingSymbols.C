@@ -387,10 +387,15 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                     aliasSymbol->get_causal_nodes().push_back(causalNode);
 
 #if ALIAS_SYMBOL_DEBUGGING
-                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
+                 // printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p causalNode = %p = %s \n",aliasSymbol,causalNode,causalNode->class_name().c_str());
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
 #endif
                  // Use the current name and the alias to the symbol
                     currentScope->insert_symbol(name, aliasSymbol);
+
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): DONE: Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
+#endif
                   }
              }
             else

@@ -14,12 +14,14 @@ void func1(int len)
 /* declared once, used multiple times as loop index variable*/
 /* declared once, used multiple times */
   for (int i = 0; i < len; ++i) {
-    int tmp = f(i);
+    int tmp;
+    tmp = f(i);
     x = foo(tmp);
 /* … */
   }
   for (int i = 0; i < len; ++i) {
-    int tmp = g(i);
+    int tmp;
+    tmp = g(i);
     y = goo(tmp);
 /* … */
   }

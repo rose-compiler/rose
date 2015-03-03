@@ -122,7 +122,10 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                   {
                     ia.skipSubTree = true;
                   }
-#if 0
+
+#define DEBUG_DSL_EXAMPLES 1
+
+#if DEBUG_DSL_EXAMPLES
             // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
             // handle visualization of selected portions of large files.
 
@@ -151,7 +154,7 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
              {
              }
 #endif
-#if 0
+#if DEBUG_DSL_EXAMPLES
        // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
        // I think we need to have a mechanism to support this so that we can better handle visualization 
        // of selected portions of large files.

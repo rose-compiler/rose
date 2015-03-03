@@ -3,11 +3,9 @@
 void foo(int value,int *first,int *last)
 {
   const int tmp = value;
-  for (; first != last; ++first) {
+  for (; first != last; ++first) 
      *first = tmp;
-  }
 //test if false body is not created.
-  if (( *first)) {
+  if (( *first)) 
     ;
-  }
 }

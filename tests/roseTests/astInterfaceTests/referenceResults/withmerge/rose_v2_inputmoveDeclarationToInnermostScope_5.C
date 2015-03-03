@@ -54,24 +54,18 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
        */
     r = (r * 7621 + 1) % 32768;
     r3 = r % 3;
-    if (r3 == 0) {
+    if (r3 == 0) 
       med = eclass[fmap[lo]];
-    }
-    else {
-      if (r3 == 1) {
-        med = eclass[fmap[lo + hi >> 1]];
-      }
-      else {
-        med = eclass[fmap[hi]];
-      }
-    }
+     else if (r3 == 1) 
+      med = eclass[fmap[lo + hi >> 1]];
+     else 
+      med = eclass[fmap[hi]];
     unLo = ltLo = lo;
     unHi = gtHi = hi;
     while(1){
       while(1){
-        if (unLo > unHi) {
+        if (unLo > unHi) 
           break; 
-        }
         n = ((Int32 )eclass[fmap[unLo]]) - ((Int32 )med);
         if (n == 0) {
           ltLo++;
@@ -79,15 +73,13 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
           continue; 
         }
         ;
-        if (n > 0) {
+        if (n > 0) 
           break; 
-        }
         unLo++;
       }
       while(1){
-        if (unLo > unHi) {
+        if (unLo > unHi) 
           break; 
-        }
         n = ((Int32 )eclass[fmap[unHi]]) - ((Int32 )med);
         if (n == 0) {
           gtHi--;
@@ -95,20 +87,17 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
           continue; 
         }
         ;
-        if (n < 0) {
+        if (n < 0) 
           break; 
-        }
         unHi--;
       }
-      if (unLo > unHi) {
+      if (unLo > unHi) 
         break; 
-      }
       unLo++;
       unHi--;
     }
-    if (gtHi < ltLo) {
+    if (gtHi < ltLo) 
       continue; 
-    }
     n = (ltLo - lo < unLo - ltLo?ltLo - lo : unLo - ltLo);
 {
       Int32 yyp1 = lo;
@@ -137,7 +126,7 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
     m = hi - (gtHi - unHi) + 1;
     if (n - lo > hi - m) {
     }
-    else {
+     else {
     }
   }
 // made up another test for if (condition)
@@ -161,7 +150,7 @@ static void fallbackQSort3(UInt32 *fmap,UInt32 *eclass,Int32 loSt,Int32 hiSt)
       int blockx;
       blockx++;
     }
-    else {
+     else {
       int blockx;
       blockx--;
     }
@@ -193,12 +182,12 @@ void uInt64_toAscii(char *outbuf,UInt64 *n)
   Int32 nBuf = 0;
   UInt64 n_copy =  *n;
   do {
-    Int32 q = uInt64_qrm10(&n_copy);
+    Int32 q;
+    q = uInt64_qrm10(&n_copy);
     buf[nBuf] = (q + '0');
     nBuf++;
   }while (!(uInt64_isZero(&n_copy)));
   outbuf[nBuf] = 0;
-  for (Int32 i = 0; i < nBuf; i++) {
+  for (Int32 i = 0; i < nBuf; i++) 
     outbuf[i] = buf[nBuf - i - 1];
-  }
 }

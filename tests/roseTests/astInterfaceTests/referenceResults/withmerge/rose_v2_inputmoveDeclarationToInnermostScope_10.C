@@ -20,7 +20,7 @@ void bar(bool allow)
     for (int i = 0; i < 4; ++i) {
     }
   }
-  else {
+   else {
     for (int i = 0; i < 4; ++i) {
     }
   }
@@ -44,7 +44,7 @@ void foo2(bool allow,int update,int update2)
             for ((i = 0 , j = 0); i < 10; (++i , ++j)) {
             }
           }
-          else {
+           else {
             int i;
             for ((i = 0 , j = 0); i < 10; (++i , ++j)) {
             }
@@ -72,18 +72,21 @@ void foo::f1(bool allow,int update,int length,double *b)
 {
   if (allow) {
     for (int iz = 0; iz < length; ++iz) {
-      int dens = (int )((this) -> m_a / b[iz]);
+      int dens;
+      dens = ((this) -> m_a / b[iz]);
     }
   }
-  else {
+   else {
     if (update > 0) {
       for (int iz = 0; iz < length; ++iz) {
-        int dens = (int )((this) -> m_a / b[iz]);
+        int dens;
+        dens = ((this) -> m_a / b[iz]);
       }
     }
-    else {
+     else {
       for (int iz = 0; iz < length; ++iz) {
-        int dens = (int )((this) -> m_a / b[iz]);
+        int dens;
+        dens = ((this) -> m_a / b[iz]);
       }
     }
   }

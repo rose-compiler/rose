@@ -49,6 +49,7 @@ SUBDIRS = \
 	StencilManyCore \
 	ShiftCalculus \
 	ShiftCalculus2 \
+	ShiftCalculus3 \
 	Fortran_to_C \
 	mint \
 	vectorization \

@@ -6,9 +6,11 @@ void foobar(int e)
   int x;
 #endif
   if (e) {
-    int d = 0;
+    int d;
+    d = 0;
   }
-  else {
-    int d = 1;
+   else {
+    int d;
+    d = 1;
   }
 }

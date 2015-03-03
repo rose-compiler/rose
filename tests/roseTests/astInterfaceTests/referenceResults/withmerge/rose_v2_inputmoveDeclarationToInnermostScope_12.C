@@ -6,7 +6,7 @@ void foo(int dimensions)
   if (dimensions == 2) {
     numItems = 10;
   }
-  else {
+   else {
     numItems = 20;
   }
   double *buffer = new double [numItems];
