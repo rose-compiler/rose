@@ -530,8 +530,18 @@ struct IP_cmovcc: P {
 struct IP_cmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        (void) d->doAddOperation(d->read(args[0], nbits), ops->invert(d->read(args[1], nbits)), true, ops->boolean_(false));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            if (b->get_width() < a->get_width())
+                b = ops->signExtend(b, a->get_width());
+            ASSERT_require(a->get_width() == b->get_width());
+
+            // Compute a-b for its status register side effects
+            (void) d->doAddOperation(a, ops->invert(b), true, ops->boolean_(false));
+        }
     }
 };
 
