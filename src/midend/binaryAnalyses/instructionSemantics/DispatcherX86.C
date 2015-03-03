@@ -676,6 +676,18 @@ struct IP_cwd: P {
     }
 };
 
+// Sign extend RAX into RDX:RAX
+struct IP_cqo: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_RDX, ops->extract(ops->signExtend(d->readRegister(d->REG_RAX), 128), 64, 128));
+        }
+    }
+};
+
 // Sign extend AX to EAX
 struct IP_cwde: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1670,6 +1682,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_cmpsd,        new X86::IP_cmpstrings(x86_repeat_none, 32)); // FIXME: also a floating point instruction
     iproc_set(x86_cmpxchg,      new X86::IP_cmpxchg);
     iproc_set(x86_cpuid,        new X86::IP_cpuid);
+    iproc_set(x86_cqo,          new X86::IP_cqo);
     iproc_set(x86_cwd,          new X86::IP_cwd);
     iproc_set(x86_cwde,         new X86::IP_cwde);
     iproc_set(x86_dec,          new X86::IP_dec);
@@ -1807,6 +1820,7 @@ DispatcherX86::regcache_init()
         switch (processorMode()) {
             case x86_insnsize_64:
                 REG_RAX = findRegister("rax", 64);
+                REG_RDX = findRegister("rdx", 64);
                 REG_RDI = findRegister("rdi", 64);
                 REG_RSI = findRegister("rsi", 64);
                 // fall through...
