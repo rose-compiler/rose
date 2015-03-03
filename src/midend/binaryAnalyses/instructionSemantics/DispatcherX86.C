@@ -546,38 +546,84 @@ struct IP_cmp: P {
 };
 
 // Compare strings
+// CMPSD is also a floating-point instruction when it has two operands
 struct IP_cmpstrings: P {
     const X86RepeatPrefix repeat;
     const size_t nbits;
     const size_t nbytes;
     IP_cmpstrings(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits || 64==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
+        if (insn->get_kind()==x86_cmpsd && args.size() == 2) {
+            // This is a floating point instruction: compare scalar double-precision floating-point values
+            throw BaseSemantics::Exception("no dispatch ability for instruction", insn);
+        }
+
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
-        RegisterDescriptor sr(x86_regclass_segment,
-                              insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
-                              0, 16);
-        BaseSemantics::SValuePtr si_value = ops->readMemory(sr, d->readRegister(d->REG_ESI),
-                                                            ops->undefined_(nbits), in_loop);
-        BaseSemantics::SValuePtr di_value = ops->readMemory(d->REG_ES, d->readRegister(d->REG_EDI),
-                                                            ops->undefined_(nbits), in_loop);
-        d->doAddOperation(si_value, ops->invert(di_value), true, ops->boolean_(false), in_loop);
-        BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
-                                                 ops->number_(32, -nbytes), ops->number_(32, nbytes));
-        ops->writeRegister(d->REG_ESI,
-                           ops->ite(in_loop,
-                                    ops->add(d->readRegister(d->REG_ESI), step),
-                                    d->readRegister(d->REG_ESI)));
-        ops->writeRegister(d->REG_EDI,
-                           ops->ite(in_loop,
-                                    ops->add(d->readRegister(d->REG_EDI), step),
-                                    d->readRegister(d->REG_EDI)));
-        if (x86_repeat_none!=repeat)
-            d->repLeave(repeat, in_loop, insn->get_address());
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            // The disassembler produces CMPB, CMPW, CMPD, or CMPQ without any arguments.
+            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+
+            // Get the addresses for the two values to read and compare.
+            RegisterDescriptor reg1, reg2;
+            switch (insn->get_addressSize()) {
+                case x86_insnsize_16:
+                    reg1 = d->REG_SI;
+                    reg2 = d->REG_DI;
+                    break;
+                case x86_insnsize_32:
+                    reg1 = d->REG_ESI;
+                    reg2 = d->REG_EDI;
+                    break;
+                case x86_insnsize_64:
+                    reg1 = d->REG_RSI;
+                    reg2 = d->REG_RDI;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid instruction address size");
+            }
+            BaseSemantics::SValuePtr addr1 = d->readRegister(reg1);
+            BaseSemantics::SValuePtr addr2 = d->readRegister(reg2);
+
+            // Adjust address width depending on how memory is accessed.
+            if (size_t addrWidth = d->addressWidth()) {
+                if (addr1->get_width() < addrWidth) {
+                    addr1 = ops->signExtend(addr1, addrWidth);
+                } else if (addr1->get_width() > addrWidth) {
+                    addr1 = ops->unsignedExtend(addr1, addrWidth);
+                }
+                if (addr2->get_width() < addrWidth) {
+                    addr2 = ops->signExtend(addr2, addrWidth);
+                } else if (addr2->get_width() > addrWidth) {
+                    addr2 = ops->unsignedExtend(addr2, addrWidth);
+                }
+            }
+            ASSERT_require(addr1->get_width() == addr2->get_width());
+            
+            // Read the two values from memory.
+            RegisterDescriptor sr(x86_regclass_segment,
+                                  insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
+                                  0, 16);
+            BaseSemantics::SValuePtr val1 = ops->readMemory(sr, addr1, ops->undefined_(nbits), inLoop);
+            BaseSemantics::SValuePtr val2 = ops->readMemory(sr, addr2, ops->undefined_(nbits), inLoop);
+
+            // Compare values and set status flags.
+            (void) d->doAddOperation(val1, ops->invert(val2), true, ops->boolean_(false), inLoop);
+
+            // Adjust the address registers
+            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
+                                                     ops->number_(reg1.get_nbits(), -nbytes),
+                                                     ops->number_(reg1.get_nbits(), +nbytes));
+            ops->writeRegister(reg1, ops->ite(inLoop, ops->add(ops->readRegister(reg1), step), ops->readRegister(reg1)));
+            ops->writeRegister(reg2, ops->ite(inLoop, ops->add(ops->readRegister(reg1), step), ops->readRegister(reg2)));
+
+            // Adjust instruction pointer register to either repeat the instruction or fall through
+            if (x86_repeat_none!=repeat)
+                d->repLeave(repeat, inLoop, insn->get_address());
+        }
     }
 };
 
@@ -1952,8 +1998,8 @@ DispatcherX86::repEnter(X86RepeatPrefix repeat)
 {
     if (repeat==x86_repeat_none)
         return operators->boolean_(true);
-    BaseSemantics::SValuePtr ecx = operators->readRegister(REG_ECX);
-    BaseSemantics::SValuePtr in_loop = operators->invert(operators->equalToZero(ecx));
+    BaseSemantics::SValuePtr cx = operators->readRegister(REG_anyCX);
+    BaseSemantics::SValuePtr in_loop = operators->invert(operators->equalToZero(cx));
     return in_loop;
 }
 
@@ -1962,13 +2008,13 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
 {
     ASSERT_require(in_loop!=NULL && in_loop->get_width()==1);
 
-    // conditionally decrement the ECX register
-    BaseSemantics::SValuePtr new_ecx = operators->add(operators->readRegister(REG_ECX),
-                                                      operators->ite(in_loop,
-                                                                     operators->number_(32, -1),
-                                                                     operators->number_(32, 0)));
-    operators->writeRegister(REG_ECX, new_ecx);
-    BaseSemantics::SValuePtr nonzero_ecx = operators->invert(operators->equalToZero(new_ecx));
+    // conditionally decrement the CX register
+    BaseSemantics::SValuePtr new_cx = operators->add(operators->readRegister(REG_anyCX),
+                                                     operators->ite(in_loop,
+                                                                    operators->number_(REG_anyCX.get_nbits(), -1),
+                                                                    operators->number_(REG_anyCX.get_nbits(),  0)));
+    operators->writeRegister(REG_anyCX, new_cx);
+    BaseSemantics::SValuePtr nonzero_cx = operators->invert(operators->equalToZero(new_cx));
 
     // determine whether we should repeat the instruction.
     BaseSemantics::SValuePtr again;
@@ -1977,12 +2023,12 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
             again = operators->boolean_(false);
             break;
         case x86_repeat_repe:
-            again = operators->and_(operators->and_(in_loop, nonzero_ecx),
+            again = operators->and_(operators->and_(in_loop, nonzero_cx),
                                     operators->readRegister(REG_ZF));
 
             break;
         case x86_repeat_repne:
-            again = operators->and_(operators->and_(in_loop, nonzero_ecx),
+            again = operators->and_(operators->and_(in_loop, nonzero_cx),
                                     operators->invert(operators->readRegister(REG_ZF)));
             break;
     }
