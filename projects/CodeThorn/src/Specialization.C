@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "Specialization.h"
 
@@ -6,6 +5,17 @@
 
 using namespace std;
 using namespace SPRAY;
+
+int Specialization::numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping) {
+  int checkParLoopNum=0;
+  for(LoopInfoSet::iterator i=loopInfoSet.begin();i!=loopInfoSet.end();++i) {
+    if((*i).iterationVarType==ITERVAR_PAR) {
+      checkParLoopNum++;
+      //cout<<"DEBUG: PAR-VAR:"<<variableIdMapping->variableName((*i).iterationVarId)<<endl;
+    }
+  }
+  return checkParLoopNum;
+}
 
 ConstReporter::~ConstReporter() {
 }
@@ -252,9 +262,9 @@ void Specialization::extractArrayUpdateOperations(Analyzer* ana,
     if(numProcessedArrayUpdates%100==0) {
       cout<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
-    arrayUpdates[i]=EStateExprInfo(p_estate,p_expCopy2);
+    rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
+    arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);
   }    
-  
 }
 
 
@@ -478,15 +488,277 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
   }
 }
 
-int Specialization::verifyUpdateSequenceRaceConditions(std::vector<VariableId> iterationVars, VariableId parallelIterationVar, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
-  int cnt=0;
-  for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-    const EState* estate=(*i).first;
-    const PState* pstate=estate->pstate();
-    SgExpression* exp=(*i).second;
-    cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
-    ++cnt;
+string Specialization::iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping) {
+  stringstream ss;
+  bool exists=false;
+  for(IterationVariables::iterator i=iterationVars.begin();i!=iterationVars.end();++i) {
+    if(i!=iterationVars.begin())
+      ss<<", ";
+    ss<<variableIdMapping->variableName((*i).first);
+    if((*i).second) {
+      ss<<"[par]";
+      exists=true;
+    }
   }
+#if 0
+  if(!exists) {
+    cerr<<"Error: iterVarsAndParVarToString:: parallel iteration var is not an iteration variable."<<endl;
+    cerr<<"Variable: "<<variableIdMapping->variableName(parallelIterationVar)<<endl;
+    exit(1);
+  }
+#endif
+  return ss.str();
+}
+
+VariableId LoopInfo::iterationVariableId(SgForStatement* forStmt, VariableIdMapping* variableIdMapping) {
+  VariableId varId;
+  AstMatching m;
+  // operator '#' is used to ensure no nested loop is matched ('#' cuts off subtrees of 4th element (loop body)).
+  string matchexpression="SgForStatement(_,_,SgPlusPlusOp($ITERVAR=SgVarRefExp)|SgMinusMinusOp($ITERVAR=SgVarRefExp),..)";
+  MatchResult r=m.performMatching(matchexpression,forStmt);
+  if(r.size()>1) {
+    //ROSE_ASSERT(r.size()==1);
+    for(MatchResult::iterator i=r.begin();i!=r.end();++i) {
+      SgVarRefExp* node=isSgVarRefExp((*i)["$ITERVAR"]);
+      varId=variableIdMapping->variableId(node);
+      return varId;
+    }
+  } else {
+    cout<<"WARNING: no match!"<<endl;
+  }
+  return varId;
+}
+
+void LoopInfo::computeOuterLoopsVarIds(VariableIdMapping* variableIdMapping) {
+  ROSE_ASSERT(forStmt);
+  // compute outer loops
+  SgNode* node=forStmt;
+  while(!isSgFunctionDefinition(node)) {
+    node=node->get_parent();
+    if(SgForStatement* outerForStmt=isSgForStatement(node)) {
+      VariableId iterVarId=iterationVariableId(outerForStmt,variableIdMapping);
+      if(iterVarId.isValid()) {
+        outerLoopsVarIds.insert(iterVarId);
+      } else {
+        cout<<"WARNING: no iter variable detected."<<endl;
+        cout<<forStmt->unparseToString()<<endl;
+      }
+    }
+  }
+}
+
+void LoopInfo::computeLoopLabelSet(Labeler* labeler) {
+  ROSE_ASSERT(forStmt);
+  RoseAst ast(forStmt);
+  for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
+    if(labeler->isLabelRelevantNode(*i)) {
+      // use getLabelSet to also include callreturn nodes
+      loopLabelSet.insert(labeler->getLabel(*i));
+    }
+  }
+}
+
+bool LoopInfo::isInAssociatedLoop(const EState* estate) {
+  Label lab=estate->label();
+  ROSE_ASSERT(forStmt);
+  return loopLabelSet.find(lab)!=loopLabelSet.end();
+}
+
+// will use std algo instead
+bool accessSetIntersect(ArrayElementAccessDataSet& set1,ArrayElementAccessDataSet& set2) {
+  for(ArrayElementAccessDataSet::iterator i=set1.begin();i!=set1.end();++i) {
+    if(set2.find(*i)!=set2.end())
+      return true;
+  }
+  return false;
+}
+
+// returns the number of race conditions detected (0 or 1 as of now)
+int Specialization::verifyUpdateSequenceRaceConditions(LoopInfoSet& loopInfoSet, ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
+  int cnt=0;
+  stringstream ss;
+  cout<<"STATUS: checking race conditions."<<endl;
+  cout<<"INFO: number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
+
+  VariableIdSet allIterVars;
+  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
+    allIterVars.insert((*lis).iterationVarId);
+  }
+  for(LoopInfoSet::iterator lis=loopInfoSet.begin();lis!=loopInfoSet.end();++lis) {
+    if((*lis).iterationVarType==ITERVAR_PAR) {
+      VariableId parVariable;
+      parVariable=(*lis).iterationVarId;
+      cout<<"INFO: checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+
+      // race check
+      // intersect w-set_i = empty
+      // w-set_i intersect r-set_j = empty, i!=j.
+
+      IndexToReadWriteDataMap indexToReadWriteDataMap;
+      for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
+        const EState* estate=(*i).first;
+        const PState* pstate=estate->pstate();
+        SgExpression* exp=(*i).second;
+        IndexVector index;
+        // use all vars for indexing or only outer+par loop variables
+#ifdef USE_ALL_ITER_VARS
+        for(VariableIdSet::iterator ol=allIterVars.begin();ol!=allIterVars.end();++ol) {
+          VariableId otherVarId=*ol;
+          ROSE_ASSERT(otherVarId.isValid());
+          if(!pstate->varValue(otherVarId).isTop()) {
+            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+            index.push_back(otherIntVal);
+          }
+        }
+#else
+        for(VariableIdSet::iterator ol=(*lis).outerLoopsVarIds.begin();ol!=(*lis).outerLoopsVarIds.end();++ol) {
+          VariableId otherVarId=*ol;
+          ROSE_ASSERT(otherVarId.isValid());
+          if(!pstate->varValue(otherVarId).isTop()&&pstate->varValue(otherVarId).isConstInt()) {
+            int otherIntVal=pstate->varValue(otherVarId).getIntValue();
+            index.push_back(otherIntVal);
+          }
+        }
+        if(!pstate->varValue(parVariable).isTop()&&pstate->varValue(parVariable).isConstInt()) {
+          int parIntVal=pstate->varValue(parVariable).getIntValue();
+          index.push_back(parIntVal);
+        }
+#endif
+        if((*lis).isInAssociatedLoop(estate)) {
+          SgExpression* lhs=isSgExpression(SgNodeHelper::getLhs(exp));
+          SgExpression* rhs=isSgExpression(SgNodeHelper::getRhs(exp));
+          ROSE_ASSERT(isSgPntrArrRefExp(lhs)||SgNodeHelper::isFloatingPointAssignment(exp));
+        
+          //cout<<"EXP: "<<exp->unparseToString()<<", lhs:"<<lhs->unparseToString()<<" :: "<<endl;
+          // read-set
+          RoseAst rhsast(rhs);
+          for(RoseAst::iterator j=rhsast.begin();j!=rhsast.end();++j) {
+            if(SgPntrArrRefExp* useRef=isSgPntrArrRefExp(*j)) {
+              j.skipChildrenOnForward();
+              ArrayElementAccessData access(useRef,variableIdMapping);
+              indexToReadWriteDataMap[index].readArrayAccessSet.insert(access);
+            } else if(SgVarRefExp* useRef=isSgVarRefExp(*j)) {
+              ROSE_ASSERT(useRef);
+              j.skipChildrenOnForward();
+              VariableId varId=variableIdMapping->variableId(useRef);
+              indexToReadWriteDataMap[index].readVarIdSet.insert(varId);
+            } else {
+              //cout<<"INFO: UpdateExtraction: ignored expression on rhs:"<<(*j)->unparseToString()<<endl;
+            }
+          }
+          if(SgPntrArrRefExp* arr=isSgPntrArrRefExp(lhs)) {
+            ArrayElementAccessData access(arr,variableIdMapping);
+            indexToReadWriteDataMap[index].writeArrayAccessSet.insert(access);
+          } else if(SgVarRefExp* var=isSgVarRefExp(lhs)) {
+            VariableId varId=variableIdMapping->variableId(var);
+            indexToReadWriteDataMap[index].writeVarIdSet.insert(varId);
+          } else {
+            cerr<<"Error: SSA Numbering: unknown LHS."<<endl;
+            exit(1);
+          }
+        
+          ss<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
+          ++cnt;
+        }
+      } // array sequence iter
+
+      // to be utilized later for more detailed output
+#if 0
+      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+          imap!=indexToReadWriteDataMap.end();
+          ++imap) {
+        //        cout<<"DEBUG: INDEX: "<<(*imap).first<<" R-SET: ";
+        IndexVector index=(*imap).first;
+
+        cout<<"DEBUG: INDEX: ";
+        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+          if(iv!=index.begin())
+            cout<<",";
+          cout<<*iv;
+        }
+        cout<<" R-SET: ";
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].readArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].readArrayAccessSet.end();++i) {
+          cout<<(*i).toString(variableIdMapping)<<" ";
+        }
+        cout<<endl;
+        cout<<"DEBUG: INDEX: ";
+        for(IndexVector::iterator iv=index.begin();iv!=index.end();++iv) {
+          if(iv!=index.begin())
+            cout<<",";
+          cout<<*iv;
+        }
+        cout<<" W-SET: ";
+        for(ArrayElementAccessDataSet::const_iterator i=indexToReadWriteDataMap[index].writeArrayAccessSet.begin();i!=indexToReadWriteDataMap[index].writeArrayAccessSet.end();++i) {
+          cout<<(*i).toString(variableIdMapping)<<" ";
+        }
+        cout<<endl;
+        cout<<"DEBUG: read-array-access:"<<indexToReadWriteDataMap[index].readArrayAccessSet.size()<<" read-var-access:"<<indexToReadWriteDataMap[index].readVarIdSet.size()<<endl;
+        cout<<"DEBUG: write-array-access:"<<indexToReadWriteDataMap[index].writeArrayAccessSet.size()<<" write-var-access:"<<indexToReadWriteDataMap[index].writeVarIdSet.size()<<endl;
+      } // imap
+#endif
+
+      // perform the check now
+      // 1) compute vector if index-vectors for each outer-var-vector
+      // 2) check each index-vector. For each iteration of each par-loop iteration then.
+      
+      //typedef set<int> ParVariableValueSet;
+      //ParVariableValueSet parVariableValueSet;
+      // MAP: par-variable-val -> vector of IndexVectors with this par-variable-val
+      typedef vector<IndexVector> ThreadVector;
+      typedef map<IndexVector,ThreadVector > CheckMapType;
+      CheckMapType checkMap;
+      for(IndexToReadWriteDataMap::iterator imap=indexToReadWriteDataMap.begin();
+          imap!=indexToReadWriteDataMap.end();
+          ++imap) {
+        IndexVector index=(*imap).first;
+        IndexVector outVarIndex;
+        // if index.size()==0, it will analyze the loop independet of outer loops
+        if(index.size()>0) {
+          ROSE_ASSERT(index.size()>0);
+          for(size_t iv1=0;iv1<index.size()-1;iv1++) {
+            outVarIndex.push_back(index[iv1]);
+          }
+          ROSE_ASSERT(outVarIndex.size()<index.size());
+        } else {
+          // nothing to check
+          continue;
+        }
+        // last index of index of par-variable
+        //int parVariableValue=index[index.size()-1];
+        checkMap[outVarIndex].push_back(index);
+      }
+      //cout<<"INFO: race condition check-map size: "<<checkMap.size()<<endl;
+      // perform the check now
+
+      for(CheckMapType::iterator miter=checkMap.begin();miter!=checkMap.end();++miter) {
+        IndexVector outerVarIndexVector=(*miter).first;
+        ThreadVector threadVectorToCheck=(*miter).second;
+        //cout<<"DEBUG: to check: "<<threadVectorToCheck.size()<<endl;
+        for(ThreadVector::iterator tv1=threadVectorToCheck.begin();tv1!=threadVectorToCheck.end();++tv1) {
+          ArrayElementAccessDataSet wset=indexToReadWriteDataMap[*tv1].writeArrayAccessSet;
+          for(ThreadVector::iterator tv2=tv1;tv2!=threadVectorToCheck.end();++tv2) {
+            ThreadVector::iterator tv2b=tv2;
+            ++tv2b;
+            if(tv2b!=threadVectorToCheck.end()) {
+              ArrayElementAccessDataSet rset2=indexToReadWriteDataMap[*tv2b].readArrayAccessSet;
+              ArrayElementAccessDataSet wset2=indexToReadWriteDataMap[*tv2b].writeArrayAccessSet;
+              // check intersect(rset,wset)
+              if(accessSetIntersect(wset,rset2)) {
+                // verification failed
+                cout<<"INFO: race condition detected (wset1,rset2)."<<endl;
+                return 1;
+              } 
+              if(accessSetIntersect(wset,wset2)) {
+                // verification failed
+                cout<<"INFO: race condition detected (wset1,wset2)."<<endl;
+                return 1;
+              }
+            }
+          }
+        }
+      }
+    } // if parallel loop
+  } // foreach loop
   return 0;
 }
 

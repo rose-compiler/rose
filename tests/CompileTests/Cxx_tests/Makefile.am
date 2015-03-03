@@ -215,6 +215,13 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    lulesh.C \
    luleshTALC.C
 
+
+# DQ (2/26/2015): Failing test codes in the new development branch.
+#   test2014_83.C 
+#   test2014_88.C 
+#   test2014_89.C 
+#   test2014_90.C 
+
 # DQ (8/29/2014): Put macros into testcode files so that they are only run on GNU g++ 4.4 compiler.
 # DQ (8/25/2014): These fail for older versions of GNU (e.g. g++ version 4.2.2)
 # --- error: cannot open tr1_impl/boost_sp_counted_base.h"

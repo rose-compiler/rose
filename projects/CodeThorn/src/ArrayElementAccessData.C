@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "ArrayElementAccessData.h"
 
 using namespace std;
@@ -6,23 +7,23 @@ using namespace SPRAY;
 ArrayElementAccessData::ArrayElementAccessData() {
 }
 
-VariableId ArrayElementAccessData::getVariable() {
+VariableId ArrayElementAccessData::getVariable() const {
   return varId;
 }
 
-int ArrayElementAccessData::getSubscript(int dimension) {
+int ArrayElementAccessData::getSubscript(int dimension) const {
   return subscripts.at(dimension);
 }
 
-int ArrayElementAccessData::getDimensions() {
+int ArrayElementAccessData::getDimensions() const {
   return subscripts.size();
 }
 
-string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
+string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) const {
   if(isValid()) {
     stringstream ss;
     ss<< variableIdMapping->uniqueShortVariableName(varId);
-    for(vector<int>::iterator i=subscripts.begin();i!=subscripts.end();++i) {
+    for(vector<int>::const_iterator i=subscripts.begin();i!=subscripts.end();++i) {
       ss<<"["<<*i<<"]";
     }
     return ss.str();
@@ -31,7 +32,7 @@ string ArrayElementAccessData::toString(VariableIdMapping* variableIdMapping) {
   }
 }
 
-bool ArrayElementAccessData::isValid() {
+bool ArrayElementAccessData::isValid() const {
   return varId.isValid() && subscripts.size()>0;
 }
 
@@ -57,3 +58,29 @@ ArrayElementAccessData::ArrayElementAccessData(SgPntrArrRefExp* ref, VariableIdM
   }
 }
 
+bool operator==(const ArrayElementAccessData& a,const ArrayElementAccessData& other) {
+    for(size_t i=0;i<a.subscripts.size();++i)
+      if(a.subscripts[i]!=other.subscripts[i])
+        return false;
+    return a.varId==other.varId;
+}
+bool operator!=(const ArrayElementAccessData& a, const ArrayElementAccessData& other) {
+  return !(a==other);
+}
+bool operator<(const ArrayElementAccessData& a, const ArrayElementAccessData& other) {
+    if(a.varId!=other.varId)
+      return a.varId<other.varId;
+    if(a.subscripts.size()!=other.subscripts.size())
+      return a.subscripts.size()<other.subscripts.size();
+    vector<int>::const_iterator i=a.subscripts.begin();
+    vector<int>::const_iterator j=other.subscripts.begin();
+    while(i!=a.subscripts.end() && j!=other.subscripts.end()) {
+      if(*i!=*j) {
+        return *i<*j;
+      } else {
+        ++i;++j;
+      }
+    }
+    ROSE_ASSERT(i==a.subscripts.end() && j==other.subscripts.end());
+    return false; // both are equal
+  }
