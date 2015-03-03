@@ -2013,6 +2013,19 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          break;
                        }
 
+                 // DQ (2/28/2015): Added support for SgAliasSymbol case.
+                    case V_SgAliasSymbol:
+                       {
+                         SgAliasSymbol* tempSymbol = isSgAliasSymbol(symbol);
+                         ROSE_ASSERT(tempSymbol != NULL);
+
+                      // DQ (2/28/2015): I think this is not possible to fix here, so we need to report the error and exit.
+                         printf ("ERROR: parent for SgAliasSymbol not set (can't be fixed up here) \n");
+                         ROSE_ASSERT(false);
+
+                         break;
+                       }
+
                     default:
                        {
                          printf ("Error: default reached in switch(symbol->variantT()) symbol = %p = %s \n",symbol,symbol->class_name().c_str());
