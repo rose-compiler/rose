@@ -652,7 +652,11 @@ struct IP_cmpxchg: P {
 struct IP_cpuid: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->cpuid();
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->cpuid();
+        }
     }
 };
 
