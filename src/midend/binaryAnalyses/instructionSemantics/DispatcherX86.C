@@ -668,7 +668,11 @@ struct IP_cpuid: P {
 struct IP_cwd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_DX, ops->extract(ops->signExtend(d->readRegister(d->REG_AX), 32), 16, 32));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_DX, ops->extract(ops->signExtend(d->readRegister(d->REG_AX), 32), 16, 32));
+        }
     }
 };
 
