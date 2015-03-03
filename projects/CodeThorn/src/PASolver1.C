@@ -47,6 +47,7 @@ PASolver1::runSolver() {
     Edge edge=_workList.take();
     Label lab0=edge.source;
     Label lab1=edge.target;
+    cout<<"DEBUG: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
     _transferFunctions.transfer(lab0,*info);
