@@ -11,21 +11,22 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
-    X86ProcessorMode processorMode_;
+    X86InstructionSize processorMode_;
 
     // Prototypical constructor
     DispatcherX86()
-        : BaseSemantics::Dispatcher(32, registersForProcessorMode(x86_processor_32)), processorMode_(x86_processor_32) {}
+        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
+          processorMode_(x86_insnsize_32) {}
 
     // Prototypical constructor
     DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, registersForProcessorMode(processorModeForAddressWidth(addrWidth))),
-          processorMode_(processorModeForAddressWidth(addrWidth)) {}
+        : BaseSemantics::Dispatcher(addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
 
     // Normal constructor
     DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, registersForProcessorMode(processorModeForAddressWidth(addrWidth))),
-          processorMode_(processorModeForAddressWidth(addrWidth)) {
+        : BaseSemantics::Dispatcher(ops, addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
         regcache_init();
         iproc_init();
     }
@@ -45,10 +46,11 @@ public:
      *  defined only on architectures that support them.
      *
      * @{ */
-    RegisterDescriptor REG_anyIP, REG_anySP;
-    RegisterDescriptor REG_RAX;
+    RegisterDescriptor REG_anyIP, REG_anySP, REG_anyCX;
+    RegisterDescriptor REG_RAX, REG_RDI, REG_RSI;
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP;
-    RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
+    RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_DI, REG_SI;
+    RegisterDescriptor REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
     RegisterDescriptor REG_DS, REG_ES, REG_SS;
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
@@ -92,8 +94,8 @@ public:
     /** CPU mode of operation.
      *
      * @{ */
-    X86ProcessorMode processorMode() const { return processorMode_; }
-    void processorMode(X86ProcessorMode m) { processorMode_ = m; }
+    X86InstructionSize processorMode() const { return processorMode_; }
+    void processorMode(X86InstructionSize m) { processorMode_ = m; }
     /** @} */
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
@@ -185,34 +187,6 @@ public:
 
     /** Pop the top item from the floating point stack. */
     virtual void popFloatingPoint();
-
-private:
-    static X86ProcessorMode processorModeForAddressWidth(size_t addrWidth) {
-        switch (addrWidth) {
-            case 16: return x86_processor_16;
-            case 32: return x86_processor_32;
-            case 64: return x86_processor_64;
-        }
-        ASSERT_not_reachable("invalid address width: " + StringUtility::numberToString(addrWidth));
-    }
-
-    static size_t addressWidthForProcessorMode(X86ProcessorMode proc) {
-        switch (proc) {
-            case x86_processor_16: return 16;
-            case x86_processor_32: return 32;
-            case x86_processor_64: return 64;
-        }
-        ASSERT_not_reachable("invalid x86 processor type");
-    }
-
-    static const RegisterDictionary *registersForProcessorMode(X86ProcessorMode proc) {
-        switch (proc) {
-            case x86_processor_16: return RegisterDictionary::dictionary_i286();
-            case x86_processor_32: return RegisterDictionary::dictionary_pentium4();
-            case x86_processor_64: return RegisterDictionary::dictionary_amd64();
-        }
-        ASSERT_not_reachable("invalid x86 processor type");
-    }
 };
         
 } // namespace

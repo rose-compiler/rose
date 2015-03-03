@@ -65,9 +65,8 @@ DisassemblerX86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
-    X86ProcessorMode procMode;
     const RegisterDictionary *regdict = NULL;
-    size_t addrWidth = 0;
+    size_t addrWidth=0;
     switch (wordsize) {
         case 2:
             addrWidth = 16;
@@ -76,7 +75,6 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("ip");
             REG_SP = *regdict->lookup("sp");
             REG_SS = *regdict->lookup("ss");
-            procMode = x86_processor_16;
             break;
         case 4:
             addrWidth = 32;
@@ -85,7 +83,6 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("eip");
             REG_SP = *regdict->lookup("esp");
             REG_SS = *regdict->lookup("ss");
-            procMode = x86_processor_32;
             break;
         case 8:
             addrWidth = 64;
@@ -94,7 +91,6 @@ DisassemblerX86::init(size_t wordsize)
             REG_IP = *regdict->lookup("rip");
             REG_SP = *regdict->lookup("rsp");
             REG_SS = *regdict->lookup("ss");
-            procMode = x86_processor_64;
             break;
         default:
             ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");

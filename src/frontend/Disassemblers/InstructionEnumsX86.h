@@ -5,13 +5,6 @@
 
 #include "AssemblerX86Init.h"   /* A big enum whose members are all possible x86 instructions. */
 
-/** Processor mode. */
-enum X86ProcessorMode {
-    x86_processor_16,                                   /**< 16-bit processor. */
-    x86_processor_32,                                   /**< Compatibility/Legacy mode (32-bit). */
-    x86_processor_64,                                   /**< 64-bit mode. */
-};
-
 /** Intel x86 instruction size constants. */
 enum X86InstructionSize {
     x86_insnsize_none,

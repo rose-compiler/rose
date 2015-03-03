@@ -87,9 +87,9 @@ public:
 struct IP_aaa: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (d->processorMode() == x86_processor_16) {
+        if (d->processorMode() == x86_insnsize_16) {
             throw BaseSemantics::Exception("16-bit processor not implemented", insn);
-        } else if (d->processorMode() == x86_processor_32) {
+        } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
@@ -109,7 +109,7 @@ struct IP_aaa: P {
                 ops->writeRegister(d->REG_CF, incAh);
             }
         } else {
-            ASSERT_require(d->processorMode() == x86_processor_64);
+            ASSERT_require(d->processorMode() == x86_insnsize_64);
             ops->interrupt(x86_exception_ud, 0);
         }
     }
@@ -119,9 +119,9 @@ struct IP_aaa: P {
 struct IP_aad: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (d->processorMode() == x86_processor_16) {
+        if (d->processorMode() == x86_insnsize_16) {
             throw BaseSemantics::Exception("16-bit processor not implemented", insn);
-        } else if (d->processorMode() == x86_processor_32) {
+        } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
@@ -136,7 +136,7 @@ struct IP_aad: P {
                 d->setFlagsForResult(newAl);
             }
         } else {
-            ASSERT_require(d->processorMode() == x86_processor_64);
+            ASSERT_require(d->processorMode() == x86_insnsize_64);
             ops->interrupt(x86_exception_ud, 0);
         }
     }
@@ -148,9 +148,9 @@ struct IP_aad: P {
 struct IP_aam: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (d->processorMode() == x86_processor_16) {
+        if (d->processorMode() == x86_insnsize_16) {
             throw BaseSemantics::Exception("16-bit processor not implemented", insn);
-        } else if (d->processorMode() == x86_processor_32) {
+        } else if (d->processorMode() == x86_insnsize_32) {
             BaseSemantics::SValuePtr divisor = d->read(args[0], 8);
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
@@ -167,7 +167,7 @@ struct IP_aam: P {
                 d->setFlagsForResult(newAl);
             }
         } else {
-            ASSERT_require(d->processorMode() == x86_processor_64);
+            ASSERT_require(d->processorMode() == x86_insnsize_64);
             ops->interrupt(x86_exception_ud, 0);
         }
     }
@@ -177,9 +177,9 @@ struct IP_aam: P {
 struct IP_aas: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (d->processorMode() == x86_processor_16) {
+        if (d->processorMode() == x86_insnsize_16) {
             throw BaseSemantics::Exception("16-bit processor not implemented", insn);
-        } else if (d->processorMode() == x86_processor_32) {
+        } else if (d->processorMode() == x86_insnsize_32) {
             if (insn->get_lockPrefix()) {
                 ops->interrupt(x86_exception_ud, 0);
             } else {
@@ -199,7 +199,7 @@ struct IP_aas: P {
                 ops->writeRegister(d->REG_CF, decAh);
             }
         } else {
-            ASSERT_require(d->processorMode() == x86_processor_64);
+            ASSERT_require(d->processorMode() == x86_insnsize_64);
             ops->interrupt(x86_exception_ud, 0);
         }
     }
@@ -1742,10 +1742,12 @@ DispatcherX86::regcache_init()
 {
     if (regdict) {
         switch (processorMode()) {
-            case x86_processor_64:
+            case x86_insnsize_64:
                 REG_RAX = findRegister("rax", 64);
+                REG_RDI = findRegister("rdi", 64);
+                REG_RSI = findRegister("rsi", 64);
                 // fall through...
-            case x86_processor_32:
+            case x86_insnsize_32:
                 REG_EAX = findRegister("eax", 32);
                 REG_EBX = findRegister("ebx", 32);
                 REG_ECX = findRegister("ecx", 32);
@@ -1761,19 +1763,21 @@ DispatcherX86::regcache_init()
                 REG_FPCTL = findRegister("fpctl", 16);
                 REG_MXCSR = findRegister("mxcsr", 32);
                 // fall through...
-            case x86_processor_16:
-                REG_AX  = findRegister("ax", 16);
-                REG_CX  = findRegister("cx", 16);
-                REG_DX  = findRegister("dx", 16);
-                REG_AL  = findRegister("al", 8);
-                REG_AH  = findRegister("ah", 8);
-                REG_AF  = findRegister("af", 1);
-                REG_CF  = findRegister("cf", 1);
-                REG_DF  = findRegister("df", 1);
-                REG_OF  = findRegister("of", 1);
-                REG_PF  = findRegister("pf", 1);
-                REG_SF  = findRegister("sf", 1);
-                REG_ZF  = findRegister("zf", 1);
+            case x86_insnsize_16:
+                REG_AX = findRegister("ax", 16);
+                REG_CX = findRegister("cx", 16);
+                REG_DX = findRegister("dx", 16);
+                REG_DI = findRegister("di", 16);
+                REG_SI = findRegister("si", 16);
+                REG_AL = findRegister("al", 8);
+                REG_AH = findRegister("ah", 8);
+                REG_AF = findRegister("af", 1);
+                REG_CF = findRegister("cf", 1);
+                REG_DF = findRegister("df", 1);
+                REG_OF = findRegister("of", 1);
+                REG_PF = findRegister("pf", 1);
+                REG_SF = findRegister("sf", 1);
+                REG_ZF = findRegister("zf", 1);
                 REG_DS = findRegister("ds", 16);
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
@@ -1781,6 +1785,7 @@ DispatcherX86::regcache_init()
 
         REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
         REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
     }
 }
 

@@ -26,7 +26,44 @@ SgAsmX86Instruction::terminatesBasicBlock() {
     return x86InstructionIsControlTransfer(this);
 }
 
+// class method
+X86InstructionSize
+SgAsmX86Instruction::instructionSizeForWidth(size_t nbits) {
+    switch (nbits) {
+        case 16: return x86_insnsize_16;
+        case 32: return x86_insnsize_32;
+        case 64: return x86_insnsize_64;
+    }
+    ASSERT_not_reachable("invalid width: " + StringUtility::numberToString(nbits));
+}
 
+// class method
+size_t
+SgAsmX86Instruction::widthForInstructionSize(X86InstructionSize isize) {
+    switch (isize) {
+        case x86_insnsize_16: return 16;
+        case x86_insnsize_32: return 32;
+        case x86_insnsize_64: return 64;
+        default: ASSERT_not_reachable("invalid x86 instruction size");
+    }
+}
+
+// class method
+const RegisterDictionary*
+SgAsmX86Instruction::registersForInstructionSize(X86InstructionSize isize) {
+    switch (isize) {
+        case x86_insnsize_16: return RegisterDictionary::dictionary_i286();
+        case x86_insnsize_32: return RegisterDictionary::dictionary_pentium4();
+        case x86_insnsize_64: return RegisterDictionary::dictionary_amd64();
+        default: ASSERT_not_reachable("invalid x86 instruction size");
+    }
+}
+
+// class method
+const RegisterDictionary*
+SgAsmX86Instruction::registersForWidth(size_t nbits) {
+    return registersForInstructionSize(instructionSizeForWidth(nbits));
+}
 
 // see base class
 bool
@@ -134,8 +171,14 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace rose::BinaryAnalysis;
         using namespace rose::BinaryAnalysis::InstructionSemantics2;
         using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
+        ASSERT_not_null(x86insn);
+#if 1 // [Robb P. Matzke 2015-03-03]: FIXME[Robb P. Matzke 2015-03-03]: not ready yet; x86-64 semantics still under construction
+        if (x86insn->get_addressSize() != x86_insnsize_32)
+            return false;
+#endif
+        const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
         const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
         DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());

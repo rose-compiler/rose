@@ -122,7 +122,7 @@ int main(int argc, char *argv[])
     // Build semantics framework; only used when settings.runSemantics is set
     BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(disassembler->get_registers());
     ops = TraceSemantics::RiscOperators::instance(ops);
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherM68k::instance(ops);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherM68k::instance(ops, disassembler->get_wordsize()*8);
     dispatcher->get_state()->get_memory_state()->set_byteOrder(ByteOrder::ORDER_MSB);
 
     // Disassemble at each valid address, and show disassembly errors
