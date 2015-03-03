@@ -499,7 +499,11 @@ struct IP_clflush: P {
 struct IP_cmc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_CF, ops->invert(d->readRegister(d->REG_CF)));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_CF, ops->invert(d->readRegister(d->REG_CF)));
+        }
     }
 };
 
@@ -514,10 +518,11 @@ struct IP_cmovcc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(insn->get_kind()==kind);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        ASSERT_require(16==nbits || 32==nbits);
-        BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
-        d->write(args[0], ops->ite(cond, d->read(args[1], nbits), d->read(args[0], nbits)));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            d->write(args[0], ops->ite(d->flagsCombo(kind), d->read(args[1]), d->read(args[0])));
+        }
     }                                                                                                                          \
 };
         
