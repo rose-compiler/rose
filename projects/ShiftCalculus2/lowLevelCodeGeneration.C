@@ -25,7 +25,7 @@ using namespace DSL_Support;
 //    SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y)
 SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, SgVariableSymbol* boxVariableSymbol,
    SgVariableSymbol* & indexVariableSymbol_X, SgVariableSymbol* & indexVariableSymbol_Y, SgVariableSymbol* & indexVariableSymbol_Z, 
-   SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y)
+   SgVariableSymbol* & arraySizeVariableSymbol_X, SgVariableSymbol* & arraySizeVariableSymbol_Y, SgStatement* & anchorStatement)
    {
   // SgScopeStatement* currentScope    = outerScope;
      SgForStatement*   loopNest        = NULL;
@@ -189,14 +189,15 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
                SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(SageBuilder::buildIntVal(42));
                ROSE_ASSERT(assignInitializer != NULL);
 
-               SgVariableDeclaration* arraySizeVariableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(arraySizeNameList[k-1],SageBuilder::buildIntType(),assignInitializer,currentLoopBody);
+               SgVariableDeclaration* arraySizeVariableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(arraySizeNameList[k-1],SageBuilder::buildIntType(),assignInitializer,anchorStatement->get_scope());
                ROSE_ASSERT(variableDeclaration != NULL);
 
                if (k == 1) arraySizeVariableSymbol_X = SageInterface::getFirstVarSym (arraySizeVariableDeclaration);
                if (k == 2) arraySizeVariableSymbol_Y = SageInterface::getFirstVarSym (arraySizeVariableDeclaration);
 
             // Add the variable declaration of the array size in the previous dimension.
-               SageInterface::appendStatement(arraySizeVariableDeclaration,currentLoopBody);
+               SageInterface::insertStatementAfter(anchorStatement,arraySizeVariableDeclaration,anchorStatement->get_scope());
+               anchorStatement = arraySizeVariableDeclaration;
 
                SageInterface::appendStatement(forStatementScope,currentLoopBody);
                currentLoopBody = loopBody;

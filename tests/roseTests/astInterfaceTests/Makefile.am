@@ -12,7 +12,7 @@ INCLUDES =  \
         $(ROSE_INCLUDES) \
         -I$(top_srcdir)/src/frontend/SageIII/sageInterface
 # We install a few test programs since they might be useful for external users
-bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsing moveDeclarationToInnermostScope
+bin_PROGRAMS = loopInterchange loopUnrolling loopTiling loopCollapsingDirective loopCollapsing moveDeclarationToInnermostScope
 
 #not for installation
 noinst_PROGRAMS = \
@@ -89,6 +89,7 @@ insertAfterUsingCommaOp_SOURCES          = insertAfterUsingCommaOp.C
 deepCopy_SOURCES                         = deepCopy.C
 buildJavaPackage_SOURCES                 = buildJavaPackage.C           
 loopCollapsing_SOURCES                    = loopCollapsing.C
+loopCollapsingDirective_SOURCES           = loopCollapsingDirective.C
 createAbstractHandles_SOURCES             = createAbstractHandles.C
 moveDeclarationToInnermostScope_SOURCES   = moveDeclarationToInnermostScope.C
 # libsageInterface.la is included in rose.la already?

@@ -47,7 +47,7 @@ void mlmFrontend::visit(SgNode* node)
     } 
     if(type >= 0) 
     {
-      //cout << "type = " << type << endl;
+      cout << "type = " << type << endl;
       mlmAttribute* newAttr = new mlmAttribute(type);
       mlmFrontend::attachAttribute(pragDecl, newAttr);
       DeletepragmasList.push_back(pragDecl);
@@ -112,10 +112,11 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
 {
     ROSE_ASSERT(callExp);
     SgFunctionRefExp* funcName = isSgFunctionRefExp(callExp->get_function());
+    if(!funcName) return;
     SgExprListExp* funcArgList = callExp->get_args();
     SgExpressionPtrList argList = funcArgList->get_expressions();
     SgScopeStatement* scope = getScope(callExp);         
-    //cout << funcName->get_symbol()->get_name() << endl;
+    cout << funcName->get_symbol()->get_name() << endl;
 
     /** if it is malloc, search for the mlm attribute and append the memory level **/
     if(strncmp("malloc",funcName->get_symbol()->get_name().str(),6) == 0)
@@ -126,10 +127,11 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
       // check if LHS of malloc has an attribute assigned
       SgNode* parentNode = callExp->get_parent();
       // parent node can be a casting expression
-      if(isSgCastExp(parentNode))
+      while(isSgCastExp(parentNode))
       {
         parentNode = parentNode->get_parent();
       }
+      cout << parentNode->class_name() << endl;
       // the mlm attribute
       AstAttribute* attr = NULL;
       // So far we spot two candidates for parentNode that we need to transform
@@ -139,7 +141,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         SgExpression* lhs = isSgExpression(assignOp->get_lhs_operand());
         if(!isSgVarRefExp(lhs))
         {
-          //cout << "lhs:" << assignOp->get_lhs_operand()->class_name() << endl;
+          cout << "lhs:" << assignOp->get_lhs_operand()->class_name() << endl;
 
           // if pointer is packaged inside a struct, then we need to look down in lhs.
           if(isSgDotExp(lhs))
@@ -153,7 +155,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         ROSE_ASSERT(symbol);
         //retrieve the attribute from symbol
         attr = symbol->getAttribute("mlmAttribute");
-        //cout << "LHS symbol name: " << symbol->get_name() << endl;
+        cout << "LHS symbol name: " << symbol->get_name() << endl;
       }
       else if(isSgAssignInitializer(parentNode))
       {
@@ -164,7 +166,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         ROSE_ASSERT(symbol);
         //retrieve the attribute from symbol
         attr = symbol->getAttribute("mlmAttribute");
-        //cout << "Initialized symbol name: " << symbol->get_name() << endl;
+        cout << "Initialized symbol name: " << symbol->get_name() << endl;
       }
       else
       {

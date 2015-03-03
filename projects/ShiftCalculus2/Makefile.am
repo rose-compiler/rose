@@ -6,10 +6,10 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
-bin_PROGRAMS = shiftCalculusCompiler 
+bin_PROGRAMS = shiftCalculusCompiler  
 
 CPPFLAGS += -std=c++11
-
+ 
 shiftCalculusCompiler_SOURCES = shiftCalculusCompiler.C stencilAndStencilOperatorDetection.C stencilEvaluation.C stencilFiniteStateMachine.C dslSupport.C dslCodeGeneration.C lowLevelCodeGeneration.C
 
 include_HEADERS = shiftCalculusCompiler.h stencilAndStencilOperatorDetection.h stencilEvaluation.h stencilFiniteStateMachine.h dslSupport.h dslCodeGeneration.h lowLevelCodeGeneration.h
@@ -73,18 +73,22 @@ test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
 
 rose_laplacian_lite.cu: shiftCalculusCompiler
-	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output rose_laplacian_lite.cu $(srcdir)/laplacian_lite.cpp
 rose_laplacian_lite_v2.cu: shiftCalculusCompiler
-	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output $@ $(srcdir)/laplacian_lite_v2.cpp
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@ $(srcdir)/laplacian_lite_v2.cpp
 rose_laplacian_lite_v3.cu: shiftCalculusCompiler
-	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
+
+rose_laplacian_lite_v3_GPU_collapsed.cu: ${OMPACC}
+	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:dslcompiler:collapse -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
+
 # Note that test1 and test3 are zero dimensional stencils that are not supported for code generation yet.
 # test2 is including STL and other library code
 # test4 is a version of test2 which excludes STL and library code (and it thus smaller to work with but the same API).
 # test5 - test8 test subsets of the stencil specification.
 localTests: test4 test2 test5 test6 test7 test8
 
-cudaTests: rose_laplacian_lite.cu 
+cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

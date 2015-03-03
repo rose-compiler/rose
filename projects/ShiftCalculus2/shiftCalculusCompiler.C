@@ -47,7 +47,15 @@ int main( int argc, char * argv[] )
     }
     else
       b_gen_cuda = false;
-
+// Pei-Hung, enable loop collapsing
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","collapse",true))
+    {
+      std::cout<<"Turning on OpenMP loop collapsing ..."<<std::endl;
+      b_enable_collapse = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_collapse = false;
 
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);

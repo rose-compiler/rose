@@ -20,6 +20,8 @@ using namespace DSL_Support;
 
 //We don't generate cuda code by default
 bool b_gen_cuda = false;
+// disable collapse by default
+bool b_enable_collapse = false;
 // an internal variable to store the generated serial loop nests.
 static SgForStatement* temp_for_loop_nest = NULL; 
 
@@ -164,7 +166,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
 
           SgBasicBlock* innerLoopBody = NULL;
 
-          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y);
+          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, lastStatement);
           ROSE_ASSERT(innerLoopBody != NULL);
 
           ROSE_ASSERT(lastStatement != NULL);
@@ -203,6 +205,32 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
        // Assemble the stencilSubTreeArray into a single expression.
           SgExprStatement* stencilStatement = assembleStencilSubTreeArray(stencil_lhs,stencilSubTreeArray,stencilDimension,destinationVariableSymbol);
           SageInterface::appendStatement(stencilStatement,innerLoopBody);
+
+          // Liao, 11/10/2014, further CUDA code generation if requested 
+          if (b_gen_cuda)
+          {
+            if (stencilFSM->stencilDimension()==2 || stencilFSM->stencilDimension()==3)
+            {
+              // currently arraySize_X is generated inside the loop nest. No need to specify its sharing attribute.
+              //string parallel_pragma_string= "omp parallel for shared (destinationDataPointer, sourceDataPointer, arraySize_X)"
+              string parallel_pragma_string;
+              if(b_enable_collapse)
+                parallel_pragma_string= "omp parallel for collapse(" + std::to_string(stencilFSM->stencilDimension()) + ") shared (destinationDataPointer, sourceDataPointer)";
+              else
+                parallel_pragma_string= "omp parallel for shared (destinationDataPointer, sourceDataPointer)";
+              SgPragmaDeclaration* pragma1 = SageBuilder::buildPragmaDeclaration (parallel_pragma_string, NULL);
+              SageInterface::insertStatementBefore(loopNest,  pragma1);
+              // TODO: once total arraySize is calculated , we use a variable arraySize_Total instead of 1764 ( 42*42 )
+              string target_pragma_string = "omp target device(0) map (out:destinationDataPointer[0:1764]) map(in:sourceDataPointer[0:1764])";
+              SgPragmaDeclaration* pragma2 = SageBuilder::buildPragmaDeclaration (target_pragma_string, NULL);
+              SageInterface::insertStatementBefore(pragma1,  pragma2);
+            }
+            else
+            {
+              std::cerr<<"Error, only 2-D CUDA generation is considered for now."<<std::endl;
+              ROSE_ASSERT (false);
+            }
+          } 
         }
    }
 
