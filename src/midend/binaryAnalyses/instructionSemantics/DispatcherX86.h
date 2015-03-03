@@ -46,6 +46,7 @@ public:
      *
      * @{ */
     RegisterDescriptor REG_anyIP, REG_anySP;
+    RegisterDescriptor REG_RAX;
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP;
     RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;

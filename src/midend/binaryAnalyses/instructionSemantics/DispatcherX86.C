@@ -425,6 +425,18 @@ struct IP_call: P {
     }
 };
 
+// Sign extend AL to AX
+struct IP_cbw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_AX, ops->signExtend(d->readRegister(d->REG_AL), 16));
+        }
+    }
+};
+
 // Sign extend EAX into EDX:EAX
 struct IP_cdq: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -433,11 +445,15 @@ struct IP_cdq: P {
     }
 };
 
-// Sign extend AL to AX
-struct IP_cbw: P {
+// Sign extend EAX to RAX
+struct IP_cdqe: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_AX, ops->signExtend(d->readRegister(d->REG_AL), 16));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_RAX, ops->signExtend(d->readRegister(d->REG_EAX), 64));
+        }
     }
 };
 
@@ -564,7 +580,11 @@ struct IP_cwd: P {
 struct IP_cwde: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_EAX, ops->signExtend(d->readRegister(d->REG_AX), 32)); 
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_EAX, ops->signExtend(d->readRegister(d->REG_AX), 32));
+        }
     }
 };
 
@@ -1523,6 +1543,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_call,         new X86::IP_call);
     iproc_set(x86_cbw,          new X86::IP_cbw);
     iproc_set(x86_cdq,          new X86::IP_cdq);
+    iproc_set(x86_cdqe,         new X86::IP_cdqe);
     iproc_set(x86_clc,          new X86::IP_clc);
     iproc_set(x86_cld,          new X86::IP_cld);
     iproc_set(x86_cmc,          new X86::IP_cmc);
@@ -1684,6 +1705,7 @@ DispatcherX86::regcache_init()
     if (regdict) {
         switch (processorMode()) {
             case x86_processor_64:
+                REG_RAX = findRegister("rax", 64);
                 // fall through...
             case x86_processor_32:
                 REG_EAX = findRegister("eax", 32);
