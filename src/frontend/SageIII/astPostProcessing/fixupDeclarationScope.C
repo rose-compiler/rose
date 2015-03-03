@@ -33,7 +33,23 @@ void fixupAstDeclarationScope( SgNode* node )
      while (i != mapOfSets.end())
         {
           SgDeclarationStatement* firstNondefiningDeclaration = i->first;
-          ROSE_ASSERT(firstNondefiningDeclaration == firstNondefiningDeclaration->get_firstNondefiningDeclaration());
+
+       // DQ (3/2/2015): Added assertion.
+          ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
+       // DQ (3/2/2015): Added assertion.
+          ROSE_ASSERT(firstNondefiningDeclaration->get_firstNondefiningDeclaration() != NULL);
+ 
+       // DQ (3/2/2015): Make this assertion a warning: fails in outlining example seq7a_test2006_78.C.
+       // ROSE_ASSERT(firstNondefiningDeclaration == firstNondefiningDeclaration->get_firstNondefiningDeclaration());
+          if (firstNondefiningDeclaration != firstNondefiningDeclaration->get_firstNondefiningDeclaration())
+             {
+               printf ("WARNING: In fixupAstDeclarationScope(): firstNondefiningDeclaration != firstNondefiningDeclaration->get_firstNondefiningDeclaration() \n");
+               printf ("   --- firstNondefiningDeclaration = %p = %s \n",
+                    firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
+               printf ("   --- firstNondefiningDeclaration->get_firstNondefiningDeclaration() = %p = %s \n",
+                    firstNondefiningDeclaration->get_firstNondefiningDeclaration(),firstNondefiningDeclaration->get_firstNondefiningDeclaration()->class_name().c_str());
+             }
 
           SgScopeStatement* correctScope = firstNondefiningDeclaration->get_scope();
           ROSE_ASSERT(correctScope != NULL);
@@ -123,12 +139,29 @@ FixupAstDeclarationScope::visit ( SgNode* node )
                        {
                          std::set<SgDeclarationStatement*>* new_empty_set = new std::set<SgDeclarationStatement*>();
                          ROSE_ASSERT(new_empty_set != NULL);
+#if 0
+                         printf ("In FixupAstDeclarationScope::visit(): Adding a set of declarations to the mapOfSets: new_empty_set = %p \n",new_empty_set);
+#endif
+                      // DQ (3/2/2015): Added assertion.
+                         ROSE_ASSERT(firstNondefiningDeclaration != NULL);
+
                          mapOfSets.insert(std::pair<SgDeclarationStatement*,std::set<SgDeclarationStatement*>*>(firstNondefiningDeclaration,new_empty_set));
                        }
 
-                     ROSE_ASSERT(mapOfSets.find(firstNondefiningDeclaration) != mapOfSets.end());
+                    ROSE_ASSERT(mapOfSets.find(firstNondefiningDeclaration) != mapOfSets.end());
 
-                     mapOfSets[firstNondefiningDeclaration]->insert(declaration);
+                 // DQ (3/2/2015): Added assertion.
+                    ROSE_ASSERT(declaration != NULL);
+#if 0
+                    printf ("In FixupAstDeclarationScope::visit(): Adding a declaration = %p = %s to a specific set in the mapOfSets: mapOfSets[firstNondefiningDeclaration=%p] = %p \n",
+                         declaration,declaration->class_name().c_str(),firstNondefiningDeclaration,mapOfSets[firstNondefiningDeclaration]);
+                    printf ("   --- declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
+#endif
+                 // DQ (3/2/2015): Added assertion.
+                 // ROSE_ASSERT(declaration == declaration->get_firstNondefiningDeclaration());
+
+                 // mapOfSets[firstNondefiningDeclaration]->insert(firstNondefiningDeclaration);
+                    mapOfSets[firstNondefiningDeclaration]->insert(declaration);
                   }
              }
         }

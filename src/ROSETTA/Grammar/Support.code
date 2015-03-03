@@ -9646,7 +9646,11 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
                            // yet in the traversal of the AST represented by the symbol tabel query at this point.
                               original_aliased_symbol = NULL;
 #if 0
-                              printf ("associated causal nodes not seen yet in traversal of AST: \n",aliasedSymbol->get_causal_nodes().size());
+                              printf ("associated causal nodes not seen yet in traversal of AST: \n");
+                              ROSE_ASSERT(aliasedSymbol->get_alias() != NULL);
+                              printf (" --- aliasedSymbol = %p aliasedSymbol->get_alias() = %p = %s \n",aliasedSymbol,aliasedSymbol->get_alias(),aliasedSymbol->get_alias()->class_name().c_str());
+                              printf (" --- aliasedSymbol->get_causal_nodes().size() = %zu \n",aliasedSymbol->get_causal_nodes().size());
+                              printf (" --- get_aliasSymbolCausalNodeSet().size()    = %zu \n",get_aliasSymbolCausalNodeSet().size());
                               for (std::vector<SgNode*>::iterator i = aliasedSymbol->get_causal_nodes().begin(); i != aliasedSymbol->get_causal_nodes().end(); i++)
                                  {
                                    printf ("   --- causal node = %p = %s \n",*i,(*i)->class_name().c_str());

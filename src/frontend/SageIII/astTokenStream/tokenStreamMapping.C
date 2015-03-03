@@ -5664,7 +5664,8 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
 #endif
 
-     ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
+  // DQ (2/28/2015): This assertion will be false where the input is an empty file.
+  // ROSE_ASSERT(tokenStreamSequenceMap.empty() == false);
 
      map<SgStatement*,FrontierNode*> token_unparse_frontier_map = sourceFile->get_token_unparse_frontier();
 

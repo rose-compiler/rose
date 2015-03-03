@@ -3060,8 +3060,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
         }
        else
         {
+       // DQ (2/28/2015): This assertion will be false where the input is an empty file.
        // DQ (1/6/2015): If we are calling this function and sourceFile->get_unparse_tokens() == true, then globalScope->get_containsTransformation() == true.
-          ROSE_ASSERT(globalScope->get_containsTransformation() == true);
+       // ROSE_ASSERT(globalScope->get_containsTransformation() == true);
         }
 
   // DQ (1/4/2015): Find the first statement so that we can unparse the tokens leading up to it.
