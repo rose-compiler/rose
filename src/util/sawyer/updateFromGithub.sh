@@ -4,6 +4,16 @@ set -e
 
 SAWYER_REPO=${1-github.com:matzke1/sawyer}
 
+emit_cpp_warning() {
+    echo "// WARNING: Changes to this file must be contributed back to Sawyer or else they will"
+    echo "//          be clobbered by the next update from Sawyer.  The Sawyer repository is at"
+    echo "//          $SAWYER_REPO."
+    echo
+    echo
+    echo
+    echo
+}
+
 # Download the latest version of the source code
 SAWYER_ROOT="sawyer-$(date +%Y%m%d)"
 if [ -d "$SAWYER_ROOT" ]; then
@@ -25,8 +35,8 @@ for f in \
     SmallObject Stack StaticBuffer Stopwatch Synchronization WarningsOff WarningsRestore
 do
     srcbase="$SAWYER_ROOT/sawyer/$f";
-    cp "$srcbase.h" .
-    [ -f "$srcbase.C" ] && cp "$srcbase.C" .
+    ( emit_cpp_warning; cat "$srcbase.h" ) > ./$f.h
+    [ -f "$srcbase.C" ] && ( emit_cpp_warning; cat "$srcbase.C" ) > ./$f.C
 done
 
 
