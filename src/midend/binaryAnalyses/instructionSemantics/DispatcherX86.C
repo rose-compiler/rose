@@ -461,7 +461,11 @@ struct IP_cdqe: P {
 struct IP_clc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        }
     }
 };
 
@@ -469,7 +473,25 @@ struct IP_clc: P {
 struct IP_cld: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_DF, ops->boolean_(false));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_DF, ops->boolean_(false));
+        }
+    }
+};
+
+// Flush cache line
+struct IP_clflush: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            // read memory for its side effects (e.g., page faults), but don't do anything else since semantics has no cache
+            // lines.
+            (void) d->read(args[0]);
+        }
     }
 };
 
@@ -1546,6 +1568,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_cdqe,         new X86::IP_cdqe);
     iproc_set(x86_clc,          new X86::IP_clc);
     iproc_set(x86_cld,          new X86::IP_cld);
+    iproc_set(x86_clflush,      new X86::IP_clflush);
     iproc_set(x86_cmc,          new X86::IP_cmc);
     iproc_set(x86_cmova,        new X86::IP_cmovcc(x86_cmova));
     iproc_set(x86_cmovae,       new X86::IP_cmovcc(x86_cmovae));
