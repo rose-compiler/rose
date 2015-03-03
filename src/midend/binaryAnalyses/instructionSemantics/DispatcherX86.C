@@ -631,15 +631,20 @@ struct IP_cmpstrings: P {
 struct IP_cmpxchg: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
-        RegisterDescriptor A = d->REG_EAX;
-        A.set_nbits(nbits);
-        BaseSemantics::SValuePtr oldA = d->readRegister(A);
-        (void) d->doAddOperation(oldA, ops->invert(op0), true, ops->boolean_(false));
-        BaseSemantics::SValuePtr zf = d->readRegister(d->REG_ZF);
-        d->write(args[0], ops->ite(zf, d->read(args[1], nbits), op0));
-        ops->writeRegister(A, ops->ite(zf, oldA, op0));
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbits = asm_type_width(args[0]->get_type());
+            ASSERT_require(asm_type_width(args[1]->get_type()) == nbits);
+            BaseSemantics::SValuePtr op0 = d->read(args[0]);
+            RegisterDescriptor A = d->REG_AX;
+            A.set_nbits(nbits);
+            BaseSemantics::SValuePtr oldA = d->readRegister(A);
+            (void) d->doAddOperation(oldA, ops->invert(op0), true, ops->boolean_(false));
+            BaseSemantics::SValuePtr zf = d->readRegister(d->REG_ZF);
+            d->write(args[0], ops->ite(zf, d->read(args[1]), op0));
+            ops->writeRegister(A, ops->ite(zf, oldA, op0));
+        }
     }
 };
 
@@ -1827,6 +1832,9 @@ DispatcherX86::regcache_init()
                 REG_DS = findRegister("ds", 16);
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
+                break;
+            default:
+                ASSERT_not_reachable("invalid instruction size");
         }
 
         REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
