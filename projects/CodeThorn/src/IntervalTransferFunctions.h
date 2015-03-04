@@ -12,12 +12,12 @@ public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();
   IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
-  void transferExpression(SPRAY::Label label, SgExpression* expr, IntervalPropertyState& element);
-  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, IntervalPropertyState& element);
-  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, IntervalPropertyState& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, IntervalPropertyState& element);
-  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, IntervalPropertyState& element);
-  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, IntervalPropertyState& element);
+  void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
+  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
+  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, Lattice& element);
+  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
+  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
 private:
   CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;

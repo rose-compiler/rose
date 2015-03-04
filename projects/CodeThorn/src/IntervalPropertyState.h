@@ -22,8 +22,11 @@ public:
 #endif
   typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
   IntervalMapType intervals;
-  bool isBot() { std::cerr<<"WARNING: isBot not implement for IntervalPropertState"<<std::endl; return false; }
+  bool isBot() { return _bot; }
+  void setBot() { _bot=true; }
   void setEmptyState();
+ private:
+  bool _bot;
 };
 
 #endif

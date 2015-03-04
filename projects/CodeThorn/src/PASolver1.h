@@ -31,6 +31,8 @@ class PASolver1 {
   PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
+ public:
+  bool _trace;
 };
 
 #endif

@@ -24,10 +24,30 @@ class CppExprEvaluator {
       case V_SgMultiplyOp: return domain->arithMul(evaluate(lhs),evaluate(rhs));
       case V_SgDivideOp: return domain->arithDiv(evaluate(lhs),evaluate(rhs));
       case V_SgModOp: return domain->arithMod(evaluate(lhs),evaluate(rhs));
-      case V_SgAssignOp: {cout<<"WARNING: Eval: Assignment (not implemented)."<<endl;return evaluate(rhs);}
+      case V_SgAssignOp: {
+        if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
+#if 0
+          ROSE_ASSERT(variableIdMapping); // TODO
+          variableIdMapping->toStream(cout);
+          VariableId varId=variableIdMapping->variableId(lhsVar);
+          if(IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState)) {
+            ips->intervals[varId]=evaluate(rhs);
+          } else {
+            cerr<<"Error: CppExprEvaluator:: Unknown type of property state."<<endl;
+            exit(1);
+          }
+#else
+          cout<<"WARNING: not handling assignment."<<endl;
+#endif
+        } else {
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<endl;
+          return NumberIntervalLattice();
+        }
+      }
       default:
-	cerr<<"Error: unknown binary operator."<<endl;
-	exit(1);
+        cout<<"Warning: unknown binary operator."<<endl;
+        return NumberIntervalLattice();
+        //exit(1);
       }
     }
     switch(node->variantT()) {
@@ -38,11 +58,12 @@ class CppExprEvaluator {
       return NumberIntervalLattice();
     }
     default: // generates bot element
-	cerr<<"Error: unknown unary operator."<<endl;
-	exit(1);
+      cout<<"Warning: unknown unary operator."<<endl;
+      return NumberIntervalLattice();
+      //exit(1);
     }
-    cerr<<"Error: Unknown operator."<<endl;
-    exit(1);
+    cerr<<"Warning: Unknown operator."<<endl;
+    return NumberIntervalLattice();
   }
   void setDomain(NumberIntervalLattice* domain) { this->domain=domain; }
   void setPropertyState(PropertyState* pstate) { this->propertyState=pstate; }
