@@ -1,6 +1,10 @@
 
 #include "stencilFiniteStateMachine.h"
 
+extern bool b_enable_polyopt;
+
+SgExpression* buildStencilSubscript(std::vector<SgExpression*> operand, std::vector<SgExpression*> size, int dimSize);
+
 SgForStatement* 
 buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBody, SgVariableSymbol* boxVariableSymbol,
    SgVariableSymbol* & indexVariableSymbol_X, SgVariableSymbol* & indexVariableSymbol_Y, SgVariableSymbol* & indexVariableSymbol_Z, 
