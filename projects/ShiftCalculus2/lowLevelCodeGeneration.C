@@ -266,6 +266,10 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
           SgVarRefExp* indexVarRefExp_Y     = SageBuilder::buildVarRefExp(indexVariableSymbol_Y);
           SgVarRefExp* arraySizeVarRefExp_X = SageBuilder::buildVarRefExp(arraySizeVariableSymbol_X);
           SgVarRefExp* indexVarRefExp_X     = SageBuilder::buildVarRefExp(indexVariableSymbol_X);
+       // Pei-Hung: vector to store operands and array size
+          std::vector<SgExpression*> operand;
+          std::vector<SgExpression*> arraySize;
+          arraySize.push_back(arraySizeVarRefExp_X);
 
        // For the index expression.
           SgExpression* expression = NULL;
@@ -273,7 +277,11 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
              {
             // This is a center point in the stencil
             // We want to generate: source[j*axis_x_size+i]
-               expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), indexVarRefExp_X);
+            // Pei-Hung: replace with a subscript building function
+               //expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), indexVarRefExp_X);
+               operand.push_back(indexVarRefExp_X);
+               operand.push_back(indexVarRefExp_Y);
+               expression = buildStencilSubscript(operand,arraySize,operand.size());
              }
             else
              {
@@ -283,7 +291,11 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
                if (stencilOffsetFSM->offsetValues[0] == 0 && stencilOffsetFSM->offsetValues[1] != 0)
                   {
                     SgExpression* offsetValue_Y = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[1]);
-                    expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                 // Pei-Hung: replace with a subscript building function
+                    //expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                    operand.push_back(indexVarRefExp_X);
+                    operand.push_back(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y));
+                    expression = buildStencilSubscript(operand,arraySize,operand.size());
                   }
                  else
                   {
@@ -291,7 +303,11 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
                     if (stencilOffsetFSM->offsetValues[0] != 0 && stencilOffsetFSM->offsetValues[1] == 0)
                        {
                          SgExpression* offsetValue_X = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[0]);
-                         expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         // Pei-Hung: replace with a subscript building function
+                         //expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Y,arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         operand.push_back(SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         operand.push_back(indexVarRefExp_Y);
+                         expression = buildStencilSubscript(operand,arraySize,operand.size());
                        }
                       else
                        {
@@ -300,7 +316,11 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
 
                          SgExpression* offsetValue_X = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[0]);
                          SgExpression* offsetValue_Y = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[1]);
-                         expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         // Pei-Hung: replace with a subscript building function
+                         //expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         operand.push_back(SageBuilder::buildAddOp(indexVarRefExp_X,offsetValue_X));
+                         operand.push_back(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y));
+                         expression = buildStencilSubscript(operand,arraySize,operand.size());
                        }
                   }
              }

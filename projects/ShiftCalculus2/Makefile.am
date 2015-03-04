@@ -67,7 +67,8 @@ test9: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/laplacian_lite_v2.cpp
 
 test10: shiftCalculusCompiler
-	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/laplacian_lite_v3.cpp
+	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_lite_v3.cpp
+	g++ -std=c++11 rose_laplacian_lite_v3.cpp $(srcdir)/Box.cpp -I$(srcdir) -o $@ 
 
 test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
