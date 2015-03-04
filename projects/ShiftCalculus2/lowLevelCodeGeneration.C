@@ -361,7 +361,8 @@ buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient,
                   {
                     SgExpression* offsetValue_Y = SageBuilder::buildIntVal(stencilOffsetFSM->offsetValues[1]);
                  // expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
-                    expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X);
+                    expression = SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(indexVarRefExp_Z,arraySizeVarRefExp_Y),
+                                                         SageBuilder::buildAddOp(SageBuilder::buildMultiplyOp(SageBuilder::buildAddOp(indexVarRefExp_Y,offsetValue_Y),arraySizeVarRefExp_X), indexVarRefExp_X));
                   }
                  else
                   {
