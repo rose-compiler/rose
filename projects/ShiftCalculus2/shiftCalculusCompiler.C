@@ -56,6 +56,15 @@ int main( int argc, char * argv[] )
     }
     else
       b_enable_collapse = false;
+// Pei-Hung, code generation to fulfill polyopt 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","polyopt",true))
+    {
+      std::cout<<"Generating code for PolyOpt  ..."<<std::endl;
+      b_enable_polyopt = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_enable_polyopt = false;
 
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);

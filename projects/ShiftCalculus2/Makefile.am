@@ -70,6 +70,16 @@ test10: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_lite_v3.cpp
 	g++ -std=c++11 rose_laplacian_lite_v3.cpp $(srcdir)/Box.cpp -I$(srcdir) -o $@ 
 
+POLYOPT_PATH=$(top_builddir)/projects/PolyOpt2
+
+test10poly: shiftCalculusCompiler
+	./shiftCalculusCompiler -c -rose:dslcompiler:polyopt -std=c++11 $(srcdir)/laplacian_lite_v3.cpp -rose:skipfinalCompileStep -rose:output laplacian_lite_v3_polyopt.cpp
+	make -C $(POLYOPT_PATH)
+	$(POLYOPT_PATH)/src/PolyOpt laplacian_lite_v3_polyopt.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep --polyopt-parallel-only -rose:o rose_parallel_only_laplacian_lite_v3_polyopt.cpp
+	echo "8 8 8" >> tile.sizes
+	$(POLYOPT_PATH)/src/PolyOpt laplacian_lite_v3_polyopt.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep --polyopt-fixed-tiling -rose:o rose_fixed-tiling_laplacian_lite_v3_polyopt.cpp
+        
+
 test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
 

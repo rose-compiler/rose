@@ -23,7 +23,9 @@ bool b_gen_cuda = false;
 // disable collapse by default
 bool b_enable_collapse = false;
 // an internal variable to store the generated serial loop nests.
-static SgForStatement* temp_for_loop_nest = NULL; 
+bool b_enable_polyopt = false;
+// an internal variable to store the generated serial loop nests.
+//static SgForStatement* temp_for_loop_nest = NULL; 
 
 void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLowlevelCode)
    {
@@ -136,6 +138,7 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           SgVariableSymbol* indexVariableSymbol_Z     = NULL;
           SgVariableSymbol* arraySizeVariableSymbol_X = NULL;
           SgVariableSymbol* arraySizeVariableSymbol_Y = NULL;
+          SgVariableSymbol* arraySizeVariableSymbol_Z = NULL;
 
           SgVariableSymbol* destinationVariableSymbol = destinationArrayVarRefExp->get_symbol();
           ROSE_ASSERT(destinationVariableSymbol != NULL);
@@ -143,18 +146,40 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           ROSE_ASSERT(sourceVariableSymbol != NULL);
           SgVariableSymbol* boxVariableSymbol = boxVarRefExp->get_symbol();
           ROSE_ASSERT(boxVariableSymbol != NULL);
+          std::vector<SgVariableSymbol*> SymbolArray;
 
        // This can be important in handling of comments and CPP directives.
           bool autoMovePreprocessingInfo = true;
 
           SgStatement* lastStatement = associatedStatement;
+          SgBasicBlock* innerLoopBody = NULL;
+
+          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, arraySizeVariableSymbol_Z,lastStatement);
+          ROSE_ASSERT(innerLoopBody != NULL);
+
+          ROSE_ASSERT(lastStatement != NULL);
+          SageInterface::insertStatementAfter(lastStatement,loopNest,autoMovePreprocessingInfo);
+          lastStatement = loopNest;
+// Pei-Hung SymoblArray stores the varialbe symobols for array sizes
+          SymbolArray.push_back(arraySizeVariableSymbol_X);
+          SymbolArray.push_back(arraySizeVariableSymbol_Y);
+          SymbolArray.push_back(arraySizeVariableSymbol_Z);
+
           if (generateLowlevelCode == true)
              {
-               SgVariableDeclaration* sourceDataPointerVariableDeclaration = buildDataPointer("sourceDataPointer",sourceVariableSymbol,outerScope);
+               SgVariableDeclaration* sourceDataPointerVariableDeclaration = NULL;
+               if (b_enable_polyopt)
+                 sourceDataPointerVariableDeclaration = buildMultiDimPointer("sourceDataPointer",sourceVariableSymbol,outerScope,SymbolArray,stencilFSM->stencilDimension());
+               else
+                 sourceDataPointerVariableDeclaration = buildDataPointer("sourceDataPointer",sourceVariableSymbol,outerScope);
 
-               SageInterface::insertStatementAfter(associatedStatement,sourceDataPointerVariableDeclaration,autoMovePreprocessingInfo);
+               SageInterface::insertStatementBefore(lastStatement,sourceDataPointerVariableDeclaration,autoMovePreprocessingInfo);
 
-               SgVariableDeclaration* destinationDataPointerVariableDeclaration = buildDataPointer("destinationDataPointer",destinationVariableSymbol,outerScope);
+               SgVariableDeclaration* destinationDataPointerVariableDeclaration = NULL;
+               if (b_enable_polyopt)
+                 destinationDataPointerVariableDeclaration = buildMultiDimPointer("destinationDataPointer",destinationVariableSymbol,outerScope,SymbolArray,stencilFSM->stencilDimension());
+               else
+                 destinationDataPointerVariableDeclaration = buildDataPointer("destinationDataPointer",destinationVariableSymbol,outerScope);
                SageInterface::insertStatementAfter(sourceDataPointerVariableDeclaration,destinationDataPointerVariableDeclaration,autoMovePreprocessingInfo);
 
             // Reset the variable symbols we will use in the buildStencilPoint() function.
@@ -164,13 +189,6 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
                lastStatement = destinationDataPointerVariableDeclaration;
              }
 
-          SgBasicBlock* innerLoopBody = NULL;
-
-          SgForStatement* loopNest = buildLoopNest(stencilFSM->stencilDimension(),innerLoopBody,boxVariableSymbol,indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y, lastStatement);
-          ROSE_ASSERT(innerLoopBody != NULL);
-
-          ROSE_ASSERT(lastStatement != NULL);
-          SageInterface::insertStatementAfter(lastStatement,loopNest,autoMovePreprocessingInfo);
 
        // Mark this as compiler generated so that it will not be unparsed.
           associatedStatement->get_file_info()->setCompilerGenerated();
@@ -186,10 +204,20 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
                double stencilCoeficient           = stencilPointList[j].second;
 
             // SgFunctionCallExp* stencilSubTree = buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilFSM->stencilDimension());
-               SgExpression* stencilSubTree = 
-                    buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
-                         indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,generateLowlevelCode);
-
+               SgExpression* stencilSubTree = NULL;
+               if (b_enable_polyopt)
+                  {
+                     stencilSubTree = 
+                          buildMultiDimStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
+                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                  }
+               else
+                  {
+                     stencilSubTree = 
+                          buildStencilPoint(stencilOffsetFSM,stencilCoeficient,stencilDimension,sourceVariableSymbol,
+                               indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+                  }
+             
                ROSE_ASSERT(stencilSubTree != NULL);
 
                stencilSubTreeArray.push_back(stencilSubTree);
@@ -198,8 +226,17 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
        // Construct the lhs value for the stencil inner loop statement.
           StencilOffsetFSM* stencilOffsetFSM_lhs = new StencilOffsetFSM(0,0,0);
           double stencilCoeficient_lhs = 1.00;
-          SgExpression* stencil_lhs = buildStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
-                                           indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,generateLowlevelCode);
+          SgExpression* stencil_lhs = NULL;
+          if (b_enable_polyopt)
+            {
+              stencil_lhs = buildMultiDimStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
+                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+            }
+          else
+            {
+              stencil_lhs = buildStencilPoint(stencilOffsetFSM_lhs,stencilCoeficient_lhs,stencilDimension,destinationVariableSymbol,
+                                              indexVariableSymbol_X,indexVariableSymbol_Y,indexVariableSymbol_Z,arraySizeVariableSymbol_X,arraySizeVariableSymbol_Y,arraySizeVariableSymbol_Z,generateLowlevelCode);
+            }
           ROSE_ASSERT(stencil_lhs != NULL);
 
        // Assemble the stencilSubTreeArray into a single expression.
@@ -231,6 +268,13 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
               ROSE_ASSERT (false);
             }
           } 
+          if (b_enable_polyopt)
+          {
+              string scop_pragma_string;
+              scop_pragma_string = "scop";
+              SgPragmaDeclaration* pragma = SageBuilder::buildPragmaDeclaration (scop_pragma_string, NULL);
+              SageInterface::insertStatementBefore(loopNest,  pragma); 
+          }
         }
    }
 
