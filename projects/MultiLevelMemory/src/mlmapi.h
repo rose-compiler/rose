@@ -45,6 +45,7 @@ public:
   void transformCallExp(SgCallExpression* callExp);
   void transformForStmt(SgForStatement* forStmt);
   bool loopTiling(SgForStatement*, size_t, size_t);
+  void allocSubdomain(SgForStatement*, int);
 protected:
   void virtual visit (SgNode*);	
 };

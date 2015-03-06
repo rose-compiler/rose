@@ -98,6 +98,14 @@ test10vector: shiftCalculusCompiler
 	@echo "********************************************************************************************"
 	$(VECTOR_PATH)/src/vectorization laplacian_lite_v3_vec.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep -rose:o rose_vectorization_laplacian_lite_v3.cpp
 
+MLM_PATH=$(top_builddir)/projects/MultiLevelMemory
+test10MLM: shiftCalculusCompiler
+	make -C $(MLM_PATH)
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for SST Simulator              ********"
+	@echo "********************************************************************************************"
+	$(MLM_PATH)/src/mlm $(srcdir)/laplacian_lite_v3_MLM.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep -rose:o rose_MLM_laplacian_lite_v3.cpp
+
 test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
 
@@ -125,7 +133,7 @@ localTests: test4 test2 test5 test6 test7 test8
 
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
 
-demo: test10 cudaTests test10poly test10vector
+demo: test10 cudaTests test10poly test10vector test10MLM
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

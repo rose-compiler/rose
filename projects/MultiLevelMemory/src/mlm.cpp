@@ -47,7 +47,7 @@ void mlmFrontend::visit(SgNode* node)
     } 
     if(type >= 0) 
     {
-      cout << "type = " << type << endl;
+      //cout << "type = " << type << endl;
       mlmAttribute* newAttr = new mlmAttribute(type);
       mlmFrontend::attachAttribute(pragDecl, newAttr);
       DeletepragmasList.push_back(pragDecl);
@@ -84,10 +84,11 @@ void mlmTransform::transformForStmt(SgForStatement* forStmt)
     {
       mlmAttribute* mlmAttr = dynamic_cast<mlmAttribute*> (attr);
       int tileArg = mlmAttr->getMemType();
-//      bool result=false;
-//      result = loopTiling(forStmt,2, tileArg);
-//      ROSE_ASSERT(result != false);
 /*
+      bool result=false;
+      result = loopTiling(forStmt,2, tileArg);
+      ROSE_ASSERT(result != false);
+*/
       FILE* tileFile;
       tileFile = fopen("tile.sizes", "w");
       fprintf(tileFile, "%d %d %d",tileArg,tileArg, 1);
@@ -101,9 +102,8 @@ void mlmTransform::transformForStmt(SgForStatement* forStmt)
       PolyRoseOptions polyoptions (polyargc, polyargv);
       int retval;
       retval = PolyOptOptimizeSubTree(forStmt, polyoptions);
-*/
-      int retval;
-      retval = PolyOptLoopTiling(forStmt,tileArg,tileArg,1); 
+//      int retval;
+//      retval = PolyOptLoopTiling(forStmt,tileArg,tileArg,1); 
     }
 }
 
@@ -112,11 +112,12 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
 {
     ROSE_ASSERT(callExp);
     SgFunctionRefExp* funcName = isSgFunctionRefExp(callExp->get_function());
-    if(!funcName) return;
+    if(!funcName) 
+      return;
     SgExprListExp* funcArgList = callExp->get_args();
     SgExpressionPtrList argList = funcArgList->get_expressions();
     SgScopeStatement* scope = getScope(callExp);         
-    cout << funcName->get_symbol()->get_name() << endl;
+    //cout << funcName->get_symbol()->get_name() << endl;
 
     /** if it is malloc, search for the mlm attribute and append the memory level **/
     if(strncmp("malloc",funcName->get_symbol()->get_name().str(),6) == 0)
@@ -127,11 +128,10 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
       // check if LHS of malloc has an attribute assigned
       SgNode* parentNode = callExp->get_parent();
       // parent node can be a casting expression
-      while(isSgCastExp(parentNode))
+      if(isSgCastExp(parentNode))
       {
         parentNode = parentNode->get_parent();
       }
-      cout << parentNode->class_name() << endl;
       // the mlm attribute
       AstAttribute* attr = NULL;
       // So far we spot two candidates for parentNode that we need to transform
@@ -141,7 +141,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         SgExpression* lhs = isSgExpression(assignOp->get_lhs_operand());
         if(!isSgVarRefExp(lhs))
         {
-          cout << "lhs:" << assignOp->get_lhs_operand()->class_name() << endl;
+          //cout << "lhs:" << assignOp->get_lhs_operand()->class_name() << endl;
 
           // if pointer is packaged inside a struct, then we need to look down in lhs.
           if(isSgDotExp(lhs))
@@ -155,7 +155,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         ROSE_ASSERT(symbol);
         //retrieve the attribute from symbol
         attr = symbol->getAttribute("mlmAttribute");
-        cout << "LHS symbol name: " << symbol->get_name() << endl;
+        //cout << "LHS symbol name: " << symbol->get_name() << endl;
       }
       else if(isSgAssignInitializer(parentNode))
       {
@@ -166,7 +166,7 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
         ROSE_ASSERT(symbol);
         //retrieve the attribute from symbol
         attr = symbol->getAttribute("mlmAttribute");
-        cout << "Initialized symbol name: " << symbol->get_name() << endl;
+        //cout << "Initialized symbol name: " << symbol->get_name() << endl;
       }
       else
       {
@@ -242,6 +242,76 @@ void mlmTransform::transformCallExp(SgCallExpression* callExp)
       }
     }
 
+}
+
+
+/* This will allocate all the subdomain for every array
+ * */
+void mlmTransform::allocSubdomain(SgForStatement* loopNest, int tileSize)
+{
+    SgScopeStatement* scope = loopNest->get_scope();
+    map<SgVariableSymbol*, SgPntrArrRefExp*> variableMap;
+    std::vector<SgPntrArrRefExp* > pntrs= SageInterface::querySubTree<SgPntrArrRefExp>(loopNest,V_SgPntrArrRefExp);
+    for(std::vector<SgPntrArrRefExp* >::iterator it = pntrs.begin(); it != pntrs.end(); ++ it)
+    {
+      vector<SgVariableSymbol*> tmp = SageInterface::getSymbolsUsedInExpression(*it);
+      for(vector<SgVariableSymbol*>::iterator vit = tmp.begin(); vit != tmp.end(); ++vit)
+      {
+        //cout << "name = " << (*vit)->get_name()<< " type=" << (*vit)->get_type()->class_name() << endl;
+        if(isSgArrayType((*vit)->get_type()) || isSgPointerType((*vit)->get_type()))
+          variableMap[*vit] = *it;
+      }
+    }
+
+    for(map<SgVariableSymbol*, SgPntrArrRefExp*>::iterator it=variableMap.begin(); it != variableMap.end(); ++it)
+    {
+  	string subArrayName = (*it).first->get_name().getString()+"_sub";
+        cout << "name = " << (*it).first->get_name() << " new name:" << subArrayName << endl;
+        SgType* subType = (*it).first->get_type();
+        SgExpression* sizeExp;
+        SgArrayType* oldtype;
+        SgType* baseType;
+        if(isSgArrayType((*it).first->get_type()))
+        {
+          // create the mutlti-dim data type for the subdomain
+          oldtype = isSgArrayType((*it).first->get_type());
+          std::vector<SgExpression*> arrayInfo = SageInterface::get_C_array_dimensions(oldtype);
+          baseType = getArrayElementType(oldtype);
+//cout << "dim size= " << getDimensionCount(oldtype) << " base type=" << baseType->class_name() << endl;
+          for(int i=0; i <getDimensionCount(oldtype);++i)
+          {
+            SgArrayType* tmpArrayType;
+            if(i == 0)
+            {
+              tmpArrayType = buildArrayType(baseType,buildIntVal(tileSize));
+              sizeExp = buildIntVal(tileSize);
+            }
+            else
+            {
+              tmpArrayType = buildArrayType(baseType,buildIntVal(tileSize));
+              sizeExp = buildMultiplyOp(sizeExp, buildIntVal(tileSize));
+            }
+            baseType = isSgType(tmpArrayType);
+          }
+
+          subType = buildPointerType(baseType);
+        }
+        // Building variable Declaration with malloc as initializer
+        sizeExp = buildMultiplyOp(buildSizeOfOp(getArrayElementType(oldtype)),sizeExp);
+        SgExprListExp* funcCallArgs = buildExprListExp(sizeExp);
+        SgAssignInitializer* assignInit = buildAssignInitializer(buildFunctionCallExp("malloc",subType,funcCallArgs,scope));
+  	SgVariableDeclaration* subArrayDecl = buildVariableDeclaration(subArrayName, subType,assignInit, scope);
+        insertStatementBefore(loopNest, subArrayDecl);
+
+        //Building memcpy function call
+        //The offset, and size to be copied is still under development
+        SgExprListExp* memcpyArgs = buildExprListExp(buildAddressOfOp(buildVarRefExp(subArrayName,scope)), buildAddressOfOp(buildVarRefExp((*it).first->get_name(),scope)), buildSizeOfOp(getArrayElementType(oldtype)));
+        SgExprStatement* memcpyStmt = buildFunctionCallStmt("memcpy",buildVoidType(),memcpyArgs ,scope);
+        insertStatementBefore(loopNest, memcpyStmt);
+        
+        SgPntrArrRefExp* pntrArrRef = (*it).second;
+        pntrArrRef->set_lhs_operand(buildVarRefExp(subArrayName,scope)); 
+    }
 }
 
 void mlmTransform::insertHeaders(SgProject* project)
@@ -363,68 +433,7 @@ bool mlmTransform::loopTiling(SgForStatement* loopNest, size_t tileDims, size_t 
 
   if(id == tileDims-1)
   {
-    map<SgVariableSymbol*, SgPntrArrRefExp*> variableMap;
-    std::vector<SgPntrArrRefExp* > pntrs= SageInterface::querySubTree<SgPntrArrRefExp>(loopNest,V_SgPntrArrRefExp);
-    for(std::vector<SgPntrArrRefExp* >::iterator it = pntrs.begin(); it != pntrs.end(); ++ it)
-    {
-      vector<SgVariableSymbol*> tmp = SageInterface::getSymbolsUsedInExpression(*it);
-      for(vector<SgVariableSymbol*>::iterator vit = tmp.begin(); vit != tmp.end(); ++vit)
-      {
-        //cout << "name = " << (*vit)->get_name()<< " type=" << (*vit)->get_type()->class_name() << endl;
-        if(isSgArrayType((*vit)->get_type()) || isSgPointerType((*vit)->get_type()))
-          variableMap[*vit] = *it;
-      }
-    }
-
-    for(map<SgVariableSymbol*, SgPntrArrRefExp*>::iterator it=variableMap.begin(); it != variableMap.end(); ++it)
-    {
-  	string subArrayName = (*it).first->get_name().getString()+"_sub";
-        cout << "name = " << (*it).first->get_name() << " new name:" << subArrayName << endl;
-        SgType* subType = (*it).first->get_type();
-        SgExpression* sizeExp;
-        SgArrayType* oldtype;
-        SgType* baseType;
-        if(isSgArrayType((*it).first->get_type()))
-        {
-          // create the mutlti-dim data type for the subdomain
-          oldtype = isSgArrayType((*it).first->get_type());
-          std::vector<SgExpression*> arrayInfo = SageInterface::get_C_array_dimensions(oldtype);
-          baseType = getArrayElementType(oldtype);
-//cout << "dim size= " << getDimensionCount(oldtype) << " base type=" << baseType->class_name() << endl;
-          for(int i=0; i <getDimensionCount(oldtype);++i)
-          {
-            SgArrayType* tmpArrayType;
-            if(i == 0)
-            {
-              tmpArrayType = buildArrayType(baseType,buildIntVal(tileSize));
-              sizeExp = buildIntVal(tileSize);
-            }
-            else
-            {
-              tmpArrayType = buildArrayType(baseType,buildIntVal(tileSize));
-              sizeExp = buildMultiplyOp(sizeExp, buildIntVal(tileSize));
-            }
-            baseType = isSgType(tmpArrayType);
-          }
-
-          subType = buildPointerType(baseType);
-        }
-        // Building variable Declaration with malloc as initializer
-        sizeExp = buildMultiplyOp(buildSizeOfOp(getArrayElementType(oldtype)),sizeExp);
-        SgExprListExp* funcCallArgs = buildExprListExp(sizeExp);
-        SgAssignInitializer* assignInit = buildAssignInitializer(buildFunctionCallExp("malloc",subType,funcCallArgs,scope));
-  	SgVariableDeclaration* subArrayDecl = buildVariableDeclaration(subArrayName, subType,assignInit, scope);
-        insertStatementBefore(loopNest, subArrayDecl);
-
-        //Building memcpy function call
-        //The offset, and size to be copied is still under development
-        SgExprListExp* memcpyArgs = buildExprListExp(buildAddressOfOp(buildVarRefExp(subArrayName,scope)), buildAddressOfOp(buildVarRefExp((*it).first->get_name(),scope)), buildSizeOfOp(getArrayElementType(oldtype)));
-        SgExprStatement* memcpyStmt = buildFunctionCallStmt("memcpy",buildVoidType(),memcpyArgs ,scope);
-        insertStatementBefore(loopNest, memcpyStmt);
-        
-        SgPntrArrRefExp* pntrArrRef = (*it).second;
-        pntrArrRef->set_lhs_operand(buildVarRefExp(subArrayName,scope)); 
-    }
+    allocSubdomain(loopNest, tileSize);
   } 
 
   // rewrite the lower (i=lb), upper bounds (i<=/>= ub) of the target loop
