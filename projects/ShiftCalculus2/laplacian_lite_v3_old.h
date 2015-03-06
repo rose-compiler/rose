@@ -380,4 +380,4 @@ class PointwiseOperator
    };
 
 // function to initialize the src data
-void initialize(RectMDArray<double>& patch) {}
+//void initialize(RectMDArray<double>& patch) {}

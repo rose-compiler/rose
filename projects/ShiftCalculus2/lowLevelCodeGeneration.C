@@ -225,13 +225,6 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
             // Save the outer most forStatementScope.
                loopNest = forStatementScope;
                currentLoopBody = loopBody;
-               if (b_gen_vectorization)
-               {
-                   string scop_pragma_string;
-                   scop_pragma_string = "SIMD";
-                   SgPragmaDeclaration* pragma = SageBuilder::buildPragmaDeclaration (scop_pragma_string, NULL);
-                   SageInterface::insertStatementBefore(loopNest,  pragma); 
-               }
                arraySizeVariableSymbol_X = SageInterface::getFirstVarSym (arraySizeVariableDeclaration);
              }
             else
@@ -246,6 +239,13 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
             // Add the variable declaration of the array size in the previous dimension.
 
                SageInterface::appendStatement(forStatementScope,currentLoopBody);
+               if (k == 2 && b_gen_vectorization)
+               {
+                   string scop_pragma_string;
+                   scop_pragma_string = "SIMD";
+                   SgPragmaDeclaration* pragma = SageBuilder::buildPragmaDeclaration (scop_pragma_string, NULL);
+                   SageInterface::prependStatement(pragma, currentLoopBody);
+               }
                currentLoopBody = loopBody;
              }
 

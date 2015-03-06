@@ -91,7 +91,7 @@ test10poly: shiftCalculusCompiler
 VECTOR_PATH=$(top_builddir)/projects/vectorization
 
 test10vector: shiftCalculusCompiler
-	./shiftCalculusCompiler -c -rose:dslcompiler:vectorization -std=c++11 $(srcdir)/laplacian_lite_v3.cpp -rose:skipfinalCompileStep -rose:output laplacian_lite_v3_vec.cpp
+	./shiftCalculusCompiler -c -rose:dslcompiler:vectorization -std=c++11 $(srcdir)/laplacian_lite_v3_vec.cpp -rose:skipfinalCompileStep -rose:output laplacian_lite_v3_vec.cpp
 	make -C $(VECTOR_PATH)
 	@echo "********************************************************************************************"
 	@echo "******* ROSE/projects/ShiftCalculus: code generation for vectorization              ********"
