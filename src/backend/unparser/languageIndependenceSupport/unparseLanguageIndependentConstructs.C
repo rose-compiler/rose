@@ -477,7 +477,7 @@ void
 UnparseLanguageIndependentConstructs::outputCompilerGeneratedStatements( SgUnparse_Info & info )
    {
      list<SgStatement*>::iterator i = unp->compilerGeneratedStatementQueue.begin();
-  // printf ("compilerGeneratedStatementQueue.size() = %zu \n",compilerGeneratedStatementQueue.size());
+  // printf ("compilerGeneratedStatementQueue.size() = %" PRIuPTR " \n",compilerGeneratedStatementQueue.size());
      while (info.outputCompilerGeneratedStatements() == false && unp->compilerGeneratedStatementQueue.empty() == false)
         {
        // now output the compiler generated statements
@@ -1134,7 +1134,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("In unparseStatementFromTokenStream(): globalScope = %p \n",globalScope);
                     if (globalScope != NULL)
                        {
-                         printf ("globalScope->get_declarations().size() = %zu \n",globalScope->get_declarations().size());
+                         printf ("globalScope->get_declarations().size() = %" PRIuPTR " \n",globalScope->get_declarations().size());
                          for (size_t i = 0; i < globalScope->get_declarations().size(); i++)
                             {
                               SgDeclarationStatement* decl = globalScope->get_declarations()[i];
@@ -6132,19 +6132,19 @@ static std::string mapOperatorToString(SgOmpClause::omp_map_operator_enum ro)
   string result;
   switch (ro)
   {
-    case SgOmpClause::e_omp_map_inout: 
+    case SgOmpClause::e_omp_map_tofrom: 
       {
-        result = "inout";
+        result = "tofrom";
         break;
       }
-    case SgOmpClause::e_omp_map_in: 
+    case SgOmpClause::e_omp_map_to: 
       {
-        result = "in";
+        result = "to";
         break;
       }
-    case SgOmpClause::e_omp_map_out:   
+    case SgOmpClause::e_omp_map_from:   
       {
-        result = "out";
+        result = "from";
         break;
       }
     case SgOmpClause::e_omp_map_alloc:  

@@ -1,6 +1,7 @@
 
 #include <iostream>
 
+#include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
 #include "rose_config.h"

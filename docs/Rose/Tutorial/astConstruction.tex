@@ -477,9 +477,10 @@ each block within the AST.
 \item Figure~\ref{Tutorial:exampleAddFunctionCalls} shows the use of
 the AST builder interface to do the same instrumentation work.
 \end{itemize}
-   Figure~\ref{Tutorial:exampleInputCode_InstrumentationTranslator} shows the
-input code used to get the translator.
-Figure~\ref{Tutorial:exampleOutput_InstrumentationTranslator} shows the resulting output.
+% PHL (2/3/2015): inputCode_InstrumentationTranslator.C was removed by TV
+%   Figure~\ref{Tutorial:exampleInputCode_InstrumentationTranslator} shows the
+%input code used to get the translator.
+%Figure~\ref{Tutorial:exampleOutput_InstrumentationTranslator} shows the resulting output.
 
 Another example shows how to add a function call at the end of each
 function body. A utility function, \textit{instrumentEndOfFunction()}, from SageInterface name space is used. 
@@ -542,58 +543,59 @@ The interface tries to locate all return statements of a target function
 \end{figure}
 
 
-%----------------------- input code--------------------------       
-\begin{figure}[!ht]
-{\indent
-{\mySmallFontSize
-
-
-% Do this when processing latex to generate non-html (not using latex2html)
-\begin{latexonly}
-   \lstinputlisting{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
-\end{latexonly}
-
-% Do this when processing latex to build html (using latex2html)
-\begin{htmlonly}
-   \verbatiminput{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
-\end{htmlonly}
-
-% end of scope in font size
-}
-% End of scope in indentation
-}
-\caption{Example source code used as input to instrumenting translator.}
-\label{Tutorial:exampleInputCode_InstrumentationTranslator}
-\end{figure}
-
-%----------------------- output code--------------------------       
-\begin{figure}[!ht]
-{\indent
-{\mySmallFontSize
-
-
-% Do this when processing latex to generate non-html (not using latex2html)
-\begin{latexonly}
-   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
-\end{latexonly}
-
-% Do this when processing latex to build html (using latex2html)
-\begin{htmlonly}
-   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
-\end{htmlonly}
-
-% end of scope in font size
-}
-% End of scope in indentation
-}
-
-
-\caption{Output of input to instrumenting translator.}
-\label{Tutorial:exampleOutput_InstrumentationTranslator}
-\end{figure}
-
-
-%------------------end of function example
+% PHL (2/3/2015): inputCode_InstrumentationTranslator.C was removed by TV
+%%----------------------- input code--------------------------       
+%\begin{figure}[!ht]
+%{\indent
+%{\mySmallFontSize
+%
+%
+%% Do this when processing latex to generate non-html (not using latex2html)
+%\begin{latexonly}
+%   \lstinputlisting{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
+%\end{latexonly}
+%
+%% Do this when processing latex to build html (using latex2html)
+%\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleDirectory/inputCode_InstrumentationTranslator.C}
+%\end{htmlonly}
+%
+%% end of scope in font size
+%}
+%% End of scope in indentation
+%}
+%\caption{Example source code used as input to instrumenting translator.}
+%\label{Tutorial:exampleInputCode_InstrumentationTranslator}
+%\end{figure}
+%
+%%----------------------- output code--------------------------       
+%\begin{figure}[!ht]
+%{\indent
+%{\mySmallFontSize
+%
+%
+%% Do this when processing latex to generate non-html (not using latex2html)
+%\begin{latexonly}
+%   \lstinputlisting{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
+%\end{latexonly}
+%
+%% Do this when processing latex to build html (using latex2html)
+%\begin{htmlonly}
+%   \verbatiminput{\TutorialExampleBuildDirectory/rose_inputCode_InstrumentationTranslator.C}
+%\end{htmlonly}
+%
+%% end of scope in font size
+%}
+%% End of scope in indentation
+%}
+%
+%
+%\caption{Output of input to instrumenting translator.}
+%\label{Tutorial:exampleOutput_InstrumentationTranslator}
+%\end{figure}
+%
+%
+%%------------------end of function example
 %----------------------- translator 3--------------------------       
 \begin{figure}[!ht]
 {\indent

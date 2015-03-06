@@ -763,7 +763,7 @@ Unparse_MOD_SAGE::isOneElementList(SgConstructorInitializer* con_init)
                   }
 #else
             // DQ (4/1/2005): This is a simpler implementation
-            // printf ("In Unparse_MOD_SAGE::isOneElementList: expr_list->get_expressions().size() = %zu \n",expr_list->get_expressions().size());
+            // printf ("In Unparse_MOD_SAGE::isOneElementList: expr_list->get_expressions().size() = %" PRIuPTR " \n",expr_list->get_expressions().size());
                if (expr_list->get_expressions().size() == 1)
                     return true;
 #endif

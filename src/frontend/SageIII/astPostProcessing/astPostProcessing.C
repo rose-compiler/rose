@@ -48,7 +48,7 @@ void AstPostProcessing (SgNode* node)
           if (SgProject::get_verbose() > 0)
              {
                 printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->class_name().c_str(),SageInterface::get_name(node).c_str());
-               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %" PRIuPTR " (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
              }
 
           SgNode::clearGlobalMangledNameMap();

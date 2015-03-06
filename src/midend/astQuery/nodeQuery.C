@@ -1158,7 +1158,7 @@ Rose_STL_Container<SgNode*> NodeQuery::generateListOfTypes ( SgNode* astNode )
 #endif
 
 #if 0
-    printf ("/* AST Test: nodeList.size() = %zu */ \n",nodeList.size());
+    printf ("/* AST Test: nodeList.size() = %" PRIuPTR " */ \n",nodeList.size());
     printNodeList(nodeList);
     printf ("*** Sorted list *** \n");
 #endif

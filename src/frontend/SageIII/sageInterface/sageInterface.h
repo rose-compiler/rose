@@ -626,6 +626,7 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   ROSE_DLL_API bool is_PHP_language();
   ROSE_DLL_API bool is_Python_language();
   ROSE_DLL_API bool is_Cuda_language();
+  ROSE_DLL_API bool is_OpenCL_language();
   ROSE_DLL_API bool is_X10_language();
   ROSE_DLL_API bool is_binary_executable();
   ROSE_DLL_API bool is_mixed_C_and_Cxx_language ();
@@ -682,6 +683,9 @@ SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::ma
   //! Dumps a located node's preprocessing information.
   void dumpPreprocInfo (SgLocatedNode* locatedNode);
 
+//! Insert  #include "filename" or #include <filename> (system header) onto the global scope of a source file
+PreprocessingInfo * insertHeader(SgSourceFile * source_file, const std::string & header_file_name, bool isSystemHeader = false, PreprocessingInfo::RelativePositionType position = PreprocessingInfo::before);
+
 //! Insert  #include "filename" or #include <filename> (system header) into the global scope containing the current scope, right after other #include XXX.
 ROSE_DLL_API PreprocessingInfo* insertHeader(const std::string& filename, PreprocessingInfo::RelativePositionType position=PreprocessingInfo::after, bool isSystemHeader=false, SgScopeStatement* scope=NULL);
 
@@ -708,12 +712,14 @@ ROSE_DLL_API PreprocessingInfo* attachArbitraryText(SgLocatedNode* target,
 ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* target);
 //@}
 
+//! Build and attach comment onto the global scope of a source file
+PreprocessingInfo* attachComment(
+  SgSourceFile * source_file,
+  const std::string & content,
+  PreprocessingInfo::DirectiveType directive_type = PreprocessingInfo::C_StyleComment,
+  PreprocessingInfo::RelativePositionType  position = PreprocessingInfo::before
+);
 
-//------------------------------------------------------------------------
-//@{
-/*! @name Source File Position
-  \brief set Sg_File_Info for a SgNode
-*/
 //! Build and attach comment, comment style is inferred from the language type of the target node if not provided
    ROSE_DLL_API PreprocessingInfo* attachComment(SgLocatedNode* target, const std::string & content,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
@@ -727,7 +733,20 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 //! Add a string to be unparsed to support code generation for back-end specific tools or compilers.
   ROSE_DLL_API void addTextForUnparser ( SgNode* astNode, std::string s, AstUnparseAttribute::RelativePositionType inputlocation );
 
+/**
+ * Add preproccessor guard around a given node.
+ * It surrounds the node with "#if guard" and "#endif"
+ */
+void guardNode(SgLocatedNode * target, std::string guard);
 
+//@}
+
+
+//------------------------------------------------------------------------
+//@{
+/*! @name Source File Position
+  \brief set Sg_File_Info for a SgNode
+*/
 
 // ************************************************************************
 //              Newer versions of now depricated functions
@@ -742,17 +761,6 @@ ROSE_DLL_API void replaceMacroCallsWithExpandedStrings(SgPragmaDeclaration* targ
 // A better name might be "setSourcePositionForSubTree"
 //! Set the source code positon for the subtree (including the root).
   ROSE_DLL_API void setSourcePositionAtRootAndAllChildren(SgNode *root);
-
-// DQ (5/1/2012): New function with improved name (still preserving the previous interface).
-// This function is not required once the new mechanism defining a source position mode is complete (shortly).
-//! Set subtree as a transformation.
-// void setSourcePositionAtRootAndAllChildrenAsTransformation(SgNode *root);
-// void setSourcePositionAtRootAndAllChildrenAsDefault(SgNode *root);
-
-// Removed to force use of the API and permit flexability in the lower level implementation.
-//! DQ (5/1/2012): New function with improved name.
-// void setSourcePositionToDefault( SgLocatedNode* locatedNode );
-  template<class T> void setSourcePositionToDefault( T* node );
 
 //! DQ (5/1/2012): New function with improved name.
 void setSourcePositionAsTransformation(SgNode *node);
@@ -998,6 +1006,11 @@ ROSE_DLL_API SgType* lookupNamedTypeInParentScopes(const std::string& type_name,
 //! Get the type of the associated argument expression from the function type.
 ROSE_DLL_API SgType* getAssociatedTypeFromFunctionTypeList(SgExpression* actual_argument_expression);
 
+//! Verify that 2 SgTemplateArgument are equivalent (same type, same expression, or same template declaration)
+ROSE_DLL_API bool templateArgumentEquivalence(SgTemplateArgument * arg1, SgTemplateArgument * arg2);
+
+//! Verify that 2 SgTemplateArgumentPtrList are equivalent.
+ROSE_DLL_API bool templateArgumentListEquivalence(const SgTemplateArgumentPtrList & list1, const SgTemplateArgumentPtrList & list2);
 
 //@}
 
@@ -1098,6 +1111,14 @@ ROSE_DLL_API bool loopTiling(SgForStatement* loopNest, size_t targetLevel, size_
 //Winnie Loop Collapsing
 SgExprListExp * loopCollapsing(SgForStatement* target_loop, size_t collapsing_factor);
 
+bool getForLoopInformations(
+  SgForStatement * for_loop,
+  SgVariableSymbol * & iterator,
+  SgExpression * & lower_bound,
+  SgExpression * & upper_bound,
+  SgExpression * & stride
+);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -1133,6 +1154,9 @@ std::vector<NodeType*> querySubTree(SgNode* top, VariantT variant = (VariantT)No
  *  function returns the null pointer. */
 ROSE_DLL_API SgProject * getProject();
 
+  //! \return the project associated with a node
+  SgProject * getProject(const SgNode * node);
+
 //! Query memory pools to grab SgNode of a specified type
 template <typename NodeType>
 static std::vector<NodeType*> getSgNodeListFromMemoryPool()
@@ -1155,7 +1179,7 @@ static std::vector<NodeType*> getSgNodeListFromMemoryPool()
   };
 
   MyTraversal my_traversal;
-  NodeType::visitRepresentativeNode(my_traversal);
+  NodeType::traverseMemoryPoolNodes(my_traversal);
   return my_traversal.resultlist;
 }
 
@@ -1698,21 +1722,13 @@ ROSE_DLL_API void appendExpression(SgExprListExp *, SgExpression*);
 ROSE_DLL_API void appendExpressionList(SgExprListExp *, const std::vector<SgExpression*>&);
 
 //! Set parameter list for a function declaration, considering existing parameter list etc.
-// void setParameterList(SgFunctionDeclaration *func,SgFunctionParameterList *paralist);
 template <class actualFunction> 
-ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist);
-
-# if 1
-  // DQ (11/25/2011): Moved to the header file so that it could be seen as a template function.
+ROSE_DLL_API void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
   // TODO consider the difference between C++ and Fortran
   // fixup the scope of arguments,no symbols for nondefining function declaration's arguments
-template <class actualFunction>
-void
-// SageInterface::setParameterList(SgFunctionDeclaration * func,SgFunctionParameterList * paralist)
-setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
-   {
-  // DQ (11/25/2011): Modified this to be a templated function so that we can handle both 
+
+  // DQ (11/25/2011): templated function so that we can handle both 
   // SgFunctionDeclaration and SgTemplateFunctionDeclaration (and their associated member 
   // function derived classes).
 
@@ -1753,7 +1769,6 @@ setParameterList(actualFunction* func, SgFunctionParameterList* paralist)
           (*i)->set_declptr(func);
         }
    }
-#endif
 
 //! Set a pragma of a pragma declaration. handle memory release for preexisting pragma, and set parent pointer.
 ROSE_DLL_API void setPragma(SgPragmaDeclaration* decl, SgPragma *pragma);

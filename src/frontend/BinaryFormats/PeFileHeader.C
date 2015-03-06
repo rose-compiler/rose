@@ -516,7 +516,7 @@ SgAsmPEFileHeader::add_rvasize_pairs()
     extend(pairs_size);
     for (size_t i = 0; i < p_e_num_rvasize_pairs; i++, pairs_offset += sizeof pairs_disk) {
         if (sizeof(pairs_disk)!=read_content_local(pairs_offset, &pairs_disk, sizeof pairs_disk, false))
-            fprintf(stderr, "SgAsmPEFileHeader::add_rvasize_pairs: warning: RVA/Size pair %zu at file offset 0x%08"PRIx64
+            fprintf(stderr, "SgAsmPEFileHeader::add_rvasize_pairs: warning: RVA/Size pair %" PRIuPTR " at file offset 0x%08"PRIx64
                     " extends beyond the end of file (assuming 0/0)\n", i, get_offset()+pairs_offset);
         p_rvasize_pairs->get_pairs().push_back(new SgAsmPERVASizePair(p_rvasize_pairs, &pairs_disk));
     }
@@ -547,7 +547,7 @@ SgAsmPEFileHeader::create_table_sections()
         MemoryMap *map = get_loader_map();
         ROSE_ASSERT(map!=NULL);
         if (!map->baseSize(pair_va, pair->get_e_size()).exists(Sawyer::Container::MATCH_WHOLE)) {
-            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%zu, rva=0x%08"PRIx64", size=%"PRIu64
+            fprintf(stderr, "SgAsmPEFileHeader::create_table_sections: warning: pair-%" PRIuPTR ", rva=0x%08"PRIx64", size=%"PRIu64
                     " bytes \"%s\": unable to find a mapping for the virtual address (skipping)\n",
                     i, pair->get_e_rva().get_rva(), pair->get_e_size(), tabname.c_str());
             continue;
@@ -666,8 +666,8 @@ SgAsmPEFileHeader::reallocate()
                 p_e_nsections++;
         }
 
-        rose_addr_t header_size = ALIGN_UP(p_section_table->get_offset() + p_section_table->get_size(),
-                                           p_e_file_align>0 ? p_e_file_align : 1);
+        rose_addr_t header_size = alignUp(p_section_table->get_offset() + p_section_table->get_size(),
+                                          (rose_addr_t)(p_e_file_align>0 ? p_e_file_align : 1));
 #if 1
         /* The PE Specification regarding e_header_size (known as "SizeOfHeader" on page 14 of "Microsoft Portable Executable
          * and Common Object File Format Specification: Revision 8.1 February 15, 2008" is not always followed. We recompute

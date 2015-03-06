@@ -466,7 +466,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
   // scopes.  This is handled in the get_scope() function which is called by the get_qualified_name() function.
 
   // ROSE_ASSERT(templateArgListPtr != NULL);
-  // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %zu ### \n",templateArgListPtr->size());
+  // printf ("### In resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %" PRIuPTR " ### \n",templateArgListPtr->size());
      SgTemplateArgumentPtrList::const_iterator i = templateArgListPtr.begin();
      while (i != templateArgListPtr.end())
         {
@@ -697,7 +697,7 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
           i++;
         }
 
-  // printf ("### Leaving resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %zu ### \n",templateArgListPtr->size());
+  // printf ("### Leaving resetParentPointersInTemplateArgumentList(): templateArgListPtr->size() = %" PRIuPTR " ### \n",templateArgListPtr->size());
    }
 
 
@@ -2019,6 +2019,19 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          ROSE_ASSERT(scope != NULL);
                          ROSE_ASSERT(scope->get_symbol_table() != NULL);
                          symbol->set_parent(scope->get_symbol_table());
+                         break;
+                       }
+
+                 // DQ (2/28/2015): Added support for SgAliasSymbol case.
+                    case V_SgAliasSymbol:
+                       {
+                         SgAliasSymbol* tempSymbol = isSgAliasSymbol(symbol);
+                         ROSE_ASSERT(tempSymbol != NULL);
+
+                      // DQ (2/28/2015): I think this is not possible to fix here, so we need to report the error and exit.
+                         printf ("ERROR: parent for SgAliasSymbol not set (can't be fixed up here) \n");
+                         ROSE_ASSERT(false);
+
                          break;
                        }
 

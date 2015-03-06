@@ -25,7 +25,11 @@ noinst_LTLIBRARIES = libroseutil.la
 
 # libroseutil_la_SOURCES = processSupport.C processSupport.h
 libroseutil_la_SOURCES =			\
+	Color.C					\
+	Combinatorics.C				\
 	compilationFileDatabase.C		\
+	FileSystem.C				\
+	LinearCongruentialGenerator.C		\
 	processSupport.C			\
 	rose_getline.C				\
 	rose_strtoull.C
@@ -43,11 +47,15 @@ libroseutil_la_LIBADD = \
 # DISTCLEANFILES = rose_paths.C
 
 pkginclude_HEADERS =				\
+	Color.h					\
+	Combinatorics.h				\
 	compilationFileDatabase.h		\
+	FileSystem.h				\
 	FormatRestorer.h			\
 	GraphUtility.h				\
+	LinearCongruentialGenerator.h		\
 	Map.h					\
-	ParallelSort.h                          \
+	ParallelSort.h				\
 	processSupport.h			\
 	rose_getline.h				\
 	rose_override.h				\
@@ -87,6 +95,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/Callbacks.h			\
 	sawyer/CommandLine.h			\
 	sawyer/DefaultAllocator.h		\
+	sawyer/DistinctList.h			\
 	sawyer/Graph.h				\
 	sawyer/GraphBoost.h			\
 	sawyer/GraphTraversal.h			\
