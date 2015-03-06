@@ -3,7 +3,7 @@
 
 #include "createSignatureVectors.h"
 #include "vectorCompression.h"
-
+#include "../semantic/CloneDetectionLib.h"
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <ext/hash_map>
@@ -34,9 +34,7 @@ struct hash<void*> {
 
 #define NORMALIZED_UNPARSED_INSTRUCTIONS
 
-enum ExpressionCategory {ec_reg = 0, ec_mem = 1, ec_val = 2};
-
-#if 1
+#if 0
 static const size_t numberOfInstructionKinds = x86_last_instruction;
 inline size_t getInstructionKind(SgAsmX86Instruction* insn) {return insn->get_kind();}
 #else
@@ -75,61 +73,6 @@ unparseAndIntern(SgAsmExpression* e)
         return i->second;
     }
 }
- 
-class SignatureVector {
-public:
-    static const size_t Size = numberOfInstructionKinds * 4 + 300 + 9 + 3;
-    typedef uint16_t ElementType;
-
-private:
-    ElementType values[Size];
-
-public:
-    SignatureVector() {
-        clear();
-    }
-
-    void clear() {
-        for (size_t i = 0; i < Size; ++i)
-            values[i] = 0;
-    }
-
-    ElementType operator[](size_t i) const {
-        assert(i < Size);
-        return values[i];
-    }
-
-    ElementType& totalForVariant(size_t var) {
-        assert(var < numberOfInstructionKinds);
-        return values[var * 4];
-    }
-
-    ElementType& opsForVariant(ExpressionCategory cat, size_t var) {
-        assert(var < numberOfInstructionKinds);
-        return values[var * 4 + (int)cat + 1];
-    }
-
-    ElementType& specificOp(ExpressionCategory cat, size_t num) {
-	static ElementType dummyVariable = 0;
-	if (num < 100) {
-            return values[numberOfInstructionKinds * 4 + 100 * (int)cat + num];
-	} else {
-            return dummyVariable;
-        }
-    }
-
-    ElementType& operandPair(ExpressionCategory a, ExpressionCategory b) {
-        return values[numberOfInstructionKinds * 4 + 300 + (int)a * 3 + (int)b];
-    }
-
-    ElementType& operandTotal(ExpressionCategory a) {
-        return values[numberOfInstructionKinds * 4 + 300 + 9 + (int)a];
-    }
-
-    const ElementType* getBase() const {
-        return values;
-    }
-};
 
 inline ExpressionCategory
 getCategory(SgAsmExpression* e)
@@ -296,7 +239,7 @@ createVectorsRespectingFunctionBoundaries(SgNode* top, const std::string& filena
     int functionId = tx->statement("select coalesce(max(id),-1)+1 from functions")->execute_int(); // zero origin
     
     for (vector<SgAsmFunction*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
-        ExtentMap e_insns, e_data, e_total;
+        AddressIntervalSet e_insns, e_data, e_total;
         (*fi)->get_extent(&e_insns, NULL, NULL, &iselector);
         (*fi)->get_extent(&e_data,  NULL, NULL, &dselector);
         (*fi)->get_extent(&e_total);
@@ -333,6 +276,11 @@ addFunctionStatistics(const SqlDatabase::TransactionPtr &tx, const std::string& 
         ->bind(1, numInstructions)
         ->execute();
 }
+
+
+
+
+
 
 void
 addVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector& vec, const std::string& functionName,
@@ -385,3 +333,426 @@ createDatabases(const SqlDatabase::TransactionPtr &tx)
     extern const char *syntactic_schema_create; // defined in machine-generated SyntacticSchema.C
     tx->execute(syntactic_schema_create);
 }
+
+/* ========================================================================================================= 
+       SOURCE CODE CLONE DETECTION
+
+*/
+
+void
+addSourceVectorToDatabase(const SqlDatabase::TransactionPtr &tx, const SignatureVector& vec,
+                    size_t functionId, SgLocatedNode* firstNode, SgLocatedNode* lastNode)
+{
+    ++numVectorsGenerated;
+
+    vector<uint8_t> compressedCounts = compressVector(vec.getBase(), SignatureVector::Size);
+    size_t vectorSum = 0;
+
+   for (size_t i=0; i<SignatureVector::Size; ++i){
+        vectorSum += vec[i];
+    }
+
+    SqlDatabase::StatementPtr cmd = tx->statement("insert into vectors"
+                                                  // 0   1            2                      3     4             5
+                                                  " (id, function_id, index_within_function, line, last_insn_va, size,"
+                                                  // 6            7           8
+                                                  "sum_of_counts, counts_b64, instr_seq_b64)"
+                                                  " values (?,?,?,?,?,?,?,?,?)");
+    int vector_id = tx->statement("select coalesce(max(id),0)+1 from vectors")->execute_int(); // 1-origin
+    
+    std::string base64_encoding = StringUtility::encode_base64(&compressedCounts[0], compressedCounts.size());
+
+    unsigned char md[16];
+    MD5((const unsigned char*)&compressedCounts[0], compressedCounts.size(), md);
+
+
+    int start_line = isSgLocatedNode(firstNode) ? firstNode->get_file_info()->get_line() : 0;
+    int end_line   = isSgLocatedNode(lastNode)  ? lastNode->get_file_info()->get_line()  : 0;
+
+    cmd->bind(0, vector_id);
+    cmd->bind(1, functionId);
+    cmd->bind(2, start_line );
+    cmd->bind(3, start_line );
+    cmd->bind(4, end_line );
+    // this is the size of the code - don't know if that makes as much sense for source so I am using vectorSum 
+    cmd->bind(5, vectorSum); 
+    cmd->bind(6, vectorSum);
+    cmd->bind(7, base64_encoding );
+    // In source we do not create a normalized string representation as we do for source. 
+    //   We therefore just use the encoding of the compressedCounts 
+    cmd->bind(8,  StringUtility::encode_base64(md, 16) );     cmd->execute();
+}
+
+
+
+class SynthesizedAttribute
+   {
+     public:
+         //Nodes In the Subtree of this node. Currently does not contain
+         //the node itself
+         int *nodesInSubtree;
+
+         SynthesizedAttribute(); 
+         void addToVector(int *vectorToAdd);
+     
+        SynthesizedAttribute & operator=( const SynthesizedAttribute& rhs );
+            
+   };
+
+//Current merged vector
+
+
+class GenerateMergedVector{
+     const SqlDatabase::TransactionPtr tx;
+ 
+     unsigned int stride;
+     unsigned int windowSize;
+     unsigned int functionId;
+
+     unsigned int currentVectorId;
+     unsigned int currentStride;
+
+     std::vector< std::pair<SignatureVector*, SgLocatedNode*> > mergedVectorArray;
+     std::vector<int> variantNumVec;
+     SignatureVector mergedVector;
+
+   public: 
+     
+    GenerateMergedVector(const SqlDatabase::TransactionPtr &tmp_tx, int _stride, int _windowSize, int _functionId,  
+      std::vector<int> _variantNumVec);
+
+    std::pair<SignatureVector*, SgLocatedNode*>&
+    getSignatureVectorPair();
+
+    void
+    setCurrentNode(SgLocatedNode* locNode);
+
+    void
+    stepAndGenerate();
+  
+};
+
+
+GenerateMergedVector::GenerateMergedVector(const SqlDatabase::TransactionPtr &tmp_tx, int _stride, int _windowSize, int _functionId,  
+		std::vector<int> _variantNumVec)
+: tx(tmp_tx), stride(_stride), windowSize(_windowSize), functionId(_functionId)
+{
+	currentVectorId = 0;
+	currentStride = stride;
+
+	for(unsigned int i = 0; i < windowSize; i++){
+		mergedVectorArray.push_back( std::pair<SignatureVector*, SgLocatedNode*>(new SignatureVector(),NULL) );
+	}
+	for(unsigned int i = 0; i < _variantNumVec.size(); i++){
+		variantNumVec.push_back(_variantNumVec[i]);
+	}
+
+};
+
+std::pair<SignatureVector*, SgLocatedNode*>&
+GenerateMergedVector::getSignatureVectorPair(){
+	return  mergedVectorArray[currentVectorId];
+};
+
+
+void
+GenerateMergedVector::setCurrentNode(SgLocatedNode* locNode){
+	mergedVectorArray[currentVectorId].second = locNode;
+};
+
+
+
+void
+GenerateMergedVector::stepAndGenerate()
+{
+
+	if(currentStride < stride){
+		//Only happens when the stride is larger than the windowSize
+		//ignoring this vector
+		// - need to clear items that are set
+		getSignatureVectorPair().first->clear();
+		currentStride++;
+
+	}else if(currentVectorId == windowSize - 1 ){
+
+		//iterate over vecs and add up
+		//PS! LIMITED TO ONLY WORK FOR SOURCE CODE CLONE DETECTION SINCE
+		//V_SgNumVariants is the limit
+
+		SgLocatedNode* firstNode = NULL;
+		SgLocatedNode* lastNode  = NULL;
+
+		for( unsigned int i = 0; i < mergedVectorArray.size(); i++ ){
+			SignatureVector* tmp_vec = mergedVectorArray[i].first;
+
+			if( firstNode == NULL ) 
+				firstNode =  mergedVectorArray[i].second;
+
+			if( mergedVectorArray[i].second  == NULL ) 
+				lastNode  =  mergedVectorArray[i].second;
+			for( unsigned int j = 0; j < V_SgNumVariants; j++ ){
+				mergedVector.totalForVariant(j) += (*tmp_vec)[j*4]; 
+			}  
+		}
+		addSourceVectorToDatabase(tx, mergedVector, functionId, firstNode, lastNode);         
+
+		//jump for stride
+
+		for(unsigned int i = stride; i < mergedVectorArray.size(); i++ ){
+			std::pair<SignatureVector*,SgLocatedNode*> tmp_vec = mergedVectorArray[i - stride];
+			mergedVectorArray[i - stride] = mergedVectorArray[i];
+			mergedVectorArray[i] = tmp_vec;
+		}
+
+		currentVectorId = mergedVectorArray.size() >= stride ? mergedVectorArray.size() - stride : 0;   
+		currentStride   = mergedVectorArray.size() >= stride ? stride : stride - mergedVectorArray.size(); 
+
+		//Cleanup
+		// - clear all elements of mergedVectorArray that will be overwritten
+		// - clear mergedVector since vectors are already generated
+		for(unsigned int i = currentVectorId; i < mergedVectorArray.size(); i++){ 
+			mergedVectorArray[i].first->clear();
+			mergedVectorArray[i].second = NULL;
+		} 
+		mergedVector.clear();
+
+
+
+	}else{
+		currentVectorId++;
+                //std::cerr << currentVectorId << std::endl;
+
+	}
+
+};
+
+
+class CreateCloneDetectionVectors : public SgBottomUpProcessing<SynthesizedAttribute>
+   {
+
+     private:
+       GenerateMergedVector* vecGen;
+
+     public:
+
+       CreateCloneDetectionVectors(const SqlDatabase::TransactionPtr &tmp_tx, int _functionId, size_t _minTokens, 
+          size_t _stride, size_t _windowSize, std::vector<int> _variantNumVec, std::vector<int> _variantToWriteToFile) 
+          : tx(tmp_tx), functionId(_functionId), minTokens(_minTokens), stride(_stride), windowSize(_windowSize),
+            variantNumVec(_variantNumVec), variantToWriteToFile(_variantToWriteToFile)
+       {
+          firstNode = NULL;  
+          lastNode  = NULL;
+          vecGen = new GenerateMergedVector(tmp_tx, stride, windowSize, functionId,  
+                       variantNumVec);
+       };
+
+       const SqlDatabase::TransactionPtr tx;
+ 
+       std::map<SgNode*, int* > nodeToCloneVector; 
+
+       int functionId;
+
+
+       //min number of tokens before writing out
+       int minTokens;
+ 
+       //stride
+       int stride;
+       int windowSize;
+
+       //Variants to put in the generated vector
+       std::vector<int> variantNumVec;
+
+       //Variants to write to file
+       std::vector<int> variantToWriteToFile;
+
+
+
+       SgLocatedNode* firstNode;
+
+       SgLocatedNode* lastNode;
+
+
+       // Functions required
+       SynthesizedAttribute evaluateSynthesizedAttribute (
+             SgNode* astNode,
+             SubTreeSynthesizedAttributes synthesizedAttributeList );
+
+};
+
+
+
+
+SynthesizedAttribute::SynthesizedAttribute() {
+  nodesInSubtree = new int[V_SgNumVariants];
+  for( int i = 0; i < V_SgNumVariants; ++i)
+  {
+	(nodesInSubtree)[i] = 0;
+  }
+
+
+};
+
+void SynthesizedAttribute::addToVector(int *vectorToAdd){
+  int j=0;
+  for( int i = 0; i < V_SgNumVariants; i++)
+  {
+	(nodesInSubtree)[i] += (vectorToAdd)[i];
+	j+=(nodesInSubtree)[i];
+	//std::cout << (*nodesInSubtree)[i] << " " ;
+
+  }
+  //std::cout << std::endl << std::endl;
+  //std::cout <<  j << std::endl;
+}
+
+SynthesizedAttribute& SynthesizedAttribute::operator=( const SynthesizedAttribute& rhs ){
+  nodesInSubtree = rhs.nodesInSubtree;
+  return (*this);
+}
+
+
+
+SynthesizedAttribute
+CreateCloneDetectionVectors::evaluateSynthesizedAttribute (
+     SgNode* astNode,
+     SubTreeSynthesizedAttributes synthesizedAttributeList )
+{
+	SynthesizedAttribute returnAttribute;
+	//test.push_back(astNode->class_name());
+	//initialize to zero
+	for( int i = 0; i < V_SgNumVariants; ++i)
+	{
+		(returnAttribute.nodesInSubtree)[i] = 0;
+	}
+
+	nodeToCloneVector[astNode] = returnAttribute.nodesInSubtree;
+
+	//Add current node to vector
+	(returnAttribute.nodesInSubtree)[astNode->variantT()]+=1;
+
+
+	//Add the vectors in the subtrees of the vector to this vector
+	for(SubTreeSynthesizedAttributes::iterator iItr = synthesizedAttributeList.begin();
+			iItr != synthesizedAttributeList.end(); ++iItr){
+#if 0 
+		for( int i = 0; i < lengthVariantT; i++)
+		{
+			std::cout << (iItr->nodesInSubtree)[i] << " " ;
+
+		}
+		std::cout << std::endl << std::endl;
+#endif
+
+		returnAttribute.addToVector ( (*iItr).nodesInSubtree );
+	}
+
+	//std::cout << "\n\nVector of names" << std::endl;
+
+#if 0	 
+	//Print out the number of elements found for each variant in the subtree
+	for(int i = 0;  i < V_SgNumVariants; i++  ){
+		if(returnAttribute.nodesInSubtree[i] > 0)
+			std::cout << returnAttribute.nodesInSubtree[i] << " " << roseGlobalVariantNameList[i] << " ";
+	}
+	std::cout << "\n\n";
+#endif
+
+	//Write to the file specified in the config file on the commandline
+	if(( variantToWriteToFile.size() == 0 || std::find(variantToWriteToFile.begin(), variantToWriteToFile.end(), astNode->variantT()) != variantToWriteToFile.end() ) && 
+			astNode->get_file_info() != NULL && astNode->get_file_info()->isCompilerGenerated() == false 
+	  )
+	{
+
+		int numTokens = 0;
+               
+		if( variantNumVec.size() > 0 ){
+			for(unsigned int i=0; i < variantNumVec.size(); i++ )
+				numTokens+= returnAttribute.nodesInSubtree[ variantNumVec[i] ];
+
+		}else{
+			for(unsigned int i=0; i < V_SgNumVariants; i++ )
+				numTokens+= returnAttribute.nodesInSubtree[i];
+		}
+
+
+		if( numTokens >= minTokens )
+		{
+			//To implement the concept of a stride we need to not overcount
+			//subtrees. But I am not sure if the vectors which contains this vector
+			//should have a smaller
+                        std::pair<SignatureVector*,SgLocatedNode*> mergedVectorPair = vecGen->getSignatureVectorPair();
+                        SignatureVector* mergedVector = mergedVectorPair.first;
+                        vecGen->setCurrentNode(isSgLocatedNode(astNode));
+
+			if(variantNumVec.size() > 0){
+				for(unsigned int i = 0;  i < variantNumVec.size(); i++  ){
+					mergedVector->totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+                                }
+			}else{
+				for(unsigned int i = 0;  i < V_SgNumVariants; i++  ){
+					mergedVector->totalForVariant(i)+= returnAttribute.nodesInSubtree[i];
+                                }
+			}
+ 
+                        vecGen->stepAndGenerate();
+		}
+
+	}
+
+	return returnAttribute;
+}
+
+
+
+
+
+
+
+void createSourceVectorsForSubtree(SgNode* top, int functionId, size_t minTokens, size_t stride, size_t windowSize,
+     std::vector<int> variantNumVec, std::vector<int> variantToWriteToFile,  const SqlDatabase::TransactionPtr &tx )
+{
+   CreateCloneDetectionVectors t(tx, functionId, minTokens, stride, windowSize, variantNumVec, variantToWriteToFile);
+   
+   t.traverse(top);     
+   
+};
+
+void
+createSourceVectorsRespectingFunctionBoundaries(SgNode* top, size_t minTokens, size_t stride, size_t windowSize,
+                                          std::vector<int> variantNumVec, std::vector<int> variantToWriteToFile, const SqlDatabase::TransactionPtr &tx)
+{
+    CloneDetection::FilesTable files(tx);
+
+    SqlDatabase::StatementPtr cmd1 = tx->statement("insert into semantic_functions"
+                                                   // 0   1     2              3         4      5      6
+                                                   " (id, file_id, name, entry_va, isize, dsize, size)"
+                                                   " values(?,?,?,?,?,?,?)");
+    
+    vector<SgFunctionDefinition*> funcs = SageInterface::querySubTree<SgFunctionDefinition>(top);
+    int functionId = tx->statement("select coalesce(max(id),-1)+1 from semantic_functions")->execute_int(); // zero origin
+    
+    for (vector<SgFunctionDefinition*>::iterator fi=funcs.begin(); fi!=funcs.end(); ++fi, ++functionId) {
+
+      size_t num_successors = (*fi)->get_numberOfTraversalSuccessors(); 
+ 
+        std::string specimen_name = (*fi)->get_file_info()->get_filename();
+        int specimen_id = files.insert(specimen_name);
+        files.save(tx);
+
+        cmd1->bind(0, functionId);
+        cmd1->bind(1, specimen_id);
+        cmd1->bind(2, (*fi)->get_declaration()->get_name() );
+        cmd1->bind(3, (*fi)->get_file_info()->get_line());
+        cmd1->bind(4, num_successors );
+        cmd1->bind(5, num_successors);
+        cmd1->bind(6, num_successors);
+        cmd1->execute();
+
+	createSourceVectorsForSubtree(*fi, functionId, minTokens, stride, windowSize, variantNumVec, variantToWriteToFile, tx);
+  
+    }
+    cerr << "Total vectors generated: " << numVectorsGenerated << endl;
+}
+
+

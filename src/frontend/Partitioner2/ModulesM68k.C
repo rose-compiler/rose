@@ -12,11 +12,11 @@ namespace ModulesM68k {
 using namespace rose::Diagnostics;
 
 bool
-MatchLink::match(const Partitioner *partitioner, rose_addr_t anchor) {
+MatchLink::match(const Partitioner &partitioner, rose_addr_t anchor) {
     if (anchor & 1)
         return false;                               // m68k instructions must be 16-bit aligned
     static const RegisterDescriptor REG_A6(m68k_regclass_addr, 6, 0, 32);
-    if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner->discoverInstruction(anchor))) {
+    if (SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(partitioner.discoverInstruction(anchor))) {
         const SgAsmExpressionPtrList &args = insn->get_operandList()->get_operands();
         SgAsmDirectRegisterExpression *rre = NULL;
         SgAsmIntegerValueExpression *offset = NULL;
@@ -34,8 +34,8 @@ MatchLink::match(const Partitioner *partitioner, rose_addr_t anchor) {
 // For m68k, padding is either 2-byte TRAPF instructions (0x51 0xfc) or zero bytes.  Patterns we've seen are 51 fc, 51 fc 00
 // 51 fc, 00 00, 51 fc 51 fc, but we'll allow any combination.
 rose_addr_t
-MatchFunctionPadding::match(const Partitioner *partitioner, rose_addr_t anchor) {
-    const MemoryMap &m = partitioner->memoryMap();
+MatchFunctionPadding::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    const MemoryMap &m = partitioner.memoryMap();
     if (0==anchor)
         return anchor;
 
@@ -58,7 +58,7 @@ MatchFunctionPadding::match(const Partitioner *partitioner, rose_addr_t anchor) 
         }
 
         // Make sure that what we matched is not already part of some other instruction
-        if (!partitioner->instructionsOverlapping(matched).empty())
+        if (!partitioner.instructionsOverlapping(matched).empty())
             break;
 
         // This match appears to be valid padding
@@ -77,7 +77,6 @@ MatchFunctionPadding::match(const Partitioner *partitioner, rose_addr_t anchor) 
 // immediately after the offset table.
 bool
 SwitchSuccessors::operator()(bool chain, const Args &args) {
-    ASSERT_not_null(args.partitioner);
     ASSERT_not_null(args.bblock);
     if (!chain)
         return false;
@@ -92,7 +91,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     const SgAsmExpressionPtrList &jmp_args = jmp->get_operandList()->get_operands();
     if (movea_args.size()!=2 || jmp_args.size()!=1)
         return chain;
-    const RegisterDescriptor REG_PC = args.partitioner->instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor REG_PC = args.partitioner.instructionProvider().instructionPointerRegister();
 
     // MOVEA first argument is: (+ (+ PC 6) (* Dx 2))
     //   prog variables: sum1 ---^  ^ ^^ ^   ^ ^^ ^---- scale1
@@ -143,7 +142,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     size_t tableIdx = 0;
     rose_addr_t leastCodeVa = (rose_addr_t)(-1);
     std::set<rose_addr_t> codeVas;
-    const MemoryMap &map = args.partitioner->memoryMap();
+    const MemoryMap &map = args.partitioner.memoryMap();
     while (1) {
         // Where is the offset in memory?  It must be between the end of the JMP instruction (watch out for overflow) and the
         // lowest address for a switch case.
@@ -157,7 +156,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
         // a case that's pointed to by the offset table.  But it will only catch those situations if we already know about such
         // a basic block.  This seems to work okay for well-formed (non-obfuscated) code when the recursive basic block
         // discovery follows higher-address blocks before lower-address blocks.
-        if (args.partitioner->placeholderExists(offsetVa) || !args.partitioner->basicBlocksOverlapping(offsetExtent).empty())
+        if (args.partitioner.placeholderExists(offsetVa) || !args.partitioner.basicBlocksOverlapping(offsetExtent).empty())
             break;
         
         // Read the offset from the offset table.  Something went wrong if we can't read it because we know that the code for
@@ -198,6 +197,87 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
 
     return chain;
 }
+
+std::vector<Function::Ptr>
+findInterruptFunctions(const Partitioner &partitioner, rose_addr_t vectorVa) {
+    std::vector<Function::Ptr> functions;
+    std::set<rose_addr_t> functionVas;
+    for (size_t i=0; i<256; ++i) {
+        rose_addr_t elmtVa = vectorVa + 4*i;
+        uint32_t functionVa;
+        if (4 == partitioner.memoryMap().at(elmtVa).limit(4).read((uint8_t*)&functionVa).size()) {
+            functionVa = ByteOrder::be_to_host(functionVa);
+            std::string name;
+            unsigned reasons = SgAsmFunction::FUNC_EXCEPTION_HANDLER;
+            switch (i) {
+                case 0: continue; // this vector entry is the initial stack pointer, not a function address
+                case 1: name = "reset_handler"; reasons |= SgAsmFunction::FUNC_ENTRY_POINT; break;
+                case 2: name = "access_fault_handler"; break;
+                case 3: name = "address_error_handler"; break;
+                case 4: name = "illegal_insn_handler"; break;
+                case 5: name = "integer_divide_by_zero_handler"; break;
+                case 6: name = "chk_insn_handler"; break;
+                case 7: name = "trap_insn_handler"; break;
+                case 8: name = "privilege_violation_handler"; break;
+                case 9: name = "trace_handler"; break;
+                case 10: name = "line_1010_emulator"; break;
+                case 11: name = "line_1111_emulator"; break;
+                case 12: name = "non_pc_breakpoint_debug_handler"; break;
+                case 13: name = "pc_breakpoing_debug_handler"; break;
+                case 14: name = "format_error_handler"; break;
+                case 15: name = "uninitialized_interrupt_handler"; break;
+                case 24: name = "spurious_interrupt_handler"; break;
+                case 25: name = "level_1_interrupt_autovector_handler"; break;
+                case 26: name = "level_2_interrupt_autovector_handler"; break;
+                case 27: name = "level_3_interrupt_autovector_handler"; break;
+                case 28: name = "level_4_interrupt_autovector_handler"; break;
+                case 29: name = "level_5_interrupt_autovector_handler"; break;
+                case 30: name = "level_6_interrupt_autovector_handler"; break;
+                case 31: name = "level_7_interrupt_autovector_handler"; break;
+                case 32:
+                case 33:
+                case 34:
+                case 35:
+                case 36:
+                case 37:
+                case 38:
+                case 39:
+                case 40:
+                case 41:
+                case 42:
+                case 43:
+                case 44:
+                case 45:
+                case 46:
+                case 47: name = "trap_" + StringUtility::numberToString(i-32) + "_insn_handler"; break;
+                case 48: name = "fp_branch_on_unordered_condition_handler"; break;
+                case 49: name = "fp_inexact_result_handler"; break;
+                case 50: name = "fp_divide_by_zero_handler"; break;
+                case 51: name = "fp_underflow_handler"; break;
+                case 52: name = "fp_operand_error_handler"; break;
+                case 53: name = "fp_overflow_handler"; break;
+                case 54: name = "fp_signaling_nan_handler"; break;
+                case 55: name = "fp_input_denormalized_handler"; break;
+                case 56: name = "mmu_configuration_error_handler"; break;
+                case 57: name = "mmu_illegal_operation_handler"; break;
+                case 58: name = "mmu_access_level_violation_handler"; break;
+                case 61: name = "unsupported_instruction_handler"; break;
+                default:
+                    name = "interrupt_vector_"+StringUtility::numberToString(i)+"_handler"; break;
+            }
+                        
+            Function::Ptr function = Function::instance(functionVa, name, reasons);
+            if (Sawyer::Optional<Function::Ptr> found = getUnique(functions, function, sortFunctionsByAddress)) {
+                // Multiple vector entries point to the same function, so give it a rather generic name
+                found.get()->name("interrupt_vector_function");
+            } else {
+                insertUnique(functions, function, sortFunctionsByAddress);
+            }
+        }
+    }
+    return functions;
+}
+
 
 } // namespace
 } // namespace

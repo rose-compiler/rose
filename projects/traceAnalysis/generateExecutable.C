@@ -46,11 +46,11 @@ generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns
          * instruction iterator points to the first instruction of this section while the "ij" iterator points to the first
          * instruction of the next section (or end). */
         Disassembler::InstructionMap::const_iterator ij = ii;
-        rose_addr_t start_va = ALIGN_DN(ii->first, mem_align);
-        rose_addr_t end_va = ALIGN_UP(ii->first + ii->second->get_raw_bytes().size(), mem_align);
+        rose_addr_t start_va = alignDown(ii->first, mem_align);
+        rose_addr_t end_va = alignUp(ii->first + ii->second->get_raw_bytes().size(), mem_align);
         ROSE_ASSERT(start_va >= fhdr->get_base_va());
-        while (ij!=insns.end() && end_va + max_separation >= ALIGN_DN(ij->first, mem_align)) {
-            end_va = ALIGN_UP(ij->first + ij->second->get_raw_bytes().size(), mem_align);
+        while (ij!=insns.end() && end_va + max_separation >= alignDown(ij->first, mem_align)) {
+            end_va = alignUp(ij->first + ij->second->get_raw_bytes().size(), mem_align);
             ++ij;
         }
 
@@ -86,9 +86,9 @@ generateTextSections(HeaderType *fhdr, const Disassembler::InstructionMap &insns
     ExtentMap section_extents;
     for (Disassembler::InstructionMap::const_iterator ii=insns.begin(); ii!=insns.end(); ++ii) {
         rose_addr_t start = ii->first;
-        rose_addr_t aligned_start = ALIGN_DN(start, mem_align);
+        rose_addr_t aligned_start = alignDown(start, mem_align);
         rose_addr_t size = ii->second->get_size() + (start-aligned_start);
-        rose_addr_t aligned_end = ALIGN_UP(aligned_start + size, mem_align);
+        rose_addr_t aligned_end = alignUp(aligned_start + size, mem_align);
         section_extents.insert(Extent(aligned_start, aligned_end-aligned_start));
     }
     std::vector<Extent> small_holes;

@@ -349,6 +349,14 @@ noinst_PROGRAMS += cory002
 cory002_SOURCES = cory002.C
 cory002_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
+# Test certain RegisterStateGeneric stuff
+noinst_PROGRAMS += cory003
+cory003_SOURCES = cory003.C
+cory003_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory003.passed
+cory003.passed: $(TEST_EXIT_STATUS) cory003
+	@$(RTH_RUN) CMD=./cory003 $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C

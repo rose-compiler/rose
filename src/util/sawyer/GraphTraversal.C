@@ -15,9 +15,10 @@ traversalEventName(TraversalEvent event) {
         case ENTER_EDGE:      return "ENTER_EDGE";
         case LEAVE_VERTEX:    return "LEAVE_VERTEX";
         case LEAVE_EDGE:      return "LEAVE_EDGE";
+        case FOLLOW_EDGE:     return "FOLLOW_EDGE";
     }
     std::ostringstream ss;
-    ss <<"TraversalEvent(" <<std::hex <<event <<")";
+    ss <<"TraversalEvent(0x" <<std::hex <<event <<")";
     return ss.str();
 }
 

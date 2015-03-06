@@ -432,7 +432,7 @@ public:
      *  not have a run-time type that is a SymbolicSemantics::MemoryState or subclass thereof. */
     static MemoryStatePtr promote(const BaseSemantics::MemoryStatePtr &x) {
         MemoryStatePtr retval = boost::dynamic_pointer_cast<MemoryState>(x);
-        ASSERT_not_null(x);
+        ASSERT_not_null(retval);
         return retval;
     }
     

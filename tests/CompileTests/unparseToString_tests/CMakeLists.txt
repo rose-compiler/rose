@@ -19,4 +19,7 @@ foreach(file_to_test ${ROSE__CXX_TESTS})
     NAME ua_${file_to_test}
     COMMAND unparseToString --all ${ROSE_FLAGS} ${TESTCODE_INCLUDES}
             -c ${TESTCODE_DIR}/${file_to_test})
+
+  set_tests_properties(ua_${file_to_test}
+    PROPERTIES DEPENDS ut_${file_to_test} )
 endforeach()

@@ -1,5 +1,6 @@
 
 #add_library(astFileIO OBJECT AST_FILE_IO.C StorageClasses.C)
+#add_dependencies(astFileIO rosetta_generated)
 
 ########### install files ###############
 

@@ -6,12 +6,18 @@ using this memory map for disassembly:
     va 0x0040023c + 0x00000004 = 0x00400240 r-xp at buffer aab   + 0x0000023c x86-64-poweroff(LOAD#2)
     va 0x00400240 + 0x0000015c = 0x0040039c r--- at buffer aap   + 0x00000240 x86-64-poweroff(.hash)
     va 0x0040039c + 0x00000004 = 0x004003a0 r-xp at buffer aab   + 0x0000039c x86-64-poweroff(LOAD#2)
-    va 0x004003a0 + 0x000004a8 = 0x00400848 r--- at buffer aat   + 0x000003a0 x86-64-poweroff(.dynsym+.gnu.liblist)
+    va 0x004003a0 + 0x00000480 = 0x00400820 r--- at buffer aar   + 0x000003a0 x86-64-poweroff(.dynsym)
+    va 0x00400820 + 0x00000028 = 0x00400848 r--- at buffer aat   + 0x00000820 x86-64-poweroff(.gnu.liblist)
     va 0x00400848 + 0x00000158 = 0x004009a0 r-xp at buffer aab   + 0x00000848 x86-64-poweroff(LOAD#2)
-    va 0x004009a0 + 0x000004d0 = 0x00400e70 r--- at buffer abb   + 0x000009a0 x86-64-poweroff(.gnu.version+.gnu.version_r+.rela.dy...
-    va 0x00400e70 + 0x000002c8 = 0x00401138 r-x- at buffer abf   + 0x00000e70 x86-64-poweroff(.init+.plt)
+    va 0x004009a0 + 0x00000060 = 0x00400a00 r--- at buffer aav   + 0x000009a0 x86-64-poweroff(.gnu.version)
+    va 0x00400a00 + 0x00000020 = 0x00400a20 r--- at buffer aax   + 0x00000a00 x86-64-poweroff(.gnu.version_r)
+    va 0x00400a20 + 0x00000060 = 0x00400a80 r--- at buffer aaz   + 0x00000a20 x86-64-poweroff(.rela.dyn)
+    va 0x00400a80 + 0x000003f0 = 0x00400e70 r--- at buffer abb   + 0x00000a80 x86-64-poweroff(.rela.plt)
+    va 0x00400e70 + 0x00000018 = 0x00400e88 r-x- at buffer abd   + 0x00000e70 x86-64-poweroff(.init)
+    va 0x00400e88 + 0x000002b0 = 0x00401138 r-x- at buffer abf   + 0x00000e88 x86-64-poweroff(.plt)
     va 0x00401138 + 0x00000008 = 0x00401140 r-xp at buffer aab   + 0x00001138 x86-64-poweroff(LOAD#2)
-    va 0x00401140 + 0x00000d76 = 0x00401eb6 r-x- at buffer abj   + 0x00001140 x86-64-poweroff(.fini+.text)
+    va 0x00401140 + 0x00000d68 = 0x00401ea8 r-x- at buffer abh   + 0x00001140 x86-64-poweroff(.text)
+    va 0x00401ea8 + 0x0000000e = 0x00401eb6 r-x- at buffer abj   + 0x00001ea8 x86-64-poweroff(.fini)
     va 0x00401eb6 + 0x00000002 = 0x00401eb8 r-xp at buffer aab   + 0x00001eb6 x86-64-poweroff(LOAD#2)
     va 0x00401eb8 + 0x0000040e = 0x004022c6 r--- at buffer abl   + 0x00001eb8 x86-64-poweroff(.rodata)
     va 0x004022c6 + 0x00000002 = 0x004022c8 r-xp at buffer aab   + 0x000022c6 x86-64-poweroff(LOAD#2)
@@ -20,9 +26,15 @@ using this memory map for disassembly:
     va 0x00402328 + 0x000001f4 = 0x0040251c r--- at buffer abn   + 0x00002328 x86-64-poweroff(.eh_frame)
     va 0x0040251c + 0x00000ae4 = 0x00403000 r-xp at buffer aab   + 0x0000251c x86-64-poweroff(LOAD#2)
     va 0x00500000 + 0x00002520 = 0x00502520 rw-p at buffer aal   + 0x00000000 x86-64-poweroff(LOAD#3)
-    va 0x00502520 + 0x00000028 = 0x00502548 rw-- at buffer abt   + 0x00002520 x86-64-poweroff(.ctors+.dtors+.jcr)
+    va 0x00502520 + 0x00000010 = 0x00502530 rw-- at buffer abp   + 0x00002520 x86-64-poweroff(.ctors)
+    va 0x00502530 + 0x00000010 = 0x00502540 rw-- at buffer abr   + 0x00002530 x86-64-poweroff(.dtors)
+    va 0x00502540 + 0x00000008 = 0x00502548 rw-- at buffer abt   + 0x00002540 x86-64-poweroff(.jcr)
     va 0x00502548 + 0x00000190 = 0x005026d8 rw-p at buffer aan   + 0x00000000 x86-64-poweroff(.dynamic)
-    va 0x005026d8 + 0x000001c0 = 0x00502898 rw-- at buffer acd   + 0x000026d8 x86-64-poweroff(.bss+.data+.dynbss+.got+.got.plt)
+    va 0x005026d8 + 0x00000008 = 0x005026e0 rw-- at buffer abv   + 0x000026d8 x86-64-poweroff(.got)
+    va 0x005026e0 + 0x00000168 = 0x00502848 rw-- at buffer abx   + 0x000026e0 x86-64-poweroff(.got.plt)
+    va 0x00502848 + 0x00000030 = 0x00502878 rw-- at buffer abz   + 0x00002848 x86-64-poweroff(.data)
+    va 0x00502878 + 0x00000014 = 0x0050288c rw-- at buffer acb   + 0x00002878 x86-64-poweroff(.dynbss)
+    va 0x0050288c + 0x0000000c = 0x00502898 rw-- at buffer acd   + 0x0000288c x86-64-poweroff(.bss)
     va 0x00502898 + 0x0000019c = 0x00502a34 r--- at buffer acf   + 0x00002898 x86-64-poweroff(.dynstr)
     va 0x00502a34 + 0x00000004 = 0x00502a38 rw-p at buffer aal   + 0x00002a34 x86-64-poweroff(LOAD#3)
     va 0x00502a38 + 0x000001b0 = 0x00502be8 r--- at buffer ach   + 0x00002a38 x86-64-poweroff(.gnu.conflict)
@@ -62,8 +74,8 @@ using this memory map for disassembly:
 
 0x00400e88: ff 35 5a 18 10 00 ff 25 |.5Z....%|
 0x00400e90: 5c 18 10 00 90 90 90 90 |\.......| 16 bytes untyped data beginning at 0x00400e88
-0x00400e88: ff 35 5a 18 10 00       |.5Z...  | (data)   push   QWORD PTR ds:[rip + 0x000000000010185a]
-0x00400e8e: ff 25 5c 18 10 00       |.%\...  | (data)   jmp    QWORD PTR ds:[rip + 0x000000000010185c]
+0x00400e88: ff 35 5a 18 10 00       |.5Z...  | (data)   push   qword ds:[rip + 0x000000000010185a]
+0x00400e8e: ff 25 5c 18 10 00       |.%\...  | (data)   jmp    qword ds:[rip + 0x000000000010185c]
 0x00400e94: 90                      |.       | (data)   nop    
 0x00400e95: 90                      |.       | (data)   nop    
 0x00400e96: 90                      |.       | (data)   nop    
@@ -74,7 +86,7 @@ using this memory map for disassembly:
 
 0x00400e98: Basic block reasons: entry point, graph-1
 0x00400e98: Predecessor blocks: 0x00401436<<Func>>
-0x00400e98: ff 25 5a 18 10 00       |.%Z...  |   jmp    QWORD PTR ds:[rip + 0x000000000010185a]
+0x00400e98: ff 25 5a 18 10 00       |.%Z...  |   jmp    qword ds:[rip + 0x000000000010185a]
 0x00400e98: Successor blocks: unknown
 
 0x00400e9e: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -87,7 +99,7 @@ using this memory map for disassembly:
 
 0x00400ea8: Basic block reasons: entry point, graph-1
 0x00400ea8: Predecessor blocks: 0x00401140<<Func>>
-0x00400ea8: ff 25 52 18 10 00       |.%R...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101852]
+0x00400ea8: ff 25 52 18 10 00       |.%R...  |   jmp    qword ds:[rip + 0x0000000000101852]
 0x00400ea8: Successor blocks: unknown
 
 0x00400eae: 68 01 00 00 00 e9 d0 ff |h.......|
@@ -100,7 +112,7 @@ using this memory map for disassembly:
 
 0x00400eb8: Basic block reasons: entry point, graph-1
 0x00400eb8: Predecessor blocks: 0x004014cd<<Func>>
-0x00400eb8: ff 25 4a 18 10 00       |.%J...  |   jmp    QWORD PTR ds:[rip + 0x000000000010184a]
+0x00400eb8: ff 25 4a 18 10 00       |.%J...  |   jmp    qword ds:[rip + 0x000000000010184a]
 0x00400eb8: Successor blocks: unknown
 
 0x00400ebe: 68 02 00 00 00 e9 c0 ff |h.......|
@@ -113,7 +125,7 @@ using this memory map for disassembly:
 
 0x00400ec8: Basic block reasons: entry point, graph-1
 0x00400ec8: Predecessor blocks: 0x00401710<<Func>>
-0x00400ec8: ff 25 42 18 10 00       |.%B...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101842]
+0x00400ec8: ff 25 42 18 10 00       |.%B...  |   jmp    qword ds:[rip + 0x0000000000101842]
 0x00400ec8: Successor blocks: unknown
 
 0x00400ece: 68 03 00 00 00 e9 b0 ff |h.......|
@@ -126,7 +138,7 @@ using this memory map for disassembly:
 
 0x00400ed8: Basic block reasons: entry point, graph-1
 0x00400ed8: Predecessor blocks: 0x00401663<<Func>>, 0x0040168b<<Func>>
-0x00400ed8: ff 25 3a 18 10 00       |.%:...  |   jmp    QWORD PTR ds:[rip + 0x000000000010183a]
+0x00400ed8: ff 25 3a 18 10 00       |.%:...  |   jmp    qword ds:[rip + 0x000000000010183a]
 0x00400ed8: Successor blocks: unknown
 
 0x00400ede: 68 04 00 00 00 e9 a0 ff |h.......|
@@ -139,7 +151,7 @@ using this memory map for disassembly:
 
 0x00400ee8: Basic block reasons: entry point, graph-1
 0x00400ee8: Predecessor blocks: 0x004019bc<<Func>>
-0x00400ee8: ff 25 32 18 10 00       |.%2...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101832]
+0x00400ee8: ff 25 32 18 10 00       |.%2...  |   jmp    qword ds:[rip + 0x0000000000101832]
 0x00400ee8: Successor blocks: unknown
 
 0x00400eee: 68 05 00 00 00 e9 90 ff |h.......|
@@ -153,7 +165,7 @@ using this memory map for disassembly:
 
 0x00400ef8: Basic block reasons: entry point, graph-1
 0x00400ef8: Predecessor blocks: 0x00401301<<Func>>, 0x00401cfe<<Func>>
-0x00400ef8: ff 25 2a 18 10 00       |.%*...  |   jmp    QWORD PTR ds:[rip + 0x000000000010182a]
+0x00400ef8: ff 25 2a 18 10 00       |.%*...  |   jmp    qword ds:[rip + 0x000000000010182a]
 0x00400ef8: Successor blocks: unknown
 
 0x00400efe: 68 06 00 00 00 e9 80 ff |h.......|
@@ -166,7 +178,7 @@ using this memory map for disassembly:
 
 0x00400f08: Basic block reasons: entry point, graph-1
 0x00400f08: Predecessor blocks: 0x004012b0<<Func>>, 0x004012c3<<Func>>
-0x00400f08: ff 25 22 18 10 00       |.%"...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101822]
+0x00400f08: ff 25 22 18 10 00       |.%"...  |   jmp    qword ds:[rip + 0x0000000000101822]
 0x00400f08: Successor blocks: unknown
 
 0x00400f0e: 68 07 00 00 00 e9 70 ff |h.....p.|
@@ -179,7 +191,7 @@ using this memory map for disassembly:
 
 0x00400f18: Basic block reasons: entry point, graph-1
 0x00400f18: Predecessor blocks: 0x00401594<<Func>>, 0x0040160d<<Func>>
-0x00400f18: ff 25 1a 18 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x000000000010181a]
+0x00400f18: ff 25 1a 18 10 00       |.%....  |   jmp    qword ds:[rip + 0x000000000010181a]
 0x00400f18: Successor blocks: unknown
 
 0x00400f1e: 68 08 00 00 00 e9 60 ff |h.....`.|
@@ -192,7 +204,7 @@ using this memory map for disassembly:
 
 0x00400f28: Basic block reasons: entry point, graph-1
 0x00400f28: Predecessor blocks: 0x004012e5<<Func>>
-0x00400f28: ff 25 12 18 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000101812]
+0x00400f28: ff 25 12 18 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000101812]
 0x00400f28: Successor blocks: unknown
 
 0x00400f2e: 68 09 00 00 00 e9 50 ff |h.....P.|
@@ -206,7 +218,7 @@ using this memory map for disassembly:
 
 0x00400f38: Basic block reasons: entry point, graph-1
 0x00400f38: Predecessor blocks: 0x00401b56<<Func>>, 0x00401b7c<<Func>>, 0x00401b8d<<Func>>, 0x00401c00<<Func>>, 0x00401c90<<Func>>, 0x00401cc2<<Func>>, 0x00401cd9<<Func>>, 0x00401d90<<Func>>, 0x00401dab<<Func>>
-0x00400f38: ff 25 0a 18 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x000000000010180a]
+0x00400f38: ff 25 0a 18 10 00       |.%....  |   jmp    qword ds:[rip + 0x000000000010180a]
 0x00400f38: Successor blocks: unknown
 
 0x00400f3e: 68 0a 00 00 00 e9 40 ff |h.....@.|
@@ -220,7 +232,7 @@ using this memory map for disassembly:
 
 0x00400f48: Basic block reasons: entry point, graph-1
 0x00400f48: Predecessor blocks: 0x00401238<<Func>>, 0x00401253<<Func>>, 0x0040126e<<Func>>, 0x00401821<<Func>>, 0x00401879<<Func>>, 0x004018a5<<Func>>
-0x00400f48: ff 25 02 18 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000101802]
+0x00400f48: ff 25 02 18 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000101802]
 0x00400f48: Successor blocks: unknown
 
 0x00400f4e: 68 0b 00 00 00 e9 30 ff |h.....0.|
@@ -233,7 +245,7 @@ using this memory map for disassembly:
 
 0x00400f58: Basic block reasons: entry point, graph-1
 0x00400f58: Predecessor blocks: 0x004019a3<<Func>>, 0x00401a92<<Func>>
-0x00400f58: ff 25 fa 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017fa]
+0x00400f58: ff 25 fa 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017fa]
 0x00400f58: Successor blocks: unknown
 
 0x00400f5e: 68 0c 00 00 00 e9 20 ff |h..... .|
@@ -246,7 +258,7 @@ using this memory map for disassembly:
 
 0x00400f68: Basic block reasons: entry point, graph-1
 0x00400f68: Predecessor blocks: 0x00401659<<Func>>, 0x0040167f<<Func>>, 0x00401684<<Func>>, 0x004016a1<<Func>>
-0x00400f68: ff 25 f2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017f2]
+0x00400f68: ff 25 f2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017f2]
 0x00400f68: Successor blocks: unknown
 
 0x00400f6e: 68 0d 00 00 00 e9 10 ff |h.......|
@@ -259,7 +271,7 @@ using this memory map for disassembly:
 
 0x00400f78: Basic block reasons: entry point, graph-1
 0x00400f78: Predecessor blocks: 0x00401ab1<<Func>>
-0x00400f78: ff 25 ea 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017ea]
+0x00400f78: ff 25 ea 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017ea]
 0x00400f78: Successor blocks: unknown
 
 0x00400f7e: 68 0e 00 00 00 e9 00 ff |h.......|
@@ -274,7 +286,7 @@ using this memory map for disassembly:
 
 0x00400f88: Basic block reasons: entry point, graph-1
 0x00400f88: Predecessor blocks: 0x00401200<<Func>>, 0x0040121e<<Func>>, 0x00401289<<Func>>, 0x00401306<<Func>>, 0x00401320<<Func>>, 0x004016ad<<Func>>
-0x00400f88: ff 25 e2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017e2]
+0x00400f88: ff 25 e2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017e2]
 0x00400f88: Successor blocks: unknown
 
 0x00400f8e: 68 0f 00 00 00 e9 f0 fe |h.......|
@@ -287,7 +299,7 @@ using this memory map for disassembly:
 
 0x00400f98: Basic block reasons: entry point, graph-1
 0x00400f98: Predecessor blocks: 0x0040183c<<Func>>, 0x00401894<<Func>>, 0x004018c0<<Func>>
-0x00400f98: ff 25 da 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017da]
+0x00400f98: ff 25 da 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017da]
 0x00400f98: Successor blocks: unknown
 
 0x00400f9e: 68 10 00 00 00 e9 e0 fe |h.......|
@@ -301,7 +313,7 @@ using this memory map for disassembly:
 
 0x00400fa8: Basic block reasons: entry point, graph-1
 0x00400fa8: Predecessor blocks: 0x004015b0<<Func>>, 0x00401d6b<<Func>>
-0x00400fa8: ff 25 d2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017d2]
+0x00400fa8: ff 25 d2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017d2]
 0x00400fa8: Successor blocks: unknown
 
 0x00400fae: 68 11 00 00 00 e9 d0 fe |h.......|
@@ -314,7 +326,7 @@ using this memory map for disassembly:
 
 0x00400fb8: Basic block reasons: entry point, graph-1
 0x00400fb8: Predecessor blocks: 0x00401947<<Func>>, 0x00401a9a<<Func>>
-0x00400fb8: ff 25 ca 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017ca]
+0x00400fb8: ff 25 ca 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017ca]
 0x00400fb8: Successor blocks: unknown
 
 0x00400fbe: 68 12 00 00 00 e9 c0 fe |h.......|
@@ -327,7 +339,7 @@ using this memory map for disassembly:
 
 0x00400fc8: Basic block reasons: entry point, graph-1
 0x00400fc8: Predecessor blocks: 0x00401978<<Func>>
-0x00400fc8: ff 25 c2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017c2]
+0x00400fc8: ff 25 c2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017c2]
 0x00400fc8: Successor blocks: unknown
 
 0x00400fce: 68 13 00 00 00 e9 b0 fe |h.......|
@@ -340,7 +352,7 @@ using this memory map for disassembly:
 
 0x00400fd8: Basic block reasons: entry point, graph-1
 0x00400fd8: Predecessor blocks: 0x004016d1<<Func>>
-0x00400fd8: ff 25 ba 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017ba]
+0x00400fd8: ff 25 ba 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017ba]
 0x00400fd8: Successor blocks: unknown
 
 0x00400fde: 68 14 00 00 00 e9 a0 fe |h.......|
@@ -353,7 +365,7 @@ using this memory map for disassembly:
 
 0x00400fe8: Basic block reasons: entry point, graph-1
 0x00400fe8: Predecessor blocks: 0x004016d6<<Func>>
-0x00400fe8: ff 25 b2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017b2]
+0x00400fe8: ff 25 b2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017b2]
 0x00400fe8: Successor blocks: unknown
 
 0x00400fee: 68 15 00 00 00 e9 90 fe |h.......|
@@ -366,7 +378,7 @@ using this memory map for disassembly:
 
 0x00400ff8: Basic block reasons: entry point, graph-1
 0x00400ff8: Predecessor blocks: 0x004018e0<<Func>>
-0x00400ff8: ff 25 aa 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017aa]
+0x00400ff8: ff 25 aa 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017aa]
 0x00400ff8: Successor blocks: unknown
 
 0x00400ffe: 68 16 00 00 00 e9 80 fe |h.......|
@@ -379,7 +391,7 @@ using this memory map for disassembly:
 
 0x00401008: Basic block reasons: entry point, graph-1
 0x00401008: Predecessor blocks: 0x00401bac<<Func>>
-0x00401008: ff 25 a2 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001017a2]
+0x00401008: ff 25 a2 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001017a2]
 0x00401008: Successor blocks: unknown
 
 0x0040100e: 68 17 00 00 00 e9 70 fe |h.....p.|
@@ -394,7 +406,7 @@ using this memory map for disassembly:
 
 0x00401018: Basic block reasons: entry point, graph-1
 0x00401018: Predecessor blocks: 0x004015b8<<Func>>, 0x00401a0d<<Func>>, 0x00401ae0<<Func>>
-0x00401018: ff 25 9a 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x000000000010179a]
+0x00401018: ff 25 9a 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x000000000010179a]
 0x00401018: Successor blocks: unknown
 
 0x0040101e: 68 18 00 00 00 e9 60 fe |h.....`.|
@@ -407,7 +419,7 @@ using this memory map for disassembly:
 
 0x00401028: Basic block reasons: entry point, graph-1
 0x00401028: Predecessor blocks: 0x00401481<<Func>>, 0x004014ac<<Func>>
-0x00401028: ff 25 92 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000101792]
+0x00401028: ff 25 92 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000101792]
 0x00401028: Successor blocks: unknown
 
 0x0040102e: 68 19 00 00 00 e9 50 fe |h.....P.|
@@ -421,7 +433,7 @@ using this memory map for disassembly:
 
 0x00401038: Basic block reasons: entry point, graph-1
 0x00401038: Predecessor blocks: 0x0040137c<<Func>>
-0x00401038: ff 25 8a 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x000000000010178a]
+0x00401038: ff 25 8a 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x000000000010178a]
 0x00401038: Successor blocks: unknown
 
 0x0040103e: 68 1a 00 00 00 e9 40 fe |h.....@.|
@@ -434,7 +446,7 @@ using this memory map for disassembly:
 
 0x00401048: Basic block reasons: entry point, graph-1
 0x00401048: Predecessor blocks: 0x00401ba0<<Func>>
-0x00401048: ff 25 82 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000101782]
+0x00401048: ff 25 82 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000101782]
 0x00401048: Successor blocks: unknown
 
 0x0040104e: 68 1b 00 00 00 e9 30 fe |h.....0.|
@@ -447,7 +459,7 @@ using this memory map for disassembly:
 
 0x00401058: Basic block reasons: entry point, graph-1
 0x00401058: Predecessor blocks: 0x004017f4<<Func>>
-0x00401058: ff 25 7a 17 10 00       |.%z...  |   jmp    QWORD PTR ds:[rip + 0x000000000010177a]
+0x00401058: ff 25 7a 17 10 00       |.%z...  |   jmp    qword ds:[rip + 0x000000000010177a]
 0x00401058: Successor blocks: unknown
 
 0x0040105e: 68 1c 00 00 00 e9 20 fe |h..... .|
@@ -461,7 +473,7 @@ using this memory map for disassembly:
 
 0x00401068: Basic block reasons: entry point, graph-1
 0x00401068: Predecessor blocks: 0x00401b31<<Func>>, 0x00401c79<<Func>>
-0x00401068: ff 25 72 17 10 00       |.%r...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101772]
+0x00401068: ff 25 72 17 10 00       |.%r...  |   jmp    qword ds:[rip + 0x0000000000101772]
 0x00401068: Successor blocks: unknown
 
 0x0040106e: 68 1d 00 00 00 e9 10 fe |h.......|
@@ -474,7 +486,7 @@ using this memory map for disassembly:
 
 0x00401078: Basic block reasons: entry point, graph-1
 0x00401078: Predecessor blocks: 0x00401d7d<<Func>>
-0x00401078: ff 25 6a 17 10 00       |.%j...  |   jmp    QWORD PTR ds:[rip + 0x000000000010176a]
+0x00401078: ff 25 6a 17 10 00       |.%j...  |   jmp    qword ds:[rip + 0x000000000010176a]
 0x00401078: Successor blocks: unknown
 
 0x0040107e: 68 1e 00 00 00 e9 00 fe |h.......|
@@ -487,7 +499,7 @@ using this memory map for disassembly:
 
 0x00401088: Basic block reasons: entry point, graph-1
 0x00401088: Predecessor blocks: 0x00401cf6<<Func>>
-0x00401088: ff 25 62 17 10 00       |.%b...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101762]
+0x00401088: ff 25 62 17 10 00       |.%b...  |   jmp    qword ds:[rip + 0x0000000000101762]
 0x00401088: Successor blocks: unknown
 
 0x0040108e: 68 1f 00 00 00 e9 f0 fd |h.......|
@@ -500,7 +512,7 @@ using this memory map for disassembly:
 
 0x00401098: Basic block reasons: entry point, graph-1
 0x00401098: Predecessor blocks: 0x004013d0<<Func>>
-0x00401098: ff 25 5a 17 10 00       |.%Z...  |   jmp    QWORD PTR ds:[rip + 0x000000000010175a]
+0x00401098: ff 25 5a 17 10 00       |.%Z...  |   jmp    qword ds:[rip + 0x000000000010175a]
 0x00401098: Successor blocks: unknown
 
 0x0040109e: 68 20 00 00 00 e9 e0 fd |h ......|
@@ -515,7 +527,7 @@ using this memory map for disassembly:
 
 0x004010a8: Basic block reasons: entry point, graph-1
 0x004010a8: Predecessor blocks: 0x004012a3<<Func>>, 0x004014f0<<Func>>, 0x004016c7<<Func>>
-0x004010a8: ff 25 52 17 10 00       |.%R...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101752]
+0x004010a8: ff 25 52 17 10 00       |.%R...  |   jmp    qword ds:[rip + 0x0000000000101752]
 0x004010a8: Successor blocks: unknown
 
 0x004010ae: 68 21 00 00 00 e9 d0 fd |h!......|
@@ -528,7 +540,7 @@ using this memory map for disassembly:
 
 0x004010b8: Basic block reasons: entry point, graph-1
 0x004010b8: Predecessor blocks: 0x00401c5d<<Func>>
-0x004010b8: ff 25 4a 17 10 00       |.%J...  |   jmp    QWORD PTR ds:[rip + 0x000000000010174a]
+0x004010b8: ff 25 4a 17 10 00       |.%J...  |   jmp    qword ds:[rip + 0x000000000010174a]
 0x004010b8: Successor blocks: unknown
 
 0x004010be: 68 22 00 00 00 e9 c0 fd |h"......|
@@ -541,7 +553,7 @@ using this memory map for disassembly:
 
 0x004010c8: Basic block reasons: entry point, graph-1
 0x004010c8: Predecessor blocks: 0x00401920<<Func>>, 0x004019ab<<Func>>
-0x004010c8: ff 25 42 17 10 00       |.%B...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101742]
+0x004010c8: ff 25 42 17 10 00       |.%B...  |   jmp    qword ds:[rip + 0x0000000000101742]
 0x004010c8: Successor blocks: unknown
 
 0x004010ce: 68 23 00 00 00 e9 b0 fd |h#......|
@@ -555,7 +567,7 @@ using this memory map for disassembly:
 
 0x004010d8: Basic block reasons: entry point, graph-1
 0x004010d8: Predecessor blocks: 0x0040173e<<Func>>, 0x00401806<<Func>>, 0x00401a37<<Func>>, 0x00401a4e<<Func>>
-0x004010d8: ff 25 3a 17 10 00       |.%:...  |   jmp    QWORD PTR ds:[rip + 0x000000000010173a]
+0x004010d8: ff 25 3a 17 10 00       |.%:...  |   jmp    qword ds:[rip + 0x000000000010173a]
 0x004010d8: Successor blocks: unknown
 
 0x004010de: 68 24 00 00 00 e9 a0 fd |h$......|
@@ -570,7 +582,7 @@ using this memory map for disassembly:
 
 0x004010e8: Basic block reasons: entry point, graph-1
 0x004010e8: Predecessor blocks: 0x004015cc<<Func>>, 0x00401859<<Func>>, 0x004018ca<<Func>>, 0x00401bb9<<Func>>
-0x004010e8: ff 25 32 17 10 00       |.%2...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101732]
+0x004010e8: ff 25 32 17 10 00       |.%2...  |   jmp    qword ds:[rip + 0x0000000000101732]
 0x004010e8: Successor blocks: unknown
 
 0x004010ee: 68 25 00 00 00 e9 90 fd |h%......|
@@ -584,7 +596,7 @@ using this memory map for disassembly:
 
 0x004010f8: Basic block reasons: entry point, graph-1
 0x004010f8: Predecessor blocks: 0x004012e0<<Func>>, 0x00401cf1<<Func>>, 0x00401d66<<Func>>
-0x004010f8: ff 25 2a 17 10 00       |.%*...  |   jmp    QWORD PTR ds:[rip + 0x000000000010172a]
+0x004010f8: ff 25 2a 17 10 00       |.%*...  |   jmp    qword ds:[rip + 0x000000000010172a]
 0x004010f8: Successor blocks: unknown
 
 0x004010fe: 68 26 00 00 00 e9 80 fd |h&......|
@@ -597,7 +609,7 @@ using this memory map for disassembly:
 
 0x00401108: Basic block reasons: entry point, graph-1
 0x00401108: Predecessor blocks: 0x004015d3<<Func>>
-0x00401108: ff 25 22 17 10 00       |.%"...  |   jmp    QWORD PTR ds:[rip + 0x0000000000101722]
+0x00401108: ff 25 22 17 10 00       |.%"...  |   jmp    qword ds:[rip + 0x0000000000101722]
 0x00401108: Successor blocks: unknown
 
 0x0040110e: 68 27 00 00 00 e9 70 fd |h'....p.|
@@ -611,7 +623,7 @@ using this memory map for disassembly:
 
 0x00401118: Basic block reasons: entry point, graph-1
 0x00401118: Predecessor blocks: 0x00401b48<<Func>>, 0x00401cb3<<Func>>
-0x00401118: ff 25 1a 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x000000000010171a]
+0x00401118: ff 25 1a 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x000000000010171a]
 0x00401118: Successor blocks: unknown
 
 0x0040111e: 68 28 00 00 00 e9 60 fd |h(....`.|
@@ -624,7 +636,7 @@ using this memory map for disassembly:
 
 0x00401128: Basic block reasons: entry point, graph-1
 0x00401128: Predecessor blocks: 0x00401963<<Func>>
-0x00401128: ff 25 12 17 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000101712]
+0x00401128: ff 25 12 17 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000101712]
 0x00401128: Successor blocks: unknown
 
 0x0040112e: 68 29 00 00 00 e9 50 fd |h)....P.|
@@ -632,10 +644,10 @@ using this memory map for disassembly:
 0x0040113e: 00 00                   |..      | 18 bytes untyped data beginning at 0x0040112e
 0x0040112e: 68 29 00 00 00          |h)...   | (data)   push   0x00000029
 0x00401133: e9 50 fd ff ff          |.P...   | (data)   jmp    0x0000000000400e88
-0x00401138: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x0040113a: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x0040113c: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
-0x0040113e: 00 00                   |..      | (data)   add    BYTE PTR ds:[rax], al
+0x00401138: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x0040113a: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x0040113c: 00 00                   |..      | (data)   add    byte ds:[rax], al
+0x0040113e: 00 00                   |..      | (data)   add    byte ds:[rax], al
 
 0x00401140: ================================== Function (entry point) unknown name
 0x00401140: No known callers.
@@ -671,7 +683,7 @@ using this memory map for disassembly:
 0x0040116c: Basic block reasons: entry point, graph-2
 0x0040116c: Predecessor blocks: 0x00400e70<<Func>>
 0x0040116c: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x00401170: 48 8b 05 61 15 10 00    |H..a... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000101561]
+0x00401170: 48 8b 05 61 15 10 00    |H..a... |   mov    rax, qword ds:[rip + 0x0000000000101561]
 0x00401177: 48 85 c0                |H..     |   test   rax, rax
 0x0040117a: 74 02                   |t.      |   je     0x000000000040117e<<Insn>>
 0x0040117a: Successor blocks: 0x0040117c, 0x0040117e
@@ -696,7 +708,7 @@ using this memory map for disassembly:
 0x00401190: No known callers.
 
 0x00401190: Basic block reasons: entry point, graph-2
-0x00401190: 80 3d f5 16 10 00 00    |.=..... |   cmp    BYTE PTR ds:[rip + 0x00000000001016f5], 0x00
+0x00401190: 80 3d f5 16 10 00 00    |.=..... |   cmp    byte ds:[rip + 0x00000000001016f5], 0x00
 0x00401197: 55                      |U       |   push   rbp
 0x00401198: 48 89 e5                |H..     |   mov    rbp, rsp
 0x0040119b: 74 10                   |t.      |   je     0x00000000004011ad<<Insn>>
@@ -715,15 +727,15 @@ using this memory map for disassembly:
 0x004011a0: Predecessor blocks: 0x004011ad
 0x004011a0: Dominator block: 0x004011ad
 0x004011a0: 48 83 c0 08             |H...    |   add    rax, 0x08
-0x004011a4: 48 89 05 ad 16 10 00    |H...... |   mov    QWORD PTR ds:[rip + 0x00000000001016ad], rax
+0x004011a4: 48 89 05 ad 16 10 00    |H...... |   mov    qword ds:[rip + 0x00000000001016ad], rax
 0x004011ab: ff d2                   |..      |   call   rdx
 0x004011ab: Successor blocks: 0x004011ad, unknown
 
 0x004011ad: Basic block reasons: graph-2
 0x004011ad: Predecessor blocks: 0x00401190, 0x004011a0
 0x004011ad: Dominator block: 0x00401190
-0x004011ad: 48 8b 05 a4 16 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x00000000001016a4]
-0x004011b4: 48 8b 10                |H..     |   mov    rdx, QWORD PTR ds:[rax]
+0x004011ad: 48 8b 05 a4 16 10 00    |H...... |   mov    rax, qword ds:[rip + 0x00000000001016a4]
+0x004011b4: 48 8b 10                |H..     |   mov    rdx, qword ds:[rax]
 0x004011b7: 48 85 d2                |H..     |   test   rdx, rdx
 0x004011ba: 75 e4                   |u.      |   jne    0x00000000004011a0<<Insn>>
 0x004011ba: Successor blocks: 0x004011a0, 0x004011bc
@@ -731,7 +743,7 @@ using this memory map for disassembly:
 0x004011bc: Basic block reasons: graph-2
 0x004011bc: Predecessor blocks: 0x004011ad
 0x004011bc: Dominator block: 0x004011ad
-0x004011bc: c6 05 c9 16 10 00 01    |....... |   mov    BYTE PTR ds:[rip + 0x00000000001016c9], 0x01
+0x004011bc: c6 05 c9 16 10 00 01    |....... |   mov    byte ds:[rip + 0x00000000001016c9], 0x01
 0x004011bc: Successor blocks: 0x004011c3
 
 0x004011c3: Basic block reasons: graph-2
@@ -753,7 +765,7 @@ using this memory map for disassembly:
 0x004011d0: Basic block reasons: entry point, graph-2
 0x004011d0: Predecessor blocks: 0x00400e79<<Func>>
 0x004011d0: 55                      |U       |   push   rbp
-0x004011d1: 48 83 3d 67 13 10 00 00 |H.=g....|   cmp    QWORD PTR ds:[rip + 0x0000000000101367], 0x00
+0x004011d1: 48 83 3d 67 13 10 00 00 |H.=g....|   cmp    qword ds:[rip + 0x0000000000101367], 0x00
 0x004011d9: 48 89 e5                |H..     |   mov    rbp, rsp
 0x004011dc: 74 16                   |t.      |   je     0x00000000004011f4<<Insn>>
 0x004011dc: Successor blocks: 0x004011de, 0x004011f4
@@ -800,8 +812,8 @@ using this memory map for disassembly:
 0x00401200: Basic block reasons: entry point, graph-1
 0x00401200: Predecessor blocks: 0x004014a7<<Func>>, 0x004014c8<<Func>>
 0x00401200: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x00401204: 48 8b 15 85 16 10 00    |H...... |   mov    rdx, QWORD PTR ds:[rip + 0x0000000000101685]
-0x0040120b: 48 8b 3d 66 16 10 00    |H.=f... |   mov    rdi, QWORD PTR ds:[rip + 0x0000000000101666]
+0x00401204: 48 8b 15 85 16 10 00    |H...... |   mov    rdx, qword ds:[rip + 0x0000000000101685]
+0x0040120b: 48 8b 3d 66 16 10 00    |H.=f... |   mov    rdi, qword ds:[rip + 0x0000000000101666]
 0x00401212: be f0 1e 40 00          |...@.   |   mov    esi, 0x00401ef0<.rodata+0x38>
 0x00401217: 31 c0                   |1.      |   xor    eax, eax
 0x00401219: e8 6a fd ff ff          |.j...   |   call   0x0000000000400f88<fprintf@plt>
@@ -810,8 +822,8 @@ using this memory map for disassembly:
 0x0040121e: Basic block reasons: graph-1
 0x0040121e: Predecessor blocks: 0x00401200
 0x0040121e: Dominator block: 0x00401200
-0x0040121e: 48 8b 15 6b 16 10 00    |H..k... |   mov    rdx, QWORD PTR ds:[rip + 0x000000000010166b]
-0x00401225: 48 8b 3d 4c 16 10 00    |H.=L... |   mov    rdi, QWORD PTR ds:[rip + 0x000000000010164c]
+0x0040121e: 48 8b 15 6b 16 10 00    |H..k... |   mov    rdx, qword ds:[rip + 0x000000000010166b]
+0x00401225: 48 8b 3d 4c 16 10 00    |H.=L... |   mov    rdi, qword ds:[rip + 0x000000000010164c]
 0x0040122c: be 20 1f 40 00          |. .@.   |   mov    esi, 0x00401f20<.rodata+0x68>
 0x00401231: 31 c0                   |1.      |   xor    eax, eax
 0x00401233: e8 50 fd ff ff          |.P...   |   call   0x0000000000400f88<fprintf@plt>
@@ -820,7 +832,7 @@ using this memory map for disassembly:
 0x00401238: Basic block reasons: graph-1
 0x00401238: Predecessor blocks: 0x0040121e
 0x00401238: Dominator block: 0x0040121e
-0x00401238: 48 8b 0d 39 16 10 00    |H..9... |   mov    rcx, QWORD PTR ds:[rip + 0x0000000000101639]
+0x00401238: 48 8b 0d 39 16 10 00    |H..9... |   mov    rcx, qword ds:[rip + 0x0000000000101639]
 0x0040123f: ba 32 00 00 00          |.2...   |   mov    edx, 0x00000032
 0x00401244: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x00401249: bf 50 1f 40 00          |.P.@.   |   mov    edi, 0x00401f50<.rodata+0x98>
@@ -830,7 +842,7 @@ using this memory map for disassembly:
 0x00401253: Basic block reasons: graph-1
 0x00401253: Predecessor blocks: 0x00401238
 0x00401253: Dominator block: 0x00401238
-0x00401253: 48 8b 0d 1e 16 10 00    |H...... |   mov    rcx, QWORD PTR ds:[rip + 0x000000000010161e]
+0x00401253: 48 8b 0d 1e 16 10 00    |H...... |   mov    rcx, qword ds:[rip + 0x000000000010161e]
 0x0040125a: ba 23 00 00 00          |.#...   |   mov    edx, 0x00000023
 0x0040125f: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x00401264: bf 88 1f 40 00          |...@.   |   mov    edi, 0x00401f88<.rodata+0xd0>
@@ -840,7 +852,7 @@ using this memory map for disassembly:
 0x0040126e: Basic block reasons: graph-1
 0x0040126e: Predecessor blocks: 0x00401253
 0x0040126e: Dominator block: 0x00401253
-0x0040126e: 48 8b 0d 03 16 10 00    |H...... |   mov    rcx, QWORD PTR ds:[rip + 0x0000000000101603]
+0x0040126e: 48 8b 0d 03 16 10 00    |H...... |   mov    rcx, qword ds:[rip + 0x0000000000101603]
 0x00401275: ba 30 00 00 00          |.0...   |   mov    edx, 0x00000030
 0x0040127a: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x0040127f: bf b0 1f 40 00          |...@.   |   mov    edi, 0x00401fb0<.rodata+0xf8>
@@ -850,8 +862,8 @@ using this memory map for disassembly:
 0x00401289: Basic block reasons: graph-1
 0x00401289: Predecessor blocks: 0x0040126e
 0x00401289: Dominator block: 0x0040126e
-0x00401289: 48 8b 3d e8 15 10 00    |H.=.... |   mov    rdi, QWORD PTR ds:[rip + 0x00000000001015e8]
-0x00401290: 48 8b 15 f9 15 10 00    |H...... |   mov    rdx, QWORD PTR ds:[rip + 0x00000000001015f9]
+0x00401289: 48 8b 3d e8 15 10 00    |H.=.... |   mov    rdi, qword ds:[rip + 0x00000000001015e8]
+0x00401290: 48 8b 15 f9 15 10 00    |H...... |   mov    rdx, qword ds:[rip + 0x00000000001015f9]
 0x00401297: be e8 1f 40 00          |...@.   |   mov    esi, 0x00401fe8<.rodata+0x0130>
 0x0040129c: 31 c0                   |1.      |   xor    eax, eax
 0x0040129e: e8 e5 fc ff ff          |.....   |   call   0x0000000000400f88<fprintf@plt>
@@ -907,7 +919,7 @@ using this memory map for disassembly:
 0x004012d2: Basic block reasons: graph-1
 0x004012d2: Predecessor blocks: 0x004012cd
 0x004012d2: Dominator block: 0x004012cd
-0x004012d2: 0f be 00                |...     |   movsx  eax, BYTE PTR ds:[rax]
+0x004012d2: 0f be 00                |...     |   movsx  eax, byte ds:[rax]
 0x004012d5: 48 83 c4 08             |H...    |   add    rsp, 0x08
 0x004012d9: c3                      |.       |   ret    
 0x004012d9: Successor blocks: unknown
@@ -940,14 +952,14 @@ using this memory map for disassembly:
 0x004012f2: Basic block reasons: graph-1
 0x004012f2: Predecessor blocks: 0x004012ea
 0x004012f2: Dominator block: 0x004012ea
-0x004012f2: 66 83 38 01             |f.8.    |   cmp    WORD PTR ds:[rax], 0x01
+0x004012f2: 66 83 38 01             |f.8.    |   cmp    word ds:[rax], 0x01
 0x004012f6: 75 ed                   |u.      |   jne    0x00000000004012e5<<Insn>>
 0x004012f6: Successor blocks: 0x004012e5, 0x004012f8
 
 0x004012f8: Basic block reasons: graph-1
 0x004012f8: Predecessor blocks: 0x004012f2
 0x004012f8: Dominator block: 0x004012f2
-0x004012f8: 0f b6 40 04             |..@.    |   movzx  eax, BYTE PTR ds:[rax + 0x04]
+0x004012f8: 0f b6 40 04             |..@.    |   movzx  eax, byte ds:[rax + 0x04]
 0x004012fc: 48 83 c4 08             |H...    |   add    rsp, 0x08
 0x00401300: c3                      |.       |   ret    
 0x00401300: Successor blocks: unknown
@@ -961,8 +973,8 @@ using this memory map for disassembly:
 0x00401306: Basic block reasons: graph-1
 0x00401306: Predecessor blocks: 0x00401301
 0x00401306: Dominator block: 0x00401301
-0x00401306: 48 8b 15 83 15 10 00    |H...... |   mov    rdx, QWORD PTR ds:[rip + 0x0000000000101583]
-0x0040130d: 48 8b 3d 64 15 10 00    |H.=d... |   mov    rdi, QWORD PTR ds:[rip + 0x0000000000101564]
+0x00401306: 48 8b 15 83 15 10 00    |H...... |   mov    rdx, qword ds:[rip + 0x0000000000101583]
+0x0040130d: 48 8b 3d 64 15 10 00    |H.=d... |   mov    rdi, qword ds:[rip + 0x0000000000101564]
 0x00401314: be 28 20 40 00          |.( @.   |   mov    esi, 0x00402028<.rodata+0x0170>
 0x00401319: 31 c0                   |1.      |   xor    eax, eax
 0x0040131b: e8 68 fc ff ff          |.h...   |   call   0x0000000000400f88<fprintf@plt>
@@ -971,8 +983,8 @@ using this memory map for disassembly:
 0x00401320: Basic block reasons: graph-1
 0x00401320: Predecessor blocks: 0x00401306
 0x00401320: Dominator block: 0x00401306
-0x00401320: 48 8b 15 69 15 10 00    |H..i... |   mov    rdx, QWORD PTR ds:[rip + 0x0000000000101569]
-0x00401327: 48 8b 3d 4a 15 10 00    |H.=J... |   mov    rdi, QWORD PTR ds:[rip + 0x000000000010154a]
+0x00401320: 48 8b 15 69 15 10 00    |H..i... |   mov    rdx, qword ds:[rip + 0x0000000000101569]
+0x00401327: 48 8b 3d 4a 15 10 00    |H.=J... |   mov    rdi, qword ds:[rip + 0x000000000010154a]
 0x0040132e: be 60 20 40 00          |.` @.   |   mov    esi, 0x00402060<.rodata+0x01a8>
 0x00401333: 31 c0                   |1.      |   xor    eax, eax
 0x00401335: e8 4e fc ff ff          |.N...   |   call   0x0000000000400f88<fprintf@plt>
@@ -1004,8 +1016,8 @@ using this memory map for disassembly:
 0x00401351: ba 02 00 00 00          |.....   |   mov    edx, 0x00000002
 0x00401356: 48 83 ec 40             |H..@    |   sub    rsp, 0x40
 0x0040135a: 48 85 f6                |H..     |   test   rsi, rsi
-0x0040135d: 48 c7 04 24 d6 20 40 00 |H..$. @.|   mov    QWORD PTR ds:[rsp], 0x004020d6<.rodata+0x021e>
-0x00401365: 48 89 7c 24 08          |H.|$.   |   mov    QWORD PTR ds:[rsp + 0x08], rdi
+0x0040135d: 48 c7 04 24 d6 20 40 00 |H..$. @.|   mov    qword ds:[rsp], 0x004020d6<.rodata+0x021e>
+0x00401365: 48 89 7c 24 08          |H.|$.   |   mov    qword ds:[rsp + 0x08], rdi
 0x0040136a: 74 10                   |t.      |   je     0x000000000040137c<<Insn>>
 0x0040136a: Successor blocks: 0x0040136c, 0x0040137c
 
@@ -1013,8 +1025,8 @@ using this memory map for disassembly:
 0x0040136c: Predecessor blocks: 0x00401350
 0x0040136c: Dominator block: 0x00401350
 0x0040136c: 48 c7 44 24 10 bb 20 40 |H.D$.. @|
-0x00401374: 00                      |.       |   mov    QWORD PTR ds:[rsp + 0x10], 0x004020bb<.rodata+0x0203>
-0x00401375: 48 89 74 24 18          |H.t$.   |   mov    QWORD PTR ds:[rsp + 0x18], rsi
+0x00401374: 00                      |.       |   mov    qword ds:[rsp + 0x10], 0x004020bb<.rodata+0x0203>
+0x00401375: 48 89 74 24 18          |H.t$.   |   mov    qword ds:[rsp + 0x18], rsi
 0x0040137a: b2 04                   |..      |   mov    dl, 0x04
 0x0040137a: Successor blocks: 0x0040137c
 
@@ -1024,10 +1036,10 @@ using this memory map for disassembly:
 0x0040137c: 48 63 c2                |Hc.     |   movsxd rax, edx
 0x0040137f: ff c2                   |..      |   inc    edx
 0x00401381: 48 89 e6                |H..     |   mov    rsi, rsp
-0x00401384: 48 c7 04 c4 be 20 40 00 |H.... @.|   mov    QWORD PTR ds:[rsp + rax*0x08], 0x004020be<.rodata+0x0206>
+0x00401384: 48 c7 04 c4 be 20 40 00 |H.... @.|   mov    qword ds:[rsp + rax*0x08], 0x004020be<.rodata+0x0206>
 0x0040138c: bf c2 20 40 00          |.. @.   |   mov    edi, 0x004020c2<.rodata+0x020a>
 0x00401391: 48 63 c2                |Hc.     |   movsxd rax, edx
-0x00401394: 48 c7 04 c4 00 00 00 00 |H.......|   mov    QWORD PTR ds:[rsp + rax*0x08], 0x00000000
+0x00401394: 48 c7 04 c4 00 00 00 00 |H.......|   mov    qword ds:[rsp + rax*0x08], 0x00000000
 0x0040139c: e8 97 fc ff ff          |.....   |   call   0x0000000000401038<execv@plt>
 0x0040139c: Successor blocks: 0x00401038<execv@plt>
 
@@ -1088,12 +1100,12 @@ using this memory map for disassembly:
 0x004013eb: 48 89 f3                |H..     |   mov    rbx, rsi
 0x004013ee: be 2f 00 00 00          |./...   |   mov    esi, 0x0000002f
 0x004013f3: 48 83 ec 18             |H...    |   sub    rsp, 0x18
-0x004013f7: 48 8b 3b                |H.;     |   mov    rdi, QWORD PTR ds:[rbx]
-0x004013fa: c7 44 24 14 01 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x14], 0x00000001
-0x00401402: c7 44 24 10 00 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x10], 0x00000000
-0x0040140a: c7 44 24 0c 00 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x0c], 0x00000000
-0x00401412: c7 44 24 08 00 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x08], 0x00000000
-0x0040141a: 48 c7 04 24 00 00 00 00 |H..$....|   mov    QWORD PTR ds:[rsp], 0x00000000
+0x004013f7: 48 8b 3b                |H.;     |   mov    rdi, qword ds:[rbx]
+0x004013fa: c7 44 24 14 01 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x14], 0x00000001
+0x00401402: c7 44 24 10 00 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x10], 0x00000000
+0x0040140a: c7 44 24 0c 00 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x0c], 0x00000000
+0x00401412: c7 44 24 08 00 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x08], 0x00000000
+0x0040141a: 48 c7 04 24 00 00 00 00 |H..$....|   mov    qword ds:[rsp], 0x00000000
 0x00401422: e8 71 fc ff ff          |.q...   |   call   0x0000000000401098<strrchr@plt>
 0x00401422: Successor blocks: 0x00401098<strrchr@plt>, 0x00401427
 
@@ -1114,7 +1126,7 @@ using this memory map for disassembly:
 0x00401436: Basic block reasons: graph-1
 0x00401436: Predecessor blocks: 0x00401433, 0x004015fa
 0x00401436: Dominator block: 0x00401427
-0x00401436: 4c 89 05 53 14 10 00    |L..S... |   mov    QWORD PTR ds:[rip + 0x0000000000101453], r8
+0x00401436: 4c 89 05 53 14 10 00    |L..S... |   mov    qword ds:[rip + 0x0000000000101453], r8
 0x0040143d: e8 56 fa ff ff          |.V...   |   call   0x0000000000400e98<geteuid@plt>
 0x0040143d: Successor blocks: 0x00400e98<geteuid@plt>, 0x00401442
 
@@ -1128,7 +1140,7 @@ using this memory map for disassembly:
 0x0040144a: Basic block reasons: graph-1
 0x0040144a: Predecessor blocks: 0x00401442
 0x0040144a: Dominator block: 0x00401442
-0x0040144a: 4c 8b 05 3f 14 10 00    |L..?... |   mov    r8, QWORD PTR ds:[rip + 0x000000000010143f]
+0x0040144a: 4c 8b 05 3f 14 10 00    |L..?... |   mov    r8, qword ds:[rip + 0x000000000010143f]
 0x00401451: b8 07 00 00 00          |.....   |   mov    eax, 0x00000007
 0x00401456: bf ed 20 40 00          |.. @.   |   mov    edi, 0x004020ed<.rodata+0x0235>
 0x0040145b: fc                      |.       |   cld    
@@ -1174,7 +1186,7 @@ using this memory map for disassembly:
 0x0040149d: Dominator block: 0x00401495
 0x0040149d: 89 c0                   |..      |   mov    eax, eax
 0x0040149f: 90                      |.       |   nop    
-0x004014a0: ff 24 c5 38 21 40 00    |.$.8!@. |   jmp    QWORD PTR ds:[0x0000000000402138<.rodata+0x0280> + rax*0x08]
+0x004014a0: ff 24 c5 38 21 40 00    |.$.8!@. |   jmp    qword ds:[0x0000000000402138<.rodata+0x0280> + rax*0x08]
 0x004014a0: Successor blocks: unknown
 
 0x004014a7: Basic block reasons: graph-1
@@ -1199,7 +1211,7 @@ using this memory map for disassembly:
 0x004014c0: Basic block reasons: graph-1
 0x004014c0: Predecessor blocks: 0x00401490, 0x004014bb
 0x004014c0: Dominator block: 0x00401490
-0x004014c0: 3b 2d c2 13 10 00       |;-....  |   cmp    ebp, DWORD PTR ds:[rip + 0x00000000001013c2]
+0x004014c0: 3b 2d c2 13 10 00       |;-....  |   cmp    ebp, dword ds:[rip + 0x00000000001013c2]
 0x004014c6: 74 05                   |t.      |   je     0x00000000004014cd<<Insn>>
 0x004014c6: Successor blocks: 0x004014c8, 0x004014cd
 
@@ -1252,12 +1264,12 @@ using this memory map for disassembly:
 0x004014f5: Basic block reasons: graph-1
 0x004014f5: Predecessor blocks: 0x0040144a
 0x004014f5: Dominator block: 0x0040144a
-0x004014f5: c7 44 24 08 01 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x08], 0x00000001
+0x004014f5: c7 44 24 08 01 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x08], 0x00000001
 0x004014fd: eb 82                   |..      |   jmp    0x0000000000401481<<Insn>>
 0x004014fd: Successor blocks: 0x00401481
 
 0x004014ff: Basic block reasons: fragment, CFG head; 66% code likelihood
-0x004014ff: c7 44 24 14 00 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x14], 0x00000000
+0x004014ff: c7 44 24 14 00 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x14], 0x00000000
 0x00401507: 45 31 e4                |E1.     |   xor    r12d, r12d
 0x0040150a: e9 72 ff ff ff          |.r...   |   jmp    0x0000000000401481<<Insn>>
 0x0040150a: Successor blocks: 0x00401481
@@ -1268,18 +1280,18 @@ using this memory map for disassembly:
 0x00401515: Successor blocks: 0x00401481
 
 0x0040151a: Basic block reasons: fragment, CFG head; 66% code likelihood
-0x0040151a: 48 8b 05 5f 13 10 00    |H.._... |   mov    rax, QWORD PTR ds:[rip + 0x000000000010135f]
-0x00401521: 48 89 04 24             |H..$    |   mov    QWORD PTR ds:[rsp], rax
+0x0040151a: 48 8b 05 5f 13 10 00    |H.._... |   mov    rax, qword ds:[rip + 0x000000000010135f]
+0x00401521: 48 89 04 24             |H..$    |   mov    qword ds:[rsp], rax
 0x00401525: e9 57 ff ff ff          |.W...   |   jmp    0x0000000000401481<<Insn>>
 0x00401525: Successor blocks: 0x00401481
 
 0x0040152a: Basic block reasons: fragment, CFG head; 66% code likelihood
-0x0040152a: c7 44 24 10 01 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x10], 0x00000001
+0x0040152a: c7 44 24 10 01 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x10], 0x00000001
 0x00401532: e9 4a ff ff ff          |.J...   |   jmp    0x0000000000401481<<Insn>>
 0x00401532: Successor blocks: 0x00401481
 
 0x00401537: Basic block reasons: fragment, CFG head; 66% code likelihood
-0x00401537: c7 44 24 0c 01 00 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x0c], 0x00000001
+0x00401537: c7 44 24 0c 01 00 00 00 |.D$.....|   mov    dword ds:[rsp + 0x0c], 0x00000001
 0x0040153f: e9 3d ff ff ff          |.=...   |   jmp    0x0000000000401481<<Insn>>
 0x0040153f: Successor blocks: 0x00401481
 
@@ -1326,7 +1338,7 @@ using this memory map for disassembly:
 0x0040158c: Basic block reasons: graph-1
 0x0040158c: Predecessor blocks: 0x00401575
 0x0040158c: Dominator block: 0x00401575
-0x0040158c: 8b 7c 24 08             |.|$.    |   mov    edi, DWORD PTR ds:[rsp + 0x08]
+0x0040158c: 8b 7c 24 08             |.|$.    |   mov    edi, dword ds:[rsp + 0x08]
 0x00401590: 85 ff                   |..      |   test   edi, edi
 0x00401592: 74 79                   |ty      |   je     0x000000000040160d<<Insn>>
 0x00401592: Successor blocks: 0x00401594, 0x0040160d
@@ -1387,7 +1399,7 @@ using this memory map for disassembly:
 0x004015db: Basic block reasons: graph-1
 0x004015db: Predecessor blocks: 0x004015d3
 0x004015db: Dominator block: 0x004015d3
-0x004015db: 48 8b 34 24             |H.4$    |   mov    rsi, QWORD PTR ds:[rsp]
+0x004015db: 48 8b 34 24             |H.4$    |   mov    rsi, qword ds:[rsp]
 0x004015df: 45 85 f6                |E..     |   test   r14d, r14d
 0x004015e2: b8 0e 21 40 00          |..!@.   |   mov    eax, 0x0040210e<.rodata+0x0256>
 0x004015e7: bf 11 21 40 00          |..!@.   |   mov    edi, 0x00402111<.rodata+0x0259>
@@ -1403,8 +1415,8 @@ using this memory map for disassembly:
 0x004015fa: Predecessor blocks: 0x00401427
 0x004015fa: Dominator block: 0x00401427
 0x004015fa: 48 c7 05 8b 12 10 00 00 |H.......|
-0x00401602: 00 00 00                |...     |   mov    QWORD PTR ds:[rip + 0x000000000010128b], 0x00000000
-0x00401605: 4c 8b 03                |L..     |   mov    r8, QWORD PTR ds:[rbx]
+0x00401602: 00 00 00                |...     |   mov    qword ds:[rip + 0x000000000010128b], 0x00000000
+0x00401605: 4c 8b 03                |L..     |   mov    r8, qword ds:[rbx]
 0x00401608: e9 29 fe ff ff          |.)...   |   jmp    0x0000000000401436<<Insn>>
 0x00401608: Successor blocks: 0x00401436
 
@@ -1434,7 +1446,7 @@ using this memory map for disassembly:
 0x0040162b: Basic block reasons: graph-1
 0x0040162b: Predecessor blocks: 0x004014e5
 0x0040162b: Dominator block: 0x004014e5
-0x0040162b: 8b 74 24 14             |.t$.    |   mov    esi, DWORD PTR ds:[rsp + 0x14]
+0x0040162b: 8b 74 24 14             |.t$.    |   mov    esi, dword ds:[rsp + 0x14]
 0x0040162f: 85 f6                   |..      |   test   esi, esi
 0x00401631: 0f 85 9a 00 00 00       |......  |   jne    0x00000000004016d1<<Insn>>
 0x00401631: Successor blocks: 0x00401637, 0x004016d1
@@ -1442,7 +1454,7 @@ using this memory map for disassembly:
 0x00401637: Basic block reasons: graph-1
 0x00401637: Predecessor blocks: 0x0040162b, 0x004016e0
 0x00401637: Dominator block: 0x0040162b
-0x00401637: 8b 4c 24 10             |.L$.    |   mov    ecx, DWORD PTR ds:[rsp + 0x10]
+0x00401637: 8b 4c 24 10             |.L$.    |   mov    ecx, dword ds:[rsp + 0x10]
 0x0040163b: 85 c9                   |..      |   test   ecx, ecx
 0x0040163d: 0f 85 b2 00 00 00       |......  |   jne    0x00000000004016f5<<Insn>>
 0x0040163d: Successor blocks: 0x00401643, 0x004016f5
@@ -1450,7 +1462,7 @@ using this memory map for disassembly:
 0x00401643: Basic block reasons: graph-1
 0x00401643: Predecessor blocks: 0x00401637, 0x004016fa
 0x00401643: Dominator block: 0x00401637
-0x00401643: 8b 54 24 0c             |.T$.    |   mov    edx, DWORD PTR ds:[rsp + 0x0c]
+0x00401643: 8b 54 24 0c             |.T$.    |   mov    edx, dword ds:[rsp + 0x0c]
 0x00401647: 85 d2                   |..      |   test   edx, edx
 0x00401649: 0f 85 96 00 00 00       |......  |   jne    0x00000000004016e5<<Insn>>
 0x00401649: Successor blocks: 0x0040164f, 0x004016e5
@@ -1481,7 +1493,7 @@ using this memory map for disassembly:
 0x00401672: Basic block reasons: graph-1
 0x00401672: Predecessor blocks: 0x00401663
 0x00401672: Dominator block: 0x00401663
-0x00401672: 8b 44 24 08             |.D$.    |   mov    eax, DWORD PTR ds:[rsp + 0x08]
+0x00401672: 8b 44 24 08             |.D$.    |   mov    eax, dword ds:[rsp + 0x08]
 0x00401676: 85 c0                   |..      |   test   eax, eax
 0x00401678: 75 27                   |u'      |   jne    0x00000000004016a1<<Insn>>
 0x00401678: Successor blocks: 0x0040167a, 0x004016a1
@@ -1536,8 +1548,8 @@ using this memory map for disassembly:
 0x004016ad: Basic block reasons: graph-1
 0x004016ad: Predecessor blocks: 0x00401442
 0x004016ad: Dominator block: 0x00401442
-0x004016ad: 48 8b 3d c4 11 10 00    |H.=.... |   mov    rdi, QWORD PTR ds:[rip + 0x00000000001011c4]
-0x004016b4: 48 8b 15 d5 11 10 00    |H...... |   mov    rdx, QWORD PTR ds:[rip + 0x00000000001011d5]
+0x004016ad: 48 8b 3d c4 11 10 00    |H.=.... |   mov    rdi, qword ds:[rip + 0x00000000001011c4]
+0x004016b4: 48 8b 15 d5 11 10 00    |H...... |   mov    rdx, qword ds:[rip + 0x00000000001011d5]
 0x004016bb: be 1a 21 40 00          |..!@.   |   mov    esi, 0x0040211a<.rodata+0x0262>
 0x004016c0: 31 c0                   |1.      |   xor    eax, eax
 0x004016c2: e8 c1 f8 ff ff          |.....   |   call   0x0000000000400f88<fprintf@plt>
@@ -1628,7 +1640,7 @@ using this memory map for disassembly:
 0x00401732: Predecessor blocks: 0x00401710
 0x00401732: Dominator block: 0x00401710
 0x00401732: 85 c0                   |..      |   test   eax, eax
-0x00401734: 89 44 24 0c             |.D$.    |   mov    DWORD PTR ds:[rsp + 0x0c], eax
+0x00401734: 89 44 24 0c             |.D$.    |   mov    dword ds:[rsp + 0x0c], eax
 0x00401738: 0f 88 3b 01 00 00       |..;...  |   js     0x0000000000401879<<Insn>>
 0x00401738: Successor blocks: 0x0040173e, 0x00401879
 
@@ -1636,11 +1648,11 @@ using this memory map for disassembly:
 0x0040173e: Predecessor blocks: 0x00401732
 0x0040173e: Dominator block: 0x00401732
 0x0040173e: 48 8d 44 24 20          |H.D$    |   lea    rax, [rsp + 0x20]
-0x00401743: 8b 7c 24 0c             |.|$.    |   mov    edi, DWORD PTR ds:[rsp + 0x0c]
+0x00401743: 8b 7c 24 0c             |.|$.    |   mov    edi, dword ds:[rsp + 0x0c]
 0x00401747: 48 8d 54 24 10          |H.T$.   |   lea    rdx, [rsp + 0x10]
 0x0040174c: be 12 89 00 00          |.....   |   mov    esi, 0x00008912<35090>
-0x00401751: c7 44 24 10 00 0a 00 00 |.D$.....|   mov    DWORD PTR ds:[rsp + 0x10], 0x00000a00<2560>
-0x00401759: 48 89 44 24 18          |H.D$.   |   mov    QWORD PTR ds:[rsp + 0x18], rax
+0x00401751: c7 44 24 10 00 0a 00 00 |.D$.....|   mov    dword ds:[rsp + 0x10], 0x00000a00<2560>
+0x00401759: 48 89 44 24 18          |H.D$.   |   mov    qword ds:[rsp + 0x18], rax
 0x0040175e: 31 c0                   |1.      |   xor    eax, eax
 0x00401760: e8 73 f9 ff ff          |.s...   |   call   0x00000000004010d8<ioctl@plt>
 0x00401760: Successor blocks: 0x004010d8<ioctl@plt>, 0x00401765
@@ -1655,7 +1667,7 @@ using this memory map for disassembly:
 0x0040176d: Basic block reasons: graph-1
 0x0040176d: Predecessor blocks: 0x00401765
 0x0040176d: Dominator block: 0x00401765
-0x0040176d: 48 63 54 24 10          |HcT$.   |   movsxd rdx, DWORD PTR ds:[rsp + 0x10]
+0x0040176d: 48 63 54 24 10          |HcT$.   |   movsxd rdx, dword ds:[rsp + 0x10]
 0x00401772: 48 b8 cd cc cc cc cc cc |H.......|
 0x0040177a: cc cc                   |..      |   mov    rax, 0xcccccccccccccccd<-3689348814741910323>
 0x0040177c: 41 bd 01 00 00 00       |A.....  |   mov    r13d, 0x00000001
@@ -1708,7 +1720,7 @@ using this memory map for disassembly:
 0x004017d4: Basic block reasons: graph-1
 0x004017d4: Predecessor blocks: 0x004017bb
 0x004017d4: Dominator block: 0x004017bb
-0x004017d4: 0f b6 44 2c 20          |..D,    |   movzx  eax, BYTE PTR ds:[rsp + rbp + 0x20]
+0x004017d4: 0f b6 44 2c 20          |..D,    |   movzx  eax, byte ds:[rsp + rbp + 0x20]
 0x004017d9: 83 e8 6c                |..l     |   sub    eax, 0x6c
 0x004017dc: 75 12                   |u.      |   jne    0x00000000004017f0<<Insn>>
 0x004017dc: Successor blocks: 0x004017de, 0x004017f0
@@ -1716,7 +1728,7 @@ using this memory map for disassembly:
 0x004017de: Basic block reasons: graph-1
 0x004017de: Predecessor blocks: 0x004017d4
 0x004017de: Dominator block: 0x004017d4
-0x004017de: 0f b6 44 2c 21          |..D,!   |   movzx  eax, BYTE PTR ds:[rsp + rbp + 0x21]
+0x004017de: 0f b6 44 2c 21          |..D,!   |   movzx  eax, byte ds:[rsp + rbp + 0x21]
 0x004017e3: 83 e8 6f                |..o     |   sub    eax, 0x6f
 0x004017e6: 75 08                   |u.      |   jne    0x00000000004017f0<<Insn>>
 0x004017e6: Successor blocks: 0x004017e8, 0x004017f0
@@ -1724,7 +1736,7 @@ using this memory map for disassembly:
 0x004017e8: Basic block reasons: graph-1
 0x004017e8: Predecessor blocks: 0x004017de
 0x004017e8: Dominator block: 0x004017de
-0x004017e8: 0f b6 44 2c 22          |..D,"   |   movzx  eax, BYTE PTR ds:[rsp + rbp + 0x22]
+0x004017e8: 0f b6 44 2c 22          |..D,"   |   movzx  eax, byte ds:[rsp + rbp + 0x22]
 0x004017ed: 66 66 90                |ff.     |   nop    
 0x004017ed: Successor blocks: 0x004017f0
 
@@ -1753,10 +1765,10 @@ using this memory map for disassembly:
 0x00401806: Basic block reasons: graph-1
 0x00401806: Predecessor blocks: 0x00401801
 0x00401806: Dominator block: 0x00401801
-0x00401806: 66 83 64 2c 30 fe       |f.d,0.  |   and    WORD PTR ds:[rsp + rbp + 0x30], 0xfe<-2>
+0x00401806: 66 83 64 2c 30 fe       |f.d,0.  |   and    word ds:[rsp + rbp + 0x30], 0xfe<-2>
 0x0040180c: 48 89 da                |H..     |   mov    rdx, rbx
 0x0040180f: be 14 89 00 00          |.....   |   mov    esi, 0x00008914<35092>
-0x00401814: 8b 7c 24 0c             |.|$.    |   mov    edi, DWORD PTR ds:[rsp + 0x0c]
+0x00401814: 8b 7c 24 0c             |.|$.    |   mov    edi, dword ds:[rsp + 0x0c]
 0x00401818: e8 bb f8 ff ff          |.....   |   call   0x00000000004010d8<ioctl@plt>
 0x00401818: Successor blocks: 0x004010d8<ioctl@plt>, 0x0040181d
 
@@ -1770,7 +1782,7 @@ using this memory map for disassembly:
 0x00401821: Basic block reasons: graph-1
 0x00401821: Predecessor blocks: 0x0040181d
 0x00401821: Dominator block: 0x0040181d
-0x00401821: 48 8b 0d 50 10 10 00    |H..P... |   mov    rcx, QWORD PTR ds:[rip + 0x0000000000101050]
+0x00401821: 48 8b 0d 50 10 10 00    |H..P... |   mov    rcx, qword ds:[rip + 0x0000000000101050]
 0x00401828: ba 11 00 00 00          |.....   |   mov    edx, 0x00000011
 0x0040182d: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x00401832: bf 13 22 40 00          |.."@.   |   mov    edi, 0x00402213<.rodata+0x035b>
@@ -1805,7 +1817,7 @@ using this memory map for disassembly:
 0x00401859: Basic block reasons: graph-1
 0x00401859: Predecessor blocks: 0x00401850
 0x00401859: Dominator block: 0x00401850
-0x00401859: 8b 7c 24 0c             |.|$.    |   mov    edi, DWORD PTR ds:[rsp + 0x0c]
+0x00401859: 8b 7c 24 0c             |.|$.    |   mov    edi, dword ds:[rsp + 0x0c]
 0x0040185d: 66 66 90                |ff.     |   nop    
 0x00401860: e8 83 f8 ff ff          |.....   |   call   0x00000000004010e8<close@plt>
 0x00401860: Successor blocks: 0x004010e8<close@plt>, 0x00401865
@@ -1832,7 +1844,7 @@ using this memory map for disassembly:
 0x00401879: Basic block reasons: graph-1
 0x00401879: Predecessor blocks: 0x00401732
 0x00401879: Dominator block: 0x00401732
-0x00401879: 48 8b 0d f8 0f 10 00    |H...... |   mov    rcx, QWORD PTR ds:[rip + 0x0000000000100ff8]
+0x00401879: 48 8b 0d f8 0f 10 00    |H...... |   mov    rcx, qword ds:[rip + 0x0000000000100ff8]
 0x00401880: ba 08 00 00 00          |.....   |   mov    edx, 0x00000008
 0x00401885: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x0040188a: bf 25 22 40 00          |.%"@.   |   mov    edi, 0x00402225<.rodata+0x036d>
@@ -1856,7 +1868,7 @@ using this memory map for disassembly:
 0x004018a5: Basic block reasons: graph-1
 0x004018a5: Predecessor blocks: 0x00401765
 0x004018a5: Dominator block: 0x00401765
-0x004018a5: 48 8b 0d cc 0f 10 00    |H...... |   mov    rcx, QWORD PTR ds:[rip + 0x0000000000100fcc]
+0x004018a5: 48 8b 0d cc 0f 10 00    |H...... |   mov    rcx, qword ds:[rip + 0x0000000000100fcc]
 0x004018ac: ba 08 00 00 00          |.....   |   mov    edx, 0x00000008
 0x004018b1: be 01 00 00 00          |.....   |   mov    esi, 0x00000001
 0x004018b6: bf 25 22 40 00          |.%"@.   |   mov    edi, 0x00402225<.rodata+0x036d>
@@ -1873,7 +1885,7 @@ using this memory map for disassembly:
 0x004018ca: Basic block reasons: graph-1
 0x004018ca: Predecessor blocks: 0x004018c0
 0x004018ca: Dominator block: 0x004018c0
-0x004018ca: 8b 7c 24 0c             |.|$.    |   mov    edi, DWORD PTR ds:[rsp + 0x0c]
+0x004018ca: 8b 7c 24 0c             |.|$.    |   mov    edi, dword ds:[rsp + 0x0c]
 0x004018ce: e8 15 f8 ff ff          |.....   |   call   0x00000000004010e8<close@plt>
 0x004018ce: Successor blocks: 0x004010e8<close@plt>, 0x004018d3
 
@@ -1964,7 +1976,7 @@ using this memory map for disassembly:
 0x0040194f: be 00 01 00 00          |.....   |   mov    esi, 0x00000100<256>
 0x00401954: 4c 89 ef                |L..     |   mov    rdi, r13
 0x00401957: 31 c0                   |1.      |   xor    eax, eax
-0x00401959: c6 44 24 10 00          |.D$..   |   mov    BYTE PTR ds:[rsp + 0x10], 0x00
+0x00401959: c6 44 24 10 00          |.D$..   |   mov    byte ds:[rsp + 0x10], 0x00
 0x0040195e: e8 55 f6 ff ff          |.U...   |   call   0x0000000000400fb8<snprintf@plt>
 0x0040195e: Successor blocks: 0x00400fb8<snprintf@plt>, 0x00401963
 
@@ -2050,7 +2062,7 @@ using this memory map for disassembly:
 0x004019ca: Predecessor blocks: 0x004019c4
 0x004019ca: Dominator block: 0x004019c4
 0x004019ca: 49 63 c6                |Ic.     |   movsxd rax, r14d
-0x004019cd: 49 c7 04 c7 00 00 00 00 |I.......|   mov    QWORD PTR ds:[r15 + rax*0x08], 0x00000000
+0x004019cd: 49 c7 04 c7 00 00 00 00 |I.......|   mov    qword ds:[r15 + rax*0x08], 0x00000000
 0x004019cd: Successor blocks: 0x004019d5
 
 0x004019d5: Basic block reasons: graph-1
@@ -2058,7 +2070,7 @@ using this memory map for disassembly:
 0x004019d5: Dominator block: 0x004019c4
 0x004019d5: 31 ed                   |1.      |   xor    ebp, ebp
 0x004019d7: 48 83 bc 24 10 01 00 00 |H..$....|
-0x004019df: 00                      |.       |   cmp    QWORD PTR ds:[rsp + 0x00000110<272>], 0x00
+0x004019df: 00                      |.       |   cmp    qword ds:[rsp + 0x00000110<272>], 0x00
 0x004019e0: 0f 84 98 00 00 00       |......  |   je     0x0000000000401a7e<<Insn>>
 0x004019e0: Successor blocks: 0x004019e6, 0x00401a7e
 
@@ -2077,7 +2089,7 @@ using this memory map for disassembly:
 0x004019f0: ff c5                   |..      |   inc    ebp
 0x004019f2: 48 63 cd                |Hc.     |   movsxd rcx, ebp
 0x004019f5: 48 83 bc cc 10 01 00 00 |H.......|
-0x004019fd: 00                      |.       |   cmp    QWORD PTR ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x004019fd: 00                      |.       |   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
 0x004019fe: 0f 95 c2                |...     |   setne  dl
 0x00401a01: 31 c0                   |1.      |   xor    eax, eax
 0x00401a03: 83 fd 3f                |..?     |   cmp    ebp, 0x3f
@@ -2089,13 +2101,13 @@ using this memory map for disassembly:
 0x00401a0d: Basic block reasons: graph-1
 0x00401a0d: Predecessor blocks: 0x004019e6, 0x004019f0, 0x00401a63
 0x00401a0d: Dominator block: 0x004019e6
-0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|   mov    rdi, QWORD PTR ds:[rsp + rcx*0x08 + 0x00000110<272>]
+0x00401a0d: 48 8b bc cc 10 01 00 00 |H.......|   mov    rdi, qword ds:[rsp + rcx*0x08 + 0x00000110<272>]
 0x00401a15: 31 c0                   |1.      |   xor    eax, eax
 0x00401a17: 41 b5 e0                |A..     |   mov    r13b, 0xe0<-32>
 0x00401a1a: 41 b4 94                |A..     |   mov    r12b, 0x94<-108>
 0x00401a1d: be 02 00 00 00          |.....   |   mov    esi, 0x00000002
-0x00401a22: 44 89 6c 24 0c          |D.l$.   |   mov    DWORD PTR ds:[rsp + 0x0c], r13d
-0x00401a27: 44 89 64 24 08          |D.d$.   |   mov    DWORD PTR ds:[rsp + 0x08], r12d
+0x00401a22: 44 89 6c 24 0c          |D.l$.   |   mov    dword ds:[rsp + 0x0c], r13d
+0x00401a27: 44 89 64 24 08          |D.d$.   |   mov    dword ds:[rsp + 0x08], r12d
 0x00401a2c: e8 e7 f5 ff ff          |.....   |   call   0x0000000000401018<open@plt>
 0x00401a2c: Successor blocks: 0x00401018<open@plt>, 0x00401a31
 
@@ -2140,7 +2152,7 @@ using this memory map for disassembly:
 0x00401a63: Dominator block: 0x00401a4e
 0x00401a63: 48 63 cd                |Hc.     |   movsxd rcx, ebp
 0x00401a66: 48 83 bc cc 10 01 00 00 |H.......|
-0x00401a6e: 00                      |.       |   cmp    QWORD PTR ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
+0x00401a6e: 00                      |.       |   cmp    qword ds:[rsp + rcx*0x08 + 0x00000110<272>], 0x00
 0x00401a6f: 0f 95 c2                |...     |   setne  dl
 0x00401a72: 31 c0                   |1.      |   xor    eax, eax
 0x00401a74: 83 fd 3f                |..?     |   cmp    ebp, 0x3f
@@ -2199,7 +2211,7 @@ using this memory map for disassembly:
 0x00401ab9: 49 63 d6                |Ic.     |   movsxd rdx, r14d
 0x00401abc: 41 ff c6                |A..     |   inc    r14d
 0x00401abf: 41 83 fe 40             |A..@    |   cmp    r14d, 0x40
-0x00401ac3: 49 89 04 d7             |I...    |   mov    QWORD PTR ds:[r15 + rdx*0x08], rax
+0x00401ac3: 49 89 04 d7             |I...    |   mov    qword ds:[r15 + rdx*0x08], rax
 0x00401ac7: 0f 8c 53 fe ff ff       |..S...  |   jl     0x0000000000401920<<Insn>>
 0x00401ac7: Successor blocks: 0x00401920, 0x00401acd
 
@@ -2226,21 +2238,21 @@ using this memory map for disassembly:
 
 0x00401ae0: Basic block reasons: entry point, graph-1
 0x00401ae0: Predecessor blocks: 0x0040154f<<Func>>, 0x00401d1a<<Func>>
-0x00401ae0: 48 89 6c 24 d8          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xd8<-40>], rbp
-0x00401ae5: 4c 89 64 24 e0          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xe0<-32>], r12
+0x00401ae0: 48 89 6c 24 d8          |H.l$.   |   mov    qword ds:[rsp + 0xd8<-40>], rbp
+0x00401ae5: 4c 89 64 24 e0          |L.d$.   |   mov    qword ds:[rsp + 0xe0<-32>], r12
 0x00401aea: 31 c0                   |1.      |   xor    eax, eax
-0x00401aec: 4c 89 6c 24 e8          |L.l$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], r13
-0x00401af1: 4c 89 74 24 f0          |L.t$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], r14
+0x00401aec: 4c 89 6c 24 e8          |L.l$.   |   mov    qword ds:[rsp + 0xe8<-24>], r13
+0x00401af1: 4c 89 74 24 f0          |L.t$.   |   mov    qword ds:[rsp + 0xf0<-16>], r14
 0x00401af6: 49 89 fd                |I..     |   mov    r13, rdi
-0x00401af9: 4c 89 7c 24 f8          |L.|$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r15
-0x00401afe: 48 89 5c 24 d0          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xd0<-48>], rbx
+0x00401af9: 4c 89 7c 24 f8          |L.|$.   |   mov    qword ds:[rsp + 0xf8<-8>], r15
+0x00401afe: 48 89 5c 24 d0          |H.\$.   |   mov    qword ds:[rsp + 0xd0<-48>], rbx
 0x00401b03: 49 89 f7                |I..     |   mov    r15, rsi
 0x00401b06: 48 81 ec 58 03 00 00    |H..X... |   sub    rsp, 0x00000358<856>
 0x00401b0d: be 01 04 00 00          |.....   |   mov    esi, 0x00000401<1025>
 0x00401b12: bf aa 22 40 00          |.."@.   |   mov    edi, 0x004022aa<.rodata+0x03f2>
 0x00401b17: 89 d5                   |..      |   mov    ebp, edx
 0x00401b19: 41 89 cc                |A..     |   mov    r12d, ecx
-0x00401b1c: 4c 89 44 24 08          |L.D$.   |   mov    QWORD PTR ds:[rsp + 0x08], r8
+0x00401b1c: 4c 89 44 24 08          |L.D$.   |   mov    qword ds:[rsp + 0x08], r8
 0x00401b21: e8 f2 f4 ff ff          |.....   |   call   0x0000000000401018<open@plt>
 0x00401b21: Successor blocks: 0x00401018<open@plt>, 0x00401b26
 
@@ -2276,9 +2288,9 @@ using this memory map for disassembly:
 0x00401b56: 48 8d 7b 2c             |H.{,    |   lea    rdi, [rbx + 0x2c]
 0x00401b5a: ba 20 00 00 00          |. ...   |   mov    edx, 0x00000020
 0x00401b5f: 4c 89 ee                |L..     |   mov    rsi, r13
-0x00401b62: 89 ac 24 a4 01 00 00    |..$.... |   mov    DWORD PTR ds:[rsp + 0x000001a4<420>], ebp
+0x00401b62: 89 ac 24 a4 01 00 00    |..$.... |   mov    dword ds:[rsp + 0x000001a4<420>], ebp
 0x00401b69: 66 44 89 a4 24 a0 01 00 |fD..$...|
-0x00401b71: 00                      |.       |   mov    WORD PTR ds:[rsp + 0x000001a0<416>], r12w
+0x00401b71: 00                      |.       |   mov    word ds:[rsp + 0x000001a0<416>], r12w
 0x00401b72: 48 8d 6c 24 10          |H.l$.   |   lea    rbp, [rsp + 0x10]
 0x00401b77: e8 bc f3 ff ff          |.....   |   call   0x0000000000400f38<strncpy@plt>
 0x00401b77: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401b7c
@@ -2295,7 +2307,7 @@ using this memory map for disassembly:
 0x00401b8d: Basic block reasons: graph-1
 0x00401b8d: Predecessor blocks: 0x00401b7c
 0x00401b8d: Dominator block: 0x00401b7c
-0x00401b8d: 48 8b 74 24 08          |H.t$.   |   mov    rsi, QWORD PTR ds:[rsp + 0x08]
+0x00401b8d: 48 8b 74 24 08          |H.t$.   |   mov    rsi, qword ds:[rsp + 0x08]
 0x00401b92: 48 8d 7b 08             |H.{.    |   lea    rdi, [rbx + 0x08]
 0x00401b96: ba 20 00 00 00          |. ...   |   mov    edx, 0x00000020
 0x00401b9b: e8 98 f3 ff ff          |.....   |   call   0x0000000000400f38<strncpy@plt>
@@ -2333,12 +2345,12 @@ using this memory map for disassembly:
 0x00401bc1: Basic block reasons: graph-1
 0x00401bc1: Predecessor blocks: 0x00401b26, 0x00401bb9
 0x00401bc1: Dominator block: 0x00401b26
-0x00401bc1: 48 8b 9c 24 28 03 00 00 |H..$(...|   mov    rbx, QWORD PTR ds:[rsp + 0x00000328<808>]
-0x00401bc9: 48 8b ac 24 30 03 00 00 |H..$0...|   mov    rbp, QWORD PTR ds:[rsp + 0x00000330<816>]
-0x00401bd1: 4c 8b a4 24 38 03 00 00 |L..$8...|   mov    r12, QWORD PTR ds:[rsp + 0x00000338<824>]
-0x00401bd9: 4c 8b ac 24 40 03 00 00 |L..$@...|   mov    r13, QWORD PTR ds:[rsp + 0x00000340<832>]
-0x00401be1: 4c 8b b4 24 48 03 00 00 |L..$H...|   mov    r14, QWORD PTR ds:[rsp + 0x00000348<840>]
-0x00401be9: 4c 8b bc 24 50 03 00 00 |L..$P...|   mov    r15, QWORD PTR ds:[rsp + 0x00000350<848>]
+0x00401bc1: 48 8b 9c 24 28 03 00 00 |H..$(...|   mov    rbx, qword ds:[rsp + 0x00000328<808>]
+0x00401bc9: 48 8b ac 24 30 03 00 00 |H..$0...|   mov    rbp, qword ds:[rsp + 0x00000330<816>]
+0x00401bd1: 4c 8b a4 24 38 03 00 00 |L..$8...|   mov    r12, qword ds:[rsp + 0x00000338<824>]
+0x00401bd9: 4c 8b ac 24 40 03 00 00 |L..$@...|   mov    r13, qword ds:[rsp + 0x00000340<832>]
+0x00401be1: 4c 8b b4 24 48 03 00 00 |L..$H...|   mov    r14, qword ds:[rsp + 0x00000348<840>]
+0x00401be9: 4c 8b bc 24 50 03 00 00 |L..$P...|   mov    r15, qword ds:[rsp + 0x00000350<848>]
 0x00401bf1: 48 81 c4 58 03 00 00    |H..X... |   add    rsp, 0x00000358<856>
 0x00401bf8: c3                      |.       |   ret    
 0x00401bf8: Successor blocks: unknown
@@ -2384,14 +2396,14 @@ using this memory map for disassembly:
 
 0x00401c20: Basic block reasons: entry point, graph-1
 0x00401c20: Predecessor blocks: 0x00401c17<<Func>>
-0x00401c20: 48 89 5c 24 d0          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xd0<-48>], rbx
-0x00401c25: 48 89 6c 24 d8          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xd8<-40>], rbp
+0x00401c20: 48 89 5c 24 d0          |H.\$.   |   mov    qword ds:[rsp + 0xd0<-48>], rbx
+0x00401c25: 48 89 6c 24 d8          |H.l$.   |   mov    qword ds:[rsp + 0xd8<-40>], rbp
 0x00401c2a: 48 89 f3                |H..     |   mov    rbx, rsi
-0x00401c2d: 4c 89 6c 24 e8          |L.l$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], r13
-0x00401c32: 4c 89 74 24 f0          |L.t$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], r14
+0x00401c2d: 4c 89 6c 24 e8          |L.l$.   |   mov    qword ds:[rsp + 0xe8<-24>], r13
+0x00401c32: 4c 89 74 24 f0          |L.t$.   |   mov    qword ds:[rsp + 0xf0<-16>], r14
 0x00401c37: 49 89 fd                |I..     |   mov    r13, rdi
-0x00401c3a: 4c 89 7c 24 f8          |L.|$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r15
-0x00401c3f: 4c 89 64 24 e0          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xe0<-32>], r12
+0x00401c3a: 4c 89 7c 24 f8          |L.|$.   |   mov    qword ds:[rsp + 0xf8<-8>], r15
+0x00401c3f: 4c 89 64 24 e0          |L.d$.   |   mov    qword ds:[rsp + 0xe0<-32>], r12
 0x00401c44: 48 81 ec 68 03 00 00    |H..h... |   sub    rsp, 0x00000368<872>
 0x00401c4b: 48 85 ff                |H..     |   test   rdi, rdi
 0x00401c4e: 41 89 d7                |A..     |   mov    r15d, edx
@@ -2405,7 +2417,7 @@ using this memory map for disassembly:
 0x00401c5d: Dominator block: 0x00401c20
 0x00401c5d: 31 f6                   |1.      |   xor    esi, esi
 0x00401c5f: bf b8 22 40 00          |.."@.   |   mov    edi, 0x004022b8<.rodata+0x0400>
-0x00401c64: c6 84 24 10 03 00 00 00 |..$.....|   mov    BYTE PTR ds:[rsp + 0x00000310<784>], 0x00
+0x00401c64: c6 84 24 10 03 00 00 00 |..$.....|   mov    byte ds:[rsp + 0x00000310<784>], 0x00
 0x00401c6c: e8 47 f4 ff ff          |.G...   |   call   0x00000000004010b8<access@plt>
 0x00401c6c: Successor blocks: 0x004010b8<access@plt>, 0x00401c71
 
@@ -2433,8 +2445,8 @@ using this memory map for disassembly:
 0x00401c95: ba 04 00 00 00          |.....   |   mov    edx, 0x00000004
 0x00401c9a: 48 89 de                |H..     |   mov    rsi, rbx
 0x00401c9d: 66 44 89 b4 24 90 01 00 |fD..$...|
-0x00401ca5: 00                      |.       |   mov    WORD PTR ds:[rsp + 0x00000190<400>], r14w
-0x00401ca6: 44 89 bc 24 94 01 00 00 |D..$....|   mov    DWORD PTR ds:[rsp + 0x00000194<404>], r15d
+0x00401ca5: 00                      |.       |   mov    word ds:[rsp + 0x00000190<400>], r14w
+0x00401ca6: 44 89 bc 24 94 01 00 00 |D..$....|   mov    dword ds:[rsp + 0x00000194<404>], r15d
 0x00401cae: e8 85 f2 ff ff          |.....   |   call   0x0000000000400f38<strncpy@plt>
 0x00401cae: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401cb3
 
@@ -2507,7 +2519,7 @@ using this memory map for disassembly:
 0x00401d08: Basic block reasons: graph-1
 0x00401d08: Predecessor blocks: 0x00401d03
 0x00401d08: Dominator block: 0x00401d03
-0x00401d08: 80 7d 00 00             |.}..    |   cmp    BYTE PTR ds:[rbp + 0x00], 0x00
+0x00401d08: 80 7d 00 00             |.}..    |   cmp    byte ds:[rbp + 0x00], 0x00
 0x00401d0c: 48 89 e8                |H..     |   mov    rax, rbp
 0x00401d0f: 90                      |.       |   nop    
 0x00401d10: 75 08                   |u.      |   jne    0x0000000000401d1a<<Insn>>
@@ -2533,12 +2545,12 @@ using this memory map for disassembly:
 0x00401d2e: Basic block reasons: graph-1
 0x00401d2e: Predecessor blocks: 0x00401c20, 0x00401d1a
 0x00401d2e: Dominator block: 0x00401c20
-0x00401d2e: 48 8b 9c 24 38 03 00 00 |H..$8...|   mov    rbx, QWORD PTR ds:[rsp + 0x00000338<824>]
-0x00401d36: 48 8b ac 24 40 03 00 00 |H..$@...|   mov    rbp, QWORD PTR ds:[rsp + 0x00000340<832>]
-0x00401d3e: 4c 8b a4 24 48 03 00 00 |L..$H...|   mov    r12, QWORD PTR ds:[rsp + 0x00000348<840>]
-0x00401d46: 4c 8b ac 24 50 03 00 00 |L..$P...|   mov    r13, QWORD PTR ds:[rsp + 0x00000350<848>]
-0x00401d4e: 4c 8b b4 24 58 03 00 00 |L..$X...|   mov    r14, QWORD PTR ds:[rsp + 0x00000358<856>]
-0x00401d56: 4c 8b bc 24 60 03 00 00 |L..$`...|   mov    r15, QWORD PTR ds:[rsp + 0x00000360<864>]
+0x00401d2e: 48 8b 9c 24 38 03 00 00 |H..$8...|   mov    rbx, qword ds:[rsp + 0x00000338<824>]
+0x00401d36: 48 8b ac 24 40 03 00 00 |H..$@...|   mov    rbp, qword ds:[rsp + 0x00000340<832>]
+0x00401d3e: 4c 8b a4 24 48 03 00 00 |L..$H...|   mov    r12, qword ds:[rsp + 0x00000348<840>]
+0x00401d46: 4c 8b ac 24 50 03 00 00 |L..$P...|   mov    r13, qword ds:[rsp + 0x00000350<848>]
+0x00401d4e: 4c 8b b4 24 58 03 00 00 |L..$X...|   mov    r14, qword ds:[rsp + 0x00000358<856>]
+0x00401d56: 4c 8b bc 24 60 03 00 00 |L..$`...|   mov    r15, qword ds:[rsp + 0x00000360<864>]
 0x00401d5e: 48 81 c4 68 03 00 00    |H..h... |   add    rsp, 0x00000368<872>
 0x00401d65: c3                      |.       |   ret    
 0x00401d65: Successor blocks: unknown
@@ -2579,14 +2591,14 @@ using this memory map for disassembly:
 0x00401d94: 49 8d 7c 24 08          |I.|$.   |   lea    rdi, [r12 + 0x08]
 0x00401d99: ba 20 00 00 00          |. ...   |   mov    edx, 0x00000020
 0x00401d9e: 48 89 c6                |H..     |   mov    rsi, rax
-0x00401da1: 48 89 44 24 08          |H.D$.   |   mov    QWORD PTR ds:[rsp + 0x08], rax
+0x00401da1: 48 89 44 24 08          |H.D$.   |   mov    qword ds:[rsp + 0x08], rax
 0x00401da6: e8 8d f1 ff ff          |.....   |   call   0x0000000000400f38<strncpy@plt>
 0x00401da6: Successor blocks: 0x00400f38<strncpy@plt>, 0x00401dab
 
 0x00401dab: Basic block reasons: graph-1
 0x00401dab: Predecessor blocks: 0x00401d90
 0x00401dab: Dominator block: 0x00401d90
-0x00401dab: 48 8b 74 24 08          |H.t$.   |   mov    rsi, QWORD PTR ds:[rsp + 0x08]
+0x00401dab: 48 8b 74 24 08          |H.t$.   |   mov    rsi, qword ds:[rsp + 0x08]
 0x00401db0: 48 8d bc 24 10 03 00 00 |H..$....|   lea    rdi, [rsp + 0x00000310<784>]
 0x00401db8: ba 20 00 00 00          |. ...   |   mov    edx, 0x00000020
 0x00401dbd: e8 76 f1 ff ff          |.v...   |   call   0x0000000000400f38<strncpy@plt>
@@ -2606,10 +2618,10 @@ using this memory map for disassembly:
 0x00401dd0: This function calls 0x00400e70
 
 0x00401dd0: Basic block reasons: entry point, graph-2
-0x00401dd0: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
-0x00401dd5: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
+0x00401dd0: 48 89 5c 24 e8          |H.\$.   |   mov    qword ds:[rsp + 0xe8<-24>], rbx
+0x00401dd5: 4c 89 64 24 f8          |L.d$.   |   mov    qword ds:[rsp + 0xf8<-8>], r12
 0x00401dda: 4c 8d 25 3f 07 10 00    |L.%?... |   lea    r12, [rip + 0x000000000010073f]
-0x00401de1: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
+0x00401de1: 48 89 6c 24 f0          |H.l$.   |   mov    qword ds:[rsp + 0xf0<-16>], rbp
 0x00401de6: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x00401dea: 31 db                   |1.      |   xor    ebx, ebx
 0x00401dec: e8 7f f0 ff ff          |.....   |   call   0x0000000000400e70<<Func>>
@@ -2634,7 +2646,7 @@ using this memory map for disassembly:
 0x00401e07: Basic block reasons: graph-2
 0x00401e07: Predecessor blocks: 0x00401e04, 0x00401e0b
 0x00401e07: Dominator block: 0x00401e04
-0x00401e07: 41 ff 14 dc             |A...    |   call   QWORD PTR ds:[r12 + rbx*0x08]
+0x00401e07: 41 ff 14 dc             |A...    |   call   qword ds:[r12 + rbx*0x08]
 0x00401e07: Successor blocks: 0x00401e0b, unknown
 
 0x00401e0b: Basic block reasons: graph-2
@@ -2648,9 +2660,9 @@ using this memory map for disassembly:
 0x00401e13: Basic block reasons: graph-2
 0x00401e13: Predecessor blocks: 0x00401df1, 0x00401e0b
 0x00401e13: Dominator block: 0x00401df1
-0x00401e13: 48 8b 1c 24             |H..$    |   mov    rbx, QWORD PTR ds:[rsp]
-0x00401e17: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, QWORD PTR ds:[rsp + 0x08]
-0x00401e1c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, QWORD PTR ds:[rsp + 0x10]
+0x00401e13: 48 8b 1c 24             |H..$    |   mov    rbx, qword ds:[rsp]
+0x00401e17: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, qword ds:[rsp + 0x08]
+0x00401e1c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, qword ds:[rsp + 0x10]
 0x00401e21: 48 83 c4 18             |H...    |   add    rsp, 0x18
 0x00401e25: c3                      |.       |   ret    
 0x00401e25: Successor blocks: unknown
@@ -2676,7 +2688,7 @@ using this memory map for disassembly:
 0x00401e47: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x00401e4b: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x00401e4f: eb 07                   |..      | (data)   jmp    0x0000000000401e58
-0x00401e51: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
+0x00401e51: ff 54 dd 00             |.T..    | (data)   call   qword ds:[rbp + rbx*0x08 + 0x00]
 0x00401e55: 48 ff cb                |H..     | (data)   dec    rbx
 0x00401e58: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x00401e5c: 75 f3                   |u.      | (data)   jne    0x0000000000401e51
@@ -2697,7 +2709,7 @@ using this memory map for disassembly:
 0x00401e74: 53                      |S       |   push   rbx
 0x00401e75: 48 c7 c3 20 25 50 00    |H.. %P. |   mov    rbx, 0x00502520<.ctors>
 0x00401e7c: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x00401e80: 48 8b 05 99 06 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000100699]
+0x00401e80: 48 8b 05 99 06 10 00    |H...... |   mov    rax, qword ds:[rip + 0x0000000000100699]
 0x00401e80: Successor blocks: 0x00401e87
 
 0x00401e87: Basic block reasons: graph-2
@@ -2720,7 +2732,7 @@ using this memory map for disassembly:
 0x00401e96: Basic block reasons: graph-2
 0x00401e96: Predecessor blocks: 0x00401e90
 0x00401e96: Dominator block: 0x00401e90
-0x00401e96: 48 8b 03                |H..     |   mov    rax, QWORD PTR ds:[rbx]
+0x00401e96: 48 8b 03                |H..     |   mov    rax, qword ds:[rbx]
 0x00401e96: Successor blocks: 0x00401e99
 
 0x00401e99: Basic block reasons: graph-2

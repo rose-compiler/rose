@@ -443,7 +443,7 @@ TokenMappingTraversal::consistancyCheck()
           ROSE_ASSERT(tokenStreamSequenceVector[i]->node != NULL);
           if (tokenStreamSequenceMap.find(tokenStreamSequenceVector[i]->node) == tokenStreamSequenceMap.end())
              {
-               printf ("Error: cannot find: tokenStreamSequenceVector[i=%zu] = %p node = %p = %s \n",i,tokenStreamSequenceVector[i],tokenStreamSequenceVector[i]->node,tokenStreamSequenceVector[i]->node->class_name().c_str());
+               printf ("Error: cannot find: tokenStreamSequenceVector[i=%" PRIuPTR "] = %p node = %p = %s \n",i,tokenStreamSequenceVector[i],tokenStreamSequenceVector[i]->node,tokenStreamSequenceVector[i]->node->class_name().c_str());
                tokenStreamSequenceVector[i]->node->get_file_info()->display("error: can't find node in tokenStreamSequenceMap: debug");
 
                printf ("Error: TokenStreamSequenceToNodeMapping* element in tokenStreamSequenceVector not found in tokenStreamSequenceMap \n");
@@ -868,7 +868,7 @@ end [shape=Msquare];
      for (size_t i = 0; i < tokenList.size(); i++)
         {
 #if 0
-          printf ("tokenList[i=%zu] = %p \n",i,tokenList[i]);
+          printf ("tokenList[i=%" PRIuPTR "] = %p \n",i,tokenList[i]);
 #endif
           string token_name = "token #";
           token_name += StringUtility::numberToString(i) + "\\n";
@@ -1608,7 +1608,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              mappingInfo->node,mappingInfo->node->class_name().c_str());
 #endif
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                        printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                                        printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                                      // Remove the associated token stream subsequence from the map.
                                      // ROSE_ASSERT(tokenStreamSequenceMap.find(mappingInfo->node) != tokenStreamSequenceMap.end());
@@ -1634,7 +1634,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                              printf ("mappingInfo = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",mappingInfo,mappingInfo->node,mappingInfo->node->class_name().c_str());
                                            }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                        printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                                        printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                                      // DQ (10/14/2013): Added consistancy test.
                                         consistancyCheck();
@@ -1672,7 +1672,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
                          ROSE_ASSERT(mappingInfo_to_add != NULL);
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                         printf ("BEFORE erase: tokenToNodeVector.size() = %zu \n",tokenToNodeVector.size());
+                         printf ("BEFORE erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
@@ -1689,7 +1689,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                          for (size_t index = 0; index < tokenToNodeEntriesToRemove.size(); index++)
                             {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s \n",index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
+                              printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s \n",index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                               vector<TokenStreamSequenceToNodeMapping*>::iterator k1,k2;
                               k1 = find(tokenToNodeVector.begin(),tokenToNodeVector.end(),tokenToNodeEntriesToRemove[index]);
@@ -1701,7 +1701,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                               ROSE_ASSERT(tokenStreamSequenceMap.find(n) != tokenStreamSequenceMap.end());
                               ROSE_ASSERT(tokenToNodeEntriesToRemove[index]->node != NULL);
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                              printf ("BEFORE ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                            // tokenStreamSequenceMap.erase(tokenToNodeEntriesToRemove[index].node);
                            // tokenStreamSequenceMap.erase(tokenStreamSequenceMap.find(tokenToNodeEntriesToRemove[index]->node));
@@ -1712,7 +1712,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 else
                                  {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                   printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceMap \n",
+                                   printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s NOT FOUND in tokenStreamSequenceMap \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                                  }
@@ -1725,16 +1725,16 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 else
                                  {
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                                   printf ("tokenToNodeEntriesToRemove[index=%zu] = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",
+                                   printf ("tokenToNodeEntriesToRemove[index=%" PRIuPTR "] = %p node = %p = %s NOT FOUND in tokenStreamSequenceVector \n",
                                         index,tokenToNodeEntriesToRemove[index],tokenToNodeEntriesToRemove[index]->node,tokenToNodeEntriesToRemove[index]->node->class_name().c_str());
 #endif
                                  }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                              printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %zu tokenStreamSequenceVector.size() = %zu \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
+                              printf ("AFTER ERASE: tokenStreamSequenceMap.size() = %" PRIuPTR " tokenStreamSequenceVector.size() = %" PRIuPTR " \n",tokenStreamSequenceMap.size(),tokenStreamSequenceVector.size());
 #endif
                             }
 #if DEBUG_TOKEN_SHARING_BETWEEN_STATEMENTS
-                         printf ("AFTER erase: tokenToNodeVector.size() = %zu \n",tokenToNodeVector.size());
+                         printf ("AFTER erase: tokenToNodeVector.size() = %" PRIuPTR " \n",tokenToNodeVector.size());
 #endif
                       // DQ (10/14/2013): Added consistancy test.
                          consistancyCheck();
@@ -1821,7 +1821,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                printf ("$$$$$$$$$$$$ List the IR nodes that have an identified token subsequence mappings (tokenToNodeVector.size() = %zu): \n",tokenToNodeVector.size());
                for (size_t j = 0; j < tokenToNodeVector.size(); j++)
                   {
-                    printf ("   --- tokenToNodeVector[j=%zu] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
+                    printf ("   --- tokenToNodeVector[j=%" PRIuPTR "] = %p = %s \n",j,tokenToNodeVector[j]->node,tokenToNodeVector[j]->node->class_name().c_str());
                  // printf ("   --- is first child with token mapping = %s \n",(firstChildWithTokenMapping == j) ? "true" : "false");
                  // printf ("   --- is last child with token mapping  = %s \n",(lastChildWithTokenMapping == j) ? "true" : "false");
                     printf ("   --- tokenToNodeVector[j=%zu]->leading_whitespace_start  = %d end = %d \n",j,tokenToNodeVector[j]->leading_whitespace_start,tokenToNodeVector[j]->leading_whitespace_end);
@@ -1972,7 +1972,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 
             // ROSE_ASSERT(firstChildWithTokenMapping <= lastChildWithTokenMapping);
 #if 0
-               printf ("tokenToNodeVector.size() = %zu childrenWithoutTokenMappings.size() = %zu \n",tokenToNodeVector.size(),childrenWithoutTokenMappings.size());
+               printf ("tokenToNodeVector.size() = %" PRIuPTR " childrenWithoutTokenMappings.size() = %" PRIuPTR " \n",tokenToNodeVector.size(),childrenWithoutTokenMappings.size());
                printf ("   --- firstChildWithTokenMapping = %d \n",firstChildWithTokenMapping);
                printf ("   --- lastChildWithTokenMapping  = %d \n",lastChildWithTokenMapping);
 #endif
@@ -2019,7 +2019,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                     for (size_t i = 0; i < tokenToNodeVector.size(); i++)
                        {
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
-                         printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%zu] = %p \n",i,tokenToNodeVector[i]);
+                         printf ("In evaluateSynthesizedAttribute(): tokenToNodeVector[%" PRIuPTR "] = %p \n",i,tokenToNodeVector[i]);
 #endif
                          TokenStreamSequenceToNodeMapping* mappingInfo = tokenToNodeVector[i];
 #if DEBUG_LEADING_AND_TRAILING_WHITESPACE
@@ -6067,7 +6067,7 @@ ALT_buildTokenStreamMapping(SgSourceFile* sourceFile)
              }
           ROSE_ASSERT(lastElement->trailing_whitespace_start <= lastElement->trailing_whitespace_end);
 #if 0
-          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %zu \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
+          printf ("Setting the last token's trailing_whitespace (%d,%d) tokenVector.size() = %" PRIuPTR " \n",lastElement->trailing_whitespace_start,lastElement->trailing_whitespace_end,tokenVector.size());
 #endif
         }
 #endif

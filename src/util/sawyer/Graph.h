@@ -445,6 +445,23 @@ public:                                                 // public only for the s
             return !(*this==other);
         }
         /** @} */
+
+        /** Iterator comparison. */
+        bool operator<(const EdgeBaseIterator &other) const {
+            Node *a = NULL;
+            if (N_PHASES==phase_) {
+                a = iter_.isAtEnd() ? NULL : &iter_->value();
+            } else {
+                a = vlist_->isHead() ? NULL : &vlist_->dereference();
+            }
+            Node *b = NULL;
+            if (N_PHASES==other.phase_) {
+                b = other.iter_.isAtEnd() ? NULL : &other.iter_->value();
+            } else {
+                b = other.vlist_->isHead() ? NULL : &other.vlist_->dereference();
+            }
+            return a < b;
+        }
     };
 
     /** Base class for vertex iterators. */
@@ -489,6 +506,10 @@ public:                                                 // public only for the s
         template<class OtherIter> bool operator==(const OtherIter &other) const { return base_ == other.base_; }
         template<class OtherIter> bool operator!=(const OtherIter &other) const { return base_ != other.base_; }
         /** @} */
+
+        /** Iterator comparison. */
+        bool operator<(const VertexBaseIterator &other) const { return base_ < other.base_; }
+
     private:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }

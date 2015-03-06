@@ -321,8 +321,8 @@ public:
  * locally defined @c mlog.  Therefore, a "using namespace rose::Diagnostics" probably needs to be in effect. */
 StreamPrintf mfprintf(std::ostream &stream);
 
-// See mfprintf
-#define mprintf mfprintf(mlog[rose::Diagnostics::DEBUG]) /*"mlog" must be resolved at point where macro is expanded*/
+// See mfprintf. "mlog" must be resolved at point where macro is expanded.
+#define mprintf rose::Diagnostics::mfprintf(mlog[rose::Diagnostics::DEBUG]) 
 
 } // namespace
 } // namespace

@@ -211,18 +211,27 @@ Disassembler::lookup(SgAsmGenericHeader *header)
 }
 
 // Class method
+std::vector<std::string>
+Disassembler::isaNames() {
+    std::vector<std::string> v;
+    v.push_back("amd64");
+    v.push_back("arm");
+    v.push_back("coldfire");
+    v.push_back("i386");
+    v.push_back("m68040");
+    v.push_back("mips");
+    v.push_back("ppc");
+    return v;
+}
+
+// Class method
 Disassembler *
 Disassembler::lookup(const std::string &name)
 {
     if (0==name.compare("list")) {
-        std::cout <<"The following ISAs are supported:\n"
-                  <<"  amd64\n"
-                  <<"  arm\n"
-                  <<"  coldfire\n"
-                  <<"  i386\n"
-                  <<"  m68040\n"
-                  <<"  mips\n"
-                  <<"  ppc\n";
+        std::cout <<"The following ISAs are supported:\n";
+        BOOST_FOREACH (const std::string &name, isaNames())
+            std::cout <<"  " <<name <<"\n";
         exit(0);
     } else if (0==name.compare("arm")) {
         return new DisassemblerArm();
@@ -594,7 +603,7 @@ Disassembler::search_words(AddressSet *worklist, const MemoryMap *map, const Ins
     if (map->isEmpty())
         return;
 
-    rose_addr_t va = ALIGN_UP(map->hull().least(), get_alignment());
+    rose_addr_t va = alignUp(map->hull().least(), (rose_addr_t)get_alignment());
     rose_addr_t constant = 0;                           // value read from memory
     ASSERT_require(get_wordsize() <= sizeof constant);
     uint8_t buf[sizeof constant];

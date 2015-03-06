@@ -379,7 +379,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                
                if ( alreadyExists == false)
                   {
-                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+#if 0
+                    printf ("Building a SgAliasSymbol \n");
+#endif
+                 // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol);
                     ROSE_ASSERT(aliasSymbol != NULL);
 
                  // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
@@ -421,6 +425,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #if 0
   // debugging
      symbolTable->print("In injectSymbolsFromReferencedScopeIntoCurrentScope(): printing out the symbol tables");
+#endif
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
 #endif
    }
 
@@ -469,14 +476,14 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
           printf ("namespace definition associated mangled name = %s \n",mangledNamespaceName.str());
 #endif
 #if ALIAS_SYMBOL_DEBUGGING
-          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %zu \n",mangledNamespaceName.str(),namespaceMap.size());
+          printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: associated mangled name = %s namespaceMap size = %" PRIuPTR " \n",mangledNamespaceName.str(),namespaceMap.size());
 #endif
           std::map<SgName,std::vector<SgNamespaceDefinitionStatement*> >::iterator i = namespaceMap.find(mangledNamespaceName);
           if (i != namespaceMap.end())
              {
                std::vector<SgNamespaceDefinitionStatement*> & namespaceVector = i->second;
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %zu \n",namespaceVector.size());
+               printf ("In FixupAstSymbolTablesToSupportAliasedSymbols: (found an entry): Namespace vector size = %" PRIuPTR " \n",namespaceVector.size());
 #endif
             // Testing each entry...
                for (size_t j = 0; j < namespaceVector.size(); j++)
@@ -606,7 +613,7 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #error "DEAD CODE"
 
 #if ALIAS_SYMBOL_DEBUGGING
-               printf ("namespaceMap.size() = %zu \n",namespaceMap.size());
+               printf ("namespaceMap.size() = %" PRIuPTR " \n",namespaceMap.size());
 #endif
              }
         }
@@ -818,7 +825,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
                   }
              }
-        }          
+        }
+
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("Leaving FixupAstSymbolTablesToSupportAliasedSymbols::visit() (preorder AST traversal) node = %p = %s \n",node,node->class_name().c_str());
+#endif
    }
 
 

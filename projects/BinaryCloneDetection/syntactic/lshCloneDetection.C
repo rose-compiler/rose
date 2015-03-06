@@ -97,6 +97,7 @@ read_vector_data(const SqlDatabase::TransactionPtr &tx, scoped_array_with_size<V
         ve.compressedCounts.allocate(compressedCounts.size());
         ve.rowNumber = rowNumber;
         memcpy(ve.compressedCounts.get(), compressedCounts.data(), compressedCounts.size());
+         
         if (instrSeqMD5.size() != 16) {
             if (debug_messages)
                 cout << "Found MD5 with length other than 16" << endl;
@@ -314,6 +315,7 @@ main(int argc, char* argv[])
                 const VectorEntry& ve = duplicateVectors[j->first][k];
                 insert_into_clusters(tx, clusterNum, ve.functionId, ve.indexWithinFunction, ve.rowNumber, j->second);
             }
+
             const VectorEntry& ve = vectors[j->first];
             insert_into_clusters(tx, clusterNum, ve.functionId, ve.indexWithinFunction, ve.rowNumber, j->second);
         }

@@ -4,6 +4,9 @@
 #include "RDAstAttribute.h"
 #include "UDAstAttribute.h"
 
+using namespace std;
+using namespace SPRAY;
+
 void DFAstAttributeConversion::createUDAstAttributeFromRDAttribute(Labeler* labeler, string rdAttributeName, string udAttributeName) {
   long labelNum=labeler->numberOfLabels();
   for(long i=0;i<labelNum;++i) {

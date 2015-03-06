@@ -19,6 +19,7 @@ sageInterfaceTest_CXXFLAGS= \
 sageInterfaceTest_LDADD= \
   $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la \
   $(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la \
+  $(top_builddir)/tests/testSupport/gtest/lib/libgtest.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 
@@ -35,6 +36,7 @@ sageBuilderTest_CXXFLAGS= \
 sageBuilderTest_LDADD= \
   $(top_builddir)/tests/testSupport/libroseUnitTestSupport.la \
   $(top_builddir)/tests/testSupport/gtest/lib/libgtest_main.la \
+  $(top_builddir)/tests/testSupport/gtest/lib/libgtest.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 

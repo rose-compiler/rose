@@ -294,11 +294,17 @@ struct IP_bswap: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
-        BaseSemantics::SValuePtr result = ops->extract(op0, 0, 8);
-        for (size_t startbit=8; startbit<nbits; startbit+=8)
-            result = ops->concat(ops->extract(op0, startbit, startbit+8), result);
-        d->write(args[0], result);
+        if (16 == nbits) {
+            // Intel ref manual says "When the BSWAP instruction references a 16-bit register, the result is
+            // undefined".
+            d->write(args[0], ops->undefined_(16));
+        } else {
+            BaseSemantics::SValuePtr op0 = d->read(args[0], nbits);
+            BaseSemantics::SValuePtr result = ops->extract(op0, 0, 8);
+            for (size_t startbit=8; startbit<nbits; startbit+=8)
+                result = ops->concat(ops->extract(op0, startbit, startbit+8), result);
+            d->write(args[0], result);
+        }
     }
 };
 
@@ -692,7 +698,8 @@ struct IP_jcc: P {
 struct IP_lea: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        d->write(args[0], d->effectiveAddress(args[1], 32));
+        size_t nbits = asm_type_width(args[0]->get_type());
+        d->write(args[0], ops->unsignedExtend(d->effectiveAddress(args[1]), nbits));
     }
 };
 

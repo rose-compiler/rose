@@ -1795,7 +1795,15 @@ syscall_mmap(RSIM_Thread *t, int callno)
         return;
     }
 
-    uint32_t result = t->get_process()->mem_map(args.addr, args.len, args.prot, args.flags, args.offset, args.fd);
+    unsigned rose_perms = 0;
+    if (0 != (args.prot & PROT_READ))
+        rose_perms |= MemoryMap::READABLE;
+    if (0 != (args.prot & PROT_WRITE))
+        rose_perms |= MemoryMap::WRITABLE;
+    if (0 != (args.prot & PROT_EXEC))
+        rose_perms |= MemoryMap::EXECUTABLE;
+
+    uint32_t result = t->get_process()->mem_map(args.addr, args.len, rose_perms, args.flags, args.offset, args.fd);
     t->syscall_return(result);
 }
 
@@ -1819,8 +1827,8 @@ syscall_munmap(RSIM_Thread *t, int callno)
 {
     uint32_t va=t->syscall_arg(0);
     uint32_t sz=t->syscall_arg(1);
-    uint32_t aligned_va = ALIGN_DN(va, PAGE_SIZE);
-    uint32_t aligned_sz = ALIGN_UP(sz+va-aligned_va, PAGE_SIZE);
+    uint32_t aligned_va = alignDown(va, (uint32_t)PAGE_SIZE);
+    uint32_t aligned_sz = alignUp(sz+va-aligned_va, (uint32_t)PAGE_SIZE);
 
     /* Check ranges */
     if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
@@ -2001,7 +2009,7 @@ static ControlHeader *cmsg_next(void *control, size_t controllen, ControlHeader 
     if (!cur) return NULL;
     assert(control!=NULL && (uint8_t*)cur>=(uint8_t*)control);
     assert(cur->cmsg_len >= sizeof(ControlHeader));
-    size_t offset = (uint8_t*)cur - (uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    size_t offset = (uint8_t*)cur - (uint8_t*)control + alignUp((size_t)cur->cmsg_len, sizeof(cur->cmsg_len));
     return offset+sizeof(ControlHeader)<=controllen ? (ControlHeader*)((uint8_t*)control+offset) : NULL;
 }
 template<class ControlHeader>
@@ -2009,7 +2017,7 @@ static const ControlHeader *cmsg_next(const void *control, size_t controllen, co
     if (!cur) return NULL;
     assert(control!=NULL && (const uint8_t*)cur>=(const uint8_t*)control);
     assert(cur->cmsg_len >= sizeof(ControlHeader));
-    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + ALIGN_UP(cur->cmsg_len, sizeof(cur->cmsg_len));
+    size_t offset = (const uint8_t*)cur - (const uint8_t*)control + alignUp((size_t)cur->cmsg_len, sizeof(cur->cmsg_len));
     return offset+sizeof(ControlHeader)<=controllen ? (const ControlHeader*)((const uint8_t*)control+offset) : NULL;
 }
 
@@ -2063,7 +2071,7 @@ static size_t cmsg_needed(const void *control, size_t controllen)
     for (const SourceType *ctl=cmsg_first<SourceType>(control, controllen);
          ctl!=NULL;
          ctl=cmsg_next<SourceType>(control, controllen, ctl)) {
-        retval = ALIGN_UP(retval, sizeof(dst->cmsg_len));
+        retval = alignUp(retval, sizeof(dst->cmsg_len));
         retval += sizeof(DestinationType) + cmsg_payload_size(control, controllen, ctl);
     }
     return retval;
@@ -2230,6 +2238,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
             break;
+        case 5:/*SYS_ACCEPT*/
+            if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_enter(a, "accept", "dpp");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "socketpair", "dddp");
@@ -2240,6 +2255,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 10: /* SYS_RECV */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_enter(a, "recv", "dpdd");
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 14:/*SYS_SETSOCKOPT*/
+            if (20==t->get_process()->mem_read(a, t->syscall_arg(1), 20)) {
+                t->syscall_enter(a, "setsockopt", "dddpd");
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -2286,6 +2308,13 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_enter(a, "recvmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+            } else {
+                t->syscall_enter("socketcall", "fp", socketcall_commands);
+            }
+            break;
+        case 18:/*SYS_ACCEPT4*/
+            if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_enter(a, "accept4", "dppd");
             } else {
                 t->syscall_enter("socketcall", "fp", socketcall_commands);
             }
@@ -2388,43 +2417,75 @@ sys_socketpair(RSIM_Thread *t, int family, int type, int protocol, uint32_t sock
 static void
 sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 {
-    sockaddr_32 guest;
-    if (sizeof(guest)!=t->get_process()->mem_read(&guest, addr_va, sizeof guest)) {
+    uint8_t addr[4096];
+    if (addrlen==0 || addrlen>sizeof addr) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (addrlen != t->get_process()->mem_read(addr, addr_va, addrlen)) {
         t->syscall_return(-EFAULT);
         return;
     }
-
-    switch (guest.sa_family) {
-        case AF_UNIX: {
-            bool error;
-            std::string filename = t->get_process()->read_string(addr_va+2, 0, &error);
-            if (error) {
-                t->syscall_return(-EFAULT);
-                return;
-            }
-            size_t host_sz = 2/*af_family*/ + filename.size() + 1/*NUL*/;
-            char host[host_sz];
-            uint16_t fam = guest.sa_family;
-            memcpy(host+0, &fam, 2);
-            strcpy(host+2, filename.c_str());
-#ifdef SYS_socketcall /* i686 */
-            ROSE_ASSERT(4==sizeof(int));
-            int a[3];
-            a[0] = fd;
-            a[1] = (uint32_t)host;
-            a[2] = host_sz;
-            int result = syscall(SYS_socketcall, 3/*SYS_CONNECT*/, a);
-#else /* amd64 */
-            int result = syscall(SYS_connect, fd, host, host_sz);
+    
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[3];
+    a[0] = fd;
+    a[1] = (uint32_t)addr;
+    a[2] = addrlen;
+    int result = syscall(SYS_socketcall, 3 /*SYS_CONNECT*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_connect, fd, addr, addrlen);
 #endif
-            t->syscall_return(-1==result ? -errno : result);
-            break;
-        }
 
-        default:
-            t->syscall_return(-EINVAL);
-            break;
+    if (-1 == result) {
+        t->syscall_return(-errno); 
+        return;
     }
+    
+    t->syscall_return(result);
+}
+
+static void
+sys_accept4(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen_va, uint32_t flags)
+{
+    uint8_t addr[4096];
+    uint32_t addrlen = 0;
+    if (addr_va != 0 && addrlen_va != 0) {
+        if (4!=t->get_process()->mem_read(&addrlen, addrlen_va, 4)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        if (addrlen > sizeof addr) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+    }
+
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[4];
+    a[0] = fd;
+    a[1] = addr_va ? (uint32_t)addr : 0;
+    a[2] = addrlen_va ? (uint32_t)&addrlen : 0;
+    a[3] = flags;
+    int result = syscall(SYS_socketcall, 18 /*SYS_ACCEPT4*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_accept4, fd, addr_va?addr:NULL, addrlen_va?&addrlen:NULL, flags);
+#endif
+    if (-1 == result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (addr_va != 0 && addrlen_va != 0) {
+        if (addrlen != t->get_process()->mem_write(addr, addr_va, addrlen)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    }
+
+    t->syscall_return(result);
 }
 
 static void
@@ -2612,9 +2673,43 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 }
 
 static void
+sys_setsockopt(RSIM_Thread *t, int fd, int level, int optname, uint32_t optval_va, uint32_t optsz) {
+    uint8_t optval[4096];
+    if (optsz<0 || optsz>sizeof optval) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (optval_va && optsz!=t->get_process()->mem_read(optval, optval_va, optsz)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    
+    // FIXME[Robb P. Matzke 2015-01-27]: some of these option values might need to be converted from the 32-bit guest to the
+    // 64-bit host format.
+#ifdef SYS_socketcall /*i686*/
+    ROSE_ASSERT(4==sizeof(int));
+    int a[5];
+    a[0] = fd;
+    a[1] = level;
+    a[2] = optname;
+    a[3] = optval_va ? (uint32_t)optval : 0;
+    a[4] = optsz;
+    int result = syscall(SYS_socketcall, 14 /*SYS_SETSOCKOPT*/, a);
+#else /*amd64*/
+    int result = syscall(SYS_setsockopt, fd, level, optname, optval_va?optval:NULL, optsz);
+#endif
+    if (-1 == result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    
+    t->syscall_return(result);
+}
+
+static void
 syscall_socketcall(RSIM_Thread *t, int callno)
 {
-    /* Return value is written to eax by these helper functions. The struction of this code closely follows that in the
+    /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
      * Linux kernel. See linux/net/socket.c. */
     uint32_t a[6];
     switch (t->syscall_arg(0)) {
@@ -2654,6 +2749,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 5: { /* SYS_ACCEPT */
+            if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_accept4(t, a[0], a[1], a[2], 0);
+            }
+            break;
+        }
+            
         case 8: { /* SYS_SOCKETPAIR */
             if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
                 t->syscall_return(-EFAULT);
@@ -2672,6 +2776,15 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
+        case 14: { /* SYS_SETSOCKOPT */
+            if (20!=t->get_process()->mem_read(a, t->syscall_arg(1), 20)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_setsockopt(t, a[0], a[1], a[2], a[3], a[4]);
+            }
+            break;
+        }
+            
         case 16: {/* SYS_SENDMSG */
             if (12!=t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_return(-EFAULT);
@@ -2690,16 +2803,23 @@ syscall_socketcall(RSIM_Thread *t, int callno)
             break;
         }
 
-        case 5: /* SYS_ACCEPT */
+        case 18: { /* SYS_ACCEPT4 */
+            if (16!=t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
+                t->syscall_return(-EFAULT);
+            } else {
+                sys_accept4(t, a[0], a[1], a[2], a[3]);
+            }
+            break;
+        }
+            
+
         case 6: /* SYS_GETSOCKNAME */
         case 7: /* SYS_GETPEERNAME */
         case 9: /* SYS_SEND */
         case 11: /* SYS_SENDTO */
         case 12: /* SYS_RECVFROM */
         case 13: /* SYS_SHUTDOWN */
-        case 14: /* SYS_SETSOCKOPT */
         case 15: /* SYS_GETSOCKOPT */
-        case 18: /* SYS_ACCEPT4 */
         case 19: /* SYS_RECVMMSG */
             t->syscall_return(-ENOSYS);
             break;
@@ -3738,8 +3858,8 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
             assert(!freeArea.isEmpty());
             shmaddr = freeArea.least();
         } else if (shmflg & SHM_RND) {
-            shmaddr = ALIGN_DN(shmaddr, SHMLBA);
-        } else if (ALIGN_DN(shmaddr, 4096)!=shmaddr) {
+            shmaddr = alignDown(shmaddr, (uint32_t)SHMLBA);
+        } else if (alignDown(shmaddr, (uint32_t)4096)!=shmaddr) {
             result = -EINVAL;
             break;
         }
@@ -3983,7 +4103,10 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
 {
     RSIM_Process *p = t->get_process();
 
-    if (flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) {
+
+    // Flags are documented at http://linux.die.net/man/2/clone and elsewhere
+    if ((flags == (CLONE_CHILD_CLEARTID | CLONE_CHILD_SETTID | SIGCHLD)) || // linux 2.5.32 through 2.5.48
+        (flags == (CLONE_PARENT_SETTID | SIGCHLD))) {                       // linux 2.5.49 and later
 
         /* Apply process pre-fork callbacks */
         p->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, p, RSIM_Callbacks::ProcessCallback::FORK, true);
@@ -3993,23 +4116,46 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
          * actions, wait and post the simulator's global semaphore. */
         t->atfork_prepare();
         pid_t pid = fork();
+        bool isParent = pid != -1 && pid != 0;
+        bool isChild = pid == 0;
+        uint32_t childTid32 = isParent ? pid : getpid();
 
-        if (0!=pid) {
+#if 1 // DEBUGGING [Robb P. Matzke 2015-02-09]
+        if (isChild && 0 == access("./x86sim-stop-at-fork", F_OK)) {
+            p->get_memory().dump(std::cerr, "childmem: ");
+            std::cerr <<"simulator: new process " <<childTid32 <<" stopped immediately after creation\n";
+            raise(SIGSTOP);
+        }
+#endif
+
+        if (isParent) {
             t->atfork_parent();
-        } else {
+        } else if (isChild) {
             t->atfork_child();
+        }
 
-            /* Thread-related things. We have to initialize a few data structures because the specimen may be using a
-             * thread-aware library. */
-            if (0!=(flags & CLONE_CHILD_SETTID) && child_tls_va) {
-                uint32_t pid32 = getpid();
-                size_t nwritten = p->mem_write(&pid32, child_tls_va, 4);
-                ROSE_ASSERT(4==nwritten);
-            }
-            if (0!=(flags & CLONE_CHILD_CLEARTID))
-                t->clear_child_tid = parent_tid_va;
+        // CLONE_CHILD_SETTID: Store child thread ID at location ctid in child memory.
+        if (isChild && 0 != (flags & CLONE_CHILD_SETTID) && child_tls_va) {
+            size_t nwritten = p->mem_write(&childTid32, child_tls_va, 4);
+            ROSE_ASSERT(4==nwritten);
+        }
 
-            /* Return register values in child */
+        // CLONE_CHILD_CLEARTID: Erase child thread ID at location ctid in child memory when the child exits, and do a wakeup
+        // on the futex at that address. The address involved may be changed by the set_tid_address(2) system call. This is
+        // used by threading libraries.
+        if (isChild && 0!=(flags & CLONE_CHILD_CLEARTID))
+            t->clear_child_tid = parent_tid_va;
+
+        // CLONE_PARENT_SETTID: Store child thread ID at location ptid in parent and child memory. (In Linux 2.5.32-2.5.48
+        // there was a flag CLONE_SETTID that did this.)
+        if ((isParent || isChild) && 0 != (flags & CLONE_PARENT_SETTID) && parent_tid_va) {
+            size_t nwritten = p->mem_write(&childTid32, parent_tid_va, 4);
+            ROSE_ASSERT(4==nwritten);
+        }
+
+        // Return register values in child
+        // does not work for linux 2.6.32; perhaps this was only necessary for 2.5.32-2.5.48? [Robb P. Matzke 2015-02-09]
+        if (isChild && flags==(CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD)) {
             pt_regs_32 regs;
             regs.bx = t->policy.readRegister<32>(t->policy.reg_ebx).known_value();
             regs.cx = t->policy.readRegister<32>(t->policy.reg_ecx).known_value();
@@ -4027,10 +4173,12 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
             regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
             if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
-
-            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
         }
-        
+
+        // Callbacks
+        if (isChild)
+            p->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, p, RSIM_Callbacks::ProcessCallback::FORK, true);
+
         return -1==pid ? -errno : pid;
         
     } else if (flags == (CLONE_VM |
@@ -4179,7 +4327,7 @@ syscall_mprotect(RSIM_Thread *t, int callno)
     if (va % PAGE_SIZE) {
         t->syscall_return(-EINVAL);
     } else {
-        uint32_t aligned_sz = ALIGN_UP(size, PAGE_SIZE);
+        uint32_t aligned_sz = alignUp(size, (uint32_t)PAGE_SIZE);
         t->syscall_return(t->get_process()->mem_protect(va, aligned_sz, rose_perms, real_perms));
     }
 }
@@ -4941,7 +5089,15 @@ syscall_mmap2(RSIM_Thread *t, int callno)
     uint32_t start=t->syscall_arg(0), size=t->syscall_arg(1), prot=t->syscall_arg(2), flags=t->syscall_arg(3);
     uint32_t offset=t->syscall_arg(5)*PAGE_SIZE;
     int fd=t->syscall_arg(4);
-    uint32_t result = t->get_process()->mem_map(start, size, prot, flags, offset, fd);
+    unsigned rose_perms = 0;
+    if (0 != (prot & PROT_READ))
+        rose_perms |= MemoryMap::READABLE;
+    if (0 != (prot & PROT_WRITE))
+        rose_perms |= MemoryMap::WRITABLE;
+    if (0 != (prot & PROT_EXEC))
+        rose_perms |= MemoryMap::EXECUTABLE;
+
+    uint32_t result = t->get_process()->mem_map(start, size, rose_perms, flags, offset, fd);
     t->syscall_return(result);
 }
 

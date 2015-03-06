@@ -551,9 +551,9 @@ public:
             return;
         }
         if (hull().least() < interval.least())
-            map_.eraseMultiple(Interval::hull(hull().least(), interval.least()-1));
+            map_.erase(Interval::hull(hull().least(), interval.least()-1));
         if (hull().greatest() > interval.greatest())
-            map_.eraseMultiple(Interval::hull(interval.greatest(), hull().greatest()));
+            map_.erase(Interval::hull(interval.greatest(), hull().greatest()));
     }
 
     template<class Interval2>
@@ -606,6 +606,15 @@ public:
         return tmp;
     }
 
+    /** Union of set with interval.
+     *
+     *  It's probably more efficient to insert the interval in place, but this method is sometimes convenient. */
+    IntervalSet operator|(const Interval &interval) const {
+        IntervalSet retval = *this;
+        retval.insert(interval);
+        return retval;
+    }
+
     /** Intersection of two sets. */
     IntervalSet operator&(const IntervalSet &other) const {
         if (nIntervals() < other.nIntervals()) {
@@ -616,6 +625,13 @@ public:
         IntervalSet tmp = *this;
         tmp.intersect(other);
         return tmp;
+    }
+
+    /** Intersection of set with interval. */
+    IntervalSet operator&(const Interval &interval) const {
+        IntervalSet retval = *this;
+        retval.intersect(interval);
+        return retval;
     }
 
     /** Subtract another set from this one.
