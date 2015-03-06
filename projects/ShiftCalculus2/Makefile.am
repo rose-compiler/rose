@@ -67,6 +67,9 @@ test9: shiftCalculusCompiler
 	./shiftCalculusCompiler -c $(srcdir)/laplacian_lite_v2.cpp
 
 test10: shiftCalculusCompiler
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for C++ code                   ********"
+	@echo "********************************************************************************************"
 	./shiftCalculusCompiler -c -std=c++11 $(srcdir)/laplacian_lite_v3.cpp
 	g++ -std=c++11 rose_laplacian_lite_v3.cpp $(srcdir)/Box.cpp -I$(srcdir) -o $@ 
 
@@ -75,10 +78,25 @@ POLYOPT_PATH=$(top_builddir)/projects/PolyOpt2
 test10poly: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:polyopt -std=c++11 $(srcdir)/laplacian_lite_v3.cpp -rose:skipfinalCompileStep -rose:output laplacian_lite_v3_polyopt.cpp
 	make -C $(POLYOPT_PATH)
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: running polyhedral parallel only               ********"
+	@echo "********************************************************************************************"
 	$(POLYOPT_PATH)/src/PolyOpt laplacian_lite_v3_polyopt.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep --polyopt-parallel-only -rose:o rose_parallel_only_laplacian_lite_v3_polyopt.cpp
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: running polyhedral tiling (tile size 8x8x8)    ********"
+	@echo "********************************************************************************************"
 	echo "8 8 8" >> tile.sizes
 	$(POLYOPT_PATH)/src/PolyOpt laplacian_lite_v3_polyopt.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep --polyopt-fixed-tiling -rose:o rose_fixed-tiling_laplacian_lite_v3_polyopt.cpp
         
+VECTOR_PATH=$(top_builddir)/projects/vectorization
+
+test10vector: shiftCalculusCompiler
+	./shiftCalculusCompiler -c -rose:dslcompiler:vectorization -std=c++11 $(srcdir)/laplacian_lite_v3.cpp -rose:skipfinalCompileStep -rose:output laplacian_lite_v3_vec.cpp
+	make -C $(VECTOR_PATH)
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for vectorization              ********"
+	@echo "********************************************************************************************"
+	$(VECTOR_PATH)/src/vectorization laplacian_lite_v3_vec.cpp -I$(srcdir) -std=c++11 -rose:Cxx11 -rose:skipfinalCompileStep -rose:o rose_vectorization_laplacian_lite_v3.cpp
 
 test11: shiftCalculusCompiler
 	./shiftCalculusCompiler -std=c++11 -c $(srcdir)/simpleCNS.cpp
@@ -88,9 +106,15 @@ rose_laplacian_lite.cu: shiftCalculusCompiler
 rose_laplacian_lite_v2.cu: shiftCalculusCompiler
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@ $(srcdir)/laplacian_lite_v2.cpp
 rose_laplacian_lite_v3.cu: shiftCalculusCompiler
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for GPU                        ********"
+	@echo "********************************************************************************************"
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 
-rose_laplacian_lite_v3_GPU_collapsed.cu: ${OMPACC}
+rose_laplacian_lite_v3_GPU_collapsed.cu: 
+	@echo "********************************************************************************************"
+	@echo "******* ROSE/projects/ShiftCalculus: code generation for GPU with loop collapsing   ********"
+	@echo "********************************************************************************************"
 	./shiftCalculusCompiler -c -rose:dslcompiler:cuda -rose:dslcompiler:collapse -std=c++11 -rose:skipfinalCompileStep -rose:output $@  $(srcdir)/laplacian_lite_v3.cpp
 
 # Note that test1 and test3 are zero dimensional stencils that are not supported for code generation yet.
@@ -100,6 +124,8 @@ rose_laplacian_lite_v3_GPU_collapsed.cu: ${OMPACC}
 localTests: test4 test2 test5 test6 test7 test8
 
 cudaTests: rose_laplacian_lite_v3.cu rose_laplacian_lite_v3_GPU_collapsed.cu 
+
+demo: test10 cudaTests test10poly test10vector
 
 check-local:
 	@echo "Tests for Shift Calculus examples."

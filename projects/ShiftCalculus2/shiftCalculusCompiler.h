@@ -7,3 +7,4 @@
 extern bool b_gen_cuda;
 extern bool b_enable_collapse;
 extern bool b_enable_polyopt;
+extern bool b_gen_vectorization;

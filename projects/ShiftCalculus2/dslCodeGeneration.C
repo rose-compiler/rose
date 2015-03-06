@@ -22,8 +22,10 @@ using namespace DSL_Support;
 bool b_gen_cuda = false;
 // disable collapse by default
 bool b_enable_collapse = false;
-// an internal variable to store the generated serial loop nests.
+// disable polyopt by default
 bool b_enable_polyopt = false;
+// disable vectorization by default
+bool b_gen_vectorization = false;
 // an internal variable to store the generated serial loop nests.
 //static SgForStatement* temp_for_loop_nest = NULL; 
 

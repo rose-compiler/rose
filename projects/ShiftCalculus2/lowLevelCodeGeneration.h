@@ -2,6 +2,7 @@
 #include "stencilFiniteStateMachine.h"
 
 extern bool b_enable_polyopt;
+extern bool b_gen_vectorization;
 
 SgExpression* buildStencilSubscript(std::vector<SgExpression*> operand, std::vector<SgExpression*> size, int dimSize);
 

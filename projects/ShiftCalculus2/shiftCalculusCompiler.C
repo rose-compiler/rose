@@ -66,6 +66,15 @@ int main( int argc, char * argv[] )
     else
       b_enable_polyopt = false;
 
+// Pei-Hung, code generation to vectorization 
+    if (CommandlineProcessing::isOption (argvList,"-rose:dslcompiler:","vectorization",true))
+    {
+      std::cout<<"Generating code for vectorization  ..."<<std::endl;
+      b_gen_vectorization = true;
+//      argvList.push_back("-rose:openmp:lowering");
+    }
+    else
+      b_gen_vectorization = false;
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv,frontendConstantFolding);
      ROSE_ASSERT(project != NULL);

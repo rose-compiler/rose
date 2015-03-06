@@ -130,7 +130,7 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
           SgAssignInitializer* assignInitializer = SageBuilder::buildAssignInitializer_nfi(SageBuilder::buildIntVal());
           ROSE_ASSERT(assignInitializer != NULL);
 
-          SgVariableDeclaration* variableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(indexNameList[k],SageBuilder::buildIntType(),assignInitializer,forStatementScope);
+          SgVariableDeclaration* variableDeclaration  = SageBuilder::buildVariableDeclaration_nfi(indexNameList[k],SageBuilder::buildIntType(),assignInitializer,anchorStatement->get_scope());
           ROSE_ASSERT(variableDeclaration != NULL);
        // Pei-Hung: Normalize the loop in code generation
           SageInterface::insertStatementAfter(anchorStatement,variableDeclaration,anchorStatement->get_scope());
@@ -225,6 +225,13 @@ SgForStatement* buildLoopNest(int stencilDimension, SgBasicBlock* & innerLoopBod
             // Save the outer most forStatementScope.
                loopNest = forStatementScope;
                currentLoopBody = loopBody;
+               if (b_gen_vectorization)
+               {
+                   string scop_pragma_string;
+                   scop_pragma_string = "SIMD";
+                   SgPragmaDeclaration* pragma = SageBuilder::buildPragmaDeclaration (scop_pragma_string, NULL);
+                   SageInterface::insertStatementBefore(loopNest,  pragma); 
+               }
                arraySizeVariableSymbol_X = SageInterface::getFirstVarSym (arraySizeVariableDeclaration);
              }
             else
