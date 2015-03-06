@@ -5913,13 +5913,13 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
   // string header_path = findRoseSupportPathFromBuild("include-staging", "include-staging");
      string header_path = findRoseSupportPathFromBuild("include-staging", "include/edg");
-     
+#if 0
      if (enable_cuda || enable_opencl) {
         Rose::Cmdline::makeSysIncludeList(C_ConfigIncludeDirs, commandLine);
         if (enable_cuda && !enable_opencl) {
           commandLine.push_back("--preinclude");
           commandLine.push_back(header_path + "/cuda_HEADERS/preinclude-cuda.h");
-
+#endif
 #if 0
      printf ("In build_EDG_CommandLine(): enable_cuda = %s enable_opencl = %s \n",enable_cuda ? "true" : "false",enable_opencl ? "true" : "false");
 #endif

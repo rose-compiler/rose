@@ -3958,6 +3958,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                           << std::endl;
                       exit(1);
                   }
+              }
 
               //-----------------------------------------------------------
               // Pass File to Frontend. Avoid using try/catch/re-throw if not necessary because it interferes with debugging
