@@ -379,7 +379,9 @@ SgScopeStatement::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) const
 #if 0
           printf ("copy = %p = %s = %s \n",copy,copy->class_name().c_str(),SageInterface::get_name(copy).c_str());
 #endif
+#if 0
           copyScopeStatement->get_file_info()->display("In SgScopeStatement::fixupCopy_scopes()");
+#endif
         }
 
   // DQ (2/6/2009): Comment this out since it fails for the case of the reverseTraversal tests.
@@ -1099,6 +1101,35 @@ SgTemplateInstantiationDecl::fixupCopy_scopes(SgNode* copy, SgCopyHelp & help) c
   // Also call the base class version of the fixupCopycopy() member function
      SgClassDeclaration::fixupCopy_scopes(copy,help);
 
+#if 0
+     if (this->get_templateDeclaration() == NULL)
+        {
+          printf ("Error: this = %p = %s name = %s \n",this,this->class_name().c_str(),this->get_name().str());
+          this->get_file_info()->display("SgTemplateInstantiationDecl::fixupCopy_scopes(): this: debug");
+
+          SgTemplateInstantiationDecl* nondefiningDeclaration = isSgTemplateInstantiationDecl(this->get_firstNondefiningDeclaration());
+          SgTemplateInstantiationDecl* definingDeclaration    = isSgTemplateInstantiationDecl(this->get_definingDeclaration());
+
+          printf ("this->get_firstNondefiningDeclaration() = %p nondefiningDeclaration = %p \n",this->get_firstNondefiningDeclaration(),nondefiningDeclaration);
+          printf ("this->get_definingDeclaration()         = %p definingDeclaration    = %p \n",this->get_definingDeclaration(),definingDeclaration);
+          if (nondefiningDeclaration != NULL)
+             {
+               printf ("nondefiningDeclaration->get_templateDeclaration() = %p \n",nondefiningDeclaration->get_templateDeclaration());
+               if (nondefiningDeclaration->get_templateDeclaration() != NULL)
+                  {
+                 // DQ (3/7/2015): This is not the correct place to set this, but this is debugging code.
+                 // Also this is only an issue to EDG 4.7 and not EDG 4.9; and we are about retire EDG 4.7 support.
+                 // printf ("WARNING: setting templateDeclaration in SgTemplateInstantiationDecl::fixupCopy_scopes(): this = %p = %s name = %s \n",this,this->class_name().c_str(),this->get_name().str());
+                 // SgTemplateInstantiationDecl* nondefiningDeclaration = isSgTemplateInstantiationDecl(this->get_firstNondefiningDeclaration());
+                 // this->set_templateDeclaration(nondefiningDeclaration->get_templateDeclaration());
+                  }
+             }
+          if (definingDeclaration != NULL)
+             {
+               printf ("definingDeclaration->get_templateDeclaration() = %p \n",definingDeclaration->get_templateDeclaration());
+             }
+        }
+#endif
      ROSE_ASSERT(this->get_templateDeclaration() != NULL);
      ROSE_ASSERT(templateClassDeclaration_copy->get_templateDeclaration() != NULL);
 

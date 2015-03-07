@@ -11772,6 +11772,43 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
      testTemplateArgumentParents(nondefdecl);
      testTemplateArgumentParents(defdecl);
 
+#if 0
+     printf ("Leaving buildClassDeclaration_nfi(): defdecl = %p = %s \n",defdecl,defdecl->class_name().c_str());
+     printf ("   --- defdecl->get_firstNondefiningDeclaration() = %p \n",defdecl->get_firstNondefiningDeclaration());
+     printf ("   --- defdecl->get_definingDeclaration()         = %p \n",defdecl->get_definingDeclaration());
+#endif
+
+  // DQ (3/7/2015): Only in EDG 4.7 does the defining declaration not have a valid templateDeclaration pointer (sometimes).
+     SgTemplateInstantiationDecl* nondefiningDeclaration = isSgTemplateInstantiationDecl(defdecl->get_firstNondefiningDeclaration());
+     SgTemplateInstantiationDecl* definingDeclaration    = isSgTemplateInstantiationDecl(defdecl->get_definingDeclaration());
+     if (definingDeclaration != NULL && nondefiningDeclaration != NULL)
+        {
+          SgTemplateClassDeclaration* templateDeclaration = nondefiningDeclaration->get_templateDeclaration();
+          if (templateDeclaration != NULL && definingDeclaration->get_templateDeclaration() == NULL)
+             {
+#if 0
+               printf ("NOTE: buildClassDeclaration_nfi(): Setting the templateDeclaration for the defining declaration = %p using the value = %p from the nondefiningDeclaration = %p \n",
+                    definingDeclaration,templateDeclaration,nondefiningDeclaration);
+#endif
+               definingDeclaration->set_templateDeclaration(templateDeclaration);
+
+               ROSE_ASSERT(definingDeclaration->get_templateDeclaration() != NULL);
+             }
+       // ROSE_ASSERT(definingDeclaration->get_templateDeclaration() != NULL);
+        }
+
+  // DQ (3/7/2015): Only in EDG 4.7 does the defining declaration not have a valid templateDeclaration pointer (sometimes).
+     if (definingDeclaration != NULL)
+        {
+          if (definingDeclaration->get_templateDeclaration() == NULL)
+             {
+#if 0
+               printf ("NOTE: buildClassDeclaration_nfi(): definingDeclaration->get_templateDeclaration() == NULL \n");
+#endif
+             }
+       // ROSE_ASSERT(definingDeclaration->get_templateDeclaration() != NULL);
+        }
+
      return defdecl;    
    }
 
