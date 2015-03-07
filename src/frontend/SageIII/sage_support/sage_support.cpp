@@ -3933,6 +3933,7 @@ Rose::Frontend::RunSerial(SgProject* project)
               printf ("In Rose::Frontend::RunSerial(): Skipping try...catch mechanism in call to file->runFrontend(status_of_file); \n");
               file->runFrontend(status_of_file);
 #else
+#if 0
               try
               {
                   //-----------------------------------------------------------
@@ -3959,7 +3960,7 @@ Rose::Frontend::RunSerial(SgProject* project)
                       exit(1);
                   }
               }
-
+#endif
               //-----------------------------------------------------------
               // Pass File to Frontend. Avoid using try/catch/re-throw if not necessary because it interferes with debugging
               // the exception (it makes it hard to find where the exception was originally thrown).  Also, no need to print a
