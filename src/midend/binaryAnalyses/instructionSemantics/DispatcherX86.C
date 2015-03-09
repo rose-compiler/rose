@@ -830,7 +830,11 @@ struct IP_fnstcw: P {
 struct IP_fnstsw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        d->write(args[0], d->readRegister(d->REG_FPSTATUS));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            d->write(args[0], d->readRegister(d->REG_FPSTATUS));
+        }
     }
 };
 
