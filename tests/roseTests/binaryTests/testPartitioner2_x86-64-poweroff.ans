@@ -55,7 +55,8 @@
 0x00400ea8: ================================== Function (function call, graph) unknown name
 
 0x00400ea8: Basic block reasons: entry point
-0x00400ea8: ff 25 52 18 10 00       |.%R...  |          jmp    qword ds:[rip + 0x0000000000101852]
+0x00400ea8: ff 25 52 18 10 00       |.%R...  |<sp+0 >   jmp    qword ds:[rip + 0x0000000000101852]
+0x00400ea8: Outgoing stack delta: +0
 0x00400ea8: Successor blocks: unknown
 
 0x00401140: ================================== Function (entry point, graph) <_start>

@@ -9,7 +9,8 @@
 0x00400490: ================================== Function (function call, graph) unknown name
 
 0x00400490: Basic block reasons: entry point
-0x00400490: ff 25 02 05 10 00       |.%....  |          jmp    qword ds:[rip + 0x0000000000100502]
+0x00400490: ff 25 02 05 10 00       |.%....  |<sp+0 >   jmp    qword ds:[rip + 0x0000000000100502]
+0x00400490: Outgoing stack delta: +0
 0x00400490: Successor blocks: unknown
 
 0x004004d0: ================================== Function (entry point, graph) <_start>
