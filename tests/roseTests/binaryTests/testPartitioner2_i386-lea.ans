@@ -1,0 +1,9 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: 66 8d 04 24             |f..$    |          lea    ax, [esp]
+0x080480a4: 8d 04 24                |..$     |          lea    eax, [esp]
+0x080480a7: f4                      |.       |          hlt    
+0x080480a7: Successor blocks: none
+

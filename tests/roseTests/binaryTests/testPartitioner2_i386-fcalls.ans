@@ -1,0 +1,138 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+0x080480a0: Function does not return to caller.
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: e8 1c 00 00 00          |.....   |<sp+0 >   call   0x080480c1<T1>
+0x080480a0: Outgoing stack delta: -4
+0x080480a0: Successor blocks: 0x080480c1, 0x080480a5
+
+0x080480a5: Basic block reasons: 
+0x080480a5: e8 1d 00 00 00          |.....   |<sp+0 >   call   0x080480c7<T2>
+0x080480a5: Outgoing stack delta: -4
+0x080480a5: Successor blocks: 0x080480c7, 0x080480aa
+
+0x080480aa: Basic block reasons: 
+0x080480aa: e8 23 00 00 00          |.#...   |<sp-4 >   call   0x080480d2<T3>
+0x080480aa: Outgoing stack delta: -8
+0x080480aa: Successor blocks: 0x080480d2, 0x080480af
+
+0x080480af: Basic block reasons: 
+0x080480af: e8 24 00 00 00          |.$...   |<sp-4 >   call   0x080480d8<T4>
+0x080480af: Outgoing stack delta: -8
+0x080480af: Successor blocks: 0x080480d8, 0x080480b4
+
+0x080480b4: Basic block reasons: 
+0x080480b4: e8 40 00 00 00          |.@...   |<sp-16>   call   0x080480f9<T5>
+0x080480b4: Outgoing stack delta: -20
+0x080480b4: Successor blocks: 0x080480f9, 0x080480b9
+
+0x080480b9: Basic block reasons: 
+0x080480b9: b8 01 00 00 00          |.....   |<sp-16>   mov    eax, 0x00000001
+0x080480be: cd 80                   |..      |<sp-16>   int    0x80<-128>
+0x080480c0: f4                      |.       |          hlt    
+0x080480c0: Successor blocks: none
+
+0x080480c1: ================================== Function (function call, graph) <T1>
+0x080480c1: Function stack delta: +4
+
+0x080480c1: Basic block reasons: entry point
+0x080480c1: e8 52 00 00 00          |.R...   |<sp+0 >   call   0x08048118<callee>
+0x080480c1: Outgoing stack delta: -4
+0x080480c1: Successor blocks: 0x08048118, 0x080480c6
+
+0x080480c6: Basic block reasons: 
+0x080480c6: c3                      |.       |<sp+0 >   ret    
+0x080480c6: Outgoing stack delta: +4
+0x080480c6: Successor blocks: unknown
+
+0x080480c7: ================================== Function (function call, graph) <T2>
+0x080480c7: Function stack delta: +0
+
+0x080480c7: Basic block reasons: entry point
+0x080480c7: 68 d1 80 04 08          |h....   |<sp+0 >   push   0x080480d1<T2.L1>
+0x080480cc: e9 47 00 00 00          |.G...   |<sp-4 >   jmp    0x08048118<callee>
+0x080480cc: Outgoing stack delta: -4
+0x080480cc: Successor blocks: 0x08048118
+
+0x080480d2: ================================== Function (function call, graph) <T3>
+0x080480d2: Function stack delta: +4
+
+0x080480d2: Basic block reasons: entry point
+0x080480d2: e9 41 00 00 00          |.A...   |<sp+0 >   jmp    0x08048118<callee>
+0x080480d2: Outgoing stack delta: +0
+0x080480d2: Successor blocks: 0x08048118
+
+0x080480d8: ================================== Function (function call, graph) <T4>
+0x080480d8: Function stack delta: -8
+
+0x080480d8: Basic block reasons: entry point
+0x080480d8: 50                      |P       |<sp+0 >   push   eax
+0x080480d9: b8 f6 80 04 08          |.....   |<sp-4 >   mov    eax, 0x080480f6<T4.L1>
+0x080480de: 05 02 00 00 00          |.....   |<sp-4 >   add    eax, 0x00000002
+0x080480e3: 2d 01 00 00 00          |-....   |<sp-4 >   sub    eax, 0x00000001
+0x080480e8: 50                      |P       |<sp-4 >   push   eax
+0x080480e9: 2d 01 00 00 00          |-....   |<sp-8 >   sub    eax, 0x00000001
+0x080480ee: 50                      |P       |<sp-8 >   push   eax
+0x080480ef: 40                      |@       |<sp-12>   inc    eax
+0x080480f0: 40                      |@       |<sp-12>   inc    eax
+0x080480f1: e9 22 00 00 00          |."...   |<sp-12>   jmp    0x08048118<callee>
+0x080480f1: Outgoing stack delta: -12
+0x080480f1: Successor blocks: 0x08048118
+
+0x080480f9: ================================== Function (function call, graph) <T5>
+0x080480f9: Function stack delta: +4
+
+0x080480f9: Basic block reasons: entry point
+0x080480f9: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x08048109<T5_1>
+0x080480f9: Outgoing stack delta: -4
+0x080480f9: Successor blocks: 0x08048109, 0x080480fe
+
+0x080480fe: Basic block reasons: 
+0x080480fe: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x0804810e<T5_2>
+0x080480fe: Outgoing stack delta: -4
+0x080480fe: Successor blocks: 0x0804810e, 0x08048103
+
+0x08048103: Basic block reasons: 
+0x08048103: e8 0b 00 00 00          |.....   |<sp+0 >   call   0x08048113<T5_3>
+0x08048103: Outgoing stack delta: -4
+0x08048103: Successor blocks: 0x08048113, 0x08048108
+
+0x08048108: Basic block reasons: 
+0x08048108: c3                      |.       |<sp+0 >   ret    
+0x08048108: Outgoing stack delta: +4
+0x08048108: Successor blocks: unknown
+
+0x08048109: ================================== Function (function call, graph) <T5_1>
+0x08048109: Function stack delta: +4
+
+0x08048109: Basic block reasons: entry point
+0x08048109: e9 0a 00 00 00          |.....   |<sp+0 >   jmp    0x08048118<callee>
+0x08048109: Outgoing stack delta: +0
+0x08048109: Successor blocks: 0x08048118
+
+0x0804810e: ================================== Function (function call, graph) <T5_2>
+0x0804810e: Function stack delta: +4
+
+0x0804810e: Basic block reasons: entry point
+0x0804810e: e9 f6 ff ff ff          |.....   |<sp+0 >   jmp    0x08048109<T5_1>
+0x0804810e: Outgoing stack delta: +0
+0x0804810e: Successor blocks: 0x08048109
+
+0x08048113: ================================== Function (function call, graph) <T5_3>
+0x08048113: Function stack delta: +4
+
+0x08048113: Basic block reasons: entry point
+0x08048113: e9 f6 ff ff ff          |.....   |<sp+0 >   jmp    0x0804810e<T5_2>
+0x08048113: Outgoing stack delta: +0
+0x08048113: Successor blocks: 0x0804810e
+
+0x08048118: ================================== Function (function call, graph) <callee>
+0x08048118: Function stack delta: +4
+
+0x08048118: Basic block reasons: entry point
+0x08048118: 90                      |.       |<sp+0 >   nop    
+0x08048119: c3                      |.       |<sp+0 >   ret    
+0x08048119: Outgoing stack delta: +4
+0x08048119: Successor blocks: unknown
+

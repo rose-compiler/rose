@@ -43,6 +43,14 @@ magicScanner_CPPFLAGS = $(ROSE_INCLUDES)
 magicScanner_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Execute instructions
+
+bin_PROGRAMS += simulate
+simulate_SOURCES = simulate.C
+simulate_CPPFLAGS = $(ROSE_INCLUDES)
+simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Experimental "binary ROSE on-line workbench for specimen exploration"
 
 if ROSE_USE_WT
