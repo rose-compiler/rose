@@ -704,9 +704,12 @@ struct IP_cwde: P {
 struct IP_dec: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doIncOperation(d->read(args[0], nbits), true, false);
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr result = d->doIncOperation(d->read(args[0]), true, false);
+            d->write(args[0], result);
+        }
     }
 };
 
