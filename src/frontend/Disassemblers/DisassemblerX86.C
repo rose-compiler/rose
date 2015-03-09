@@ -951,9 +951,12 @@ DisassemblerX86::getImmJb()
         case x86_insnsize_32:
             retval = SageBuilderAsm::buildValueX86DWord(target);
             break;
-        default:
+        case x86_insnsize_64:
             retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
+        default:
+            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
+            return NULL;                                // not reachable, but avoids MSCV warning
     }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);

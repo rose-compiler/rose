@@ -991,10 +991,19 @@ struct IP_int3: P {
 };
 
 // Jump
+// The argument must be an absolute address, not an offset.  The disassembler takes care of that for us.
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        ops->writeRegister(d->REG_anyIP, ops->filterIndirectJumpTarget(d->read(args[0], d->REG_anyIP.get_nbits())));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t tgtWidth = d->REG_anyIP.get_nbits();
+            BaseSemantics::SValuePtr tgt = ops->filterIndirectJumpTarget(ops->unsignedExtend(d->read(args[0]), tgtWidth));
+            if (insn->get_operandSize() == x86_insnsize_16 && tgtWidth == 32)
+                tgt = ops->concat(ops->extract(tgt, 0, 16), ops->number_(16, 0));
+            ops->writeRegister(d->REG_anyIP, tgt);
+        }
     }
 };
 
