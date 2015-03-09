@@ -977,6 +977,19 @@ struct IP_int: P {
     }
 };
 
+// Call to the interrupt 3 procedure (for debugging), but slightly different semantics than the one-argument "INT 3"
+// instruction.
+struct IP_int3: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->interrupt(x86_exception_int, -3);
+        }
+    }
+};
+
 // Jump
 struct IP_jmp: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1772,6 +1785,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_imul,         new X86::IP_imul);
     iproc_set(x86_inc,          new X86::IP_inc);
     iproc_set(x86_int,          new X86::IP_int);
+    iproc_set(x86_int3,         new X86::IP_int3);
     iproc_set(x86_ja,           new X86::IP_jcc(x86_ja));
     iproc_set(x86_jae,          new X86::IP_jcc(x86_jae));
     iproc_set(x86_jb,           new X86::IP_jcc(x86_jb));
