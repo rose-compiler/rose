@@ -2,16 +2,51 @@
 #include "IntervalPropertyState.h"
 
 IntervalPropertyState::IntervalPropertyState() {
+  setBot();
 }
 
 void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
+  if(isBot()) {
+    os<<"bot";
+  } else {
+    os<<"{";
+    for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+      if(i!=intervals.begin())
+        os<<", ";
+      VariableId varId=(*i).first;
+      NumberIntervalLattice niElem=(*i).second;
+      cout<<vim->variableName(varId)<<"->"<<niElem.toString();
+    }
+    os<<"}";
+  }
 }
 
-bool IntervalPropertyState::approximatedBy(PropertyState& other) {
-  return false;
+bool IntervalPropertyState::approximatedBy(PropertyState& other0) {
+  IntervalPropertyState& other=dynamic_cast<IntervalPropertyState&> (other0);
+  if(isBot())
+    return true;
+  if(!isBot()&&other.isBot())
+    return false;
+  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    VariableId varId=(*i).first;
+    if(!NumberIntervalLattice::isSubIntervalOf(intervals[varId],other.intervals[varId]))
+      return false;
+  }
+  return true;
 }
 
-void IntervalPropertyState::combine(PropertyState& other){
+void IntervalPropertyState::combine(PropertyState& other0){
+  IntervalPropertyState& other=dynamic_cast<IntervalPropertyState&> (other0);
+  if(isBot()&&other.isBot())
+    return;
+  if(!isBot()&&other.isBot())
+    return;
+  if(isBot()&&!other.isBot()) 
+    _bot=false;
+  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    VariableId varId=(*i).first;
+    intervals[varId].join(other.intervals[varId]);
+  }
 }
 
 // adds integer variable
@@ -20,6 +55,10 @@ void IntervalPropertyState::addVariable(VariableId varId) {
 }
 
 void IntervalPropertyState::setEmptyState() {
+  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    intervals[(*i).first]=NumberIntervalLattice();
+  }
+  _bot=false;
 }
 
 #if 0

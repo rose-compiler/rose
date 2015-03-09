@@ -14,8 +14,12 @@ using namespace CodeThorn;
 
 using namespace SPRAY;
 
-IntervalTransferFunctions::IntervalTransferFunctions() {
-  _cppExprEvaluator=0;
+IntervalTransferFunctions::IntervalTransferFunctions():
+  _cppExprEvaluator(0),
+  _domain(0),
+  _labeler(0),
+  _variableIdMapping(0)
+{
 }
 
 IntervalTransferFunctions::IntervalTransferFunctions(
@@ -36,8 +40,8 @@ IntervalTransferFunctions::~IntervalTransferFunctions() {
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, IntervalPropertyState& pstate) {
-  ROSE_ASSERT(_variableIdMapping);
+void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
+  //ROSE_ASSERT(_variableIdMapping); TODO
   NumberIntervalLattice niLattice;
   CppExprEvaluator evaluator(&niLattice,&pstate,_variableIdMapping);
   cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
@@ -49,7 +53,7 @@ void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node
   * \date 2014.
  */
 //NOTE: missing: UD must take uses in initializers into account
-void IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, IntervalPropertyState& element) {
+void IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
   ROSE_ASSERT(node);
 }
@@ -59,7 +63,7 @@ void IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclara
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,IntervalPropertyState& element) {
+void IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   // uses and defs in argument-expressions
   for(SgExpressionPtrList::iterator i=arguments.begin();i!=arguments.end();++i) {
     transferExpression(lab,*i,element);
@@ -69,7 +73,7 @@ void IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallEx
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, IntervalPropertyState& element) {
+void IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
   //TODO: def in x=f(...) (not seen as assignment)
 }
 
@@ -77,7 +81,7 @@ void IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgFunction
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, IntervalPropertyState& element) {
+void IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // generate Intervals for each parameter variable
   for(SgInitializedNamePtrList::iterator i=formalParameters.begin();
       i!=formalParameters.end();
@@ -95,7 +99,7 @@ void IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefin
   * \author Markus Schordan
   * \date 2014.
  */
-void IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, IntervalPropertyState& element) {
+void IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
     // VariableId varId=*i;

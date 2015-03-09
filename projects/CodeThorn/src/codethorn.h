@@ -31,6 +31,8 @@ public:
 
 void printAnalyzerStatistics(Analyzer& analyzer, double totalRunTime, 
                                string title = "state transition system computed");
+// prints #transitions and details about states
+void printStgSize(TransitionGraph* model, string optionalComment="");
 
 } // end of namespace CodeThorn
 

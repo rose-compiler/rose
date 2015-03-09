@@ -17,7 +17,8 @@ PASolver1::PASolver1(WorkListSeq<Edge>& workList,
   _analyzerDataPostInfo(analyzerDataPostInfo),
   _initialElementFactory(initialElementFactory),
   _flow(flow),
-  _transferFunctions(transferFunctions)
+  _transferFunctions(transferFunctions),
+  _trace(false)
 {
 }
 
@@ -47,8 +48,15 @@ PASolver1::runSolver() {
     Edge edge=_workList.take();
     Label lab0=edge.source;
     Label lab1=edge.target;
+    if(_trace)
+      cout<<"DEBUG: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
+    if(_trace) {
+      cout<<"DEBUG: lab0: "<<lab0<<":";info->toStream(cout);
+      cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout);
+      cout<<endl;
+    }
     _transferFunctions.transfer(lab0,*info);
     bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
     if(!isApproximatedBy) {
@@ -57,6 +65,8 @@ PASolver1::runSolver() {
       _workList.add(outEdges);
     } else {
       // no new information was computed. Nothing to do.
+      if(_trace)
+        cout<<"Nothing to do."<<endl;
     }
     delete info;
   }

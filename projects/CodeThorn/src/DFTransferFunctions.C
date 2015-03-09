@@ -85,6 +85,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 
 
 void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
+  cout<<"DEFAULT: transferExp."<<endl;
   // default identity function
 }
   

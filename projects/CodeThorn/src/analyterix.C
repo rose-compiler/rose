@@ -289,6 +289,7 @@ int main(int argc, char* argv[]) {
       ("at-analysis", "address-taken analysis.")
       ("interval-analysis", "perform interval analysis.")
       ("print-varidmapping", "prints variableIdMapping")
+      ("print-varidmapping-array", "prints variableIdMapping with array element varids.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -366,6 +367,9 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
+  if (args.count("print-varidmapping-array")) {
+    variableIdMapping.setModeVariableIdForEachArrayElement(true);
+  }
   variableIdMapping.computeVariableSymbolMapping(root);
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
@@ -376,7 +380,7 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varidmapping")) {
+  if (args.count("print-varidmapping")||args.count("print-varidmapping-array")) {
     variableIdMapping.toStream(cout);
   }
 

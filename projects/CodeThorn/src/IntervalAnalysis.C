@@ -31,3 +31,4 @@ void IntervalAnalysis::initializeExtremalValue(Lattice* element) {
 DFAstAttribute* IntervalAnalysis::createDFAstAttribute(IntervalPropertyState* elem) {
   return new IntervalAstAttribute(elem);
 }
+
