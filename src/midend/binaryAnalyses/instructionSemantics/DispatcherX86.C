@@ -730,42 +730,46 @@ struct IP_divide: P {
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        RegisterDescriptor regA = d->REG_AX; regA.set_nbits(8==nbits ? 16 : nbits);
-        RegisterDescriptor regD = d->REG_DX; regD.set_nbits(8==nbits ? 16 : nbits);
-        BaseSemantics::SValuePtr op0;
-        if (8==nbits) {
-            op0 = d->readRegister(regA);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
         } else {
-            op0 = ops->concat(d->readRegister(regA), d->readRegister(regD));
+            size_t nbits = asm_type_width(args[0]->get_type());
+            RegisterDescriptor regA = d->REG_AX; regA.set_nbits(8==nbits ? 16 : nbits);
+            RegisterDescriptor regD = d->REG_DX; regD.set_nbits(8==nbits ? 16 : nbits);
+            BaseSemantics::SValuePtr dividend;
+            if (8==nbits) {
+                dividend = d->readRegister(regA);
+            } else {
+                dividend = ops->concat(d->readRegister(regA), d->readRegister(regD));
+            }
+            BaseSemantics::SValuePtr divisor = d->read(args[0]);
+            BaseSemantics::SValuePtr divResult, modResult;
+            ASSERT_require(insn->get_kind()==kind);
+            switch (kind) {
+                case x86_idiv:
+                    divResult = ops->signedDivide(dividend, divisor);
+                    modResult = ops->signedModulo(dividend, divisor);
+                    break;
+                case x86_div:
+                    divResult = ops->unsignedDivide(dividend, divisor);
+                    modResult = ops->unsignedModulo(dividend, divisor);
+                    break;
+                default:
+                    ASSERT_not_reachable("instruction kind not handled");
+            }
+            if (8==nbits) {
+                ops->writeRegister(regA, ops->concat(ops->extract(divResult, 0, 8), modResult));
+            } else {
+                ops->writeRegister(regA, ops->extract(divResult, 0, nbits));
+                ops->writeRegister(regD, modResult);
+            }
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
+            ops->writeRegister(d->REG_CF, ops->undefined_(1));
+            ops->writeRegister(d->REG_OF, ops->undefined_(1));
         }
-        BaseSemantics::SValuePtr op1 = d->read(args[0], nbits);
-        BaseSemantics::SValuePtr divResult, modResult;
-        ASSERT_require(insn->get_kind()==kind);
-        switch (kind) {
-            case x86_idiv:
-                divResult = ops->signedDivide(op0, op1);
-                modResult = ops->signedModulo(op0, op1);
-                break;
-            case x86_div:
-                divResult = ops->unsignedDivide(op0, op1);
-                modResult = ops->unsignedModulo(op0, op1);
-                break;
-            default:
-                ASSERT_not_reachable("instruction kind not handled");
-        }
-        if (8==nbits) {
-            ops->writeRegister(regA, ops->concat(ops->extract(divResult, 0, 8), modResult));
-        } else {
-            ops->writeRegister(regA, ops->extract(divResult, 0, nbits));
-            ops->writeRegister(regD, modResult);
-        }
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->undefined_(1));
-        ops->writeRegister(d->REG_OF, ops->undefined_(1));
     }
 };
 
