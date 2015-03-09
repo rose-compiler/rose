@@ -966,10 +966,14 @@ struct IP_inc: P {
 struct IP_int: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
-        if (!bv)
-            throw BaseSemantics::Exception("operand must be a byte value expression", insn);
-        ops->interrupt(0, bv->get_value());
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            SgAsmIntegerValueExpression *bv = isSgAsmIntegerValueExpression(args[0]);
+            if (!bv)
+                throw BaseSemantics::Exception("operand must be a byte value expression", insn);
+            ops->interrupt(x86_exception_int, bv->get_value());
+        }
     }
 };
 
