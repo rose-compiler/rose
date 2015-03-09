@@ -1018,9 +1018,18 @@ struct IP_jcc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(insn->get_kind()==kind);
-        BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
-        ops->writeRegister(d->REG_anyIP,
-                           ops->ite(cond, d->read(args[0], d->REG_anyIP.get_nbits()), d->readRegister(d->REG_anyIP)));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t tgtWidth = d->REG_anyIP.get_nbits();
+            BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
+            BaseSemantics::SValuePtr tgt = ops->ite(cond,
+                                                    ops->unsignedExtend(d->read(args[0]), tgtWidth),
+                                                    d->readRegister(d->REG_anyIP));
+            if (insn->get_operandSize() == x86_insnsize_16 && tgtWidth == 32)
+                tgt = ops->concat(ops->extract(tgt, 0, 16), ops->number_(16, 0));
+            ops->writeRegister(d->REG_anyIP, tgt);
+        }
     }
 };
 
