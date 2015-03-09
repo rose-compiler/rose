@@ -805,6 +805,15 @@ struct IP_fldcw: P {
     }
 };
 
+// Floating-point no-operation
+struct IP_fnop: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix())
+            ops->interrupt(x86_exception_ud, 0);
+    }
+};
+
 // Store x87 FPU control word
 struct IP_fnstcw: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1708,6 +1717,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_div,          new X86::IP_divide(x86_div));
     iproc_set(x86_fld,          new X86::IP_fld);
     iproc_set(x86_fldcw,        new X86::IP_fldcw);
+    iproc_set(x86_fnop,         new X86::IP_fnop);
     iproc_set(x86_fnstcw,       new X86::IP_fnstcw);
     iproc_set(x86_fnstsw,       new X86::IP_fnstsw);
     iproc_set(x86_fst,          new X86::IP_fst);
