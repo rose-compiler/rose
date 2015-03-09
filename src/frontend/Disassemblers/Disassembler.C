@@ -652,7 +652,7 @@ Disassembler::search_next_address(AddressSet *worklist, rose_addr_t start_va, co
         const AddressInterval &range = si->key();
         const MemoryMap::Segment &segment = si->value();
         ASSERT_require(range.greatest()>=next_va);
-        ASSERT_require((segment.accessibility() & MemoryMap::EXECUTABLE) != 0);
+        ASSERT_always_require((segment.accessibility() & MemoryMap::EXECUTABLE) != 0);
         next_va = std::max(next_va, range.least());
 
         /* If we tried to disassemble at this address and failed, then try the next address. */

@@ -2,6 +2,7 @@
 
 #include <rose.h>
 
+#include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <DispatcherX86.h>
@@ -235,6 +236,7 @@ makeProtoVal(const Settings &settings) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::SValue\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
@@ -245,6 +247,8 @@ makeProtoVal(const Settings &settings) {
     } else if (className == "example") {
         return com::example::semantics::SValue::instance();
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::SValue::instance();
     } else if (className == "interval") {
         return IntervalSemantics::SValue::instance();
     } else if (className == "null") {
@@ -268,6 +272,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RegisterState\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  generic          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
@@ -280,6 +285,8 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
     } else if (className == "example") {
         return com::example::semantics::RegisterState::instance(protoval, regdict);
 #endif
+    } else if (className == "concrete") {
+        return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "generic") {
         return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "interval") {
@@ -308,6 +315,7 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::MemoryState\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
@@ -318,6 +326,8 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
     } else if (className == "example") {
         return com::example::semantics::MemoryState::instance(protoval, protoaddr);
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "interval") {
         return IntervalSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "null") {
@@ -342,6 +352,7 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RiscOperators\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
@@ -363,6 +374,8 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
     } else if (className == "example") {
         return com::example::semantics::RiscOperators::instance(state, solver);
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::RiscOperators::instance(state, solver);
     } else if (className == "interval") {
         return IntervalSemantics::RiscOperators::instance(state, solver);
     } else if (className == "null") {
@@ -413,6 +426,11 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
                           com::example::semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
 #endif
+        } else if (settings.opsClassName == "concrete") {
+            TestSemantics<ConcreteSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          ConcreteSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          ConcreteSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
         } else if (settings.opsClassName == "interval") {
             TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                           IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
@@ -440,7 +458,7 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
         }
     } else {
         // There are many more combinations where the operators class need not be the same as the value or state classes. We
@@ -465,14 +483,14 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
             if (settings.valueClassName != settings.opsClassName)
-                mlog[WARN] <<" value=" <<settings.valueClassName;
+                ::mlog[WARN] <<" value=" <<settings.valueClassName;
             if (settings.rstateClassName != settings.opsClassName)
-                mlog[WARN] <<" rstate=" <<settings.rstateClassName;
+                ::mlog[WARN] <<" rstate=" <<settings.rstateClassName;
             if (settings.mstateClassName != settings.opsClassName)
-                mlog[WARN] <<" mstate=" <<settings.mstateClassName;
-            mlog[WARN] <<" cannot be tested\n";
+                ::mlog[WARN] <<" mstate=" <<settings.mstateClassName;
+            ::mlog[WARN] <<" cannot be tested\n";
         }
     }
 }
@@ -527,8 +545,8 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
 int
 main(int argc, char *argv[]) {
     Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ::mlog = Sawyer::Message::Facility("tool");
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line to load, disassemble, and partition the specimen
     Settings settings;

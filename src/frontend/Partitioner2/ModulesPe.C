@@ -139,10 +139,15 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
 
 void
 rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
-    ASSERT_require2(partitioner.instructionProvider().instructionPointerRegister().get_nbits()==32,
-                    "FIXME[Robb P. Matzke 2014-08-24]: supports only 32-bit addresses at this time");
     ASSERT_require2(partitioner.instructionProvider().defaultByteOrder()==ByteOrder::ORDER_LSB,
                     "FIXME[Robb P. Matzke 2014-08-24]: supports only little-endian architectures at this time");
+
+    size_t wordSize = partitioner.instructionProvider().instructionPointerRegister().get_nbits() / 8;
+    if (wordSize > 8) {
+        mlog[WARN] <<"ModulesPe::rebaseImportAddressTable does not support a word size of "
+                   <<StringUtility::plural(wordSize, "bytes") <<"\n";
+        return;
+    }
 
     // FIXME[Robb P. Matzke 2014-08-24]: we should probably check that monkeying with memory won't affect existing instructions
 
@@ -150,7 +155,7 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     // their code if we don't introduce hundreds of segments).
     AddressIntervalSet iatAddresses;
     BOOST_FOREACH (SgAsmPEImportItem *import, index.values())
-        iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), 4));
+        iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), wordSize));
 
     // Add segments to the memory map.
     BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
@@ -161,10 +166,11 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
 
     // Write IAT entries into the newly mapped IATs
     BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
-        uint32_t packed;
-        ByteOrder::host_to_le(node.key(), &packed);
+        uint8_t packed[8];
+        for (size_t i=0; i<wordSize; ++i)
+            packed[i] = (node.key() >> (8*i)) & 0xff;
         rose_addr_t iatVa = node.value()->get_iat_entry_va();
-        if (4!=partitioner.memoryMap().at(iatVa).limit(4).write((uint8_t*)&packed).size())
+        if (wordSize!=partitioner.memoryMap().at(iatVa).limit(wordSize).write(packed).size())
             ASSERT_not_reachable("write failed to map we just created");
     }
 }

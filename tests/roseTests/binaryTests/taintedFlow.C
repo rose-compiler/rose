@@ -111,14 +111,14 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 
     // List the function
     std::cout <<"\n";
-    mlog[WHERE] <<"Taint analysis for function \"" <<specimen->get_name() <<"\""
-                <<" at " <<StringUtility::addrToString(specimen->get_entry_va()) <<"\n";
+    ::mlog[WHERE] <<"Taint analysis for function \"" <<specimen->get_name() <<"\""
+                  <<" at " <<StringUtility::addrToString(specimen->get_entry_va()) <<"\n";
     AsmUnparser().unparse(std::cout, specimen);
 
     // Control flow graph.  Any graph implementing the Boost Graph Library API is permissible. We use Sawyer's implementation
     // because it has a nicer interface for the rest of this file to use.  We could use basic blocks or instructions as the
     // vertices.  The edge value is irrelevant -- we don't use them.
-    mlog[TRACE] <<"Obtaining control flow graph...\n";
+    ::mlog[TRACE] <<"Obtaining control flow graph...\n";
     typedef Sawyer::Container::Graph<SageNode*> CFG;
     CFG cfg;
     buildControlFlowGraph(specimen, cfg);
@@ -157,35 +157,35 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     YicesSolver solver;
     taintAnalysis.smtSolver(&solver);
 #else
-    mlog[WARN] <<"not using an SMT solver (none available)\n";
+    ::mlog[WARN] <<"not using an SMT solver (none available)\n";
 #endif
 
     // Analyze the specimen in order to discover what variables are referenced and the control flow between those variables for
     // each basic block.
-    mlog[TRACE] <<"Finding data flows between variables...\n";
+    ::mlog[TRACE] <<"Finding data flows between variables...\n";
     taintAnalysis.computeFlowGraphs(cfg, cfgStartVertex);
 
     // Print some debugging information.
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"Data flow per basic block:\n";
+    if (::mlog[DEBUG]) {
+        ::mlog[DEBUG] <<"Data flow per basic block:\n";
         BOOST_FOREACH (const DataFlow::VertexFlowGraphs::Node &indexNode, taintAnalysis.vertexFlowGraphs().nodes()) {
             SageNode *node = cfg.findVertex(indexNode.key())->value();
             std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(node);
-            mlog[DEBUG] <<"  Instruction" <<(1==insns.size()?"":"s") <<":\n";
+            ::mlog[DEBUG] <<"  Instruction" <<(1==insns.size()?"":"s") <<":\n";
             BOOST_FOREACH (SgAsmInstruction *insn, insns)
-                mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
-            mlog[DEBUG] <<"  Data flow edges:\n";
+                ::mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
+            ::mlog[DEBUG] <<"  Data flow edges:\n";
             BOOST_FOREACH (const DataFlow::Graph::EdgeNode &edge, indexNode.value().edges()) {
-                mlog[DEBUG] <<"    data flow #" <<edge.value().sequence
-                            <<" from " <<edge.source()->value()
-                            <<(DataFlow::Graph::EdgeValue::CLOBBER==edge.value().edgeType ? " clobbers " : " augments ")
-                            <<edge.target()->value()
-                            <<"\n";
+                ::mlog[DEBUG] <<"    data flow #" <<edge.value().sequence
+                              <<" from " <<edge.source()->value()
+                              <<(DataFlow::Graph::EdgeValue::CLOBBER==edge.value().edgeType ? " clobbers " : " augments ")
+                              <<edge.target()->value()
+                              <<"\n";
             }
         }
-        mlog[DEBUG] <<"\nVariables:\n";
+        ::mlog[DEBUG] <<"\nVariables:\n";
         BOOST_FOREACH (const DataFlow::Variable &variable, taintAnalysis.variables())
-            mlog[DEBUG] <<"  " <<variable <<"\n";
+            ::mlog[DEBUG] <<"  " <<variable <<"\n";
     }
 
     // Arbitrarily mark variable at address esp_0 + 4 as tainted. This corresponds to the least significant byte of the first
@@ -194,18 +194,18 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     TaintedFlow::StatePtr initialState = taintAnalysis.stateInstance(TaintedFlow::BOTTOM); // provide a default taintedness
     DataFlow::Variable stack4(symbolicOps->add(esp_0, symbolicOps->number_(esp_0->get_width(), 4)));
     if (initialState->setIfExists(stack4, TaintedFlow::TAINTED)) { // taint source
-        mlog[TRACE] <<"Taint source: " <<stack4 <<"\n";
+        ::mlog[TRACE] <<"Taint source: " <<stack4 <<"\n";
     } else {
-        mlog[TRACE] <<"Taint source: NOTHING! (no function arguments referenced?)\n";
+        ::mlog[TRACE] <<"Taint source: NOTHING! (no function arguments referenced?)\n";
     }
     initialState->setIfExists(DataFlow::Variable(), TaintedFlow::NOT_TAINTED); // constants are not tainted
 
     // Run the taint analysis until it reaches a fixed point.  Be sure to use the same CFG and starting vertex as above!
-    mlog[TRACE] <<"Running data flow analysis...\n";
+    ::mlog[TRACE] <<"Running data flow analysis...\n";
     taintAnalysis.runToFixedPoint(cfg, cfgStartVertex, initialState);
 
     // Print the final data flow state for each CFG vertex that has no successors.
-    mlog[TRACE] <<"Printing results...\n";
+    ::mlog[TRACE] <<"Printing results...\n";
     BOOST_FOREACH (const typename CFG::VertexNode &vertex, cfg.vertices()) {
         if (vertex.nOutEdges()==0) {
             rose_addr_t lastInsnAddr = SageInterface::querySubTree<SgAsmInstruction>(vertex.value()).back()->get_address();
@@ -224,8 +224,8 @@ int main(int argc, char *argv[])
 {
     // Configure diagnostic output
     rose::Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("taintedFlow", rose::Diagnostics::destination);
-    rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ::mlog = Sawyer::Message::Facility("taintedFlow", rose::Diagnostics::destination);
+    rose::Diagnostics::mfacilities.insertAndAdjust(::mlog);
     rose::Diagnostics::mfacilities.control("taintedFlow(>=where)"); // the default
 
     // Describe the command-line
@@ -269,7 +269,7 @@ int main(int argc, char *argv[])
                          "expression is given then a function is analyzed if it's name matches any of the expressions."));
 
     Sawyer::CommandLine::Parser cmdline_parser;
-    cmdline_parser.errorStream(mlog[FATAL]);
+    cmdline_parser.errorStream(::mlog[FATAL]);
     cmdline_parser.purpose("binary tainted flow analysis");
     cmdline_parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
     cmdline_parser.chapter(1, "ROSE Command-line Tools");

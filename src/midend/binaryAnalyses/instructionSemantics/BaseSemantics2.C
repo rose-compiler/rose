@@ -1,10 +1,26 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
+#include "Diagnostics.h"
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
+
+using namespace Sawyer::Message::Common;
+
+Sawyer::Message::Facility mlog;
+
+void
+initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::InstructionSemantics2", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
+
 namespace BaseSemantics {
 
 /*******************************************************************************************************************************
@@ -1117,6 +1133,14 @@ State::print(std::ostream &stream, Formatter &fmt) const
 /*******************************************************************************************************************************
  *                                      RiscOperators
  *******************************************************************************************************************************/
+
+void
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
+    cur_insn = insn;
+    ++ninsns;
+};
 
 SValuePtr
 RiscOperators::subtract(const SValuePtr &subtrahand, const SValuePtr &minuend) {

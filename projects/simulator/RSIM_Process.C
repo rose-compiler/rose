@@ -1033,7 +1033,7 @@ RSIM_Process::mem_transaction_start(const std::string &name)
     if (!map_stack.empty()) {
         new_map = map_stack.back().first;
         BOOST_FOREACH (MemoryMap::Segment &segment, new_map.segments())
-            segment.setCopyOnWrite();
+            segment.buffer()->copyOnWrite(true);
     }
     map_stack.push_back(std::make_pair(new_map, name));
     return map_stack.size();

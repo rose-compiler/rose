@@ -2,13 +2,14 @@
 
 #include "sawyer/Assert.h"
 #include "sawyer/ProgressBar.h"
-#include "AsmUnparser.h"                                // rose::AsmUnparser
-#include "BinaryDataFlow.h"                             // BinaryAnalysis::DataFlow
-#include "BinaryLoader.h"                               // rose::BinaryLoader
-#include "BinaryTaintedFlow.h"                          // BinaryAnalysis::TaintedFlow
+#include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
+#include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
+#include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
+#include "BinaryLoader.h"                               // BinaryLoader
+#include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
-#include "Disassembler.h"                               // rose::Disassembler
-#include "Partitioner.h"                                // rose::Partitioner
+#include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
+#include "Partitioner.h"                                // rose::BinaryAnalysis::Partitioner
 #include <Partitioner2/Utility.h>                       // rose::BinaryAnalysis::Partitioner2
 #include <EditDistance/EditDistance.h>                  // rose::EditDistance
 
@@ -64,6 +65,7 @@ void initialize() {
         BinaryAnalysis::DataFlow::initDiagnostics();
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
+        BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         EditDistance::initDiagnostics();
     }
 }

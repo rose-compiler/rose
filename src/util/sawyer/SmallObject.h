@@ -11,11 +11,11 @@ namespace Sawyer {
  *  Small objects that inherit from this class will use a pool allocator instead of the global allocator. */
 class SAWYER_EXPORT SmallObject {
 #include <sawyer/WarningsOff.h>
-    static PoolAllocator allocator_;
+    static SynchronizedPoolAllocator allocator_;
 #include <sawyer/WarningsRestore.h>
 public:
     /** Return the pool allocator for this class. */
-    static PoolAllocator& poolAllocator() { return allocator_; }
+    static SynchronizedPoolAllocator& poolAllocator() { return allocator_; }
 
     static void *operator new(size_t size) { return allocator_.allocate(size); }
     static void operator delete(void *ptr, size_t size) { allocator_.deallocate(ptr, size); }
