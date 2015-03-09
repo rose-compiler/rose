@@ -781,11 +781,15 @@ struct IP_divide: P {
 struct IP_fld: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        if (80!=nbits)
-            throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
-        BaseSemantics::SValuePtr fp = d->read(args[0], nbits);
-        d->pushFloatingPoint(fp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbits = asm_type_width(args[0]->get_type());
+            if (80!=nbits)
+                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+            BaseSemantics::SValuePtr fp = d->read(args[0], nbits);
+            d->pushFloatingPoint(fp);
+        }
     }
 };
 
