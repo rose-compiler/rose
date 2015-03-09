@@ -818,7 +818,11 @@ struct IP_fnop: P {
 struct IP_fnstcw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        d->write(args[0], d->readRegister(d->REG_FPCTL));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            d->write(args[0], d->readRegister(d->REG_FPCTL));
+        }
     }
 };
 
