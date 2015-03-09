@@ -712,41 +712,37 @@ XorSimplifier::rewrite(const InternalNode *inode) const
 TreeNodePtr
 SmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    if (nbits <= 64) {
-        int64_t result = (*begin)->isLeafNode()->get_value();
-        for (++begin; begin!=end; ++begin) {
-            LeafNodePtr leaf = (*begin)->isLeafNode();
-            result *= (int64_t)leaf->get_value();
-            nbits += leaf->get_nbits();
-        }
-        ASSERT_require(nbits<=8*sizeof result);
-        return LeafNode::create_integer(nbits, result);
-    } else {
-        // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
-        // 64-bits because Sawyer::Container::BitVector does not provide a multiplication method.
-        return TreeNodePtr();
+    // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
+    // because Sawyer::Container::BitVector does not provide a multiplication method.
+    size_t totalWidth = 0;
+    int64_t product = 1;
+    for (/*void*/; begin!=end; ++begin) {
+        size_t nbits = (*begin)->get_nbits();
+        totalWidth += nbits;
+        if (totalWidth > 8*sizeof(product))
+            return TreeNodePtr();
+        LeafNodePtr leaf = (*begin)->isLeafNode();
+        product *= (int64_t)leaf->get_value();
     }
+    return LeafNode::create_integer(totalWidth, product);
 }
 
 TreeNodePtr
 UmulSimplifier::fold(TreeNodes::const_iterator begin, TreeNodes::const_iterator end) const
 {
-    size_t nbits = (*begin)->get_nbits();
-    if (nbits <= 64) {
-        uint64_t result = (*begin)->isLeafNode()->get_value();
-        for (++begin; begin!=end; ++begin) {
-            LeafNodePtr leaf = (*begin)->isLeafNode();
-            result *= leaf->get_value();
-            nbits += leaf->get_nbits();
-        }
-        ASSERT_require(nbits>0 && nbits<=8*sizeof result);
-        return LeafNode::create_integer(nbits, result);
-    } else {
-        // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than
-        // 64-bits because Sawyer::Container::BitVector does not provide a multiplication method.
-        return TreeNodePtr();
+    // FIXME[Robb P. Matzke 2014-05-05]: Constant folding is not currently possible when the operands are wider than 64 bits
+    // because Sawyer::Container::BitVector does not provide a multiplication method.
+    size_t totalWidth = 0;
+    uint64_t product = 1;
+    for (/*void*/; begin!=end; ++begin) {
+        size_t nbits = (*begin)->get_nbits();
+        totalWidth += nbits;
+        if (totalWidth > 8*sizeof(product))
+            return TreeNodePtr();
+        LeafNodePtr leaf = (*begin)->isLeafNode();
+        product *= (uint64_t)leaf->get_value();
     }
+    return LeafNode::create_integer(totalWidth, product);
 }
 
 TreeNodePtr
