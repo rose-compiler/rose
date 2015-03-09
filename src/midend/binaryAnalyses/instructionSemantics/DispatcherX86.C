@@ -834,10 +834,14 @@ struct IP_fnstsw: P {
 struct IP_fst: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        if (80!=nbits)
-            throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
-        d->write(args[0], d->readFloatingPointStack(0));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbits = asm_type_width(args[0]->get_type());
+            if (80!=nbits)
+                throw BaseSemantics::Exception(StringUtility::numberToString(nbits)+"-bit FP values not supported yet", insn);
+            d->write(args[0], d->readFloatingPointStack(0));
+        }
     }
 };
 
