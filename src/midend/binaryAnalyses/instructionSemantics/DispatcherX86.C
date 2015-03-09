@@ -869,61 +869,83 @@ struct IP_fstp: P {
     }
 };
 
-// Signed multiply
+// Signed multiply.
+// Note that the Intel documentation's assertion that "the two- and three-operand forms may also be used with unsigned operands
+// because the lower half of the product is the same regardless if the operands are signed or unsigned" is nonsense when the
+// factors are not the same width and the second factor is thus sign extended before the product is computed.  E.g., "IMUL r64,
+// imm32" when applied to 1 x 4294967295 results in "-1" (0xffffffffffffffff) not 4294967295 (0x00000000ffffffff).
 struct IP_imul: P {
     void p(D d, Ops ops, I insn, A args) {
-        size_t nbits = asm_type_width(args[0]->get_type());
-        size_t nbits_last = asm_type_width(args.back()->get_type());
-        BaseSemantics::SValuePtr result;
-        RegisterDescriptor reg0 = d->REG_AX;
-        reg0.set_nbits(nbits);
-        if (8==nbits) {
-            assert_args(insn, args, 1);
-            BaseSemantics::SValuePtr op0 = d->readRegister(reg0);
-            BaseSemantics::SValuePtr op1 = d->read(args[0], nbits);
-            result = ops->signedMultiply(op0, op1);
-            ops->writeRegister(d->REG_AX, result);
+        ASSERT_require(args.size() >= 1);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
         } else {
-            if (args.size()<1 || args.size()>3)
-                throw BaseSemantics::Exception("instruction must have 1, 2, or 3 arguments", insn);
-            BaseSemantics::SValuePtr op0 = 1==args.size() ? d->readRegister(reg0) : d->read(args[args.size()-2], nbits);
-            BaseSemantics::SValuePtr op1 = ops->signExtend(d->read(args.back(), nbits_last), nbits);
-            result = ops->signedMultiply(op0, op1);
-            if (1==args.size()) {
-                RegisterDescriptor reg1 = d->REG_DX;
-                reg1.set_nbits(nbits);
-                ops->writeRegister(reg0, ops->extract(result, 0, nbits));
-                ops->writeRegister(reg1, ops->extract(result, nbits, 2*nbits));
-            } else {
-                d->write(args[0], ops->extract(result, 0, nbits));
-            }
-        }
-        ASSERT_require(result->get_width() == 2*nbits);
 
-        // For the one-operand form of the instruction, the CF and OF flags are set only when bits are carried into the upper
-        // half of the result; for the two- and three-operand forms, the CF and OF flags are set only when the signed result
-        // must be truncated to fit in the destination operand size.  The CF and OF flags are cleared otherwise.
-        BaseSemantics::SValuePtr carry;
-        if (1==args.size()) {
-            // carry set when high-order bits are not all zero
-            carry = ops->invert(ops->equalToZero(ops->extract(result, nbits, 2*nbits)));
-        } else {
-            // carry set when high-order bits are not all equal to the low-half sign bit.  In other words, when high-half bits
-            // are not all clear or not all set or when the high-half sign bit is not equal to the low-half sign bit.
-            BaseSemantics::SValuePtr lh_signbit = ops->extract(result, nbits-1, nbits);
-            BaseSemantics::SValuePtr hh_signbit = ops->extract(result, 2*nbits-1, 2*nbits);
-            BaseSemantics::SValuePtr hh = ops->extract(result, nbits, 2*nbits);
+            // Read the two factors to be multiplied.
+            size_t arg0Width = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr factor1, factor2;
+            if (1 == args.size()) {
+                if (8 == arg0Width) {
+                    factor1 = d->readRegister(d->REG_AL);
+                    factor2 = d->read(args[0]);
+                } else {
+                    RegisterDescriptor reg0 = d->REG_AX; reg0.set_nbits(arg0Width);
+                    factor1 = d->readRegister(reg0);
+                    factor2 = d->read(args[0]);
+                }
+            } else if (2 == args.size()) {
+                ASSERT_require(arg0Width > 8);
+                ASSERT_require(asm_type_width(args[1]->get_type()) <= arg0Width);
+                factor1 = d->read(args[0]);
+                factor2 = ops->signExtend(d->read(args[1]), arg0Width);
+            } else if (3 == args.size()) {
+                ASSERT_require(arg0Width > 8);
+                ASSERT_require(asm_type_width(args[1]->get_type()) == arg0Width);
+                ASSERT_require(asm_type_width(args[2]->get_type()) <= arg0Width);
+                factor1 = d->read(args[1]);
+                factor2 = ops->signExtend(d->read(args[2]), arg0Width);
+            }
+
+            // Obtain the result
+            ASSERT_not_null(factor1);
+            ASSERT_not_null(factor2);
+            ASSERT_require(factor1->get_width() == factor2->get_width());
+            BaseSemantics::SValuePtr product = ops->signedMultiply(factor1, factor2);
+
+            // Store the result
+            if (1 == args.size()) {
+                if (8 == arg0Width) {
+                    ops->writeRegister(d->REG_AX, product);
+                } else {
+                    RegisterDescriptor aReg = d->REG_AX; aReg.set_nbits(arg0Width);
+                    RegisterDescriptor dReg = d->REG_DX; dReg.set_nbits(arg0Width);
+                    ops->writeRegister(aReg, ops->extract(product, 0, arg0Width));
+                    ops->writeRegister(dReg, ops->extract(product, arg0Width, 2*arg0Width));
+                }
+            } else {
+                d->write(args[0], ops->extract(product, 0, arg0Width));
+            }
+
+            // Carry flag set when high-order bits of the product are not all equal to the low-half's sign bit. In other words,
+            // when the high-half bits are not all clear or not all set or when the high-half sign bit is not equal to the
+            // low-half sign bit.
+            ASSERT_require(product->get_width() % 2 == 0);
+            size_t productHalfWidth = product->get_width() / 2;
+            BaseSemantics::SValuePtr lh_signbit = ops->extract(product, productHalfWidth-1, productHalfWidth);
+            BaseSemantics::SValuePtr hh_signbit = ops->extract(product, product->get_width()-1, product->get_width());
+            BaseSemantics::SValuePtr hh = ops->extract(product, productHalfWidth, product->get_width());
             BaseSemantics::SValuePtr hh_allsame = ops->or_(ops->equalToZero(hh), ops->equalToZero(ops->invert(hh)));
             BaseSemantics::SValuePtr signsame = ops->equalToZero(ops->xor_(lh_signbit, hh_signbit));
-            carry = ops->invert(ops->and_(hh_allsame, signsame));
-        }
+            BaseSemantics::SValuePtr carry = ops->invert(ops->and_(hh_allsame, signsame));
 
-        ops->writeRegister(d->REG_CF, carry);
-        ops->writeRegister(d->REG_OF, carry);
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
+            // Update status flags
+            ops->writeRegister(d->REG_CF, carry);
+            ops->writeRegister(d->REG_OF, carry);
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
+        }
     }
 };
 
