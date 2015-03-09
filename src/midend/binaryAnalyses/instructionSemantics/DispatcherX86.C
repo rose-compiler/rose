@@ -797,7 +797,11 @@ struct IP_fld: P {
 struct IP_fldcw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        ops->writeRegister(d->REG_FPCTL, d->read(args[0], 16));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_FPCTL, d->read(args[0], 16));
+        }
     }
 };
 
