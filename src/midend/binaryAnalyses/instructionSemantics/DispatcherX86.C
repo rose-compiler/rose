@@ -1427,7 +1427,10 @@ struct IP_neg: P {
 
 // No operation
 struct IP_nop: P {
-    void p(D d, Ops ops, I insn, A args) {}
+    void p(D d, Ops ops, I insn, A args) {
+        if (insn->get_lockPrefix())
+            ops->interrupt(x86_exception_ud, 0);
+    }
 };
 
 // Invert bits
