@@ -1413,10 +1413,15 @@ struct IP_mul: P {
 struct IP_neg: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(ops->number_(nbits, 0), ops->invert(d->read(args[0], nbits)),
-                                                            true, ops->boolean_(false));
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr srcVal = d->read(args[0]);
+            BaseSemantics::SValuePtr result = d->doAddOperation(ops->number_(srcVal->get_width(), 0),
+                                                                ops->invert(srcVal),
+                                                                true, ops->boolean_(false));
+            d->write(args[0], result);
+        }
     }
 };
 
