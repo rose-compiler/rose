@@ -288,7 +288,10 @@ struct XOMP_mapped_variable
 {
   void * address; // original variable's address
   //TODO: support array sections
-  int size; 
+  int* size; 
+  int* offset;
+  int* DimSize;
+  int  nDim;
   void * dev_address; // the corresponding device variable's address
   bool copyTo; // if this variable should be copied to the device first
   bool copyFrom; // if this variable should be copied back to HOST when existing the data environment
@@ -335,12 +338,12 @@ extern void xomp_deviceDataEnvironmentEnter();
 // The function will first try to inherit/reuse the same variable from the parent DDE. i
 // If not successful , it will allocate a new data on device, register it to the current DDE, and copy CPU values when needed.
 // The allocated or found device variable address will be returned.
-extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int size, bool copyTo, bool copyFrom);
+extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* size, int* offset, int* vDimSize, bool copyTo, bool copyFrom);
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
 //void* XOMP_Device_Data_Environment_Get_Inherited_Variable (void* original_variable_address, int size);
-extern void* xomp_deviceDataEnvironmentGetInheritedVariable (void* original_variable_address, int size);
+extern void* xomp_deviceDataEnvironmentGetInheritedVariable (void* original_variable_address, int* size);
 
 //! Add a newly mapped variable into the current DDE's new variable list
 //void XOMP_Device_Data_Environment_Add_Variable (void* var_addr, int var_size, void * dev_addr);
