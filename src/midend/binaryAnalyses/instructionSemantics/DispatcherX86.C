@@ -1224,7 +1224,7 @@ struct IP_mov: P {
 
 // Move source to destination with truncation or zero extend
 // Used for MOVD and MOVQ
-struct IP_move_extend: P {
+struct IP_move_zero_extend: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         if (insn->get_lockPrefix()) {
@@ -1232,6 +1232,23 @@ struct IP_move_extend: P {
         } else {
             size_t nbitsDst = asm_type_width(args[0]->get_type());
             d->write(args[0], ops->unsignedExtend(d->read(args[1]), nbitsDst));
+        }
+    }
+};
+
+// Move source to destination with sign extend
+// Used for MOVD and MOVQ
+struct IP_move_sign_extend: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t dstWidth = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr value = d->read(args[1]);
+            if (value->get_width() < dstWidth)
+                value = ops->signExtend(value, dstWidth);
+            d->write(args[0], value);
         }
     }
 };
@@ -1320,40 +1337,6 @@ struct IP_movestring: P {
             // Adjust instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none!=repeat)
                 d->repLeave(repeat, inLoop, insn->get_address());
-        }
-    }
-};
-
-// Move with sign extend
-struct IP_movsx: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        switch (asm_type_width(args[0]->get_type())) {
-            case 16: {
-                BaseSemantics::SValuePtr op1 = d->read(args[1], 8);
-                BaseSemantics::SValuePtr result = ops->signExtend(op1, 16);
-                d->write(args[0], result);
-                break;
-            }
-            case 32: {
-                size_t width1 = asm_type_width(args[1]->get_type());
-                switch (width1) {
-                    case 8:
-                    case 16: {
-                        BaseSemantics::SValuePtr op1 = d->read(args[1], width1);
-                        BaseSemantics::SValuePtr result = ops->signExtend(op1, 32);
-                        d->write(args[0], result);
-                        break;
-                    }
-                    default:
-                        throw BaseSemantics::Exception("size not implemented", insn);
-                }
-                break;
-            }
-            default: {
-                throw BaseSemantics::Exception("size not implemented", insn);
-                break;
-            }
         }
     }
 };
@@ -1975,10 +1958,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
     iproc_set(x86_mov,          new X86::IP_mov);
-    iproc_set(x86_movd,         new X86::IP_move_extend);
+    iproc_set(x86_movd,         new X86::IP_move_zero_extend);
     iproc_set(x86_movdqa,       new X86::IP_move_same);
     iproc_set(x86_movdqu,       new X86::IP_move_same);
-    iproc_set(x86_movq,         new X86::IP_move_extend);
+    iproc_set(x86_movq,         new X86::IP_move_zero_extend);
     iproc_set(x86_movntdqa,     new X86::IP_move_same);
     iproc_set(x86_movntdq,      new X86::IP_move_same);
     iproc_set(x86_movnti,       new X86::IP_move_same);
@@ -1987,7 +1970,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
     iproc_set(x86_movsq,        new X86::IP_movestring(x86_repeat_none, 64));
-    iproc_set(x86_movsx,        new X86::IP_movsx);
+    iproc_set(x86_movsx,        new X86::IP_move_sign_extend);
+    iproc_set(x86_movsxd,       new X86::IP_move_sign_extend);
     iproc_set(x86_movzx,        new X86::IP_movzx);
     iproc_set(x86_mul,          new X86::IP_mul);
     iproc_set(x86_neg,          new X86::IP_neg);
