@@ -1200,12 +1200,25 @@ struct IP_loop: P {
     }
 };
 
-// Move
+// The MOV instruction
 struct IP_mov: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        d->write(args[0], d->read(args[1], nbits));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t dstWidth = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr value = d->read(args[1]);
+            if (dstWidth > value->get_width()) {
+                // MOV r/m64, imm32 uses sign extend, but all others use unsigned extend or truncation.
+                if (64==dstWidth && isSgAsmIntegerValueExpression(args[1])) {
+                    value = ops->signExtend(value, 64);
+                } else {
+                    value = ops->unsignedExtend(value, dstWidth);
+                }
+            }
+            d->write(args[0], value);
+        }
     }
 };
 
