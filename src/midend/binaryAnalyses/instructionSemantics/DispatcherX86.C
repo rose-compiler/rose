@@ -1230,8 +1230,11 @@ struct IP_move_zero_extend: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            size_t nbitsDst = asm_type_width(args[0]->get_type());
-            d->write(args[0], ops->unsignedExtend(d->read(args[1]), nbitsDst));
+            size_t dstWidth = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr value = d->read(args[1]);
+            if (value->get_width() != dstWidth)
+                value = ops->unsignedExtend(value, dstWidth);
+            d->write(args[0], value);
         }
     }
 };
@@ -1337,21 +1340,6 @@ struct IP_movestring: P {
             // Adjust instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none!=repeat)
                 d->repLeave(repeat, inLoop, insn->get_address());
-        }
-    }
-};
-
-// Move with zero extend
-struct IP_movzx: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        size_t dst_nbits = asm_type_width(args[0]->get_type());
-        size_t src_nbits = asm_type_width(args[1]->get_type());
-        if (dst_nbits==src_nbits) {
-            d->write(args[0], d->read(args[1], src_nbits));
-        } else {
-            ASSERT_require(dst_nbits>src_nbits);
-            d->write(args[0], ops->concat(d->read(args[1], src_nbits), ops->number_(dst_nbits-src_nbits, 0)));
         }
     }
 };
@@ -1972,7 +1960,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movsq,        new X86::IP_movestring(x86_repeat_none, 64));
     iproc_set(x86_movsx,        new X86::IP_move_sign_extend);
     iproc_set(x86_movsxd,       new X86::IP_move_sign_extend);
-    iproc_set(x86_movzx,        new X86::IP_movzx);
+    iproc_set(x86_movzx,        new X86::IP_move_zero_extend);
     iproc_set(x86_mul,          new X86::IP_mul);
     iproc_set(x86_neg,          new X86::IP_neg);
     iproc_set(x86_nop,          new X86::IP_nop);
