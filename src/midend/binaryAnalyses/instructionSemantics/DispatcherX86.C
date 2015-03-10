@@ -1936,6 +1936,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movntdqa,     new X86::IP_move_same);
     iproc_set(x86_movntdq,      new X86::IP_move_same);
     iproc_set(x86_movnti,       new X86::IP_move_same);
+    iproc_set(x86_movntq,       new X86::IP_move_same);
     iproc_set(x86_movsb,        new X86::IP_movestring(x86_repeat_none, 8));
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
