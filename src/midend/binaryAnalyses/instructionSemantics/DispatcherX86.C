@@ -1236,20 +1236,8 @@ struct IP_move_extend: P {
     }
 };
 
-// Move aligned or unaligned double quadword
-struct IP_movdq: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        if (insn->get_lockPrefix()) {
-            ops->interrupt(x86_exception_ud, 0);
-        } else {
-            d->write(args[0], d->read(args[1]));
-        }
-    }
-};
-
-// Load/store double quadword non-temporal hint for MOVNTDQA and MOVNTDQ instructions.
-struct IP_movntdq: P {
+// Move from one location to another without any extension or truncation.
+struct IP_move_same: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         if (insn->get_lockPrefix()) {
@@ -1942,11 +1930,12 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
     iproc_set(x86_mov,          new X86::IP_mov);
     iproc_set(x86_movd,         new X86::IP_move_extend);
-    iproc_set(x86_movdqa,       new X86::IP_movdq);
-    iproc_set(x86_movdqu,       new X86::IP_movdq);
+    iproc_set(x86_movdqa,       new X86::IP_move_same);
+    iproc_set(x86_movdqu,       new X86::IP_move_same);
     iproc_set(x86_movq,         new X86::IP_move_extend);
-    iproc_set(x86_movntdqa,     new X86::IP_movntdq);
-    iproc_set(x86_movntdq,      new X86::IP_movntdq);
+    iproc_set(x86_movntdqa,     new X86::IP_move_same);
+    iproc_set(x86_movntdq,      new X86::IP_move_same);
+    iproc_set(x86_movnti,       new X86::IP_move_same);
     iproc_set(x86_movsb,        new X86::IP_movestring(x86_repeat_none, 8));
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
