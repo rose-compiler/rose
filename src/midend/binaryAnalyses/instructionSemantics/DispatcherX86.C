@@ -1050,13 +1050,16 @@ struct IP_lea: P {
 struct IP_leave: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        ops->writeRegister(d->REG_ESP, d->readRegister(d->REG_EBP));
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, 4));
-        ops->writeRegister(d->REG_EBP, ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_ESP, newSp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbitsBP = d->REG_anyBP.get_nbits();
+            ops->writeRegister(d->REG_anySP, d->readRegister(d->REG_anyBP));
+            BaseSemantics::SValuePtr oldSP = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSP = ops->add(oldSP, ops->number_(oldSP->get_width(), nbitsBP/8));
+            ops->writeRegister(d->REG_anyBP, ops->readMemory(d->REG_SS, oldSP, ops->undefined_(nbitsBP), ops->boolean_(true)));
+            ops->writeRegister(d->REG_anySP, newSP);
+        }
     }
 };
 
@@ -1975,6 +1978,7 @@ DispatcherX86::regcache_init()
 
         REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
         REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+        REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
         REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
     }
 }
