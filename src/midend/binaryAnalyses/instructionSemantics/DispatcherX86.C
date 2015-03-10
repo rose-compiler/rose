@@ -1248,8 +1248,8 @@ struct IP_movdq: P {
     }
 };
 
-// Load double quadword non-temporal aligned hint
-struct IP_movntdqa: P {
+// Load/store double quadword non-temporal hint for MOVNTDQA and MOVNTDQ instructions.
+struct IP_movntdq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         if (insn->get_lockPrefix()) {
@@ -1945,7 +1945,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movdqa,       new X86::IP_movdq);
     iproc_set(x86_movdqu,       new X86::IP_movdq);
     iproc_set(x86_movq,         new X86::IP_move_extend);
-    iproc_set(x86_movntdqa,     new X86::IP_movntdqa);
+    iproc_set(x86_movntdqa,     new X86::IP_movntdq);
+    iproc_set(x86_movntdq,      new X86::IP_movntdq);
     iproc_set(x86_movsb,        new X86::IP_movestring(x86_repeat_none, 8));
     iproc_set(x86_movsw,        new X86::IP_movestring(x86_repeat_none, 16));
     iproc_set(x86_movsd,        new X86::IP_movestring(x86_repeat_none, 32));
