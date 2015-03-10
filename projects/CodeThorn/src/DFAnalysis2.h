@@ -61,6 +61,7 @@ class DFAnalysis2 {
   void attachOutInfoToAst(string attributeName);
 
   void attachInfoToAst(string attributeName,bool inInfo);
+  void setSolverTrace(bool trace) { _solver->setTrace(trace); }
 
  protected:
 

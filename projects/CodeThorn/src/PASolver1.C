@@ -48,12 +48,12 @@ PASolver1::runSolver() {
     Edge edge=_workList.take();
     Label lab0=edge.source;
     Label lab1=edge.target;
-    if(_trace)
-      cout<<"DEBUG: computing edge "<<lab0<<"->"<<lab1<<endl;
+    //if(_trace)
+    //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
     if(_trace) {
-      cout<<"DEBUG: lab0: "<<lab0<<":";info->toStream(cout);
+      cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout);
       cout<<"->"<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout);
       cout<<endl;
     }
@@ -63,10 +63,11 @@ PASolver1::runSolver() {
       _analyzerDataPreInfo[lab1.getId()]->combine(*info);
       Flow outEdges=_flow.outEdges(lab1);
       _workList.add(outEdges);
+      cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;
     } else {
       // no new information was computed. Nothing to do.
       if(_trace)
-        cout<<"Nothing to do."<<endl;
+        cout<<"TRACE: nop."<<endl;
     }
     delete info;
   }

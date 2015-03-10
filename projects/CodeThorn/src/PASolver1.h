@@ -32,6 +32,8 @@ class PASolver1 {
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
  public:
+  void setTrace(bool trace) { _trace=trace; }
+ private:
   bool _trace;
 };
 

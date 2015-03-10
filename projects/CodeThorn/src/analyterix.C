@@ -65,6 +65,7 @@ bool option_ud_analysis=false;
 bool option_lv_analysis=false;
 bool option_interval_analysis=false;
 bool option_at_analysis=false;
+bool option_trace=false;
 
 //boost::program_options::variables_map args;
 
@@ -123,6 +124,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
@@ -288,6 +290,7 @@ int main(int argc, char* argv[]) {
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
       ("interval-analysis", "perform interval analysis.")
+      ("trace", "show operations as performed by selected solver.")
       ("print-varidmapping", "prints variableIdMapping")
       ("print-varidmapping-array", "prints variableIdMapping with array element varids.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
@@ -314,6 +317,9 @@ int main(int argc, char* argv[]) {
       option_prefix=args["prefix"].as<string>().c_str();
     }
 
+    if (args.count("trace")) {
+      option_trace=true;
+    }
     if(args.count("stats")) {
       option_stats=true;
     }
