@@ -568,7 +568,7 @@ struct IP_cmpstrings: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            // The disassembler produces CMPB, CMPW, CMPD, or CMPQ without any arguments.
+            // The disassembler produces CMPSB, CMPSW, CMPSD, or CMPSQ without any arguments (never CMPS with an arg).
             BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
 
             // Get the addresses for the two values to read and compare.
@@ -589,10 +589,12 @@ struct IP_cmpstrings: P {
                 default:
                     ASSERT_not_reachable("invalid instruction address size");
             }
+            ASSERT_require(reg1.is_valid());
+            ASSERT_require(reg2.is_valid());
             BaseSemantics::SValuePtr addr1 = d->readRegister(reg1);
             BaseSemantics::SValuePtr addr2 = d->readRegister(reg2);
 
-            // Adjust address width depending on how memory is accessed.
+            // Adjust address width depending on how memory is accessed. All addresses in memory have the same width.
             if (size_t addrWidth = d->addressWidth()) {
                 if (addr1->get_width() < addrWidth) {
                     addr1 = ops->signExtend(addr1, addrWidth);
@@ -1079,22 +1081,63 @@ struct IP_loadstring: P {
     const size_t nbits;
     const size_t nbytes;
     IP_loadstring(X86RepeatPrefix repeat, size_t nbits): repeat(repeat), nbits(nbits), nbytes(nbits/8) {
-        ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+        ASSERT_require(8==nbits || 16==nbits || 32==nbits || 64==nbits);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        RegisterDescriptor regA = d->REG_EAX; regA.set_nbits(nbits);
-        BaseSemantics::SValuePtr in_loop = d->repEnter(repeat);
-        RegisterDescriptor sr(x86_regclass_segment,
-                              insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
-                              0, 16);
-        BaseSemantics::SValuePtr value = ops->readMemory(sr, d->readRegister(d->REG_ESI), ops->undefined_(nbits), in_loop);
-        ops->writeRegister(regA, value);
-        BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
-                                                 ops->number_(32, -nbytes), ops->number_(32, nbytes));
-        ops->writeRegister(d->REG_ESI, ops->add(d->readRegister(d->REG_ESI), step));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            // The disassembler produces LODSB, LODSW, LODSD, or LODSQ without any arguments (never LODS with an arg).
+            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+
+            // Get the address for the string to load.
+            RegisterDescriptor srcReg;
+            switch (insn->get_addressSize()) {
+                case x86_insnsize_16:
+                    srcReg = d->REG_SI;
+                    break;
+                case x86_insnsize_32:
+                    srcReg = d->REG_ESI;
+                    break;
+                case x86_insnsize_64:
+                    srcReg = d->REG_RSI;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid instruction address size");
+            }
+            ASSERT_require(srcReg.is_valid());
+            BaseSemantics::SValuePtr addr = d->readRegister(srcReg);
+
+            // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
+            if (size_t addrWidth = d->addressWidth()) {
+                if (addr->get_width() < addrWidth) {
+                    addr = ops->signExtend(addr, addrWidth);
+                } else if (addr->get_width() > addrWidth) {
+                    addr = ops->unsignedExtend(addr, addrWidth);
+                }
+            }
+
+            // Load the byte, word, dword, or qword from memory.
+            RegisterDescriptor sr(x86_regclass_segment,
+                                  insn->get_segmentOverride()!=x86_segreg_none ? insn->get_segmentOverride() : x86_segreg_ds,
+                                  0, 16);
+            BaseSemantics::SValuePtr val = ops->readMemory(sr, addr, ops->undefined_(nbits), inLoop);
+
+            // Save value into destination register
+            RegisterDescriptor dstReg = d->REG_AX; dstReg.set_nbits(nbits);
+            ops->writeRegister(dstReg, val);
+
+            // Advance pointer register
+            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
+                                                     ops->number_(srcReg.get_nbits(), -nbytes),
+                                                     ops->number_(srcReg.get_nbits(), +nbytes));
+            ops->writeRegister(srcReg, ops->add(d->readRegister(srcReg), step));
+
+            // Adjust the instruction pointer register to either repeat the instruction or fall through
+            if (x86_repeat_none != repeat)
+                d->repLeave(repeat, inLoop, insn->get_address());
+        }
     }
 };
 
@@ -1791,6 +1834,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_cmpsb,        new X86::IP_cmpstrings(x86_repeat_none, 8));
     iproc_set(x86_cmpsw,        new X86::IP_cmpstrings(x86_repeat_none, 16));
     iproc_set(x86_cmpsd,        new X86::IP_cmpstrings(x86_repeat_none, 32)); // FIXME: also a floating point instruction
+    iproc_set(x86_cmpsq,        new X86::IP_cmpstrings(x86_repeat_none, 64));
     iproc_set(x86_cmpxchg,      new X86::IP_cmpxchg);
     iproc_set(x86_cpuid,        new X86::IP_cpuid);
     iproc_set(x86_cqo,          new X86::IP_cqo);
@@ -1835,6 +1879,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_lodsb,        new X86::IP_loadstring(x86_repeat_none, 8));
     iproc_set(x86_lodsw,        new X86::IP_loadstring(x86_repeat_none, 16));
     iproc_set(x86_lodsd,        new X86::IP_loadstring(x86_repeat_none, 32));
+    iproc_set(x86_lodsq,        new X86::IP_loadstring(x86_repeat_none, 64));
     iproc_set(x86_loop,         new X86::IP_loop(x86_loop));
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
@@ -1865,6 +1910,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_rep_lodsb,    new X86::IP_loadstring(x86_repeat_repe, 8));
     iproc_set(x86_rep_lodsw,    new X86::IP_loadstring(x86_repeat_repe, 16));
     iproc_set(x86_rep_lodsd,    new X86::IP_loadstring(x86_repeat_repe, 32));
+    iproc_set(x86_rep_lodsq,    new X86::IP_loadstring(x86_repeat_repe, 64));
     iproc_set(x86_rep_movsb,    new X86::IP_movestring(x86_repeat_repe, 8));
     iproc_set(x86_rep_movsw,    new X86::IP_movestring(x86_repeat_repe, 16));
     iproc_set(x86_rep_movsd,    new X86::IP_movestring(x86_repeat_repe, 32));
@@ -1874,12 +1920,14 @@ DispatcherX86::iproc_init()
     iproc_set(x86_repe_cmpsb,   new X86::IP_cmpstrings(x86_repeat_repe, 8));
     iproc_set(x86_repe_cmpsw,   new X86::IP_cmpstrings(x86_repeat_repe, 16));
     iproc_set(x86_repe_cmpsd,   new X86::IP_cmpstrings(x86_repeat_repe, 32));
+    iproc_set(x86_repe_cmpsq,   new X86::IP_cmpstrings(x86_repeat_repe, 64));
     iproc_set(x86_repe_scasb,   new X86::IP_scanstring(x86_repeat_repe, 8));
     iproc_set(x86_repe_scasw,   new X86::IP_scanstring(x86_repeat_repe, 16));
     iproc_set(x86_repe_scasd,   new X86::IP_scanstring(x86_repeat_repe, 32));
     iproc_set(x86_repne_cmpsb,  new X86::IP_cmpstrings(x86_repeat_repne, 8));
     iproc_set(x86_repne_cmpsw,  new X86::IP_cmpstrings(x86_repeat_repne, 16));
     iproc_set(x86_repne_cmpsd,  new X86::IP_cmpstrings(x86_repeat_repne, 32));
+    iproc_set(x86_repne_cmpsq,  new X86::IP_cmpstrings(x86_repeat_repne, 64));
     iproc_set(x86_repne_scasb,  new X86::IP_scanstring(x86_repeat_repne, 8));
     iproc_set(x86_repne_scasw,  new X86::IP_scanstring(x86_repeat_repne, 16));
     iproc_set(x86_repne_scasd,  new X86::IP_scanstring(x86_repeat_repne, 32));
