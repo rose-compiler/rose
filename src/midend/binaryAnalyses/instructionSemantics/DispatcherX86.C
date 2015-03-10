@@ -1223,12 +1223,16 @@ struct IP_mov: P {
 };
 
 // Move source to destination with truncation or zero extend
+// Used for MOVD and MOVQ
 struct IP_move_extend: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbitsSrc = asm_type_width(args[1]->get_type());
-        size_t nbitsDst = asm_type_width(args[0]->get_type());
-        d->write(args[0], ops->unsignedExtend(d->read(args[1], nbitsSrc), nbitsDst));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbitsDst = asm_type_width(args[0]->get_type());
+            d->write(args[0], ops->unsignedExtend(d->read(args[1]), nbitsDst));
+        }
     }
 };
 
