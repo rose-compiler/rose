@@ -1149,29 +1149,54 @@ struct IP_loop: P {
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr oldCx = d->readRegister(d->REG_ECX);
-        BaseSemantics::SValuePtr newCx = ops->add(ops->number_(32, -1), oldCx);
-        ops->writeRegister(d->REG_ECX, newCx);
-        BaseSemantics::SValuePtr doLoop;
-        ASSERT_require(insn->get_kind()==kind);
-        switch (kind) {
-            case x86_loop:
-                doLoop = ops->invert(ops->equalToZero(newCx));
-                break;
-            case x86_loopnz:
-                doLoop = ops->and_(ops->invert(ops->equalToZero(newCx)), ops->invert(d->readRegister(d->REG_ZF)));
-                break;
-            case x86_loopz:
-                doLoop = ops->and_(ops->invert(ops->equalToZero(newCx)), d->readRegister(d->REG_ZF));
-                break;
-            default:
-                ASSERT_not_reachable("instruction type not handled");
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            // Which register is used for counting?
+            RegisterDescriptor counterReg;
+            switch (insn->get_addressSize()) {
+                case x86_insnsize_16:
+                    counterReg = d->REG_DX;
+                    break;
+                case x86_insnsize_32:
+                    counterReg = d->REG_EDX;
+                    break;
+                case x86_insnsize_64:
+                    counterReg = d->REG_RDX;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid instruction address size");
+            }
+
+            // Decrement the counter
+            BaseSemantics::SValuePtr oldCounter = d->readRegister(counterReg);
+            BaseSemantics::SValuePtr newCounter = ops->add(oldCounter, ops->number_(oldCounter->get_width(), -1));
+            ops->writeRegister(counterReg, newCounter);
+
+            // Should we loop?
+            BaseSemantics::SValuePtr doLoop;
+            ASSERT_require(insn->get_kind() == kind);
+            switch (kind) {
+                case x86_loop:
+                    doLoop = ops->invert(ops->equalToZero(newCounter));
+                    break;
+                case x86_loopnz:
+                    doLoop = ops->and_(ops->invert(ops->equalToZero(newCounter)),
+                                       ops->invert(d->readRegister(d->REG_ZF)));
+                    break;
+                case x86_loopz:
+                    doLoop = ops->and_(ops->invert(ops->equalToZero(newCounter)),
+                                       d->readRegister(d->REG_ZF));
+                    break;
+                default:
+                    ASSERT_not_reachable("instruction type not handled");
+            }
+
+            // Adjust the instruction pointer to either loop or fall through.
+            ops->writeRegister(d->REG_anyIP, ops->ite(doLoop,
+                                                      d->read(args[0], d->REG_anyIP.get_nbits()),
+                                                      d->readRegister(d->REG_anyIP)));
         }
-        ops->writeRegister(d->REG_anyIP, ops->ite(doLoop,
-                                                  d->read(args[0], d->REG_anyIP.get_nbits()),
-                                                  d->readRegister(d->REG_anyIP)));
     }
 };
 
