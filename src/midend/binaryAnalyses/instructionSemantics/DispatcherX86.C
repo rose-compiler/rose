@@ -882,7 +882,6 @@ struct IP_imul: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-
             // Read the two factors to be multiplied.
             size_t arg0Width = asm_type_width(args[0]->get_type());
             BaseSemantics::SValuePtr factor1, factor2;
@@ -1348,25 +1347,65 @@ struct IP_movestring: P {
 struct IP_mul: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        RegisterDescriptor reg0 = d->REG_AX; reg0.set_nbits(nbits);
-        RegisterDescriptor reg1 = d->REG_DX; reg1.set_nbits(nbits);
-        BaseSemantics::SValuePtr op0 = d->readRegister(reg0);
-        BaseSemantics::SValuePtr op1 = d->read(args[0], nbits);
-        BaseSemantics::SValuePtr result = ops->unsignedMultiply(op0, op1);
-        if (8==nbits) {
-            ops->writeRegister(d->REG_AX, result);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
         } else {
-            ops->writeRegister(reg0, ops->extract(result, 0, nbits));
-            ops->writeRegister(reg1, ops->extract(result, nbits, 2*nbits));
+            // Read the two factors to be multiplied
+            BaseSemantics::SValuePtr factor1 = d->read(args[0]);
+            BaseSemantics::SValuePtr factor2;
+            switch (factor1->get_width()) {
+                case 8:
+                    factor2 = d->readRegister(d->REG_AL);
+                    break;
+                case 16:
+                    factor2 = d->readRegister(d->REG_AX);
+                    break;
+                case 32:
+                    factor2 = d->readRegister(d->REG_EAX);
+                    break;
+                case 64:
+                    factor2 = d->readRegister(d->REG_RAX);
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+
+            // Compute the result
+            ASSERT_not_null(factor2);
+            ASSERT_require(factor1->get_width() == factor2->get_width());
+            BaseSemantics::SValuePtr product = ops->unsignedMultiply(factor1, factor2);
+
+            // Save the result
+            switch (factor1->get_width()) {
+                case 8:
+                    ops->writeRegister(d->REG_AX, product);
+                    break;
+                case 16:
+                    ops->writeRegister(d->REG_AX, ops->extract(product, 0, 16));
+                    ops->writeRegister(d->REG_DX, ops->extract(product, 16, 32));
+                    break;
+                case 32:
+                    ops->writeRegister(d->REG_EAX, ops->extract(product, 0, 32));
+                    ops->writeRegister(d->REG_EDX, ops->extract(product, 32, 64));
+                    break;
+                case 64:
+                    ops->writeRegister(d->REG_RAX, ops->extract(product, 0, 64));
+                    ops->writeRegister(d->REG_RDX, ops->extract(product, 64, 128));
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+
+            // Set flags
+            BaseSemantics::SValuePtr carry = ops->invert(ops->equalToZero(ops->extract(product, factor1->get_width(),
+                                                                                       2 * factor1->get_width())));
+            ops->writeRegister(d->REG_CF, carry);
+            ops->writeRegister(d->REG_OF, carry);
+            ops->writeRegister(d->REG_SF, ops->undefined_(1));
+            ops->writeRegister(d->REG_ZF, ops->undefined_(1));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_PF, ops->undefined_(1));
         }
-        BaseSemantics::SValuePtr carry = ops->invert(ops->equalToZero(ops->extract(result, nbits, 2*nbits)));
-        ops->writeRegister(d->REG_CF, carry);
-        ops->writeRegister(d->REG_OF, carry);
-        ops->writeRegister(d->REG_SF, ops->undefined_(1));
-        ops->writeRegister(d->REG_ZF, ops->undefined_(1));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_PF, ops->undefined_(1));
     }
 };
 
