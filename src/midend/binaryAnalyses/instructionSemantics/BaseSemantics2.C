@@ -1,10 +1,26 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
+#include "Diagnostics.h"
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
+
+using namespace Sawyer::Message::Common;
+
+Sawyer::Message::Facility mlog;
+
+void
+initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::InstructionSemantics2", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
+
 namespace BaseSemantics {
 
 /*******************************************************************************************************************************
@@ -191,7 +207,7 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
 
     // Get a list of all the (parts of) registers that might overlap with this register.
     const Extent need_extent(reg.get_offset(), reg.get_nbits());
-    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by bit offset
+    std::vector<SValuePtr> overlaps(reg.get_nbits()); // overlapping parts of other registers by destination bit offset
     std::vector<RegPair> nonoverlaps; // non-overlapping parts of overlapping registers
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
@@ -208,8 +224,17 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
                 const size_t lo_bit = need_extent.first() - have_extent.first();
                 return ops->extract(rvi->value, lo_bit, lo_bit+need_extent.size());
             } else if (!overlap.empty()) {
-                const SValuePtr overlap_val = ops->extract(rvi->value, overlap.first()-have_extent.first(), overlap.size());
-                overlaps[overlap.first()] = overlap_val;
+                ASSERT_require(overlap.first() >= have_extent.first());
+                size_t extractBegin = overlap.first() - have_extent.first();
+                size_t extractEnd = extractBegin + overlap.size();
+                ASSERT_require(extractEnd > extractBegin);
+                ASSERT_require(extractEnd <= rvi->value->get_width());
+                const SValuePtr overlap_val = ops->extract(rvi->value, extractBegin, extractEnd);
+                ASSERT_require(overlap_val->get_width() == overlap.size());
+                ASSERT_require(overlap.first() >= need_extent.first());
+                size_t offsetWrtResult = overlap.first() - need_extent.first();
+                overlaps[offsetWrtResult] = overlap_val;
+
                 if (coalesceOnRead) {
                     // If any part of the existing register is not represented by the register being read, then we need to save
                     // that part.
@@ -256,7 +281,8 @@ RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators 
     // which we can insert the value we're about to return.
     if (coalesceOnRead)
         ri->second.push_back(RegPair(reg, retval));
-        
+
+    ASSERT_require(reg.get_nbits()==retval->get_width());
     return retval;
 }
 
@@ -925,15 +951,15 @@ bool
 MemoryCell::may_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check for the easy case:  two one-byte cells may alias one another if their addresses may be equal.
-    if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->may_equal(other->get_address(), addrOps->get_solver());
+    if (8==value_->get_width() && 8==other->get_value()->get_width())
+        return address_->may_equal(other->get_address(), addrOps->get_solver());
 
-    size_t addr_nbits = address->get_width();
+    size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    ASSERT_require(value->get_width() % 8 == 0);        // memory is byte addressable, so values must be multiples of a byte
-    SValuePtr lo1 = address;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
+    ASSERT_require(value_->get_width() % 8 == 0);       // memory is byte addressable, so values must be multiples of a byte
+    SValuePtr lo1 = address_;
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
 
     ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
@@ -964,15 +990,15 @@ bool
 MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 {
     // Check the easy case: two one-byte cells must alias one another if their address must be equal.
-    if (8==value->get_width() && 8==other->get_value()->get_width())
-        return address->must_equal(other->get_address(), addrOps->get_solver());
+    if (8==value_->get_width() && 8==other->get_value()->get_width())
+        return address_->must_equal(other->get_address(), addrOps->get_solver());
 
-    size_t addr_nbits = address->get_width();
+    size_t addr_nbits = address_->get_width();
     ASSERT_require(other->get_address()->get_width()==addr_nbits);
 
-    ASSERT_require(value->get_width() % 8 == 0);
-    SValuePtr lo1 = address;
-    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value->get_width() / 8));
+    ASSERT_require(value_->get_width() % 8 == 0);
+    SValuePtr lo1 = address_;
+    SValuePtr hi1 = addrOps->add(lo1, addrOps->number_(lo1->get_width(), value_->get_width() / 8));
 
     ASSERT_require(other->get_value()->get_width() % 8 == 0);
     SValuePtr lo2 = other->get_address();
@@ -1002,10 +1028,10 @@ MemoryCell::must_alias(const MemoryCellPtr &other, RiscOperators *addrOps) const
 void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
-    stream <<"addr=" <<(*address+fmt);
-    if (fmt.get_show_latest_writers() && latest_writer)
-        stream <<" writer=" <<StringUtility::addrToString(*latest_writer);
-    stream <<" value=" <<(*value+fmt);
+    stream <<"addr=" <<(*address_+fmt);
+    if (fmt.get_show_latest_writers() && latestWriter_)
+        stream <<" writer=" <<StringUtility::addrToString(*latestWriter_);
+    stream <<" value=" <<(*value_+fmt);
 }
 
 SValuePtr
@@ -1042,8 +1068,8 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
     CellList found = scan(addr, nbits, addrOps, valOps, short_circuited/*out*/);
     for (CellList::iterator fi=found.begin(); fi!=found.end(); ++fi) {
         MemoryCellPtr cell = *fi;
-        if (cell->get_latest_writer())
-            retval.insert(cell->get_latest_writer().get());
+        if (cell->latestWriter())
+            retval.insert(cell->latestWriter().get());
     }
     return retval;
 }
@@ -1104,6 +1130,23 @@ State::print(std::ostream &stream, Formatter &fmt) const
  *                                      RiscOperators
  *******************************************************************************************************************************/
 
+void
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
+    cur_insn = insn;
+    ++ninsns;
+};
+
+SValuePtr
+RiscOperators::subtract(const SValuePtr &subtrahand, const SValuePtr &minuend) {
+    return add(subtrahand, negate(minuend));
+}
+
+SValuePtr
+RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
+    return equalToZero(subtract(a, b));
+}
 
 /*******************************************************************************************************************************
  *                                      Dispatcher

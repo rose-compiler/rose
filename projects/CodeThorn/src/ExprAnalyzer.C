@@ -9,7 +9,7 @@
 
 using namespace CodeThorn;
 
-ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false){
+ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
 
 void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
@@ -18,6 +18,14 @@ void ExprAnalyzer::setSkipSelectedFunctionCalls(bool skip) {
 
 bool ExprAnalyzer::getSkipSelectedFunctionCalls() {
   return _skipSelectedFunctionCalls;
+}
+
+void ExprAnalyzer::setSkipArrayAccesses(bool skip) {
+  _skipArrayAccesses=skip;
+}
+
+bool ExprAnalyzer::getSkipArrayAccesses() {
+  return _skipArrayAccesses;
 }
 
 bool ExprAnalyzer::variable(SgNode* node, string& varName) {
@@ -31,18 +39,35 @@ bool ExprAnalyzer::variable(SgNode* node, string& varName) {
     return false;
   }
 }
+
 bool ExprAnalyzer::variable(SgNode* node, VariableId& varId) {
   assert(node);
+  if(SgNodeHelper::isArrayAccess(node)) {
+    // 1) array variable id
+    // 2) eval array-index expr
+    // 3) if const then compute variable id otherwise return non-valid var id (would require set)
+#if 0
+    VariableId arrayVarId;
+    SgExpression* arrayIndexExpr=0;
+    int arrayIndexInt=-1;
+    //cout<<"DEBUG: ARRAY-ACCESS"<<astTermWithNullValuesToString(node)<<endl;
+    if(false) {
+      varId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,arrayIndexInt);
+    }
+#endif
+    return false;
+  }
   if(SgVarRefExp* varref=isSgVarRefExp(node)) {
     // found variable
     assert(_variableIdMapping);
-#if 1
+#if 0
     SgSymbol* sym=varref->get_symbol();
     assert(sym);
     varId=_variableIdMapping->variableId(sym);
 #else
     // MS: to investigate: even with the new var-sym-only case this does not work
     // MS: investigage getSymbolOfVariable
+    // MS: 9/6/2014: this seems to work now
     varId=_variableIdMapping->variableId(varref);
 #endif
     return true;
@@ -62,17 +87,35 @@ list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res) {
   return resList;
 }
 
-
 list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState estate, bool useConstraints, bool safeConstraintPropagation) {
   assert(estate.pstate()); // ensure state exists
   SingleEvalResultConstInt res;
-
+  //cout<<"DEBUG: evalConstInt: "<<node->unparseToString()<<astTermWithNullValuesToString(node)<<endl;
+  // guard: for floating-point expression: return immediately with most general result
+  // TODO: refine to walk the tree, when assignments are allowed in sub-expressions
+  // MS: 2014-06-27: this cannot run in parallel because exp->get_type() seg-faults 
+#if 0
+  if(SgExpression* exp=isSgExpression(node)) {
+    bool isFloatingPointType;
+    // ROSE workaround. get_type cannot be run in parallel
+    #pragma omp critical
+    {
+      isFloatingPointType=SgNodeHelper::isFloatingPointType(exp->get_type());
+    }
+    if(isFloatingPointType) {
+      res.estate=estate;
+      res.result=AType::ConstIntLattice(AType::Top());
+      return listify(res);
+    }
+  }
+#endif
   // initialize with default values from argument(s)
   res.estate=estate;
   res.result=AType::ConstIntLattice(AType::Bot());
 
   if(SgNodeHelper::isPostfixIncDecOp(node)) {
-    cout << "INFO: incdec-op found!"<<endl;
+    cout << "Error: incdec-op not supported in conditions yet."<<endl;
+    exit(1);
   }
   if(SgConditionalExp* condExp=isSgConditionalExp(node)) {
     list<SingleEvalResultConstInt> resultList;
@@ -81,6 +124,15 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     if(condResultList.size()==0) {
       cerr<<"Error: evaluating condition of conditional operator inside expressions gives no result."<<endl;
       exit(1);
+    }
+    if(condResultList.size()==2) {
+      list<SingleEvalResultConstInt>::iterator i=condResultList.begin();
+      SingleEvalResultConstInt singleResult1=*i;
+      ++i;
+      SingleEvalResultConstInt singleResult2=*i;
+      if((singleResult1.value()==singleResult2.value()).isTrue()) {
+        cout<<"Info: evaluating condition of conditional operator gives two equal results"<<endl;
+      }
     }
     if(condResultList.size()>1) {
       cerr<<"Error: evaluating condition of conditional operator gives more than one result. Not supported yet."<<endl;
@@ -333,9 +385,75 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
         }
         case V_SgPntrArrRefExp: {
           // assume top for array elements (array elements are not stored in state)
-          res.result=AType::Top();
-          res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
-          resultList.push_back(res);
+          //cout<<"DEBUG: ARRAY-ACCESS2: ARR"<<node->unparseToString()<<"Index:"<<rhsResult.value()<<"skip:"<<getSkipArrayAccesses()<<endl;
+          if(rhsResult.value().isTop()||getSkipArrayAccesses()==true) {
+            res.result=AType::Top();
+            res.exprConstraints=lhsResult.exprConstraints+rhsResult.exprConstraints;
+            resultList.push_back(res);
+            break;
+          } else {
+            if(SgVarRefExp* varRefExp=isSgVarRefExp(lhs)) {
+              const PState* pstate=estate.pstate();
+              PState pstate2=*pstate; // also removes constness
+              VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
+              // two cases
+              if(_variableIdMapping->hasArrayType(arrayVarId)) {
+                // has already correct id
+                // nothing to do
+              } else if(_variableIdMapping->hasPointerType(arrayVarId)) {
+                // in case it is a pointer retrieve pointer value
+                //cout<<"DEBUG: pointer-array access!"<<endl;
+                if(pstate->varExists(arrayVarId)) {
+                  AValue aValuePtr=pstate2[arrayVarId].getValue();
+                  // convert integer to VariableId
+                  int aValueInt=aValuePtr.getIntValue();
+                  // change arrayVarId to refered array!
+                  //cout<<"DEBUG: defering pointer-to-array: ptr:"<<_variableIdMapping->variableName(arrayVarId);
+                  arrayVarId=_variableIdMapping->variableIdFromCode(aValueInt);
+                  //cout<<" to "<<_variableIdMapping->variableName(arrayVarId)<<endl;//DEBUG
+                } else {
+                  cerr<<"Error: pointer variable does not exist in PState."<<endl;
+                  exit(1);
+                }
+              } else {
+                cerr<<"Error: unkown type of array or pointer."<<endl;
+                exit(1);
+              }
+              VariableId arrayElementId;
+              AValue aValue=rhsResult.value();
+              if(aValue.isConstInt()) {
+                int index=aValue.getIntValue();
+                arrayElementId=_variableIdMapping->variableIdOfArrayElement(arrayVarId,index);
+                //cout<<"DEBUG: arrayElementVarId:"<<arrayElementId.toString()<<":"<<_variableIdMapping->variableName(arrayVarId)<<" Index:"<<index<<endl;
+              } else {
+                cerr<<"Error: array index cannot be evaluated to a constant. Not supported yet."<<endl;
+                cerr<<"expr: "<<varRefExp->unparseToString()<<endl;
+                exit(1);
+              }
+              ROSE_ASSERT(arrayElementId.isValid());
+              // read value of variable var id (same as for VarRefExp - TODO: reuse)
+              if(pstate->varExists(arrayElementId)) {
+                res.result=pstate2[arrayElementId].getValue();
+                //cout<<"DEBUG: retrieved value:"<<res.result<<endl;
+                if(res.result.isTop() && useConstraints) {
+                  AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(arrayElementId);
+                  res.result=val;
+                }
+                return listify(res);
+              } else {
+                cerr<<"Error: Array Element does not exist (out of array access?)"<<endl;
+                cerr<<"array-element-id: "<<arrayElementId.toString()<<" name:"<<_variableIdMapping->variableName(arrayElementId)<<endl;
+                cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
+                cerr<<"AST: "<<node->unparseToString()<<endl;
+                exit(1);
+              }
+            } else {
+              cerr<<"Error: array-access uses expr for denoting the array. Not supported yet."<<endl;
+              cerr<<"expr: "<<lhs->unparseToString()<<endl;
+              cerr<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+              exit(1);
+            }
+          }
           break;
         }
         default:
@@ -424,19 +542,24 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     const PState* pstate=estate.pstate();
     if(pstate->varExists(varId)) {
       PState pstate2=*pstate; // also removes constness
-      res.result=pstate2[varId].getValue();
+
+      if(_variableIdMapping->hasArrayType(varId)) {
+        // CODE-POINT-1
+        // for arrays (by default the address is used) return its pointer value (the var-id-code)
+        res.result=AType::ConstIntLattice(varId.getIdCode());
+      } else {
+        res.result=pstate2[varId].getValue(); // this include assignment of pointer values
+      }
       if(res.result.isTop() && useConstraints) {
         // in case of TOP we try to extract a possibly more precise value from the constraints
         AType::ConstIntLattice val=res.estate.constraints()->varConstIntLatticeValue(varId);
-        //if(!val.isTop())
-        // TODO: we will want to monitor this for statistics!
-        //  cout << "DEBUG: extracing more precise value from constraints: "<<res.result.toString()<<" ==> "<<val.toString()<<endl;
+        // TODO: TOPIFY-MODE: most efficient here
         res.result=val;
       }
       return listify(res);
     } else {
       res.result=AType::Top();
-      //cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
+      cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueLongVariableName(varId)<<"). Initialized with top."<<endl;
       return listify(res);
     }
     break;

@@ -7,6 +7,7 @@
 /*-----------------------------------------------------------------------------
  *  Dependencies
  *---------------------------------------------------------------------------*/
+#include "sage3basic.h"
 #include "sage_support.h"
 #include "dwarfSupport.h"
 #include "keep_going.h"
@@ -20,9 +21,6 @@
 #endif
 
 #include <algorithm>
-
-// DQ (2/10/2014): We now want to avoid specifying this explicitly if possible.
-// #define BOOST_FILESYSTEM_VERSION 2
 
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -1714,6 +1712,10 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , SgProject* project )
 // : SgFile (argv,errorCode,fileNameIndex,project)
    {
   // printf ("In the SgSourceFile constructor \n");
+
+     this->p_package = NULL;
+     this->p_import_list = NULL;
+     this->p_class_list = NULL;
 
      set_globalScope(NULL);
 
@@ -3876,40 +3878,34 @@ Rose::Frontend::RunSerial(SgProject* project)
           }
           else
           {
-              try
-              {
-                  //-----------------------------------------------------------
-                  // Pass File to Frontend
-                  //-----------------------------------------------------------
-                  file->runFrontend(status_of_file);
-                  {
-                      status_of_function =
-                          max(status_of_file, status_of_function);
-                  }
-              }
-              catch(...)
-              {
-                  if (file != NULL)
-                  {
-                     file->set_frontendErrorCode(100);
-                  }
-                  else
-                  {
-                      std::cout
-                          << "[FATAL] "
-                          << "Unable to keep going due to an unrecoverable internal error"
-                          << std::endl;
-                      exit(1);
-                  }
 
-                  if (Rose::KeepGoing::g_keep_going)
-                  {
-                      raise(SIGABRT);// catch with signal handling above
+              //-----------------------------------------------------------
+              // Pass File to Frontend. Avoid using try/catch/re-throw if not necessary because it interferes with debugging
+              // the exception (it makes it hard to find where the exception was originally thrown).  Also, no need to print a
+              // fatal message to std::cout(!) if the exception inherits from the STL properly since the C++ runtime will do
+              // all that for us. [Robb P. Matzke 2015-01-07]
+              //-----------------------------------------------------------
+              if (Rose::KeepGoing::g_keep_going) {
+                  try {
+                      file->runFrontend(status_of_file);
+                      status_of_function = max(status_of_file, status_of_function);
+                  } catch (...) {
+                      if (file != NULL) {
+                         file->set_frontendErrorCode(100);
+                      } else {
+                          std::cout
+                              << "[FATAL] "
+                              << "Unable to keep going due to an unrecoverable internal error"
+                              << std::endl;
+                          exit(1);
+                      }
+                      raise(SIGABRT); // catch with signal handling above
                   }
-                  else
-                  {
-                      throw;
-                  }
+              } else {
+                  // Same thing but without the try/catch because we want the exception to be propagated all the way to the
+                  // user without us re-throwing it and interfering with debugging.
+                  file->runFrontend(status_of_file);
+                  status_of_function = max(status_of_file, status_of_function);
               }
           }
       }//BOOST_FOREACH

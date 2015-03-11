@@ -43,11 +43,11 @@ void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
 
 void AssertionExtractor::computeLabelVectorOfEStates() {
   for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
-    Label lab=(*i).label();
-    const PState* p=(*i).pstate();
-    if(assertions[lab]!="")
-      assertions[lab]+="||";
-    assertions[lab]+="(";
+    Label lab=(*i)->label();
+    const PState* p=(*i)->pstate();
+    if(assertions[lab.getId()]!="")
+      assertions[lab.getId()]+="||";
+    assertions[lab.getId()]+="(";
     {
       bool isFirst=true;
       for(PState::const_iterator j=p->begin();j!=p->end();++j) {
@@ -55,22 +55,22 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
         VariableId varId=(*j).first;
         if(p->varIsConst(varId)) {
           if(!isFirst) {
-            assertions[lab]+=" && ";
+            assertions[lab.getId()]+=" && ";
           } else {
             isFirst=false;
           }
-          assertions[lab]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+          assertions[lab.getId()]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
         }
       }
-      const ConstraintSet* cset=(*i).constraints();
+      const ConstraintSet* cset=(*i)->constraints();
       string constraintstring=cset->toAssertionString(variableIdMapping);
       if(!isFirst && constraintstring!="") {
-        assertions[lab]+=" && ";
+        assertions[lab.getId()]+=" && ";
       } else {
         isFirst=false;
       }
-      assertions[lab]+=constraintstring;
-      assertions[lab]+=")";
+      assertions[lab.getId()]+=constraintstring;
+      assertions[lab.getId()]+=")";
     }
   }
 #if 0
@@ -177,6 +177,14 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
     ss<<estate->toString(variableIdMapping);
   } 
+  if((tg1&&boolOptions["tg1-estate-predicate"])||(tg2&&boolOptions["tg2-estate-predicate"])) {
+    string s=estate->predicateToString(variableIdMapping);
+    // replace ASCII with HTML characters
+    s=replace_string(s,",","&and;");
+    s=replace_string(s,"!=","&ne;");
+    s=replace_string(s,"==","=");
+    ss<<s;
+  } 
   return ss.str();
 }
 
@@ -254,14 +262,14 @@ string Visualizer::transitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
-    ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
-    ss <<"["<<(*j).edge.typesToString()<<"]";
+    ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source));
+    ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
-    ss <<" color="<<(*j).edge.color()<<" ";
-    ss <<" stype="<<(*j).edge.dotEdgeStyle()<<" ";
+    ss <<" color="<<(*j)->edge.color()<<" ";
+    ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
     ss <<"]"<<";"<<endl;
   }
   tg1=false;
@@ -373,11 +381,11 @@ string Visualizer::foldedTransitionGraphToDot() {
   }
   // generate edges
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    const EState* source=(*j).source;
-    const EState* target=(*j).target;
+    const EState* source=(*j)->source;
+    const EState* target=(*j)->target;
 
     // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
@@ -386,9 +394,9 @@ string Visualizer::foldedTransitionGraphToDot() {
     ss <<"\"P"<<estateIdStringWithTemporaries(target)<<"\"";
 
     ss<<"[";
-    ss<<"color="<<(*j).edge.color();
+    ss<<"color="<<(*j)->edge.color();
     ss<<" ";
-    ss<<"style="<<(*j).edge.dotEdgeStyle();
+    ss<<"style="<<(*j)->edge.dotEdgeStyle();
     ss<<"]";
     ss<<";"<<endl;
     //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;

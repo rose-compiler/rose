@@ -116,6 +116,9 @@ public:
     /** Create a reference to the condition code register. This is the low-order 8 bits of the status register. */
     SgAsmRegisterReferenceExpression *makeConditionCodeRegister();
 
+    /** Create control register for ColdFire cpu. */
+    SgAsmRegisterReferenceExpression* makeColdFireControlRegister(unsigned regnum);
+
     /** Create a reference to the program counter register. */
     SgAsmRegisterReferenceExpression *makeProgramCounter();
 

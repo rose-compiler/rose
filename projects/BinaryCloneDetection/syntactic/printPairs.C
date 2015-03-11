@@ -1,3 +1,5 @@
+#include "createCloneDetectionVectorsBinary.h"
+
 
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -205,20 +207,19 @@ int main(int argc, char* argv[])
 
 
 
-  sqlite3_connection con;
-  con.open(database.c_str());
+  SqlDatabase::TransactionPtr tx = SqlDatabase::Connection::create(database)->transaction();
 
 
   try {
-	  con.executenonquery("create table IF NOT EXISTS largest_clones(row_number INTEGER PRIMARY KEY, function_id_A INTEGER, begin_index_within_function_A INTEGER, end_index_within_function_A INTEGER,"
-            "function_id_B INTEGER , begin_index_within_function_B INTEGER, end_index_within_function_B INTEGER )");
+	  tx->statement("create table IF NOT EXISTS largest_clones(row_number INTEGER PRIMARY KEY, function_id_A INTEGER, begin_index_within_function_A INTEGER, end_index_within_function_A INTEGER,"
+            "function_id_B INTEGER , begin_index_within_function_B INTEGER, end_index_within_function_B INTEGER )")->execute();
   }
   catch(exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
   }
 
    try {
-	  con.executenonquery("delete from largest_clones");
+	  tx->statement("delete from largest_clones")->execute();
   }
   catch(exception &ex) {
 	cerr << "Exception Occurred: " << ex.what() << endl;
@@ -232,34 +233,33 @@ int main(int argc, char* argv[])
   int windowSize = 0;
   int stride = 0;
   try {
-	windowSize = sqlite3_command(con, "select window_size from run_parameters limit 1").executeint();
+	windowSize = tx->statement("select window_size from run_parameters limit 1")->execute_int();
   } catch (exception& ex) {cerr << "Exception Occurred: " << ex.what() << endl;}
   try {
-	stride = sqlite3_command(con, "select stride from run_parameters limit 1").executeint();
+	stride = tx->statement("select stride from run_parameters limit 1")->execute_int();
   } catch (exception& ex) {cerr << "Exception Occurred: " << ex.what() << endl;}
   assert (windowSize != 0);
   assert (stride != 0);
 
   //Create set of clone pairs
   try{
-    std::string selectSeparateDatasets ="SELECT cluster, function_id, index_within_function, vectors_row from  postprocessed_clusters ORDER BY cluster, function_id, index_within_function";
+    std::string selectSeparateDatasets ="SELECT cluster, function_id, index_within_function, vectors_row from  clusters ORDER BY cluster, function_id, index_within_function";
 
-    sqlite3_command cmd(con, selectSeparateDatasets.c_str());
-    sqlite3_reader datasets=cmd.executereader();
+    SqlDatabase::StatementPtr cmd = tx->statement(selectSeparateDatasets);
 
     int64_t thisClusterName=-1;
     
     std::vector<Element> thisCluster;
-    
-    while(datasets.read())
-    {
+   
+    for (SqlDatabase::Statement::iterator r=cmd->begin(); r!=cmd->end(); ++r) {
+
       Element cur_elem;
-      int64_t cluster     = boost::lexical_cast<int64_t>(datasets.getstring(0));
-      cur_elem.function_id = boost::lexical_cast<int>(datasets.getstring(1));
-      cur_elem.index_within_function = boost::lexical_cast<int>(datasets.getstring(2));
+      int64_t cluster       = r.get<int64_t>(0);
+      cur_elem.function_id  = r.get<int64_t>(1);
+      cur_elem.index_within_function = r.get<int64_t>(2);
       cur_elem.last_index_within_function = cur_elem.index_within_function;
 
-      cur_elem.vectors_row      = boost::lexical_cast<int>(datasets.getstring(3));
+      cur_elem.vectors_row      = r.get<int64_t>(3);
 //      cur_elem.line        = boost::lexical_cast<int> ( datasets.getstring(5) );
 //      cur_elem.offset      = boost::lexical_cast<int> ( datasets.getstring(6) );
 

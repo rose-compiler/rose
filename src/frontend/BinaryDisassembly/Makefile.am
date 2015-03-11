@@ -24,10 +24,6 @@ libbinaryFrontend_la_DEPENDENCIES =
 if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libbinaryFrontend_la_SOURCES = RoseBin_support.cpp \
       instructionDispatch.cpp \
-      x86InstructionProperties.h \
-      x86InstructionProperties.C \
-      armInstructionEnum.h armInstructionEnumPrinter.C \
-      powerpcInstructionEnum.h powerpcInstructionEnumPrinter.C \
       powerpcInstructionProperties.h powerpcInstructionProperties.C \
       readTicl.C RoseBin_file.cpp RoseFile.cpp \
       RoseBin_buildTree.cpp RoseBin_IDAPRO_buildTree.cpp \
@@ -36,23 +32,6 @@ else
    libbinaryFrontend_la_SOURCES = dummyBinaryFrontend.C
 endif
 
-
-BUILT_SOURCES = armInstructionEnumPrinter.C powerpcInstructionEnumPrinter.C
-CLEANFILES = $(BUILT_SOURCES)
-
-armInstructionEnumPrinter.C: $(srcdir)/armInstructionEnum.h
-	$(AM_V_GEN)
-	@echo '#include "armInstructionEnum.h"' > armInstructionEnumPrinter.C
-	@echo '#include <string>' >> armInstructionEnumPrinter.C
-	@sed -n '/arm_unknown_instruction/,/arm_last_instruction/p' < $(srcdir)/armInstructionEnum.h | sed 's/ = 0//' | tr -d , | sed 's,^ *,",' | sed 's@$$@",@' | (echo 'static const char* armInstructionStrings[] = {'; cat; echo '""};') >> armInstructionEnumPrinter.C
-	@echo 'std::string toString(ArmInstructionKind k) {static const int s = sizeof(armInstructionStrings) / sizeof(*armInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return armInstructionStrings[(int)k];}' >> armInstructionEnumPrinter.C
-
-powerpcInstructionEnumPrinter.C: $(srcdir)/powerpcInstructionEnum.h
-	$(AM_V_GEN)
-	@echo '#include "powerpcInstructionEnum.h"' > powerpcInstructionEnumPrinter.C
-	@echo '#include <string>' >> powerpcInstructionEnumPrinter.C
-	@sed -n '/powerpc_unknown_instruction/,/powerpc_last_instruction/p' < $(srcdir)/powerpcInstructionEnum.h | sed 's/ = 0//' | sed 's, *//.*,,' | tr -d , | sed 's,^ *,",' | sed 's/_record/./' | sed 's@$$@",@' | (echo 'static const char* powerpcInstructionStrings[] = {'; cat; echo '""};') >> powerpcInstructionEnumPrinter.C
-	@echo 'std::string toString(PowerpcInstructionKind k) {static const int s = sizeof(powerpcInstructionStrings) / sizeof(*powerpcInstructionStrings); if ((int)k < 0 || (int)k >= s) return ""; else return powerpcInstructionStrings[(int)k];}' >> powerpcInstructionEnumPrinter.C
 
 # Make sure these SAGE specific header files are placed into a distribution
 if ROSE_USE_MYSQL
@@ -64,7 +43,7 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   powerpcInstructionProperties.h \
    RoseObj.h
 else
 BINARY_DISASSEMBLY_HEADER_FILES = \
@@ -74,21 +53,12 @@ BINARY_DISASSEMBLY_HEADER_FILES = \
    AST_BIN_Traversal.h \
    readTicl.h RoseBin_file.h RoseFile.h \
    RoseBin_abstract.h \
-   x86InstructionProperties.h powerpcInstructionProperties.h armInstructionEnum.h powerpcInstructionEnum.h \
+   powerpcInstructionProperties.h \
    RoseObj.h
 endif
 
 pkginclude_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
 EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 dummyBinaryFrontend.C
-
-# DQ (9/30/2009): Added automake conditional to handle machines where we test and "tclsh" is not availble.
-# Rule for maintainers (requires Tcl interpreter)
-$(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
-if ROSE_USE_TCLSH
-	cd $(srcdir) && ../../../config/missing --run tclsh ./make-decision-tree.tcl x86 Arm
-else
-   echo "Warning: tclsh is not available on this machine."
-endif
 
 clean-local:

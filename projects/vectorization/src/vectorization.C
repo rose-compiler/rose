@@ -19,6 +19,7 @@ using namespace SIMDVectorization;
 extern int VF;
 extern std::map<SgExprStatement*, vector<SgStatement*> > insertList;
 extern std::map<std::string, std::string> constantValMap;
+vector<SgPntrArrRefExp*> nonAlignedPntrArrList;
 
 void SIMDVectorization::addHeaderFile(SgProject* project)
 {
@@ -56,6 +57,26 @@ void SIMDVectorization::insertSIMDDataType(SgGlobal* globalScope)
   buildOpaqueType("__SIMDd",globalScope);
 }
 
+bool SIMDVectorization::isSubscriptExpression(SgExpression* exp)
+{
+  SgNode* tmp1 = exp;
+  SgNode* tmp2 = exp;
+  while(!isSgStatement(tmp1->get_parent()))
+  {
+     tmp2 = tmp1;
+     tmp1 = tmp1->get_parent();
+     if(isSgPntrArrRefExp(tmp1))
+     {
+       SgPntrArrRefExp* pntr = isSgPntrArrRefExp(tmp1);
+       if(pntr->get_rhs_operand() == tmp2)
+         return true;
+       else return false;
+     }
+  } 
+  return false;
+}
+
+
 /******************************************************************************************************************************/
 /*
   translate the binary operator to the mapped SIMD intrisic functions
@@ -66,7 +87,8 @@ void SIMDVectorization::insertSIMDDataType(SgGlobal* globalScope)
 /******************************************************************************************************************************/
 void SIMDVectorization::translateBinaryOp(SgBinaryOp* binaryOp, SgScopeStatement* scope, SgName name)
 {
-  if(isSgPntrArrRefExp(binaryOp->get_parent()) != NULL)
+//  if(isSgPntrArrRefExp(binaryOp->get_parent()) != NULL)
+  if(isSubscriptExpression(binaryOp))
     return;
   SgExpression* lhs = binaryOp->get_lhs_operand();
   ROSE_ASSERT(lhs);
@@ -189,81 +211,153 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
       {
         SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(operand);
 
-        //  If the operand is multi-dimensional array, then we have to do a recursive search to get the SgVarRefExp
-        SgNode* tmpNode = pntrArrRefExp->get_lhs_operand();
-        SgVarRefExp* arrayRefExp  = NULL;
-        while((arrayRefExp = isSgVarRefExp(tmpNode)) == NULL)
+        if(find(nonAlignedPntrArrList.begin(), nonAlignedPntrArrList.end(), pntrArrRefExp) != nonAlignedPntrArrList.end())
         {
-          pntrArrRefExp = isSgPntrArrRefExp(tmpNode);
-          tmpNode = (isSgPntrArrRefExp(tmpNode))->get_lhs_operand();
-        }
-        ROSE_ASSERT(arrayRefExp);
-        SgVariableSymbol* arraySymbol = arrayRefExp->get_symbol();
-
-        SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
-        string arrayName = arraySymbol->get_name().getString();
-        string SIMDName = arrayName + "_SIMD";
-        if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
-        {
-          /* 
-            To create pointers that can point to multi-dimension array, 
-            we need to retrieve the dimension information for each array.
-            Multi-dimensional array in C is declared as array of arrays.  Therefore, we have to fetch all the information recursively.
-          */
-          vector<SgExpression*> arrayInfo;
-          SgType* originalType = arraySymbol->get_type();
-          SgArrayType* tmpArrayType = isSgArrayType(originalType);
-          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
-          while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+          SgNode* tmpNode = pntrArrRefExp;
+          SgNode* tmpNode2 = tmpNode;
+          while(!isSgAssignOp(tmpNode))
           {
+            tmpNode2 = tmpNode;
+            tmpNode = tmpNode->get_parent();
+          }
+          SgAssignOp* assignOp = isSgAssignOp(tmpNode);
+          ROSE_ASSERT(assignOp);
+          bool isLHS = false;
+          if(assignOp->get_lhs_operand() == tmpNode2) 
+           isLHS = true;
+
+
+          tmpNode = pntrArrRefExp->get_lhs_operand();
+          SgVarRefExp* arrayRefExp  = NULL;
+          while((arrayRefExp = isSgVarRefExp(tmpNode)) == NULL)
+          {
+            pntrArrRefExp = isSgPntrArrRefExp(tmpNode);
+            tmpNode = (isSgPntrArrRefExp(tmpNode))->get_lhs_operand();
+          }
+          ROSE_ASSERT(arrayRefExp);
+          SgVariableSymbol* arraySymbol = arrayRefExp->get_symbol();
+
+          SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
+          string arrayName = arraySymbol->get_name().getString();
+          cout << "array " << arrayName << " is not aligned and isLHS=" << isLHS << endl;
+
+          string SIMDName = generateUniqueVariableName(arraySymbol->get_scope(),"SIMDtmp");
+          if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
+          {
+//            SgArrayType* arrayType = isSgArrayType(arraySymbol->get_type());
+//            ROSE_ASSERT(arrayType);
+//            SIMDType = getSIMDType(arrayType->get_base_type(),getScope(operand)); 
+            SIMDType = getSIMDType(arraySymbol->get_type()->findBaseType(),getScope(operand)); 
+            SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,SIMDType,NULL,getGlobalScope(operand));        
+            insertStatementAfterLastDeclaration(SIMDDeclarationStmt,arraySymbol->get_scope());
+          }
+          if(isLHS)
+          {
+            // Storing the tmp SIMD operand back to the array address
+            SgName functionName = SgName("_SIMD_st");
+            SgExprListExp* SIMDAddArgs = buildExprListExp(buildAddressOfOp(deepCopy(operand)),buildVarRefExp(SIMDName, getScope(operand)));
+            SgFunctionCallExp* SIMDST = buildFunctionCallExp(functionName,SIMDType, 
+                                                               SIMDAddArgs, 
+                                                               getScope(operand));
+            SgExprStatement* stmt = buildExprStatement(SIMDST);
+            appendStatement(stmt, getScope(operand)); 
+          }
+          else
+          {
+            // Loading the tmp SIMD operand from array address, this is expected to be an unaligned load
+            SgName functionName = SgName("_SIMD_load");
+            SgExprListExp* SIMDAddArgs = buildExprListExp(buildAddressOfOp(deepCopy(operand)));
+            SgFunctionCallExp* SIMDLD = buildFunctionCallExp(functionName,SIMDType, 
+                                                               SIMDAddArgs, 
+                                                               getScope(operand));
+            SgAssignOp* assignTmp = buildAssignOp(buildVarRefExp(SIMDName, getScope(operand)),SIMDLD);
+            SgExprStatement* stmt = buildExprStatement(assignTmp);
+            prependStatement(stmt, getScope(operand)); 
+          }
+          SgVarRefExp* newOperand = buildVarRefExp(SIMDName, arraySymbol->get_scope());
+          newOperand->set_parent(operand->get_parent());
+          replaceExpression(operand, newOperand, false);
+        }
+        else
+        {
+          SgNode* tmpNode = pntrArrRefExp->get_lhs_operand();
+          SgVarRefExp* arrayRefExp  = NULL;
+          while((arrayRefExp = isSgVarRefExp(tmpNode)) == NULL)
+          {
+            pntrArrRefExp = isSgPntrArrRefExp(tmpNode);
+            tmpNode = (isSgPntrArrRefExp(tmpNode))->get_lhs_operand();
+          }
+          ROSE_ASSERT(arrayRefExp);
+          SgVariableSymbol* arraySymbol = arrayRefExp->get_symbol();
+
+          SgDeclarationStatement* arrayDeclarationStmt = arraySymbol->get_declaration()->get_declaration();
+          string arrayName = arraySymbol->get_name().getString();
+
+          //  If the operand is multi-dimensional array, then we have to do a recursive search to get the SgVarRefExp
+          string SIMDName = arrayName + "_SIMD";
+          if(lookupSymbolInParentScopes(SIMDName,getScope(operand)) == NULL)
+          {
+            /* 
+              To create pointers that can point to multi-dimension array, 
+              we need to retrieve the dimension information for each array.
+              Multi-dimensional array in C is declared as array of arrays.  Therefore, we have to fetch all the information recursively.
+            */
+            vector<SgExpression*> arrayInfo;
+            SgType* originalType = arraySymbol->get_type();
+            SgArrayType* tmpArrayType = isSgArrayType(originalType);
             arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
-          }
-          // Get the original data type and find the mapped SIMD data type.
-          SgArrayType* arrayType = isSgArrayType(arraySymbol->get_type());
-          ROSE_ASSERT(arrayType);
-          SIMDType = getSIMDType(arrayType->get_base_type(),getScope(operand)); 
-
-          /*
-            This following section creates pointer that points to a multi-dimension array, and applied the type casting on that.
-            The following table should expalin the details:
-
-            dimension       original array        SIMD pointer that points to the original array
-              1             float a[i];           __SIMD *a_SIMD;       
-              2             float b[j][i];        __SIMD (*b_SIMD)[i / 4];
-              3             float c[k][j][i];     __SIMD (*c_SIMD)[j][i / 4];
-          */
-          SgType* newType = NULL;
-          SgType* baseType = isSgType(SIMDType);
-          for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
-          {
-            SgArrayType* tmpArrayType;
-            if(i == arrayInfo.begin())
+            while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
             {
-              tmpArrayType = buildArrayType(baseType,buildDivideOp(*i,buildIntVal(VF)));
+              arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
             }
-            else
-            {
-              tmpArrayType = buildArrayType(baseType,*i);
-            }
-            baseType = isSgType(tmpArrayType);
-          }
-          newType = buildPointerType(baseType);
+            // Get the original data type and find the mapped SIMD data type.
+//            SgArrayType* arrayType = isSgArrayType(arraySymbol->get_type());
+//            ROSE_ASSERT(arrayType);
+//            SIMDType = getSIMDType(arrayType->get_base_type(),getScope(operand)); 
+            SIMDType = getSIMDType(arraySymbol->get_type()->findBaseType(),getScope(operand)); 
 
+            /*
+              This following section creates pointer that points to a multi-dimension array, and applied the type casting on that.
+              The following table should expalin the details:
+
+              dimension       original array        SIMD pointer that points to the original array
+                1             float a[i];           __SIMD *a_SIMD;       
+                2             float b[j][i];        __SIMD (*b_SIMD)[i / 4];
+                3             float c[k][j][i];     __SIMD (*c_SIMD)[j][i / 4];
+            */
+            SgType* newType = NULL;
+            SgType* baseType = isSgType(SIMDType);
+            for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+            {
+              SgArrayType* tmpArrayType;
+              if(i == arrayInfo.begin())
+              {
+                tmpArrayType = buildArrayType(baseType,buildDivideOp(*i,buildIntVal(VF)));
+              }
+              else
+              {
+                tmpArrayType = buildArrayType(baseType,*i);
+              }
+              baseType = isSgType(tmpArrayType);
+            }
+            newType = buildPointerType(baseType);
+
+            /* 
+              VariableDeclaration for this pointer, that points to the array space
+              The assignInitializer should take care of the assignment, and no further pointer assignment is needed.
+            */
+            SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,
+                                                                                  newType,
+                                                                                  buildAssignInitializer(buildCastExp(buildVarRefExp(arraySymbol),newType,SgCastExp::e_C_style_cast ),newType),
+                                                                                  arraySymbol->get_scope());        
+            insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
+          }
           /* 
-            VariableDeclaration for this pointer, that points to the array space
-            The assignInitializer should take care of the assignment, and no further pointer assignment is needed.
+            we have the SIMD pointer, we can use this as the operand in the SIMD intrinsic functions.
           */
-          SgVariableDeclaration* SIMDDeclarationStmt = buildVariableDeclaration(SIMDName,
-                                                                                newType,
-                                                                                buildAssignInitializer(buildCastExp(buildVarRefExp(arraySymbol),newType,SgCastExp::e_C_style_cast ),newType),
-                                                                                arraySymbol->get_scope());        
-          insertStatement(arrayDeclarationStmt,SIMDDeclarationStmt,false,true);
+          SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(arrayRefExp));
+          replaceExpression(arrayRefExp, newOperand, false);
         }
-        /* 
-          we have the SIMD pointer, we can use this as the operand in the SIMD intrinsic functions.
-        */
-        SgVarRefExp* newOperand = buildVarRefExp(SIMDName, getScope(arrayRefExp));
-        replaceExpression(arrayRefExp, newOperand, false);
         break;
       }
     case V_SgCastExp:
@@ -312,8 +406,8 @@ void SIMDVectorization::translateOperand(SgExpression* operand)
         }
         SgVarRefExp* constantVarRefExp = buildVarRefExp(constantValMap.find(constantValString)->second,getScope(operand));
         replaceExpression(operand, constantVarRefExp); 
-        break;
       }
+      break;
     default:
       {
         // By default, we don't change anything for the operands. 
@@ -950,6 +1044,8 @@ class maddTraversal : public AstSimpleProcessing
             isMatched = true;
           }
         }
+        if(isSubscriptExpression(addOp))
+          isMatched = false;
         if(isMatched)
         {
           suffix = getSIMDOpSuffix(addOp->get_type());
@@ -971,6 +1067,8 @@ class maddTraversal : public AstSimpleProcessing
             isMatched = true;
           }
         }
+        if(isSubscriptExpression(subOp))
+          isMatched = false;
         if(isMatched)
         {
           suffix = getSIMDOpSuffix(subOp->get_type());
@@ -1123,11 +1221,61 @@ void SIMDVectorization::updateLoopIteration(SgForStatement* forStatement, int VF
   {
     SgVarRefExp *vRef = isSgVarRefExp((*i));
     if (vRef->get_symbol()==indexVariable->get_symbol_from_symbol_table())
-      vRef->set_symbol(innerLoopIndexSymbol);
+    {
+      if (isSgAddOp(vRef->get_parent()) || isSgSubtractOp(vRef->get_parent()) || isSgMultiplyOp(vRef->get_parent()) || isSgDivideOp(vRef->get_parent()))
+      {
+        SgNode* tmpNode = vRef;
+        while(!isSgPntrArrRefExp(tmpNode))
+        {
+          tmpNode = tmpNode->get_parent();
+        }
+        SgPntrArrRefExp* nonAlignedPntr = isSgPntrArrRefExp(tmpNode);
+        ROSE_ASSERT(nonAlignedPntr);
+        nonAlignedPntrArrList.push_back(nonAlignedPntr); 
+// Special code required to handle subscript computation
+      }
+      else
+        vRef->set_symbol(innerLoopIndexSymbol);
+    }
   }
 
 }
 
+/******************************************************************************************************************************/
+/*
+  This is to change the lowerbound of the remaining loop iterations.
+
+
+  for (i=0; i<Num; i++) {
+    ...
+  }
+    
+  transform the loop to the following format:
+
+  for (i=0, j = i; i < Num; i+=VF, j ++) { 
+  }
+  for (i=VF*(Num/VF); i < Num; i++) { 
+  }
+
+
+*/
+/******************************************************************************************************************************/
+void SIMDVectorization::changeRemainingLowerBound(SgForStatement* forStatement, int VF)
+{
+  // Fetch all information from original forStatement
+  SgInitializedName* indexVariable = getLoopIndexVariable(forStatement);
+  ROSE_ASSERT(indexVariable);
+
+  SgBinaryOp* testExpression = isSgBinaryOp(forStatement->get_test_expr());
+  ROSE_ASSERT(testExpression);
+
+  SgScopeStatement* scope = forStatement->get_scope();
+  ROSE_ASSERT(scope);
+
+  SgMultiplyOp* newinit = buildMultiplyOp(buildIntVal(VF),buildDivideOp(deepCopy(testExpression->get_rhs_operand()),buildIntVal(VF)));
+  setLoopLowerBound(forStatement,newinit);
+
+}
 
 void SIMDVectorization::scalarVariableConversion(SgForStatement* forStatement, std::set<SgInitializedName*> liveIns, std::set<SgInitializedName*> liveOuts)
 {

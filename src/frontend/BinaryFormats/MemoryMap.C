@@ -1,8 +1,7 @@
-#define BOOST_FILESYSTEM_VERSION 3
-
 #include "sage3basic.h"
 
 #include "Diagnostics.h"
+#include "FileSystem.h"
 #include "MemoryMap.h"
 #include "rose_getline.h"
 #include "rose_strtoull.h"
@@ -18,6 +17,7 @@
 # include <unistd.h>                                    // for access()
 #endif
 
+using namespace rose;
 using namespace rose::Diagnostics;
 
 
@@ -121,7 +121,7 @@ MemoryMap::segmentTitle(const Segment &segment) {
 size_t
 MemoryMap::insertFile(const std::string &fileName, rose_addr_t startVa, bool writable, std::string segmentName) {
     if (segmentName.empty())
-        segmentName = boost::filesystem::path(fileName).filename().string();
+        segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
     Segment segment = Segment::fileInstance(fileName, READABLE | (writable?WRITABLE:0), segmentName);
     AddressInterval fileInterval = AddressInterval::baseSize(startVa, segment.buffer()->size());
     insert(fileInterval, segment);
@@ -242,7 +242,7 @@ MemoryMap::insertFile(const std::string &locatorString) {
     std::string fileName = s;
     if (fileName.size()!=strlen(fileName.c_str()))
         throw insertFileError(locatorString, "invalid file name");
-    std::string segmentName = boost::filesystem::path(fileName).filename().string();
+    std::string segmentName = FileSystem::toString(boost::filesystem::path(fileName).filename());
 
     //-------------------------------- 
     // Open the file and read the data
@@ -553,15 +553,18 @@ MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) co
 
 std::string
 MemoryMap::readString(rose_addr_t va, size_t desired, int(*validChar)(int), int(*invalidChar)(int),
-                      unsigned requiredPerms, unsigned prohibitedPerms) const
+                      unsigned requiredPerms, unsigned prohibitedPerms, char terminator) const
 {
     std::vector<uint8_t> buf(desired, 0);
     size_t nread = at(va).require(requiredPerms).prohibit(prohibitedPerms).read(buf).size();
     for (size_t i=0; i<nread; ++i) {
-        if (0==buf[i] || (validChar && !validChar(buf[i])) || (invalidChar && invalidChar(buf[i])))
-            nread = i;
+        if (buf[i] == terminator)
+            return std::string(buf.begin(), buf.begin()+i);
+
+        if ((invalidChar && invalidChar(buf[i])) || (validChar && !validChar(buf[i])))
+            return "";
     }
-    return std::string(buf.begin(), buf.begin()+nread);
+    return "";
 }
 
 void

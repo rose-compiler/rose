@@ -264,7 +264,7 @@ public:
 
         AddressInterval freeArea = map->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
         assert(!freeArea.isEmpty());
-        vdso_mapped_va = ALIGN_UP(freeArea.least(), PAGE_SIZE);
+        vdso_mapped_va = alignUp(freeArea.least(), (rose_addr_t)PAGE_SIZE);
         vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
 
         unsigned vdso_access = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
@@ -272,9 +272,10 @@ public:
         assert((ssize_t)vdso_segment.buffer()->size()==sb.st_size);
         map->insert(AddressInterval::baseSize(vdso_mapped_va, vdso_segment.buffer()->size()), vdso_segment);
 
-        if (vdso_segment.buffer()->size()!=ALIGN_UP(vdso_segment.buffer()->size(), PAGE_SIZE)) {
+        if (vdso_segment.buffer()->size()!=alignUp(vdso_segment.buffer()->size(), (rose_addr_t)PAGE_SIZE)) {
             rose_addr_t anon_va = vdso_mapped_va + vdso_segment.buffer()->size();
-            rose_addr_t anon_size = ALIGN_UP(vdso_segment.buffer()->size(), PAGE_SIZE) - vdso_segment.buffer()->size();
+            rose_addr_t anon_size = alignUp(vdso_segment.buffer()->size(),
+                                            (rose_addr_t)PAGE_SIZE) - vdso_segment.buffer()->size();
             map->insert(AddressInterval::baseSize(anon_va, anon_size),
                         MemoryMap::Segment::anonymousInstance(anon_size, vdso_access, vdso_segment.name()));
         }
@@ -406,7 +407,7 @@ RSIM_Process::load(const char *name)
      * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
     rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
                                      (rose_addr_t)brk_base);
-    brk_va = ALIGN_UP(free_area, PAGE_SIZE);
+    brk_va = alignUp(free_area, PAGE_SIZE);
 #else
     struct FindInitialBrk: public SgSimpleProcessing {
         FindInitialBrk(): max_mapped_va(0) {}
@@ -669,7 +670,7 @@ RSIM_Process::dump_core(int signo, std::string base_name)
         SegmentBuilder(SgAsmElfFileHeader *fhdr, MemoryMap *map, rose_addr_t va, rose_addr_t sz, unsigned perms)
             : SgAsmElfSection(fhdr), map(map) {
             set_purpose(SgAsmGenericSection::SP_PROGRAM);       /* Program-supplied text, data, etc. */
-            set_offset(ALIGN_UP(get_offset(), 4096));
+            set_offset(alignUp(get_offset(), 4096));
             set_size(sz);
             set_file_alignment(4096);
             set_mapped_alignment(4096);
@@ -1032,7 +1033,7 @@ RSIM_Process::mem_transaction_start(const std::string &name)
     if (!map_stack.empty()) {
         new_map = map_stack.back().first;
         BOOST_FOREACH (MemoryMap::Segment &segment, new_map.segments())
-            segment.setCopyOnWrite();
+            segment.buffer()->copyOnWrite(true);
     }
     map_stack.push_back(std::make_pair(new_map, name));
     return map_stack.size();
@@ -1168,7 +1169,7 @@ int
 RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsigned real_perms)
 {
     int retval = -ENOSYS;
-    size_t aligned_sz = ALIGN_UP(sz, PAGE_SIZE);
+    size_t aligned_sz = alignUp(sz, (size_t)PAGE_SIZE);
 
     RTS_WRITE(rwlock()) {
         /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory that's
@@ -1194,7 +1195,7 @@ RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsign
 rose_addr_t
 RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsigned flags, size_t offset, int fd)
 {
-    size_t aligned_size = ALIGN_UP(size, PAGE_SIZE);
+    size_t aligned_size = alignUp(size, (size_t)PAGE_SIZE);
     uint8_t *buf = NULL;
     unsigned prot = ((rose_perms & MemoryMap::READABLE  ? PROT_READ  : 0) |
                      (rose_perms & MemoryMap::WRITABLE ? PROT_WRITE : 0) |

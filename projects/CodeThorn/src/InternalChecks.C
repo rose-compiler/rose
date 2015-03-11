@@ -6,6 +6,8 @@
 
 #include "sage3basic.h"
 
+#define EXCLUDE_RDANALYSIS
+
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
@@ -14,13 +16,16 @@
 #include "Analyzer.h"
 #include "LanguageRestrictor.h"
 #include "Timer.h"
-#include "LTL.h"
-#include "LTLCheckerFixpoint.h"
 #include <cstdio>
 #include <cstring>
 #include <boost/program_options.hpp>
 #include <map>
+
+#ifndef EXCLUDE_RDANALYSIS
 #include "RDLattice.h"
+#endif
+
+#include "Miscellaneous.h"
 #include "InternalChecks.h"
 
 using namespace CodeThorn;
@@ -33,7 +38,7 @@ void nocheck(string checkIdentifier, bool checkResult);
 void check(string checkIdentifier, bool checkResult, bool check);
 
 // intentionally global
-bool checkresult=true;
+extern bool checkresult;
 
 bool CodeThorn::internalChecks(int argc, char *argv[]) {
   try {
@@ -66,6 +71,7 @@ namespace po = boost::program_options;
 // this function reports the results of checks
 // if the passed argument is true the check is PASS, otherwise FAIL.
 
+#if 0
 void nocheck(string checkIdentifier, bool checkResult) {
   check(checkIdentifier,checkResult,false);
 }
@@ -88,7 +94,7 @@ void check(string checkIdentifier, bool checkResult, bool check=true) {
   checkNr++;
   cout<<color("normal")<<endl;
 }
-
+#endif
 
 void checkTypes() {
   VariableIdMapping variableIdMapping;
@@ -99,7 +105,7 @@ void checkTypes() {
     VariableId var_tmp=variableIdMapping.createUniqueTemporaryVariableId("tmp");
     variableIdMapping.deleteUniqueTemporaryVariableId(var_tmp);
   }
-  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
+
   {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR BOOLLATTICE TYPE:"<<endl;
@@ -169,8 +175,6 @@ void checkTypes() {
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
     VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
     VariableId var_y=variableIdMapping.createUniqueTemporaryVariableId("y");
-    VariableId var_z=variableIdMapping.createUniqueTemporaryVariableId("z");
-    VariableId var_a=variableIdMapping.createUniqueTemporaryVariableId("a");
 
     Constraint c1(Constraint::EQ_VAR_CONST,var_x,1);
     Constraint c2(Constraint::NEQ_VAR_CONST,var_y,2);
@@ -557,6 +561,7 @@ void checkTypes() {
       cs.toStream(ssout);
       check("Stream I/O DEQ constraint: "+cstring,ssout.str()==cstring);
     }
+#ifndef EXCLUDE_RDANALYSIS
     {
       RDLattice a;
       VariableId var1;
@@ -572,7 +577,7 @@ void checkTypes() {
       check("a ApproximatedBy b",a.approximatedBy(b)==true);
       check("not (b ApproximatedBy a)",b.approximatedBy(a)==false);
     }
-
+#endif
   } // end of stream operator checks
 }
 
@@ -594,7 +599,6 @@ void checkLanguageRestrictor(int argc, char *argv[]) {
 
 void checkLargeSets() {
   VariableIdMapping variableIdMapping;
-  VariableId var_x=variableIdMapping.createUniqueTemporaryVariableId("x");
   AType::ConstIntLattice i;
   using namespace AType;
   set<CppCapsuleConstIntLattice> cilSet;

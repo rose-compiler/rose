@@ -165,6 +165,10 @@ if ROSE_WITH_ATERM
    SUBDIRS += AtermTranslation
 endif
 
+# Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+if ROSE_WITH_POCC
+   SUBDIRS += PolyOpt2
+endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
 # be missing at configure time.
@@ -173,6 +177,8 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
+SUBDIRS += demos-dlx-mdcg
+SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

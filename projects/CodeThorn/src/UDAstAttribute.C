@@ -2,6 +2,9 @@
 #include "sage3basic.h"
 #include "UDAstAttribute.h"
 
+using namespace std;
+using namespace SPRAY;
+
 UDAstAttribute::UDAstAttribute(RDAstAttribute* rdAttr, SgNode* nodeForUseVarQuery)
   :_rdAttr(rdAttr),
    _node(nodeForUseVarQuery)

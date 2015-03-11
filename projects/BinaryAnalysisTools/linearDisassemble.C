@@ -83,8 +83,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 int main(int argc, char *argv[])
 {
     Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insert(mlog);
+    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
+    Diagnostics::mfacilities.insert(::mlog);
 
     // Parse the command-line
     Settings settings;
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         disassembler = disassembler->clone();
     }
 
-    map.dump(mlog[INFO]);
+    map.dump(::mlog[INFO]);
     map.dump(std::cout);
 
     // Obtain an unparser suitable for this disassembler

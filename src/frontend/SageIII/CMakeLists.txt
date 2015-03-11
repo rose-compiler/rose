@@ -68,6 +68,44 @@ add_custom_target( OMPPARSER ALL DEPENDS
     COMMENT "Generating files for the omp parser" 
     )
 
+#Mark these files as generated
+#SET_SOURCE_FILES_PROPERTIES(
+#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/lex.yy.C
+#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.C
+#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/ompparser.h
+#    ${CMAKE_BINARY_DIR}/src/frontend/SageIII/omp-lex.yy.C
+#    PROPERTIES GENERATED 1
+#    )
+
+
+########### next target ###############
+add_library(sage3 OBJECT
+  rose_attributes_list.C
+  attachPreprocessingInfo.C
+  attachPreprocessingInfoTraversal.C
+  attributeListMap.C
+  manglingSupport.C
+  sage_support/sage_support.cpp
+  sage_support/cmdline.cpp
+  sage_support/keep_going.cpp
+  fixupCopy_scopes.C
+  fixupCopy_symbols.C
+  fixupCopy_references.C
+  rtiHelpers.C
+  OmpAttribute.C
+  ompAstConstruction.cpp
+  ompFortranParser.C
+  dwarfSupport.C
+  rose_graph_support.C
+  #omplexer.ll
+  #ompparser.yy
+  Utf8.C
+  ${CMAKE_CURRENT_BINARY_DIR}/lex.yy.C
+  ${CMAKE_CURRENT_BINARY_DIR}/ompparser.C
+  ${CMAKE_CURRENT_BINARY_DIR}/omp-lex.yy.C
+)
+add_dependencies(sage3 rosetta_generated generate_stringify)
+
 
 ########### install files ###############
 

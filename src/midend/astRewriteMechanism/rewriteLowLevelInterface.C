@@ -70,7 +70,7 @@ insertAtTopOfScope (
    SgScopeStatement* currentScope )
    {
   // Insert at top of list (pull the elements off the bottom of the new statement list to get the order correct
-  // printf ("Insert new statements (new statement list size = %zu) at the top of the block %s (in reverse order to preset the order in the final block) \n",newTransformationStatementList.size(),currentScope->sage_class_name());
+  // printf ("Insert new statements (new statement list size = %" PRIuPTR ") at the top of the block %s (in reverse order to preset the order in the final block) \n",newTransformationStatementList.size(),currentScope->sage_class_name());
 
      ROSE_ASSERT (currentScope != NULL);
 
@@ -245,7 +245,7 @@ insertStatementUsingDependenceInformation (
 
   // There should be at least one type in the statement
      ROSE_ASSERT (typeNameStringList.size() > 0);
-  // printf ("typeNameStringList.size() = %zu \n",typeNameStringList.size());
+  // printf ("typeNameStringList.size() = %" PRIuPTR " \n",typeNameStringList.size());
 
   // printf ("This statement has a dependence upon a variable of some type \n");
 
@@ -271,7 +271,7 @@ insertStatementUsingDependenceInformation (
 
        // There should be at least one variable of that type in the statement
           ROSE_ASSERT (operandNameStringList.size() > 0);
-       // printf ("operandNameStringList.size() = %zu \n",operandNameStringList.size());
+       // printf ("operandNameStringList.size() = %" PRIuPTR " \n",operandNameStringList.size());
 
        // Loop over all the types and get list of variable of each type
           Rose_STL_Container<string>::iterator variableListStringElementIterator;
@@ -596,7 +596,7 @@ replaceAppendPrependTreeFragment (
      reassociatePreprocessorDeclarations (newTransformationStatementList,astNode,prependNewCode,removeOriginalStatement);
 
 #if 0
-     printf ("In replaceAppendPrependTreeFragment(): newTransformationStatementList.size() = %zu commentsAndDirectives.size() = %d \n",
+     printf ("In replaceAppendPrependTreeFragment(): newTransformationStatementList.size() = %" PRIuPTR " commentsAndDirectives.size() = %d \n",
           newTransformationStatementList.size(),commentsAndDirectives.size());
 #endif
 
@@ -875,7 +875,7 @@ reassociatePreprocessorDeclarations (
 
   // printf ("Some aspects of the LowLevelRewrite::reassociatePreprocessorDeclarations() function may be redundent! \n");
 
-  // printf ("newTransformationStatementList.size() = %zu \n",newTransformationStatementList.size());
+  // printf ("newTransformationStatementList.size() = %" PRIuPTR " \n",newTransformationStatementList.size());
 
      if (newTransformationStatementList.size() == 0)
         {
@@ -1312,7 +1312,7 @@ appendPrependTreeFragment (
           SgDeclarationStatementPtrList & parentStatementList = *parentStatementListPointer;
 #endif
 
-       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %zu \n",parentStatementList.size());
+       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %" PRIuPTR " \n",parentStatementList.size());
 
 #if 0
 #ifdef SAGE_INTERNAL_DEBUG
@@ -1320,7 +1320,7 @@ appendPrependTreeFragment (
           if ( SAGE_DEBUG > -1 )
              {
                SgDeclarationStatementPtrList::iterator statementIterator;
-               printf ("BEFORE insertion of new declaration: targetStatementParent list.size() = %zu statements are: \n",parentStatementList.size());
+               printf ("BEFORE insertion of new declaration: targetStatementParent list.size() = %" PRIuPTR " statements are: \n",parentStatementList.size());
                int counter = 0;
                for ( statementIterator = parentStatementList.begin(); 
                      statementIterator != parentStatementList.end();
@@ -1404,7 +1404,7 @@ appendPrependTreeFragment (
                   }
              }
 
-       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %zu \n",parentStatementList.size());
+       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %" PRIuPTR " \n",parentStatementList.size());
 
 #if 0
 #ifdef SAGE_INTERNAL_DEBUG
@@ -1412,7 +1412,7 @@ appendPrependTreeFragment (
           if ( SAGE_DEBUG > -1 )
              {
                SgDeclarationStatementPtrList::iterator statementIterator;
-               printf ("AFTER insertion of new declaration: targetStatementParent list.size() = %zu statements are: \n",parentStatementList.size());
+               printf ("AFTER insertion of new declaration: targetStatementParent list.size() = %" PRIuPTR " statements are: \n",parentStatementList.size());
                int counter = 0;
                for ( statementIterator = parentStatementList.begin(); 
                      statementIterator != parentStatementList.end();
@@ -1469,7 +1469,7 @@ appendPrependTreeFragment (
           ROSE_ASSERT ( parentStatementBasicBlock != NULL );
           SgStatementPtrList & parentStatementList = parentStatementBasicBlock->get_statements();
 
-       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %zu \n",parentStatementList.size());
+       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %" PRIuPTR " \n",parentStatementList.size());
 
        // Rather than looping through the parent scope we could have used the STL find 
        // function to build the iterator required by the insert_declaration member function
@@ -1525,7 +1525,7 @@ appendPrependTreeFragment (
              }
 
        // printf ("After insertion of new list elements \n");
-       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %zu \n",parentStatementList.size());
+       // printf ("In appendPrependTreeFragment(): parentStatementList.size() = %" PRIuPTR " \n",parentStatementList.size());
         }
 #endif
    }

@@ -1727,7 +1727,7 @@ Partitioner::mark_func_patterns()
                         if (i+5<nread &&                                // x86:
                             0x8b==buf[i+0] && 0xff==buf[i+1] &&         //   mov edi, edi
                             0x55==buf[i+2] &&                           //   push ebp
-                            0x8b==buf[i+4] && 0xec==buf[i+5]) {         //   mov ebp, esp
+                            0x8b==buf[i+3] && 0xec==buf[i+4]) {         //   mov ebp, esp
                             p->add_function(va+i, SgAsmFunction::FUNC_PATTERN);
                             i += 4;
                         } else if (i+3<nread &&                         // x86:

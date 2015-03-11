@@ -1,0 +1,8 @@
+*.dot
+*.svg
+blank-viz
+blank-viz.o
+default-viz
+default-viz.o
+programmable-viz
+programmable-viz.o
