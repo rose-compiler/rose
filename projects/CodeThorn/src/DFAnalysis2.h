@@ -94,7 +94,9 @@ class DFAnalysis2 {
   void computeAllPostInfo();
   bool _preInfoIsValid;
   bool _postInfoIsValid;
+ public:
   DFTransferFunctions* _transferFunctions;
+ protected:
   PropertyStateFactory* _initialElementFactory;
   PASolver1* _solver;
   AnalysisType _analysisType;

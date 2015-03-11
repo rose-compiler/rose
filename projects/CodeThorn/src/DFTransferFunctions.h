@@ -5,7 +5,9 @@
 #include "Lattice.h"
 #include "PointerAnalysisInterface.h"
 
-class Domain;
+//class Domain;
+
+#include "Domain.hpp"
 
 class DFTransferFunctions {
 public:

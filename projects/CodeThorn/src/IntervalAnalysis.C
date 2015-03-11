@@ -32,3 +32,13 @@ DFAstAttribute* IntervalAnalysis::createDFAstAttribute(IntervalPropertyState* el
   return new IntervalAstAttribute(elem);
 }
 
+void IntervalAnalysis::initializeTransferFunctions() {
+  cerr<<"P1"<<endl;
+  DFAnalysis2::initializeTransferFunctions();
+  ROSE_ASSERT(_numberIntervalLattice);
+  ROSE_ASSERT(dynamic_cast<IntervalTransferFunctions*>(_transferFunctions));
+  cerr<<"P2"<<endl;
+  ROSE_ASSERT(dynamic_cast<IntervalTransferFunctions*>(_transferFunctions)->_cppExprEvaluator==0);
+  dynamic_cast<IntervalTransferFunctions*>(_transferFunctions)->_cppExprEvaluator=new CppExprEvaluator(_numberIntervalLattice,0,&_variableIdMapping);
+  cerr<<"P3"<<endl;
+}

@@ -37,7 +37,7 @@ class CppExprEvaluator {
             exit(1);
           }
 #else
-          cout<<"WARNING: not handling assignment."<<endl;
+          cout<<"WARNING: not handling assignment.[vid:"<<variableIdMapping<<","<<"ps:"<<propertyState<<"]"<<endl;
 #endif
         } else {
           cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<endl;
@@ -67,10 +67,15 @@ class CppExprEvaluator {
   }
   void setDomain(NumberIntervalLattice* domain) { this->domain=domain; }
   void setPropertyState(PropertyState* pstate) { this->propertyState=pstate; }
-  void setVariableIdMapping(VariableIdMapping* variableIdMapping) { this->variableIdMapping=variableIdMapping; }
+  void setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
+    this->variableIdMapping=variableIdMapping;
+  }
 private:
   NumberIntervalLattice* domain;
   PropertyState* propertyState;
+
+  //temporarily public
+ public:
   VariableIdMapping* variableIdMapping;
 };
 

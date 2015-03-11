@@ -28,8 +28,10 @@ class IntervalAnalysis : public DFAnalysis2 {
   IntervalAnalysis();
   ~IntervalAnalysis();
   void initializeExtremalValue(Lattice* element);
+  void initializeTransferFunctions();
  protected:
   virtual DFAstAttribute* createDFAstAttribute(IntervalPropertyState* elem);
+  NumberIntervalLattice* _numberIntervalLattice;
 };
 
 #endif

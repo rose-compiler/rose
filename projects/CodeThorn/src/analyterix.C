@@ -46,6 +46,9 @@
 // ROSE analyses
 #include "VariableRenaming.h"
 
+// temporary
+#include "IntervalTransferFunctions.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -121,6 +124,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root);
     cout << "STATUS: initializing interval transfer functions."<<endl;
     intervalAnalyzer->initializeTransferFunctions();
+
+    cout << "VID:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
