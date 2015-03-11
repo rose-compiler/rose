@@ -12113,7 +12113,9 @@ PreprocessingInfo* SageInterface::insertHeader(const string& filename, Preproces
        successful = true;
     }
     // must be inserted once somehow
-    ROSE_ASSERT(successful==true);
+    // Liao 3/11/2015. We allow failed insertion sometimes, for example when translating an empty file for OpenMP, we don't need to insert any headers
+    // The caller function should decide what to do if insertion is failed: ignore vs. assert failure.
+    //ROSE_ASSERT(successful==true);
     return result;
   }
 
