@@ -9020,6 +9020,12 @@ SgPointerType* SageBuilder::buildPointerType(SgType * base_type /*= NULL*/)
 
   // DQ (7/29/2010): This function needs to call the SgPointerType::createType() function to support the new type table.
   // SgPointerType* result = new SgPointerType(base_type);
+     if (isSgReferenceType (base_type))
+     {
+       cerr<<"Error in SageBuilder::buildPointerType(): trying to build a pointer to a reference type! This is not allowed in C++."<<endl;
+       ROSE_ASSERT (false);
+     } 
+
      SgPointerType* result = SgPointerType::createType(base_type);
      ROSE_ASSERT(result != NULL);
 
