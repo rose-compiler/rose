@@ -26,6 +26,7 @@ class CppExprEvaluator {
       case V_SgModOp: return domain->arithMod(evaluate(lhs),evaluate(rhs));
       case V_SgAssignOp: {
         if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
+          cout<<"DEBUG: EVAL: LHS-VAR: VID:"<<variableIdMapping<<endl;
 #if 0
           ROSE_ASSERT(variableIdMapping); // TODO
           variableIdMapping->toStream(cout);

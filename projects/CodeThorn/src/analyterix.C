@@ -125,7 +125,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval transfer functions."<<endl;
     intervalAnalyzer->initializeTransferFunctions();
 
-    cout << "VID:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
+    cout << "VID1:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
@@ -136,6 +136,8 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
 #if 1
     intervalAnalyzer->run();
+    cout << "VID2:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
+
 #else
     cout << "STATUS: did not run interval analysis."<<endl;      
 #endif
