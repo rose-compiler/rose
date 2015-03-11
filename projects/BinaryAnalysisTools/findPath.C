@@ -15,6 +15,7 @@ using namespace rose;
 using namespace rose::BinaryAnalysis;
 using namespace Sawyer::Message::Common;
 using namespace Sawyer::Container::Algorithm;
+using namespace rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
 namespace P2 = Partitioner2;
 
 Diagnostics::Facility mlog;
@@ -166,6 +167,9 @@ class CfgPath {
 public:
     /** Stack of inter-connected edges. */
     typedef std::vector<P2::ControlFlowGraph::ConstEdgeNodeIterator> Edges;
+
+    /** Stack of vertices. */
+    typedef std::vector<P2::ControlFlowGraph::ConstVertexNodeIterator> Vertices;
 private:
     Sawyer::Optional<P2::ControlFlowGraph::ConstVertexNodeIterator> frontVertex_;
     Edges edges_;
@@ -224,6 +228,20 @@ public:
         return edges_;
     }
 
+    /** Return all the vertices in a path.
+     *
+     *  The list of vertices is not stored explicitly by this path object and must be recomputed for each call. Vertices are
+     *  not necessarily unique within a path since they can be reached sometimes by multiple edges. */
+    Vertices vertices() const {
+        Vertices retval;
+        if (!isEmpty()) {
+            retval.push_back(frontVertex());
+            BOOST_FOREACH (const Edges::value_type &edge, edges_)
+                retval.push_back(edge->target());
+        }
+        return retval;
+    }
+    
     /** Append a new edge to the end of the path.
      *
      *  If the path is not empty then the source vertex for the new edge must be equal to the  @ref backVertex. */
@@ -591,11 +609,11 @@ bool shouldInline(const P2::Partitioner &partitioner, const CfgPath &path) {
         if (globalCallee->value().type() == P2::V_BASIC_BLOCK) {
             if (P2::Function::Ptr callee = globalCallee->value().function()) {
                 if (path.callDepth(callee) >= settings.expansionDepthLimit) {
-                    mlog[WARN] <<"call depth exceeded; skipping call at " <<partitioner.vertexName(pathsCallSite) <<"\n";
+                    ::mlog[WARN] <<"call depth exceeded; skipping call at " <<partitioner.vertexName(pathsCallSite) <<"\n";
                     return false;
                 }
             } else {
-                mlog[WARN] <<"skipping call to non-function at " <<partitioner.vertexName(pathsCallSite) <<"\n";
+                ::mlog[WARN] <<"skipping call to non-function at " <<partitioner.vertexName(pathsCallSite) <<"\n";
                 return false;
             }
         }
@@ -628,7 +646,7 @@ insertCallee(P2::ControlFlowGraph &paths, const P2::ControlFlowGraph::ConstEdgeN
             P2::ControlFlowGraph::ConstVertexNodeIterator indet = paths.insertVertex(P2::CfgVertex(P2::V_INDETERMINATE));
             paths.insertEdge(callSite, indet, P2::CfgEdge(P2::E_FUNCTION_CALL));
             paths.insertEdge(indet, pathRetTgt, P2::CfgEdge(P2::E_FUNCTION_RETURN));
-            mlog[WARN] <<"indeterminate function call from " <<callSite->value().bblock()->printableName() <<"\n";
+            ::mlog[WARN] <<"indeterminate function call from " <<callSite->value().bblock()->printableName() <<"\n";
         } else {
             // Call to a normal function.
             ASSERT_require2(callee->value().type() == P2::V_BASIC_BLOCK, "non-basic block callees not implemented yet");
@@ -640,7 +658,7 @@ insertCallee(P2::ControlFlowGraph &paths, const P2::ControlFlowGraph::ConstEdgeN
             CfgVertexSet returns = findFunctionReturns(partitioner, callee);
             P2::ControlFlowGraph calleePaths = findPathsNoCalls(partitioner, callee, returns, avoidVertices, avoidEdges, vmap1);
             if (calleePaths.isEmpty())
-                mlog[WARN] <<calleeName <<" has no paths that return\n";
+                ::mlog[WARN] <<calleeName <<" has no paths that return\n";
 
             // Insert the callee into the paths CFG
             VMap vmap2;                                     // relates calleePaths to paths
@@ -693,9 +711,123 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     gv.emit(out);
 }
 
+typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
+
+// RiscOperators that add some additional tracking information for memory values.
+class RiscOperators: public SymbolicSemantics::RiscOperators {
+public:
+    typedef Sawyer::Container::Map<size_t /*vname*/, std::string /*comment*/> VarComments;
+    VarComments varComments_;                           // information about certain symbolic variables
+    size_t pathInsnIndex_;                              // current location in path
+
+protected:
+    explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
+        : SymbolicSemantics::RiscOperators(protoval, solver) {
+        set_name("FindPath");
+    }
+
+    explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
+        : SymbolicSemantics::RiscOperators(state, solver) {
+        set_name("FindPath");
+    }
+
+public:
+    static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
+        BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
+        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+        BaseSemantics::MemoryStatePtr memory = SymbolicSemantics::MemoryState::instance(protoval, protoval);
+        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+
+    static RiscOperatorsPtr instance(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(protoval, solver));
+    }
+
+    static RiscOperatorsPtr instance(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL) {
+        return RiscOperatorsPtr(new RiscOperators(state, solver));
+    }
+
+public:
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
+                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        return instance(protoval, solver);
+    }
+
+    virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
+                                                   SMTSolver *solver=NULL) const ROSE_OVERRIDE {
+        return instance(state, solver);
+    }
+
+public:
+    static RiscOperatorsPtr promote(const BaseSemantics::RiscOperatorsPtr &x) {
+        RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
+        ASSERT_not_null(retval);
+        return retval;
+    }
+
+public:
+    void pathInsnIndex(size_t idx) { pathInsnIndex_ = idx; }
+    const VarComments& varComments() const { return varComments_; }
+
+public:
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        using namespace InsnSemanticsExpr;
+        BaseSemantics::SValuePtr retval = SymbolicSemantics::RiscOperators::readMemory(segreg, addr, dflt, cond);
+
+        // Do we already have info about the return value?
+        TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
+        if (!valExpr->isLeafNode() || !valExpr->isLeafNode()->is_variable())
+            return retval;                              // result is not a variable
+        size_t varNumber = valExpr->isLeafNode()->get_name();
+        if (varComments_.exists(varNumber))
+            return retval;                              // we already have info for this variable
+        if (!get_insn())
+            return retval;                              // not called from dispatcher on behalf of an instruction
+        
+
+        // Save some info about the return value, a symbolic variable.
+        std::string varComment = "first read at path position #" + StringUtility::numberToString(pathInsnIndex_) +
+                                 ": " + unparseInstruction(get_insn());
+
+        // Sometimes we can save useful information about the address.
+        TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+        if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
+            if (addrLeaf->is_known())
+                varComment += "\nat address 0x" + addrLeaf->get_bits().toHex();
+        } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
+            if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
+                addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
+                addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
+                LeafNodePtr base = addrINode->child(0)->isLeafNode();
+                LeafNodePtr offset = addrINode->child(1)->isLeafNode();
+                varComment += "\nat address ";
+                if (base->get_comment().empty()) {
+                    varComment += "v" + StringUtility::numberToString(base->get_name());
+                } else {
+                    varComment += base->get_comment();
+                }
+                Sawyer::Container::BitVector tmp = offset->get_bits();
+                if (tmp.get(tmp.size()-1)) {
+                    varComment += " - 0x" + tmp.negate().toHex();
+                } else {
+                    varComment += " + 0x" + tmp.toHex();
+                }
+            }
+        }
+
+        if (!varComment.empty())
+            varComments_.insert(varNumber, varComment);
+
+        return retval;
+    }
+};
+
 void
 processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const CfgPath &path) {
-    using namespace rose::BinaryAnalysis::InstructionSemantics2; // BaseSemantics, SymbolicSemantics
     using namespace rose::BinaryAnalysis::InsnSemanticsExpr;     // TreeNode, InternalNode, LeafNode
 
     static int npaths = -1;
@@ -716,10 +848,11 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
 
     YicesSolver solver;
     const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, &solver);
+    RiscOperatorsPtr ops = RiscOperators::instance(regdict, &solver);
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
     std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
 
+    size_t insnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &pathEdge, path.edges()) {
         if (pathEdge->source()->value().type() != P2::V_BASIC_BLOCK) {
             error <<"cannot compute path feasibility across a non-basic-block vertex at "
@@ -729,8 +862,10 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
             P2::BasicBlock::Ptr bblock = pathEdge->source()->value().bblock();
             ASSERT_not_null(bblock);
             try {
-                BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
+                BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+                    ops->pathInsnIndex(insnIndex++);
                     cpu->processInstruction(insn);
+                }
             } catch (const BaseSemantics::Exception &e) {
                 error <<"semantics failed: " <<e <<"\n";
                 return;
@@ -765,37 +900,49 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
         std::cout <<"Found feasible path #" <<npaths
                   <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
 
-        std::cout <<"  Path CFG edges:\n";
-        if (path.nEdges() == 0) {
-            std::cout <<"    path starts and ends at vertex " <<partitioner.vertexName(path.frontVertex()) <<"\n";
-        } else {
-            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, path.edges())
-                std::cout <<"    " <<partitioner.edgeName(edge) <<"\n";
+        std::cout <<"  Path:\n";
+        size_t insnIdx=0, pathIdx=0;
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &pathVertex, path.vertices()) {
+            if (0==pathIdx) {
+                std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
+            } else {
+                std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
+            }
+            BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions())
+                std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++ <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+            ++pathIdx;
         }
 
-        std::cout <<"  Path instructions:\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, path.edges()) {
-            BOOST_FOREACH (SgAsmInstruction *insn, edge->source()->value().bblock()->instructions())
-                std::cout <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
-        }
-
-        std::cout <<"  Path constraints:\n";
+        std::cout <<"  Constraints:\n";
         if (pathConstraints.empty()) {
-            std::cout <<"    no constraints\n";
+            std::cout <<"    none\n";
         } else {
+            size_t idx = 0;
             BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
-                std::cout <<"    " <<*constraint <<"\n";
+                std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
         }
 
         std::cout <<"  Evidence of satisfiability:\n";
         std::vector<std::string> enames = solver.evidence_names();
         if (enames.empty()) {
-            std::cout <<"    none available or none necessary\n";
+            std::cout <<"    not available\n";
         } else {
-            BOOST_FOREACH (const std::string &ename, enames)
+            BOOST_FOREACH (const std::string &ename, enames) {
                 std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
-        }
+            }
 
+            std::cout <<"  Variable information:\n";
+            BOOST_FOREACH (const std::string &ename, enames) {
+                if (ename.size()>=2 && ename[0]=='v' && isdigit(ename[1])) {
+                    size_t varNumber = strtoull(ename.c_str()+1, NULL, 0);
+                    std::string varComment;
+                    if (ops->varComments().getOptional(varNumber).assignTo(varComment)) {
+                        std::cout <<"    " <<ename <<":\n" <<StringUtility::prefixLines(varComment, "      ") <<"\n";
+                    }
+                }
+            }
+        }
+        
         std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n";
         SymbolicSemantics::Formatter fmt;
         fmt.set_line_prefix("    ");
@@ -823,12 +970,12 @@ findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGra
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
-    Stream info(mlog[INFO] <<"finding top-level paths");
+    Stream info(::mlog[INFO] <<"finding top-level paths");
     VMap vmap;                                          // relates global CFG vertices to path vertices
     P2::ControlFlowGraph paths = findPathsNoCalls(partitioner, globalBeginVertex, globalEndVertices, globalAvoidVertices,
                                                   globalAvoidEdges, vmap);
     if (!vmap.forward().exists(globalBeginVertex)) {
-        mlog[WARN] <<"no paths found\n";
+        ::mlog[WARN] <<"no paths found\n";
         return;
     }
     P2::ControlFlowGraph::ConstVertexNodeIterator pathsBeginVertex = vmap.forward()[globalBeginVertex];
@@ -1216,8 +1363,8 @@ expandPath(const P2::Partitioner &partitioner, const CfgPath &toExpand,
 
 int main(int argc, char *argv[]) {
     Diagnostics::initialize();
-    mlog = Diagnostics::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line
     std::vector<std::string> specimenNames = parseCommandLine(argc, argv).unreachedArgs();
@@ -1228,7 +1375,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Disassemble and partition
-    Stream info(mlog[INFO] <<"disassembling");
+    Stream info(::mlog[INFO] <<"disassembling");
     engine.postPartitionAnalyses(false);
     engine.load(specimenNames);
 #if 0 // [Robb P. Matzke 2015-02-27]
@@ -1285,28 +1432,27 @@ int main(int argc, char *argv[]) {
     }
 
     // Show the configuration
-    mlog[INFO] <<"start at vertex: " <<partitioner.vertexName(beginVertex) <<";\n";
-    mlog[INFO] <<"end at vertices:";
+    info <<"start at vertex: " <<partitioner.vertexName(beginVertex) <<";\n";
+    info <<"end at vertices:";
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &vertex, endVertices)
-        mlog[INFO] <<" " <<partitioner.vertexName(vertex) <<";";
-    mlog[INFO] <<"\n";
+        info <<" " <<partitioner.vertexName(vertex) <<";";
+    info <<"\n";
     if (!avoidVertices.empty()) {
-        mlog[INFO] <<"avoiding the following vertices:";
+        info <<"avoiding the following vertices:";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &vertex, avoidVertices)
-            mlog[INFO] <<" " <<partitioner.vertexName(vertex) <<";";
-        mlog[INFO] <<"\n";
+            info <<" " <<partitioner.vertexName(vertex) <<";";
+        info <<"\n";
     }
     if (!avoidEdges.empty()) {
-        mlog[INFO] <<"avoiding the following edges:";
+        info <<"avoiding the following edges:";
         BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, avoidEdges)
-            mlog[INFO] <<" " <<partitioner.edgeName(edge) <<";";
-        mlog[INFO] <<"\n";
+            info <<" " <<partitioner.edgeName(edge) <<";";
+        info <<"\n";
     }
 
     // Initialize info about how addresses map to source lines if that info is available
     if (SgProject *project = SageInterface::getProject())
         srcMapper = DwarfLineMapper(project);
-    std::cerr <<"Line mapping information:\n" <<srcMapper;
     
     // Find paths
     findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
