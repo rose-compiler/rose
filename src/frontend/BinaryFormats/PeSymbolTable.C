@@ -299,7 +299,7 @@ SgAsmCoffSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
     fprintf(f, "%s%-*s = %s\n",               p, w, "st_storage_class", s);
     fprintf(f, "%s%-*s = \"%s\"\n",           p, w, "st_name", escapeString(p_st_name).c_str());
     fprintf(f, "%s%-*s = %u\n",               p, w, "st_num_aux_entries", p_st_num_aux_entries);
-    fprintf(f, "%s%-*s = %zu bytes\n",        p, w, "aux_data", p_aux_data.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " bytes\n",        p, w, "aux_data", p_aux_data.size());
     hexdump(f, 0, std::string(p)+"aux_data at ", p_aux_data);
 }
 
@@ -352,8 +352,8 @@ SgAsmCoffSymbolTable::parse()
             p_symbols->get_symbols().push_back(symbol);
         } catch (const ShortRead &e) {
             fprintf(stderr, "SgAsmCoffSymbolTable::parse: warning: read past end of section \"%s\" [%d]\n"
-                    "    symbol #%zu at file offset 0x%08"PRIx64"\n"
-                    "    skipping %zu symbols (including this one)\n",
+                    "    symbol #%" PRIuPTR " at file offset 0x%08"PRIx64"\n"
+                    "    skipping %" PRIuPTR " symbols (including this one)\n",
                     get_name()->get_string(true).c_str(), get_id(),
                     i, e.offset,
                     fhdr->get_e_coff_nsyms()-i);
@@ -410,7 +410,7 @@ SgAsmCoffSymbolTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu symbols\n", p, w, "size", p_symbols->get_symbols().size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " symbols\n", p, w, "size", p_symbols->get_symbols().size());
     for (size_t i = 0; i < p_symbols->get_symbols().size(); i++) {
         p_symbols->get_symbols()[i]->dump(f, p, i);
     }

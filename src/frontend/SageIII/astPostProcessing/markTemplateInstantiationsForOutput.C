@@ -46,7 +46,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
      declarationFixupTraversal.traverse(node,inheritedAttribute);
 
 #if 0
-     printf ("Declarations collected form first phase of processing (size = %zu): \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+     printf ("Declarations collected form first phase of processing (size = %" PRIuPTR "): \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
      list<SgDeclarationStatement*>::iterator i = declarationFixupTraversal.listOfTemplateDeclarationsToOutput.begin();
      while ( i != declarationFixupTraversal.listOfTemplateDeclarationsToOutput.end())
         {
@@ -57,7 +57,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
 
 #if 0
      printf ("Through with first call to traverse AST! \n");
-     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+     printf ("declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %" PRIuPTR " \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
 
      list<SgDeclarationStatement*> accumulatedList = declarationFixupTraversal.listOfTemplateDeclarationsToOutput;
@@ -87,7 +87,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
              }
 #endif
 #if 0
-          printf ("   --- AFTER accumulation: accumulatedList.size() = %zu \n",accumulatedList.size());
+          printf ("   --- AFTER accumulation: accumulatedList.size() = %" PRIuPTR " \n",accumulatedList.size());
           list<SgDeclarationStatement*>::iterator a = accumulatedList.begin();
           unsigned int b = 0;
           while (a != accumulatedList.end())
@@ -102,17 +102,17 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
        // append the newest list to the back of the list of lists of required declarations
           listOfListsOfDeclarations.push_back(currentList);
 #if 0
-          printf ("   --- Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+          printf ("   --- Number of lists of required declarations = %" PRIuPTR " \n",listOfListsOfDeclarations.size());
 #endif
 #if 0
           for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
              {
-            // printf (" -- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
-               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+            // printf (" -- Size of listOfListsOfDeclarations[%u] = %" PRIuPTR " \n",n,listOfListsOfDeclarations[n].size());
+               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %" PRIuPTR " \n",n,listOfListsOfDeclarations[n].size());
              }
 #endif
 #if 0
-          printf ("   --- currentList.size() = %zu \n",currentList.size());
+          printf ("   --- currentList.size() = %" PRIuPTR " \n",currentList.size());
           list<SgDeclarationStatement*>::iterator j = currentList.begin();
           unsigned int m = 0;
           while (j != currentList.end())
@@ -150,7 +150,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                d++;
              }
 #if 0
-          printf ("   --- AFTER ERASE: currentList.size() = %zu \n",currentList.size());
+          printf ("   --- AFTER ERASE: currentList.size() = %" PRIuPTR " \n",currentList.size());
           list<SgDeclarationStatement*>::iterator k = currentList.begin();
           unsigned int o = 0;
           while (k != currentList.end())
@@ -160,16 +160,16 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                o++;
              }
 
-          printf ("   --- declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
+          printf ("   --- declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %" PRIuPTR " \n",declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
 
 #error "DEAD CODE!"
 
 #if 0
-          printf ("   --- After erase of currentList: Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+          printf ("   --- After erase of currentList: Number of lists of required declarations = %" PRIuPTR " \n",listOfListsOfDeclarations.size());
           for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
              {
-               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %zu \n",n,listOfListsOfDeclarations[n].size());
+               printf ("   ---   --- Size of listOfListsOfDeclarations[%u] = %" PRIuPTR " \n",n,listOfListsOfDeclarations[n].size());
 
                list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[n].begin();
 
@@ -193,12 +193,12 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
                   {
                  // Look into this subtrees for any required declarations (which would not have been caught last iteration!
 #if 0
-                    printf ("   --- START: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
+                    printf ("   --- START: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %" PRIuPTR " \n",
                          declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
                     declarationFixupTraversal.traverse ( *i , inheritedAttribute );
 #if 0
-                    printf ("   --- END: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %zu \n",
+                    printf ("   --- END: Nested traversal: declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size() = %" PRIuPTR " \n",
                          declarationFixupTraversal.listOfTemplateDeclarationsToOutput.size());
 #endif
                   }
@@ -265,7 +265,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
         }
 
 #if 0
-     printf ("Number of lists of required declarations = %zu \n",listOfListsOfDeclarations.size());
+     printf ("Number of lists of required declarations = %" PRIuPTR " \n",listOfListsOfDeclarations.size());
 #endif
 
   // Convert the vector of lists to a set!
@@ -274,7 +274,7 @@ MarkTemplateInstantiationsForOutput::BuildSetOfRequiredTemplateDeclarations ( Sg
      for (unsigned int n = 0; n < listOfListsOfDeclarations.size(); n++)
         {
 #if 0
-          printf (" -- Size of listOfListsOfDeclarations[%d] = %zu \n",n,listOfListsOfDeclarations[n].size());
+          printf (" -- Size of listOfListsOfDeclarations[%d] = %" PRIuPTR " \n",n,listOfListsOfDeclarations[n].size());
 #endif
           list<SgDeclarationStatement*>::iterator i = listOfListsOfDeclarations[n].begin();
           while ( i != listOfListsOfDeclarations[n].end() )
@@ -1102,7 +1102,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
              }
 #endif
 #if 0
-          printf ("In markTemplateInstantiationsForOutput(): ProcessMemberFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
+          printf ("In markTemplateInstantiationsForOutput(): ProcessMemberFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %" PRIuPTR " \n",setOfRequiredDeclarations.size());
 #endif
 
        // ***************************************************************************************
@@ -1111,7 +1111,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
           MarkTemplateInstantiationsForOutput::ProcessMemberFunctionTemplateDeclarations(setOfRequiredDeclarations,file);
 
 #if 0
-          printf ("In markTemplateInstantiationsForOutput(): ProcessFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
+          printf ("In markTemplateInstantiationsForOutput(): ProcessFunctionTemplateDeclarations(): setOfRequiredDeclarations.size() = %" PRIuPTR " \n",setOfRequiredDeclarations.size());
 #endif
 
        // ********************************************************************************
@@ -1121,7 +1121,7 @@ markTemplateInstantiationsForOutput( SgNode* node )
           MarkTemplateInstantiationsForOutput::ProcessFunctionTemplateDeclarations(setOfRequiredDeclarations,file);
 
 #if 0
-          printf ("In markTemplateInstantiationsForOutput(): ProcessClassTemplateDeclarations(): setOfRequiredDeclarations.size() = %zu \n",setOfRequiredDeclarations.size());
+          printf ("In markTemplateInstantiationsForOutput(): ProcessClassTemplateDeclarations(): setOfRequiredDeclarations.size() = %" PRIuPTR " \n",setOfRequiredDeclarations.size());
 #endif
 
        // *****************************************************************************
