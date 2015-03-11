@@ -592,17 +592,21 @@ YicesSolver::out_zerop(std::ostream &o, const InternalNodePtr &in)
  *  widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
  *  Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
- *    (bv-mul (bv-sign-extend A [|B|-1]) (bv-sign-extend B [|A|-1]))
+ *    (bv-mul (bv-sign-extend A |B|) (bv-sign-extend B |A|))
  *  \endcode
  */
 void
 YicesSolver::out_mult(std::ostream &o, const InternalNodePtr &in)
 {
+    ASSERT_require(in->get_nbits() == in->child(0)->get_nbits() + in->child(1)->get_nbits());
+    size_t extend0 = in->child(1)->get_nbits(); // amount by which to extend arg0
+    size_t extend1 = in->child(0)->get_nbits(); // amount by which to extend arg1
+
     o <<"(bv-mul (bv-sign-extend ";
     out_expr(o, in->child(0));
-    o <<" " <<(in->child(1)->get_nbits()-1) <<") (bv-sign-extend ";
+    o <<" " <<extend0 <<") (bv-sign-extend ";
     out_expr(o, in->child(1));
-    o <<" " <<(in->child(0)->get_nbits()-1) <<"))";
+    o <<" " <<extend1 <<"))";
 }
 
 /** Output for write. */
@@ -977,15 +981,19 @@ YicesSolver::ctx_zerop(const InternalNodePtr &in)
  *  the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
  *  size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
- *    (bv-mul (bv-sign-extend A [|B|-1]) (bv-sign-extend B [|A|-1]))
+ *    (bv-mul (bv-sign-extend A |B|]) (bv-sign-extend B |A|))
  *  \endcode
  */
 yices_expr
 YicesSolver::ctx_mult(const InternalNodePtr &in)
 {
+    ASSERT_require(in->get_nbits() == in->child(0)->get_nbits() + in->child(1)->get_nbits());
+    size_t extend0 = in->child(1)->get_nbits(); // amount by which to extend arg0
+    size_t extend1 = in->child(0)->get_nbits(); // amount by which to extend arg1
+
     yices_expr retval = yices_mk_bv_mul(context, 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), in->child(1)->get_nbits()-1), 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), in->child(0)->get_nbits()-1));
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), extend0), 
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), extend1));
     ASSERT_not_null(retval);
     return retval;
 }
