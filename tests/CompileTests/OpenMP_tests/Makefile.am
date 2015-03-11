@@ -53,6 +53,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-1.c \
 	hello-2.c \
 	hello-ordered.c \
+	include_header_only.c \
 	init.c \
 	lastprivate0.c \
 	lastprivate.c \

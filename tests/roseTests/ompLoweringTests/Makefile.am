@@ -28,6 +28,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	full_verify.c \
+        include_header_only.c \
 	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
