@@ -6692,12 +6692,11 @@ if (get_C_only() ||
 
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-          if (get_openmp_lowering())  
+          if (get_openmp_lowering()||get_openmp())  
           {
             compilerNameString.push_back("-D_OPENMP");
           }
     }
-
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 
