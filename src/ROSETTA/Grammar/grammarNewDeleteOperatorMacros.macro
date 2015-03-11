@@ -71,7 +71,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 #if COMPILE_DEBUG_STATEMENTS
     if (ROSE_DEBUG > 1) {
         printf("Call $CLASSNAME::operator new!  "
-               "$CLASSNAME_Memory_Block_List.size() = %zu  Size(%zu) != sizeof($CLASSNAME)(%zu)\n",
+               "$CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "  Size(%" PRIuPTR ") != sizeof($CLASSNAME)(%" PRIuPTR ")\n",
                $CLASSNAME_Memory_Block_List.size(), Size, sizeof($CLASSNAME));
     }
 #endif
@@ -80,7 +80,7 @@ void *$CLASSNAME::operator new ( size_t Size )
     {
 #       if COMPILE_DEBUG_STATEMENTS
         if (ROSE_DEBUG > 1)
-            printf("Calling ROSE_MALLOC(Size = %zu)\n",Size);
+            printf("Calling ROSE_MALLOC(Size = %" PRIuPTR ")\n",Size);
 #       endif
         void *mem = ROSE_MALLOC(Size);
         ALLOC_MUTEX($CLASSNAME, unlock);
@@ -114,15 +114,15 @@ void *$CLASSNAME::operator new ( size_t Size )
 #           if COMPILE_DEBUG_STATEMENTS
             if (ROSE_DEBUG > 1) {
                 printf("In $CLASSNAME::operator new: "
-                       "Calling ROSE_MALLOC because Size(%zu) != sizeof($CLASSNAME)(%zu)\n",
+                       "Calling ROSE_MALLOC because Size(%" PRIuPTR ") != sizeof($CLASSNAME)(%" PRIuPTR ")\n",
                        Size, sizeof($CLASSNAME));
             }
-            printf("Inside of $CLASSNAME::operator new: sizeof(int)(%zu)\n", sizeof(int));
-            printf("Inside of $CLASSNAME::operator new: sizeof(bool)(%zu)\n", sizeof(bool));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgSharedVector<unsigned char>)(%zu)\n",
+            printf("Inside of $CLASSNAME::operator new: sizeof(int)(%" PRIuPTR ")\n", sizeof(int));
+            printf("Inside of $CLASSNAME::operator new: sizeof(bool)(%" PRIuPTR ")\n", sizeof(bool));
+            printf("Inside of $CLASSNAME::operator new: sizeof(SgSharedVector<unsigned char>)(%" PRIuPTR ")\n",
                    sizeof(SgSharedVector<unsigned char>));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgFileContentList)(%zu)\n", sizeof(SgFileContentList));
-            printf("Inside of $CLASSNAME::operator new: sizeof(SgAsmGenericFormat::fileDetails)(%zu)\n",
+            printf("Inside of $CLASSNAME::operator new: sizeof(SgFileContentList)(%" PRIuPTR ")\n", sizeof(SgFileContentList));
+            printf("Inside of $CLASSNAME::operator new: sizeof(SgAsmGenericFormat::fileDetails)(%" PRIuPTR ")\n",
                    sizeof(SgAsmGenericFormat::fileDetails));
 #           endif
 
@@ -134,7 +134,7 @@ void *$CLASSNAME::operator new ( size_t Size )
                 // CLASS_ALLOCATION_POOL_SIZE *= 2;
 #               if COMPILE_DEBUG_STATEMENTS
                 if (ROSE_DEBUG > 1)
-                    printf("Call ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %zu\n",
+                    printf("Call ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "\n",
                            $CLASSNAME_Memory_Block_List.size());
 #               endif
 
@@ -148,7 +148,7 @@ void *$CLASSNAME::operator new ( size_t Size )
 
 #               if COMPILE_DEBUG_STATEMENTS
                 if (ROSE_DEBUG > 1) {
-                    printf("Called ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %zu\n",
+                    printf("Called ROSE_MALLOC for Array $CLASSNAME_Memory_Block_List.size() = %" PRIuPTR "\n",
                            $CLASSNAME_Memory_Block_List.size());
                 }
 #               endif

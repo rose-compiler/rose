@@ -214,13 +214,13 @@ AstTests::runAllTests(SgProject* sageProject)
                     SgGlobal* globalScope = sourceFile->get_globalScope();
                     ROSE_ASSERT(globalScope != NULL);
                     size_t maxCollisions = globalScope->get_symbol_table()->maxCollisions();
-                    printf ("Symbol Table Statistics: sourceFile = %zu maxCollisions = %zu \n",i,maxCollisions);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " maxCollisions = %" PRIuPTR " \n",i,maxCollisions);
 
                     float load_factor     = globalScope->get_symbol_table()->get_table()->load_factor();
-                    printf ("Symbol Table Statistics: sourceFile = %zu load_factor = %f \n",i,load_factor);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " load_factor = %f \n",i,load_factor);
 
                     float max_load_factor = globalScope->get_symbol_table()->get_table()->max_load_factor();
-                    printf ("Symbol Table Statistics: sourceFile = %zu max_load_factor = %f \n",i,max_load_factor);
+                    printf ("Symbol Table Statistics: sourceFile = %" PRIuPTR " max_load_factor = %f \n",i,max_load_factor);
                   }
              }
         }
@@ -5675,15 +5675,19 @@ TestLValueExpressions::visit ( SgNode* node )
                          ROSE_ASSERT(operand != NULL);
 
 #if WARN_ABOUT_ATYPICAL_LVALUES
-                      // if (operand->get_lvalue() == true)
-                         if (operand->get_lvalue() == false)
-                            {
-                              printf ("Error for operand = %p = %s = %s in unary expression (SgMinusMinusOp or SgPlusPlusOp) = %s \n",
-                                   operand,operand->class_name().c_str(),SageInterface::get_name(operand).c_str(),expression->class_name().c_str());
-                              unaryOperator->get_startOfConstruct()->display("Error for operand: operand->get_lvalue() == true: debug");
-                            }
+                         if (operand->get_lvalue() == false) {
+                              std::cerr <<"Error for operand"
+                                        <<" (" <<operand->class_name() <<"*)" <<" = " <<SageInterface::get_name(operand)
+                                        <<" in unary " <<expression->class_name() <<" expression"
+                                        <<": operand->get_lvalue() == false but should be true\n";
+                              std::cerr <<"ancestors of (" <<operand->class_name() <<"*)" <<operand <<" are:";
+                              for (SgNode *p=operand->get_parent(); p; p=p->get_parent())
+                                  std::cerr <<" (" <<p->class_name() <<"*)" <<p;
+                              std::cerr <<"\n";
+                              unaryOperator->get_startOfConstruct()
+                                  ->display("Error for operand: operand->get_lvalue() == false: debug");
+                         }
 #endif
-                      // ROSE_ASSERT(operand->get_lvalue() == false);
                          ROSE_ASSERT(operand->get_lvalue() == true);
                          break;
                        }
@@ -5984,8 +5988,8 @@ TestForDisconnectedAST::test(SgNode * node)
 
           if (AST_set.size() != All_IR_Nodes_set.size())
              {
-               printf ("AST_set          = %zu \n",AST_set.size());
-               printf ("All_IR_Nodes_set = %zu \n",All_IR_Nodes_set.size());
+               printf ("AST_set          = %" PRIuPTR " \n",AST_set.size());
+               printf ("All_IR_Nodes_set = %" PRIuPTR " \n",All_IR_Nodes_set.size());
              }
         }
 

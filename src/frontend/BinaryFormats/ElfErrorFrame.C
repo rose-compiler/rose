@@ -1,6 +1,13 @@
-/* ELF Error Handling Frames (SgAsmElfEHFrameSection and related classes) */
+// ELF Error Handling Frames (SgAsmElfEHFrameSection and related classes).  Documentation for the format of these sections is
+// notoriously sparse, but similar, but not idential, to the DWARF .debug_frame section.  The best documentation is to read the
+// C++ runtime code that parses this section.  Here are some other sources:
+//      http://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html
+//      http://www.airs.com/blog/archives/460
 
 #include "sage3basic.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 static const size_t WARNING_LIMIT=10;
 static size_t nwarnings=0;
@@ -125,6 +132,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %d\n", p, w, "version", get_version());
     fprintf(f, "%s%-*s = \"%s\"\n", p, w, "augStr", get_augmentation_string().c_str());
+    fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "eh_data", get_eh_data(), get_eh_data());
     fprintf(f, "%s%-*s = %s\n", p, w, "sig_frame", get_sig_frame()?"yes":"no");
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64")\n", p, w, "code_align",
             get_code_alignment_factor(), get_code_alignment_factor());
@@ -140,7 +148,7 @@ SgAsmElfEHFrameEntryCI::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
     fprintf(f, "%s%-*s = %d\n", p, w, "addr_encoding", get_addr_encoding());
     if (get_instructions().size()>0) {
-        fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+        fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
                 get_instructions().size(), get_instructions().size());
         hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
     }
@@ -237,10 +245,10 @@ SgAsmElfEHFrameEntryFD::dump(FILE *f, const char *prefix, ssize_t idx) const
 
     fprintf(f, "%s%-*s = %s\n", p, w, "begin_rva", get_begin_rva().to_string().c_str());
     fprintf(f, "%s%-*s = 0x%08"PRIx64" (%"PRIu64") bytes\n", p, w, "size", get_size(), get_size());
-    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "aug_data",
+    fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "aug_data",
             get_augmentation_data().size(), get_augmentation_data().size());
     hexdump(f, 0, std::string(p)+"data at ", get_augmentation_data());
-    fprintf(f, "%s%-*s = 0x%08zx (%zu) bytes\n", p, w, "instructions",
+    fprintf(f, "%s%-*s = 0x%08zx (%" PRIuPTR ") bytes\n", p, w, "instructions",
             get_instructions().size(), get_instructions().size());
     hexdump(f, 0, std::string(p)+"insns at ", get_instructions());
 }
@@ -264,6 +272,12 @@ SgAsmElfEHFrameSection::parse()
     rose_addr_t record_offset=0;
     std::map<rose_addr_t, SgAsmElfEHFrameEntryCI*> cies;
 
+    // This section consists of a Common Information Entry (CIE) followed by one or more Frame Description Entry (FDE) and this
+    // pattern is repeated for the entire section or until a termination record is reached.  There is typically one CIE per
+    // object file and one FDE per function.  The CIE and FDE together describe how to unwind the caller during an exception if
+    // the current instruction pointer is in the range covered by the FDE.
+
+    Sawyer::Optional<rose_addr_t> prevCieOffset;
     while (record_offset<get_size()) {
         rose_addr_t at = record_offset;
         unsigned char u8_disk;
@@ -277,10 +291,12 @@ SgAsmElfEHFrameSection::parse()
         if (record_size==0xffffffff) {
             read_content_local(at, &u64_disk, 8); at += 8;
             record_size = disk_to_host(fhdr->get_sex(), u64_disk);
-            length_field_size += 8; /*FIXME: it's not entirely clear whether ExtendedLength includes this field*/
+            length_field_size += 8;                     // length field size is both "length" and "extended length"
         }
-        if (0==record_size)
+        if (0==record_size) {
+            record_offset += length_field_size;
             break;
+        }
 
         /* Backward offset to CIE record, or zero if this is a CIE record. */
         read_content_local(at, &u32_disk, 4); at += 4;
@@ -289,8 +305,9 @@ SgAsmElfEHFrameSection::parse()
             /* This is a CIE record */
             SgAsmElfEHFrameEntryCI *cie = new SgAsmElfEHFrameEntryCI(this);
             cies[record_offset] = cie;
+            prevCieOffset = record_offset;
 
-            /* Version */
+            /* Version. This parser was written based on version 1 documentation. */
             uint8_t cie_version;
             read_content_local(at++, &cie_version, 1);
             cie->set_version(cie_version);
@@ -300,14 +317,36 @@ SgAsmElfEHFrameSection::parse()
             at += astr.size() + 1;
             cie->set_augmentation_string(astr);
 
-            /* Alignment factors */
+            /* EH data: 4 or 8 bytes depending on word size, only present "if the augmentation string contains 'eh'". The word
+             * "contains" in the documentation apparently means the string is _equal_ to "eh". */
+            if (astr == "eh") {
+                uint64_t eh_data;
+                if (4==fhdr->get_exec_format()->get_word_size()) {
+                    read_content_local(at, &u32_disk, 4); at += 4;
+                    eh_data = disk_to_host(fhdr->get_sex(), u32_disk);
+                } else {
+                    read_content_local(at, &u64_disk, 8); at += 8;
+                    eh_data = disk_to_host(fhdr->get_sex(), u64_disk);
+                }
+                cie->set_eh_data(eh_data);
+            }
+            
+            /* Alignment factors:
+             * + code_alignment_factor: An unsigned LEB128 encoded value that is factored out of all advance location
+             *   instructions that are associated with this CIE or its FDEs. This value shall be multiplied by the delta
+             *   argument of an adavance location instruction to obtain the new location value.
+             * + data_alignment_factor: A signed LEB128 encoded value that is factored out of all offset instructions that are
+             *   associated with this CIE or its FDEs. This value shall be multiplied by the register offset argument of an
+             *   offset instruction to obtain the new offset value. */
             cie->set_code_alignment_factor(read_content_local_uleb128(&at));
             cie->set_data_alignment_factor(read_content_local_sleb128(&at));
 
             /* Augmentation data length. This is apparently the length of the data described by the Augmentation String plus
-             * the Initial Instructions plus any padding. [RPM 2009-01-15] */
-            cie->set_augmentation_data_length(read_content_local_uleb128(&at));
-
+             * the Initial Instructions plus any padding [RPM 2009-01-15].  This field is present only if the augmentation
+             * string starts with the character "z" [Robb P. Matzke 2014-12-15]. */
+            if (!astr.empty() && astr[0]=='z')
+                cie->set_augmentation_data_length(read_content_local_uleb128(&at));
+            
             /* Augmentation data. The format of the augmentation data in the CIE record is determined by reading the
              * characters of the augmentation string. */ 
             if (!astr.empty() && astr[0]=='z') {
@@ -332,6 +371,9 @@ SgAsmElfEHFrameSection::parse()
                             case 0x09:          /* *.o file generated by gcc-4.0.x */
                                 /* FIXME: Cannot find any info about this entry. Fix SgAsmElfEHFrameSection::parse() if we
                                  *        ever figure this out. [RPM 2009-09-29] */
+                                /*fallthrough*/
+                            case 0x10:          /* See 32-bit version of skype library */
+                                /* FIXME[Robb P. Matzke 2014-12-15]: cannot find any info for this entry. */
                                 /*fallthrough*/
                             default: {
                                 if (++nwarnings<=WARNING_LIMIT) {
@@ -369,7 +411,22 @@ SgAsmElfEHFrameSection::parse()
 
         } else {
             /* This is a FDE record */
+            bool fde_parse_error = false;
             rose_addr_t cie_offset = record_offset + length_field_size - cie_back_offset;
+            if (cies.find(cie_offset) == cies.end()) {
+                mlog[ERROR] <<"bad CIE offset " <<cie_offset
+                            <<" in section \"" <<StringUtility::cEscape(get_name()->get_string()) <<"\"\n";
+                mlog[ERROR] <<"  referenced by FDE at offset " <<record_offset
+                            <<" having CIE back offset " <<cie_back_offset <<"\n";
+                if (prevCieOffset) {
+                    mlog[ERROR] <<"  previous CIE was at offset " <<*prevCieOffset <<"\n";
+                } else {
+                    mlog[ERROR] <<"  there was no previous CIE in this section\n";
+                }
+                mlog[ERROR] <<"  bailing out early\n";
+                break;
+            }
+
             assert(cies.find(cie_offset)!=cies.end());
             SgAsmElfEHFrameEntryCI *cie = cies[cie_offset];
             SgAsmElfEHFrameEntryFD *fde = new SgAsmElfEHFrameEntryFD(cie);
@@ -388,28 +445,39 @@ SgAsmElfEHFrameSection::parse()
                   break;
               }
               default:
-                fprintf(stderr, "%s:%u: ELF CIE 0x%08"PRIx64", FDE 0x%08"PRIx64": unknown address encoding: 0x%02x\n", 
+                fprintf(stderr, "%s:%u: warning: ELF CIE 0x%08"PRIx64", FDE 0x%08"PRIx64": unknown address encoding: 0x%02x\n", 
                         __FILE__, __LINE__, get_offset()+cie_offset, get_offset()+record_offset, cie->get_addr_encoding());
-                abort();
+                fde_parse_error = true;
+                break;
             }
 
-            /* Augmentation Data */
-            std::string astring = cie->get_augmentation_string();
-            if (astring.size()>0 && astring[0]=='z') {
-                rose_addr_t aug_length = read_content_local_uleb128(&at);
-                fde->get_augmentation_data() = read_content_local_ucl(at, aug_length);
-                at += aug_length;
-                ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
-            }
+            // Location of following fields depends on having correctly unparsed the previous stuff which is RLE.
+            if (!fde_parse_error) {
+                /* Augmentation Data */
+                std::string astring = cie->get_augmentation_string();
+                if (astring.size()>0 && astring[0]=='z') {
+                    rose_addr_t aug_length = read_content_local_uleb128(&at);
+                    fde->get_augmentation_data() = read_content_local_ucl(at, aug_length);
+                    at += aug_length;
+                    ROSE_ASSERT(fde->get_augmentation_data().size()==aug_length);
+                }
 
-            /* Call frame instructions */
-            rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
-            fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
-            ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+                /* Call frame instructions */
+                rose_addr_t cf_insn_size = (length_field_size + record_size) - (at - record_offset);
+                fde->get_instructions() = read_content_local_ucl(at, cf_insn_size);
+                ROSE_ASSERT(fde->get_instructions().size()==cf_insn_size);
+            }
         }
 
         record_offset += length_field_size + record_size;
     }
+
+    if (record_offset < get_size()) {
+        mlog[WARN] <<"ELF error handling section \"" <<StringUtility::cEscape(get_name()->get_string()) <<"\""
+                   <<" contains " <<StringUtility::plural(get_size()-record_offset, "more bytes")
+                   <<" that were not parsed\n";
+    }
+
     return this;
 }
 
