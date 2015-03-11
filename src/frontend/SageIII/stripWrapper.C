@@ -294,11 +294,11 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
                               ROSE_ASSERT (declarationStatmentList != NULL);
                               ROSE_ASSERT (declarationStatmentList->size() > 0);
 
-                              printf ("declarationStatmentList->size() = %zu \n",declarationStatmentList->size());
+                              printf ("declarationStatmentList->size() = %" PRIuPTR " \n",declarationStatmentList->size());
                               returnStatmentListPtr->insert (returnStatmentListPtr->end(),
                                                         declarationStatmentList->begin(),
                                                         declarationStatmentList->end());
-                           // printf ("returnStatmentListPtr->size() = %zu \n",returnStatmentListPtr->size());
+                           // printf ("returnStatmentListPtr->size() = %" PRIuPTR " \n",returnStatmentListPtr->size());
                             }
                            else
                             {
@@ -314,7 +314,7 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
                                                         initializationStatmentList->begin(),
                                                         initializationStatmentList->end());
 
-                           // printf ("returnStatmentListPtr->size() = %zu \n",returnStatmentListPtr->size());
+                           // printf ("returnStatmentListPtr->size() = %" PRIuPTR " \n",returnStatmentListPtr->size());
                            // printf ("Processing TRANSFORMATION_MARKER \n");
 
                               transformationStatmentList =
@@ -327,7 +327,7 @@ SgNode::stripAwayWrapping ( SgFile & file, bool isADeclaration )
                               returnStatmentListPtr->insert (returnStatmentListPtr->end(),
                                                         transformationStatmentList->begin(),
                                                         transformationStatmentList->end());
-                           // printf ("returnStatmentListPtr->size() = %zu \n",returnStatmentListPtr->size());
+                           // printf ("returnStatmentListPtr->size() = %" PRIuPTR " \n",returnStatmentListPtr->size());
                             }
 #if 0
                          printf ("Exiting after extraction of declaration, initialization, and transformation statements! \n");

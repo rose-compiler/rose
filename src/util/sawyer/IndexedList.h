@@ -166,6 +166,7 @@ private:
         Derived operator--(int) { Derived old=*this; base_ = base_->prev; return old; }
         template<class OtherIter> bool operator==(const OtherIter &other) const { return base_ == other.base(); }
         template<class OtherIter> bool operator!=(const OtherIter &other) const { return base_ != other.base(); }
+        bool operator<(const IteratorBase &other) const { return base_ < other.base_; }
     protected:
         Derived* derived() { return static_cast<Derived*>(this); }
         const Derived* derived() const { return static_cast<const Derived*>(this); }
@@ -530,9 +531,8 @@ public:
     const Value& operator[](size_t id) const {
         return indexedValue(id);
     }
-    /** @} */
 
-    Optional<Value> get(size_t id) const {
+    Optional<Value> getOptional(size_t id) const {
         return id < size() ? Optional<Value>(index_[id]) : Optional<Value>();
     }
 
@@ -542,6 +542,12 @@ public:
     const Value& getOrElse(size_t id, const Value &dflt) const {
         return id < size() ? *index_[id] : dflt;
     }
+
+    const Value& getOrDefault(size_t id) const {
+        static const Value dflt;
+        return id < size() ? *index_[id] : dflt;
+    }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Mutators

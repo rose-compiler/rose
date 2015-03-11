@@ -8,14 +8,8 @@
 #include <string>
 #include <set>
 #include <iostream>
-/* driscoll6 (4/15/11) The default Boost::Filesystem version was
- * bumped from 2 to 3 in Boost 1.46. Use version 2 until we have time to
- * refactor the code for version 3. */
 #include "boost/algorithm/string/predicate.hpp"
-
-#define BOOST_FILESYSTEM_VERSION 2
 #include "boost/filesystem/operations.hpp"
-
 #include "DataStructures.h"
 #include "RtedTransformation.h"
 
@@ -92,7 +86,7 @@ struct FileRegistrar
 
   void operator()(const char* arg)
   {
-    filenames.insert( boostfs::system_complete( arg ).file_string() );
+    filenames.insert( boostfs::system_complete( arg ).string() );
   }
 
   operator RtedFiles() { return filenames; }
@@ -133,6 +127,7 @@ std::ostream& operator<<(std::ostream& os, const OptionsRegistrar& opt)
 {
   os << opt.globalsInitialized.name << opt.globalsInitialized.help
      << std::endl;
+  return os;
 }
 
 

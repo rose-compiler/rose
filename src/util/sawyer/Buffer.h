@@ -15,8 +15,9 @@ namespace Container {
 template<class A, class T>
 class Buffer: public SharedObject {
     std::string name_;
+    bool copyOnWrite_;
 protected:
-    Buffer(): name_(generateSequentialName()) {}
+    Buffer(): name_(generateSequentialName()), copyOnWrite_(false) {}
 public:
     /** Reference counting smart pointer.
      *
@@ -96,6 +97,16 @@ public:
      *
      *  Returns a pointer for the buffer data.  Those subclasses that don't support this method will return the null pointer. */
     virtual const Value* data() const = 0;
+
+    /** Property: Copy on write.
+     *
+     *  This is a bit stored in the buffer and is used by higher layers to implement copy-on-write.  The buffer itself does
+     *  nothing with this bit.
+     *
+     * @{ */
+    bool copyOnWrite() const { return copyOnWrite_; }
+    void copyOnWrite(bool b) { copyOnWrite_ = b; }
+    /** @} */
 };
 
 } // namespace

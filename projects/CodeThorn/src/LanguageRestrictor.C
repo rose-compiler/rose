@@ -7,6 +7,7 @@
 #include "sage3basic.h"
 
 #include "LanguageRestrictor.h"
+#include "SgNodeHelper.h"
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {
   LanguageRestrictor::VariantSet vset;
@@ -116,7 +117,7 @@ bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(!isAllowedAstNode(*i)) {
-      cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() << endl;
+      cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
       // report first error and return
       if((*i)->variantT()==V_SgContinueStmt) {
         cerr << "cfg construction for continue-statement not supported yet."<<endl; break;

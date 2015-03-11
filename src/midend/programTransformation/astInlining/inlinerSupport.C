@@ -752,19 +752,24 @@ SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStatement* scope) {
 // Combined procedure for cleaning up code after inlining.  Does not do
 // variable renaming or block flattening, however.
 void cleanupInlinedCode(SgNode* top) {
-  simpleCopyAndConstantPropagation(top);
-  SageInterface::removeJumpsToNextStatement(top);
-  SageInterface::removeUnusedLabels(top);
-  RemoveNullStatementsVisitor().traverse(top, postorder);
-  MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
-  FindInitializedNames fin;
-  fin.traverse(top, preorder);
-  for (SgInitializedNamePtrList::iterator i = fin.ls.begin();
-       i != fin.ls.end(); ++i) {
-    doSubexpressionExpansionSmart(*i);
-  }
-  simpleCopyAndConstantPropagation(top);
-  RemoveNullStatementsVisitor().traverse(top, postorder);
+    simpleCopyAndConstantPropagation(top);
+    SageInterface::removeJumpsToNextStatement(top);
+    SageInterface::removeUnusedLabels(top);
+    RemoveNullStatementsVisitor().traverse(top, postorder);
+    MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
+    FindInitializedNames fin;
+    fin.traverse(top, preorder);
+    for (SgInitializedNamePtrList::iterator i = fin.ls.begin(); i != fin.ls.end(); ++i) {
+        doSubexpressionExpansionSmart(*i);
+    }
+    simpleCopyAndConstantPropagation(top);
+    RemoveNullStatementsVisitor().traverse(top, postorder);
+
+    // Make sure the AST is consistent. To save time, we'll just fix things that we know can go wrong. For instance, the
+    // SgAsmExpression.p_lvalue data member is required to be true for certain operators and is set to false in other
+    // situations. Since we've introduced new expressions into the AST we need to adjust their p_lvalue according to the
+    // operators where they were inserted.
+    markLhsValues(top);
 }
 
 void removeNullStatements(SgNode* top) {

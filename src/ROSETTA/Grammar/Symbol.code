@@ -93,6 +93,12 @@ HEADER_ALIAS_SYMBOL_START
        // SgType* get_type() const;
        // SgNode* get_symbol_basis() const;
 
+       // DQ (2/28/2015): Added copy constructor to make sure that the causal_nodes is preserved across copies.
+          SgAliasSymbol( const SgAliasSymbol & X );
+
+       // DQ (2/28/2015): Add this function so that we can check and for alias of SgAliasSymbol.
+          void post_construction_initialization();
+
       //! For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
           SgSymbol* get_base() const;
 
@@ -1052,6 +1058,44 @@ SgAliasSymbol::get_declaration() const
 
      return returnValue;
    }
+
+SgAliasSymbol::SgAliasSymbol( const SgAliasSymbol & X )
+   {
+  // DQ (2/28/2015): Added copy constructor to make sure that the causal_nodes is preserved across copies (used in SgScopeStatement::insert_symbol() function).
+  // This is a fix for Tristan's use of the copy constructor in the SgScopeStatement::insert_symbol() function).
+
+     p_alias        = X.p_alias;
+     p_isRenamed    = X.p_isRenamed;
+     p_new_name     = X.p_new_name;
+     p_causal_nodes = X.p_causal_nodes;
+
+#if 0
+     printf ("In SgAliasSymbol copy constructor: p_causal_nodes.size() = %zu X.p_causal_nodes = %zu \n",p_causal_nodes.size(),X.p_causal_nodes.size());
+#endif
+   }
+
+       // DQ (2/28/2015): Add this function so that we can check and for alias of SgAliasSymbol.
+void
+SgAliasSymbol::post_construction_initialization()
+   {
+     ROSE_ASSERT(p_alias != NULL);
+     SgAliasSymbol* aliasSymbol = isSgAliasSymbol(p_alias);
+     if (aliasSymbol != NULL)
+        {
+#if 0
+          printf ("WARNING: SgAliasSymbol build from another SgAliasSymbol is not allowed! (automating fix) \n");
+#endif
+          p_alias = aliasSymbol->get_alias();
+
+          SgAliasSymbol* aliasSymbol_nextLevel = isSgAliasSymbol(p_alias);
+          if (aliasSymbol_nextLevel != NULL)
+             {
+               printf ("ERROR: SgAliasSymbol build from another SgAliasSymbol is not allowed! \n");
+               ROSE_ASSERT(false);
+             }
+        }
+   }
+
 
 SOURCE_ALIAS_SYMBOL_END
 

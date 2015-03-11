@@ -194,7 +194,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
           printf ("Calling getMangledNameMap(): DONE \n");
           printf ("************************************************************\n\n");
 
-          printf ("mangledNameMap.size() = %zu intermediateDeleteSet = %zu \n",mangledNameMap.size(),intermediateDeleteSet.size());
+          printf ("mangledNameMap.size() = %" PRIuPTR " intermediateDeleteSet = %" PRIuPTR " \n",mangledNameMap.size(),intermediateDeleteSet.size());
 
 #if DISPLAY_INTERNAL_DATA 
           printf ("\n\n**************************************** \n");
@@ -219,7 +219,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      int numberOfASTnodesBeforeCopy = numberOfNodes();
 
      if (SgProject::get_verbose() > 0)
-          printf ("Before AST copy: numberOfASTnodesBeforeCopy = %d intermediateDeleteSet = %zu \n",numberOfASTnodesBeforeCopy,intermediateDeleteSet.size());
+          printf ("Before AST copy: numberOfASTnodesBeforeCopy = %d intermediateDeleteSet = %" PRIuPTR " \n",numberOfASTnodesBeforeCopy,intermediateDeleteSet.size());
 
 #if 0
   // printf ("Generate the graph before the copy \n");
@@ -269,7 +269,7 @@ mergeAST ( SgProject* project, bool skipFrontendSpecificIRnodes )
      if ( (SgProject::get_verbose() > 0) && (numberOfASTnodesBeforeMerge < MAX_NUMBER_OF_IR_NODES_TO_GRAPH))
         {
           if (SgProject::get_verbose() > 0)
-               printf ("Generate the graph after the copy intermediateDeleteSet = %zu \n",intermediateDeleteSet.size());
+               printf ("Generate the graph after the copy intermediateDeleteSet = %" PRIuPTR " \n",intermediateDeleteSet.size());
        // SimpleColorMemoryPoolTraversal::generateGraph(filename+"_afterMangledNameMapWholeAST",intermediateDeleteSet);
           generateWholeGraphOfAST(filename+"_afterMangledNameMapWholeAST",intermediateDeleteSet);
        // SimpleColorFilesTraversal::generateGraph(project,filename+"_afterMangledNameMap");
@@ -917,7 +917,7 @@ accumulateSaveSet ( SgNode* node, set<SgNode*> & saveSet )
   // AST merge.
 
 #if 0
-     printf ("Inside of accumulateSaveSet ( node = %p = %s, saveSet.size() = %zu ) \n",node,node->class_name().c_str(),saveSet.size());
+     printf ("Inside of accumulateSaveSet ( node = %p = %s, saveSet.size() = %" PRIuPTR " ) \n",node,node->class_name().c_str(),saveSet.size());
 #endif
 
   // Save the current IR node
@@ -935,7 +935,7 @@ accumulateSaveSet ( SgNode* node, set<SgNode*> & saveSet )
      if (typePointer != NULL)
         {
        // Output data about the number of data members generated.
-       // printf ("For node = %p = %s dataMemberMap.size() = %zu \n",node,node->class_name().c_str(),dataMemberMap.size());
+       // printf ("For node = %p = %s dataMemberMap.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),dataMemberMap.size());
 
        // Save the associated SgTypedefSeq opbject.
           accumulateSaveSet(typePointer->get_typedefs(),saveSet);
@@ -988,7 +988,7 @@ accumulateSaveSetForPreprocessingInfo ( set<SgNode*> & saveSet )
                        {
                          SgNode* parent = node->get_parent();
 #if 0
-                         printf ("Inside of accumulateSaveSetForPreprocessingInfo ( node = %p = %s ) saveSet.size() = %zu \n",node,node->class_name().c_str(),saveSet.size());
+                         printf ("Inside of accumulateSaveSetForPreprocessingInfo ( node = %p = %s ) saveSet.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),saveSet.size());
                          if (parent != NULL)
                               printf ("Inside of accumulateSaveSetForPreprocessingInfo() parent = %p = %s ) \n",parent,parent->class_name().c_str());
 #endif
@@ -1040,7 +1040,7 @@ accumulateDeleteSet ( SgProject* project, const set<SgNode*> & saveSet )
                     if (saveSet.find(node) == saveSet.end())
                        {
 #if 0
-                         printf ("Inside of accumulateDeleteSet ( node = %p = %s ) deleteSet.size() = %zu \n",node,node->class_name().c_str(),deleteSet.size());
+                         printf ("Inside of accumulateDeleteSet ( node = %p = %s ) deleteSet.size() = %" PRIuPTR " \n",node,node->class_name().c_str(),deleteSet.size());
 #endif
 #if 0
                          SgNode* parent = node->get_parent();
@@ -1114,10 +1114,10 @@ buildDeleteSet( SgProject* project )
   // Step 1: Compute the set of IR nodes in the current AST.
   // saveSet.insert(SgNode::p_globalFunctionTypeTable);
      accumulateSaveSet(project,saveSet);
-  // printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+  // printf ("Computing the IR nodes to be deleted saveSet.size() = %" PRIuPTR " \n",saveSet.size());
 
   // DQ (7/10/2010): These are not handled in the MangledNameMapTraversal constructor (types are handled directly)
-  // printf ("Handle SgNode::p_globalFunctionTypeTable : Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+  // printf ("Handle SgNode::p_globalFunctionTypeTable : Computing the IR nodes to be deleted saveSet.size() = %" PRIuPTR " \n",saveSet.size());
      ROSE_ASSERT(SgNode::get_globalFunctionTypeTable() != NULL);
      accumulateSaveSet(SgNode::get_globalFunctionTypeTable(),saveSet);
 
@@ -1169,17 +1169,17 @@ buildDeleteSet( SgProject* project )
   // is not generated by ROSETTA, the partent of each Sg_File_Info object is defined (somewhat arbitrarily) to be a SgDefaultType object.
   // A special function is implemented to process these specific IR nodes since they are disconnected from the AST proper and we don't 
   // want them to be removed as part of the AST merge (compression).
-  // printf ("Handle Sg_File_Info objects that are associated with PreprocessingInfo objects: Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+  // printf ("Handle Sg_File_Info objects that are associated with PreprocessingInfo objects: Computing the IR nodes to be deleted saveSet.size() = %" PRIuPTR " \n",saveSet.size());
      accumulateSaveSetForPreprocessingInfo(saveSet);
 
 #if 0
-     printf ("Computing the IR nodes to be deleted saveSet.size() = %zu \n",saveSet.size());
+     printf ("Computing the IR nodes to be deleted saveSet.size() = %" PRIuPTR " \n",saveSet.size());
 #endif
 
      set<SgNode*> tempDeleteSet = accumulateDeleteSet(project,saveSet);
 
 #if 0
-     printf ("tempDeleteSet.size() = %zu \n",tempDeleteSet.size());
+     printf ("tempDeleteSet.size() = %" PRIuPTR " \n",tempDeleteSet.size());
 #endif
 #if 0
      displaySet(tempDeleteSet,"buildDeleteSet: Computing the IR nodes to be deleted");

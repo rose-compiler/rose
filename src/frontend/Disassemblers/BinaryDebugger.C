@@ -61,6 +61,12 @@ static int WTERMSIG(int) { return 0; }                  // Windows dud
 static int WIFSTOPPED(int) { return 0; }                // Windows dud
 static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
+#elif defined(__APPLE__) && defined(__MACH__)
+
+// I don't have a Mac OSX on which to test things, so whoever does, please replace this comment with whatever's necessary to
+// make the rest of the code compile.  See the windows stuff above for examples. [Robb P. Matzke 2015-02-20]
+#error "FIXME[Robb P. Matzke 2015-02-20]: Not supported on Mac OSX yet"
+
 #else
 
 # include <sys/ptrace.h>

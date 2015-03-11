@@ -9,21 +9,21 @@ using this memory map for disassembly:
 0x08048310: 55                      |U       | F08048310 E1....    push   ebp
 0x08048311: 89 e5                   |..      |                     mov    ebp, esp
 0x08048313: 83 ec 08                |...     |                     sub    esp, 0x08
-0x08048316: 80 3d bc 95 04 08 00    |.=..... |                     cmp    BYTE PTR ds:[0x080495bc], 0x00
+0x08048316: 80 3d bc 95 04 08 00    |.=..... |                     cmp    byte ds:[0x080495bc], 0x00
 0x0804831d: 74 0c                   |t.      |                     je     0x0804832b<<Insn>>
 
 0x0804831f: eb 1c                   |..      | F08048310 .1....    jmp    0x0804833d<<Insn>>
 
 0x08048321: 83 c0 04                |...     | F08048310 .1....    add    eax, 0x04
-0x08048324: a3 b8 95 04 08          |.....   |                     mov    DWORD PTR ds:[0x080495b8], eax
+0x08048324: a3 b8 95 04 08          |.....   |                     mov    dword ds:[0x080495b8], eax
 0x08048329: ff d2                   |..      |                     call   edx
 
-0x0804832b: a1 b8 95 04 08          |.....   | F08048310 .1....    mov    eax, DWORD PTR ds:[0x080495b8]
-0x08048330: 8b 10                   |..      |                     mov    edx, DWORD PTR ds:[eax]
+0x0804832b: a1 b8 95 04 08          |.....   | F08048310 .1....    mov    eax, dword ds:[0x080495b8]
+0x08048330: 8b 10                   |..      |                     mov    edx, dword ds:[eax]
 0x08048332: 85 d2                   |..      |                     test   edx, edx
 0x08048334: 75 eb                   |u.      |                     jne    0x08048321<<Insn>>
 
-0x08048336: c6 05 bc 95 04 08 01    |....... | F08048310 .1....    mov    BYTE PTR ds:[0x080495bc], 0x01
+0x08048336: c6 05 bc 95 04 08 01    |....... | F08048310 .1....    mov    byte ds:[0x080495bc], 0x01
 
 0x0804833d: c9                      |.       | F08048310 .1....    leave  
 0x0804833e: c3                      |.       |                     ret    

@@ -205,7 +205,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
             ASSERT_not_null(ve);
             uint64_t v = ve->get_absoluteValue();
             result += "#" + unparseArmSign(sign) + StringUtility::numberToString(v);
-            if (labels && v!=0) {
+            if (expr->get_comment().empty() && v!=0 && labels && ve->get_significantBits()>8) {
                 AsmUnparser::LabelMap::const_iterator li=labels->find(v);
                 if (li!=labels->end())
                     result = StringUtility::appendAsmComment(result, li->second);
@@ -227,6 +227,7 @@ static std::string unparseArmExpression(SgAsmExpression* expr, const AsmUnparser
         *suffix = extra;
 
     result = StringUtility::appendAsmComment(result, expr->get_replacement());
+    result = StringUtility::appendAsmComment(result, expr->get_comment());
     return result;
 }
 

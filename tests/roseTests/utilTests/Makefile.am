@@ -22,7 +22,7 @@ testBoostRegex.passed: testBoostRegex
 # Tests the RangeMap class
 noinst_PROGRAMS += testRangeMap
 testRangeMap_SOURCES = testRangeMap.C
-testRangeMap_LDADD = 
+testRangeMap_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += testRangeMap.passed
 testRangeMap.passed: tests.conf testRangeMap
 	@$(RTH_RUN) CMD=./testRangeMap $< $@
@@ -49,7 +49,7 @@ testStrings.passed: tests.conf testStrings
 # Test file name support
 noinst_PROGRAMS += filenameSupport
 filenameSupport_SOURCES = filenameSupport.C
-filenameSupport_LDADD = $(top_builddir)/src/util/stringSupport/libRoseStringSupport.la
+filenameSupport_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += filenameSupport.passed
 filenameSupport.passed: tests.conf filenameSupport
 	@$(RTH_RUN) CMD=./filenameSupport $< $@

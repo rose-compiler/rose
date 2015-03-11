@@ -1,0 +1,3 @@
+
+SUBDIRS=dlx mdcg liblogger
+

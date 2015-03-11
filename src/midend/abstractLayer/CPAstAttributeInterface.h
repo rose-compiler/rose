@@ -7,6 +7,8 @@
 #include "VariableIdMapping.h"
 #include "DFAstAttribute.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -18,5 +20,7 @@ class CPAstAttributeInterface : public DFAstAttribute {
   virtual ConstantInteger getConstantInteger(VariableId varId)=0;
   virtual ~CPAstAttributeInterface();
 };
+
+}
 
 #endif

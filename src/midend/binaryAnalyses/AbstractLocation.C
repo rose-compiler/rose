@@ -37,6 +37,8 @@ AbstractLocation::print(std::ostream &out, const RegisterDictionary *regdict,
         out <<RegisterNames()(reg_, regdict ? regdict : regdict_);
     } else if (isAddress()) {
         out <<(*addr_+fmt);
+        if (nBytes_>0)
+            out <<"+" <<StringUtility::plural(nBytes_, "bytes");
     } else {
         out <<"NO_LOCATION";
     }

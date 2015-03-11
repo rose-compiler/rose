@@ -3,6 +3,8 @@
  * http://java.sun.com/j2se/1.4.2/docs/guide/jni/spec/jniTOC.html
  * http://java.sun.com/docs/books/jni/html/invoke.html
  */
+#include "sage3basic.h"
+
 #include <string.h>
 #include <string>
 #include <stdlib.h>
@@ -185,11 +187,8 @@ jserver_start(JvmT* je)
 void 
 jserver_destroy()
 {
-    
-    JavaVM*  jvm = get_jvm();
-    if (jvm != NULL) {
-         /* Destroy the Java VM.  */
-         jvm->DestroyJavaVM();
+    if( je.jvm != NULL  ){
+         je.jvm->DestroyJavaVM();
     }
 }
 

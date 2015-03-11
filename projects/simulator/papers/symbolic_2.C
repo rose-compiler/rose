@@ -102,7 +102,7 @@ public:
                                             PartialSymbolicSemantics::ValueType> sem(p);
                     MemoryMap p_map = args.thread->get_process()->get_memory();
                     BOOST_FOREACH (MemoryMap::Segment &segment, p_map.segments())
-                        segment.setCopyOnWrite();
+                        segment.buffer()->copyOnWrite(true);
                     p.set_map(&p_map); // won't be thread safe
                     sem.processInstruction(insn);
                     policy.writeRegister("eip", SymbolicSemantics::ValueType<32>(p.readRegister<32>("eip").known_value()));

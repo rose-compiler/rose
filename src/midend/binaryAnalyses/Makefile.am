@@ -18,6 +18,7 @@ libbinaryMidend_la_SOURCES =					\
     dataflowanalyses/RoseBin_Emulate.cpp			\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
@@ -43,7 +44,9 @@ libbinaryMidend_la_SOURCES =					\
     BinaryDominance.C						\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
+    BinaryMagic.C						\
     BinaryReturnValueUsed.C					\
+    BinaryString.C						\
     BinaryTaintedFlow.C						\
     DwarfLineMapper.C
 else
@@ -78,6 +81,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
@@ -107,9 +111,11 @@ pkginclude_HEADERS =					\
     BinaryDominance.h					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
+    BinaryMagic.h					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\
+    BinaryString.h					\
     BinaryTaintedFlow.h					\
     DwarfLineMapper.h
 
