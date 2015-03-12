@@ -403,6 +403,27 @@ static SgStatement* build_array_unpacking_statement( SgExpression * lhs, SgExpre
  *   using conventional pointer dereferencing or 
  *   using cloned variables(temp_variable)
  *
+ * 
+ * Notes for handling reference type in OpenMP outlining 
+ * ------------------------------------------------
+ * Reference type handling when a wrapper data structure is requested: 
+ *   It is not allowed to create a pointer type to a reference type. 
+ *   We create a pointer type to the base type of the reference type instead. 
+ *   Anything else is handled the same since &var means to get the address of the original variable even var is a reference type. 
+ *
+ *   struct OUT__1__8577___data 
+ *   {
+ *     void *dthydro_p;
+ *   }
+ *  
+ *  some_function( Real_t& dthydro )
+ * dthydro is a reference type, & dthydro is equal to & of its original object
+ *  __out_argv1__8577__ . OUT__1__8577___data::dthydro_p = ((void *)(&dthydro));
+ *
+ *  Real_t *dthydro = (Real_t *)(((struct OUT__1__8577___data *)__out_argv) -> OUT__1__8577___data::dthydro_p);
+ *
+ *  the original use is replaced as pointer dereferences
+ *   Real_t dthydro_tmp =  *dthydro;
  */
 static
 SgVariableDeclaration *
@@ -444,8 +465,15 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     // unique processing for C/C++ if temp variables are used
     {
         if( isPointerDeref || ( !isPointerDeref && is_array_parameter ) )    
+        {
+          // Liao 3/11/2015. For a parameter of a reference type, we have to specially tweak the unpacking statement
+          // It is not allowed to create a pointer to a reference type. So we use a pointer to its raw type (stripped reference type) instead.
             // use pointer dereferencing for some
-            local_type = buildPointerType(orig_var_type);
+            if (SgReferenceType* rtype = isSgReferenceType(orig_var_type))
+               local_type = buildPointerType(rtype->get_base_type());
+            else 
+               local_type = buildPointerType(orig_var_type);
+        }    
         else                    // use variable clone instead for others
             local_type = orig_var_type;
     }  
