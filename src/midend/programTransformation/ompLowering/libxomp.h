@@ -139,10 +139,10 @@ extern void XOMP_ordered_end (void);
 //--------------------- kernel launch ------------------
 
 // the max number of threads per thread block of the first available device
-extern size_t xomp_get_maxThreadsPerBlock();
+extern size_t xomp_get_maxThreadsPerBlock(int devID);
 
 //get the max number of 1D blocks for a given input length
-extern size_t xomp_get_max1DBlock(size_t ss);
+extern size_t xomp_get_max1DBlock(int devID, size_t ss);
 
 // Get the max number threads for one dimension (x or y) of a 2D block
 // Two factors are considered: the total number of threads within the 2D block must<= total threads per block
@@ -151,10 +151,10 @@ extern size_t xomp_get_max1DBlock(size_t ss);
 //    x <= maxThreadsDim[0],  1024
 //    y <= maxThreadsDim[1], 1024 
 //  maxThreadsDim[0] happens to be equal to  maxThreadsDim[1] so we use a single function to calculate max segments for both dimensions
-extern size_t xomp_get_max_threads_per_dimesion_2D ();
+extern size_t xomp_get_max_threads_per_dimesion_2D (int devID);
 
 // return the max number of segments for a dimension (either x or y) of a 2D block
-extern size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size);
+extern size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(int devID, size_t dimension_size);
 
 //------------------memory allocation/copy/free----------------------------------
 //Allocate device memory and return the pointer
@@ -329,6 +329,7 @@ extern DDE** DDE_head; //TODO. We don't really need this head pointer, it is lik
 // The tail of the list
 extern DDE** DDE_tail;
 
+extern void** xomp_cuda_prop;
 // create a new DDE-data node and append it to the end of the tracking list
 // copy all variables from its parent node to be into the set of inherited variable set.
 //void XOMP_Device_Data_Environment_Enter();

@@ -259,6 +259,7 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseVa
 /*Initial values for the DDE node list */
   DDE_head = (DDE**)malloc(sizeof(DDE*) * numThread);
   DDE_tail = (DDE**)malloc(sizeof(DDE*) * numThread);
+  xomp_cuda_prop = (void**)malloc(sizeof(void*) * numThread);
   int i;
   for(i=0; i < numThread; ++i)
   {
@@ -1814,3 +1815,4 @@ DDE** DDE_head = NULL;
 DDE** DDE_tail = NULL;
 // implementation of DDE functions have to be put into .cu files, to avoid undefined references to CUDA function calls!
 
+void** xomp_cuda_prop = NULL;
