@@ -255,6 +255,18 @@ void XOMP_parallel_start (void (*func) (void *), void *data, unsigned ifClauseVa
     numThread = 1;
   else
     numThread = numThreadsSpecified;
+
+/*Initial values for the DDE node list */
+  DDE_head = (DDE**)malloc(sizeof(DDE*) * numThread);
+  DDE_tail = (DDE**)malloc(sizeof(DDE*) * numThread);
+  int i;
+  for(i=0; i < numThread; ++i)
+  {
+    DDE_head[i] = NULL;
+    DDE_tail[i] = NULL;
+  }
+// implementation of DDE functions have to be put into .cu files, to avoid undefined references to CUDA function calls!
+
   GOMP_parallel_start (func, data, numThread);
   func(data);
 #else   
@@ -1798,8 +1810,7 @@ void XOMP_ordered_end (void)
 }
 
 /*Initial values for the DDE node list */
-struct DDE_data* DDE_head = NULL;
-struct DDE_data* DDE_tail = NULL;
+DDE** DDE_head = NULL;
+DDE** DDE_tail = NULL;
 // implementation of DDE functions have to be put into .cu files, to avoid undefined references to CUDA function calls!
-
 
