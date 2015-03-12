@@ -3134,6 +3134,10 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     SgOmpTargetStatement* target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
 
+    // device expression
+    SgExpression* device_expression ;
+    device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
+
     // Now we need to ensure that "omp target " has a basic block as its body
    // so we can insert declarations into an inner block, instead of colliding declarations within the scope of "omp target"
    // This is important since we often have consecutive "omp target" regions within one big scope
@@ -3252,7 +3256,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
    // insert dim3 threadsPerBlock(xomp_get_maxThreadsPerBlock()); 
    // TODO: for 1-D mapping, int type is enough,  //TODO: a better interface accepting expression as initializer!!
     SgVariableDeclaration* threads_per_block_decl = buildVariableDeclaration ("_threads_per_block_", buildIntType(), 
-                  buildAssignInitializer(buildFunctionCallExp("xomp_get_maxThreadsPerBlock",buildIntType(), NULL, p_scope)), 
+                  buildAssignInitializer(buildFunctionCallExp("xomp_get_maxThreadsPerBlock",buildIntType(), buildExprListExp(device_expression), p_scope)), 
                   p_scope);
     //insertStatementBefore (target_directive_stmt, threads_per_block_decl);
     insertStatementBefore (target, threads_per_block_decl);
@@ -3262,7 +3266,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     // TODO: handle 2-D or 3-D using dim type
     ROSE_ASSERT (cuda_loop_iter_count_1 != NULL);
     SgVariableDeclaration* num_blocks_decl = buildVariableDeclaration ("_num_blocks_", buildIntType(), 
-                  buildAssignInitializer(buildFunctionCallExp("xomp_get_max1DBlock",buildIntType(), buildExprListExp(cuda_loop_iter_count_1), p_scope)),
+                  buildAssignInitializer(buildFunctionCallExp("xomp_get_max1DBlock",buildIntType(), buildExprListExp(device_expression, cuda_loop_iter_count_1), p_scope)),
                   p_scope);
     //insertStatementBefore (target_directive_stmt, num_blocks_decl);
     insertStatementBefore (target, num_blocks_decl);

@@ -13,32 +13,36 @@ Liao 4/11/2012
 extern DDE** DDE_head;
 extern DDE** DDE_tail;
 
-cudaDeviceProp* xomp_cuda_prop = NULL; 
+extern void** xomp_cuda_prop; 
 bool xomp_verbose = false;
 
 // this can be called multiple times. But the xomp_cuda_prop variable will only be set once
-cudaDeviceProp * xomp_getCudaDeviceProp()
+cudaDeviceProp * xomp_getCudaDeviceProp(int devID)
 {
-  if (xomp_cuda_prop == NULL )
+  cudaDeviceProp* propPointer = NULL;
+  if (xomp_cuda_prop[devID] == NULL )
   {
-    xomp_cuda_prop = (cudaDeviceProp *) malloc(sizeof(cudaDeviceProp));
-    assert (xomp_cuda_prop != NULL);
+    propPointer = (cudaDeviceProp *) malloc(sizeof(cudaDeviceProp));
+    xomp_cuda_prop[devID] = propPointer;
+    assert (xomp_cuda_prop[devID] != NULL);
     int count;
     cudaGetDeviceCount (&count);
     assert (count>=1); // must have at least one GPU here
     
-    cudaGetDeviceProperties  (xomp_cuda_prop, 0);
+    cudaGetDeviceProperties  (propPointer, devID);
   }
-  return xomp_cuda_prop;
+  else
+    propPointer = (cudaDeviceProp *)xomp_cuda_prop[devID];
+  return propPointer;
 }
 
-void xomp_print_gpu_info()
+void xomp_print_gpu_info(int devID)
 {
-  int max_threads_per_block = xomp_getCudaDeviceProp()->maxThreadsPerBlock;
-  int max_blocks_per_grid_x = xomp_getCudaDeviceProp()->maxGridSize[0];
-  int global_memory_size =    xomp_getCudaDeviceProp()->totalGlobalMem;
-  int shared_memory_size =    xomp_getCudaDeviceProp()->sharedMemPerBlock;
-  int registers_per_block =   xomp_getCudaDeviceProp()->regsPerBlock;
+  int max_threads_per_block = xomp_getCudaDeviceProp(devID)->maxThreadsPerBlock;
+  int max_blocks_per_grid_x = xomp_getCudaDeviceProp(devID)->maxGridSize[0];
+  int global_memory_size =    xomp_getCudaDeviceProp(devID)->totalGlobalMem;
+  int shared_memory_size =    xomp_getCudaDeviceProp(devID)->sharedMemPerBlock;
+  int registers_per_block =   xomp_getCudaDeviceProp(devID)->regsPerBlock;
 
   printf ("Found a GPU with \n\tmax threads per block=%d, \n\tmax blocks for Grid X dimension=%d\n\
       \tglobal mem bytes =%d, \n\tshared mem bytes =%d, \n\tregs per block = %d\n",
@@ -47,11 +51,11 @@ void xomp_print_gpu_info()
 }
 // A helper function to probe physical limits based on GPU Compute Capability numbers
 // Reference: http://developer.download.nvidia.com/compute/cuda/CUDA_Occupancy_calculator.xls
-size_t xomp_get_maxThreadBlocksPerMultiprocessor()
+size_t xomp_get_maxThreadBlocksPerMultiprocessor(int devID)
 {
   int major, minor; 
-  major = xomp_getCudaDeviceProp()-> major;
-  minor = xomp_getCudaDeviceProp()-> minor;
+  major = xomp_getCudaDeviceProp(devID)-> major;
+  minor = xomp_getCudaDeviceProp(devID)-> minor;
   if (major <= 2) //1.x and 2.x: 8 blocks per multiprocessor
     return 8;
   else if (major == 3)
@@ -75,29 +79,29 @@ size_t xomp_get_maxThreadBlocksPerMultiprocessor()
 //  1) max-active-threads per multiprocessor 
 //  2) max active thread blocks per multiprocessor
 // So for 1-D block, max threads per block = maxThreadsPerMultiProcessor /  maxBlocks per multiprocessor
-size_t xomp_get_maxThreadsPerBlock()
+size_t xomp_get_maxThreadsPerBlock(int devID)
 {
   // this often causes oversubscription to the cores supported by GPU SM processors
   //return xomp_getCudaDeviceProp()->maxThreadsPerBlock;
   //return 128;
   // 2.0: 1536/8= 192 threads per block
   // 3.5 2048/16 = 128
-  return xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor();
+  return xomp_getCudaDeviceProp(devID)->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor(devID);
 }
 
 /*
 * In order to ensure best performance, we setup max_block limitation here, so that each core in the GPU works on only one threads.
 * Use XOMP_accelerator_loop_default() runtime to support input data size that exceeds max_block*xomp_get_maxThreadsPerBlock().  
 */
-size_t xomp_get_max1DBlock(size_t s)
+size_t xomp_get_max1DBlock(int devID, size_t s)
 {
 #if 1  
-  size_t block_num = s/xomp_get_maxThreadsPerBlock();
-  if (s % xomp_get_maxThreadsPerBlock()!= 0)
+  size_t block_num = s/xomp_get_maxThreadsPerBlock(devID);
+  if (s % xomp_get_maxThreadsPerBlock(devID)!= 0)
      block_num ++;
   //return block_num;     
 
-  size_t max_block = xomp_getCudaDeviceProp()->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor();
+  size_t max_block = xomp_getCudaDeviceProp(devID)->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor(devID);
 
   return block_num<max_block? block_num: max_block; 
 
@@ -116,28 +120,28 @@ size_t xomp_get_max1DBlock(size_t s)
 //    x <= maxThreadsDim[0],  1024
 //    y <= maxThreadsDim[1], 1024 
 //  maxThreadsDim[0] happens to be equal to  maxThreadsDim[1] so we use a single function to calculate max segments for both dimensions
-size_t xomp_get_max_threads_per_dimesion_2D ()
+size_t xomp_get_max_threads_per_dimesion_2D (int devID)
 {
 
-  int max_threads_per_block = xomp_getCudaDeviceProp()->maxThreadsPerBlock;
+  int max_threads_per_block = xomp_getCudaDeviceProp(devID)->maxThreadsPerBlock;
   // we equalize the number of threads in each dimension
   int max_threads_per_2d_dimension = (int)(sqrt((float)max_threads_per_block));  
   assert (max_threads_per_2d_dimension*max_threads_per_2d_dimension<= max_threads_per_block);
 
   // our assumption is that dim[0] == dim[1] so we handle x and y in one function
-  assert ( xomp_getCudaDeviceProp()->maxThreadsDim[0] == xomp_getCudaDeviceProp()->maxThreadsDim[1]);   
-  assert (max_threads_per_2d_dimension <= xomp_getCudaDeviceProp()->maxThreadsDim[0]);
+  assert ( xomp_getCudaDeviceProp(devID)->maxThreadsDim[0] == xomp_getCudaDeviceProp(devID)->maxThreadsDim[1]);   
+  assert (max_threads_per_2d_dimension <= xomp_getCudaDeviceProp(devID)->maxThreadsDim[0]);
   return max_threads_per_2d_dimension;
 }
 
 // return the max number of segments for a dimension (either x or y) of a 2D block
 // we define the number of segments to be  SIZE_of_Dimension_x/max_threads_x_dimension
-size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size)
+size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(int devID, size_t dimension_size)
 {
   // For simplicity, we don't yet consider the factor of warp size for now
   // TODO: block size should be divisible by the warp size??
   // e.g. max threads per block is 1024, then max number of tiles per dimension in a 2D block is 1024^0.5 = 32 threads
-  size_t max_threads_per_2d_dimension = xomp_get_max_threads_per_dimesion_2D ();
+  size_t max_threads_per_2d_dimension = xomp_get_max_threads_per_dimesion_2D (devID);
   size_t block_num_x_or_y =  dimension_size/max_threads_per_2d_dimension;
   if (dimension_size % max_threads_per_2d_dimension != 0)
      block_num_x_or_y ++;
