@@ -692,7 +692,7 @@ public:
             if (lowerLimit < iter->key().least())
                 return lowerLimit;
             lowerLimit = iter->key().greatest() + 1;
-            if (lowerLimit < iter->key().greatest())
+            if (lowerLimit <= iter->key().greatest())   // sensitive to GCC optimization
                 return Nothing();                       // overflow
         }
         return lowerLimit;
@@ -706,8 +706,8 @@ public:
         for (ConstNodeIterator iter = findPrior(upperLimit); iter!=nodes().end(); --iter) {
             if (upperLimit > iter->key().greatest())
                 return upperLimit;
-            upperLimit = iter->key().least()- 1;
-            if (upperLimit > iter->key().least())
+            upperLimit = iter->key().least() - 1;
+            if (upperLimit > iter->key().greatest())    // sensitive to GCC optimization
                 return Nothing();                       // overflow
             if (iter==nodes().begin())
                 break;
