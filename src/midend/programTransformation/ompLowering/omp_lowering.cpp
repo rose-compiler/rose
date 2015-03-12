@@ -2435,7 +2435,7 @@ static void generateMappedArrayMemoryHandling(
     /* the array and the map information */
     SgSymbol* sym, 
     SgOmpMapClause* map_alloc_clause, SgOmpMapClause* map_to_clause, SgOmpMapClause* map_from_clause, SgOmpMapClause* map_tofrom_clause, 
-    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions,
+    std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > > & array_dimensions, SgExpression* device_expression,
     /*Where to insert generated function calls*/
     SgBasicBlock* insertion_scope, SgStatement* insertion_anchor_stmt, 
     bool need_generate_data_stmt
@@ -2550,7 +2550,7 @@ static void generateMappedArrayMemoryHandling(
 //cout<<"Debug: inserting var ref to be preserved:"<<sym->get_name()<<"@"<<host_var_ref <<endl;    
 
     SgExprListExp * parameters =
-      buildExprListExp(buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(array_dimensions[sym].size()), 
+      buildExprListExp(device_expression, buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(array_dimensions[sym].size()), 
           buildVarRefExp( dev_var_size_name, insertion_scope), buildVarRefExp( dev_var_offset_name, insertion_scope),
           buildVarRefExp( dev_var_offset_name, insertion_scope), copyToExp, copyFromExp
           );
@@ -2730,10 +2730,17 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   //     std::map<SgSymbol*,  std::vector < std::pair <SgExpression*, SgExpression*> > >  array_dimensions
 
   Rose_STL_Container<SgOmpClause*> map_clauses; 
+  Rose_STL_Container<SgOmpClause*> device_clauses; 
   if (target_data_stmt)
+  {
      map_clauses = getClause(target_data_stmt, V_SgOmpMapClause);
+     device_clauses = getClause(target_data_stmt, V_SgOmpDeviceClause);
+  }
   else if (target_directive_stmt)
+  {
      map_clauses = getClause(target_directive_stmt, V_SgOmpMapClause);
+     device_clauses = getClause(target_directive_stmt, V_SgOmpDeviceClause);
+  }
   else 
     ROSE_ASSERT (false);
 
@@ -2757,6 +2764,14 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   else if (target_directive_stmt)
     all_mapped_vars = collectClauseVariables (target_directive_stmt, VariantVector(V_SgOmpMapClause)); 
 
+  // store all variables showing up in any of the device clauses
+  SgExpression* device_expression ;
+  if (target_data_stmt)
+    device_expression = getClauseExpression (target_data_stmt, VariantVector(V_SgOmpDeviceClause)); 
+  else if (target_directive_stmt)
+    device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
+
+ 
   extractMapClauses (map_clauses, array_dimensions, &map_alloc_clause, &map_to_clause, &map_from_clause, &map_tofrom_clause);
   std::set<SgSymbol*> array_syms; // store clause variable symbols which are array types (explicit or as a pointer)
   std::set<SgSymbol*> atom_syms; // store clause variable symbols which are non-aggregate types: scalar, pointer, etc
@@ -2794,7 +2809,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   std::map <SgVariableSymbol *, bool> variable_map = collectVariableAppearance (insertion_scope);
 
   // Now insert xomp_deviceDataEnvironmentEnter() before xomp_deviceDataEnvironmentPrepareVariable()
-  SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), NULL, insertion_scope);
+  SgExprListExp* argumentList = NULL;
+  if(device_expression)
+  {
+    argumentList = buildExprListExp(deepCopy(device_expression)); 
+  }
+  SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), argumentList, insertion_scope);
   prependStatement(dde_enter_stmt, insertion_scope); 
 
   // handle array variables showing up in the map clauses:   
@@ -2833,12 +2853,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
         if (variable_map[orig_sym])
           all_syms.insert(new_sym);
     // generate memory allocation, copy, free function calls.
-    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, 
+    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, device_expression, 
         insertion_scope, insertion_anchor_stmt, true);
   }  // end for
 
   // Generate a single DDE enter() call
-  SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), NULL, insertion_scope);
+  SgExprStatement* dde_exit_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentExit"), buildVoidType(), argumentList, insertion_scope);
   appendStatement(dde_exit_stmt , insertion_anchor_stmt->get_scope()); 
 
   // Step 5. TODO  replace indexing element access with address calculation (only needed for 2/3 -D)
@@ -3049,7 +3069,7 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     }
 
     // generate memory allocation, copy, free function calls.
-    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, 
+    generateMappedArrayMemoryHandling (sym, map_alloc_clause, map_to_clause, map_from_clause, map_tofrom_clause,array_dimensions, NULL,  
         insertion_scope, insertion_anchor_stmt, need_generate_data_stmt);
   }  // end for
 
@@ -4008,6 +4028,16 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
       std::copy(result2.begin(), result2.end(), back_inserter(result));
     }
     return result;
+  }
+
+  SgExpression* getClauseExpression(SgOmpClauseBodyStatement * clause_stmt, const VariantVector & vvt)
+  {
+     SgExpression* expr = NULL;
+     ROSE_ASSERT(clause_stmt != NULL);
+     Rose_STL_Container<SgOmpClause*> p_clause = 
+       NodeQuery::queryNodeList<SgOmpClause>(clause_stmt->get_clauses(),vvt);
+     expr = isSgOmpExpressionClause(p_clause[0])->get_expression();
+     return expr; 
   }
 
   //! Collect all variables from OpenMP clauses associated with an omp statement: private, reduction, etc 

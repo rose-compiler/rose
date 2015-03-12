@@ -301,9 +301,12 @@ struct XOMP_mapped_variable
 extern void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped_variable* src );
 
 /* A doubly linked list for tracking Device Data Environment (DDE) */
-struct DDE_data {
+typedef struct DDE_data {
     // Do we need this at all?  we can allocate/deallocate data without saving region ID
  int Region_ID;  // hash of the AST node? or just memory address of the AST node for now 
+ 
+// Store the device ID in DDE
+ int devID; 
 
 // array of the newly mapped variables
  int new_variable_count;
@@ -319,17 +322,17 @@ struct DDE_data {
  struct  DDE_data* parent;
  // link to its child node
  struct  DDE_data* child;
-};
+} DDE;
 
 // The head of the list of DDE data nodes
-extern struct DDE_data* DDE_head; //TODO. We don't really need this head pointer, it is like a stack, access the end is enough
+extern DDE** DDE_head; //TODO. We don't really need this head pointer, it is like a stack, access the end is enough
 // The tail of the list
-extern struct DDE_data* DDE_tail;
+extern DDE** DDE_tail;
 
 // create a new DDE-data node and append it to the end of the tracking list
 // copy all variables from its parent node to be into the set of inherited variable set.
 //void XOMP_Device_Data_Environment_Enter();
-extern void xomp_deviceDataEnvironmentEnter();
+extern void xomp_deviceDataEnvironmentEnter(int devID);
 
 // A all-in-one wrapper to integrate three things: 1) get inherited variable 2) allocate if not found, 3) register, 
 // and 4) copy into GPU operations into one function
@@ -338,20 +341,20 @@ extern void xomp_deviceDataEnvironmentEnter();
 // The function will first try to inherit/reuse the same variable from the parent DDE. i
 // If not successful , it will allocate a new data on device, register it to the current DDE, and copy CPU values when needed.
 // The allocated or found device variable address will be returned.
-extern void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* size, int* offset, int* vDimSize, bool copyTo, bool copyFrom);
+extern void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variable_address, int nDim, int* size, int* offset, int* vDimSize, bool copyTo, bool copyFrom);
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
 //void* XOMP_Device_Data_Environment_Get_Inherited_Variable (void* original_variable_address, int size);
-extern void* xomp_deviceDataEnvironmentGetInheritedVariable (void* original_variable_address, int* size);
+extern void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* original_variable_address, int* size);
 
 //! Add a newly mapped variable into the current DDE's new variable list
 //void XOMP_Device_Data_Environment_Add_Variable (void* var_addr, int var_size, void * dev_addr);
-extern void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int var_size, void * dev_addr, bool copyTo, bool copyFrom);
+extern void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int var_size, void * dev_addr, bool copyTo, bool copyFrom);
 
 // Exit current DDE: deallocate device memory, delete the DDE-data node from the end of the tracking list
 //void XOMP_Device_Data_Environment_Exit();   
-extern void xomp_deviceDataEnvironmentExit();   
+extern void xomp_deviceDataEnvironmentExit(int devID);   
 
 
 #ifdef __cplusplus

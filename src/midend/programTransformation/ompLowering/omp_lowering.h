@@ -135,6 +135,9 @@ namespace OmpSupport
   //! Collect variables from given types of OpenMP clauses associated with an omp statement: private, reduction, etc 
   ROSE_DLL_API SgInitializedNamePtrList collectClauseVariables (SgOmpClauseBodyStatement * clause_stmt, const VariantVector& vvt);
 
+  //! Collect expression from given types of OpenMP clauses associated with an omp statement: private, reduction, etc 
+  ROSE_DLL_API SgExpression* getClauseExpression (SgOmpClauseBodyStatement * clause_stmt, const VariantVector& vvt);
+
   //! Check if a variable is in a variable list of a given clause type
   ROSE_DLL_API bool isInClauseVariableList(SgInitializedName* var, SgOmpClauseBodyStatement * clause_stmt, const VariantT& vt);
 

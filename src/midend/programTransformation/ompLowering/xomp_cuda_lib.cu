@@ -10,8 +10,8 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
-extern struct DDE_data * DDE_head;
-extern struct DDE_data * DDE_tail;
+extern DDE** DDE_head;
+extern DDE** DDE_tail;
 
 cudaDeviceProp* xomp_cuda_prop = NULL; 
 bool xomp_verbose = false;
@@ -26,6 +26,7 @@ cudaDeviceProp * xomp_getCudaDeviceProp()
     int count;
     cudaGetDeviceCount (&count);
     assert (count>=1); // must have at least one GPU here
+    
     cudaGetDeviceProperties  (xomp_cuda_prop, 0);
   }
   return xomp_cuda_prop;
@@ -53,8 +54,10 @@ size_t xomp_get_maxThreadBlocksPerMultiprocessor()
   minor = xomp_getCudaDeviceProp()-> minor;
   if (major <= 2) //1.x and 2.x: 8 blocks per multiprocessor
     return 8;
-  else if (minor <= 5)
+  else if (major == 3)
     return 16;
+  else if (major == 5)
+    return 32;
   else
   {
    printf("Error: xomp_get_maxThreadBlocksPerMultiprocessor(): unhandled Compute Capability numbers%d.%d \n", major, minor);
@@ -593,15 +596,16 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
 // create a new DDE-data node and 
 // append it to the end of the tracking list, and 
 // copy all variables from its parent node to be into the set of inherited variable set.
-void xomp_deviceDataEnvironmentEnter()
+void xomp_deviceDataEnvironmentEnter(int devID)
 {
   // create a new DDE node and initialize it
-  struct DDE_data * data = (struct DDE_data *) malloc (sizeof (struct DDE_data));
+  DDE * data = (DDE *) malloc (sizeof (DDE));
   assert (data!=NULL);
   data->new_variable_count = 0;
   data->inherited_variable_count = 0;
   data->parent = NULL;
   data->child= NULL;
+  data->devID= devID;
 
   // For simplicity, we pre-allocate the storage for the list of variables
   // TODO: improve the efficiency
@@ -610,20 +614,20 @@ void xomp_deviceDataEnvironmentEnter()
 
   // Append the data to the list
   // Case 1: empty list, add as the first node, nothing else to do
-  if (DDE_tail == NULL)
+  if (DDE_tail[devID] == NULL)
   {
-    assert (DDE_head == NULL );
-    DDE_head = data;
-    DDE_tail = data;
+    assert (DDE_head[devID] == NULL );
+    DDE_head[devID] = data;
+    DDE_tail[devID] = data;
     return; 
   }
 
   // Case 2: non-empty list
   // create double links
-  data->parent = DDE_tail; 
-  DDE_tail->child = data;
+  data->parent = DDE_tail[devID]; 
+  DDE_tail[devID]->child = data;
   // shift the tail
-  DDE_tail = data;
+  DDE_tail[devID] = data;
 
   // copy all variables from its parent node into the inherited variable set. 
   // Both new and inherited variables of the parent node become inherited for the current node
@@ -636,7 +640,7 @@ void xomp_deviceDataEnvironmentEnter()
   for (i = 0; i < data->parent->new_variable_count; i++)
   {
     struct XOMP_mapped_variable* dest_element  = data->inherited_variables + offset;
-    struct DDE_data* p = data->parent;
+    DDE* p = data->parent;
     struct XOMP_mapped_variable* src_element  =  p->new_variables + i;
 
     copy_mapped_variable(dest_element, src_element);
@@ -655,17 +659,17 @@ void xomp_deviceDataEnvironmentEnter()
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
-void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
+void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var, int* size)
 {
   void * dev_address = NULL; 
   assert (orig_var != NULL);
   int i; 
   // At this point, DDE list should not be empty
   // At least a call to XOMP_Device_Data_Environment_Enter() should have finished before
-  assert ( DDE_tail != NULL );
-  for (i = 0; i < DDE_tail->inherited_variable_count; i++)
+  assert ( DDE_tail[devID] != NULL );
+  for (i = 0; i < DDE_tail[devID]->inherited_variable_count; i++)
   {
-    struct XOMP_mapped_variable* cur_var = DDE_tail->inherited_variables + i; 
+    struct XOMP_mapped_variable* cur_var = DDE_tail[devID]->inherited_variables + i; 
     if (cur_var->address == orig_var)
     {
       dev_address = cur_var-> dev_address;
@@ -684,11 +688,11 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
 }
 
 //! Add a newly mapped variable into the current DDE's new variable list
-void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, void * dev_addr, bool copyTo, bool copyFrom)
+void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, void * dev_addr, bool copyTo, bool copyFrom)
 {
   // TODO: sanity check to avoid add duplicated variable or inheritable variable
-  assert ( DDE_tail != NULL );
-  struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + DDE_tail->new_variable_count ;
+  assert ( DDE_tail[devID] != NULL );
+  struct XOMP_mapped_variable* mapped_var = DDE_tail[devID]->new_variables + DDE_tail[devID]->new_variable_count ;
   mapped_var-> address = var_addr;
   mapped_var-> size = (int*)malloc(sizeof(int) * nDim); 
   mapped_var-> offset = (int*)malloc(sizeof(int) * nDim); 
@@ -705,7 +709,7 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* 
   mapped_var-> copyTo= copyTo; 
   mapped_var-> copyFrom= copyFrom; 
   // now move up the offset
-  DDE_tail->new_variable_count ++;
+  DDE_tail[devID]->new_variable_count ++;
 }
 
 void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
@@ -715,7 +719,7 @@ void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset,
   assert (ndim <= 3);
   if(ndim == 1)
   {
-     xomp_memcpyDeviceToHost((char*)dest, (char*)src+voffset[0], vsize[0]);
+     xomp_memcpyDeviceToHost((char*)dest+voffset[0], (char*)src, vsize[0]);
   }
   else  if(ndim == 2)
   {
@@ -781,15 +785,15 @@ void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset
 }
 
 // All-in-one function to prepare device variable
-void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
+void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variable_address, int nDim, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
 {
   // currently only handle one dimension
   void* dev_var_address = NULL; 
-  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (original_variable_address, vsize);
+  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (devID, original_variable_address, vsize);
   if (dev_var_address == NULL)
   {
     dev_var_address = xomp_deviceMalloc(vsize[0]);
-    xomp_deviceDataEnvironmentAddVariable (original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
+    xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
 
     // The spec says : reuse enclosing data and discard map-type rule.
     // So map-type only matters when no-reuse happens
@@ -804,20 +808,20 @@ void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address,
 }
 
 // Exit current DDE: copy back values if specified, deallocate memory, delete the DDE-data node from the end of the tracking list
-void xomp_deviceDataEnvironmentExit()
+void xomp_deviceDataEnvironmentExit(int devID)
 {
-  assert ( DDE_tail != NULL );
+  assert ( DDE_tail[devID] != NULL );
 
   // Deallocate mapped device variables which are allocated by this current DDE
   // Optionally copy the value back to host if specified.
   int i; 
-  for (i = 0; i < DDE_tail->new_variable_count; i++)
+  for (i = 0; i < DDE_tail[devID]->new_variable_count; i++)
   {
-    struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + i;
+    struct XOMP_mapped_variable* mapped_var = DDE_tail[devID]->new_variables + i;
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
+       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
        //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
@@ -825,23 +829,23 @@ void xomp_deviceDataEnvironmentExit()
   }
 
   // Deallocate pre-allocated variable lists
-  free (DDE_tail->new_variables);
-  free (DDE_tail->inherited_variables);
+  free (DDE_tail[devID]->new_variables);
+  free (DDE_tail[devID]->inherited_variables);
   
   // Delete the node from the tail
-  struct DDE_data * parent = DDE_tail->parent; 
+  DDE * parent = DDE_tail[devID]->parent; 
   if (parent != NULL)
   {
-    assert (DDE_tail == parent->child); 
-    DDE_tail = parent; 
+    assert (DDE_tail[devID] == parent->child); 
+    DDE_tail[devID] = parent; 
     free (parent->child);
     parent->child = NULL;
   }
   else // last node in the list
   {
-    free (DDE_tail);
-    DDE_head = NULL;
-    DDE_tail = NULL;
+    free (DDE_tail[devID]);
+    DDE_head[devID] = NULL;
+    DDE_tail[devID] = NULL;
   }  
 }
 
