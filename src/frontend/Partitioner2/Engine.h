@@ -71,11 +71,12 @@ class Engine {
     bool intraFunctionCodeSearch_;                      // search for unreachable code surrounded by a function?
     bool opaquePredicateSearch_;                        // search for code opposite opaque predicate edges?
     bool postPartitionAnalyses_;                        // run various analyses after partitioning?
+    bool useSemantics_;                                 // use instruction semantics
 public:
     Engine()
         : interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()),
           dataMentionedFunctionSearch_(false), intraFunctionCodeSearch_(true), opaquePredicateSearch_(true),
-          postPartitionAnalyses_(true) {}
+          postPartitionAnalyses_(true), useSemantics_(false) {}
 
     virtual ~Engine() {}
 
@@ -132,6 +133,7 @@ public:
     Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
     Partitioner partition(const std::string &fileName) /*final*/ { return partition(std::vector<std::string>(1, fileName)); }
     virtual Partitioner partition(SgAsmInterpretation*);
+    void partition(Partitioner&);
     /** @} */
 
     /** Obtain an abstract syntax tree.
@@ -304,6 +306,16 @@ public:
      * @{ */
     Disassembler *disassembler() const /*final*/ { return disassembler_; }
     virtual void disassembler(Disassembler *d) { disassembler_ = d; }
+    /** @} */
+
+    /** Property: use semantics.
+     *
+     *  If this property is true then the partitioner will use instruction semantics to calculate things like control flow
+     *  successors. Using semantics can drastically slow down partitioning, but can also produce more accurate results.
+     *
+     * @{ */
+    bool useSemantics() const /*final*/ { return useSemantics_; }
+    virtual void useSemantics(bool b) { useSemantics_ = b; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

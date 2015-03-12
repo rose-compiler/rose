@@ -53,6 +53,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 	hello-1.c \
 	hello-2.c \
 	hello-ordered.c \
+	include_header_only.c \
 	init.c \
 	lastprivate0.c \
 	lastprivate.c \
@@ -162,7 +163,8 @@ CXX_TESTCODES_REQUIRED_TO_PASS = \
 	preprocessingInfo2.cpp \
 	task_link.cpp \
 	task_link2.cpp \
-	task_tree.cpp 
+	task_tree.cpp \
+	referenceType.cpp
 
 # put macroCalls.c here since it requires -rose:wave, which causes seg fault on 64-bit machine
 TESTCODE_CURRENTLY_FAILING = \
