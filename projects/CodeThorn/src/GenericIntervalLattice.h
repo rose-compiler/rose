@@ -123,7 +123,7 @@ class GenericIntervalLattice {
     else if(l2.isTop())
       return true;
     else {
-      bool lowOk=(l2.isLowInf() || (!l1.isLowInf() && l1.getLow()>=l2.getLow()) );
+      bool lowOk=(l2.isLowInf() || (!l1.isLowInf() && !l2.isLowInf() && l1.getLow()>=l2.getLow()) );
       bool highOk=(l2.isHighInf() || (!l1.isHighInf() && l1.getHigh()<=l2.getHigh()) );
       return lowOk && highOk;
     }
@@ -385,6 +385,15 @@ class GenericIntervalLattice {
     if(haveOverlap(l1,l2)) {
       return BoolLatticeType(CodeThorn::AType::Top());
     } else {
+      if(l1.isHighInf())
+        return false;
+      if(l1.isLowInf()&&!l2.isLowInf())
+        return true;
+      if(l2.isLowInf())
+        return false;
+      if(l2.isHighInf()&&!l1.isHighInf())
+        return true;
+      ROSE_ASSERT(!l1.isHighInf()&&l2.isLowInf());
       if(l1.getHigh()<l2.getLow())
 	return BoolLatticeType(true);
       else
@@ -394,9 +403,9 @@ class GenericIntervalLattice {
   BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
-  bool operator=(GenericIntervalLattice l2) {
+  bool operator==(GenericIntervalLattice l2) {
     return (isTop() && l2.isTop())
-    || (isBot() && l2.isTop())
+    || (isBot() && l2.isBot())
     || (getLow()==l2.getLow() && getHigh()==l2.getHigh())
     ;
   }

@@ -58,9 +58,31 @@ PASolver1::runSolver() {
       cout<<endl;
     }
     _transferFunctions.transfer(lab0,*info);
+
+    if(_trace) {
+      cout<<"TRACE: transfer function result: "<<lab1<<":";
+#if 0
+      info->toStream(cout);
+#else
+      cout<<"not printing result info.";
+#endif
+      cout<<endl;
+    }
+
     bool isApproximatedBy=info->approximatedBy(*_analyzerDataPreInfo[lab1.getId()]);
     if(!isApproximatedBy) {
       _analyzerDataPreInfo[lab1.getId()]->combine(*info);
+   
+
+      if(_trace) {
+#if 1
+        cout<<"TRACE: new df value: "<<lab1<<":";_analyzerDataPreInfo[lab1.getId()]->toStream(cout);
+#else
+        cout<<"TRACE: not printing df value."<<endl;
+#endif
+        cout<<endl;
+      }
+      
       Flow outEdges=_flow.outEdges(lab1);
       _workList.add(outEdges);
       cout<<"TRACE: adding to worklist: "<<outEdges.toString()<<endl;

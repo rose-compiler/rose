@@ -15,6 +15,7 @@ class CppExprEvaluator {
  public:
   CppExprEvaluator(NumberIntervalLattice* d, PropertyState* p, VariableIdMapping* vim):domain(d), propertyState(p),variableIdMapping(vim){}
   NumberIntervalLattice evaluate(SgNode* node) {
+    cout<<"DEBUG: eval @:"<<node->unparseToString()<<endl;
     if(isSgBinaryOp(node)) {
       SgNode* lhs=SgNodeHelper::getLhs(node);
       SgNode* rhs=SgNodeHelper::getRhs(node);
@@ -27,12 +28,20 @@ class CppExprEvaluator {
       case V_SgAssignOp: {
         if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
           cout<<"DEBUG: EVAL: LHS-VAR: VID:"<<variableIdMapping<<endl;
-#if 0
-          ROSE_ASSERT(variableIdMapping); // TODO
+#if 1
+          ROSE_ASSERT(variableIdMapping);
           variableIdMapping->toStream(cout);
           VariableId varId=variableIdMapping->variableId(lhsVar);
           if(IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState)) {
-            ips->intervals[varId]=evaluate(rhs);
+            cout<<"DEBUG: eval: rhs:"<<rhs->unparseToString()<<endl;
+            NumberIntervalLattice rhsResult=evaluate(rhs);
+            cout<<"DEBUG: eval: rhs-result:"<<rhsResult.toString()<<endl;
+            cout<<"DEBUG: eval: updating:"<<varId.toString()<<endl;
+
+            cout<<"DEBUG: eval: before-update:"<<ips->intervals[varId].toString()<<endl;
+            ips->intervals[varId]=rhsResult;
+            cout<<"DEBUG: eval: after-update :"<<ips->intervals[varId].toString()<<endl;
+            return rhsResult;
           } else {
             cerr<<"Error: CppExprEvaluator:: Unknown type of property state."<<endl;
             exit(1);
@@ -42,29 +51,32 @@ class CppExprEvaluator {
 #endif
         } else {
           cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<endl;
-          return NumberIntervalLattice();
+          return NumberIntervalLattice::top();
         }
       }
       default:
         cout<<"Warning: unknown binary operator."<<endl;
-        return NumberIntervalLattice();
-        //exit(1);
+        return NumberIntervalLattice::top();
       }
     }
     switch(node->variantT()) {
     case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
     case V_SgMinusOp: return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(SgNodeHelper::getFirstChild(node)));
     case V_SgVarRefExp: {
-      cout<<"WARNING: Eval: VarRefExp (not implemented)."<<endl;
-      return NumberIntervalLattice();
+      SgVarRefExp* varRefExp=isSgVarRefExp(node);
+      ROSE_ASSERT(varRefExp);
+      VariableId varId=variableIdMapping->variableId(varRefExp);
+      IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
+      ROSE_ASSERT(ips);
+      NumberIntervalLattice evalResult=ips->intervals[varId];
+      return evalResult;
     }
-    default: // generates bot element
+    default: // generates top element
       cout<<"Warning: unknown unary operator."<<endl;
-      return NumberIntervalLattice();
-      //exit(1);
+      return NumberIntervalLattice::top();
     }
     cerr<<"Warning: Unknown operator."<<endl;
-    return NumberIntervalLattice();
+    return NumberIntervalLattice::top();
   }
   void setDomain(NumberIntervalLattice* domain) { this->domain=domain; }
   void setPropertyState(PropertyState* pstate) { this->propertyState=pstate; }
