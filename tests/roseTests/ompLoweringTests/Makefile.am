@@ -28,6 +28,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 	endif.c \
 	endif3.c \
 	full_verify.c \
+        include_header_only.c \
 	init.c \
 	lastprivateOrphaned.c \
 	linebreak.c \
@@ -150,7 +151,8 @@ endif
 # C++ test codes which can only be compiled
 CXX_TESTCODES_REQUIRED_TO_COMPILE = \
 	memberFunction.cpp \
-	memberFunction2.cpp
+	memberFunction2.cpp \
+	referenceType.cpp
 
 # C++ test codes which can be compiled and linked to final executables
 CXX_TESTCODES_REQUIRED_TO_RUN =  \

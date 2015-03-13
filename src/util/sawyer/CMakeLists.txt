@@ -9,6 +9,6 @@ install(FILES
     Interval.h IntervalMap.h IntervalSet.h Map.h MappedBuffer.h Markup.h
     MarkupPod.h Message.h NullBuffer.h Optional.h PoolAllocator.h ProgressBar.h
     Sawyer.h SharedPointer.h SmallObject.h Stack.h StaticBuffer.h Stopwatch.h
-    WarningsOff.h WarningsRestore.h
+    Synchronization.h WarningsOff.h WarningsRestore.h
   DESTINATION ${INCLUDE_INSTALL_DIR}/sawyer)
 

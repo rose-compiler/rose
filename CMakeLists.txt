@@ -234,12 +234,19 @@ endif (WIN32)
 SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
 find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
-
-
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
+
+# Boost thread library requires the system thread support. For GCC compilers it is not sufficient to
+# only add "-lpthread" to the link commands--we also need to add "-pthread" to compile commands.
+find_package(Threads)
+if(CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_USE_PTHREADS_INIT})
+  add_definitions(-pthread)
+endif()
+
+
 
 
 
@@ -870,7 +877,7 @@ endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
-  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 else (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)
