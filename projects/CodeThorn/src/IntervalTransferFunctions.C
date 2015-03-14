@@ -45,6 +45,7 @@ void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node
   NumberIntervalLattice niLattice;
   cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
   _cppExprEvaluator->setPropertyState(&pstate);
+  cout<<"PSTATE:"<<pstate.toString()<<endl;
   _cppExprEvaluator->evaluate(node); // ignore return value for now
 }
 

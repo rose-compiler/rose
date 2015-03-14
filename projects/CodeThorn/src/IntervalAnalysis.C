@@ -35,6 +35,7 @@ DFAstAttribute* IntervalAnalysis::createDFAstAttribute(IntervalPropertyState* el
 void IntervalAnalysis::initializeTransferFunctions() {
   cerr<<"P1"<<endl;
   DFAnalysis2::initializeTransferFunctions();
+  _numberIntervalLattice=new NumberIntervalLattice();
   ROSE_ASSERT(_numberIntervalLattice);
   ROSE_ASSERT(dynamic_cast<IntervalTransferFunctions*>(_transferFunctions));
   cerr<<"P2"<<endl;

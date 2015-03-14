@@ -30,7 +30,7 @@ class CppExprEvaluator {
           cout<<"DEBUG: EVAL: LHS-VAR: VID:"<<variableIdMapping<<endl;
 #if 1
           ROSE_ASSERT(variableIdMapping);
-          variableIdMapping->toStream(cout);
+          //variableIdMapping->toStream(cout);
           VariableId varId=variableIdMapping->variableId(lhsVar);
           if(IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState)) {
             cout<<"DEBUG: eval: rhs:"<<rhs->unparseToString()<<endl;
@@ -39,8 +39,10 @@ class CppExprEvaluator {
             cout<<"DEBUG: eval: updating:"<<varId.toString()<<endl;
 
             cout<<"DEBUG: eval: before-update:"<<ips->intervals[varId].toString()<<endl;
+            //            cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
             ips->intervals[varId]=rhsResult;
             cout<<"DEBUG: eval: after-update :"<<ips->intervals[varId].toString()<<endl;
+            //     cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
             return rhsResult;
           } else {
             cerr<<"Error: CppExprEvaluator:: Unknown type of property state."<<endl;

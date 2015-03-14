@@ -51,6 +51,7 @@ PASolver1::runSolver() {
     //if(_trace)
     //  cout<<"TRACE: computing edge "<<lab0<<"->"<<lab1<<endl;
     Lattice* info=_initialElementFactory.create();
+    ROSE_ASSERT(info);
     info->combine(*_analyzerDataPreInfo[lab0.getId()]);
     if(_trace) {
       cout<<"TRACE: computing transfer function: "<<lab0<<":";info->toStream(cout);
@@ -61,7 +62,8 @@ PASolver1::runSolver() {
 
     if(_trace) {
       cout<<"TRACE: transfer function result: "<<lab1<<":";
-#if 0
+#if 1
+      ROSE_ASSERT(info);
       info->toStream(cout);
 #else
       cout<<"not printing result info.";

@@ -11,6 +11,7 @@ Lattice::~Lattice() {
 }
 
 void Lattice::toStream(std::ostream& os, VariableIdMapping* vim) {
+  os<<"<lattice-element>";
 }
 
 std::string Lattice::toString(VariableIdMapping* vim) {
