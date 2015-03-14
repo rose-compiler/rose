@@ -34,6 +34,7 @@ extern int env_region_instr_val; // save the environment variable value for inst
 //Runtime library initialization routine
 extern void XOMP_init (int argc, char ** argv);
 extern void xomp_init (void);
+extern void xomp_acc_init (void);
 
 // Runtime library termination routine
 extern void XOMP_terminate (int exitcode);

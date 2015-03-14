@@ -55,6 +55,9 @@ namespace OmpSupport
   //! Insert runtime init and terminate routines to main() entry
   void insertRTLinitAndCleanCode(SgSourceFile* ); 
 
+  //Pei-Hung Insert accelerator init 
+  void insertAcceleratorInit(SgSourceFile* ); 
+
   //! A driver to traverse AST trees and invoke individual translators for OpenMP constructs, (not in use)
   //! Postorder is preferred. 
   class translationDriver: public AstSimpleProcessing

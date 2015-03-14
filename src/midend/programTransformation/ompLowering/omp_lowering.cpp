@@ -295,6 +295,39 @@ namespace OmpSupport
 #endif      
   }
 
+  void insertAcceleratorInit(SgSourceFile* sgfile)
+  {
+#ifdef ENABLE_XOMP
+    bool hasMain= false;
+    //find the main entry
+    SgFunctionDefinition* mainDef=NULL;
+    string mainName = "::main";
+    ROSE_ASSERT(sgfile != NULL);
+
+    SgFunctionDeclaration * mainDecl=findMain(sgfile);
+    if (mainDecl!= NULL)
+    {
+      // printf ("Found main function setting hasMain == true \n");
+      mainDef = mainDecl->get_definition();
+      hasMain = true;
+    }
+
+    //TODO declare pointers for threadprivate variables and global lock
+    //addGlobalOmpDeclarations(ompfrontend, sgfile->get_globalScope(), hasMain );
+
+    if (! hasMain) return ;
+    ROSE_ASSERT (mainDef!= NULL); // Liao, at this point, we expect a defining declaration of main() is 
+    // look up symbol tables for symbols
+    SgScopeStatement * currentscope = mainDef->get_body();
+
+    SgExprStatement * expStmt=  buildFunctionCallStmt (SgName("xomp_acc_init"),
+        buildVoidType(), NULL,currentscope);
+    prependStatement(expStmt,currentscope);
+#endif  // ENABLE_XOMP
+
+    return;
+  }
+
   //----------------------------
   //tasks:
   // * find the main entry for the application
@@ -5601,6 +5634,8 @@ void lower_omp(SgSourceFile* file)
     insertRTLHeaders(file);
   if (!enable_accelerator)
     insertRTLinitAndCleanCode(file);
+  else
+    insertAcceleratorInit(file);
   //    translationDriver driver;
   // SgOmpXXXStatment is compiler-generated and has no file info
   //driver.traverseWithinFile(file,postorder);

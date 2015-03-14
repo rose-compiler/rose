@@ -10,11 +10,26 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
-extern DDE** DDE_head;
-extern DDE** DDE_tail;
+DDE** DDE_head;
+DDE** DDE_tail;
 
-extern void** xomp_cuda_prop; 
+void** xomp_cuda_prop; 
 bool xomp_verbose = false;
+
+void xomp_acc_init(void)
+{
+  cudaError_t err;
+  int maxDevice = 0;
+  err = cudaGetDeviceCount(&maxDevice);
+  if(err != cudaSuccess)
+  {
+      fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+      exit(err);
+  }
+  DDE_head = (DDE**)malloc(sizeof(DDE*)*maxDevice);
+  DDE_tail = (DDE**)malloc(sizeof(DDE*)*maxDevice);
+  xomp_cuda_prop = (void**)malloc(sizeof(void*)*maxDevice);
+} 
 
 // this can be called multiple times. But the xomp_cuda_prop variable will only be set once
 cudaDeviceProp * xomp_getCudaDeviceProp(int devID)
