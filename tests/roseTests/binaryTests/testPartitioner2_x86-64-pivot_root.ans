@@ -17,21 +17,23 @@
 0x004004d0: Function does not return to caller.
 
 0x004004d0: Basic block reasons: entry point, CFG head
-0x004004d0: 48 31 ed                |H1.     |          xor    rbp, rbp
-0x004004d3: 49 89 d1                |I..     |          mov    r9, rdx
-0x004004d6: 5e                      |^       |          pop    rsi
-0x004004d7: 48 89 e2                |H..     |          mov    rdx, rsp
-0x004004da: 48 83 e4 f0             |H...    |          and    rsp, 0xf0<-16>
-0x004004de: 50                      |P       |          push   rax
-0x004004df: 54                      |T       |          push   rsp
-0x004004e0: 49 c7 c0 50 06 40 00    |I..P.@. |          mov    r8, 0x00400650
-0x004004e7: 48 c7 c1 f0 05 40 00    |H....@. |          mov    rcx, 0x004005f0
-0x004004ee: 48 c7 c7 90 05 40 00    |H....@. |          mov    rdi, 0x00400590
-0x004004f5: e8 96 ff ff ff          |.....   |          call   0x0000000000400490<<Func>>
+0x004004d0: 48 31 ed                |H1.     |<sp+0 >   xor    rbp, rbp
+0x004004d3: 49 89 d1                |I..     |<sp+0 >   mov    r9, rdx
+0x004004d6: 5e                      |^       |<sp+0 >   pop    rsi
+0x004004d7: 48 89 e2                |H..     |<sp+8 >   mov    rdx, rsp
+0x004004da: 48 83 e4 f0             |H...    |<sp+8 >   and    rsp, 0xf0<-16>
+0x004004de: 50                      |P       |<sp+0 >   push   rax
+0x004004df: 54                      |T       |<sp-8 >   push   rsp
+0x004004e0: 49 c7 c0 50 06 40 00    |I..P.@. |<sp-16>   mov    r8, 0x00400650
+0x004004e7: 48 c7 c1 f0 05 40 00    |H....@. |<sp-16>   mov    rcx, 0x004005f0
+0x004004ee: 48 c7 c7 90 05 40 00    |H....@. |<sp-16>   mov    rdi, 0x00400590
+0x004004f5: e8 96 ff ff ff          |.....   |<sp-16>   call   0x0000000000400490<<Func>>
+0x004004f5: Outgoing stack delta: -24
 0x004004f5: Successor blocks: 0x00400490, 0x004004fa
 
 0x004004fa: Basic block reasons: 
-0x004004fa: f4                      |.       |          hlt    
+0x004004fa: f4                      |.       |<sp-16>   hlt    
+0x004004fa: Outgoing stack delta: -16
 0x004004fa: Successor blocks: none
 
 0x00400527: ================================== Function (pattern, graph) unknown name
