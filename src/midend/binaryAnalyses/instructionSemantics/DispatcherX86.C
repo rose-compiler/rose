@@ -1504,7 +1504,7 @@ struct IP_pop: P {
 //  POPA  - 16-bit registers
 //  POPAD - 32-bit registers
 //  Invalid for 64-bit
-struct IP_pop_all: P {
+struct IP_pop_gprs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
         if (insn->get_lockPrefix()) {
@@ -1566,7 +1566,7 @@ struct IP_pop_all: P {
                                                ops->undefined_(32), ops->boolean_(true)));
             ops->writeRegister(d->REG_anySP, newSp);
         } else {
-            throw BaseSemantics::Exception("instruction size not supported", insn);
+            ops->interrupt(x86_exception_ud, 0);        // 64-bit mode
         }
     }
 };
@@ -1613,30 +1613,56 @@ struct IP_push: P {
 };
 
 // Push all general-purpose registers
-struct IP_pushad: P {
+struct IP_push_gprs: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -32));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(newSp),
-                         d->readRegister(d->REG_EDI), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 4))),
-                         d->readRegister(d->REG_ESI), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 8))),
-                         d->readRegister(d->REG_EBP), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 12))),
-                         oldSp, ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 16))),
-                         d->readRegister(d->REG_EBX), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 20))),
-                         d->readRegister(d->REG_EDX), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 24))),
-                         d->readRegister(d->REG_ECX), ops->boolean_(true));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(newSp, ops->number_(32, 28))),
-                         d->readRegister(d->REG_EAX), ops->boolean_(true));
-        ops->writeRegister(d->REG_ESP, newSp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (insn->get_addressSize() == x86_insnsize_16) {
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_SP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(16, -16));
+            BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(base),
+                             d->readRegister(d->REG_DI), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 2))),
+                             d->readRegister(d->REG_SI), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 4))),
+                             d->readRegister(d->REG_BP), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 6))),
+                             oldSp, ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 8))),
+                             d->readRegister(d->REG_BX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 10))),
+                             d->readRegister(d->REG_DX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 12))),
+                             d->readRegister(d->REG_CX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(16, 14))),
+                             d->readRegister(d->REG_AX), ops->boolean_(true));
+            ops->writeRegister(d->REG_SP, newSp);
+        } else if (insn->get_addressSize() == x86_insnsize_32) {
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -32));
+            BaseSemantics::SValuePtr base = d->fixMemoryAddress(newSp);
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(base),
+                             d->readRegister(d->REG_EDI), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 4))),
+                             d->readRegister(d->REG_ESI), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 8))),
+                             d->readRegister(d->REG_EBP), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 12))),
+                             oldSp, ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 16))),
+                             d->readRegister(d->REG_EBX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 20))),
+                             d->readRegister(d->REG_EDX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 24))),
+                             d->readRegister(d->REG_ECX), ops->boolean_(true));
+            ops->writeMemory(d->REG_SS, d->fixMemoryAddress(ops->add(base, ops->number_(32, 28))),
+                             d->readRegister(d->REG_EAX), ops->boolean_(true));
+            ops->writeRegister(d->REG_ESP, newSp);
+        } else {
+            ops->interrupt(x86_exception_ud, 0);        // 64-bit mode
+        }
     }
 };
 
@@ -2063,11 +2089,12 @@ DispatcherX86::iproc_init()
     iproc_set(x86_or,           new X86::IP_or);
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pop,          new X86::IP_pop);
-    iproc_set(x86_popa,         new X86::IP_pop_all);
-    iproc_set(x86_popad,        new X86::IP_pop_all);
+    iproc_set(x86_popa,         new X86::IP_pop_gprs);
+    iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_push,         new X86::IP_push);
-    iproc_set(x86_pushad,       new X86::IP_pushad);
+    iproc_set(x86_pusha,        new X86::IP_push_gprs);
+    iproc_set(x86_pushad,       new X86::IP_push_gprs);
     iproc_set(x86_pushfd,       new X86::IP_pushfd);
     iproc_set(x86_pxor,         new X86::IP_pxor);
     iproc_set(x86_rcl,          new X86::IP_rotate(x86_rcl));
