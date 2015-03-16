@@ -1667,15 +1667,40 @@ struct IP_push_gprs: P {
 };
 
 // Push EFLAGS onto the stack
-struct IP_pushfd: P {
+struct IP_push_flags: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -4));
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(newSp), d->readRegister(d->REG_EFLAGS), ops->boolean_(true));
-        ops->writeRegister(d->REG_ESP, newSp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            // Get the value to be pushed. Assume non-priviledged.
+            BaseSemantics::SValuePtr valueToPush;
+            switch (insn->get_operandSize()) {
+                case x86_insnsize_16:
+                    valueToPush = d->readRegister(d->REG_FLAGS);
+                    break;
+                case x86_insnsize_32:
+                    valueToPush = d->readRegister(d->REG_EFLAGS);
+                    valueToPush = ops->and_(valueToPush, ops->number_(32, 0x00fcffff));
+                    break;
+                case x86_insnsize_64:
+                    valueToPush = d->readRegister(d->REG_RFLAGS);
+                    valueToPush = ops->and_(valueToPush, ops->number_(64, 0x00fcffff));
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+
+            // Push value onto stack
+            ASSERT_not_null(valueToPush);
+            ASSERT_require(valueToPush->get_width() % 8 == 0);
+            size_t valueSize = valueToPush->get_width() / 8;
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), -valueSize));
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(newSp);
+            ops->writeMemory(d->REG_SS, addr, valueToPush, ops->boolean_(true));
+            ops->writeRegister(d->REG_anySP, newSp);
+        }
     }
 };
 
@@ -2095,7 +2120,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pusha,        new X86::IP_push_gprs);
     iproc_set(x86_pushad,       new X86::IP_push_gprs);
-    iproc_set(x86_pushfd,       new X86::IP_pushfd);
+    iproc_set(x86_pushf,        new X86::IP_push_flags);
+    iproc_set(x86_pushfd,       new X86::IP_push_flags);
+    iproc_set(x86_pushfq,       new X86::IP_push_flags);
     iproc_set(x86_pxor,         new X86::IP_pxor);
     iproc_set(x86_rcl,          new X86::IP_rotate(x86_rcl));
     iproc_set(x86_rcr,          new X86::IP_rotate(x86_rcr));
@@ -2179,6 +2206,7 @@ DispatcherX86::regcache_init()
                 REG_RDI = findRegister("rdi", 64);
                 REG_RSI = findRegister("rsi", 64);
                 REG_RSP = findRegister("rsp", 64);
+                REG_RFLAGS = findRegister("rflags", 64);
                 // fall through...
             case x86_insnsize_32:
                 REG_EAX = findRegister("eax", 32);
@@ -2209,6 +2237,7 @@ DispatcherX86::regcache_init()
                 REG_BP = findRegister("bp", 16);
                 REG_AL = findRegister("al", 8);
                 REG_AH = findRegister("ah", 8);
+                REG_FLAGS = findRegister("flags", 16);
                 REG_AF = findRegister("af", 1);
                 REG_CF = findRegister("cf", 1);
                 REG_DF = findRegister("df", 1);
