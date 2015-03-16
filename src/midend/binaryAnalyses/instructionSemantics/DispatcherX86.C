@@ -2054,6 +2054,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_all);
     iproc_set(x86_popad,        new X86::IP_pop_all);
+    iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pushad,       new X86::IP_pushad);
     iproc_set(x86_pushfd,       new X86::IP_pushfd);
