@@ -1474,6 +1474,7 @@ struct IP_pop: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
+            // Stack pointer register
             RegisterDescriptor sp;
             switch (insn->get_addressSize()) {
                 case x86_insnsize_16: sp = d->REG_SP;  break;
@@ -1483,10 +1484,9 @@ struct IP_pop: P {
                     ASSERT_not_reachable("invalid address size");
             }
             ASSERT_require(sp.is_valid());
-
-            size_t operandWidth = asm_type_width(args[0]->get_type());
         
             // Increment the stack pointer before writing to args[0] just in case args[0] is stack-relative
+            size_t operandWidth = asm_type_width(args[0]->get_type());
             ASSERT_require(operandWidth % 8 == 0);
             size_t stackDelta = operandWidth / 8;
             BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
@@ -1575,29 +1575,40 @@ struct IP_pop_all: P {
 struct IP_push: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t operandWidth = asm_type_width(args[0]->get_type());
-        bool isImmediate = isSgAsmIntegerValueExpression(args[0])!=NULL;
-
-        // Assuming the address size attribute of the stack segment is set to 32 bits.
-        BaseSemantics::SValuePtr toPush;
-        if (isImmediate) {
-            toPush = ops->signExtend(d->read(args[0], operandWidth), 32);
-        } else if (16==operandWidth || 32==operandWidth) {
-            toPush = d->read(args[0], operandWidth);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
         } else {
-            throw BaseSemantics::Exception("invalid operand size for 32-bit push", insn);
-        }
-        ASSERT_not_null(toPush);
-        ASSERT_require(toPush->get_width()==16 || toPush->get_width()==32);
-        
-        // Decrement stack pointer. The source operand must have been read already (i.e., "push esp" pushes the old value)
-        int stackDelta = toPush->get_width() / 8;
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(32, -stackDelta));
-        ops->writeRegister(d->REG_ESP, newSp);
+            // Stack pointer register
+            RegisterDescriptor sp;
+            switch (insn->get_addressSize()) {
+                case x86_insnsize_16: sp = d->REG_SP;  break;
+                case x86_insnsize_32: sp = d->REG_ESP; break;
+                case x86_insnsize_64: sp = d->REG_RSP; break;
+                default:
+                    ASSERT_not_reachable("invalid address size");
+            }
+            ASSERT_require(sp.is_valid());
 
-        // Write data to stack
-        ops->writeMemory(d->REG_SS, d->fixMemoryAddress(newSp), toPush, ops->boolean_(true));
+            // Read the value to push onto the stack before decrementing the stack pointer.
+            BaseSemantics::SValuePtr toPush = d->read(args[0]);
+            if (isSgAsmIntegerValueExpression(args[0]) && toPush->get_width() < sp.get_nbits()) {
+                toPush = ops->signExtend(toPush, sp.get_nbits());
+            } else if (isSgAsmRegisterReferenceExpression(args[0]) && toPush->get_width() < sp.get_nbits() &&
+                       (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() == d->REG_FS ||
+                        isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() == d->REG_GS)) {
+                toPush = ops->unsignedExtend(toPush, sp.get_nbits());
+            }
+            
+            // Decrement the stack pointer before writing to args[0] just in case args[0] is stack-relative
+            int stackDelta = toPush->get_width() / 8;
+            BaseSemantics::SValuePtr oldSp = d->readRegister(sp);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(sp.get_nbits(), -stackDelta));
+            ops->writeRegister(sp, newSp);
+
+            // Write data to stack
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(newSp);
+            ops->writeMemory(d->REG_SS, addr, toPush, ops->boolean_(true));
+        }
     }
 };
 
@@ -2157,6 +2168,8 @@ DispatcherX86::regcache_init()
                 REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
                 REG_FPCTL = findRegister("fpctl", 16);
                 REG_MXCSR = findRegister("mxcsr", 32);
+                REG_FS = findRegister("fs", 16);
+                REG_GS = findRegister("gs", 16);
                 // fall through...
             case x86_insnsize_16:
                 REG_AX = findRegister("ax", 16);
