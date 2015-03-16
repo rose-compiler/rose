@@ -1449,13 +1449,21 @@ struct IP_not: P {
 struct IP_or: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = ops->or_(d->read(args[0], nbits), d->read(args[1], nbits));
-        d->setFlagsForResult(result);
-        d->write(args[0], result);
-        ops->writeRegister(d->REG_OF, ops->boolean_(false));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            if (a->get_width() > b->get_width())
+                b = ops->signExtend(b, a->get_width());
+            ASSERT_require(a->get_width() == b->get_width());
+            BaseSemantics::SValuePtr result = ops->or_(a, b);
+            d->setFlagsForResult(result);
+            d->write(args[0], result);
+            ops->writeRegister(d->REG_OF, ops->boolean_(false));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_CF, ops->boolean_(false));
+        }
     }
 };
 
