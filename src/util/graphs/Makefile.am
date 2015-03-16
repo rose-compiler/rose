@@ -10,8 +10,11 @@ libgraphsSources = \
 # lib_LIBRARIES = libgraphs.a
 # libgraphs_a_SOURCES  = $(libgraphsSources)
 
+# Use BOOST_CPPFLAGS because that's where the "-pthread" switch is if user wants multi-thread support.
 noinst_LTLIBRARIES = libgraphs.la
 libgraphs_la_SOURCES = $(libgraphsSources)
+libgraphs_la_CPPFLAGS = $(BOOST_CPPFLAGS)
+libgraphs_la_LDFLAGS = $(BOOST_THREAD_LIB)
 
 clean-local:
 	rm -rf Templates.DB ii_files ti_files cxx_templates
