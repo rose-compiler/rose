@@ -16,6 +16,7 @@ include_HEADERS = \
     jserver.h
 
 if ROSE_BUILD_X10_LANGUAGE_SUPPORT
+
 X10_DIR = @X10_INSTALL_PATH@
 
 lib_LTLIBRARIES = libx10Traversal.la
@@ -36,11 +37,19 @@ libroseX10_la_SOURCES = \
 	x10.C jserver.C \
 	x10_main.cpp
 
-INCLUDES = \
-	$(ROSE_INCLUDES) \
-	-I$(top_srcdir)/src/frontend/X10_ROSE_Connection \
-	-I$(X10_DIR) \
-	$(JAVA_JVM_INCLUDE)
+# BOOST_CPPFLAGS is included because that's where the -pthread switch is located if user desires it.
+libroseX10_la_CPPFLAGS =					\
+	$(ROSE_INCLUDES)					\
+	-I$(top_srcdir)/src/frontend/X10_ROSE_Connection	\
+	-I$(X10_DIR)						\
+	$(JAVA_JVM_INCLUDE)					\
+	$(BOOST_CPPFLAGS)
+libroseX10_la_LDFLAGS = $(BOOST_THREAD_LIB)
+
 else
+
 libroseX10_la_SOURCES = dummy_x10_main.cpp
+libroseX10_la_CPPFLAGS = $(BOOST_CPPFLAGS)
+libroseX10_la_LDFLAGS = $(BOOST_THREAD_LIB)
+
 endif
