@@ -1347,6 +1347,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        ASSERT_require(0==addrWidth_ || addr->get_width()==addrWidth_);
         operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
     } else {
         ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
@@ -1383,6 +1384,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits
         retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        ASSERT_require(0==addrWidth_ || addr->get_width()==addrWidth_);
         BaseSemantics::SValuePtr dflt = undefined_(value_nbits);
         retval = operators->readMemory(segmentRegister(mre), addr, dflt, operators->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {
