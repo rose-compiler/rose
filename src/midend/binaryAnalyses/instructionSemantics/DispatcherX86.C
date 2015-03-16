@@ -1756,19 +1756,24 @@ struct IP_rotate: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(insn->get_kind()==kind);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        // FIXME: Intel documentation contains conflicting statements about the number of significant bits in the rotate count.
-        // We're doing what seems most reasonable: 6-bit counts for any operand (inc. CF) that's wider than 32 bits.
-        size_t rotateWidth = (nbits>32 || (32==nbits && with_cf)) ? 6 : 5;
-        BaseSemantics::SValuePtr operand = d->read(args[0], nbits);
-        if (with_cf)
-            operand = ops->concat(operand, d->readRegister(d->REG_CF));
-        BaseSemantics::SValuePtr rotateCount = d->read(args[1], 8);
-        BaseSemantics::SValuePtr result = d->doRotateOperation(kind, operand, rotateCount, rotateWidth);
-        // flags have been updated; we just need to store the result
-        if (with_cf)
-            result = ops->extract(result, 0, nbits);
-        d->write(args[0], result);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbits = asm_type_width(args[0]->get_type());
+            // FIXME: Intel documentation contains conflicting statements about the number of significant bits in the rotate
+            // count.  We're doing what seems most reasonable: 6-bit counts for any operand (inc. CF) that's wider than 32
+            // bits.
+            size_t rotateWidth = (nbits>32 || (32==nbits && with_cf)) ? 6 : 5;
+            BaseSemantics::SValuePtr operand = d->read(args[0]);
+            if (with_cf)
+                operand = ops->concat(operand, d->readRegister(d->REG_CF));
+            BaseSemantics::SValuePtr rotateCount = d->read(args[1], 8);
+            BaseSemantics::SValuePtr result = d->doRotateOperation(kind, operand, rotateCount, rotateWidth);
+            // flags have been updated; we just need to store the result
+            if (with_cf)
+                result = ops->extract(result, 0, nbits);
+            d->write(args[0], result);
+        }
     }
 };
 
