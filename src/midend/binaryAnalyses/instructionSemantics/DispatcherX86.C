@@ -1501,36 +1501,73 @@ struct IP_pop: P {
 };
 
 // Pop all general-purpose registers
-struct IP_popad: P {
+//  POPA  - 16-bit registers
+//  POPAD - 32-bit registers
+//  Invalid for 64-bit
+struct IP_pop_all: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        if (insn->get_addressSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = d->fixMemoryAddress(ops->add(oldSp, ops->number_(32, 32)));
-        ops->writeRegister(d->REG_EDI,
-                           ops->readMemory(d->REG_SS, oldSp, ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_ESI,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 4)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_EBP,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 8)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_EBX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 16)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_EDX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 20)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_ECX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 24)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        ops->writeRegister(d->REG_EAX,
-                           ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 28)),
-                                           ops->undefined_(32), ops->boolean_(true)));
-        (void) ops->readMemory(d->REG_SS, ops->add(oldSp, ops->number_(32, 12)),
-                               ops->undefined_(32), ops->boolean_(true));
-        ops->writeRegister(d->REG_ESP, newSp);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (insn->get_addressSize() == x86_insnsize_16) {
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), 16));
+            BaseSemantics::SValuePtr base = d->fixMemoryAddress(oldSp);
+            ops->writeRegister(d->REG_DI,
+                               ops->readMemory(d->REG_SS, base,
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_SI,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 2)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_BP,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 4)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            (void)             ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 6)),
+                                               ops->undefined_(16), ops->boolean_(true));
+            ops->writeRegister(d->REG_BX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 8)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_DX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 10)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_CX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 12)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_AX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 14)),
+                                               ops->undefined_(16), ops->boolean_(true)));
+            ops->writeRegister(d->REG_anySP, newSp);
+        } else if (insn->get_addressSize() == x86_insnsize_32) {
+            BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), 32));
+            BaseSemantics::SValuePtr base = d->fixMemoryAddress(oldSp);
+            ops->writeRegister(d->REG_EDI,
+                               ops->readMemory(d->REG_SS, base,
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_ESI,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 4)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_EBP,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 8)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            (void)             ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 12)),
+                                               ops->undefined_(32), ops->boolean_(true));
+            ops->writeRegister(d->REG_EBX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 16)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_EDX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 20)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_ECX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 24)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_EAX,
+                               ops->readMemory(d->REG_SS, ops->add(base, ops->number_(base->get_width(), 28)),
+                                               ops->undefined_(32), ops->boolean_(true)));
+            ops->writeRegister(d->REG_anySP, newSp);
+        } else {
+            throw BaseSemantics::Exception("instruction size not supported", insn);
+        }
     }
 };
 
@@ -2015,7 +2052,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_or,           new X86::IP_or);
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pop,          new X86::IP_pop);
-    iproc_set(x86_popad,        new X86::IP_popad);
+    iproc_set(x86_popa,         new X86::IP_pop_all);
+    iproc_set(x86_popad,        new X86::IP_pop_all);
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pushad,       new X86::IP_pushad);
     iproc_set(x86_pushfd,       new X86::IP_pushfd);
@@ -2121,11 +2159,13 @@ DispatcherX86::regcache_init()
                 // fall through...
             case x86_insnsize_16:
                 REG_AX = findRegister("ax", 16);
+                REG_BX = findRegister("bx", 16);
                 REG_CX = findRegister("cx", 16);
                 REG_DX = findRegister("dx", 16);
                 REG_DI = findRegister("di", 16);
                 REG_SI = findRegister("si", 16);
                 REG_SP = findRegister("sp", 16);
+                REG_BP = findRegister("bp", 16);
                 REG_AL = findRegister("al", 8);
                 REG_AH = findRegister("ah", 8);
                 REG_AF = findRegister("af", 1);

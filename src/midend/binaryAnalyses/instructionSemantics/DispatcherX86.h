@@ -49,7 +49,7 @@ public:
     RegisterDescriptor REG_anyIP, REG_anySP, REG_anyBP, REG_anyCX;
     RegisterDescriptor REG_RAX, REG_RDX,          REG_RDI,          REG_RSI, REG_RSP;
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP;
-    RegisterDescriptor REG_AX,           REG_CX,  REG_DX,  REG_DI,  REG_SI,  REG_SP;
+    RegisterDescriptor REG_AX,  REG_BX,  REG_CX,  REG_DX,  REG_DI,  REG_SI,  REG_SP,  REG_BP;
     RegisterDescriptor REG_AL, REG_AH;
     RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
     RegisterDescriptor REG_DS, REG_ES, REG_SS;
