@@ -38,18 +38,18 @@ libroseX10_la_SOURCES = \
 	x10_main.cpp
 
 # BOOST_CPPFLAGS is included because that's where the -pthread switch is located if user desires it.
-libroseX10_la_CPPFLAGS =					\
+INCLUDES =							\
 	$(ROSE_INCLUDES)					\
 	-I$(top_srcdir)/src/frontend/X10_ROSE_Connection	\
 	-I$(X10_DIR)						\
 	$(JAVA_JVM_INCLUDE)					\
 	$(BOOST_CPPFLAGS)
+
 libroseX10_la_LDFLAGS = $(BOOST_THREAD_LIB)
+libx10Traversal_la_LDFLAGS = $(BOOST_THREAD_LIB)
 
 else
 
 libroseX10_la_SOURCES = dummy_x10_main.cpp
-libroseX10_la_CPPFLAGS = $(BOOST_CPPFLAGS)
-libroseX10_la_LDFLAGS = $(BOOST_THREAD_LIB)
 
 endif
