@@ -1059,9 +1059,13 @@ struct IP_leave: P {
 struct IP_rdtsc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        BaseSemantics::SValuePtr tsc = ops->rdtsc();
-        ops->writeRegister(d->REG_EAX, ops->extract(tsc, 0, 32));
-        ops->writeRegister(d->REG_EDX, ops->extract(tsc, 32, 64));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr tsc = ops->rdtsc();
+            ops->writeRegister(d->REG_EAX, ops->extract(tsc, 0, 32));
+            ops->writeRegister(d->REG_EDX, ops->extract(tsc, 32, 64));
+        }
     }
 };
 
