@@ -1738,15 +1738,19 @@ struct IP_ret: P {
     void p(D d, Ops ops, I insn, A args) {
         if (args.size()>1)
             throw BaseSemantics::Exception("instruction must have zero or one operand", insn);
-        if (insn->get_addressSize() != x86_insnsize_32 || insn->get_operandSize() != x86_insnsize_32)
-            throw BaseSemantics::Exception("size not implemented", insn);
-        BaseSemantics::SValuePtr extraBytes = (args.size()==1 ? d->read(args[0], 32) : ops->number_(32, 0));
-        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_ESP);
-        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->add(ops->number_(32, 4), extraBytes));
-        ops->writeRegister(d->REG_anyIP, ops->filterReturnTarget(ops->readMemory(d->REG_SS, d->fixMemoryAddress(oldSp),
+        BaseSemantics::SValuePtr oldSp = d->readRegister(d->REG_anySP);
+        size_t stackDelta = d->REG_anyIP.get_nbits() / 8;
+        if (args.size() == 1) {
+            ASSERT_require(isSgAsmIntegerValueExpression(args[0]));
+            stackDelta += isSgAsmIntegerValueExpression(args[0])->get_absoluteValue();
+        }
+        BaseSemantics::SValuePtr newSp = ops->add(oldSp, ops->number_(oldSp->get_width(), stackDelta));
+        BaseSemantics::SValuePtr stackVa = d->fixMemoryAddress(oldSp);
+        BaseSemantics::SValuePtr retVa = ops->filterReturnTarget(ops->readMemory(d->REG_SS, stackVa,
                                                                                  ops->undefined_(d->REG_anyIP.get_nbits()),
-                                                                                 ops->boolean_(true))));
-        ops->writeRegister(d->REG_ESP, newSp);
+                                                                                 ops->boolean_(true)));
+        ops->writeRegister(d->REG_anyIP, retVa);
+        ops->writeRegister(d->REG_anySP, newSp);
     }
 };
 
