@@ -2083,11 +2083,14 @@ struct IP_wait: P {
 struct IP_xadd: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits), d->read(args[1], nbits),
-                                                            false, ops->boolean_(false));
-        d->write(args[1], d->read(args[0], nbits));
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() &&
+            !isSgAsmMemoryReferenceExpression(args[0]) && !isSgAsmMemoryReferenceExpression(args[1])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr sum = d->doAddOperation(d->read(args[0]), d->read(args[1]), false, ops->boolean_(false));
+            d->write(args[1], d->read(args[0]));
+            d->write(args[0], sum);
+        }
     }
 };
 
