@@ -1,6 +1,6 @@
 include_directories(${ROSE_INCLUDES})
 add_executable(copyExample copyExample.C)
-target_link_libraries(copyExample ROSE_DLL ${Boost_LIBRARIES})
+target_link_libraries(copyExample ROSE_DLL ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 install(TARGETS copyExample DESTINATION bin)
 
 if(with-ROSE_LONG_MAKE_CHECK_RULE)

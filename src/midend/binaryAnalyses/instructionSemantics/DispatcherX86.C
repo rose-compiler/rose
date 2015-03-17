@@ -3,6 +3,8 @@
 #include "DispatcherX86.h"
 #include "integerOps.h"
 
+#undef si_value                                         // name pollution from siginfo.h
+
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
