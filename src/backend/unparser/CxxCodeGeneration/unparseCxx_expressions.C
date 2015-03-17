@@ -115,6 +115,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (6/20/2013): Added alignof operator to support C/C++ extensions (used in EDG 4.7).
           case ALIGNOF_OP:            { unparseAlignOfOp(expr, info); break; }
 
+       // DQ (2/5/2015): Added missing C++11 support.
+          case NOEXCEPT_OP:           { unparseNoexceptOp(expr, info); break; }
+
           case TYPEID_OP:               { unparseTypeIdOp(expr, info); break; }
           case NOT_OP:                  { unparseNotOp(expr, info); break; }
           case DEREF_OP:                { unparseDerefOp(expr, info); break; }
@@ -316,10 +319,15 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
    {
      ROSE_ASSERT(expr != NULL);
 
-     printf ("In unparseFunctionParameterRefExpression = %p = %s) \n",expr,expr->class_name().c_str());
-
      SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
      ROSE_ASSERT(functionParameterRefExp != NULL);
+
+#if 0
+     printf ("In unparseFunctionParameterRefExpression = %p = %s \n",functionParameterRefExp,functionParameterRefExp->class_name().c_str());
+     printf ("   --- functionParameterRefExp->get_parameter_number()    = %d \n",functionParameterRefExp->get_parameter_number());
+     printf ("   --- functionParameterRefExp->get_parameter_levels_up() = %d \n",functionParameterRefExp->get_parameter_levels_up());
+     printf ("   --- functionParameterRefExp->get_parameter_type()      = %p \n",functionParameterRefExp->get_parameter_type());
+#endif
 
 #if 0
      if (functionParameterRefExp->get_base_expression() != NULL)
@@ -332,7 +340,14 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
           unp->u_type->unparseType(functionParameterRefExp->get_base_type(),info);
         }
 #else
-     unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+  // unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+
+  // DQ (2/14/2015): We at least require this sort of funcationality for C++11 test2015_13.C.
+  // if (functionParameterRefExp->get_parameter_levels_up() == 0)
+     if (functionParameterRefExp->get_parameter_number() == 0 && functionParameterRefExp->get_parameter_levels_up() == 0)
+        {
+          unp->u_exprStmt->curprint("this ");
+        }
 #endif
 
 #if 0
@@ -578,8 +593,9 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
    }
 
 
+
 void
-Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & templateArgListPtr, SgUnparse_Info& info)
    {
   // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
   // the name generated identically (in each case) is critical.  Not clear how to best refactor this code.
@@ -653,7 +669,21 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
                if (i != templateArgListPtr.end())
                   {
-                    unp->u_exprStmt->curprint(" , ");
+                 // unp->u_exprStmt->curprint(" , ");
+
+                 // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
+                    if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                       {
+                      // This should be the last template parameter, we I am not verifying this.
+#if 0
+                         printf ("In unparseTemplateArgumentList(): Need to supress the trailing \",\" \n");
+#endif
+                       }
+                      else
+                       {
+                         unp->u_exprStmt->curprint(" , ");
+                       }
+
                   }
              }
 
@@ -674,15 +704,107 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
 
 void
+Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info)
+   {
+#if 0
+     printf ("In unparseTemplateParameterList(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+
+     if (templateParameterList.empty() == false)
+        {
+          curprint ("< ");
+          SgTemplateParameterPtrList::const_iterator i = templateParameterList.begin();
+          while (i != templateParameterList.end())
+             {
+               SgTemplateParameter* templateParameter = *i;
+               ROSE_ASSERT(templateParameter != NULL);
+#if 0
+               printf ("In unparseTemplateParameterList(): templateParameter = %p \n",templateParameter);
+#endif
+               unparseTemplateParameter(templateParameter,info);
+
+               i++;
+
+               if (i != templateParameterList.end())
+                  {
+                    curprint (",");
+                  }
+             }
+
+          curprint ("> ");
+        }
+   }
+
+
+void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateParameter != NULL);
+
+#if 0
+     printf ("In unparseTemplateParameter(): templateParameter = %p \n",templateParameter);
+#endif
 
      switch(templateParameter->get_parameterType())
         {
           case SgTemplateParameter::type_parameter:
              {
-#if 1
+            // DQ (9/7/2014): Added support for case SgTemplateParameter::type_parameter.
+               SgType* type = templateParameter->get_type();
+               ROSE_ASSERT(type != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+
+            // DQ (9/9/2014): Note that this is now constrcuted to be a SgClassType were ever possible.
+            // This allows the name qualification to be resolved when unparsing template declarations.
+               SgTemplateType* templateType = isSgTemplateType(type);
+            // ROSE_ASSERT(templateType != NULL);
+               if (templateType == NULL)
+                  {
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: (templateType == NULL): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // When unparsing a template paramter we only want to use the name.
+                    SgClassType* classType = isSgClassType(type);
+                    if (classType != NULL)
+                       {
+                         string name = classType->get_name();
+                         curprint(name);
+                       }
+                      else
+                       {
+                         SgUnparse_Info ninfo(info);
+                         unp->u_type->unparseType(type,ninfo);
+                       }
+                  }
+                 else
+                  {
+                    string name = templateType->get_name();
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
+#endif
+                 // unp->u_exprStmt->curprint(" typename ");
+                    curprint(name);
+                  }
+
+               SgType* default_type = templateParameter->get_defaultTypeParameter();
+               if (default_type != NULL)
+                  {
+                 // Need to add the default type.
+#if 0
+                    curprint("=");
+
+                    SgUnparse_Info ninfo(info);
+                    unp->u_type->unparseType(default_type,ninfo);
+#else
+                 // See test2014_149.C for an example of where this is mistakenly done in the defining declaration (where it is an error).
+#if 0
+                    printf ("Skipping default template parameter unparsing \n");
+#endif
+#endif
+                  }
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -693,6 +815,9 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
              {
                if (templateParameter->get_expression() != NULL)
                   {
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::nontype_parameter: templateParameter->get_expression() = %p = %s \n",templateParameter->get_expression(),templateParameter->get_expression()->class_name().c_str());
+#endif
                     unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
                   }
                  else
@@ -701,8 +826,14 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 
                     SgType* type = templateParameter->get_initializedName()->get_type();
                     ROSE_ASSERT(type != NULL);
-
-                    unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::nontype_parameter: templateParameter->get_initializedName()->get_type() = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter list.
+                 // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                 // SgUnparse_Info ninfo(info);
+                 // unp->u_type->unparseType(type,ninfo);
+                    curprint(templateParameter->get_initializedName()->get_name());
                   }
 
                break;
@@ -710,7 +841,34 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 
           case SgTemplateParameter::template_parameter:
              {
-#if 1
+               ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
+               SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
+               ROSE_ASSERT(templateDeclaration != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: output name = %s \n",templateDeclaration->get_name().str());
+#endif
+#if 0
+            // This is a part of the template header that is not output here.
+               SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+               SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+               curprint(" template < ");
+               while (i != templateParameterList.end())
+                  {
+                    SgUnparse_Info newInfo(info);
+                    curprint(" typename ");
+                    unparseTemplateParameter(*i,newInfo);
+                 // curprint(" SgTemplateDeclaration_name ");
+
+                    i++;
+
+                    if (i != templateParameterList.end())
+                         curprint(",");
+                  }
+
+               curprint(" > ");
+#endif
+               curprint(templateDeclaration->get_name());
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -1303,7 +1461,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     SgType* type = templateArgument->get_initializedName()->get_type();
                     ROSE_ASSERT(type != NULL);
 
-                    unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                 // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter or argument list.
+                 // unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                 // SgUnparse_Info ninfo(info);
+                 // unp->u_type->unparseType(type,ninfo);
+                    curprint(templateArgument->get_initializedName()->get_name());
                   }
 
             // printf ("Error: nontype_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
@@ -1346,9 +1508,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
             // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-            // curprint("/* varadic template argument */ ...");
-               curprint("/* varadic template argument */ ");
-
+#if 0
+               curprint("/* varadic template argument */ ...");
+#else
+            // DQ (2/7/2015): Supress the comment from being output.
+            // curprint("/* varadic template argument */ ");
+#endif
                break;
              }
 
@@ -4621,6 +4786,25 @@ Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
         }
      curprint ( ")");
+   }
+
+
+void
+Unparse_ExprStmt::unparseNoexceptOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgNoexceptOp* noexcept_op = isSgNoexceptOp(expr);
+     ROSE_ASSERT(noexcept_op != NULL);
+
+#if 0
+     printf ("In unparseNoexceptOp(expr = %p): \n",expr);
+#endif
+
+     curprint("noexcept(");
+
+     ROSE_ASSERT(noexcept_op->get_operand_expr() != NULL);
+     unparseExpression(noexcept_op->get_operand_expr(), info);
+
+     curprint(")");
    }
 
 
