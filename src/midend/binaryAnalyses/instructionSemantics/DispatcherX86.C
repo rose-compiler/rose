@@ -1789,10 +1789,18 @@ struct IP_rotate: P {
 struct IP_sbb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result = d->doAddOperation(d->read(args[0], nbits), ops->invert(d->read(args[1], nbits)),
-                                                            true, d->readRegister(d->REG_CF));
-        d->write(args[0], result);
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr minuend = d->read(args[0]);
+            BaseSemantics::SValuePtr subtrahend = d->read(args[1]);
+            if (minuend->get_width() > subtrahend->get_width())
+                subtrahend = ops->signExtend(subtrahend, minuend->get_width());
+            ASSERT_require(minuend->get_width() == subtrahend->get_width());
+            BaseSemantics::SValuePtr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true,
+                                                                    d->readRegister(d->REG_CF));
+            d->write(args[0], difference);
+        }
     }
 };
 
