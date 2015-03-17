@@ -1925,7 +1925,11 @@ struct IP_shift_2: P {
 struct IP_stc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_CF, ops->boolean_(true));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_CF, ops->boolean_(true));
+        }
     }
 };
 
