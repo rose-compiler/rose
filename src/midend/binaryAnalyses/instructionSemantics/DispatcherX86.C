@@ -1937,7 +1937,11 @@ struct IP_stc: P {
 struct IP_std: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->writeRegister(d->REG_DF, ops->boolean_(true));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->writeRegister(d->REG_DF, ops->boolean_(true));
+        }
     }
 };
 
