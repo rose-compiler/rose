@@ -1870,8 +1870,12 @@ struct IP_setcc: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
         ASSERT_require(insn->get_kind()==kind);
-        BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
-        d->write(args[0], ops->concat(cond, ops->number_(7, 0)));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr cond = d->flagsCombo(kind);
+            d->write(args[0], ops->concat(cond, ops->number_(7, 0)));
+        }
     }
 };
 
