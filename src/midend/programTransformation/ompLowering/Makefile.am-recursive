@@ -9,7 +9,6 @@ lib_LIBRARIES = libxomp.a
 libxomp_a_SOURCES = xomp.c  \
  	   run_me_callers.inc run_me_defs.inc  \
            run_me_callers2.inc run_me_task_defs.inc 
-#libxomp_a_CXXFLAGS = -pthreads
 
 include_HEADERS = omp_lowering.h libgomp_g.h \
            libompc.h  libxomp.h libxompf.h
