@@ -10,8 +10,8 @@ class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
   void toStream(std::ostream& os, VariableIdMapping* vim=0);
-  bool approximatedBy(PropertyState& other);
-  void combine(PropertyState& other);
+  bool approximatedBy(Lattice& other);
+  void combine(Lattice& other);
   // adds integer variable
   void addVariable(VariableId varId);
 #if 0

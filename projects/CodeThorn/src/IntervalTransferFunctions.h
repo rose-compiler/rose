@@ -11,7 +11,7 @@ class IntervalTransferFunctions : public DFTransferFunctions {
 public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();
-  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
+  //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
   void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
   void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);

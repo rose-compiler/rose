@@ -15,6 +15,11 @@ class CppExprEvaluator {
  public:
   CppExprEvaluator(NumberIntervalLattice* d, PropertyState* p, VariableIdMapping* vim):domain(d), propertyState(p),variableIdMapping(vim){}
   NumberIntervalLattice evaluate(SgNode* node) {
+
+    ROSE_ASSERT(domain);
+    ROSE_ASSERT(propertyState);
+    ROSE_ASSERT(variableIdMapping);
+
     cout<<"DEBUG: eval @:"<<node->unparseToString()<<endl;
     if(isSgBinaryOp(node)) {
       SgNode* lhs=SgNodeHelper::getLhs(node);
@@ -40,7 +45,7 @@ class CppExprEvaluator {
 
             cout<<"DEBUG: eval: before-update:"<<ips->intervals[varId].toString()<<endl;
             //            cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
-            ips->intervals[varId]=rhsResult;
+            //ips->intervals[varId]=rhsResult;
             cout<<"DEBUG: eval: after-update :"<<ips->intervals[varId].toString()<<endl;
             //     cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
             return rhsResult;
@@ -67,7 +72,10 @@ class CppExprEvaluator {
     case V_SgVarRefExp: {
       SgVarRefExp* varRefExp=isSgVarRefExp(node);
       ROSE_ASSERT(varRefExp);
+      cout<<"DEBUG: accessing variable "<<varRefExp->unparseToString();
       VariableId varId=variableIdMapping->variableId(varRefExp);
+      cout<<" varid:"<<varId.toString()<<endl;
+
       IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
       ROSE_ASSERT(ips);
       NumberIntervalLattice evalResult=ips->intervals[varId];

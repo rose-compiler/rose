@@ -21,31 +21,33 @@ void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
   }
 }
 
-bool IntervalPropertyState::approximatedBy(PropertyState& other0) {
-  IntervalPropertyState& other=dynamic_cast<IntervalPropertyState&> (other0);
+bool IntervalPropertyState::approximatedBy(Lattice& other0) {
+  IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
+  ROSE_ASSERT(other);
   if(isBot())
     return true;
-  if(!isBot()&&other.isBot())
+  if(!isBot()&&other->isBot())
     return false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    if(!NumberIntervalLattice::isSubIntervalOf(intervals[varId],other.intervals[varId]))
+    if(!NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
       return false;
   }
   return true;
 }
 
-void IntervalPropertyState::combine(PropertyState& other0){
-  IntervalPropertyState& other=dynamic_cast<IntervalPropertyState&> (other0);
-  if(isBot()&&other.isBot())
+void IntervalPropertyState::combine(Lattice& other0){
+  IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
+  ROSE_ASSERT(other!=0);
+  if(isBot()&&other->isBot())
     return;
-  if(!isBot()&&other.isBot())
+  if(!isBot()&&other->isBot())
     return;
-  if(isBot()&&!other.isBot()) 
+  if(isBot()&&!other->isBot()) 
     _bot=false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    intervals[varId].join(other.intervals[varId]);
+    intervals[varId].join(other->intervals[varId]);
   }
 }
 

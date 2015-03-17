@@ -22,6 +22,7 @@ IntervalTransferFunctions::IntervalTransferFunctions():
 {
 }
 
+#if 0
 IntervalTransferFunctions::IntervalTransferFunctions(
                                                      NumberIntervalLattice* domain, 
                                                      PropertyState* p, 
@@ -30,6 +31,7 @@ IntervalTransferFunctions::IntervalTransferFunctions(
   :_domain(domain),_labeler(l),_variableIdMapping(vid) {
   _cppExprEvaluator=new CppExprEvaluator(domain,p,vid);
 }
+#endif
 
 IntervalTransferFunctions::~IntervalTransferFunctions() {
   if(_cppExprEvaluator)
