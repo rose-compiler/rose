@@ -1450,6 +1450,9 @@ HEADER_LIST_DECLARATIONS
        // that only the qualified name would distinguish them).
           virtual SgName get_qualified_name() const;
 
+       // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+          SgName get_template_header() const;
+
      protected:
           virtual bool replace_child(SgStatement *,SgStatement *,
                                          bool extractListFromBasicBlock = false);
@@ -1468,6 +1471,8 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
           static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
 
+       // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+          bool isNormalizedTemplateFunction() const;
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -10827,6 +10832,72 @@ SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
      return nameQualifier;
    }
 
+SgName
+SgFunctionDeclaration::get_template_header() const
+   {
+  // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+
+     SgName template_header;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTemplateHeaders().end())
+        {
+          template_header = i->second;
+#if 0
+          printf ("Found a valid template header : template_header %s \n",template_header.str());
+#endif
+        }
+#if 0
+     printf ("template_header for SgFunctionDeclaration = %p = %s = %s \n",this,class_name().c_str(),template_header.str());
+#endif
+
+     return template_header;
+   }
+
+
+bool
+SgFunctionDeclaration::isNormalizedTemplateFunction() const
+   {
+  // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+  // EDG normalizes member and non-member function definitions defined in template classes.
+  // As a result we need to detect where this normalization is done in both the unparser and
+  // the token mapping.  Where the normalization has been done the text string saved in EDG 
+  // and used in ROSE is only representing the body of the function and so the unparser must
+  // know to generate the function prototype declaration to assemble with the function body
+  // held as text.  In the future we will unparse the template declarations from the AST and/or
+  // the token stream, but that is a later step.
+
+     bool string_represents_function_body = false;
+     const SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(this);
+     const SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(this);
+     if (templateFunctionDeclaration != NULL)
+        {
+       // printf ("This is a SgTemplateFunctionDeclaration \n");
+          string_represents_function_body = templateFunctionDeclaration->get_string_represents_function_body();
+        }
+       else
+        {
+          if (templateMemberFunctionDeclaration != NULL)
+             {
+            // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+               string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
+            // template_function_name = templateMemberFunctionDeclaration->get_name();
+             }
+            else
+             {
+#if 0
+            // This is likely a SgTemplateClassDeclaration
+               if (isSgTemplateClassDeclaration(this) == NULL)
+                  {
+                    printf ("Error: In SgFunctionDeclaration::isNormalizedTemplateFunction(): What is this if not a template function or template member function stmt = %p = %s \n",this,this->class_name().c_str());
+                  }
+#endif
+             }
+        }
+
+     return string_represents_function_body;
+   }
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END
@@ -12764,6 +12835,7 @@ SgClassDeclaration::get_mangled_name(void) const
           return i->second.c_str();
         }
 #endif
+
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgClassDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
@@ -15310,6 +15382,9 @@ SgTemplateDeclaration::get_mangled_name(void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTemplateDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
+#if 0
+          printf ("In SgTemplateDeclaration::get_mangled_name(): (FOUND in MangledNameFromCache): returning mangledNameString = %s \n",mangledNameString.c_str());
+#endif
        // return i->second.c_str();
           return mangledNameString;
         }
@@ -15319,7 +15394,9 @@ SgTemplateDeclaration::get_mangled_name(void) const
           SgScopeStatement* scope = get_scope();
           ROSE_ASSERT(scope != NULL);
           SgName mangledName = scope->get_mangled_name() + SgName("_template_declaration_") + get_name();
-
+#if 0
+          printf ("In SgTemplateDeclaration::get_mangled_name(): (NOT found in MangledNameFromCache): returning mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateDeclaration*>(this),mangledName);
           return mangledName;
@@ -15408,7 +15485,13 @@ SgTemplateClassDeclaration::post_construction_initialization()
 SgName
 SgTemplateClassDeclaration::get_mangled_name(void) const
    {
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  #error "ROSE_USE_NEW_EDG_INTERFACE is required!"
+#endif
+
+
+#if 0
+  // DQ (2/13/2015): This is the older version of the code that was a problem for test2015_09.C.
   // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
      SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
 
@@ -15429,16 +15512,71 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
           mangled_name += "__";
         }
 #else
-  // SgName mangled_name = SgClassDeclaration::get_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
-     printf ("For EDG 3.3: mangled_name might not be set propoerly for SgTemplateClassDeclaration::get_mangled_name() \n");
-     SgName mangled_name = "";
+     string mangled_name;
 
-     printf ("ERROR: SgTemplateClassDeclaration::get_mangled_name() function should not be called for this IR node (IR node not used in EDG 3.3 compatability). \n");
-     ROSE_ASSERT(false);
+  // DQ (2/13/2015): Fixing bug specific to adding mangle name of the scope of the template class to avoid collisions with other types 
+  // with the same name in different scopes when used as in function types.  The bud demonstrating this problem is in test2015_09.C and 
+  // test2015_10.C.  This problem was caught in the range.h header file for the GNU g++ version 4.8.1 header file system.  This was
+  // an issue to the processing of the newest version of the LBL DSL specification.
+     std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTemplateClassDeclaration*>(this));
+     if (mangledNameString.empty() == false)
+        {
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (FOUND in cache) mangledNameString = %s \n",mangledNameString.c_str());
+#endif
+          return mangledNameString;
+        }
+       else
+        {
+       // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
+          ROSE_ASSERT(get_scope() != NULL);
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): calling joinMangledQualifiers(mangleQualifiers(get_scope()),get_name()) --- get_name() = %s \n",get_name().str());
+#endif
+       // DQ (3/14/2012): Seperating the steps to computing the mangled name (which should include some qualification via non empty mangledScopeName)
+       // SgName mangledName = joinMangledQualifiers(mangleQualifiers(get_scope()),get_name());
+          SgName mangledScopeName = mangleQualifiers(get_scope());
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangleQualifiers(get_scope()) mangledScopeName = %s \n",mangledScopeName.str());
+#endif
+       // DQ (3/14/2012): I think that we can assert this.  No, if the scope is SgGlobal (for example) then the mangledName is empty.
+       // ROSE_ASSERT(mangledScopeName.is_null() == false);
+
+       // DQ (2/13/2015): Changed this to use the templateName which excludes the template arguments, I think this is enough to be unique.
+       // SgName mangledName = joinMangledQualifiers(mangledScopeName,get_name());
+          SgName mangledName = joinMangledQualifiers(mangledScopeName,get_templateName());
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s \n",mangledName.str());
+#endif
+          if (mangledName.is_null() == true)
+             {
+#if 0
+               printf ("In SgTemplateClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s get_name() = %s \n",mangledName.str(),get_name().str());
+#endif
+               mangledName = "unknown_scope_and_name";
+             }
+          ROSE_ASSERT(mangledName.is_null() == false);
+
+       // p_globalMangledNameMap[classDeclaration] = mangledName;
+          mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateClassDeclaration*>(this),mangledName);
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (AFTER adding to cache) mangledName = %s \n",mangledName.str());
+#endif
+       // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+       // Make sure that there is no template specific syntax included in the mangled name
+       // string mangled_name = mangledName;
+          mangled_name = mangledName;
+          if ( mangled_name.find('<') != string::npos )
+             {
+               printf ("In SgTemplateClassDeclaration::get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
+             }
+          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+        }
 #endif
 
 #if 0
-     printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+  // DQ (7/24/2012): Output the mangled name being generated for debugging.
+     printf (">>>>>>>>>> SgTemplateClassDeclaration::get_mangled_name(): returning mangled_name = %s \n",mangled_name.c_str());
 #endif
 
      return mangled_name;

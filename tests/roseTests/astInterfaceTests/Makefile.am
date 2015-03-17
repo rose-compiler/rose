@@ -153,17 +153,290 @@ generatedCodeExamples = \
   rose_inputloopCollapsing_3.C\
   rose_inputloopCollapsing_4.C\
   rose_inputloopCollapsing_5.C\
-  rose_inputmoveDeclarationToInnermostScope_1.C \
-  rose_inputmoveDeclarationToInnermostScope_2.C \
-  rose_inputmoveDeclarationToInnermostScope_3.C \
-  rose_inputmoveDeclarationToInnermostScope_4.C \
-  rose_inputmoveDeclarationToInnermostScope_5.C \
-  rose_inputmoveDeclarationToInnermostScope_6.C \
-  rose_inputmoveDeclarationToInnermostScope_7.C \
-  rose_inputmoveDeclarationToInnermostScope_8.C \
   buildJavaPackage.passed 
 
-test_move_decls: rose_inputmoveDeclarationToInnermostScope_1.C rose_inputmoveDeclarationToInnermostScope_2.C rose_inputmoveDeclarationToInnermostScope_3.C rose_inputmoveDeclarationToInnermostScope_4.C rose_inputmoveDeclarationToInnermostScope_5.C rose_inputmoveDeclarationToInnermostScope_6.C rose_inputmoveDeclarationToInnermostScope_7.C rose_inputmoveDeclarationToInnermostScope_8.C
+# section for declaration moving tool
+#--------------------------------------------
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_1.C \
+  inputmoveDeclarationToInnermostScope_2.C \
+  inputmoveDeclarationToInnermostScope_3.C \
+  inputmoveDeclarationToInnermostScope_4.C \
+  inputmoveDeclarationToInnermostScope_5.C \
+  inputmoveDeclarationToInnermostScope_6.C \
+  inputmoveDeclarationToInnermostScope_7.C \
+  inputmoveDeclarationToInnermostScope_8.C \
+  inputmoveDeclarationToInnermostScope_9.C \
+  inputmoveDeclarationToInnermostScope_10.C \
+  inputmoveDeclarationToInnermostScope_11.C \
+  inputmoveDeclarationToInnermostScope_12.C \
+  inputmoveDeclarationToInnermostScope_13.C \
+  inputmoveDeclarationToInnermostScope_14.C \
+  inputmoveDeclarationToInnermostScope_15.C  \
+  inputmoveDeclarationToInnermostScope_16.C \
+  inputmoveDeclarationToInnermostScope_18.C
+
+# DQ (12/23/2014): This fails because the normal unparsing (without token unparsing) is failing.
+# inputmoveDeclarationToInnermostScope_test2014_26.C
+
+MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED = 
+
+# identity translator cannot handle them properly  
+# 17: shared SgArrayType issue
+MOVE_DECLS_TESTCODES_FAILING = \
+  inputmoveDeclarationToInnermostScope_17.C \
+  inputmoveDeclarationToInnermostScope_test2014_18.C \
+  inputmoveDeclarationToInnermostScope_test2014_22.C
+
+MOVE_DECLS_TESTCODES_REQUIRED_TO_PASS = \
+  $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED) \
+  $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED)
+
+MOVE_DECLS_TESTCODES_CURRENTLY_FAILING = 
+
+MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
+MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+
+MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_FULLY_SUPPORTED})
+MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS = $(addprefix rose_v2_, ${MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED})
+
+
+PASSING_MOVE_DECLS_TESTCODES_RESULTS = \
+   $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
+   $(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+
+# DQ (12/23/2014): Added tests specific to use of move tool with token-based unparsing.
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
+  inputmoveDeclarationToInnermostScope_1.C \
+  inputmoveDeclarationToInnermostScope_2.C \
+  inputmoveDeclarationToInnermostScope_3.C \
+  inputmoveDeclarationToInnermostScope_4.C \
+  inputmoveDeclarationToInnermostScope_6.C \
+  inputmoveDeclarationToInnermostScope_7.C \
+  inputmoveDeclarationToInnermostScope_8.C \
+  inputmoveDeclarationToInnermostScope_9.C \
+  inputmoveDeclarationToInnermostScope_10.C \
+  inputmoveDeclarationToInnermostScope_11.C \
+  inputmoveDeclarationToInnermostScope_12.C \
+  inputmoveDeclarationToInnermostScope_13.C \
+  inputmoveDeclarationToInnermostScope_14.C \
+  inputmoveDeclarationToInnermostScope_15.C \
+  inputmoveDeclarationToInnermostScope_16.C \
+  inputmoveDeclarationToInnermostScope_18.C \
+  inputmoveDeclarationToInnermostScope_test2014_01.C \
+  inputmoveDeclarationToInnermostScope_test2014_02.C \
+  inputmoveDeclarationToInnermostScope_test2014_03.C \
+  inputmoveDeclarationToInnermostScope_test2014_04.C \
+  inputmoveDeclarationToInnermostScope_test2014_05.C \
+  inputmoveDeclarationToInnermostScope_test2014_06.C \
+  inputmoveDeclarationToInnermostScope_test2014_07.C \
+  inputmoveDeclarationToInnermostScope_test2014_08.C \
+  inputmoveDeclarationToInnermostScope_test2014_10.C \
+  inputmoveDeclarationToInnermostScope_test2014_11.C \
+  inputmoveDeclarationToInnermostScope_test2014_12.C \
+  inputmoveDeclarationToInnermostScope_test2014_13.C \
+  inputmoveDeclarationToInnermostScope_test2014_14.C \
+  inputmoveDeclarationToInnermostScope_test2014_15.C \
+  inputmoveDeclarationToInnermostScope_test2014_16.C \
+  inputmoveDeclarationToInnermostScope_test2014_17.C \
+  inputmoveDeclarationToInnermostScope_test2014_19.C \
+  inputmoveDeclarationToInnermostScope_test2014_20.C \
+  inputmoveDeclarationToInnermostScope_test2014_21.C \
+  inputmoveDeclarationToInnermostScope_test2014_23.C \
+  inputmoveDeclarationToInnermostScope_test2014_24.C \
+  inputmoveDeclarationToInnermostScope_test2014_25.C \
+  inputmoveDeclarationToInnermostScope_test2014_26.C \
+  inputmoveDeclarationToInnermostScope_test2014_27.C \
+  inputmoveDeclarationToInnermostScope_test2014_28.C \
+  inputmoveDeclarationToInnermostScope_test2014_29.C \
+  inputmoveDeclarationToInnermostScope_test2014_30.C \
+  inputmoveDeclarationToInnermostScope_test2014_31.C \
+  inputmoveDeclarationToInnermostScope_test2015_01.C \
+  inputmoveDeclarationToInnermostScope_test2015_02.C \
+  inputmoveDeclarationToInnermostScope_test2015_03.C \
+  inputmoveDeclarationToInnermostScope_test2015_04.C \
+  inputmoveDeclarationToInnermostScope_test2015_05.C \
+  inputmoveDeclarationToInnermostScope_test2015_06.C \
+  inputmoveDeclarationToInnermostScope_test2015_07.C \
+  inputmoveDeclarationToInnermostScope_test2015_08.C \
+  inputmoveDeclarationToInnermostScope_test2015_09.C \
+  inputmoveDeclarationToInnermostScope_test2015_10.C \
+  inputmoveDeclarationToInnermostScope_test2015_11.C \
+  inputmoveDeclarationToInnermostScope_test2015_12.C \
+  inputmoveDeclarationToInnermostScope_test2015_13.C \
+  inputmoveDeclarationToInnermostScope_test2015_14.C \
+  inputmoveDeclarationToInnermostScope_test2015_15.C \
+  inputmoveDeclarationToInnermostScope_test2015_16.C \
+  inputmoveDeclarationToInnermostScope_test2015_17.C \
+  inputmoveDeclarationToInnermostScope_test2015_18.C \
+  inputmoveDeclarationToInnermostScope_test2015_19.C \
+  inputmoveDeclarationToInnermostScope_test2015_20.C \
+  inputmoveDeclarationToInnermostScope_test2015_21.C \
+  inputmoveDeclarationToInnermostScope_test2015_22.C \
+  inputmoveDeclarationToInnermostScope_test2015_23.C \
+  inputmoveDeclarationToInnermostScope_test2015_24.C \
+  inputmoveDeclarationToInnermostScope_test2015_25.C \
+  inputmoveDeclarationToInnermostScope_test2015_26.C \
+  inputmoveDeclarationToInnermostScope_test2015_27.C \
+  inputmoveDeclarationToInnermostScope_test2015_28.C \
+  inputmoveDeclarationToInnermostScope_test2015_29.C \
+  inputmoveDeclarationToInnermostScope_test2015_30.C \
+  inputmoveDeclarationToInnermostScope_test2015_31.C \
+  inputmoveDeclarationToInnermostScope_test2015_32.C \
+  inputmoveDeclarationToInnermostScope_test2015_33.C \
+  inputmoveDeclarationToInnermostScope_test2015_34.C \
+  inputmoveDeclarationToInnermostScope_test2015_35.C \
+  inputmoveDeclarationToInnermostScope_test2015_36.C \
+  inputmoveDeclarationToInnermostScope_test2015_37.C \
+  inputmoveDeclarationToInnermostScope_test2015_38.C \
+  inputmoveDeclarationToInnermostScope_test2015_39.C \
+  inputmoveDeclarationToInnermostScope_test2015_40.C \
+  inputmoveDeclarationToInnermostScope_test2015_41.C \
+  inputmoveDeclarationToInnermostScope_test2015_42.C \
+  inputmoveDeclarationToInnermostScope_test2015_43.C \
+  inputmoveDeclarationToInnermostScope_test2015_44.C \
+  inputmoveDeclarationToInnermostScope_test2015_45.C \
+  inputmoveDeclarationToInnermostScope_test2015_46.C \
+  inputmoveDeclarationToInnermostScope_test2015_47.C \
+  inputmoveDeclarationToInnermostScope_test2015_48.C \
+  inputmoveDeclarationToInnermostScope_test2015_49.C \
+  inputmoveDeclarationToInnermostScope_test2015_50.C \
+  inputmoveDeclarationToInnermostScope_test2015_51.C \
+  inputmoveDeclarationToInnermostScope_test2015_52.C \
+  inputmoveDeclarationToInnermostScope_test2015_53.C \
+  inputmoveDeclarationToInnermostScope_test2015_54.C \
+  inputmoveDeclarationToInnermostScope_test2015_55.C \
+  inputmoveDeclarationToInnermostScope_test2015_56.C \
+  inputmoveDeclarationToInnermostScope_test2015_57.C \
+  inputmoveDeclarationToInnermostScope_test2015_58.C \
+  inputmoveDeclarationToInnermostScope_test2015_59.C \
+  inputmoveDeclarationToInnermostScope_test2015_60.C \
+  inputmoveDeclarationToInnermostScope_test2015_61.C \
+  inputmoveDeclarationToInnermostScope_test2015_62.C \
+  inputmoveDeclarationToInnermostScope_test2015_63.C \
+  inputmoveDeclarationToInnermostScope_test2015_64.C \
+  inputmoveDeclarationToInnermostScope_test2015_65.C \
+  inputmoveDeclarationToInnermostScope_test2015_66.C \
+  inputmoveDeclarationToInnermostScope_test2015_67.C \
+  inputmoveDeclarationToInnermostScope_test2015_68.C \
+  inputmoveDeclarationToInnermostScope_test2015_69.C \
+  inputmoveDeclarationToInnermostScope_test2015_70.C \
+  inputmoveDeclarationToInnermostScope_test2015_71.C \
+  inputmoveDeclarationToInnermostScope_test2015_72.C \
+  inputmoveDeclarationToInnermostScope_test2015_73.C \
+  inputmoveDeclarationToInnermostScope_test2015_74.C \
+  inputmoveDeclarationToInnermostScope_test2015_75.C \
+  inputmoveDeclarationToInnermostScope_test2015_76.C \
+  inputmoveDeclarationToInnermostScope_test2015_77.C \
+  inputmoveDeclarationToInnermostScope_test2015_78.C \
+  inputmoveDeclarationToInnermostScope_test2015_79.C \
+  inputmoveDeclarationToInnermostScope_test2015_80.C \
+  inputmoveDeclarationToInnermostScope_test2015_81.C \
+  inputmoveDeclarationToInnermostScope_test2015_82.C \
+  inputmoveDeclarationToInnermostScope_test2015_83.C \
+  inputmoveDeclarationToInnermostScope_test2015_84.C \
+  inputmoveDeclarationToInnermostScope_test2015_85.C \
+  inputmoveDeclarationToInnermostScope_test2015_86.C \
+  inputmoveDeclarationToInnermostScope_test2015_87.C \
+  inputmoveDeclarationToInnermostScope_test2015_88.C \
+  inputmoveDeclarationToInnermostScope_test2015_89.C \
+  inputmoveDeclarationToInnermostScope_test2015_90.C \
+  inputmoveDeclarationToInnermostScope_test2015_91.C \
+  inputmoveDeclarationToInnermostScope_test2015_92.C \
+  inputmoveDeclarationToInnermostScope_test2015_93.C \
+  inputmoveDeclarationToInnermostScope_test2015_94.C \
+  inputmoveDeclarationToInnermostScope_test2015_95.C \
+  inputmoveDeclarationToInnermostScope_test2015_96.C \
+  inputmoveDeclarationToInnermostScope_test2015_97.C \
+  inputmoveDeclarationToInnermostScope_test2015_98.C \
+  inputmoveDeclarationToInnermostScope_test2015_99.C \
+  inputmoveDeclarationToInnermostScope_test2015_102.C \
+  inputmoveDeclarationToInnermostScope_test2015_103.C \
+  inputmoveDeclarationToInnermostScope_test2015_104.C \
+  inputmoveDeclarationToInnermostScope_test2015_105.C \
+  inputmoveDeclarationToInnermostScope_test2015_108.C \
+  inputmoveDeclarationToInnermostScope_test2015_109.C \
+  inputmoveDeclarationToInnermostScope_test2015_110.C \
+  inputmoveDeclarationToInnermostScope_test2015_111.C \
+  inputmoveDeclarationToInnermostScope_test2015_112.C \
+  inputmoveDeclarationToInnermostScope_test2015_113.C \
+  inputmoveDeclarationToInnermostScope_test2015_114.C \
+  inputmoveDeclarationToInnermostScope_test2015_115.C \
+  inputmoveDeclarationToInnermostScope_test2015_116.C 
+
+# DQ (1/11/2014): Failing test with new design.
+#  inputmoveDeclarationToInnermostScope_test2015_45.C 
+#  inputmoveDeclarationToInnermostScope_test2015_46.C 
+#  inputmoveDeclarationToInnermostScope_test2015_47.C 
+#  inputmoveDeclarationToInnermostScope_test2015_48.C 
+
+# DQ (1/11/2014): Failing test with new design.
+# inputmoveDeclarationToInnermostScope_test2014_09.C 
+# inputmoveDeclarationToInnermostScope_test2014_26.C 
+# inputmoveDeclarationToInnermostScope_test2015_06.C 
+
+# DQ (1/4/2014): Failing test with new design.
+#  inputmoveDeclarationToInnermostScope_test2014_20.C 
+#  inputmoveDeclarationToInnermostScope_test2014_26.C 
+#  inputmoveDeclarationToInnermostScope_test2015_06.C 
+#  inputmoveDeclarationToInnermostScope_test2015_07.C 
+#  inputmoveDeclarationToInnermostScope_test2015_11.C 
+
+# DQ (12/23/2014): These fail (for the same reason) and demonstrate a bug in the move tool.
+# inputmoveDeclarationToInnermostScope_test2014_18.C 
+# inputmoveDeclarationToInnermostScope_test2014_22.C
+# inputmoveDeclarationToInnermostScope_5.C (while statements not yet supported)
+
+# DQ (12/23/2014): Notes:
+# inputmoveDeclarationToInnermostScope_2.C (works, but demonstrates that "\" is not output as token)
+# inputmoveDeclarationToInnermostScope_4.C (works, but diff includes "{" and "}" for for loop bodies that didn't include that syntax).
+# inputmoveDeclarationToInnermostScope_6.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+# inputmoveDeclarationToInnermostScope_9.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+# inputmoveDeclarationToInnermostScope_14.C (works, but same issue as inputmoveDeclarationToInnermostScope_4.C).
+
+
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix rose_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
+
+PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
+   $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) 
+
+PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
+   $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) \
+   $(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS)
+
+REFERENCE_PATH = $(top_srcdir)/tests/roseTests/astInterfaceTests/referenceResults
+MOVE_DECLS_DIFF_FILES=$(PASSING_MOVE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+
+MOVE_MERGE_DECLS_DIFF_FILES=$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS:.C=.C.diff)
+DIFF=diff
+#$(MOVE_DECLS_DIFF_FILES):$(@:.C.diff=.C)
+$(MOVE_DECLS_DIFF_FILES):$(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+$(MOVE_MERGE_DECLS_DIFF_FILES):$(PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS)
+	echo "Verifying moveDeclarationToInnermostScope translation with merge by diff ..."; \
+	if $(DIFF) $(@:.C.diff=.C) $(REFERENCE_PATH)/withmerge/$(@:.C.diff=.C) > $@ ; then echo "Test Passed" ; else echo "Files differ; test falied"; rm -rf $@; exit 1; fi
+
+
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_%=%)
+
+test_move_decls: $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
+
+test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS)
+	@echo "********************************************************************************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInterface_tests/moveDeclarationToInnermostScope: make test_move_decls_with_token_unparsing rule complete (terminated normally) ******"
+	@echo "********************************************************************************************************************************************************************"
+
+# test both diff cases
+move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+
+# only move , no merge
+move_decls_diff_check: $(MOVE_DECLS_DIFF_FILES)
+# both move and merge
+move_merge_decls_diff_check: $(MOVE_MERGE_DECLS_DIFF_FILES)
+
 # Liao 8/17/2010
 #if USE_ROSE_OPEN_FORTRAN_PARSER_SUPPORT
 # if ROSE_USE_OPEN_FORTRAN_PARSER
@@ -470,62 +743,18 @@ rose_inputloopCollapsing_5.C: inputloopCollapsing_5.C loopCollapsing
 		$(srcdir)/astInterface.conf $@.passed
 endif
 
-rose_inputmoveDeclarationToInnermostScope_1.C: inputmoveDeclarationToInnermostScope_1.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug"  \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+# rules for declaration moving tests
+$(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug $(srcdir)/$(@:rose_%=%)
 
-rose_inputmoveDeclarationToInnermostScope_2.C: inputmoveDeclarationToInnermostScope_2.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+$(MOVE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:keep_going $(srcdir)/$(@:rose_%=%)
 
-rose_inputmoveDeclarationToInnermostScope_3.C: inputmoveDeclarationToInnermostScope_3.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
+$(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2_%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
-rose_inputmoveDeclarationToInnermostScope_4.C: inputmoveDeclarationToInnermostScope_4.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_5.C: inputmoveDeclarationToInnermostScope_5.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_6.C: inputmoveDeclarationToInnermostScope_6.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_7.C: inputmoveDeclarationToInnermostScope_7.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
-rose_inputmoveDeclarationToInnermostScope_8.C: inputmoveDeclarationToInnermostScope_8.C moveDeclarationToInnermostScope
-	@$(RTH_RUN) \
-		EXE="$$(pwd)/moveDeclarationToInnermostScope$(EXEEXT)" \
-		FLAGS="$(TEST_CXXFLAGS) -rose:debug" \
-		INPUT=$(abspath $<) \
-		$(srcdir)/astInterface.conf $@.passed
-
+$(MOVE_MERGE_DECLS_TESTCODES_PARTIALLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_v2%=%) moveDeclarationToInnermostScope 
+		./moveDeclarationToInnermostScope $(TEST_CXXFLAGS) -c -rose:debug -rose:merge_decl_assign -rose:keep_going $(srcdir)/$(@:rose_v2%=%) -rose:output $@
 
 # interchange the first loop within the input file, interchange depth is 4, lexicographical order is 1.
 rose_inputloopInterchange.C: inputloopInterchange.C loopInterchange
@@ -629,9 +858,13 @@ unit-tests:
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(generatedCodeExamples) unit-tests
+# move_decls_diff_check move_merge_decls_diff_check
+check-local: $(generatedCodeExamples) move_diff_check 
 
 clean-local:
-	rm -f $(generatedCodeExamples) *.dot
+	rm -f $(generatedCodeExamples) *.dot $(PASSING_MOVE_DECLS_TESTCODES_RESULTS)
 	rm -f $(addsuffix .passed, $(generatedCodeExamples))
 	rm -f $(addsuffix .failed, $(generatedCodeExamples))
+	rm -f $(addsuffix .passed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .failed, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
+	rm -f $(addsuffix .diff, $(PASSING_MOVE_DECLS_TESTCODES_RESULTS))
