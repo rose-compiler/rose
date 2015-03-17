@@ -2001,10 +2001,11 @@ struct IP_storestring: P {
 struct IP_stmxcsr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 1);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        if (nbits!=32)
-            throw BaseSemantics::Exception("STMXCSR operand must be 32 bits", insn);
-        d->write(args[0], d->readRegister(d->REG_MXCSR));
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            d->write(args[0], d->readRegister(d->REG_MXCSR));
+        }
     }
 };
 
