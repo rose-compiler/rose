@@ -2113,26 +2113,33 @@ struct IP_xchg: P {
 struct IP_xor: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        BaseSemantics::SValuePtr result;
-
-        // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
-        if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1])) {
-            RegisterDescriptor r1 = isSgAsmRegisterReferenceExpression(args[0])->get_descriptor();
-            RegisterDescriptor r2 = isSgAsmRegisterReferenceExpression(args[1])->get_descriptor();
-            if (r1==r2)
+        if (insn->get_lockPrefix() && !isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr result;
+            
+            if (isSgAsmRegisterReferenceExpression(args[0]) && isSgAsmRegisterReferenceExpression(args[1]) &&
+                   (isSgAsmRegisterReferenceExpression(args[0])->get_descriptor() ==
+                    isSgAsmRegisterReferenceExpression(args[1])->get_descriptor())) {
+                // XOR of a register with itself is an x86 idiom for setting the register to zero, so treat it as such
+                size_t nbits = asm_type_width(args[0]->get_type());
                 result = ops->number_(nbits, 0);
+            } else {
+                // The non-idiomatic behavior
+                BaseSemantics::SValuePtr a = d->read(args[0]);
+                BaseSemantics::SValuePtr b = d->read(args[1]);
+                if (a->get_width() > b->get_width())
+                    b = ops->signExtend(b, a->get_width());
+                ASSERT_require(a->get_width() == b->get_width());
+                result = ops->xor_(a, b);
+            }
+        
+            d->setFlagsForResult(result);
+            d->write(args[0], result);
+            ops->writeRegister(d->REG_OF, ops->boolean_(false));
+            ops->writeRegister(d->REG_AF, ops->undefined_(1));
+            ops->writeRegister(d->REG_CF, ops->boolean_(false));
         }
-
-        // The non-idiomatic behavior
-        if (result==NULL)
-            result = ops->xor_(d->read(args[0], nbits), d->read(args[1], nbits));
-
-        d->setFlagsForResult(result);
-        d->write(args[0], result);
-        ops->writeRegister(d->REG_OF, ops->boolean_(false));
-        ops->writeRegister(d->REG_AF, ops->undefined_(1));
-        ops->writeRegister(d->REG_CF, ops->boolean_(false));
     }
 };
 
