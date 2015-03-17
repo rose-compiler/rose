@@ -2033,7 +2033,11 @@ struct IP_sub: P {
 struct IP_sysenter: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
-        ops->interrupt(1, 0); // 1 indicates a SYSENTER instruction as opposed to an INT instruction
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->interrupt(x86_exception_sysenter, 0);
+        }
     }
 };
 
