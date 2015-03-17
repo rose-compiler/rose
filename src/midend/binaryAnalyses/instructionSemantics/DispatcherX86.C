@@ -1849,12 +1849,16 @@ struct IP_shift: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(insn->get_kind()==kind);
-        size_t nbits = asm_type_width(args[0]->get_type());
-        size_t shiftSignificantBits = nbits <= 32 ? 5 : 7;
-        BaseSemantics::SValuePtr result = d->doShiftOperation(insn->get_kind(), d->read(args[0], nbits),
-                                                              ops->undefined_(nbits), d->read(args[1], 8),
-                                                              shiftSignificantBits);
-        d->write(args[0], result);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t nbits = asm_type_width(args[0]->get_type());
+            size_t shiftSignificantBits = nbits <= 32 ? 5 : 6;
+            BaseSemantics::SValuePtr result = d->doShiftOperation(insn->get_kind(), d->read(args[0]),
+                                                                  ops->undefined_(nbits), d->read(args[1], 8),
+                                                                  shiftSignificantBits);
+            d->write(args[0], result);
+        }
     }
 };
 
@@ -2759,8 +2763,8 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
                                                   operators->readRegister(REG_OF),
                                                   undefined_(1)));
             break;
-        default: // to shut up compiler warnings even though we would have aborted by now.
-            abort();
+        default:
+            ASSERT_not_reachable("instruction not handled");
     }
     operators->writeRegister(REG_OF, newOF);
 
