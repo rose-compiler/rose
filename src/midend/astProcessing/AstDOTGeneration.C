@@ -123,7 +123,7 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                     ia.skipSubTree = true;
                   }
 
-#define DEBUG_DSL_EXAMPLES 1
+#define DEBUG_DSL_EXAMPLES 0
 
 #if DEBUG_DSL_EXAMPLES
             // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
