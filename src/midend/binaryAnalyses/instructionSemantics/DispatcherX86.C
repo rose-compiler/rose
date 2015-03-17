@@ -1880,10 +1880,10 @@ struct IP_setcc: P {
 };
 
 // Shift instructions: SHL, SAR, and SHR
-struct IP_shift: P {
+struct IP_shift_1: P {
     const X86InstructionKind kind;
-    IP_shift(X86InstructionKind k): kind(k) {
-        ASSERT_require(x86_shr==k || x86_sar==k || x86_shl==k || x86_shld==k || x86_shrd==k);
+    IP_shift_1(X86InstructionKind k): kind(k) {
+        ASSERT_require(x86_shr==k || x86_sar==k || x86_shl==k);
     }
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -1893,9 +1893,29 @@ struct IP_shift: P {
         } else {
             size_t nbits = asm_type_width(args[0]->get_type());
             size_t shiftSignificantBits = nbits <= 32 ? 5 : 6;
-            BaseSemantics::SValuePtr result = d->doShiftOperation(insn->get_kind(), d->read(args[0]),
-                                                                  ops->undefined_(nbits), d->read(args[1], 8),
-                                                                  shiftSignificantBits);
+            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), ops->undefined_(nbits),
+                                                                  d->read(args[1], 8), shiftSignificantBits);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Double-wide shift: SHLD
+struct IP_shift_2: P {
+    const X86InstructionKind kind;
+    IP_shift_2(X86InstructionKind k): kind(k) {
+        ASSERT_require(x86_shld==k || x86_shrd==k);
+    }
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        ASSERT_require(insn->get_kind()==kind);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t halfWidth = asm_type_width(args[0]->get_type());
+            size_t shiftSignificantBits = halfWidth <= 32 ? 5 : 6;
+            BaseSemantics::SValuePtr result = d->doShiftOperation(kind, d->read(args[0]), d->read(args[1]),
+                                                                  d->read(args[2], 8), shiftSignificantBits);
             d->write(args[0], result);
         }
     }
@@ -2213,7 +2233,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_ret,          new X86::IP_ret);
     iproc_set(x86_rol,          new X86::IP_rotate(x86_rol));
     iproc_set(x86_ror,          new X86::IP_rotate(x86_ror));
-    iproc_set(x86_sar,          new X86::IP_shift(x86_sar));
+    iproc_set(x86_sar,          new X86::IP_shift_1(x86_sar));
     iproc_set(x86_sbb,          new X86::IP_sbb);
     iproc_set(x86_scasb,        new X86::IP_scanstring(x86_repeat_none, 8));
     iproc_set(x86_scasw,        new X86::IP_scanstring(x86_repeat_none, 16));
@@ -2235,10 +2255,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_setpe,        new X86::IP_setcc(x86_setpe));
     iproc_set(x86_setpo,        new X86::IP_setcc(x86_setpo));
     iproc_set(x86_sets,         new X86::IP_setcc(x86_sets));
-    iproc_set(x86_shl,          new X86::IP_shift(x86_shl));
-    iproc_set(x86_shld,         new X86::IP_shift(x86_shld));
-    iproc_set(x86_shr,          new X86::IP_shift(x86_shr));
-    iproc_set(x86_shrd,         new X86::IP_shift(x86_shrd));
+    iproc_set(x86_shl,          new X86::IP_shift_1(x86_shl));
+    iproc_set(x86_shld,         new X86::IP_shift_2(x86_shld));
+    iproc_set(x86_shr,          new X86::IP_shift_1(x86_shr));
+    iproc_set(x86_shrd,         new X86::IP_shift_2(x86_shrd));
     iproc_set(x86_stc,          new X86::IP_stc);
     iproc_set(x86_std,          new X86::IP_std);
     iproc_set(x86_stosb,        new X86::IP_storestring(x86_repeat_none, 8));
