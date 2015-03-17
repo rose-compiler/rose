@@ -2064,6 +2064,13 @@ struct IP_test: P {
     }
 };
 
+// Undefined instruction: UD2
+struct IP_ud2: P {
+    void p(D d, Ops ops, I insn, A args) {
+        ops->interrupt(x86_exception_ud, 0);
+    }
+};
+
 // Wait (check for and handle unmasked floating-point exceptions)
 struct IP_wait: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2325,6 +2332,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_sub,          new X86::IP_sub);
     iproc_set(x86_sysenter,     new X86::IP_sysenter);
     iproc_set(x86_test,         new X86::IP_test);
+    iproc_set(x86_ud2,          new X86::IP_ud2);
     iproc_set(x86_wait,         new X86::IP_wait);
     iproc_set(x86_xadd,         new X86::IP_xadd);
     iproc_set(x86_xchg,         new X86::IP_xchg);
