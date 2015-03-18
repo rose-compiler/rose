@@ -18,12 +18,13 @@ public:
   void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, Lattice& element);
   void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
-  CppExprEvaluator* _cppExprEvaluator;
-private:
-  NumberIntervalLattice* _domain;
-  SPRAY::Labeler* _labeler;
-  VariableIdMapping* _variableIdMapping;
   void setPropertyState(PropertyState* p) { _cppExprEvaluator->setPropertyState(p); }
+  //private:
+  CppExprEvaluator* getCppExprEvaluator();
+  void setCppExprEvaluator(CppExprEvaluator* expEval);
+private:
+  CppExprEvaluator* _cppExprEvaluator;
+  NumberIntervalLattice* _domain;
 };
 
 #endif

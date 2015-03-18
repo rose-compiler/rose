@@ -31,9 +31,10 @@ public:
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
-protected:
+  //protected:
+ public:
   SPRAY::Labeler* _labeler;
-  VariableIdMapping* _variableIdMapping;
+  SPRAY::VariableIdMapping* _variableIdMapping;
   Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 };

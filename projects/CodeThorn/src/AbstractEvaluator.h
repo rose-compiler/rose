@@ -13,14 +13,15 @@ using namespace std;
 
 class CppExprEvaluator {
  public:
-  CppExprEvaluator(NumberIntervalLattice* d, PropertyState* p, VariableIdMapping* vim):domain(d), propertyState(p),variableIdMapping(vim){}
+ CppExprEvaluator(NumberIntervalLattice* d, VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
+  }
+
   NumberIntervalLattice evaluate(SgNode* node) {
 
     ROSE_ASSERT(domain);
     ROSE_ASSERT(propertyState);
     ROSE_ASSERT(variableIdMapping);
 
-    cout<<"DEBUG: eval @:"<<node->unparseToString()<<endl;
     if(isSgBinaryOp(node)) {
       SgNode* lhs=SgNodeHelper::getLhs(node);
       SgNode* rhs=SgNodeHelper::getRhs(node);
@@ -32,37 +33,24 @@ class CppExprEvaluator {
       case V_SgModOp: return domain->arithMod(evaluate(lhs),evaluate(rhs));
       case V_SgAssignOp: {
         if(SgVarRefExp* lhsVar=isSgVarRefExp(lhs)) {
-          cout<<"DEBUG: EVAL: LHS-VAR: VID:"<<variableIdMapping<<endl;
-#if 1
           ROSE_ASSERT(variableIdMapping);
           //variableIdMapping->toStream(cout);
           VariableId varId=variableIdMapping->variableId(lhsVar);
           if(IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState)) {
-            cout<<"DEBUG: eval: rhs:"<<rhs->unparseToString()<<endl;
             NumberIntervalLattice rhsResult=evaluate(rhs);
-            cout<<"DEBUG: eval: rhs-result:"<<rhsResult.toString()<<endl;
-            cout<<"DEBUG: eval: updating:"<<varId.toString()<<endl;
-
-            cout<<"DEBUG: eval: before-update:"<<ips->intervals[varId].toString()<<endl;
-            //            cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
-            //ips->intervals[varId]=rhsResult;
-            cout<<"DEBUG: eval: after-update :"<<ips->intervals[varId].toString()<<endl;
-            //     cout<<"DEBUG: eval-PSTATE:"<<ips->toString()<<endl;
+            ips->setVariable(varId,rhsResult);
             return rhsResult;
           } else {
             cerr<<"Error: CppExprEvaluator:: Unknown type of property state."<<endl;
             exit(1);
           }
-#else
-          cout<<"WARNING: not handling assignment.[vid:"<<variableIdMapping<<","<<"ps:"<<propertyState<<"]"<<endl;
-#endif
         } else {
           cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<endl;
           return NumberIntervalLattice::top();
         }
       }
       default:
-        cout<<"Warning: unknown binary operator."<<endl;
+        cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
         return NumberIntervalLattice::top();
       }
     }
@@ -72,20 +60,18 @@ class CppExprEvaluator {
     case V_SgVarRefExp: {
       SgVarRefExp* varRefExp=isSgVarRefExp(node);
       ROSE_ASSERT(varRefExp);
-      cout<<"DEBUG: accessing variable "<<varRefExp->unparseToString();
       VariableId varId=variableIdMapping->variableId(varRefExp);
-      cout<<" varid:"<<varId.toString()<<endl;
 
       IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
       ROSE_ASSERT(ips);
-      NumberIntervalLattice evalResult=ips->intervals[varId];
+      NumberIntervalLattice evalResult=ips->getVariable(varId);
       return evalResult;
     }
     default: // generates top element
-      cout<<"Warning: unknown unary operator."<<endl;
+      cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
       return NumberIntervalLattice::top();
     }
-    cerr<<"Warning: Unknown operator."<<endl;
+    cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
     return NumberIntervalLattice::top();
   }
   void setDomain(NumberIntervalLattice* domain) { this->domain=domain; }
@@ -93,24 +79,13 @@ class CppExprEvaluator {
   void setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
     this->variableIdMapping=variableIdMapping;
   }
+  bool isValid() {
+    return domain!=0 && propertyState!=0 && variableIdMapping!=0;
+  }
 private:
   NumberIntervalLattice* domain;
-  PropertyState* propertyState;
-
-  //temporarily public
- public:
   VariableIdMapping* variableIdMapping;
+  PropertyState* propertyState;
 };
-
-#if 0
-template<AbstractLValue, AbstractRValue, PropertyState, Domain>
-class AbstractEvaluator {
-  void setDomain(Domain* domain) { _domain=domain; }
-  virtual AbstractRValue evaluateRValueExpression(SgExpression* node, PropertyState* pstate) { return defaultRValue(); }
-  virtual AbstractLValue evaluateLValueExpression(SgExpression* node, PropertyState* pstate) { return defaultLValue(); }
-  virtual defautRValue() { return AbstractRValue(); }
-  virtual defautLValue() { return AbstractLValue(); }
-};
-#endif
 
 #endif

@@ -14,6 +14,9 @@ public:
   void combine(Lattice& other);
   // adds integer variable
   void addVariable(VariableId varId);
+  void setVariable(VariableId varId,NumberIntervalLattice num);
+  NumberIntervalLattice getVariable(SPRAY::VariableId varId);
+  SPRAY::VariableIdSet allVariableIds();
 #if 0
   // adds pointer variable
   void addPointerVariable(VariableId);
@@ -21,11 +24,11 @@ public:
   void addArrayElements(VariableId,int number);
 #endif
   typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
-  IntervalMapType intervals;
   bool isBot() { return _bot; }
   void setBot() { _bot=true; }
   void setEmptyState();
  private:
+  IntervalMapType intervals;
   bool _bot;
 };
 

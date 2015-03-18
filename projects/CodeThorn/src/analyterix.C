@@ -10,7 +10,7 @@
 #include "WorkList.h"
 #include "CFAnalyzer.h"
 #include "RDLattice.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "RDAnalysis.h"
 #include "RoseRDAnalysis.h"
 #include "LVAnalysis.h"
@@ -124,8 +124,6 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     intervalAnalyzer->initialize(root);
     cout << "STATUS: initializing interval transfer functions."<<endl;
     intervalAnalyzer->initializeTransferFunctions();
-
-    cout << "VID1:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
@@ -134,13 +132,12 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
-#if 1
     intervalAnalyzer->run();
-    cout << "VID2:"<<((dynamic_cast<IntervalTransferFunctions*>(intervalAnalyzer->_transferFunctions))->_cppExprEvaluator->variableIdMapping)<<endl;
-
-#else
-    cout << "STATUS: did not run interval analysis."<<endl;      
-#endif
+    intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
+    intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
+    AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
+    ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
   }
 
   if(option_lv_analysis) {

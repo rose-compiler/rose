@@ -26,10 +26,10 @@ namespace CodeThorn {
 
 #include "PropertyState.h"
 
-class DFAnalysis2 {
+class DFAnalysisBase {
  public:
-  DFAnalysis2();
-  virtual ~DFAnalysis2();
+  DFAnalysisBase();
+  virtual ~DFAnalysisBase();
   void setExtremalLabels(set<Label> extremalLabels);
   void initialize(SgProject*);
   void setForwardAnalysis();
@@ -42,7 +42,7 @@ class DFAnalysis2 {
   virtual void initializeSolver();
   void determineExtremalLabels(SgNode*);
   void run();
-  PropertyState* createPropertyState();
+  //virtual PropertyState* createPropertyState();
 
   // results are accessible through begin/end and iterator.
   typedef vector<Lattice*> AnalyzerData;

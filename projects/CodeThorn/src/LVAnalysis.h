@@ -8,7 +8,7 @@
 #include "Labeler.h"
 #include "CFAnalyzer.h"
 #include "LVLattice.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
@@ -31,7 +31,7 @@ class LVPropertyStateFactory : public PropertyStateFactory {
   * \author Markus Schordan
   * \date 2013.
  */
-class LVAnalysis : public DFAnalysis2 {
+class LVAnalysis : public DFAnalysisBase {
  public:
   LVAnalysis();
   ~LVAnalysis();

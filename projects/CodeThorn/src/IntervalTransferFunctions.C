@@ -16,9 +16,7 @@ using namespace SPRAY;
 
 IntervalTransferFunctions::IntervalTransferFunctions():
   _cppExprEvaluator(0),
-  _domain(0),
-  _labeler(0),
-  _variableIdMapping(0)
+  _domain(0)
 {
 }
 
@@ -45,9 +43,9 @@ IntervalTransferFunctions::~IntervalTransferFunctions() {
 void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   //ROSE_ASSERT(_variableIdMapping); TODO
   NumberIntervalLattice niLattice;
-  cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
+  //cout<<"TINFO: transferExpression "<<node->unparseToString()<<endl;
   _cppExprEvaluator->setPropertyState(&pstate);
-  cout<<"PSTATE:"<<pstate.toString()<<endl;
+  //cout<<"PSTATE:";pstate.toStream(cout,_variableIdMapping);cout<<endl;
   _cppExprEvaluator->evaluate(node); // ignore return value for now
 }
 
@@ -55,10 +53,14 @@ void IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node
   * \author Markus Schordan
   * \date 2014.
  */
-//NOTE: missing: UD must take uses in initializers into account
 void IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
+  ROSE_ASSERT(this!=0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
-  ROSE_ASSERT(node);
+  ROSE_ASSERT(_variableIdMapping);
+  VariableId varId=_variableIdMapping->variableId(node);
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+  ROSE_ASSERT(ips);
+  ips->addVariable(varId);
 }
 
 
@@ -109,4 +111,12 @@ void IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefini
     // TODO: element.removeVariableFromState(varId);
   }
   // TODO:: return variable $r
+}
+
+CppExprEvaluator* IntervalTransferFunctions::getCppExprEvaluator() {
+  return _cppExprEvaluator;
+}
+
+void IntervalTransferFunctions::setCppExprEvaluator(CppExprEvaluator* expEval) {
+  _cppExprEvaluator=expEval;
 }

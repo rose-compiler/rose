@@ -15,7 +15,10 @@ void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
         os<<", ";
       VariableId varId=(*i).first;
       NumberIntervalLattice niElem=(*i).second;
-      cout<<vim->variableName(varId)<<"->"<<niElem.toString();
+      if(vim)
+        os<<vim->variableName(varId)<<"->"<<niElem.toString();
+      else
+        os<<varId.toString()<<"->"<<niElem.toString();
     }
     os<<"}";
   }
@@ -49,11 +52,30 @@ void IntervalPropertyState::combine(Lattice& other0){
     VariableId varId=(*i).first;
     intervals[varId].join(other->intervals[varId]);
   }
+  for(IntervalMapType::iterator i=other->intervals.begin();i!=other->intervals.end();++i) {
+    VariableId varId=(*i).first;
+    if(intervals.find(varId)==intervals.end()) {
+      // other ps's variable is not in this ps yet
+      intervals[varId]=(*i).second;
+    }else {
+      intervals[varId].join(other->intervals[varId]);
+    }
+  }
 }
 
 // adds integer variable
 void IntervalPropertyState::addVariable(VariableId varId) {
   intervals[varId]=NumberIntervalLattice();
+}
+
+// assign integer variable
+void IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
+  intervals[varId]=num;
+}
+
+// assign integer variable
+NumberIntervalLattice IntervalPropertyState::getVariable(VariableId varId) {
+  return intervals[varId];
 }
 
 void IntervalPropertyState::setEmptyState() {
@@ -69,3 +91,11 @@ void IntervalPropertyState::setEmptyState() {
   // adds array elements for indices 0 to number-1
   void IntervalPropertyState::addArrayElements(VariableId,int number);
 #endif
+
+VariableIdSet IntervalPropertyState::allVariableIds() {
+  VariableIdSet set;
+  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    set.insert((*i).first);
+  }
+  return set;
+}

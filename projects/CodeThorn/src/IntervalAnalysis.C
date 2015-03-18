@@ -28,18 +28,17 @@ void IntervalAnalysis::initializeExtremalValue(Lattice* element) {
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
-DFAstAttribute* IntervalAnalysis::createDFAstAttribute(IntervalPropertyState* elem) {
-  return new IntervalAstAttribute(elem);
+DFAstAttribute* IntervalAnalysis::createDFAstAttribute(Lattice* elem) {
+  IntervalPropertyState* ivElem=dynamic_cast<IntervalPropertyState*>(elem);
+  ROSE_ASSERT(ivElem);
+  return new IntervalAstAttribute(ivElem);
 }
 
 void IntervalAnalysis::initializeTransferFunctions() {
-  cerr<<"P1"<<endl;
-  DFAnalysis2::initializeTransferFunctions();
+   DFAnalysisBase::initializeTransferFunctions();
   _numberIntervalLattice=new NumberIntervalLattice();
   ROSE_ASSERT(_numberIntervalLattice);
-  ROSE_ASSERT(dynamic_cast<IntervalTransferFunctions*>(_transferFunctions));
-  cerr<<"P2"<<endl;
-  ROSE_ASSERT(dynamic_cast<IntervalTransferFunctions*>(_transferFunctions)->_cppExprEvaluator==0);
-  dynamic_cast<IntervalTransferFunctions*>(_transferFunctions)->_cppExprEvaluator=new CppExprEvaluator(_numberIntervalLattice,0,&_variableIdMapping);
-  cerr<<"P3"<<endl;
-}
+  IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<IntervalTransferFunctions*>(_transferFunctions);
+  ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
+  intervalTransferFunctions->setCppExprEvaluator(new CppExprEvaluator(_numberIntervalLattice,&_variableIdMapping));
+ }

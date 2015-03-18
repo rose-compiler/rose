@@ -22,9 +22,10 @@ template<typename Type>
 class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- GenericIntervalLattice() { setTop();}
- GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false) {} 
- GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
+ GenericIntervalLattice():_exactJoin(false) { setTop();}
+ GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
+ GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
+  void setExactJoin(bool exact) { _exactJoin=exact; }
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
     t.setIsLowInf(false);
@@ -204,15 +205,40 @@ class GenericIntervalLattice {
   }
 
   void join(GenericIntervalLattice other) {
+    // subsumption in case none of the two intervals has an unknown bound
+    if(!isInfLength()&&!other.isInfLength()) {
+      if((_low>=other._low && _high<=other._high)
+         ||(other._low>=_low && other._high<=_high)) {
+        _low=std::min(_low,other._low);
+        _high=std::max(_high,other._high);
+        return;
+      }
+    }
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     } else {
-      _low=std::min(_low,other._low);
+      if(_exactJoin || (isConst()&&other.isConst())) {
+        _low=std::min(_low,other._low);
+      } else {
+        if(_low!=other._low) {
+          setIsLowInf(true);
+        } else {
+          // keep _low
+        }
+      }
     }
     if(isHighInf()||other.isHighInf()) {
       setIsHighInf(true);
     } else {
-      _high=std::max(_high,other._high);
+      if(_exactJoin || (isConst()&&other.isConst())) {
+        _high=std::max(_high,other._high);
+      } else {
+        if(_high!=other._high) {
+          setIsHighInf(true);
+        } else {
+          // keep _high
+        }
+      }
     }
   }
 
@@ -427,6 +453,7 @@ class GenericIntervalLattice {
   Type _high;
   bool _isLowInf;
   bool _isHighInf;
+  bool _exactJoin;
 };
 
 #endif

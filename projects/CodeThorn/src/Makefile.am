@@ -294,8 +294,8 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   PASolver1.C \
   DFTransferFunctions.h \
   DFTransferFunctions.C \
-  DFAnalysis2.h \
-  DFAnalysis2.C \
+  DFAnalysisBase.h \
+  DFAnalysisBase.C \
   RDLattice.h RDLattice.C \
   RDTransferfunctions.h RDTransferFunctions.C \
   RDAnalysis.h \
@@ -374,8 +374,8 @@ analyterix_SOURCES = \
   DataDependenceVisualizer.h \
   defUseQuery.C \
   defUseQuery.h \
-  DFAnalysis2.C \
-  DFAnalysis2.h \
+  DFAnalysisBase.C \
+  DFAnalysisBase.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
   DFTransferFunctions.C \
   DFTransferFunctions.h \
