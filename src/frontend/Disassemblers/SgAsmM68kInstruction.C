@@ -9,7 +9,7 @@
 #include "SymbolicSemantics2.h"
 
 using namespace rose;                                   // temporary until this lives in "rose"
-using namespace rose::Diagnostics;
+using namespace Sawyer::Message::Common;
 
 unsigned
 SgAsmM68kInstruction::get_anyKind() const {
