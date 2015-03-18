@@ -7,6 +7,7 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
 bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
+
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
@@ -162,7 +163,8 @@ faketarget:
 	tests/rdtest3.C 
 	tests/rdtest4.C 
 	tests/rers13_mini1.C 
-	AbstractEvaluator.h
+	CppExprEvaluator.h
+	CppExprEvaluator.C
 	AbstractValue.C
 	AbstractValue.h
 	CPDomain.hpp
@@ -288,6 +290,8 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   IntervalTransferFunctions.C \
   IntervalAstAttributeInterface.h \
   IntervalAstAttributeInterface.C \
+  CppExprEvaluator.h \
+  CppExprEvaluator.C \
   NumberIntervalLattice.h \
   NumberIntervalLattice.C \
   PASolver1.h \
@@ -368,6 +372,8 @@ analyterix_SOURCES = \
   CFAnalyzer.C \
   CFAnalyzer.h \
   CPAstAttribute.h CPAstAttribute.C \
+  CppExprEvaluator.h \
+  CppExprEvaluator.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
   DataDependenceVisualizer.C \

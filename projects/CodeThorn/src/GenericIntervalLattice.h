@@ -216,8 +216,6 @@ class GenericIntervalLattice {
         return;
       }
     }
-    if(isConst()&&other.isConst())
-
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     } else {
@@ -429,7 +427,7 @@ class GenericIntervalLattice {
 	return BoolLatticeType(false);
     }
   }
-  BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+  static BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
   bool operator==(GenericIntervalLattice l2) {
