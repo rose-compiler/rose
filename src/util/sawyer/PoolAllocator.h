@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_PoolAllocator_H
 #define Sawyer_PoolAllocator_H
 
@@ -9,6 +16,7 @@
 #include <sawyer/Interval.h>
 #include <sawyer/IntervalMap.h>
 #include <sawyer/Sawyer.h>
+#include <sawyer/Synchronization.h>
 #include <vector>
 
 namespace Sawyer {
@@ -32,8 +40,12 @@ namespace Sawyer {
  *      chunks in the allocator are the same size regardless of the cell size, and this may lead to external
  *      fragmentation&mdash;extra space at the end of a chunk that is not large enough for a complete cell.  The chunk size
  *      should be large in relation to the largest cell size (that's the whole point of pool allocation).
+ *  @li @p Sync is the syncrhonization mechanism and can be either @ref Sawyer::SingleThreadedTag or @ref
+ *      Sawyer::MultiThreadedTag. A single-threaded pool requires synchronization in the caller in order to prevent concurrent
+ *      calls to the allocator, but a multi-threaded pool performs the synchronization internally. Single-threaded pools are
+ *      somewhat faster.
  *
- *  The @ref PoolAllocator typedef provides reasonable template arguments.
+ *  The @ref SynchronizedPoolAllocator and @ref UnsynchronizedPoolAllocator typedefs provide reasonable template arguments.
  *
  *  When a pool allocator is copied, only its settings are copied, not the pools.  Since containers typically copy their
  *  constructor-provided allocators, each container will have its own pools even if one provides the same pool to all the
@@ -43,7 +55,7 @@ namespace Sawyer {
  *  Deleting a pool allocator deletes all its pools, which deletes all the chunks, which deallocates memory that might be in
  *  use by objects allocated from this allocator.  In other words, don't destroy the allocator unless you're willing that the
  *  memory for any objects in use will suddenly be freed without even calling the destructors for those objects. */
-template<size_t smallestCell, size_t sizeDelta, size_t nPools, size_t chunkSize>
+template<size_t smallestCell, size_t sizeDelta, size_t nPools, size_t chunkSize, typename Sync>
 class PoolAllocatorBase {
 public:
     enum { SMALLEST_CELL = smallestCell };
@@ -203,6 +215,7 @@ private:
     //                                  Private data members and methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
+    mutable typename SynchronizationTraits<Sync>::Mutex mutex_;
     std::vector<Pool> pools_;
 
     // Called by constructors
@@ -275,9 +288,12 @@ public:
      *
      *  The requested size must be positive.
      *
+     *  Thread safety: This method is thread safe.
+     *
      *  @sa DefaultAllocator::allocate */
     void *allocate(size_t size) {                       // hot
         ASSERT_require(size>0);
+        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         size_t pn = poolNumber(size);
         return pn < nPools ? pools_[pn].aquire() : ::operator new(size);
     }
@@ -285,9 +301,12 @@ public:
     /** Number of objects allocated and reserved.
      *
      *  Returns a pair containing the number of objects currently allocated in the pool, and the number of objects that the
-     *  pool can hold (including those that are allocated) before the pool must request more memory from the system. */
+     *  pool can hold (including those that are allocated) before the pool must request more memory from the system.
+     *
+     *  Thread safety: This method is thread-safe. */
     std::pair<size_t, size_t> nAllocated() const {
         size_t nAllocated = 0, nReserved = 0;
+        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn) {
             ChunkInfoMap cim = pools_[pn].chunkInfo();
             nReserved += nCells(pn) * cim.nIntervals();
@@ -304,15 +323,19 @@ public:
      *  deallocated in the interim.  The @p size must be the same as the argument passed to the @ref allocate call that
      *  returned this address.
      *
+     *  Thread safety: This method is thread-safe.
+     *
      *  @sa DefaultAllocator::deallocate */
     void deallocate(void *addr, size_t size) {          // hot
-        ASSERT_not_null(addr);
-        ASSERT_require(size>0);
-        size_t pn = poolNumber(size);
-        if (pn < nPools) {
-            pools_[pn].release(addr);
-        } else {
-            ::operator delete(addr);
+        if (addr) {
+            ASSERT_require(size>0);
+            size_t pn = poolNumber(size);
+            if (pn < nPools) {
+                typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
+                pools_[pn].release(addr);
+            } else {
+                ::operator delete(addr);
+            }
         }
     }
 
@@ -320,16 +343,22 @@ public:
      *
      *  A pool allocator is optimized for the utmost performance when allocating and deallocating small objects, and therefore
      *  does minimal bookkeeping and does not free chunks.  This method traverses the free lists to discover which chunks have
-     *  no cells in use, removes those cells from the free list, and frees the chunk. */
+     *  no cells in use, removes those cells from the free list, and frees the chunk.
+     *
+     *  Thread safety: This method is thread-safe. */
     void vacuum() {
+        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn)
             pools_[pn].vacuum();
     }
 
     /** Print pool allocation information.
      *
-     *  Prints some interesting information about each chunk of each pool. The output will be multiple lines. */
+     *  Prints some interesting information about each chunk of each pool. The output will be multiple lines.
+     *
+     *  Thread safety: This method is thread-safe. */
     void showInfo(std::ostream &out) const {
+        typename SynchronizationTraits<Sync>::LockGuard lock(mutex_);
         for (size_t pn=0; pn<nPools; ++pn) {
             if (!pools_[pn].isEmpty()) {
                 out <<"  pool #" <<pn <<"; cellSize = " <<cellSize(pn) <<" bytes:\n";
@@ -342,8 +371,17 @@ public:
 
 /** Small object allocation from memory pools.
  *
+ *  Thread safety:  This allocator is not thread safe; the caller must synchronize to prevent concurrent calls.
+ *
  *  See @ref PoolAllocatorBase for details. */
-typedef PoolAllocatorBase<sizeof(void*), 4, 32, 40960> PoolAllocator;
+typedef PoolAllocatorBase<sizeof(void*), 4, 32, 40960, SingleThreadedTag> UnsynchronizedPoolAllocator;
+
+/** Small object allocation from memory pools.
+ *
+ *  Thread safety: This allocator is thread safe.
+ *
+ *  See @ref PoolAllocatorBase for details. */
+typedef PoolAllocatorBase<sizeof(void*), 4, 32, 40960, MultiThreadedTag> SynchronizedPoolAllocator;
 
 } // namespace
 #endif

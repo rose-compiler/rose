@@ -982,6 +982,8 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // Liao 6/29/2012: support linking flags for OpenMP lowering when no SgFile is available
      set_openmp_linking(false);
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:OpenMP:","lowering",true) == true
+         || CommandlineProcessing::isOption(local_commandLineArgumentList,"--rose:OpenMP:","lowering",true) == true
+         || CommandlineProcessing::isOption(local_commandLineArgumentList,"--rose:openmp:","lowering",true) == true
          ||CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:openmp:","lowering",true) == true)
         {
           if ( SgProject::get_verbose() >= 1 )
@@ -4552,7 +4554,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      // Process sub-options for OpenMP handling, Liao 5/31/2009
      // We want to turn on OpenMP if any of its suboptions is used.  Liao , 8/11/2009
      if ( CommandlineProcessing::isOption(argv,"-rose:OpenMP:","parse_only",true) == true
-         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","parse_only",true) == true)
+         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openmp:","parse_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenMP:","parse_only",true) == true
+         )
      {
        if ( SgProject::get_verbose() >= 1 )
          printf ("OpenMP sub option for parsing specified \n");
@@ -4566,7 +4571,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      }
 
      if ( CommandlineProcessing::isOption(argv,"-rose:OpenMP:","ast_only",true) == true
-         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","ast_only",true) == true)
+         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openmp:","ast_only",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenMP:","ast_only",true) == true
+         )
      {
        if ( SgProject::get_verbose() >= 1 )
          printf ("OpenMP option for AST construction specified \n");
@@ -4582,7 +4590,10 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      }
 
      if ( CommandlineProcessing::isOption(argv,"-rose:OpenMP:","lowering",true) == true
-         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","lowering",true) == true)
+         ||CommandlineProcessing::isOption(argv,"-rose:openmp:","lowering",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:openmp:","lowering",true) == true
+         ||CommandlineProcessing::isOption(argv,"--rose:OpenMP:","lowering",true) == true
+         )
      {
        if ( SgProject::get_verbose() >= 1 )
          printf ("OpenMP sub option for AST lowering specified \n");
@@ -5236,6 +5247,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
      optionCount = sla(argv, "-rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(openmp:lowering|OpenMP:lowering)",1);
+     // support --rose:openmp variants
+     optionCount = sla(argv, "--rose:", "($)", "(openmp:parse_only|OpenMP:parse_only)",1);
+     optionCount = sla(argv, "--rose:", "($)", "(openmp:ast_only|OpenMP:ast_only)",1);
+     optionCount = sla(argv, "--rose:", "($)", "(openmp:lowering|OpenMP:lowering)",1);
+ 
      optionCount = sla(argv, "-rose:", "($)", "(C89|C89_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(C99|C99_only)",1);
      optionCount = sla(argv, "-rose:", "($)", "(Cxx|Cxx_only)",1);
@@ -7143,12 +7159,11 @@ if (get_C_only() ||
 
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
-          if (get_openmp_lowering())  
+          if (get_openmp_lowering()||get_openmp())  
           {
             compilerNameString.push_back("-D_OPENMP");
           }
     }
-
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
 

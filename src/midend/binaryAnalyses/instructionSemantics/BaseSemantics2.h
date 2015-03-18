@@ -1,6 +1,7 @@
 #ifndef Rose_BaseSemantics2_H
 #define Rose_BaseSemantics2_H
 
+#include "Diagnostics.h"
 #include "Registers.h"
 #include "FormatRestorer.h"
 #include "SMTSolver.h"
@@ -326,6 +327,12 @@ namespace BinaryAnalysis {
  *  domain by subclassing PartialSymbolicSemantics in order to execute specimen programs.
  */
 namespace InstructionSemantics2 {
+
+/** Diagnostics logging facility for instruction semantics. */
+extern Sawyer::Message::Facility mlog;
+
+/** Initialize diagnostics for instruction semantics. */
+void initDiagnostics();
 
 /** Base classes for instruction semantics.  Basically, anything that is common to two or more instruction semantic
  *  domains will be factored out and placed in this name space. */
@@ -1908,11 +1915,7 @@ public:
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
      *  processing an instruction.  Some policies use this to update a pointer to the current instruction. */
-    virtual void startInstruction(SgAsmInstruction *insn) {
-        ASSERT_not_null(insn);
-        cur_insn = insn;
-        ++ninsns;
-    };
+    virtual void startInstruction(SgAsmInstruction *insn);
 
     /** Called at the end of every instruction.  This method is invoked whenever the translation object ends processing for an
      *  instruction.  This is not called if there's an exception during processing. */

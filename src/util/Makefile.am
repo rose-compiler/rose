@@ -81,6 +81,7 @@ libroseSawyer_la_SOURCES =			\
 	sawyer/Sawyer.C				\
 	sawyer/SmallObject.C			\
 	sawyer/Stopwatch.C			\
+	sawyer/Synchronization.C		\
 	sawyer/useHeaders.C
 nobase_pkginclude_HEADERS   =			\
 	sawyer/Access.h				\
@@ -88,6 +89,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/AddressSegment.h			\
 	sawyer/AllocatingBuffer.h		\
 	sawyer/Assert.h				\
+	sawyer/BiMap.h				\
 	sawyer/BitVector.h			\
 	sawyer/BitVectorSupport.h		\
 	sawyer/Buffer.h				\
@@ -118,6 +120,7 @@ nobase_pkginclude_HEADERS   =			\
 	sawyer/Stack.h				\
 	sawyer/StaticBuffer.h			\
 	sawyer/Stopwatch.h			\
+	sawyer/Synchronization.h		\
 	sawyer/WarningsOff.h			\
 	sawyer/WarningsRestore.h
 EXTRA_DIST += sawyer/CMakeLists.txt
@@ -127,7 +130,7 @@ EXTRA_DIST += sawyer/CMakeLists.txt
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C stringify.[Ch]
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C
 
 distclean-local:
 	rm -rf Templates.DB

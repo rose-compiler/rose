@@ -1,0 +1,276 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: e9 04 00 00 00          |.....   |          jmp    0x080480a9<<Insn>>
+0x080480a9: f4                      |.       |          hlt    
+0x080480a9: Successor blocks: none
+
+0x080480a5: Basic block reasons: CFG head
+0x080480a5: ef                      |.       |          out    dx, eax
+0x080480a6: be ad de f4 00          |.....   |          mov    esi, 0x00f4dead
+0x080480ab: 2e 73 79                |.sy     |          jae,pn 0x08048127<<BBlock>>
+0x080480ab: Successor blocks: 0x080480ae, 0x08048127
+
+0x080480ae: Basic block reasons: 
+0x080480ae: 6d                      |m       |          insd   
+0x080480af: 74 61                   |ta      |          je     0x08048112<<BBlock>>
+0x080480af: Successor blocks: 0x080480b1, 0x08048112
+
+0x080480b1: Basic block reasons: 
+0x080480b1: 62 00                   |b.      |          bound  eax, dword ds:[eax]
+0x080480b3: 2e 73 74                |.st     |          jae,pn 0x0804812a<<BBlock>>
+0x080480b3: Successor blocks: 0x080480b6, 0x0804812a
+
+0x080480b6: Basic block reasons: 
+0x080480b6: 72 74                   |rt      |          jb     0x0804812c<<BBlock>>
+0x080480b6: Successor blocks: 0x080480b8, 0x0804812c
+
+0x080480b8: Basic block reasons: 
+0x080480b8: 61                      |a       |          popad  
+0x080480b9: 62 00                   |b.      |          bound  eax, dword ds:[eax]
+0x080480bb: 2e 73 68                |.sh     |          jae,pn 0x08048126<<BBlock>>
+0x080480bb: Successor blocks: 0x080480be, 0x08048126
+
+0x080480be: Basic block reasons: 
+0x080480be: 73 74                   |st      |          jae    0x08048134<<BBlock>>
+0x080480be: Successor blocks: 0x080480c0, 0x08048134
+
+0x080480c0: Basic block reasons: 
+0x080480c0: 72 74                   |rt      |          jb     0x08048136<<BBlock>>
+0x080480c0: Successor blocks: 0x080480c2, 0x08048136
+
+0x080480c2: Basic block reasons: 
+0x080480c2: 61                      |a       |          popad  
+0x080480c3: 62 00                   |b.      |          bound  eax, dword ds:[eax]
+0x080480c5: 2e 6e                   |.n      |          outsb  
+0x080480c7: 6f                      |o       |          outsd  
+0x080480c8: 74 65                   |te      |          je     0x0804812f<<BBlock>>
+0x080480c8: Successor blocks: 0x080480ca, 0x0804812f
+
+0x080480ca: Basic block reasons: 
+0x080480ca: 2e 67 6e                |.gn     |          outsb  
+0x080480cd: 75 2e                   |u.      |          jne    0x080480fd<<BBlock>>
+0x080480cd: Successor blocks: 0x080480cf, 0x080480fd
+
+0x080480cf: Basic block reasons: 
+0x080480cf: 62 75 69                |bui     |          bound  esi, dword ss:[ebp + 0x69]
+0x080480d2: 6c                      |l       |          insb   
+0x080480d3: 64 2d 69 64 00 2e       |d-id..  |          sub    eax, 0x2e006469
+0x080480d9: 74 65                   |te      |          je     0x08048140<<BBlock>>
+0x080480d9: Successor blocks: 0x080480db, 0x08048140
+
+0x080480db: Basic block reasons: 
+0x080480db: 78 74                   |xt      |          js     0x08048151<<BBlock>>
+0x080480db: Successor blocks: 0x080480dd, 0x08048151
+
+0x080480dd: Basic block reasons: 
+0x080480dd: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480df: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480e1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480e3: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480e5: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480e7: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480e9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480eb: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480ed: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480ef: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480f1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480f3: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480f5: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480f7: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480f9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480fb: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480fb: Successor blocks: 0x080480fd
+
+0x080480fd: Basic block reasons: 
+0x080480fd: 00 00                   |..      |          add    byte ds:[eax], al
+0x080480ff: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048101: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048103: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048105: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048107: 00 1b                   |..      |          add    byte ds:[ebx], bl
+0x08048109: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804810b: 00 07                   |..      |          add    byte ds:[edi], al
+0x0804810d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804810f: 00 02                   |..      |          add    byte ds:[edx], al
+0x08048111: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048113: 00 74 80 04             |.t..    |          add    byte ds:[eax + eax*0x04 + 0x04], dh
+0x08048117: 08 74 00 00             |.t..    |          or     byte ds:[eax + eax + 0x00], dh
+0x0804811b: 00 24 00                |.$.     |          add    byte ds:[eax + eax], ah
+0x0804811b: Successor blocks: 0x0804811e
+
+0x08048112: Basic block reasons: 
+0x08048112: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048114: 74 80                   |t.      |          je     0x08048096<.note.gnu.build-id+0x22>
+0x08048114: Successor blocks: 0x08048096, 0x08048116
+
+0x08048116: Basic block reasons: 
+0x08048116: 04 08                   |..      |          add    al, 0x08
+0x08048118: 74 00                   |t.      |          je     0x0804811a<<Insn>>
+0x0804811a: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804811c: 24 00                   |$.      |          and    al, 0x00
+0x0804811c: Successor blocks: 0x0804811e
+
+0x0804811e: Basic block reasons: 
+0x0804811e: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048120: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048122: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048124: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048124: Successor blocks: 0x08048126
+
+0x08048126: Basic block reasons: 
+0x08048126: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048128: 04 00                   |..      |          add    al, 0x00
+0x08048128: Successor blocks: 0x0804812a
+
+0x08048127: Basic block reasons: 
+0x08048127: 00 04 00                |...     |          add    byte ds:[eax + eax], al
+0x08048127: Successor blocks: 0x0804812a
+
+0x0804812a: Basic block reasons: 
+0x0804812a: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804812a: Successor blocks: 0x0804812c
+
+0x0804812c: Basic block reasons: 
+0x0804812c: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804812e: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048130: 2e 00 00                |...     |          add    byte cs:[eax], al
+0x08048130: Successor blocks: 0x08048133
+
+0x0804812f: Basic block reasons: 
+0x0804812f: 00 2e                   |..      |          add    byte ds:[esi], ch
+0x08048131: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048131: Successor blocks: 0x08048133
+
+0x08048133: Basic block reasons: 
+0x08048133: 00 01                   |..      |          add    byte ds:[ecx], al
+0x08048135: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048137: 00 06                   |..      |          add    byte ds:[esi], al
+0x08048137: Successor blocks: 0x08048139
+
+0x08048134: Basic block reasons: 
+0x08048134: 01 00                   |..      |          add    dword ds:[eax], eax
+0x08048134: Successor blocks: 0x08048136
+
+0x08048136: Basic block reasons: 
+0x08048136: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048138: 06                      |.       |          push   es
+0x08048138: Successor blocks: 0x08048139
+
+0x08048139: Basic block reasons: 
+0x08048139: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804813b: 00 a0 80 04 08 a0       |......  |          add    byte ds:[eax + 0xa0080480], ah
+0x08048141: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048143: 00 0a                   |..      |          add    byte ds:[edx], cl
+0x08048143: Successor blocks: 0x08048145
+
+0x08048140: Basic block reasons: 
+0x08048140: a0 00 00 00 0a          |.....   |          mov    al, byte ds:[0x0a000000]
+0x08048140: Successor blocks: 0x08048145
+
+0x08048145: Basic block reasons: 
+0x08048145: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048147: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048149: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804814b: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804814d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804814f: 00 10                   |..      |          add    byte ds:[eax], dl
+0x0804814f: Successor blocks: 0x08048151
+
+0x08048151: Basic block reasons: 
+0x08048151: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048153: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048155: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048157: 00 11                   |..      |          add    byte ds:[ecx], dl
+0x08048159: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804815b: 00 03                   |..      |          add    byte ds:[ebx], al
+0x0804815d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804815f: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048161: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048163: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048165: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048167: 00 aa 00 00 00 34       |.....4  |          add    byte ds:[edx + 0x34000000], ch
+0x0804816d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804816f: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048171: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048173: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048175: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048177: 00 01                   |..      |          add    byte ds:[ecx], al
+0x08048179: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804817b: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804817d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804817f: 00 01                   |..      |          add    byte ds:[ecx], al
+0x08048181: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048183: 00 02                   |..      |          add    byte ds:[edx], al
+0x08048185: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048187: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048189: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804818b: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804818d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804818f: 00 d0                   |..      |          add    al, dl
+0x08048191: 01 00                   |..      |          add    dword ds:[eax], eax
+0x08048193: 00 a0 00 00 00 05       |......  |          add    byte ds:[eax + 0x05000000], ah
+0x08048199: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804819b: 00 06                   |..      |          add    byte ds:[esi], al
+0x0804819d: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804819f: 00 04 00                |...     |          add    byte ds:[eax + eax], al
+0x080481a2: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481a4: 10 00                   |..      |          adc    byte ds:[eax], al
+0x080481a6: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481a8: 09 00                   |..      |          or     dword ds:[eax], eax
+0x080481aa: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481ac: 03 00                   |..      |          add    eax, dword ds:[eax]
+0x080481ae: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481b0: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481b2: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481b4: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481b6: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481b8: 70 02                   |p.      |          jo     0x080481bc<<BBlock>>
+0x080481b8: Successor blocks: 0x080481ba, 0x080481bc
+
+0x080481ba: Basic block reasons: 
+0x080481ba: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481ba: Successor blocks: 0x080481bc
+
+0x080481bc: Basic block reasons: 
+0x080481bc: 36 00 00                |6..     |          add    byte ss:[eax], al
+0x080481bf: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481c1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481c3: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481c5: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481c7: 00 01                   |..      |          add    byte ds:[ecx], al
+0x080481c9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481cb: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481cd: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481cf: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481d1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481d3: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481d5: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481d7: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481d9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481db: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481dd: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481df: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481e1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481e3: 00 74 80 04             |.t..    |          add    byte ds:[eax + eax*0x04 + 0x04], dh
+0x080481e7: 08 00                   |..      |          or     byte ds:[eax], al
+0x080481e9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481eb: 00 03                   |..      |          add    byte ds:[ebx], al
+0x080481ed: 00 01                   |..      |          add    byte ds:[ecx], al
+0x080481ef: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481f1: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481f3: 00 a0 80 04 08 00       |......  |          add    byte ds:[eax + 0x00080480], ah
+0x080481f9: 00 00                   |..      |          add    byte ds:[eax], al
+0x080481fb: 00 03                   |..      |          add    byte ds:[ebx], al
+0x080481fd: 00 02                   |..      |          add    byte ds:[edx], al
+0x080481ff: 00 01                   |..      |          add    byte ds:[ecx], al
+0x08048201: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048203: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048205: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048207: 00 00                   |..      |          add    byte ds:[eax], al
+0x08048209: 00 00                   |..      |          add    byte ds:[eax], al
+0x0804820b: 00 04 00                |...     |          add    byte ds:[eax + eax], al
+0x0804820e: f1                      |.       |          int1   
+0x0804820e: Successor blocks: unknown
+

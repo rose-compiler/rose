@@ -7,13 +7,15 @@ INCLUDES = $(ROSE_INCLUDES)
 CXX_TEMPLATE_REPOSITORY_PATH = .
 
 
-# The stringify.h and stringify.C files contain functions for converting an enum constant into a string.
-# This should probably also depend on all the source files that contain enum definitions.
-stringify.h: stringify.C
-stringify.C: $(top_srcdir)/scripts/stringify.pl
-	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl --generic --header --output=$@ $(top_srcdir)/src ../frontend/SageIII
-
-threadSupport.lo: stringify.h
+# The stringify.h and stringify.C files contain functions for converting an enum constant into a string. We once had
+# this configured to rebuild these two files for every fresh build, but there's no good reason that end users need to
+# run this command when developers can do it instead.  On a reasonable machine it takes around a minute; on a misconfigured
+# Ubuntu 14.04 it takes >12 hours.
+.PHONY: rebuild-stringify
+rebuild-stringify:
+	$(AM_V_GEN) $(top_srcdir)/scripts/stringify.pl		\
+	    --generic --header --output=$(srcdir)/stringify.C	\
+	    $(top_srcdir)/src ../frontend/SageIII
 
 noinst_LTLIBRARIES = libroseSupport.la
 
@@ -28,9 +30,7 @@ libroseSupport_la_SOURCES =			\
 	threadSupport.C				\
 	IncludeDirective.C			\
 	SqlDatabase.C				\
-	Diagnostics.C
-
-nodist_libroseSupport_la_SOURCES =		\
+	Diagnostics.C				\
 	stringify.C
 
 pkginclude_HEADERS =				\
@@ -53,10 +53,10 @@ pkginclude_HEADERS =				\
 # templateSupport.h
 
 clean-local:
-	rm -rf Templates.DB ii_files ti_files stringify.C stringify.h
+	rm -rf Templates.DB ii_files ti_files
 
 distclean-local:
-	rm -rf Templates.DB stringify.C stringify.h
+	rm -rf Templates.DB
 
 
 
