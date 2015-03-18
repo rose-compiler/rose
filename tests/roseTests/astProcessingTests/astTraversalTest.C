@@ -438,6 +438,14 @@ void runCombinedTests(SgProject *root, std::vector<unsigned long> *referenceResu
 
 void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResults)
 {
+#ifndef _REENTRANT                                      // Does user want multi-thread support? (e.g., g++ -pthread)
+# ifdef _MSC_VER
+#  pragma message("AstSharedMemoryParallelSimpleProcessing is not tested when the user has disabled parallel support")
+# else
+#  warning "AstSharedMemoryParalleSimpleProcessing is not tested when the user has disabled parallel support";
+# endif
+    std::cerr <<"AstSharedMemoryParallelSimpleProcessing is not tested when the user has disable parallel support.\n";
+#else
     struct timeval beginTime, endTime;
     size_t i;
     std::cout << "starting shared memory parallel tests" << std::endl;
@@ -561,6 +569,7 @@ void runParallelTests(SgProject *root, std::vector<unsigned long> *referenceResu
     std::cout << std::endl;
 #endif
     std::cout << "approximate time (seconds): " << timeDifference(endTime, beginTime) << std::endl;
+#endif
 }
 
 class NodeCounterTraversal: public AstSimpleProcessing
