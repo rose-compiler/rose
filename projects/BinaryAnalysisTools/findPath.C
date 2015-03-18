@@ -30,6 +30,7 @@ typedef Sawyer::Container::BiMap<P2::ControlFlowGraph::ConstVertexNodeIterator,
 
 
 enum FollowCalls { SINGLE_FUNCTION, FOLLOW_CALLS };
+enum PathSelection { NO_PATHS, FEASIBLE_PATHS, ALL_PATHS };
 
 // Settings from the command-line
 struct Settings {
@@ -40,13 +41,17 @@ struct Settings {
     std::vector<std::string> avoidEdges;                // edges to avoid in any path (even number of vertex addresses)
     size_t expansionDepthLimit;                         // max function call depth when expanding function calls
     size_t vertexVisitLimit;                            // max times a vertex can appear in a path
-    bool showInstructions;                              // show instructions in paths
+    bool showInstructions;                              // show instructions in paths?
+    bool showConstraints;                               // show path constraints?
+    bool showFinalState;                                // show final machine state for each feasible path?
     bool showFunctionSubgraphs;                         // show functions in GraphViz output?
-    std::string dumpGraphVizPaths;                      // filename prefix for dumping GraphViz of each path
+    std::string graphVizPrefix;                         // prefix for GraphViz file names
+    PathSelection graphVizOutput;                       // which paths to dump to GraphViz files
     size_t maxPaths;                                    // max number of paths to find (0==unlimited)
     Settings()
-        : beginVertex("_start"), expansionDepthLimit(4), vertexVisitLimit(1), showInstructions(false),
-          showFunctionSubgraphs(true), maxPaths(1) {}
+        : beginVertex("_start"), expansionDepthLimit(4), vertexVisitLimit(1), showInstructions(true),
+          showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
+          graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1) {}
 };
 static Settings settings;
 
@@ -136,7 +141,31 @@ parseCommandLine(int argc, char *argv[])
     SwitchGroup out("Output switches");
     out.insert(Switch("show-instructions")
                .intrinsicValue(true, settings.showInstructions)
-               .doc("Cause instructions to be listed as part of each path."));
+               .doc("Cause instructions to be listed as part of each path. The @s{no-show-instructions} switch turns "
+                    "this off. The default is to " + std::string(settings.showInstructions?"":"not ") + "show instructions."));
+    out.insert(Switch("no-show-instructions")
+               .key("show-instructions")
+               .intrinsicValue(false, settings.showInstructions)
+               .hidden(true));
+
+    out.insert(Switch("show-constraints")
+               .intrinsicValue(true, settings.showConstraints)
+               .doc("List constraints for each path.  The @s{no-show-constraints} switch turns this off. The default is to " +
+                    std::string(settings.showConstraints?"":"not ") + "show path constraints in the output.\n"));
+    out.insert(Switch("no-show-constraints")
+               .key("show-constraints")
+               .intrinsicValue(false, settings.showConstraints)
+               .hidden(true));
+
+    out.insert(Switch("show-final-state")
+               .intrinsicValue(true, settings.showFinalState)
+               .doc("Show symbolic machine state at the end of each path.  The state contains the final values for registers "
+                    "and memory accessed along the path.  The @s{no-show-final-state} switch turns this information off. "
+                    "The default is to " + std::string(settings.showFinalState?"":"not ") + "show this information."));
+    out.insert(Switch("no-show-final-state")
+               .key("show-final-state")
+               .intrinsicValue(false, settings.showFinalState)
+               .hidden(true));
 
     out.insert(Switch("subgraphs")
                .intrinsicValue(true, settings.showFunctionSubgraphs)
@@ -148,12 +177,29 @@ parseCommandLine(int argc, char *argv[])
                .intrinsicValue(false, settings.showFunctionSubgraphs)
                .hidden(true));
 
+    out.insert(Switch("gv-prefix")
+               .argument("string", anyParser(settings.graphVizPrefix))
+               .doc("File name prefix for graph-viz files.  The default is " +
+                    (settings.graphVizPrefix.empty() ? std::string("an empty string") :
+                     ("\"" + StringUtility::cEscape(settings.graphVizPrefix) + "\"")) + ". "
+                    "The full file name is constructed by appending additional strings to the prefix, namely "
+                    "a six-digit decimal path number, followed by a hyphen and six-digit decimal number of vertices "
+                    "in the path, followed by \".dot\"."));
+
     out.insert(Switch("gv-paths")
-               .argument("prefix", anyParser(settings.dumpGraphVizPaths))
-               .doc("If this switch is specified then a GraphViz file is generated for each path.  The file name is "
-                    "constructed from the specified @v{prefix} string, followed by a six-digit decimal path number, "
-                    "followed by a hyphen and six-digit decimal number of vertices in the path, followed by a \".dot\" "
-                    "extension."));
+               .argument("selector", enumParser(settings.graphVizOutput)
+                         ->with("all", ALL_PATHS)
+                         ->with("feasible", FEASIBLE_PATHS)
+                         ->with("none", NO_PATHS))
+               .doc("Whether to dump paths to GraphViz files.  The switch argument, @v{selector}, can be one of:"
+                    "@named{\"all\"}{Dump all paths regardless of whether they're feasible paths. " +
+                    std::string(ALL_PATHS==settings.graphVizOutput? "This is the default.":"") + "}"
+                    "@named{\"feasible\"}{Dump only those paths that are determined to be feasible.  The path numbers "
+                    "in the file names are still computed across all paths and so will not be consecutive. " +
+                    std::string(FEASIBLE_PATHS==settings.graphVizOutput? "This is the default.":"") + "}"
+                    "@named{\"none\"}{Do not dump any paths. " +
+                    std::string(NO_PATHS==settings.graphVizOutput? "This is the default.":"") + "}"
+                    "The file name algorithm is described in the @s{gv-prefix} switch documentation."));
 
     return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
 }
@@ -711,6 +757,17 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     gv.emit(out);
 }
 
+std::string
+printGraphViz(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const CfgPath &path, size_t pathIdx) {
+    char fileName[256];
+    sprintf(fileName, "%s%06zu-%06zu.dot", settings.graphVizPrefix.c_str(), pathIdx, path.nVertices());
+    std::ofstream file(fileName);
+    CfgVertexSet endVertices;
+    endVertices.insert(path.backVertex());
+    printGraphViz(file, partitioner, paths, path.frontVertex(), endVertices, path);
+    return fileName;
+}
+
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // RiscOperators that add some additional tracking information for memory values.
@@ -836,14 +893,10 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
     Stream error(::mlog[ERROR]);
     info <<"path #" <<npaths <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<"\n";
 
-    if (!settings.dumpGraphVizPaths.empty()) {
-        char fileName[256];
-        sprintf(fileName, "%s%06d-%06zu.dot", settings.dumpGraphVizPaths.c_str(), npaths, path.nVertices());
-        std::ofstream file(fileName);
-        CfgVertexSet endVertices;
-        endVertices.insert(path.backVertex());
-        printGraphViz(file, partitioner, paths, path.frontVertex(), endVertices, path);
-        info <<"  saved as \"" <<StringUtility::cEscape(fileName) <<"\"\n";
+    std::string graphVizFileName;
+    if (ALL_PATHS == settings.graphVizOutput) {
+        graphVizFileName = printGraphViz(partitioner, paths, path, npaths);
+        info <<"  saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
     }
 
     YicesSolver solver;
@@ -882,7 +935,7 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
             if (ip->get_number() != pathEdge->target()->value().address()) {
                 // Executing the path forces us to go a different direction than where the path indicates we should go. We
                 // don't need an SMT solver to tell us that when the values are just integers.
-                info <<"  not feasible\n";
+                info <<"  not feasible according to ROSE semantics\n";
                 return;
             }
         } else {
@@ -900,56 +953,70 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
         std::cout <<"Found feasible path #" <<npaths
                   <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
 
+        if (FEASIBLE_PATHS == settings.graphVizOutput)
+            graphVizFileName = printGraphViz(partitioner, paths, path, npaths);
+        if (!graphVizFileName.empty())
+            std::cout <<"  Saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
+
         std::cout <<"  Path:\n";
         size_t insnIdx=0, pathIdx=0;
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &pathVertex, path.vertices()) {
-            if (0==pathIdx) {
-                std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
-            } else {
-                std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
-            }
-            BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions())
-                std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++ <<" " <<unparseInstructionWithAddress(insn) <<"\n";
-            ++pathIdx;
-        }
-
-        std::cout <<"  Constraints:\n";
-        if (pathConstraints.empty()) {
-            std::cout <<"    none\n";
+        if (path.nEdges() == 0) {
+            std::cout <<"    path is trivial (contains only vertex " <<partitioner.vertexName(path.frontVertex()) <<")\n";
         } else {
-            size_t idx = 0;
-            BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
-                std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &pathVertex, path.vertices()) {
+                if (0==pathIdx) {
+                    std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
+                } else {
+                    std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
+                }
+                if (settings.showInstructions) {
+                    BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
+                        std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
+                                  <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                    }
+                }
+                ++pathIdx;
+            }
         }
 
-        std::cout <<"  Evidence of satisfiability:\n";
+        if (settings.showConstraints) {
+            std::cout <<"  Constraints:\n";
+            if (pathConstraints.empty()) {
+                std::cout <<"    none\n";
+            } else {
+                size_t idx = 0;
+                BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
+                    std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
+            }
+        }
+
+        std::cout <<"  Inputs sufficient to cause path to be taken:\n";
         std::vector<std::string> enames = solver.evidence_names();
-        if (enames.empty()) {
+        if (pathConstraints.empty()) {
+            std::cout <<"    none necessary\n";
+        } else if (enames.empty()) {
             std::cout <<"    not available\n";
         } else {
             BOOST_FOREACH (const std::string &ename, enames) {
                 std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
-            }
-
-            std::cout <<"  Variable information:\n";
-            BOOST_FOREACH (const std::string &ename, enames) {
                 if (ename.size()>=2 && ename[0]=='v' && isdigit(ename[1])) {
                     size_t varNumber = strtoull(ename.c_str()+1, NULL, 0);
                     std::string varComment;
-                    if (ops->varComments().getOptional(varNumber).assignTo(varComment)) {
-                        std::cout <<"    " <<ename <<":\n" <<StringUtility::prefixLines(varComment, "      ") <<"\n";
-                    }
+                    if (ops->varComments().getOptional(varNumber).assignTo(varComment))
+                        std::cout <<StringUtility::prefixLines(varComment, "      ") <<"\n";
                 }
             }
         }
-        
-        std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n";
-        SymbolicSemantics::Formatter fmt;
-        fmt.set_line_prefix("    ");
-        std::cout <<(*ops->get_state()+fmt);
+
+        if (settings.showFinalState) {
+            std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n";
+            SymbolicSemantics::Formatter fmt;
+            fmt.set_line_prefix("    ");
+            std::cout <<(*ops->get_state()+fmt);
+        }
 
     } else if (satisfiable == SMTSolver::SAT_NO) {
-        info <<"  path is not feasible\n";
+        info <<"  not feasible according to SMT solver\n";
         return;
     } else {
         ASSERT_require(satisfiable == SMTSolver::SAT_UNKNOWN);
