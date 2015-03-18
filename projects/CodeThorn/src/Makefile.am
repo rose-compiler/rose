@@ -6,7 +6,7 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
 
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
@@ -449,16 +449,6 @@ analyterix_SOURCES = \
   VariableIdUtils.C \
   VariableIdUtils.h \
   analyterix.C
-
-reverser_LDADD = -lrose
-reverser_SOURCES = \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
-  LanguageRestrictorCollection.h \
-  LanguageRestrictorCollection.C \
-  AstTerm.h \
-  AstTerm.C \
-  reverser.C
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
