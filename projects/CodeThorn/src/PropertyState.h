@@ -7,17 +7,8 @@
 #include "VariableIdMapping.h"
 
 namespace SPRAY {
-#if 0
-class PropertyState : public Lattice {
- public:
-  PropertyState();
-  virtual void toStream(ostream& os, VariableIdMapping* vim=0);
-  virtual bool approximatedBy(PropertyState& other);
-  virtual void combine(PropertyState& other);
-};
-#else
+
 typedef Lattice PropertyState;
-#endif
 
 class PropertyStateFactory {
  public:

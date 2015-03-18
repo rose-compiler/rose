@@ -12,10 +12,6 @@
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
-
-using namespace std;
-using namespace CodeThorn;
-
 #include "LVTransferFunctions.h"
 
 namespace SPRAY {

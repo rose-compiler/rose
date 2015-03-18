@@ -5,9 +5,7 @@
 #include "Lattice.h"
 #include "PointerAnalysisInterface.h"
 
-//class Domain;
-
-//#include "Domain.hpp"
+namespace SPRAY {
 
 class DFTransferFunctions {
 public:
@@ -38,5 +36,7 @@ public:
   //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 };
+
+}
 
 #endif

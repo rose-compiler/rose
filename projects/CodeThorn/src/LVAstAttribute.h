@@ -9,8 +9,6 @@
 #include "LVLattice.h"
 #include <string>
 
-using std::string;
-
 namespace SPRAY {
 
 class LVAstAttribute : public LVAstAttributeInterface {
@@ -22,8 +20,8 @@ class LVAstAttribute : public LVAstAttributeInterface {
   virtual LVLattice::iterator end();
   virtual ~LVAstAttribute();
   LVAstAttribute(LVLattice* elem);
-  void toStream(ostream& os, VariableIdMapping* vim);
-  string toString();
+  void toStream(std::ostream& os, VariableIdMapping* vim);
+  std::string toString();
  private:
   LVLattice* _elem;
 };

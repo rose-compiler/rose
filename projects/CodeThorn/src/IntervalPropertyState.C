@@ -1,6 +1,8 @@
 #include "sage3basic.h"
 #include "IntervalPropertyState.h"
 
+using namespace SPRAY;
+
 SPRAY::IntervalPropertyState::IntervalPropertyState() {
   setBot();
 }
@@ -14,7 +16,7 @@ void SPRAY::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim)
       if(i!=intervals.begin())
         os<<", ";
       VariableId varId=(*i).first;
-      NumberIntervalLattice niElem=(*i).second;
+      SPRAY::NumberIntervalLattice niElem=(*i).second;
       if(vim)
         os<<vim->variableName(varId)<<"->"<<niElem.toString();
       else
@@ -33,7 +35,7 @@ bool SPRAY::IntervalPropertyState::approximatedBy(Lattice& other0) {
     return false;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     VariableId varId=(*i).first;
-    if(!NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
+    if(!SPRAY::NumberIntervalLattice::isSubIntervalOf(intervals[varId],other->intervals[varId]))
       return false;
   }
   return true;

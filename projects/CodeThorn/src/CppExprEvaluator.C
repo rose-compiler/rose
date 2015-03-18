@@ -11,7 +11,7 @@ using namespace std;
 SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
 }
   
-NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
+SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   
   ROSE_ASSERT(domain);
   ROSE_ASSERT(propertyState);

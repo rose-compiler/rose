@@ -105,7 +105,7 @@ int main(int argc, char* argv[]) {
     if(option_rd_analysis)
     {
       cout << "STATUS: creating RD analyzer."<<endl;
-      RDAnalysis* rdAnalysis=new RDAnalysis();
+      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;

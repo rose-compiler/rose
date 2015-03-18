@@ -5,6 +5,8 @@
 #include "VariableIdUtils.h"
 #include "CFAnalyzer.h"
 
+using namespace SPRAY;
+
 class VariableIdSetAttribute;
 
 // public

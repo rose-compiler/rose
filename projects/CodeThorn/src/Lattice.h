@@ -6,8 +6,7 @@
 #include <string>
 #include "VariableIdMapping.h"
 
-using namespace std;
-using namespace SPRAY;
+namespace SPRAY {
 
 class Lattice {
  public:
@@ -19,5 +18,7 @@ class Lattice {
   virtual void combine(Lattice& other);
   virtual ~Lattice();
 };
+
+}
 
 #endif

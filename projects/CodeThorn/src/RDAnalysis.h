@@ -17,6 +17,8 @@
 using namespace std;
 using namespace CodeThorn;
 
+namespace SPRAY {
+
 class RDPropertyStateFactory : public PropertyStateFactory {
  public:
   RDPropertyStateFactory();
@@ -37,5 +39,7 @@ class RDAnalysis : public DFAnalysisBase {
  protected:
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
 };
+
+} // end of namespace SPRAY
 
 #endif
