@@ -6,6 +6,7 @@
 #include "Lattice.h"
 #include "VariableIdMapping.h"
 
+namespace SPRAY {
 #if 0
 class PropertyState : public Lattice {
  public:
@@ -25,6 +26,5 @@ class PropertyStateFactory {
   virtual ~PropertyStateFactory();
 };
 
-typedef PropertyStateFactory LatticeElementFactory;
-
+}
 #endif

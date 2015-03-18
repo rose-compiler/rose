@@ -8,7 +8,6 @@
 #include "DFAnalysisBase.h"
 #include "AnalysisAbstractionLayer.h"
 
-using namespace CodeThorn;
 using namespace SPRAY;
 
 DFAnalysisBase::DFAnalysisBase():

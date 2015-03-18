@@ -6,6 +6,7 @@
 #include "NumberIntervalLattice.h"
 #include "PropertyState.h"
 
+namespace SPRAY {
 class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
@@ -31,5 +32,7 @@ public:
   IntervalMapType intervals;
   bool _bot;
 };
+
+} // end of namespace SPRAY
 
 #endif

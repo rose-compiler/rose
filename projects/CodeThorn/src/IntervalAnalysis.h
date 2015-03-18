@@ -15,13 +15,14 @@
 #include "IntervalPropertyState.h"
 
 using namespace std;
-using namespace CodeThorn;
 
 #include "IntervalPropertyState.h"
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
+
+namespace SPRAY {
 class IntervalAnalysis : public DFAnalysisBase {
  public:
   IntervalAnalysis();
@@ -32,5 +33,6 @@ class IntervalAnalysis : public DFAnalysisBase {
   virtual DFAstAttribute* createDFAstAttribute(Lattice* elem);
   NumberIntervalLattice* _numberIntervalLattice;
 };
+}
 
 #endif

@@ -119,7 +119,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
   
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
-    IntervalAnalysis* intervalAnalyzer=new IntervalAnalysis();
+    SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->initialize(root);
     cout << "STATUS: initializing interval transfer functions."<<endl;

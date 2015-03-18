@@ -9,36 +9,35 @@
 #include "IntervalPropertyStateFactory.h"
 
 using namespace std;
-using namespace CodeThorn;
 
-IntervalAnalysis::IntervalAnalysis() {
-  _transferFunctions=new IntervalTransferFunctions();
-  _initialElementFactory=new IntervalPropertyStateFactory();
+SPRAY::IntervalAnalysis::IntervalAnalysis() {
+  _transferFunctions=new SPRAY::IntervalTransferFunctions();
+  _initialElementFactory=new SPRAY::IntervalPropertyStateFactory();
 }
 
-IntervalAnalysis::~IntervalAnalysis() {
+SPRAY::IntervalAnalysis::~IntervalAnalysis() {
   delete _transferFunctions;
   delete _initialElementFactory;
 }
 
-void IntervalAnalysis::initializeExtremalValue(Lattice* element) {
-  IntervalPropertyState* pstate=dynamic_cast<IntervalPropertyState*>(element);
+void SPRAY::IntervalAnalysis::initializeExtremalValue(Lattice* element) {
+  SPRAY::IntervalPropertyState* pstate=dynamic_cast<SPRAY::IntervalPropertyState*>(element);
   pstate->setEmptyState();
   //iElement->... init to empty state, not being bottom
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
-DFAstAttribute* IntervalAnalysis::createDFAstAttribute(Lattice* elem) {
-  IntervalPropertyState* ivElem=dynamic_cast<IntervalPropertyState*>(elem);
+DFAstAttribute* SPRAY::IntervalAnalysis::createDFAstAttribute(Lattice* elem) {
+  SPRAY::IntervalPropertyState* ivElem=dynamic_cast<SPRAY::IntervalPropertyState*>(elem);
   ROSE_ASSERT(ivElem);
   return new IntervalAstAttribute(ivElem);
 }
 
-void IntervalAnalysis::initializeTransferFunctions() {
+void SPRAY::IntervalAnalysis::initializeTransferFunctions() {
    DFAnalysisBase::initializeTransferFunctions();
   _numberIntervalLattice=new NumberIntervalLattice();
   ROSE_ASSERT(_numberIntervalLattice);
-  IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<IntervalTransferFunctions*>(_transferFunctions);
+  SPRAY::IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<SPRAY::IntervalTransferFunctions*>(_transferFunctions);
   ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
   intervalTransferFunctions->setCppExprEvaluator(new SPRAY::CppExprEvaluator(_numberIntervalLattice,&_variableIdMapping));
  }

@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace SPRAY {
+
 class IntervalTransferFunctions : public DFTransferFunctions {
 public:
   IntervalTransferFunctions();
@@ -27,4 +29,5 @@ private:
   NumberIntervalLattice* _domain;
 };
 
+} // end of namespace SPRAY
 #endif

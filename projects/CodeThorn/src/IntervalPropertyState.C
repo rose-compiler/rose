@@ -1,11 +1,11 @@
 #include "sage3basic.h"
 #include "IntervalPropertyState.h"
 
-IntervalPropertyState::IntervalPropertyState() {
+SPRAY::IntervalPropertyState::IntervalPropertyState() {
   setBot();
 }
 
-void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
+void SPRAY::IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
     os<<"bot";
   } else {
@@ -24,7 +24,7 @@ void IntervalPropertyState::toStream(ostream& os, VariableIdMapping* vim) {
   }
 }
 
-bool IntervalPropertyState::approximatedBy(Lattice& other0) {
+bool SPRAY::IntervalPropertyState::approximatedBy(Lattice& other0) {
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other);
   if(isBot())
@@ -39,7 +39,7 @@ bool IntervalPropertyState::approximatedBy(Lattice& other0) {
   return true;
 }
 
-void IntervalPropertyState::combine(Lattice& other0){
+void SPRAY::IntervalPropertyState::combine(Lattice& other0){
   IntervalPropertyState* other=dynamic_cast<IntervalPropertyState*> (&other0);
   ROSE_ASSERT(other!=0);
   if(isBot()&&other->isBot())
@@ -64,21 +64,21 @@ void IntervalPropertyState::combine(Lattice& other0){
 }
 
 // adds integer variable
-void IntervalPropertyState::addVariable(VariableId varId) {
+void SPRAY::IntervalPropertyState::addVariable(VariableId varId) {
   intervals[varId]=NumberIntervalLattice();
 }
 
 // assign integer variable
-void IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
+void SPRAY::IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
   intervals[varId]=num;
 }
 
 // assign integer variable
-NumberIntervalLattice IntervalPropertyState::getVariable(VariableId varId) {
+NumberIntervalLattice SPRAY::IntervalPropertyState::getVariable(VariableId varId) {
   return intervals[varId];
 }
 
-void IntervalPropertyState::setEmptyState() {
+void SPRAY::IntervalPropertyState::setEmptyState() {
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     intervals[(*i).first]=NumberIntervalLattice();
   }
@@ -87,12 +87,12 @@ void IntervalPropertyState::setEmptyState() {
 
 #if 0
   // adds pointer variable
-  void IntervalPropertyState::addPointerVariable(VariableId);
+  void SPRAY::IntervalPropertyState::addPointerVariable(VariableId);
   // adds array elements for indices 0 to number-1
-  void IntervalPropertyState::addArrayElements(VariableId,int number);
+  void SPRAY::IntervalPropertyState::addArrayElements(VariableId,int number);
 #endif
 
-VariableIdSet IntervalPropertyState::allVariableIds() {
+VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
   VariableIdSet set;
   for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
     set.insert((*i).first);

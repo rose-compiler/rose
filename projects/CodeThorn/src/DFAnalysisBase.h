@@ -4,8 +4,8 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-#ifndef DFANALYSIS_H
-#define DFANALYSIS_H
+#ifndef DFANALYSISBASE_H
+#define DFANALYSISBASE_H
 
 #include <set>
 #include <string>
@@ -18,7 +18,7 @@
 #include "DFAstAttribute.h"
 #include "PointerAnalysisInterface.h"
 
-namespace CodeThorn {
+namespace SPRAY {
 
   using std::set;
   using std::vector;
