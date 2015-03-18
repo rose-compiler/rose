@@ -207,17 +207,21 @@ class GenericIntervalLattice {
   void join(GenericIntervalLattice other) {
     // subsumption in case none of the two intervals has an unknown bound
     if(!isInfLength()&&!other.isInfLength()) {
+      // handle 2 cases i) subset (2 variants), ii) constants (interval-length==1 for both)
       if((_low>=other._low && _high<=other._high)
-         ||(other._low>=_low && other._high<=_high)) {
+         ||(other._low>=_low && other._high<=_high)
+         ||(isConst()&&other.isConst()) ) {
         _low=std::min(_low,other._low);
         _high=std::max(_high,other._high);
         return;
       }
     }
+    if(isConst()&&other.isConst())
+
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     } else {
-      if(_exactJoin || (isConst()&&other.isConst())) {
+      if(_exactJoin) {
         _low=std::min(_low,other._low);
       } else {
         if(_low!=other._low) {
@@ -230,7 +234,7 @@ class GenericIntervalLattice {
     if(isHighInf()||other.isHighInf()) {
       setIsHighInf(true);
     } else {
-      if(_exactJoin || (isConst()&&other.isConst())) {
+      if(_exactJoin) {
         _high=std::max(_high,other._high);
       } else {
         if(_high!=other._high) {
