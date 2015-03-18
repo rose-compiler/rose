@@ -20,6 +20,7 @@
 #include "HSetMaintainer.h"
 
 using namespace std;
+using namespace SPRAY;
 
 namespace CodeThorn {
 

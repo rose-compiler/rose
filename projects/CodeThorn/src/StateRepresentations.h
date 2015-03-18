@@ -34,6 +34,8 @@ using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
 using SPRAY::Edge;
 
+using namespace SPRAY;
+
 namespace CodeThorn {
 
 /*! 

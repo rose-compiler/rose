@@ -12,7 +12,7 @@
 #include "CommandLineOptions.h"
 #include "Flow.h"
 
-namespace CodeThorn {
+namespace SPRAY {
 
 /*! 
   * \author Markus Schordan

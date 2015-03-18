@@ -3,13 +3,10 @@
 
 #include <boost/graph/adjacency_list.hpp> 
 #include <boost/graph/graphviz.hpp>
-using namespace std;
 using namespace boost; 
-using namespace SPRAY;
 
 #include "SgNodeHelper.h"
 #include "Labeler.h"
-#include "CommandLineOptions.h"
 
 namespace SPRAY {
 
@@ -30,13 +27,13 @@ class Edge {
   Edge(Label source0,Label target0);
   Edge(Label source0,EdgeType type0,Label target0);
   Edge(Label source0,set<EdgeType> type0,Label target0);
-  string toString() const;
-  string toStringNoType() const;
-  string toDotColored() const;
-  string toDotFixedColor(string) const;
-  //string typeToString() const;
-  string typesToString() const;
-  static string typeToString(EdgeType et);
+  std::string toString() const;
+  std::string toStringNoType() const;
+  std::string toDotColored() const;
+  std::string toDotFixedColor(std::string) const;
+  //std::string typeToString() const;
+  std::string typesToString() const;
+  static std::string typeToString(EdgeType et);
   Label source;
   //EdgeType type;
   Label target;
@@ -46,8 +43,8 @@ class Edge {
   void removeType(EdgeType et);
   set<EdgeType> types() const;
   long typesCode() const;
-  string color() const;
-  string dotEdgeStyle() const;
+  std::string color() const;
+  std::string dotEdgeStyle() const;
   long hash() const;
   set<EdgeType> getTypes() const { return _types; }
  private:
@@ -88,15 +85,15 @@ class Edge {
   void setDotOptionDisplayLabel(bool opt);
   void setDotOptionDisplayStmt(bool opt);
   void setDotOptionFixedColor(bool opt);
-  void setDotFixedColor(string color);
+  void setDotFixedColor(std::string color);
   void setDotOptionHeaderFooter(bool opt);
-  string toDot(Labeler *labeler);
+  std::string toDot(Labeler *labeler);
   void setTextOptionPrintType(bool opt);
   void resetDotOptions();
-  string toString();
+  std::string toString();
   // deletes all Edges of type edgeType. The return value is the number of deleted edges.
-  size_t deleteEdges(EdgeType edgeType);
-  size_t deleteEdges(Flow& flow);
+  std::size_t deleteEdges(EdgeType edgeType);
+  std::size_t deleteEdges(Flow& flow);
   void establishBoostGraph();
 
   //Define the graph using those classes
@@ -107,14 +104,14 @@ class Edge {
   void boostify();
   //! inverts all edges in the graph. The root node is updated. This operation is only successful if
   //! the original graph had exactly one final node (which becomes the start node of the new graph).
-  Flow reverseFlow();
+  SPRAY::Flow reverseFlow();
 
  private:
   bool _dotOptionDisplayLabel;
   bool _dotOptionDisplayStmt;
   bool _stringNoType;
   bool _dotOptionFixedColor;
-  string _fixedColor;
+  std::string _fixedColor;
   bool _dotOptionHeaderFooter;
   bool _boostified;
 
@@ -141,7 +138,7 @@ bool operator!=(const InterEdge& e1, const InterEdge& e2);
  */
 class InterFlow : public set<InterEdge> {
  public:
-  string toString() const;
+  std::string toString() const;
 };
 
 } // end namespace CodeThorn

@@ -7,6 +7,7 @@
 
 using namespace CodeThorn;
 using namespace SPRAY;
+using namespace std;
 
 Edge::Edge():source(0),target(0){
 }
