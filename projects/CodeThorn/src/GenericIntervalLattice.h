@@ -419,7 +419,6 @@ class GenericIntervalLattice {
         return false;
       if(l2.isHighInf()&&!l1.isHighInf())
         return true;
-      ROSE_ASSERT(!l1.isHighInf()&&l2.isLowInf());
       if(l1.getHigh()<l2.getLow())
 	return BoolLatticeType(true);
       else

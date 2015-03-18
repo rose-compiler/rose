@@ -1,4 +1,6 @@
 #include <iostream>
+
+#define ROSE_ASSERT(x) assert(x)
 #include "../GenericIntervalLattice.h"
 #include "../NumberIntervalLattice.h"
 using namespace std;
@@ -58,7 +60,7 @@ int main() {
     GenericIntervalLattice<int> i30(1,3);
     GenericIntervalLattice<int> i31(-1,4);
     GenericIntervalLattice<int> i32(1,4);
-    GenericIntervalLattice<int> i33();
+    //GenericIntervalLattice<int> i33();
     cout<<"Test1:(1):"<<GenericIntervalLattice<int>::isSubIntervalOf(i30,i32)<<endl;
     cout<<"Test2:(0):"<<GenericIntervalLattice<int>::isSubIntervalOf(i32,i30)<<endl;
     cout<<"Test3:(1):"<<GenericIntervalLattice<int>::isSubIntervalOf(i32,i31)<<endl;
