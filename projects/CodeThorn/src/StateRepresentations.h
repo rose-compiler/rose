@@ -32,7 +32,7 @@ typedef int EStateId;
 using CodeThorn::CppCapsuleAValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
-using CodeThorn::Edge;
+using SPRAY::Edge;
 
 namespace CodeThorn {
 

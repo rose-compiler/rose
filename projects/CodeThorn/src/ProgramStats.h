@@ -10,8 +10,6 @@
 #include "Miscellaneous.h"
 #include "AnalysisAbstractionLayer.h"
 
-using CodeThorn::Flow;
-
 namespace SPRAY {
 
 enum CompInfoType {CIT_TOTAL=1, CIT_INT, CIT_FLOAT, CIT_NUM};

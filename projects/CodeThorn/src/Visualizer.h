@@ -39,11 +39,11 @@ class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::Analyzer* analyzer);
-  Visualizer(IOLabeler* l, VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
+  Visualizer(IOLabeler* l, VariableIdMapping* vim, SPRAY::Flow* f, CodeThorn::PStateSet* ss, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setVariableIdMapping(VariableIdMapping* x);
   void setLabeler(IOLabeler* x);
-  void setFlow(CodeThorn::Flow* x);
+  void setFlow(SPRAY::Flow* x);
   void setPStateSet(CodeThorn::PStateSet* x);
   void setEStateSet(CodeThorn::EStateSet* x);
   void setTransitionGraph(CodeThorn::TransitionGraph* x);
@@ -64,7 +64,7 @@ class Visualizer {
  private:
   IOLabeler* labeler;
   VariableIdMapping* variableIdMapping;
-  CodeThorn::Flow* flow;
+  SPRAY::Flow* flow;
   CodeThorn::PStateSet* pstateSet;
   CodeThorn::EStateSet* estateSet;
   CodeThorn::TransitionGraph* transitionGraph;

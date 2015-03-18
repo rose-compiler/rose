@@ -7,11 +7,11 @@ using namespace std;
 using namespace boost; 
 using namespace SPRAY;
 
-namespace CodeThorn {
-
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "CommandLineOptions.h"
+
+namespace SPRAY {
 
   //#include <boost/graph/graphviz.hpp>
 
