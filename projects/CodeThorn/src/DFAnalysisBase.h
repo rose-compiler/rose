@@ -98,7 +98,7 @@ class DFAnalysisBase {
   DFTransferFunctions* _transferFunctions;
  protected:
   PropertyStateFactory* _initialElementFactory;
-  PASolver1* _solver;
+  SPRAY::PASolver1* _solver;
   AnalysisType _analysisType;
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;

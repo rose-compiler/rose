@@ -5,7 +5,7 @@
 
 #include "PASolver1.h"
 
-PASolver1::PASolver1(WorkListSeq<Edge>& workList,
+SPRAY::PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 				  vector<Lattice*>& analyzerDataPreInfo,
 				  vector<Lattice*>& analyzerDataPostInfo,
 				  PropertyStateFactory& initialElementFactory,
@@ -23,7 +23,7 @@ PASolver1::PASolver1(WorkListSeq<Edge>& workList,
 }
 
 void
-PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
+SPRAY::PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
   LabelSet pred=_flow.pred(lab);
   for(LabelSet::iterator i=pred.begin();i!=pred.end();++i) {
     Lattice* predInfo=_initialElementFactory.create();
@@ -35,13 +35,13 @@ PASolver1::computeCombinedPreInfo(Label lab,Lattice& info) {
 }
 
 void
-PASolver1::computePostInfo(Label lab,Lattice& info) {
+SPRAY::PASolver1::computePostInfo(Label lab,Lattice& info) {
   _transferFunctions.transfer(lab,info);
 }
 
 // runs until worklist is empty
 void
-PASolver1::runSolver() {
+SPRAY::PASolver1::runSolver() {
   cout<<"INFO: solver 1 started."<<endl;
   ROSE_ASSERT(!_workList.isEmpty());
   while(!_workList.isEmpty()) {

@@ -35,7 +35,7 @@ void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(&_flow);
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new PASolver1(_workList,
+  _solver=new SPRAY::PASolver1(_workList,
                       _analyzerDataPreInfo,
                       _analyzerDataPostInfo,
                       *_initialElementFactory,

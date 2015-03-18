@@ -11,6 +11,8 @@
 
 #include <vector>
 
+namespace SPRAY {
+
 class PASolver1 {
  public:
   PASolver1(WorkListSeq<Edge>& workList,
@@ -36,5 +38,7 @@ class PASolver1 {
  private:
   bool _trace;
 };
+
+}
 
 #endif
