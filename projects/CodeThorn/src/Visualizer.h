@@ -8,7 +8,7 @@
  *************************************************************/
 
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "StateRepresentations.h"
 #include "Analyzer.h"
 #include "CommandLineOptions.h"

@@ -1533,8 +1533,8 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  cout << "INIT: Creating CFAnalyzer."<<endl;
-  cfanalyzer=new CFAnalyzer(labeler);
+  cout << "INIT: Creating CFAnalysis."<<endl;
+  cfanalyzer=new CFAnalysis(labeler);
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
 

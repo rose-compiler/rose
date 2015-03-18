@@ -138,8 +138,8 @@ DFAnalysisBase::initialize(SgProject* root) {
   _labeler= new Labeler(root);
   //cout << "INIT: Initializing ExprAnalyzer."<<endl;
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  cout << "INIT: Creating CFAnalyzer."<<endl;
-  _cfanalyzer=new CFAnalyzer(_labeler);
+  cout << "INIT: Creating CFAnalysis."<<endl;
+  _cfanalyzer=new CFAnalysis(_labeler);
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
@@ -331,7 +331,7 @@ using std::string;
 
 #include <sstream>
 
-CFAnalyzer* DFAnalysisBase::getCFAnalyzer() {
+CFAnalysis* DFAnalysisBase::getCFAnalyzer() {
   return _cfanalyzer;
 }
 

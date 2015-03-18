@@ -14,7 +14,7 @@
 #include <map>
 #include <utility>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"

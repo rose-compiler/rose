@@ -31,8 +31,8 @@ codethorn_SOURCES = \
   Analyzer.h                       \
   AstTerm.C                        \
   AstTerm.h                        \
-  CFAnalyzer.C                     \
-  CFAnalyzer.h                     \
+  CFAnalysis.C                     \
+  CFAnalysis.h                     \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
@@ -251,7 +251,7 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
 rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
- CFAnalyzer.h CFAnalyzer.C \
+ CFAnalysis.h CFAnalysis.C \
   LanguageRestrictor.h LanguageRestrictor.C \
   LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -323,7 +323,7 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   rdmain.C 
 
 woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalysis.h CFAnalysis.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   AType.h                          \
@@ -369,8 +369,8 @@ analyterix_SOURCES = \
   AstTerm.h \
   AType.C \
   AType.h \
-  CFAnalyzer.C \
-  CFAnalyzer.h \
+  CFAnalysis.C \
+  CFAnalysis.h \
   CPAstAttribute.h CPAstAttribute.C \
   CppExprEvaluator.h \
   CppExprEvaluator.C \

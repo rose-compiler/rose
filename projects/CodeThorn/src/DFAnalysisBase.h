@@ -10,7 +10,7 @@
 #include <set>
 #include <string>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "WorkListSeq.h"
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
@@ -52,7 +52,7 @@ class DFAnalysisBase {
   void attachResultsToAst(string);
 #endif
   Labeler* getLabeler();
-  CFAnalyzer* getCFAnalyzer();
+  CFAnalysis* getCFAnalyzer();
   VariableIdMapping* getVariableIdMapping();
   Flow* getFlow() { return &_flow; }
   Lattice* getPreInfo(Label lab);
@@ -69,7 +69,7 @@ class DFAnalysisBase {
   virtual void solve();
   VariableIdMapping _variableIdMapping;
   Labeler* _labeler;
-  CFAnalyzer* _cfanalyzer;
+  CFAnalysis* _cfanalyzer;
   set<Label> _extremalLabels;
   Flow _flow;
   // following members are initialized by function initialize()

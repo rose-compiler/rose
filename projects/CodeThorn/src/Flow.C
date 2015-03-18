@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>

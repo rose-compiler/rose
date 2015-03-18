@@ -6,7 +6,7 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "ExprAnalyzer.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 
 //BOOST includes
 #include "boost/unordered_set.hpp"
@@ -25,7 +25,7 @@ namespace CodeThorn {
   //                the constraint variables themselves.
   class RefinementConstraints {
   public:
-    RefinementConstraints(Flow* flow, IOLabeler* labeler, ExprAnalyzer* exprAnalyzer, CFAnalyzer* cfanalyzer, VariableIdMapping* varIdMapping) {
+    RefinementConstraints(Flow* flow, IOLabeler* labeler, ExprAnalyzer* exprAnalyzer, CFAnalysis* cfanalyzer, VariableIdMapping* varIdMapping) {
       _cfg = flow; _labeler=labeler; _exprAnalyzer=exprAnalyzer; _cfanalyzer=cfanalyzer; _varIdMapping=varIdMapping;
     };
     // collects the atomic propositions of conditional statements that decide about the path from the start of the program to "label".
@@ -59,7 +59,7 @@ namespace CodeThorn {
     VarToIntMap _constraintsLessThan;
 
     Flow* _cfg;
-    CFAnalyzer* _cfanalyzer;
+    CFAnalysis* _cfanalyzer;
     IOLabeler* _labeler;
     ExprAnalyzer* _exprAnalyzer;
     VariableIdMapping* _varIdMapping; 

@@ -13,7 +13,7 @@
 #include <string>
 #include <sstream>
 
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "Analyzer.h"
 #include "Visualizer.h"
 #include "LanguageRestrictor.h"

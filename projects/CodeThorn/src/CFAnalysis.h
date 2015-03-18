@@ -18,9 +18,9 @@ namespace SPRAY {
   * \author Markus Schordan
   * \date 2012.
  */
-class CFAnalyzer {
+class CFAnalysis {
  public:
-  CFAnalyzer(SPRAY::Labeler* l);
+  CFAnalysis(SPRAY::Labeler* l);
   Label getLabel(SgNode* node);
   SgNode* getNode(Label label);
   Label initialLabel(SgNode* node);

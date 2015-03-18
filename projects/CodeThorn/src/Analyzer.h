@@ -19,7 +19,7 @@
 
 #include "AstTerm.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
@@ -232,9 +232,9 @@ namespace CodeThorn {
     void runSolver7();
     void runSolver8();
     void runSolver();
-    //! The analyzer requires a CFAnalyzer to obtain the ICFG.
-    void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
-    CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
+    //! The analyzer requires a CFAnalysis to obtain the ICFG.
+    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
     
     //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
 
@@ -254,7 +254,7 @@ namespace CodeThorn {
     //private: TODO
     Flow flow;
     SgNode* startFunRoot;
-    CFAnalyzer* cfanalyzer;
+    CFAnalysis* cfanalyzer;
     VariableValueMonitor variableValueMonitor;
     void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
   public:

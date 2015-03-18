@@ -2,7 +2,7 @@
 #define PASOLVER1_H
 
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "WorkListSeq.h"
 #include "Flow.h"
 #include "Lattice.h"

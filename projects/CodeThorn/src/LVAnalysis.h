@@ -6,7 +6,7 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "LVLattice.h"
 #include "DFAnalysisBase.h"
 #include "WorkList.h"

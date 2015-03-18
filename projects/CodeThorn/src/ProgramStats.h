@@ -4,7 +4,7 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "RDAstAttribute.h"
 #include "Miscellaneous.h"

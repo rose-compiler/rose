@@ -13,7 +13,7 @@
 #include <string>
 #include <list>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"

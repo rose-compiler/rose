@@ -8,7 +8,7 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "WorkList.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "DFAnalysisBase.h"
 #include "RDAnalysis.h"
@@ -210,7 +210,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
         int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
         cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         
