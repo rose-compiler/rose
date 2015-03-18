@@ -1095,7 +1095,7 @@ static void run_sawyer() {
 
 static void run_sawyer_pool() {
     // "int" could be "void" for this test when supported
-    typedef Sawyer::Container::Graph<int, int, Sawyer::PoolAllocator> sgl1;
+    typedef Sawyer::Container::Graph<int, int, Sawyer::UnsynchronizedPoolAllocator> sgl1;
     sgl_test_all<sgl1>("Sawyer Graph using memory pools");
 }
 
@@ -1107,7 +1107,7 @@ static void run_sawyer_bgl() {
 
 static void run_sawyer_bgl_pool() {
     // "int" could be "void" for this test when supported
-    typedef Sawyer::Container::Graph<int, int, Sawyer::PoolAllocator> sgl1;
+    typedef Sawyer::Container::Graph<int, int, Sawyer::UnsynchronizedPoolAllocator> sgl1;
     bgl_test_all<sgl1>("Sawyer Graph w/BGL interface using memory pools");
 }
 

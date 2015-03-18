@@ -261,7 +261,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
     mode_ = mode;
     function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
-    if (bblock) {
+    if (bblock && function_) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
         FunctionDataFlow df = functionDataFlow(ctx_.partitioner, function_);

@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_AddressSegment_H
 #define Sawyer_AddressSegment_H
 
@@ -27,7 +34,6 @@ class AddressSegment {
     typename Buffer<A, T>::Ptr buffer_;                 // reference counted buffer
     A offset_;                                          // initial offset into buffer
     unsigned accessibility_;                            // uninterpreted bit mask
-    bool copyOnWrite_;                                  // should buffer be copied on write?
     std::string name_;                                  // for debugging
 
 public:
@@ -43,22 +49,21 @@ public:
      *
      *  Constructs a segment that does not point to any buffer.  This is mainly to fulfill the requirement that values in an
      *  IntervalMap are default constructable. */
-    AddressSegment(): offset_(0), accessibility_(0), copyOnWrite_(false) {}
+    AddressSegment(): offset_(0), accessibility_(0) {}
 
     /** Copy constructor.
      *
      *  Creates a new segment that's an exact copy of @p other.  Both segments will point to the same underlying buffer, which
      *  is reference counted. */
     AddressSegment(const AddressSegment &other)
-        : buffer_(other.buffer_), offset_(other.offset_), accessibility_(other.accessibility_), copyOnWrite_(false),
-          name_(other.name_) {}
+        : buffer_(other.buffer_), offset_(other.offset_), accessibility_(other.accessibility_), name_(other.name_) {}
 
     /** Construct a segment with buffer.
      *
      *  This is the usual way that segments are created: by specifying a buffer and some access permissions. */
     explicit AddressSegment(const typename Buffer<Address, Value>::Ptr &buffer, Address offset=0, unsigned accessBits=0,
                             const std::string &name="")
-        : buffer_(buffer), offset_(offset), accessibility_(accessBits), copyOnWrite_(false), name_(name) {}
+        : buffer_(buffer), offset_(offset), accessibility_(accessBits), name_(name) {}
 
     //-------------------------------------------------------------------------------------------------------------------
     // The following static methods are convenience wrappers around various buffer types.
@@ -136,17 +141,6 @@ public:
      *  @{ */
     unsigned accessibility() const { return accessibility_; }
     AddressSegment& accessibility(unsigned bits) { accessibility_ = bits; return *this; }
-    /** @} */
-
-    /** Property: copy on write
-     *
-     *  This property is a boolean value that can be used by higher layers of software to implement copy-on-write.  The segment
-     *  itself does nothing with this property.
-     *
-     * @{ */
-    bool isCopyOnWrite() const { return copyOnWrite_; }
-    void setCopyOnWrite(bool b=true) { copyOnWrite_ = b; }
-    void clearCopyOnWrite() { copyOnWrite_ = false; }
     /** @} */
 
     /** Property: name.

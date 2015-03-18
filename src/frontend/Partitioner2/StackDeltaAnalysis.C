@@ -14,6 +14,36 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+void
+Partitioner::forgetStackDeltas() const {
+    BOOST_FOREACH (const BasicBlock::Ptr &bb, basicBlocks()) {
+        bb->stackDeltaIn().clear();
+        bb->stackDeltaOut().clear();
+        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+            insn->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
+    }
+    BOOST_FOREACH (const Function::Ptr &func, functions()) {
+        func->stackDelta().clear();
+    }
+}
+
+void
+Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
+        ControlFlowGraph::ConstVertexNodeIterator vertex = findPlaceholder(va);
+        if (vertex != cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
+            if (BasicBlock::Ptr bb = vertex->value().bblock()) {
+                bb->stackDeltaIn().clear();
+                bb->stackDeltaOut().clear();
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    insn->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
+            }
+        }
+    }
+    function->stackDelta().clear();
+}
+
 // Determines when to perform interprocedural dataflow.  We want stack delta analysis to be interprocedural only if the called
 // function has no stack delta.
 struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
@@ -281,6 +311,12 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(*this, cfg_, cfgStart, ip);
     P2::DataFlow::DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
+    if (cpu==NULL) {
+        mlog[DEBUG] <<"  no instruction semantics for this architecture\n";
+        forgetStackDeltas(function);
+        function->stackDelta() = retval;
+        return retval;
+    }
     BinaryAnalysis::DataFlow df(cpu);
 
     // Dump the CFG for debugging
@@ -317,8 +353,9 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     Engine engine(dfCfg, xfer);
     try {
         engine.runToFixedPoint(dfCfgStart->id(), xfer.initialState());
-    } catch (const BaseSemantics::Exception&) {
-        SAWYER_MESG(trace) <<" = BOTTOM (semantics exception)\n";
+    } catch (const BaseSemantics::Exception &e) {
+        SAWYER_MESG(trace) <<" = BOTTOM (semantics exception: " <<e.what() <<")\n";
+        forgetStackDeltas(function);
         retval = ops->undefined_(bitsPerWord);
         function->stackDelta() = retval;
         return retval;
