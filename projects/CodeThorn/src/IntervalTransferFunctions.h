@@ -21,9 +21,9 @@ public:
   void setPropertyState(PropertyState* p) { _cppExprEvaluator->setPropertyState(p); }
   //private:
   CppExprEvaluator* getCppExprEvaluator();
-  void setCppExprEvaluator(CppExprEvaluator* expEval);
+  void setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval);
 private:
-  CppExprEvaluator* _cppExprEvaluator;
+  SPRAY::CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;
 };
 

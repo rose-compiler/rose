@@ -27,7 +27,7 @@ IntervalTransferFunctions::IntervalTransferFunctions(
                                                      Labeler* l, 
                                                      VariableIdMapping* vid)
   :_domain(domain),_labeler(l),_variableIdMapping(vid) {
-  _cppExprEvaluator=new CppExprEvaluator(domain,p,vid);
+  _cppExprEvaluator=new SPRAY::CppExprEvaluator(domain,p,vid);
 }
 #endif
 
@@ -113,10 +113,10 @@ void IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefini
   // TODO:: return variable $r
 }
 
-CppExprEvaluator* IntervalTransferFunctions::getCppExprEvaluator() {
+SPRAY::CppExprEvaluator* IntervalTransferFunctions::getCppExprEvaluator() {
   return _cppExprEvaluator;
 }
 
-void IntervalTransferFunctions::setCppExprEvaluator(CppExprEvaluator* expEval) {
+void IntervalTransferFunctions::setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval) {
   _cppExprEvaluator=expEval;
 }

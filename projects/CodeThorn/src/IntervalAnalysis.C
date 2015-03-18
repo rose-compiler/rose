@@ -40,5 +40,5 @@ void IntervalAnalysis::initializeTransferFunctions() {
   ROSE_ASSERT(_numberIntervalLattice);
   IntervalTransferFunctions* intervalTransferFunctions=dynamic_cast<IntervalTransferFunctions*>(_transferFunctions);
   ROSE_ASSERT(intervalTransferFunctions->getCppExprEvaluator()==0);
-  intervalTransferFunctions->setCppExprEvaluator(new CppExprEvaluator(_numberIntervalLattice,&_variableIdMapping));
+  intervalTransferFunctions->setCppExprEvaluator(new SPRAY::CppExprEvaluator(_numberIntervalLattice,&_variableIdMapping));
  }

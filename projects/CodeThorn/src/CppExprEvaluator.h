@@ -11,6 +11,7 @@ using namespace std;
 #include "PropertyState.h"
 #include "NumberIntervalLattice.h"
 
+namespace SPRAY {
 class CppExprEvaluator {
  public:
   CppExprEvaluator(NumberIntervalLattice* d, VariableIdMapping* vim);
@@ -24,5 +25,5 @@ class CppExprEvaluator {
   VariableIdMapping* variableIdMapping;
   PropertyState* propertyState;
 };
-
+}
 #endif

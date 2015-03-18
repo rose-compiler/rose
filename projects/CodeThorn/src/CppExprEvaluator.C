@@ -8,10 +8,10 @@ using namespace std;
 #include "CppExprEvaluator.h"
 #include "IntervalPropertyState.h"
 
-CppExprEvaluator::CppExprEvaluator(NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
+SPRAY::CppExprEvaluator::CppExprEvaluator(NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
 }
   
-NumberIntervalLattice CppExprEvaluator::evaluate(SgNode* node) {
+NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   
   ROSE_ASSERT(domain);
   ROSE_ASSERT(propertyState);
@@ -81,19 +81,19 @@ NumberIntervalLattice CppExprEvaluator::evaluate(SgNode* node) {
   return NumberIntervalLattice::top();
 }
 
-void CppExprEvaluator::setDomain(NumberIntervalLattice* domain) {
+void SPRAY::CppExprEvaluator::setDomain(NumberIntervalLattice* domain) {
   this->domain=domain;
 }
 
-void CppExprEvaluator::setPropertyState(PropertyState* pstate) {
+void SPRAY::CppExprEvaluator::setPropertyState(PropertyState* pstate) {
   this->propertyState=pstate;
 }
 
-void CppExprEvaluator::setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
+void SPRAY::CppExprEvaluator::setVariableIdMapping(VariableIdMapping* variableIdMapping) { 
   this->variableIdMapping=variableIdMapping;
 }
 
-bool CppExprEvaluator::isValid() {
+bool SPRAY::CppExprEvaluator::isValid() {
   return domain!=0 && propertyState!=0 && variableIdMapping!=0;
 }
 
