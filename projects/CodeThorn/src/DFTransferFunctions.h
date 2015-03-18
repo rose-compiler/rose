@@ -7,15 +7,15 @@
 
 //class Domain;
 
-#include "Domain.hpp"
+//#include "Domain.hpp"
 
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
   void setLabeler(SPRAY::Labeler* labeler) { _labeler=labeler; }
   SPRAY::Labeler* getLabeler() { return _labeler; }
-  void setDomain(Domain* domain) { _domain=domain; }
-  Domain* getDomain() { return _domain; }
+  //void setDomain(Domain* domain) { _domain=domain; }
+  //Domain* getDomain() { return _domain; }
   void setVariableIdMapping(VariableIdMapping* v) { _variableIdMapping=v; }
   VariableIdMapping* getVariableIdMapping() { return _variableIdMapping; }
 
@@ -35,7 +35,7 @@ public:
  public:
   SPRAY::Labeler* _labeler;
   SPRAY::VariableIdMapping* _variableIdMapping;
-  Domain* _domain;
+  //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 };
 

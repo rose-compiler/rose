@@ -18,6 +18,8 @@
 // we may want to make this type a template parameter of IntervalLattice for handling relational operators
 typedef CodeThorn::AType::BoolLattice BoolLatticeType;
 
+namespace SPRAY {
+
 template<typename Type>
 class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
@@ -456,5 +458,7 @@ class GenericIntervalLattice {
   bool _isHighInf;
   bool _exactJoin;
 };
+
+}
 
 #endif

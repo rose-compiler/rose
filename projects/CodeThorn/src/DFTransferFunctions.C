@@ -12,7 +12,7 @@ using namespace CodeThorn;
 
 using namespace SPRAY;
 
-DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
+DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
 
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);

@@ -8,7 +8,7 @@ using namespace std;
 #include "CppExprEvaluator.h"
 #include "IntervalPropertyState.h"
 
-SPRAY::CppExprEvaluator::CppExprEvaluator(NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
+SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
 }
   
 NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
