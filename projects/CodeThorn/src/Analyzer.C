@@ -18,6 +18,7 @@
 #include "Timer.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 #include "CollectionOperators.h"
 

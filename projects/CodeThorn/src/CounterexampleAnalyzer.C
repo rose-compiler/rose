@@ -3,6 +3,7 @@
 #include "CounterexampleAnalyzer.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer) : _analyzer(analyzer) {
 }

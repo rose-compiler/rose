@@ -29,8 +29,6 @@
 // we use INT_MIN, INT_MAX
 #include "limits.h"
 
-using namespace std;
-
 namespace CodeThorn {
 
 #define DEBUGPRINT_STMT 0x1
@@ -45,7 +43,7 @@ namespace CodeThorn {
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
-    string toString() { stringstream ss;
+    std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";
       ss<<"init:"<<initialLabel<<" ";
       ss<<"final:"<<finalLabelsSet.toString();
@@ -83,13 +81,13 @@ namespace CodeThorn {
     VariableMode getVariableMode(VariableId);
     void update(Analyzer* analyzer, EState* estate);
     bool isHotVariable(Analyzer* analyzer, VariableId varId);
-    string toString(VariableIdMapping* variableIdMapping);
+    std::string toString(VariableIdMapping* variableIdMapping);
 #if 0
     bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
 #endif
   private:
-    map<VariableId,set<int>* > _variablesMap;
-    map<VariableId,VariableMode> _variablesModeMap;
+    std::map<VariableId,std::set<int>* > _variablesMap;
+    std::map<VariableId,VariableMode> _variablesModeMap;
     long int _threshold;
   };
 
@@ -107,7 +105,7 @@ namespace CodeThorn {
     
     void initAstNodeInfo(SgNode* node);
     bool isActiveGlobalTopify();
-    static string nodeToString(SgNode* node);
+    static std::string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
@@ -129,7 +127,7 @@ namespace CodeThorn {
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
-    set<const EState*> nonLTLRelevantEStates();
+    std::set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
     // 6 experimental functions
@@ -144,7 +142,7 @@ namespace CodeThorn {
     // requires semantically reduced STG
     int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
-    bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
+    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
     // this function requires that no LTL graph is computed
     void deleteNonRelevantEStates();
@@ -203,16 +201,16 @@ namespace CodeThorn {
     // please note: target has to be a predecessor of source (reversed trace)
     list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
     list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
-    string reversedInOutRunToString(list<const EState*>& run);
+    std::string reversedInOutRunToString(list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
     
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    string generateSpotSTG();
+    std::string generateSpotSTG();
   private:
-    void generateSpotTransition(stringstream& ss, const Transition& t);
+    void generateSpotTransition(std::stringstream& ss, const Transition& t);
     //less than comarisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
   public:
@@ -263,7 +261,7 @@ namespace CodeThorn {
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
-    set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
     typedef list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
@@ -280,8 +278,8 @@ namespace CodeThorn {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
     size_t getNumberOfErrorLabels();
-    string labelNameOfAssertLabel(Label lab) {
-      string labelName;
+    std::string labelNameOfAssertLabel(Label lab) {
+      std::string labelName;
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
@@ -312,22 +310,22 @@ namespace CodeThorn {
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    void setCsvAssertLiveFileName(string filename) { _csv_assert_live_file=filename; }
-    VariableId globalVarIdByName(string varName) { return globalVarName2VarIdMapping[varName]; }
-    void setStgTraceFileName(string filename) {
+    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
+    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
+    void setStgTraceFileName(std::string filename) {
       _stg_trace_filename=filename;
       std::ofstream fout;
       fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
       fout<<"START"<<endl;
       fout.close();    // close. Will be used with append.
     }
-    string _csv_assert_live_file; // to become private
+    std::string _csv_assert_live_file; // to become private
   private:
-    string _stg_trace_filename;
+    std::string _stg_trace_filename;
  public:
     // only used temporarily for binary-binding prototype
-    map<string,VariableId> globalVarName2VarIdMapping;
-    vector<bool> binaryBindingAssert;
+    std::map<std::string,VariableId> globalVarName2VarIdMapping;
+    std::vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
