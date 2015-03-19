@@ -234,6 +234,13 @@ class  PreprocessingInfo
           std::string filenameForCompilerGeneratedLinemarker;
           std::string optionalflagsForCompilerGeneratedLinemarker;
 
+       // DQ (1/15/2015): Adding support for token-based unparsing. When new comments and CPP directives are added we need
+       // to record these as a kind of transformation that will trigger the token stream representation to NOT be used and
+       // the comments and CPP directives unparsed from the AST seperately from the associated IR node being unparsed from
+       // the AST.  The problem is that we wnat to record where there might be comments or CPP directives removed and having
+       // a flag here is not going to work for that.  so we have to also record that the ROSEAttributesList has changed.
+          bool p_isTransformation;
+
 // This is part of Wave support in ROSE.
 // #ifndef USE_ROSE
      public:
@@ -438,6 +445,11 @@ class  PreprocessingInfo
       // always better to use the token stream unparsing for these cases.
          bool isSelfReferential();
          std::string getMacroName();
+
+       // DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+          bool isTransformation() const;
+          void setAsTransformation();
+          void unsetAsTransformation();
    };
 
 // DQ (10/15/2002) Changed list element from "PreprocessingInfo" to 
@@ -469,6 +481,13 @@ class ROSEAttributesList
        // DQ (12/15/2012): Save file ids that are from filenames referenced in #line 
        // directives, these will be considered equivalent to the input source filename.
           std::set<int> filenameIdSet;
+
+       // DQ (1/15/2015): Adding support for token-based unparsing. When new comments and CPP directives are added we need
+       // to record these as a kind of transformation that will trigger the token stream representation to NOT be used and
+       // the comments and CPP directives unparsed from the AST seperately from the associated IR node being unparsed from
+       // the AST.  The problem is that we wnat to record where there might be comments or CPP directives removed and having
+       // a flag here is not going to work for that.  so we have to also record that the ROSEAttributesList has changed.
+       // bool p_isTransformation;
 
      public:
        // DQ (11/19/2008): Added language selection support for handling comments
@@ -553,6 +572,11 @@ class ROSEAttributesList
 
        // DQ (9/29/2013): Added to support adding processed CPP directives and comments as tokens to token list.
           PreprocessingInfo* lastElement();
+
+       // DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+       // bool isTransformation() const;
+       // void setAsTransformation();
+       // void unsetAsTransformation();
    };
 
 //
