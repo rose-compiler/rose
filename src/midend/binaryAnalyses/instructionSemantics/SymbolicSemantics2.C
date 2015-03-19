@@ -714,10 +714,11 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (SgAsmInstruction *insn = get_insn()) {
-            BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
-            BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-            ASSERT_not_null(cell); // we just wrote to it!
-            cell->latestWriter(insn->get_address());
+            if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
+                ASSERT_not_null(cell); // we just wrote to it!
+                cell->latestWriter(insn->get_address());
+            }
         }
     }
 }
