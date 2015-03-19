@@ -10,6 +10,7 @@
 #include "SgNodeHelper.h"
 
 using namespace std;
+using namespace SPRAY;
 
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {
   LanguageRestrictor::VariantSet vset;

@@ -11,6 +11,7 @@
 #include <string>
 #include "RoseAst.h"
 
+namespace SPRAY {
 /*!
   \brief Allows to check an AST for a restricted subset of C/C++.
   \details This class can be used to check the AST of an input program to contain only nodes of a certain subset of C/C++.
@@ -39,5 +40,7 @@ class LanguageRestrictor {
   void ensureVariantIsValid(VariantT variant);
   bool variants[V_SgNumVariants+1];
 };
+
+}
 
 #endif
