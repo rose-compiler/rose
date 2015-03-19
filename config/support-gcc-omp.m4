@@ -19,6 +19,8 @@ if test "$with_parallel_ast_traversal_omp" = no; then
    # If omp_runtime_support is not specified, then don't use it.
    echo "Skipping use of GCC OpenMP support!"
 else
+   # OpenMP support assumes that "-pthread" is a valid compiler switch that turns on multi-threading support.
+   # See also "--with-boost-thread" configure switch for a better way to do this.
    parallel_ast_traversal_omp_path=$with_parallel_ast_traversal_omp
    echo "Setup OpenMP support in ROSE! path = $parallel_ast_traversal_omp_path"
    AC_DEFINE([USE_ROSE_GCC_OMP],1,[Use of GCC OpenMP in ROSE.])

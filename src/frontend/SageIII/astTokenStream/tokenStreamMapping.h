@@ -45,6 +45,9 @@ class TokenStreamSequenceToNodeMapping
        // trailing whitespace
           int trailing_whitespace_start, trailing_whitespace_end;
 
+       // DQ (12/31/2014): Added to support the middle subsequence of tokens in the SgIfStmt as a special case.
+          int else_whitespace_start, else_whitespace_end;
+
        // Currently some normalized parts of the ROSE AST can share the same 
        // TokenStreamSequenceToNodeMapping data structure.  The best example
        // of this is the case of a variable declaration using multiple variables
@@ -73,9 +76,10 @@ class TokenStreamSequenceToNodeMapping
 
        // Constructor
           TokenStreamSequenceToNodeMapping(SgNode* n, 
-               int input_leading_whitespace_start, int input_leading_whitespace_end, 
-               int input_token_subsequence_start, int input_token_subsequence_end, 
-               int input_trailing_whitespace_start, int input_trailing_whitespace_end);
+               int input_leading_whitespace_start,  int input_leading_whitespace_end, 
+               int input_token_subsequence_start,   int input_token_subsequence_end, 
+               int input_trailing_whitespace_start, int input_trailing_whitespace_end,
+               int input_else_whitespace_start,     int input_else_whitespace_end);
 
        // Constructor
           TokenStreamSequenceToNodeMapping( const TokenStreamSequenceToNodeMapping & X );
@@ -84,7 +88,8 @@ class TokenStreamSequenceToNodeMapping
           static TokenStreamSequenceToNodeMapping* createTokenInterval (SgNode* n, 
                int input_leading_whitespace_start, int input_leading_whitespace_end, 
                int input_token_subsequence_start, int input_token_subsequence_end, 
-               int input_trailing_whitespace_start, int input_trailing_whitespace_end);
+               int input_trailing_whitespace_start, int input_trailing_whitespace_end,
+               int input_else_whitespace_start,     int input_else_whitespace_end);
 
           void display(std::string label) const;
    };
@@ -92,5 +97,9 @@ class TokenStreamSequenceToNodeMapping
 #endif
 
 #include "frontierDetection.h"
+
+// DQ (12/4/2014): Added alternative form of detection where to switch 
+// between unparsing from the AST and unparsing from the token stream.
+#include "simpleFrontierDetection.h"
 
 
