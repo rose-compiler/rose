@@ -484,6 +484,7 @@ SgNaryBooleanOp
 SgNaryComparisonOp
 SgNewExp
 SgNode
+SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp

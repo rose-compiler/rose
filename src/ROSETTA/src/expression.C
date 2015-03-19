@@ -42,6 +42,9 @@ Grammar::setUpExpressions ()
   // DQ (6/20/2013): Added alignOf operator.
      NEW_TERMINAL_MACRO (AlignOfOp,                    "AlignOfOp",                    "ALIGNOF_OP" );
 
+  // DQ (2/4/2015): Added C++11 noexcept operator.
+     NEW_TERMINAL_MACRO (NoexceptOp,                   "NoexceptOp",                   "NOEXCEPT_OP" );
+
      NEW_TERMINAL_MACRO (JavaInstanceOfOp,             "JavaInstanceOfOp",             "JAVA_INSTANCEOF_OP" );
 
   // DQ (1/13/2014): Added Java support for Java annotations.
@@ -381,7 +384,7 @@ Grammar::setUpExpressions ()
           Comprehension       | ListComprehension       | SetComprehension         | DictionaryComprehension      | NaryOp |
           StringConversion    | YieldExpression         | TemplateFunctionRefExp   | TemplateMemberFunctionRefExp | AlignOfOp |
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression | 
-          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp, "Expression", "ExpressionTag", false);
+          ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | NoexceptOp, "Expression", "ExpressionTag", false);
        // ClassExp | FunctionParameterRefExp            | HereExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
@@ -646,6 +649,8 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
      AlignOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
+     NoexceptOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
+                                  "../Grammar/Expression.code" );
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
                                   "../Grammar/Expression.code" );
      TypeIdOp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION", 
@@ -845,6 +850,7 @@ Grammar::setUpExpressions ()
   // (where the precedence member function is defined)
      SizeOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
      AlignOfOp.editSubstitute       ( "PRECEDENCE_VALUE", "16" );
+     NoexceptOp.editSubstitute      ( "PRECEDENCE_VALUE", "16" );
 
   // DQ (7/18/2011): What is the precedence of this operator?
      JavaInstanceOfOp.editSubstitute        ( "PRECEDENCE_VALUE", "16" );
@@ -1335,17 +1341,26 @@ Grammar::setUpExpressions ()
      FunctionParameterRefExp.setDataPrototype ("SgExpression*", "parameter_expression", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+  // DQ (2/14/2015): This can't be a part of the AST (so can't be defined in a traversal), since types
+  // are never traversed.
   // DQ (11/10/2014): We need to store an explicit type pointer in this IR node so that we can support
   // the get_type() function called from any expression that might have this kind of IR node in its subtree.
+  // FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
+  //                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      FunctionParameterRefExp.setDataPrototype ("SgType*", "parameter_type", "= NULL",
-                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/2/2014): Adding support for C++11 lambda expresions.
      LambdaExp.setFunctionPrototype ( "HEADER_LAMBDA_EXPRESSION", "../Grammar/Expression.code" );
      LambdaExp.setDataPrototype ("SgLambdaCaptureList*", "lambda_capture_list", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/15/2015): This will call cycles in the AST if it is allowed to be defined in the AST traversal.
+  // LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
+  //             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ("SgClassDeclaration*", "lambda_closure_class", "= NULL",
-                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      LambdaExp.setDataPrototype ("SgFunctionDeclaration*", "lambda_function", "= NULL",
                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      LambdaExp.setDataPrototype ( "bool", "is_mutable", "= false",
@@ -1699,6 +1714,11 @@ Grammar::setUpExpressions ()
   // We need to control the output of the defining declaration in some interesting places where it can be specified.
      AlignOfOp.setDataPrototype("bool","alignOfContainsBaseTypeDefiningDeclaration","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (2/4/2015): Added noexecpt operator.
+     NoexceptOp.setFunctionPrototype ( "HEADER_NOEXCEPT_OPERATOR", "../Grammar/Expression.code" );
+     NoexceptOp.setDataPrototype ( "SgExpression*", "operand_expr", "= NULL",
+                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/18/2011): This is structurally similar to the SizeOfOp in that it takes a type operand
   // and we have to save the expression type explicitly (I think).
@@ -2562,6 +2582,8 @@ Grammar::setUpExpressions ()
 
      SizeOfOp.setFunctionSource ( "SOURCE_SIZE_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
      AlignOfOp.setFunctionSource ( "SOURCE_ALIGN_OF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+     NoexceptOp.setFunctionSource ( "SOURCE_NOEXCEPT_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
+
      JavaInstanceOfOp.setFunctionSource ( "SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (1/13/2014): Added Java support for Java annotations.
