@@ -114,6 +114,15 @@ UnparseFormat & UnparseFormat::operator=(const UnparseFormat & X)
    }
 
 
+// DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the 
+// formatting for AST subtrees unparsed using the AST in conjunction with the token based unparsing.
+void
+UnparseFormat::reset_chars_on_line()
+   {
+     chars_on_line  = 0;
+   }
+
+
 //-----------------------------------------------------------------------------------
 //  void Unparser::insert_newline
 //
@@ -208,6 +217,10 @@ UnparseFormat& UnparseFormat::operator << ( string out)
   // const char* p2 = p + strlen(p)-1;
      const char* p2 = p + strlen(p);
 
+#if 0
+     printf ("****************** UnparseFormat::operator << (): linewrap = %d chars_on_line = %d \n",linewrap,chars_on_line);
+#endif
+
   // DQ (3/18/2006): The default is TABINDENT, but we get a value from formatHelp if available
      int tabIndentSize = TABINDENT;
      if (formatHelpInfo != NULL)
@@ -231,6 +244,9 @@ UnparseFormat& UnparseFormat::operator << ( string out)
   // DQ: Better code might use "strlen(p)" instead of "(p2 - p)"
      if (linewrap > 0 && chars_on_line + (p2 - p) >= linewrap) 
         {
+#if 0
+          printf ("UnparseFormat::operator << (): CALLING insert_newline: chars_on_line = %d \n",chars_on_line);
+#endif
           insert_newline(1, stmtIndent + 2 * tabIndentSize);
         }
 
@@ -269,6 +285,9 @@ UnparseFormat& UnparseFormat::operator << ( string out)
                     if ((ahead1=='\\') && (ahead2=='\n'))
                     mustInsert = true;
                   }
+#if 0
+               printf ("UnparseFormat::operator << (): mustInsert = %s \n",mustInsert ? "true" : "false");
+#endif
                if (mustInsert)
                     insert_newline(2,-1);
                  else
@@ -638,6 +657,9 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
                     break;
                case FORMAT_BEFORE_STMT:
                   {
+#if 0
+                    printf ("UnparseFormat::format(): case FORMAT_BEFORE_STMT: node = %p = %s \n",node,node->class_name().c_str());
+#endif
                     switch(v)
                        {
                          case V_SgBasicBlock:
@@ -646,14 +668,21 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
                               break;
                          default:
                             {
+#if 0
+                              printf ("UnparseFormat::format(): case FORMAT_BEFORE_STMT: info.inConditional() = %s \n",info.inConditional() ? "true" : "false");
+#endif
                               if (!info.inConditional())
                                  {
                                    linewrap = MAXCHARSONLINE;
                                    prevnode = node;
                                    if  (v == V_SgFunctionDefinition || v == V_SgClassDefinition)
+                                      {
                                         insert_newline(2,stmtIndent);
+                                      }
                                      else
+                                      {
                                         insert_newline(1,stmtIndent);
+                                      }
                                  }
                             }
                        }
@@ -705,6 +734,10 @@ UnparseFormat::format(SgLocatedNode* node, SgUnparse_Info& info, FormatOpt opt)
        // printf ("Leaving UnparseFormat::format(%s,opt=%d) \n",node->class_name().c_str(),opt);
           (*this) << "]" << node->class_name();
         }
+
+#if 0
+     printf ("Leaving UnparseFormat::format(): node = %p = %s currentLine = %d chars_on_line = %d \n",node,node->class_name().c_str(),currentLine,chars_on_line);
+#endif
    }
 
 

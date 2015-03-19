@@ -194,6 +194,19 @@ class Unparser
           bool p_resetSourcePosition;
 
      public:
+#if 0
+       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
+          enum token_sequence_position_enum_type
+             {
+               e_leading_whitespace_start,
+               e_leading_whitespace_end,
+               e_token_subsequence_start,
+               e_token_subsequence_end,
+               e_trailing_whitespace_start,
+               e_trailing_whitespace_end
+             };
+#endif
+
        // DQ (8/19/2007): I have removed the "int lineNumberToUnparse" function parameter (see code for details).
        // Unparser( std::ostream* localStream, std::string filename, Unparser_Opt info, int lineNumberToUnparse, UnparseFormatHelp *h = NULL, UnparseDelegate* repl = NULL);
       //! constructor
