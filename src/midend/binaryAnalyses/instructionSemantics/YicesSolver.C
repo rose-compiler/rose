@@ -215,9 +215,6 @@ YicesSolver::parse_evidence()
                 size_t nbits = rest-s;
                 s = rest;
 
-                if (')'!=*s++)
-                    throw Error(s-1, "')' expected at end of memory value (10)");
-
                 std::string addr_name = StringUtility::addrToString(addr);
                 ASSERT_require(evidence.find(addr_name)==evidence.end());
                 evidence[addr_name] = std::pair<size_t, uint64_t>(nbits, val);
