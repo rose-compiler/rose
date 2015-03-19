@@ -57,6 +57,12 @@ void SPRAY::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariable
   IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
   ROSE_ASSERT(ips);
   ips->addVariable(varId);
+  SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);
+  if(initExp) {
+    NumberIntervalLattice res=_cppExprEvaluator->evaluate(initExp,ips);
+    ROSE_ASSERT(!res.isBot());
+    ips->setVariable(varId,res);
+  }
 }
 
 

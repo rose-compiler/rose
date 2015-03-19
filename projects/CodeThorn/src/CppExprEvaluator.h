@@ -10,6 +10,7 @@ class CppExprEvaluator {
  public:
   CppExprEvaluator(NumberIntervalLattice* d, VariableIdMapping* vim);
   NumberIntervalLattice evaluate(SgNode* node);
+  NumberIntervalLattice evaluate(SgNode* node, PropertyState* pstate);
   void setDomain(NumberIntervalLattice* domain);
   void setPropertyState(PropertyState* pstate);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping);
