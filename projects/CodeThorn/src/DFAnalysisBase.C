@@ -9,6 +9,7 @@
 #include "AnalysisAbstractionLayer.h"
 
 using namespace SPRAY;
+using namespace std;
 
 DFAnalysisBase::DFAnalysisBase():
   _labeler(0),

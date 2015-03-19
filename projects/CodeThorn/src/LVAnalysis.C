@@ -13,12 +13,12 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
-using namespace CodeThorn;
+using namespace SPRAY;
 
 SPRAY::LVPropertyStateFactory::LVPropertyStateFactory() {
 }
 
-PropertyState* SPRAY::LVPropertyStateFactory::create() {
+SPRAY::PropertyState* SPRAY::LVPropertyStateFactory::create() {
   LVLattice* element=new LVLattice();
   return element;
 }

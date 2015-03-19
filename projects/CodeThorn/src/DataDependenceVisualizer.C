@@ -6,6 +6,7 @@
 #include "CFAnalysis.h"
 
 using namespace SPRAY;
+using namespace std;
 
 class VariableIdSetAttribute;
 

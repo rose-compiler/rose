@@ -2,11 +2,13 @@
 #define EVALUATOR_H
 
 #include <iostream>
-using namespace std;
 
 #include "sage3basic.h"
 #include "CppExprEvaluator.h"
 #include "IntervalPropertyState.h"
+#include "SgNodeHelper.h"
+
+using namespace std;
 
 SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
 }

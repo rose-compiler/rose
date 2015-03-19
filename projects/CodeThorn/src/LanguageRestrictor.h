@@ -11,8 +11,6 @@
 #include <string>
 #include "RoseAst.h"
 
-using namespace std;
-
 /*!
   \brief Allows to check an AST for a restricted subset of C/C++.
   \details This class can be used to check the AST of an input program to contain only nodes of a certain subset of C/C++.
@@ -21,11 +19,11 @@ using namespace std;
  */
 class LanguageRestrictor {
  public:
-  typedef set<VariantT> VariantSet;
+  typedef std::set<VariantT> VariantSet;
   void allowAllAstNodes();
   void disallowAllAstNodes();
   VariantSet computeVariantSetOfProvidedAst(SgNode*);
-  string variantToString(VariantT variant);
+  std::string variantToString(VariantT variant);
   void allowAstNodesRequiredForEmptyProgram();
   void setAstNodeVariant(VariantT variant, bool allowed);
   void setAstNodeVariantSet(VariantSet variants, bool allowed);

@@ -5,13 +5,11 @@
 
 #include "VariableIdMapping.h"
 
-using namespace SPRAY;
-
 namespace AnalysisAbstractionLayer {
-  VariableIdSet globalVariables(SgProject* project, VariableIdMapping* variableIdMapping);
-  VariableIdSet usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping);
-  VariableIdSet useVariables(SgNode* node, VariableIdMapping& vidm);
-  VariableIdSet defVariables(SgNode* node, VariableIdMapping& vidm);
-  VariableIdSet astSubTreeVariables(SgNode* node, VariableIdMapping& vidm);
+  SPRAY::VariableIdSet globalVariables(SgProject* project, SPRAY::VariableIdMapping* variableIdMapping);
+  SPRAY::VariableIdSet usedVariablesInsideFunctions(SgProject* project, SPRAY::VariableIdMapping* variableIdMapping);
+  SPRAY::VariableIdSet useVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
+  SPRAY::VariableIdSet defVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
+  SPRAY::VariableIdSet astSubTreeVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
 }
 #endif

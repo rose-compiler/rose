@@ -6,36 +6,35 @@
 #include "WorkListSeq.h"
 
 using namespace std;
-using namespace CodeThorn;
 
 template<typename Element>
-bool WorkListSeq<Element>::isEmpty() { 
+bool SPRAY::WorkListSeq<Element>::isEmpty() { 
   bool res;
   res=(workList.size()==0);
   return res;
 }
 
 template<typename Element>
-bool WorkListSeq<Element>::exists(Element elem) {
+bool SPRAY::WorkListSeq<Element>::exists(Element elem) {
   typename list<Element>::iterator findIter;
   findIter=std::find(workList.begin(), workList.end(), elem);
   return findIter==workList.end();
 }
 
 template<typename Element>
-void WorkListSeq<Element>::add(Element elem) { 
+void SPRAY::WorkListSeq<Element>::add(Element elem) { 
   workList.push_back(elem); 
 }
 
 template<typename Element>
-void WorkListSeq<Element>::add(std::set<Element>& elemSet) { 
+void SPRAY::WorkListSeq<Element>::add(std::set<Element>& elemSet) { 
   for(typename std::set<Element>::iterator i=elemSet.begin();i!=elemSet.end();++i) {
     workList.push_back(*i);
   }
 }
 
 template<typename Element>
-Element WorkListSeq<Element>::take() {
+Element SPRAY::WorkListSeq<Element>::take() {
   if(workList.size()==0) {
     throw "Error: attempted to take element from empty work list.";
   }  else {
@@ -47,7 +46,7 @@ Element WorkListSeq<Element>::take() {
 }
 
 template<typename Element>
-Element WorkListSeq<Element>::examine() {
+Element SPRAY::WorkListSeq<Element>::examine() {
   if(workList.size()==0)
     throw "Error: attempted to examine next element in empty work list.";
   Element elem;

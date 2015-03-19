@@ -11,8 +11,8 @@
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
 
-using namespace CodeThorn;
 using namespace SPRAY;
+using namespace std;
 
 CFAnalysis::CFAnalysis(Labeler* l):labeler(l){
 }

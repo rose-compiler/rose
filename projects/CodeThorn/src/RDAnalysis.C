@@ -14,6 +14,7 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
+using namespace SPRAY;
 
 SPRAY::RDPropertyStateFactory::RDPropertyStateFactory() {
 }
@@ -41,7 +42,7 @@ void SPRAY::RDAnalysis::initializeExtremalValue(Lattice* element) {
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
-DFAstAttribute* SPRAY::RDAnalysis::createDFAstAttribute(Lattice* elem) {
+SPRAY::DFAstAttribute* SPRAY::RDAnalysis::createDFAstAttribute(Lattice* elem) {
   RDLattice* rdElem=dynamic_cast<RDLattice*>(elem);
   ROSE_ASSERT(rdElem);
   return new RDAstAttribute(rdElem);

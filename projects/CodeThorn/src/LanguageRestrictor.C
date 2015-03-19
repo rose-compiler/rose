@@ -9,6 +9,8 @@
 #include "LanguageRestrictor.h"
 #include "SgNodeHelper.h"
 
+using namespace std;
+
 LanguageRestrictor::VariantSet LanguageRestrictor::computeVariantSetOfProvidedAst(SgNode* node) {
   LanguageRestrictor::VariantSet vset;
   RoseAst ast(node);

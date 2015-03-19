@@ -9,8 +9,6 @@
 #include "IntervalPropertyState.h"
 #include <string>
 
-using namespace std;
-
 class IntervalAstAttribute : public IntervalAstAttributeInterface {
  public:
   virtual bool isBottomElement();
@@ -18,7 +16,7 @@ class IntervalAstAttribute : public IntervalAstAttributeInterface {
   virtual ~IntervalAstAttribute();
  public:
   IntervalAstAttribute(IntervalPropertyState* elem);
-  void toStream(ostream& os, VariableIdMapping* vim);
+  void toStream(std::ostream& os, VariableIdMapping* vim);
   string toString();
 #if 0
   typedef IntervalPropertyState::IntervalMapType::iterator iterator;

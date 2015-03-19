@@ -6,8 +6,6 @@
 using namespace std;
 
 #include "CollectionOperators.h"
-using namespace CodeThorn;
-
 #include "DFTransferFunctions.h"
 
 using namespace SPRAY;

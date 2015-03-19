@@ -1,12 +1,6 @@
 #ifndef CPPEXPREVALUATOR_H
 #define CPPEXPREVALUATOR_H
 
-#include <iostream>
-using namespace std;
-
-#include "AstProcessing.h"
-#include "SgNodeHelper.h"
-//#include "Domain.hpp"
 #include "VariableIdMapping.h"
 #include "PropertyState.h"
 #include "NumberIntervalLattice.h"

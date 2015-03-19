@@ -199,7 +199,7 @@ LoopInfoSet determineLoopInfoSet(SgNode* root, VariableIdMapping* variableIdMapp
 class TermRepresentation : public DFAstAttribute {
 public:
   TermRepresentation(SgNode* node) : _node(node) {}
-  string toString() { return "AstTerm: "+astTermWithNullValuesToString(_node); }
+  string toString() { return "AstTerm: "+SPRAY::AstTerm::astTermWithNullValuesToString(_node); }
 private:
   SgNode* _node;
 };
@@ -210,7 +210,7 @@ public:
     //std::cout<<"DEBUG:generated: "+pointerExprToString(node)+"\n";
   }
   string toString() { 
-    return "// POINTEREXPR: "+pointerExprToString(_node);
+    return "// POINTEREXPR: "+SPRAY::AstTerm::pointerExprToString(_node);
   }
 private:
   SgNode* _node;
@@ -1481,7 +1481,7 @@ int main( int argc, char * argv[] ) {
     //dotFile=astTermWithNullValuesToDot(analyzer.startFunRoot);
     analyzer.generateAstNodeInfo(sageProject);
     cout << "generated node info."<<endl;
-    dotFile=functionAstTermsWithNullValuesToDot(sageProject);
+    dotFile=SPRAY::AstTerm::functionAstTermsWithNullValuesToDot(sageProject);
     write_file("ast.dot", dotFile);
     cout << "generated ast.dot."<<endl;
     

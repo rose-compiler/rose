@@ -14,9 +14,6 @@
 #include "DFAstAttribute.h"
 #include "RDTransferFunctions.h"
 
-using namespace std;
-using namespace CodeThorn;
-
 namespace SPRAY {
 
 class RDPropertyStateFactory : public PropertyStateFactory {

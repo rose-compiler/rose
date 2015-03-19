@@ -42,15 +42,15 @@ public:
   bool hasFloat;
   bool hasRead;
   bool hasWrite;
-  string toString() {
-    stringstream ss;
+  std::string toString() {
+    std::stringstream ss;
     ss<<"Jmp:"<<numJmp<<","
       <<"Tst:"<<numConditionTest<<","
       <<"LogOp:"<<numLogOp<<","
       <<"BitOp:"<<numBitOp;
     ss<< " [";
     for(int i=CIT_TOTAL; i<CIT_NUM;++i) {
-      string tt;
+      std::string tt;
       switch(i){
       case CIT_TOTAL: tt="total";break;
       case CIT_INT: tt="int";break;
@@ -63,8 +63,8 @@ public:
     ss<< "]";
     return ss.str();
   }
-  static string coloredHTMLEntry(int cnt,string defaultColor, string color) {
-    stringstream ss;
+  static std::string coloredHTMLEntry(int cnt,std::string defaultColor, std::string color) {
+    std::stringstream ss;
     // only generate numbers != 0 for readability (-> defaultcolor block does never contain a number)
     if(cnt>0)
       ss<<cnt;
@@ -72,12 +72,12 @@ public:
       ss<<"-";
     if(cnt<0)
       ss<<"*";
-    string cntstr=ss.str();
-    return string("<TD BGCOLOR=")+"\""+string(cnt==0?defaultColor:color)+"\""+">"+cntstr+"</TD>";
+    std::string cntstr=ss.str();
+    return std::string("<TD BGCOLOR=")+"\""+std::string(cnt==0?defaultColor:color)+"\""+">"+cntstr+"</TD>";
   }
- string toDot() {
-    stringstream ss;
-    string defaultcolor="grey";
+ std::string toDot() {
+    std::stringstream ss;
+    std::string defaultcolor="grey";
     ss<<coloredHTMLEntry((numJmp+numConditionTest)?1:0,defaultcolor,"yellow");
     //    ss<<coloredHTMLEntry(numLogOp,defaultcolor,"darkorchid1");
     //ss<<coloredHTMLEntry(numBitOp,defaultcolor,"darkorchid2");
@@ -104,12 +104,12 @@ public:
 
 class ProgramStatistics {
  public:
-  ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, string useDefAstAttributeName);
+  ProgramStatistics(VariableIdMapping* vidm, Labeler* labeler, Flow* icfg, std::string useDefAstAttributeName);
   static void printBasicCodeInfo(SgNode* root);
   void computeStatistics();
-  void generateResourceUsageICFGDotFile(string dotfile);
+  void generateResourceUsageICFGDotFile(std::string dotfile);
   void printStatistics();
-  string generateNodeResourceUsageDotString(Label lab);
+  std::string generateNodeResourceUsageDotString(Label lab);
   void setGenerateWithSource(bool withsource);
  private:
   void computeOpStats(ComputationInfo& ci, SgNode* node);
@@ -118,8 +118,8 @@ class ProgramStatistics {
   VariableIdMapping* vidm;
   Labeler* labeler;
   Flow* icfg;
-  string useDefAstAttributeName;
-  vector<ComputationInfo> computationInfo;
+  std::string useDefAstAttributeName;
+  std::vector<ComputationInfo> computationInfo;
   bool _withSource;
 };
 

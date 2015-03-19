@@ -689,7 +689,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
             newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
           } else {
-            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
+            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
             exit(1);
           }
           elemIndex++;
@@ -1417,7 +1417,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           varVal=varVal-const1; // overloaded binary - operator
           break;
         default:
-          cerr << "Operator-AST:"<<astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+          cerr << "Operator-AST:"<<SPRAY::AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
           cerr << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
           cerr << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
           cerr<<"Error: programmatic error in handling of inc/dec operators."<<endl;
@@ -1690,7 +1690,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         return newPState;
       } else {
         cerr<<"Errpr: RHS: unknown : type: ";
-        cerr<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
       cout<<endl;

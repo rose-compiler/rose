@@ -5,8 +5,6 @@
 #include "IntervalPropertyState.h"
 #include "CppExprEvaluator.h"
 
-using namespace std;
-
 namespace SPRAY {
 
 class IntervalTransferFunctions : public DFTransferFunctions {

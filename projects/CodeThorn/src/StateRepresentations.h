@@ -27,8 +27,6 @@ typedef int EStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-//using namespace CodeThorn;
-
 using CodeThorn::CppCapsuleAValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;

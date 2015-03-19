@@ -4,6 +4,7 @@
 #include "ProgramStats.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 void SPRAY::ProgramStatistics::printBasicCodeInfo(SgNode* root) {
   SgProject* project=isSgProject(root);

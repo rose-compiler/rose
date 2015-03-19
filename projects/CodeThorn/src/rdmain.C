@@ -24,6 +24,7 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
+using namespace SPRAY;
 
 int main(int argc, char* argv[]) {
   bool option_rd_analysis=true;

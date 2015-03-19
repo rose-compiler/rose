@@ -14,9 +14,6 @@
 #include "DFAstAttribute.h"
 #include "IntervalPropertyState.h"
 
-using namespace std;
-
-#include "IntervalPropertyState.h"
 /*! 
   * \author Markus Schordan
   * \date 2013.
