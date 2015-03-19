@@ -8,9 +8,9 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "WorkList.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RDLattice.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "RDAnalysis.h"
 #include "RoseRDAnalysis.h"
 #include "LVAnalysis.h"
@@ -46,6 +46,9 @@
 // ROSE analyses
 #include "VariableRenaming.h"
 
+// temporary
+#include "IntervalTransferFunctions.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -65,6 +68,7 @@ bool option_ud_analysis=false;
 bool option_lv_analysis=false;
 bool option_interval_analysis=false;
 bool option_at_analysis=false;
+bool option_trace=false;
 
 //boost::program_options::variables_map args;
 
@@ -115,7 +119,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
   
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
-    IntervalAnalysis* intervalAnalyzer=new IntervalAnalysis();
+    SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->initialize(root);
     cout << "STATUS: initializing interval transfer functions."<<endl;
@@ -123,15 +127,17 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
-#if 1
     intervalAnalyzer->run();
-#else
-    cout << "STATUS: did not run interval analysis."<<endl;      
-#endif
+    intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
+    intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
+    AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
+    ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
   }
 
   if(option_lv_analysis) {
@@ -167,7 +173,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
 
   if(option_rd_analysis) {
       cout << "STATUS: creating RD analyzer."<<endl;
-      RDAnalysis* rdAnalysis=new RDAnalysis();
+      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;
@@ -204,7 +210,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
         int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
         cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         
@@ -288,7 +294,9 @@ int main(int argc, char* argv[]) {
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
       ("interval-analysis", "perform interval analysis.")
+      ("trace", "show operations as performed by selected solver.")
       ("print-varidmapping", "prints variableIdMapping")
+      ("print-varidmapping-array", "prints variableIdMapping with array element varids.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -313,6 +321,9 @@ int main(int argc, char* argv[]) {
       option_prefix=args["prefix"].as<string>().c_str();
     }
 
+    if (args.count("trace")) {
+      option_trace=true;
+    }
     if(args.count("stats")) {
       option_stats=true;
     }
@@ -366,6 +377,9 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
+  if (args.count("print-varidmapping-array")) {
+    variableIdMapping.setModeVariableIdForEachArrayElement(true);
+  }
   variableIdMapping.computeVariableSymbolMapping(root);
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
@@ -376,7 +390,7 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varidmapping")) {
+  if (args.count("print-varidmapping")||args.count("print-varidmapping-array")) {
     variableIdMapping.toStream(cout);
   }
 

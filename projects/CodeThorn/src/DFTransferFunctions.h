@@ -5,15 +5,15 @@
 #include "Lattice.h"
 #include "PointerAnalysisInterface.h"
 
-class Domain;
+namespace SPRAY {
 
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
   void setLabeler(SPRAY::Labeler* labeler) { _labeler=labeler; }
   SPRAY::Labeler* getLabeler() { return _labeler; }
-  void setDomain(Domain* domain) { _domain=domain; }
-  Domain* getDomain() { return _domain; }
+  //void setDomain(Domain* domain) { _domain=domain; }
+  //Domain* getDomain() { return _domain; }
   void setVariableIdMapping(VariableIdMapping* v) { _variableIdMapping=v; }
   VariableIdMapping* getVariableIdMapping() { return _variableIdMapping; }
 
@@ -29,11 +29,14 @@ public:
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
-protected:
+  //protected:
+ public:
   SPRAY::Labeler* _labeler;
-  VariableIdMapping* _variableIdMapping;
-  Domain* _domain;
+  SPRAY::VariableIdMapping* _variableIdMapping;
+  //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 };
+
+}
 
 #endif

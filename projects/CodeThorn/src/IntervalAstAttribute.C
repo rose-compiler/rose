@@ -21,14 +21,10 @@ bool IntervalAstAttribute::isBottomElement() {
   return _elem->isBot();
 }
 VariableIdSet IntervalAstAttribute::allVariableIds() {
-  VariableIdSet set;
-  for(IntervalAstAttribute::iterator i=begin();i!=end();++i) {
-    set.insert((*i).first);
-  }
-  return set;
+  return _elem->allVariableIds();
 }
 
-#if 1
+#if 0
 IntervalAstAttribute::iterator
 IntervalAstAttribute::begin() {
   return _elem->intervals.begin();

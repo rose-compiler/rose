@@ -8,6 +8,7 @@
 #include "ExprAnalyzer.h"
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 ExprAnalyzer::ExprAnalyzer():_variableIdMapping(0),_skipSelectedFunctionCalls(false),_skipArrayAccesses(false){
 }
@@ -504,7 +505,7 @@ list<SingleEvalResultConstInt> ExprAnalyzer::evalConstInt(SgNode* node,EState es
     return  resultList;
   }
   
-  assert(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
+  ROSE_ASSERT(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
   
   // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
   // EXPRESSION LEAF NODES
