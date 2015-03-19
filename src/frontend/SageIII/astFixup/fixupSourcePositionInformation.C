@@ -15,9 +15,9 @@
       4) the location of the ";" is often unavialable (or not properly extracted from EDG, 
          since I think it might be present in come cases).
 
-   These details aside, EDG is in general extremely good about saveing source position information
-   (and in great details, more detail that we require in ROSE).
-   
+   These details aside, EDG is in general extremely good about saving source position information
+   (and in great detail, more detail that we require in ROSE).
+
    However, in ROSE we want the start and end of each expression and statement (at least the statements).
    To get this information we have built a traversal which uses synthesized attributes to compute the
    farthest ending position of any part of a subtree represented by a statement and we use that for
@@ -211,7 +211,7 @@ FixupSourcePositionInformationSynthesizedAttribute
 FixupSourcePositionInformation::evaluateSynthesizedAttribute 
    ( SgNode* node, FixupSourcePositionInformationInheritedAttribute ia, SynthesizedAttributesList l )
    {
-#if 0
+#if 1
      printf ("In evaluateSynthesizedAttribute(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -414,6 +414,12 @@ FixupSourcePositionInformation::evaluateSynthesizedAttribute
           SgNode* tempNode = returnAttribute.startingPosition->get_parent();
           printf ("Note: isSourcePositionUnavailableInFrontend() == false --- returnAttribute.startingPosition->get_parent() = %p = %s \n",tempNode,tempNode->class_name().c_str());
         }
+#endif
+
+#if 1
+     printf ("Leaving FixupSourcePositionInformation::evaluateSynthesizedAttribute(): node = %p = %s (%d,%d) -> (%d,%d) \n",node,node->sage_class_name(),
+          node->get_startOfConstruct()->get_line(),node->get_startOfConstruct()->get_col(),
+          node->get_endOfConstruct()->get_line(),node->get_endOfConstruct()->get_col());
 #endif
 
      return returnAttribute;

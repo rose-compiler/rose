@@ -108,6 +108,10 @@ class UnparseFormat
        // DQ (2/16/2004): Make this part of the public interface (to control old-style K&R C function definitions)
           void insert_newline(int i = 1, int indent = -1);
 
+       // DQ (12/10/2014): Reset the chars_on_line to zero, used in token based unparsing to reset the 
+       // formatting for AST subtrees unparsed using the AST in conjunction with the token based unparsing.
+          void reset_chars_on_line();
+
           //   private:
           //Unparser* unp;
      public:
