@@ -56,5 +56,11 @@ struct dummy : public super
 int main()
    {
   // dummy()["Kuh"];
+#if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+// This example fails for g++ version 4.8.1.
      dummy::dummy()["Kuh"];
+#else
+  // I think this is the only acceptable version for the GNU g++ 4.8.1 compiler.
+     dummy()["Kuh"];
+#endif
    }

@@ -1,12 +1,23 @@
 // Author: Gergo Barany
 // $Id: AstSharedMemoryParallelSimpleProcessing.C,v 1.1 2008/01/08 02:56:39 dquinlan Exp $
 #include "sage3basic.h"
-#ifdef _MSC_VER
-#pragma message ("Error: pthread.h is unavailable on MSVC, we might want to use boost.thread library.")
-#else
-#include <pthread.h>
+
+#ifdef _REENTRANT                                       // Does user want multi-thread support? (e.g., g++ -pthread)
+# ifdef HAVE_PTHREAD_H                                  // Do we have POSIX threads?
+#  include <pthread.h>
+# else
+   // This should all be switched to Boost Threads instead, which is more portable.
+#  ifdef _MSC_VER
+#   pragma message ("POSIX threads are unavailable on this platform.")
+#  else
+#   warning "POSIX threads are unavailable on this platform"
+#  endif
+# endif
 #endif
 
+// Perhaps this functionality should be fixed so it works with one thread when multi-threading is disabled.  Until then, I'm
+// commenting out this entire file when the user disables multi-thread support. [Robb P. Matzke 2015-03-14]
+#ifdef _REENTRANT                                       // Does user want multi-thread support? (e.g., g++ -pthread)
 
 
 #include "AstSharedMemoryParallelSimpleProcessing.h"
@@ -387,3 +398,5 @@ void AstSharedMemoryParallelPrePostProcessing::traverseInParallel(SgNode *baseno
     delete [] threads;
     // Done!
 }
+
+#endif

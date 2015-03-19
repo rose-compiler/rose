@@ -445,21 +445,38 @@ CfgEmitter::assignFunctionSubgraphs() {
 //----------------------------------------------------------------------------------------------------------------------------
 
 std::string
+CfgEmitter::sourceLocation(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+    ASSERT_require(graph_.isValidVertex(vertex));
+    if (vertex->value().type() != V_BASIC_BLOCK)
+        return "";
+    DwarfLineMapper::SrcInfo srcInfo = srcMapper_.addr2src(vertex->value().address());
+    if (srcInfo.file_id == Sg_File_Info::NULL_FILE_ID || srcInfo.line_num == 0)
+        return "";
+    std::string fileName = Sg_File_Info::getFilenameFromID(srcInfo.file_id);
+    size_t slash = fileName.rfind('/');
+    if (slash != std::string::npos && slash+1 < fileName.size())
+        fileName = fileName.substr(slash+1);
+    return fileName + ":" + StringUtility::numberToString(srcInfo.line_num);
+}
+
+std::string
 CfgEmitter::vertexLabel(const ControlFlowGraph::VertexNode &v) const {
     return vertexLabel(graph_.findVertex(v.id()));
 }
 
 std::string
 CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
-    ASSERT_require(vertex != graph_.vertices().end());
+    std::string srcLoc = sourceLocation(vertex);
+    if (!srcLoc.empty())
+        srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
     switch (vertex->value().type()) {
         case V_BASIC_BLOCK:
             if (vertex->value().function() && vertex->value().function()->address() == vertex->value().address()) {
-                return "\"" + quotedEscape(vertex->value().function()->printableName()) + "\"";
+                return "<" + srcLoc + htmlEscape(vertex->value().function()->printableName()) + ">";
             } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
-                return "\"" + quotedEscape(bb->printableName()) + "\"";
+                return "<" + srcLoc + htmlEscape(bb->printableName()) + ">";
             } else {
-                return "\"" + StringUtility::addrToString(vertex->value().address()) + "\"";
+                return "<" + srcLoc + StringUtility::addrToString(vertex->value().address()) + ">";
             }
         case V_NONEXISTING:
             return "\"nonexisting\"";
@@ -478,10 +495,12 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::VertexNode &v) const {
 
 std::string
 CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
-    ASSERT_require(vertex != graph_.vertices().end());
     BasicBlock::Ptr bb;
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
-        std::string s;
+        std::string srcLoc = sourceLocation(vertex);
+        if (!srcLoc.empty())
+            srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
+        std::string s = srcLoc;
         BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
             if (showInstructionAddresses_)
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";

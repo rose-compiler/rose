@@ -118,7 +118,7 @@ Engine::load(const std::vector<std::string> &fileNames) {
                 if (!srecs[i].error().empty())
                     mlog[ERROR] <<fileName <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::EXECUTABLE);
+            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
         }
     }
 
@@ -271,7 +271,7 @@ Engine::specimenNameDocumentation() {
 
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
-            "with read and execute permissions.}"
+            "with read, write, and execute permissions.}"
 
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "

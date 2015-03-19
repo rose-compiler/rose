@@ -5,7 +5,6 @@ void foo(int value, int* first, int* last)
   for(;first != last;++first) 
     *first = tmp;
 
-
 //test if false body is not created.
   if (*first);  
 }

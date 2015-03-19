@@ -7,7 +7,8 @@
 // DQ (11/29/2013): Added to support marking of redundant mappings of statements to token streams.
 #include "tokenStreamMapping.h"
 
-#include "frontierDetection.h"
+// DQ (12/4/2014): This is redundant with being included in "tokenStreamMapping.h".
+// #include "frontierDetection.h"
 
 #include "previousAndNextNode.h"
 
@@ -641,7 +642,7 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
              }
             else
              {
-            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unarpsed from the token stream.
+            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unparsed from the token stream.
                SgGlobal* globalScope = isSgGlobal(n);
                if (globalScope != NULL)
                   {
@@ -1182,7 +1183,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
   // Now traverse the AST and record the linked list of nodes to be unparsed as tokens and from the AST.
-  // So that we can query next and last statements and determin if they were unparsed from the token 
+  // So that we can query next and last statements and determine if they were unparsed from the token 
   // stream or the AST.  Not clear if the edges of token-stream/AST unparsing should be unparsed from the 
   // token stream leading trailing token information or from the AST using the attached CPP info.
 
@@ -1324,13 +1325,18 @@ FrontierDetectionForTokenStreamMappingAttribute::additionalNodeInfo()
 AstAttribute*
 FrontierDetectionForTokenStreamMappingAttribute::copy()
    {
-  // Support for the coping of AST and associated attributes on each IR node (required for attributes 
+  // Support for the copying of AST and associated attributes on each IR node (required for attributes 
   // derived from AstAttribute, else just the base class AstAttribute will be copied).
 
+#if 0
      printf ("Error: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
      ROSE_ASSERT(false);
 
      return new FrontierDetectionForTokenStreamMappingAttribute(*this);
+#else
+     printf ("Warning: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
+     return NULL;
+#endif
    }
 
 #if 0

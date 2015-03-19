@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_IntervalMap_H
 #define Sawyer_IntervalMap_H
 
@@ -692,7 +699,7 @@ public:
             if (lowerLimit < iter->key().least())
                 return lowerLimit;
             lowerLimit = iter->key().greatest() + 1;
-            if (lowerLimit <= iter->key().greatest())   // sensitive to GCC optimization
+            if (lowerLimit <= iter->key().least())      // sensitive to GCC optimization
                 return Nothing();                       // overflow
         }
         return lowerLimit;
@@ -707,7 +714,7 @@ public:
             if (upperLimit > iter->key().greatest())
                 return upperLimit;
             upperLimit = iter->key().least() - 1;
-            if (upperLimit > iter->key().greatest())    // sensitive to GCC optimization
+            if (upperLimit >= iter->key().greatest())   // sensitive to GCC optimization
                 return Nothing();                       // overflow
             if (iter==nodes().begin())
                 break;

@@ -46,8 +46,6 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
   // This function generates the AST representing the stencil points:
   //    SgExpression* buildStencilPoint (StencilOffsetFSM* stencilOffsetFSM, double stencilCoeficient, int stencilDimension, SgVariableSymbol* destinationVariableSymbol, SgVariableSymbol* sourceVariableSymbol)
 
-
-
   // The generated code should be in terms of the operator[]() functions on the 
   // RectMDArray objects.  Likely we have to support a wider range of generated code later.
   //    const RectMDArray<TDest>& a_LOfPhi,
@@ -113,7 +111,9 @@ void generateStencilCode(StencilEvaluationTraversal & traversal, bool generateLo
           StencilFSM* stencilFSM = stencilMap[stencilName];
           ROSE_ASSERT(stencilFSM != NULL);
 
+       // DQ (2/8/2015): Moved out of loop.
           int stencilDimension = stencilFSM->stencilDimension();
+          ROSE_ASSERT(stencilDimension > 0);
 
        // These are computed values.
           printf ("Stencil dimension = %d \n",stencilDimension);

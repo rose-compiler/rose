@@ -704,14 +704,13 @@ AC_ARG_WITH(pch,
 ])
 AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
 if test "x$with_pch" = xyes; then
-  CPPFLAGS="-U_REENTRANT $CPPFLAGS";
   AC_MSG_NOTICE( "PCH enabled: You got the following CPPFLAGS: $CPPFLAGS" );
-if test "x$with_parallel_ast_traversal_mpi" = xyes; then
-  AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
-fi
-if test "x$with_parallel_ast_traversal_omp" = xyes; then
-  AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
-fi
+  if test "x$with_parallel_ast_traversal_mpi" = xyes; then
+    AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
+  fi
+  if test "x$with_parallel_ast_traversal_omp" = xyes; then
+    AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
+  fi
 else
   AC_MSG_NOTICE( "PCH disabled: No Support for PCH." );
 fi
@@ -1992,6 +1991,8 @@ projects/PolyhedralModel/projects/utils/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
+projects/ShiftCalculus2/Makefile
+projects/ShiftCalculus3/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
 projects/demos-dlx-mdcg/Makefile
