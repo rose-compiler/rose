@@ -142,7 +142,7 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    TreeNodePtr expr = LeafNode::create_memory(8);
+    TreeNodePtr expr = LeafNode::create_memory(address->get_width(), dflt->get_width());
     InsnSet definers;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());

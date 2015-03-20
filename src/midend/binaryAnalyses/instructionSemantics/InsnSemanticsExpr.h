@@ -115,6 +115,12 @@ enum VisitAction {
     TERMINATE,                              /**< Terminate the traversal. */
 };
 
+/** Maximum number of nodes that can be reported.
+ *
+ *  If @ref nnodes returns this value then the size of the expressions could not be counted. This can happens when the
+ *  expression contains a large number of common subexpressions. */
+extern const uint64_t MAX_NNODES;       // defined in .C so we don't pollute user namespace with limit macros
+
 /** Base class for visiting nodes during expression traversal.  The preVisit method is called before children are visited, and
  *  the postVisit method is called after children are visited.  If preVisit returns TRUNCATE, then the children are not
  *  visited, but the postVisit method is still called.  If either method returns TERMINATE then the traversal is immediately
@@ -136,12 +142,15 @@ public:
  *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
 class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
-    size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
+    size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
+    size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
-    mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
-public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
+    mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
+protected:
+    TreeNode(std::string comment=""): nbits(0), domainWidth_(0), comment(comment), hashval(0) {}
+
+public:
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
      * expressions. Two expressions can be equal without being the same width (e.g., a 32-bit constant zero is equal to a
@@ -185,6 +194,16 @@ public:
      *  cleared. */
     size_t get_nbits() const { return nbits; }
 
+    /** Returns address width for memory expressions.
+     *
+     *  The return value is non-zero if and only if this tree node is a memory expression. */
+    size_t domainWidth() const { return domainWidth_; }
+
+    /** Check whether expression is scalar.
+     *
+     *  Everything is scalar except for memory. */
+    bool isScalar() const { return 0 == domainWidth_; }
+
     /** Traverse the expression.  The expression is traversed in a depth-first visit.  The final return value is the final
      *  return value of the last call to the visitor. */
     virtual VisitAction depth_first_traversal(Visitor&) const = 0;
@@ -203,6 +222,9 @@ public:
      *
      *  @sa nnodesUnique */
     virtual uint64_t nnodes() const = 0;
+
+    /** Number of unique nodes in expression. */
+    uint64_t nnodesUnique() const;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
@@ -417,28 +439,34 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    InternalNode(size_t nbits, Operator op, const std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                  std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
         add_child(c);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
 
 public:
@@ -446,10 +474,6 @@ public:
      *  a leaf node. Use these class methods instead of c'tors.
      *
      *  @{ */
-    static TreeNodePtr create(size_t nbits, Operator op, const std::string comment="") {
-        InternalNodePtr retval(new InternalNode(nbits, op, comment));
-        return retval->simplifyTop();
-    }
     static TreeNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
         InternalNodePtr retval(new InternalNode(nbits, op, a, comment));
         return retval->simplifyTop();
@@ -538,8 +562,11 @@ public:
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
      *  is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used anywhere
-     *  yet. */
+     *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
     void add_child(const TreeNodePtr &child);
+
+    /** Adjust width based on operands. */
+    void adjustWidth();
 };
 
 /** Leaf node of an expression tree for instruction semantics.
@@ -553,7 +580,10 @@ private:
     uint64_t name;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), name(0) {}
+    LeafNode()
+        : TreeNode(""), leaf_type(CONSTANT), name(0) {}
+    explicit LeafNode(const std::string &comment)
+        : TreeNode(comment), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
@@ -573,8 +603,8 @@ public:
         return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
     }
 
-    /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of specified size. */
-    static LeafNodePtr create_memory(size_t nbits, std::string comment="");
+    /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
+    static LeafNodePtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="");
 
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;

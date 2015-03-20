@@ -24,7 +24,8 @@ protected:
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval) {
-        mem_ = InsnSemanticsExpr::LeafNode::create_memory(8);
+        // Initially assume that addresses are 32 bits wide and values are 8 bits wide. We can change this on the first access.
+        mem_ = InsnSemanticsExpr::LeafNode::create_memory(32, 8);
     }
 
 public:
@@ -55,9 +56,7 @@ public:
 
 public:
     // documented in base class
-    virtual void clear() ROSE_OVERRIDE {
-        mem_ = InsnSemanticsExpr::LeafNode::create_memory(8);
-    }
+    virtual void clear() ROSE_OVERRIDE;
 
     // documented in base class
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,

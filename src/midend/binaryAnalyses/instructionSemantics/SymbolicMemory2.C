@@ -7,10 +7,28 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+void
+SymbolicMemory::clear() {
+    if (mem_) {
+        mem_ = InsnSemanticsExpr::LeafNode::create_memory(mem_->domainWidth(), mem_->get_nbits());
+    } else {
+        mem_ = InsnSemanticsExpr::LeafNode::create_memory(32, 8); // can be adjusted later
+    }
+}
+
 SValuePtr
 SymbolicMemory::readMemory(const SValuePtr &address_, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     using namespace InsnSemanticsExpr;
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
+    if (address->get_width() != mem_->domainWidth() || dflt->get_width() != mem_->get_nbits()) {
+        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
+                        "invalid address and/or value size for memory; expecting " +
+                        StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
+                        StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
+
+        // We can finalize the domain and range widths for the memory now that they've been given.
+        mem_ = LeafNode::create_memory(address->get_width(), dflt->get_width());
+    }
     TreeNodePtr resultExpr = InternalNode::create(8, OP_READ, mem_, address->get_expression());
     SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(dflt->copy());
     retval->set_expression(resultExpr);
@@ -22,6 +40,16 @@ SymbolicMemory::writeMemory(const SValuePtr &address_, const SValuePtr &value_, 
     using namespace InsnSemanticsExpr;
     SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(address_);
     SymbolicSemantics::SValuePtr value = SymbolicSemantics::SValue::promote(value_);
+    if (address->get_width() != mem_->domainWidth() || value->get_width() != mem_->get_nbits()) {
+        ASSERT_require2(mem_->isLeafNode() && mem_->isLeafNode()->is_memory(),
+                        "invalid address and/or value size for memory; expecting " +
+                        StringUtility::numberToString(mem_->domainWidth()) + "-bit addresses and " +
+                        StringUtility::numberToString(mem_->get_nbits()) + "-bit values");
+
+        // We can finalize the domain and range widths for the memory now that they've been given.
+        mem_ = LeafNode::create_memory(address->get_width(), value->get_width());
+    }
+
     mem_ = InternalNode::create(mem_->get_nbits(), OP_WRITE, mem_, address->get_expression(), value->get_expression());
 }
 

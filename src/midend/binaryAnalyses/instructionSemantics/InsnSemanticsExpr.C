@@ -1,3 +1,5 @@
+#define __STDC_LIMIT_MACROS
+
 #include "sage3basic.h"
 
 #include "InsnSemanticsExpr.h"
@@ -17,6 +19,8 @@ namespace InsnSemanticsExpr {
 uint64_t
 LeafNode::name_counter = 0;
 
+const uint64_t
+MAX_NNODES = UINT64_MAX;
 
 const char *
 to_str(Operator o)
@@ -94,6 +98,12 @@ TreeNode::assert_acyclic() const
 #endif
 }
 
+uint64_t
+TreeNode::nnodesUnique() const {
+    std::vector<TreeNodePtr> exprs(1, sharedFromThis());
+    return InsnSemanticsExpr::nnodesUnique(exprs.begin(), exprs.end());
+}
+
 std::vector<TreeNodePtr>
 TreeNode::findCommonSubexpressions() const {
     return InsnSemanticsExpr::findCommonSubexpressions(std::vector<TreeNodePtr>(1, sharedFromThis()));
@@ -108,7 +118,165 @@ InternalNode::add_child(const TreeNodePtr &child)
 {
     ASSERT_not_null(child);
     children.push_back(child);
-    nnodes_ += child->nnodes();
+    if (nnodes_ != MAX_NNODES) {
+        if (nnodes_ + child->nnodes() < nnodes_) {
+            nnodes_ = MAX_NNODES;                       // overflow
+        } else {
+            nnodes_ += child->nnodes();
+        }
+    }
+}
+
+void
+InternalNode::adjustWidth() {
+    ASSERT_require(!children.empty());
+    switch (op) {
+        case OP_ASR:
+        case OP_ROL:
+        case OP_ROR:
+        case OP_SHL0:
+        case OP_SHL1:
+        case OP_SHR0:
+        case OP_SHR1: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->isScalar());       // shift amount
+            ASSERT_require(child(1)->isScalar());       // value to shift
+            nbits = child(1)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_CONCAT: {
+            size_t totalWidth = 0;
+            BOOST_FOREACH (const TreeNodePtr &child, children) {
+                ASSERT_require(child->isScalar());
+                totalWidth += child->get_nbits();
+            }
+            nbits = totalWidth;
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_EQ:
+        case OP_NE:
+        case OP_SGE:
+        case OP_SGT:
+        case OP_SLE:
+        case OP_SLT:
+        case OP_UGE:
+        case OP_UGT:
+        case OP_ULE:
+        case OP_ULT: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->get_nbits() == child(1)->get_nbits());
+            nbits = 1;
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_EXTRACT: {
+            ASSERT_require(nchildren() == 3);
+            ASSERT_require(child(0)->is_known());
+            ASSERT_require(child(1)->is_known());
+            ASSERT_require(child(2)->isScalar());
+            ASSERT_require(child(0)->get_value() < child(1)->get_value());
+            size_t totalSize = child(1)->get_value() - child(0)->get_value();
+            nbits = totalSize;
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_ITE: {
+            ASSERT_require(nchildren() == 3);
+            ASSERT_require(child(0)->isScalar());
+            ASSERT_require(child(0)->get_nbits() == 1);
+            ASSERT_require(child(1)->get_nbits() == child(2)->get_nbits());
+            ASSERT_require(child(1)->domainWidth() == child(2)->domainWidth());
+            nbits = child(1)->get_nbits();
+            domainWidth_ = child(1)->domainWidth();
+            break;
+        }
+        case OP_LSSB:
+        case OP_MSSB:
+        case OP_NEGATE: {
+            ASSERT_require(nchildren() == 1);
+            ASSERT_require(child(0)->isScalar());
+            nbits = child(0)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_READ: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require2(!child(0)->isScalar(), "memory state expected for first operand");
+            ASSERT_require(child(1)->isScalar());
+            ASSERT_require2(child(0)->domainWidth() == child(1)->get_nbits(), "invalid address size");
+            nbits = child(0)->get_nbits();              // size of values stored in memory
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_SDIV:
+        case OP_UDIV: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->isScalar());
+            ASSERT_require(child(1)->isScalar());
+            nbits = child(0)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_SEXTEND:
+        case OP_UEXTEND: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->is_known());       // new size
+            ASSERT_require(child(1)->isScalar());       // value to extend
+            nbits = child(0)->get_value();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_SMOD:
+        case OP_UMOD: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->isScalar());
+            ASSERT_require(child(1)->isScalar());
+            nbits = child(1)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_SMUL:
+        case OP_UMUL: {
+            ASSERT_require(nchildren() == 2);
+            ASSERT_require(child(0)->isScalar());
+            ASSERT_require(child(1)->isScalar());
+            nbits = child(0)->get_nbits() + child(1)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+        case OP_WRITE: {
+            ASSERT_require(nchildren() == 3);
+            ASSERT_require2(!child(0)->isScalar(), "first operand must be memory");
+            ASSERT_require(child(1)->isScalar());       // address
+            ASSERT_require(child(2)->isScalar());       // value
+            ASSERT_require2(child(1)->get_nbits() == child(0)->domainWidth(), "incorrect address width");
+            ASSERT_require2(child(2)->get_nbits() == child(0)->get_nbits(), "incorrect value width");
+            nbits = child(0)->get_nbits();
+            domainWidth_ = child(0)->domainWidth();
+            break;
+        }
+        case OP_ZEROP: {
+            ASSERT_require(nchildren() == 1);
+            ASSERT_require(child(0)->isScalar());
+            nbits = 1;
+            domainWidth_ = 0;
+            break;
+        }
+        default: {
+            // All children must have the same width, which is the width of this expression. This is suitable for things like
+            // bitwise operators, add, etc.
+            ASSERT_require(child(0)->isScalar());
+            for (size_t i=1; i<nchildren(); ++i) {
+                ASSERT_require(child(i)->isScalar());
+                ASSERT_require(child(i)->get_nbits() == child(0)->get_nbits());
+            }
+            nbits = child(0)->get_nbits();
+            domainWidth_ = 0;
+            break;
+        }
+    }
 }
 
 void
@@ -323,7 +491,7 @@ InternalNode::depth_first_traversal(Visitor &v) const
 InternalNodePtr
 InternalNode::nonassociative() const
 {
-    InternalNode *retval = new InternalNode(get_nbits(), op, get_comment());
+    TreeNodes newOperands;
     std::list<TreeNodePtr> worklist(children.begin(), children.end());
     bool modified = false;
     while (!worklist.empty()) {
@@ -334,13 +502,14 @@ InternalNode::nonassociative() const
             worklist.insert(worklist.begin(), ichild->children.begin(), ichild->children.end());
             modified = true;
         } else {
-            retval->add_child(child);
+            newOperands.push_back(child);
         }
     }
-    if (modified)
-        return InternalNodePtr(retval);
-    delete retval;
-    return isInternalNode();
+    if (!modified)
+        return isInternalNode();
+
+    // Return the new expression without simplifying it again.
+    return InternalNodePtr(new InternalNode(get_nbits(), op, newOperands, get_comment()));
 }
 
 // compare expressions for sorting operands of commutative operators. Returns -1, 0, 1
@@ -492,9 +661,7 @@ InternalNode::identity(uint64_t ident) const
     }
     
     // construct the new node but don't simplify it yet (i.e., don't use InternalNode::create())
-    InternalNode *retval = new InternalNode(get_nbits(), get_operator(), get_comment());
-    retval->children.insert(retval->children.end(), args.begin(), args.end());
-    return InternalNodePtr(retval);
+    return InternalNodePtr(new InternalNode(get_nbits(), get_operator(), args, get_comment()));
 }
 
 TreeNodePtr
@@ -514,7 +681,7 @@ InternalNode::rewrite(const Simplifier &simplifier) const
 TreeNodePtr
 InternalNode::constant_folding(const Simplifier &simplifier) const
 {
-    InternalNode *retval = new InternalNode(get_nbits(), op, get_comment());
+    TreeNodes newOperands;
     bool modified = false;
     TreeNodes::const_iterator ci1 = children.begin();
     while (ci1!=children.end()) {
@@ -522,27 +689,24 @@ InternalNode::constant_folding(const Simplifier &simplifier) const
         LeafNodePtr leaf;
         while (ci2!=children.end() && (leaf=(*ci2)->isLeafNode()) && leaf->is_known()) ++ci2;
         if (ci1==ci2 || ci1+1==ci2) {                           // arg is not a constant, or we had only one constant by itself
-            retval->add_child(*ci1);
+            newOperands.push_back(*ci1);
             ++ci1;
         } else if (TreeNodePtr folded = simplifier.fold(ci1, ci2)) { // able to fold all these constants into a new node
-            retval->add_child(folded);
+            newOperands.push_back(folded);
             modified = true;
             ci1 = ci2;
         } else {                                                // multiple constants, but unable to fold
-            retval->children.insert(retval->children.end(), ci1, ci2);
+            newOperands.insert(newOperands.end(), ci1, ci2);
             ci1 = ci2;
         }
     }
-    if (!modified) {
-        delete retval;
+    if (!modified)
         return isInternalNode();
-    }
-    if (1==retval->nchildren()) {
-        TreeNodePtr tmp = TreeNodePtr(retval->child(0)); // need to hold this pointer while we delete
-        delete retval;
-        return tmp;
-    }
-    return InternalNodePtr(retval);
+    if (1==newOperands.size())
+        return newOperands.front();
+
+    // Do not simplify again (i.e., don't use InternalNode::create())
+    return InternalNodePtr(new InternalNode(get_nbits(), op, newOperands, get_comment()));
 }
 
 TreeNodePtr
@@ -1625,6 +1789,7 @@ InternalNode::simplifyTop() const
 LeafNodePtr
 LeafNode::create_variable(size_t nbits, std::string comment)
 {
+    ASSERT_require(nbits > 0);
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
     node->leaf_type = BITVECTOR;
@@ -1637,6 +1802,7 @@ LeafNode::create_variable(size_t nbits, std::string comment)
 LeafNodePtr
 LeafNode::create_integer(size_t nbits, uint64_t n, std::string comment)
 {
+    ASSERT_require(nbits > 0);
     LeafNode *node = new LeafNode(comment);
     node->nbits = nbits;
     node->leaf_type = CONSTANT;
@@ -1659,10 +1825,13 @@ LeafNode::create_constant(const Sawyer::Container::BitVector &bits, std::string 
 
 /* class method */
 LeafNodePtr
-LeafNode::create_memory(size_t nbits, std::string comment)
+LeafNode::create_memory(size_t addressWidth, size_t valueWidth, std::string comment)
 {
+    ASSERT_require(addressWidth > 0);
+    ASSERT_require(valueWidth > 0);
     LeafNode *node = new LeafNode(comment);
-    node->nbits = nbits;
+    node->nbits = valueWidth;
+    node->domainWidth_ = addressWidth;
     node->leaf_type = MEMORY;
     node->name = name_counter++;
     LeafNodePtr retval(node);
