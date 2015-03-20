@@ -15,12 +15,14 @@ class CppExprEvaluator {
   void setPropertyState(PropertyState* pstate);
   void setVariableIdMapping(VariableIdMapping* variableIdMapping);
   bool isValid();
+  void setShowWarnings(bool warnings);
  private:
   bool isExprRootNode(SgNode* node);
   SgNode* findExprRootNode(SgNode* node);
   NumberIntervalLattice* domain;
   VariableIdMapping* variableIdMapping;
   PropertyState* propertyState;
+  bool _showWarnings;
 };
 }
 #endif

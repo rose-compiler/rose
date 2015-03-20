@@ -10,7 +10,7 @@
 
 using namespace std;
 
-SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0){
+SPRAY::CppExprEvaluator::CppExprEvaluator(SPRAY::NumberIntervalLattice* d, SPRAY::VariableIdMapping* vim):domain(d),variableIdMapping(vim),propertyState(0),_showWarnings(false){
 }
 
 SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node, PropertyState* pstate) {
@@ -23,6 +23,11 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
   ROSE_ASSERT(domain);
   ROSE_ASSERT(propertyState);
   ROSE_ASSERT(variableIdMapping);
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
+  if(!ips) {
+    cerr<<"Error: CppExprEvaluator:: Unsupported type of property state."<<endl;
+    exit(1);
+  }
   
   if(isSgBinaryOp(node)) {
     SgNode* lhs=SgNodeHelper::getLhs(node);
@@ -38,21 +43,19 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
         ROSE_ASSERT(variableIdMapping);
         //variableIdMapping->toStream(cout);
         VariableId varId=variableIdMapping->variableId(lhsVar);
-        if(IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState)) {
-          NumberIntervalLattice rhsResult=evaluate(rhs);
-          ips->setVariable(varId,rhsResult);
-          return rhsResult;
-        } else {
-          cerr<<"Error: CppExprEvaluator:: Unknown type of property state."<<endl;
-          exit(1);
-        }
+        NumberIntervalLattice rhsResult=evaluate(rhs);
+        ips->setVariable(varId,rhsResult);
+        return rhsResult;
       } else {
-        cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<endl;
+        if(_showWarnings)
+          cout<<"Warning: unknown lhs of assignment: "<<lhs->unparseToString()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+        ips->topifyAllVariables();
         return NumberIntervalLattice::top();
       }
     }
     default:
-      cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+      if(_showWarnings) cout<<"Warning: unknown binary operator: "<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+      ips->topifyAllVariables();
       return NumberIntervalLattice::top();
     }
   }
@@ -90,7 +93,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
           } else {
             SgNode* exprRootNode=findExprRootNode(node);
             cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
-
             exit(1);
           }
         }
@@ -100,7 +102,8 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       }
     }
     default: // generates top element
-      cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+      if(_showWarnings) cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+      ips->topifyAllVariables();
       return NumberIntervalLattice::top();
     }
   }
@@ -111,7 +114,6 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     ROSE_ASSERT(varRefExp);
     VariableId varId=variableIdMapping->variableId(varRefExp);
     
-    IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
     ROSE_ASSERT(ips);
     NumberIntervalLattice evalResult=ips->getVariable(varId);
     return evalResult;
@@ -128,10 +130,12 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
   }
   default: // generates top element
-    cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+    if(_showWarnings) cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<" ... using unbounded result interval."<<endl;
     return NumberIntervalLattice::top();
   }
-  cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+  if(_showWarnings) cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... setting alll variables to unbounded interval and using unbounded result interval."<<endl;
+  // an unknown operator may have an arbitrary effect, to err on the safe side we topify all variables
+  ips->topifyAllVariables();
   return NumberIntervalLattice::top();
 }
 
@@ -150,6 +154,11 @@ void SPRAY::CppExprEvaluator::setVariableIdMapping(VariableIdMapping* variableId
 bool SPRAY::CppExprEvaluator::isValid() {
   return domain!=0 && propertyState!=0 && variableIdMapping!=0;
 }
+
+void SPRAY::CppExprEvaluator::setShowWarnings(bool warnings) {
+  _showWarnings=warnings;
+}
+
 
 bool SPRAY::CppExprEvaluator::isExprRootNode(SgNode* node) {
   return (isSgExpression(node) && !isSgExpression(node->get_parent()));

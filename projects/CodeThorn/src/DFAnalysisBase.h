@@ -36,7 +36,9 @@ class DFAnalysisBase {
   void setBackwardAnalysis();
   bool isForwardAnalysis();
   bool isBackwardAnalysis();
-  virtual void initializeGlobalVariables(SgProject* root);
+  // computes state for global variable initializations
+  virtual Lattice* initializeGlobalVariables(SgProject* root);
+  // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
@@ -103,6 +105,7 @@ class DFAnalysisBase {
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;
+  Lattice* _globalVariablesState;
 };
 
 } // end of namespace

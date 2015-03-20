@@ -104,27 +104,30 @@ bool DFAnalysisBase::isBackwardAnalysis() {
   return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
 }
 
-void DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
+// outdated
+Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
   VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
   VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs;
-  cout <<"INFO: global variables: "<<globalVars.size()<<endl;
-  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
-  cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
+  //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
   list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
   for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
-    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
-      cout<<"DEBUG: transfer for global var "<<(*i)->unparseToString()<<endl;
+    //    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
+      cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
-    }
+      //}
   }
   cout << "INIT: initial element: ";
   elem->toStream(cout,&_variableIdMapping);
   cout<<endl;
+  _globalVariablesState=elem;
+  return elem;
 }
 
 
@@ -175,6 +178,7 @@ DFAnalysisBase::initialize(SgProject* root) {
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
 
+  //_globalVariablesState=initializeGlobalVariables(root);
 
 #if 0
   std::string functionToStartAt="main";
@@ -298,6 +302,8 @@ DFAnalysisBase::run() {
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
+    // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
+    _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(&_variableIdMapping);
     cout<<endl;
@@ -441,3 +447,4 @@ void DFAnalysisBase::attachInInfoToAst(string attributeName) {
 void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }
+
