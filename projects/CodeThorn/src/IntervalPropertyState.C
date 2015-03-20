@@ -101,3 +101,13 @@ VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
   }
   return set;
 }
+
+bool SPRAY::IntervalPropertyState::variableExists(VariableId varId) {
+  return intervals.find(varId)!=intervals.end();
+}
+
+bool SPRAY::IntervalPropertyState::removeVariable(VariableId varId) {
+  // for STL map numErased can only be 0 or 1.
+  size_t numErased=intervals.erase(varId);
+  return numErased==1;
+}
