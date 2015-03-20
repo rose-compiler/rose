@@ -263,6 +263,12 @@ public:
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
     void assert_acyclic() const;
 
+    /** Find common subexpressions.
+     *
+     *  Returns a vector of the largest common subexpressions. The list is computed by performing a depth-first search on this
+     *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
+     *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
+    std::vector<TreeNodePtr> findCommonSubexpressions() const;
 };
 
 /** Operator-specific simplification methods. */
@@ -640,6 +646,40 @@ nnodesUnique(InputIterator begin, InputIterator end)
         status = (*ii)->depth_first_traversal(visitor);
     return visitor.nUnique;
 }
+
+/** Find common subexpressions.
+ *
+ *  This is similar to @ref TreeNodePtr::findCommonSubexpressions except the analysis is over a collection of expressions
+ *  rather than a single expression.
+ *
+ * @{ */
+std::vector<TreeNodePtr> findCommonSubexpressions(const std::vector<TreeNodePtr>&);
+
+template<typename InputIterator>
+std::vector<TreeNodePtr>
+findCommonSubexpressions(InputIterator begin, InputIterator end) {
+    typedef Sawyer::Container::Map<TreeNodePtr, size_t> NodeCounts;
+    struct T1: Visitor {
+        NodeCounts nodeCounts;
+        std::vector<TreeNodePtr> result;
+
+        VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
+            size_t &nSeen = nodeCounts.insertMaybe(node, 0);
+            if (2 == ++nSeen)
+                result.push_back(node);
+            return nSeen>1 ? TRUNCATE : CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
+            return CONTINUE;
+        }
+    } visitor;
+
+    for (InputIterator ii=begin; ii!=end; ++ii)
+        (*ii)->depth_first_traversal(visitor);
+    return visitor.result;
+}
+/** @} */
 
 } // namespace
 } // namespace

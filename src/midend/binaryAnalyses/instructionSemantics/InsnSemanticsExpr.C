@@ -94,6 +94,10 @@ TreeNode::assert_acyclic() const
 #endif
 }
 
+std::vector<TreeNodePtr>
+TreeNode::findCommonSubexpressions() const {
+    return InsnSemanticsExpr::findCommonSubexpressions(std::vector<TreeNodePtr>(1, sharedFromThis()));
+}
 
 /*******************************************************************************************************************************
  *                                      InternalNode methods
@@ -1886,6 +1890,10 @@ operator<<(std::ostream &o, const TreeNode::WithFormatter &w)
     return o;
 }
 
+std::vector<TreeNodePtr>
+findCommonSubexpressions(const std::vector<TreeNodePtr> &exprs) {
+    return findCommonSubexpressions(exprs.begin(), exprs.end());
+}
 
 } // namespace
 } // namespace
