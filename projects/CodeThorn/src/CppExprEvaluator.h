@@ -16,6 +16,8 @@ class CppExprEvaluator {
   void setVariableIdMapping(VariableIdMapping* variableIdMapping);
   bool isValid();
  private:
+  bool isExprRootNode(SgNode* node);
+  SgNode* findExprRootNode(SgNode* node);
   NumberIntervalLattice* domain;
   VariableIdMapping* variableIdMapping;
   PropertyState* propertyState;

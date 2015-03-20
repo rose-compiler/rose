@@ -56,9 +56,56 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
       return NumberIntervalLattice::top();
     }
   }
+  if(isSgUnaryOp(node)) {
+    switch(node->variantT()) {
+    case V_SgMinusOp: {
+      return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(SgNodeHelper::getFirstChild(node)));
+    }
+    case V_SgMinusMinusOp:
+    case V_SgPlusPlusOp: {
+      int incdecVal=0;
+      if(isSgPlusPlusOp(node)) {
+        incdecVal=1;
+      } else if(isSgMinusMinusOp(node)) {
+          incdecVal=-1;
+      } else {
+        cerr<<"Error: CppExprEvaluator: unknown operator in ++/-- computation:"<<node->sage_class_name()<<endl;
+        exit(1);
+      }
+      SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(node));
+      if(varRefExp) {
+        VariableId varId=variableIdMapping->variableId(varRefExp);
+        if(SgNodeHelper::isPrefixIncDecOp(node)) {
+          IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
+          NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
+          ips->setVariable(varId,res);
+          return res;
+        }
+        if(SgNodeHelper::isPostfixIncDecOp(node)) {
+          IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(propertyState);
+          NumberIntervalLattice res=domain->arithAdd(NumberIntervalLattice(Number(1)),evaluate(SgNodeHelper::getFirstChild(node)));
+          if(isExprRootNode(node)) {
+            ips->setVariable(varId,res);
+            return res;
+          } else {
+            SgNode* exprRootNode=findExprRootNode(node);
+            cerr<<"Error: CppExprEvaluator: post-fix operator ++ not supported in sub-expressions yet: expression: "<<"\""<<(exprRootNode?exprRootNode->unparseToString():0)<<"\""<<endl;
+
+            exit(1);
+          }
+        }
+      } else {
+        cerr<<"Error: CppExprEvaluator: ++/-- operation on lhs-expression not supported yet."<<endl;
+        exit(1);
+      }
+    }
+    default: // generates top element
+      cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+      return NumberIntervalLattice::top();
+    }
+  }
   switch(node->variantT()) {
   case V_SgIntVal: return NumberIntervalLattice(Number(isSgIntVal(node)->get_value()));
-  case V_SgMinusOp: return domain->arithSub(NumberIntervalLattice(Number(0)),evaluate(SgNodeHelper::getFirstChild(node)));
   case V_SgVarRefExp: {
     SgVarRefExp* varRefExp=isSgVarRefExp(node);
     ROSE_ASSERT(varRefExp);
@@ -81,7 +128,7 @@ SPRAY::NumberIntervalLattice SPRAY::CppExprEvaluator::evaluate(SgNode* node) {
     }
   }
   default: // generates top element
-    cout<<"Warning: unknown unary operator: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
+    cout<<"Warning: unknown leaf node: "<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
     return NumberIntervalLattice::top();
   }
   cout<<"Warning: Unknown operator."<<node->sage_class_name()<<" ... using unbounded interval."<<endl;
@@ -104,4 +151,17 @@ bool SPRAY::CppExprEvaluator::isValid() {
   return domain!=0 && propertyState!=0 && variableIdMapping!=0;
 }
 
+bool SPRAY::CppExprEvaluator::isExprRootNode(SgNode* node) {
+  return (isSgExpression(node) && !isSgExpression(node->get_parent()));
+}
+
+SgNode* SPRAY::CppExprEvaluator::findExprRootNode(SgNode* node) {
+  if(isSgExpression(node)&&!isExprRootNode(node)) {
+    return findExprRootNode(node->get_parent());
+  } else if(isExprRootNode(node)) {
+    return node;
+  } else {
+    return 0;
+  }
+}
 #endif
