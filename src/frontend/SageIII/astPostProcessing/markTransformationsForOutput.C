@@ -74,7 +74,23 @@ MarkTransformationsForOutput::evaluateInheritedAttribute (
                     printf ("MarkTransformationsForOutput: Reset the fileInfo to be a transformation \n");
 #endif
                  // Mark the IR node as a transformation.
-                    fileInfo->setTransformation();
+
+                 // DQ (3/20/2015): Mark this as a transformation uniformally for both the startOfConstruct and endOfConstruct seperately.
+                 // Note: there is not uniform API at SgLocatedNode for marking the startOfConstruct and endOfConstruct together.
+                 // fileInfo->setTransformation();
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL)
+                       {
+                         ROSE_ASSERT(locatedNode->get_startOfConstruct() != NULL);
+                         locatedNode->get_startOfConstruct()->setTransformation();
+                         ROSE_ASSERT(locatedNode->get_endOfConstruct() != NULL);
+                         locatedNode->get_endOfConstruct()->setTransformation();
+                       }
+                      else
+                       {
+                      // I don't think this case will be executed.
+                         fileInfo->setTransformation();
+                       }
 
                  // DQ (3/8/2006): Not clear if we always want to do this!
                  // printf ("In MarkTransformationsForOutput: Also mark transformation for output node = %s \n",node->class_name().c_str());
