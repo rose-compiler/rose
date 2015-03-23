@@ -641,6 +641,25 @@ public:
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
 
+/** Counts the number of nodes.
+ *
+ *  Counts the total number of nodes in multiple expressions.  The return value is a saturated sum, returning MAX_NNODES if an
+ *  overflow occurs. */
+template<typename InputIterator>
+uint64_t
+nnodes(InputIterator begin, InputIterator end) {
+    uint64_t total = 0;
+    for (InputIterator ii=begin; ii!=end; ++ii) {
+        uint64_t n = (*ii)->nnodes();
+        if (MAX_NNODES==n)
+            return MAX_NNODES;
+        if (total + n < total)
+            return MAX_NNODES;
+        total += n;
+    }
+    return total;
+}
+
 /** Counts the number of unique nodes.
  *
  *  Counts the number of unique nodes across a number of expressions.  Nodes shared between two expressions are counted only

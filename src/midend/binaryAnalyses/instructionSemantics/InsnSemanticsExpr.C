@@ -277,6 +277,7 @@ InternalNode::adjustWidth() {
             break;
         }
     }
+    ASSERT_require(nbits != 0);
 }
 
 void
