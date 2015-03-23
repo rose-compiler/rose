@@ -21,6 +21,20 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
   return globalVarsIdSet;
 }
 
+SPRAY::VariableIdSet
+AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* project, VariableIdMapping* variableIdMapping) {
+  list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+  SPRAY::VariableIdMapping::VariableIdSet usedVarsInInitializersIdSet;
+  for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+    SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(*i);
+    SPRAY::VariableIdSet usedVarsInInitializer;
+    usedVarsInInitializer=AnalysisAbstractionLayer::astSubTreeVariables(initExp, *variableIdMapping);
+    usedVarsInInitializersIdSet.insert(usedVarsInInitializer.begin(),usedVarsInInitializer.end());
+  }
+  return usedVarsInInitializersIdSet;
+}
+
+
 SPRAY::VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
@@ -76,16 +90,3 @@ SPRAY::VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node,
   return vset;
 }
 
-SPRAY::VariableIdSet AnalysisAbstractionLayer::usedVarsInInitializers(VariableIdSet declaredVariables, VariableIdMapping* vid) {
-  SPRAY::VariableIdSet vis;
-  // TODO: iterate over declared variables, compute used variableIds in initializers
-  //for(SPRAY::VariableIdSet::iterator i=declaredVariables.begin();declaredVariables.end();++i) {
-  //  SgVariableDeclaration* varDecl=isSgVariableDeclaration(vid->getNode(*i));
-  //  ROSE_ASSERT(varDecl);
-    // TODO: get init of varDecl
-    // compute used-vars of init
-    //variableIdsOfAstSubTree(SgNode* node);
-    // add used vars to vis;
-  //  }
-  return vis;
-}

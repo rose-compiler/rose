@@ -110,7 +110,7 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
   VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
-  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVarsInInitializers(globalVars,&_variableIdMapping);
+  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&_variableIdMapping);
   VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
   usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
 			  usedVarsInGlobalVarsInitializers.end());
@@ -118,13 +118,15 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
-  list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
-  for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
-    //    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
-      cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
+  list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
+    if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
+      //cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
-      //}
+    } else {
+      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
+    }
   }
   cout << "INIT: initial element: ";
   elem->toStream(cout,&_variableIdMapping);
@@ -269,6 +271,7 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
       // TODO: temporary hack (requires get-methods for different types of labels
       // or a list of all labels that are associated with a node)
       int startLabelId=startLabel.getId();
+      // exit-label = entry-label + 1
       Label endLabel(startLabelId+1);
       _extremalLabels.insert(endLabel);
     }

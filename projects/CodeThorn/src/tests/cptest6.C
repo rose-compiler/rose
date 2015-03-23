@@ -16,7 +16,6 @@ int main() {
   int y=2;
   int z1;
   int z2;
-  int* xp=&x;
   float fa;
   fa=0.2;
   z3=1;
@@ -29,7 +28,6 @@ int main() {
     y=f(y);
   }
   z1=x;
-  *xp=500;
   z2=y;
   return 0;
 }
