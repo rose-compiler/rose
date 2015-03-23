@@ -117,6 +117,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     Definitions defns;
     generate_file(tmpfile.file, exprs, &defns);
     tmpfile.file.close();
+#if 0 // DEBUGGING [Robb P. Matzke 2015-03-19]
+    std::cerr <<"ROBB: saving SMT file as 'x.smt'\n";
+    system((std::string("cp ") + tmpfile.name + " x.smt").c_str());
+#endif
     struct stat sb;
     int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     ASSERT_require(status>=0);
