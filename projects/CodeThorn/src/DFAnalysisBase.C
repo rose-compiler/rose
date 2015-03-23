@@ -110,7 +110,10 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
   VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
-  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs;
+  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVarsInInitializers(globalVars,&_variableIdMapping);
+  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
+  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
+			  usedVarsInGlobalVarsInitializers.end());
   cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
   //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
   //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;

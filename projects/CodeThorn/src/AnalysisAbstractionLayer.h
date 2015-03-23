@@ -11,5 +11,6 @@ namespace AnalysisAbstractionLayer {
   SPRAY::VariableIdSet useVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
   SPRAY::VariableIdSet defVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
   SPRAY::VariableIdSet astSubTreeVariables(SgNode* node, SPRAY::VariableIdMapping& vidm);
+  SPRAY::VariableIdSet usedVarsInInitializers(SPRAY::VariableIdSet declaredVariables, SPRAY::VariableIdMapping* vid);
 }
 #endif
