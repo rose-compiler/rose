@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
      // Command line option handling.
     namespace po = boost::program_options;
     po::options_description desc
-      ("analyterix V0.1\n"
+      ("analyterix V0.2\n"
        "Written by Markus Schordan\n"
        "Supported options");
   
