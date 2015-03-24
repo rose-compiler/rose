@@ -119,7 +119,7 @@ addressTakenAnalysis_SOURCES = \
 
 addressTakenAnalysis_LDADD = -lrose
 
-# used only in specialized analyzer
+# workaround to intentionally fool policy
 faketarget:
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
@@ -233,6 +233,18 @@ faketarget:
 	tests/rers/Problem1_pmod.c
 	tests/rers/inputsequencepack/Problem1_pmod.c
 	tests/rev1.C
+	tests/cptest10.C
+	tests/cptest1.C
+	tests/cptest2.C
+	tests/cptest3.C
+	tests/cptest4.C
+	tests/cptest5.C
+	tests/cptest6.C
+	tests/cptest7.C
+	tests/cptest8.C
+	tests/cptest9.C
+	tests/mailinglist2.C
+	tests/mailinglist3.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
