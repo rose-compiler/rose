@@ -28,6 +28,10 @@ namespace SPRAY {
 
 class DFAnalysisBase {
  public:
+  /* normalizes a C++ program to a C++ subset. The transformed program is a C++ program, but with additional
+     temporary variables and additional statements. E.g. "f(g())" becomes "int t=g(); f(t);"
+  */
+  static void normalizeProgram(SgProject*);
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(set<Label> extremalLabels);

@@ -88,6 +88,8 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
+  SPRAY::DFAnalysisBase::normalizeProgram(root);
+
   if(option_fi_constanalysis) {
     VarConstSetMap varConstSetMap;
     FIConstAnalysis fiConstAnalysis(variableIdMapping);

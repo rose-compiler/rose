@@ -7,6 +7,8 @@
 #include "sage3basic.h"
 #include "DFAnalysisBase.h"
 #include "AnalysisAbstractionLayer.h"
+#include "ExtractFunctionArguments.h"
+#include "FunctionNormalization.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -135,6 +137,18 @@ Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   return elem;
 }
 
+void
+DFAnalysisBase::normalizeProgram(SgProject* root) {
+    cout<<"STATUS: Normalizing program."<<endl;
+  ExtractFunctionArguments efa;
+  if(!efa.IsNormalized(root)) {
+    cout<<"STATUS: Normalizing function call arguments."<<endl;
+    efa.NormalizeTree(root,true);
+  }
+  FunctionCallNormalization fn;
+  cout<<"STATUS: Normalizing function calls in expressions."<<endl;
+  fn.visit(root);
+}
 
 void
 DFAnalysisBase::initialize(SgProject* root) {
@@ -182,67 +196,6 @@ DFAnalysisBase::initialize(SgProject* root) {
 
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
-
-  //_globalVariablesState=initializeGlobalVariables(root);
-
-#if 0
-  std::string functionToStartAt="main";
-  std::string funtofind=functionToStartAt;
-  RoseAst completeast(root);
-  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
-    exit(1);
-  } else {
-    // determine label of function
-    Label startlab=_labeler->getLabel(startFunRoot);
-    set<Label> elab;
-    elab.insert(startlab);
-    setExtremalLabels(elab);
-    initializeTransferFunctions();
-    initializeGlobalVariables(root);
-    _analyzerDataPostInfo[startlab]=_initialElementFactory->create();
-    cout << "STATUS: Initial info established at label "<<startlab<<endl;
-  }
-#endif
-  
-  // create empty state
-#if 0
-  PState emptyPState;
-  const PState* emptyPStateStored=processNew(emptyPState);
-  assert(emptyPStateStored);
-  cout << "INIT: Empty state(stored): "<<emptyPStateStored->toString()<<endl;
-  assert(cfanalyzer);
-
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-
-  if(SgProject* project=isSgProject(root)) {
-    cout << "STATUS: Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    cout << globalVars.size()<<endl;
-    
-    list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
-    // compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-    VariableIdMapping::VariableIdSet setOfUsedVars;
-    for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-      setOfUsedVars.insert(variableIdMapping.variableId(*i));
-    }
-    cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end()) {
-        globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
-        //estate=analyzeVariableDeclaration(*i,estate,estate.label());
-      }
-      else
-        filteredVars++;
-    }
-    cout << "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-  } else {
-    cout << "INIT: no global scope.";
-  }    
-#endif
 }
 
 void DFAnalysisBase::initializeTransferFunctions() {
@@ -267,13 +220,18 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
       _extremalLabels.insert(startLabel);
     } else if(isBackwardAnalysis()) {
-      Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-      // TODO: temporary hack (requires get-methods for different types of labels
-      // or a list of all labels that are associated with a node)
-      int startLabelId=startLabel.getId();
-      // exit-label = entry-label + 1
-      Label endLabel(startLabelId+1);
-      _extremalLabels.insert(endLabel);
+      if(isSgFunctionDefinition(startFunRoot)) {
+        Label startLabel=_cfanalyzer->getLabel(startFunRoot);
+        // TODO: temporary hack (requires get-methods for different types of labels
+        // or a list of all labels that are associated with a node)
+        int startLabelId=startLabel.getId();
+        // exit-label = entry-label + 1
+        Label endLabel(startLabelId+1);
+        _extremalLabels.insert(endLabel);
+      } else {
+        cerr<<"Error: backward analysis only supported for start at a function exit label."<<endl;
+        exit(1);
+      }
     }
   } else {
     // naive way of initializing all labels

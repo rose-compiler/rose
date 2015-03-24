@@ -78,10 +78,15 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
 }
 /*! 
   * \author Markus Schordan
-  * \date 2014.a
+  * \date 2014.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
-  //TODO: def in x=f(...) (not seen as assignment)
+void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
+  VariableId varId=_variableIdMapping->variableId(lhsVar);  
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+  NumberIntervalLattice number;
+  number.setTop();
+  // TODO: use return value ($r) in property state
+  ips->setVariable(varId,number);
 }
 
 /*! 
