@@ -21,6 +21,20 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
   return globalVarsIdSet;
 }
 
+SPRAY::VariableIdSet
+AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* project, VariableIdMapping* variableIdMapping) {
+  list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+  SPRAY::VariableIdMapping::VariableIdSet usedVarsInInitializersIdSet;
+  for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+    SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(*i);
+    SPRAY::VariableIdSet usedVarsInInitializer;
+    usedVarsInInitializer=AnalysisAbstractionLayer::astSubTreeVariables(initExp, *variableIdMapping);
+    usedVarsInInitializersIdSet.insert(usedVarsInInitializer.begin(),usedVarsInInitializer.end());
+  }
+  return usedVarsInInitializersIdSet;
+}
+
+
 SPRAY::VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
@@ -75,3 +89,4 @@ SPRAY::VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node,
   }
   return vset;
 }
+

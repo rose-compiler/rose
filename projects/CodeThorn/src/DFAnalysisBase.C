@@ -7,6 +7,8 @@
 #include "sage3basic.h"
 #include "DFAnalysisBase.h"
 #include "AnalysisAbstractionLayer.h"
+#include "ExtractFunctionArguments.h"
+#include "FunctionNormalization.h"
 
 using namespace SPRAY;
 using namespace std;
@@ -104,29 +106,49 @@ bool DFAnalysisBase::isBackwardAnalysis() {
   return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
 }
 
-void DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
+// outdated
+Lattice* DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
   VariableIdSet usedVarsInFuncs=AnalysisAbstractionLayer::usedVariablesInsideFunctions(root,&_variableIdMapping);
-  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs;
-  cout <<"INFO: global variables: "<<globalVars.size()<<endl;
-  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
-  cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
+  VariableIdSet usedVarsInGlobalVarsInitializers=AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(root,&_variableIdMapping);
+  VariableIdSet usedGlobalVarIds=globalVars*usedVarsInFuncs; //+usedVarsInGlobalVarsInitializers;;
+  usedGlobalVarIds.insert(usedVarsInGlobalVarsInitializers.begin(),
+			  usedVarsInGlobalVarsInitializers.end());
+  cout <<"INFO: number of global variables: "<<globalVars.size()<<endl;
+  //  cout <<"INFO: used variables in functions: "<<usedVarsInFuncs.size()<<endl;
+  //cout <<"INFO: used global vars: "<<usedGlobalVarIds.size()<<endl;
   Lattice* elem=_initialElementFactory->create();
-  list<SgVariableDeclaration*> usedGlobalVarDecls=SgNodeHelper::listOfGlobalVars(root);
-  for(list<SgVariableDeclaration*>::iterator i=usedGlobalVarDecls.begin();i!=usedGlobalVarDecls.end();++i) {
+  list<SgVariableDeclaration*> globalVarDecls=SgNodeHelper::listOfGlobalVars(root);
+  for(list<SgVariableDeclaration*>::iterator i=globalVarDecls.begin();i!=globalVarDecls.end();++i) {
     if(usedGlobalVarIds.find(_variableIdMapping.variableId(*i))!=usedGlobalVarIds.end()) {
-      cout<<"DEBUG: transfer for global var "<<(*i)->unparseToString()<<endl;
+      //cout<<"DEBUG: transfer for global var @"<<_labeler->getLabel(*i)<<" : "<<(*i)->unparseToString()<<endl;
       ROSE_ASSERT(_transferFunctions);
       _transferFunctions->transfer(_labeler->getLabel(*i),*elem);
+    } else {
+      cout<<"INFO: filtered from initial state: "<<(*i)->unparseToString()<<endl;
     }
   }
   cout << "INIT: initial element: ";
   elem->toStream(cout,&_variableIdMapping);
   cout<<endl;
+  _globalVariablesState=elem;
+  return elem;
 }
 
+void
+DFAnalysisBase::normalizeProgram(SgProject* root) {
+    cout<<"STATUS: Normalizing program."<<endl;
+  ExtractFunctionArguments efa;
+  if(!efa.IsNormalized(root)) {
+    cout<<"STATUS: Normalizing function call arguments."<<endl;
+    efa.NormalizeTree(root,true);
+  }
+  FunctionCallNormalization fn;
+  cout<<"STATUS: Normalizing function calls in expressions."<<endl;
+  fn.visit(root);
+}
 
 void
 DFAnalysisBase::initialize(SgProject* root) {
@@ -174,66 +196,6 @@ DFAnalysisBase::initialize(SgProject* root) {
 
   initializeSolver();
   cout << "STATUS: initialized solver."<<endl;
-
-
-#if 0
-  std::string functionToStartAt="main";
-  std::string funtofind=functionToStartAt;
-  RoseAst completeast(root);
-  SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
-  if(startFunRoot==0) { 
-    std::cerr << "Function '"<<funtofind<<"' not found.\n"; 
-    exit(1);
-  } else {
-    // determine label of function
-    Label startlab=_labeler->getLabel(startFunRoot);
-    set<Label> elab;
-    elab.insert(startlab);
-    setExtremalLabels(elab);
-    initializeTransferFunctions();
-    initializeGlobalVariables(root);
-    _analyzerDataPostInfo[startlab]=_initialElementFactory->create();
-    cout << "STATUS: Initial info established at label "<<startlab<<endl;
-  }
-#endif
-  
-  // create empty state
-#if 0
-  PState emptyPState;
-  const PState* emptyPStateStored=processNew(emptyPState);
-  assert(emptyPStateStored);
-  cout << "INIT: Empty state(stored): "<<emptyPStateStored->toString()<<endl;
-  assert(cfanalyzer);
-
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-
-  if(SgProject* project=isSgProject(root)) {
-    cout << "STATUS: Number of global variables: ";
-    list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-    cout << globalVars.size()<<endl;
-    
-    list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
-    // compute set of varIds (it is a set because we want multiple uses of the same var to be represented by one id)
-    VariableIdMapping::VariableIdSet setOfUsedVars;
-    for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
-      setOfUsedVars.insert(variableIdMapping.variableId(*i));
-    }
-    cout << "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-
-    int filteredVars=0;
-    for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
-      if(setOfUsedVars.find(variableIdMapping.variableId(*i))!=setOfUsedVars.end()) {
-        globalVarName2VarIdMapping[variableIdMapping.variableName(variableIdMapping.variableId(*i))]=variableIdMapping.variableId(*i);
-        //estate=analyzeVariableDeclaration(*i,estate,estate.label());
-      }
-      else
-        filteredVars++;
-    }
-    cout << "STATUS: Number of filtered variables for initial pstate: "<<filteredVars<<endl;
-  } else {
-    cout << "INIT: no global scope.";
-  }    
-#endif
 }
 
 void DFAnalysisBase::initializeTransferFunctions() {
@@ -258,12 +220,18 @@ DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
       _extremalLabels.insert(startLabel);
     } else if(isBackwardAnalysis()) {
-      Label startLabel=_cfanalyzer->getLabel(startFunRoot);
-      // TODO: temporary hack (requires get-methods for different types of labels
-      // or a list of all labels that are associated with a node)
-      int startLabelId=startLabel.getId();
-      Label endLabel(startLabelId+1);
-      _extremalLabels.insert(endLabel);
+      if(isSgFunctionDefinition(startFunRoot)) {
+        Label startLabel=_cfanalyzer->getLabel(startFunRoot);
+        // TODO: temporary hack (requires get-methods for different types of labels
+        // or a list of all labels that are associated with a node)
+        int startLabelId=startLabel.getId();
+        // exit-label = entry-label + 1
+        Label endLabel(startLabelId+1);
+        _extremalLabels.insert(endLabel);
+      } else {
+        cerr<<"Error: backward analysis only supported for start at a function exit label."<<endl;
+        exit(1);
+      }
     }
   } else {
     // naive way of initializing all labels
@@ -298,6 +266,8 @@ DFAnalysisBase::run() {
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
     initializeExtremalValue(_analyzerDataPreInfo[(*i).getId()]);
+    // combine extremal value with global variables initialization state (computed by initializeGlobalVariables)
+    _analyzerDataPreInfo[(*i).getId()]->combine(*_globalVariablesState);
     cout<<"INFO: Initialized "<<*i<<" with ";
     cout<<_analyzerDataPreInfo[(*i).getId()]->toString(&_variableIdMapping);
     cout<<endl;
@@ -441,3 +411,4 @@ void DFAnalysisBase::attachInInfoToAst(string attributeName) {
 void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }
+

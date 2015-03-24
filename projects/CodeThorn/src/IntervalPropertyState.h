@@ -18,6 +18,10 @@ public:
   void setVariable(VariableId varId,NumberIntervalLattice num);
   NumberIntervalLattice getVariable(SPRAY::VariableId varId);
   SPRAY::VariableIdSet allVariableIds();
+  // removes variable from state. Returns true if variable existed in state, otherwise false.
+  bool variableExists(VariableId varId);
+  bool removeVariable(VariableId varId);
+  void topifyAllVariables();
 #if 0
   // adds pointer variable
   void addPointerVariable(VariableId);

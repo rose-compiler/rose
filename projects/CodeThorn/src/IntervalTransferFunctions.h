@@ -15,7 +15,7 @@ public:
   void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
   void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, Lattice& element);
+  void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
   void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   void setPropertyState(PropertyState* p) { _cppExprEvaluator->setPropertyState(p); }
