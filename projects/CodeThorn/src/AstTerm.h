@@ -9,19 +9,22 @@
 #include "RoseAst.h"
 #include <typeinfo>
 
-using namespace std;
+namespace SPRAY {
 
-namespace CodeThorn {
-std::string nodeTypeName(SgNode* node);
-std::string astTermToMultiLineString(SgNode* node,int sep=1, int pos=0);
-std::string astTermWithNullValuesToString(SgNode* node);
-std::string pointerExprToString(SgNode* node);
-std::string astTermWithNullValuesToDot(SgNode* root);
-std::string astTermWithoutNullValuesToDot(SgNode* root);
-std::string dotFragmentToDot(string fragment);
-std::string astTermWithNullValuesToDotFragment(SgNode* root) ;
-std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end);
-std::string functionAstTermsWithNullValuesToDot(SgNode* root);
+  class AstTerm {
+  public:
+    static std::string astTermToMultiLineString(SgNode* node,int sep=1, int pos=0);
+    static std::string astTermWithNullValuesToString(SgNode* node);
+    static std::string astTermWithNullValuesToDot(SgNode* root);
+    static std::string astTermWithoutNullValuesToDot(SgNode* root);
+    static std::string astTermWithNullValuesToDotFragment(SgNode* root) ;
+    static std::string astTermToDot(RoseAst::iterator start, RoseAst::iterator end);
+    static std::string functionAstTermsWithNullValuesToDot(SgNode* root);
+    static std::string pointerExprToString(SgNode* node);
+  private:
+    static std::string nodeTypeName(SgNode* node);
+    static std::string dotFragmentToDot(std::string fragment);
+  };
 }
 
 #endif

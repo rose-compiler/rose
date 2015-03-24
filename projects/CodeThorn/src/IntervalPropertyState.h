@@ -6,14 +6,18 @@
 #include "NumberIntervalLattice.h"
 #include "PropertyState.h"
 
+namespace SPRAY {
 class IntervalPropertyState : public Lattice {
 public:
   IntervalPropertyState();
   void toStream(std::ostream& os, VariableIdMapping* vim=0);
-  bool approximatedBy(PropertyState& other);
-  void combine(PropertyState& other);
+  bool approximatedBy(Lattice& other);
+  void combine(Lattice& other);
   // adds integer variable
   void addVariable(VariableId varId);
+  void setVariable(VariableId varId,NumberIntervalLattice num);
+  NumberIntervalLattice getVariable(SPRAY::VariableId varId);
+  SPRAY::VariableIdSet allVariableIds();
 #if 0
   // adds pointer variable
   void addPointerVariable(VariableId);
@@ -21,9 +25,14 @@ public:
   void addArrayElements(VariableId,int number);
 #endif
   typedef std::map<VariableId,NumberIntervalLattice> IntervalMapType;
-  IntervalMapType intervals;
-  bool isBot() { std::cerr<<"WARNING: isBot not implement for IntervalPropertState"<<std::endl; return false; }
+  bool isBot() { return _bot; }
+  void setBot() { _bot=true; }
   void setEmptyState();
+ private:
+  IntervalMapType intervals;
+  bool _bot;
 };
+
+} // end of namespace SPRAY
 
 #endif

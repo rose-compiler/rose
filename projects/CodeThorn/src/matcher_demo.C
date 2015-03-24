@@ -9,7 +9,7 @@
 
 #include "Timer.h"
 
-using namespace CodeThorn;
+using namespace std;
 
 class TestTraversal : public AstSimpleProcessing {
 public:
@@ -145,15 +145,15 @@ int main( int argc, char * argv[] ) {
       //SgNode* n=(*i)["X"];
       for(SingleMatchVarBindings::iterator vars_iter=(*i).begin();vars_iter!=(*i).end();++vars_iter) {
         SgNode* matchedTerm=(*vars_iter).second;
-        std::cout << "  VAR: " << (*vars_iter).first << "=" << astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+        std::cout << "  VAR: " << (*vars_iter).first << "=" << SPRAY::AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
       }
       std::cout << std::endl;
       std::cout << "Matching time: "<<matchingMeasurementTime<<endl;
     }
     m.printMarkedLocations();
     m.printMatchOperationsSequence();
-    write_file("astterm.txt",astTermToMultiLineString(root,2));
-    write_file("astterm.dot",astTermWithNullValuesToDot(root));
+    write_file("astterm.txt",SPRAY::AstTerm::astTermToMultiLineString(root,2));
+    write_file("astterm.dot",SPRAY::AstTerm::astTermWithNullValuesToDot(root));
   } else {
     std::string measurement_matchexpressions[]={"SgAssignOp","$X=SgAssignOp","_(_,_)","null","$X=SgAssignOp($Y,$Z=SgAddOp)","_($X,..)","_(#$X,..)"};
     int measurement_test_cases_num=7;

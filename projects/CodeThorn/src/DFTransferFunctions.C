@@ -6,13 +6,11 @@
 using namespace std;
 
 #include "CollectionOperators.h"
-using namespace CodeThorn;
-
 #include "DFTransferFunctions.h"
 
 using namespace SPRAY;
 
-DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0),_domain(0){}
+DFTransferFunctions::DFTransferFunctions():_labeler(0),_variableIdMapping(0){}
 
 void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   ROSE_ASSERT(_labeler);
@@ -85,6 +83,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
 
 
 void DFTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element) {
+  cout<<"DEFAULT: transferExp."<<endl;
   // default identity function
 }
   

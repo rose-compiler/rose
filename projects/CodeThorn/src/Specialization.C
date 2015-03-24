@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "Specialization.h"
+#include "SgNodeHelper.h"
 
 #include <map>
 
@@ -78,16 +79,43 @@ int PStateConstReporter::getConstInt() {
 }
 
 int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping) {
+  return specializeFunction(project, funNameToFind, param, constInt, "", 0, variableIdMapping);
+}
+
+int Specialization::specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping) {
   std::list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
+  int subst=0;
   for(std::list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
     std::string funName=SgNodeHelper::getFunctionName(*i);
     if(funNameToFind==funName) {
       _specializedFunctionRootNode=*i;
-      VariableId varId=determineVariableIdToSpecialize(*i,param,variableIdMapping);
-      return substituteVariablesWithConst(*i, variableIdMapping, varId, constInt);
+      if(param>=0) {
+        VariableId varId=determineVariableIdToSpecialize(*i,param,variableIdMapping);
+        subst+=substituteVariablesWithConst(*i, variableIdMapping, varId, constInt);
+      }
+      if(varInitName!="") {
+        cout<<"DEBUG: checking for varInitName:"<<varInitName<<endl;
+        subst+=substituteVarInitWithConst(*i,variableIdMapping, varInitName,initConst);
+      }
     }
   }
-  return 0;
+  return subst;
+}
+
+int Specialization::substituteVarInitWithConst(SgFunctionDefinition* funDef, VariableIdMapping* variableIdMapping, string varInitName, int varInitConstInt) {
+  int varInitSubst=0;
+  std::set<SgVariableDeclaration*> varDeclSet=SgNodeHelper::localVariableDeclarationsOfFunction(funDef);
+  for(std::set<SgVariableDeclaration*>::iterator i=varDeclSet.begin();i!=varDeclSet.end();++i) {
+    SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(*i);
+    SgName sgname=initName->get_qualified_name();
+    cout<<"DEBUG: investigating variable: "<<sgname.getString()<<endl;
+    if(sgname.getString()==varInitName) {
+      cout<<"DEBUG: found variable: "<<sgname.getString()<<endl;
+      VariableId varId=variableIdMapping->variableId(initName);
+      varInitSubst+=substituteVariablesWithConst(funDef, variableIdMapping, varId, varInitConstInt);
+    }
+  }
+  return varInitSubst;
 }
 
 VariableId Specialization::determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping) {

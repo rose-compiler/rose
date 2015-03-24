@@ -14,36 +14,35 @@
 #include "VariableIdMapping.h"
 
 using namespace std;
-using namespace CodeThorn;
 using namespace SPRAY;
 
-RDPropertyStateFactory::RDPropertyStateFactory() {
+SPRAY::RDPropertyStateFactory::RDPropertyStateFactory() {
 }
 
-PropertyState* RDPropertyStateFactory::create() {
+SPRAY::PropertyState* SPRAY::RDPropertyStateFactory::create() {
   RDLattice* element=new RDLattice();
   return element;
 }
 
-RDPropertyStateFactory::~RDPropertyStateFactory() {
+SPRAY::RDPropertyStateFactory::~RDPropertyStateFactory() {
 }
 
-RDAnalysis::RDAnalysis() {
+SPRAY::RDAnalysis::RDAnalysis() {
   _transferFunctions=new RDTransferFunctions();
   _initialElementFactory=new RDPropertyStateFactory();
 }
 
-RDAnalysis::~RDAnalysis() {
+SPRAY::RDAnalysis::~RDAnalysis() {
   delete _transferFunctions;
   delete _initialElementFactory;
 }
-void RDAnalysis::initializeExtremalValue(Lattice* element) {
+void SPRAY::RDAnalysis::initializeExtremalValue(Lattice* element) {
   RDLattice* rdElement=dynamic_cast<RDLattice*>(element);
   rdElement->setEmptySet();
   cout<<"INFO: initialized extremal value."<<endl;
 }
 
-DFAstAttribute* RDAnalysis::createDFAstAttribute(Lattice* elem) {
+SPRAY::DFAstAttribute* SPRAY::RDAnalysis::createDFAstAttribute(Lattice* elem) {
   RDLattice* rdElem=dynamic_cast<RDLattice*>(elem);
   ROSE_ASSERT(rdElem);
   return new RDAstAttribute(rdElem);

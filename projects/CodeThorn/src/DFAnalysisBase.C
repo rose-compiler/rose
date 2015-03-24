@@ -5,13 +5,13 @@
  *************************************************************/
 
 #include "sage3basic.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "AnalysisAbstractionLayer.h"
 
-using namespace CodeThorn;
 using namespace SPRAY;
+using namespace std;
 
-DFAnalysis2::DFAnalysis2():
+DFAnalysisBase::DFAnalysisBase():
   _labeler(0),
   _cfanalyzer(0),
   _numberOfLabels(0),
@@ -19,23 +19,23 @@ DFAnalysis2::DFAnalysis2():
   _postInfoIsValid(false),
   _transferFunctions(0),
   _initialElementFactory(0),
-  _analysisType(DFAnalysis2::FORWARD_ANALYSIS),
+  _analysisType(DFAnalysisBase::FORWARD_ANALYSIS),
   _pointerAnalysisInterface(0),
   _pointerAnalysisEmptyImplementation(0)
 {}
 
-DFAnalysis2::~DFAnalysis2() {
+DFAnalysisBase::~DFAnalysisBase() {
   if(_pointerAnalysisEmptyImplementation)
     delete _pointerAnalysisEmptyImplementation;
 }
-void DFAnalysis2::initializeSolver() {
+void DFAnalysisBase::initializeSolver() {
   ROSE_ASSERT(&_workList);
   ROSE_ASSERT(&_initialElementFactory);
   ROSE_ASSERT(&_analyzerDataPreInfo);
   ROSE_ASSERT(&_analyzerDataPostInfo);
   ROSE_ASSERT(&_flow);
   ROSE_ASSERT(&_transferFunctions);
-  _solver=new PASolver1(_workList,
+  _solver=new SPRAY::PASolver1(_workList,
                       _analyzerDataPreInfo,
                       _analyzerDataPostInfo,
                       *_initialElementFactory,
@@ -43,19 +43,19 @@ void DFAnalysis2::initializeSolver() {
                       *_transferFunctions);
 }
 
-void DFAnalysis2::initializeExtremalValue(Lattice* element) {
+void DFAnalysisBase::initializeExtremalValue(Lattice* element) {
   // default identity function
 }
 
-Lattice* DFAnalysis2::getPreInfo(Label lab) {
+Lattice* DFAnalysisBase::getPreInfo(Label lab) {
   return _analyzerDataPreInfo[lab.getId()];
 }
 
-Lattice* DFAnalysis2::getPostInfo(Label lab) {
+Lattice* DFAnalysisBase::getPostInfo(Label lab) {
   return _analyzerDataPostInfo[lab.getId()];
 }
 
-void DFAnalysis2::computeAllPreInfo() {
+void DFAnalysisBase::computeAllPreInfo() {
   if(!_preInfoIsValid) {
     _solver->runSolver();
     _preInfoIsValid=true;
@@ -63,7 +63,7 @@ void DFAnalysis2::computeAllPreInfo() {
   }
 }
 
-void DFAnalysis2::computeAllPostInfo() {
+void DFAnalysisBase::computeAllPostInfo() {
   if(!_postInfoIsValid) {
     computeAllPreInfo();
     for(Labeler::iterator i=_labeler->begin();i!=_labeler->end();++i) {
@@ -80,31 +80,31 @@ void DFAnalysis2::computeAllPostInfo() {
   }
 }
 
-void DFAnalysis2::setInitialElementFactory(PropertyStateFactory* pf) {
+void DFAnalysisBase::setInitialElementFactory(PropertyStateFactory* pf) {
   _initialElementFactory=pf;
 }
 
-void DFAnalysis2::setExtremalLabels(set<Label> extremalLabels) {
+void DFAnalysisBase::setExtremalLabels(set<Label> extremalLabels) {
   _extremalLabels=extremalLabels;
 }
 
-void DFAnalysis2::setForwardAnalysis() {
-  _analysisType=DFAnalysis2::FORWARD_ANALYSIS;
+void DFAnalysisBase::setForwardAnalysis() {
+  _analysisType=DFAnalysisBase::FORWARD_ANALYSIS;
 }
 
-void DFAnalysis2::setBackwardAnalysis() {
-  _analysisType=DFAnalysis2::BACKWARD_ANALYSIS;
+void DFAnalysisBase::setBackwardAnalysis() {
+  _analysisType=DFAnalysisBase::BACKWARD_ANALYSIS;
 }
 
-bool DFAnalysis2::isForwardAnalysis() {
-  return _analysisType==DFAnalysis2::FORWARD_ANALYSIS;
+bool DFAnalysisBase::isForwardAnalysis() {
+  return _analysisType==DFAnalysisBase::FORWARD_ANALYSIS;
 }
 
-bool DFAnalysis2::isBackwardAnalysis() {
-  return _analysisType==DFAnalysis2::BACKWARD_ANALYSIS;
+bool DFAnalysisBase::isBackwardAnalysis() {
+  return _analysisType==DFAnalysisBase::BACKWARD_ANALYSIS;
 }
 
-void DFAnalysis2::initializeGlobalVariables(SgProject* root) {
+void DFAnalysisBase::initializeGlobalVariables(SgProject* root) {
   ROSE_ASSERT(root);
   cout << "INFO: Initializing property state with global variables."<<endl;
   VariableIdSet globalVars=AnalysisAbstractionLayer::globalVariables(root,&_variableIdMapping);
@@ -129,7 +129,7 @@ void DFAnalysis2::initializeGlobalVariables(SgProject* root) {
 
 
 void
-DFAnalysis2::initialize(SgProject* root) {
+DFAnalysisBase::initialize(SgProject* root) {
   cout << "INIT: Creating VariableIdMapping."<<endl;
   _variableIdMapping.computeVariableSymbolMapping(root);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(&_variableIdMapping);
@@ -139,8 +139,8 @@ DFAnalysis2::initialize(SgProject* root) {
   _labeler= new Labeler(root);
   //cout << "INIT: Initializing ExprAnalyzer."<<endl;
   //exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  cout << "INIT: Creating CFAnalyzer."<<endl;
-  _cfanalyzer=new CFAnalyzer(_labeler);
+  cout << "INIT: Creating CFAnalysis."<<endl;
+  _cfanalyzer=new CFAnalysis(_labeler);
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFG for each function."<<endl;
   _flow=_cfanalyzer->flow(root);
@@ -236,7 +236,7 @@ DFAnalysis2::initialize(SgProject* root) {
 #endif
 }
 
-void DFAnalysis2::initializeTransferFunctions() {
+void DFAnalysisBase::initializeTransferFunctions() {
   ROSE_ASSERT(_transferFunctions);
   ROSE_ASSERT(_labeler);
   _transferFunctions->setLabeler(_labeler);
@@ -247,12 +247,12 @@ void DFAnalysis2::initializeTransferFunctions() {
     _transferFunctions->setPointerAnalysis(_pointerAnalysisInterface);
 }
 
-void DFAnalysis2::setPointerAnalysis(PointerAnalysisInterface* pa) {
+void DFAnalysisBase::setPointerAnalysis(PointerAnalysisInterface* pa) {
   _pointerAnalysisInterface=pa;
 }
 
 void
-DFAnalysis2::determineExtremalLabels(SgNode* startFunRoot=0) {
+DFAnalysisBase::determineExtremalLabels(SgNode* startFunRoot=0) {
   if(startFunRoot) {
     if(isForwardAnalysis()) {
       Label startLabel=_cfanalyzer->getLabel(startFunRoot);
@@ -280,12 +280,12 @@ DFAnalysis2::determineExtremalLabels(SgNode* startFunRoot=0) {
 // runs until worklist is empty
 
 void
-DFAnalysis2::solve() {
+DFAnalysisBase::solve() {
   computeAllPreInfo();
   computeAllPostInfo();
 }
 
-DFAstAttribute* DFAnalysis2::createDFAstAttribute(Lattice* elem) {
+DFAstAttribute* DFAnalysisBase::createDFAstAttribute(Lattice* elem) {
   // elem ignored in default function
   return new DFAstAttribute();
 }
@@ -293,7 +293,7 @@ DFAstAttribute* DFAnalysis2::createDFAstAttribute(Lattice* elem) {
 // runs until worklist is empty
 
 void
-DFAnalysis2::run() {
+DFAnalysisBase::run() {
   // initialize work list with extremal labels
   for(set<Label>::iterator i=_extremalLabels.begin();i!=_extremalLabels.end();++i) {
     ROSE_ASSERT(_analyzerDataPreInfo[(*i).getId()]!=0);
@@ -318,8 +318,8 @@ DFAnalysis2::run() {
 
 // default identity function
 
-DFAnalysis2::ResultAccess&
-DFAnalysis2::getResultAccess() {
+DFAnalysisBase::ResultAccess&
+DFAnalysisBase::getResultAccess() {
   return _analyzerDataPreInfo;
 }
 
@@ -332,33 +332,33 @@ using std::string;
 
 #include <sstream>
 
-CFAnalyzer* DFAnalysis2::getCFAnalyzer() {
+CFAnalysis* DFAnalysisBase::getCFAnalyzer() {
   return _cfanalyzer;
 }
 
 
-Labeler* DFAnalysis2::getLabeler() {
+Labeler* DFAnalysisBase::getLabeler() {
   return _labeler;
 }
 
 
-VariableIdMapping* DFAnalysis2::getVariableIdMapping() {
+VariableIdMapping* DFAnalysisBase::getVariableIdMapping() {
   return &_variableIdMapping;
 }
 
 #if 0
 
-CodeThorn::DFAnalysis2::iterator CodeThorn::DFAnalysis2::begin() {
+CodeThorn::DFAnalysisBase::iterator CodeThorn::DFAnalysisBase::begin() {
   return _analyzerDataPostInfo.begin();
 }
   
 
-DFAnalysis2::iterator CodeThorn::DFAnalysis2::end() {
+DFAnalysisBase::iterator CodeThorn::DFAnalysisBase::end() {
   return _analyzerDataPostInfo.end();
 }
 
 
-size_t DFAnalysis2::size() {
+size_t DFAnalysisBase::size() {
   return _analyzerDataPostInfo.size();
 }
 #endif // begin/end
@@ -372,7 +372,7 @@ size_t DFAnalysis2::size() {
 /* TODO: nodes with multiple associated labels need to be attached multiple attributes (or a list of attributes)
    e.g. FunctionEntry/FunctionExit are associated with SgFunctionDefinition (should be a vector of attributes at each node)
  */
-void DFAnalysis2::attachInfoToAst(string attributeName,bool inInfo) {
+void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
   computeAllPreInfo();
   computeAllPostInfo();
   LabelSet labelSet=_flow.nodeLabels();
@@ -429,7 +429,7 @@ void DFAnalysis2::attachInfoToAst(string attributeName,bool inInfo) {
   * \date 2012.
  */
 
-void DFAnalysis2::attachInInfoToAst(string attributeName) {
+void DFAnalysisBase::attachInInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,true);
 }
 
@@ -438,6 +438,6 @@ void DFAnalysis2::attachInInfoToAst(string attributeName) {
   * \date 2012.
  */
 
-void DFAnalysis2::attachOutInfoToAst(string attributeName) {
+void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
   attachInfoToAst(attributeName,false);
 }

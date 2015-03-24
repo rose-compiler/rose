@@ -14,25 +14,23 @@
 #include <set>
 #include <list>
 
-using namespace std;
-
 namespace CodeThorn {
 
   void write_file(std::string filename, std::string data);
-  string int_to_string(int x);
-  string color(string name);
-  string replace_string(string toModify, string toReplace, string with);
-  void nocheck(string checkIdentifier, bool checkResult);
-  void check(string checkIdentifier, bool checkResult, bool check=true);
+  std::string int_to_string(int x);
+  std::string color(std::string name);
+  std::string replace_string(std::string toModify, std::string toReplace, std::string with);
+  void nocheck(std::string checkIdentifier, bool checkResult);
+  void check(std::string checkIdentifier, bool checkResult, bool check=true);
 
  namespace Parse {
-   bool checkWord(string w,istream& is);
-   void parseString(string w,istream& is);
-   bool integer(istream& is, int& num);
-   int spaces(istream& is);
-   int whitespaces(istream& is);
-   set<int> integerSet(string intSet);
-   list<int> integerList(string intList);
+   bool checkWord(std::string w,std::istream& is);
+   void parseString(std::string w,std::istream& is);
+   bool integer(std::istream& is, int& num);
+   int spaces(std::istream& is);
+   int whitespaces(std::istream& is);
+   std::set<int> integerSet(std::string intSet);
+   std::list<int> integerList(std::string intList);
  }
 
 } // end of namespace CodeThorn

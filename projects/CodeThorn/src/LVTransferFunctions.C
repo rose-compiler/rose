@@ -3,8 +3,6 @@
 using namespace std;
 
 #include "CollectionOperators.h"
-using namespace CodeThorn;
-
 #include "LVTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
