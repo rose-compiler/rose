@@ -616,7 +616,7 @@ struct IP_cmpstrings: P {
                                                      ops->number_(reg1.get_nbits(), -nbytes),
                                                      ops->number_(reg1.get_nbits(), +nbytes));
             ops->writeRegister(reg1, ops->ite(inLoop, ops->add(ops->readRegister(reg1), step), ops->readRegister(reg1)));
-            ops->writeRegister(reg2, ops->ite(inLoop, ops->add(ops->readRegister(reg1), step), ops->readRegister(reg2)));
+            ops->writeRegister(reg2, ops->ite(inLoop, ops->add(ops->readRegister(reg2), step), ops->readRegister(reg2)));
 
             // Adjust instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none!=repeat)
