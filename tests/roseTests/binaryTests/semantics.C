@@ -359,8 +359,19 @@ analyze_interp(SgAsmInterpretation *interp)
         formatter.set_show_latest_writers(do_usedef);
         BaseSemantics::DispatcherPtr dispatcher;
         if (do_trace) {
+            // Enable RiscOperators tracing, but turn off a bunch of info that makes comparisons with a known good answer
+            // difficult.
+            Sawyer::Message::PrefixPtr prefix = Sawyer::Message::Prefix::instance();
+            prefix->showProgramName(false);
+            prefix->showThreadId(false);
+            prefix->showElapsedTime(false);
+            prefix->showFacilityName(Sawyer::Message::Prefix::NEVER);
+            prefix->showImportance(false);
+            Sawyer::Message::UnformattedSinkPtr sink = Sawyer::Message::StreamSink::instance(std::cout);
+            sink->prefix(prefix);
+            sink->defaultPropertiesNS().useColor = false;
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
-            trace->set_stream(stdout);
+            trace->stream().destination(sink);
             dispatcher = DispatcherX86::instance(trace, 32);
         } else {
             dispatcher = DispatcherX86::instance(operators, 32);
