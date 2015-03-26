@@ -141,8 +141,10 @@ public:
      *  whether we just executed the instruction, and is usually the return value from the previous repEnter() call. If @p
      *  in_loop is false then this function is a no-op. Otherwise, the ECX register is decremented and, if it is non-zero and
      *  the repeat condition (true, equal, or not-equal) is satisified, then the EIP register is reset to the specified
-     *  instruction address causing the instruction to be repeated. Use this in conjunction with repEnter(). */
-    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va);
+     *  instruction address causing the instruction to be repeated. Use this in conjunction with repEnter().  The REP and REPE
+     *  prefixes are shared, both represented by x86_repeat_repe, and we use the honorZeroFlag to decide whether the prefix is
+     *  REP (false) or REPE (true). */
+    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va, bool honorZeroFlag);
 
     /** Adds two values and adjusts flags.  This method can be used for subtraction if @p b is two's complement and @p
      *  invertCarries is set.  If @p cond is supplied, then the addition and flag adjustments are conditional.

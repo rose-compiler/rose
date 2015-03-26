@@ -620,7 +620,7 @@ struct IP_cmpstrings: P {
 
             // Adjust instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none!=repeat)
-                d->repLeave(repeat, inLoop, insn->get_address());
+                d->repLeave(repeat, inLoop, insn->get_address(), true/*use ZF*/);
         }
     }
 };
@@ -1126,7 +1126,7 @@ struct IP_loadstring: P {
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
-                d->repLeave(repeat, inLoop, insn->get_address());
+                d->repLeave(repeat, inLoop, insn->get_address(), false/*no ZF*/);
         }
     }
 };
@@ -1295,12 +1295,12 @@ struct IP_movestring: P {
             }
             ASSERT_require(srcReg.is_valid());
             ASSERT_require(dstReg.is_valid());
-            BaseSemantics::SValuePtr srcAddr = d->readRegister(srcReg);
-            BaseSemantics::SValuePtr dstAddr = d->readRegister(dstReg);
+            BaseSemantics::SValuePtr srcRegVal = d->readRegister(srcReg);
+            BaseSemantics::SValuePtr dstRegVal = d->readRegister(dstReg);
 
             // Adjust address width depending on how memory is accessed.  All addresses in memory have the same width.
-            srcAddr = d->fixMemoryAddress(srcAddr);
-            dstAddr = d->fixMemoryAddress(dstAddr);
+            BaseSemantics::SValuePtr srcAddr = d->fixMemoryAddress(srcRegVal);
+            BaseSemantics::SValuePtr dstAddr = d->fixMemoryAddress(dstRegVal);
             ASSERT_require(srcAddr->get_width() == dstAddr->get_width());
 
             // Copy a value from source to destination
@@ -1314,12 +1314,12 @@ struct IP_movestring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(srcReg.get_nbits(), -nbytes),
                                                      ops->number_(srcReg.get_nbits(), +nbytes));
-            ops->writeRegister(srcReg, ops->ite(inLoop, ops->add(ops->readRegister(srcReg), step), ops->readRegister(srcReg)));
-            ops->writeRegister(dstReg, ops->ite(inLoop, ops->add(ops->readRegister(dstReg), step), ops->readRegister(dstReg)));
+            ops->writeRegister(srcReg, ops->ite(inLoop, ops->add(srcRegVal, step), srcRegVal));
+            ops->writeRegister(dstReg, ops->ite(inLoop, ops->add(dstRegVal, step), dstRegVal));
 
             // Adjust instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none!=repeat)
-                d->repLeave(repeat, inLoop, insn->get_address());
+                d->repLeave(repeat, inLoop, insn->get_address(), false/*no ZF*/);
         }
     }
 };
@@ -1857,7 +1857,7 @@ struct IP_scanstring: P {
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
-                d->repLeave(repeat, inLoop, insn->get_address());
+                d->repLeave(repeat, inLoop, insn->get_address(), true/*use ZF*/);
         }
     }
 };
@@ -1994,7 +1994,7 @@ struct IP_storestring: P {
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
-                d->repLeave(repeat, inLoop, insn->get_address());
+                d->repLeave(repeat, inLoop, insn->get_address(), false/*no ZF*/);
         }
     }
 };
@@ -2587,7 +2587,8 @@ DispatcherX86::repEnter(X86RepeatPrefix repeat)
 }
 
 void
-DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va)
+DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va,
+                        bool honorZeroFlag)
 {
     ASSERT_require(in_loop!=NULL && in_loop->get_width()==1);
 
@@ -2606,9 +2607,12 @@ DispatcherX86::repLeave(X86RepeatPrefix repeat_prefix, const BaseSemantics::SVal
             again = operators->boolean_(false);
             break;
         case x86_repeat_repe:
-            again = operators->and_(operators->and_(in_loop, nonzero_cx),
-                                    operators->readRegister(REG_ZF));
-
+            // REPE is an alias for REP when used with certain instructions.
+            if (honorZeroFlag) {
+                again = operators->and_(operators->and_(in_loop, nonzero_cx), operators->readRegister(REG_ZF));
+            } else {
+                again = operators->and_(in_loop, nonzero_cx);
+            }
             break;
         case x86_repeat_repne:
             again = operators->and_(operators->and_(in_loop, nonzero_cx),
