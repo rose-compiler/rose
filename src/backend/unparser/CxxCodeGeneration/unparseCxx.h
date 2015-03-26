@@ -11,6 +11,7 @@
 
 #include "unparser.h"
 
+// Unparser::token_sequence_position_enum_type xxx;
 
 class SgExpression;
 class SgStatement;
@@ -65,7 +66,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
 
        // DQ (6/21/2011): Refactored support for unparing names with template arguments.
           void unparseTemplateFunctionName ( SgTemplateInstantiationFunctionDecl* templateInstantiationFunctionDeclaration, SgUnparse_Info& info );
-          void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info );
+          void unparseTemplateArgumentList ( const SgTemplateArgumentPtrList  & templateArgListPtr,    SgUnparse_Info& info );
+
+       // DQ (9/13/2014): Added as part of refactoring support for name qualification.
+          void unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info);
 
        // DQ (5/25/2013): Added support for unparsing the name of the template member function.
           void unparseTemplateMemberFunctionName ( SgTemplateInstantiationMemberFunctionDecl* templateInstantiationMemberFunctionDeclaration, SgUnparse_Info& info );
@@ -242,7 +246,10 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
           virtual void unparseSizeOfOp                (SgExpression* expr, SgUnparse_Info& info);  
 
        // DQ (6/20/2013): Added support for C/C++ alignment extension __alignof__ operator.
-          virtual void unparseAlignOfOp                (SgExpression* expr, SgUnparse_Info& info);  
+          virtual void unparseAlignOfOp               (SgExpression* expr, SgUnparse_Info& info);  
+
+       // DQ (2/5/2015): Added missing C++11 support.
+          virtual void unparseNoexceptOp              (SgExpression* expr, SgUnparse_Info& info);  
 
        // DQ (2/12/2011): Added support for UPC specific sizeof operators.
           virtual void unparseUpcLocalSizeOfOp        (SgExpression* expr, SgUnparse_Info& info);
@@ -372,10 +379,19 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ 11/3/2014): Adding C++11 templated typedef declaration support.
           virtual void unparseTemplateTypedefDeclaration(SgStatement* stmt, SgUnparse_Info& info);
 
+       // DQ (9/7/2014): Refactored this code so we could call it from the template member and non-member function declaration unparse function.
+          virtual void unparseReturnType (SgFunctionDeclaration* funcdecl_stmt, SgType* & rtype, SgUnparse_Info& info);
+
+       // DQ (9/9/2014): Refactoring support for member function modifiers (so that they can be used to unparse template membr functions).
+          virtual void unparseTrailingFunctionModifiers(SgMemberFunctionDeclaration* mfuncdecl_stmt, SgUnparse_Info& info);
+
+       // DQ (9/7/2014): Support for unparsing of the template header within template declarations (I think this only applies to template member and non-member functions).
+          virtual void unparseTemplateHeader(SgFunctionDeclaration* functionDeclaration, SgUnparse_Info& info);
+
        // DQ (12/26/2011): Supporting function for all template declarations (initially at least).
           template<class T> void unparseTemplateDeclarationStatment_support(SgStatement* stmt, SgUnparse_Info& info);
 
-//        virtual void unparseNullStatement    (SgStatement* stmt, SgUnparse_Info& info);
+       // virtual void unparseNullStatement    (SgStatement* stmt, SgUnparse_Info& info);
 
        // DQ (7/21/2006): Added support for GNU statement expression extension.
           virtual void unparseStatementExpression (SgExpression* expr, SgUnparse_Info& info);
@@ -480,6 +496,27 @@ class Unparse_ExprStmt : public UnparseLanguageIndependentConstructs
        // DQ (2/8/2014): The name of the constructor call for a SgConstructorInitializer must 
        // be output differently for the GNU g++ 4.5 version compiler and later.
           SgName trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName nameQualifier, bool & skipOutputOfFunctionName);
+
+#if 0
+       // DQ (12/6/2014): This type permits specification of what bounds to use in the specifiation of token stream subsequence boundaries.
+          enum token_sequence_position_enum_type
+             {
+               e_leading_whitespace_start,
+               e_leading_whitespace_end,
+               e_token_subsequence_start,
+               e_token_subsequence_end,
+               e_trailing_whitespace_start,
+               e_trailing_whitespace_end
+             };
+#endif
+#if 0
+       // Single statement specification of token subsequence.
+          void unparseStatementFromTokenStream (SgStatement* stmt, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+
+       // Two statement specification of token subsequence (required for "else" case in SgIfStmt).
+       // void unparseStatementFromTokenStream (SgStatement* stmt_1, SgStatement* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+          void unparseStatementFromTokenStream (SgLocatedNode* stmt_1, SgLocatedNode* stmt_2, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_leading_whitespace_start, UnparseLanguageIndependentConstructs::token_sequence_position_enum_type e_token_subsequence_start);
+#endif
    };
 
 #endif
