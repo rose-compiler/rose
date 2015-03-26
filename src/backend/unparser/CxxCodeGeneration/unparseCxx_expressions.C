@@ -1902,7 +1902,7 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
           ROSE_ASSERT(lhs != NULL);
           SgExpression* rhs = binaryOp->get_rhs_operand();
           ROSE_ASSERT(rhs != NULL);
-#if 1
+#if 0
           printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions() == true: only unparsing the rhs operand \n");
 #endif
           if (lhs->isCompilerGenerated() == true)
@@ -3890,7 +3890,7 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
                  // This is the more general form required for test2013_104.c "offsetof(zip_header_t, formatted.extra_len)".
                     SgUnparse_Info info2(info);
                     info2.set_skipCompilerGeneratedSubExpressions();
-#if 1
+#if 0
                     printf ("In unparseTypeTraitBuiltinExp(): set skipCompilerGeneratedSubExpressions flag \n");
 #endif
                     ROSE_ASSERT(info2.skipCompilerGeneratedSubExpressions() == true);
@@ -6029,37 +6029,50 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // SgAggregateInitializer (shares the same parent statement).
        // SgUnparse_Info newinfo(info);
        // newinfo.unset_SkipClassDefinition();
-          SgUnparse_Info newinfo(info);
+          SgUnparse_Info newinfo2(info);
           if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
              {
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
-               newinfo.unset_SkipClassDefinition();
+               newinfo2.unset_SkipClassDefinition();
 
             // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
-               newinfo.unset_SkipEnumDefinition();
+               newinfo2.unset_SkipEnumDefinition();
 #if 0
-               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
-               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipClassDefinition() = %s \n",(newinfo2.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipEnumDefinition()  = %s \n",(newinfo2.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
             // DQ (1/9/2014): These should have been setup to be the same.
-               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
+               ROSE_ASSERT(newinfo2.SkipClassDefinition() == newinfo2.SkipEnumDefinition());
              }
             else
              {
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == false) \n");
 #endif
+#if 1
+               printf ("In unparseAggrInit(): aggr_init->get_uses_compound_literal() == true: Skipping the class definition if it is not in the expression. \n");
+#endif
+            // DQ (3/26/2015): Skip the class definition if it is not in the expression.
+               newinfo2.set_SkipClassDefinition();
+               newinfo2.set_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo2.SkipClassDefinition() = %s \n",(newinfo2.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipEnumDefinition()  = %s \n",(newinfo2.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
              }
 #if 0
-          newinfo.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
+          newinfo2.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
 #endif
           curprint ("(");
 
+#if 0
+          curprint ("/* output type in unparseAggrInit() */ ");
+#endif
        // DQ (9/4/2013): We need to unparse the full type (both the first and second parts of the type).
        // unp->u_type->unparseType(aggr_init->get_type(),newinfo);
-          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo);
+          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo2);
 
           curprint (")");
 #if 0
@@ -6071,9 +6084,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      bool need_explicit_braces = aggr_init->get_need_explicit_braces();
 
 #if 0
-     printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
-     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
-     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
 
 #if 0
