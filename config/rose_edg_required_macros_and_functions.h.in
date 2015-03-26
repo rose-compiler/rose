@@ -45,6 +45,14 @@
   #define _OVERRIDE_COMPLEX_SPECIALIZATION_
 #endif
 
+/* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
+/* This shuld be a test of the version of EDG, but it is not clear how to do that. */
+#if ((__GNUC__ == 4) && (__GNUC_MINOR__ < 8))
+   /* DQ (3/15/2015): Adding support for uint128 (required for Xen) */
+      typedef long long int __int128_t;
+      typedef unsigned long long int __uint128_t;
+#endif
+
 /* DQ (10/22/2010): Isolate some of the OSX specific details. */
 #ifdef __APPLE__
 /* DQ (10/13/2010): This is a specific fix suggested by Cong Hou for an OSX problem. 
@@ -369,8 +377,14 @@ the AST.  The detection of the use of these macros in the near future will help
 make this safer.
 */
 
+/* DQ (3/18/2015): This macro should no longer be required since it is defined properly in EDG as a recognized builtin function. */
 /* This is not a correct test, but it is a weak form of equivalence that is portable */
-#define __builtin_types_compatible_p(T1,T2) (sizeof(T1)==sizeof(T2))
+/* #define __builtin_types_compatible_p(T1,T2) (sizeof(T1)==sizeof(T2)) */
+/* DQ (3/23/2015): We need to use the EDG's version of __builtin_types_compatible_p() 
+    which it then translates to _types_compatible() and then we need to conversion back 
+    to __builtin_types_compatible_p() for the backend compiler. */
+#define __types_compatible(T1,T2) __builtin_types_compatible_p(T1,T2)
+
 /* This is not correct, but it should be portable */
 #define __builtin_choose_expr(exp,T1,T2) (T1)
 /* This is not correct, but it should be portable, make it always return false for now */
@@ -587,6 +601,9 @@ function is just defined as being the offsetof macro.
 // #define __builtin_offsetof(t,memb) ((size_t)&(((t *)0)->memb))
 */
 #ifndef __cplusplus
+/* DQ (3/24/2015): Added this back because it is required by Xen. */
+/* DQ (3/19/2015): This is now properly defined by EDG so we don't need to define it explicitly (noticed as part of Xen support). */
+/* #define __builtin_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER) */
 #define __builtin_offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #else
 /* The cast to "char &" below avoids problems with user-defined "operator &", which can appear in a POD type. */

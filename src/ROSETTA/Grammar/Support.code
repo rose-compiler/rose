@@ -6230,6 +6230,9 @@ HEADER_UNPARSE_INFO_START
             // DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
                b_unparsedPartiallyUsingTokenStream = 48, /*!< Record that the statement was partially unparsed using the token stream. */
 
+            // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+               b_skipCompilerGeneratedSubExpressions = 49, /*!< Supress compiler generated subexpressions (used to output fields in the 2nd parameter of the offsetof() function family. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6484,6 +6487,11 @@ HEADER_UNPARSE_INFO_START
           bool unparsedPartiallyUsingTokenStream() const;
           void set_unparsedPartiallyUsingTokenStream();
           void unset_unparsedPartiallyUsingTokenStream();
+
+       // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+          bool skipCompilerGeneratedSubExpressions() const;
+          void set_skipCompilerGeneratedSubExpressions();
+          void unset_skipCompilerGeneratedSubExpressions();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -17680,6 +17688,16 @@ void SgUnparse_Info::set_unparsedPartiallyUsingTokenStream()
 void SgUnparse_Info::unset_unparsedPartiallyUsingTokenStream()
    { unsetBit(b_unparsedPartiallyUsingTokenStream); }
 
+// DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+bool SgUnparse_Info::skipCompilerGeneratedSubExpressions() const
+   { return checkBit(b_skipCompilerGeneratedSubExpressions); }
+
+void SgUnparse_Info::set_skipCompilerGeneratedSubExpressions()
+   { setBit(b_skipCompilerGeneratedSubExpressions); }
+
+void SgUnparse_Info::unset_skipCompilerGeneratedSubExpressions()
+   { unsetBit(b_skipCompilerGeneratedSubExpressions); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -17765,6 +17783,7 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
      printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
      printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
+     printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
