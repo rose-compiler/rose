@@ -32,29 +32,16 @@
 #include <string>
 
 /* Figure out whether ROSE can support multi-threading and what kind of support library is available. */
-#ifdef ROSE_HAVE_PTHREAD_H
+#ifdef _REENTRANT                                       // Does user want multi-thread support? (e.g., g++ -pthread)
+# ifdef ROSE_HAVE_PTHREAD_H                             // Do we have POSIX threads? Consider using Boost Threads instead.
 #  define ROSE_THREADS_ENABLED
 #  define ROSE_THREADS_POSIX
 #  include <pthread.h>
-#else
+# else
 #  undef  ROSE_THREADS_ENABLED
-#endif
-
-/* This warning is in a public header file so that end users will see it when they compile against a version of ROSE that
- * doesn't have multi-thread support.  It would be imprudent to move this to one of the library's *.C files because then
- * an end user might spend substantial time trying to figure out why his multi-threaded program fails nondeterministically when
- * the ROSE documentation advertises that certain functions are thread safe.
- *
- * Unfortunately, due to the way ROSE's header files are organized, threadSupport.h will be included by pretty much every
- * ROSE library source file because every file includes _all_ the Sage node definitions (instead of only the ones it needs),
- * and a few of those nodes (e.g., SgFile) depend on something defined by the Disassembler class. The Disassembler supports
- * multi threading and therefore includes this header. Therefore every ROSE library source file will spit out this warning. */
-#ifndef ROSE_THREADS_ENABLED
-#  ifdef _MSC_VER
-#    pragma message("Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety.")
-#  else
-#    warning "Multi-thread support is not enabled. ROSE will not be thread safe even for functions that advertise safety."
-#  endif
+# endif
+#else
+# undef ROSE_THREADS_ENABLED
 #endif
 
 /* The __attribute__ mechanism is only supported by GNU compilers */

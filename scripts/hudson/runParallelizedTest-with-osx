@@ -358,7 +358,6 @@ make-distcheck)
     make -j${NUM_PROCESS} -C src/util/commandlineProcessing/ libRoseCommandlineUtil.la
     make -j${NUM_PROCESS} -C src/util/ libroseutil.la
     make -j${NUM_PROCESS} -C src/ROSETTA/src/
-    make -j${NUM_PROCESS} -C src/roseSupport/ stringify.h
 
     runBuildStep make-distcheck
 

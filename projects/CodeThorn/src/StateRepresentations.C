@@ -14,6 +14,8 @@
 #include "CommandLineOptions.h"
 #include "Miscellaneous.h"
 
+#include "boost/regex.hpp"
+
 // it is not necessary to define comparison-ops for Pstate, but
 // the ordering appears to be implementation dependent (but consistent)
 
@@ -1023,6 +1025,19 @@ set<const EState*> TransitionGraph::estateSet() {
   return _recomputedestateSet;
 }
 
+// author: Marc Jasper, 2015. 
+long TransitionGraph::numberOfObservableStates(bool includeIn, bool includeOut, bool includeErr) {
+  long result = 0;
+  EStatePtrSet allStates = estateSet();
+  for (EStatePtrSet::iterator i=allStates.begin(); i!=allStates.end(); ++i) {
+    if ((includeIn && (*i)->io.isStdInIO()) || (includeOut && (*i)->io.isStdOutIO())
+            || (includeErr && ((*i)->io.isStdErrIO()||(*i)->io.isFailedAssertIO())) ) {
+      result++;
+    }
+  }
+  return result;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -1121,6 +1136,25 @@ bool EState::isConst(VariableIdMapping* vim) const {
   }
   if(option_debug_mode) cout<<endl;
   return true;
+}
+
+bool EState::isRersTopified(VariableIdMapping* vim) const {
+  boost::regex re("a(.)*");
+  const PState* pstate = this->pstate();
+  VariableIdSet varSet=pstate->getVariableIds();
+  for (VariableIdSet::iterator l=varSet.begin();l!=varSet.end();++l) {
+    string varName=SgNodeHelper::symbolToString(vim->getSymbol(*l));
+    if (boost::regex_match(varName, re)) { //matches internal RERS variables (e.g. "int a188")
+      if (pstate->varIsConst(*l)) {  // is a concrete (therefore prefix) state
+        return false;
+      } else {
+        return true;
+      }
+    }
+  }
+  cout << "ERROR: Could not find a matching variable to check if";
+  cout << "a \"topified\" state of the analyzed RERS challenge program exists. " << endl;
+  assert(0);
 }
 
 /*! 

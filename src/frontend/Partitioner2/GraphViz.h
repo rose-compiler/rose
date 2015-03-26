@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <Color.h>
+#include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/FunctionCallGraph.h>
 
@@ -415,6 +416,7 @@ class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     Color::HSV funcEnterColor_;                         // background color for function entrance blocks
     Color::HSV funcReturnColor_;                        // background color for function return blocks
     Color::HSV warningColor_;                           // background color for special nodes and warnings
+    DwarfLineMapper srcMapper_;                         // maps addresses to source code (optional)
 
 public:
     /** Constructor.
@@ -528,6 +530,16 @@ public:
      * @{ */
     bool showReturnEdges() const { return showReturnEdges_; }
     void showReturnEdges(bool b) { showReturnEdges_ = b; }
+    /** @} */
+
+    /** Property: Address-to-source mapping.
+     *
+     *  If an address to source mapping is provided then source location information will be shown in each vertex.
+     *
+     * @{ */
+    const DwarfLineMapper& srcMapper() const { return srcMapper_; }
+    DwarfLineMapper& srcMapper() { return srcMapper_; }
+    void srcMapper(const DwarfLineMapper &mapper) { srcMapper_ = mapper; }
     /** @} */
 
 
@@ -653,6 +665,12 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Formatting: these are expected to be overridden by subclasses
 
+    /** Source location for vertex.
+     *
+     *  Returns a string indicating the source code location for a vertex.  If no information is available then an empty string
+     *  is returned. */
+    virtual std::string sourceLocation(const ControlFlowGraph::ConstVertexNodeIterator&) const;
+
     /** Label for CFG vertex.
      *
      *  Returns the simple label for a CFG vertex.  The simple label is usually just an address rather than instructions, etc.
@@ -747,7 +765,7 @@ BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeNodeItera
     ASSERT_require2(vmap.exists(edge->target()->id()), "edge target vertex has not yet been emitted");
 
     out <<vmap[edge->source()->id()] <<" -> " <<vmap[edge->target()->id()]
-        <<" [ label=" <<org.label()
+        <<" [ label=" <<org.label() <<" "
         <<toString(org.attributes()) <<" ];\n";
 }
 
