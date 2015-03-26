@@ -1,4 +1,4 @@
-//#include "stdint.h"
+#include "stdint.h"
 
 #define ZIP_HEADER_LEN 26
 
@@ -6,7 +6,7 @@
 
 typedef unsigned long int size_t;
 
-#define offsetof(type, member)  __builtin_offsetof (type, member)
+// #define offsetof(type, member)  __builtin_offsetof (type, member)
 
 typedef union {
 	uint8_t raw[ZIP_HEADER_LEN];
@@ -27,5 +27,5 @@ typedef union {
 struct BUG_zip_header_must_be_26_bytes 
    {
   // char BUG_zip_header_must_be_26_bytes[offsetof(zip_header_t, formatted.extra_len) + 2 == ZIP_HEADER_LEN ? 1 : -1];
-     char BUG_zip_header_must_be_26_bytes[offsetof(zip_header_t, formatted.extra_len) + 2 == ZIP_HEADER_LEN ? 1 : -1];
+     char BUG_zip_header_must_be_26_bytes[__builtin_offsetof(zip_header_t, formatted.extra_len) + 2 == ZIP_HEADER_LEN ? 1 : -1];
    };
