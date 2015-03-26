@@ -42,10 +42,15 @@ template A<int>;
 template inline void A<int>::f(int x);
 #endif
 
+#if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+// This example using inline templates fails for g++ version 4.8.1.
 // Template instantiation directives (for a function)
 // template inline void A<int>::g<int>(int y,int u);
 // DQ (6/4/2011): This unparses as: "template void g < int > (int y,int u);"
 template inline void A<int>::g<int>(int y,int u);
+#else
+template void A<int>::g<int>(int y,int u);
+#endif
 
 int foo()
    {

@@ -22,7 +22,7 @@ int main()
         if (k >= 1) {
           duz[i][j][k] = (duz[i][j][k] - a[k] * duz[i][j][k - 1]) * b[k];
         }
-        else {
+         else {
         }
         tot[i][j] = tot[i][j] + d[k] * duz[i][j][k];
       }

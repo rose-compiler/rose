@@ -119,8 +119,60 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
                std::string rawFileName         = node->get_file_info()->get_raw_filename();
                std::string filenameWithoutPath = StringUtility::stripPathFromFileName(rawFileName);
                if (filenameWithoutPath == targetFileName)
+                  {
                     ia.skipSubTree = true;
+                  }
+
+#define DEBUG_DSL_EXAMPLES 1
+
+#if DEBUG_DSL_EXAMPLES
+            // DQ (2/14/2015): I think we need to have a mechanism to support this so that we can better 
+            // handle visualization of selected portions of large files.
+
+            // DQ (2/12/2015): Test skipping instantiated templates since this frequently makes 
+            // the generated dot file too large to be visualized. Ultimately this should be 
+            // some sort of optional behavior.
+               SgTemplateInstantiationDecl*               templateInstantationClassDeclaration          = isSgTemplateInstantiationDecl(node);
+               SgTemplateInstantiationFunctionDecl*       templateInstantationFunctionDeclaration       = isSgTemplateInstantiationFunctionDecl(node);
+               SgTemplateInstantiationMemberFunctionDecl* templateInstantationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
+               SgTemplateMemberFunctionDeclaration*       templateMemberFunctionDeclaration             = isSgTemplateMemberFunctionDeclaration(node);
+
+               if (templateInstantationClassDeclaration != NULL || 
+                   templateInstantationFunctionDeclaration != NULL || 
+                   templateInstantationMemberFunctionDeclaration != NULL ||
+                   templateMemberFunctionDeclaration != NULL)
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
              }
+
+#if 0
+       // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
+          SgTemplateInstantiationMemberFunctionDecl* templateInstantationMemberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(node);
+          if (templateInstantationMemberFunctionDeclaration != NULL)
+             {
+             }
+#endif
+#if DEBUG_DSL_EXAMPLES
+       // DQ (2/12/2015): Test skipping template member functions that are not from the current file.
+       // I think we need to have a mechanism to support this so that we can better handle visualization 
+       // of selected portions of large files.
+          SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
+          if (functionDeclaration != NULL)
+             {
+#if 0
+               printf ("DOT file generation: functionDeclaration->get_name() = %s \n",functionDeclaration->get_name().str());
+#endif
+#if 1
+               if (functionDeclaration->get_name() != "main" &&
+                   functionDeclaration->get_name() != "makeStencils")
+                  {
+                    ia.skipSubTree = true;
+                  }
+#endif
+             }
+#endif
         }
 
   // We might not want to increment the trace position information for
@@ -324,6 +376,15 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
 
           nodelabel += string("\\n") + name;
+        }
+
+  // DQ (12/4/2014): Added support for debugging the unparsing using the token stream.
+     SgStatement* genericStatement = isSgStatement(node);
+     if (genericStatement != NULL)
+        {
+          nodelabel += string("\\n") + string("isModified = ") + string(genericStatement->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(genericStatement->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(genericStatement->isTransformation() ? "true" : "false");
         }
 
   // DQ (4/6/2011): Added support for output of the name for SgInitializedName IR nodes.
@@ -857,6 +918,13 @@ generateFileLineColumnString (Sg_File_Info* fileInfo)
      ss += StringUtility::numberToString(line);
      ss += ":";
      ss += StringUtility::numberToString(column);
+
+  // DQ (12/21/2014): Adding the physical line number (used by the token mapping).
+     int physical_line    = fileInfo->get_physical_line();
+     ss += " (physical line=";
+     ss += StringUtility::numberToString(physical_line);
+     ss += ")";
+
      ss += "\\n";
 
      return ss;
@@ -934,6 +1002,16 @@ sourcePositionInformation (SgNode* node)
             else
              {
                ss += "no source position available\\n";
+             }
+
+       // DQ (1/28/2015): Added more info to support debugging the token-stream unparsing.
+          if (locatedNode->get_containsTransformationToSurroundingWhitespace() == true)
+             {
+               ss += "containsTransformationToSurroundingWhitespace == true\\n";
+             }
+            else
+             {
+               ss += "containsTransformationToSurroundingWhitespace == false\\n";
              }
         }
        else

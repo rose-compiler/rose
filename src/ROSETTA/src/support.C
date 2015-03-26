@@ -544,6 +544,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (1/10/2015): We need to save a pointer to the SgSourceFile to support the token based unparsing efficiently.
+     Unparse_Info.setDataPrototype("SgSourceFile*","current_source_file","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 

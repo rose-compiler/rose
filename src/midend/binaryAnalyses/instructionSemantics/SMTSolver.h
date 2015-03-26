@@ -66,7 +66,7 @@ public:
      * @{ */
     virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(uint64_t varno) {
         char buf[64];
-        snprintf(buf, sizeof buf, "v%"PRIu64, varno);
+        snprintf(buf, sizeof buf, "v%" PRIu64, varno);
         return evidence_for_name(buf);
     }
     virtual InsnSemanticsExpr::TreeNodePtr evidence_for_variable(const InsnSemanticsExpr::TreeNodePtr &var) {

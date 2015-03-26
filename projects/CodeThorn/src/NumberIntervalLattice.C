@@ -1,6 +1,8 @@
 #include "NumberIntervalLattice.h"
 #include <iostream>
 
+using namespace SPRAY;
+
 Number::Number():_num(0){}
 Number::Number(int num):_num(num) {}
 int Number::getInt() { return _num; }
@@ -43,7 +45,7 @@ std::string Number::toString() const {
     return ss.str();
 }
 
-std::ostream& operator<<(std::ostream& out, Number& number) {
+std::ostream& SPRAY::operator<<(std::ostream& out, Number& number) {
   out<<number.toString();
   return out;
 }

@@ -5,15 +5,15 @@
 #include "Lattice.h"
 #include "PointerAnalysisInterface.h"
 
-class Domain;
+namespace SPRAY {
 
 class DFTransferFunctions {
 public:
   DFTransferFunctions();
   void setLabeler(SPRAY::Labeler* labeler) { _labeler=labeler; }
   SPRAY::Labeler* getLabeler() { return _labeler; }
-  void setDomain(Domain* domain) { _domain=domain; }
-  Domain* getDomain() { return _domain; }
+  //void setDomain(Domain* domain) { _domain=domain; }
+  //Domain* getDomain() { return _domain; }
   void setVariableIdMapping(VariableIdMapping* v) { _variableIdMapping=v; }
   VariableIdMapping* getVariableIdMapping() { return _variableIdMapping; }
 
@@ -25,15 +25,18 @@ public:
   virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   virtual void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
   virtual void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  virtual void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, Lattice& element);
+  virtual void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}
-protected:
+  //protected:
+ public:
   SPRAY::Labeler* _labeler;
-  VariableIdMapping* _variableIdMapping;
-  Domain* _domain;
+  SPRAY::VariableIdMapping* _variableIdMapping;
+  //Domain* _domain;
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
 };
+
+}
 
 #endif

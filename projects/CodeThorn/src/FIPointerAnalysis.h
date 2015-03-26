@@ -6,8 +6,6 @@
 #include "addressTakenAnalysis.h"
 #include "PointerAnalysisInterface.h"
 
-using namespace CodeThorn;
-
 namespace SPRAY {
 
   class FIPointerAnalysis : public PointerAnalysisInterface {

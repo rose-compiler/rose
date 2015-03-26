@@ -6,17 +6,9 @@
 #include "Lattice.h"
 #include "VariableIdMapping.h"
 
-#if 0
-class PropertyState : public Lattice {
- public:
-  PropertyState();
-  virtual void toStream(ostream& os, VariableIdMapping* vim=0);
-  virtual bool approximatedBy(PropertyState& other);
-  virtual void combine(PropertyState& other);
-};
-#else
+namespace SPRAY {
+
 typedef Lattice PropertyState;
-#endif
 
 class PropertyStateFactory {
  public:
@@ -25,6 +17,5 @@ class PropertyStateFactory {
   virtual ~PropertyStateFactory();
 };
 
-typedef PropertyStateFactory LatticeElementFactory;
-
+}
 #endif

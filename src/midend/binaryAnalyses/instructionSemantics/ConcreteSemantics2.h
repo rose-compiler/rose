@@ -41,7 +41,7 @@ protected:
     uint64_t bits_[2];
 
 public:
-    static const size_t maxNBits_ = 8 * sizeof bits_;
+    static const size_t maxNBits_ = 64;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors

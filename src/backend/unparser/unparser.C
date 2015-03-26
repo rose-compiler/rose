@@ -43,8 +43,14 @@ using namespace std;
 // DQ (6/25/2011): Forward declaration for new name qualification support.
 void generateNameQualificationSupport( SgNode* node, std::set<SgNode*> & referencedNameSet );
 
+// DQ (12/6/2014): The call to this function has been moved to the sage_support.cpp file
+// so that it can be called on the AST before transformations.  However it is now
+// split into two parts so that the token stream can be mapped to the AST before 
+// transformations, and then the token stream frontier can be computed after 
+// transformations have been done in the AST.
 // DQ (10/27/2013): Added forward declaration for new token stream support.
-void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile);
+void buildTokenStreamFrontier(SgSourceFile* sourceFile);
 
 
 //-----------------------------------------------------------------------------------
@@ -333,6 +339,9 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
   // DQ (6/30/2013): Added support to time the unparsing of the file (name qualification will be nested in this time).
      TimingPerformance timer ("Unparse File:");
 
+  // DQ (1/10/2015): Set the current source file.
+     info.set_current_source_file(file);
+
   // DQ (5/15/2011): Moved this to be called in the postProcessingSupport() (before resetTemplateNames() else template names will not be set properly).
 
   // DQ (11/10/2007): Moved computation of hidden list from astPostProcessing.C to unparseFile so that 
@@ -373,13 +382,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("In Unparser::unparseFile(): file->get_unparse_tokens()      = %s \n",file->get_unparse_tokens() ? "true" : "false");
 #endif
 
+#if 0
+  // DQ (12/6/2014): We need this computed in terms of the original AST before transformations, so we have to move this to after the
+  // AST is built, instead of before it is unparsed.  This makes no difference if we don't do transformations, but if transformations
+  // are done if this is computed here then statements removed from the AST showup in the white space between statements (an error).
+
   // DQ (10/27/2013): Adding support for token stream use in unparser. We might want to only turn this of when -rose:unparse_tokens is specified.
   // if (SageInterface::is_C_language() == true)
   // if (SageInterface::is_C_language() == true && file->get_unparse_tokens() == true)
      if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
         {
        // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
-#if 1
+#if 0
           printf ("Building token stream mapping map! \n");
 #endif
        // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
@@ -394,10 +408,30 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
              }
 #endif
 
-#if 1
+#if 0
           printf ("DONE: Building token stream mapping map! \n");
 #endif
         }
+#endif
+
+  // DQ (12/6/2014): this is the part of the token stream support that is required after transformations have been done in the AST.
+     if ( ( (SageInterface::is_C_language() == true) || (SageInterface::is_Cxx_language() == true) ) && file->get_unparse_tokens() == true)
+        {
+       // This is only currently being tested and evaluated for C language (should also work for C++, but not yet for Fortran).
+#if 0
+          printf ("Building token stream mapping frontier! \n");
+#endif
+       // This function builds the data base (STL map) for the different subsequences ranges of the token stream.
+       // and attaches the toke stream to the SgSourceFile IR node.  
+       // *** Next we have to attached the data base ***
+       // buildTokenStreamMapping(file);
+          buildTokenStreamFrontier(file);
+#if 0
+          printf ("DONE: Building token stream mapping frontier! \n");
+#endif
+        }
+     
+
 
   // Turn ON the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(true);
@@ -417,7 +451,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 
             // This is just unparsing the token stream WITHOUT using the mapping information that relates it to the AST.
 //MH-20140701 removed comment-out
-#if 1
+#if 0
                printf ("In Unparser::unparseFile(): Detected case of file->get_unparse_tokens() == true \n");
 #endif
             // Note that this is not yet using the SgTokenPtrList of SgToken IR nodes (this is using a lower level data structure).
@@ -669,7 +703,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      string fileNameForTokenStream = file->getFileName();
 
 #if 1
-     printf ("In Unparser::unparseFile(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
+     printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
      ROSE_ASSERT(file->get_preprocessorDirectivesAndCommentsList() != NULL);
@@ -790,9 +824,13 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
 
           if ((*i)->beginning_fpi.column_num != current_column_number)
              {
-               printf ("error: (*i)->beginning_fpi.column_num = %d \n",(*i)->beginning_fpi.column_num);
-               printf ("error: current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
-               ROSE_ASSERT(false);
+            // DQ (1/4/2014): This problem is demonstrated by tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_18.C when using the "-rose:verbose 2" option.
+               printf ("error: In Unparser::unparseFileUsingTokenStream(): (*i)->beginning_fpi.column_num = %d \n",(*i)->beginning_fpi.column_num);
+               printf ("error: In Unparser::unparseFileUsingTokenStream(): current_line_number = %d current_column_number = %d \n",current_line_number,current_column_number);
+
+            // DQ (1/4/2014): Commented this assertion out as part of debugging tests/roseTests/astInterfaceTests/inputmoveDeclarationToInnermostScope_test2015_18.C when using the "-rose:verbose 2" option.
+            // Note that "}" that is a part of an "extern \"C\" {" fails this test (is classified as CPP_PREPROCESSING_INFO).
+            // ROSE_ASSERT(false);
              }
 
           current_line_number += lines;
@@ -1467,8 +1505,11 @@ resetSourcePositionToGeneratedCode( SgFile* file, UnparseFormatHelp *unparseHelp
                for the allocation and destruction of objects provided to the interface 
                of functions.
   */
-string
-globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer );
+
+// DQ (9/13/2014): Added support for unparsing of STL lists (specifically SgTemplateArgumentPtrList and SgTemplateParameterPtrList).
+// This allows us to define a simpler API for the name qualification and refactor as much of the support as possible.
+// string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer );
+string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList, const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer );
 
 string
 globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
@@ -1490,19 +1531,73 @@ globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoP
                ROSE_ASSERT(inputUnparseInfoPointer->SkipClassDefinition() == inputUnparseInfoPointer->SkipEnumDefinition());
              }
 
-          returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+       // DQ (9/13/2014): Call internal funtion modified to be more general.
+       // returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+          returnString = globalUnparseToString_OpenMPSafe(astNode,NULL,NULL,inputUnparseInfoPointer);
         }
 
      return returnString;
    }
 
 string
-globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
+globalUnparseToString ( const SgTemplateArgumentPtrList* templateArgumentList, SgUnparse_Info* inputUnparseInfoPointer )
+   {
+     string returnString;
+
+// tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
+#if ROSE_GCC_OMP
+#pragma omp critical (unparser)
+#endif
+        {
+          if (inputUnparseInfoPointer != NULL)
+             {
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inputUnparseInfoPointer->SkipClassDefinition() == inputUnparseInfoPointer->SkipEnumDefinition());
+             }
+
+       // DQ (9/13/2014): Call internal funtion modified to be more general.
+       // returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+          returnString = globalUnparseToString_OpenMPSafe(NULL,templateArgumentList,NULL,inputUnparseInfoPointer);
+        }
+
+     return returnString;
+   }
+
+string
+globalUnparseToString ( const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer )
+   {
+     string returnString;
+
+// tps (Jun 24 2008) added because OpenMP crashes all the time at the unparser
+#if ROSE_GCC_OMP
+#pragma omp critical (unparser)
+#endif
+        {
+          if (inputUnparseInfoPointer != NULL)
+             {
+            // DQ (1/13/2014): These should have been setup to be the same.
+               ROSE_ASSERT(inputUnparseInfoPointer->SkipClassDefinition() == inputUnparseInfoPointer->SkipEnumDefinition());
+             }
+
+       // DQ (9/13/2014): Call internal funtion modified to be more general.
+       // returnString = globalUnparseToString_OpenMPSafe(astNode,inputUnparseInfoPointer);
+          returnString = globalUnparseToString_OpenMPSafe(NULL,NULL,templateParameterList,inputUnparseInfoPointer);
+        }
+
+     return returnString;
+   }
+
+// DQ (9/13/2014): Modified to extend the API of this internal function.
+// string globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer )
+string
+globalUnparseToString_OpenMPSafe ( const SgNode* astNode, const SgTemplateArgumentPtrList* templateArgumentList, const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer )
    {
   // This global function permits any SgNode (including it's subtree) to be turned into a string
 
+  // DQ (9/13/2014): Modified the API to be more general (as part of refactoring support for name qualification).
   // DQ (3/2/2006): Let's make sure we have a valid IR node!
-     ROSE_ASSERT(astNode != NULL);
+  // ROSE_ASSERT(astNode != NULL);
+     ROSE_ASSERT(astNode != NULL || templateArgumentList != NULL || templateParameterList != NULL);
 
      string returnString;
 
@@ -1534,6 +1629,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                                _class,
                                _forced_transformation_format,
                                _unparse_includes );
+
 
   // DQ (7/19/2007): Remove lineNumber from constructor parameter list.
   // int lineNumber = 0;  // Zero indicates that ALL lines should be unparsed
@@ -1656,13 +1752,28 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
 
        // DQ (5/19/2011): Allow compiler generated statements to be unparsed by default.
           inheritedAttributeInfoPointer->set_outputCompilerGeneratedStatements();
+
+       // DQ (1/10/2015): Add initialization of the current_source_file.
+       // This is required where this function is called from the name qualification support.
+          SgSourceFile* sourceFile = TransformationSupport::getSourceFile(astNode);
+       // ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile == NULL)
+             {
+#if 0
+            // DQ (1/12/2015): This message it commented out, it is frequently triggered for expression IR nodes (SgNullExpression, SgIntVal, SgTemplateParameterVal, SgAddOp, etc.).
+               printf ("NOTE: in globalUnparseToString(): TransformationSupport::getSourceFile(astNode = %p = %s) == NULL \n",astNode,astNode->class_name().c_str());
+#endif
+             }
+
+          inheritedAttributeInfoPointer->set_current_source_file(sourceFile);
         }
 
      ROSE_ASSERT (inheritedAttributeInfoPointer != NULL);
      SgUnparse_Info & inheritedAttributeInfo = *inheritedAttributeInfoPointer;
 
   // DQ (5/27/2007): Commented out, uncomment when we are ready for Robert's new hidden list mechanism.
-     if (inheritedAttributeInfo.get_current_scope() == NULL)
+  // if (inheritedAttributeInfo.get_current_scope() == NULL)
+     if (astNode != NULL && inheritedAttributeInfo.get_current_scope() == NULL)
         {
        // printf ("In globalUnparseToString(): inheritedAttributeInfo.get_current_scope() == NULL astNode = %p = %s \n",astNode,astNode->class_name().c_str());
 
@@ -1749,7 +1860,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                  // SgFile* file = &(project->get_file(i));
                     SgFile* file = project->get_fileList()[i];
                     ROSE_ASSERT(file != NULL);
-                    string unparsedFileString = globalUnparseToString_OpenMPSafe(file,inputUnparseInfoPointer);
+                    string unparsedFileString = globalUnparseToString_OpenMPSafe(file,NULL,NULL,inputUnparseInfoPointer);
                  // string prefixString       = string("/* TOP:")      + string(ROSE::getFileName(file)) + string(" */ \n");
                  // string suffixString       = string("\n/* BOTTOM:") + string(ROSE::getFileName(file)) + string(" */ \n\n");
                     string prefixString       = string("/* TOP:")      + file->getFileName() + string(" */ \n");
@@ -1764,7 +1875,7 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
              {
                SgGlobal* globalScope = file->get_globalScope();
                ROSE_ASSERT(globalScope != NULL);
-               returnString = globalUnparseToString_OpenMPSafe(globalScope,inputUnparseInfoPointer);
+               returnString = globalUnparseToString_OpenMPSafe(globalScope,NULL,NULL,inputUnparseInfoPointer);
              }
         }
        else
@@ -1967,6 +2078,34 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
                   }
              }
 
+          if (astNode == NULL)
+             {
+            // DQ (9/13/2014): This is where we could put support for when astNode == NULL, and the input was an STL list of IR node pointers.
+               if (templateArgumentList != NULL)
+                  {
+#if 0
+                    printf ("Detected SgTemplateArgumentPtrList: templateArgumentList = %p size = %zu \n",templateArgumentList,templateArgumentList->size());
+#endif
+                    roseUnparser.u_exprStmt->unparseTemplateArgumentList(*templateArgumentList, inheritedAttributeInfo );
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+               if (templateParameterList != NULL)
+                  {
+#if 0
+                    printf ("Detected SgTemplateParameterPtrList: templateParameterList = %p size = %zu \n",templateParameterList,templateParameterList->size());
+#endif
+                    roseUnparser.u_exprStmt->unparseTemplateParameterList(*templateParameterList, inheritedAttributeInfo );
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+             }
+
        // Liao 11/5/2010 move out of SgSupport
           if (isSgInitializedName(astNode)) //       case V_SgInitializedName:
              {
@@ -1977,7 +2116,9 @@ globalUnparseToString_OpenMPSafe ( const SgNode* astNode, SgUnparse_Info* inputU
             // roseUnparser.get_output_stream() << initializedName->get_qualified_name().str();
                SgScopeStatement* scope = initializedName->get_scope();
                if (isSgGlobal(scope) == NULL && scope->containsOnlyDeclarations() == true)
-                     roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
+                  {
+                    roseUnparser.get_output_stream() << roseUnparser.u_exprStmt->trimGlobalScopeQualifier ( scope->get_qualified_name().getString() ) << "::";
+                  }
                roseUnparser.get_output_stream() << initializedName->get_name().str();
             // break;
              }
