@@ -5,8 +5,6 @@
 #include <set>
 #include <string>
 
-using namespace std;
-
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -31,13 +29,13 @@ class EqualityMaintainer {
   //! determines whether an equality exists
   bool equalityExists(const T var1, const T var2) const;
   //! return all equal elements (including the element itself)
-  set<T> equalElements(const T var) const;
+  std::set<T> equalElements(const T var) const;
   //! returns the number of equal elements (the size of the equality set)
   int numberOfEqualElements(const T var) const;
   //! prints all equality sets (this includes all elements, also single elements)
-  string toString();
+  std::string toString();
  private:
-  list< set<T> > equality;
+  std::list< std::set<T> > equality;
 };
 
 #include "EqualityMaintainer.C"

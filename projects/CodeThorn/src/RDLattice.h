@@ -5,6 +5,8 @@
 #include "VariableIdMapping.h"
 #include "Lattice.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -31,6 +33,8 @@ class RDLattice : public Lattice {
   std::set<std::pair<SPRAY::Label,VariableId> > rdSet;
   bool _bot;
 };
+
+}
 
 #endif
 

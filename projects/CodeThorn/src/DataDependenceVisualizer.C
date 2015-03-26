@@ -3,7 +3,10 @@
 #include "rose.h"
 #include "DataDependenceVisualizer.h"
 #include "VariableIdUtils.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
+
+using namespace SPRAY;
+using namespace std;
 
 class VariableIdSetAttribute;
 
@@ -94,7 +97,7 @@ void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileN
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalyzer* cfanalyzer, string fileName, bool withDataDependencies) {
+void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
 
   // temporary combersome recomputation
   Flow flow=cfanalyzer->flow(root);

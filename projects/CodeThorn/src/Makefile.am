@@ -6,7 +6,8 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
+bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix
+
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
@@ -30,8 +31,8 @@ codethorn_SOURCES = \
   Analyzer.h                       \
   AstTerm.C                        \
   AstTerm.h                        \
-  CFAnalyzer.C                     \
-  CFAnalyzer.h                     \
+  CFAnalysis.C                     \
+  CFAnalysis.h                     \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
@@ -118,7 +119,7 @@ addressTakenAnalysis_SOURCES = \
 
 addressTakenAnalysis_LDADD = -lrose
 
-# used only in specialized analyzer
+# workaround to intentionally fool policy
 faketarget:
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
@@ -162,7 +163,8 @@ faketarget:
 	tests/rdtest3.C 
 	tests/rdtest4.C 
 	tests/rers13_mini1.C 
-	AbstractEvaluator.h
+	CppExprEvaluator.h
+	CppExprEvaluator.C
 	AbstractValue.C
 	AbstractValue.h
 	CPDomain.hpp
@@ -231,6 +233,18 @@ faketarget:
 	tests/rers/Problem1_pmod.c
 	tests/rers/inputsequencepack/Problem1_pmod.c
 	tests/rev1.C
+	tests/cptest10.C
+	tests/cptest1.C
+	tests/cptest2.C
+	tests/cptest3.C
+	tests/cptest4.C
+	tests/cptest5.C
+	tests/cptest6.C
+	tests/cptest7.C
+	tests/cptest8.C
+	tests/cptest9.C
+	tests/mailinglist2.C
+	tests/mailinglist3.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -249,7 +263,7 @@ varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
 rdmain_LDADD = -lrose
 rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
- CFAnalyzer.h CFAnalyzer.C \
+ CFAnalysis.h CFAnalysis.C \
   LanguageRestrictor.h LanguageRestrictor.C \
   LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
@@ -288,14 +302,16 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   IntervalTransferFunctions.C \
   IntervalAstAttributeInterface.h \
   IntervalAstAttributeInterface.C \
+  CppExprEvaluator.h \
+  CppExprEvaluator.C \
   NumberIntervalLattice.h \
   NumberIntervalLattice.C \
   PASolver1.h \
   PASolver1.C \
   DFTransferFunctions.h \
   DFTransferFunctions.C \
-  DFAnalysis2.h \
-  DFAnalysis2.C \
+  DFAnalysisBase.h \
+  DFAnalysisBase.C \
   RDLattice.h RDLattice.C \
   RDTransferfunctions.h RDTransferFunctions.C \
   RDAnalysis.h \
@@ -319,7 +335,7 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   rdmain.C 
 
 woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalysis.h CFAnalysis.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AnalysisAbstractionLayer.h       \
   AnalysisAbstractionLayer.C       \
   AType.h                          \
@@ -365,17 +381,19 @@ analyterix_SOURCES = \
   AstTerm.h \
   AType.C \
   AType.h \
-  CFAnalyzer.C \
-  CFAnalyzer.h \
+  CFAnalysis.C \
+  CFAnalysis.h \
   CPAstAttribute.h CPAstAttribute.C \
+  CppExprEvaluator.h \
+  CppExprEvaluator.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
   DataDependenceVisualizer.C \
   DataDependenceVisualizer.h \
   defUseQuery.C \
   defUseQuery.h \
-  DFAnalysis2.C \
-  DFAnalysis2.h \
+  DFAnalysisBase.C \
+  DFAnalysisBase.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
   DFTransferFunctions.C \
   DFTransferFunctions.h \
@@ -443,16 +461,6 @@ analyterix_SOURCES = \
   VariableIdUtils.C \
   VariableIdUtils.h \
   analyterix.C
-
-reverser_LDADD = -lrose
-reverser_SOURCES = \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
-  LanguageRestrictorCollection.h \
-  LanguageRestrictorCollection.C \
-  AstTerm.h \
-  AstTerm.C \
-  reverser.C
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser

@@ -7,8 +7,6 @@
 #include <cstring>
 #include <boost/program_options.hpp>
 
-using namespace std;
-
 //namespace po = boost::program_options;
 
 class BoolOptions {
@@ -16,14 +14,14 @@ public:
   BoolOptions();
   BoolOptions(int argc, char* argv[]);
   void init(int argc0, char* argv0[]);
-  void registerOption(string name, bool defaultval);
+  void registerOption(std::string name, bool defaultval);
   void processOptions();
-  bool operator[](string option);
-  string toString();
+  bool operator[](std::string option);
+  std::string toString();
 private:
   int argc;
   char** argv;
-  map<string,bool> mapping;
+  std::map<std::string,bool> mapping;
 };
 
 enum ResultsFormat { RF_UNKNOWN, RF_RERS2012, RF_RERS2013 };

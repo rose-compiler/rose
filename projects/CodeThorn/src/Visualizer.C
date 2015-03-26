@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 class AssertionAttribute : public DFAstAttribute {
 public:
@@ -184,7 +185,7 @@ string Visualizer::estateToString(const EState* estate) {
     s=replace_string(s,"!=","&ne;");
     s=replace_string(s,"==","=");
     ss<<s;
-  } 
+  }
   return ss.str();
 }
 
@@ -273,6 +274,151 @@ string Visualizer::transitionGraphToDot() {
     ss <<"]"<<";"<<endl;
   }
   tg1=false;
+  return ss.str();
+}
+
+string Visualizer::abstractTransitionGraphToDot() {
+  stringstream ss;
+  string result;
+  // group all states into concrete and abstract ones
+  EStatePtrSet allEStates=transitionGraph->estateSet();
+  EStatePtrSet concreteEStates;
+  EStatePtrSet abstractEStates;
+  for(EStatePtrSet::iterator i=allEStates.begin(); i!=allEStates.end(); ++i) {
+    if ((*i)->isRersTopified(variableIdMapping)) {
+      abstractEStates.insert(*i);
+    } else {
+      concreteEStates.insert(*i);
+    } 
+  }
+  ss << transitionGraphWithIOToDot(concreteEStates, true, boolOptions["keep-error-states"], false);
+  ss << "subgraph cluster_abstractStates {" << endl;
+  ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
+  ss << "}" << endl;
+  return ss.str();
+}
+
+string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
+                                              bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates) {
+  stringstream ss;
+  EStatePtrSet estatePtrSet = displayedEStates;
+  set<int> outputValues;
+  EStatePtrSet abstractInputStates;
+  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+    if ( !includeErrorStates && ((*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ){
+      continue;
+    }
+    if(allignAbstractStates && (*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
+      abstractInputStates.insert(*i);
+    }
+    //represent the current EState
+    bool displayCurrentState = true;
+    if ( uniteOutputFromAbstractStates && (*i)->io.isStdOutIO() && (*i)->isRersTopified(variableIdMapping) ) {
+      int outputVal = (*i)->determineUniqueIOValue().getIntValue();
+      pair<set<int>::iterator, bool> notYetSeen = outputValues.insert(outputVal);
+      if (notYetSeen.second == true) {
+        stringstream temp;
+        temp << "abstractOutput" << outputVal;
+        string outputStateName = temp.str();
+        ss<< outputStateName <<" [label=";
+      } else {
+        displayCurrentState=false;
+      }
+    } else {
+      ss<<"n"<<*i<<" [label=";
+    }
+    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    if (displayCurrentState) {
+      // generate number which is used in IO operation
+      string name="\"";
+      if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+        if(!number.isTop() && !number.isBot()) {
+          // convert number to letter
+          int num=number.getIntValue();
+          num+='A'-1;
+          char numc=num;
+          stringstream ss;
+          ss<<numc;
+          name+=ss.str();
+        } else {
+          name+=number.toString();
+        }
+      } else {
+        name+=number.toString();
+      }
+      name+="\"";
+      ss<<name;
+      // determine color based on IO type
+      Label lab=(*i)->label();
+      string color="grey";
+      if(labeler->isStdInLabel(lab))
+        color="dodgerblue";
+      if(labeler->isStdOutLabel(lab))
+        color="orange";
+      if(labeler->isStdErrLabel(lab))
+        color="orangered";
+      if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
+         color="black";
+      ss<<" color="<<color<<" style=\"filled\" fontsize=24 ";
+      if((*i)->io.isStdErrIO())
+        ss <<" fontcolor=orangered "; // do not show input value in stdErr states
+      ss<<"];";
+      ss<<endl;
+    }
+    
+    stringstream newedges;
+    // generate constraint on each edge of following state
+    TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
+#if 0 // debug only
+    if ((*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
+      int inputVal = (*i)->determineUniqueIOValue().getIntValue();
+      cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
+    }
+#endif
+    for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
+    j!=outTrans.end();
+    ++j) { 
+      const EState* target = (*j)->target;
+      if ( !includeErrorStates && (target->io.isStdErrIO() || target->io.isFailedAssertIO()) ){
+        continue;
+      }
+      if ( uniteOutputFromAbstractStates && (*i)->io.isStdOutIO() && (*i)->isRersTopified(variableIdMapping) ) {
+        int outputVal = (*i)->determineUniqueIOValue().getIntValue();
+        newedges<< "abstractOutput" << outputVal<<"->";
+      } else {
+        newedges<<"n"<<(*j)->source<<"->";
+      }
+      if ( uniteOutputFromAbstractStates && target->io.isStdOutIO() && target->isRersTopified(variableIdMapping) ) {
+        int targetOutputVal = (*j)->target->determineUniqueIOValue().getIntValue();
+        newedges<< "abstractOutput" << targetOutputVal;
+      } else {
+        newedges<<"n"<<(*j)->target;
+      }
+      if(number.isTop()) {
+        newedges<<" [label=\"";
+        newedges<<(*j)->target->constraints()->toString()<<"\"";
+      if((*j)->source==(*j)->target)
+        newedges<<" color=black "; // self-edge-color
+        newedges<<"];"<<endl;
+      }
+      newedges<<endl;
+    }
+    ss<<newedges.str();
+  }
+
+  // allign abstract input and output states
+  if (allignAbstractStates) {
+    ss << "{ rank=same;";
+    for (EStatePtrSet::iterator i = abstractInputStates.begin(); i != abstractInputStates.end(); ++i) {
+      ss << " n" << (*i); 
+    }
+    ss << " }" << endl;
+    ss << "{ rank=same;";
+    for (set<int>::iterator i = outputValues.begin(); i != outputValues.end(); ++i) {
+      ss << " abstractOutput" << (*i); 
+    }
+    ss << " }" << endl;
+  }
   return ss.str();
 }
 

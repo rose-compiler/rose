@@ -14,7 +14,7 @@
 #include <map>
 #include <utility>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "ConstraintRepresentation.h"
@@ -27,12 +27,12 @@ typedef int EStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-//using namespace CodeThorn;
-
 using CodeThorn::CppCapsuleAValue;
 using CodeThorn::ConstraintSet;
 using CodeThorn::ConstraintSetMaintainer;
-using CodeThorn::Edge;
+using SPRAY::Edge;
+
+using namespace SPRAY;
 
 namespace CodeThorn {
 
@@ -190,6 +190,7 @@ class EState {
      This function uses the entire PState and all available constraints to determine constness.
    */
   bool isConst(VariableIdMapping* vid) const;
+  bool isRersTopified(VariableIdMapping* vid) const;
   string predicateToString(VariableIdMapping* vid) const;
  private:
   Label _label;
@@ -353,6 +354,7 @@ class EStateList : public list<EState> {
   EStatePtrSet transitionSourceEStateSetOfLabel(Label lab);
   EStatePtrSet estateSetOfLabel(Label lab);
   EStatePtrSet estateSet();
+  long numberOfObservableStates(bool inlcudeIn=true, bool includeOut=true, bool includeErr=true);
   void add(Transition trans);
   string toString() const;
   LabelSet labelSetOfIoOperations(InputOutput::OpType op);

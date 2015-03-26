@@ -19,7 +19,7 @@ void SPRAY::FIPointerAnalysis::initialize() {
   //cout<<"DEBUG: _modVariableIds.size(): "<<_modVariableIds.size()<<endl;
 }
 
-VariableIdSet SPRAY::FIPointerAnalysis::getModByPointer() {
+SPRAY::VariableIdSet SPRAY::FIPointerAnalysis::getModByPointer() {
   // TODO: lookup
   return _modVariableIds;
 }
