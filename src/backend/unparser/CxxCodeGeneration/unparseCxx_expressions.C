@@ -1892,7 +1892,33 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-     unparseBinaryExpr(expr, newinfo);
+     if (info.skipCompilerGeneratedSubExpressions() == true)
+        {
+       // Only unparse the rhs operand if it is compiler generated.
+          SgBinaryOp* binaryOp = isSgBinaryOp(expr);
+          ROSE_ASSERT(binaryOp != NULL);
+
+          SgExpression* lhs = binaryOp->get_lhs_operand();
+          ROSE_ASSERT(lhs != NULL);
+          SgExpression* rhs = binaryOp->get_rhs_operand();
+          ROSE_ASSERT(rhs != NULL);
+#if 1
+          printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions() == true: only unparsing the rhs operand \n");
+#endif
+          if (lhs->isCompilerGenerated() == true)
+             {
+            // Then only unparse the rhs.
+               unparseExpression(rhs, newinfo);
+             }
+            else
+             {
+               unparseBinaryExpr(expr, newinfo);
+             }
+        }
+       else
+        {
+          unparseBinaryExpr(expr, newinfo);
+        }
 
 #if 0
      curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
@@ -3852,7 +3878,50 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
              }
             else
              {
+#if 1
+            // DQ (3/24/2015): Added case of "__builtin_offsetof" to make it consistant with the change in the EDG/ROSE translation.
+            // DQ (3/19/2015): For the case of the __offsetof() builtin function we have to avoid output of the structure (e.g. "(0*).field").
+            // unparseExpression(expression,info);
+            // if (functionNameString == "__offsetof")
+               if (functionNameString == "__offsetof" || functionNameString == "__builtin_offsetof")
+                  {
+#if 1
+                 // DQ (3/25/2015): Develop new way to supress output of "(0*)" in "(0*).field".
+                 // This is the more general form required for test2013_104.c "offsetof(zip_header_t, formatted.extra_len)".
+                    SgUnparse_Info info2(info);
+                    info2.set_skipCompilerGeneratedSubExpressions();
+#if 1
+                    printf ("In unparseTypeTraitBuiltinExp(): set skipCompilerGeneratedSubExpressions flag \n");
+#endif
+                    ROSE_ASSERT(info2.skipCompilerGeneratedSubExpressions() == true);
+
+                    unparseExpression(expression,info2);
+#else
+                 // This should be the 2nd operand.
+                    ROSE_ASSERT(operand != list.begin());
+#error "DEAD CODE!"
+                    SgDotExp* dotExp = isSgDotExp(expression);
+                    ROSE_ASSERT(dotExp != NULL);
+                    SgExpression* field = dotExp->get_rhs_operand();
+
+                 // Output the data member field only.
+                    unparseExpression(field,info);
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // Original code.
+                    unparseExpression(expression,info);
+                  }
+#else
+               printf ("In unparseTypeTraitBuiltinExp(): Skipping special conversion for functionNameString == __offsetof \n");
+#error "DEAD CODE!"
                unparseExpression(expression,info);
+#endif
              }
 
           operand++;
@@ -4638,9 +4707,11 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 
 #if 0
      printf ("In unparseSizeOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+     printf ("sizeof_op->get_operand_expr() = %p \n",sizeof_op->get_operand_expr());
+     printf ("sizeof_op->get_operand_type() = %p \n",sizeof_op->get_operand_type());     
 #endif
 
-     curprint ( "sizeof(");
+     curprint("sizeof(");
      if (sizeof_op->get_operand_expr() != NULL)
         {
           ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
@@ -4649,9 +4720,13 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
        else
         {
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
-          info2.set_SkipClassDefinition();
+
+       // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
+       // info2.set_SkipClassDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
 
@@ -4667,7 +4742,8 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
              {
             // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
             // newinfo.set_SkipQualifiedNames();
-
+#if 0
+            // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
             // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
                newinfo.unset_SkipDefinition();
 
@@ -4676,6 +4752,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
                ROSE_ASSERT(newinfo.SkipClassDefinition() == false);
                ROSE_ASSERT(newinfo.SkipEnumDefinition()  == false);
                ROSE_ASSERT(newinfo.SkipDefinition()      == false);
+#endif
              }
             else
              {
@@ -4686,23 +4763,36 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 
 #if 0
           printf ("In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n");
+          curprint ("/* In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n */ ");
 #endif
        // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
           newinfo.unset_SkipSemiColon();
 #if 1
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeFirstPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          curprint ("/* In unparseSizeOfOp(): isTypeFirstPart \n */ ");
+#endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
           newinfo.set_isTypeSecondPart();
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeSecondPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          curprint ("/* In unparseSizeOfOp(): isTypeSecondPart \n */ ");
+#endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
 #else
+
+#error "DEAD CODE!"
+
        // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
        // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
        // unp->u_type->unparseType(cast_op->get_type(), newinfo);
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
 #endif
         }
-     curprint ( ")");
+
+     curprint(")");
    }
 
 
@@ -6974,6 +7064,33 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
   // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false) && (isArrayElementDesignator == false);
      bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false) || (isAssignInitializer == true);
 
+  // DQ (3/15/2015): Look for nested SgDesignatedInitializer (so we can supress the unparsed "=" syntax) (this case is demonstrated in test2015_03.c).
+     bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
+     if (isInitializer_AggregateInitializer == true)
+        {
+#if 0
+          printf ("Found memberInit to be a SgAggregateInitializer \n");
+#endif
+          SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
+          ROSE_ASSERT(aggregateInitializer != NULL);
+          SgExprListExp* exprListExp = aggregateInitializer->get_initializers();
+          ROSE_ASSERT(exprListExp != NULL);
+          if (exprListExp->get_expressions().size() == 1)
+             {
+               SgExpression* tmp_expr = exprListExp->get_expressions()[0];
+               ROSE_ASSERT(tmp_expr != NULL);
+
+               SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(tmp_expr);
+               if (designatedInitializer != NULL)
+                  {
+#if 0
+                    printf ("Mark outputDesignatedInitializerAssignmentOperator as false since there is a nested SgDesignatedInitializer \n");
+#endif
+                    outputDesignatedInitializerAssignmentOperator = false;
+                  }
+             }
+        }
+
 #if 0
      printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
      printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
@@ -7005,6 +7122,9 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
        // int x = (((union ABC { int __in; int __i; }) { .__in = 42 }).__i);
        // isInUnion = false;
 #if 0
+
+#error "DEAD CODE!"
+
        // DQ (7/25/2013): We need to detect if this is in a function argument list.
           if (info.SkipClassDefinition() == false)
              {

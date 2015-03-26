@@ -479,7 +479,43 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_11.c \
      test2010_14.c \
      constants.c \
+     test2015_01.c \
+     test2015_02.c \
+     test2015_03.c \
+     test2015_04.c \
+     test2015_05.c \
+     test2015_06.c \
+     test2015_07.c \
+     test2015_08.c \
+     test2015_09.c \
+     test2015_10.c \
+     test2015_11.c \
+     test2015_12.c \
+     test2015_13.c \
+     test2015_14.c \
+     test2015_15.c \
+     test2015_16.c \
+     test2015_17.c \
+     test2015_18.c \
+     test2015_19.c \
+     test2015_20.c \
+     test2015_21.c \
+     test2015_22.c \
+     test2015_23.c \
+     test2015_24.c \
+     test2015_25.c \
+     test2015_26.c \
+     test2015_27.c \
+     test2015_28.c \
+     test2015_29.c \
+     test2015_30.c \
+     test2015_33.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+# DQ (3/22/2015): Still failing:
+#    test2015_31.c 
+#    test2015_32.c 
+
 
 if OS_VENDOR_REDHAT_REL5
    EXTRA_OS_SPECIFIC_SOURCE_FILES = test2012_173.c

@@ -5850,13 +5850,56 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
 #endif
 
+#if 0
+     printf ("In SgFile::build_EDG_CommandLine(): includePaths.size() = %zu \n",includePaths.size());
+#endif
+#if 1
+  // DQ (3/14/2015): This has been moved to before the compiler and system specific include and 
+  // sys_include paths so that header files with names that match compiler and system header 
+  // files will be used instead from the directories specified using the -I and sys_include options.
+  // Note that this bug fix is required to support Xen (which uses it's own header files that have
+  // the same name as system and compiler specific header files).
+
+  // Add the -I definitions to the command line
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+       // inputCommandLine.push_back("-I" + *i);
+          commandLine.push_back("-I" + *i);
+        }
+
+  // PL (4/15/2014): In GCC's document about system headers (http://gcc.gnu.org/onlinedocs/cpp/System-Headers.html):
+  // All directories named by -isystem are searched after all directories named by -I, no matter what their order was on the command line.
+  // DQ (4/14/2014): Experiment with placing this here (after "-I" options).  This is part of the
+  // fix to supress redundant output of all "-i" paths as "-sys_include" options to EDG.
+     if ( SgProject::get_verbose() > 1 )
+        {
+          printf ("project->get_preincludeDirectoryList().size() = %" PRIuPTR " \n",project->get_preincludeDirectoryList().size());
+        }
+
+  // This is the list of directories that have been referenced as "-isystem <directory>" on the original command line to the ROSE 
+  // translator.  We translate these to "-sys_include <directory>" options to pass to EDG (since that is how EDG understands them).
+     for (SgStringList::iterator i = project->get_preincludeDirectoryList().begin(); i != project->get_preincludeDirectoryList().end(); i++)
+        {
+       // Build the preinclude directory list
+          if ( SgProject::get_verbose() > 1 )
+             {
+               printf ("Building commandline: --sys_include %s \n",(*i).c_str());
+             }
+
+       // inputCommandLine.push_back("--sys_include");
+       // inputCommandLine.push_back(*i);
+          commandLine.push_back("--sys_include");
+          commandLine.push_back(*i);
+        }
+#endif
+
   // DQ (1/13/2009): The preincludeFileList was built if the -include <file> option was used
   // George Vulov (12/8/2010) Include the file rose_edg_required_macros_and_functions.h first, then the other preincludes
      for (SgStringList::iterator i = project->get_preincludeFileList().begin(); i != project->get_preincludeFileList().end(); i++)
         {
        // Build the preinclude file list
           ROSE_ASSERT(project->get_preincludeFileList().empty() == false);
-#if 1
+#if 0
           printf ("In build_EDG_CommandLine(): Building commandline: --preinclude %s \n",(*i).c_str());
 #endif
           commandLine.push_back("--preinclude");
@@ -6443,6 +6486,11 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
         }
 #endif
 
+#if 0
+  // DQ (3/14/2015): This must be moved to before the compiler and system specific include and 
+  // sys_include paths so that header files with names that match compiler and system header 
+  // files will be used instead from the directories specified using the -I and sys_include options.
+
   // Add the -I definitions to the command line
      for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
@@ -6472,6 +6520,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
           inputCommandLine.push_back("--sys_include");
           inputCommandLine.push_back(*i);
         }
+#endif
 #endif
 
   // DQ (7/3/2013): Where are we in the command line.

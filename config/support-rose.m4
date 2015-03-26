@@ -2049,6 +2049,7 @@ tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseInsensitive/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseSensitive/Makefile
 tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile
+tests/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/CompileTests/Makefile
 tests/CompileTests/A++Tests/Makefile
 tests/CompileTests/P++Tests/Makefile
