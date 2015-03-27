@@ -108,11 +108,15 @@ CxxGrammarMetaProgram_SOURCES = \
 
 # buildConstructorsWithoutSourcePositionInformation.o: buildConstructorsWithoutSourcePositionInformation.C
 
-CxxGrammarMetaProgram_LDADD = $(top_builddir)/src/util/libroseutil.la			\
-	$(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB)						\
-	$(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB)	\
-	$(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)		\
-	$(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(RT_LIBS)
+BoostLibraries = \
+  $(BOOST_LDFLAGS) $(BOOST_DATE_TIME_LIB)           \
+  $(BOOST_THREAD_LIB) $(BOOST_FILESYSTEM_LIB) $(BOOST_PROGRAM_OPTIONS_LIB)  \
+  $(BOOST_REGEX_LIB)  $(BOOST_SYSTEM_LIB) $(BOOST_SERIALIZATION_LIB)    \
+  $(BOOST_WAVE_LIB) $(BOOST_IOSTREAMS_LIB) $(RT_LIBS) $(top_builddir)/src/util/libroseutil.la
+
+CxxGrammarMetaProgram_LDADD = \
+  $(BoostLibraries) \
+  $(top_builddir)/src/util/libroseutil.la
 
 # DQ (9/11/2008):
 # The rose_paths.c is built in ROSE/src/util and this dependence causes
