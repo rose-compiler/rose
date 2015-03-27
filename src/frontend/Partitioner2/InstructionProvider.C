@@ -26,5 +26,11 @@ InstructionProvider::operator[](rose_addr_t va) const {
     return insn;
 }
 
+void
+InstructionProvider::insert(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    insnMap_.insert(insn->get_address(), insn);
+}
+
 } // namespace
 } // namespace

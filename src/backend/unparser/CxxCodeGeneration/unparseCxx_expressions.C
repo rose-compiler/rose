@@ -115,6 +115,9 @@ Unparse_ExprStmt::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
        // DQ (6/20/2013): Added alignof operator to support C/C++ extensions (used in EDG 4.7).
           case ALIGNOF_OP:            { unparseAlignOfOp(expr, info); break; }
 
+       // DQ (2/5/2015): Added missing C++11 support.
+          case NOEXCEPT_OP:           { unparseNoexceptOp(expr, info); break; }
+
           case TYPEID_OP:               { unparseTypeIdOp(expr, info); break; }
           case NOT_OP:                  { unparseNotOp(expr, info); break; }
           case DEREF_OP:                { unparseDerefOp(expr, info); break; }
@@ -316,10 +319,15 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
    {
      ROSE_ASSERT(expr != NULL);
 
-     printf ("In unparseFunctionParameterRefExpression = %p = %s) \n",expr,expr->class_name().c_str());
-
      SgFunctionParameterRefExp* functionParameterRefExp = isSgFunctionParameterRefExp(expr);
      ROSE_ASSERT(functionParameterRefExp != NULL);
+
+#if 0
+     printf ("In unparseFunctionParameterRefExpression = %p = %s \n",functionParameterRefExp,functionParameterRefExp->class_name().c_str());
+     printf ("   --- functionParameterRefExp->get_parameter_number()    = %d \n",functionParameterRefExp->get_parameter_number());
+     printf ("   --- functionParameterRefExp->get_parameter_levels_up() = %d \n",functionParameterRefExp->get_parameter_levels_up());
+     printf ("   --- functionParameterRefExp->get_parameter_type()      = %p \n",functionParameterRefExp->get_parameter_type());
+#endif
 
 #if 0
      if (functionParameterRefExp->get_base_expression() != NULL)
@@ -332,7 +340,14 @@ Unparse_ExprStmt::unparseFunctionParameterRefExpression (SgExpression* expr, SgU
           unp->u_type->unparseType(functionParameterRefExp->get_base_type(),info);
         }
 #else
-     unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+  // unp->u_exprStmt->curprint(" /* In unparseFunctionParameterRefExpression() */ ");
+
+  // DQ (2/14/2015): We at least require this sort of funcationality for C++11 test2015_13.C.
+  // if (functionParameterRefExp->get_parameter_levels_up() == 0)
+     if (functionParameterRefExp->get_parameter_number() == 0 && functionParameterRefExp->get_parameter_levels_up() == 0)
+        {
+          unp->u_exprStmt->curprint("this ");
+        }
 #endif
 
 #if 0
@@ -443,7 +458,7 @@ Unparse_ExprStmt::unparseTemplateName(SgTemplateInstantiationDecl* templateInsta
      const SgTemplateArgumentPtrList& templateArgListPtr = templateInstantiationDeclaration->get_templateArguments();
      if (!templateArgListPtr.empty())
         {
-       // printf ("templateArgListPtr->size() = %zu \n",templateArgListPtr->size());
+       // printf ("templateArgListPtr->size() = %" PRIuPTR " \n",templateArgListPtr->size());
 
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -578,8 +593,9 @@ Unparse_ExprStmt::unparseTemplateMemberFunctionName(SgTemplateInstantiationMembe
    }
 
 
+
 void
-Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& templateArgListPtr, SgUnparse_Info& info)
+Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList & templateArgListPtr, SgUnparse_Info& info)
    {
   // DQ (7/23/2012): This is one of three locations where the template arguments are assembled and where 
   // the name generated identically (in each case) is critical.  Not clear how to best refactor this code.
@@ -599,7 +615,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 #endif
 
 #if 0
-     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+     printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
 
      SgUnparse_Info ninfo(info);
@@ -628,7 +644,7 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
      if (!templateArgListPtr.empty())
         {
 #if 0
-          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %zu \n",templateArgListPtr.size());
+          printf ("In unparseTemplateArgumentList(): templateArgListPtr.size() = %" PRIuPTR " \n",templateArgListPtr.size());
 #endif
        // DQ (4/18/2005): We would like to avoid output of "<>" if possible so verify that there are template arguments
           ROSE_ASSERT(templateArgListPtr.size() > 0);
@@ -653,7 +669,21 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
                if (i != templateArgListPtr.end())
                   {
-                    unp->u_exprStmt->curprint(" , ");
+                 // unp->u_exprStmt->curprint(" , ");
+
+                 // DQ (2/7/2015): See C++11 test2015_01.C for where we have to handle this special case.
+                    if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
+                       {
+                      // This should be the last template parameter, we I am not verifying this.
+#if 0
+                         printf ("In unparseTemplateArgumentList(): Need to supress the trailing \",\" \n");
+#endif
+                       }
+                      else
+                       {
+                         unp->u_exprStmt->curprint(" , ");
+                       }
+
                   }
              }
 
@@ -674,15 +704,107 @@ Unparse_ExprStmt::unparseTemplateArgumentList(const SgTemplateArgumentPtrList& t
 
 
 void
+Unparse_ExprStmt::unparseTemplateParameterList( const SgTemplateParameterPtrList & templateParameterList, SgUnparse_Info& info)
+   {
+#if 0
+     printf ("In unparseTemplateParameterList(): templateParameterList.size() = %zu \n",templateParameterList.size());
+#endif
+
+     if (templateParameterList.empty() == false)
+        {
+          curprint ("< ");
+          SgTemplateParameterPtrList::const_iterator i = templateParameterList.begin();
+          while (i != templateParameterList.end())
+             {
+               SgTemplateParameter* templateParameter = *i;
+               ROSE_ASSERT(templateParameter != NULL);
+#if 0
+               printf ("In unparseTemplateParameterList(): templateParameter = %p \n",templateParameter);
+#endif
+               unparseTemplateParameter(templateParameter,info);
+
+               i++;
+
+               if (i != templateParameterList.end())
+                  {
+                    curprint (",");
+                  }
+             }
+
+          curprint ("> ");
+        }
+   }
+
+
+void
 Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParameter, SgUnparse_Info& info)
    {
      ROSE_ASSERT(templateParameter != NULL);
+
+#if 0
+     printf ("In unparseTemplateParameter(): templateParameter = %p \n",templateParameter);
+#endif
 
      switch(templateParameter->get_parameterType())
         {
           case SgTemplateParameter::type_parameter:
              {
-#if 1
+            // DQ (9/7/2014): Added support for case SgTemplateParameter::type_parameter.
+               SgType* type = templateParameter->get_type();
+               ROSE_ASSERT(type != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+
+            // DQ (9/9/2014): Note that this is now constrcuted to be a SgClassType were ever possible.
+            // This allows the name qualification to be resolved when unparsing template declarations.
+               SgTemplateType* templateType = isSgTemplateType(type);
+            // ROSE_ASSERT(templateType != NULL);
+               if (templateType == NULL)
+                  {
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: (templateType == NULL): type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // When unparsing a template paramter we only want to use the name.
+                    SgClassType* classType = isSgClassType(type);
+                    if (classType != NULL)
+                       {
+                         string name = classType->get_name();
+                         curprint(name);
+                       }
+                      else
+                       {
+                         SgUnparse_Info ninfo(info);
+                         unp->u_type->unparseType(type,ninfo);
+                       }
+                  }
+                 else
+                  {
+                    string name = templateType->get_name();
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: type->get_name() = %s \n",name.c_str());
+#endif
+                 // unp->u_exprStmt->curprint(" typename ");
+                    curprint(name);
+                  }
+
+               SgType* default_type = templateParameter->get_defaultTypeParameter();
+               if (default_type != NULL)
+                  {
+                 // Need to add the default type.
+#if 0
+                    curprint("=");
+
+                    SgUnparse_Info ninfo(info);
+                    unp->u_type->unparseType(default_type,ninfo);
+#else
+                 // See test2014_149.C for an example of where this is mistakenly done in the defining declaration (where it is an error).
+#if 0
+                    printf ("Skipping default template parameter unparsing \n");
+#endif
+#endif
+                  }
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::type_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -693,6 +815,9 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
              {
                if (templateParameter->get_expression() != NULL)
                   {
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::nontype_parameter: templateParameter->get_expression() = %p = %s \n",templateParameter->get_expression(),templateParameter->get_expression()->class_name().c_str());
+#endif
                     unp->u_exprStmt->unparseExpression(templateParameter->get_expression(),info);
                   }
                  else
@@ -701,8 +826,14 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 
                     SgType* type = templateParameter->get_initializedName()->get_type();
                     ROSE_ASSERT(type != NULL);
-
-                    unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+#if 0
+                    printf ("unparseTemplateParameter(): case SgTemplateParameter::nontype_parameter: templateParameter->get_initializedName()->get_type() = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter list.
+                 // unp->u_type->outputType<SgInitializedName>(templateParameter->get_initializedName(),type,info);
+                 // SgUnparse_Info ninfo(info);
+                 // unp->u_type->unparseType(type,ninfo);
+                    curprint(templateParameter->get_initializedName()->get_name());
                   }
 
                break;
@@ -710,7 +841,34 @@ Unparse_ExprStmt::unparseTemplateParameter(SgTemplateParameter* templateParamete
 
           case SgTemplateParameter::template_parameter:
              {
-#if 1
+               ROSE_ASSERT(templateParameter->get_templateDeclaration() != NULL);
+               SgTemplateDeclaration* templateDeclaration = isSgTemplateDeclaration(templateParameter->get_templateDeclaration());
+               ROSE_ASSERT(templateDeclaration != NULL);
+#if 0
+               printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: output name = %s \n",templateDeclaration->get_name().str());
+#endif
+#if 0
+            // This is a part of the template header that is not output here.
+               SgTemplateParameterPtrList & templateParameterList = templateDeclaration->get_templateParameters();
+               SgTemplateParameterPtrList::iterator i = templateParameterList.begin();
+               curprint(" template < ");
+               while (i != templateParameterList.end())
+                  {
+                    SgUnparse_Info newInfo(info);
+                    curprint(" typename ");
+                    unparseTemplateParameter(*i,newInfo);
+                 // curprint(" SgTemplateDeclaration_name ");
+
+                    i++;
+
+                    if (i != templateParameterList.end())
+                         curprint(",");
+                  }
+
+               curprint(" > ");
+#endif
+               curprint(templateDeclaration->get_name());
+#if 0
                printf ("unparseTemplateParameter(): case SgTemplateParameter::template_parameter: Sorry, not implemented! \n");
                ROSE_ASSERT(false);
 #endif
@@ -1303,7 +1461,11 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
                     SgType* type = templateArgument->get_initializedName()->get_type();
                     ROSE_ASSERT(type != NULL);
 
-                    unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                 // DQ (9/10/2014): Note that this will unparse "int T" which we want in the template header, but not in the template parameter or argument list.
+                 // unp->u_type->outputType<SgInitializedName>(templateArgument->get_initializedName(),type,newInfo);
+                 // SgUnparse_Info ninfo(info);
+                 // unp->u_type->unparseType(type,ninfo);
+                    curprint(templateArgument->get_initializedName()->get_name());
                   }
 
             // printf ("Error: nontype_argument case not implemented in Unparse_ExprStmt::unparseTemplateArgument \n");
@@ -1346,9 +1508,12 @@ Unparse_ExprStmt::unparseTemplateArgument(SgTemplateArgument* templateArgument, 
 
             // DQ (11/6/2014): C++11 test: test2014_84.C demonstrates that we don't want to output the "...".
             // DQ (7/4/2013): I am not sure if this is correct.
-            // curprint("/* varadic template argument */ ...");
-               curprint("/* varadic template argument */ ");
-
+#if 0
+               curprint("/* varadic template argument */ ...");
+#else
+            // DQ (2/7/2015): Supress the comment from being output.
+            // curprint("/* varadic template argument */ ");
+#endif
                break;
              }
 
@@ -1727,7 +1892,33 @@ Unparse_ExprStmt::unparseBinaryOperator(SgExpression* expr, const char* op, SgUn
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
 
-     unparseBinaryExpr(expr, newinfo);
+     if (info.skipCompilerGeneratedSubExpressions() == true)
+        {
+       // Only unparse the rhs operand if it is compiler generated.
+          SgBinaryOp* binaryOp = isSgBinaryOp(expr);
+          ROSE_ASSERT(binaryOp != NULL);
+
+          SgExpression* lhs = binaryOp->get_lhs_operand();
+          ROSE_ASSERT(lhs != NULL);
+          SgExpression* rhs = binaryOp->get_rhs_operand();
+          ROSE_ASSERT(rhs != NULL);
+#if 0
+          printf ("In unparseBinaryOperator(): info.skipCompilerGeneratedSubExpressions() == true: only unparsing the rhs operand \n");
+#endif
+          if (lhs->isCompilerGenerated() == true)
+             {
+            // Then only unparse the rhs.
+               unparseExpression(rhs, newinfo);
+             }
+            else
+             {
+               unparseBinaryExpr(expr, newinfo);
+             }
+        }
+       else
+        {
+          unparseBinaryExpr(expr, newinfo);
+        }
 
 #if 0
      curprint ( string("\n /* Leaving unparseBinaryOperator(expr = ") +  StringUtility::numberToString(expr) + " = " + expr->sage_class_name() + "," + op + ",SgUnparse_Info) */ \n");
@@ -1991,7 +2182,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
         {
        // See test2005_02.C for an example of where this logic is required fro constructors.
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
-          printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+          printf ("rrrrrrrrrrrr In unparseFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
@@ -2182,7 +2373,7 @@ Unparse_ExprStmt::unparseFuncRefSupport(SgExpression* expr, SgUnparse_Info& info
                     SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if DEBUG_FUNCTION_REFERENCE_SUPPORT
                     printf ("In unparseFuncRef(): nameQualifier = %s \n",nameQualifier.str());
-                    printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+                    printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
                     printf ("In unparseFuncRef(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                  // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
@@ -2508,7 +2699,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
      if (nodeReferenceToFunction != NULL)
         {
 #if 0
-          printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",
+          printf ("rrrrrrrrrrrr In unparseMFuncRefSupport() output type generated name: nodeReferenceToFunction = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",
                nodeReferenceToFunction,nodeReferenceToFunction->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToFunction);
@@ -2950,7 +3141,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                               SgName nameQualifier = func_ref->get_qualified_name_prefix();
 #if 0
                               printf ("In unparseMFuncRefSupport(): nameQualifier = %s \n",nameQualifier.str());
-                              printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %zu \n",SgNode::get_globalQualifiedNameMapForNames().size());
+                              printf ("SgNode::get_globalQualifiedNameMapForNames().size() = %" PRIuPTR " \n",SgNode::get_globalQualifiedNameMapForNames().size());
                               printf ("In unparseMFuncRefSupport(): Testing name in map: for SgFunctionRefExp = %p qualified name = %s \n",func_ref,func_ref->get_qualified_name_prefix().str());
                            // curprint ( "\n /* unparseFuncRef using nameQualifier = " + nameQualifier.str() + " */ \n";
 #endif
@@ -3055,7 +3246,7 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
                          curprint("/* In unparseMFuncRefSupport(): function name is NOT output */ \n");
 #endif
 #if MFuncRefSupport_DEBUG
-                         printf ("In unparseMFuncRefSupport(): mfd->get_args().size() = %zu \n",mfd->get_args().size());
+                         printf ("In unparseMFuncRefSupport(): mfd->get_args().size() = %" PRIuPTR " \n",mfd->get_args().size());
 #endif
                       // DQ (11/17/2013): We need to distinguish between unary and binary overloaded operators (for member 
                       // functions a unary operator has zero arguments, and a binary operator has a single argument).
@@ -3273,7 +3464,7 @@ Unparse_ExprStmt::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 #endif
 #if 0
           printf ("In unparseStringVal(): str_val->get_value()          = %s \n",str_val->get_value().c_str());
-          printf ("In unparseStringVal(): str_val->get_value().length() = %zu \n",str_val->get_value().length());
+          printf ("In unparseStringVal(): str_val->get_value().length() = %" PRIuPTR " \n",str_val->get_value().length());
           printf ("In unparseStringVal(): output string: s              = %s \n",s.c_str());
 #endif
           curprint(s);
@@ -3687,7 +3878,50 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
              }
             else
              {
+#if 1
+            // DQ (3/24/2015): Added case of "__builtin_offsetof" to make it consistant with the change in the EDG/ROSE translation.
+            // DQ (3/19/2015): For the case of the __offsetof() builtin function we have to avoid output of the structure (e.g. "(0*).field").
+            // unparseExpression(expression,info);
+            // if (functionNameString == "__offsetof")
+               if (functionNameString == "__offsetof" || functionNameString == "__builtin_offsetof")
+                  {
+#if 1
+                 // DQ (3/25/2015): Develop new way to supress output of "(0*)" in "(0*).field".
+                 // This is the more general form required for test2013_104.c "offsetof(zip_header_t, formatted.extra_len)".
+                    SgUnparse_Info info2(info);
+                    info2.set_skipCompilerGeneratedSubExpressions();
+#if 0
+                    printf ("In unparseTypeTraitBuiltinExp(): set skipCompilerGeneratedSubExpressions flag \n");
+#endif
+                    ROSE_ASSERT(info2.skipCompilerGeneratedSubExpressions() == true);
+
+                    unparseExpression(expression,info2);
+#else
+                 // This should be the 2nd operand.
+                    ROSE_ASSERT(operand != list.begin());
+#error "DEAD CODE!"
+                    SgDotExp* dotExp = isSgDotExp(expression);
+                    ROSE_ASSERT(dotExp != NULL);
+                    SgExpression* field = dotExp->get_rhs_operand();
+
+                 // Output the data member field only.
+                    unparseExpression(field,info);
+#endif
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                  }
+                 else
+                  {
+                 // Original code.
+                    unparseExpression(expression,info);
+                  }
+#else
+               printf ("In unparseTypeTraitBuiltinExp(): Skipping special conversion for functionNameString == __offsetof \n");
+#error "DEAD CODE!"
                unparseExpression(expression,info);
+#endif
              }
 
           operand++;
@@ -4473,9 +4707,11 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 
 #if 0
      printf ("In unparseSizeOfOp(expr = %p): outputTypeDefinition = %s \n",expr,(outputTypeDefinition == true) ? "true" : "false");
+     printf ("sizeof_op->get_operand_expr() = %p \n",sizeof_op->get_operand_expr());
+     printf ("sizeof_op->get_operand_type() = %p \n",sizeof_op->get_operand_type());     
 #endif
 
-     curprint ( "sizeof(");
+     curprint("sizeof(");
      if (sizeof_op->get_operand_expr() != NULL)
         {
           ROSE_ASSERT(sizeof_op->get_operand_expr() != NULL);
@@ -4484,9 +4720,13 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
        else
         {
           ROSE_ASSERT(sizeof_op->get_operand_type() != NULL);
+
           SgUnparse_Info info2(info);
           info2.unset_SkipBaseType();
-          info2.set_SkipClassDefinition();
+
+       // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
+       // info2.set_SkipClassDefinition();
+
           info2.unset_isTypeFirstPart();
           info2.unset_isTypeSecondPart();
 
@@ -4502,7 +4742,8 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
              {
             // DQ (10/11/2006): As part of new implementation of qualified names we now default to the generation of all qualified names unless they are skipped.
             // newinfo.set_SkipQualifiedNames();
-
+#if 0
+            // DQ (3/15/2015): test2015_11.c demonstrates a case where I think this should be not be set (un-named struct type).
             // DQ (10/17/2012): Added new code not present where this is handled for SgVariableDeclaration IR nodes.
                newinfo.unset_SkipDefinition();
 
@@ -4511,6 +4752,7 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
                ROSE_ASSERT(newinfo.SkipClassDefinition() == false);
                ROSE_ASSERT(newinfo.SkipEnumDefinition()  == false);
                ROSE_ASSERT(newinfo.SkipDefinition()      == false);
+#endif
              }
             else
              {
@@ -4521,23 +4763,36 @@ Unparse_ExprStmt::unparseSizeOfOp(SgExpression* expr, SgUnparse_Info & info)
 
 #if 0
           printf ("In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n");
+          curprint ("/* In unparseSizeOfOp(): calling newinfo.unset_SkipSemiColon() \n */ ");
 #endif
        // DQ (10/18/2012): Added to unset ";" usage in defining declaration.
           newinfo.unset_SkipSemiColon();
 #if 1
        // DQ (10/17/2012): We have to separate these out if we want to output the defining declarations.
           newinfo.set_isTypeFirstPart();
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeFirstPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          curprint ("/* In unparseSizeOfOp(): isTypeFirstPart \n */ ");
+#endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
           newinfo.set_isTypeSecondPart();
+#if 0
+          printf ("In unparseSizeOfOp(): isTypeSecondPart: sizeof_op->get_operand_type() = %p = %s \n",sizeof_op->get_operand_type(),sizeof_op->get_operand_type()->class_name().c_str());
+          curprint ("/* In unparseSizeOfOp(): isTypeSecondPart \n */ ");
+#endif
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
 #else
+
+#error "DEAD CODE!"
+
        // DQ (1/14/2006): p_expression_type is no longer stored (type is computed instead)
        // unp->u_type->unparseType(cast_op->get_expression_type(), newinfo);
        // unp->u_type->unparseType(cast_op->get_type(), newinfo);
           unp->u_type->unparseType(sizeof_op->get_operand_type(), newinfo);
 #endif
         }
-     curprint ( ")");
+
+     curprint(")");
    }
 
 
@@ -4621,6 +4876,25 @@ Unparse_ExprStmt::unparseAlignOfOp(SgExpression* expr, SgUnparse_Info & info)
 #endif
         }
      curprint ( ")");
+   }
+
+
+void
+Unparse_ExprStmt::unparseNoexceptOp(SgExpression* expr, SgUnparse_Info & info)
+   {
+     SgNoexceptOp* noexcept_op = isSgNoexceptOp(expr);
+     ROSE_ASSERT(noexcept_op != NULL);
+
+#if 0
+     printf ("In unparseNoexceptOp(expr = %p): \n",expr);
+#endif
+
+     curprint("noexcept(");
+
+     ROSE_ASSERT(noexcept_op->get_operand_expr() != NULL);
+     unparseExpression(noexcept_op->get_operand_expr(), info);
+
+     curprint(")");
    }
 
 
@@ -5755,37 +6029,50 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
        // SgAggregateInitializer (shares the same parent statement).
        // SgUnparse_Info newinfo(info);
        // newinfo.unset_SkipClassDefinition();
-          SgUnparse_Info newinfo(info);
+          SgUnparse_Info newinfo2(info);
           if (sharesSameStatement(aggr_init,aggr_init->get_type()) == true)
              {
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == true) \n");
 #endif
-               newinfo.unset_SkipClassDefinition();
+               newinfo2.unset_SkipClassDefinition();
 
             // DQ (1/9/2014): We have to make the handling of enum definitions consistant with that of class definitions.
-               newinfo.unset_SkipEnumDefinition();
+               newinfo2.unset_SkipEnumDefinition();
 #if 0
-               printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",(newinfo.SkipClassDefinition() == true) ? "true" : "false");
-               printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition()  = %s \n",(newinfo.SkipEnumDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipClassDefinition() = %s \n",(newinfo2.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipEnumDefinition()  = %s \n",(newinfo2.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
             // DQ (1/9/2014): These should have been setup to be the same.
-               ROSE_ASSERT(newinfo.SkipClassDefinition() == newinfo.SkipEnumDefinition());
+               ROSE_ASSERT(newinfo2.SkipClassDefinition() == newinfo2.SkipEnumDefinition());
              }
             else
              {
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == false) \n");
 #endif
+#if 1
+               printf ("In unparseAggrInit(): aggr_init->get_uses_compound_literal() == true: Skipping the class definition if it is not in the expression. \n");
+#endif
+            // DQ (3/26/2015): Skip the class definition if it is not in the expression.
+               newinfo2.set_SkipClassDefinition();
+               newinfo2.set_SkipEnumDefinition();
+#if 0
+               printf ("In unparseAggrInit(): newinfo2.SkipClassDefinition() = %s \n",(newinfo2.SkipClassDefinition() == true) ? "true" : "false");
+               printf ("In unparseAggrInit(): newinfo2.SkipEnumDefinition()  = %s \n",(newinfo2.SkipEnumDefinition() == true) ? "true" : "false");
+#endif
              }
 #if 0
-          newinfo.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
+          newinfo2.display("In unparseAggrInit(): (aggr_init->get_uses_compound_literal() == true): newinfo");
 #endif
           curprint ("(");
 
+#if 0
+          curprint ("/* output type in unparseAggrInit() */ ");
+#endif
        // DQ (9/4/2013): We need to unparse the full type (both the first and second parts of the type).
        // unp->u_type->unparseType(aggr_init->get_type(),newinfo);
-          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo);
+          unp->u_type->outputType<SgAggregateInitializer>(aggr_init,aggr_init->get_type(),newinfo2);
 
           curprint (")");
 #if 0
@@ -5797,9 +6084,9 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      bool need_explicit_braces = aggr_init->get_need_explicit_braces();
 
 #if 0
-     printf ("In unparseAggrInit(): need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
-     printf ("In unparseAggrInit(): newinfo.SkipEnumDefinition() = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
-     printf ("In unparseAggrInit(): newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
+     printf ("In unparseAggrInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
 #endif
 
 #if 0
@@ -5857,7 +6144,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
      for (size_t index = 0; index < list.size(); index ++)
         {
-          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%zu] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
+          printf ("In unparseAggrInit(): loop: printOutComments(list[index=%" PRIuPTR "] = %p = %s) \n",index,list[index],list[index]->class_name().c_str());
           printOutComments(list[index]);
         }
 #endif
@@ -5897,7 +6184,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
             else
              {
 #if 0
-               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
+               printf ("In unparseAggrInit(): (aggr_init = %p) list[index = %" PRIuPTR "] = %p = %s is from another file so its subtree will not be output in the generated code \n",aggr_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
 #endif
@@ -5948,7 +6235,7 @@ Unparse_ExprStmt::unparseCompInit(SgExpression* expr, SgUnparse_Info& info)
             else
              {
 #if 0
-               printf ("In unparseCompInit(): (comp_init = %p) list[index = %zu] = %p = %s is from another file so its subtree will not be output in the generated code \n",comp_init,index,list[index],list[index]->class_name().c_str());
+               printf ("In unparseCompInit(): (comp_init = %p) list[index = %" PRIuPTR "] = %p = %s is from another file so its subtree will not be output in the generated code \n",comp_init,index,list[index],list[index]->class_name().c_str());
 #endif
              }
         }
@@ -5994,7 +6281,7 @@ Unparse_ExprStmt::trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(SgName name
             // trim the trailing "A::" from the end of the nameQualifier.
                size_t temp_nameQualifier_last  = temp_nameQualifier.find_last_not_of("::");
 #if 0
-               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %zu \n",temp_nameQualifier_last);
+               printf ("In trimOutputOfFunctionNameForGNU_4_5_VersionAndLater(): temp_nameQualifier_last = %" PRIuPTR " \n",temp_nameQualifier_last);
 #endif
                if (temp_nameQualifier_last != string::npos)
                   {
@@ -6790,6 +7077,33 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
   // bool outputDesignatedInitializerAssignmentOperator = (subTreeContainsDesignatedInitializer(initializer) == false) && (isArrayElementDesignator == false);
      bool outputDesignatedInitializerAssignmentOperator = (isArrayElementDesignator == false) || (isAssignInitializer == true);
 
+  // DQ (3/15/2015): Look for nested SgDesignatedInitializer (so we can supress the unparsed "=" syntax) (this case is demonstrated in test2015_03.c).
+     bool isInitializer_AggregateInitializer   = (isSgAggregateInitializer(initializer) != NULL);
+     if (isInitializer_AggregateInitializer == true)
+        {
+#if 0
+          printf ("Found memberInit to be a SgAggregateInitializer \n");
+#endif
+          SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
+          ROSE_ASSERT(aggregateInitializer != NULL);
+          SgExprListExp* exprListExp = aggregateInitializer->get_initializers();
+          ROSE_ASSERT(exprListExp != NULL);
+          if (exprListExp->get_expressions().size() == 1)
+             {
+               SgExpression* tmp_expr = exprListExp->get_expressions()[0];
+               ROSE_ASSERT(tmp_expr != NULL);
+
+               SgDesignatedInitializer* designatedInitializer = isSgDesignatedInitializer(tmp_expr);
+               if (designatedInitializer != NULL)
+                  {
+#if 0
+                    printf ("Mark outputDesignatedInitializerAssignmentOperator as false since there is a nested SgDesignatedInitializer \n");
+#endif
+                    outputDesignatedInitializerAssignmentOperator = false;
+                  }
+             }
+        }
+
 #if 0
      printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
      printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
@@ -6821,6 +7135,9 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
        // int x = (((union ABC { int __in; int __i; }) { .__in = 42 }).__i);
        // isInUnion = false;
 #if 0
+
+#error "DEAD CODE!"
+
        // DQ (7/25/2013): We need to detect if this is in a function argument list.
           if (info.SkipClassDefinition() == false)
              {

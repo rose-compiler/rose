@@ -13,18 +13,18 @@
 #include <string>
 #include <list>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"
 #include "HSetMaintainer.h"
 
-using namespace std;
+using namespace SPRAY;
 
 namespace CodeThorn {
 
-typedef list<AValue> ListOfAValue;
- typedef VariableIdMapping::VariableIdSet SetOfVariableId;
+  typedef std::list<AValue> ListOfAValue;
+  typedef VariableIdMapping::VariableIdSet SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
@@ -49,10 +49,10 @@ class Constraint {
   VariableId rhsVar() const;
   AValue rhsVal() const;
   CppCapsuleAValue rhsValCppCapsule() const;
-  string toString() const;
-  string toString(VariableIdMapping*) const;
-  string toAssertionString(VariableIdMapping*) const;
-  string operatorStringFromStream(istream& is);
+  std::string toString() const;
+  std::string toString(VariableIdMapping*) const;
+  std::string toAssertionString(VariableIdMapping*) const;
+  std::string operatorStringFromStream(istream& is);
   void fromStream(istream& is);
   void toStream(ostream& os);
   void toStreamAsTuple(ostream& os);
@@ -66,7 +66,7 @@ class Constraint {
   void setLhsVar(VariableId lhs) { _lhsVar=lhs; } 
  private:
   void initialize();
-  string opToString() const;
+  std::string opToString() const;
   ConstraintOp _op;
   VariableId _lhsVar;
   VariableId _rhsVar;
@@ -86,7 +86,7 @@ bool operator!=(const Constraint& c1, const Constraint& c2);
  */
 class ConstraintSet : public set<Constraint> {
  public:
-  ConstraintSet constraintsOfVariable(VariableId varId);
+  ConstraintSet constraintsOfVariable(VariableId varId) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, CppCapsuleAValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op, VariableId varId, AValue intVal) const;
   bool constraintExists(Constraint::ConstraintOp op) const;
@@ -98,9 +98,10 @@ class ConstraintSet : public set<Constraint> {
   // deprecated
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
 
-  string toString() const;
-  string toString(VariableIdMapping* vim) const;
-  string toAssertionString(VariableIdMapping* vim) const;
+  std::string toString() const;
+  std::string toString(VariableIdMapping* vim) const;
+  std::string toStringWithoutBraces(VariableIdMapping* vim) const;
+  std::string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
@@ -153,6 +154,7 @@ class ConstraintSet : public set<Constraint> {
   * \author Markus Schordan
   * \date 2012.
  */
+#ifdef USE_CUSTOM_HSET
 class ConstraintSetHashFun {
    public:
     ConstraintSetHashFun(long prime=99991) : tabSize(prime) {}
@@ -174,20 +176,63 @@ class ConstraintSetHashFun {
    private:
     long tabSize;
 };
+#else
+class ConstraintSetHashFun {
+   public:
+    ConstraintSetHashFun() {}
+    long operator()(ConstraintSet* cs) const {
+      unsigned int hash=1;
+      for(ConstraintSet::iterator i=cs->begin();i!=cs->end();++i) {
+        // use the symbol-ptr of lhsVar for hashing (we are a friend).
+        if((*i).isVarValOp())
+          hash=((hash<<8)+((long)(*i).rhsValCppCapsule().getValue().hash()))^hash;
+        else if((*i).isVarVarOp()) {
+          hash=((hash<<8)+((long)((*i).rhsVar().getIdCode())))^hash;
+        } else {
+          hash=0; // DEQ
+        }
+      }
+      return long(hash);
+    }
+   private:
+};
+#endif
 
 ConstraintSet operator+(ConstraintSet s1, ConstraintSet s2);
 bool operator<(const ConstraintSet& s1, const ConstraintSet& s2);
-//bool operator==(const ConstraintSet& s1, const ConstraintSet& s2);
+//bool operator==(const ConstraintSet& s1, const ConstraintSet& s2); // std operator is implemented for set
 //bool operator!=(const ConstraintSet& s1, const ConstraintSet& s2);
+class ConstraintSetEqualToPred {
+   public:
+    ConstraintSetEqualToPred() {}
+    bool operator()(ConstraintSet* s1, ConstraintSet* s2) const {
+      //return *s1==*s2;
+      if(s1->disequalityExists()&&s2->disequalityExists())
+        return true;
+      if(s1->size()!=s2->size()) {
+        return false;
+      } else {
+        return *s1==*s2;
+        for(ConstraintSet::iterator i=s1->begin(),j=s2->begin();
+            i!=s1->end();
+            (++i,++j)) {
+          if(!(*i==*j))
+            return false;
+        }
+        return true;
+      }
+    }
+   private:
+};
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
- class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun> {
+ class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun,ConstraintSetEqualToPred> {
  public:
-  typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun>::ProcessingResult ProcessingResult;
-  string toString();
+  typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun,ConstraintSetEqualToPred>::ProcessingResult ProcessingResult;
+  std::string toString();
  };
  
 } // end of namespace CodeThorn

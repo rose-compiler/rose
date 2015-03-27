@@ -764,8 +764,8 @@ insertStatementList (
           target,target->sage_class_name());
      printf ("     positionInFile = %d positionName() = %s \n",
           positionInFile,getIntermediateFilePositionName(positionInFile).c_str());
-     printf ("     SgStatementPtrList size (X.size() = %zu) \n",X.size());
-     printf ("     commentsAndDirectives.size() = %zu \n",commentsAndDirectives.size());
+     printf ("     SgStatementPtrList size (X.size() = %" PRIuPTR ") \n",X.size());
+     printf ("     commentsAndDirectives.size() = %" PRIuPTR " \n",commentsAndDirectives.size());
 #endif
 
   // If there is nothing to insert or replace with, then exit
@@ -941,7 +941,7 @@ insertStatementList (
           target,target->sage_class_name());
      printf ("     positionInFile = %d positionName() = %s \n",
           positionInFile,getIntermediateFilePositionName(positionInFile).c_str());
-     printf ("     SgStatementPtrList size (X.size() = %zu) \n",X.size());
+     printf ("     SgStatementPtrList size (X.size() = %" PRIuPTR ") \n",X.size());
      printf ("target = %s \n",target->unparseToString().c_str());
 #endif
 
@@ -1128,13 +1128,13 @@ HighLevelInterfaceNodeCollection::insertStatementListWithMarkers (
      ROSE_ASSERT (target != NULL);
      ROSE_ASSERT (statementList.size() >= 2);
 
-  // printf ("In HighLevelInterfaceNodeCollection::insertStatementListWithMarkers: Before markStatementListWithMarkersAsTransformation: statementList = %zu \n",statementList.size());
+  // printf ("In HighLevelInterfaceNodeCollection::insertStatementListWithMarkers: Before markStatementListWithMarkersAsTransformation: statementList = %" PRIuPTR " \n",statementList.size());
 
   // DQ (1/11/2006): Make the statements as transformations (note not all statements 
   // marked as transformations are output, e.g. statements coming from header files).
      markStatementListWithMarkersAsTransformation(statementList);
 
-  // printf ("After markStatementListWithMarkersAsTransformation: statementList = %zu \n",statementList.size());
+  // printf ("After markStatementListWithMarkersAsTransformation: statementList = %" PRIuPTR " \n",statementList.size());
 
   // Handle the comments and CPP directives that might be attached to the edged (marker declarations)
      AttachedPreprocessingInfoType commentsAndDirectives = processCommentsAndDirectives (statementList);
@@ -1146,7 +1146,7 @@ HighLevelInterfaceNodeCollection::insertStatementListWithMarkers (
   // not permitted, remove should be called instead.  A higher level interface might later decide to 
   // implement replace with nothing as replace with ";" which I think would be cleaner and still permit
   // the strict error checking within the lower level interface.
-  // printf ("Before insertStatementList(): statementList = %zu commentsAndDirectives = %zu \n",statementList.size(),commentsAndDirectives.size());
+  // printf ("Before insertStatementList(): statementList = %" PRIuPTR " commentsAndDirectives = %" PRIuPTR " \n",statementList.size(),commentsAndDirectives.size());
      if (statementList.size() > 0 || commentsAndDirectives.size() > 0)
         {
           ROSE_ASSERT (statementList.size() > 0 || commentsAndDirectives.size() > 0);
@@ -1430,9 +1430,9 @@ void avoidCompilerWarnings() \n\
           
 
 #if 1
-          printf ("newOpeningGlobalDeclarationString (length = %zu) = \n%s \n",newOpeningGlobalDeclarationString.size(),newOpeningGlobalDeclarationString.c_str());
-          printf ("newOpeningLocalDeclarationString  (length = %zu) = \n%s \n",newOpeningLocalDeclarationString.size(),newOpeningLocalDeclarationString.c_str());
-          printf ("newClosingString                  (length = %zu) = \n%s \n",newClosingString.size(),newClosingString.c_str());
+          printf ("newOpeningGlobalDeclarationString (length = %" PRIuPTR ") = \n%s \n",newOpeningGlobalDeclarationString.size(),newOpeningGlobalDeclarationString.c_str());
+          printf ("newOpeningLocalDeclarationString  (length = %" PRIuPTR ") = \n%s \n",newOpeningLocalDeclarationString.size(),newOpeningLocalDeclarationString.c_str());
+          printf ("newClosingString                  (length = %" PRIuPTR ") = \n%s \n",newClosingString.size(),newClosingString.c_str());
        // printf ("Exiting after call to HighLevelRewrite::generatePrefixAndSuffix() \n");
        // printf ("Exiting in HighLevelRewrite::SynthesizedAttribute::generateIntermediateFileString() \n");
        // ROSE_ABORT();

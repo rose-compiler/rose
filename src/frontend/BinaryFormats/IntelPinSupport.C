@@ -1,7 +1,7 @@
 // This file includes support for handling Intel Pin data types and and
 // other required code to support Intel Pin within ROSE.
 
-#include "rose.h"
+#include "sage3basic.h"
 // #include "IntelPinSupport.h"
 
 // Later we can sue ROSE_ASSERT if appropriate.

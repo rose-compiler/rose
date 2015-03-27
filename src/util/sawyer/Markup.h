@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 // A very siple markup language
 #ifndef Sawyer_Markup_H
 #define Sawyer_Markup_H

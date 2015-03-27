@@ -15,19 +15,19 @@
 
 #include <omp.h>
 
+#include <boost/unordered_set.hpp>
+
 #include "AstTerm.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
 #include "StateRepresentations.h"
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
-
-using namespace std;
 
 namespace CodeThorn {
 
@@ -43,7 +43,7 @@ namespace CodeThorn {
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
-    string toString() { stringstream ss;
+    std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";
       ss<<"init:"<<initialLabel<<" ";
       ss<<"final:"<<finalLabelsSet.toString();
@@ -59,7 +59,37 @@ namespace CodeThorn {
   };
 
   typedef list<const EState*> EStateWorkList;
+  typedef pair<int, const EState*> FailedAssertion;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
+
+  class Analyzer;
+
+  class VariableValueMonitor {
+  public:
+    enum VariableMode { VARMODE_FORCED_TOP, VARMODE_ADAPTIVE_TOP, VARMODE_PRECISE, VARMODE_FORCED_PRECISE};
+    VariableValueMonitor();
+    void setThreshold(size_t threshold);
+    size_t getThreshold();
+    bool isActive();
+    // the init function only uses the variableIds of a given estate (not its values) for initialization
+    void init(const EState* estate);
+    void init(const PState* pstate);
+    VariableIdSet getHotVariables(Analyzer* analyzer, const EState* estate);
+    VariableIdSet getHotVariables(Analyzer* analyzer, const PState* pstate);
+    VariableIdSet getVariables();
+    void setVariableMode(VariableMode,VariableId);
+    VariableMode getVariableMode(VariableId);
+    void update(Analyzer* analyzer, EState* estate);
+    bool isHotVariable(Analyzer* analyzer, VariableId varId);
+    std::string toString(VariableIdMapping* variableIdMapping);
+#if 0
+    bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
+#endif
+  private:
+    std::map<VariableId,std::set<int>* > _variablesMap;
+    std::map<VariableId,VariableMode> _variablesModeMap;
+    long int _threshold;
+  };
 
 /*! 
   * \author Markus Schordan
@@ -67,16 +97,18 @@ namespace CodeThorn {
  */
   class Analyzer {
     friend class Visualizer;
-
+    friend class VariableValueMonitor;
   public:
     
     Analyzer();
     ~Analyzer();
     
     void initAstNodeInfo(SgNode* node);
-    
-    static string nodeToString(SgNode* node);
-    void initializeSolver1(std::string functionToStartAt,SgNode* root);
+    bool isActiveGlobalTopify();
+    static std::string nodeToString(SgNode* node);
+    void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
+    void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
+    void continueAnalysisFrom(EState* newStartEState);
     
     PState analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode* rhs,ConstraintSet& cset);
     EState analyzeVariableDeclaration(SgVariableDeclaration* nextNodeToAnalyze1,EState currentEState, Label targetLabel);
@@ -95,7 +127,7 @@ namespace CodeThorn {
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
-    set<const EState*> nonLTLRelevantEStates();
+    std::set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
     // 6 experimental functions
@@ -110,10 +142,30 @@ namespace CodeThorn {
     // requires semantically reduced STG
     int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
-    bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
+    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
     // this function requires that no LTL graph is computed
     void deleteNonRelevantEStates();
+
+    // bypasses and removes all states that are not standard I/O states
+    void removeNonIOStates();
+    // bypasses and removes all states that are not stdIn/stdOut/stdErr/failedAssert states
+    void reduceToObservableBehavior();
+    // erases transitions that lead directly from one output state to another output state
+    void removeOutputOutputTransitions();
+    // erases transitions that lead directly from one input state to another input state
+    void removeInputInputTransitions();
+    // cuts off all paths in the transition graph that lead to leaves 
+    // (recursively until only paths of infinite length remain)
+    void pruneLeavesRec();
+    // connects start, input, output and worklist states according to possible paths in the transition graph. 
+    // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
+    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
+    // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
+    // stores results in PropertyValueTable "reachabilityResults".
+    // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
+    // shortest ones leading to the individual failing assertion (returns -1 otherwise).
+    int extractAssertionTraces();
     
   private:
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise 
@@ -123,6 +175,8 @@ namespace CodeThorn {
     const PState* processNewOrExisting(PState& s);
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
+    const EState* processCompleteNewOrExisting(const EState* es);
+    void topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId);
     
     EStateSet::ProcessingResult process(EState& s);
     EStateSet::ProcessingResult process(Label label, PState pstate, ConstraintSet cset, InputOutput io);
@@ -130,28 +184,62 @@ namespace CodeThorn {
     
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
+
+    //returns a list of transitions representing existing paths from "startState" to all possible input/output/error states (no output -> output)
+    // collection of transitions to worklist states currently disabled. the returned set has to be deleted by the calling function.
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* startState, 
+								      bool includeIn, bool includeOut, bool includeErr);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState, 
+                                                            	      boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
+								      bool includeIn, bool includeOut, bool includeErr);
+    // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
+    // counterexample input sequence.
+    int addCounterexample(int assertCode, const EState* assertEState);
+    // returns a list of EStates from source to target. Target has to come before source in the STG (reversed trace). 
+    list<const EState*>reverseInOutSequenceBreadthFirst(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    // returns a list of EStates from source to target (shortest input path). 
+    // please note: target has to be a predecessor of source (reversed trace)
+    list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
+    list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
+    std::string reversedInOutRunToString(list<const EState*>& run);
+    //returns the shortest possible number of input states on the path leading to "target".
+    int inputSequenceLength(const EState* target);
     
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    string generateSpotSTG();
+    std::string generateSpotSTG();
   private:
-    void generateSpotTransition(stringstream& ss, const Transition& t);
+    void generateSpotTransition(std::stringstream& ss, const Transition& t);
+    //less than comarisions on two states according to (#input transitions * #output transitions)
+    bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
   public:
+    //stores a backup of the created transitionGraph
+    void storeStgBackup();
+    //load previous backup of the transitionGraph, storing the current version as a backup instead
+    void swapStgWithBackup();
+    //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
+    void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
     void runSolver1();
     void runSolver2();
     void runSolver3();
     void runSolver4();
+    void runSolver5();
+    void runSolver6();
+    void runSolver7();
+    void runSolver8();
     void runSolver();
-    //! The analyzer requires a CFAnalyzer to obtain the ICFG.
-    void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
-    CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
+    //! The analyzer requires a CFAnalysis to obtain the ICFG.
+    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
     
+    //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
+
     // access  functions for computed information
     VariableIdMapping* getVariableIdMapping() { return &variableIdMapping; }
-    IOLabeler* getLabeler() const {
-      IOLabeler* ioLabeler=dynamic_cast<IOLabeler*>(cfanalyzer->getLabeler());
+    SPRAY::IOLabeler* getLabeler() const {
+      SPRAY::IOLabeler* ioLabeler=dynamic_cast<SPRAY::IOLabeler*>(cfanalyzer->getLabeler());
       ROSE_ASSERT(ioLabeler);
       return ioLabeler;
     }
@@ -164,14 +252,19 @@ namespace CodeThorn {
     //private: TODO
     Flow flow;
     SgNode* startFunRoot;
-    CFAnalyzer* cfanalyzer;
-    
+    CFAnalysis* cfanalyzer;
+    VariableValueMonitor variableValueMonitor;
+    void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
+  public:
     //! compute the VariableIds of variable declarations
     VariableIdMapping::VariableIdSet determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> decls);
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
-    set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    typedef list<SgVariableDeclaration*> VariableDeclarationList;
+    VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
+    VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
     
     //bool isAssertExpr(SgNode* node);
     bool isFailedAssertEState(const EState* estate);
@@ -184,8 +277,9 @@ namespace CodeThorn {
     void initLabeledAssertNodes(SgProject* root) {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
-    string labelNameOfAssertLabel(Label lab) {
-      string labelName;
+    size_t getNumberOfErrorLabels();
+    std::string labelNameOfAssertLabel(Label lab) {
+      std::string labelName;
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
@@ -199,37 +293,80 @@ namespace CodeThorn {
     InputOutput::OpType ioOp(const EState* estate) const;
     
     void setDisplayDiff(int diff) { _displayDiff=diff; }
-    void setSolver(int solver) { _solver=solver; ROSE_ASSERT(_solver>=1 && _solver<=4);}
+    void setSolver(int solver) { _solver=solver; }
     int getSolver() { return _solver;}
     void setSemanticFoldThreshold(int t) { _semanticFoldThreshold=t; }
     void setLTLVerifier(int v) { _ltlVerifier=v; }
     int getLTLVerifier() { return _ltlVerifier; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
+    int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void insertInputVarValue(int i) { _inputVarValues.insert(i); }
+    void addInputSequenceValue(int i) { _inputSequence.push_back(i); }
+    void resetToEmptyInputSequence() { _inputSequence.clear(); }
+    void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
+    const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
+    const EState* getLatestErrorEState() {return _latestErrorEState;}
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
+    std::set<int> getInputVarValues() { return _inputVarValues; }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    string _csv_assert_live_file; // to become private
-    VariableId globalVarIdByName(string varName) { return globalVarName2VarIdMapping[varName]; }
-    
+    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
+    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
+    void setStgTraceFileName(std::string filename) {
+      _stg_trace_filename=filename;
+      std::ofstream fout;
+      fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
+      fout<<"START"<<endl;
+      fout.close();    // close. Will be used with append.
+    }
+    std::string _csv_assert_live_file; // to become private
+  private:
+    std::string _stg_trace_filename;
  public:
     // only used temporarily for binary-binding prototype
-    map<string,VariableId> globalVarName2VarIdMapping;
-    vector<bool> binaryBindingAssert;
+    std::map<std::string,VariableId> globalVarName2VarIdMapping;
+    std::vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
+    void eventGlobalTopifyTurnedOn();
+    void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
-    ReachabilityResults reachabilityResults;
+    bool isPrecise();
+    PropertyValueTable reachabilityResults;
     int reachabilityAssertCode(const EState* currentEStatePtr);
-    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST };
+    enum ExplorationMode { EXPL_DEPTH_FIRST, EXPL_BREADTH_FIRST, EXPL_LOOP_AWARE };
     void setExplorationMode(ExplorationMode em) { _explorationMode=em; }
+    ExplorationMode getExplorationMode() { return _explorationMode; }
     void setSkipSelectedFunctionCalls(bool defer) {
       _skipSelectedFunctionCalls=true; 
       exprAnalyzer.setSkipSelectedFunctionCalls(true);
     }
+    void setSkipArrayAccesses(bool skip) {
+      exprAnalyzer.setSkipArrayAccesses(skip);
+    }
+    bool getSkipArrayAccesses() {
+      return exprAnalyzer.getSkipArrayAccesses();
+    }
     ExprAnalyzer* getExprAnalyzer();
+    list<FailedAssertion> getFirstAssertionOccurences(){return _firstAssertionOccurences;}
+    void incIterations() {
+      if(isPrecise()) {
+#pragma omp atomic
+        _iterations+=1;
+      } else {
+#pragma omp atomic
+        _approximated_iterations+=1;
+      }
+    }
+    bool isLoopCondLabel(Label lab);
+    int getApproximatedIterations() { return _approximated_iterations; }
+    int getIterations() { return _iterations; }
   private:
     set<int> _inputVarValues;
+    list<int> _inputSequence;
+    list<int>::iterator _inputSequenceIterator;
     ExprAnalyzer exprAnalyzer;
     VariableIdMapping variableIdMapping;
     EStateWorkList estateWorkList;
@@ -237,6 +374,7 @@ namespace CodeThorn {
     PStateSet pstateSet;
     ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
+    TransitionGraph backupTransitionGraph;
     set<const EState*> transitionSourceEStateSetOfLabel(Label lab);
     int _displayDiff;
     int _numberOfThreadsToUse;
@@ -246,11 +384,23 @@ namespace CodeThorn {
     int _solver;
     AnalyzerMode _analyzerMode;
     set<const EState*> _newNodesToFold;
-    size_t _maxTransitions;
+    long int _maxTransitions;
+    long int _maxTransitionsForcedTop;
+    long int _maxIterationsForcedTop;
     bool _treatStdErrLikeFailedAssert;
-    ExplorationMode _explorationMode;
     bool _skipSelectedFunctionCalls;
-  };
+    ExplorationMode _explorationMode;
+    list<FailedAssertion> _firstAssertionOccurences;
+    const EState* _estateBeforeMissingInput;
+    const EState* _latestOutputEState;
+    const EState* _latestErrorEState;
+    bool _minimizeStates;
+    bool _topifyModeActive;
+    int _iterations;
+    int _approximated_iterations;
+    int _curr_iteration_cnt;
+    int _next_iteration_cnt;
+  }; // end of class Analyzer
   
 } // end of namespace CodeThorn
 
@@ -258,16 +408,25 @@ namespace CodeThorn {
 #ifdef RERS_SPECIALIZATION
 // RERS-binary-binding-specific declarations
 #define STR_VALUE(arg) #arg
-#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
+#define COPY_PSTATEVAR_TO_GLOBALVAR(VARNAME) VARNAME[thread_id] = pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().getIntValue();
 
 //cout<<"PSTATEVAR:"<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].toString()<<"="<<pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))].getValue().toString()<<endl;
 
-#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME);
+#define COPY_GLOBALVAR_TO_PSTATEVAR(VARNAME) pstate[analyzer->globalVarIdByName(STR_VALUE(VARNAME))]=CodeThorn::AType::CppCapsuleConstIntLattice(VARNAME[thread_id]);
+
+// macro used to generate the initialization of global variables in the hybrid analyzer (linked binary with threads)
+#define INIT_GLOBALVAR(VARNAME) VARNAME = new int[numberOfThreads];
 
 namespace RERS_Problem {
-  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
-  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate);
-  int calculate_output(int);
+  void rersGlobalVarsCallInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  void rersGlobalVarsCallReturnInit(CodeThorn::Analyzer* analyzer, CodeThorn::PState& pstate, int thread_id);
+  void rersGlobalVarsArrayInit(int numberOfThreads);
+#if 0
+  // input variable passed as a parameter (obsolete since transformation of "input" into a global varialbe)
+  void calculate_output(int);
+#endif
+  void calculate_output(int numberOfThreads);
+  extern int* output;
 }
 // END OF RERS-binary-binding-specific declarations
 #endif

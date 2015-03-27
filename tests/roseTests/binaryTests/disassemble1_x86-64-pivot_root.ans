@@ -6,12 +6,18 @@ using this memory map for disassembly:
     va 0x0040023c + 0x00000004 = 0x00400240 r-xp at buffer aab   + 0x0000023c x86-64-pivot_root(LOAD#2)
     va 0x00400240 + 0x00000034 = 0x00400274 r--- at buffer aap   + 0x00000240 x86-64-pivot_root(.hash)
     va 0x00400274 + 0x00000004 = 0x00400278 r-xp at buffer aab   + 0x00000274 x86-64-pivot_root(LOAD#2)
-    va 0x00400278 + 0x000000e8 = 0x00400360 r--- at buffer aat   + 0x00000278 x86-64-pivot_root(.dynsym+.gnu.liblist)
+    va 0x00400278 + 0x000000c0 = 0x00400338 r--- at buffer aar   + 0x00000278 x86-64-pivot_root(.dynsym)
+    va 0x00400338 + 0x00000028 = 0x00400360 r--- at buffer aat   + 0x00000338 x86-64-pivot_root(.gnu.liblist)
     va 0x00400360 + 0x00000042 = 0x004003a2 r-xp at buffer aab   + 0x00000360 x86-64-pivot_root(LOAD#2)
     va 0x004003a2 + 0x00000010 = 0x004003b2 r--- at buffer aav   + 0x000003a2 x86-64-pivot_root(.gnu.version)
     va 0x004003b2 + 0x00000006 = 0x004003b8 r-xp at buffer aab   + 0x000003b2 x86-64-pivot_root(LOAD#2)
-    va 0x004003b8 + 0x000000b0 = 0x00400468 r--- at buffer abb   + 0x000003b8 x86-64-pivot_root(.gnu.version_r+.rela.dyn+.rela.plt)
-    va 0x00400468 + 0x0000026e = 0x004006d6 r-x- at buffer abj   + 0x00000468 x86-64-pivot_root(.fini+.init+.plt+.text)
+    va 0x004003b8 + 0x00000020 = 0x004003d8 r--- at buffer aax   + 0x000003b8 x86-64-pivot_root(.gnu.version_r)
+    va 0x004003d8 + 0x00000030 = 0x00400408 r--- at buffer aaz   + 0x000003d8 x86-64-pivot_root(.rela.dyn)
+    va 0x00400408 + 0x00000060 = 0x00400468 r--- at buffer abb   + 0x00000408 x86-64-pivot_root(.rela.plt)
+    va 0x00400468 + 0x00000018 = 0x00400480 r-x- at buffer abd   + 0x00000468 x86-64-pivot_root(.init)
+    va 0x00400480 + 0x00000050 = 0x004004d0 r-x- at buffer abf   + 0x00000480 x86-64-pivot_root(.plt)
+    va 0x004004d0 + 0x000001f8 = 0x004006c8 r-x- at buffer abh   + 0x000004d0 x86-64-pivot_root(.text)
+    va 0x004006c8 + 0x0000000e = 0x004006d6 r-x- at buffer abj   + 0x000006c8 x86-64-pivot_root(.fini)
     va 0x004006d6 + 0x00000002 = 0x004006d8 r-xp at buffer aab   + 0x000006d6 x86-64-pivot_root(LOAD#2)
     va 0x004006d8 + 0x0000002b = 0x00400703 r--- at buffer abl   + 0x000006d8 x86-64-pivot_root(.rodata)
     va 0x00400703 + 0x00000001 = 0x00400704 r-xp at buffer aab   + 0x00000703 x86-64-pivot_root(LOAD#2)
@@ -19,9 +25,15 @@ using this memory map for disassembly:
     va 0x00400728 + 0x00000094 = 0x004007bc r--- at buffer abn   + 0x00000728 x86-64-pivot_root(.eh_frame)
     va 0x004007bc + 0x00000844 = 0x00401000 r-xp at buffer aab   + 0x000007bc x86-64-pivot_root(LOAD#2)
     va 0x00500000 + 0x000007c0 = 0x005007c0 rw-p at buffer aal   + 0x00000000 x86-64-pivot_root(LOAD#3)
-    va 0x005007c0 + 0x00000028 = 0x005007e8 rw-- at buffer abt   + 0x000007c0 x86-64-pivot_root(.ctors+.dtors+.jcr)
+    va 0x005007c0 + 0x00000010 = 0x005007d0 rw-- at buffer abp   + 0x000007c0 x86-64-pivot_root(.ctors)
+    va 0x005007d0 + 0x00000010 = 0x005007e0 rw-- at buffer abr   + 0x000007d0 x86-64-pivot_root(.dtors)
+    va 0x005007e0 + 0x00000008 = 0x005007e8 rw-- at buffer abt   + 0x000007e0 x86-64-pivot_root(.jcr)
     va 0x005007e8 + 0x00000190 = 0x00500978 rw-p at buffer aan   + 0x00000000 x86-64-pivot_root(.dynamic)
-    va 0x00500978 + 0x00000068 = 0x005009e0 rw-- at buffer acd   + 0x00000978 x86-64-pivot_root(.bss+.data+.dynbss+.got+.got.plt)
+    va 0x00500978 + 0x00000008 = 0x00500980 rw-- at buffer abv   + 0x00000978 x86-64-pivot_root(.got)
+    va 0x00500980 + 0x00000038 = 0x005009b8 rw-- at buffer abx   + 0x00000980 x86-64-pivot_root(.got.plt)
+    va 0x005009b8 + 0x00000018 = 0x005009d0 rw-- at buffer abz   + 0x000009b8 x86-64-pivot_root(.data)
+    va 0x005009d0 + 0x00000008 = 0x005009d8 rw-- at buffer acb   + 0x000009d0 x86-64-pivot_root(.dynbss)
+    va 0x005009d8 + 0x00000008 = 0x005009e0 rw-- at buffer acd   + 0x000009d8 x86-64-pivot_root(.bss)
     va 0x005009e0 + 0x00000086 = 0x00500a66 r--- at buffer acf   + 0x000009e0 x86-64-pivot_root(.dynstr)
     va 0x00500a66 + 0x00000002 = 0x00500a68 rw-p at buffer aal   + 0x00000a66 x86-64-pivot_root(LOAD#3)
     va 0x00500a68 + 0x00000180 = 0x00500be8 r--- at buffer ach   + 0x00000a68 x86-64-pivot_root(.gnu.conflict)
@@ -61,8 +73,8 @@ using this memory map for disassembly:
 
 0x00400480: ff 35 02 05 10 00 ff 25 |.5.....%|
 0x00400488: 04 05 10 00 90 90 90 90 |........| 16 bytes untyped data beginning at 0x00400480
-0x00400480: ff 35 02 05 10 00       |.5....  | (data)   push   QWORD PTR ds:[rip + 0x0000000000100502]
-0x00400486: ff 25 04 05 10 00       |.%....  | (data)   jmp    QWORD PTR ds:[rip + 0x0000000000100504]
+0x00400480: ff 35 02 05 10 00       |.5....  | (data)   push   qword ds:[rip + 0x0000000000100502]
+0x00400486: ff 25 04 05 10 00       |.%....  | (data)   jmp    qword ds:[rip + 0x0000000000100504]
 0x0040048c: 90                      |.       | (data)   nop    
 0x0040048d: 90                      |.       | (data)   nop    
 0x0040048e: 90                      |.       | (data)   nop    
@@ -73,7 +85,7 @@ using this memory map for disassembly:
 
 0x00400490: Basic block reasons: entry point, graph-1
 0x00400490: Predecessor blocks: 0x004004d0<<Func>>
-0x00400490: ff 25 02 05 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x0000000000100502]
+0x00400490: ff 25 02 05 10 00       |.%....  |   jmp    qword ds:[rip + 0x0000000000100502]
 0x00400490: Successor blocks: unknown
 
 0x00400496: 68 00 00 00 00 e9 e0 ff |h.......|
@@ -86,7 +98,7 @@ using this memory map for disassembly:
 
 0x004004a0: Basic block reasons: entry point, graph-1
 0x004004a0: Predecessor blocks: 0x004005c0<<Func>>
-0x004004a0: ff 25 fa 04 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001004fa]
+0x004004a0: ff 25 fa 04 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001004fa]
 0x004004a0: Successor blocks: unknown
 
 0x004004a6: 68 01 00 00 00 e9 d0 ff |h.......|
@@ -99,7 +111,7 @@ using this memory map for disassembly:
 
 0x004004b0: Basic block reasons: entry point, graph-1
 0x004004b0: Predecessor blocks: 0x00400599<<Func>>
-0x004004b0: ff 25 f2 04 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001004f2]
+0x004004b0: ff 25 f2 04 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001004f2]
 0x004004b0: Successor blocks: unknown
 
 0x004004b6: 68 02 00 00 00 e9 c0 ff |h.......|
@@ -112,7 +124,7 @@ using this memory map for disassembly:
 
 0x004004c0: Basic block reasons: entry point, graph-1
 0x004004c0: Predecessor blocks: 0x004005db<<Func>>
-0x004004c0: ff 25 ea 04 10 00       |.%....  |   jmp    QWORD PTR ds:[rip + 0x00000000001004ea]
+0x004004c0: ff 25 ea 04 10 00       |.%....  |   jmp    qword ds:[rip + 0x00000000001004ea]
 0x004004c0: Successor blocks: unknown
 
 0x004004c6: 68 03 00 00 00 e9 b0 ff |h.......|
@@ -165,7 +177,7 @@ using this memory map for disassembly:
 0x004004fc: Basic block reasons: entry point, graph-2
 0x004004fc: Predecessor blocks: 0x00400468<<Func>>
 0x004004fc: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x00400500: 48 8b 05 71 04 10 00    |H..q... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000100471]
+0x00400500: 48 8b 05 71 04 10 00    |H..q... |   mov    rax, qword ds:[rip + 0x0000000000100471]
 0x00400507: 48 85 c0                |H..     |   test   rax, rax
 0x0040050a: 74 02                   |t.      |   je     0x000000000040050e<<Insn>>
 0x0040050a: Successor blocks: 0x0040050c, 0x0040050e
@@ -192,7 +204,7 @@ using this memory map for disassembly:
 0x00400520: This function calls 0x0040053d
 
 0x00400520: Basic block reasons: fragment, graph-2; 71% code likelihood
-0x00400520: 80 3d b1 04 10 00 00    |.=..... |   cmp    BYTE PTR ds:[rip + 0x00000000001004b1], 0x00
+0x00400520: 80 3d b1 04 10 00 00    |.=..... |   cmp    byte ds:[rip + 0x00000000001004b1], 0x00
 0x00400527: 55                      |U       |   push   rbp
 0x00400528: 48 89 e5                |H..     |   mov    rbp, rsp
 0x0040052b: 74 10                   |t.      |   je     0x000000000040053d<<Func>>
@@ -216,7 +228,7 @@ using this memory map for disassembly:
 0x00400530: Basic block reasons: entry point, graph-2
 0x00400530: Predecessor blocks: 0x0040052f<<Func>>, 0x0040053d<<Func>>
 0x00400530: 48 83 c0 08             |H...    |   add    rax, 0x08
-0x00400534: 48 89 05 8d 04 10 00    |H...... |   mov    QWORD PTR ds:[rip + 0x000000000010048d], rax
+0x00400534: 48 89 05 8d 04 10 00    |H...... |   mov    qword ds:[rip + 0x000000000010048d], rax
 0x0040053b: ff d2                   |..      |   call   rdx
 0x0040053b: Successor blocks: 0x0040053d<<Func>>, unknown
 
@@ -228,8 +240,8 @@ using this memory map for disassembly:
 
 0x0040053d: Basic block reasons: fragment, graph-2; 71% code likelihood
 0x0040053d: Predecessor blocks: 0x00400520<<Func>>, 0x00400530<<Func>>
-0x0040053d: 48 8b 05 84 04 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000100484]
-0x00400544: 48 8b 10                |H..     |   mov    rdx, QWORD PTR ds:[rax]
+0x0040053d: 48 8b 05 84 04 10 00    |H...... |   mov    rax, qword ds:[rip + 0x0000000000100484]
+0x00400544: 48 8b 10                |H..     |   mov    rdx, qword ds:[rax]
 0x00400547: 48 85 d2                |H..     |   test   rdx, rdx
 0x0040054a: 75 e4                   |u.      |   jne    0x0000000000400530<<Func>>
 0x0040054a: Successor blocks: 0x00400530<<Func>>, 0x0040054c<<Func>>
@@ -240,7 +252,7 @@ using this memory map for disassembly:
 
 0x0040054c: Basic block reasons: fragment, graph-2; 71% code likelihood
 0x0040054c: Predecessor blocks: 0x0040053d<<Func>>
-0x0040054c: c6 05 85 04 10 00 01    |....... |   mov    BYTE PTR ds:[rip + 0x0000000000100485], 0x01
+0x0040054c: c6 05 85 04 10 00 01    |....... |   mov    byte ds:[rip + 0x0000000000100485], 0x01
 0x0040054c: Successor blocks: 0x00400553<<Func>>
 
 0x00400553: ================================== Function (graph) unknown name
@@ -262,7 +274,7 @@ using this memory map for disassembly:
 0x00400560: Basic block reasons: entry point, graph-2
 0x00400560: Predecessor blocks: 0x00400471<<Func>>, 0x00400555<<Func>>
 0x00400560: 55                      |U       |   push   rbp
-0x00400561: 48 83 3d 77 02 10 00 00 |H.=w....|   cmp    QWORD PTR ds:[rip + 0x0000000000100277], 0x00
+0x00400561: 48 83 3d 77 02 10 00 00 |H.=w....|   cmp    qword ds:[rip + 0x0000000000100277], 0x00
 0x00400569: 48 89 e5                |H..     |   mov    rbp, rsp
 0x0040056c: 74 16                   |t.      |   je     0x0000000000400584<<Func>>
 0x0040056c: Successor blocks: 0x0040056e<<Func>>, 0x00400584<<Func>>
@@ -326,8 +338,8 @@ using this memory map for disassembly:
 0x00400599: Basic block reasons: graph-1
 0x00400599: Predecessor blocks: 0x00400590
 0x00400599: Dominator block: 0x00400590
-0x00400599: 48 8b 16                |H..     |   mov    rdx, QWORD PTR ds:[rsi]
-0x0040059c: 48 8b 3d 2d 04 10 00    |H.=-... |   mov    rdi, QWORD PTR ds:[rip + 0x000000000010042d]
+0x00400599: 48 8b 16                |H..     |   mov    rdx, qword ds:[rsi]
+0x0040059c: 48 8b 3d 2d 04 10 00    |H.=-... |   mov    rdi, qword ds:[rip + 0x000000000010042d]
 0x004005a3: be dc 06 40 00          |...@.   |   mov    esi, 0x004006dc<.rodata+4>
 0x004005a8: 31 c0                   |1.      |   xor    eax, eax
 0x004005aa: e8 01 ff ff ff          |.....   |   call   0x00000000004004b0<fprintf@plt>
@@ -355,8 +367,8 @@ using this memory map for disassembly:
 0x004005c0: Basic block reasons: graph-1
 0x004005c0: Predecessor blocks: 0x00400590, 0x004005bb
 0x004005c0: Dominator block: 0x00400590
-0x004005c0: 48 8b 56 10             |H.V.    |   mov    rdx, QWORD PTR ds:[rsi + 0x10]
-0x004005c4: 48 8b 76 08             |H.v.    |   mov    rsi, QWORD PTR ds:[rsi + 0x08]
+0x004005c0: 48 8b 56 10             |H.V.    |   mov    rdx, qword ds:[rsi + 0x10]
+0x004005c4: 48 8b 76 08             |H.v.    |   mov    rsi, qword ds:[rsi + 0x08]
 0x004005c8: 31 c0                   |1.      |   xor    eax, eax
 0x004005ca: bf 9b 00 00 00          |.....   |   mov    edi, 0x0000009b
 0x004005cf: e8 cc fe ff ff          |.....   |   call   0x00000000004004a0<syscall@plt>
@@ -391,10 +403,10 @@ using this memory map for disassembly:
 0x004005f0: This function calls 0x00400468
 
 0x004005f0: Basic block reasons: entry point, graph-2
-0x004005f0: 48 89 5c 24 e8          |H.\$.   |   mov    QWORD PTR ds:[rsp + 0xe8<-24>], rbx
-0x004005f5: 4c 89 64 24 f8          |L.d$.   |   mov    QWORD PTR ds:[rsp + 0xf8<-8>], r12
+0x004005f0: 48 89 5c 24 e8          |H.\$.   |   mov    qword ds:[rsp + 0xe8<-24>], rbx
+0x004005f5: 4c 89 64 24 f8          |L.d$.   |   mov    qword ds:[rsp + 0xf8<-8>], r12
 0x004005fa: 4c 8d 25 bf 01 10 00    |L.%.... |   lea    r12, [rip + 0x00000000001001bf]
-0x00400601: 48 89 6c 24 f0          |H.l$.   |   mov    QWORD PTR ds:[rsp + 0xf0<-16>], rbp
+0x00400601: 48 89 6c 24 f0          |H.l$.   |   mov    qword ds:[rsp + 0xf0<-16>], rbp
 0x00400606: 48 83 ec 18             |H...    |   sub    rsp, 0x18
 0x0040060a: 31 db                   |1.      |   xor    ebx, ebx
 0x0040060c: e8 57 fe ff ff          |.W...   |   call   0x0000000000400468<<Func>>
@@ -419,7 +431,7 @@ using this memory map for disassembly:
 0x00400627: Basic block reasons: graph-2
 0x00400627: Predecessor blocks: 0x00400624, 0x0040062b
 0x00400627: Dominator block: 0x00400624
-0x00400627: 41 ff 14 dc             |A...    |   call   QWORD PTR ds:[r12 + rbx*0x08]
+0x00400627: 41 ff 14 dc             |A...    |   call   qword ds:[r12 + rbx*0x08]
 0x00400627: Successor blocks: 0x0040062b, unknown
 
 0x0040062b: Basic block reasons: graph-2
@@ -433,9 +445,9 @@ using this memory map for disassembly:
 0x00400633: Basic block reasons: graph-2
 0x00400633: Predecessor blocks: 0x00400611, 0x0040062b
 0x00400633: Dominator block: 0x00400611
-0x00400633: 48 8b 1c 24             |H..$    |   mov    rbx, QWORD PTR ds:[rsp]
-0x00400637: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, QWORD PTR ds:[rsp + 0x08]
-0x0040063c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, QWORD PTR ds:[rsp + 0x10]
+0x00400633: 48 8b 1c 24             |H..$    |   mov    rbx, qword ds:[rsp]
+0x00400637: 48 8b 6c 24 08          |H.l$.   |   mov    rbp, qword ds:[rsp + 0x08]
+0x0040063c: 4c 8b 64 24 10          |L.d$.   |   mov    r12, qword ds:[rsp + 0x10]
 0x00400641: 48 83 c4 18             |H...    |   add    rsp, 0x18
 0x00400645: c3                      |.       |   ret    
 0x00400645: Successor blocks: unknown
@@ -461,7 +473,7 @@ using this memory map for disassembly:
 0x00400667: 48 8d 58 ff             |H.X.    | (data)   lea    rbx, [rax + 0xff<-1>]
 0x0040066b: 48 83 ec 08             |H...    | (data)   sub    rsp, 0x08
 0x0040066f: eb 07                   |..      | (data)   jmp    0x0000000000400678
-0x00400671: ff 54 dd 00             |.T..    | (data)   call   QWORD PTR ds:[rbp + rbx*0x08 + 0x00]
+0x00400671: ff 54 dd 00             |.T..    | (data)   call   qword ds:[rbp + rbx*0x08 + 0x00]
 0x00400675: 48 ff cb                |H..     | (data)   dec    rbx
 0x00400678: 48 83 fb ff             |H...    | (data)   cmp    rbx, 0xff<-1>
 0x0040067c: 75 f3                   |u.      | (data)   jne    0x0000000000400671
@@ -482,7 +494,7 @@ using this memory map for disassembly:
 0x00400694: 53                      |S       |   push   rbx
 0x00400695: 48 c7 c3 c0 07 50 00    |H....P. |   mov    rbx, 0x005007c0<.ctors>
 0x0040069c: 48 83 ec 08             |H...    |   sub    rsp, 0x08
-0x004006a0: 48 8b 05 19 01 10 00    |H...... |   mov    rax, QWORD PTR ds:[rip + 0x0000000000100119]
+0x004006a0: 48 8b 05 19 01 10 00    |H...... |   mov    rax, qword ds:[rip + 0x0000000000100119]
 0x004006a0: Successor blocks: 0x004006a7
 
 0x004006a7: Basic block reasons: graph-2
@@ -505,7 +517,7 @@ using this memory map for disassembly:
 0x004006b6: Basic block reasons: graph-2
 0x004006b6: Predecessor blocks: 0x004006b0
 0x004006b6: Dominator block: 0x004006b0
-0x004006b6: 48 8b 03                |H..     |   mov    rax, QWORD PTR ds:[rbx]
+0x004006b6: 48 8b 03                |H..     |   mov    rax, qword ds:[rbx]
 0x004006b6: Successor blocks: 0x004006b9
 
 0x004006b9: Basic block reasons: graph-2

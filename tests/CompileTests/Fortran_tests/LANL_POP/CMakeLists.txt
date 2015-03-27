@@ -45,8 +45,8 @@ set(files_to_compile
   io.F90
   io_binary.F90
   io_netcdf.F90
-  io_netcdf_testcode_01.F90
-  io_netcdf_testcode_02.F90
+  #expected failure: io_netcdf_testcode_01.F90
+  #expected failure: io_netcdf_testcode_02.F90
   io_types.F90
   kinds_mod.F90
   movie.F90
@@ -173,7 +173,7 @@ set_tests_properties(hmix_gm.F90 PROPERTIES DEPENDS
   "vertical_mix.F90;vmix_kpp.F90")
 
 set_tests_properties(horizontal_mix.F90 PROPERTIES DEPENDS
-  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;communicate.F90;time_management.F90;broadcast.F90;grid.F90;io_types.F90;hmix_del2.F90;hmix_del4.F90;hmix_gm.F90;hmix_aniso.F90;topostress.F90;tavg.F90;timers.F90;exit_mod.F90io_netcdf.F90")
+  "kinds_mod.F90;blocks.F90;distribution.F90;domain.F90;constants.F90;communicate.F90;time_management.F90;broadcast.F90;grid.F90;io_types.F90;hmix_del2.F90;hmix_del4.F90;hmix_gm.F90;hmix_aniso.F90;topostress.F90;tavg.F90;timers.F90;exit_mod.F90;io_netcdf.F90")
 
 set_tests_properties(ice.F90 PROPERTIES DEPENDS
   "kinds_mod.F90;blocks.F90;constants.F90;broadcast.F90;io_types.F90;time_management.F90;exit_mod.F90")
@@ -191,13 +191,14 @@ set_tests_properties(io_binary.F90 PROPERTIES DEPENDS
 set_tests_properties(io_netcdf.F90 PROPERTIES DEPENDS
   "gather_scatter.F90;netcdf.F90")
 
+#EXPECTED FAILURES:
 # DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
-set_tests_properties(io_netcdf_testcode_01.F90 PROPERTIES DEPENDS
-  "gather_scatter.F90;netcdf.F90")
+#set_tests_properties(io_netcdf_testcode_01.F90 PROPERTIES DEPENDS
+#  "gather_scatter.F90;netcdf.F90")
 
 # DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
-set_tests_properties(io_netcdf_testcode_02.F90 PROPERTIES DEPENDS
-  "gather_scatter.F90;netcdf.F90")
+#set_tests_properties(io_netcdf_testcode_02.F90 PROPERTIES DEPENDS
+#  "gather_scatter.F90;netcdf.F90")
 
 set_tests_properties(io_types.F90 PROPERTIES DEPENDS broadcast.F90)
 

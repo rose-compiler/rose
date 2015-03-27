@@ -1,0 +1,13 @@
+NAME=$1
+IFS=$'\n'       # make newlines the only separator
+echo "Adapting input sequences for Problem $1."
+newsequence="Problem${NAME}.isequence2.txt"
+rm -f $newsequence
+for j in `cat ./Problem${NAME}.isequence.txt`
+do
+echo "100 $j" >> $newsequence
+done
+echo "101" >> $newsequence
+echo "Checking Problem $1."
+./Problem1 < $newsequence > /dev/null
+echo "done."

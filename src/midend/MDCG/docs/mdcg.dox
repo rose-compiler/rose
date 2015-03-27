@@ -1,0 +1,30 @@
+/*!
+ * \defgroup grp_rose ROSE
+ * @{
+ *   \defgroup grp_mdcg MDCG
+ *   @{
+ *     \defgroup grp_mdcg_codegen Code Generator
+ *     @{
+ *     @}
+ *     \defgroup grp_mdcg_model Model
+ *     @{
+ *     @}
+ *     \defgroup grp_mdcg_handles Handles
+ *     @{
+ *     @}
+ *   @}
+ * @}
+ */
+
+/*!
+ * \addtogroup grp_mdcg
+ * @{
+ *
+ * \section sec_mdcg_intro Introduction
+ *
+ * Model Driven Code Generator (MDCG) creates an additional level of abstraction over the notion of API (introduced by MFB).
+ * It enables to manipulate an object-oriented model of existing code or to generate code from a model.
+ *
+ * @}
+ */
+

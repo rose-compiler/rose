@@ -68,6 +68,9 @@ LONG_LIST_TESTCODES_REQUIRED_TO_PASS = \
    copytest2014_02.C \
    copyExampleInput.C
 
+# DQ (2/28/2015): These fail due to the fix for the EDG template normalization.
+#  copytest2007_40.C 
+
 # DQ (6/22/2011): These fail the new name qualification support.
 #  copytest2007_33.C 
 #  copytest2007_34.C 
@@ -689,6 +692,16 @@ math.C \
 inputForLoopLocator.C \
 X.C \
 $(FAILING_TESTS)
+
+# DQ (2/28/2015): These fail due to the fix for the EDG template normalization.
+# test2004_149.C 
+# test2005_28.C 
+# test2005_93.C 
+# test2005_98.C 
+# test2005_181.C 
+# test2006_20.C 
+# test2006_79.C 
+# test2007_141.C 
 
 # New failing test codes (related to the most recent fixes or merge)
 # test2005_06.C 

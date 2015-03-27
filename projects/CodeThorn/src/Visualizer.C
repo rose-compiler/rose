@@ -17,6 +17,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace CodeThorn;
+using namespace SPRAY;
 
 class AssertionAttribute : public DFAstAttribute {
 public:
@@ -43,11 +44,11 @@ void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
 
 void AssertionExtractor::computeLabelVectorOfEStates() {
   for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
-    Label lab=(*i).label();
-    const PState* p=(*i).pstate();
-    if(assertions[lab]!="")
-      assertions[lab]+="||";
-    assertions[lab]+="(";
+    Label lab=(*i)->label();
+    const PState* p=(*i)->pstate();
+    if(assertions[lab.getId()]!="")
+      assertions[lab.getId()]+="||";
+    assertions[lab.getId()]+="(";
     {
       bool isFirst=true;
       for(PState::const_iterator j=p->begin();j!=p->end();++j) {
@@ -55,22 +56,22 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
         VariableId varId=(*j).first;
         if(p->varIsConst(varId)) {
           if(!isFirst) {
-            assertions[lab]+=" && ";
+            assertions[lab.getId()]+=" && ";
           } else {
             isFirst=false;
           }
-          assertions[lab]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
+          assertions[lab.getId()]+=variableIdMapping->variableName(varId)+"=="+p->varValueToString(varId);
         }
       }
-      const ConstraintSet* cset=(*i).constraints();
+      const ConstraintSet* cset=(*i)->constraints();
       string constraintstring=cset->toAssertionString(variableIdMapping);
       if(!isFirst && constraintstring!="") {
-        assertions[lab]+=" && ";
+        assertions[lab.getId()]+=" && ";
       } else {
         isFirst=false;
       }
-      assertions[lab]+=constraintstring;
-      assertions[lab]+=")";
+      assertions[lab.getId()]+=constraintstring;
+      assertions[lab.getId()]+=")";
     }
   }
 #if 0
@@ -177,6 +178,14 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&boolOptions["tg1-estate-properties"])||(tg2&&boolOptions["tg2-estate-properties"])) {
     ss<<estate->toString(variableIdMapping);
   } 
+  if((tg1&&boolOptions["tg1-estate-predicate"])||(tg2&&boolOptions["tg2-estate-predicate"])) {
+    string s=estate->predicateToString(variableIdMapping);
+    // replace ASCII with HTML characters
+    s=replace_string(s,",","&and;");
+    s=replace_string(s,"!=","&ne;");
+    s=replace_string(s,"==","=");
+    ss<<s;
+  }
   return ss.str();
 }
 
@@ -254,17 +263,162 @@ string Visualizer::transitionGraphToDot() {
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
 
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
-    ss <<"\""<<estateToString((*j).source)<<"\""<< "->" <<"\""<<estateToString((*j).target)<<"\"";
-    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j).edge.source));
-    ss <<"["<<(*j).edge.typesToString()<<"]";
+    ss <<"\""<<estateToString((*j)->source)<<"\""<< "->" <<"\""<<estateToString((*j)->target)<<"\"";
+    ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source));
+    ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
-    ss <<" color="<<(*j).edge.color()<<" ";
-    ss <<" stype="<<(*j).edge.dotEdgeStyle()<<" ";
+    ss <<" color="<<(*j)->edge.color()<<" ";
+    ss <<" stype="<<(*j)->edge.dotEdgeStyle()<<" ";
     ss <<"]"<<";"<<endl;
   }
   tg1=false;
+  return ss.str();
+}
+
+string Visualizer::abstractTransitionGraphToDot() {
+  stringstream ss;
+  string result;
+  // group all states into concrete and abstract ones
+  EStatePtrSet allEStates=transitionGraph->estateSet();
+  EStatePtrSet concreteEStates;
+  EStatePtrSet abstractEStates;
+  for(EStatePtrSet::iterator i=allEStates.begin(); i!=allEStates.end(); ++i) {
+    if ((*i)->isRersTopified(variableIdMapping)) {
+      abstractEStates.insert(*i);
+    } else {
+      concreteEStates.insert(*i);
+    } 
+  }
+  ss << transitionGraphWithIOToDot(concreteEStates, true, boolOptions["keep-error-states"], false);
+  ss << "subgraph cluster_abstractStates {" << endl;
+  ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
+  ss << "}" << endl;
+  return ss.str();
+}
+
+string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
+                                              bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates) {
+  stringstream ss;
+  EStatePtrSet estatePtrSet = displayedEStates;
+  set<int> outputValues;
+  EStatePtrSet abstractInputStates;
+  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+    if ( !includeErrorStates && ((*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ){
+      continue;
+    }
+    if(allignAbstractStates && (*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
+      abstractInputStates.insert(*i);
+    }
+    //represent the current EState
+    bool displayCurrentState = true;
+    if ( uniteOutputFromAbstractStates && (*i)->io.isStdOutIO() && (*i)->isRersTopified(variableIdMapping) ) {
+      int outputVal = (*i)->determineUniqueIOValue().getIntValue();
+      pair<set<int>::iterator, bool> notYetSeen = outputValues.insert(outputVal);
+      if (notYetSeen.second == true) {
+        stringstream temp;
+        temp << "abstractOutput" << outputVal;
+        string outputStateName = temp.str();
+        ss<< outputStateName <<" [label=";
+      } else {
+        displayCurrentState=false;
+      }
+    } else {
+      ss<<"n"<<*i<<" [label=";
+    }
+    AType::ConstIntLattice number=(*i)->determineUniqueIOValue();
+    if (displayCurrentState) {
+      // generate number which is used in IO operation
+      string name="\"";
+      if(boolOptions["rersmode"] && !boolOptions["rers-numeric"]) {
+        if(!number.isTop() && !number.isBot()) {
+          // convert number to letter
+          int num=number.getIntValue();
+          num+='A'-1;
+          char numc=num;
+          stringstream ss;
+          ss<<numc;
+          name+=ss.str();
+        } else {
+          name+=number.toString();
+        }
+      } else {
+        name+=number.toString();
+      }
+      name+="\"";
+      ss<<name;
+      // determine color based on IO type
+      Label lab=(*i)->label();
+      string color="grey";
+      if(labeler->isStdInLabel(lab))
+        color="dodgerblue";
+      if(labeler->isStdOutLabel(lab))
+        color="orange";
+      if(labeler->isStdErrLabel(lab))
+        color="orangered";
+      if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
+         color="black";
+      ss<<" color="<<color<<" style=\"filled\" fontsize=24 ";
+      if((*i)->io.isStdErrIO())
+        ss <<" fontcolor=orangered "; // do not show input value in stdErr states
+      ss<<"];";
+      ss<<endl;
+    }
+    
+    stringstream newedges;
+    // generate constraint on each edge of following state
+    TransitionGraph::TransitionPtrSet outTrans=transitionGraph->outEdges(*i);
+#if 0 // debug only
+    if ((*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
+      int inputVal = (*i)->determineUniqueIOValue().getIntValue();
+      cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
+    }
+#endif
+    for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
+    j!=outTrans.end();
+    ++j) { 
+      const EState* target = (*j)->target;
+      if ( !includeErrorStates && (target->io.isStdErrIO() || target->io.isFailedAssertIO()) ){
+        continue;
+      }
+      if ( uniteOutputFromAbstractStates && (*i)->io.isStdOutIO() && (*i)->isRersTopified(variableIdMapping) ) {
+        int outputVal = (*i)->determineUniqueIOValue().getIntValue();
+        newedges<< "abstractOutput" << outputVal<<"->";
+      } else {
+        newedges<<"n"<<(*j)->source<<"->";
+      }
+      if ( uniteOutputFromAbstractStates && target->io.isStdOutIO() && target->isRersTopified(variableIdMapping) ) {
+        int targetOutputVal = (*j)->target->determineUniqueIOValue().getIntValue();
+        newedges<< "abstractOutput" << targetOutputVal;
+      } else {
+        newedges<<"n"<<(*j)->target;
+      }
+      if(number.isTop()) {
+        newedges<<" [label=\"";
+        newedges<<(*j)->target->constraints()->toString()<<"\"";
+      if((*j)->source==(*j)->target)
+        newedges<<" color=black "; // self-edge-color
+        newedges<<"];"<<endl;
+      }
+      newedges<<endl;
+    }
+    ss<<newedges.str();
+  }
+
+  // allign abstract input and output states
+  if (allignAbstractStates) {
+    ss << "{ rank=same;";
+    for (EStatePtrSet::iterator i = abstractInputStates.begin(); i != abstractInputStates.end(); ++i) {
+      ss << " n" << (*i); 
+    }
+    ss << " }" << endl;
+    ss << "{ rank=same;";
+    for (set<int>::iterator i = outputValues.begin(); i != outputValues.end(); ++i) {
+      ss << " abstractOutput" << (*i); 
+    }
+    ss << " }" << endl;
+  }
   return ss.str();
 }
 
@@ -373,11 +527,11 @@ string Visualizer::foldedTransitionGraphToDot() {
   }
   // generate edges
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    const EState* source=(*j).source;
-    const EState* target=(*j).target;
+    const EState* source=(*j)->source;
+    const EState* target=(*j)->target;
 
     // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
-    if((*j).target->io.op==InputOutput::FAILED_ASSERT) continue;
+    if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
     ss <<"L"<<Labeler::labelToString(source->label())<<":";
     ss <<"\"P"<<estateIdStringWithTemporaries(source)<<"\"";
@@ -386,9 +540,9 @@ string Visualizer::foldedTransitionGraphToDot() {
     ss <<"\"P"<<estateIdStringWithTemporaries(target)<<"\"";
 
     ss<<"[";
-    ss<<"color="<<(*j).edge.color();
+    ss<<"color="<<(*j)->edge.color();
     ss<<" ";
-    ss<<"style="<<(*j).edge.dotEdgeStyle();
+    ss<<"style="<<(*j)->edge.dotEdgeStyle();
     ss<<"]";
     ss<<";"<<endl;
     //ss <<" [label=\""<<SgNodeHelper::nodeToString(getLabeler()->getNode((*j).edge.source))<<"\"]"<<";"<<endl;

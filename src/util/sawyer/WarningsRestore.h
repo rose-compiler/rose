@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 // Do not protect this file with include-once macros.
 
 // This file is the counterpart of <sawyer/WarningsOff.h> and restores warnings to their state before WarningsOff was

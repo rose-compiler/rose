@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_GraphTraversal_H
 #define Sawyer_GraphTraversal_H
 
@@ -359,15 +366,15 @@ protected:
 
     // Mark a vertex as being discovered.  A vertex so marked will not be added to the work list, but will remain in the
     // worklist if it is already present.
-    void setDiscovered(VertexNodeIterator vertex) {
+    void setDiscovered(VertexNodeIterator vertex, bool isDiscovered=true) {
         ASSERT_require(vertex != graph_.vertices().end());
-        verticesDiscovered_.set(vertex->id());
+        verticesDiscovered_.setValue(vertex->id(), isDiscovered);
     }
 
     // Mark an edge as having been entered.  An edge so marked will not be entered again.
-    void setVisited(EdgeNodeIterator edge) {
+    void setVisited(EdgeNodeIterator edge, bool isVisited=true) {
         ASSERT_require(edge != graph_.edges().end());
-        edgesVisited_.set(edge->id());
+        edgesVisited_.setValue(edge->id(), isVisited);
     }
 
     // Reset to an inital empty state.
@@ -600,6 +607,22 @@ public:
                                          traversalEventName(event()) + " event");
         }
         ASSERT_not_reachable("invalid state: event=" + traversalEventName(event()));
+    }
+
+    /** Allow a vertex to be discovered again.
+     *
+     *  Under normal operation, once a vertex is discovered all of its incoming or outgoing edges (depending on the traversal
+     *  direction) are inserted into the worklist. This discovery normally happens once per vertex. However, the vertex can be
+     *  forgotten so that if it's ever discovered by some other edge its incoming or outgoing edges will be inserted into the
+     *  worklist again.  Calling @ref allowRediscovery each time a traversal leaves a vertex during a depth-first traversal
+     *  will result in a traversal that finds all non-cyclic paths, possibly visiting some vertices more than once. */
+    void allowRediscovery(VertexNodeIterator vertex) {
+        if (vertex != graph_.vertices().end()) {
+            setDiscovered(vertex, false);
+            boost::iterator_range<EdgeNodeIterator> edges = nextEdges(vertex, Direction());
+            for (EdgeNodeIterator iter=edges.begin(); iter!=edges.end(); ++iter)
+                setVisited(iter, false);
+        }
     }
     
     /** True if the vertex has been discovered.

@@ -3,7 +3,10 @@
 #include "rose.h"
 #include "DataDependenceVisualizer.h"
 #include "VariableIdUtils.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
+
+using namespace SPRAY;
+using namespace std;
 
 class VariableIdSetAttribute;
 
@@ -94,7 +97,7 @@ void DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileN
   * \author Markus Schordan
   * \date 2013.
  */
-void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalyzer* cfanalyzer, string fileName, bool withDataDependencies) {
+void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
 
   // temporary combersome recomputation
   Flow flow=cfanalyzer->flow(root);
@@ -131,7 +134,6 @@ void DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnaly
           for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
             Label sourceNode=lab;
             Label targetNode=*i;
-            VariableId edgeAnnotation=useVar;
             string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
             stringstream ddedge;
             switch(_mode) {
@@ -202,7 +204,6 @@ void DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
         for(LabelSet::iterator i=defLabSet.begin();i!=defLabSet.end();++i) {
           Label sourceNode=lab;
           Label targetNode=*i;
-          VariableId edgeAnnotation=useVar;
           string edgeAnnotationString=_variableIdMapping->uniqueShortVariableName(useVar);
           switch(_mode) {
           case DDVMODE_USEDEF:

@@ -36,9 +36,9 @@ evaluateSynthesizedAttribute (
 
 #if 0
      printf ("^^^^^ TOP of AST_Rewrite::RewriteTreeTraversal::evaluateSynthesizedAttribute: \n");
-     printf ("    (traversalNodeCounter=%d) (astNode = %s) (synthesizedAttributeList.size() = %zu) \n",
+     printf ("    (traversalNodeCounter=%d) (astNode = %s) (synthesizedAttributeList.size() = %" PRIuPTR ") \n",
           traversalNodeCounter,astNode->sage_class_name(),synthesizedAttributeList.size());
-     printf ("    inheritedValue.declarationContainer->size() = %zu \n",inheritedValue.declarationContainer->size());
+     printf ("    inheritedValue.declarationContainer->size() = %" PRIuPTR " \n",inheritedValue.declarationContainer->size());
      printf ("astNode->unparseToString() = %s \n",astNode->unparseToString().c_str());
 #endif
 
@@ -54,13 +54,13 @@ evaluateSynthesizedAttribute (
   // RewriteSynthesizedAttribute returnSynthesizedAttribute(astNode);
      RewriteSynthesizedAttribute returnSynthesizedAttribute;
 
-  // printf ("    Test 1: inheritedValue.declarationContainer->size() = %zu \n",inheritedValue.declarationContainer->size());
+  // printf ("    Test 1: inheritedValue.declarationContainer->size() = %" PRIuPTR " \n",inheritedValue.declarationContainer->size());
 
   // Accumulate the child attributes into the parent (uses user's operator+= defined for 
   // RewriteSynthesizedAttribute).
      returnSynthesizedAttribute.mergeChildSynthesizedAttributes(synthesizedAttributeList);
 
-  // printf ("    Test 2: inheritedValue.declarationContainer->size() = %zu \n",inheritedValue.declarationContainer->size());
+  // printf ("    Test 2: inheritedValue.declarationContainer->size() = %" PRIuPTR " \n",inheritedValue.declarationContainer->size());
 
      returnSynthesizedAttribute.consistancyCheck("After mergeChildSynthesizedAttributes");
 
@@ -71,11 +71,11 @@ evaluateSynthesizedAttribute (
 
      returnSynthesizedAttribute.consistancyCheck("After += operator");
 
-  // printf ("    Test 3: inheritedValue.declarationContainer->size() = %zu \n",inheritedValue.declarationContainer->size());
+  // printf ("    Test 3: inheritedValue.declarationContainer->size() = %" PRIuPTR " \n",inheritedValue.declarationContainer->size());
 
   // returnSynthesizedAttribute.display("Called from BASE of AST_Rewrite::RewriteTreeTraversal<>::evaluateSynthesizedAttribute()");
 
-  // printf ("In AST_Rewrite::RewriteTreeTraversal::evaluateSynthesizedAttribute(): inheritedValue.declarations.size() = %zu \n",inheritedValue.declarationContainer->size());
+  // printf ("In AST_Rewrite::RewriteTreeTraversal::evaluateSynthesizedAttribute(): inheritedValue.declarations.size() = %" PRIuPTR " \n",inheritedValue.declarationContainer->size());
   // ROSE_ASSERT (inheritedValue.declarationContainer->size() > 0);
 
   // Now call the rewrite mechanism to generate AST fragements from the relavant 

@@ -825,7 +825,6 @@ ControlFlow::fixup_fcall_fret(InsnCFG &cfg, bool preserve_call_fallthrough_edges
     typedef typename boost::graph_traits<InsnCFG>::in_edge_iterator CFG_InEdgeIterator;
     typedef std::pair<CFG_Vertex, CFG_Vertex> CFG_VertexPair;
     typedef Map<SgAsmInstruction*, CFG_Vertex> InsnToVertex;
- // typedef Map<CFG_Vertex, rose_addr_t> CallSites; // return address (or -1) for each call or inter-function branch site
     CFG_Vertex NO_VERTEX = boost::graph_traits<InsnCFG>::null_vertex();
 
     // Build mappings needed later and find the function return points.  We just look for the x86
@@ -1045,7 +1044,7 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
             SgNode *node = get_ast_node(cfg, f.vertices.front());
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node, true);
             char cluster_name[64];
-            sprintf(cluster_name, "cluster_F%"PRIx64, func->get_entry_va());
+            sprintf(cluster_name, "cluster_F%" PRIx64, func->get_entry_va());
             out <<"  subgraph " <<cluster_name <<" {\n"
                 <<"    style=filled;\n"
                 <<"    color=lightgrey;\n"

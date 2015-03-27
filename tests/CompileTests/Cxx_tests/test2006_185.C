@@ -28,9 +28,17 @@ main()
 
   // Original code is: if ((A() && B(C() && D())) || E())
   // Unparsed as: if ((A::A()) && (B::B((C::C()) && (D::D()))) || (E::E()))
+#if (__GNUC__ == 4) && (__GNUC_MINOR__ <= 4)
+  // This example fails for g++ version 4.8.1.
      if ((A() && B(C() && D())) || E())
         {
         }
+#else
+  // This is the only version of code that GNU g++ version 4.8.1 will accept, I think this is a bug in g++ 4.8.1.
+     if ( A() && B(C() && D()) || E())
+        {
+        }
+#endif
 
      return 0;
    }

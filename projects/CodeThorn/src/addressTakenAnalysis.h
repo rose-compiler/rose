@@ -1,5 +1,5 @@
-#ifndef _ADDRESSTAKENANALYSIS_H
-#define _ADDRESSTAKENANALYSIS_H
+#ifndef ADDRESSTAKENANALYSIS_H
+#define ADDRESSTAKENANALYSIS_H
 
 /*************************************************************
  * Copyright: (C) 2013 by Sriram Aananthakrishnan            *
@@ -14,14 +14,15 @@
 #include <set>
 #include "VariableIdUtils.h"
 
-using namespace CodeThorn;
-
 // AST Query Processor
 // common functor to process any query and build match result
 
 /*************************************************
  ***************** ProcessQuery  *****************
  *************************************************/
+
+namespace SPRAY {
+
 class ProcessQuery
 {
   // the root node on which the AST matching needs to be performed
@@ -154,5 +155,7 @@ public:
   VariableIdSet getMemModByPointer();
   VariableIdMapping& getVariableIdMapping();
 };
+
+} // end of namespace SPRAY
 
 #endif

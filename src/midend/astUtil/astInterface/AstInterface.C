@@ -1,5 +1,5 @@
+#include <sage3basic.h>
 #include "AstInterface.h"
-#include <rose.h>
 #include "AstInterface_ROSE.h"
 #include <stdlib.h>
 #include <iostream>
@@ -9,6 +9,8 @@
 
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
+#include "unparser.h"
+#include "unparser_opt.h"
 
 #ifdef _MSC_VER
 #include <io.h>

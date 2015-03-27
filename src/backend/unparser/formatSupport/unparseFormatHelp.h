@@ -10,6 +10,9 @@
 
 // #include "rose.h"
 #include "unparser.h"
+#include <sawyer/Callbacks.h>
+#include <FileSystem.h>
+
 class SgUnparse_Info;
 class SgLocatedNode;
 class Unparser;
@@ -39,6 +42,20 @@ class ROSE_DLL_API UnparseFormatHelp
       // return the value for indentation of code (part of control over style)
       // virtual int maxLineLength (SgLocatedNode*, SgUnparse_Info& info, FormatOpt opt);
          virtual int maxLineLength ();
+
+      // Base class for user-defined callbacks to be invoked immediately after the output file is created
+         class PostOutputCallback {
+         public:
+             struct Args {
+                 SgFile *fileNode;                      // file that was unparsed
+                 rose::FileSystem::Path outputName;           // name of output file
+                 Args(SgFile *fileNode, const rose::FileSystem::Path &outputName): fileNode(fileNode), outputName(outputName) {}
+             };
+             virtual bool operator()(bool chain, const Args&) { return chain; }
+         };
+             
+      // User-defined callbacks invoked immediately after output file is created.
+         Sawyer::Callbacks<PostOutputCallback*> postOutputCallbacks;
    };
 
 

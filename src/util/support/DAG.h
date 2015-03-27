@@ -35,7 +35,7 @@ class ROSE_UTIL_API DAGEdge : public DirectedGraphEdge<Node,Edge>
   virtual ~DAGEdge() {}
   void MoveEndPoint(Node *n, EdgeDirection dir);
   bool IsBackEdge() const;
-  DirectedGraphEdge<Node,Edge>::EndPoint;
+  using DirectedGraphEdge<Node,Edge>::EndPoint;
  friend class DAG<Node,Edge>;
 };
 
@@ -120,7 +120,7 @@ class ROSE_UTIL_API DAG  : public DirectedGraph<Node,Edge>
   DAG() : ordered(true), sort(NON_SORT) {}
   virtual ~DAG() {}
 
-  DirectedGraph<Node,Edge>::GetNodeIterator;
+  using DirectedGraph<Node,Edge>::GetNodeIterator;
 
   void TopoOrderNodes()
   { if (!ordered) {

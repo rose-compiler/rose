@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_AddressMap_H
 #define Sawyer_AddressMap_H
 
@@ -83,6 +90,7 @@ public: // FIXME[Robb Matzke 2014-08-31]: "friend AddressMap" not allowed until 
 public:
     AddressMapConstraints(AddressMap *map)
         : map_(map), never_(false), maxSize_(-1), singleSegment_(false), requiredAccess_(0), prohibitedAccess_(0) {}
+
     operator AddressMapConstraints<const AddressMap>() const {
         AddressMapConstraints<const AddressMap> cc(map_);
         cc.never_ = never_;
@@ -98,90 +106,96 @@ public:
         return cc;
     }
 public:
-    AddressMapConstraints& require(unsigned bits) {
-        requiredAccess_ |= bits;
-        return *this;
+    AddressMapConstraints require(unsigned bits) const {
+        AddressMapConstraints retval = *this;
+        retval.requiredAccess_ |= bits;
+        return retval;
     }
-    AddressMapConstraints& prohibit(unsigned bits) {
-        prohibitedAccess_ |= bits;
-        return *this;
+    AddressMapConstraints prohibit(unsigned bits) const {
+        AddressMapConstraints retval = *this;
+        retval.prohibitedAccess_ |= bits;
+        return retval;
     }
-    AddressMapConstraints& access(unsigned bits) {
+    AddressMapConstraints access(unsigned bits) const {
         return require(bits).prohibit(~bits);
     }
-    AddressMapConstraints& substr(const std::string &s) {
+    AddressMapConstraints substr(const std::string &s) const {
         ASSERT_require(nameSubstring_.empty() || nameSubstring_==s);// substring conjunction not supported
-        nameSubstring_ = s;
+        AddressMapConstraints retval = *this;
+        retval.nameSubstring_ = s;
+        return retval;
+    }
+    AddressMapConstraints any() const {
         return *this;
     }
-    AddressMapConstraints& any() {
-        return *this;
+    AddressMapConstraints none() const {
+        AddressMapConstraints retval = *this;
+        retval.never_ = true;
+        return retval;
     }
-    AddressMapConstraints& none() {
-        never_=true;
-        return *this;
+    AddressMapConstraints at(Address x) const {
+        AddressMapConstraints retval = *this;
+        retval.anchored_ = anchored_ ? *anchored_ & AddressInterval(x) : AddressInterval(x);
+        return retval.anchored_->isEmpty() ? retval.none() : retval;
     }
-    AddressMapConstraints& at(Address x) {
-        anchored_ = anchored_ ? *anchored_ & AddressInterval(x) : AddressInterval(x);
-        if (anchored_->isEmpty())
-            none();
-        return *this;
+    AddressMapConstraints at(const Sawyer::Container::Interval<Address> &x) const {
+        AddressMapConstraints retval = *this;
+        retval.anchored_ = anchored_ ? *anchored_ & x : x;
+        return retval.anchored_->isEmpty() ? retval.none() : retval.atOrAfter(x.least()).atOrBefore(x.greatest());
     }
-    AddressMapConstraints& at(const Sawyer::Container::Interval<Address> &x) {
-        anchored_ = anchored_ ? *anchored_ & x : x;
-        return anchored_->isEmpty() ? none() : atOrAfter(x.least()).atOrBefore(x.greatest());
+    AddressMapConstraints limit(size_t x) const {
+        AddressMapConstraints retval = *this;
+        retval.maxSize_ = std::min(maxSize_, x);
+        return 0 == retval.maxSize_ ? retval.none() : retval;
     }
-    AddressMapConstraints& limit(size_t x) {
-        if (0 == (maxSize_ = std::min(maxSize_, x)))
-            none();
-        return *this;
-    }
-    AddressMapConstraints& atOrAfter(Address least) {
+    AddressMapConstraints atOrAfter(Address least) const {
+        AddressMapConstraints retval = *this;
         if (least_) {
-            least_ = std::max(*least_, least);
+            retval.least_ = std::max(*least_, least);
         } else {
-            least_ = least;
+            retval.least_ = least;
         }
-        if (greatest_ && *greatest_ < *least_)
-            none();
-        return *this;
+        if (greatest_ && *greatest_ < *retval.least_)
+            retval.none();
+        return retval;
     }
-    AddressMapConstraints& atOrBefore(Address greatest) {
+    AddressMapConstraints atOrBefore(Address greatest) const {
+        AddressMapConstraints retval = *this;
         if (greatest_) {
-            greatest_ = std::min(*greatest_, greatest);
+            retval.greatest_ = std::min(*greatest_, greatest);
         } else {
-            greatest_ = greatest;
+            retval.greatest_ = greatest;
         }
-        if (least_ && *least_ > *greatest_)
-            none();
-        return *this;
+        if (least_ && *least_ > *retval.greatest_)
+            retval.none();
+        return retval;
     }
-    AddressMapConstraints& within(const Sawyer::Container::Interval<Address> &x) {
+    AddressMapConstraints within(const Sawyer::Container::Interval<Address> &x) const {
         return x.isEmpty() ? none() : atOrAfter(x.least()).atOrBefore(x.greatest());
     }
-    AddressMapConstraints& within(Address lo, Address hi) {
+    AddressMapConstraints within(Address lo, Address hi) const {
         return lo<=hi ? within(Sawyer::Container::Interval<Address>::hull(lo, hi)) : none();
     }
-    AddressMapConstraints& baseSize(Address base, Address size) {
+    AddressMapConstraints baseSize(Address base, Address size) const {
         return size>0 ? atOrAfter(base).atOrBefore(base+size-1) : none();
     }
-    AddressMapConstraints& after(Address x) {
+    AddressMapConstraints after(Address x) const {
         return x==boost::integer_traits<Address>::const_max ? none() : atOrAfter(x+1);
     }
-    AddressMapConstraints& before(Address x) {
+    AddressMapConstraints before(Address x) const {
         return x==boost::integer_traits<Address>::const_min ? none() : atOrBefore(x-1);
     }
-    AddressMapConstraints& singleSegment() {
-        singleSegment_ = true;
-        return *this;
+    AddressMapConstraints singleSegment() const {
+        AddressMapConstraints retval = *this;
+        retval.singleSegment_ = true;
+        return retval;
     }
-    AddressMapConstraints& segmentPredicate(SegmentPredicate<Address, Value> *p) {
-        if (p) {
-            segmentPredicates_.append(p);
-        } else {
-            none();
-        }
-        return *this;
+    AddressMapConstraints segmentPredicate(SegmentPredicate<Address, Value> *p) const {
+        if (!p)
+            return none();
+        AddressMapConstraints retval = *this;
+        retval.segmentPredicates_.append(p);
+        return retval;
     }
 public:
     // true if we need to iterate over segments to find the end point
@@ -231,6 +245,16 @@ public:
         return map_->findNode(*this, flags);
     }
 
+    template<typename Functor>
+    void
+    traverse(Functor &functor, MatchFlags flags=0) const {
+        return map_->traverse(functor, *this, flags);
+    }
+    void
+    traverse(typename AddressMap::Visitor &visitor, MatchFlags flags=0) const {
+        return map_->traverse<typename AddressMap::Visitor>(visitor, *this, flags);
+    }
+    
     Sawyer::Container::Interval<Address>
     read(typename AddressMap::Value *buf /*out*/, MatchFlags flags=0) const {
         return map_->read(buf, *this, flags);
@@ -740,8 +764,26 @@ public:
     /** Copy constructor.
      *
      *  The new address map has the same addresses mapped to the same buffers as the @p other map.  The buffers themselves are
-     *  not copied since they are reference counted. */
-    AddressMap(const AddressMap &other): Super(other) {}
+     *  not copied since they are reference counted.
+     *
+     *  If @p copyOnWrite is set then the buffers are marked so that any subsequent write to that buffer via the @ref write
+     *  method from any AddressMap object will cause a new copy to be created and used by the AddressMap that's doing the
+     *  writing. One should be careful when buffers are intended to be shared because setting the copy-on-write bit on the
+     *  buffer will cause the sharing to be broken.  For example, if map1 is created and then copied into map2 with the
+     *  copy-on-write bit cleared, then any writes to the buffer via map1 will be visible when reading from map2 and vice
+     *  versa.  However, if map3 is then created by copying either map1 or map2 with the copy-on-write bit set, then writes to
+     *  any of the three maps will cause that map to obtain an independent copy of the buffer, effectively removing the sharing
+     *  that was intended between map1 and map2.  Another thing to be aware of is that some buffer types will return a
+     *  different buffer type when they're copied.  For instance, copying a @ref StaticBuffer or @ref MappedBuffer will return
+     *  an @ref AllocatingBuffer. */
+    AddressMap(const AddressMap &other, bool copyOnWrite=false): Super(other) {
+        if (copyOnWrite) {
+            BOOST_FOREACH (Segment &segment, this->values()) {
+                if (const typename Buffer::Ptr &buffer = segment.buffer())
+                    buffer->copyOnWrite(true);
+            }
+        }
+    }
 
     /** Constraint: required access bits.
      *
@@ -1161,12 +1203,11 @@ public:
      *  }
      * @endcode */
     Optional<Address>
-    next(AddressMapConstraints<const AddressMap> c, MatchFlags flags=0) const {
+    next(const AddressMapConstraints<const AddressMap> &c, MatchFlags flags=0) const {
         using namespace AddressMapImpl;
         if (0==(flags & (MATCH_CONTIGUOUS|MATCH_NONCONTIGUOUS)))
             flags |= MATCH_CONTIGUOUS;
-        c.limit(1);                                     // no need to test segments beyond the first match
-        MatchedConstraints<const AddressMap> m = matchConstraints(*this, c, flags);
+        MatchedConstraints<const AddressMap> m = matchConstraints(*this, c.limit(1), flags);
         return m.interval_.isEmpty() ? Optional<Address>() : Optional<Address>(m.interval_.least());
     }
 
@@ -1201,13 +1242,11 @@ public:
      *  Finds the node that contains the first (or last, depending on direction) address that satisfies the constraints.
      *
      * @{ */
-    ConstNodeIterator findNode(AddressMapConstraints<const AddressMap> c, MatchFlags flags=0) const {
-        c.limit(1);
-        return nodes(c, flags).begin();
+    ConstNodeIterator findNode(const AddressMapConstraints<const AddressMap> &c, MatchFlags flags=0) const {
+        return nodes(c.limit(1), flags).begin();
     }
-    NodeIterator findNode(AddressMapConstraints<AddressMap> c, MatchFlags flags=0) {
-        c.limit(1);
-        return nodes(c, flags).begin();
+    NodeIterator findNode(const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
+        return nodes(c.limit(1), flags).begin();
     }
     /** @} */
 
@@ -1280,7 +1319,67 @@ public:
         }
         return Nothing();
     }
-    
+
+    /** Base class for traversals. */
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+        virtual bool operator()(const AddressMap&, const Sawyer::Container::Interval<Address>&) = 0;
+    };
+
+    /** Invoke a function on each address interval.
+     *
+     *  The functor is invoked with the following arguments: the memory map and an interval.  If the functor returns false then
+     *  the traversal is terminated.  To facilitate the use of function-local types for the functor without requiring the use
+     *  of explicit template parameters, one may pass a subclass of @ref Visitor as the functor.
+     *
+     *  This example shows one way to print the names of segments that overlap with a given interval:
+     *
+     * @code
+     *  typedef AddressMap<unsigned, char> Map;
+     *  struct: Visitor {
+     *      bool operator()(const Map &map, const Interval<unsigned> &interval) {
+     *          const Map::Segment &segment = map.at(interval.least()).findNode()->value();
+     *          std::cerr <<"segment \"" <<segment.name() <<"\"\n";
+     *          return true;
+     *      }
+     *  } visitor;
+     *  Map map = ...;
+     *  Interval<unsigned> where = ...;
+     *  map.within(where).traverse(visitor);
+     * @endcode
+     *
+     * @{ */
+    template<typename Functor>
+    void traverse(Functor &functor, const AddressMapConstraints<const AddressMap> &c, MatchFlags flags=0) const {
+        using namespace AddressMapImpl;
+        MatchedConstraints<const AddressMap> m = matchConstraints(*this, c, flags);
+        BOOST_FOREACH (const Node &node, m.nodes_) {
+            Sawyer::Container::Interval<Address> part = m.interval_ & node.key();
+            if (!functor(*this, part))
+                return;
+        }
+        return;
+    }
+    template<typename Functor>
+    void traverse(Functor &functor, const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
+        using namespace AddressMapImpl;
+        MatchedConstraints<AddressMap> m = matchConstraints(*this, c, flags);
+        BOOST_FOREACH (const Node &node, m.nodes_) {
+            Sawyer::Container::Interval<Address> part = m.interval_ & node.key();
+            if (!functor(*this, part))
+                return;
+        }
+        return;
+    }
+    void traverse(Visitor &visitor, const AddressMapConstraints<const AddressMap> &c, MatchFlags flags=0) const {
+        traverse<Visitor>(visitor, c, flags);
+    }
+    void traverse(Visitor &visitor, const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
+        traverse<Visitor>(visitor, c, flags);
+    }
+    /** @} */
+
     /** Reads data into the supplied buffer.
      *
      *  Reads data into an array or STL vector according to the specified constraints.  If the array is a null pointer then no
@@ -1343,9 +1442,8 @@ public:
     }
 
     Sawyer::Container::Interval<Address>
-    read(std::vector<Value> &buf /*out*/, AddressMapConstraints<const AddressMap> c, MatchFlags flags=0) const {
-        c.limit(buf.size());
-        return buf.empty() ? Sawyer::Container::Interval<Address>() : read(&buf[0], c, flags);
+    read(std::vector<Value> &buf /*out*/, const AddressMapConstraints<const AddressMap> &c, MatchFlags flags=0) const {
+        return buf.empty() ? Sawyer::Container::Interval<Address>() : read(&buf[0], c.limit(buf.size()), flags);
     }
     /** @} */
     
@@ -1382,13 +1480,12 @@ public:
      *
      * @{ */
     Sawyer::Container::Interval<Address>
-    write(const Value *buf, AddressMapConstraints<AddressMap> c, MatchFlags flags=0) {
+    write(const Value *buf, const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
         using namespace AddressMapImpl;
         ASSERT_require2(0 == (flags & MATCH_NONCONTIGUOUS), "only contiguous addresses can be written");
         if (0==(flags & (MATCH_CONTIGUOUS|MATCH_NONCONTIGUOUS)))
             flags |= MATCH_CONTIGUOUS;
-        c.prohibit(Access::IMMUTABLE);                  // don't ever write to buffers that can't be modified
-        MatchedConstraints<AddressMap> m = matchConstraints(*this, c, flags);
+        MatchedConstraints<AddressMap> m = matchConstraints(*this, c.prohibit(Access::IMMUTABLE), flags);
         if (buf) {
             BOOST_FOREACH (Node &node, m.nodes_) {
                 Segment &segment = node.value();
@@ -1397,17 +1494,14 @@ public:
                 typename Buffer::Ptr buffer = segment.buffer();
                 ASSERT_not_null(buffer);
 
-                if (segment.isCopyOnWrite()) {
-                    typename Buffer::Ptr newBuffer = buffer->copy();
+                if (buffer->copyOnWrite()) {
+                    typename Buffer::Ptr newBuffer = buffer->copy(); // copyOnWrite is cleared in newBuffer
                     ASSERT_not_null(newBuffer);
                     for (NodeIterator iter=this->lowerBound(node.key().least()); iter!=nodes().end(); ++iter) {
-                        if (iter->value().buffer() == buffer) {
+                        if (iter->value().buffer() == buffer)
                             iter->value().buffer(newBuffer);
-                            iter->value().clearCopyOnWrite();
-                        }
                     }
                     buffer = newBuffer;
-                    ASSERT_forbid(segment.isCopyOnWrite());
                 }
 
                 Address bufferOffset = part.least() - node.key().least() + segment.offset();
@@ -1423,9 +1517,8 @@ public:
     }
 
     Sawyer::Container::Interval<Address>
-    write(const std::vector<Value> &buf, AddressMapConstraints<AddressMap> c, MatchFlags flags=0) {
-        c.limit(buf.size());
-        return buf.empty() ? Sawyer::Container::Interval<Address>() : write(&buf[0], c, flags);
+    write(const std::vector<Value> &buf, const AddressMapConstraints<AddressMap> &c, MatchFlags flags=0) {
+        return buf.empty() ? Sawyer::Container::Interval<Address>() : write(&buf[0], c.limit(buf.size()), flags);
     }
     /** @} */
 

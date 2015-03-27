@@ -10,22 +10,22 @@ using this memory map for disassembly:
 0x000000cc: Basic block reasons: graph-1
 0x000000cc: Predecessor blocks: 0x00000117
 0x000000cc: Dominator block: 0x00000117
-0x000000cc: 8a 8c 30 02             |..0.    |   mov    cl, BYTE PTR ds:[si + 0x0230<560>]
+0x000000cc: 8a 8c 30 02             |..0.    |   mov    cl, byte ds:[si + 0x0230<560>]
 0x000000d0: e8 4d 00                |.M.     |   call   0x0120<288,<Func>>
 0x000000d0: Successor blocks: 0x000000d3, 0x00000120<<Func>>
 
 0x000000d3: Basic block reasons: graph-1
 0x000000d3: Predecessor blocks: 0x000000cc, 0x000000ea
 0x000000d3: Dominator block: 0x000000cc
-0x000000d3: 8a 97 42 02             |..B.    |   mov    dl, BYTE PTR ds:[bx + 0x0242<578>]
+0x000000d3: 8a 97 42 02             |..B.    |   mov    dl, byte ds:[bx + 0x0242<578>]
 0x000000d7: 8b ea                   |..      |   mov    bp, dx
 0x000000d7: Successor blocks: 0x000000d9
 
 0x000000d9: Basic block reasons: graph-1
 0x000000d9: Predecessor blocks: 0x000000d3, 0x000000d9
 0x000000d9: Dominator block: 0x000000d3
-0x000000d9: 26 88 4e 00             |&.N.    |   mov    BYTE PTR es:[bp + 0x0000], cl
-0x000000dd: 26 88 9e 00 01          |&....   |   mov    BYTE PTR es:[bp + 0x0100<256,<Func>>], bl
+0x000000d9: 26 88 4e 00             |&.N.    |   mov    byte es:[bp + 0x0000], cl
+0x000000dd: 26 88 9e 00 01          |&....   |   mov    byte es:[bp + 0x0100<256,<Func>>], bl
 0x000000e2: 03 e8                   |..      |   add    bp, ax
 0x000000e4: 81 fd 00 01             |....    |   cmp    bp, 0x0100<256,<Func>>
 0x000000e8: 72 ef                   |r.      |   jb     0x00d9<<Insn>>
@@ -42,7 +42,7 @@ using this memory map for disassembly:
 0x000000ef: Basic block reasons: graph-1
 0x000000ef: Predecessor blocks: 0x000000ea
 0x000000ef: Dominator block: 0x000000ea
-0x000000ef: 8a 8c 39 02             |..9.    |   mov    cl, BYTE PTR ds:[si + 0x0239<569>]
+0x000000ef: 8a 8c 39 02             |..9.    |   mov    cl, byte ds:[si + 0x0239<569>]
 0x000000f3: e8 2a 00                |.*.     |   call   0x0120<288,<Func>>
 0x000000f3: Successor blocks: 0x000000f6, 0x00000120<<Func>>
 
@@ -55,7 +55,7 @@ using this memory map for disassembly:
 0x000000f8: Basic block reasons: graph-1
 0x000000f8: Predecessor blocks: 0x000000f6, 0x00000112
 0x000000f8: Dominator block: 0x00000112
-0x000000f8: 8a 97 82 02             |....    |   mov    dl, BYTE PTR ds:[bx + 0x0282<642>]
+0x000000f8: 8a 97 82 02             |....    |   mov    dl, byte ds:[bx + 0x0282<642>]
 0x000000fc: 8b ea                   |..      |   mov    bp, dx
 0x000000fe: 43                      |C       |   inc    bx
 0x000000ff: 43                      |C       |   inc    bx
@@ -63,8 +63,8 @@ using this memory map for disassembly:
 
 0x00000100: Basic block reasons: entry point, graph-1
 0x00000100: Predecessor blocks: 0x00000100, 0x000000f8
-0x00000100: 26 88 8e 00 02          |&....   |   mov    BYTE PTR es:[bp + 0x0200<512>], cl
-0x00000105: 26 88 9e 00 03          |&....   |   mov    BYTE PTR es:[bp + 0x0300<768>], bl
+0x00000100: 26 88 8e 00 02          |&....   |   mov    byte es:[bp + 0x0200<512>], cl
+0x00000105: 26 88 9e 00 03          |&....   |   mov    byte es:[bp + 0x0300<768>], bl
 0x0000010a: 03 e8                   |..      |   add    bp, ax
 0x0000010c: 81 fd 00 01             |....    |   cmp    bp, 0x0100<256,<Func>>
 0x00000110: 72 ee                   |r.      |   jb     0x0100<256,<Func>>

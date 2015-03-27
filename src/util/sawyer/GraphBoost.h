@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 // Boost Graph Library (BGL) interface around Sawyer::Container::Graph
 #ifndef Sawyer_GraphBoost_H
 #define Sawyer_GraphBoost_H

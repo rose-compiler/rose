@@ -110,7 +110,7 @@ find=
 fetch="$manifest"
 generate=
 hasher=generate_edg_hash
-ntries=500
+ntries=1
 progress=
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -133,6 +133,17 @@ if [ "$#" -gt 1 ]; then
 fi
 commit="${1-HEAD}"
 
+#------------------------------------------------------------------------------------------------------------------------
+show_introduction () {
+    echo "  EDG is the C/C++ frontend from the Edison Design Group and is not distributed"
+    echo "  as part of the ROSE source code. However, the ROSE team routinely compiles"
+    echo "  EDG and makes binary versions available for download and linking with ROSE."
+    echo "  The binary version of EDG must be compatible with the version of ROSE with"
+    echo "  which it is being linked, and we use hashes to compute the EDG binary version"
+    echo "  number from its ROSE dependecies with \$ROSE/scripts/$myname."
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Find the top of the ROSE source tree. We do that by assuming that this script lives in ROSE's "scripts". A better way
 # might be to scan upward throught the directory hierarchy until we reach a directory that contains a ".git" directory, but
 # we can't assume that we even have a git repo (the user might have downloaded a ROSE tarball).
@@ -199,7 +210,18 @@ get_available_edg_versions () {
 	EDGBIN_REMOTE_TARBALLS="${EDGBIN_REMOTE_TARBALLS#EDGBIN_REMOTE_TARBALLS*=}"
 	local wget_switches=
 	[ "$find" != "verbose" ] && wget_switches=--quiet
-	wget $wget_switches -O "$manifest" "$EDGBIN_REMOTE_TARBALLS/$manifest" || exit 1
+	if ! wget $wget_switches -O "$manifest" "$EDGBIN_REMOTE_TARBALLS/$manifest"; then
+	    echo "*** error downloading EDG binary manifest" >&2
+	    show_introduction >&2
+	    echo >&2
+	    echo "  The list of available EDG binary tarballs could not be downloaded. You can" >&2
+	    echo "  try to download the file manually." >&2
+	    echo >&2
+	    echo "  Download: $EDGBIN_REMOTE_TARBALLS/$manifest" >&2
+	    echo "  Save as: $(pwd)/$manifest" >&2
+	    echo >&2
+            exit 1
+        fi
     fi
     local nversions=$(grep '^[0-9a-f]' "$manifest" |wc -l)
     if [ $nversions -eq 0 ]; then
@@ -274,11 +296,11 @@ else
 
     # Try to find the best version (which requires us to be in a git repository)
     if [ "$sig" = "" ] && is_git_repo; then
-        [ -n "$progress" ] && echo -n "checking" >&2
+        [ -n "$progress" ] && echo -n "checking for EDG (SHA1)..." >&2
 	sig=$(find_best_edg_version $commit generate_edg_hash)
     fi
     if [ "$sig" = "" ] && is_git_repo; then
-	[ -n "$progress" ] && echo -n "checking (old)" >&2
+	[ -n "$progress" ] && echo -n "checking for EDG (MD5)..." >&2
 	sig=$(find_best_edg_version $commit generate_edg_hash_old)  #DEPRECATED
     fi
     
@@ -286,25 +308,52 @@ else
     # Diagnostics
     if [ "$sig" = "" ]; then
 	(
-	    echo "$myname: could not find a reasonable version of the EDG binary."
-	    echo "$myname: include the following information in your bug report:"
+	    echo
+	    echo "*** error finding EDG binary version"
+	    if [ $ntries -eq 1 ]; then
+		echo "$myname: could not find an exact version of the EDG binary."
+	    else
+		echo "$myname: could not find a close enough version of the EDG binary."
+	    fi
+
+	    show_introduction
+
+	    if [ $ntries -eq 1 ]; then
+		echo
+		echo "  We could not find a version of EDG that is an exact match"
+		echo "  for your version of ROSE.  If you're feeling lucky, you can try extending"
+		echo "  the search and choosing a close match, but there is no guarantee that"
+		echo "  the chosen binary EDG will be compatible with your version of ROSE--be"
+		echo "  ready for strange behavior, core dumps, etc.  You can perform an extended"
+		echo "  search by using the --ntries=N switch for this script ($myname),"
+		echo "  or running \"make EDGBIN_NTRIES=N\"."
+	    else
+		echo "  We could not find a close version of EDG within $ntries tries."
+	    fi
+
+	    echo
+	    echo "  The following information is relevant:"
 	    echo "    Time          = $(date)"
 	    echo "    ROSE src dir  = $ROSE_SRC"
+	    echo -n "    nTries        = $ntries"
+	    [ $ntries -eq 1 ] || echo -n " (caveat emptor)"
+	    echo
 	    if is_git_repo; then
 		echo "    Commit        = $(cd $ROSE_SRC && git rev-parse $commit) $commit"
 	    else
 		echo "    Commit        = <this is not a Git repository>"
 	    fi
 	    if [ -r "$manifest" ]; then
-		echo "    Manifest file = $(cd $ROSE_SRC && git hash-object $manifest) $localdir"
+		echo "    Manifest file = $(git hash-object $manifest)"
 		echo "    Num versions  = $(grep '^[0-9a-f]' $manifest |wc -l)"
 	    else
 		echo "    Manifest file = not found"
 	    fi
 	    if is_git_repo; then
-		echo "    Here          = $(generate_edg_hash $commit)"
-		echo "    Here (old)    = $(generate_edg_hash_old $commit)" #DEPRECATED
+		echo "    Need (SHA1)   = $(generate_edg_hash $commit)"
+		echo "    Need (MD5)    = $(generate_edg_hash_old $commit)" #DEPRECATED
 	    fi
+	    echo
 	) >&2
 	exit 1
     fi

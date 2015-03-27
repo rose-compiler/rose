@@ -44,6 +44,12 @@ AppendToFile(const std::string& filename, const std::string& msg);
 std::map<std::string, std::string>
 CreateExpectationsMap(const std::string& filename);
 
+/**
+ * @returns A vector of all filenames from the commandline.
+ */
+std::vector<std::string>
+GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv);
+
 int
 main(int argc, char * argv[])
 {
@@ -62,6 +68,7 @@ main(int argc, char * argv[])
   rose_cmdline.push_back("-rose:keep_going");
 
   {// CLI
+      std::string cli_list_filenames        = "--list-filenames"; // deprecated 2013-11-2
       std::string cli_report                = "--report="; // deprecated 2013-11-2
       std::string cli_report__fail          = "--report-fail=";
       std::string cli_report__pass          = "--report-pass=";
@@ -70,6 +77,7 @@ main(int argc, char * argv[])
       std::string cli_strip_path_prefix     = "--strip-path-prefix=";
       std::string cli_enable_ast_tests      = "--enable-ast-tests";
       std::string cli_verbose               = "--verbose";
+      std::string cli_silent                = "--silent";
 
       for (int ii = 1; ii < argc; ++ii)
       {
@@ -85,6 +93,26 @@ main(int argc, char * argv[])
           else if (arg.find(cli_verbose) == 0)
           {
               verbose = true;
+          }
+          // --silent
+          else if (arg.find(cli_silent) == 0)
+          {
+              verbose = false;
+          }
+          // --list-filenames
+          else if (arg.find(cli_list_filenames) == 0)
+          {
+              arg.replace(0, cli_list_filenames.length(), "");
+              {
+                  std::vector<std::string> filenames =
+                      GetSourceFilenamesFromCommandline(
+                          std::vector<std::string>(argv, argv + argc));
+                  BOOST_FOREACH(std::string filename, filenames)
+                  {
+                      std::cout << filename << std::endl;
+                  }
+              }
+              return 0;
           }
           // --report=<filename>
           else if (arg.find(cli_report) == 0)
@@ -227,7 +255,7 @@ main(int argc, char * argv[])
       if (verbose)
       {
           std::cout
-              << "ROSE Commandline: "
+              << "[INFO] ROSE Commandline: "
               << boost::algorithm::join(rose_cmdline, " ")
               << std::endl;
       }
@@ -253,10 +281,13 @@ main(int argc, char * argv[])
       }
       else
       {
-          std::cout
-              << "[INFO] "
-              << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
-              << std::endl;
+          if (verbose)
+          {
+              std::cerr
+                  << "[INFO] "
+                  << "Skipping AST consistency tests; turn them on with '--enable-ast-tests'"
+                  << std::endl;
+          }
       }
   }
 
@@ -416,6 +447,9 @@ ShowUsage(std::string program_name)
   std::cerr
     << "Usage: " << program_name << " [--help] [ROSE Commandline]\n"
     << "Options:\n"
+    << "  --list-filenames                Prints the filename(s), computed by the ROSE commandline handling,\n"
+    << "                                  onto standard out. Each filename is separated by a new line.\n"
+    << "\n"
     << "  --report-pass=<filename>        File to write report of passes\n"
     << "  --report-fail=<filename>        File to write report of failurest\n"
     << "  --expected-failures=<filename>  File containing filenames that are expected to fail\n"
@@ -426,6 +460,7 @@ ShowUsage(std::string program_name)
     << "\n"
     << "  -h,--help                       Show this help message\n"
     << "  --verbose                       Enables debugging output, e.g. outputs successful files\n"
+    << "  --silent                        Disables debugging output\n"
     << std::endl;
 }
 
@@ -588,5 +623,13 @@ CreateExpectationsMap(const std::string& filename)
   fin.close();
 
   return expectations;
+}
+
+std::vector<std::string>
+GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
+{
+  std::vector<std::string> filenames =
+      CommandlineProcessing::generateSourceFilenames(argv, false);
+  return filenames;
 }
 

@@ -10,6 +10,8 @@
 
 using std::cout;
 using std::endl;
+using namespace SPRAY;
+using namespace std;
 
 namespace po = boost::program_options;
 

@@ -55,14 +55,14 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 
 0x080482a0: ================================== Function (function call, import) <malloc@plt>
 
-0x080482a0: ff 25 a8 95 04 08       |.%....  | F080482a0 E1....    jmp    DWORD PTR ds:[0x080495a8<.got.plt+0x0c>]
+0x080482a0: ff 25 a8 95 04 08       |.%....  | F080482a0 E1....    jmp    dword ds:[0x080495a8<.got.plt+0x0c>]
 
 0x080482a6: 68 00 00 00 00 e9 e0 ff |h.......|
 0x080482ae: ff ff                   |..      | F080482a0 ..M001  10 bytes untyped data beginning at 0x080482a6
 
 0x080482b0: ================================== Function (function call, import) <__libc_start_main@plt>
 
-0x080482b0: ff 25 ac 95 04 08       |.%....  | F080482b0 E1....    jmp    DWORD PTR ds:[0x080495ac<.got.plt+0x10>]
+0x080482b0: ff 25 ac 95 04 08       |.%....  | F080482b0 E1....    jmp    dword ds:[0x080495ac<.got.plt+0x10>]
 
 0x080482b6: 68 08 00 00 00 e9 d0 ff |h.......|
 0x080482be: ff ff                   |..      | F080482b0 ..M001  10 bytes untyped data beginning at 0x080482b6
@@ -97,7 +97,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x080482ed: 5b                      |[       |                     pop    ebx
 0x080482ee: 81 c3 af 12 00 00       |......  |                     add    ebx, 0x000012af<4783>
 0x080482f4: 52                      |R       |                     push   edx
-0x080482f5: 8b 83 fc ff ff ff       |......  |                     mov    eax, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x080482f5: 8b 83 fc ff ff ff       |......  |                     mov    eax, dword ds:[ebx + 0xfffffffc<-4>]
 0x080482fb: 85 c0                   |..      |                     test   eax, eax
 0x080482fd: 74 02                   |t.      |                     je     0x08048301<<Insn>>
 
@@ -116,21 +116,21 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x08048310: 55                      |U       | F08048310 E1....    push   ebp
 0x08048311: 89 e5                   |..      |                     mov    ebp, esp
 0x08048313: 83 ec 08                |...     |                     sub    esp, 0x08
-0x08048316: 80 3d bc 95 04 08 00    |.=..... |                     cmp    BYTE PTR ds:[0x080495bc<.bss>], 0x00
+0x08048316: 80 3d bc 95 04 08 00    |.=..... |                     cmp    byte ds:[0x080495bc<.bss>], 0x00
 0x0804831d: 74 0c                   |t.      |                     je     0x0804832b<<Insn>>
 
 0x0804831f: eb 1c                   |..      | F08048310 .1....    jmp    0x0804833d<<Insn>>
 
 0x08048321: 83 c0 04                |...     | F08048310 .1....    add    eax, 0x04
-0x08048324: a3 b8 95 04 08          |.....   |                     mov    DWORD PTR ds:[0x080495b8<.data+8>], eax
+0x08048324: a3 b8 95 04 08          |.....   |                     mov    dword ds:[0x080495b8<.data+8>], eax
 0x08048329: ff d2                   |..      |                     call   edx
 
-0x0804832b: a1 b8 95 04 08          |.....   | F08048310 .1....    mov    eax, DWORD PTR ds:[0x080495b8<.data+8>]
-0x08048330: 8b 10                   |..      |                     mov    edx, DWORD PTR ds:[eax]
+0x0804832b: a1 b8 95 04 08          |.....   | F08048310 .1....    mov    eax, dword ds:[0x080495b8<.data+8>]
+0x08048330: 8b 10                   |..      |                     mov    edx, dword ds:[eax]
 0x08048332: 85 d2                   |..      |                     test   edx, edx
 0x08048334: 75 eb                   |u.      |                     jne    0x08048321<<Insn>>
 
-0x08048336: c6 05 bc 95 04 08 01    |....... | F08048310 .1....    mov    BYTE PTR ds:[0x080495bc<.bss>], 0x01
+0x08048336: c6 05 bc 95 04 08 01    |....... | F08048310 .1....    mov    byte ds:[0x080495bc<.bss>], 0x01
 
 0x0804833d: c9                      |.       | F08048310 .1....    leave  
 0x0804833e: c3                      |.       |                     ret    
@@ -142,7 +142,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x08048340: 55                      |U       | F08048340 E1....    push   ebp
 0x08048341: 89 e5                   |..      |                     mov    ebp, esp
 0x08048343: 83 ec 08                |...     |                     sub    esp, 0x08
-0x08048346: a1 cc 94 04 08          |.....   |                     mov    eax, DWORD PTR ds:[0x080494cc<.jcr>]
+0x08048346: a1 cc 94 04 08          |.....   |                     mov    eax, dword ds:[0x080494cc<.jcr>]
 0x0804834b: 85 c0                   |..      |                     test   eax, eax
 0x0804834d: 74 12                   |t.      |                     je     0x08048361<<Insn>>
 
@@ -150,7 +150,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x08048354: 85 c0                   |..      |                     test   eax, eax
 0x08048356: 74 09                   |t.      |                     je     0x08048361<<Insn>>
 
-0x08048358: c7 04 24 cc 94 04 08    |..$.... | F08048340 FH....    mov    DWORD PTR ss:[esp], 0x080494cc<.jcr>
+0x08048358: c7 04 24 cc 94 04 08    |..$.... | F08048340 FH....    mov    dword ss:[esp], 0x080494cc<.jcr>
 0x0804835f: ff d0                   |..      |                     call   eax
 
 0x08048361: c9                      |.       | F08048340 .1....    leave  
@@ -162,7 +162,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 
 0x08048364: 8d 4c 24 04             |.L$.    | F08048364 E1....    lea    ecx, [esp + 0x04]
 0x08048368: 83 e4 f0                |...     |                     and    esp, 0xf0<-16>
-0x0804836b: ff 71 fc                |.q.     |                     push   DWORD PTR ds:[ecx + 0xfc<-4>]
+0x0804836b: ff 71 fc                |.q.     |                     push   dword ds:[ecx + 0xfc<-4>]
 
 0x0804836e: ================================== Function (pattern) unknown name
 
@@ -170,27 +170,27 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x0804836f: 89 e5                   |..      |                     mov    ebp, esp
 0x08048371: 51                      |Q       |                     push   ecx
 0x08048372: 83 ec 14                |...     |                     sub    esp, 0x14
-0x08048375: c7 04 24 28 00 00 00    |..$(... |                     mov    DWORD PTR ss:[esp], 0x00000028
+0x08048375: c7 04 24 28 00 00 00    |..$(... |                     mov    dword ss:[esp], 0x00000028
 0x0804837c: e8 1f ff ff ff          |.....   |                     call   0x080482a0<malloc@plt>
 
-0x08048381: 89 45 f0                |.E.     | F0804836e .1....    mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
-0x08048384: c7 45 f4 00 00 00 00    |.E..... |                     mov    DWORD PTR ss:[ebp + 0xf4<-12>], 0x00000000
-0x0804838b: c7 45 f4 00 00 00 00    |.E..... |                     mov    DWORD PTR ss:[ebp + 0xf4<-12>], 0x00000000
+0x08048381: 89 45 f0                |.E.     | F0804836e .1....    mov    dword ss:[ebp + 0xf0<-16>], eax
+0x08048384: c7 45 f4 00 00 00 00    |.E..... |                     mov    dword ss:[ebp + 0xf4<-12>], 0x00000000
+0x0804838b: c7 45 f4 00 00 00 00    |.E..... |                     mov    dword ss:[ebp + 0xf4<-12>], 0x00000000
 0x08048392: eb 12                   |..      |                     jmp    0x080483a6<<Insn>>
 
-0x08048394: 8b 45 f4                |.E.     | F0804836e .1....    mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
+0x08048394: 8b 45 f4                |.E.     | F0804836e .1....    mov    eax, dword ss:[ebp + 0xf4<-12>]
 0x08048397: c1 e0 02                |...     |                     shl    eax, 0x02
-0x0804839a: 03 45 f0                |.E.     |                     add    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
-0x0804839d: c7 00 05 00 00 00       |......  |                     mov    DWORD PTR ds:[eax], 0x00000005
-0x080483a3: ff 45 f4                |.E.     |                     inc    DWORD PTR ss:[ebp + 0xf4<-12>]
+0x0804839a: 03 45 f0                |.E.     |                     add    eax, dword ss:[ebp + 0xf0<-16>]
+0x0804839d: c7 00 05 00 00 00       |......  |                     mov    dword ds:[eax], 0x00000005
+0x080483a3: ff 45 f4                |.E.     |                     inc    dword ss:[ebp + 0xf4<-12>]
 
-0x080483a6: 83 7d f4 09             |.}..    | F0804836e .1....    cmp    DWORD PTR ss:[ebp + 0xf4<-12>], 0x09
+0x080483a6: 83 7d f4 09             |.}..    | F0804836e .1....    cmp    dword ss:[ebp + 0xf4<-12>], 0x09
 0x080483aa: 7e e8                   |~.      |                     jle    0x08048394<<Insn>>
 
-0x080483ac: 8b 45 f0                |.E.     | F0804836e .1....    mov    eax, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x080483ac: 8b 45 f0                |.E.     | F0804836e .1....    mov    eax, dword ss:[ebp + 0xf0<-16>]
 0x080483af: 83 c0 30                |..0     |                     add    eax, 0x30
-0x080483b2: 8b 00                   |..      |                     mov    eax, DWORD PTR ds:[eax]
-0x080483b4: 89 45 f8                |.E.     |                     mov    DWORD PTR ss:[ebp + 0xf8<-8>], eax
+0x080483b2: 8b 00                   |..      |                     mov    eax, dword ds:[eax]
+0x080483b4: 89 45 f8                |.E.     |                     mov    dword ss:[ebp + 0xf8<-8>], eax
 0x080483b7: 83 c4 14                |...     |                     add    esp, 0x14
 0x080483ba: 59                      |Y       |                     pop    ecx
 0x080483bb: 5d                      |]       |                     pop    ebp
@@ -212,7 +212,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 
 0x080483da: 8d 83 20 ff ff ff       |.. ...  | F080483c0 .1....    lea    eax, [ebx + 0xffffff20<-224>]
 0x080483e0: 8d 93 20 ff ff ff       |.. ...  |                     lea    edx, [ebx + 0xffffff20<-224>]
-0x080483e6: 89 45 f0                |.E.     |                     mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080483e6: 89 45 f0                |.E.     |                     mov    dword ss:[ebp + 0xf0<-16>], eax
 0x080483e9: 29 d0                   |).      |                     sub    eax, edx
 0x080483eb: 31 f6                   |1.      |                     xor    esi, esi
 0x080483ed: c1 f8 02                |...     |                     sar    eax, 0x02
@@ -221,9 +221,9 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 
 0x080483f4: 89 d7                   |..      | F080483c0 FH....    mov    edi, edx
 0x080483f6: 89 f6                   |..      |                     mov    esi, esi
-0x080483f8: ff 14 b2                |...     |                     call   DWORD PTR ds:[edx + esi*0x04]
+0x080483f8: ff 14 b2                |...     |                     call   dword ds:[edx + esi*0x04]
 
-0x080483fb: 8b 4d f0                |.M.     | F080483c0 FH....    mov    ecx, DWORD PTR ss:[ebp + 0xf0<-16>]
+0x080483fb: 8b 4d f0                |.M.     | F080483c0 FH....    mov    ecx, dword ss:[ebp + 0xf0<-16>]
 0x080483fe: 29 f9                   |).      |                     sub    ecx, edi
 0x08048400: 46                      |F       |                     inc    esi
 0x08048401: c1 f9 02                |...     |                     sar    ecx, 0x02
@@ -259,7 +259,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x0804843d: eb 05                   |..      |                     jmp    0x08048444<<Insn>>
 
 0x0804843f: 90                      |.       | F08048414 FH....    nop    
-0x08048440: ff 14 b7                |...     |                     call   DWORD PTR ds:[edi + esi*0x04]
+0x08048440: ff 14 b7                |...     |                     call   dword ds:[edi + esi*0x04]
 
 0x08048443: 4e                      |N       | F08048414 FH....    dec    esi
 
@@ -284,7 +284,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x08048463: 53                      |S       |                     push   ebx
 0x08048464: bb bc 94 04 08          |.....   |                     mov    ebx, 0x080494bc<.ctors>
 0x08048469: 83 ec 04                |...     |                     sub    esp, 0x04
-0x0804846c: a1 bc 94 04 08          |.....   |                     mov    eax, DWORD PTR ds:[0x080494bc<.ctors>]
+0x0804846c: a1 bc 94 04 08          |.....   |                     mov    eax, dword ds:[0x080494bc<.ctors>]
 0x08048471: 83 f8 ff                |...     |                     cmp    eax, 0xff<-1>
 0x08048474: 74 16                   |t.      |                     je     0x0804848c<<Insn>>
 
@@ -294,7 +294,7 @@ va 0x080495c0 + 0x00000a40 = 0x0804a000 rw-p at buffer aaj   + 0x00000004 buffer
 0x08048480: 83 eb 04                |...     | F08048460 .1....    sub    ebx, 0x04
 0x08048483: ff d0                   |..      |                     call   eax
 
-0x08048485: 8b 03                   |..      | F08048460 .1....    mov    eax, DWORD PTR ds:[ebx]
+0x08048485: 8b 03                   |..      | F08048460 .1....    mov    eax, dword ds:[ebx]
 0x08048487: 83 f8 ff                |...     |                     cmp    eax, 0xff<-1>
 0x0804848a: 75 f4                   |u.      |                     jne    0x08048480<<Insn>>
 

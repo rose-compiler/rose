@@ -123,8 +123,8 @@ serialNumber() {
 std::string
 AddressIntervalParser::docString() {
     return ("An address interval can be specified as a single address, or a first and inclusive last address separated by a "
-            "comma, or a begin and exclusive end address seaprated by a hyphen, or a begin address and size in bytes "
-            "separated by a plus sign or an empty string to indicate an empty interval.  The upper address must always be "
+            "comma, or a begin and exclusive end address separated by a hyphen, or a begin address and size in bytes "
+            "separated by a plus sign, or an empty string to indicate an empty interval.  The upper address must always be "
             "greater than or equal to the lower address. Addresses and sizes can be specified in decimal, hexadecimal "
             "(leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
 }

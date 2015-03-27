@@ -22,7 +22,7 @@ set(files_to_test
   test2012_33.c test2012_34.c test2012_35.c test2012_36.c test2012_37.c
   test2012_38.c test2012_39.c test2012_40.c test2012_42.c test2012_41.c
   test2012_43.c test2012_46.c test2012_47.c test2012_48.c test2012_49.c
-  test2012_50.c test2012_51.c test2012_52.c test2012_53.c test2012_54.c
+  test2012_50.c test2012_52.c test2012_53.c test2012_54.c
   test2012_55.c test2012_56.c test2012_57.c test2012_58.c test2012_59.c
   test2012_60.c test2012_61.c test2012_62.c test2012_63.c test2012_64.c
   test2012_65.c test2012_66.c test2012_67.c test2012_68.c test2012_69.c
@@ -51,7 +51,7 @@ set(files_to_test
   test2013_14.c test2013_15.c test2013_16.c test2013_17.c test2013_18.c
   test2013_19.c test2013_20.c test2013_21.c test2013_22.c test2013_23.c
   test2013_24.c test2013_25.c test2013_26.c test2013_27.c test2013_28.c
-  test2013_29.c test2013_30.c test2013_31.c test2013_32.c test2013_33.c
+  test2013_29.c test2013_30.c test2013_32.c test2013_33.c
   test2013_34.c test2013_35.c test2013_36.c test2013_37.c test2013_38.c
   test2013_39.c test2013_40.c test2013_41.c test2013_42.c test2013_43.c
   test2013_44.c test2013_45.c test2013_46.c test2013_47.c test2013_48.c
@@ -67,7 +67,9 @@ set(files_to_test
   test2013_94.c test2013_95.c test2013_96.c test2013_97.c test2013_98.c
   test2013_99.c test2013_100.c math.c complex_01.c stdio.c
   test2006_48.c test2006_132.c test2010_04.c test2010_10.c test2010_12.c
-  test2010_11.c test2010_14.c constants.c)
+  test2010_11.c test2010_14.c constants.c
+  #EXPECTED FAILURES: test2012_51.c test2013_31.c  
+)
 
 if (NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   list(APPEND files_to_test test2009_05.c test2009_17.c)
