@@ -295,6 +295,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("icfg-dot", "generates the ICFG as dot file.")
       ("interval-analysis", "perform interval analysis.")
       ("trace", "show operations as performed by selected solver.")
       ("print-varidmapping", "prints variableIdMapping")
@@ -338,7 +339,7 @@ int main(int argc, char* argv[]) {
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
     }
-    if(args.count("dd-analysis")) {
+    if(args.count("ud-analysis")) {
       option_rd_analysis=true; // required
       option_ud_analysis=true;
     }
