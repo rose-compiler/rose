@@ -50,7 +50,10 @@ Unparse_Type::generateElaboratedType(SgDeclarationStatement* declarationStatemen
 
 string get_type_name(SgType* t)
    {
-  // printf ("t->class_name() = %s \n",t->class_name().c_str());
+
+#if 0
+     printf ("In get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
+#endif
 
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
@@ -153,7 +156,7 @@ string get_type_name(SgType* t)
           case T_DEFAULT:
              {
 #if 0
-               printf ("Outp case T_DEFAULT: (int) \n");
+               printf ("Output case T_DEFAULT: (int) \n");
 #endif
                return "int";
              }
@@ -161,7 +164,7 @@ string get_type_name(SgType* t)
           case T_POINTER:
                 {
 #if 0
-                  printf ("Outp case T_POINTER: \n");
+                  printf ("Output case T_POINTER: \n");
 #endif
                   SgPointerType* pointer_type = isSgPointerType(t);
                   ROSE_ASSERT(pointer_type != NULL);
@@ -361,6 +364,9 @@ string get_type_name(SgType* t)
               ROSE_ASSERT(array_type != NULL);
 
               string res = get_type_name(array_type->get_base_type()) + "[";
+#if 0
+              printf ("In get_type_name(): case T_ARRAY: res = %s \n",res.c_str());
+#endif
               if (array_type->get_index())
                   res = res + array_type->get_index()->unparseToString();
                res = res + "]";
@@ -377,6 +383,10 @@ string get_type_name(SgType* t)
              }
         }
 //#endif
+
+#if 0
+     printf ("Leaving get_type_name(t = %p): t->class_name() = %s \n",t,t->class_name().c_str());
+#endif
    }
 
 //-----------------------------------------------------------------------------------
@@ -1242,9 +1252,9 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseClassType(): ninfo.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
      printf ("In unparseClassType(): ninfo.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
 #endif
+
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(info.SkipClassDefinition() == info.SkipEnumDefinition());
-
 
   // CH (4/7/2010): This issue is because of using a MSVC keyword 'cdecl' as a variable name
 
@@ -2812,6 +2822,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      SgArrayType* array_type = isSgArrayType(type);
      ROSE_ASSERT(array_type != NULL);
 
+#define DEBUG_ARRAY_TYPE 0
+
   // different cases to think about
   //    int (*) [10],  int (*var) [20]
   //    int *[10],  int *var[10]
@@ -2821,22 +2833,22 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
   //      ArrayType(base_type, 2)
   //        ArrayType(int, 10), because of the front-end
 
-#if 0
+#if DEBUG_ARRAY_TYPE
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
-     printf ("In Unparse_Type::unparseArrayType(): type = %p type->class_name() = %s firstPart = %s secondPart = %s \n",type,type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+     printf ("\nIn Unparse_Type::unparseArrayType(): type = %p type->class_name() = %s firstPart = %s secondPart = %s \n",type,type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
 #endif
 
 #if 0
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      curprint("/* In unparseArrayType() */ \n ");
 #endif
-#if 0
+#if DEBUG_ARRAY_TYPE
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
      curprint(string("\n/* Top of unparseArrayType() using generated type name string: ") + type->class_name() + " firstPart " + firstPartString + " secondPart " + secondPartString + " */ \n");
 #endif
 
-#if 0
+#if DEBUG_ARRAY_TYPE
      printf ("In Unparse_Type::unparseArrayType(): info.isReferenceToSomething() = %s \n",info.isReferenceToSomething() ? "true" : "false");
      printf ("In Unparse_Type::unparseArrayType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
 #endif
@@ -2848,8 +2860,9 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
           needParen = true;
         }
 
-#if 0
+#if DEBUG_ARRAY_TYPE
      printf ("In unparseArrayType(): needParen = %s \n",(needParen == true) ? "true" : "false");
+     curprint(string("/* In  unparseArrayType() needParen = ") + string((needParen == true) ? "true" : "false") + string(" */ \n "));
 #endif
 
      if (ninfo.isTypeFirstPart() == true)
@@ -2858,13 +2871,25 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
              {
                ninfo.unset_isReferenceToSomething();
                ninfo.unset_isPointerToSomething();
+#if DEBUG_ARRAY_TYPE
+               printf ("ninfo.isTypeFirstPart() == true: needParen == true: Calling unparseType(array_type->get_base_type(), ninfo); \n");
+#endif
                unparseType(array_type->get_base_type(), ninfo);
+#if DEBUG_ARRAY_TYPE
+               printf ("DONE: ninfo.isTypeFirstPart() == true: needParen == true: Calling unparseType(array_type->get_base_type(), ninfo); \n");
+#endif
                curprint("(");
             // curprint(" /* unparseArrayType */ (");
              }
             else
              {
+#if DEBUG_ARRAY_TYPE
+               printf ("ninfo.isTypeFirstPart() == true: needParen == false: Calling unparseType(array_type->get_base_type(), ninfo); \n");
+#endif
                unparseType(array_type->get_base_type(), ninfo);
+#if DEBUG_ARRAY_TYPE
+               printf ("DONE: ninfo.isTypeFirstPart() == true: needParen == false: Calling unparseType(array_type->get_base_type(), ninfo); \n");
+#endif
              }
         }
        else
@@ -2875,15 +2900,39 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                   {
                     curprint(")");
                  // curprint(" /* unparseArrayType */ )");
+#if 0
+#error "DEAD CODE!"
+                 // DQ (3/24/2015): Original code.
                     info.unset_isReferenceToSomething();
                     info.unset_isPointerToSomething();
+#else
+#if 1
+                 // DQ (3/24/2015): Original code (also required to fix test2015_21.C).
+                    info.unset_isReferenceToSomething();
+                    info.unset_isPointerToSomething();
+#endif
+                 // DQ (3/24/2015): I think we want to unset ninfo (see test2015_30.c).
+                    ninfo.unset_isReferenceToSomething();
+                    ninfo.unset_isPointerToSomething();
+#endif
                   }
+
                curprint("[");
+
                if (array_type->get_index())
                   {
                  // JJW (12/14/2008): There may be types inside the size of an array, and they are not the second part of the type
                     SgUnparse_Info ninfo2(ninfo);
                     ninfo2.unset_isTypeSecondPart();
+#if 0
+                    printf ("In Unparse_Type::unparseArrayType(): ninfo2.isReferenceToSomething() = %s \n",ninfo2.isReferenceToSomething() ? "true" : "false");
+                    printf ("In Unparse_Type::unparseArrayType(): ninfo2.isPointerToSomething()   = %s \n",ninfo2.isPointerToSomething()   ? "true" : "false");
+#endif
+#if 0
+                 // DQ (3/24/2015): I think that the index needs to have these be unset!
+                    ROSE_ASSERT(ninfo2.isReferenceToSomething() == false);
+                    ROSE_ASSERT(ninfo2.isPointerToSomething() == false);
+#endif
 #if 0
                     printf ("In unparseArrayType(): ninfo2.SkipClassDefinition() = %s \n",(ninfo2.SkipClassDefinition() == true) ? "true" : "false");
                     printf ("In unparseArrayType(): ninfo2.SkipEnumDefinition()  = %s \n",(ninfo2.SkipEnumDefinition() == true) ? "true" : "false");
@@ -2911,20 +2960,35 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
                        }
                   }
+
                curprint("]");
+#if DEBUG_ARRAY_TYPE
+               printf ("ninfo.isTypeSecondPart() == true: needParen = %s Calling unparseType(array_type->get_base_type(), ninfo); \n",needParen ? "true" : "false");
+#endif
                unparseType(array_type->get_base_type(), info); // second part
+#if DEBUG_ARRAY_TYPE
+               printf ("DONE: ninfo.isTypeSecondPart() == true: needParen = %s Calling unparseType(array_type->get_base_type(), ninfo); \n",needParen ? "true" : "false");
+#endif
              }
             else
              {
+#if DEBUG_ARRAY_TYPE
+               printf ("Calling unparseType(array_type, ninfo); with ninfo.set_isTypeFirstPart(); \n");
+#endif
                ninfo.set_isTypeFirstPart();
                unparseType(array_type, ninfo);
+
+#if DEBUG_ARRAY_TYPE
+               printf ("Calling unparseType(array_type, ninfo); with ninfo.set_isTypeSecondPart(); \n");
+#endif
                ninfo.set_isTypeSecondPart();
                unparseType(array_type, ninfo);
              }
         }
 
-#if 0
+#if DEBUG_ARRAY_TYPE
   // DQ (5/8/2013): Note that this will make the type name very long and can cause problems with nexted type generating nested comments.
+     printf ("Leaving unparseArrayType(): type = %p \n",type);
      curprint("/* Leaving unparseArrayType() */ \n ");
 #endif
    }
