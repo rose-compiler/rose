@@ -149,6 +149,22 @@ RegisterDictionary::lookup(const RegisterDescriptor &rdesc) const {
     return empty;
 }
 
+RegisterDescriptor
+RegisterDictionary::findLargestRegister(unsigned major, unsigned minor) const {
+    RegisterDescriptor retval;
+    for (Entries::const_iterator iter=forward.begin(); iter!=forward.end(); ++iter) {
+        const RegisterDescriptor &reg = iter->second;
+        if (major == reg.get_major() && minor == reg.get_minor()) {
+            if (!retval.is_valid()) {
+                retval = reg;
+            } else if (retval.get_nbits() < reg.get_nbits()) {
+                retval = reg;
+            }
+        }
+    }
+    return retval;
+}
+
 void
 RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
     const RegisterDescriptor *old_desc = lookup(name);

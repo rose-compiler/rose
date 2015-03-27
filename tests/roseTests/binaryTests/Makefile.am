@@ -434,13 +434,18 @@ TEST_TARGETS += testBitPattern.passed
 testBitPattern.passed: testBitPattern
 	@$(RTH_RUN) CMD="./testBitPattern" $(TEST_EXIT_STATUS) $@
 
-# Random number genertor tests
+# Random number generator tests
 noinst_PROGRAMS += testRNG
 testRNG_SOURCES = testRNG.C
 testRNG_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 TEST_TARGETS += testRNG.passed
 testRNG.passed: testRNG
 	@$(RTH_RUN) CMD="./testRNG" $(TEST_EXIT_STATUS) $@
+
+# Instruction semantics verification
+noinst_PROGRAMS += verifySemantics
+verifySemantics_SOURCES = verifySemantics.C
+verifySemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
 
 
 ###############################################################################################################################

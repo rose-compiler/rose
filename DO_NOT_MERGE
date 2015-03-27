@@ -1,0 +1,7 @@
+	This branch is not ready to be merged into master, so
+	we are forcing it to fail for Jenkin's sake.  When devel-Jenkins
+	is fixed so it doesn't merge branches with names like "*-test"
+	then this kludge can be removed.
+
+	This branch is not merged because the x86-64 semantics feature
+	is not ready to release yet. [Robb Matzke, 2014-03-09]

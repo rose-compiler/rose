@@ -279,7 +279,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_) {
 
 BaseSemantics::SValuePtr
 RiscOperators::ite(const BaseSemantics::SValuePtr &sel_, const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    if (equalToZero(sel_)) {
+    if (equalToZero(sel_)->get_number()) {
         return b_->copy();
     } else {
         return a_->copy();
@@ -353,8 +353,11 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_) {
 
 BaseSemantics::SValuePtr
 RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    ASSERT_require2(a_->get_width() <= 64, "not implemented");
-    ASSERT_require2(b_->get_width() <= 64, "not implemented");
+    if (a_->get_width() > 64 || b_->get_width() > 64) {
+        throw BaseSemantics::Exception("signedDivide x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] / y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    }
     int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
     int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
     if (0==b)
@@ -364,8 +367,11 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 
 BaseSemantics::SValuePtr
 RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    ASSERT_require2(a_->get_width() <= 64, "not implemented");
-    ASSERT_require2(b_->get_width() <= 64, "not implemented");
+    if (a_->get_width() > 64 || b_->get_width() > 64) {
+        throw BaseSemantics::Exception("signedModulo x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] % y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    }
     int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
     int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
     if (0==b)
@@ -377,16 +383,44 @@ BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     ASSERT_require2(a_->get_width() <= 64, "not implemented");
     ASSERT_require2(b_->get_width() <= 64, "not implemented");
-    ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented");
-    int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
-    int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
-    return svalue_number(a_->get_width() + b_->get_width(), a * b);
+
+    if (a_->get_width() == 64 && b_->get_width() == 64) {
+        // Do long multiplication with 32 bits at a time in 64-bit variables (32 bits * 32 bits = 64 bits)
+        // FIXME[Robb P. Matzke 2015-03-23]: use arbitrary width vector multiply in Sawyer when it's available.
+        uint64_t a0 = a_->get_number() & 0xffffffff;
+        uint64_t a1 = a_->get_number() >> 32;
+        uint64_t b0 = b_->get_number() & 0xffffffff;
+        uint64_t b1 = b_->get_number() >> 32;
+        uint64_t c0 = a0 * b0;
+        uint64_t c1 = (a0 * b1) + (a1 * b0) + (c0 >> 32);
+        uint64_t c2 = (a1 * b1) + (c1 >> 32);
+        c0 &= 0xffffffff;
+        c1 &= 0xffffffff;
+        //c2: use all 64 bits
+
+        SValuePtr product = svalue_number(a_->get_width() + b_->get_width(), 0);
+        product->bits()[0] = (c1 << 32) | c0;
+        product->bits()[1] = c2;
+        return product;
+    } else if (a_->get_width() + b_->get_width() > 64) {
+        throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] * y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    } else {
+        ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented yet");
+        int64_t a = IntegerOps::signExtend2(a_->get_number(), a_->get_width(), 64);
+        int64_t b = IntegerOps::signExtend2(b_->get_number(), b_->get_width(), 64);
+        return svalue_number(a_->get_width() + b_->get_width(), a * b);
+    }
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    ASSERT_require2(a_->get_width() <= 64, "not implemented");
-    ASSERT_require2(b_->get_width() <= 64, "not implemented");
+    if (a_->get_width() > 64 || b_->get_width() > 64) {
+        throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] / y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    }
     uint64_t a = a_->get_number();
     uint64_t b = b_->get_number();
     if (0==b)
@@ -396,8 +430,11 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    ASSERT_require2(a_->get_width() <= 64, "not implemented");
-    ASSERT_require2(b_->get_width() <= 64, "not implemented");
+    if (a_->get_width() > 64 || b_->get_width() > 64) {
+        throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] % y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    }
     uint64_t a = a_->get_number();
     uint64_t b = b_->get_number();
     if (0==b)
@@ -409,10 +446,35 @@ BaseSemantics::SValuePtr
 RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     ASSERT_require2(a_->get_width() <= 64, "not implemented");
     ASSERT_require2(b_->get_width() <= 64, "not implemented");
-    ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented");
-    uint64_t a = a_->get_number();
-    uint64_t b = b_->get_number();
-    return svalue_number(a_->get_width() + b_->get_width(), a * b);
+
+    if (a_->get_width() == 64 && b_->get_width() == 64) {
+        // Do long multiplication with 32 bits at a time in 64-bit variables (32 bits * 32 bits = 64 bits)
+        // FIXME[Robb P. Matzke 2015-03-23]: use arbitrary width vector multiply in Sawyer when it's available.
+        uint64_t a0 = a_->get_number() & 0xffffffff;
+        uint64_t a1 = a_->get_number() >> 32;
+        uint64_t b0 = b_->get_number() & 0xffffffff;
+        uint64_t b1 = b_->get_number() >> 32;
+        uint64_t c0 = a0 * b0;
+        uint64_t c1 = (a0 * b1) + (a1 * b0) + (c0 >> 32);
+        uint64_t c2 = (a1 * b1) + (c1 >> 32);
+        c0 &= 0xffffffff;
+        c1 &= 0xffffffff;
+        //c2: use all 64 bits
+
+        SValuePtr product = svalue_number(a_->get_width() + b_->get_width(), 0);
+        product->bits()[0] = (c1 << 32) | c0;
+        product->bits()[1] = c2;
+        return product;
+    } else if (a_->get_width() + b_->get_width() > 64) {
+        throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
+                                       "] * y[" + StringUtility::addrToString(b_->get_width()) +
+                                       "] is not implemented", get_insn());
+    } else {
+        ASSERT_require2(a_->get_width() + b_->get_width() <= 64, "not implemented yet");
+        uint64_t a = a_->get_number();
+        uint64_t b = b_->get_number();
+        return svalue_number(a_->get_width() + b_->get_width(), a * b);
+    }
 }
 
 BaseSemantics::SValuePtr

@@ -50,6 +50,7 @@ enum FunctionSelector {
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
     std::string isaName;                                // instruction set architecture name
+    std::vector<rose_addr_t> startVas;                  // where to start disassembling
     size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
     bool useSemantics;                                  // should we use symbolic semantics?
     bool followGhostEdges;                              // do we ignore opaque predicates?
@@ -142,6 +143,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
     dis.insert(Switch("isa")
                .argument("architecture", anyParser(settings.isaName))
                .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
+
+    dis.insert(Switch("start")
+               .argument("addresses", listParser(nonNegativeIntegerParser(settings.startVas)))
+               .whichValue(SAVE_ALL)
+               .explosiveLists(true)
+               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
+                    "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
 
     dis.insert(Switch("allow-discontiguous-blocks")
                .intrinsicValue(true, settings.allowDiscontiguousBlocks)
@@ -870,6 +879,10 @@ int main(int argc, char *argv[]) {
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
+    BOOST_FOREACH (rose_addr_t va, settings.startVas) {
+        P2::Function::Ptr function = P2::Function::instance(va, SgAsmFunction::FUNC_USERDEF);
+        partitioner.attachOrMergeFunction(function);
+    }
 
     // Insert debugging aids
     BOOST_FOREACH (const std::string &s, settings.triggers) {
@@ -935,6 +948,9 @@ int main(int argc, char *argv[]) {
     }
     
     info <<"; completed in " <<partitionTime <<" seconds.\n";
+
+    if (partitioner.functions().empty() && settings.startVas.empty())
+        mlog[WARN] <<"no starting points for recursive disassembly; prehaps you need --start?\n";
 
     //-------------------------------------------------------------- 
     // The rest of main() is just about showing the results...

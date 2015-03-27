@@ -345,8 +345,20 @@ testKeepGoingTranslator: KeepGoingTranslator
 #testPredefinedMacros: predefinedMacros
 #	./predefinedMacros
 
+# This rule is temporary: it is to force a failure so Jenkins doesn't merge this branch into master after testing.
+# This test can be removed once devel Jenkins is changed so it doesn't merge branches that have certain names.
+# [Robb Matzke, 2015-03-09]
+.PHONY: check-no-merge
+check-no-merge:
+	if test -f $(top_srcdir)/DO_NOT_MERGE; then						\
+	    echo "*** All tests passed, but we are preventing Jenkins from merging." >&2;	\
+	    cat $(top_srcdir)/DO_NOT_MERGE ;							\
+	    exit 1;										\
+	fi
+
 # Make check rule
 check-local: test
+	$(MAKE) check-no-merge
 	@echo "************************************************************************"
 	@echo "****** ROSE/tests: make check rule complete (terminated normally) ******"
 	@echo "************************************************************************"

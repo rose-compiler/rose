@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "BinaryDebugger.h"
+#include "integerOps.h"
 
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -69,9 +70,11 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 
 #else
 
+# include <fcntl.h>
 # include <sys/ptrace.h>
 # include <sys/user.h>
 # include <sys/wait.h>
+# include <unistd.h>
 
 #endif
 
@@ -104,6 +107,77 @@ setInstructionPointer(user_regs_struct &regs, rose_addr_t va) {
     regs.rip = va;
 }
 #endif
+
+void
+BinaryDebugger::init() {
+
+    // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
+    // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit
+    // and the other for 64-bit based on whether ROSE is compiled as 32- or 64-bit.  I'm not sure what happens if a 32-bit
+    // version of ROSE tries to analyze a 64-bit specimen; does the OS return only the 32-bit registers or does it return the
+    // 64-bit versions regardless of how user_regs_struct is defined in ROSE? [Robb P. Matzke 2015-03-24]
+    //
+    // The userRegDefs map assigns an offset in the returned (not necessarily the defined) user_regs_struct. The register
+    // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
+    // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
+#if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
+    //------------------------------------
+    // Entries for 64-bit user_regs_struct
+    //------------------------------------
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r15,      0, 64),   0);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r14,      0, 64),   8);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r13,      0, 64),  16);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r12,      0, 64),  24);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 64),  32);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 64),  40);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r11,      0, 64),  48);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r10,      0, 64),  56);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r9,       0, 64),  64);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r8,       0, 64),  72);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 64),  80);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 64),  88);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 64),  96);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 64), 104);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 64), 112);
+    // orig_rax: unused                                                                    120
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 64), 128);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 64), 136);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 64), 144);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 64), 152);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 64), 160);
+    // fs_base: unused                                                                     168
+    // gs_base: unused                                                                     176
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 64), 184);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 64), 192);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 64), 200);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 64), 208);
+#elif defined(__linux) && defined(__x86_64) && __WORDSIZE==32
+    //------------------------------------
+    // Entries for 32-bit user_regs_struct
+    //------------------------------------
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 32),   0);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 32),   4);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 32),   8);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 32),  12);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 32),  16);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 32),  20);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 32),  24);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 32),  28);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 32),  32);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 32),  36);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 32),  40);
+    // orig_eax: unused                                                                     44
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 32),  48);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 32),  52);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 32),  56);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 32),  60);
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 32),  64);
+# elif defined(_MSC_VER)
+#   pragma message("unable to read subordinate process registers on this platform")
+# else
+#   warning("unable to read subordinate process registers on this platform")
+#endif
+}
 
 bool
 BinaryDebugger::isTerminated() {
@@ -238,6 +312,107 @@ void
 BinaryDebugger::singleStep() {
     sendCommand(PTRACE_SINGLESTEP, child_, 0, (void*)sendSignal_);
     waitForChild();
+}
+
+uint64_t
+BinaryDebugger::readRegister(const RegisterDescriptor &desc) {
+    // We don't know the size of the user_regs_struct that will be returned by the kernel. It could be the 32-bit or 64-bit
+    // version depending on whether the subordinate is 32 or 64 bits.  In any case, it's quite possible that it's not the
+    // struct defined (based on how ROSE is compiled) in <sys/user.h>.  We use a heuristic to find the size: we allocate the
+    // larger version of the struct, then fill it with magic bytes, then issue PTRACE_GETREGS.
+    static const uint8_t magic = 0xb7;                  // arbitrary
+    uint8_t userRegs[4096];                             // arbitrary size, but plenty large for any user_regs_struct
+    memset(userRegs, magic, sizeof userRegs);
+    sendCommand(PTRACE_GETREGS, child_, 0, &userRegs);
+
+    // How much was written, approximately?
+    size_t highWater = sizeof userRegs;
+    while (highWater>0 && userRegs[highWater-1]==magic)
+        --highWater;
+    size_t wordSize = 0;
+    if (highWater == 216) {
+        wordSize = 64;
+    } else if (highWater == 68) {
+        wordSize = 32;
+    } else if (highWater > 100) {
+        wordSize = 64;                                  // guess
+    } else {
+        wordSize = 32;                                  // guess;
+    }
+
+#if 0 // DEBUGGING [Robb P. Matzke 2015-03-24]
+    std::cerr <<"register=" <<desc <<"; highWater=" <<highWater <<"; wordSize=" <<wordSize <<"\n";
+#endif
+
+    // Where is the register in question?
+    RegisterDescriptor base(desc.get_major(), desc.get_minor(), 0, wordSize);
+    size_t userRegsStructOffset = 0;
+    if (!userRegDefs_.getOptional(base).assignTo(userRegsStructOffset))
+        throw std::runtime_error("register is not available");
+    uint64_t baseValue = 0;
+    if (32 == wordSize) {
+        baseValue = *(uint32_t*)((uint8_t*)&userRegs + userRegsStructOffset);
+    } else {
+        baseValue = *(uint64_t*)((uint8_t*)&userRegs + userRegsStructOffset);
+    }
+
+    // Convert the baseValue to a subregister (e.g., EAX to AX) if necessary
+    if (desc.get_offset() != 0 || desc.get_nbits() != base.get_nbits()) {
+        ASSERT_require(desc.get_offset() + desc.get_nbits() <= base.get_nbits());
+        ASSERT_require(desc.get_offset() < 64);
+        baseValue >>= desc.get_offset();
+        baseValue &= IntegerOps::genMask<uint64_t>(desc.get_nbits());
+    }
+
+    return baseValue;
+}
+
+size_t
+BinaryDebugger::readMemory(rose_addr_t va, size_t nBytes, uint8_t *buffer) {
+#ifdef __linux__
+    struct T {
+        int fd;
+        T(): fd(-1) {}
+        ~T() {
+            if (-1 != fd)
+                close(fd);
+        }
+    } mem;
+
+    // We could use PTRACE_PEEKDATA, but it can be very slow if we're reading lots of memory since it reads only one word at a
+    // time. We'd also need to worry about alignment so we don't inadvertently read past the end of a memory region when we're
+    // trying to read the last byte.  Reading /proc/N/mem is faster and easier.
+    std::string memName = "/proc/" + StringUtility::numberToString(child_) + "/mem";
+    if (-1 == (mem.fd = open(memName.c_str(), O_RDONLY)))
+        throw std::runtime_error("cannot open \"" + memName + "\": " + strerror(errno));
+    if (-1 == lseek(mem.fd, va, SEEK_SET))
+        throw std::runtime_error(memName + " seek failed: " + strerror(errno));
+    size_t totalRead = 0;
+    while (nBytes > 0) {
+        ssize_t nread = read(mem.fd, buffer, nBytes);
+        if (-1 == nread) {
+            if (EINTR == errno)
+                continue;
+            return totalRead;                           // error
+        } else if (0 == nread) {
+            return totalRead;                           // short read
+        } else {
+            ASSERT_require(nread > 0);
+            ASSERT_require((size_t)nread <= nBytes);
+            nBytes -= nread;
+            buffer += nread;
+            totalRead += nread;
+        }
+    }
+    return totalRead;
+#else
+# ifdef _MSC_VER
+#  pragma message("reading from subordinate memory is not implemented")
+# else
+#  warning "reading from subordinate memory is not implemented"
+# endif
+    throw std::runtime_error("cannot read subordinate memory (not implemented)");
+#endif
 }
 
 void
