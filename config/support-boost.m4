@@ -89,17 +89,40 @@ AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_52, test "x$rose_boost_version" = "x10
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_53, test "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53")
 AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_1_54, test "x$rose_boost_version" = "x105400" -o "x$_version" = "x1.54")
 
+# TOO1 (3/16/2015):
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_35, test $rose_boost_version -ge 103500)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_36, test $rose_boost_version -ge 103600)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_37, test $rose_boost_version -ge 103700)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_38, test $rose_boost_version -ge 103800)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_39, test $rose_boost_version -ge 103900)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_40, test $rose_boost_version -ge 104000)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_41, test $rose_boost_version -ge 104100)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_42, test $rose_boost_version -ge 104200)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_43, test $rose_boost_version -ge 104300)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_44, test $rose_boost_version -ge 104400)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_45, test $rose_boost_version -ge 104500)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_46, test $rose_boost_version -ge 104600)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_46, test $rose_boost_version -ge 104601)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_47, test $rose_boost_version -ge 104700)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_48, test $rose_boost_version -ge 104800)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_49, test $rose_boost_version -ge 104900)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_50, test $rose_boost_version -ge 105000)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_51, test $rose_boost_version -ge 105100)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_52, test $rose_boost_version -ge 105200)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_53, test $rose_boost_version -ge 105300)
+AM_CONDITIONAL(ROSE_USING_BOOST_VERSION_GE_1_54, test $rose_boost_version -ge 105400)
+
 if test \
       "x$rose_boost_version" = "x104500" -o "x$_version" = "x1.45" \
    -o "x$rose_boost_version" = "x104600" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104601" -o "x$_version" = "x1.46" \
    -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.47" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.48" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.49" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.50" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.51" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.52" \
-   -o "x$rose_boost_version" = "x104700" -o "x$_version" = "x1.53"
+   -o "x$rose_boost_version" = "x104800" -o "x$_version" = "x1.48" \
+   -o "x$rose_boost_version" = "x104900" -o "x$_version" = "x1.49" \
+   -o "x$rose_boost_version" = "x105000" -o "x$_version" = "x1.50" \
+   -o "x$rose_boost_version" = "x105100" -o "x$_version" = "x1.51" \
+   -o "x$rose_boost_version" = "x105200" -o "x$_version" = "x1.52" \
+   -o "x$rose_boost_version" = "x105300" -o "x$_version" = "x1.53"
 then
     echo "Reasonable version of Boost found!"
 else
@@ -131,7 +154,6 @@ AX_BOOST_PROGRAM_OPTIONS
 AX_BOOST_SYSTEM
 AX_BOOST_FILESYSTEM
 AX_BOOST_WAVE
-AX_BOOST_IOSTREAMS
 
 # AM_CONDITIONAL(ROSE_USE_BOOST_WAVE,test "$with_wave" = true)
 

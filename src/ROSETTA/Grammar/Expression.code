@@ -839,6 +839,19 @@ HEADER_ALIGNOF_OPERATOR_START
 HEADER_ALIGNOF_OPERATOR_END
 
 
+HEADER_NOEXCEPT_OPERATOR_START
+       // DQ (2/4/2015): Let's not build this if we don't need it.
+       // int replace_expression(SgExpression*, SgExpression*) ROSE_DEPRECATED_FUNCTION;
+
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual unsigned int cfgIndexForEnd() const;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index);
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index);
+#endif
+
+HEADER_NOEXCEPT_OPERATOR_END
+
+
 HEADER_JAVA_INSTANCEOF_OPERATOR_START
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
           virtual unsigned int cfgIndexForEnd() const;
@@ -3019,7 +3032,7 @@ SgLabelRefExp::isFunctionCallArgumentForAlternativeReturnType() const
 
      SgTypePtrList & functionTypeArguments = functionParameterTypeList->get_arguments();
 
-     printf ("functionTypeArguments.size() = %zu \n",functionTypeArguments.size());
+     printf ("functionTypeArguments.size() = %" PRIuPTR " \n",functionTypeArguments.size());
      ROSE_ASSERT(positionInList < functionTypeArguments.size());
 
      SgType* tmp_thisParametersType = functionTypeArguments[positionInList];
@@ -3495,14 +3508,14 @@ SgTemplateParameterVal::get_template_parameter_name() const
         }
 
   // printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
-  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
+  // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %" PRIuPTR " \n",templateParameters.size());
 
   // if (template_parameter_position >= (long int)(templateParameters.size()))
      if (template_parameter_position >= numberOfTemplateParameters)
         {
           printf ("In SgTemplateParameterVal::get_template_parameter_name(): template_parameter_position = %d \n",template_parameter_position);
-       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %zu \n",templateParameters.size());
-          printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %zu \n",numberOfTemplateParameters);
+       // printf ("In SgTemplateParameterVal::get_template_parameter_name(): templateParameters.size()   = %" PRIuPTR " \n",templateParameters.size());
+          printf ("In SgTemplateParameterVal::get_template_parameter_name(): numberOfTemplateParameters  = %" PRIuPTR " \n",numberOfTemplateParameters);
         }
 
      printf ("In SgTemplateParameterVal::get_template_parameter_name(): getParameterNameFromTemplateParameterList = %s \n",getParameterNameFromTemplateParameterList ? "true" : "false");
@@ -4403,6 +4416,47 @@ SgAlignOfOp::replace_expression (SgExpression *o, SgExpression *n)
    } 
 
 SOURCE_ALIGN_OF_OPERATOR_EXPRESSION_END
+
+SOURCE_NOEXCEPT_OPERATOR_EXPRESSION_START
+
+// DQ (2/4/2015): Added noexcept operator as part of C++11 support.
+SgType*
+SgNoexceptOp::get_type() const
+   {
+  // DQ (2/4/2015): This function returns a bool type (evaluating if exceptions are to be supported).
+
+     ROSE_ASSERT(p_operand_expr != NULL);
+     SgType* returnType = SgTypeBool::createType();
+
+     ROSE_ASSERT(returnType != NULL);
+     return returnType;
+   }
+
+#if 0
+// DQ (2/4/2015): This function was required for the SgAlignOfOp, but I don't know if it is required for the SgNoexceptOp node.
+int
+SgNoexceptOp::replace_expression (SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a  
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if (get_operand_expr() == o)
+        {
+          set_operand_expr(n);
+          return 1;
+        }
+       else
+        {
+          printf ("Warning: inside of SgAlignOfOp::replace_expression original SgExpression unidentified \n");
+          return 0;
+        }
+   } 
+#endif
+
+SOURCE_NOEXCEPT_OPERATOR_EXPRESSION_END
 
 SOURCE_JAVA_INSTANCEOF_OPERATOR_EXPRESSION_START
 

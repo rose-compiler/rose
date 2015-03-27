@@ -723,7 +723,7 @@ SgAsmNEModuleTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     }
 
     for (size_t i = 0; i < p_names.size(); i++) {
-        fprintf(f, "%s%-*s = [%zu] (offset %"PRIu64", %zu bytes) \"%s\"\n",
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %"PRIu64", %" PRIuPTR " bytes) \"%s\"\n",
                 p, w, "name", i, p_name_offsets[i], p_names[i].size(), escapeString(p_names[i]).c_str());
     }
 }
@@ -785,7 +785,7 @@ SgAsmNEStringTable::dump(FILE *f, const char *prefix, ssize_t idx) const
         std::string s = get_string(at);
         char label[64];
         sprintf(label, "string-at-%"PRIu64, at);
-        fprintf(f, "%s%-*s = [%zu] (offset %"PRIu64", %zu bytes) \"%s\"\n", p, w, "string", i, at, s.size(), s.c_str());
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] (offset %"PRIu64", %" PRIuPTR " bytes) \"%s\"\n", p, w, "string", i, at, s.size(), s.c_str());
         at += 1 + s.size();
     }
     if (!was_congealed)
@@ -909,7 +909,7 @@ SgAsmNEEntryTable::populate_entries()
             SgAsmNEFileHeader *ne_header = dynamic_cast<SgAsmNEFileHeader*>(fhdr);
             SgAsmNENameTable *nametab = ne_header->get_nonresname_table();
             std::vector<std::string> names = nametab->get_names_by_ordinal(i+1);
-            fprintf(stderr, "ROBB: entry[%zu] (ordinal %zu)\n", i, i+1);
+            fprintf(stderr, "ROBB: entry[%" PRIuPTR "] (ordinal %" PRIuPTR ")\n", i, i+1);
             for (size_t j = 0; j < p_names.size(); j++) {
                 fprintf(stderr, "ROBB:     name=\"%s\"\n", p_names[j].c_str());
             }
@@ -985,9 +985,9 @@ SgAsmNEEntryTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu bundles\n", p, w, "nbundles", p_bundle_sizes.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " bundles\n", p, w, "nbundles", p_bundle_sizes.size());
     for (size_t i = 0; i < p_bundle_sizes.size(); i++) {
-        fprintf(f, "%s%-*s = [%zu] %zu entries\n", p, w, "bundle_size", i, p_bundle_sizes[i]);
+        fprintf(f, "%s%-*s = [%" PRIuPTR "] %" PRIuPTR " entries\n", p, w, "bundle_size", i, p_bundle_sizes[i]);
     }
     for (size_t i = 0; i < p_entries.size(); i++) {
         p_entries[i]->dump(f, p, i);
@@ -1315,7 +1315,7 @@ SgAsmNERelocTable::dump(FILE *f, const char *prefix, ssize_t idx) const
     const int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
     SgAsmGenericSection::dump(f, p, -1);
-    fprintf(f, "%s%-*s = %zu entries\n", p, w, "size", p_entries.size());
+    fprintf(f, "%s%-*s = %" PRIuPTR " entries\n", p, w, "size", p_entries.size());
     for (size_t i = 0; i < p_entries.size(); i++) {
         p_entries[i]->dump(f, p, i);
     }

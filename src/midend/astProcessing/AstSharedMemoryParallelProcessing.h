@@ -6,9 +6,7 @@
 #ifndef ASTSHAREDMEMORYPARALLELPROCESSING_H
 #define ASTSHAREDMEMORYPARALLELPROCESSING_H
 
-// tps (01/08/2010) Added sage3basic since this doesnt compile under gcc4.1.2
-//#include "sage3basic.h"
-//#include "sage3.h"
+#include "rosePublicConfig.h"
 
 #include "AstProcessing.h"
 
@@ -17,15 +15,21 @@
 // care of that.
 struct AstSharedMemoryParallelProcessingSynchronizationInfo
 {
-#ifdef _MSC_VER
-#pragma message ("Error: pthread.h is unavailable on MSVC, we might want to use boost.thread library.")
-#else
+#ifdef _REENTRANT                                       // user wants mult-thread support? (e.g., g++ -pthread)?
+# ifdef ROSE_HAVE_PTHREAD_H                             // POSIX threads are available?
     // mutex that controls access to the global stuff here
     pthread_mutex_t *mutex;
     // signal broadcast by last worker thread to arrive at a synchronization point
     pthread_cond_t *synchronizationEvent;
     // signal sent by workers when they exit
     pthread_cond_t *threadFinishedEvent;
+# else
+#  ifdef _MSC_VER
+#   pragma message ("POSIX threads are unavailable on this platform");
+#  else
+#   warning "POSIX threads are unavailable on this platform."
+#  endif
+# endif
 #endif
 
     // global counter of the number of threads that are still working (i.e.

@@ -109,7 +109,7 @@ evaluateInheritedAttribute (
                if ( generateIncludeDirectives == false || declarationFilename == targetFilename )
                   {
 #if PRINT_DEBUGGING_INFO
-                    printf ("Found a statement important to the prefix mechanism currentScope.size() = %zu \n",currentScope.size());
+                    printf ("Found a statement important to the prefix mechanism currentScope.size() = %" PRIuPTR " \n",currentScope.size());
 #endif
 
 #if 0
@@ -197,7 +197,7 @@ evaluateInheritedAttribute (
                     if ( /* (currentScope.size() >= 0) && */ (qualifiedStatement == true) && (isInNestedScope == true) )
                        {
 #if PRINT_DEBUGGING_INFO
-                         printf ("$$$$$ Push a new scope! currentStatement = %s currentStatement = %s stackOfScopes.size() = %zu currentScope.size() = %zu $$$$$ \n",
+                         printf ("$$$$$ Push a new scope! currentStatement = %s currentStatement = %s stackOfScopes.size() = %" PRIuPTR " currentScope.size() = %" PRIuPTR " $$$$$ \n",
                               currentStatementScope->sage_class_name(),
                               currentStatement->unparseToString().c_str(),
                               stackOfScopes.size(),currentScope.size());
@@ -207,7 +207,7 @@ evaluateInheritedAttribute (
                          stackOfScopes.push(currentScope);
 
 #if PRINT_DEBUGGING_INFO
-                         printf ("View the stackOfScopes! stackOfScopes.size() = %zu \n",stackOfScopes.size());
+                         printf ("View the stackOfScopes! stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
                          display(stackOfScopes,"Push Current scope: AFTER");
 #endif
                       // Empty the current scope stack so that it can be used
@@ -274,7 +274,7 @@ evaluateInheritedAttribute (
                stackOfScopes.push(currentScope);
 
 #if PRINT_DEBUGGING_INFO
-               printf ("Pushed global scope onto the stack stackOfScopes.size() = %zu \n",stackOfScopes.size());
+               printf ("Pushed global scope onto the stack stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
 #endif
             // Empty the current scope stack so that it can be used
             // to accumulate new statements for the next scope.
@@ -283,7 +283,7 @@ evaluateInheritedAttribute (
 
 #if PRINT_DEBUGGING_INFO
           char buffer[256];
-          sprintf (buffer,"At base of evaluateInheritedAttribute: stackOfScopes.size() = %zu",stackOfScopes.size());
+          sprintf (buffer,"At base of evaluateInheritedAttribute: stackOfScopes.size() = %" PRIuPTR "",stackOfScopes.size());
           std::string displayString = buffer;
           display(displayString);
 
@@ -292,7 +292,7 @@ evaluateInheritedAttribute (
         }
 
 #if PRINT_DEBUGGING_INFO
-     printf ("Leaving evaluateInheritedAttribute(): stackOfScopes.size() = %zu \n",stackOfScopes.size());
+     printf ("Leaving evaluateInheritedAttribute(): stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
 #endif
 
      return inputInheritedAttribute;
@@ -310,7 +310,7 @@ evaluateSynthesizedAttribute (
      printf ("@@@ In evaluateSynthesizedAttribute: astNode = %p = %s \n",astNode,astNode->sage_class_name());
 #endif
 #if 0
-     printf ("     inputSynthesizedAttributeList.size() = %zu \n",inputSynthesizedAttributeList.size());
+     printf ("     inputSynthesizedAttributeList.size() = %" PRIuPTR " \n",inputSynthesizedAttributeList.size());
 #endif
 
      return PrefixSynthesizedAttribute();
@@ -619,7 +619,7 @@ generatePrefixString()
 
      std::string prefixString;
 
-//   printf ("In generatePrefixString() stackOfScopes.size() = %zu \n",stackOfScopes.size());
+//   printf ("In generatePrefixString() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
 
 //   printf ("Calling generatePrefixStringGlobalDeclarations() \n");
      prefixString += generatePrefixStringGlobalDeclarations();
@@ -793,7 +793,7 @@ generatePrefixStringGlobalDeclarations()
    {
      std::string globalPrefixString;
 
-  // printf ("In generatePrefixStringGlobalDeclarations() stackOfScopes.size() = %zu \n",stackOfScopes.size());
+  // printf ("In generatePrefixStringGlobalDeclarations() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
 
   // We need to handle the case of a prefix generated for SgGlobal 
   // (in which case the stack of scopes is empty!).  
@@ -869,7 +869,7 @@ generatePrefixStringLocalDeclarations()
           return localPrefixString;
 #endif
 
-  // printf ("In generatePrefixStringLocalDeclarations() stackOfScopes.size() = %zu \n",stackOfScopes.size());
+  // printf ("In generatePrefixStringLocalDeclarations() stackOfScopes.size() = %" PRIuPTR " \n",stackOfScopes.size());
 
      if (stackOfScopes.size() > 1)
         {
@@ -887,7 +887,7 @@ generatePrefixStringLocalDeclarations()
        // bool firstOpenParen = true;
 
        // Pop off the global scope (which is on top of the stack)
-       // printf ("In generatePrefixStringLocalDeclarations() pop off the global scope: tempStack.size() = %zu \n",tempStack.size());
+       // printf ("In generatePrefixStringLocalDeclarations() pop off the global scope: tempStack.size() = %" PRIuPTR " \n",tempStack.size());
           ROSE_ASSERT(tempStack.size() > 0);
           tempStack.pop();
           stackSize--;
@@ -899,7 +899,7 @@ generatePrefixStringLocalDeclarations()
              {
                ListOfStatementsType tempList = tempStack.top();
 #if 0
-               printf ("In generatePrefixStringLocalDeclarations(): stackCounter = %d lastScopeIndex = %d tempList.size() = %zu \n",stackCounter,lastScopeIndex,tempList.size());
+               printf ("In generatePrefixStringLocalDeclarations(): stackCounter = %d lastScopeIndex = %d tempList.size() = %" PRIuPTR " \n",stackCounter,lastScopeIndex,tempList.size());
 
                typename ListOfStatementsType::iterator i = tempList.begin();
                while (i != tempList.end())

@@ -61,10 +61,10 @@ template <class T, class Impl>
 class IteratorWrap : public CountRefHandle <Impl>
 {
  protected:
-  CountRefHandle <Impl>::ConstRef;
-  CountRefHandle <Impl>::ConstPtr;
-  CountRefHandle <Impl>::UpdatePtr;
-  CountRefHandle <Impl>::UpdateRef;
+  using CountRefHandle <Impl>::ConstRef;
+  using CountRefHandle <Impl>::ConstPtr;
+  using CountRefHandle <Impl>::UpdatePtr;
+  using CountRefHandle <Impl>::UpdateRef;
  public:
   IteratorWrap<T,Impl>& operator = (const IteratorWrap<T,Impl> &that)
      { CountRefHandle <Impl> :: operator=(that); return *this; }

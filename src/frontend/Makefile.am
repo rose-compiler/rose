@@ -44,6 +44,8 @@ if ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
    SUBDIRS += PythonFrontend
 endif
 
+SUBDIRS += DLX
+
 # Until we revisit this this, we want to include specific documentation that has been put into this directory.
 # Note that OpenFortranParser_SAGE_Connection has the newer work to support Fortran in ROSE.  This work
 # is part of a contract to add Fortran support to ROSE using the Open 64 compiler.  It supports a roughly
@@ -66,6 +68,7 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/Exception.h		\
 	Partitioner2/Function.h			\
 	Partitioner2/FunctionCallGraph.h	\
+	Partitioner2/GraphViz.h			\
 	Partitioner2/InstructionProvider.h	\
 	Partitioner2/Modules.h			\
 	Partitioner2/ModulesElf.h		\
@@ -74,5 +77,6 @@ nobase_pkginclude_HEADERS=			\
 	Partitioner2/ModulesX86.h		\
 	Partitioner2/OwnedDataBlock.h		\
 	Partitioner2/Partitioner.h		\
+	Partitioner2/Reference.h		\
 	Partitioner2/Semantics.h		\
 	Partitioner2/Utility.h

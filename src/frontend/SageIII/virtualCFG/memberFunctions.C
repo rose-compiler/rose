@@ -2982,6 +2982,50 @@ SgAlignOfOp::cfgInEdges(unsigned int idx) {
         return result;
 }
 
+// DQ (2/4/2015): Added support for C++11 noexcept operator (structurally similar to SgAlignOfOp operator).
+unsigned int
+SgNoexceptOp::cfgIndexForEnd() const {
+     return 1;
+}
+
+std::vector<CFGEdge>
+SgNoexceptOp::cfgOutEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+
+        switch (idx) {
+                case 0:
+                        if (get_operand_expr())
+                                makeEdge(CFGNode(this, idx), get_operand_expr()->cfgForBeginning(), result);
+                        else
+                                makeEdge(CFGNode(this, idx), CFGNode(this, idx+1), result);
+                        break;
+                case 1: 
+                        makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
+std::vector<CFGEdge>
+SgNoexceptOp::cfgInEdges(unsigned int idx) {
+        std::vector<CFGEdge> result;
+        switch (idx) {
+                case 0: 
+                        makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+                case 1:
+                        if (get_operand_expr())
+                                makeEdge(get_operand_expr()->cfgForEnd(), CFGNode(this, idx), result);
+                        else
+                                makeEdge(CFGNode(this, idx-1), CFGNode(this, idx), result);
+                        break;
+                default: 
+                        ROSE_ASSERT (!"Bad index for SgUnaryOp");
+        }
+        return result;
+}
+
 // DQ (7/18/2011): Added support for new Java specific IR node (structurally similar to SgSizeOf operator).
 unsigned int
 SgJavaInstanceOfOp::cfgIndexForEnd() const {
@@ -4187,7 +4231,7 @@ std::vector<CFGEdge> SgCtorInitializerList::cfgInEdges(unsigned int idx) {
 
 #if 0
      SgInitializedNamePtrList & ctorList = this->get_ctors();
-     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %zu \n",idx,this,ctorList.size());
+     printf ("In SgCtorInitializerList::cfgInEdges(idx = %u): this = %p ctorList.size() = %" PRIuPTR " \n",idx,this,ctorList.size());
 #endif
 
      if (idx == 0) {

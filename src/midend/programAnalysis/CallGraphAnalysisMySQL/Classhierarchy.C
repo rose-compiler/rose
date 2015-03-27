@@ -6,7 +6,7 @@
  *
  *****************************************************************************/
 
-#include <rose.h>
+#include <sage3basic.h>
 #include "Classhierarchy.h"
 #include "GlobalDatabaseConnection.h"
 

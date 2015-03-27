@@ -607,31 +607,6 @@ ROSE_SUPPORT_IDA
 # Setup Automake conditional in projects/AstEquivalence/Makefile.am
 AM_CONDITIONAL(ROSE_USE_IDA,test ! "$with_ida" = no)
 
-# Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
-ROSE_SUPPORT_YICES
-
-# Call supporting macro to check for "--enable-i386" switch
-ROSE_SUPPORT_I386
-
-# Call supporting macro to internal Satisfiability (SAT) Solver
-ROSE_SUPPORT_SAT
-
-# Setup Automake conditional in --- (not yet ready for use)
-echo "with_sat = $with_sat"
-AM_CONDITIONAL(ROSE_USE_SAT,test ! "$with_sat" = no)
-
-# Call supporting macro to Intel Pin Dynamic Instrumentation
-ROSE_SUPPORT_INTEL_PIN
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_INTEL_PIN,test ! "$with_IntelPin" = no)
-
-# Call supporting macro to DWARF (libdwarf)
-ROSE_SUPPORT_DWARF
-
-# Setup Automake conditional in --- (not yet distributed)
-AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
-
 # Call supporting macro for libffi (Foreign Function Interface library)
 # This library is used by Peter's work on the Interpreter in ROSE.
 ROSE_SUPPORT_LIBFFI
@@ -639,19 +614,6 @@ ROSE_SUPPORT_LIBFFI
 # Setup Automake conditional in projects/interpreter/Makefile.am
 AM_CONDITIONAL(ROSE_USE_LIBFFI,test ! "$with_libffi" = no)
 
-TEST_SMT_SOLVER=""
-AC_ARG_WITH(smt-solver,
-[  --with-smt-solver=PATH	Specify the path to an SMT-LIB compatible SMT solver.  Used only for testing.],
-if test "x$with_smt_solver" = "xcheck" -o "x$with_smt_solver" = "xyes"; then
-  AC_ERROR([--with-smt-solver cannot be auto-detected])
-fi
-if test "x$with_smt_solver" != "xno"; then
-  TEST_SMT_SOLVER="$with_smt_solver"
-fi,
-)
-
-AM_CONDITIONAL(ROSE_USE_TEST_SMT_SOLVER,test ! "$TEST_SMT_SOLVER" = "")
-AC_SUBST(TEST_SMT_SOLVER)
 
 # DQ (3/13/2009): Trying to get Intel Pin and ROSE to both use the same version of libdwarf.
 # DQ (3/10/2009): The Dwarf support in Intel Pin conflicts with the Dwarf support in ROSE.
@@ -669,6 +631,9 @@ ROSE_SUPPORT_ATERM
 ROSE_SUPPORT_MINT
 
 ROSE_SUPPORT_VECTORIZATION
+
+# Pei-Hung (12/17/2014): Adding support for POCC.
+ROSE_SUPPORT_POCC
 
 ROSE_SUPPORT_PHP
 
@@ -739,14 +704,13 @@ AC_ARG_WITH(pch,
 ])
 AM_CONDITIONAL(ROSE_PCH,test "$with_pch" = yes)
 if test "x$with_pch" = xyes; then
-  CPPFLAGS="-U_REENTRANT $CPPFLAGS";
   AC_MSG_NOTICE( "PCH enabled: You got the following CPPFLAGS: $CPPFLAGS" );
-if test "x$with_parallel_ast_traversal_mpi" = xyes; then
-  AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
-fi
-if test "x$with_parallel_ast_traversal_omp" = xyes; then
-  AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
-fi
+  if test "x$with_parallel_ast_traversal_mpi" = xyes; then
+    AC_MSG_ERROR( "PCH Support cannot be configured together with MPI support" );
+  fi
+  if test "x$with_parallel_ast_traversal_omp" = xyes; then
+    AC_MSG_ERROR( "PCH Support cannot be configured together with GCC_OMP support" );
+  fi
 else
   AC_MSG_NOTICE( "PCH disabled: No Support for PCH." );
 fi
@@ -886,9 +850,6 @@ ROSE_SUPPORT_VISUALIZATION
 
 # Setup Automake conditional in src/roseIndependentSupport/visualization/Makefile.am
 AM_CONDITIONAL(ROSE_USE_VISUALIZATION,(test ! "$with_FLTK_include" = no) || (test ! "$with_FLTK_libs" = no) || (test ! "$with_GraphViz_include" = no) || (test ! "$with_GraphViz_libs" = no))
-
-# support for Unified Parallel Runtime, check for CUDA and OpenCL
-ROSE_SUPPORT_UPR
 
 # *********************************************************************
 # Option to control internal support of PPL (Parma Polyhedron Library)
@@ -1055,6 +1016,14 @@ if test "x$enable_candl" = "xyes"; then
 fi
 AC_SUBST(ROSE_USE_CANDL)
 AC_SUBST(CANDL_PATH)
+
+# *****************************************************************
+#            Accelerator Support (CUDA, OpenCL, OpenACC)
+# *****************************************************************
+
+ROSE_CHECK_CUDA
+ROSE_CHECK_OPENCL
+ROSE_CHECK_OPENACC
 
 # *****************************************************************
 #            Option to define DOXYGEN SUPPORT
@@ -1566,27 +1535,8 @@ fi
 
 # ****************************************************
 #   Support for Assembly Semantics (binary analysis)
+ROSE_SUPPORT_BINARY
 # ****************************************************
-
-AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
-AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
-
-# Xen and Ether [RPM 2009-10-28]
-AC_ARG_WITH(ether,
-        [  --with-ether=PATH   prefix of Xen/Ether installation
-                      Xen is a hypervisor for running virtual machines (http://www.xen.org)
-                      Ether is a layer on top of Xen for accessing Windows XP OS-level data
-                      structures (http://ether.gtisc.gatech.edu)],
-        [AC_DEFINE(ROSE_USE_ETHER, 1, [Defined if Ether from Georgia Tech is available.])
-	 if test "$with_ether" = "yes"; then ETHER_PREFIX=/usr; else ETHER_PREFIX="$with_ether"; fi],
-        [with_ether=no])
-AC_SUBST(ETHER_PREFIX)
-AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
-
-# libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h)
-AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
-AC_CHECK_LIB(gcrypt,gcry_check_version)
 
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
 AC_CHECK_HEADERS(numa.h, [found_libnuma=yes])
@@ -1597,30 +1547,6 @@ fi
 
 AM_CONDITIONAL(ROSE_USE_LIBNUMA, [test "x$found_libnuma" = xyes])
 
-# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
-# the ROSE library.
-AC_CHECK_HEADERS(pthread.h)
-
-# Check for the __thread keyword.  This type qualifier creates objects that are thread local.
-AC_MSG_CHECKING([for thread local storage type qualifier])
-AC_COMPILE_IFELSE([struct S {int a, b;}; static __thread struct S x;],
-	[AC_DEFINE(ROSE_THREAD_LOCAL_STORAGE, __thread, [Define to __thread keyword for thread local storage.])
-	 AC_MSG_RESULT([__thread])],
-	[AC_MSG_RESULT([not supported])])
-
-# These headers and types are needed by projects/simulator [matzke 2009-07-02]
-AC_CHECK_HEADERS([asm/ldt.h elf.h linux/types.h linux/dirent.h linux/unistd.h])
-AC_CHECK_HEADERS([sys/types.h sys/mman.h sys/stat.h sys/uio.h sys/wait.h sys/utsname.h sys/ioctl.h sys/sysinfo.h sys/socket.h])
-AC_CHECK_HEADERS([termios.h grp.h syscall.h])
-AC_CHECK_FUNCS(pipe2)
-AC_CHECK_TYPE(user_desc,
-              AC_DEFINE(HAVE_USER_DESC, [], [Defined if the user_desc type is declared in <asm/ldt.h>]),
-              [],
-	      [#include <asm/ldt.h>])
-
-# Check whether PostgreSQL is supported
-AC_CHECK_HEADERS([pqxx/version.hxx])
-AC_CHECK_LIB(pqxx, PQconnectdb)
 
 # PC (7/10/2009): The Haskell build system expects a fully numeric version number.
 PACKAGE_VERSION_NUMERIC=`echo $PACKAGE_VERSION | sed -e 's/\([[a-z]]\+\)/\.\1/; y/a-i/1-9/'`
@@ -1737,18 +1663,6 @@ src/3rdPartyLibraries/qrose/Components/Common/icons/Makefile
 src/3rdPartyLibraries/qrose/Components/QueryBox/Makefile
 src/3rdPartyLibraries/qrose/Components/SourceBox/Makefile
 src/3rdPartyLibraries/qrose/Components/TreeBox/Makefile
-src/3rdPartyLibraries/UPR/Makefile
-src/3rdPartyLibraries/UPR/docs/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/Makefile
-src/3rdPartyLibraries/UPR/docs/doxygen/doxy.conf
-src/3rdPartyLibraries/UPR/examples/Makefile
-src/3rdPartyLibraries/UPR/examples/cuda/Makefile
-src/3rdPartyLibraries/UPR/examples/opencl/Makefile
-src/3rdPartyLibraries/UPR/examples/xomp/Makefile
-src/3rdPartyLibraries/UPR/include/Makefile
-src/3rdPartyLibraries/UPR/include/UPR/Makefile
-src/3rdPartyLibraries/UPR/lib/Makefile
-src/3rdPartyLibraries/UPR/tools/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/frontend/Makefile
@@ -1778,6 +1692,15 @@ src/frontend/BinaryDisassembly/Makefile
 src/frontend/BinaryLoader/Makefile
 src/frontend/BinaryFormats/Makefile
 src/frontend/Disassemblers/Makefile
+src/frontend/DLX/Makefile
+src/frontend/DLX/docs/Makefile
+src/frontend/DLX/docs/doxygen/Makefile
+src/frontend/DLX/docs/doxygen/doxy.conf
+src/frontend/DLX/include/Makefile
+src/frontend/DLX/include/DLX/Makefile
+src/frontend/DLX/include/DLX/Core/Makefile
+src/frontend/DLX/lib/Makefile
+src/frontend/DLX/lib/core/Makefile
 src/frontend/Partitioner2/Makefile
 src/midend/Makefile
 src/midend/binaryAnalyses/Makefile
@@ -1788,7 +1711,32 @@ src/midend/programAnalysis/systemDependenceGraph/Makefile
 src/midend/programTransformation/extractFunctionArgumentsNormalization/Makefile
 src/midend/programTransformation/singleStatementToBlockNormalization/Makefile
 src/midend/programTransformation/loopProcessing/Makefile
+src/midend/MFB/Makefile
+src/midend/MFB/docs/Makefile
+src/midend/MFB/docs/doxygen/Makefile
+src/midend/MFB/docs/doxygen/doxy.conf
+src/midend/MFB/include/Makefile
+src/midend/MFB/include/MFB/Makefile
+src/midend/MFB/include/MFB/Sage/Makefile
+src/midend/MFB/lib/Makefile
+src/midend/MFB/lib/sage/Makefile
+src/midend/MDCG/Makefile
+src/midend/MDCG/docs/Makefile
+src/midend/MDCG/docs/doxygen/Makefile
+src/midend/MDCG/docs/doxygen/doxy.conf
+src/midend/MDCG/include/Makefile
+src/midend/MDCG/include/MDCG/Makefile
+src/midend/MDCG/lib/Makefile
 src/backend/Makefile
+src/backend/KLT/Makefile
+src/backend/KLT/docs/Makefile
+src/backend/KLT/docs/doxygen/Makefile
+src/backend/KLT/docs/doxygen/doxy.conf
+src/backend/KLT/include/Makefile
+src/backend/KLT/include/KLT/Makefile
+src/backend/KLT/include/KLT/Core/Makefile
+src/backend/KLT/lib/Makefile
+src/backend/KLT/lib/core/Makefile
 src/roseSupport/Makefile
 src/roseExtensions/Makefile
 src/roseExtensions/sqlite3x/Makefile
@@ -2025,6 +1973,9 @@ projects/Fortran_to_C/tests/Makefile
 projects/vectorization/Makefile
 projects/vectorization/src/Makefile
 projects/vectorization/tests/Makefile
+projects/PolyOpt2/Makefile
+projects/PolyOpt2/polyopt/Makefile
+projects/PolyOpt2/src/Makefile
 projects/PolyhedralModel/Makefile
 projects/PolyhedralModel/src/Makefile
 projects/PolyhedralModel/docs/Makefile
@@ -2040,9 +1991,42 @@ projects/PolyhedralModel/projects/utils/Makefile
 projects/RoseBlockLevelTracing/Makefile
 projects/RoseBlockLevelTracing/src/Makefile
 projects/ShiftCalculus/Makefile
+projects/ShiftCalculus2/Makefile
+projects/ShiftCalculus3/Makefile
 projects/LineDeleter/Makefile
 projects/LineDeleter/src/Makefile
-projects/SMTPathFeasibility/Makefile
+projects/demos-dlx-mdcg/Makefile
+projects/demos-dlx-mdcg/include/Makefile
+projects/demos-dlx-mdcg/include/DLX/Makefile
+projects/demos-dlx-mdcg/include/DLX/Logger/Makefile
+projects/demos-dlx-mdcg/include/MDCG/Makefile
+projects/demos-dlx-mdcg/include/MDCG/Logger/Makefile
+projects/demos-dlx-mdcg/include/libLogger/Makefile
+projects/demos-dlx-mdcg/lib/Makefile
+projects/demos-dlx-mdcg/lib/dlx/Makefile
+projects/demos-dlx-mdcg/lib/dlx/logger/Makefile
+projects/demos-dlx-mdcg/lib/mdcg/Makefile
+projects/demos-dlx-mdcg/lib/mdcg/logger/Makefile
+projects/demos-dlx-mdcg/lib/liblogger/Makefile
+projects/demos-dlx-mdcg/src/Makefile
+projects/demos-dlx-mdcg/tests/Makefile
+projects/rose-tooling/Makefile
+projects/rose-tooling/include/Makefile
+projects/rose-tooling/include/DLX/Makefile
+projects/rose-tooling/include/DLX/Tooling/Makefile
+projects/rose-tooling/lib/Makefile
+projects/rose-tooling/lib/dlx/Makefile
+projects/rose-tooling/lib/dlx/tooling/Makefile
+projects/rose-tooling/src/Makefile
+projects/rose-tooling/tests/Makefile
+projects/Viz/Makefile
+projects/Viz/include/Makefile
+projects/Viz/include/Viz/Makefile
+projects/Viz/include/Viz/Traversals/Makefile
+projects/Viz/lib/Makefile
+projects/Viz/src/Makefile
+projects/Viz/tools/Makefile
+projects/Viz/examples/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
@@ -2064,6 +2048,7 @@ tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseInsensitive/Makefile
 tests/CompilerOptionsTests/testFileNamesAndExtensions/fileExtensions/caseSensitive/Makefile
 tests/CompilerOptionsTests/testGenerateSourceFileNames/Makefile
+tests/CompilerOptionsTests/testIncludeOptions/Makefile
 tests/CompileTests/Makefile
 tests/CompileTests/A++Tests/Makefile
 tests/CompileTests/P++Tests/Makefile
