@@ -236,7 +236,8 @@ YicesSolver::parse_evidence()
                 s = rest;
 
                 std::string addr_name = StringUtility::addrToString(addr);
-                ASSERT_require(evidence.find(addr_name)==evidence.end());
+                if (evidence.find(addr_name) != evidence.end())
+                    throw Error(s, addr_name + " appears more than once (10)");
                 evidence[addr_name] = std::pair<size_t, uint64_t>(nbits, val);
 
             } else {
