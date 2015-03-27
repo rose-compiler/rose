@@ -55,6 +55,14 @@ public:
     }
 
 public:
+    /** Property: the symbolic expression for the memory.
+     *
+     * @{ */
+    InsnSemanticsExpr::TreeNodePtr expression() const { return mem_; }
+    void expression(const InsnSemanticsExpr::TreeNodePtr &mem);
+    /** @} */
+
+public:
     // documented in base class
     virtual void clear() ROSE_OVERRIDE;
 

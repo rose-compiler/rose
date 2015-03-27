@@ -8,6 +8,13 @@ namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
 void
+SymbolicMemory::expression(const InsnSemanticsExpr::TreeNodePtr &expr) {
+    ASSERT_not_null(expr);
+    ASSERT_require2(!expr->isScalar(), "expression must be a memory state");
+    mem_ = expr;
+}
+
+void
 SymbolicMemory::clear() {
     if (mem_) {
         mem_ = InsnSemanticsExpr::LeafNode::create_memory(mem_->domainWidth(), mem_->get_nbits());
