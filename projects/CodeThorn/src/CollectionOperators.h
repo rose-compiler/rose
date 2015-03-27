@@ -7,7 +7,7 @@
  * License  : see file LICENSE in the CodeThorn distribution *
  *************************************************************/
 
-namespace CodeThorn {
+namespace SPRAY {
 
 // set intersection
 template<typename T>
