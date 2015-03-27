@@ -268,6 +268,17 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2014_241.C \
    test2014_242.C \
    test2014_243.C \
+   test2015_01.C \
+   test2015_02.C \
+   test2015_03.C \
+   test2015_04.C \
+   test2015_05.C \
+   test2015_07.C \
+   test2015_08.C \
+   test2015_09.C \
+   test2015_20.C \
+   test2015_21.C \
+   test2015_22.C \
    lulesh.C \
    luleshTALC.C
 
