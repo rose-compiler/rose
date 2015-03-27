@@ -8,6 +8,7 @@
 #include <rose_strtoull.h>
 #include <sawyer/BiMap.h>
 #include <sawyer/GraphTraversal.h>
+#include <SymbolicMemory2.h>
 #include <SymbolicSemantics2.h>
 #include <YicesSolver.h>
 
@@ -48,10 +49,12 @@ struct Settings {
     std::string graphVizPrefix;                         // prefix for GraphViz file names
     PathSelection graphVizOutput;                       // which paths to dump to GraphViz files
     size_t maxPaths;                                    // max number of paths to find (0==unlimited)
+    bool multiPathSmt;                                  // send multiple paths at once to the SMT solver?
+    size_t maxExprDepth;                                // max depth when printing expressions
     Settings()
         : beginVertex("_start"), expansionDepthLimit(4), vertexVisitLimit(1), showInstructions(true),
           showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
-          graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1) {}
+          graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1), multiPathSmt(false), maxExprDepth(4) {}
 };
 static Settings settings;
 
@@ -137,6 +140,20 @@ parseCommandLine(int argc, char *argv[])
                     "exits.  The default is " + StringUtility::numberToString(settings.maxPaths) + ". Setting this to "
                     "zero finds all possible feasible paths, subject to other constraints.\n"));
 
+    cfg.insert(Switch("multi-path")
+               .intrinsicValue(true, settings.multiPathSmt)
+               .doc("Enables a mode of operation where information about multiple paths is sent to the SMT solver all "
+                    "at once rather than invoking the SMT solver once per path.  When multi-path mode is enabled information "
+                    "about which path is taken is not available--only the fact that some path was feasible is reported. The "
+                    "initial conditions that cause some feasible path to be taken are always reported regardless of whether "
+                    "feasibility is evaluated one path at a time, or multiple paths at once.  The @s{single-path} switch "
+                    "is the inverse.  The default is @s{" + std::string(settings.multiPathSmt?"multi":"single") + "-path}."));
+    cfg.insert(Switch("single-path")
+               .key("multi-path")
+               .intrinsicValue(false, settings.multiPathSmt)
+               .doc("Enables a mode of operation where information about only one path at a time is sent to the SMT solver. "
+                    "See @s{multi-path} for details."));
+
     //--------------------------- 
     SwitchGroup out("Output switches");
     out.insert(Switch("show-instructions")
@@ -200,6 +217,11 @@ parseCommandLine(int argc, char *argv[])
                     "@named{\"none\"}{Do not dump any paths. " +
                     std::string(NO_PATHS==settings.graphVizOutput? "This is the default.":"") + "}"
                     "The file name algorithm is described in the @s{gv-prefix} switch documentation."));
+
+    out.insert(Switch("max-expr-depth")
+               .argument("n", nonNegativeIntegerParser(settings.maxExprDepth))
+               .doc("Maximum depth to which symbolic expressions are printed in diagnostic messages.  The default is " +
+                    StringUtility::numberToString(settings.maxExprDepth) + "."));
 
     return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
 }
@@ -575,6 +597,37 @@ eraseUnreachable(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowGr
     }
 }
 
+/** Find back edges. */
+CfgEdgeSet
+findBackEdges(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstVertexNodeIterator &begin) {
+    using namespace Sawyer::Container::Algorithm;
+    typedef DepthFirstForwardGraphTraversal<const P2::ControlFlowGraph> Traversal;
+
+    CfgEdgeSet backEdges;
+    std::vector<bool> visitingVertex(cfg.nVertices(), false);
+    for (Traversal t(cfg, begin, ENTER_VERTEX|LEAVE_VERTEX|ENTER_EDGE); t; ++t) {
+        if (t.event() == ENTER_VERTEX) {
+            visitingVertex[t.vertex()->id()] = true;
+        } else if (t.event() == LEAVE_VERTEX) {
+            visitingVertex[t.vertex()->id()] = false;
+        } else if (t.event() == ENTER_EDGE) {
+            if (visitingVertex[t.edge()->target()->id()])
+                backEdges.insert(t.edge());
+        }
+    }
+    return backEdges;
+}
+
+/** Erase all back edges.
+ *
+ *  Perform a depth first search and erase back edges. */
+void
+eraseBackEdges(P2::ControlFlowGraph &cfg /*in,out*/, const P2::ControlFlowGraph::ConstVertexNodeIterator &begin) {
+    CfgEdgeSet backEdges = findBackEdges(cfg, begin);
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, backEdges)
+        cfg.eraseEdge(edge);
+}
+
 /** Compute all paths.
  *
  *  Computes all paths from @p beginVertex to any @p endVertices that does not go through any @p avoidVertices or @p
@@ -737,12 +790,19 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     Color::HSV pathColor(0.84, 1.0, 0.4);               // dark magenta
 
     P2::GraphViz::CfgEmitter gv(partitioner, cfg);
+#if 1 // normal output
     gv.srcMapper(srcMapper);
     gv.defaultGraphAttributes().insert("overlap", "scale");
     gv.useFunctionSubgraphs(settings.showFunctionSubgraphs);
     gv.showInstructions(true);
     gv.showInstructionAddresses(true);
     gv.showInstructionStackDeltas(false);
+#else // small output
+    gv.useFunctionSubgraphs(false);
+    gv.showInstructions(false);
+    gv.showInstructionAddresses(false);
+    gv.showInstructionStackDeltas(false);
+#endif
     gv.selectWholeGraph();
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator &endVertex, endVertices)
         gv.vertexOrganization(endVertex).attributes().insert("fillcolor", exitColor.toHtml());
@@ -772,19 +832,20 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // RiscOperators that add some additional tracking information for memory values.
 class RiscOperators: public SymbolicSemantics::RiscOperators {
+    typedef SymbolicSemantics::RiscOperators Super;
 public:
-    typedef Sawyer::Container::Map<size_t /*vname*/, std::string /*comment*/> VarComments;
+    typedef Sawyer::Container::Map<std::string /*name*/, std::string /*comment*/> VarComments;
     VarComments varComments_;                           // information about certain symbolic variables
     size_t pathInsnIndex_;                              // current location in path
 
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(protoval, solver) {
+        : Super(protoval, solver), pathInsnIndex_(0) {
         set_name("FindPath");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : SymbolicSemantics::RiscOperators(state, solver) {
+        : Super(state, solver), pathInsnIndex_(0) {
         set_name("FindPath");
     }
 
@@ -792,7 +853,16 @@ public:
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SymbolicSemantics::SValue::instance();
         BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-        BaseSemantics::MemoryStatePtr memory = SymbolicSemantics::MemoryState::instance(protoval, protoval);
+        BaseSemantics::MemoryStatePtr memory;
+        if (settings.multiPathSmt) {
+            // If we're sending multiple paths at a time to the SMT solver then we need to provide the SMT solver with detailed
+            // information about how memory is affected on those different paths.
+            memory = BaseSemantics::SymbolicMemory::instance(protoval, protoval);
+        } else {
+            // We can perform memory-related operations and simplifications inside ROSE, which results in more but smaller
+            // expressions being sent to the SMT solver.
+            memory = SymbolicSemantics::MemoryState::instance(protoval, protoval);
+        }
         BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
@@ -824,37 +894,21 @@ public:
     }
 
 public:
-    void pathInsnIndex(size_t idx) { pathInsnIndex_ = idx; }
     const VarComments& varComments() const { return varComments_; }
 
-public:
-    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
-                                                const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+private:
+    /** Create a comment to describe a memory address if possible. */
+    std::string commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode) {
         using namespace InsnSemanticsExpr;
-        BaseSemantics::SValuePtr retval = SymbolicSemantics::RiscOperators::readMemory(segreg, addr, dflt, cond);
-
-        // Do we already have info about the return value?
-        TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
-        if (!valExpr->isLeafNode() || !valExpr->isLeafNode()->is_variable())
-            return retval;                              // result is not a variable
-        size_t varNumber = valExpr->isLeafNode()->get_name();
-        if (varComments_.exists(varNumber))
-            return retval;                              // we already have info for this variable
-        if (!get_insn())
-            return retval;                              // not called from dispatcher on behalf of an instruction
-        
-
-        // Save some info about the return value, a symbolic variable.
-        std::string varComment = "first read at path position #" + StringUtility::numberToString(pathInsnIndex_) +
+        std::string varComment = "first " + accessMode + " at path position #" +
+                                 StringUtility::numberToString(pathInsnIndex_-1) +
                                  ": " + unparseInstruction(get_insn());
 
         // Sometimes we can save useful information about the address.
         TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
         if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
             if (addrLeaf->is_known())
-                varComment += "\nat address 0x" + addrLeaf->get_bits().toHex();
+                varComment += "\nat address " + addrLeaf->toString();
         } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
             if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
                 addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
@@ -863,7 +917,7 @@ public:
                 LeafNodePtr offset = addrINode->child(1)->isLeafNode();
                 varComment += "\nat address ";
                 if (base->get_comment().empty()) {
-                    varComment += "v" + StringUtility::numberToString(base->get_name());
+                    varComment = base->toString();
                 } else {
                     varComment += base->get_comment();
                 }
@@ -875,22 +929,124 @@ public:
                 }
             }
         }
+        return varComment;
+    }
 
-        if (!varComment.empty())
-            varComments_.insert(varNumber, varComment);
+public:
+    virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+        Super::startInstruction(insn);
+        ++pathInsnIndex_;
+    }
+
+    /** Read memory.
+     *
+     *  If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
+     *  specified address; otherwise, actually read the value and return it.  In any case, record some information about the
+     *  address that's being read if we've never seen it before. */
+    virtual BaseSemantics::SValuePtr readMemory(const RegisterDescriptor &segreg,
+                                                const BaseSemantics::SValuePtr &addr,
+                                                const BaseSemantics::SValuePtr &dflt,
+                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        BaseSemantics::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
+        if (!get_insn())
+            return retval;                              // not called from dispatcher on behalf of an instruction
+
+        // Save a description of the variable
+        std::string varComment = commentForVariable(addr, "read");
+        InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable())
+            varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
+
+        // Save a description of the address
+        InsnSemanticsExpr::TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+        if (addrExpr->isLeafNode())
+            varComments_.insertMaybe(addrExpr->isLeafNode()->toString(), varComment);
 
         return retval;
     }
+
+    /** Write value to memory.
+     *
+     *  If multi-path is enabled, then return a new memory expression that updates memory with a new address/value pair;
+     *  otherwise update the memory directly.  In any case, record some information about the address that was written if we've
+     *  never seen it before. */
+    virtual void writeMemory(const RegisterDescriptor &segreg,
+                             const BaseSemantics::SValuePtr &addr,
+                             const BaseSemantics::SValuePtr &value,
+                             const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+        Super::writeMemory(segreg, addr, value, cond);
+
+        // Save a description of the variable
+        std::string varComment = commentForVariable(addr, "write");
+        InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable())
+            varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
+
+        // Save a description of the address
+        InsnSemanticsExpr::TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+        if (addrExpr->isLeafNode())
+            varComments_.insertMaybe(addrExpr->isLeafNode()->toString(), varComment);
+    }
 };
 
+/** Build a new virtual CPU. */
+BaseSemantics::DispatcherPtr
+buildVirtualCpu(const P2::Partitioner &partitioner) {
+    // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
+    SMTSolver *solver = NULL;
+    RiscOperatorsPtr ops = RiscOperators::instance(partitioner.instructionProvider().registerDictionary(), solver);
+    BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
+    return cpu;
+}
+
+/** Process instructions for one basic block on the specified virtual CPU. */
 void
-processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const CfgPath &path) {
+processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu) {
+    ASSERT_not_null(bblock);
+    Stream error(::mlog[ERROR]);
+    Stream debug(::mlog[DEBUG]);
+    try {
+        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            SAWYER_MESG(debug) <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
+            cpu->processInstruction(insn);
+        }
+    } catch (const BaseSemantics::Exception &e) {
+        error <<"semantics failed: " <<e <<"\n";
+        return;
+    }
+}
+
+void
+showPathEvidence(SMTSolver &solver, const RiscOperatorsPtr &ops) {
+    std::cout <<"  Inputs sufficient to cause path to be taken:\n";
+    std::vector<std::string> enames = solver.evidence_names();
+    if (enames.empty()) {
+        std::cout <<"    not available (or none necessary)\n";
+    } else {
+        BOOST_FOREACH (const std::string &ename, enames) {
+            if (ename.substr(0, 2) == "0x") {
+                std::cout <<"    memory[" <<ename <<"] == " <<*solver.evidence_for_name(ename) <<"\n";
+            } else {
+                std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
+            }
+            std::string varComment;
+            if (ops->varComments().getOptional(ename).assignTo(varComment))
+                std::cout <<StringUtility::prefixLines(varComment, "      ") <<"\n";
+        }
+    }
+}
+
+/** Process one path. Given a path, determine if the path is feasible. If so, emit the initial conditions that cause this path
+ *  to be taken. */
+void
+singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const CfgPath &path) {
     using namespace rose::BinaryAnalysis::InsnSemanticsExpr;     // TreeNode, InternalNode, LeafNode
 
     static int npaths = -1;
     ++npaths;
     Stream info(::mlog[INFO]);
     Stream error(::mlog[ERROR]);
+    Stream debug(::mlog[DEBUG]);
     info <<"path #" <<npaths <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<"\n";
 
     std::string graphVizFileName;
@@ -900,29 +1056,17 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
     }
 
     YicesSolver solver;
-    const RegisterDictionary *regdict = partitioner.instructionProvider().registerDictionary();
-    RiscOperatorsPtr ops = RiscOperators::instance(regdict, &solver);
-    BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
 
-    size_t insnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &pathEdge, path.edges()) {
         if (pathEdge->source()->value().type() != P2::V_BASIC_BLOCK) {
             error <<"cannot compute path feasibility across a non-basic-block vertex at "
                   <<partitioner.vertexName(pathEdge->source()) <<"\n";
             return;
         } else {
-            P2::BasicBlock::Ptr bblock = pathEdge->source()->value().bblock();
-            ASSERT_not_null(bblock);
-            try {
-                BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
-                    ops->pathInsnIndex(insnIndex++);
-                    cpu->processInstruction(insn);
-                }
-            } catch (const BaseSemantics::Exception &e) {
-                error <<"semantics failed: " <<e <<"\n";
-                return;
-            }
+            processBasicBlock(pathEdge->source()->value().bblock(), cpu);
         }
 
         if (pathEdge->target()->value().type() != P2::V_BASIC_BLOCK) {
@@ -947,8 +1091,17 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
     }
 
     // Are the constraints satisfiable.  Empty constraints are tivially satisfiable.
-    SMTSolver::Satisfiable satisfiable = solver.satisfiable(pathConstraints);
-    if (satisfiable == SMTSolver::SAT_YES) {
+    SMTSolver::Satisfiable isSatisfied = SMTSolver::SAT_UNKNOWN;
+    if (settings.multiPathSmt && !pathConstraints.empty()) {
+        // If we give the SMT solver an equation built from multiple paths, then we don't care about which path was taken to
+        // get from point A to point B, just that some path could be taken.  Therefore, we just need to be sure that the final
+        // value for the instruction pointer register is point B.
+        isSatisfied = solver.satisfiable(pathConstraints.back());
+    } else {
+        isSatisfied = solver.satisfiable(pathConstraints);
+    }
+    
+    if (isSatisfied == SMTSolver::SAT_YES) {
         info <<"  path is feasible\n";
         std::cout <<"Found feasible path #" <<npaths
                   <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
@@ -990,36 +1143,21 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
             }
         }
 
-        std::cout <<"  Inputs sufficient to cause path to be taken:\n";
-        std::vector<std::string> enames = solver.evidence_names();
-        if (pathConstraints.empty()) {
-            std::cout <<"    none necessary\n";
-        } else if (enames.empty()) {
-            std::cout <<"    not available\n";
-        } else {
-            BOOST_FOREACH (const std::string &ename, enames) {
-                std::cout <<"    " <<ename <<" == " <<*solver.evidence_for_name(ename) <<"\n";
-                if (ename.size()>=2 && ename[0]=='v' && isdigit(ename[1])) {
-                    size_t varNumber = strtoull(ename.c_str()+1, NULL, 0);
-                    std::string varComment;
-                    if (ops->varComments().getOptional(varNumber).assignTo(varComment))
-                        std::cout <<StringUtility::prefixLines(varComment, "      ") <<"\n";
-                }
-            }
-        }
+        showPathEvidence(solver, ops);
 
         if (settings.showFinalState) {
             std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n";
             SymbolicSemantics::Formatter fmt;
             fmt.set_line_prefix("    ");
+            fmt.expr_formatter.max_depth = settings.maxExprDepth;
             std::cout <<(*ops->get_state()+fmt);
         }
 
-    } else if (satisfiable == SMTSolver::SAT_NO) {
+    } else if (isSatisfied == SMTSolver::SAT_NO) {
         info <<"  not feasible according to SMT solver\n";
         return;
     } else {
-        ASSERT_require(satisfiable == SMTSolver::SAT_UNKNOWN);
+        ASSERT_require(isSatisfied == SMTSolver::SAT_UNKNOWN);
         error <<"SMT solver could not determine satisfiability\n";
         return;
     }
@@ -1030,10 +1168,154 @@ processPath(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &path
     }
 }
 
+/** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
+ * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
+ * expressions. */
+BaseSemantics::StatePtr
+mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
+                     const BaseSemantics::StatePtr &s1, const BaseSemantics::StatePtr &s2) {
+    using namespace InsnSemanticsExpr;
+
+    // The instruction pointer constraint to use values from s1, otherwise from s2.
+    SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(ops->undefined_(1));// FIXME[Robb P. Matzke 2015-03-26]
+
+    // Merge register states s1reg and s2reg into mergedReg
+    BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->get_register_state());
+    BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->get_register_state());
+    BaseSemantics::RegisterStatePtr mergedReg = s1reg->clone();
+    BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
+        if (s1reg->is_partly_stored(pair.desc)) {
+            // The register exists (at least partly) in both states, so merge its values.
+            BaseSemantics::SValuePtr mergedVal = ops->ite(s1Constraint,
+                                                          s1->readRegister(pair.desc, ops.get()),
+                                                          s2->readRegister(pair.desc, ops.get()));
+            mergedReg->writeRegister(pair.desc, mergedVal, ops.get());
+        } else {
+            // The register exists only in the s2 state, so copy it.
+            mergedReg->writeRegister(pair.desc, pair.value, ops.get());
+        }
+    }
+
+    // Merge memory states s1mem and s2mem into mergedMem
+    BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
+    BaseSemantics::SymbolicMemoryPtr s2mem = BaseSemantics::SymbolicMemory::promote(s2->get_memory_state());
+    TreeNodePtr memExpr1 = s1mem->expression();
+    TreeNodePtr memExpr2 = s2mem->expression();
+    TreeNodePtr mergedExpr = InternalNode::create(memExpr1->get_nbits(), OP_ITE, s1Constraint->get_expression(),
+                                                  memExpr1, memExpr2);
+    BaseSemantics::SymbolicMemoryPtr mergedMem = BaseSemantics::SymbolicMemory::promote(s1mem->clone());
+    mergedMem->expression(mergedExpr);
+
+    return ops->get_state()->create(mergedReg, mergedMem);
+}
+
+/** Process all paths at once by sending everything to the SMT solver. */
+void
+multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
+                     const P2::ControlFlowGraph::ConstVertexNodeIterator &pathsBeginVertex,
+                     const CfgVertexSet &pathsEndVertices) {
+    using namespace Sawyer::Container::Algorithm;
+    using namespace InsnSemanticsExpr;
+
+    Stream info(::mlog[INFO]);
+    info <<"testing multi-path feasibility for paths graph with "
+         <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+
+    YicesSolver solver;
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+
+    // Cycles are not allowed for multi-path feasibility analysis. Loops and recursion must have already been unrolled.
+    ASSERT_require(paths.isValidVertex(pathsBeginVertex));
+    CfgEdgeSet backEdges = findBackEdges(paths, pathsBeginVertex);
+    if (!backEdges.empty()) {
+        ::mlog[ERROR] <<"Cyclic paths are not allowed for multi-path feasibility analysis. The back edges are:\n";
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, backEdges)
+            ::mlog[ERROR] <<"  " <<partitioner.edgeName(edge) <<"\n";
+        ASSERT_not_implemented("cyclic paths not allowed for multi-path feasibility analysis");
+    }
+
+    info <<"  building path constraints expression\n";
+    ASSERT_require(pathsBeginVertex->nInEdges() == 0);
+    std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator pathsEndVertex, pathsEndVertices) {
+        // This loop is a little bit like a data-flow, except we don't have to worry about cycles in the CFG, which simplifies
+        // things quite a bit. We can process the vertices by doing a depth-first traversal starting at the end, and building
+        // the intermediate states as we back out of the traversal.  This guarantees that the final states for each of a
+        // vertex's CFG predecessors is already computed when we're ready to compute the vertex's final state.
+        typedef DepthFirstReverseGraphTraversal<const P2::ControlFlowGraph> Traversal;
+        for (Traversal t(paths, pathsEndVertex, LEAVE_VERTEX); t; ++t) {
+            // Build the initial state by merging all incoming states.
+            BaseSemantics::StatePtr state;
+            ASSERT_require(outState[t.vertex()->id()]==NULL);
+            if (0 == t.vertex()->nInEdges()) {
+                ASSERT_require(t.vertex() == pathsBeginVertex);
+                state = cpu->get_state()->clone(); state->clear();
+            } else {
+                BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, t.vertex()->inEdges()) {
+                    P2::ControlFlowGraph::ConstVertexNodeIterator predecessorVertex = edge.source();
+                    ASSERT_not_null(outState[predecessorVertex->id()]);
+                    if (edge.id() == t.vertex()->inEdges().begin()->id()) {
+                        state = outState[predecessorVertex->id()];
+                    } else {
+                        state = mergeMultipathStates(ops, state, outState[predecessorVertex->id()]);
+                    }
+                }
+            }
+            
+            // Compute and save the final state
+            ops->set_state(state);
+            processBasicBlock(t.vertex()->value().bblock(), cpu);
+            outState[t.vertex()->id()] = cpu->get_state()->clone();
+        }
+        ASSERT_not_null(outState[pathsEndVertex->id()]);
+        if (settings.showFinalState) {
+            SymbolicSemantics::Formatter fmt;
+            fmt.expr_formatter.max_depth = settings.maxExprDepth;
+            std::cerr <<"Final state:\n" <<(*cpu->get_state()+fmt);
+        }
+
+        // Final instruction pointer expression
+        BaseSemantics::SValuePtr ip = ops->readRegister(partitioner.instructionProvider().instructionPointerRegister());
+        LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathsEndVertex->value().address());
+        TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
+                                                      targetVa, SymbolicSemantics::SValue::promote(ip)->get_expression());
+        info <<"  constraints expression has " <<StringUtility::plural(constraint->nnodes(), "terms") <<"\n";
+        if (settings.showConstraints) {
+            std::cout <<"  Constraints:\n";
+            std::cout <<"    " <<*constraint <<"\n";
+        }
+
+        // Is the constraint satisfiable?
+        info <<"  invoking SMT solver\n";
+        SMTSolver::Satisfiable isSatisfied = solver.satisfiable(constraint);
+        if (isSatisfied == SMTSolver::SAT_YES) {
+            info <<"  constraints are satisfiable\n";
+            std::cout <<"Found a feasible path (specified path is not available)\n";
+            showPathEvidence(solver, ops);
+        } else if (isSatisfied == SMTSolver::SAT_NO) {
+            info <<"  constraints are not satisfiable\n";
+        } else {
+            info <<"  constraint satisfiability could not be determined.\n";
+        }
+    }
+};
+
+void
+singlePathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const CfgPath &path) {}
+
+void
+multiPathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
+              const P2::ControlFlowGraph::ConstVertexNodeIterator &pathsBeginVertex,
+              const CfgVertexSet &pathsEndVertices) {}
+
+/** Find paths and process them one at a time until we've found the desired number of feasible paths. */
+template<typename PathProcessor, typename FinalProcessor>
 void
 findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexNodeIterator &globalBeginVertex,
                     const CfgVertexSet &globalEndVertices, const CfgVertexSet &globalAvoidVertices,
-                    const CfgEdgeSet &globalAvoidEdges) {
+                    const CfgEdgeSet &globalAvoidEdges, PathProcessor pathProcessor, FinalProcessor finalProcessor) {
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
@@ -1071,7 +1353,7 @@ findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGra
             path.backtrack();
         } else if (pathsEndVertices.find(path.backVertex()) != pathsEndVertices.end()) {
             // We've reached the end of the path. Backtrack and follow a different path.
-            processPath(partitioner, paths, path);
+            pathProcessor(partitioner, paths, path);
             path.backtrack();
         } else if (path.nEdges()>0 &&
                    path.edges().back()->value().type() == P2::E_CALL_RETURN &&
@@ -1105,11 +1387,8 @@ findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGra
             path.pushBack(path.backVertex()->outEdges().begin());
         }
     }
+    finalProcessor(partitioner, paths, pathsBeginVertex, pathsEndVertices);
 }
-
-        
-
-
 
 
 
@@ -1521,6 +1800,12 @@ int main(int argc, char *argv[]) {
     if (SgProject *project = SageInterface::getProject())
         srcMapper = DwarfLineMapper(project);
     
-    // Find paths
-    findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
+    // Process individual paths
+    if (settings.multiPathSmt) {
+        findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
+                            singlePathNoOp, multiPathFeasibility);
+    } else {
+        findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
+                            singlePathFeasibility, multiPathNoOp);
+    }
 }
