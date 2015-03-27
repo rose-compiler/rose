@@ -98,7 +98,9 @@ struct Formatter {
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true), max_depth(0) {}
+    Formatter()
+        : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
+          max_depth(0), cur_depth(0) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -627,6 +629,12 @@ public:
     /** Returns the name of a free variable.  The output functions print variables as "vN" where N is an integer. It is this N
      *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
     uint64_t get_name() const;
+
+    /** Returns a string for the leaf.
+     *
+     *  Variables are returned as "vN", memory is returned as "mN", and constants are returned as a hexadecimal string, where N
+     *  is a variable or memory number. */
+    std::string toString() const;
 
     // documented in super class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;

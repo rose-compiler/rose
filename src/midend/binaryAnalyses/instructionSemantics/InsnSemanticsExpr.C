@@ -526,7 +526,9 @@ expr_cmp(const TreeNodePtr &a, const TreeNodePtr &b)
     ASSERT_require((ai!=NULL) xor (al!=NULL));
     ASSERT_require((bi!=NULL) xor (bl!=NULL));
 
-    if ((ai==NULL) != (bi==NULL)) {
+    if (a == b) {
+        return 0;
+    } else if ((ai==NULL) != (bi==NULL)) {
         // internal nodes are less than leaf nodes
         return ai!=NULL ? -1 : 1;
     } else if (al!=NULL) {
@@ -1877,6 +1879,18 @@ LeafNode::get_name() const
 {
     ASSERT_require(is_variable() || is_memory());
     return name;
+}
+
+std::string
+LeafNode::toString() const {
+    if (is_known())
+        return "0x" + get_bits().toHex();
+    if (is_variable())
+        return "v" + StringUtility::numberToString(get_name());
+    if (is_memory())
+        return "m" + StringUtility::numberToString(get_name());
+    ASSERT_not_reachable("invalid leaf type");
+    return "";
 }
 
 void
