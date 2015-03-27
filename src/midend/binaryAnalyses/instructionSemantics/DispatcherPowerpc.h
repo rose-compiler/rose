@@ -73,6 +73,8 @@ public:
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         assert(insn!=NULL);

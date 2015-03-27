@@ -32,7 +32,7 @@ public:
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmPowerpcInstruction *insn = isSgAsmPowerpcInstruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        operators->writeRegister(dispatcher->REG_IAR, operators->number_(32, insn->get_address() + 4));
+        dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         p(dispatcher.get(), operators.get(), insn, operands);
     }
@@ -1064,6 +1064,11 @@ DispatcherPowerpc::set_register_dictionary(const RegisterDictionary *regdict)
 {
     BaseSemantics::Dispatcher::set_register_dictionary(regdict);
     regcache_init();
+}
+
+RegisterDescriptor
+DispatcherPowerpc::instructionPointerRegister() const {
+    return REG_IAR;
 }
 
 void

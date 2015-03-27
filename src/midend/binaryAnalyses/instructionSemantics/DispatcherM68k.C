@@ -38,8 +38,7 @@ public:
         // individual instructions (like branches) can override this choice by assigning a new value to PC.  However, we must
         // be careful of PC-relative addressing since the PC value during the addressing operations is the instruction address
         // plus 2.
-        operators->writeRegister(dispatcher->REG_PC, operators->add(operators->number_(32, insn->get_address()),
-                                                                    operators->number_(32, insn->get_size())));
+        dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         p(dispatcher.get(), operators.get(), insn, operands);
     }
@@ -3307,6 +3306,11 @@ DispatcherM68k::regcache_init() {
         REG_MACEXT2  = findRegister("accext2", 16, IS_OPTIONAL);
         REG_MACEXT3  = findRegister("accext3", 16, IS_OPTIONAL);
     }
+}
+
+RegisterDescriptor
+DispatcherM68k::instructionPointerRegister() const {
+    return REG_PC;
 }
 
 void

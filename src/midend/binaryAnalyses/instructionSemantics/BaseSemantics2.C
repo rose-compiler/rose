@@ -293,13 +293,24 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
 {
     ASSERT_not_null(value);
     ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
+    erase_register(reg, ops);
+    Registers::iterator ri = registers.find(reg);
+    if (ri == registers.end()) {
+        registers[reg].push_back(RegPair(reg, value));
+    } else {
+        ri->second.push_back(RegPair(reg, value));
+    }
+}
+
+void
+RegisterStateGeneric::erase_register(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    ASSERT_require(reg.is_valid());
 
     // Fast case: the state does not store this register or any register that might overlap with this register
     Registers::iterator ri = registers.find(reg);
-    if (ri==registers.end()) {
-        registers[reg].push_back(RegPair(reg, value));
-        return;
-    }
+    if (ri == registers.end())
+        return;                                         // no part of register is stored in this state
 
     // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
     // need to eventually add the non-overlapping part back into the list.
@@ -307,26 +318,16 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     Extent need_extent(reg.get_offset(), reg.get_nbits());
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
-        if (need_extent==have_extent) {
-            // found exact match. No need to traverse further because a RegisterStateGeneric never stores overlapping values.
-            ASSERT_require(nonoverlaps.empty());
-            rvi->value = value;
-            return;
-        } else {
-            Extent overlap = need_extent.intersect(have_extent);
-            if (!overlap.empty()) {
-                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-                rvi->value = SValuePtr(); // mark pair for removal by setting it to null
-            }
+        Extent overlap = need_extent.intersect(have_extent);
+        if (!overlap.empty()) {
+            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
         }
     }
 
     // Remove marked pairs, then add the non-overlapping parts.
     ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
     ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
-
-    // Insert the new value.
-    ri->second.push_back(RegPair(reg, value));
 }
 
 RegisterStateGeneric::RegPairs
@@ -1155,6 +1156,23 @@ RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
 /*******************************************************************************************************************************
  *                                      Dispatcher
  *******************************************************************************************************************************/
+
+void
+Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
+    RegisterDescriptor ipReg = instructionPointerRegister();
+    size_t nBits = ipReg.get_nbits();
+    BaseSemantics::SValuePtr ipValue;
+    if (!autoResetInstructionPointer_ && operators->get_state() && operators->get_state()->get_register_state()) {
+        BaseSemantics::RegisterStateGenericPtr grState =
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->get_state()->get_register_state());
+        if (grState && grState->is_partly_stored(ipReg))
+            ipValue = operators->readRegister(ipReg);
+    }
+    if (!ipValue)
+        ipValue = operators->number_(nBits, insn->get_address());
+    ipValue = operators->add(ipValue, operators->number_(nBits, insn->get_size()));
+    operators->writeRegister(ipReg, ipValue);
+}
 
 void
 Dispatcher::addressWidth(size_t nBits) {
