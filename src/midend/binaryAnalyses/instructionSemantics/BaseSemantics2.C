@@ -451,6 +451,10 @@ RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
     return retval;
 }
 
+static bool
+sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
+    return a.desc.get_offset() < b.desc.get_offset();
+}
 
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
@@ -465,7 +469,9 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
     size_t maxlen = 6; // use at least this many columns even if register names are short.
     for (int i=0; i<2; ++i) {
         for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-            for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+            RegPairs regPairs = ri->second;
+            std::sort(regPairs.begin(), regPairs.end(), sortByOffset);
+            for (RegPairs::const_iterator rvi=regPairs.begin(); rvi!=regPairs.end(); ++rvi) {
                 std::string regname = regnames(rvi->desc);
                 if (!fmt.get_suppress_initial_values() || rvi->value->get_comment().empty() ||
                     0!=rvi->value->get_comment().compare(regname+"_0")) {
