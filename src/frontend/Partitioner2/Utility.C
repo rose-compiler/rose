@@ -69,8 +69,8 @@ sortByExpression(const BasicBlock::Successor &a, const BasicBlock::Successor &b)
 }
 
 bool
-sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator &a,
-                      const ControlFlowGraph::ConstVertexNodeIterator &b) {
+sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator &a,
+                      const ControlFlowGraph::ConstVertexIterator &b) {
     const CfgVertex &av = a->value();
     const CfgVertex &bv = b->value();
     if (av.type() != bv.type() || av.type() != V_BASIC_BLOCK)
@@ -79,14 +79,14 @@ sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator &a,
 }
 
 bool
-sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator &a,
-               const ControlFlowGraph::ConstEdgeNodeIterator &b) {
+sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
     return sortVerticesByAddress(a->source(), b->source());
 }
 
 bool
-sortEdgesByDst(const ControlFlowGraph::ConstEdgeNodeIterator &a,
-               const ControlFlowGraph::ConstEdgeNodeIterator &b) {
+sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator &a,
+               const ControlFlowGraph::ConstEdgeIterator &b) {
     return sortVerticesByAddress(a->target(), b->target());
 }
 
@@ -239,13 +239,13 @@ Trigger::docString() {
 }
 
 std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::VertexNode &x) {
+operator<<(std::ostream &out, const ControlFlowGraph::Vertex &x) {
     out <<Partitioner::vertexName(x);
     return out;
 }
 
 std::ostream&
-operator<<(std::ostream &out, const ControlFlowGraph::EdgeNode &x) {
+operator<<(std::ostream &out, const ControlFlowGraph::Edge &x) {
     out <<Partitioner::edgeName(x);
     return out;
 }

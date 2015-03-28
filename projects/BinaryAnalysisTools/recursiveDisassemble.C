@@ -1062,7 +1062,7 @@ int main(int argc, char *argv[]) {
 
 #if 0 // [Robb P. Matzke 2015-02-06]: dead code example
     std::cout <<"Unreachable code (basic blocks with no incoming edges):\n";
-    BOOST_FOREACH (const P2::ControlFlowGraph::VertexNode &vertex, partitioner.cfg().vertices()) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK && vertex.nInEdges() == 0) {
             P2::BasicBlock::Ptr bblock = vertex.value().bblock();
             std::cout <<"  " <<bblock->printableName();
