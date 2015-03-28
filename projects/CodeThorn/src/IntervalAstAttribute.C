@@ -6,6 +6,7 @@
 using namespace std;
 
 void IntervalAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+  os<<"IV:";
   _elem->toStream(os,vim);
 }
 

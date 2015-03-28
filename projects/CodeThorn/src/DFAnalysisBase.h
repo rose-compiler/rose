@@ -28,6 +28,10 @@ namespace SPRAY {
 
 class DFAnalysisBase {
  public:
+  /* normalizes a C++ program to a C++ subset. The transformed program is a C++ program, but with additional
+     temporary variables and additional statements. E.g. "f(g())" becomes "int t=g(); f(t);"
+  */
+  static void normalizeProgram(SgProject*);
   DFAnalysisBase();
   virtual ~DFAnalysisBase();
   void setExtremalLabels(set<Label> extremalLabels);
@@ -36,7 +40,9 @@ class DFAnalysisBase {
   void setBackwardAnalysis();
   bool isForwardAnalysis();
   bool isBackwardAnalysis();
-  virtual void initializeGlobalVariables(SgProject* root);
+  // computes state for global variable initializations
+  virtual Lattice* initializeGlobalVariables(SgProject* root);
+  // initializes an element with the combined global initialization state and the extremal value
   virtual void initializeExtremalValue(Lattice* element);
   virtual void initializeTransferFunctions();
   virtual void initializeSolver();
@@ -103,6 +109,7 @@ class DFAnalysisBase {
  private:
   SPRAY::PointerAnalysisInterface* _pointerAnalysisInterface;
   SPRAY::PointerAnalysisEmptyImplementation* _pointerAnalysisEmptyImplementation;
+  Lattice* _globalVariablesState;
 };
 
 } // end of namespace

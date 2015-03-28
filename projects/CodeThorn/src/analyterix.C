@@ -88,6 +88,8 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
 
+  SPRAY::DFAnalysisBase::normalizeProgram(root);
+
   if(option_fi_constanalysis) {
     VarConstSetMap varConstSetMap;
     FIConstAnalysis fiConstAnalysis(variableIdMapping);
@@ -277,7 +279,7 @@ int main(int argc, char* argv[]) {
      // Command line option handling.
     namespace po = boost::program_options;
     po::options_description desc
-      ("analyterix V0.1\n"
+      ("analyterix V0.2\n"
        "Written by Markus Schordan\n"
        "Supported options");
   
@@ -293,6 +295,7 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("icfg-dot", "generates the ICFG as dot file.")
       ("interval-analysis", "perform interval analysis.")
       ("trace", "show operations as performed by selected solver.")
       ("print-varidmapping", "prints variableIdMapping")
@@ -336,7 +339,7 @@ int main(int argc, char* argv[]) {
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
     }
-    if(args.count("dd-analysis")) {
+    if(args.count("ud-analysis")) {
       option_rd_analysis=true; // required
       option_ud_analysis=true;
     }

@@ -67,11 +67,12 @@ void SPRAY::IntervalPropertyState::combine(Lattice& other0){
 
 // adds integer variable
 void SPRAY::IntervalPropertyState::addVariable(VariableId varId) {
-  intervals[varId]=NumberIntervalLattice();
+  setVariable(varId,NumberIntervalLattice());
 }
 
 // assign integer variable
 void SPRAY::IntervalPropertyState::setVariable(VariableId varId, NumberIntervalLattice num) {
+  _bot=false;
   intervals[varId]=num;
 }
 
@@ -100,4 +101,20 @@ VariableIdSet SPRAY::IntervalPropertyState::allVariableIds() {
     set.insert((*i).first);
   }
   return set;
+}
+
+void SPRAY::IntervalPropertyState::topifyAllVariables() {
+  for(IntervalMapType::iterator i=intervals.begin();i!=intervals.end();++i) {
+    intervals[(*i).first]=SPRAY::NumberIntervalLattice::top();
+  }
+}
+
+bool SPRAY::IntervalPropertyState::variableExists(VariableId varId) {
+  return intervals.find(varId)!=intervals.end();
+}
+
+bool SPRAY::IntervalPropertyState::removeVariable(VariableId varId) {
+  // for STL map numErased can only be 0 or 1.
+  size_t numErased=intervals.erase(varId);
+  return numErased==1;
 }

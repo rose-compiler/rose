@@ -29,7 +29,13 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   }
   if(_labeler->isFunctionCallReturnLabel(lab)) {
     if(SgFunctionCallExp* funCall=isSgFunctionCallExp(getLabeler()->getNode(lab))) {
-      transferFunctionCallReturn(lab, funCall, element);
+      SgVarRefExp* lhsVar=0;
+      if(SgAssignOp* assignOp=isSgAssignOp(funCall->get_parent())) {
+        if(SgVarRefExp* lhs=isSgVarRefExp(SgNodeHelper::getLhs(assignOp))) {
+          lhsVar=lhs;
+        }
+      }
+      transferFunctionCallReturn(lab, lhsVar, funCall, element);
       return;
     }
   }
@@ -98,7 +104,7 @@ void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
 }
 
 
-void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
+void DFTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp*, SgFunctionCallExp* callExp, Lattice& element) {
   // default identity function
 }
 

@@ -106,8 +106,10 @@ void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* cal
   * \author Markus Schordan
   * \date 2013.
  */
-void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element0) {
-  //TODO: def in x=f(...) (not seen as assignment)
+void RDTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
+  RDLattice* element1=dynamic_cast<RDLattice*>(&element0);
+  VariableId varId=_variableIdMapping->variableId(lhsVar);
+  element1->insertPair(lab,varId);
 }
 //NOTE: UD analysis must take uses of function-call arguments into account
 /*! 

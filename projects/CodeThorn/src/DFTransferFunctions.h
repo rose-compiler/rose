@@ -25,7 +25,7 @@ public:
   virtual void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
   virtual void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
   virtual void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
-  virtual void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, Lattice& element);
+  virtual void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
   virtual void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
   virtual void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
   virtual ~DFTransferFunctions() {}

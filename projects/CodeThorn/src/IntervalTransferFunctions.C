@@ -80,8 +80,13 @@ void SPRAY::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctio
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element) {
-  //TODO: def in x=f(...) (not seen as assignment)
+void SPRAY::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
+  VariableId varId=_variableIdMapping->variableId(lhsVar);  
+  IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+  NumberIntervalLattice number;
+  number.setTop();
+  // TODO: use return value ($r) in property state
+  ips->setVariable(varId,number);
 }
 
 /*! 
@@ -94,11 +99,9 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
       i!=formalParameters.end();
       ++i) {
     SgInitializedName* formalParameterName=*i;
-    assert(formalParameterName);
-    
-    // TODO: element. ...
-    // VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
-
+    VariableId formalParameterVarId=_variableIdMapping->variableId(formalParameterName);
+    IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+    ips->addVariable(formalParameterVarId);
   }
 }
 
@@ -109,8 +112,9 @@ void SPRAY::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFuncti
 void SPRAY::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // remove all declared variable at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {
-    // VariableId varId=*i;
-    // TODO: element.removeVariableFromState(varId);
+    VariableId varId=*i;
+    IntervalPropertyState* ips=dynamic_cast<IntervalPropertyState*>(&element);
+    ips->removeVariable(varId);
   }
   // TODO:: return variable $r
 }
