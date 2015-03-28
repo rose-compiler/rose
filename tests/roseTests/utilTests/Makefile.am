@@ -46,6 +46,16 @@ TEST_TARGETS += testStrings.passed
 testStrings.passed: tests.conf testStrings
 	@$(RTH_RUN) CMD=./testStrings $< $@
 
+# Tests that diagnostics are working
+noinst_PROGRAMS += testDiagnostics
+testDiagnostics_SOURCES = testDiagnostics.C
+testDiagnostics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testDiagnostics.passed
+testDiagnostics.passed: $(top_srcdir)/scripts/test_exit_status testDiagnostics
+	@$(RTH_RUN)				\
+		TITLE="diagnostics [$@]"	\
+		CMD=./testDiagnostics $< $@
+
 # Test file name support
 noinst_PROGRAMS += filenameSupport
 filenameSupport_SOURCES = filenameSupport.C
