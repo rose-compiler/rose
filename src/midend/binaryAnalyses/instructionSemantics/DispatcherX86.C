@@ -1473,6 +1473,38 @@ struct IP_palignr: P {
     }
 };
 
+// Compare packed data for equal
+struct IP_pcmpeq: P {
+    size_t nCmpBits;                                    // number of bits to compare at once
+    IP_pcmpeq(size_t nCmpBits): nCmpBits(nCmpBits) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            ASSERT_require(a->get_width() % nCmpBits == 0);
+            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValuePtr zero = ops->number_(nCmpBits, 0);
+            BaseSemantics::SValuePtr ones = ops->invert(zero);
+            for (size_t i=0; i<a->get_width()/nCmpBits; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValuePtr diff = ops->add(partA, ops->negate(partB));
+                BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(diff), ones, zero);
+                if (0==i) {
+                    result = c;
+                } else {
+                    result = ops->concat(result, c);
+                }
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2266,6 +2298,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_not,          new X86::IP_not);
     iproc_set(x86_or,           new X86::IP_or);
     iproc_set(x86_palignr,      new X86::IP_palignr);
+    iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
+    iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
+    iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
+    iproc_set(x86_pcmpeqq,      new X86::IP_pcmpeq(64));
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
