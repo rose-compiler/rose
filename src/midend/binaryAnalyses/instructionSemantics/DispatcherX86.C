@@ -1103,10 +1103,10 @@ struct IP_loadstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(srcReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->readRegister(srcReg);
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(srcReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            addr = d->fixMemoryAddress(addr);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Load the byte, word, dword, or qword from memory.
             RegisterDescriptor sr(x86_regclass_segment,
@@ -1122,7 +1122,7 @@ struct IP_loadstring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(srcReg.get_nbits(), -nbytes),
                                                      ops->number_(srcReg.get_nbits(), +nbytes));
-            ops->writeRegister(srcReg, ops->add(d->readRegister(srcReg), step));
+            ops->writeRegister(srcReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -1838,10 +1838,10 @@ struct IP_scanstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(stringReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->readRegister(stringReg);
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(stringReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            addr = d->fixMemoryAddress(addr);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Compare values and set status flags.
             RegisterDescriptor compareReg = d->REG_AX; compareReg.set_nbits(nbits);
@@ -1853,7 +1853,7 @@ struct IP_scanstring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(stringReg.get_nbits(), -nbytes),
                                                      ops->number_(stringReg.get_nbits(), +nbytes));
-            ops->writeRegister(stringReg, ops->add(d->readRegister(stringReg), step));
+            ops->writeRegister(stringReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -1980,7 +1980,8 @@ struct IP_storestring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(dstReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(d->readRegister(dstReg));
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(dstReg);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Copy value from AL/AX/EAX/RAX to memory
             RegisterDescriptor regA = d->REG_AX; regA.set_nbits(nbits);
@@ -1990,7 +1991,7 @@ struct IP_storestring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(dstReg.get_nbits(), -nbytes),
                                                      ops->number_(dstReg.get_nbits(), +nbytes));
-            ops->writeRegister(dstReg, ops->add(d->readRegister(dstReg), step));
+            ops->writeRegister(dstReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -2855,7 +2856,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
     // is what should make it into the final CF; if we're left shifting by N bits then we need bit operand->get_width()-N.
     BaseSemantics::SValuePtr bitPosition;
-    if (x86_shr==kind || x86_sar==kind) {
+    if (x86_shr==kind || x86_sar==kind || x86_shrd==kind) {
         bitPosition = operators->add(maskedShiftCount, mask);
     } else {
         bitPosition = operators->add(number_(shiftSignificantBits, operand->get_width() & m), // probably zero modulo
