@@ -203,10 +203,8 @@ if (DEFINED ENV{BOOST_HOME})
   set (BOOST_ROOT "$ENV{BOOST_HOME}")
 endif ()
 
-# Boost is compiled with multi-thread support enable by default. Therefore we should
-# expect that it is installed on this system with support enabled.
 option(Boost_USE_MULTITHREADED
-  "Should Boost multithreaded libraries be used?" ON)
+  "Should Boost multithreaded libraries be used?" OFF)
 
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
@@ -231,28 +229,21 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
-# Ensure that Boost is found. If the user doesn't want ROSE to be thread aware (Boost_USE_MULTITHREADED is false) then don't
-# try to find the boost thread library. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
+# Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
 SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
-if(${Boost_USE_MULTITHREADED})
-  find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
-else()
-  find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave        REQUIRED)
-endif()
+find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
 
-# If the boost thread library is used then we must add "-pthread" to all compile and link commands, or whatever is appropriate
-# for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread" switch MUST be
-# added to the compile commands as well.
-if(${Boost_USE_MULTITHREADED})
-  find_package(Threads)
-  if(CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_USE_PTHREADS_INIT})
-    add_definitions(-pthread)
-  endif()
+# If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or whatever
+# is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread"
+# switch MUST be added to the compile commands as well.
+find_package(Threads)
+if(CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_USE_PTHREADS_INIT})
+  add_definitions(-pthread)
 endif()
 
 
