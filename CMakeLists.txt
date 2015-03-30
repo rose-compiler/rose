@@ -203,8 +203,10 @@ if (DEFINED ENV{BOOST_HOME})
   set (BOOST_ROOT "$ENV{BOOST_HOME}")
 endif ()
 
+# Boost is compiled with multi-thread support enable by default. Therefore we should
+# expect that it is installed on this system with support enabled.
 option(Boost_USE_MULTITHREADED
-  "Should Boost multithreaded libraries be used?" OFF)
+  "Should Boost multithreaded libraries be used?" ON)
 
 if (WIN32)
 FIND_PACKAGE(Boost REQUIRED) 
