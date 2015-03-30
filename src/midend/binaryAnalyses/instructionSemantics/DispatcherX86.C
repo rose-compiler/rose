@@ -1473,6 +1473,25 @@ struct IP_palignr: P {
     }
 };
 
+// Move byte mask
+struct IP_pmovmskb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            for (size_t byteIdx=0; byteIdx<src->get_width()/8; ++byteIdx) {
+                BaseSemantics::SValuePtr bit = ops->extract(src, byteIdx*8 - 1, byteIdx*8);
+                result = result ? ops->concat(result, bit) : bit;
+            }
+            result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Compare packed data for equal
 struct IP_pcmpeq: P {
     size_t nCmpBits;                                    // number of bits to compare at once
@@ -2302,6 +2321,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
     iproc_set(x86_pcmpeqq,      new X86::IP_pcmpeq(64));
+    iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
