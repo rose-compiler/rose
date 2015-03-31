@@ -48,7 +48,7 @@ void AstPostProcessing (SgNode* node)
           if (SgProject::get_verbose() > 0)
              {
                 printf("AstPostProcessing(): found a node with globalMangledNameMap size not equal to 0: SgNode = %s =%s ", node->class_name().c_str(),SageInterface::get_name(node).c_str());
-               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %zu (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
+               printf ("SgNode::get_globalMangledNameMap().size() != 0 size = %" PRIuPTR " (clearing mangled name cache) \n",SgNode::get_globalMangledNameMap().size());
              }
 
           SgNode::clearGlobalMangledNameMap();
@@ -132,6 +132,21 @@ void AstPostProcessing (SgNode* node)
                postProcessingSupport (node);
              }
         }
+
+#if 0
+  // DQ (1/12/2015): Save this so that we can check it for where it might be reset to be compiler generated (a bug).
+     extern SgFunctionDeclaration* saved_functionDeclaration;
+     ROSE_ASSERT(saved_functionDeclaration != NULL);
+
+     printf ("saved_functionDeclaration = %p = %s \n",saved_functionDeclaration,saved_functionDeclaration->class_name().c_str());
+     SgFunctionDeclaration* nondefiningDeclaration = isSgFunctionDeclaration(saved_functionDeclaration->get_firstNondefiningDeclaration());
+     SgFunctionDeclaration* definingDeclaration    = isSgFunctionDeclaration(saved_functionDeclaration->get_definingDeclaration());
+     printf ("saved_functionDeclaration nondefiningDeclaration = %p \n",nondefiningDeclaration);
+     printf ("saved_functionDeclaration definingDeclaration    = %p \n",definingDeclaration);
+
+     saved_functionDeclaration->get_startOfConstruct()->display("AstPostProcessing: saved_functionDeclaration source position of the first non-defining declaration that was modified by EDG: START: debug");
+     saved_functionDeclaration->get_endOfConstruct()  ->display("AstPostProcessing: saved_functionDeclaration source position of the first non-defining declaration that was modified by EDG: END: debug");
+#endif
 
   // DQ (3/17/2007): Clear the static globalMangledNameMap, likely this is not enough and the mangled name map 
   // should not be used while the names of scopes are being reset (done in the AST post-processing).

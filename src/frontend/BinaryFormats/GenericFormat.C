@@ -25,5 +25,5 @@ SgAsmGenericFormat::dump(FILE *f, const char *prefix, ssize_t idx) const
     
     fprintf(f, "%s%-*s = %s\n",  p, w, "ABI",      to_string(get_abi()).c_str());
     fprintf(f, "%s%-*s = %u\n",  p, w, "ABIvers",  get_abi_version());
-    fprintf(f, "%s%-*s = %zu\n", p, w, "wordsize", get_word_size());
+    fprintf(f, "%s%-*s = %" PRIuPTR "\n", p, w, "wordsize", get_word_size());
 }

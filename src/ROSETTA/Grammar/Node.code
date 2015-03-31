@@ -36,7 +36,7 @@ class AstAttributeMechanism;
 // #include "ExecGeneric.h"
 
 // This is all documented in Rva.C since doxygen can't pick of documentation from this file.
-class rose_rva_t {
+class ROSE_DLL_API rose_rva_t {
 	public:
 		rose_rva_t();
 		rose_rva_t(const rose_rva_t&);
@@ -1459,8 +1459,13 @@ ROSE_DLL_API size_t numberOfNodes();
 ROSE_DLL_API size_t memoryUsage();
 
 // DQ: This function is used by the SgNode object to connect the unparser (in ROSE) to the AST.
-//     (this function prototype is replicated in the ROSE/src/unparser/unparser.h)
 ROSE_DLL_API std::string globalUnparseToString ( const SgNode* astNode, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+
+// DQ: These functions are used by soem specific STL containers to connect the unparser (in ROSE) to the AST (mostly for name qualification).
+// DQ (9/13/2014): Added support for more general unparsing of STL containers of IR nodes (at least these).
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateParameterPtrList* templateParameterList, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+ROSE_DLL_API std::string globalUnparseToString ( const SgTemplateArgumentPtrList* templateArgumentList, SgUnparse_Info* inputUnparseInfoPointer = NULL );
+
 
 // MS 2002: global type
 /*! \brief Access to C++ Run Time Information (RTI)
@@ -1777,11 +1782,25 @@ HEADER_START
        */
           void set_isModified( bool isModified );
 
+      /*! \brief Many nodes can hide other AST nodes and we need to track when outer nodes contain modified nodes even if they are not themselves modified.
+
+          This flag is required to support the unparsing using the token stream.
+       */
+          void set_containsTransformation( bool containsTransformation );
+
+
       /*! \brief Acess function for isModified flag
+
           This flag records if the current IR node has been modified.  
           It is set to false after and ROSE front-end processing.
        */
           bool get_isModified() const;
+
+      /*! \brief Acess function for containsTransformation flag
+
+          This flag records if the current IR node has a nested AST node that is marked as being modified.
+       */
+          bool get_containsTransformation() const;
 
       //! All nodes in the AST contain a reference to a parent node
           void set_parent ( SgNode* parent );
@@ -1883,6 +1902,23 @@ HEADER_START
           type, variable type, etc.).
        */
           static void set_globalQualifiedNameMapForTypes ( const std::map<SgNode*,std::string> & X );
+
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          This name is stored with reference to where the template declaration is used (as required) instead
+          of with the IR node (where it could be incorrect).  This design allows it to be computed as needed.
+          Note that template headers are the substrings "template<typename T>" that apepar in header declarations.
+          These can be repeated as required for deeply nested templated classes and thus are associated with
+          name qualification of template declarations (along with the more common form of name qualication
+          that also applies to template declarations).
+       */
+          static std::map<SgNode*,std::string> & get_globalQualifiedNameMapForTemplateHeaders();
+
+      /*! \brief Access function for name qualification support (for template headers in template declarations).
+
+          See documentation in get_globalQualifiedNameMapForTemplateHeaders() (above).
+       */
+          static void set_globalQualifiedNameMapForTemplateHeaders ( const std::map<SgNode*,std::string> & X );
 
       /*! \brief Access function for name qualification support (for names of types).
 
@@ -2252,6 +2288,7 @@ std::map<std::string,int> SgNode::p_shortMangledNameCache;
 // qualified name support.
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForNames;
 std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTypes;
+std::map<SgNode*,std::string> SgNode::p_globalQualifiedNameMapForTemplateHeaders;
 std::map<SgNode*,std::string> SgNode::p_globalTypeNameMap;
 
 // DQ (7/22/2011): array dimensions may include expressions that require name qualification.
@@ -2423,6 +2460,20 @@ void
 SgNode::set_globalQualifiedNameMapForTypes(const std::map<SgNode*,std::string> & X)
    {
      p_globalQualifiedNameMapForTypes = X;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+std::map<SgNode*,std::string> &
+SgNode::get_globalQualifiedNameMapForTemplateHeaders()
+   {
+     return p_globalQualifiedNameMapForTemplateHeaders;
+   }
+
+// DQ (5/28/2011): Added support for holding the name qualification map.
+void
+SgNode::set_globalQualifiedNameMapForTemplateHeaders(const std::map<SgNode*,std::string> & X)
+   {
+     p_globalQualifiedNameMapForTemplateHeaders = X;
    }
 
 // DQ (6/3/2011): Added support for holding the map of type names that require qualification and at this position dependent.
@@ -2598,11 +2649,27 @@ SgNode::set_isModified ( bool isModified)
    {
      p_isModified = isModified;
    }
-                                                                                                   
+
 bool
 SgNode::get_isModified () const
    {
      return p_isModified; 
+   }                                                                                                   
+
+// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+void
+SgNode::set_containsTransformation ( bool containsTransformation)
+   {
+     p_containsTransformation = containsTransformation;
+   }
+
+// DQ (12/3/2014): Added support to recode when an AST subtree holds an AST node (or subtree) that has been modified.
+bool
+SgNode::get_containsTransformation () const
+   {
+     assert (this != NULL);
+
+     return p_containsTransformation; 
    }
                                                                                                    
 

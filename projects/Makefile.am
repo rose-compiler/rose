@@ -8,13 +8,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 SUBDIRS = \
 	AstEquivalence \
 	BabelPreprocessor \
-	BinFuncDetect \
 	BinQ \
 	BinaryCloneDetection \
 	C_to_Promela \
 	CertSecureCodeProject \
 	CloneDetection \
-   CodeThorn \
    ConstructNameSimilarityAnalysis \
 	DataFaultTolerance \
 	DatalogAnalysis \
@@ -47,7 +45,6 @@ SUBDIRS = \
    taintcheck \
 	ManyCoreRuntime \
 	StencilManyCore \
-	ShiftCalculus \
 	Fortran_to_C \
 	mint \
 	vectorization \
@@ -55,6 +52,15 @@ SUBDIRS = \
 	RoseBlockLevelTracing \
 	LineDeleter \
 	$(OPTIONAL_PROJECTS)
+
+# DQ (3/16/2015): Removed for temporary teesting.
+#	BinFuncDetect 
+#  CodeThorn
+
+# DQ (3/16/2015): Test for a version of g++ that will allow use of C++11 for the AMR Shift Calculs DSL work.
+if ROSE_USING_GCC_VERSION_LATER_4_8
+  SUBDIRS += ShiftCalculus ShiftCalculus2 ShiftCalculus3
+endif
 
 # Liao, 2014/2/11, with Dan's permission, comment out this project since it is broken now.
 #   BinaryDataStructureRecognition 
@@ -165,6 +171,10 @@ if ROSE_WITH_ATERM
    SUBDIRS += AtermTranslation
 endif
 
+# Pei-Hung (12/17/2014): adding PolyOpt only when POCC is available
+if ROSE_WITH_POCC
+   SUBDIRS += PolyOpt2
+endif
 
 # DQ (2/28/2010): We can't make this conditionsl this since then the Makefile.in will 
 # be missing at configure time.
@@ -173,6 +183,8 @@ SUBDIRS += SatSolver
 # endif
 
 SUBDIRS += PolyhedralModel
+# SUBDIRS += demos-dlx-mdcg
+# SUBDIRS += rose-tooling
 
 # DQ (9/12/2009): This was not added to ROSE correctly, please let me help you do this.
 #     StaticDynamicAnalysis/DynamicCPU

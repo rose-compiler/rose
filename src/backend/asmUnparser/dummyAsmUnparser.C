@@ -5,7 +5,11 @@
 namespace rose {
 namespace BinaryAnalysis {
 std::string unparseExpression(SgAsmExpression*, const AsmUnparser::LabelMap*) { abort(); }
-void AsmUnparser::initDiagnostics() {}
-}
+} // namespace
+} // namespace
+
+std::string unparseExpression(SgAsmExpression*, const rose::BinaryAnalysis::AsmUnparser::LabelMap*, const RegisterDictionary*) {
+    abort();
 }
 
+void rose::BinaryAnalysis::AsmUnparser::initDiagnostics() {}

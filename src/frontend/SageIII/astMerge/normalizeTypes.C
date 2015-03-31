@@ -39,7 +39,7 @@ class NormalizeTypesTraversal : public ROSE_VisitTraversal
 void
 NormalizeTypesTraversal::displayDeclarationTypeMultiMap()
    {
-     printf ("In declarationTypeMultiMap(): declarationTypeMultiMap.size() = %zu \n",declarationTypeMultiMap.size());
+     printf ("In declarationTypeMultiMap(): declarationTypeMultiMap.size() = %" PRIuPTR " \n",declarationTypeMultiMap.size());
      DeclarationTypeMultiMapType::iterator i = declarationTypeMultiMap.begin();
      while (i != declarationTypeMultiMap.end())
         {

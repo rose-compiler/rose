@@ -1949,7 +1949,7 @@ struct IP_move_mask: P {
 };
 
 // same as IP_move, but does not update CCR
-struct IP_move_sr: P {
+struct IP_move_no_ccr: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         ASSERT_require(args[0]->get_nBits()==args[1]->get_nBits());
@@ -3192,6 +3192,7 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_move,        new M68k::IP_move);
     iproc_set(m68k_move16,      new M68k::IP_move16);
     iproc_set(m68k_movea,       new M68k::IP_movea);
+    iproc_set(m68k_movec,       new M68k::IP_move_no_ccr);
     iproc_set(m68k_movem,       new M68k::IP_movem);
     iproc_set(m68k_movep,       new M68k::IP_movep);
     iproc_set(m68k_moveq,       new M68k::IP_moveq);
@@ -3200,7 +3201,7 @@ DispatcherM68k::iproc_init() {
     iproc_set(m68k_move_ccr,    new M68k::IP_move_ccr);
     iproc_set(m68k_move_macsr,  new M68k::IP_move_macsr);
     iproc_set(m68k_move_mask,   new M68k::IP_move_mask);
-    iproc_set(m68k_move_sr,     new M68k::IP_move_sr);
+    iproc_set(m68k_move_sr,     new M68k::IP_move_no_ccr);
     iproc_set(m68k_msac,        new M68k::IP_msac);
     iproc_set(m68k_muls,        new M68k::IP_muls);
     iproc_set(m68k_mulu,        new M68k::IP_mulu);

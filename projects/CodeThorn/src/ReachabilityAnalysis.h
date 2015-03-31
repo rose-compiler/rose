@@ -3,11 +3,11 @@
 
 #include "Labeler.h"
 #include "FIConstAnalysis.h"
-#include "ReachabilityResults.h"
+#include "PropertyValueTable.h"
 
 class ReachabilityAnalysis {
  public:
-  ReachabilityResults fiReachabilityAnalysis(Labeler& labeler, FIConstAnalysis& fiConstAnalysis);
+  PropertyValueTable fiReachabilityAnalysis(Labeler& labeler, FIConstAnalysis& fiConstAnalysis);
  private:
   int isIfWithLabeledAssert(SgNode* node);
   int isConditionOfIfWithLabeledAssert(SgNode* node);

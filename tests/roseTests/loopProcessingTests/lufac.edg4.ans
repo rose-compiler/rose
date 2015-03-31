@@ -10,24 +10,22 @@ int min3(int a0,int a1,int a2)
   if (a1 < res) {
     res = a1;
   }
-  else {
+   else {
   }
   if (a2 < res) {
     res = a2;
   }
-  else {
+   else {
   }
   return res;
 }
 
 double abs(double x)
 {
-  if (x < 0) {
+  if (x < 0) 
     return -x;
-  }
-  else {
+   else 
     return x;
-  }
 }
 #define n 50
 void printmatrix(double x[][50]);
@@ -60,7 +58,7 @@ int main(int argc,char *argv[])
           }
         }
       }
-      else {
+       else {
       }
       if (j <= min2(48,_var_0 + 15)) {
         mu = abs(a[j][j]);
@@ -77,7 +75,7 @@ int main(int argc,char *argv[])
           a[i][j] = a[i][j] / a[j][j];
         }
       }
-      else {
+       else {
       }
     }
   }

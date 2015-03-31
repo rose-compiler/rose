@@ -14,8 +14,27 @@ int main(int argc, char * argv[])
   // But somehow nvcc cannot link the entire libxomp.a with the cuda object file
   // TODO: ultimate solution is to outline all CUDA code into a separate file and keep the original file type intact
   OmpSupport::enable_accelerator = true;
+  OmpSupport::useDDE = true; // using Device Data Environment to manage data on GPUs
 
-  SgProject *project = frontend (argc, argv);
+  vector<string> argvList(argv, argv + argc);
+
+   // -rose:openmp:nodde to turn off the use of DDE runtime
+   // This option does not work with collapse() now. It is only for debugging and seeing old code only
+  if(CommandlineProcessing::isOption (argvList,
+        "-rose:openmp:",
+        "nodde",
+        true) ||
+  CommandlineProcessing::isOption (argvList,
+        "--rose:openmp:",
+        "nodde",
+        true))
+ 
+  {
+    OmpSupport::useDDE = false;
+    cout<<"OpenMP Lowering is set to turn off the use of DDE (Device Data Environment) functions ..."<<endl;
+  }
+
+  SgProject *project = frontend (argvList);
 
 
   //TODO: turn this back on once blockDim.x * blockIdx.x + threadIdx.x is built properly in omp_lowering.cpp

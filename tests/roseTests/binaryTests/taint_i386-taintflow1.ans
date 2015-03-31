@@ -3,15 +3,15 @@ found 1 binary interpretation
 0x0804839e: ================================== Function (symbol, pattern) <f1>
 
 0x0804839e: Basic block reasons: entry point, graph-1
-0x0804839e: 55                      |U       |   push   ebp
-0x0804839f: 89 e5                   |..      |   mov    ebp, esp
-0x080483a1: 83 ec 10                |...     |   sub    esp, 0x10
-0x080483a4: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x080483a7: 83 c0 01                |...     |   add    eax, 0x01
-0x080483aa: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x080483ad: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x080483b0: c9                      |.       |   leave  
-0x080483b1: c3                      |.       |   ret    
+0x0804839e: 55                      |U       |          push   ebp
+0x0804839f: 89 e5                   |..      |          mov    ebp, esp
+0x080483a1: 83 ec 10                |...     |          sub    esp, 0x10
+0x080483a4: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
+0x080483a7: 83 c0 01                |...     |          add    eax, 0x01
+0x080483aa: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x080483ad: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x080483b0: c9                      |.       |          leave  
+0x080483b1: c3                      |.       |          ret    
 0x080483b1: Successor blocks: unknown
 
 
@@ -49,30 +49,30 @@ Taint for each variable at 0x080483b1:
 0x080483b2: ================================== Function (symbol, pattern) <f2>
 
 0x080483b2: Basic block reasons: entry point, graph-1
-0x080483b2: 55                      |U       |   push   ebp
-0x080483b3: 89 e5                   |..      |   mov    ebp, esp
-0x080483b5: 83 ec 10                |...     |   sub    esp, 0x10
-0x080483b8: c7 45 fc 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], 0x00000000
-0x080483bf: c7 45 f8 01 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000001
-0x080483c6: eb 0a                   |..      |   jmp    0x080483d2<<Insn>>
+0x080483b2: 55                      |U       |          push   ebp
+0x080483b3: 89 e5                   |..      |          mov    ebp, esp
+0x080483b5: 83 ec 10                |...     |          sub    esp, 0x10
+0x080483b8: c7 45 fc 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xfc<-4>], 0x00000000
+0x080483bf: c7 45 f8 01 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000001
+0x080483c6: eb 0a                   |..      |          jmp    0x080483d2<<Insn>>
 0x080483c6: Successor blocks: 0x080483d2
 
 0x080483c8: Basic block reasons: graph-1
-0x080483c8: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x080483cb: 01 45 fc                |.E.     |   add    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x080483ce: 83 45 f8 01             |.E..    |   add    DWORD PTR ss:[ebp + 0xf8<-8>], 0x01
+0x080483c8: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x080483cb: 01 45 fc                |.E.     |          add    dword ss:[ebp + 0xfc<-4>], eax
+0x080483ce: 83 45 f8 01             |.E..    |          add    dword ss:[ebp + 0xf8<-8>], 0x01
 0x080483ce: Successor blocks: 0x080483d2
 
 0x080483d2: Basic block reasons: graph-1
-0x080483d2: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
-0x080483d5: 3b 45 08                |;E.     |   cmp    eax, DWORD PTR ss:[ebp + 0x08]
-0x080483d8: 7e ee                   |~.      |   jle    0x080483c8<<Insn>>
+0x080483d2: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
+0x080483d5: 3b 45 08                |;E.     |          cmp    eax, dword ss:[ebp + 0x08]
+0x080483d8: 7e ee                   |~.      |          jle    0x080483c8<<Insn>>
 0x080483d8: Successor blocks: 0x080483c8, 0x080483da
 
 0x080483da: Basic block reasons: graph-1
-0x080483da: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x080483dd: c9                      |.       |   leave  
-0x080483de: c3                      |.       |   ret    
+0x080483da: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x080483dd: c9                      |.       |          leave  
+0x080483de: c3                      |.       |          ret    
 0x080483de: Successor blocks: unknown
 
 
@@ -114,16 +114,16 @@ Taint for each variable at 0x080483de:
 0x080483df: ================================== Function (symbol, pattern) <f3>
 
 0x080483df: Basic block reasons: entry point, graph-1
-0x080483df: 55                      |U       |   push   ebp
-0x080483e0: 89 e5                   |..      |   mov    ebp, esp
-0x080483e2: 83 ec 10                |...     |   sub    esp, 0x10
-0x080483e5: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x080483e8: 8b 55 08                |.U.     |   mov    edx, DWORD PTR ss:[ebp + 0x08]
-0x080483eb: 8d 04 02                |...     |   lea    eax, [edx + eax]
-0x080483ee: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x080483f1: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x080483f4: c9                      |.       |   leave  
-0x080483f5: c3                      |.       |   ret    
+0x080483df: 55                      |U       |          push   ebp
+0x080483e0: 89 e5                   |..      |          mov    ebp, esp
+0x080483e2: 83 ec 10                |...     |          sub    esp, 0x10
+0x080483e5: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
+0x080483e8: 8b 55 08                |.U.     |          mov    edx, dword ss:[ebp + 0x08]
+0x080483eb: 8d 04 02                |...     |          lea    eax, [edx + eax]
+0x080483ee: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x080483f1: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x080483f4: c9                      |.       |          leave  
+0x080483f5: c3                      |.       |          ret    
 0x080483f5: Successor blocks: unknown
 
 
@@ -166,27 +166,27 @@ Taint for each variable at 0x080483f5:
 0x080483f6: ================================== Function (symbol, pattern) <f4>
 
 0x080483f6: Basic block reasons: entry point, graph-1
-0x080483f6: 55                      |U       |   push   ebp
-0x080483f7: 89 e5                   |..      |   mov    ebp, esp
-0x080483f9: 83 ec 10                |...     |   sub    esp, 0x10
-0x080483fc: 83 7d 08 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x08], 0x00
-0x08048400: 79 05                   |y.      |   jns    0x08048407<<Insn>>
+0x080483f6: 55                      |U       |          push   ebp
+0x080483f7: 89 e5                   |..      |          mov    ebp, esp
+0x080483f9: 83 ec 10                |...     |          sub    esp, 0x10
+0x080483fc: 83 7d 08 00             |.}..    |          cmp    dword ss:[ebp + 0x08], 0x00
+0x08048400: 79 05                   |y.      |          jns    0x08048407<<Insn>>
 0x08048400: Successor blocks: 0x08048402, 0x08048407
 
 0x08048402: Basic block reasons: graph-1
-0x08048402: 8b 45 0c                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x0c]
-0x08048405: eb 03                   |..      |   jmp    0x0804840a<<Insn>>
+0x08048402: 8b 45 0c                |.E.     |          mov    eax, dword ss:[ebp + 0x0c]
+0x08048405: eb 03                   |..      |          jmp    0x0804840a<<Insn>>
 0x08048405: Successor blocks: 0x0804840a
 
 0x08048407: Basic block reasons: graph-1
-0x08048407: 8b 45 10                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x10]
+0x08048407: 8b 45 10                |.E.     |          mov    eax, dword ss:[ebp + 0x10]
 0x08048407: Successor blocks: 0x0804840a
 
 0x0804840a: Basic block reasons: graph-1
-0x0804840a: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x0804840d: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x08048410: c9                      |.       |   leave  
-0x08048411: c3                      |.       |   ret    
+0x0804840a: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x0804840d: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048410: c9                      |.       |          leave  
+0x08048411: c3                      |.       |          ret    
 0x08048411: Successor blocks: unknown
 
 
@@ -232,28 +232,28 @@ Taint for each variable at 0x08048411:
 0x08048412: ================================== Function (symbol, pattern) <f5>
 
 0x08048412: Basic block reasons: entry point, graph-1
-0x08048412: 55                      |U       |   push   ebp
-0x08048413: 89 e5                   |..      |   mov    ebp, esp
-0x08048415: 83 ec 10                |...     |   sub    esp, 0x10
-0x08048418: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
-0x0804841f: 83 7d 0c 00             |.}..    |   cmp    DWORD PTR ss:[ebp + 0x0c], 0x00
-0x08048423: 79 05                   |y.      |   jns    0x0804842a<<Insn>>
+0x08048412: 55                      |U       |          push   ebp
+0x08048413: 89 e5                   |..      |          mov    ebp, esp
+0x08048415: 83 ec 10                |...     |          sub    esp, 0x10
+0x08048418: c7 45 f8 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x0804841f: 83 7d 0c 00             |.}..    |          cmp    dword ss:[ebp + 0x0c], 0x00
+0x08048423: 79 05                   |y.      |          jns    0x0804842a<<Insn>>
 0x08048423: Successor blocks: 0x08048425, 0x0804842a
 
 0x08048425: Basic block reasons: graph-1
-0x08048425: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x08048428: eb 03                   |..      |   jmp    0x0804842d<<Insn>>
+0x08048425: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
+0x08048428: eb 03                   |..      |          jmp    0x0804842d<<Insn>>
 0x08048428: Successor blocks: 0x0804842d
 
 0x0804842a: Basic block reasons: graph-1
-0x0804842a: 8b 45 f8                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf8<-8>]
+0x0804842a: 8b 45 f8                |.E.     |          mov    eax, dword ss:[ebp + 0xf8<-8>]
 0x0804842a: Successor blocks: 0x0804842d
 
 0x0804842d: Basic block reasons: graph-1
-0x0804842d: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x08048430: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x08048433: c9                      |.       |   leave  
-0x08048434: c3                      |.       |   ret    
+0x0804842d: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048430: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048433: c9                      |.       |          leave  
+0x08048434: c3                      |.       |          ret    
 0x08048434: Successor blocks: unknown
 
 
@@ -299,16 +299,16 @@ Taint for each variable at 0x08048434:
 0x08048435: ================================== Function (symbol, pattern) <f6>
 
 0x08048435: Basic block reasons: entry point, graph-1
-0x08048435: 55                      |U       |   push   ebp
-0x08048436: 89 e5                   |..      |   mov    ebp, esp
-0x08048438: 83 ec 10                |...     |   sub    esp, 0x10
-0x0804843b: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x0804843e: 89 45 f4                |.E.     |   mov    DWORD PTR ss:[ebp + 0xf4<-12>], eax
-0x08048441: c7 45 f8 00 00 00 00    |.E..... |   mov    DWORD PTR ss:[ebp + 0xf8<-8>], 0x00000000
-0x08048448: 8b 45 f4                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xf4<-12>]
-0x0804844b: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x0804844e: c9                      |.       |   leave  
-0x0804844f: c3                      |.       |   ret    
+0x08048435: 55                      |U       |          push   ebp
+0x08048436: 89 e5                   |..      |          mov    ebp, esp
+0x08048438: 83 ec 10                |...     |          sub    esp, 0x10
+0x0804843b: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
+0x0804843e: 89 45 f4                |.E.     |          mov    dword ss:[ebp + 0xf4<-12>], eax
+0x08048441: c7 45 f8 00 00 00 00    |.E..... |          mov    dword ss:[ebp + 0xf8<-8>], 0x00000000
+0x08048448: 8b 45 f4                |.E.     |          mov    eax, dword ss:[ebp + 0xf4<-12>]
+0x0804844b: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x0804844e: c9                      |.       |          leave  
+0x0804844f: c3                      |.       |          ret    
 0x0804844f: Successor blocks: unknown
 
 
@@ -354,16 +354,16 @@ Taint for each variable at 0x0804844f:
 0x08048450: ================================== Function (symbol, pattern) <f7>
 
 0x08048450: Basic block reasons: entry point, graph-1
-0x08048450: 55                      |U       |   push   ebp
-0x08048451: 89 e5                   |..      |   mov    ebp, esp
-0x08048453: 83 ec 10                |...     |   sub    esp, 0x10
+0x08048450: 55                      |U       |          push   ebp
+0x08048451: 89 e5                   |..      |          mov    ebp, esp
+0x08048453: 83 ec 10                |...     |          sub    esp, 0x10
 0x08048456: c7 05 40 96 04 08 00 00 |..@.....|
-0x0804845e: 00 00                   |..      |   mov    DWORD PTR ds:[0x08049640<.bss+8>], 0x00000000
-0x08048460: 8b 45 08                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0x08]
-0x08048463: 89 45 fc                |.E.     |   mov    DWORD PTR ss:[ebp + 0xfc<-4>], eax
-0x08048466: 8b 45 fc                |.E.     |   mov    eax, DWORD PTR ss:[ebp + 0xfc<-4>]
-0x08048469: c9                      |.       |   leave  
-0x0804846a: c3                      |.       |   ret    
+0x0804845e: 00 00                   |..      |          mov    dword ds:[0x08049640<.bss+8>], 0x00000000
+0x08048460: 8b 45 08                |.E.     |          mov    eax, dword ss:[ebp + 0x08]
+0x08048463: 89 45 fc                |.E.     |          mov    dword ss:[ebp + 0xfc<-4>], eax
+0x08048466: 8b 45 fc                |.E.     |          mov    eax, dword ss:[ebp + 0xfc<-4>]
+0x08048469: c9                      |.       |          leave  
+0x0804846a: c3                      |.       |          ret    
 0x0804846a: Successor blocks: unknown
 
 0x0804846b: 90 90 90 90 90          |.....   | 5-byte padding beginning at 0x0804846b

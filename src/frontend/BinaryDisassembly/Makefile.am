@@ -82,13 +82,4 @@ pkginclude_HEADERS = $(BINARY_DISASSEMBLY_HEADER_FILES)
 
 EXTRA_DIST = CMakeLists.txt make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86 dummyBinaryFrontend.C
 
-# DQ (9/30/2009): Added automake conditional to handle machines where we test and "tclsh" is not availble.
-# Rule for maintainers (requires Tcl interpreter)
-$(srcdir)/instructionDispatch.cpp: make-decision-tree.tcl RoseBin_instruction_table_arm RoseBin_instruction_table_x86
-if ROSE_USE_TCLSH
-	cd $(srcdir) && ../../../config/missing --run tclsh ./make-decision-tree.tcl x86 Arm
-else
-   echo "Warning: tclsh is not available on this machine."
-endif
-
 clean-local:

@@ -112,7 +112,7 @@ SgAsmElfSection::init_from_segment_table(SgAsmElfSegmentTableEntry *shdr, bool m
             case SgAsmElfSegmentTableEntry::PT_SUNWSTACK:    strcpy(name, "SUNWSTACK");   break;
             default:                                         sprintf(name, "PT_0x%08x", shdr->get_type()); break;
         }
-        sprintf(name+strlen(name), "#%zu", shdr->get_index());
+        sprintf(name+strlen(name), "#%" PRIuPTR "", shdr->get_index());
         set_name(new SgAsmBasicString(name));
     }
     

@@ -1,4 +1,4 @@
-
+#include "sage3basic.h"
 #include "clang-frontend-private.hpp"
 
 SgType * ClangToSageTranslator::buildTypeFromQualifiedType(const clang::QualType & qual_type) {

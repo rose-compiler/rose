@@ -93,7 +93,7 @@ unsigned int PreprocessingInfo::packed_size () const
   // If there is anything, then it might make for a simple test here.  However, there does not appear to
   // be any relationship since the sizeof(PreprocessingInfo) does not account for the sizes of internal 
   // strings used.
-  // printf ("In PreprocessingInfo::packed_size(): packedSize = %u sizeof(PreprocessingInfo) = %zu \n",packedSize,sizeof(PreprocessingInfo));
+  // printf ("In PreprocessingInfo::packed_size(): packedSize = %u sizeof(PreprocessingInfo) = %" PRIuPTR " \n",packedSize,sizeof(PreprocessingInfo));
 
   // I think that because we have to save additional information the packedSize will 
   // be a little larger than the sizeof(PreprocessingInfo).  So assert this as a test.
@@ -155,7 +155,7 @@ char* PreprocessingInfo::packed()  const
      return returnData;
    }
 
-// JH (01/03/2006) This unpack method wors conremplary to packed ...
+// JH (01/03/2006) This unpack method works complementary to packed ...
 void PreprocessingInfo::unpacked( char* storePointer )
    {
      ROSE_ASSERT(this != NULL);
@@ -302,6 +302,9 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
+
   // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
      if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
@@ -374,6 +377,8 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
@@ -460,6 +465,8 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
@@ -513,6 +520,9 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 #endif
 
      internalString = std::string(inclDir->directive.get_value().c_str()) ;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 
@@ -540,6 +550,9 @@ PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container
      copy (expression.begin(), expression.end(), inserter(*tokenStream, tokenStream->end()));
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      if (SgProject::get_verbose() >= 1)
           std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
@@ -576,6 +589,9 @@ PreprocessingInfo::PreprocessingInfo()
      numberOfLines       = -1;
      whatSortOfDirective = CpreprocessorUnknownDeclaration;
      relativePosition    = before;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 // Typical constructor used by lex-based code retrieve comments and preprocessor control directives
@@ -619,6 +635,9 @@ PreprocessingInfo::PreprocessingInfo (
   // file_info->set_parent(SgTypeLongLong::createType());
      file_info->set_parent(SgTypeDefault::createType());
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
+
   // DQ (4/15/2007): Temp code to trace common position in unparsing.
   // internalString = inputString;
 #if 0
@@ -658,6 +677,9 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
      relativePosition    = prepInfo.getRelativePosition();
      internalString      = prepInfo.internalString;
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = prepInfo.p_isTransformation;
+
   // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
      if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
@@ -682,6 +704,9 @@ PreprocessingInfo::~PreprocessingInfo()
      relativePosition    = undef;
      whatSortOfDirective = CpreprocessorUnknownDeclaration;
      internalString      = "";
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 /* starting column == 1 (DQ (10/27/2006): used to be 0, but changed to 1 for consistancy with EDG) */
@@ -942,12 +967,7 @@ PreprocessingInfo::display (const string & label) const
 std::string
 PreprocessingInfo::relativePositionName (const RelativePositionType & position)
 {
-#ifndef _MSC_VER
     return stringifyPreprocessingInfoRelativePositionType(position);
-#else
-        ROSE_ASSERT(false);
-        return "";
-#endif
 }
 
 
@@ -1058,7 +1078,7 @@ PreprocessingInfo::getMacroName()
              {
                size_t endOfDefineSubstring    = startOfDefineSubstring + lengthOfDefineSubstring;
 #if DEBUG_MACRO_NAME
-               printf ("   --- startOfDefineSubstring = %zu endOfDefineSubstring = %zu \n",startOfDefineSubstring,endOfDefineSubstring);
+               printf ("   --- startOfDefineSubstring = %" PRIuPTR " endOfDefineSubstring = %" PRIuPTR " \n",startOfDefineSubstring,endOfDefineSubstring);
 #endif
                string substring = s.substr(endOfDefineSubstring);
 
@@ -1069,14 +1089,14 @@ PreprocessingInfo::getMacroName()
                size_t startOfMacroName = s.find_first_of(cpp_macro_alphabet,endOfDefineSubstring);
                size_t endOfMacroName   = s.find_first_of(" (\t",startOfMacroName);
 #if DEBUG_MACRO_NAME
-               printf ("   --- startOfMacroName = %zu endOfMacroName = %zu \n",startOfMacroName,endOfMacroName);
+               printf ("   --- startOfMacroName = %" PRIuPTR " endOfMacroName = %" PRIuPTR " \n",startOfMacroName,endOfMacroName);
 #endif
             // DQ (1/19/2014): Added assertion.
                ROSE_ASSERT(startOfMacroName != string::npos);
 
                size_t macroNameLength = (endOfMacroName - startOfMacroName);
 #if DEBUG_MACRO_NAME
-               printf ("   --- macroNameLength = %zu \n",macroNameLength);
+               printf ("   --- macroNameLength = %" PRIuPTR " \n",macroNameLength);
 #endif
                macroName = s.substr(startOfMacroName,macroNameLength);
 #if DEBUG_MACRO_NAME
@@ -1116,7 +1136,7 @@ PreprocessingInfo::isSelfReferential()
           result = true;
           string macroName = getMacroName();
 #if DEBUG_SELF_REFERENTIAL_MACRO
-          printf ("   --- macroName = %s macroName.length() = %zu \n",macroName.c_str(),macroName.length());
+          printf ("   --- macroName = %s macroName.length() = %" PRIuPTR " \n",macroName.c_str(),macroName.length());
 #endif
           string s = internalString;
 
@@ -1135,7 +1155,7 @@ PreprocessingInfo::isSelfReferential()
 
           size_t endOfMacro_define_Substring = startOfMacro_define_Substring + defineSubstring.length();
 #if DEBUG_SELF_REFERENTIAL_MACRO
-          printf ("   --- startOfMacro_define_Substring = %zu endOfMacro_define_Substring = %zu \n",startOfMacro_define_Substring,endOfMacro_define_Substring);
+          printf ("   --- startOfMacro_define_Substring = %" PRIuPTR " endOfMacro_define_Substring = %" PRIuPTR " \n",startOfMacro_define_Substring,endOfMacro_define_Substring);
 #endif
 
        // DQ (1/13/2014):if the macro name is "n" then the "n" in "define" will be found by mistake.
@@ -1153,12 +1173,12 @@ PreprocessingInfo::isSelfReferential()
 
           size_t endOfMacroSubstring    = startOfMacroSubstring + (macroName.length() - 1);
 #if DEBUG_SELF_REFERENTIAL_MACRO
-          printf ("   --- startOfMacroSubstring = %zu endOfMacroSubstring = %zu \n",startOfMacroSubstring,endOfMacroSubstring);
+          printf ("   --- startOfMacroSubstring = %" PRIuPTR " endOfMacroSubstring = %" PRIuPTR " \n",startOfMacroSubstring,endOfMacroSubstring);
 #endif
        // size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring);
           size_t secondReferenceToMacroSubstring = s.find(macroName,endOfMacroSubstring + 1);
 #if DEBUG_SELF_REFERENTIAL_MACRO
-          printf ("   --- secondReferenceToMacroSubstring = %zu \n",secondReferenceToMacroSubstring);
+          printf ("   --- secondReferenceToMacroSubstring = %" PRIuPTR " \n",secondReferenceToMacroSubstring);
 #endif
           result = (secondReferenceToMacroSubstring != string::npos);
 #if DEBUG_SELF_REFERENTIAL_MACRO
@@ -1183,14 +1203,14 @@ PreprocessingInfo::isSelfReferential()
             // size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of("_abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
                size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = beforeSecondReferenceToMacroSubstring.find_last_not_of(cpp_macro_alphabet);
 #if DEBUG_SELF_REFERENTIAL_MACRO
-               printf ("   --- characterBeforeSecondReferenceToMacroSubstring              = %zu \n",characterBeforeSecondReferenceToMacroSubstring);
+               printf ("   --- characterBeforeSecondReferenceToMacroSubstring              = %" PRIuPTR " \n",characterBeforeSecondReferenceToMacroSubstring);
                printf ("   --- beforeSecondReferenceToMacroSubstring                       = %s \n",beforeSecondReferenceToMacroSubstring.c_str());
-               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring);
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring = %" PRIuPTR " \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring);
 #endif
                ROSE_ASSERT(nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring != string::npos);
                size_t nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring + endOfMacroSubstring + 1;
 #if DEBUG_SELF_REFERENTIAL_MACRO
-               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = %zu \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString);
+               printf ("   --- nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString = %" PRIuPTR " \n",nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString);
 #endif
             // if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring < characterBeforeSecondReferenceToMacroSubstring)
                if (nonWhiteSpaceCharacterBeforeSecondReferenceToMacroSubstring_relativeToInternalString < characterBeforeSecondReferenceToMacroSubstring)
@@ -1208,7 +1228,7 @@ PreprocessingInfo::isSelfReferential()
                ROSE_ASSERT(endOfSecondReferenceToMacroSubstring != string::npos);
                ROSE_ASSERT(endOfSecondReferenceToMacroSubstring <= s.length());
 #if DEBUG_SELF_REFERENTIAL_MACRO
-               printf ("   --- endOfSecondReferenceToMacroSubstring = %zu \n",endOfSecondReferenceToMacroSubstring);
+               printf ("   --- endOfSecondReferenceToMacroSubstring = %" PRIuPTR " \n",endOfSecondReferenceToMacroSubstring);
 #endif
                string afterSecondReferenceToMacroSubstring  = s.substr(endOfSecondReferenceToMacroSubstring+1,(s.length() - endOfSecondReferenceToMacroSubstring));
 #if DEBUG_SELF_REFERENTIAL_MACRO
@@ -1218,7 +1238,7 @@ PreprocessingInfo::isSelfReferential()
                size_t startOfRemainderSubstring = s.find_first_of(cpp_macro_alphabet,endOfSecondReferenceToMacroSubstring+1);
                size_t endOfRemainderSubstring   = s.find_first_of(" (\t\n\0",endOfSecondReferenceToMacroSubstring);
 #if DEBUG_SELF_REFERENTIAL_MACRO
-               printf ("   --- startOfRemainderSubstring = %zu endOfRemainderSubstring = %zu \n",startOfRemainderSubstring,endOfRemainderSubstring);
+               printf ("   --- startOfRemainderSubstring = %" PRIuPTR " endOfRemainderSubstring = %" PRIuPTR " \n",startOfRemainderSubstring,endOfRemainderSubstring);
 #endif
             // DQ (1/2/2014): Handle the special case of macro pasting "#define foo(X) foo##X"
             // if (s[endOfSecondReferenceToMacroSubstring+1] == '#' && s[endOfSecondReferenceToMacroSubstring+2] == '#')
@@ -1261,6 +1281,30 @@ PreprocessingInfo::isSelfReferential()
    }
 
 
+// DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+bool
+PreprocessingInfo::isTransformation() const
+   {
+     ROSE_ASSERT(this != NULL);
+     return p_isTransformation;
+   }
+
+void
+PreprocessingInfo::setAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = true;
+   }
+
+void
+PreprocessingInfo::unsetAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = false;
+   }
+
+
+
 // *********************************************
 // Member functions for class ROSEATTRIBUTESList
 // *********************************************
@@ -1274,6 +1318,9 @@ ROSEAttributesList::ROSEAttributesList()
   // Note: data members: attributeList, fileName, and filenameIdSet will default 
   // to proper values using there default constrcutors.
      rawTokenStream = NULL;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+  // p_isTransformation = false;
    }
 
 ROSEAttributesList::~ROSEAttributesList()
@@ -1594,7 +1641,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
        // Delete the entries built by the expermiental mechanism and use the previous approach.
        // This allows for the new mechanism to be widely tested in C, C++, and Fortran.
 
-          printf ("attributeList has already been build, remove the existing entries attributeList.size() = %zu \n",attributeList.size());
+          printf ("attributeList has already been build, remove the existing entries attributeList.size() = %" PRIuPTR " \n",attributeList.size());
           std::vector<PreprocessingInfo*>::iterator i = attributeList.begin();
           while (i != attributeList.end())
              {
@@ -1606,7 +1653,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
 #endif
      ROSE_ASSERT(attributeList.empty() == true);
 
-  // printf ("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST(): rawTokenStream->size() = %zu \n",rawTokenStream->size());
+  // printf ("In ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST(): rawTokenStream->size() = %" PRIuPTR " \n",rawTokenStream->size());
 
      int count = 0;
      LexTokenStreamType::iterator i = rawTokenStream->begin();
@@ -1649,7 +1696,7 @@ ROSEAttributesList::generatePreprocessorDirectivesAndCommentsForAST( const strin
           count++;
         }
 
-  // printf ("attributeList.size() = %zu \n",attributeList.size());
+  // printf ("attributeList.size() = %" PRIuPTR " \n",attributeList.size());
    }
 
 
@@ -1679,7 +1726,7 @@ ROSEAttributesList::isFortran90Comment( const string & line )
   // The character "!" starts a comment if only blanks are in the leading white space.
      if (firstNonBlankCharacter == '!')
         {
-       // printf ("This is a F90 style comment: line = %s length = %zu \n",line.c_str(),line.length());
+       // printf ("This is a F90 style comment: line = %s length = %" PRIuPTR " \n",line.c_str(),line.length());
           isComment = true;
         }
 
@@ -1714,7 +1761,7 @@ ROSEAttributesList::isFortran77Comment( const string & line )
        // Error checking on first character, I believe we can't enforce this, but I would like to have it be a warning.
           if (!(firstCharacter >= ' ') || !(firstCharacter < 126))
              {
-               printf ("Warning: firstCharacter = %d (not an acceptable character value for Fortran) line.length() = %zu \n",(int)firstCharacter,line.length());
+               printf ("Warning: firstCharacter = %d (not an acceptable character value for Fortran) line.length() = %" PRIuPTR " \n",(int)firstCharacter,line.length());
              }
 #endif
 
@@ -1774,11 +1821,11 @@ ROSEAttributesList::isFortran77Comment( const string & line )
      if (firstNonBlankCharacter == '\n' || firstNonBlankCharacter == '\0')
         {
        // This is a blank line, save it as a comment too!
-       // printf ("This is a blank line, save it as a comment too! lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
+       // printf ("This is a blank line, save it as a comment too! lineCounter = %d line = %s length = %" PRIuPTR " \n",lineCounter,line.c_str(),line.length());
 
        // Need to reset this to "\n" to save it as a comment in ROSE.
           line = "\n ";
-       // printf ("   after being reset: lineCounter = %d line = %s length = %zu \n",lineCounter,line.c_str(),line.length());
+       // printf ("   after being reset: lineCounter = %d line = %s length = %" PRIuPTR " \n",lineCounter,line.c_str(),line.length());
 
           isComment = true;
         }
@@ -1895,14 +1942,14 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
      if (firstNonBlankCharacter == '#')
         {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-       // printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %zu \n",i,lineCounter,line.c_str(),line.length());
+       // printf ("This is a CPP directive: i = %d lineCounter = %d line = %s length = %" PRIuPTR " \n",i,lineCounter,line.c_str(),line.length());
 #endif
           isLikelyCppDirective = true;
           positionofHashCharacter = i;
         }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-     printf ("i = %zu positionofHashCharacter = %d \n",i,positionofHashCharacter);
+     printf ("i = %" PRIuPTR " positionofHashCharacter = %d \n",i,positionofHashCharacter);
 #endif
      bool hasLineContinuation = false;
 
@@ -1934,7 +1981,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
           while ((i < lineLength && (firstNonBlankCharacter == ' ' || firstNonBlankCharacter == '\t')) || firstNonBlankCharacter == '#')
              {
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("Looping over # or white space between # and CPP directive i = %zu \n",i);
+               printf ("Looping over # or white space between # and CPP directive i = %" PRIuPTR " \n",i);
 #endif
                firstNonBlankCharacter = line[i];
                if (spaceAfterHash == false)
@@ -1958,13 +2005,13 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
              {
                nonBlankCharacter = line[i];
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("In loop: i = %zu lineLength = %zu nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+               printf ("In loop: i = %" PRIuPTR " lineLength = %" PRIuPTR " nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
 #endif
                i++;
              }
 
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-          printf ("i = %zu \n",i);
+          printf ("i = %" PRIuPTR " \n",i);
 #endif
 
        // Need to backup two (for example if this is the end of the line, as in "#endif")
@@ -2220,7 +2267,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                if (cppDirective == true)
                   {
 #if 0
-                    printf ("line.length() = %zu line = %s \n",line.length(),line.c_str());
+                    printf ("line.length() = %" PRIuPTR " line = %s \n",line.length(),line.c_str());
                     printf ("line[line.length()-1] = %c \n",line[line.length()-1]);
 #endif
                     if (line[line.length()-1] == '\\')
@@ -2238,7 +2285,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                             }
                        }
 
-                 // printf ("After processing continuation lines: line.length() = %zu line = %s \n",line.length(),line.c_str());
+                 // printf ("After processing continuation lines: line.length() = %" PRIuPTR " line = %s \n",line.length(),line.c_str());
                   }
 
             // DQ (11/17/2008): Refactored the code to make it simpler to add here!
@@ -2293,7 +2340,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                     ROSE_ASSERT(cppDirective != NULL);
                     attributeList.push_back(cppDirective);
 #if 0
-                    printf ("attributeList.size() = %zu \n",attributeList.size());
+                    printf ("attributeList.size() = %" PRIuPTR " \n",attributeList.size());
 #endif
                  // DQ (11/28/2008): Gather additional data for specific directives (CPP generated linemarkers (e.g. "# <line number> <filename> <flags>").
                     if (cppDeclarationKind == PreprocessingInfo::CpreprocessorCompilerGeneratedLinemarker)
@@ -2313,20 +2360,20 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                                  {
                                    nonBlankCharacter = restOfTheLine[i];
 #if 0
-                                   printf ("In loop: i = %zu lineLength = %zu nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
+                                   printf ("In loop: i = %" PRIuPTR " lineLength = %" PRIuPTR " nonBlankCharacter = %c \n",i,lineLength,isprint(nonBlankCharacter) ? nonBlankCharacter : '.');
 #endif
                                    i++;
                                  }
 
 #if 0
-                         printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: i = %zu \n",i);
+                         printf ("In ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST: i = %" PRIuPTR " \n",i);
 #endif
 
                       // Need to backup two (for example if this is the end of the line, as in "#endif")
                          size_t positionOfLastCharacterOfIntegerValue = i-2;
 
 #if 0
-                         printf ("positionOfLastCharacterOfIntegerValue = %zu \n",positionOfLastCharacterOfIntegerValue);
+                         printf ("positionOfLastCharacterOfIntegerValue = %" PRIuPTR " \n",positionOfLastCharacterOfIntegerValue);
 #endif
                          int lineNumberLength = (positionOfLastCharacterOfIntegerValue - positionOfFirstCharacterOfIntegerValue) + 1;
                          string cppIndentifier = restOfTheLine.substr(positionOfFirstCharacterOfIntegerValue,lineNumberLength);
@@ -2358,8 +2405,8 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          size_t remainingLineLength   = (lineLength - positionOfLastCharacterOfIntegerValue) - 1;
                          string remainingLine = restOfTheLine.substr(positionOfLastCharacterOfIntegerValue+1,remainingLineLength);
 #if 0
-                         printf ("lineLength    = %zu positionOfLastCharacterOfIntegerValue = %zu \n",lineLength,positionOfLastCharacterOfIntegerValue);
-                         printf ("remainingLineLength = %zu remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
+                         printf ("lineLength    = %" PRIuPTR " positionOfLastCharacterOfIntegerValue = %" PRIuPTR " \n",lineLength,positionOfLastCharacterOfIntegerValue);
+                         printf ("remainingLineLength = %" PRIuPTR " remainingLine = %s \n",remainingLineLength,remainingLine.c_str());
 #endif
                          size_t positionOfFirstQuote = remainingLine.find('"');
 
@@ -2387,7 +2434,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
                          size_t positionOfLastQuote = remainingLine.rfind('"');
                          ROSE_ASSERT(positionOfLastQuote != string::npos);
 #if 0
-                         printf ("positionOfFirstQuote = %zu positionOfLastQuote = %zu \n",positionOfFirstQuote,positionOfLastQuote);
+                         printf ("positionOfFirstQuote = %" PRIuPTR " positionOfLastQuote = %" PRIuPTR " \n",positionOfFirstQuote,positionOfLastQuote);
 #endif
                          int filenameLength = (positionOfLastQuote - positionOfFirstQuote) + 1;
 #if 0
@@ -2428,7 +2475,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
 
             // printf ("increment lineCounter = %d \n",lineCounter);
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
-               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %zu \n",lineCounter,attributeList.size());
+               printf ("At bottom of loop over lines in the file ... incremented lineCounter = %d attributeList.size() = %" PRIuPTR " \n",lineCounter,attributeList.size());
 #endif
              }
 
@@ -2445,7 +2492,7 @@ ROSEAttributesList::collectPreprocessorDirectivesAndCommentsForAST( const string
      display("Leaving collectPreprocessorDirectivesAndCommentsForAST(): debug");
 #endif
 #if 0
-     printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST(): attributeList.size() = %zu \n",attributeList.size());
+     printf ("Leaving collectPreprocessorDirectivesAndCommentsForAST(): attributeList.size() = %" PRIuPTR " \n",attributeList.size());
 #endif
    }
 
@@ -2456,7 +2503,7 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
   // This function generates a list of fileId numbers associated with each of the different names specified in #line directives.
 
 #if 0
-     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives() attributeList.size() = %zu \n",attributeList.size());
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives() attributeList.size() = %" PRIuPTR " \n",attributeList.size());
 #endif
 #if 0
      display("In ROSEAttributesList::generateFileIdListFromLineDirectives()");
@@ -2465,7 +2512,7 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
      Sg_File_Info::display_static_data("At TOP of ROSEAttributesList::generateFileIdListFromLineDirectives()");
 #endif
 #if 0
-     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): Sg_File_Info::get_nametofileid_map().size() = %zu Sg_File_Info::get_fileidtoname_map().size() = %zu \n",
+     printf ("In ROSEAttributesList::generateFileIdListFromLineDirectives(): Sg_File_Info::get_nametofileid_map().size() = %" PRIuPTR " Sg_File_Info::get_fileidtoname_map().size() = %" PRIuPTR " \n",
           Sg_File_Info::get_nametofileid_map().size(),Sg_File_Info::get_fileidtoname_map().size());
 #endif
 
@@ -2528,8 +2575,8 @@ ROSEAttributesList::generateFileIdListFromLineDirectives()
 #endif
                int line = atoi(lineNumberString.c_str());
 #if 0
-               printf ("p = %zu \n",p);
-               printf ("directiveStringWithoutHashAndKeyword.length() = %zu \n",directiveStringWithoutHashAndKeyword.length());
+               printf ("p = %" PRIuPTR " \n",p);
+               printf ("directiveStringWithoutHashAndKeyword.length() = %" PRIuPTR " \n",directiveStringWithoutHashAndKeyword.length());
                printf ("directiveStringWithoutHashLineAndKeyword (trimmed) = %s \n",directiveStringWithoutHashAndKeyword.c_str());
 #endif
             // DQ (1/7/2014): Added handling for case where filename is not present in #line directive.
@@ -2620,6 +2667,31 @@ ROSEAttributesList::numberByRelativePosition(PreprocessingInfo::RelativePosition
      return returnValue;
    }
 #endif
+
+#if 0
+// DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+bool
+ROSEAttributesList::isTransformation() const
+   {
+     ROSE_ASSERT(this != NULL);
+     return p_isTransformation;
+   }
+
+void
+ROSEAttributesList::setAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = true;
+   }
+
+void
+ROSEAttributesList::unsetAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = false;
+   }
+#endif
+
 
 //##############################################################################
 //
@@ -2808,7 +2880,7 @@ ROSEAttributesListContainer::display ( const string & label )
 #else
   // std::map<std::string, ROSEAttributesList*> attributeListMap;
 
-     printf ("In ROSEAttributesListContainer::display(): attributeListMap.size() = %zu \n",attributeListMap.size());
+     printf ("In ROSEAttributesListContainer::display(): attributeListMap.size() = %" PRIuPTR " \n",attributeListMap.size());
      map<std::string, ROSEAttributesList*>::iterator i = attributeListMap.begin();
      while (i != attributeListMap.end())
         {

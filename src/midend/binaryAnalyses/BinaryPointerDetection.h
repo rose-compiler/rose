@@ -476,7 +476,7 @@ public:
         // point to "info" and update it appropriately.
         for (info.pass=0; info.pass<2; ++info.pass) {
             if (debug) {
-                fprintf(debug, "PointerDetection: =============================== starting pass %zu "
+                fprintf(debug, "PointerDetection: =============================== starting pass %" PRIuPTR " "
                         "================================\n", info.pass);
             }
             StateMap before, after;
@@ -494,12 +494,12 @@ public:
                 if (!insn || (!addrspc.isEmpty() && !addrspc.contains(AddressInterval::baseSize(insn->get_address(),
                                                                                                 insn->get_size())))) {
                     if (debug)
-                        fprintf(debug, "PointerDetection: processing pass %zu 0x%08"PRIx64": %s\n", info.pass, va,
+                        fprintf(debug, "PointerDetection: processing pass %" PRIuPTR " 0x%08"PRIx64": %s\n", info.pass, va,
                                 (insn?"instruction excluded by ExtentMap":"no x86 instruction here"));
                     continue;
                 }
                 if (debug)
-                    fprintf(debug, "PointerDetection: processing pass %zu 0x%08"PRIx64": %s\n",
+                    fprintf(debug, "PointerDetection: processing pass %" PRIuPTR " 0x%08"PRIx64": %s\n",
                             info.pass, va, unparseInstruction(insn).c_str());
 
                 // Process the instruction

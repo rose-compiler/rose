@@ -140,8 +140,11 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
+	axpy_ompacc3.c \
+	axpy_ompacc_parseonly.c \
 	matrixmultiply-ompacc.c \
 	jacobi-ompacc.c \
+	jacobi-ompacc-v2.c \
 	jacobi-ompacc-opt1.c \
 	jacobi-ompacc-opt2.c
 
@@ -174,7 +177,9 @@ PASSING_C_TEST_Objects = $(C_TESTCODES_REQUIRED_TO_PASS:.c=.o)
 
 PASSING_CXX_TEST_Objects = $(CXX_TESTCODES_REQUIRED_TO_PASS:.cpp=.o)
 
-C_OMP_ACC_TEST_Objects = $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+#C_OMP_ACC_TEST_Objects = $(C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS:.c=.o)
+# we only care about unparsing for ACC input, not the object file generation
+C_OMP_ACC_TEST_Unparsed = $(addprefix rose_,${C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS})
 
 $(PASSING_C_TEST_Objects): %.o: $(srcdir)/%.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -c $<
@@ -201,26 +206,17 @@ macroIds.o: $(srcdir)/macroIds.c parseOmp
 	./parseOmp $(ROSE_FLAGS) $(TESTCODE_INCLUDES) -rose:collectAllCommentsAndDirectives $(srcdir)/macroIds.c
 
 # test parsing experimental OpenMP accelerator directives, Liao 1/16/2013
-$(C_OMP_ACC_TEST_Objects): %.o:$(srcdir)/%.c parseOmp
-	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $<
+#$(C_OMP_ACC_TEST_Objects): %.o:$(srcdir)/%.c parseOmp
+#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $<
+$(C_OMP_ACC_TEST_Unparsed): $(srcdir)/$(@:rose_%=%) parseOmp
+	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/$(@:rose_%=%)
 
-#axpy_ompacc.o:$(srcdir)/axpy_ompacc.c parseOmp
-#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
-##	./parseOmp -rose:openmp:parse_only --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/axpy_ompacc.c 
-#matrixmultiply-ompacc.o:$(srcdir)/matrixmultiply-ompacc.c parseOmp
-#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/matrixmultiply-ompacc.c 
-#jacobi-ompacc.o:$(srcdir)/jacobi-ompacc.c parseOmp
-#	./parseOmp -rose:openmp:ast_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc.c
-#
-#jacobi-ompacc-opt1.o:$(srcdir)/jacobi-ompacc-opt1.c parseOmp
-#	./parseOmp -rose:openmp:parse_only -rose:skipfinalCompileStep --edg:no_warnings -w -rose:verbose 0 --edg:restrict -c $(srcdir)/jacobi-ompacc-opt1.c
-	
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 check-local:
 	@echo "Test for ROSE OpenMP Parser."
 	@$(MAKE) $(PASSING_C_TEST_Objects) 
 	@$(MAKE) $(PASSING_CXX_TEST_Objects)
-	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Objects)
+	@$(MAKE) bonds-2.o macroIds.o $(C_OMP_ACC_TEST_Unparsed)
 	@echo "***********************************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/OpenMP_tests: make check rule complete (terminated normally) ******"
 	@echo "***********************************************************************************************************"

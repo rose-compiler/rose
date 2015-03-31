@@ -240,7 +240,6 @@ if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
-add_definitions(-DBOOST_FILESYSTEM_VERSION=2)
 
 
 

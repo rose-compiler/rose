@@ -1685,7 +1685,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                      // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);
@@ -1765,7 +1765,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                      // printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                      // printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);
@@ -1849,7 +1849,7 @@ TransformationSupport::getTransformationOptionsFromVariableDeclarationConstructo
                     int counter = 0;
                     while (i != expressionPtrList.end()) 
                        {
-                         printf ("Expression List Element #%d of %zu (total) \n",counter,expressionPtrList.size());
+                         printf ("Expression List Element #%d of %" PRIuPTR " (total) \n",counter,expressionPtrList.size());
 
                          SgEnumVal* enumVal = isSgEnumVal(*i);
                          ROSE_ASSERT (enumVal != NULL);
@@ -2092,7 +2092,11 @@ TransformationSupport::getDirectory( const SgNode* astNode )
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
              {
-               printf ("Error: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+            // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
+               if (isSgArrayType(parentNode) == NULL)
+                 {
+                   printf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                 }
                return NULL;
              }
         }
@@ -2129,7 +2133,11 @@ TransformationSupport::getFile( const SgNode* astNode )
         {
           if ( dynamic_cast<const SgType*>(parentNode) != NULL || dynamic_cast<const SgSymbol*>(parentNode) != NULL )
              {
-               printf ("Error: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+            // DQ (9/2/2014): Only output this message if this is not in a SgArrayType.
+               if (isSgArrayType(parentNode) == NULL)
+                 {
+                   printf ("Warning: can't locate an associated SgFile from astNode = %p = %s parentNode = %p = %s \n",astNode,astNode->class_name().c_str(),parentNode,parentNode->class_name().c_str());
+                 }
                return NULL;
              }
         }

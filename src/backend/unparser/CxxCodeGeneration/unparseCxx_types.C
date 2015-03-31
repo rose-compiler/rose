@@ -256,17 +256,17 @@ string get_type_name(SgType* t)
                 ROSE_ASSERT(mod_type != NULL);
                 string res;
                 bool unparse_base = true;
-                if ( isSgReferenceType(mod_type->get_base_type()) ||
-                     isSgPointerType(mod_type->get_base_type()) ) {
-                    res = get_type_name(mod_type->get_base_type());
-                    unparse_base = false;
-                }
                 if (mod_type->get_typeModifier().isOpenclGlobal())
                     res = "__global " + res;
                 if (mod_type->get_typeModifier().isOpenclLocal())
                     res = "__local " + res;
                 if (mod_type->get_typeModifier().isOpenclConstant())
                     res = "__constant " + res;
+                if ( isSgReferenceType(mod_type->get_base_type()) ||
+                     isSgPointerType(mod_type->get_base_type()) ) {
+                    res = get_type_name(mod_type->get_base_type());
+                    unparse_base = false;
+                }
                 if (mod_type->get_typeModifier().haveAddressSpace()) {
                     std::ostringstream outstr;
                     outstr << mod_type->get_typeModifier().get_address_space_value(); 
@@ -278,6 +278,7 @@ string get_type_name(SgType* t)
                     res = res + "volatile ";
                 if (mod_type->get_typeModifier().isRestrict())
                    {
+                  // DQ (9/2/2014): Added support for mpiicpc used at LLNL.
                   // DQ (8/29/2005): Added support for classification of back-end compilers (independent of the name invoked to execute them)
 
                      bool usingGcc = false;
@@ -287,9 +288,11 @@ string get_type_name(SgType* t)
                        #endif
                      #else
                        string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx");
+                       usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+#if 0
+                     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+#endif
                      #endif
-
                      if ( usingGcc )
                         res = res + "__restrict__ ";
                      else
@@ -442,7 +445,7 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
      if (nodeReferenceToType != NULL)
         {
 #if 0
-          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %zu \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
+          printf ("rrrrrrrrrrrr In unparseType() output type generated name: nodeReferenceToType = %p = %s SgNode::get_globalTypeNameMap().size() = %" PRIuPTR " \n",nodeReferenceToType,nodeReferenceToType->class_name().c_str(),SgNode::get_globalTypeNameMap().size());
 #endif
           std::map<SgNode*,std::string>::iterator i = SgNode::get_globalTypeNameMap().find(nodeReferenceToType);
           if (i != SgNode::get_globalTypeNameMap().end())
@@ -1639,7 +1642,7 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                        }
                     ROSE_ASSERT(classdefn_stmt != NULL);
 #if 0
-                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %zu \n",classdefn_stmt, classdefn_stmt->get_members().size());
+                    printf ("In unparseClassType: classdefn_stmt = %p classdefn_stmt->get_members().size() = %" PRIuPTR " \n",classdefn_stmt, classdefn_stmt->get_members().size());
 #endif
                     SgDeclarationStatementPtrList::iterator pp = classdefn_stmt->get_members().begin();
                     while (pp != classdefn_stmt->get_members().end())
@@ -2306,7 +2309,10 @@ Unparse_Type::unparseRestrictKeyword()
     #endif
   #else
     string compilerName = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx");
+    usingGcc = (compilerName == "g++" || compilerName == "gcc" || compilerName == "mpicc" || compilerName == "mpicxx" || compilerName == "mpiicpc");
+#if 0
+     printf ("Processing restrict keyword: compilerName = %s \n",compilerName.c_str());
+#endif
   #endif
 
   // Liao 6/11/2008, Preserve the original "restrict" for UPC
@@ -2402,15 +2408,16 @@ void Unparse_Type::unparseModifierType(SgType* type, SgUnparse_Info& info)
      if (info.isTypeFirstPart())
         {
        // Print the base type if this has to come first
-          if (btype_first)
-               unparseType(mod_type->get_base_type(), info);
-
           if (mod_type->get_typeModifier().isOpenclGlobal())
               curprint ( "__global ");
           if (mod_type->get_typeModifier().isOpenclLocal())
               curprint ( "__local ");
           if (mod_type->get_typeModifier().isOpenclConstant())
               curprint ( "__constant ");
+
+          if (btype_first)
+               unparseType(mod_type->get_base_type(), info);
+
           if (mod_type->get_typeModifier().haveAddressSpace()) {
               std::ostringstream outstr;
               outstr << "__attribute__((address_space(" << mod_type->get_typeModifier().get_address_space_value() << ")))";
@@ -2942,11 +2949,14 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
      SgName name = template_type->get_name();
 #endif
 
+  // Add a space to seperate the type from other syntax.
+     name += " ";
+
 #if 0
      printf ("In unparseTemplateType(): Unparsing the SgTemplateType as name = %s \n",name.str());
 #endif
 
-#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES
+#if OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES || 0
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("In Unparse_Type::unparseTemplateType(): type->class_name() = %s firstPart = %s secondPart = %s \n",type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
@@ -2964,7 +2974,10 @@ Unparse_Type::unparseTemplateType(SgType* type, SgUnparse_Info& info)
        else
         {
        // This is the case where it is called from within the unparser.
-          if (info.isTypeSecondPart() == true)
+
+       // DQ (9/9/2014): Fixing this to unparse as part of first part (when either is true) and not the second part.
+       // if (info.isTypeSecondPart() == true)
+          if (info.isTypeFirstPart() == true)
              {
                curprint(name);
              }
@@ -3027,6 +3040,20 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (5/4/2013): This code was copied from the function argument processing which does handle the types properly.
   // So this code needs to be refactored.
 
+#if 0
+     printf ("In outputType(): referenceNode = %p = %s \n",referenceNode,referenceNode->class_name().c_str());
+     curprint(string("\n/* In outputType(): referenceNode = ") +  referenceNode->class_name() + " */ \n");
+#endif
+
+#if 0
+  // DQ (9/10/2014): debugging code!
+     if (isSgInitializedName(referenceNode) != NULL && isSgTypeInt(referenceNodeType) != NULL)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
      SgUnparse_Info newInfo(info);
 
   // info.set_isTypeFirstPart();
@@ -3066,9 +3093,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // ninfo_for_type.set_global_qualification_required(initializedName->get_global_qualification_required_for_type());
   // ninfo_for_type.set_type_elaboration_required(initializedName->get_type_elaboration_required_for_type());
 #if 0
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
-     printf ("In unparseTemplateArgument(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
+     printf ("In outputType(): BEFORE: templateArgument->get_name_qualification_length_for_type()     = %d \n",templateArgument->get_name_qualification_length_for_type());
+     printf ("In outputType(): BEFORE: templateArgument->get_global_qualification_required_for_type() = %s \n",templateArgument->get_global_qualification_required_for_type() ? "true" : "false");
+     printf ("In outputType(): BEFORE: templateArgument->get_type_elaboration_required_for_type()     = %s \n",templateArgument->get_type_elaboration_required_for_type() ? "true" : "false");
 #endif
 
      SgTemplateArgument* templateArgument = isSgTemplateArgument(referenceNode);
@@ -3121,11 +3148,17 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // DQ (1/9/2014): These should have been setup to be the same.
      ROSE_ASSERT(ninfo_for_type.SkipClassDefinition() == ninfo_for_type.SkipEnumDefinition());
 
+#if 0
+     curprint("\n/* outputType(): output the 1st part of the type */ \n");
+#endif
+
   // unparseType(tmp_type, info);
   // unp->u_type->unparseType(tmp_type, ninfo_for_type);
      unp->u_type->unparseType(referenceNodeType, ninfo_for_type);
 
-  // curprint( "\n/* DONE - unparse_helper(): output the 1st part of the type */ \n");
+#if 0
+     curprint("\n/* DONE - outputType(): output the 1st part of the type */ \n");
+#endif
 
      SgInitializedName* initializedName = isSgInitializedName(referenceNode);
      if (initializedName != NULL)
@@ -3155,7 +3188,9 @@ Unparse_Type::outputType( T* referenceNode, SgType* referenceNodeType, SgUnparse
   // unp->u_type->unparseType(templateArgumentType, info);
      unp->u_type->unparseType(referenceNodeType, newInfo);
 
-  // printf ("DONE: unparse_helper(): output the 2nd part of the type \n");
-  // curprint( "\n/* DONE: unparse_helper(): output the 2nd part of the type */ \n");
+#if 0
+     printf ("DONE: outputType(): \n");
+     curprint( "\n/* DONE: outputType(): */ \n");
+#endif
    }
 

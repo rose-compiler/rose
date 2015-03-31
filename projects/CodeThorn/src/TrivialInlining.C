@@ -3,6 +3,8 @@
 #include "SgNodeHelper.h"
 #include "RoseAst.h"
 
+using namespace std;
+
 TrivialInlining::TrivialInlining():detailedOutput(false) {
 }
 void TrivialInlining::setDetailedOutput(bool val) {

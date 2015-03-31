@@ -237,13 +237,13 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarFPrintf(SgNode* node) {
       if(actualParams.size()==3) {
         SgVarRefExp* varRefExp=isSgVarRefExp(actualParams[2]);
         if(!varRefExp) {
-             cerr<<"Error: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-             exit(1);
+             cerr<<"Warning: unsupported fprint argument #3 (no variable found). Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+             return 0;
         }
         return varRefExp;
       } else {
-        cerr<<"Error: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
-        exit(1);
+        cerr<<"Warning: unsupported number of fprintf arguments. Required form of fprintf(stream,\"...%d...\",v)."<<endl;
+        return 0;
       }
     }
   }
@@ -271,8 +271,9 @@ bool SgNodeHelper::Pattern::matchAssertExpr(SgNode* node) {
 SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVariableDeclaration* decl) {
   SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(decl);
   SgInitializer* initializer=initName->get_initializer();
+  // check if it is a declaration without initializer
   if(!initializer)
-    throw "Error: AST structure failure: no initializer for initialized name.";
+    return 0;
   if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
     SgExpression* expr=assignInitializer->get_operand_i();
     return expr;
@@ -963,6 +964,19 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
   throw "SgNodeHelper::getCond: improper node operation.";
 }
 
+string SgNodeHelper::unparseCond(SgNode* cond) {
+  if(SgNodeHelper::isCond(cond)) {
+    string condString;
+    condString=cond->unparseToString();
+    if(condString[condString.size()-1]==';')
+      condString.erase(condString.size()-1); // C++11: condString.pop_back()
+    return condString;
+  } else {
+    throw "SgNodeHelper::unparseCond: improper node operation.";
+  }
+}
+
+
 
 /*! 
   * \author Markus Schordan
@@ -1182,6 +1196,7 @@ bool SgNodeHelper::isFloatingPointType(SgType* type) {
   return isSgTypeFloat(type) || isSgTypeDouble(type) || isSgTypeLongDouble(type);
 }
 
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -1258,4 +1273,51 @@ void SgNodeHelper::replaceExpression(SgExpression* e1, SgExpression* e2, bool mo
   } else {
     SageInterface::replaceExpression(e1,e2,mode); // this function is more general but very slow
   }
+}
+
+void SgNodeHelper::replaceAstWithString(SgNode* node, string s) {
+  AstUnparseAttribute* substituteNameAttribute=new AstUnparseAttribute(s,AstUnparseAttribute::e_replace);
+  node->setAttribute("AstUnparseAttribute",substituteNameAttribute);
+}
+
+bool SgNodeHelper::isArrayAccess(SgNode* node) {
+  return isSgPntrArrRefExp(node)!=0;
+}
+
+bool SgNodeHelper::isPointerVariable(SgVarRefExp* var) {
+  if(var==0)
+    return false;
+  SgType* type=var->get_type();
+  return isSgPointerType(type)!=0;
+}
+
+bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
+// TODO: ensure that this is an array (check type)
+  return isAggregateDeclaration(decl);
+}
+
+bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    SgInitializer* arrayInitializer=initName->get_initializer();
+    return isSgAggregateInitializer(arrayInitializer);
+  }
+  return false;
+}
+
+SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVariableDeclaration* decl) {
+  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
+  ROSE_ASSERT(initName0);
+  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+    // array initializer
+    SgInitializer* initializer=initName->get_initializer();
+    if(SgAggregateInitializer* arrayInit=isSgAggregateInitializer(initializer)) {
+      SgExprListExp* rhsOfArrayInit=arrayInit->get_initializers();
+      SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
+      return exprPtrList;
+    }
+  }
+  cerr<<"Error: getInitializerListOfArrayVariable failed."<<endl;
+  exit(1);
 }

@@ -298,7 +298,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]
+0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]
     ax = v1051
     cx = v1052
     dx = v1053
@@ -330,12 +330,12 @@
     nt = v1079
     ?15 = v1080
     memory = {}
-    ip = v1087 [from 0x080482f0: jmp    DWORD PTR ds:[0x080496d4<.got.plt+0x0c>]]
+    ip = v1087 [from 0x080482f0: jmp    dword ds:[0x080496d4<.got.plt+0x0c>]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]
+0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]
     ax = v1152
     cx = v1153
     dx = v1154
@@ -367,12 +367,12 @@
     nt = v1180
     ?15 = v1181
     memory = {}
-    ip = v1188 [from 0x08048300: jmp    DWORD PTR ds:[0x080496d8<.got.plt+0x10>]]
+    ip = v1188 [from 0x08048300: jmp    dword ds:[0x080496d8<.got.plt+0x10>]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]
+0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]
     ax = v1253
     cx = v1254
     dx = v1255
@@ -404,12 +404,12 @@
     nt = v1281
     ?15 = v1282
     memory = {}
-    ip = v1289 [from 0x08048310: jmp    DWORD PTR ds:[0x080496dc<.got.plt+0x14>]]
+    ip = v1289 [from 0x08048310: jmp    dword ds:[0x080496dc<.got.plt+0x14>]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]
+0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]
     ax = v1354
     cx = v1355
     dx = v1356
@@ -441,12 +441,12 @@
     nt = v1382
     ?15 = v1383
     memory = {}
-    ip = v1390 [from 0x08048320: jmp    DWORD PTR ds:[0x080496e0<.got.plt+0x18>]]
+    ip = v1390 [from 0x08048320: jmp    dword ds:[0x080496e0<.got.plt+0x18>]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]
+0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]
     ax = v1455
     cx = v1456
     dx = v1457
@@ -478,7 +478,7 @@
     nt = v1483
     ?15 = v1484
     memory = {}
-    ip = v1491 [from 0x08048330: jmp    DWORD PTR ds:[0x080496e4<.got.plt+0x1c>]]
+    ip = v1491 [from 0x08048330: jmp    dword ds:[0x080496e4<.got.plt+0x1c>]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -1234,10 +1234,10 @@
     memory = {}
     ip = 0x8048375 [from 0x0804836f: add    ebx, 0x0000135a<4954>]
 
-0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]
+0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    dx = v2885 [from 0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]]
     bx = v2844 [from 0x0804836f: add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x0804836e: pop    ebx]
     bp = v2733
@@ -1266,12 +1266,12 @@
     nt = v2756
     ?15 = v2757
     memory = {}
-    ip = 0x804837b [from 0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    ip = 0x804837b [from 0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]]
 
 0x0804837b: test   edx, edx
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    dx = v2885 [from 0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]]
     bx = v2844 [from 0x0804836f: add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x0804836e: pop    ebx]
     bp = v2733
@@ -1305,7 +1305,7 @@
 0x0804837d: je     0x08048384<<Insn>>
     ax = v2728
     cx = v2729
-    dx = v2885 [from 0x08048375: mov    edx, DWORD PTR ds:[ebx + 0xfffffffc<-4>]]
+    dx = v2885 [from 0x08048375: mov    edx, dword ds:[ebx + 0xfffffffc<-4>]]
     bx = v2844 [from 0x0804836f: add    ebx, 0x0000135a<4954>]
     sp = v2765 [from 0x0804836e: pop    ebx]
     bp = v2733
@@ -1625,7 +1625,7 @@
     }
     ip = 0x8048396 [from 0x08048393: sub    esp, 0x08]
 
-0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00
+0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00
     ax = v3575
     cx = v3576
     dx = v3577
@@ -1640,18 +1640,18 @@
     ds = v3586
     fs = v3587
     gs = v3588
-    cf = -v3807-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    cf = -v3807-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?1 = v3590
-    pf = -v3797-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    pf = -v3797-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?3 = v3592
-    af = -v3804-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    af = -v3804-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?5 = v3594
-    zf = v3802 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
-    sf = v3800 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    zf = v3802 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
+    sf = v3800 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     tf = v3597
     if = v3598
     df = v3599
-    of = v3812 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    of = v3812 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     iopl0 = v3601
     iopl1 = v3602
     nt = v3603
@@ -1659,7 +1659,7 @@
     memory = {
         size=4; addr=v3579-0x4 [from 0x08048390: push   ebp]; value=v3580
     }
-    ip = 0x804839d [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    ip = 0x804839d [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
 
 0x0804839d: jne    0x080483cc<<Insn>>
     ax = v3575
@@ -1676,18 +1676,18 @@
     ds = v3586
     fs = v3587
     gs = v3588
-    cf = -v3807-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    cf = -v3807-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?1 = v3590
-    pf = -v3797-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    pf = -v3797-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?3 = v3592
-    af = -v3804-0x1 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    af = -v3804-0x1 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     ?5 = v3594
-    zf = v3802 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
-    sf = v3800 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    zf = v3802 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
+    sf = v3800 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     tf = v3597
     if = v3598
     df = v3599
-    of = v3812 [from 0x08048396: cmp    BYTE PTR ds:[0x080496f4<.bss>], 0x00]
+    of = v3812 [from 0x08048396: cmp    byte ds:[0x080496f4<.bss>], 0x00]
     iopl0 = v3601
     iopl1 = v3602
     nt = v3603
@@ -1700,8 +1700,8 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
-    ax = v4015 [from 0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]
+    ax = v4015 [from 0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v3979
     dx = v3980
     bx = v3981
@@ -1732,12 +1732,12 @@
     nt = v4006
     ?15 = v4007
     memory = {}
-    ip = 0x80483a4 [from 0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ip = 0x80483a4 [from 0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]]
 
-0x080483a4: mov    edx, DWORD PTR ds:[eax]
-    ax = v4015 [from 0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+0x080483a4: mov    edx, dword ds:[eax]
+    ax = v4015 [from 0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v3979
-    dx = v4054 [from 0x080483a4: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4054 [from 0x080483a4: mov    edx, dword ds:[eax]]
     bx = v3981
     sp = v3982
     bp = v3983
@@ -1766,12 +1766,12 @@
     nt = v4006
     ?15 = v4007
     memory = {}
-    ip = 0x80483a6 [from 0x080483a4: mov    edx, DWORD PTR ds:[eax]]
+    ip = 0x80483a6 [from 0x080483a4: mov    edx, dword ds:[eax]]
 
 0x080483a6: test   edx, edx
-    ax = v4015 [from 0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ax = v4015 [from 0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v3979
-    dx = v4054 [from 0x080483a4: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4054 [from 0x080483a4: mov    edx, dword ds:[eax]]
     bx = v3981
     sp = v3982
     bp = v3983
@@ -1803,9 +1803,9 @@
     ip = 0x80483a8 [from 0x080483a6: test   edx, edx]
 
 0x080483a8: je     0x080483c5<<Insn>>
-    ax = v4015 [from 0x0804839f: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ax = v4015 [from 0x0804839f: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v3979
-    dx = v4054 [from 0x080483a4: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4054 [from 0x080483a4: mov    edx, dword ds:[eax]]
     bx = v3981
     sp = v3982
     bp = v3983
@@ -1907,7 +1907,7 @@
     memory = {}
     ip = 0x80483b3 [from 0x080483b0: add    eax, 0x04]
 
-0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax
+0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax
     ax = v4397 [from 0x080483b0: add    eax, 0x04]
     cx = v4285
     dx = v4286
@@ -1939,9 +1939,9 @@
     nt = v4312
     ?15 = v4313
     memory = {
-        size=4; addr=0x80496f0 [from 0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax]; value=v4397 [from 0x080483b0: add    eax, 0x04]
+        size=4; addr=0x80496f0 [from 0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax]; value=v4397 [from 0x080483b0: add    eax, 0x04]
     }
-    ip = 0x80483b8 [from 0x080483b3: mov    DWORD PTR ds:[0x080496f0<.data+8>], eax]
+    ip = 0x80483b8 [from 0x080483b3: mov    dword ds:[0x080496f0<.data+8>], eax]
 
 0x080483b8: call   edx
     ax = v4397 [from 0x080483b0: add    eax, 0x04]
@@ -1982,8 +1982,8 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]
-    ax = v4671 [from 0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]
+    ax = v4671 [from 0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v4635
     dx = v4636
     bx = v4637
@@ -2014,12 +2014,12 @@
     nt = v4662
     ?15 = v4663
     memory = {}
-    ip = 0x80483bf [from 0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ip = 0x80483bf [from 0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]]
 
-0x080483bf: mov    edx, DWORD PTR ds:[eax]
-    ax = v4671 [from 0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+0x080483bf: mov    edx, dword ds:[eax]
+    ax = v4671 [from 0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v4635
-    dx = v4710 [from 0x080483bf: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4710 [from 0x080483bf: mov    edx, dword ds:[eax]]
     bx = v4637
     sp = v4638
     bp = v4639
@@ -2048,12 +2048,12 @@
     nt = v4662
     ?15 = v4663
     memory = {}
-    ip = 0x80483c1 [from 0x080483bf: mov    edx, DWORD PTR ds:[eax]]
+    ip = 0x80483c1 [from 0x080483bf: mov    edx, dword ds:[eax]]
 
 0x080483c1: test   edx, edx
-    ax = v4671 [from 0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ax = v4671 [from 0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v4635
-    dx = v4710 [from 0x080483bf: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4710 [from 0x080483bf: mov    edx, dword ds:[eax]]
     bx = v4637
     sp = v4638
     bp = v4639
@@ -2085,9 +2085,9 @@
     ip = 0x80483c3 [from 0x080483c1: test   edx, edx]
 
 0x080483c3: jne    0x080483b0<<Insn>>
-    ax = v4671 [from 0x080483ba: mov    eax, DWORD PTR ds:[0x080496f0<.data+8>]]
+    ax = v4671 [from 0x080483ba: mov    eax, dword ds:[0x080496f0<.data+8>]]
     cx = v4635
-    dx = v4710 [from 0x080483bf: mov    edx, DWORD PTR ds:[eax]]
+    dx = v4710 [from 0x080483bf: mov    edx, dword ds:[eax]]
     bx = v4637
     sp = v4638
     bp = v4639
@@ -2121,7 +2121,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01
+0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01
     ax = v4941
     cx = v4942
     dx = v4943
@@ -2153,9 +2153,9 @@
     nt = v4969
     ?15 = v4970
     memory = {
-        size=1; addr=0x80496f4 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
+        size=1; addr=0x80496f4 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]
     }
-    ip = 0x80483cc [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
+    ip = 0x80483cc [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]
 
 0x080483cc: leave  
     ax = v4941
@@ -2189,7 +2189,7 @@
     nt = v4969
     ?15 = v4970
     memory = {
-        size=1; addr=0x80496f4 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
+        size=1; addr=0x80496f4 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]
     }
     ip = 0x80483cd [from 0x080483cc: leave  ]
 
@@ -2225,7 +2225,7 @@
     nt = v4969
     ?15 = v4970
     memory = {
-        size=1; addr=0x80496f4 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    BYTE PTR ds:[0x080496f4<.bss>], 0x01]
+        size=1; addr=0x80496f4 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]; value=0x1 [from 0x080483c5: mov    byte ds:[0x080496f4<.bss>], 0x01]
     }
     ip = v5064 [from 0x080483cd: ret    ]
 =====================================================================================
@@ -2340,8 +2340,8 @@
     }
     ip = 0x80483d6 [from 0x080483d3: sub    esp, 0x08]
 
-0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]
-    ax = v5326 [from 0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
+0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]
+    ax = v5326 [from 0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]]
     cx = v5131
     dx = v5132
     bx = v5133
@@ -2374,10 +2374,10 @@
     memory = {
         size=4; addr=v5134-0x4 [from 0x080483d0: push   ebp]; value=v5135
     }
-    ip = 0x80483db [from 0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
+    ip = 0x80483db [from 0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]]
 
 0x080483db: test   eax, eax
-    ax = v5326 [from 0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
+    ax = v5326 [from 0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]]
     cx = v5131
     dx = v5132
     bx = v5133
@@ -2413,7 +2413,7 @@
     ip = 0x80483dd [from 0x080483db: test   eax, eax]
 
 0x080483dd: je     0x08048400<<Insn>>
-    ax = v5326 [from 0x080483d6: mov    eax, DWORD PTR ds:[0x080495f8<.jcr>]]
+    ax = v5326 [from 0x080483d6: mov    eax, dword ds:[0x080495f8<.jcr>]]
     cx = v5131
     dx = v5132
     bx = v5133
@@ -2658,7 +2658,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>
+0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>
     ax = v5884
     cx = v5885
     dx = v5886
@@ -2690,9 +2690,9 @@
     nt = v5912
     ?15 = v5913
     memory = {
-        size=4; addr=v5888; value=0x80495f8 [from 0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>]
+        size=4; addr=v5888; value=0x80495f8 [from 0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>]
     }
-    ip = 0x80483ef [from 0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>]
+    ip = 0x80483ef [from 0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>]
 
 0x080483ef: call   0x00000000
     ax = v5884
@@ -2726,7 +2726,7 @@
     nt = v5912
     ?15 = v5913
     memory = {
-        size=4; addr=v5888; value=0x80495f8 [from 0x080483e8: mov    DWORD PTR ss:[esp], 0x080495f8<.jcr>]
+        size=4; addr=v5888; value=0x80495f8 [from 0x080483e8: mov    dword ss:[esp], 0x080495f8<.jcr>]
         size=4; addr=v5888-0x4 [from 0x080483ef: call   0x00000000]; value=0x80483f4 [from 0x080483ef: call   0x00000000]
     }
     ip = 0x0 [from 0x080483ef: call   0x00000000]
@@ -2985,7 +2985,7 @@
     }
     ip = 0x804841e [from 0x0804841b: and    esp, 0xf0<-16>]
 
-0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx
+0x0804841e: mov    dword ss:[esp + 0x04], edx
     ax = v6319
     cx = v6320
     dx = 0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
@@ -3017,11 +3017,11 @@
     nt = v6347
     ?15 = v6348
     memory = {
-        size=4; addr=v6574+0x4 [from 0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
+        size=4; addr=v6574+0x4 [from 0x0804841e: mov    dword ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
     }
-    ip = 0x8048422 [from 0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx]
+    ip = 0x8048422 [from 0x0804841e: mov    dword ss:[esp + 0x04], edx]
 
-0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a
+0x08048422: mov    dword ss:[esp], 0x0000000a
     ax = v6319
     cx = v6320
     dx = 0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
@@ -3053,10 +3053,10 @@
     nt = v6347
     ?15 = v6348
     memory = {
-        size=4; addr=v6574 [from 0x0804841b: and    esp, 0xf0<-16>]; value=0xa [from 0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a]
-        size=4; addr=v6574+0x4 [from 0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
+        size=4; addr=v6574 [from 0x0804841b: and    esp, 0xf0<-16>]; value=0xa [from 0x08048422: mov    dword ss:[esp], 0x0000000a]
+        size=4; addr=v6574+0x4 [from 0x0804841e: mov    dword ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
     }
-    ip = 0x8048429 [from 0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a]
+    ip = 0x8048429 [from 0x08048422: mov    dword ss:[esp], 0x0000000a]
 
 0x08048429: call   0x080482f0<signal@plt>
     ax = v6319
@@ -3090,8 +3090,8 @@
     nt = v6347
     ?15 = v6348
     memory = {
-        size=4; addr=v6574 [from 0x0804841b: and    esp, 0xf0<-16>]; value=0xa [from 0x08048422: mov    DWORD PTR ss:[esp], 0x0000000a]
-        size=4; addr=v6574+0x4 [from 0x0804841e: mov    DWORD PTR ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
+        size=4; addr=v6574 [from 0x0804841b: and    esp, 0xf0<-16>]; value=0xa [from 0x08048422: mov    dword ss:[esp], 0x0000000a]
+        size=4; addr=v6574+0x4 [from 0x0804841e: mov    dword ss:[esp + 0x04], edx]; value=0x8048480 [from 0x08048411: mov    edx, 0x08048480<handler>]
         size=4; addr=v6574-0x4 [from 0x08048429: call   0x080482f0<signal@plt>]; value=0x804842e [from 0x08048429: call   0x080482f0<signal@plt>]
     }
     ip = 0x80482f0 [from 0x08048429: call   0x080482f0<signal@plt>]
@@ -3346,7 +3346,7 @@
     }
     ip = 0x8048446 [from 0x08048443: sub    esp, 0x08]
 
-0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v7140
     cx = v7141
     dx = v7142
@@ -3378,9 +3378,9 @@
     nt = v7168
     ?15 = v7169
     memory = {
-        size=4; addr=v7297 [from 0x08048443: sub    esp, 0x08]; value=0x80485d4 [from 0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v7297 [from 0x08048443: sub    esp, 0x08]; value=0x80485d4 [from 0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
-    ip = 0x804844d [from 0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+    ip = 0x804844d [from 0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
 
 0x0804844d: call   0x08048300<puts@plt>
     ax = v7140
@@ -3414,7 +3414,7 @@
     nt = v7168
     ?15 = v7169
     memory = {
-        size=4; addr=v7297 [from 0x08048443: sub    esp, 0x08]; value=0x80485d4 [from 0x08048446: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v7297 [from 0x08048443: sub    esp, 0x08]; value=0x80485d4 [from 0x08048446: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
         size=4; addr=v7297-0x4 [from 0x0804844d: call   0x08048300<puts@plt>]; value=0x8048452 [from 0x0804844d: call   0x08048300<puts@plt>]
     }
     ip = 0x8048300 [from 0x0804844d: call   0x08048300<puts@plt>]
@@ -3635,7 +3635,7 @@
     }
     ip = 0x8048466 [from 0x08048463: sub    esp, 0x08]
 
-0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v7749
     cx = v7750
     dx = v7751
@@ -3667,9 +3667,9 @@
     nt = v7777
     ?15 = v7778
     memory = {
-        size=4; addr=v7906 [from 0x08048463: sub    esp, 0x08]; value=0x80485d4 [from 0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v7906 [from 0x08048463: sub    esp, 0x08]; value=0x80485d4 [from 0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
-    ip = 0x804846d [from 0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+    ip = 0x804846d [from 0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
 
 0x0804846d: call   0x08048300<puts@plt>
     ax = v7749
@@ -3703,7 +3703,7 @@
     nt = v7777
     ?15 = v7778
     memory = {
-        size=4; addr=v7906 [from 0x08048463: sub    esp, 0x08]; value=0x80485d4 [from 0x08048466: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v7906 [from 0x08048463: sub    esp, 0x08]; value=0x80485d4 [from 0x08048466: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
         size=4; addr=v7906-0x4 [from 0x0804846d: call   0x08048300<puts@plt>]; value=0x8048472 [from 0x0804846d: call   0x08048300<puts@plt>]
     }
     ip = 0x8048300 [from 0x0804846d: call   0x08048300<puts@plt>]
@@ -3711,7 +3711,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048472: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048472: mov    dword ss:[esp], 0x00000000
     ax = v8173
     cx = v8174
     dx = v8175
@@ -3743,9 +3743,9 @@
     nt = v8201
     ?15 = v8202
     memory = {
-        size=4; addr=v8177; value=0x0 [from 0x08048472: mov    DWORD PTR ss:[esp], 0x00000000]
+        size=4; addr=v8177; value=0x0 [from 0x08048472: mov    dword ss:[esp], 0x00000000]
     }
-    ip = 0x8048479 [from 0x08048472: mov    DWORD PTR ss:[esp], 0x00000000]
+    ip = 0x8048479 [from 0x08048472: mov    dword ss:[esp], 0x00000000]
 
 0x08048479: call   0x08048320<_exit@plt>
     ax = v8173
@@ -3779,7 +3779,7 @@
     nt = v8201
     ?15 = v8202
     memory = {
-        size=4; addr=v8177; value=0x0 [from 0x08048472: mov    DWORD PTR ss:[esp], 0x00000000]
+        size=4; addr=v8177; value=0x0 [from 0x08048472: mov    dword ss:[esp], 0x00000000]
         size=4; addr=v8177-0x4 [from 0x08048479: call   0x08048320<_exit@plt>]; value=0x804847e [from 0x08048479: call   0x08048320<_exit@plt>]
     }
     ip = 0x8048320 [from 0x08048479: call   0x08048320<_exit@plt>]
@@ -3895,7 +3895,7 @@
     }
     ip = 0x8048486 [from 0x08048483: sub    esp, 0x08]
 
-0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]
+0x08048486: inc    dword ds:[0x080496f8<.bss+4>]
     ax = v8438
     cx = v8439
     dx = v8440
@@ -3912,26 +3912,26 @@
     gs = v8451
     cf = -v8588-0x1 [from 0x08048483: sub    esp, 0x08]
     ?1 = v8453
-    pf = -v8658-0x1 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    pf = -v8658-0x1 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?3 = v8455
-    af = v8665 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    af = v8665 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?5 = v8457
-    zf = v8663 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
-    sf = v8661 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    zf = v8663 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
+    sf = v8661 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     tf = v8460
     if = v8461
     df = v8462
-    of = v8669 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    of = v8669 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     iopl0 = v8464
     iopl1 = v8465
     nt = v8466
     ?15 = v8467
     memory = {
-        size=4; addr=0x80496f8 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]; value=v8633+0x1 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+        size=4; addr=0x80496f8 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]; value=v8633+0x1 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     }
-    ip = 0x804848c [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    ip = 0x804848c [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
 
-0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
+0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>
     ax = v8438
     cx = v8439
     dx = v8440
@@ -3948,24 +3948,24 @@
     gs = v8451
     cf = -v8588-0x1 [from 0x08048483: sub    esp, 0x08]
     ?1 = v8453
-    pf = -v8658-0x1 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    pf = -v8658-0x1 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?3 = v8455
-    af = v8665 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    af = v8665 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?5 = v8457
-    zf = v8663 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
-    sf = v8661 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    zf = v8663 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
+    sf = v8661 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     tf = v8460
     if = v8461
     df = v8462
-    of = v8669 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    of = v8669 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     iopl0 = v8464
     iopl1 = v8465
     nt = v8466
     ?15 = v8467
     memory = {
-        size=4; addr=v8595 [from 0x08048483: sub    esp, 0x08]; value=0x80485d4 [from 0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v8595 [from 0x08048483: sub    esp, 0x08]; value=0x80485d4 [from 0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
     }
-    ip = 0x8048493 [from 0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+    ip = 0x8048493 [from 0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
 
 0x08048493: call   0x08048300<puts@plt>
     ax = v8438
@@ -3984,22 +3984,22 @@
     gs = v8451
     cf = -v8588-0x1 [from 0x08048483: sub    esp, 0x08]
     ?1 = v8453
-    pf = -v8658-0x1 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    pf = -v8658-0x1 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?3 = v8455
-    af = v8665 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    af = v8665 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     ?5 = v8457
-    zf = v8663 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
-    sf = v8661 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    zf = v8663 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
+    sf = v8661 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     tf = v8460
     if = v8461
     df = v8462
-    of = v8669 [from 0x08048486: inc    DWORD PTR ds:[0x080496f8<.bss+4>]]
+    of = v8669 [from 0x08048486: inc    dword ds:[0x080496f8<.bss+4>]]
     iopl0 = v8464
     iopl1 = v8465
     nt = v8466
     ?15 = v8467
     memory = {
-        size=4; addr=v8595 [from 0x08048483: sub    esp, 0x08]; value=0x80485d4 [from 0x0804848c: mov    DWORD PTR ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
+        size=4; addr=v8595 [from 0x08048483: sub    esp, 0x08]; value=0x80485d4 [from 0x0804848c: mov    dword ss:[esp], 0x080485d4<<StaticData@0x080485ca>+0x0a>]
         size=4; addr=v8595-0x4 [from 0x08048493: call   0x08048300<puts@plt>]; value=0x8048498 [from 0x08048493: call   0x08048300<puts@plt>]
     }
     ip = 0x8048300 [from 0x08048493: call   0x08048300<puts@plt>]
@@ -4007,7 +4007,7 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x08048498: mov    DWORD PTR ss:[esp], 0x00000000
+0x08048498: mov    dword ss:[esp], 0x00000000
     ax = v8940
     cx = v8941
     dx = v8942
@@ -4039,9 +4039,9 @@
     nt = v8968
     ?15 = v8969
     memory = {
-        size=4; addr=v8944; value=0x0 [from 0x08048498: mov    DWORD PTR ss:[esp], 0x00000000]
+        size=4; addr=v8944; value=0x0 [from 0x08048498: mov    dword ss:[esp], 0x00000000]
     }
-    ip = 0x804849f [from 0x08048498: mov    DWORD PTR ss:[esp], 0x00000000]
+    ip = 0x804849f [from 0x08048498: mov    dword ss:[esp], 0x00000000]
 
 0x0804849f: call   0x08048320<_exit@plt>
     ax = v8940
@@ -4075,7 +4075,7 @@
     nt = v8968
     ?15 = v8969
     memory = {
-        size=4; addr=v8944; value=0x0 [from 0x08048498: mov    DWORD PTR ss:[esp], 0x00000000]
+        size=4; addr=v8944; value=0x0 [from 0x08048498: mov    dword ss:[esp], 0x00000000]
         size=4; addr=v8944-0x4 [from 0x0804849f: call   0x08048320<_exit@plt>]; value=0x80484a4 [from 0x0804849f: call   0x08048320<_exit@plt>]
     }
     ip = 0x8048320 [from 0x0804849f: call   0x08048320<_exit@plt>]
@@ -4581,7 +4581,7 @@
     memory = {}
     ip = 0x80484db [from 0x080484d8: sar    eax, 0x02]
 
-0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax
     ax = v10223 [from 0x080484d8: sar    eax, 0x02]
     cx = v9971
     dx = v10046 [from 0x080484d0: lea    edx, [ebx + 0xffffff20<-224>]]
@@ -4613,9 +4613,9 @@
     nt = v9998
     ?15 = v9999
     memory = {
-        size=4; addr=v9975-0x10 [from 0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x080484d8: sar    eax, 0x02]
+        size=4; addr=v9975-0x10 [from 0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x080484d8: sar    eax, 0x02]
     }
-    ip = 0x80484de [from 0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]
+    ip = 0x80484de [from 0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax]
 
 0x080484de: jne    0x080484f0<<StaticData@0x080484e8>+8>
     ax = v10223 [from 0x080484d8: sar    eax, 0x02]
@@ -4649,7 +4649,7 @@
     nt = v9998
     ?15 = v9999
     memory = {
-        size=4; addr=v9975-0x10 [from 0x080484db: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x080484d8: sar    eax, 0x02]
+        size=4; addr=v9975-0x10 [from 0x080484db: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v10223 [from 0x080484d8: sar    eax, 0x02]
     }
     ip = v10304 [from 0x080484de: jne    0x080484f0<<StaticData@0x080484e8>+8>]
 =====================================================================================
@@ -5322,7 +5322,7 @@
     memory = {}
     ip = 0x8048546 [from 0x08048543: sar    eax, 0x02]
 
-0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax
+0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax
     ax = v11571 [from 0x08048543: sar    eax, 0x02]
     cx = v11201
     dx = v11394 [from 0x0804853b: lea    edx, [ebx + 0xffffff20<-224>]]
@@ -5354,9 +5354,9 @@
     nt = v11228
     ?15 = v11229
     memory = {
-        size=4; addr=v11205-0x10 [from 0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
     }
-    ip = 0x8048549 [from 0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]
+    ip = 0x8048549 [from 0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax]
 
 0x08048549: dec    eax
     ax = v11687 [from 0x08048549: dec    eax]
@@ -5390,7 +5390,7 @@
     nt = v11228
     ?15 = v11229
     memory = {
-        size=4; addr=v11205-0x10 [from 0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
     }
     ip = 0x804854a [from 0x08048549: dec    eax]
 
@@ -5426,7 +5426,7 @@
     nt = v11228
     ?15 = v11229
     memory = {
-        size=4; addr=v11205-0x10 [from 0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
     }
     ip = 0x804854d [from 0x0804854a: cmp    eax, 0xff<-1>]
 
@@ -5462,7 +5462,7 @@
     nt = v11228
     ?15 = v11229
     memory = {
-        size=4; addr=v11205-0x10 [from 0x08048546: mov    DWORD PTR ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
+        size=4; addr=v11205-0x10 [from 0x08048546: mov    dword ss:[ebp + 0xf0<-16>], eax]; value=v11571 [from 0x08048543: sar    eax, 0x02]
     }
     ip = v11805 [from 0x0804854d: je     0x0804856b<<Insn>>]
 =====================================================================================
@@ -5605,12 +5605,12 @@
     memory = {}
     ip = 0x8048560 [from 0x0804855a: lea    edi, [edi + 0x00000000]]
 
-0x08048560: call   DWORD PTR ds:[esi]
+0x08048560: call   dword ds:[esi]
     ax = v11930
     cx = v11931
     dx = v11932
     bx = v11933
-    sp = v12161 [from 0x08048560: call   DWORD PTR ds:[esi]]
+    sp = v12161 [from 0x08048560: call   dword ds:[esi]]
     bp = v11935
     si = v12076 [from 0x08048554: lea    esi, [esi + 0x00000000]]
     di = 0x0 [from 0x0804855a: lea    edi, [edi + 0x00000000]]
@@ -5637,9 +5637,9 @@
     nt = v11958
     ?15 = v11959
     memory = {
-        size=4; addr=v11934-0x4 [from 0x08048560: call   DWORD PTR ds:[esi]]; value=0x8048562 [from 0x08048560: call   DWORD PTR ds:[esi]]
+        size=4; addr=v11934-0x4 [from 0x08048560: call   dword ds:[esi]]; value=0x8048562 [from 0x08048560: call   dword ds:[esi]]
     }
-    ip = v12159 [from 0x08048560: call   DWORD PTR ds:[esi]]
+    ip = v12159 [from 0x08048560: call   dword ds:[esi]]
 =====================================================================================
 === Starting a new basic block                                                    ===
 =====================================================================================
@@ -5712,7 +5712,7 @@
     memory = {}
     ip = 0x8048566 [from 0x08048563: sub    esi, 0x04]
 
-0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi
+0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi
     ax = v12315
     cx = v12316
     dx = v12317
@@ -5727,24 +5727,24 @@
     ds = v12326
     fs = v12327
     gs = v12328
-    cf = -v12544-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    cf = -v12544-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?1 = v12330
-    pf = -v12534-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    pf = -v12534-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?3 = v12332
-    af = -v12541-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    af = -v12541-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?5 = v12334
-    zf = v12539 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
-    sf = v12537 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    zf = v12539 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
+    sf = v12537 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     tf = v12337
     if = v12338
     df = v12339
-    of = v12549 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    of = v12549 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     iopl0 = v12341
     iopl1 = v12342
     nt = v12343
     ?15 = v12344
     memory = {}
-    ip = 0x8048569 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    ip = 0x8048569 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
 
 0x08048569: jne    0x08048560<<Insn>>
     ax = v12315
@@ -5761,18 +5761,18 @@
     ds = v12326
     fs = v12327
     gs = v12328
-    cf = -v12544-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    cf = -v12544-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?1 = v12330
-    pf = -v12534-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    pf = -v12534-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?3 = v12332
-    af = -v12541-0x1 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    af = -v12541-0x1 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     ?5 = v12334
-    zf = v12539 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
-    sf = v12537 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    zf = v12539 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
+    sf = v12537 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     tf = v12337
     if = v12338
     df = v12339
-    of = v12549 [from 0x08048566: cmp    DWORD PTR ss:[ebp + 0xf0<-16>], edi]
+    of = v12549 [from 0x08048566: cmp    dword ss:[ebp + 0xf0<-16>], edi]
     iopl0 = v12341
     iopl1 = v12342
     nt = v12343
@@ -6209,8 +6209,8 @@
     }
     ip = 0x804858c [from 0x08048587: mov    ebx, 0x080495e8<.ctors>]
 
-0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]
-    ax = v13566 [from 0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]
+    ax = v13566 [from 0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]]
     cx = v13292
     dx = v13293
     bx = 0x80495e8 [from 0x08048587: mov    ebx, 0x080495e8<.ctors>]
@@ -6243,10 +6243,10 @@
     memory = {
         size=4; addr=v13331-0x4 [from 0x08048583: push   ebx]; value=v13294
     }
-    ip = 0x8048591 [from 0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    ip = 0x8048591 [from 0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]]
 
 0x08048591: cmp    eax, 0xff<-1>
-    ax = v13566 [from 0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    ax = v13566 [from 0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]]
     cx = v13292
     dx = v13293
     bx = 0x80495e8 [from 0x08048587: mov    ebx, 0x080495e8<.ctors>]
@@ -6282,7 +6282,7 @@
     ip = 0x8048594 [from 0x08048591: cmp    eax, 0xff<-1>]
 
 0x08048594: je     0x080485ac<<Insn>>
-    ax = v13566 [from 0x0804858c: mov    eax, DWORD PTR ds:[0x080495e8<.ctors>]]
+    ax = v13566 [from 0x0804858c: mov    eax, dword ds:[0x080495e8<.ctors>]]
     cx = v13292
     dx = v13293
     bx = 0x80495e8 [from 0x08048587: mov    ebx, 0x080495e8<.ctors>]
@@ -6461,8 +6461,8 @@
 === Starting a new basic block                                                    ===
 =====================================================================================
 
-0x080485a5: mov    eax, DWORD PTR ds:[ebx]
-    ax = v14200 [from 0x080485a5: mov    eax, DWORD PTR ds:[ebx]]
+0x080485a5: mov    eax, dword ds:[ebx]
+    ax = v14200 [from 0x080485a5: mov    eax, dword ds:[ebx]]
     cx = v14164
     dx = v14165
     bx = v14166
@@ -6493,10 +6493,10 @@
     nt = v14191
     ?15 = v14192
     memory = {}
-    ip = 0x80485a7 [from 0x080485a5: mov    eax, DWORD PTR ds:[ebx]]
+    ip = 0x80485a7 [from 0x080485a5: mov    eax, dword ds:[ebx]]
 
 0x080485a7: cmp    eax, 0xff<-1>
-    ax = v14200 [from 0x080485a5: mov    eax, DWORD PTR ds:[ebx]]
+    ax = v14200 [from 0x080485a5: mov    eax, dword ds:[ebx]]
     cx = v14164
     dx = v14165
     bx = v14166
@@ -6530,7 +6530,7 @@
     ip = 0x80485aa [from 0x080485a7: cmp    eax, 0xff<-1>]
 
 0x080485aa: jne    0x080485a0<<Insn>>
-    ax = v14200 [from 0x080485a5: mov    eax, DWORD PTR ds:[ebx]]
+    ax = v14200 [from 0x080485a5: mov    eax, dword ds:[ebx]]
     cx = v14164
     dx = v14165
     bx = v14166
