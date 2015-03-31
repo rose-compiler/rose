@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_SharedPtr_H
 #define Sawyer_SharedPtr_H
 
@@ -6,6 +13,7 @@
 #include <sawyer/Assert.h>
 #include <sawyer/Optional.h>                            // FIXME[Robb Matzke 2014-08-22]: only needed for Sawyer::Nothing
 #include <sawyer/Sawyer.h>
+#include <sawyer/Synchronization.h>
 
 namespace Sawyer {
 
@@ -24,7 +32,7 @@ public:
 private:
     Pointee *pointee_;
 
-    static void aquireOwnership(Pointee *rawPtr);
+    static void acquireOwnership(Pointee *rawPtr);
 
     // Returns number of owners remaining
     static size_t releaseOwnership(Pointee *rawPtr);
@@ -37,11 +45,11 @@ public:
      *  object will only be deleted after both pointers are deleted.
      * @{ */
     SharedPointer(const SharedPointer &other): pointee_(other.pointee_) {
-        aquireOwnership(pointee_);
+        acquireOwnership(pointee_);
     }
     template<class Y>
     SharedPointer(const SharedPointer<Y> &other): pointee_(getRawPointer(other)) {
-        aquireOwnership(pointee_);
+        acquireOwnership(pointee_);
     }
     /** @} */
     
@@ -53,7 +61,7 @@ public:
     template<class Y>
     explicit SharedPointer(Y *rawPtr): pointee_(rawPtr) {
         if (pointee_!=NULL)
-            aquireOwnership(pointee_);
+            acquireOwnership(pointee_);
     }
 
     /** Conditionally deletes the pointed-to object.  The object is deleted when its reference count reaches zero. */
@@ -74,7 +82,7 @@ public:
             if (pointee_!=NULL && 0==releaseOwnership(pointee_))
                 delete pointee_;
             pointee_ = getRawPointer(other);
-            aquireOwnership(pointee_);
+            acquireOwnership(pointee_);
         }
         return *this;
     }
@@ -252,10 +260,17 @@ void clear(SharedPointer<T> &ptr) {
  *  @sa SharedPointer, @ref SharedFromThis */
 class SAWYER_EXPORT SharedObject {
     template<class U> friend class SharedPointer;
+    mutable SAWYER_THREAD_TRAITS::Mutex mutex_;
     mutable size_t nrefs_;
 public:
     /** Default constructor.  Initializes the reference count to zero. */
     SharedObject(): nrefs_(0) {}
+
+    /** Copy constructor.
+     *
+     *  Shared objects are not typically copy-constructed, but we must support it anyway in case the user wants to
+     *  copy-construct some shared object.  The new object has a ref-count of zero. */
+    SharedObject(const SharedObject &other): nrefs_(0) {}
 
     /** Virtual destructor. Verifies that the reference count is zero. */
     virtual ~SharedObject() {
@@ -326,19 +341,26 @@ public:
 
 template<class T>
 inline size_t SharedPointer<T>::ownershipCount(T *rawPtr) {
-    return rawPtr==NULL ? 0 : rawPtr->SharedObject::nrefs_;
+    if (rawPtr) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
+        return rawPtr->SharedObject::nrefs_;
+    }
+    return 0;
 }
 
 template<class T>
-inline void SharedPointer<T>::aquireOwnership(Pointee *rawPtr) {
-    if (rawPtr!=NULL)
+inline void SharedPointer<T>::acquireOwnership(Pointee *rawPtr) {
+    if (rawPtr!=NULL) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
         ++rawPtr->SharedObject::nrefs_;
+    }
 }
 
 template<class T>
 inline size_t SharedPointer<T>::releaseOwnership(Pointee *rawPtr) {
     if (rawPtr!=NULL) {
-        ASSERT_require2(rawPtr->SharedObject::nrefs_>0, "pointee must be owned");
+        SAWYER_THREAD_TRAITS::LockGuard lock(rawPtr->SharedObject::mutex_);
+        assert(rawPtr->SharedObject::nrefs_ > 0);
         return --rawPtr->SharedObject::nrefs_;
     } else {
         return 0;

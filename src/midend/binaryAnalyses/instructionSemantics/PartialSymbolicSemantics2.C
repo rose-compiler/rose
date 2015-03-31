@@ -546,7 +546,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 {
 #ifndef NDEBUG
     size_t nbits = value->get_width();
-    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require2(nbits % 8 == 0, "write to memory must be in byte units");
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
 #endif
 
@@ -562,7 +562,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
 {
     size_t nbits = dflt_->get_width();
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
-    ASSERT_require(8==nbits || 16==nbits || 32==nbits);
+    ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
 
     // Default values come from an optional memory map if possible, otherwise use the passed-in default.
     BaseSemantics::SValuePtr dflt = dflt_;

@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_AddressMap_H
 #define Sawyer_AddressMap_H
 
@@ -757,8 +764,26 @@ public:
     /** Copy constructor.
      *
      *  The new address map has the same addresses mapped to the same buffers as the @p other map.  The buffers themselves are
-     *  not copied since they are reference counted. */
-    AddressMap(const AddressMap &other): Super(other) {}
+     *  not copied since they are reference counted.
+     *
+     *  If @p copyOnWrite is set then the buffers are marked so that any subsequent write to that buffer via the @ref write
+     *  method from any AddressMap object will cause a new copy to be created and used by the AddressMap that's doing the
+     *  writing. One should be careful when buffers are intended to be shared because setting the copy-on-write bit on the
+     *  buffer will cause the sharing to be broken.  For example, if map1 is created and then copied into map2 with the
+     *  copy-on-write bit cleared, then any writes to the buffer via map1 will be visible when reading from map2 and vice
+     *  versa.  However, if map3 is then created by copying either map1 or map2 with the copy-on-write bit set, then writes to
+     *  any of the three maps will cause that map to obtain an independent copy of the buffer, effectively removing the sharing
+     *  that was intended between map1 and map2.  Another thing to be aware of is that some buffer types will return a
+     *  different buffer type when they're copied.  For instance, copying a @ref StaticBuffer or @ref MappedBuffer will return
+     *  an @ref AllocatingBuffer. */
+    AddressMap(const AddressMap &other, bool copyOnWrite=false): Super(other) {
+        if (copyOnWrite) {
+            BOOST_FOREACH (Segment &segment, this->values()) {
+                if (const typename Buffer::Ptr &buffer = segment.buffer())
+                    buffer->copyOnWrite(true);
+            }
+        }
+    }
 
     /** Constraint: required access bits.
      *
@@ -1469,17 +1494,14 @@ public:
                 typename Buffer::Ptr buffer = segment.buffer();
                 ASSERT_not_null(buffer);
 
-                if (segment.isCopyOnWrite()) {
-                    typename Buffer::Ptr newBuffer = buffer->copy();
+                if (buffer->copyOnWrite()) {
+                    typename Buffer::Ptr newBuffer = buffer->copy(); // copyOnWrite is cleared in newBuffer
                     ASSERT_not_null(newBuffer);
                     for (NodeIterator iter=this->lowerBound(node.key().least()); iter!=nodes().end(); ++iter) {
-                        if (iter->value().buffer() == buffer) {
+                        if (iter->value().buffer() == buffer)
                             iter->value().buffer(newBuffer);
-                            iter->value().clearCopyOnWrite();
-                        }
                     }
                     buffer = newBuffer;
-                    ASSERT_forbid(segment.isCopyOnWrite());
                 }
 
                 Address bufferOffset = part.least() - node.key().least() + segment.offset();

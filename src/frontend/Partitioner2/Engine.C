@@ -118,7 +118,7 @@ Engine::load(const std::vector<std::string> &fileNames) {
                 if (!srecs[i].error().empty())
                     mlog[ERROR] <<fileName <<":" <<(i+1) <<": S-Record: " <<srecs[i].error() <<"\n";
             }
-            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::EXECUTABLE);
+            SRecord::load(srecs, map_, true /*create*/, MemoryMap::READABLE|MemoryMap::WRITABLE|MemoryMap::EXECUTABLE);
         }
     }
 
@@ -144,6 +144,15 @@ Engine::partition(SgAsmInterpretation *interp) {
     Partitioner partitioner = createTunedPartitioner();
     runPartitioner(partitioner, interp_);
     return partitioner;
+}
+
+void
+Engine::partition(Partitioner &partitioner) {
+    if (map_.isEmpty())
+        load(std::vector<std::string>());
+    if (!obtainDisassembler())
+        throw std::runtime_error("no disassembler available for partitioning");
+    runPartitioner(partitioner, interp_);
 }
 
 SgAsmBlock*
@@ -179,6 +188,7 @@ Partitioner
 Engine::createBarePartitioner() {
     checkCreatePartitionerPrerequisites();
     Partitioner p(disassembler_, map_);
+    p.enableSymbolicSemantics(useSemantics_);
 
     // Build the may-return blacklist and/or whitelist.  This could be made specific to the type of interpretation being
     // processed, but there's so few functions that we'll just plop them all into the lists.
@@ -210,6 +220,8 @@ Engine::createGenericPartitioner() {
 
 Partitioner
 Engine::createTunedPartitioner() {
+    obtainDisassembler();
+
     if (dynamic_cast<DisassemblerM68k*>(disassembler_)) {
         checkCreatePartitionerPrerequisites();
         Partitioner p = createBarePartitioner();
@@ -259,7 +271,7 @@ Engine::specimenNameDocumentation() {
 
             "@bullet{If the name ends with \".srec\" and doesn't match the previous list of prefixes then it is assumed "
             "to be a text file containing Motorola S-Records and will be parsed as such and loaded into the memory map "
-            "with read and execute permissions.}"
+            "with read, write, and execute permissions.}"
 
             "When more than one mechanism is used to load a single coherent specimen, the normal names are processed first "
             "by passing them all to ROSE's \"frontend\" function, which results in an initial memory map.  The other names "

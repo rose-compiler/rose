@@ -1,0 +1,13 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph) <_start>
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: 07                      |.       |          pop    es
+0x080480a1: 58                      |X       |          pop    eax
+0x080480a2: 66 ff 35 00 00 00 04    |f.5.... |          push   word ds:[0x04000000]
+0x080480a9: ff 35 00 00 00 04       |.5....  |          push   dword ds:[0x04000000]
+0x080480af: b8 01 00 00 00          |.....   |          mov    eax, 0x00000001
+0x080480b4: cd 80                   |..      |          int    0x80<-128>
+0x080480b6: f4                      |.       |          hlt    
+0x080480b6: Successor blocks: none
+

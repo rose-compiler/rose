@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_IndexedList_H
 #define Sawyer_IndexedList_H
 
@@ -531,9 +538,8 @@ public:
     const Value& operator[](size_t id) const {
         return indexedValue(id);
     }
-    /** @} */
 
-    Optional<Value> get(size_t id) const {
+    Optional<Value> getOptional(size_t id) const {
         return id < size() ? Optional<Value>(index_[id]) : Optional<Value>();
     }
 
@@ -543,6 +549,12 @@ public:
     const Value& getOrElse(size_t id, const Value &dflt) const {
         return id < size() ? *index_[id] : dflt;
     }
+
+    const Value& getOrDefault(size_t id) const {
+        static const Value dflt;
+        return id < size() ? *index_[id] : dflt;
+    }
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Mutators

@@ -1,16 +1,33 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #include <sawyer/Sawyer.h>
 #include <sawyer/Message.h>
+#include <sawyer/Synchronization.h>
 
 namespace Sawyer {
 
-SAWYER_EXPORT bool isInitialized;
+static void
+init() {
+  Message::initializeLibrary();
+}
 
+#if SAWYER_MULTI_THREADED
+static boost::once_flag initFlag = BOOST_ONCE_INIT;
+#endif
+
+// thread-safe
 SAWYER_EXPORT bool
 initializeLibrary() {
-    if (!isInitialized) {
-        Message::initializeLibrary();
-        isInitialized = true;
-    }
+#if SAWYER_MULTI_THREADED
+    boost::call_once(&init, initFlag);
+#else
+    init();
+#endif
     return true;
 }
 

@@ -81,7 +81,12 @@ protected:
 
     SValue(size_t nbits, uint64_t number)
         : BaseSemantics::SValue(nbits), name(0), offset(number), negate(false) {
-        this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+        if (nbits <= 64) {
+            this->offset &= IntegerOps::genMask<uint64_t>(nbits);
+        } else {
+            name = ++name_counter;
+            offset = 0;
+        }
     }
 
     SValue(size_t nbits, uint64_t name, uint64_t offset, bool negate)

@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_Graph_H
 #define Sawyer_Graph_H
 
@@ -86,6 +93,15 @@ struct GraphTraits<const G> {
  *  @li @ref ConstVertexValueIterator refers to user-defined constant values
  *  @li @ref VertexNodeIterator refers to mutable vertex storage nodes
  *  @li @ref ConstVertexNodeIterator refers to constant vertex storage nodes
+ *
+ *  A const-iterator points to information that is const qualified. Const-iterators can be converted to non-const iterators in
+ *  linear time if one has the non-const graph available:
+ *
+ * @code
+ *  MyGraph graph = ...
+ *  MyGraph::ConstVertexNodeIterator constVertex = ...; // not the end iterator
+ *  MyGraph::VertexNodeIterator vertex = graph.findVertex(constVertex->id());
+ * @endcode
  *
  *  Edge iterators are similar.
  *
@@ -195,7 +211,8 @@ struct GraphTraits<const G> {
  *  often benefit by using a memory pool allocation scheme.  The third template argument provides the type for the allocator,
  *  and the graph constructors take an allocator argument which is copied into the graph.  The allocator must implement the
  *  @ref Sawyer::DefaultAllocator API (essentially an allocate and a deallocate method), which happens to use the normal C++
- *  global <code>new</code> and <code>delete</code> allocators.  Another possibility is @ref Sawyer::PoolAllocator.
+ *  global <code>new</code> and <code>delete</code> allocators.  A couple possibilities are @ref
+ *  Sawyer::SynchronizedPoolAllocator and @ref Sawyer::UnsynchronizedPoolAllocator.
  *
  * @code
  *  typedef Sawyer::Container::Graph<std::string, double, Sawyer::PoolAllocator> MyGraphFast;
@@ -1043,6 +1060,14 @@ public:
     }
     /** @} */
 
+    /** Determines whether the vertex iterator is valid.
+     *
+     *  Returns true if and only if the specified iterator is not this graph's end iterator and the iterator points to a vertex
+     *  in this graph. */
+    bool isValidVertex(const ConstVertexNodeIterator &vertex) const {
+        return vertex!=vertices().end() && vertex->id()<nVertices() && vertex==findVertex(vertex->id());
+    }
+
     /** Iterators for all edges.
      *
      *  Returns a pair of edge node iterators that deliniate the list of all edges of this graph.  The traversal of this
@@ -1104,6 +1129,14 @@ public:
     }
     /** @} */
 
+    /** Determines whether the edge iterator is valid.
+     *
+     *  Returns true if and only if the specified iterator is not this graph's end iterator and the iterator points to an edge
+     *  in this graph. */
+    bool isValidEdge(const ConstEdgeNodeIterator &edge) const {
+        return edge!=edges().end() && edge->id()<nEdges() && edge==findEdge(edge->id());
+    }
+
     /** Total number of vertices.
      *
      *  Returns the total number of vertices in the graph.  Vertex ID numbers are guaranteed to be less than this value and
@@ -1156,7 +1189,9 @@ public:
      *  edge will eventually traverse this new edge; no iterators, edge or vertex, are invalidated.  The new edge is given the
      *  highest edge ID number; no other ID numbers, edge or vertex, change.
      *
-     *  Time complexity is constant. */
+     *  Time complexity is constant.
+     *
+     * @{ */
     EdgeNodeIterator insertEdge(const VertexNodeIterator &sourceVertex, const VertexNodeIterator &targetVertex,
                                 const EdgeValue &value = EdgeValue()) {
         ASSERT_forbid(sourceVertex==vertices().end());
@@ -1172,19 +1207,28 @@ public:
         ++targetVertex->nInEdges_;
         return newEdge;
     }
+    EdgeNodeIterator insertEdge(const ConstVertexNodeIterator &sourceVertex, const ConstVertexNodeIterator &targetVertex,
+                                const EdgeValue &value = EdgeValue()) {
+        ASSERT_forbid(sourceVertex==vertices().end());
+        ASSERT_forbid(targetVertex==vertices().end());
+        return insertEdge(findVertex(sourceVertex->id()), findVertex(targetVertex->id()), value);
+    }
+    /** @} */
 
     /** Erases an edge.
      *
      *  The edge specified by the iterator (which must not be a one-past-last iterator) is erased from the graph. The term
      *  "erasure" is Standard Template Library terminology for the withdrawal and deletion of an object from a container, and
      *  differs from the term "remove", which means to move an object to some near-the-end position in a container.  Any edge
-     *  iterator that was pointing at the removed edge becomes invalid and should not be subsequently dereferenced,
+     *  iterator that was pointing at the erased edge becomes invalid and should not be subsequently dereferenced,
      *  incremented, decremented, or compared; other iterators, edge and vertex, are unaffected.  The edge with the highest ID
-     *  number will be given the ID of the edge that was removed in order to fill the gap left in the ID sequence.  This method
-     *  returns an iterator for the edge following the one that was deleted (possibly the one-past-last iterator if the last
-     *  edge was deleted).
+     *  number will be given the ID of the edge that was erased in order to fill the gap left in the ID sequence.  This method
+     *  returns an iterator for the edge following the one that was erased (possibly the one-past-last iterator if the last
+     *  edge was erased).
      *
-     *  Time complexity is constant. */
+     *  Time complexity is constant.
+     *
+     * @{ */
     EdgeNodeIterator eraseEdge(const EdgeNodeIterator &edge) {
         ASSERT_forbid(edge==edges().end());
         EdgeNodeIterator next = edge; ++next;           // advance before we delete edge
@@ -1195,12 +1239,19 @@ public:
         edges_.eraseAt(edge->self_);                    // edge is now deleted
         return next;
     }
+    EdgeNodeIterator eraseEdge(const ConstEdgeNodeIterator &edge) {
+        ASSERT_forbid(edge==edges().end());
+        return eraseEdge(findEdge(edge->id()));
+    }
+    /** @} */
 
     /** Erases all edges connecting two vertices.
      *
      *  Given two vertex iterators, erase all edges whose source is the first vertex and whose target is the second vertex.
      *
-     *  Time complexity is linear in the number of incoming or outgoing edges (whichever is smaller). */
+     *  Time complexity is linear in the number of incoming or outgoing edges (whichever is smaller).
+     *
+     * @{ */
     void eraseEdges(const VertexNodeIterator &source, const VertexNodeIterator &target) {
         ASSERT_forbid(source==vertices().end());
         ASSERT_forbid(target==vertices().end());
@@ -1224,25 +1275,39 @@ public:
             }
         }
     }
+    void eraseEdges(const ConstVertexNodeIterator &source, const ConstVertexNodeIterator &target) {
+        ASSERT_forbid(source==vertices().end());
+        ASSERT_forbid(target==vertices().end());
+        eraseEdges(findVertex(source->id()), findVertex(target->id()));
+    }
+    /** @} */
     
     /** Erases a vertex and its incident edges.
      *
      *  The vertex specified by the iterator (which must not be a one-past-last iterator) is erased from the graph along with
      *  all edges that originate from or terminate at that vertex. The term "erasure" is Standard Template Library terminology
      *  for the withdrawal and deletion of an object from a container, and differs from the term "remove", which means to move
-     *  an object to some near-the-end position in a container.  Any iterator that was pointing at the removed vertex or any of
+     *  an object to some near-the-end position in a container.  Any iterator that was pointing at the erased vertex or any of
      *  its incident edges becomes invalid and should not be subsequently dereferenced, incremented, decremented, or compared;
      *  other iterators, edge and vertex, are unaffected.  The vertex with the highest ID number will be given the ID of the
-     *  vertex that was removed in order to fill the gap left in the ID sequence.  This method returns an iterator for the
-     *  vertex following the one that was deleted (possibly the one-past-last iterator if the last vertex was deleted).
+     *  vertex that was erased in order to fill the gap left in the ID sequence.  This method returns an iterator for the
+     *  vertex following the one that was erased (possibly the one-past-last iterator if the last vertex was erased).
      *
-     *  Time complexity is constant. */
+     *  Time complexity is constant.
+     *
+     * @{ */
     VertexNodeIterator eraseVertex(const VertexNodeIterator &vertex) {
+        ASSERT_forbid(vertex==vertices().end());
         VertexNodeIterator next = vertex; ++next;       // advance before we delete vertex
         clearEdges(vertex);
         vertices_.eraseAt(vertex->self_);               // vertex is now deleted
         return next;
     }
+    VertexNodeIterator eraseVertex(const ConstVertexNodeIterator &vertex) {
+        ASSERT_forbid(vertex==vertices().end());
+        return eraseVertex(findVertex(vertex->id()));
+    }
+    /** @} */
 
     /** Erase all edges, but leave all vertices.
      *
@@ -1264,35 +1329,56 @@ public:
      *  whose source or target is the vertex.  It is logically equivalent to calling @ref clearOutEdges followed by @ref
      *  clearInEdges, and has the same effects on iterators and edge ID numbers as erasing edges individually.
      *
-     *  Time complexity is linear in the number of edges erased. */
+     *  Time complexity is linear in the number of edges erased.
+     *
+     * @{ */
     void clearEdges(const VertexNodeIterator &vertex) {
         clearOutEdges(vertex);
         clearInEdges(vertex);
     }
+    void clearEdges(const ConstVertexNodeIterator &vertex) {
+        clearOutEdges(vertex);
+        clearInEdges(vertex);
+    }
+    /** @} */
 
     /** Erase all edges emanating from a vertex.
      *
      *  This method erases (withdraws and deletes) all edges whose source is the specified vertex.  It has the same effects on
      *  iterators and edge ID numbers as erasing edges individually.
      *
-     *  Time complexity is linear in the number of edges erased. */
+     *  Time complexity is linear in the number of edges erased.
+     *
+     * @{ */
     void clearOutEdges(const VertexNodeIterator &vertex) {
         ASSERT_forbid(vertex==vertices().end());
         for (EdgeNodeIterator edge=vertex->outEdges().begin(); edge!=vertex->outEdges().end(); /*void*/)
             edge = eraseEdge(edge);
     }
+    void clearOutEdges(const ConstVertexNodeIterator &vertex) {
+        ASSERT_forbid(vertex==vertices().end());
+        clearOutEdges(findVertex(vertex->id()));
+    }
+    /** @} */
 
     /** Erase all edges targeting a vertex.
      *
      *  This method erases (withdraws and deletes) all edges whose target is the specified vertex.  It has the same effects on
      *  iterators and edge ID numbers as erasing edges individually.
      *
-     *  Time complexity is linear in the number of edges erased. */
+     *  Time complexity is linear in the number of edges erased.
+     *
+     * @{ */
     void clearInEdges(const VertexNodeIterator &vertex) {
         ASSERT_forbid(vertex==vertices().end());
         for (EdgeNodeIterator edge=vertex->inEdges().begin(); edge!=vertex->inEdges().end(); /*void*/)
             edge = eraseEdge(edge);
     }
+    void clearInEdges(const ConstVertexNodeIterator &vertex) {
+        ASSERT_forbid(vertex==vertices().end());
+        clearInEdges(findVertex(vertex->id()));
+    }
+    /** @} */
 
     /** Remove all vertices and edges.
      *
