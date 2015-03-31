@@ -1558,7 +1558,7 @@ struct IP_pandn: P {
         }
     }
 };
-    
+
 // Move byte mask
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2523,6 +2523,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pand,         new X86::IP_pand);
     iproc_set(x86_pandn,        new X86::IP_pandn);
+    iproc_set(x86_pause,        new X86::IP_nop);
     iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
