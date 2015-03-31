@@ -1628,6 +1628,33 @@ struct IP_pop_gprs: P {
     }
 };
 
+// Unpack low data
+//   PUNPCKLBW
+//   PUNPCKLWD
+//   PUNPCKLDQ
+//   PUNPCKLQDQ
+struct IP_punpckl: P {
+    size_t bitsPerMove;
+    IP_punpckl(size_t bitsPerMove): bitsPerMove(bitsPerMove) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            for (size_t bitOffset=0; 2*(bitOffset+bitsPerMove)<=a->get_width(); bitOffset+=bitsPerMove) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, bitOffset, bitOffset+bitsPerMove);
+                BaseSemantics::SValuePtr partB = ops->extract(b, bitOffset, bitOffset+bitsPerMove);
+                BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
+                result = result ? ops->concat(result, pair) : pair;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Push onto stack
 struct IP_push: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2326,6 +2353,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
+    iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
+    iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
+    iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
+    iproc_set(x86_punpcklqdq,   new X86::IP_punpckl(64));
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pusha,        new X86::IP_push_gprs);
     iproc_set(x86_pushad,       new X86::IP_push_gprs);
