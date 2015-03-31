@@ -233,8 +233,8 @@ public:
                     if (areSame)
                         ::mlog[ERROR] <<"at " <<unparseInstructionWithAddress(insn) <<"\n";
                     ::mlog[ERROR] <<"values differ for register " <<rname(cell.desc)
-                                  <<": simulated=" <<simulatedValue.toHex()
-                                  <<", native=" <<nativeValue.toHex() <<"\n";
+                                  <<": simulated=0x" <<simulatedValue.toHex()
+                                  <<", native=0x" <<nativeValue.toHex() <<"\n";
                     areSame = false;
                 }
             }
@@ -271,10 +271,15 @@ main(int argc, char *argv[]) {
     // Build instruction semantics framework
     BinaryDebugger debugger(specimen);
     RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
-    TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
+    BaseSemantics::DispatcherPtr cpu;
     std::ostringstream trace;
-    traceOps->stream().destination(Sawyer::Message::StreamSink::instance(trace));
-    BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(traceOps, addrWidth);
+    if (settings.traceSemantics) {
+        TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
+        traceOps->stream().destination(Sawyer::Message::StreamSink::instance(trace));
+        cpu = DispatcherX86::instance(traceOps, addrWidth);
+    } else {
+        cpu = DispatcherX86::instance(checkOps, addrWidth);
+    }
     if (!cpu)
         throw std::runtime_error("instruction semantics not supported for this architecture");
 
