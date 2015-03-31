@@ -1628,6 +1628,28 @@ struct IP_pop_gprs: P {
     }
 };
 
+// Shuffle packed doublewords
+//   PSHUFD
+struct IP_pshufd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr order = d->read(args[2]);
+            BaseSemantics::SValuePtr result;
+            ASSERT_require(order->is_number());
+            for (size_t i=0; i<4; ++i) {
+                size_t dwordIdx = ((order->get_number() >> (i*2)) & 0x3);
+                BaseSemantics::SValuePtr dword = ops->extract(src, 32*dwordIdx, 32*(dwordIdx+1));
+                result = result ? ops->concat(result, dword) : dword;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Unpack low data
 //   PUNPCKLBW
 //   PUNPCKLWD
@@ -2353,6 +2375,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
+    iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
     iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
     iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
