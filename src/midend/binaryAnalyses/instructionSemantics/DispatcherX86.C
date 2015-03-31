@@ -1689,6 +1689,42 @@ struct IP_pcmpeq: P {
     }
 };
 
+// Compare packed signed integer for greater-than
+//   PCMPGTB
+//   PCMPGTW
+//   PCMPGTD
+//   PCMPGTQ
+struct IP_pcmpgt: P {
+    size_t bitsPerOp;
+    IP_pcmpgt(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr zero = ops->number_(bitsPerOp, 0);
+            BaseSemantics::SValuePtr ones = ops->invert(zero);
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr diff = ops->subtract(ops->signExtend(partA, bitsPerOp+1),
+                                                              ops->signExtend(partB, bitsPerOp+1));
+                BaseSemantics::SValuePtr isLT = ops->extract(diff, bitsPerOp, bitsPerOp+1);
+                BaseSemantics::SValuePtr isEQ = ops->equalToZero(diff);
+                BaseSemantics::SValuePtr isLE = ops->or_(isLT, isEQ);
+                BaseSemantics::SValuePtr answer = ops->ite(isLE, zero, ones);
+                result = result ? ops->concat(result, answer) : answer;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+                
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2611,6 +2647,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
     iproc_set(x86_pcmpeqq,      new X86::IP_pcmpeq(64));
+    iproc_set(x86_pcmpgtb,      new X86::IP_pcmpgt(8));
+    iproc_set(x86_pcmpgtw,      new X86::IP_pcmpgt(16));
+    iproc_set(x86_pcmpgtd,      new X86::IP_pcmpgt(32));
+    iproc_set(x86_pcmpgtq,      new X86::IP_pcmpgt(64));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
