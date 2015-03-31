@@ -1474,6 +1474,35 @@ struct IP_pabs: P {
     }
 };
 
+// Packed integer addition
+//   PADDB
+//   PADDW
+//   PADDD
+//   PADDQ
+struct IP_padd: P {
+    size_t bitsPerOp;
+    IP_padd(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(partA, partB);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Packed align right
 struct IP_palignr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2457,6 +2486,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pabsb,        new X86::IP_pabs(8));
     iproc_set(x86_pabsw,        new X86::IP_pabs(16));
     iproc_set(x86_pabsd,        new X86::IP_pabs(32));
+    iproc_set(x86_paddb,        new X86::IP_padd(8));
+    iproc_set(x86_paddw,        new X86::IP_padd(16));
+    iproc_set(x86_paddd,        new X86::IP_padd(32));
+    iproc_set(x86_paddq,        new X86::IP_padd(64));
     iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
