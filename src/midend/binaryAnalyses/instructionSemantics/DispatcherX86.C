@@ -1483,7 +1483,7 @@ struct IP_pmovmskb: P {
             BaseSemantics::SValuePtr src = d->read(args[1]);
             BaseSemantics::SValuePtr result;
             for (size_t byteIdx=0; byteIdx<src->get_width()/8; ++byteIdx) {
-                BaseSemantics::SValuePtr bit = ops->extract(src, byteIdx*8 - 1, byteIdx*8);
+                BaseSemantics::SValuePtr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
                 result = result ? ops->concat(result, bit) : bit;
             }
             result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
