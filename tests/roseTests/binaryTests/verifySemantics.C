@@ -120,7 +120,9 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
-        uint8_t buf[8];
+        using namespace Sawyer::Container;
+
+        uint8_t buf[16];
         if (dflt->get_width() > 8*sizeof(buf))
             throw BaseSemantics::Exception("readMemory width not handled: " + StringUtility::plural(dflt->get_width(), "bits"),
                                            get_insn());
@@ -130,18 +132,12 @@ public:
         size_t nRead = subordinate_.readMemory(addr->get_number(), nBytes, buf);
         if (nRead < nBytes)
             throw BaseSemantics::Exception("error reading subordinate memory", get_insn());
-        uint64_t value = 0;
-        switch (get_state()->get_memory_state()->get_byteOrder()) {
-            case ByteOrder::ORDER_MSB:
-                for (size_t i=0; i<nBytes; ++i)
-                    value |= (uint64_t)buf[i] << (8 * (nBytes-i) - 8);
-                break;
-            default:                                    // assuming little endian
-                for (size_t i=0; i<nBytes; ++i)
-                    value |= (uint64_t)buf[i] << (8*i);
-                break;
-        }
-        return number_(dflt->get_width(), value);
+
+        ASSERT_require(get_state()->get_memory_state()->get_byteOrder() != ByteOrder::ORDER_MSB);
+        BitVector bits(dflt->get_width());
+        for (size_t i=0; i<nRead; ++i)
+            bits.fromInteger(BitVector::BitRange::baseSize(8*i, 8), buf[i]);
+        return svalue_number(bits);
     }
 
 public:
