@@ -12,10 +12,12 @@ enum __ptrace_request {                                 // Windows dud
     PTRACE_CONT,
     PTRACE_DETACH,
     PTRACE_GETREGS,
+    PTRACE_GETFPREGS,
     PTRACE_KILL,
     PTRACE_SETREGS,
     PTRACE_SINGLESTEP,
-    PTRACE_TRACEME
+    PTRACE_TRACEME,
+    PTRACE_PEEKUSER,
 };
 
 static int SIGTRAP;                                     // Windows dud
@@ -81,11 +83,14 @@ static int WSTOPSIG(int) { return 0; }                  // Windows dud
 namespace rose {
 namespace BinaryAnalysis {
 
-static void
+static long
 sendCommand(__ptrace_request request, int child, void *addr=0, void *data=0) {
     ASSERT_require2(child, "must be attached to a subordinate process");
-    if (-1==ptrace(request, child, addr, data))
+    errno = 0;
+    long result = ptrace(request, child, addr, data);
+    if (result == -1 && errno != 0)
         throw std::runtime_error("BinaryDebugger::sendCommand failed: " + boost::to_lower_copy(std::string(strerror(errno))));
+    return result;
 }
 
 #if defined(BOOST_WINDOWS) || __WORDSIZE==32
@@ -121,57 +126,116 @@ BinaryDebugger::init() {
     // descriptors in this table have sizes that correspond to the data member in the user_regs_struct, not necessarily the
     // natural size of the register (e.g., The 16-bit segment registers are listed as 32 or 64 bits).
 #if defined(__linux) && defined(__x86_64) && __WORDSIZE==64
-    //------------------------------------
-    // Entries for 64-bit user_regs_struct
-    //------------------------------------
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r15,      0, 64),   0);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r14,      0, 64),   8);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r13,      0, 64),  16);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r12,      0, 64),  24);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 64),  32);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 64),  40);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r11,      0, 64),  48);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r10,      0, 64),  56);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r9,       0, 64),  64);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r8,       0, 64),  72);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 64),  80);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 64),  88);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 64),  96);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 64), 104);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 64), 112);
-    // orig_rax: unused                                                                    120
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 64), 128);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 64), 136);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 64), 144);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 64), 152);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 64), 160);
-    // fs_base: unused                                                                     168
-    // gs_base: unused                                                                     176
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 64), 184);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 64), 192);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 64), 200);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 64), 208);
+    //------------------------------------                                                 struct  struct
+    // Entries for 64-bit user_regs_struct                                                 offset  size
+    //------------------------------------                                                 (byte)  (bytes)
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r15,      0, 64), 0x0000); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r14,      0, 64), 0x0008); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r13,      0, 64), 0x0010); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r12,      0, 64), 0x0018); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 64), 0x0020); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 64), 0x0028); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r11,      0, 64), 0x0030); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r10,      0, 64), 0x0038); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r9,       0, 64), 0x0040); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_r8,       0, 64), 0x0048); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 64), 0x0050); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 64), 0x0058); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 64), 0x0060); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 64), 0x0068); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 64), 0x0070); // 8
+    // orig_rax: unused                                                                    0x0078   // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 64), 0x0080); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 64), 0x0088); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 64), 0x0090); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 64), 0x0098); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 64), 0x00a0); // 8
+    // fs_base: unused                                                                     0x00a8   // 8
+    // gs_base: unused                                                                     0x00b0   // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 64), 0x00b8); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 64), 0x00c0); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 64), 0x00c8); // 8
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 64), 0x00d0); // 8
+
+    //--------------------------------------                                                 struct   struct
+    // Entries for 64-bit user_fpregs_struct                                                 offset   size
+    //--------------------------------------                                                 (byte)   (bytes)
+    // cwd: unused                                                                           0x0000   // 2
+    // swd: unused                                                                           0x0002   // 2
+    // ftw: unused                                                                           0x0004   // 2
+    // fop: unused                                                                           0x0006   // 2
+    // rip: unused                                                                           0x0008   // 8
+    // rdp: unused                                                                           0x0010   // 8
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_mxcsr,  0, 64), 0x0018); // 4
+    // mxcsr_mask: unused                                                                    0x001c   // 4
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 64), 0x0020); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_1,         0, 64), 0x0030); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_2,         0, 64), 0x0040); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_3,         0, 64), 0x0050); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_4,         0, 64), 0x0060); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_5,         0, 64), 0x0070); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_6,         0, 64), 0x0080); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_7,         0, 64), 0x0090); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     0,                0, 64), 0x00a0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     1,                0, 64), 0x00b0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     2,                0, 64), 0x00c0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     3,                0, 64), 0x00d0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     4,                0, 64), 0x00e0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     5,                0, 64), 0x00f0); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     6,                0, 64), 0x0100); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     7,                0, 64), 0x0110); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     8,                0, 64), 0x0120); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     9,                0, 64), 0x0130); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     10,               0, 64), 0x0140); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     11,               0, 64), 0x0150); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     12,               0, 64), 0x0160); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     13,               0, 64), 0x0170); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     14,               0, 64), 0x0180); // 16
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_xmm,     15,               0, 64), 0x0190); // 16
+    //                                                                                       0x01a0
+
 #elif defined(__linux) && defined(__x86_64) && __WORDSIZE==32
-    //------------------------------------
-    // Entries for 32-bit user_regs_struct
-    //------------------------------------
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 32),   0);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 32),   4);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 32),   8);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 32),  12);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 32),  16);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 32),  20);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 32),  24);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 32),  28);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 32),  32);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 32),  36);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 32),  40);
-    // orig_eax: unused                                                                     44
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 32),  48);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 32),  52);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 32),  56);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 32),  60);
-    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 32),  64);
+    //------------------------------------                                                 struct  struct
+    // Entries for 32-bit user_regs_struct                                                 offset  size
+    //------------------------------------                                                 (byte)  (bytes)
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bx,       0, 32), 0x0000); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_cx,       0, 32), 0x0004); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_dx,       0, 32), 0x0008); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_si,       0, 32), 0x000c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_di,       0, 32), 0x0010); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_bp,       0, 32), 0x0014); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_ax,       0, 32), 0x0018); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ds,    0, 32), 0x001c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_es,    0, 32), 0x0020); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_fs,    0, 32), 0x0024); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_gs,    0, 32), 0x0028); // 4
+    // orig_eax: unused                                                                    0x002c   // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_ip,      0,                0, 32), 0x0030); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_cs,    0, 32), 0x0034); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_flags,   x86_flags_status, 0, 32), 0x0038); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_gpr,     x86_gpr_sp,       0, 32), 0x003c); // 4
+    userRegDefs_.insert(RegisterDescriptor(x86_regclass_segment, x86_segreg_ss,    0, 32), 0x0040); // 4
+    
+    //--------------------------------------                                               struct   struct
+    // Entries for 32-bit user_fpregs_struct                                               offset   size
+    //--------------------------------------                                               (byte)   (bytes)
+    // cwd: unused                                                                         0x0000   // 4
+    // swd: unused                                                                         0x0004   // 4
+    // twd: unused                                                                         0x0008   // 4
+    // fip: unused                                                                         0x000c   // 4
+    // fcs: unused                                                                         0x0010   // 4
+    // foo: unused                                                                         0x0014   // 4
+    // fos: unused                                                                         0x0018   // 4
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_0,         0, 32),   28); // 10 
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_1,         0, 32),   38); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_2,         0, 32),   48); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_3,         0, 32),   58); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_4,         0, 32),   68); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_5,         0, 32),   78); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_6,         0, 32),   88); // 10
+    userFpRegDefs_.insert(RegisterDescriptor(x86_regclass_st,      x86_st_7,         0, 32),   98); // 10
+    //                                                                                          108
+
 # elif defined(_MSC_VER)
 #   pragma message("unable to read subordinate process registers on this platform")
 # else
@@ -190,6 +254,7 @@ BinaryDebugger::waitForChild() {
     if (-1 == waitpid(child_, &wstat_, 0))
         throw std::runtime_error("BinaryDebugger::waitForChild failed: " + boost::to_lower_copy(std::string(strerror(errno))));
     sendSignal_ = WIFSTOPPED(wstat_) && WSTOPSIG(wstat_)!=SIGTRAP ? WSTOPSIG(wstat_) : 0;
+    regsPageStatus_ = REGPAGE_NONE;
 }
 
 std::string
@@ -222,6 +287,7 @@ BinaryDebugger::detach() {
     }
     howDetach_ = NOTHING;
     child_ = 0;
+    regsPageStatus_ = REGPAGE_NONE;
 }
 
 void
@@ -293,9 +359,7 @@ BinaryDebugger::executionAddress(rose_addr_t va) {
 
 rose_addr_t
 BinaryDebugger::executionAddress() {
-    user_regs_struct regs;
-    sendCommand(PTRACE_GETREGS, child_, 0, &regs);
-    return getInstructionPointer(regs);
+    return readRegister(RegisterDescriptor(x86_regclass_ip, 0, 0, kernelWordSize())).toInteger();
 }
 
 void
@@ -314,57 +378,63 @@ BinaryDebugger::singleStep() {
     waitForChild();
 }
 
-uint64_t
+size_t
+BinaryDebugger::kernelWordSize() {
+    if (kernelWordSize_ == 0) {
+        static const uint8_t magic = 0xb7;              // arbitrary
+        uint8_t userRegs[4096];                         // arbitrary size, but plenty large for any user_regs_struct
+        memset(userRegs, magic, sizeof userRegs);
+        sendCommand(PTRACE_GETREGS, child_, 0, &userRegs);
+
+        // How much was written, approximately?
+        size_t highWater = sizeof userRegs;
+        while (highWater>0 && userRegs[highWater-1]==magic)
+            --highWater;
+        if (highWater == 216) {
+            kernelWordSize_ = 64;
+        } else if (highWater == 68) {
+            kernelWordSize_ = 32;
+        } else if (highWater > 100) {
+            kernelWordSize_ = 64;                       // guess
+        } else {
+            kernelWordSize_ = 32;                       // guess;
+        }
+    }
+    return kernelWordSize_;
+}
+
+Sawyer::Container::BitVector
 BinaryDebugger::readRegister(const RegisterDescriptor &desc) {
-    // We don't know the size of the user_regs_struct that will be returned by the kernel. It could be the 32-bit or 64-bit
-    // version depending on whether the subordinate is 32 or 64 bits.  In any case, it's quite possible that it's not the
-    // struct defined (based on how ROSE is compiled) in <sys/user.h>.  We use a heuristic to find the size: we allocate the
-    // larger version of the struct, then fill it with magic bytes, then issue PTRACE_GETREGS.
-    static const uint8_t magic = 0xb7;                  // arbitrary
-    uint8_t userRegs[4096];                             // arbitrary size, but plenty large for any user_regs_struct
-    memset(userRegs, magic, sizeof userRegs);
-    sendCommand(PTRACE_GETREGS, child_, 0, &userRegs);
+    using namespace Sawyer::Container;
 
-    // How much was written, approximately?
-    size_t highWater = sizeof userRegs;
-    while (highWater>0 && userRegs[highWater-1]==magic)
-        --highWater;
-    size_t wordSize = 0;
-    if (highWater == 216) {
-        wordSize = 64;
-    } else if (highWater == 68) {
-        wordSize = 32;
-    } else if (highWater > 100) {
-        wordSize = 64;                                  // guess
+    // Lookup register according to kernel word size rather than the actual size of the register.
+    RegisterDescriptor base(desc.get_major(), desc.get_minor(), 0, kernelWordSize());
+    size_t userOffset = 0;
+    if (userRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regsPageStatus_ != REGPAGE_REGS) {
+            sendCommand(PTRACE_GETREGS, child_, 0, regsPage_);
+            regsPageStatus_ = REGPAGE_REGS;
+        }
+    } else if (userFpRegDefs_.getOptional(base).assignTo(userOffset)) {
+        if (regsPageStatus_ != REGPAGE_FPREGS) {
+            sendCommand(PTRACE_GETFPREGS, child_, 0, regsPage_);
+            regsPageStatus_ = REGPAGE_FPREGS;
+        }
     } else {
-        wordSize = 32;                                  // guess;
-    }
-
-#if 0 // DEBUGGING [Robb P. Matzke 2015-03-24]
-    std::cerr <<"register=" <<desc <<"; highWater=" <<highWater <<"; wordSize=" <<wordSize <<"\n";
-#endif
-
-    // Where is the register in question?
-    RegisterDescriptor base(desc.get_major(), desc.get_minor(), 0, wordSize);
-    size_t userRegsStructOffset = 0;
-    if (!userRegDefs_.getOptional(base).assignTo(userRegsStructOffset))
         throw std::runtime_error("register is not available");
-    uint64_t baseValue = 0;
-    if (32 == wordSize) {
-        baseValue = *(uint32_t*)((uint8_t*)&userRegs + userRegsStructOffset);
-    } else {
-        baseValue = *(uint64_t*)((uint8_t*)&userRegs + userRegsStructOffset);
     }
 
-    // Convert the baseValue to a subregister (e.g., EAX to AX) if necessary
-    if (desc.get_offset() != 0 || desc.get_nbits() != base.get_nbits()) {
-        ASSERT_require(desc.get_offset() + desc.get_nbits() <= base.get_nbits());
-        ASSERT_require(desc.get_offset() < 64);
-        baseValue >>= desc.get_offset();
-        baseValue &= IntegerOps::genMask<uint64_t>(desc.get_nbits());
-    }
+    // Extract the necessary data members from the struct. Assume that memory is little endian.
+    size_t nUserBytes = (desc.get_offset() + desc.get_nbits() + 7) / 8;
+    ASSERT_require(userOffset + nUserBytes <= sizeof regsPage_);
+    BitVector bits(8 * nUserBytes);
+    for (size_t i=0; i<nUserBytes; ++i)
+        bits.fromInteger(BitVector::BitRange::baseSize(i*8, 8), regsPage_[userOffset+i]);
 
-    return baseValue;
+    // Adjust the data to return only the bits we want.
+    bits.shiftRight(desc.get_offset());
+    bits.resize(desc.get_nbits());
+    return bits;
 }
 
 size_t
