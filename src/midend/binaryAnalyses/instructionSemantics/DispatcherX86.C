@@ -1544,6 +1544,21 @@ struct IP_pand: P {
     }
 };
 
+// Logical AND-NOT
+struct IP_pandn: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr result = ops->invert(ops->and_(a, b));
+            d->write(args[0], result);
+        }
+    }
+};
+    
 // Move byte mask
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2507,6 +2522,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_paddq,        new X86::IP_padd(64));
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pand,         new X86::IP_pand);
+    iproc_set(x86_pandn,        new X86::IP_pandn);
     iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
