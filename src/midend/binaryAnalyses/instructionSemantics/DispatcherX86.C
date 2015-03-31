@@ -1559,6 +1559,40 @@ struct IP_pandn: P {
     }
 };
 
+// Packed average
+//   PAVGB
+//   PAVGW
+struct IP_pavg: P {
+    size_t bitsPerOp;
+    IP_pavg(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(ops->add(ops->unsignedExtend(partA, bitsPerOp+1),
+                                                                 ops->unsignedExtend(partB, bitsPerOp+1)),
+                                                        ops->number_(bitsPerOp+1, 1));
+                BaseSemantics::SValuePtr ave = ops->extract(sum, 1, bitsPerOp+1);
+                result = result ? ops->concat(result, ave) : ave;
+            }
+        }
+    }
+};
+
+// Variable blend packed bytes
+struct IP_blendvb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        
+
 // Move byte mask
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2524,6 +2558,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pand,         new X86::IP_pand);
     iproc_set(x86_pandn,        new X86::IP_pandn);
     iproc_set(x86_pause,        new X86::IP_nop);
+    iproc_set(x86_pavgb,        new X86::IP_pavg(8));
+    iproc_set(x86_pavgw,        new X86::IP_pavg(16));
     iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
     iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
     iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
