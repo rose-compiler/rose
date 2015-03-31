@@ -185,7 +185,7 @@ class BreadthFirstTraversalTag {};
  *  current vertex and advances the traversal to the next vertex.
  *
  * @code
- *  MyGraph::VertexNodeIterator startingVertex = ....;
+ *  MyGraph::VertexIterator startingVertex = ....;
  *  std::vector<bool> reachable(graph.nVertices(), false);
  *
  *  DepthFirstForwardVertexTraversal<MyGraph> traversal(graph, startingVertex);
@@ -229,7 +229,7 @@ class BreadthFirstTraversalTag {};
  *  we assume has a @c isFunctionCall method.
  *
  * @code
- *  MyGraph::VertexNodeIterator startingVertex = ...;
+ *  MyGraph::VertexIterator startingVertex = ...;
  *  std::vector<bool> reachable(graph.nVertices(), false);
  *  typedef DepthFirstForwardGraphTraversal<MyGraph> Traversal;
  *
@@ -251,7 +251,7 @@ class BreadthFirstTraversalTag {};
  * @code
  *  template<class Graph>
  *  void printGraph(std::ostream &out, Graph &graph,
- *                  typename GraphTraits<Graph>::VertexNodeIterator start) {
+ *                  typename GraphTraits<Graph>::VertexIterator start) {
  *      for (DepthFirstForwardGraphTraversal t(graph, start, ENTER_EVENTS); t; ++t) {
  *          if (t.event() == ENTER_VERTEX) {
  *              out <<"vertex " <<t->vertex()->id() <<"\t= " <<t->vertex()->value() <<"\n";
@@ -281,25 +281,25 @@ class BreadthFirstTraversalTag {};
  *   typedef DepthFirstGraphTraversal<Cfg> Traversal;
  *
  *   Cfg cfg = ...;
- *   Cfg::VertexNodeIterator startVertex = ...;
+ *   Cfg::VertexIterator startVertex = ...;
  *
  *   DfCfg dfCfg;
- *   Map<size_t, DfCfg::VertexNodeIterator> vmap;
+ *   Map<size_t, DfCfg::VertexIterator> vmap;
  *   
  *   for (Traversal t(cfg, startVertex, ENTER_EVENTS|LEAVE_EDGE); t; ++t) {
  *       if (t.event() == ENTER_VERTEX) {
  *           // Insert each vertex before we visit any edge going into that vertex
- *           DfCfg::VertexNodeIterator v = dfCfg.insertVertex(NORMAL);
+ *           DfCfg::VertexIterator v = dfCfg.insertVertex(NORMAL);
  *           vmap.insert(t.vertex()->id(), v);
  *       } else if (t.event() == ENTER_EDGE && t.edge()->value().type() == INTERFUNC) {
  *           // Don't traverse edges that cross function boundaries
  *           t.skipChildren();
  *       } else if (vmap.exists(t.edge()->source()->id()) && vmap.exists(t.edge()->target()->id())) {
  *           // Insert an edge provided we have both of its endpoints
- *           DfCfg::VertexNodeIterator source = vmap[t.edge()->source()->id()];
- *           DfCfg::VertexNodeIterator target = vmap[t.edge()->target()->id()];
+ *           DfCfg::VertexIterator source = vmap[t.edge()->source()->id()];
+ *           DfCfg::VertexIterator target = vmap[t.edge()->target()->id()];
  *           if (t.edge()->value().type() == ADJUST) {
- *               DfCfg::VertexNodeIterator v = dfCfg.insertVertex(ADJUST);
+ *               DfCfg::VertexIterator v = dfCfg.insertVertex(ADJUST);
  *               dfCfg.insertEdge(source, v);
  *               dfCfg.insertEdge(v,target);
  *           } else {
@@ -312,10 +312,10 @@ template<class Graph, class Order=DepthFirstTraversalTag, class Direction=Forwar
 class GraphTraversal {
 public:
     /** Const or non-const vertex node iterator. */
-    typedef typename GraphTraits<Graph>::VertexNodeIterator VertexNodeIterator;
+    typedef typename GraphTraits<Graph>::VertexIterator VertexIterator;
 
     /** Const or non-const edge node iterator. */
-    typedef typename GraphTraits<Graph>::EdgeNodeIterator EdgeNodeIterator;
+    typedef typename GraphTraits<Graph>::EdgeIterator EdgeIterator;
 
 private:
     Graph &graph_;
@@ -326,12 +326,12 @@ protected:
     // then the iterator has reached its end state.
     struct Work {
         TraversalEvent event;                           // last event returned from this work item
-        EdgeNodeIterator fromEdge;                      // edge that brought us to this vertex (or edges().end())
-        VertexNodeIterator vertex;                      // vertex being visited
-        EdgeNodeIterator edge;                          // edge being visited
-        EdgeNodeIterator endEdge;                       // end edge for this vertex
+        EdgeIterator fromEdge;                          // edge that brought us to this vertex (or edges().end())
+        VertexIterator vertex;                          // vertex being visited
+        EdgeIterator edge;                              // edge being visited
+        EdgeIterator endEdge;                           // end edge for this vertex
         bool followEdge;                                // follow edge to discover the neighbor vertex?
-        Work(EdgeNodeIterator fromEdge, VertexNodeIterator vertex, const boost::iterator_range<EdgeNodeIterator> &nextEdges)
+        Work(EdgeIterator fromEdge, VertexIterator vertex, const boost::iterator_range<EdgeIterator> &nextEdges)
             : event(DISCOVER_VERTEX), fromEdge(fromEdge), vertex(vertex), edge(nextEdges.begin()), endEdge(nextEdges.end()),
               followEdge(true) {}
     };
@@ -366,13 +366,13 @@ protected:
 
     // Mark a vertex as being discovered.  A vertex so marked will not be added to the work list, but will remain in the
     // worklist if it is already present.
-    void setDiscovered(VertexNodeIterator vertex, bool isDiscovered=true) {
+    void setDiscovered(VertexIterator vertex, bool isDiscovered=true) {
         ASSERT_require(vertex != graph_.vertices().end());
         verticesDiscovered_.setValue(vertex->id(), isDiscovered);
     }
 
     // Mark an edge as having been entered.  An edge so marked will not be entered again.
-    void setVisited(EdgeNodeIterator edge, bool isVisited=true) {
+    void setVisited(EdgeIterator edge, bool isVisited=true) {
         ASSERT_require(edge != graph_.edges().end());
         edgesVisited_.setValue(edge->id(), isVisited);
     }
@@ -386,7 +386,7 @@ protected:
     }
 
     // Initialize traversal to start at the specified vertex.
-    void start(VertexNodeIterator startVertex) {
+    void start(VertexIterator startVertex) {
         ASSERT_forbid(startVertex == graph_.vertices().end());
         clear();
         Work newWork(graph_.edges().end(), startVertex, nextEdges(startVertex, Direction()));
@@ -398,11 +398,11 @@ protected:
     }
 
     // Initialize traversal to start at the specified edge.
-    void start(EdgeNodeIterator startEdge) {
+    void start(EdgeIterator startEdge) {
         ASSERT_forbid(startEdge == graph_.edges().end());
         clear();
-        EdgeNodeIterator endEdge = startEdge; ++endEdge;
-        boost::iterator_range<EdgeNodeIterator> edges(startEdge, endEdge);
+        EdgeIterator endEdge = startEdge; ++endEdge;
+        boost::iterator_range<EdgeIterator> edges(startEdge, endEdge);
         Work newWork(graph_.edges().end(), graph_.vertices().end(), edges);
         enqueue(newWork, Order());
         setVisited(startEdge);
@@ -424,7 +424,7 @@ public:
     /** Vertex to which traversal is pointing.
      *
      *  See @ref TraversalEvent for details about which vertex is returned for various events. */
-    VertexNodeIterator vertex() const {
+    VertexIterator vertex() const {
         switch (event()) {
             case NO_EVENT:
                 return graph_.vertices().end();
@@ -445,7 +445,7 @@ public:
     /** Edge to which traversal is pointing.
      *
      *  See @ref TraversalEvent for details about which edge is returned for various events. */
-    EdgeNodeIterator edge() const {
+    EdgeIterator edge() const {
         switch (event()) {
             case NO_EVENT:
                 return graph_.edges().end();
@@ -561,7 +561,7 @@ public:
             if (current().event == ENTER_EDGE) {
                 current().event = FOLLOW_EDGE; // never escapes to the user
                 if (current().followEdge) {
-                    VertexNodeIterator neighbor = nextVertex(workList_.front().edge, Direction());
+                    VertexIterator neighbor = nextVertex(workList_.front().edge, Direction());
                     if (!isDiscovered(neighbor)) {
                         Work newWork(workList_.front().edge, neighbor, nextEdges(neighbor, Direction()));
                         enqueue(newWork, Order());
@@ -616,11 +616,11 @@ public:
      *  forgotten so that if it's ever discovered by some other edge its incoming or outgoing edges will be inserted into the
      *  worklist again.  Calling @ref allowRediscovery each time a traversal leaves a vertex during a depth-first traversal
      *  will result in a traversal that finds all non-cyclic paths, possibly visiting some vertices more than once. */
-    void allowRediscovery(VertexNodeIterator vertex) {
+    void allowRediscovery(VertexIterator vertex) {
         if (vertex != graph_.vertices().end()) {
             setDiscovered(vertex, false);
-            boost::iterator_range<EdgeNodeIterator> edges = nextEdges(vertex, Direction());
-            for (EdgeNodeIterator iter=edges.begin(); iter!=edges.end(); ++iter)
+            boost::iterator_range<EdgeIterator> edges = nextEdges(vertex, Direction());
+            for (EdgeIterator iter=edges.begin(); iter!=edges.end(); ++iter)
                 setVisited(iter, false);
         }
     }
@@ -630,7 +630,7 @@ public:
      *  Returns true if the specified vertex has ever existed on the work list.  Vertices are normally discovered between the
      *  @ref ENTER_EDGE and @ref LEAVE_EDGE events for the edge that flows into the vertex, and are only discovered once
      *  regardless of how many edges flow into them. */
-    bool isDiscovered(VertexNodeIterator vertex) const {
+    bool isDiscovered(VertexIterator vertex) const {
         if (vertex == graph_.vertices().end())
             return false;
         return verticesDiscovered_.get(vertex->id());
@@ -639,7 +639,7 @@ public:
     /** True if the edge has been entered.
      *
      *  Returns true if the traversal has ever returned a @ref ENTER_EDGE event for the specified edge. */
-    bool isVisited(EdgeNodeIterator edge) const {
+    bool isVisited(EdgeIterator edge) const {
         if (edge == graph_.edges().end())
             return false;
         return edgesVisited_.get(edge->id());
@@ -668,13 +668,13 @@ public:
 private:
     // Returns the next vertex in traversal order when given an edge.  Forward-flowing subclasses will return edge->target()
     // and reverse-flowing subclasses will return edge->source().
-    VertexNodeIterator nextVertex(EdgeNodeIterator edge, ForwardTraversalTag) { return edge->target(); }
-    VertexNodeIterator nextVertex(EdgeNodeIterator edge, ReverseTraversalTag) { return edge->source(); }
+    VertexIterator nextVertex(EdgeIterator edge, ForwardTraversalTag) { return edge->target(); }
+    VertexIterator nextVertex(EdgeIterator edge, ReverseTraversalTag) { return edge->source(); }
 
     // Returns edges that leave a vertex for the purpose of traversal.  Forward-flowing subclasses will return
     // vertex->outEdges() and reverse-flowing subclasses will return vertex->inEdges().
-    boost::iterator_range<EdgeNodeIterator> nextEdges(VertexNodeIterator vertex, ForwardTraversalTag) { return vertex->outEdges(); }
-    boost::iterator_range<EdgeNodeIterator> nextEdges(VertexNodeIterator vertex, ReverseTraversalTag) { return vertex->inEdges(); }
+    boost::iterator_range<EdgeIterator> nextEdges(VertexIterator vertex, ForwardTraversalTag) { return vertex->outEdges(); }
+    boost::iterator_range<EdgeIterator> nextEdges(VertexIterator vertex, ReverseTraversalTag) { return vertex->inEdges(); }
 
     // Adds new work to the list.  Depth-first subclasses will push work onto the front of the list and breadth-first
     // subclasses will push it onto the end.
@@ -700,14 +700,14 @@ template<class Graph>
 class DepthFirstForwardGraphTraversal: public GraphTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex,
+    DepthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex,
                                     unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph, significantEvents) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge,
+    DepthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge,
                                     unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph, significantEvents) {
         this->start(startEdge);
@@ -731,14 +731,14 @@ template<class Graph>
 class DepthFirstReverseGraphTraversal: public GraphTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex,
+    DepthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex,
                                     unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph, significantEvents) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge,
+    DepthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge,
                                     unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph, significantEvents) {
         this->start(startEdge);
@@ -762,14 +762,14 @@ template<class Graph>
 class BreadthFirstForwardGraphTraversal: public GraphTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex,
+    BreadthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex,
                                       unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph, significantEvents) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge,
+    BreadthFirstForwardGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge,
                                       unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph, significantEvents) {
         this->start(startEdge);
@@ -793,14 +793,14 @@ template<class Graph>
 class BreadthFirstReverseGraphTraversal: public GraphTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex,
+    BreadthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex,
                                       unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph, significantEvents) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge,
+    BreadthFirstReverseGraphTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge,
                                       unsigned significantEvents=ALL_EVENTS)
         : GraphTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph, significantEvents) {
         this->start(startEdge);
@@ -830,18 +830,18 @@ protected:
 
 public:
     /** Return reference to current vertex. */
-    typename GraphTraits<Graph>::VertexNodeIterator::Reference operator*() {
+    typename GraphTraits<Graph>::VertexIterator::Reference operator*() {
         return *this->vertex();
     }
 
     /** Return pointer to current vertex. */
-    typename GraphTraits<Graph>::VertexNodeIterator::Pointer operator->() {
+    typename GraphTraits<Graph>::VertexIterator::Pointer operator->() {
         return &*this->vertex();
     }
 
     /** Return reference to current vertex and advance. */
-    typename GraphTraits<Graph>::VertexNodeIterator::Reference next() {
-        typename GraphTraits<Graph>::VertexNodeIterator::Reference retval = this->vertex();
+    typename GraphTraits<Graph>::VertexIterator::Reference next() {
+        typename GraphTraits<Graph>::VertexIterator::Reference retval = this->vertex();
         this->advance();
         return retval;
     }
@@ -856,13 +856,13 @@ template<class Graph>
 class DepthFirstForwardVertexTraversal: public GraphVertexTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    DepthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphVertexTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    DepthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphVertexTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -883,13 +883,13 @@ template<class Graph>
 class DepthFirstReverseVertexTraversal: public GraphVertexTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    DepthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphVertexTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    DepthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphVertexTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -910,13 +910,13 @@ template<class Graph>
 class BreadthFirstForwardVertexTraversal: public GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    BreadthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    BreadthFirstForwardVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -937,13 +937,13 @@ template<class Graph>
 class BreadthFirstReverseVertexTraversal: public GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    BreadthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    BreadthFirstReverseVertexTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphVertexTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -972,18 +972,18 @@ protected:
 
 public:
     /** Return reference to current edge. */
-    typename GraphTraits<Graph>::EdgeNodeIterator::Reference operator*() {
+    typename GraphTraits<Graph>::EdgeIterator::Reference operator*() {
         return *this->edge();
     }
 
     /** Return pointer to current edge. */
-    typename GraphTraits<Graph>::EdgeNodeIterator::Pointer operator->() {
+    typename GraphTraits<Graph>::EdgeIterator::Pointer operator->() {
         return &*this->edge();
     }
 
     /** Return reference to current edge and advance. */
-    typename GraphTraits<Graph>::EdgeNodeIterator::Reference next() {
-        typename GraphTraits<Graph>::EdgeNodeIterator::Reference retval = this->vertex();
+    typename GraphTraits<Graph>::EdgeIterator::Reference next() {
+        typename GraphTraits<Graph>::EdgeIterator::Reference retval = this->vertex();
         this->advance();
         return retval;
     }
@@ -998,13 +998,13 @@ template<class Graph>
 class DepthFirstForwardEdgeTraversal: public GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    DepthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    DepthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -1025,13 +1025,13 @@ template<class Graph>
 class DepthFirstReverseEdgeTraversal: public GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    DepthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    DepthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    DepthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    DepthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphEdgeTraversal<Graph, DepthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -1052,13 +1052,13 @@ template<class Graph>
 class BreadthFirstForwardEdgeTraversal: public GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    BreadthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    BreadthFirstForwardEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ForwardTraversalTag>(graph) {
         this->start(startEdge);
     }
@@ -1079,13 +1079,13 @@ template<class Graph>
 class BreadthFirstReverseEdgeTraversal: public GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag> {
 public:
     /** Start traversal at specified vertex. */
-    BreadthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexNodeIterator startVertex)
+    BreadthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::VertexIterator startVertex)
         : GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startVertex);
     }
 
     /** Start traversal at specified edge. */
-    BreadthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeNodeIterator startEdge)
+    BreadthFirstReverseEdgeTraversal(Graph &graph, typename GraphTraits<Graph>::EdgeIterator startEdge)
         : GraphEdgeTraversal<Graph, BreadthFirstTraversalTag, ReverseTraversalTag>(graph) {
         this->start(startEdge);
     }

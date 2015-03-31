@@ -22,7 +22,14 @@ static boost::once_flag initFlag = BOOST_ONCE_INIT;
 
 // thread-safe
 SAWYER_EXPORT bool
-initializeLibrary() {
+initializeLibrary(size_t vmajor, size_t vminor, size_t vpatch, bool withThreads) {
+    // Make sure that the application has compiled the correct version and configuration of Sawyer header files. They
+    // must match the version and configuration expected by the Sawyer library.
+    if (vmajor != SAWYER_VERSION_MAJOR || vminor != SAWYER_VERSION_MINOR || vpatch != SAWYER_VERSION_PATCH)
+        throw std::runtime_error("inconsistent compiling/linking with libsawyer: version number mismatch");
+    if (withThreads != SAWYER_MULTI_THREADED)
+        throw std::runtime_error("inconsistent compiling/linking with libsawyer: thread support mismatch");
+    
 #if SAWYER_MULTI_THREADED
     boost::call_once(&init, initFlag);
 #else

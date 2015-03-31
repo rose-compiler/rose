@@ -71,8 +71,8 @@ static void print_sawyer_graph_info() {
     printf("  Size of Graph                                      = %zu\n", sizeof(MySawyerGraph));
     printf("  Size of Graph::VertexValue (std::string)           = %zu\n", sizeof(MySawyerGraph::VertexValue));
     printf("  Size of Graph::EdgeValue (std::string)             = %zu\n", sizeof(MySawyerGraph::EdgeValue));
-    printf("  Size of Graph::Vertex (the storage node)           = %zu\n", sizeof(MySawyerGraph::VertexNode));
-    printf("  Size of Graph::Edge (the storage node)             = %zu\n", sizeof(MySawyerGraph::EdgeNode));
+    printf("  Size of Graph::Vertex (the storage node)           = %zu\n", sizeof(MySawyerGraph::Vertex));
+    printf("  Size of Graph::Edge (the storage node)             = %zu\n", sizeof(MySawyerGraph::Edge));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -135,8 +135,8 @@ static void test_sawyer_graph(size_t nverts, bool skipEdges) {
     std::cout <<"Graph size: " <<plural(graph.nVertices(), "vertices", "vertex")
               <<" and " <<plural(graph.nEdges(), "edges") <<"\n";
     size_t memoryUsage = sizeof(MySawyerGraph) +
-                         graph.nVertices()* sizeof(MySawyerGraph::VertexNode) +
-                         graph.nEdges() * sizeof(MySawyerGraph::EdgeNode);
+                         graph.nVertices()* sizeof(MySawyerGraph::Vertex) +
+                         graph.nEdges() * sizeof(MySawyerGraph::Edge);
     std::cout <<"Approximate memory used: " <<plural(memoryUsage, "bytes") <<"\n";
 }
 
