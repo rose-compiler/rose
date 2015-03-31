@@ -1684,6 +1684,34 @@ struct IP_psrldq: P {
     }
 };
 
+// Subtract packed integers
+//   PSUBB
+//   PSUBW
+//   PSUBD
+//   PSUBQ
+struct IP_psub: P {
+    size_t bitsPerOp;
+    IP_psub(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValuePtr result;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr subtrahend = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                result = result ? ops->concat(result, difference) : difference;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Unpack low data
 //   PUNPCKLBW
 //   PUNPCKLWD
@@ -2412,6 +2440,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
+    iproc_set(x86_psubb,        new X86::IP_psub(8));
+    iproc_set(x86_psubw,        new X86::IP_psub(16));
+    iproc_set(x86_psubd,        new X86::IP_psub(32));
+    iproc_set(x86_psubq,        new X86::IP_psub(64));
     iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
     iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
     iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
