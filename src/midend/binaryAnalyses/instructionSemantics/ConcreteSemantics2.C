@@ -4,7 +4,7 @@
 #include <sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
-using Sawyer::Container::BitVectorSupport::BitRange;
+typedef Sawyer::Container::BitVector::BitRange BitRange;
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -15,43 +15,44 @@ namespace ConcreteSemantics {
 //                                      SValue
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+SValue::bits(const Sawyer::Container::BitVector &newBits) {
+    ASSERT_require(newBits.size() == bits_.size());
+    ASSERT_require(newBits.size() == get_width());
+    bits_ = newBits;
+}
+
 bool
 SValue::may_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
-    const uint64_t *a = this->bits();
-    const uint64_t *b = SValue::promote(other)->bits();
-    return a[0] == b[0] && a[1] == b[1];
+    return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 bool
 SValue::must_equal(const BaseSemantics::SValuePtr &other, SMTSolver*) const {
-    const uint64_t *a = this->bits();
-    const uint64_t *b = SValue::promote(other)->bits();
-    return a[0] == b[0] && a[1] == b[1];
+    return 0 == bits_.compare(SValue::promote(other)->bits());
 }
 
 void
-SValue::set_width(size_t nbits) {
-    ASSERT_require(nbits > 0);
-    if (nbits != get_width()) {
-        ASSERT_require(nbits <= maxNBits_);
-        if (nbits < get_width())
-            BitVectorSupport::clear<uint64_t>(bits_, BitRange::hull(nbits, maxNBits_-1));
-        BaseSemantics::SValue::set_width(nbits);
+SValue::set_width(size_t newWidth) {
+    ASSERT_require(newWidth > 0);
+    if (newWidth != get_width()) {
+        bits_.resize(newWidth);
+        BaseSemantics::SValue::set_width(newWidth);
+        ASSERT_require(bits_.size() == get_width());
     }
 }
 
 uint64_t
 SValue::get_number() const {
-    ASSERT_require(get_width() <= 64);
-    return bits_[0];
+    return bits_.toInteger();
 }
 
 void
 SValue::print(std::ostream &out, BaseSemantics::Formatter&) const {
     if (get_width() <= 64) {
-        out <<StringUtility::toHex2(bits_[0], get_width());
+        out <<StringUtility::toHex2(bits_.toInteger(), get_width());
     } else {
-        out << BitVectorSupport::toHex<uint64_t>(bits_, BitRange::baseSize(0, get_width()));
+        out <<"0x" << bits_.toHex();
     }
 }
 
@@ -107,8 +108,8 @@ BaseSemantics::SValuePtr
 MemoryState::readMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemantics::SValuePtr &dflt_,
                         BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
     ASSERT_require2(8==dflt_->get_width(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
-    rose_addr_t addr = SValue::promote(addr_)->get_number();
-    uint8_t dflt = SValue::promote(dflt_)->get_number();
+    rose_addr_t addr = addr_->get_number();
+    uint8_t dflt = dflt_->get_number();
     if (!map_.at(addr).exists()) {
         allocatePage(addr);
         map_.at(addr).limit(1).write(&dflt);
@@ -122,8 +123,8 @@ void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &addr_, const BaseSemantics::SValuePtr &value_,
                          BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) {
     ASSERT_require2(8==value_->get_width(), "ConcreteSemantics::MemoryState requires memory cells contain 8-bit data");
-    rose_addr_t addr = SValue::promote(addr_)->get_number();
-    uint8_t value = SValue::promote(value_)->get_number();
+    rose_addr_t addr = addr_->get_number();
+    uint8_t value = value_->get_number();
     if (!map_.at(addr).exists())
         allocatePage(addr);
     map_.at(addr).limit(1).write(&value);
@@ -150,6 +151,13 @@ MemoryState::print(std::ostream &out, Formatter&) const {
 //                                      RiscOperators
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SValuePtr
+RiscOperators::svalue_number(const Sawyer::Container::BitVector &bits) {
+    SValuePtr retval = SValue::promote(svalue_number(bits.size(), 0));
+    retval->bits(bits);
+    return retval;
+}
+
 void
 RiscOperators::interrupt(int majr, int minr) {
     get_state()->clear();
@@ -157,202 +165,171 @@ RiscOperators::interrupt(int majr, int minr) {
 
 BaseSemantics::SValuePtr
 RiscOperators::and_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    uint64_t *r = retval->bits();
-    const uint64_t *b = SValue::promote(b_)->bits();
-    r[0] &= b[0];
-    r[1] &= b[1];
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.bitwiseAnd(SValue::promote(b_)->bits());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::or_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    uint64_t *r = retval->bits();
-    const uint64_t *b = SValue::promote(b_)->bits();
-    r[0] |= b[0];
-    r[1] |= b[1];
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.bitwiseOr(SValue::promote(b_)->bits());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::xor_(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    uint64_t *r = retval->bits();
-    const uint64_t *b = SValue::promote(b_)->bits();
-    r[0] ^= b[0];
-    r[1] ^= b[1];
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.bitwiseXor(SValue::promote(b_)->bits());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::invert(const BaseSemantics::SValuePtr &a_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::invert<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()));
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.invert();
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, size_t end_bit) {
     ASSERT_require(end_bit <= a_->get_width());
     ASSERT_require(begin_bit < end_bit);
-    SValuePtr retval = svalue_zero(end_bit-begin_bit);
-    uint64_t *r = retval->bits();
-    const uint64_t *a = SValue::promote(a_)->bits();
-    BitVectorSupport::copy<uint64_t>(a, BitRange::hull(begin_bit, end_bit-1), r, BitRange::baseSize(0, end_bit-begin_bit));
-    return retval;
+    BitVector result(end_bit - begin_bit);
+    result.copy(result.hull(), SValue::promote(a_)->bits(), BitRange::hull(begin_bit, end_bit-1));
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
     size_t resultNBits = a_->get_width() + b_->get_width();
-    ASSERT_require(resultNBits <= SValue::maxNBits_);
-    SValuePtr retval = svalue_zero(a_->get_width() + b_->get_width());
-    uint64_t *r = retval->bits();
-    const uint64_t *a = SValue::promote(a_)->bits();
-    BitVectorSupport::copy<uint64_t>(a, BitRange::baseSize(0, a_->get_width()),
-                                     r, BitRange::baseSize(0, a_->get_width()));
-    const uint64_t *b = SValue::promote(b_)->bits();
-    BitVectorSupport::copy<uint64_t>(b, BitRange::baseSize(0, b_->get_width()),
-                                     r, BitRange::baseSize(a_->get_width(), b_->get_width()));
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.resize(resultNBits);
+    result.copy(BitRange::baseSize(a_->get_width(), b_->get_width()),
+                SValue::promote(b_)->bits(), BitRange::baseSize(0, b_->get_width()));
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) {
-    SValuePtr retval = svalue_zero(a_->get_width());
-    const uint64_t *a = SValue::promote(a_)->bits();
-    retval->bits()[0] = BitVectorSupport::leastSignificantSetBit<uint64_t>(a, BitRange::baseSize(0, a_->get_width())).orElse(0);
-    return retval;
+    uint64_t count = SValue::promote(a_)->bits().leastSignificantSetBit().orElse(0);
+    return svalue_number(a_->get_width(), count);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) {
-    SValuePtr retval = svalue_zero(a_->get_width());
-    const uint64_t *a = SValue::promote(a_)->bits();
-    retval->bits()[0] = BitVectorSupport::mostSignificantSetBit<uint64_t>(a, BitRange::baseSize(0, a_->get_width())).orElse(0);
-    return retval;
+    uint64_t count = SValue::promote(a_)->bits().mostSignificantSetBit().orElse(0);
+    return svalue_number(a_->get_width(), count);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::rotateLeft<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()), sa_->get_number());
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.rotateLeft(sa_->get_number());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::rotateRight<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()), sa_->get_number());
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.rotateRight(sa_->get_number());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::shiftLeft<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()), sa_->get_number());
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.shiftLeft(sa_->get_number());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::shiftRight<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()), sa_->get_number());
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.shiftRight(sa_->get_number());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &sa_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    BitVectorSupport::shiftRightArithmetic<uint64_t>(retval->bits(), BitRange::baseSize(0, retval->get_width()),
-                                                     sa_->get_number());
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.shiftRightArithmetic(sa_->get_number());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a_) {
-    const uint64_t *a = SValue::promote(a_)->bits();
-    bool result = a[0]==0 && a[1]==0;
-    return svalue_boolean(result);
+    return svalue_boolean(SValue::promote(a_)->bits().isEqualToZero());
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::ite(const BaseSemantics::SValuePtr &sel_, const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    if (equalToZero(sel_)->get_number()) {
-        return b_->copy();
-    } else {
+    ASSERT_require(sel_->get_width() == 1);
+    if (sel_->get_number()) {
         return a_->copy();
+    } else {
+        return b_->copy();
     }
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) {
-    BaseSemantics::SValuePtr retval = a_->copy();
-    retval->set_width(new_width);
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.resize(new_width);
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) {
-    ASSERT_require(new_width > 0);
-    ASSERT_require(new_width <= SValue::maxNBits_);
-    SValuePtr retval = svalue_zero(new_width);
-    uint64_t *r = retval->bits();
-    const uint64_t *a = SValue::promote(a_)->bits();
-    BitVectorSupport::signExtend<uint64_t>(a, BitRange::baseSize(0, a_->get_width()), r, BitRange::baseSize(0, new_width));
-    return retval;
+    BitVector result(new_width);
+    result.signExtend(SValue::promote(a_)->bits());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    uint64_t *r = retval->bits();
-    const uint64_t *b = SValue::promote(b_)->bits();
-    BitVectorSupport::add<uint64_t>(b, BitRange::baseSize(0, b_->get_width()), r, BitRange::baseSize(0, retval->get_width()));
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.add(SValue::promote(b_)->bits());
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_,
                               const BaseSemantics::SValuePtr &c_, BaseSemantics::SValuePtr &carry_out/*out*/) {
-    ASSERT_require(a_->get_width()==b_->get_width());
-    ASSERT_require(c_->get_width()==1);
-    const uint64_t *a = SValue::promote(a_)->bits();
-    const uint64_t *b = SValue::promote(b_)->bits();
-    const uint64_t *c = SValue::promote(c_)->bits();
-    uint64_t a3[3], b3[3], c3[3], s3[3], x3[3];
-    a3[0] = a[0]; a3[1] = a[1]; a3[2] = 0;
-    b3[0] = b[0]; b3[1] = b[1]; b3[2] = 0;
-    c3[0] = c[0]; c3[1] = c[1]; c3[2] = 0;
-    s3[0] = a[0]; s3[1] = a[1]; s3[2] = 0;              // a + b + c
-    x3[0] = a[0]; x3[1] = a[1]; x3[2] = 0;              // a ^ b ^ c
-    BitRange arange = BitRange::baseSize(0, a_->get_width());
-    BitRange erange = BitRange::baseSize(0, a_->get_width()+1);
-    BitVectorSupport::add<uint64_t>(b3, erange, s3, erange);
-    BitVectorSupport::add<uint64_t>(c3, erange, s3, erange);
-    BitVectorSupport::bitwiseXor<uint64_t>(b3, erange, x3, erange);
-    BitVectorSupport::bitwiseXor<uint64_t>(s3, erange, x3, erange);
+    size_t nbits = a_->get_width();
 
-    SValuePtr co = svalue_zero(a_->get_width());
-    BitVectorSupport::copy<uint64_t>(x3, BitRange::baseSize(1, a_->get_width()), co->bits(), arange);
-    carry_out = co;
+    // Values extended by one bit
+    BitVector   ae = SValue::promote(a_)->bits();   ae.resize(nbits+1);
+    BitVector   be = SValue::promote(b_)->bits();   be.resize(nbits+1);
+    BitVector   ce = SValue::promote(c_)->bits();   ce.resize(nbits+1);
 
-    SValuePtr retval = svalue_zero(a_->get_width());
-    BitVectorSupport::copy<uint64_t>(s3, arange, retval->bits(), arange);
-    return retval;
+    // Extended sum
+    BitVector se = ae;
+    se.add(be);
+    se.add(ce);
+
+    // Carry out
+    BitVector co = ae;
+    co.bitwiseXor(be);
+    co.bitwiseXor(se);
+    co.shiftRight(1);
+    co.resize(nbits);
+    carry_out = svalue_number(co);
+
+    se.resize(nbits);
+    return svalue_number(se);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::negate(const BaseSemantics::SValuePtr &a_) {
-    SValuePtr retval = SValue::promote(a_->copy());
-    uint64_t *r = retval->bits();
-    BitVectorSupport::negate<uint64_t>(r, BitRange::baseSize(0, retval->get_width()));
-    return retval;
+    BitVector result = SValue::promote(a_)->bits();
+    result.negate();
+    return svalue_number(result);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedDivide x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] / y[" + StringUtility::addrToString(b_->get_width()) +
@@ -367,6 +344,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemant
 
 BaseSemantics::SValuePtr
 RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedModulo x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] % y[" + StringUtility::addrToString(b_->get_width()) +
@@ -381,6 +359,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemant
 
 BaseSemantics::SValuePtr
 RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a multiply method
     ASSERT_require2(a_->get_width() <= 64, "not implemented");
     ASSERT_require2(b_->get_width() <= 64, "not implemented");
 
@@ -398,10 +377,10 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
         c1 &= 0xffffffff;
         //c2: use all 64 bits
 
-        SValuePtr product = svalue_number(a_->get_width() + b_->get_width(), 0);
-        product->bits()[0] = (c1 << 32) | c0;
-        product->bits()[1] = c2;
-        return product;
+        BitVector product(128);
+        product.fromInteger(BitRange::baseSize( 0, 64), (c1 << 32) | c0);
+        product.fromInteger(BitRange::baseSize(64, 64), c2);
+        return svalue_number(product);
     } else if (a_->get_width() + b_->get_width() > 64) {
         throw BaseSemantics::Exception("signedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] * y[" + StringUtility::addrToString(b_->get_width()) +
@@ -416,6 +395,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] / y[" + StringUtility::addrToString(b_->get_width()) +
@@ -430,6 +410,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a_->get_width() > 64 || b_->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] % y[" + StringUtility::addrToString(b_->get_width()) +
@@ -444,6 +425,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a multiply method
     ASSERT_require2(a_->get_width() <= 64, "not implemented");
     ASSERT_require2(b_->get_width() <= 64, "not implemented");
 
@@ -461,10 +443,10 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
         c1 &= 0xffffffff;
         //c2: use all 64 bits
 
-        SValuePtr product = svalue_number(a_->get_width() + b_->get_width(), 0);
-        product->bits()[0] = (c1 << 32) | c0;
-        product->bits()[1] = c2;
-        return product;
+        BitVector product(128);
+        product.fromInteger(BitRange::baseSize( 0, 64), (c1 << 32) | c0);
+        product.fromInteger(BitRange::baseSize(64, 64), c2);
+        return svalue_number(product);
     } else if (a_->get_width() + b_->get_width() > 64) {
         throw BaseSemantics::Exception("unsignedMultiply x[" + StringUtility::addrToString(a_->get_width()) +
                                        "] * y[" + StringUtility::addrToString(b_->get_width()) +
@@ -485,7 +467,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
 
     // Read the bytes and concatenate them together.
-    SValuePtr retval;
+    BaseSemantics::SValuePtr retval;
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbits/8; ++bytenum) {
@@ -496,9 +478,9 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
         if (0==bytenum) {
             retval = byte_value;
         } else if (ByteOrder::ORDER_MSB==mem->get_byteOrder()) {
-            retval = SValue::promote(concat(byte_value, retval));
+            retval = concat(byte_value, retval);
         } else {
-            retval = SValue::promote(concat(retval, byte_value));
+            retval = concat(retval, byte_value);
         }
     }
 

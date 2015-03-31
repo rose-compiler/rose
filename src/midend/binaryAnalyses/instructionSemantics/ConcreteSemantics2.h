@@ -8,6 +8,7 @@
 
 #include "integerOps.h"
 #include "BaseSemantics2.h"
+#include <sawyer/BitVector.h>
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere
@@ -38,22 +39,16 @@ typedef BaseSemantics::Formatter Formatter;             // we might extend this 
  *  cleared instead. */
 class SValue: public BaseSemantics::SValue {
 protected:
-    uint64_t bits_[2];
-
-public:
-    static const size_t maxNBits_ = 128;
+    Sawyer::Container::BitVector bits_;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
-    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits) {
-        bits_[0] = bits_[1] = 0;
-    }
+    explicit SValue(size_t nbits): BaseSemantics::SValue(nbits), bits_(nbits) {}
 
     SValue(size_t nbits, uint64_t number): BaseSemantics::SValue(nbits) {
-        ASSERT_require(nbits <= maxNBits_);
-        bits_[0] = number & IntegerOps::genMask<uint64_t>(nbits);
-        bits_[1] = 0;
+        bits_ = Sawyer::Container::BitVector(nbits);
+        bits_.fromInteger(number);
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,8 +123,8 @@ public:
     /** Returns the bit vector storing the concrete value.
      *
      * @{ */
-    virtual const uint64_t* bits() const { return bits_; }
-    virtual uint64_t* bits() { return bits_; }
+    virtual const Sawyer::Container::BitVector& bits() const { return bits_; }
+    virtual void bits(const Sawyer::Container::BitVector&);
     /** @} */
 };
 
@@ -362,6 +357,8 @@ protected:
     SValuePtr svalue_number(size_t nbits, uint64_t value) {
         return SValue::promote(number_(nbits, value));
     }
+
+    SValuePtr svalue_number(const Sawyer::Container::BitVector&);
 
     SValuePtr svalue_boolean(bool b) {
         return SValue::promote(boolean_(b));

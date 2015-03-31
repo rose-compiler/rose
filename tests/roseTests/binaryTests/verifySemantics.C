@@ -8,6 +8,7 @@
 #include <Diagnostics.h>
 #include <DispatcherX86.h>
 #include <Partitioner2/Engine.h>
+#include <sawyer/BitVector.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
@@ -100,12 +101,12 @@ public:
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+        using namespace Sawyer::Container;
         RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            uint64_t value = subordinate_.readRegister(reg);
-            return number_(reg.get_nbits(), value);
+            return svalue_number(subordinate_.readRegister(reg));
         } catch (const std::runtime_error &e) {
             RegisterNames rname(get_state()->get_register_state()->get_register_dictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
@@ -151,7 +152,7 @@ public:
         RegisterState::RegPairs cells = regs->get_stored_registers();
         RegisterNames rname(get_state()->get_register_state()->get_register_dictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
-            uint64_t nativeValue = 0;
+            Sawyer::Container::BitVector nativeValue;
             try {
                 nativeValue = subordinate_.readRegister(cell.desc);
             } catch (const std::runtime_error &e) {
@@ -159,8 +160,8 @@ public:
                 continue;
             }
                 
-            uint64_t simulatedValue = cell.value->get_number();
-            if (nativeValue != simulatedValue) {
+            Sawyer::Container::BitVector simulatedValue = ConcreteSemantics::SValue::promote(cell.value)->bits();
+            if (0 != nativeValue.compare(simulatedValue)) {
                 // Avoid comparing registers whose values are indicated as "undefined" in the reference manual.
                 bool dontCare = false;
                 if (SgAsmX86Instruction *x86 = isSgAsmX86Instruction(insn)) {
@@ -236,8 +237,8 @@ public:
                     if (areSame)
                         ::mlog[ERROR] <<"at " <<unparseInstructionWithAddress(insn) <<"\n";
                     ::mlog[ERROR] <<"values differ for register " <<rname(cell.desc)
-                                  <<": simulated=" <<StringUtility::toHex2(simulatedValue, cell.desc.get_nbits())
-                                  <<", native=" <<StringUtility::toHex2(nativeValue, cell.desc.get_nbits()) <<"\n";
+                                  <<": simulated=" <<simulatedValue.toHex()
+                                  <<", native=" <<nativeValue.toHex() <<"\n";
                     areSame = false;
                 }
             }
