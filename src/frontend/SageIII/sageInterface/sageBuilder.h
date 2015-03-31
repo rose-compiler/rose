@@ -189,6 +189,9 @@ ROSE_DLL_API SgRvalueReferenceType* buildRvalueReferenceType(SgType *base_type);
 //! Build a decltype reference type
 ROSE_DLL_API SgDeclType* buildDeclType(SgExpression *base_expression, SgType* base_type);
 
+//! Build a GNU typeof operator
+ROSE_DLL_API SgTypeOfType* buildTypeOfType(SgExpression *base_expression, SgType* base_type);
+
 // Liao, entirely phase out this function ! Build a modifier type with no modifiers set
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
 
@@ -958,6 +961,11 @@ SgDefaultOptionStmt * buildDefaultOptionStmt_nfi( SgStatement *body);
 //! Build a SgExprStatement, set File_Info automatically 
 ROSE_DLL_API SgExprStatement* buildExprStatement(SgExpression*  exp = NULL);
 SgExprStatement* buildExprStatement_nfi(SgExpression*  exp);
+
+// DQ (3/27/2015): Added support for SgStatementExpression.
+//! Build a GNU statement expression
+ROSE_DLL_API SgStatementExpression* buildStatementExpression(SgStatement* exp);
+ROSE_DLL_API SgStatementExpression* buildStatementExpression_nfi(SgStatement* exp);
 
 //! Build a switch statement
 ROSE_DLL_API SgSwitchStatement* buildSwitchStatement(SgStatement *item_selector = NULL,SgStatement *body = NULL);
