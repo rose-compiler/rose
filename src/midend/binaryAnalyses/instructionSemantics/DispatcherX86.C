@@ -1650,6 +1650,23 @@ struct IP_pshufd: P {
     }
 };
 
+// Shift double quadword right logical
+//   PSRLDQ
+struct IP_psrldq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            size_t nBytesShift = d->read(args[1])->get_number();// shift amount is an immediate operand
+            BaseSemantics::SValuePtr sa = ops->number_(8, 8*nBytesShift);
+            BaseSemantics::SValuePtr result = ops->shiftRight(src, sa);
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Unpack low data
 //   PUNPCKLBW
 //   PUNPCKLWD
@@ -2376,6 +2393,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
+    iproc_set(x86_psrldq,       new X86::IP_psrldq);
     iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
     iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
     iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
