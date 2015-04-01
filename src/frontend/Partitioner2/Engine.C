@@ -12,6 +12,7 @@
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
+#include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
 #include <sawyer/GraphTraversal.h>
 
@@ -244,6 +245,70 @@ Engine::createTunedPartitioner() {
     }
 
     return createGenericPartitioner();
+}
+
+Partitioner
+Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+    interp_ = interp;
+    map_.clear();
+    load(std::vector<std::string>());
+    Partitioner partitioner = createTunedPartitioner();
+
+    // Cache all the instructions so they're available by address in O(log N) time in the future.
+    BOOST_FOREACH (SgAsmInstruction *insn, SageInterface::querySubTree<SgAsmInstruction>(interp))
+        partitioner.instructionProvider().insert(insn);
+
+    // Create and attach basic blocks
+    BOOST_FOREACH (SgAsmNode *node, SageInterface::querySubTree<SgAsmNode>(interp)) {
+        SgAsmBlock *blockAst = isSgAsmBlock(node);
+        if (!blockAst || !blockAst->has_instructions())
+            continue;
+        BasicBlock::Ptr bblock = BasicBlock::instance(blockAst->get_address(), &partitioner);
+        bblock->comment(blockAst->get_comment());
+
+        // Instructions
+        const SgAsmStatementPtrList &stmts = blockAst->get_statementList();
+        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(*si))
+                bblock->append(insn);
+        }
+
+        // Successors
+        const SgAsmIntegerValuePtrList &successors = blockAst->get_successors();
+        BOOST_FOREACH (SgAsmIntegerValueExpression *ival, successors)
+            bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
+        if (!blockAst->get_successors_complete()) {
+            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            bblock->insertSuccessor(Semantics::SValue::instance(nbits));
+        }
+
+        partitioner.attachBasicBlock(bblock);
+    }
+
+    // Create and attach functions
+    BOOST_FOREACH (SgAsmFunction *funcAst, SageInterface::querySubTree<SgAsmFunction>(interp)) {
+        if (0!=(funcAst->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
+            continue;                                   // this isn't really a true function
+        Function::Ptr function = Function::instance(funcAst->get_entry_va(), funcAst->get_name());
+        function->comment(funcAst->get_comment());
+        function->reasons(funcAst->get_reason());
+
+        BOOST_FOREACH (SgAsmBlock *blockAst, SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
+            if (blockAst->has_instructions())
+                function->insertBasicBlock(blockAst->get_address());
+        }
+
+        BOOST_FOREACH (SgAsmStaticData *dataAst, SageInterface::querySubTree<SgAsmStaticData>(funcAst)) {
+            DataBlock::Ptr dblock = DataBlock::instance(dataAst->get_address(), dataAst->get_size());
+            partitioner.attachDataBlock(dblock);
+            function->insertDataBlock(dblock);
+        }
+
+        partitioner.attachFunction(function);
+    }
+
+    return partitioner;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

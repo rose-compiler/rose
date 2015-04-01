@@ -206,6 +206,12 @@ public:
      *  load. */
     virtual Partitioner createTunedPartitioner();
 
+    /** Create a partitioner from an AST.
+     *
+     *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
+     *  the engine and a new partitioner with information from the AST. */
+    virtual Partitioner createPartitionerFromAst(SgAsmInterpretation*);
+
 private:
     virtual void checkCreatePartitionerPrerequisites() const;
     
