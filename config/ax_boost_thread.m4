@@ -36,11 +36,11 @@ AC_DEFUN([AX_BOOST_THREAD],
     AC_ARG_WITH([boost-thread],
     AS_HELP_STRING([--with-boost-thread@<:@=special-lib@:>@],
                    [Use the Thread library from Boost.  If the value is 'yes' or a certain library then ROSE will
-                        incorporate multi-thread support into some of its algorithms. The default is to not
-                        incorporate multi-thread support into any algorithms regardless of what the ROSE documentation
-                        says about the thread safety of the algorithm.  If thread support is enabled with this switch
-                        then user code should also be compiled and linked with switches appropriate for multi-threading
-                        e.g., -pthread for GCC. ]),
+                        incorporate multi-thread support into some of its algorithms. The default is to incorporate
+                        multi-thread support into ROSE algorithms since Boost is compiled with thread support by default.
+                        If thread support is enabled then user code should also be compiled and linked with switches
+                        appropriate for multi-threading e.g., -pthread for GCC.  If the user compiles Boost without
+                        thread support, then --without-boost-thread can be given on the ROSE configure commandline. ]),
         [
         if test "$withval" = "no"; then
             want_boost="no"
@@ -52,7 +52,7 @@ AC_DEFUN([AX_BOOST_THREAD],
             ax_boost_user_thread_lib="$withval"
         fi
         ],
-        [want_boost="no"]
+        [want_boost="yes"]
     )
 
     if test "x$want_boost" = "xyes"; then

@@ -372,9 +372,9 @@ RiscOperators::insertDataFlowEdge(const AbstractLocation &source, const Abstract
                                   DataFlowEdge::EdgeType edgeType) {
     // Try to find existing vertices.  This is a linear traversal because abstract locations for memory addresses
     // don't have relational operators (they might be symbolic expressions or other user-defined types).
-    DataFlowGraph::VertexNodeIterator sourceIter = dflow_.vertices().end();
-    DataFlowGraph::VertexNodeIterator targetIter = dflow_.vertices().end();
-    for (DataFlowGraph::VertexNodeIterator iter=dflow_.vertices().begin(); iter!=dflow_.vertices().end(); ++iter) {
+    DataFlowGraph::VertexIterator sourceIter = dflow_.vertices().end();
+    DataFlowGraph::VertexIterator targetIter = dflow_.vertices().end();
+    for (DataFlowGraph::VertexIterator iter=dflow_.vertices().begin(); iter!=dflow_.vertices().end(); ++iter) {
         const AbstractLocation &vertex = iter->value();
         if (sourceIter == dflow_.vertices().end()) {
             if (vertex.mustAlias(source))

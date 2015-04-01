@@ -509,9 +509,30 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_28.c \
      test2015_29.c \
      test2015_30.c \
+     test2015_31.c \
+     test2015_32.c \
      test2015_33.c \
      test2015_34.c \
      test2015_35.c \
+     test2015_36.c \
+     test2015_37.c \
+     test2015_38.c \
+     test2015_39.c \
+     test2015_40.c \
+     test2015_41.c \
+     test2015_42.c \
+     test2015_43.c \
+     test2015_44.c \
+     test2015_45.c \
+     test2015_47.c \
+     test2015_48.c \
+     test2015_49.c \
+     test2015_50.c \
+     test2015_51.c \
+     test2015_52.c \
+     test2015_53.c \
+     test2015_54.c \
+     test2015_55.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (3/22/2015): Still failing:

@@ -435,6 +435,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
        // DQ (8/12/2014): Adding C++11 support.
           case V_SgDeclType:
 
+       // DQ (3/28/2015): Adding GNU C language extension.
+          case V_SgTypeOfType:
+
           case V_SgTypeShort:
           case V_SgTypeLong:
           case V_SgTypeLongLong:
