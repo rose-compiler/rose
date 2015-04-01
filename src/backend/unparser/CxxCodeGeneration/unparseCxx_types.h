@@ -58,6 +58,9 @@ class Unparse_Type
        // DQ (8/2/2014): Adding support for C++11 decltype.
           virtual void unparseDeclType(SgType* type, SgUnparse_Info& info);
 
+       // DQ (3/28/2015): Adding support for GNU C typeof language extension.
+          virtual void unparseTypeOfType(SgType* type, SgUnparse_Info& info);
+
        // DQ (5/3/2013): This approach is no longer supported, as I recall.
        // virtual void unparseQualifiedNameType(SgType* type, SgUnparse_Info& info );
 

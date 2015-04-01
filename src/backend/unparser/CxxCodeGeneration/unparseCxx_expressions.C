@@ -3874,7 +3874,27 @@ Unparse_ExprStmt::unparseTypeTraitBuiltinOperator(SgExpression* expr, SgUnparse_
 
           if (type != NULL)
              {
-               unp->u_type->unparseType(type,newinfo);
+            // unp->u_type->unparseType(type,newinfo);
+
+               newinfo.set_SkipClassDefinition();
+            // newinfo.set_SkipClassSpecifier();
+               newinfo.set_SkipEnumDefinition();
+
+               newinfo.set_isTypeFirstPart();
+#if 0
+               printf ("In unparseTypeTraitBuiltinOperator(): isTypeFirstPart: sizeof_op->get_operand_type() = %p = %s \n",type,type->class_name().c_str());
+               curprint ("/* In unparseTypeTraitBuiltinOperator(): isTypeFirstPart \n */ ");
+#endif
+               unp->u_type->unparseType(type, newinfo);
+               newinfo.set_isTypeSecondPart();
+#if 0
+               printf ("In unparseTypeTraitBuiltinOperator(): isTypeSecondPart: type = %p = %s \n",type,type->class_name().c_str());
+               curprint ("/* In unparseTypeTraitBuiltinOperator(): isTypeSecondPart \n */ ");
+#endif
+               unp->u_type->unparseType(type, newinfo);
+
+               newinfo.unset_isTypeFirstPart();
+               newinfo.unset_isTypeSecondPart();
              }
             else
              {
@@ -5813,7 +5833,22 @@ sharesSameStatement(SgExpression* expr, SgType* expressionType)
           SgDeclarationStatement* declarationStatementDefiningType = namedType->get_declaration();
           SgDeclarationStatement* definingDeclarationStatementDefiningType = declarationStatementDefiningType->get_definingDeclaration();
           SgClassDeclaration* classDeclaration = isSgClassDeclaration(definingDeclarationStatementDefiningType);
-          if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false)
+
+       // printf ("classDeclaration = %p \n",classDeclaration);
+
+       // DQ (3/26/2015): Need to handle case where isAutonomousDeclaration() == true, but we still don't want to unparse the definition.
+       // bool isDeclarationPartOfVariableDeclaration = isSgVariableDeclaration(classDeclaration->get_parent());
+          bool isDeclarationPartOfTypedefDeclaration  = false;
+          bool isDeclarationPartOfVariableDeclaration = false;
+          if (classDeclaration != NULL)
+             {
+               isDeclarationPartOfVariableDeclaration = isSgVariableDeclaration(classDeclaration->get_parent());
+               isDeclarationPartOfTypedefDeclaration  = isSgTypedefDeclaration(classDeclaration->get_parent());
+             }
+
+       // if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false)
+       // if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false && isDeclarationPartOfVariableDeclaration == false)
+          if (classDeclaration != NULL && classDeclaration->get_isAutonomousDeclaration() == false && isDeclarationPartOfVariableDeclaration == false && isDeclarationPartOfTypedefDeclaration == false)
              {
             // This declaration IS defined imbedded in another statement.
 #if 0
@@ -6051,7 +6086,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 #if 0
                printf ("sharesSameStatement(aggr_init,aggr_init->get_type()) == false) \n");
 #endif
-#if 1
+#if 0
                printf ("In unparseAggrInit(): aggr_init->get_uses_compound_literal() == true: Skipping the class definition if it is not in the expression. \n");
 #endif
             // DQ (3/26/2015): Skip the class definition if it is not in the expression.
