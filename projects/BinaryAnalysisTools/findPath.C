@@ -599,7 +599,7 @@ eraseUnreachable(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowGr
 
 /** Find back edges. */
 CfgEdgeSet
-findBackEdges(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstVertexNodeIterator &begin) {
+findBackEdges(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstVertexIterator &begin) {
     using namespace Sawyer::Container::Algorithm;
     typedef DepthFirstForwardGraphTraversal<const P2::ControlFlowGraph> Traversal;
 
@@ -622,9 +622,9 @@ findBackEdges(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::Const
  *
  *  Perform a depth first search and erase back edges. */
 void
-eraseBackEdges(P2::ControlFlowGraph &cfg /*in,out*/, const P2::ControlFlowGraph::ConstVertexNodeIterator &begin) {
+eraseBackEdges(P2::ControlFlowGraph &cfg /*in,out*/, const P2::ControlFlowGraph::ConstVertexIterator &begin) {
     CfgEdgeSet backEdges = findBackEdges(cfg, begin);
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, backEdges)
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, backEdges)
         cfg.eraseEdge(edge);
 }
 
@@ -996,6 +996,7 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(partitioner.instructionProvider().registerDictionary(), solver);
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
+    cpu->autoResetInstructionPointer(false);
     return cpu;
 }
 
@@ -1179,6 +1180,15 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     // The instruction pointer constraint to use values from s1, otherwise from s2.
     SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(ops->undefined_(1));// FIXME[Robb P. Matzke 2015-03-26]
 
+#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
+    Stream debug(::mlog[DEBUG]);
+    debug <<"Merging register states\n"
+          <<"  First state is:\n"
+          <<*s1
+          <<"  Second state is:\n"
+          <<*s2;
+#endif
+
     // Merge register states s1reg and s2reg into mergedReg
     BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->get_register_state());
     BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->get_register_state());
@@ -1212,15 +1222,26 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
 /** Process all paths at once by sending everything to the SMT solver. */
 void
 multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
-                     const P2::ControlFlowGraph::ConstVertexNodeIterator &pathsBeginVertex,
+                     const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
                      const CfgVertexSet &pathsEndVertices) {
     using namespace Sawyer::Container::Algorithm;
     using namespace InsnSemanticsExpr;
 
+#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
+    Stream debug(::mlog[DEBUG]);
+#endif
     Stream info(::mlog[INFO]);
     info <<"testing multi-path feasibility for paths graph with "
          <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
          <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+
+    if (settings.graphVizOutput==ALL_PATHS) {
+        char dotFileName[256];
+        sprintf(dotFileName, "%sallpaths.dot", settings.graphVizPrefix.c_str());
+        std::ofstream dotFile(dotFileName);
+        printGraphViz(dotFile, partitioner, paths, pathsBeginVertex, pathsEndVertices);
+        info <<"  saved as \"" <<StringUtility::cEscape(dotFileName) <<"\"\n";
+    }
 
     YicesSolver solver;
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
@@ -1231,7 +1252,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     CfgEdgeSet backEdges = findBackEdges(paths, pathsBeginVertex);
     if (!backEdges.empty()) {
         ::mlog[ERROR] <<"Cyclic paths are not allowed for multi-path feasibility analysis. The back edges are:\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeNodeIterator &edge, backEdges)
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, backEdges)
             ::mlog[ERROR] <<"  " <<partitioner.edgeName(edge) <<"\n";
         ASSERT_not_implemented("cyclic paths not allowed for multi-path feasibility analysis");
     }
@@ -1239,7 +1260,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     info <<"  building path constraints expression\n";
     ASSERT_require(pathsBeginVertex->nInEdges() == 0);
     std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexNodeIterator pathsEndVertex, pathsEndVertices) {
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex, pathsEndVertices) {
         // This loop is a little bit like a data-flow, except we don't have to worry about cycles in the CFG, which simplifies
         // things quite a bit. We can process the vertices by doing a depth-first traversal starting at the end, and building
         // the intermediate states as we back out of the traversal.  This guarantees that the final states for each of a
@@ -1253,8 +1274,8 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                 ASSERT_require(t.vertex() == pathsBeginVertex);
                 state = cpu->get_state()->clone(); state->clear();
             } else {
-                BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, t.vertex()->inEdges()) {
-                    P2::ControlFlowGraph::ConstVertexNodeIterator predecessorVertex = edge.source();
+                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->inEdges()) {
+                    P2::ControlFlowGraph::ConstVertexIterator predecessorVertex = edge.source();
                     ASSERT_not_null(outState[predecessorVertex->id()]);
                     if (edge.id() == t.vertex()->inEdges().begin()->id()) {
                         state = outState[predecessorVertex->id()];
@@ -1264,10 +1285,21 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                 }
             }
             
-            // Compute and save the final state
+            // Compute and save the final state. The final state for the ending vertex is the same as its initial state because
+            // we want to "get to" the final vertex, not necessarily "get to the end of" the final vertex.
             ops->set_state(state);
-            processBasicBlock(t.vertex()->value().bblock(), cpu);
+            if (t.vertex() != pathsEndVertex)
+                processBasicBlock(t.vertex()->value().bblock(), cpu);
             outState[t.vertex()->id()] = cpu->get_state()->clone();
+#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
+            BaseSemantics::Formatter fmt;
+            fmt.set_line_prefix("    ");
+            if (t.vertex() != pathsEndVertex) {
+                debug <<"  state after basic block:\n" <<(*cpu->get_state()+fmt);
+            } else {
+                debug <<"  state at entrance to end vertex:\n" <<(*cpu->get_state()+fmt);
+            }
+#endif
         }
         ASSERT_not_null(outState[pathsEndVertex->id()]);
         if (settings.showFinalState) {
@@ -1307,7 +1339,7 @@ singlePathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &p
 
 void
 multiPathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
-              const P2::ControlFlowGraph::ConstVertexNodeIterator &pathsBeginVertex,
+              const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
               const CfgVertexSet &pathsEndVertices) {}
 
 /** Find paths and process them one at a time until we've found the desired number of feasible paths. */
