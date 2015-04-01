@@ -65,7 +65,7 @@ SymbolicMemory::print(std::ostream &out, Formatter &formatter_) const {
     SymbolicSemantics::Formatter *formatter = dynamic_cast<SymbolicSemantics::Formatter*>(&formatter_);
     InsnSemanticsExpr::Formatter dflt_expr_formatter;
     InsnSemanticsExpr::Formatter &expr_formatter = formatter ? formatter->expr_formatter : dflt_expr_formatter;
-    out <<(*mem_ + expr_formatter) <<"\n";
+    out <<formatter_.get_line_prefix() <<(*mem_ + expr_formatter) <<"\n";
 }
 
 

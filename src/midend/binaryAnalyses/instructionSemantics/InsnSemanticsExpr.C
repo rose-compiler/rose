@@ -1143,8 +1143,8 @@ IteSimplifier::rewrite(const InternalNode *inode) const
     }
 
     // Are both operands the same? Then the condition doesn't matter
-    if (inode->child(0)->equivalent_to(inode->child(1)))
-        return inode->child(0);
+    if (inode->child(1)->equivalent_to(inode->child(2)))
+        return inode->child(1);
 
     return TreeNodePtr();
 }
