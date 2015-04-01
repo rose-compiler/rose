@@ -1491,6 +1491,7 @@ SgTypedefDeclaration*
 SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_type,  SgScopeStatement* scope /*= NULL*/, bool has_defining_base/*=false*/)
    {
      ROSE_ASSERT (base_type != NULL);
+
 #if 0
      printf ("In buildTypedefDeclaration_nfi(): base_type = %p = %s \n",base_type,base_type->class_name().c_str());
 #endif
@@ -1507,7 +1508,15 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 
   // Handle the case where this is a pointer, reference, or typedef to another type.
   // if (isSgNamedType(base_type))
-     SgNamedType* namedType = isSgNamedType(base_type->stripType());
+  // SgNamedType* namedType = isSgNamedType(base_type->stripType());
+     SgType* stripedBaseType = base_type->stripType();
+     ROSE_ASSERT(stripedBaseType != NULL);
+
+#if 0
+     printf ("In buildTypedefDeclaration_nfi(): stripedBaseType = %p = %s \n",stripedBaseType,stripedBaseType->class_name().c_str());
+#endif
+
+     SgNamedType* namedType = isSgNamedType(stripedBaseType);
      if (namedType != NULL)
         {
        // DQ (3/20/2012): Use this to set the value of base_decl (which was previously unset).
@@ -7144,6 +7153,30 @@ SageBuilder::buildExprStatement_nfi(SgExpression*  exp)
   return expStmt;
 }
 
+// DQ (3/27/2015): Added support for SgStatementExpression.
+SgStatementExpression*
+SageBuilder::buildStatementExpression(SgStatement*  exp)
+{
+  SgStatementExpression* expStmt = new SgStatementExpression(exp);
+  ROSE_ASSERT(expStmt);
+  if (exp) exp->set_parent(expStmt);
+  setOneSourcePositionForTransformation(expStmt);
+
+  return expStmt;
+}
+
+// DQ (3/27/2015): Added support for SgStatementExpression.
+SgStatementExpression*
+SageBuilder::buildStatementExpression_nfi(SgStatement*  exp)
+{
+  SgStatementExpression* expStmt = new SgStatementExpression(exp);
+  ROSE_ASSERT(expStmt);
+  if (exp) exp->set_parent(expStmt);
+  setOneSourcePositionNull(expStmt);
+
+  return expStmt;
+}
+
 SgFunctionCallExp* 
 SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* parameters/*=NULL*/, SgScopeStatement* scope/*=NULL*/)
    {
@@ -9026,6 +9059,86 @@ SgDeclType* SageBuilder::buildDeclType ( SgExpression *base_expression, SgType* 
 
      return result;
    }
+
+//! Build a GNU typeof operator
+SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType* base_type)
+   {
+  // ROSE_ASSERT(base_expression != NULL);
+
+#if 0
+     printf ("In SageBuilder::buildTypeOfType(): base_expression = %p = %s \n",base_expression,base_expression != NULL ? base_expression->class_name().c_str() : "NULL");
+     printf ("   ------------------------------- base_type       = %p = %s \n",base_type,base_type != NULL ? base_type->class_name().c_str() : "NULL");
+#endif
+
+     SgTypeOfType* result = NULL;
+     if (isSgFunctionParameterRefExp(base_expression) != NULL)
+        {
+          result = new SgTypeOfType(base_expression,NULL);
+
+       // DQ (3/28/2015): Testing for corruption in return value.
+          ROSE_ASSERT(result != NULL);
+#if 0
+          printf ("In buildTypeOfType(): test 1: result = %p = %s \n",result,result->class_name().c_str());
+#endif
+          result->set_base_type(base_type);
+        }
+       else
+        {
+       // result = SgTypeOfType::createType(base_expression);
+          if (base_expression != NULL)
+             {
+               result = SgTypeOfType::createType(base_expression,NULL);
+
+            // DQ (3/28/2015): Testing for corruption in return value.
+               ROSE_ASSERT(result != NULL);
+#if 0
+               printf ("In buildTypeOfType(): test 2: result = %p = %s \n",result,result->class_name().c_str());
+#endif
+             }
+            else
+             {
+            // result = SgTypeOfType::createType((SgType*)NULL);
+               ROSE_ASSERT(base_type != NULL);
+               result = SgTypeOfType::createType(base_type,NULL);
+
+            // DQ (3/28/2015): Testing for corruption in return value.
+               ROSE_ASSERT(result != NULL);
+#if 0
+               printf ("In buildTypeOfType(): test 3: result = %p = %s \n",result,result->class_name().c_str());
+#endif
+
+            // result->set_base_type(base_type);
+               if (result->get_base_type() != base_type)
+                  {
+                    ROSE_ASSERT(result->get_base_type() != NULL);
+#if 0
+                    printf ("result->get_base_type() = %p = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str());
+#endif
+                    ROSE_ASSERT(base_type != NULL);
+#if 0
+                    printf ("base_type               = %p = %s \n",base_type,base_type->class_name().c_str());
+#endif
+                  }
+            // ROSE_ASSERT(result->get_base_type() == base_type);
+             }
+        }
+
+     ROSE_ASSERT(result != NULL);
+
+     if (base_expression != NULL)
+        {
+          base_expression->set_parent(result);
+        }
+
+  // DQ (3/28/2015): Testing for corruption in return value.
+     ROSE_ASSERT(result != NULL);
+#if 0
+     printf ("In buildTypeOfType(): test 4: result = %p = %s \n",result,result->class_name().c_str());
+#endif
+
+     return result;
+   }
+
 
 
 #if 0
