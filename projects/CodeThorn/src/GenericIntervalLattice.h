@@ -18,13 +18,16 @@
 // we may want to make this type a template parameter of IntervalLattice for handling relational operators
 typedef CodeThorn::AType::BoolLattice BoolLatticeType;
 
+namespace SPRAY {
+
 template<typename Type>
 class GenericIntervalLattice {
   // creates an interval with a known left and right boundary
  public:
- GenericIntervalLattice() { setTop();}
- GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false) {} 
- GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false) {} 
+ GenericIntervalLattice():_exactJoin(false) { setTop();}
+ GenericIntervalLattice(Type number):_low(number),_high(number),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
+ GenericIntervalLattice(Type left, Type right):_low(left),_high(right),_isLowInf(false),_isHighInf(false),_exactJoin(false) {} 
+  void setExactJoin(bool exact) { _exactJoin=exact; }
   static GenericIntervalLattice highInfInterval(Type left) {
     GenericIntervalLattice t;
     t.setIsLowInf(false);
@@ -123,7 +126,7 @@ class GenericIntervalLattice {
     else if(l2.isTop())
       return true;
     else {
-      bool lowOk=(l2.isLowInf() || (!l1.isLowInf() && l1.getLow()>=l2.getLow()) );
+      bool lowOk=(l2.isLowInf() || (!l1.isLowInf() && !l2.isLowInf() && l1.getLow()>=l2.getLow()) );
       bool highOk=(l2.isHighInf() || (!l1.isHighInf() && l1.getHigh()<=l2.getHigh()) );
       return lowOk && highOk;
     }
@@ -204,15 +207,42 @@ class GenericIntervalLattice {
   }
 
   void join(GenericIntervalLattice other) {
+    // subsumption in case none of the two intervals has an unknown bound
+    if(!isInfLength()&&!other.isInfLength()) {
+      // handle 2 cases i) subset (2 variants), ii) constants (interval-length==1 for both)
+      if((_low>=other._low && _high<=other._high)
+         ||(other._low>=_low && other._high<=_high)
+         ||(isConst()&&other.isConst()) ) {
+        _low=std::min(_low,other._low);
+        _high=std::max(_high,other._high);
+        return;
+      }
+    }
     if(isLowInf()||other.isLowInf()) {
       setIsLowInf(true);
     } else {
-      _low=std::min(_low,other._low);
+      if(_exactJoin) {
+        _low=std::min(_low,other._low);
+      } else {
+        if(_low!=other._low) {
+          setIsLowInf(true);
+        } else {
+          // keep _low
+        }
+      }
     }
     if(isHighInf()||other.isHighInf()) {
       setIsHighInf(true);
     } else {
-      _high=std::max(_high,other._high);
+      if(_exactJoin) {
+        _high=std::max(_high,other._high);
+      } else {
+        if(_high!=other._high) {
+          setIsHighInf(true);
+        } else {
+          // keep _high
+        }
+      }
     }
   }
 
@@ -385,18 +415,26 @@ class GenericIntervalLattice {
     if(haveOverlap(l1,l2)) {
       return BoolLatticeType(CodeThorn::AType::Top());
     } else {
+      if(l1.isHighInf())
+        return false;
+      if(l1.isLowInf()&&!l2.isLowInf())
+        return true;
+      if(l2.isLowInf())
+        return false;
+      if(l2.isHighInf()&&!l1.isHighInf())
+        return true;
       if(l1.getHigh()<l2.getLow())
 	return BoolLatticeType(true);
       else
 	return BoolLatticeType(false);
     }
   }
-  BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
+  static BoolLatticeType isSmallerOrEqual(GenericIntervalLattice l1, GenericIntervalLattice l2) {
     return isSmaller(l1,l2)||isEqual(l1,l2);
   }
-  bool operator=(GenericIntervalLattice l2) {
+  bool operator==(GenericIntervalLattice l2) {
     return (isTop() && l2.isTop())
-    || (isBot() && l2.isTop())
+    || (isBot() && l2.isBot())
     || (getLow()==l2.getLow() && getHigh()==l2.getHigh())
     ;
   }
@@ -418,6 +456,9 @@ class GenericIntervalLattice {
   Type _high;
   bool _isLowInf;
   bool _isHighInf;
+  bool _exactJoin;
 };
+
+}
 
 #endif

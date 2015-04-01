@@ -223,7 +223,7 @@ set_target_properties(ROSE_DLL PROPERTIES
 )
 
 add_dependencies(ROSE_DLL
-  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf generate_stringify
+  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
   generate_rosePublicConfig poet)
 
 

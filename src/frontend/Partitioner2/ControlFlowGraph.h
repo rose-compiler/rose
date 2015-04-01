@@ -102,20 +102,20 @@ public:
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
+typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexIterator> VertexIndex;
 
 /** List of CFG vertex pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::VertexNodeIterator> VertexList;
-typedef std::list<ControlFlowGraph::ConstVertexNodeIterator> ConstVertexList;
+typedef std::list<ControlFlowGraph::VertexIterator> VertexList;
+typedef std::list<ControlFlowGraph::ConstVertexIterator> ConstVertexList;
 /** @} */
 
 /** List of CFG edge pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::EdgeNodeIterator> EdgeList;
-typedef std::list<ControlFlowGraph::ConstEdgeNodeIterator> ConstEdgeList;
+typedef std::list<ControlFlowGraph::EdgeIterator> EdgeList;
+typedef std::list<ControlFlowGraph::ConstEdgeIterator> ConstEdgeList;
 /** @} */
 
 /** Base class for CFG-adjustment callbacks.

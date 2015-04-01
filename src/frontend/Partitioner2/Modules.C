@@ -622,7 +622,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
         }
     }
 
-    ControlFlowGraph::ConstVertexNodeIterator bblockVertex = partitioner.findPlaceholder(bb->address());
+    ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
     SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
@@ -660,8 +660,8 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
     // higher up on the AST-building stack.
     if (bblockVertex != partitioner.cfg().vertices().end()) {
         bool isComplete = true;
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, bblockVertex->outEdges()) {
-            const ControlFlowGraph::VertexNode &target = *edge.target();
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, bblockVertex->outEdges()) {
+            const ControlFlowGraph::Vertex &target = *edge.target();
             if (target.value().type() == V_INDETERMINATE || target.value().type() == V_NONEXISTING) {
                 isComplete = false;
             } else {
@@ -704,7 +704,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator vertex = partitioner.findPlaceholder(blockVa);
+        ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(blockVa);
         if (vertex == partitioner.cfg().vertices().end()) {
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
@@ -739,7 +739,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     unsigned reasons = function->reasons();
 
     // Is the function part of the CFG?
-    ControlFlowGraph::ConstVertexNodeIterator entryVertex = partitioner.findPlaceholder(function->address());
+    ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(function->address());
     if (entryVertex != partitioner.cfg().vertices().end())
         reasons |= SgAsmFunction::FUNC_GRAPH;
     
@@ -749,7 +749,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 
     // Is the function the target of a function call?
     if (entryVertex != partitioner.cfg().vertices().end()) {
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, entryVertex->inEdges()) {
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
             if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                 reasons |= SgAsmFunction::FUNC_CALL_TARGET;
                 break;

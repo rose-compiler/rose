@@ -32,7 +32,7 @@ void SPRAY::ProcessQuery::printMatchResult()
       SgNode* matchedTerm = (*smbIt).second;
       ROSE_ASSERT(matchedTerm != NULL);
       std::cout << "  VAR: " << (*smbIt).first << "=" << 
-        astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
+        SPRAY::AstTerm::astTermWithNullValuesToString(matchedTerm) << " @" << matchedTerm << std::endl;
     }
   }
 }
@@ -60,11 +60,12 @@ SPRAY::ComputeAddressTakenInfo::AddressTakenInfo SPRAY::ComputeAddressTakenInfo:
 
 void SPRAY::ComputeAddressTakenInfo::OperandToVariableId::debugPrint(SgNode* sgn)
 {
-  std::cerr << sgn->class_name() << ": " << astTermWithNullValuesToString(sgn) << ", " \
-  << sgn->unparseToString() << ", " \
-  << sgn->get_file_info()->get_filenameString() << ", " \
-  << sgn->get_file_info()->get_line() << ", " \
-  << endl;
+  std::cerr << sgn->class_name() << ": " 
+            << SPRAY::AstTerm::astTermWithNullValuesToString(sgn) << ", " \
+            << sgn->unparseToString() << ", "                           \
+            << sgn->get_file_info()->get_filenameString() << ", "       \
+            << sgn->get_file_info()->get_line() << ", " \
+            << std::endl;
 }
 
 // base case for the recursion

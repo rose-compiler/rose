@@ -175,7 +175,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
             BOOST_FOREACH (SgAsmInstruction *insn, insns)
                 ::mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
             ::mlog[DEBUG] <<"  Data flow edges:\n";
-            BOOST_FOREACH (const DataFlow::Graph::EdgeNode &edge, indexNode.value().edges()) {
+            BOOST_FOREACH (const DataFlow::Graph::Edge &edge, indexNode.value().edges()) {
                 ::mlog[DEBUG] <<"    data flow #" <<edge.value().sequence
                               <<" from " <<edge.source()->value()
                               <<(DataFlow::Graph::EdgeValue::CLOBBER==edge.value().edgeType ? " clobbers " : " augments ")
@@ -206,7 +206,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 
     // Print the final data flow state for each CFG vertex that has no successors.
     ::mlog[TRACE] <<"Printing results...\n";
-    BOOST_FOREACH (const typename CFG::VertexNode &vertex, cfg.vertices()) {
+    BOOST_FOREACH (const typename CFG::Vertex &vertex, cfg.vertices()) {
         if (vertex.nOutEdges()==0) {
             rose_addr_t lastInsnAddr = SageInterface::querySubTree<SgAsmInstruction>(vertex.value()).back()->get_address();
             std::cout <<"\nTaint for each variable at " <<StringUtility::addrToString(lastInsnAddr) <<":\n";

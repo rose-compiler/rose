@@ -6,23 +6,23 @@
 
 #include "sage3basic.h"
 
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "Labeler.h"
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
 
-using namespace CodeThorn;
 using namespace SPRAY;
+using namespace std;
 
-CFAnalyzer::CFAnalyzer(Labeler* l):labeler(l){
+CFAnalysis::CFAnalysis(Labeler* l):labeler(l){
 }
 
-size_t CFAnalyzer::deleteFunctionCallLocalEdges(Flow& flow) {
+size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
 
 // MS: TODO: refactor the following two functions 
-LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
+LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
   nodeLabels=flow.nodeLabels();
@@ -33,7 +33,7 @@ LabelSet CFAnalyzer::functionCallLabels(Flow& flow) {
   return resultSet;
 }
 
-LabelSet CFAnalyzer::conditionLabels(Flow& flow) {
+LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
   nodeLabels=flow.nodeLabels();
@@ -44,7 +44,7 @@ LabelSet CFAnalyzer::conditionLabels(Flow& flow) {
   return resultSet;
 }
 
-LabelSet CFAnalyzer::functionEntryLabels(Flow& flow) {
+LabelSet CFAnalysis::functionEntryLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
   nodeLabels=flow.nodeLabels();
@@ -55,14 +55,14 @@ LabelSet CFAnalyzer::functionEntryLabels(Flow& flow) {
   return resultSet;
 }
 
-Label CFAnalyzer::correspondingFunctionExitLabel(Label entryLabel) {
+Label CFAnalysis::correspondingFunctionExitLabel(Label entryLabel) {
   ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
   SgNode* fdefnode=getNode(entryLabel);
   ROSE_ASSERT(fdefnode);
   return getLabeler()->functionExitLabel(fdefnode);
 }
 
-int CFAnalyzer::numberOfFunctionParameters(Label entryLabel) {
+int CFAnalysis::numberOfFunctionParameters(Label entryLabel) {
   ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
   SgNode* fdefnode=getNode(entryLabel);
   ROSE_ASSERT(fdefnode);
@@ -70,14 +70,14 @@ int CFAnalyzer::numberOfFunctionParameters(Label entryLabel) {
   return params.size();
 }
 
-bool CFAnalyzer::isVoidFunction(Label entryLabel) {
+bool CFAnalysis::isVoidFunction(Label entryLabel) {
   ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
   SgNode* fdefnode=getNode(entryLabel);
   ROSE_ASSERT(fdefnode);
   return isSgTypeVoid(SgNodeHelper::getFunctionReturnType(fdefnode));
 }
 
-LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
+LabelSetSet CFAnalysis::functionLabelSetSets(Flow& flow) {
   LabelSetSet result;
   LabelSet feLabels=functionEntryLabels(flow);
   for(LabelSet::iterator i=feLabels.begin();i!=feLabels.end();++i) {
@@ -88,14 +88,14 @@ LabelSetSet CFAnalyzer::functionLabelSetSets(Flow& flow) {
   return result;
 }
 
-LabelSet CFAnalyzer::functionLabelSet(Label entryLabel, Flow& flow) {
+LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
     Label exitLabel=correspondingFunctionExitLabel(entryLabel);
     LabelSet fLabels=flow.reachableNodesButNotBeyondTargetNode(entryLabel,exitLabel);
     return fLabels;
 }
 
 
-InterFlow CFAnalyzer::interFlow(Flow& flow) {
+InterFlow CFAnalysis::interFlow(Flow& flow) {
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
   InterFlow interFlow;
@@ -132,21 +132,21 @@ InterFlow CFAnalyzer::interFlow(Flow& flow) {
   return interFlow;
 }
 
-Label CFAnalyzer::getLabel(SgNode* node) {
+Label CFAnalysis::getLabel(SgNode* node) {
   assert(labeler);
   return labeler->getLabel(node);
 }
 
-SgNode* CFAnalyzer::getNode(Label label) {
+SgNode* CFAnalysis::getNode(Label label) {
   assert(labeler);
   return labeler->getNode(label);
 }
 
-Labeler* CFAnalyzer::getLabeler() {
+Labeler* CFAnalysis::getLabeler() {
   return labeler;
 }
 
-Label CFAnalyzer::initialLabel(SgNode* node) {
+Label CFAnalysis::initialLabel(SgNode* node) {
   assert(node);
 
   // special case of incExpr in SgForStatement
@@ -201,11 +201,11 @@ Label CFAnalyzer::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
   }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
+    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
   }
 }
  
-LabelSet CFAnalyzer::finalLabels(SgNode* node) {
+LabelSet CFAnalysis::finalLabels(SgNode* node) {
   assert(node);
   assert(labeler->isLabelRelevantNode(node));
   LabelSet finalSet;
@@ -292,12 +292,12 @@ LabelSet CFAnalyzer::finalLabels(SgNode* node) {
     return finalSet;
 
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalyzer::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
+    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
    }
 }
 
 
-Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
+Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   assert(s1);
   assert(s2);
   Flow flow12;
@@ -322,7 +322,7 @@ Flow CFAnalyzer::flow(SgNode* s1, SgNode* s2) {
   * \author Markus Schordan
   * \date 2013.
  */
-int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
+int CFAnalysis::inlineTrivialFunctions(Flow& flow) {
   //cerr<<"Error: inlineTrivialFunctions is deactivated."<<endl;
   //exit(1);
   // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
@@ -358,7 +358,7 @@ int CFAnalyzer::inlineTrivialFunctions(Flow& flow) {
   return numInlined;
 }
 
-int CFAnalyzer::reduceEmptyConditionNodes(Flow& flow) {
+int CFAnalysis::reduceEmptyConditionNodes(Flow& flow) {
   LabelSet labs=conditionLabels(flow);
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
@@ -369,7 +369,7 @@ int CFAnalyzer::reduceEmptyConditionNodes(Flow& flow) {
   return cnt;
 }
 
-int CFAnalyzer::reduceNode(Flow& flow, Label lab) {
+int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   Flow inFlow=flow.inEdges(lab);
   Flow outFlow=flow.outEdges(lab);
   /* description of essential operations:
@@ -401,7 +401,7 @@ int CFAnalyzer::reduceNode(Flow& flow, Label lab) {
   return 1;
 }
 
-int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
+int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
@@ -438,7 +438,7 @@ int CFAnalyzer::reduceBlockBeginNodes(Flow& flow) {
   return cnt;
 }
 
-void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
+void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   for(InterFlow::iterator i=interFlow.begin();i!=interFlow.end();++i) {
     if((*i).entry==Labeler::NO_LABEL && (*i).exit==Labeler::NO_LABEL) {
       Edge externalEdge=Edge((*i).call,EDGE_EXTERNAL,(*i).callReturn);      
@@ -454,7 +454,7 @@ void CFAnalyzer::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   }
 }
 
-LabelSet CFAnalyzer::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
+LabelSet CFAnalysis::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
   LabelSet ls;
   if(node==0)
     return ls;
@@ -469,7 +469,7 @@ LabelSet CFAnalyzer::setOfInitialLabelsOfStmtsInBlock(SgNode* node) {
   return ls;
 }
 
-Flow CFAnalyzer::controlDependenceGraph(Flow& controlFlow) {
+Flow CFAnalysis::controlDependenceGraph(Flow& controlFlow) {
   LabelSet condLabels=conditionLabels(controlFlow);
   LabelSet targetLabels;
   Flow controlDependenceEdges;
@@ -500,7 +500,7 @@ Flow CFAnalyzer::controlDependenceGraph(Flow& controlFlow) {
   return controlDependenceEdges;
 }
 
-Flow CFAnalyzer::WhileAndDoWhileLoopFlow(SgNode* node, 
+Flow CFAnalysis::WhileAndDoWhileLoopFlow(SgNode* node, 
                                          Flow edgeSet,
                                          EdgeType edgeTypeParam1,
                                          EdgeType edgeTypeParam2) {
@@ -559,7 +559,7 @@ LabelSet Flow::reachableNodesButNotBeyondTargetNode(Label start, Label target) {
 }
 
 
-Flow CFAnalyzer::flow(SgNode* node) {
+Flow CFAnalysis::flow(SgNode* node) {
   assert(node);
 
   Flow edgeSet;
@@ -769,7 +769,7 @@ Flow CFAnalyzer::flow(SgNode* node) {
     return edgeSet;
   }
   default:
-    cerr << "Error: Unknown node in CFAnalyzer::flow: "<<node->sage_class_name()<<endl; 
+    cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;
     exit(1);
   }

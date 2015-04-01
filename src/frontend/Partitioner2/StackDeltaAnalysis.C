@@ -31,7 +31,7 @@ void
 Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator vertex = findPlaceholder(va);
+        ControlFlowGraph::ConstVertexIterator vertex = findPlaceholder(va);
         if (vertex != cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bb = vertex->value().bblock()) {
                 bb->stackDeltaIn().clear();
@@ -49,7 +49,7 @@ Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
 struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
     const Partitioner &partitioner;
     InterproceduralPredicate(const Partitioner &partitioner): partitioner(partitioner) {}
-    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeNodeIterator &callEdge, size_t depth) {
+    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &callEdge, size_t depth) {
         if (depth > partitioner.stackDeltaInterproceduralLimit())
             return false;
         ASSERT_require(callEdge != cfg.edges().end());
@@ -199,7 +199,7 @@ public:
     // Required by dataflow engine: compute new output state given a vertex and input state.
     State::Ptr operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
         State::Ptr retval = State::promote(incomingState->clone());
-        P2::DataFlow::DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
+        P2::DataFlow::DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
         ASSERT_require(vertex != dfCfg.vertices().end());
         if (P2::DataFlow::DfCfgVertex::FAKED_CALL == vertex->value().type()) {
             // Adjust the stack pointer as if the function call returned.  If we know the function delta then use it, otherwise
@@ -292,7 +292,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     
     // Create the CFG that we'll use for dataflow.
-    ControlFlowGraph::ConstVertexNodeIterator cfgStart = findPlaceholder(function->address());
+    ControlFlowGraph::ConstVertexIterator cfgStart = findPlaceholder(function->address());
     if (cfgStart == cfg_.vertices().end()) {
         SAWYER_MESG(mlog[ERROR]) <<"functionStackDeltas: " <<function->printableName()
                                  <<" entry block is not attached to the CFG/AUM\n";
@@ -309,7 +309,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     InterproceduralPredicate ip(*this);
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(*this, cfg_, cfgStart, ip);
-    P2::DataFlow::DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
+    P2::DataFlow::DfCfg::VertexIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
     if (cpu==NULL) {
         mlog[DEBUG] <<"  no instruction semantics for this architecture\n";
@@ -322,7 +322,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     // Dump the CFG for debugging
     if (mlog[DEBUG]) {
         using namespace Sawyer::Container::Algorithm;
-        BOOST_FOREACH (const P2::DataFlow::DfCfg::VertexNode &vertex, dfCfg.vertices()) {
+        BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, dfCfg.vertices()) {
             mlog[DEBUG] <<"  Vertex #" <<vertex.id() <<" [";
             if (BasicBlock::Ptr bb = vertex.value().bblock())
                 mlog[DEBUG] <<" " <<bb->printableName();
@@ -340,7 +340,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
                     mlog[DEBUG] <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
             }
             mlog[DEBUG] <<"    successor vertices {";
-            BOOST_FOREACH (const P2::DataFlow::DfCfg::EdgeNode &edge, vertex.outEdges())
+            BOOST_FOREACH (const P2::DataFlow::DfCfg::Edge &edge, vertex.outEdges())
                 mlog[DEBUG] <<" " <<edge.target()->id();
             mlog[DEBUG] <<" }\n";
         }

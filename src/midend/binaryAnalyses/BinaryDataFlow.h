@@ -191,8 +191,8 @@ public:
 
         typedef Sawyer::Container::Algorithm::DepthFirstForwardEdgeTraversal<const CFG> Traversal;
         for (Traversal t(cfg, cfg.findVertex(startVertex)); t; ++t) {
-            typename CFG::ConstVertexNodeIterator source = t->source();
-            typename CFG::ConstVertexNodeIterator target = t->target();
+            typename CFG::ConstVertexIterator source = t->source();
+            typename CFG::ConstVertexIterator target = t->target();
             InstructionSemantics2::BaseSemantics::StatePtr state = postState[target->id()];
             if (state==NULL) {
                 ASSERT_not_null(postState[source->id()]);
@@ -318,7 +318,7 @@ public:
                 
                 ASSERT_require2(cfgVertexId < cfg_.nVertices(),
                                 "vertex " + boost::lexical_cast<std::string>(cfgVertexId) + " must be valid within CFG");
-                typename CFG::ConstVertexNodeIterator vertex = cfg_.findVertex(cfgVertexId);
+                typename CFG::ConstVertexIterator vertex = cfg_.findVertex(cfgVertexId);
                 StatePtr state = incomingState_[cfgVertexId];
                 ASSERT_not_null2(state,
                                  "initial state must exist for CFG vertex " + boost::lexical_cast<std::string>(cfgVertexId));
@@ -342,7 +342,7 @@ public:
                 // is modified as a result will have its CFG vertex added to the work list.
                 SAWYER_MESG(mlog[DEBUG]) <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
-                BOOST_FOREACH (const typename CFG::EdgeNode &edge, vertex->outEdges()) {
+                BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     StatePtr targetState = incomingState_[nextVertexId];
                     if (targetState==NULL) {

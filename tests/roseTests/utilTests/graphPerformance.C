@@ -274,7 +274,7 @@ yagi_random_vertex(const GraphType &g)
 }
 
 template<class GraphType>
-static typename GraphType::VertexNodeIterator
+static typename GraphType::VertexIterator
 sgl_random_vertex(GraphType &g)
 {
     size_t n = g.nVertices();
@@ -332,7 +332,7 @@ yagi_random_edge(const GraphType &g)
 }
 
 template<class GraphType>
-static typename GraphType::EdgeNodeIterator
+static typename GraphType::EdgeIterator
 sgl_random_edge(GraphType &g)
 {
     size_t n = g.nEdges();
@@ -491,8 +491,8 @@ sgl_time_add_edge()
     start_deadman(2);
     Sawyer::Stopwatch t;
     while (!had_alarm && g.nEdges()<MAX_EDGES) {
-        typename GraphType::VertexNodeIterator v1 = sgl_random_vertex(g);
-        typename GraphType::VertexNodeIterator v2 = sgl_random_vertex(g);
+        typename GraphType::VertexIterator v1 = sgl_random_vertex(g);
+        typename GraphType::VertexIterator v2 = sgl_random_vertex(g);
         g.insertEdge(v1, v2, 0);
     }
     t.stop();
@@ -581,8 +581,8 @@ sgl_time_vertex_traversal()
     start_deadman(2);
     Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
-        boost::iterator_range<typename GraphType::VertexNodeIterator> vi_pair = g.vertices();
-        for (typename GraphType::VertexNodeIterator iter=vi_pair.begin(); iter!=vi_pair.end() && !had_alarm; ++iter)
+        boost::iterator_range<typename GraphType::VertexIterator> vi_pair = g.vertices();
+        for (typename GraphType::VertexIterator iter=vi_pair.begin(); iter!=vi_pair.end() && !had_alarm; ++iter)
             ++niter;
     }
     t.stop();
@@ -654,8 +654,8 @@ sgl_time_edge_traversal()
     start_deadman(2);
     Sawyer::Stopwatch t;
     while (!had_alarm && niter<MAX_COUNT) {
-        boost::iterator_range<typename GraphType::EdgeNodeIterator> edges = g.edges();
-        for (typename GraphType::EdgeNodeIterator edge=edges.begin(); edge!=edges.end() && !had_alarm; ++edge)
+        boost::iterator_range<typename GraphType::EdgeIterator> edges = g.edges();
+        for (typename GraphType::EdgeIterator edge=edges.begin(); edge!=edges.end() && !had_alarm; ++edge)
             ++niter;
     }
     t.stop();
@@ -863,7 +863,7 @@ sgl_time_clear_vertex()
 {
     GraphType g;
     sgl_random_graph(g, MAX_VERTICES, 2, 4.0);
-    std::vector<typename GraphType::VertexNodeIterator> vertices;
+    std::vector<typename GraphType::VertexIterator> vertices;
     for (size_t i=0; i<g.nVertices(); ++i)
         vertices.push_back(g.findVertex(i));
     shuffle(vertices);
