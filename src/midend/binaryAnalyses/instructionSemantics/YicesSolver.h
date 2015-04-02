@@ -86,6 +86,7 @@ private:
 
     /* These out_*() functions convert a InsnSemanticsExpr expression into text which is suitable as input to "yices"
      * executable. */
+    void out_comments(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
     void out_common_subexpressions(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
     void out_define(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&, Definitions*);
     void out_assert(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);

@@ -123,7 +123,7 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<TreeNodePtr> &expr
 
     o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
       <<"; Uninterpreted variables\n"
-      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n\n";
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
     out_define(o, exprs, defns);
 
     o <<"\n"
@@ -131,6 +131,8 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<TreeNodePtr> &expr
       <<"; Common subexpressions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
     out_common_subexpressions(o, exprs);
+
+    out_comments(o, exprs);
 
     o <<"\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
@@ -333,11 +335,17 @@ YicesSolver::out_define(std::ostream &o, const std::vector<TreeNodePtr> &exprs, 
                 if (leaf->is_variable()) {
                     if (defns->find(leaf->get_name())==defns->end()) {
                         defns->insert(leaf->get_name());
+                        o <<"\n";
+                        if (!leaf->get_comment().empty())
+                            o <<StringUtility::prefixLines(leaf->get_comment(), "; ") <<"\n";
                         o <<"(define v" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
                     }
                 } else if (leaf->is_memory()) {
                     if (defns->find(leaf->get_name())==defns->end()) {
                         defns->insert(leaf->get_name());
+                        o <<"\n";
+                        if (!leaf->get_comment().empty())
+                            o <<StringUtility::prefixLines(leaf->get_comment(), "; ") <<"\n";
                         o <<"(define m" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
                     }
                 }
@@ -359,8 +367,10 @@ void
 YicesSolver::out_common_subexpressions(std::ostream &o, const std::vector<TreeNodePtr> &exprs) {
     std::vector<TreeNodePtr> cses = findCommonSubexpressions(exprs);
     for (size_t i=0; i<cses.size(); ++i) {
-        o <<"\n"
-          <<"; effective size = " <<StringUtility::plural(cses[i]->nnodes(), "nodes")
+        o <<"\n";
+        if (!cses[i]->get_comment().empty())
+            o <<StringUtility::prefixLines(cses[i]->get_comment(), "; ") <<"\n";
+        o <<"; effective size = " <<StringUtility::plural(cses[i]->nnodes(), "nodes")
           <<", actual size = " <<StringUtility::plural(cses[i]->nnodesUnique(), "nodes") <<"\n";
         std::string termName = "cse_" + StringUtility::numberToString(i);
         o <<"(define " <<termName <<"::" <<get_typename(cses[i]) <<" ";
@@ -368,6 +378,46 @@ YicesSolver::out_common_subexpressions(std::ostream &o, const std::vector<TreeNo
         o <<")\n";
         termNames.insert(cses[i], termName);
     }
+}
+
+//  Generate comments for certain expressions
+void
+YicesSolver::out_comments(std::ostream &o, const std::vector<TreeNodePtr> &exprs) {
+    struct T1: Visitor {
+        typedef std::set<const TreeNode*> SeenNodes;
+        SeenNodes seen;
+        std::ostream &o;
+        bool commented;
+
+        T1(std::ostream &o)
+            : o(o), commented(false) {}
+
+        VisitAction preVisit(const TreeNodePtr &node) {
+            if (!seen.insert(getRawPointer(node)).second)
+                return TRUNCATE;                        // already processed this subexpression
+            if (LeafNodePtr leaf = node->isLeafNode()) {
+                if ((leaf->is_variable() || leaf->is_memory()) && !leaf->get_comment().empty()) {
+                    if (!commented) {
+                        o <<"\n"
+                          <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+                          <<"; Variable comments\n"
+                          <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+                        commented = true;
+                    }
+                    o <<"\n; " <<leaf->toString() <<": "
+                      <<StringUtility::prefixLines(leaf->get_comment(), ";    ", false) <<"\n";
+                }
+            }
+            return CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr&) {
+            return CONTINUE;
+        }
+    } t1(o);
+
+    BOOST_FOREACH (const TreeNodePtr &expr, exprs)
+        expr->depth_first_traversal(t1);
 }
 
 /** Generate a Yices "assert" statement for an expression. */
