@@ -51,12 +51,22 @@ struct Settings {
     size_t maxPaths;                                    // max number of paths to find (0==unlimited)
     bool multiPathSmt;                                  // send multiple paths at once to the SMT solver?
     size_t maxExprDepth;                                // max depth when printing expressions
+    bool showExprWidth;                                 // show expression widths in bits?
+    bool debugSmtSolver;                                // turn on SMT debugging?
+    Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
     Settings()
         : beginVertex("_start"), expansionDepthLimit(4), vertexVisitLimit(1), showInstructions(true),
           showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
-          graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1), multiPathSmt(false), maxExprDepth(4) {}
+          graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1), multiPathSmt(false), maxExprDepth(4),
+          showExprWidth(false), debugSmtSolver(false) {}
 };
 static Settings settings;
+
+// This is a "register" that stores a description of the current path.  The major and minor numbers are arbitrary, but chosen
+// so that they hopefully don't conflict with any real registers, which tend to start counting at zero.  Since we're using
+// BaseSemantics::RegisterStateGeneric, we can use its flexibility to store extra "registers" without making any other changes
+// to the architecture.
+static const RegisterDescriptor REG_PATH(99, 0, 0, 1);
 
 // Describe and parse the command-line
 static Sawyer::CommandLine::ParserResult
@@ -154,6 +164,12 @@ parseCommandLine(int argc, char *argv[])
                .doc("Enables a mode of operation where information about only one path at a time is sent to the SMT solver. "
                     "See @s{multi-path} for details."));
 
+    cfg.insert(Switch("stack")
+               .argument("va", nonNegativeIntegerParser(settings.initialStackPtr))
+               .doc("Virtual address to use for the initial stack pointer.  If no stack address is specified then the "
+                    "analysis uses a symbolic value.  One benefit of specifying a concrete value is that it helps "
+                    "disambiguate stack variables from other variables."));
+
     //--------------------------- 
     SwitchGroup out("Output switches");
     out.insert(Switch("show-instructions")
@@ -220,8 +236,28 @@ parseCommandLine(int argc, char *argv[])
 
     out.insert(Switch("max-expr-depth")
                .argument("n", nonNegativeIntegerParser(settings.maxExprDepth))
-               .doc("Maximum depth to which symbolic expressions are printed in diagnostic messages.  The default is " +
+               .doc("Maximum depth to which symbolic expressions are printed in diagnostic messages.  If @v{n} is zero then "
+                    "then entire expression is displayed. The default is " +
                     StringUtility::numberToString(settings.maxExprDepth) + "."));
+
+    out.insert(Switch("show-expr-width")
+               .intrinsicValue(true, settings.showExprWidth)
+               .doc("Show width in bits for symbolic expressions.  This is useful, but can make the expressions overly "
+                    "verbose and less readable.  The @s{no-show-expr-width} turns this off. The default is to " +
+                    std::string(settings.showExprWidth ? "" : "not ") + "show expression widths."));
+    out.insert(Switch("no-show-expr-width")
+               .key("show-expr-width")
+               .intrinsicValue(false, settings.showExprWidth)
+               .hidden(true));
+
+    out.insert(Switch("debug-smt")
+               .intrinsicValue(true, settings.debugSmtSolver)
+               .doc("Turns on debugging of the SMT solver.  The @s{no-debug-smt} switch disables debugging. The default "
+                    "is to " + std::string(settings.debugSmtSolver ? "" : "not ") + "debug the solver."));
+    out.insert(Switch("no-debug-smt")
+               .key("debug-smt")
+               .intrinsicValue(false, settings.debugSmtSolver)
+               .hidden(true));
 
     return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
 }
@@ -828,6 +864,15 @@ printGraphViz(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pa
     return fileName;
 }
 
+static SymbolicSemantics::Formatter
+symbolicFormat(const std::string &prefix="") {
+    SymbolicSemantics::Formatter retval;
+    retval.set_line_prefix(prefix);
+    retval.expr_formatter.max_depth = settings.maxExprDepth;
+    retval.expr_formatter.show_width = settings.showExprWidth;
+    return retval;
+}
+
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 // RiscOperators that add some additional tracking information for memory values.
@@ -897,35 +942,51 @@ public:
     const VarComments& varComments() const { return varComments_; }
 
 private:
-    /** Create a comment to describe a memory address if possible. */
-    std::string commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode) {
+    /** Create a comment to describe a memory address if possible. The nBytes will be non-zero when we're describing
+     *  an address as opposed to a value stored across some addresses. */
+    std::string commentForVariable(const BaseSemantics::SValuePtr &addr, const std::string &accessMode,
+                                   size_t byteNumber=0, size_t nBytes=0) {
         using namespace InsnSemanticsExpr;
-        std::string varComment = "first " + accessMode + " at path position #" +
-                                 StringUtility::numberToString(pathInsnIndex_-1) +
-                                 ": " + unparseInstruction(get_insn());
+        std::string varComment = "first " + accessMode + " at ";
+        if (pathInsnIndex_ > 0)
+            varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_-1) + ", ";
+        varComment += "instruction " + unparseInstructionWithAddress(get_insn());
 
         // Sometimes we can save useful information about the address.
-        TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
-        if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
-            if (addrLeaf->is_known())
-                varComment += "\nat address " + addrLeaf->toString();
-        } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
-            if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
-                addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
-                addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
-                LeafNodePtr base = addrINode->child(0)->isLeafNode();
-                LeafNodePtr offset = addrINode->child(1)->isLeafNode();
-                varComment += "\nat address ";
-                if (base->get_comment().empty()) {
-                    varComment = base->toString();
-                } else {
-                    varComment += base->get_comment();
+        if (nBytes != 1) {
+            TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
+            if (LeafNodePtr addrLeaf = addrExpr->isLeafNode()) {
+                if (addrLeaf->is_known()) {
+                    varComment += "\n";
+                    if (nBytes > 1) {
+                        varComment += StringUtility::numberToString(byteNumber) + " of " +
+                                      StringUtility::numberToString(nBytes) + " bytes starting ";
+                    }
+                    varComment += "at address " + addrLeaf->toString();
                 }
-                Sawyer::Container::BitVector tmp = offset->get_bits();
-                if (tmp.get(tmp.size()-1)) {
-                    varComment += " - 0x" + tmp.negate().toHex();
-                } else {
-                    varComment += " + 0x" + tmp.toHex();
+            } else if (InternalNodePtr addrINode = addrExpr->isInternalNode()) {
+                if (addrINode->get_operator() == OP_ADD && addrINode->nchildren() == 2 &&
+                    addrINode->child(0)->isLeafNode() && addrINode->child(0)->isLeafNode()->is_variable() &&
+                    addrINode->child(1)->isLeafNode() && addrINode->child(1)->isLeafNode()->is_known()) {
+                    LeafNodePtr base = addrINode->child(0)->isLeafNode();
+                    LeafNodePtr offset = addrINode->child(1)->isLeafNode();
+                    varComment += "\n";
+                    if (nBytes > 1) {
+                        varComment += StringUtility::numberToString(byteNumber) + " of " +
+                                      StringUtility::numberToString(nBytes) + " bytes starting ";
+                    }
+                    varComment += "at address ";
+                    if (base->get_comment().empty()) {
+                        varComment = base->toString();
+                    } else {
+                        varComment += base->get_comment();
+                    }
+                    Sawyer::Container::BitVector tmp = offset->get_bits();
+                    if (tmp.get(tmp.size()-1)) {
+                        varComment += " - 0x" + tmp.negate().toHex();
+                    } else {
+                        varComment += " + 0x" + tmp.toHex();
+                    }
                 }
             }
         }
@@ -935,9 +996,26 @@ private:
 public:
     virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         Super::startInstruction(insn);
-        ++pathInsnIndex_;
+        if (!settings.multiPathSmt)
+            ++pathInsnIndex_;
+        if (::mlog[DEBUG]) {
+            SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
+            ::mlog[DEBUG] <<"  +-------------------------------------------------\n"
+                          <<"  | " <<unparseInstructionWithAddress(insn) <<"\n"
+                          <<"  +-------------------------------------------------\n"
+                          <<"    state before instruction:\n"
+                          <<(*get_state() + fmt);
+        }
     }
 
+    virtual void finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+        if (::mlog[DEBUG]) {
+            SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
+            ::mlog[DEBUG] <<"    state after instruction:\n" <<(*get_state()+fmt);
+        }
+        Super::finishInstruction(insn);
+    }
+    
     /** Read memory.
      *
      *  If multi-path is enabled, then return a new memory expression that describes the process of reading a value from the
@@ -952,16 +1030,21 @@ public:
             return retval;                              // not called from dispatcher on behalf of an instruction
 
         // Save a description of the variable
-        std::string varComment = commentForVariable(addr, "read");
         InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable())
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+            std::string varComment = commentForVariable(addr, "read");
             varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
-
-        // Save a description of the address
-        InsnSemanticsExpr::TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
-        if (addrExpr->isLeafNode())
-            varComments_.insertMaybe(addrExpr->isLeafNode()->toString(), varComment);
-
+        }
+        
+        // Save a description for its addresses
+        size_t nBytes = dflt->get_width() / 8;
+        for (size_t i=0; i<nBytes; ++i) {
+            SymbolicSemantics::SValuePtr va = SymbolicSemantics::SValue::promote(add(addr, number_(addr->get_width(), i)));
+            if (va->get_expression()->isLeafNode()) {
+                std::string varComment = commentForVariable(addr, "read", i, nBytes);
+                varComments_.insertMaybe(va->get_expression()->isLeafNode()->toString(), varComment);
+            }
+        }
         return retval;
     }
 
@@ -977,38 +1060,68 @@ public:
         Super::writeMemory(segreg, addr, value, cond);
 
         // Save a description of the variable
-        std::string varComment = commentForVariable(addr, "write");
         InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
-        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable())
+        if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
+            std::string varComment = commentForVariable(addr, "write");
             varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
+        }
 
-        // Save a description of the address
-        InsnSemanticsExpr::TreeNodePtr addrExpr = SymbolicSemantics::SValue::promote(addr)->get_expression();
-        if (addrExpr->isLeafNode())
-            varComments_.insertMaybe(addrExpr->isLeafNode()->toString(), varComment);
+        // Save a description for its addresses
+        size_t nBytes = value->get_width() / 8;
+        for (size_t i=0; i<nBytes; ++i) {
+            SymbolicSemantics::SValuePtr va = SymbolicSemantics::SValue::promote(add(addr, number_(addr->get_width(), i)));
+            if (va->get_expression()->isLeafNode()) {
+                std::string varComment = commentForVariable(addr, "read", i, nBytes);
+                varComments_.insertMaybe(va->get_expression()->isLeafNode()->toString(), varComment);
+            }
+        }
     }
 };
 
 /** Build a new virtual CPU. */
 BaseSemantics::DispatcherPtr
 buildVirtualCpu(const P2::Partitioner &partitioner) {
+
+    // Augment the register dictionary with information about the execution path constraint.
+    static RegisterDictionary *myRegs = NULL;
+    if (NULL==myRegs) {
+        myRegs = new RegisterDictionary("findPath");
+        myRegs->insert(partitioner.instructionProvider().registerDictionary());
+        myRegs->insert("path", REG_PATH);
+    }
+
     // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
     SMTSolver *solver = NULL;
-    RiscOperatorsPtr ops = RiscOperators::instance(partitioner.instructionProvider().registerDictionary(), solver);
+    RiscOperatorsPtr ops = RiscOperators::instance(myRegs, solver);
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
-    cpu->autoResetInstructionPointer(false);
+
+    // Initialize the stack pointer
+    if (settings.initialStackPtr) {
+        const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
+        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings.initialStackPtr));
+    }
+    
     return cpu;
 }
 
 /** Process instructions for one basic block on the specified virtual CPU. */
 void
 processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu) {
+    using namespace InsnSemanticsExpr;
+
     ASSERT_not_null(bblock);
     Stream error(::mlog[ERROR]);
-    Stream debug(::mlog[DEBUG]);
+    
+    // Update the path constraint "register"
+    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+    BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
+    BaseSemantics::SValuePtr pathConstraint = ops->equal(ip, va);
+    ops->writeRegister(REG_PATH, pathConstraint);
+
+    // Process each instruction in the basic block
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
-            SAWYER_MESG(debug) <<"  " <<unparseInstructionWithAddress(insn) <<"\n";
             cpu->processInstruction(insn);
         }
     } catch (const BaseSemantics::Exception &e) {
@@ -1057,8 +1170,12 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     }
 
     YicesSolver solver;
+    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
+    ops->writeRegister(cpu->instructionPointerRegister(),
+                       ops->number_(cpu->instructionPointerRegister().get_nbits(), path.frontVertex()->value().address()));
     std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
 
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
@@ -1147,11 +1264,9 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
         showPathEvidence(solver, ops);
 
         if (settings.showFinalState) {
-            std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n";
-            SymbolicSemantics::Formatter fmt;
-            fmt.set_line_prefix("    ");
-            fmt.expr_formatter.max_depth = settings.maxExprDepth;
-            std::cout <<(*ops->get_state()+fmt);
+            SymbolicSemantics::Formatter fmt = symbolicFormat("    ");
+            std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n"
+                      <<(*ops->get_state() + fmt);
         }
 
     } else if (isSatisfied == SMTSolver::SAT_NO) {
@@ -1178,21 +1293,22 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     using namespace InsnSemanticsExpr;
 
     // The instruction pointer constraint to use values from s1, otherwise from s2.
-    SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(ops->undefined_(1));// FIXME[Robb P. Matzke 2015-03-26]
+    SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops.get()));
 
-#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
     Stream debug(::mlog[DEBUG]);
-    debug <<"Merging register states\n"
-          <<"  First state is:\n"
-          <<*s1
-          <<"  Second state is:\n"
-          <<*s2;
-#endif
+    if (debug) {
+        SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
+        debug <<"  +-------------------------------------------------\n"
+              <<"  | Merging states for next instruction's input\n"
+              <<"  +-------------------------------------------------\n"
+              <<"    State s1:\n" <<(*s1 + fmt)
+              <<"    State s2:\n" <<(*s2 + fmt);
+    }
 
     // Merge register states s1reg and s2reg into mergedReg
     BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->get_register_state());
     BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->get_register_state());
-    BaseSemantics::RegisterStatePtr mergedReg = s1reg->clone();
+    BaseSemantics::RegisterStateGenericPtr mergedReg = BaseSemantics::RegisterStateGeneric::promote(s1reg->clone());
     BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
         if (s1reg->is_partly_stored(pair.desc)) {
             // The register exists (at least partly) in both states, so merge its values.
@@ -1205,6 +1321,7 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
             mergedReg->writeRegister(pair.desc, pair.value, ops.get());
         }
     }
+    mergedReg->erase_register(REG_PATH, ops.get()); // will be updated separately in processBasicBlock
 
     // Merge memory states s1mem and s2mem into mergedMem
     BaseSemantics::SymbolicMemoryPtr s1mem = BaseSemantics::SymbolicMemory::promote(s1->get_memory_state());
@@ -1227,9 +1344,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     using namespace Sawyer::Container::Algorithm;
     using namespace InsnSemanticsExpr;
 
-#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
     Stream debug(::mlog[DEBUG]);
-#endif
     Stream info(::mlog[INFO]);
     info <<"testing multi-path feasibility for paths graph with "
          <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
@@ -1242,10 +1357,6 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
         printGraphViz(dotFile, partitioner, paths, pathsBeginVertex, pathsEndVertices);
         info <<"  saved as \"" <<StringUtility::cEscape(dotFileName) <<"\"\n";
     }
-
-    YicesSolver solver;
-    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
 
     // Cycles are not allowed for multi-path feasibility analysis. Loops and recursion must have already been unrolled.
     ASSERT_require(paths.isValidVertex(pathsBeginVertex));
@@ -1261,10 +1372,20 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     ASSERT_require(pathsBeginVertex->nInEdges() == 0);
     std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex, pathsEndVertices) {
+        // Build the semantics framework and initialize the path constraints.
+        YicesSolver solver;
+        solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+        BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+        ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
+        ops->writeRegister(cpu->instructionPointerRegister(),
+                           ops->number_(cpu->instructionPointerRegister().get_nbits(),
+                                        pathsBeginVertex->value().address()));
+
         // This loop is a little bit like a data-flow, except we don't have to worry about cycles in the CFG, which simplifies
         // things quite a bit. We can process the vertices by doing a depth-first traversal starting at the end, and building
         // the intermediate states as we back out of the traversal.  This guarantees that the final states for each of a
-        // vertex's CFG predecessors is already computed when we're ready to compute the vertex's final state.
+        // vertex's CFG predecessors are already computed when we're ready to compute this vertex's final state.
         typedef DepthFirstReverseGraphTraversal<const P2::ControlFlowGraph> Traversal;
         for (Traversal t(paths, pathsEndVertex, LEAVE_VERTEX); t; ++t) {
             // Build the initial state by merging all incoming states.
@@ -1272,7 +1393,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
             ASSERT_require(outState[t.vertex()->id()]==NULL);
             if (0 == t.vertex()->nInEdges()) {
                 ASSERT_require(t.vertex() == pathsBeginVertex);
-                state = cpu->get_state()->clone(); state->clear();
+                state = cpu->get_state();               // the initial state
             } else {
                 BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->inEdges()) {
                     P2::ControlFlowGraph::ConstVertexIterator predecessorVertex = edge.source();
@@ -1291,28 +1412,18 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
             if (t.vertex() != pathsEndVertex)
                 processBasicBlock(t.vertex()->value().bblock(), cpu);
             outState[t.vertex()->id()] = cpu->get_state()->clone();
-#if 1 // DEBUGGING [Robb P. Matzke 2015-04-01]
-            BaseSemantics::Formatter fmt;
-            fmt.set_line_prefix("    ");
-            if (t.vertex() != pathsEndVertex) {
-                debug <<"  state after basic block:\n" <<(*cpu->get_state()+fmt);
-            } else {
-                debug <<"  state at entrance to end vertex:\n" <<(*cpu->get_state()+fmt);
-            }
-#endif
         }
         ASSERT_not_null(outState[pathsEndVertex->id()]);
         if (settings.showFinalState) {
-            SymbolicSemantics::Formatter fmt;
-            fmt.expr_formatter.max_depth = settings.maxExprDepth;
-            std::cerr <<"Final state:\n" <<(*cpu->get_state()+fmt);
+            SymbolicSemantics::Formatter fmt = symbolicFormat();
+            std::cerr <<"Final state:\n" <<(*cpu->get_state() + fmt);
         }
-
-        // Final instruction pointer expression
-        BaseSemantics::SValuePtr ip = ops->readRegister(partitioner.instructionProvider().instructionPointerRegister());
-        LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathsEndVertex->value().address());
+        
+        // Final path expression
+        BaseSemantics::SValuePtr path = ops->readRegister(REG_PATH);
         TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
-                                                      targetVa, SymbolicSemantics::SValue::promote(ip)->get_expression());
+                                                      LeafNode::create_integer(1, 1),
+                                                      SymbolicSemantics::SValue::promote(path)->get_expression());
         info <<"  constraints expression has " <<StringUtility::plural(constraint->nnodes(), "terms") <<"\n";
         if (settings.showConstraints) {
             std::cout <<"  Constraints:\n";
