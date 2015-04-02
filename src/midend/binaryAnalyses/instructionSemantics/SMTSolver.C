@@ -137,8 +137,7 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            if (!line.empty())
-                fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
+            fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
         }
     }
 
