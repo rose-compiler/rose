@@ -100,7 +100,7 @@ struct Formatter {
     };
     Formatter()
         : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
-          max_depth(0), cur_depth(0) {}
+          max_depth(0), cur_depth(0), show_width(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -108,6 +108,7 @@ struct Formatter {
     size_t max_depth;                           /**< If non-zero, then replace deep parts of expressions with "...". */
     size_t cur_depth;                           /**< Depth in expression. */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+    bool show_width;                            /**< Show width in bits inside square brackets. */
 };
 
 /** Return type for visitors. */
@@ -602,7 +603,7 @@ public:
 
     /** Create a new Boolean, a single-bit integer. */
     static LeafNodePtr create_boolean(bool b, std::string comment="") {
-        return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
+        return create_integer(1, (uint64_t)(b?1:0), comment);
     }
 
     /** Construct a new memory state.  A memory state is a function that maps addresses to values. */

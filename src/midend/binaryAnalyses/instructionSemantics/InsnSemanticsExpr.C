@@ -292,11 +292,20 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
             --fmt.cur_depth;
         }
     } formatGuard(fmt);
-    
-    o <<"(" <<to_str(op) <<"[" <<nbits;
-    if (fmt.show_comments!=Formatter::CMT_SILENT && !comment.empty())
-        o <<"," <<comment;
-    o <<"]";
+
+    o <<"(" <<to_str(op);
+
+    char bracket = '[';
+    if (fmt.show_width) {
+        o <<bracket <<nbits;
+        bracket = ',';
+    }
+    if (fmt.show_comments!=Formatter::CMT_SILENT && !comment.empty()) {
+        o <<bracket <<comment;
+        bracket = ',';
+    }
+    if (bracket != '[')
+        o <<"]";
 
     if (fmt.max_depth!=0 && fmt.cur_depth>=fmt.max_depth && 0!=nchildren()) {
         o <<" ...";
@@ -347,8 +356,8 @@ InternalNode::print(std::ostream &o, Formatter &fmt) const
             if (!printed)
                 children[i]->print(o, fmt);
         }
-        o <<")";
     }
+    o <<")";
 }
 
 bool
@@ -1900,7 +1909,13 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
 {
     bool showed_comment = false;
     if (is_known()) {
-        if (bits.size() <= 64) {
+        if (bits.size() == 1) {
+            if (bits.toInteger()) {
+                o <<"true";
+            } else {
+                o <<"false";
+            }
+        } else if (bits.size() <= 64) {
             uint64_t ival = bits.toInteger();
             if ((32==nbits || 64==nbits) && 0!=(ival & 0xffff0000) && 0xffff0000!=(ival & 0xffff0000)) {
                 // The value is probably an address, so print it like one.
@@ -1956,10 +1971,18 @@ LeafNode::print_as_signed(std::ostream &o, Formatter &formatter, bool as_signed)
         }
         o <<renamed;
     }
-    o <<"[" <<nbits;
-    if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty())
-        o <<"," <<comment;
-    o <<"]";
+
+    char bracket = '[';
+    if (formatter.show_width) {
+        o <<bracket <<nbits;
+        bracket = ',';
+    }
+    if (!showed_comment && formatter.show_comments!=Formatter::CMT_SILENT && !comment.empty()) {
+        o <<bracket <<comment;
+        bracket = ',';
+    }
+    if (bracket != '[')
+        o <<"]";
 }
 
 bool
