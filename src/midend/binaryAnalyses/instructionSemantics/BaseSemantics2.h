@@ -2062,8 +2062,8 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of @ref
-     * subtract and @ref equalToZero. */
+    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of
+     *  other operations. */
     SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
 
 
