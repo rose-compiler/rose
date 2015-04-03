@@ -297,7 +297,7 @@ private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
-    VertexIndex vertexIndex_;                           // Vertex-by-address index for the CFG
+    CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
@@ -527,6 +527,12 @@ public:
         return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
     }
     /** @} */
+
+    /** Returns the CFG vertex containing specified instruction.
+     *
+     *  Returns the control flow graph vertex that contains the specified instruction. If the instruction does not exist in the
+     *  CFG then the end vertex is returned. */
+    ControlFlowGraph::ConstVertexIterator instructionVertex(rose_addr_t insnVa) const;
 
     /** Returns instructions that overlap with specified address interval.
      *
@@ -1447,11 +1453,11 @@ public:
      *
      *  @{ */
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       EdgeList *inwardInterFunctionEdges /*out*/,
-                                       EdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
+                                       CfgEdgeList *inwardInterFunctionEdges /*out*/,
+                                       CfgEdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                       ConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
+                                       CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                       CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
                                        std::vector<size_t> &inwardInterFunctionEdges /*out*/,
                                        std::vector<size_t> &outwardInterFunctionEdges /*out*/) const /*final*/;

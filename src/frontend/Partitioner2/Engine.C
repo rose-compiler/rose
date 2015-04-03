@@ -957,7 +957,7 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
         partitioner.detachFunction(function);           // must be detached in order to modify block ownership
-        EdgeList inwardConflictEdges, outwardConflictEdges;
+        CfgEdgeList inwardConflictEdges, outwardConflictEdges;
         size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges);
         if (nFailures > 0) {
             insertUnique(retval, function, sortFunctionsByAddress);
