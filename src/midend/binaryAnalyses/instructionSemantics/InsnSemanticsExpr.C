@@ -826,6 +826,16 @@ AndSimplifier::rewrite(const InternalNode *inode) const
         if (child && child->is_known() && child->get_bits().isEqualToZero())
             return LeafNode::create_integer(inode->get_nbits(), 0, inode->get_comment());
     }
+
+    // (and X X) => X (for any number of arguments that are all the same)
+    bool allSameArgs = true;
+    for (size_t i=1; i<inode->nchildren() && allSameArgs; ++i) {
+        if (!inode->child(0)->equivalent_to(inode->child(i)))
+            allSameArgs = false;
+    }
+    if (allSameArgs)
+        return inode->child(0);
+
     return TreeNodePtr();
 }
 
