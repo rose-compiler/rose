@@ -104,7 +104,7 @@ add_library(sage3 OBJECT
   ${CMAKE_CURRENT_BINARY_DIR}/ompparser.C
   ${CMAKE_CURRENT_BINARY_DIR}/omp-lex.yy.C
 )
-add_dependencies(sage3 rosetta_generated generate_stringify)
+add_dependencies(sage3 rosetta_generated)
 
 
 ########### install files ###############
