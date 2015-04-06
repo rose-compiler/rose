@@ -14,8 +14,6 @@
 #include <set>
 #include "VariableIdUtils.h"
 
-using namespace CodeThorn;
-
 // AST Query Processor
 // common functor to process any query and build match result
 

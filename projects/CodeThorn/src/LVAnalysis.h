@@ -6,16 +6,12 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "LVLattice.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "WorkList.h"
 #include "AnalysisAbstractionLayer.h"
 #include "DFAstAttribute.h"
-
-using namespace std;
-using namespace CodeThorn;
-
 #include "LVTransferFunctions.h"
 
 namespace SPRAY {
@@ -31,7 +27,7 @@ class LVPropertyStateFactory : public PropertyStateFactory {
   * \author Markus Schordan
   * \date 2013.
  */
-class LVAnalysis : public DFAnalysis2 {
+class LVAnalysis : public DFAnalysisBase {
  public:
   LVAnalysis();
   ~LVAnalysis();

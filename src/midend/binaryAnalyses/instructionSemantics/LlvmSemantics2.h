@@ -357,7 +357,7 @@ public:
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL;
         RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+        BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
         return instance(dispatcher);
     }
 

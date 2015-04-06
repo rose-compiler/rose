@@ -166,10 +166,7 @@ public:
      * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const = 0;
 
-    /** Returns true if the expression is a known value.
-     *
-     *  FIXME: The current implementation returns true only when @p this node is leaf node with a known value. Since
-     *         InsnSemanticsExpr does not do constant folding, this is of limited use. [RPM 2010-06-08]. */
+    /** Returns true if the expression is a known value. */
     virtual bool is_known() const = 0;
 
     /** Returns the integer value of a node for which is_known() returns true.  The high-order bits, those beyond the number of

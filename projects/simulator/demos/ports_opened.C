@@ -371,5 +371,6 @@ main(int argc, char *argv[], char *envp[]) {
 
     sim.terminate_self();
 }
-
+#else
+int main() { return 0; }
 #endif

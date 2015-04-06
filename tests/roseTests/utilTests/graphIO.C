@@ -98,7 +98,7 @@ std::ostream& operator<<(std::ostream &output, const Sawyer::Container::Graph<V,
         output <<"    [" <<i <<"]\t" <<graph.findVertex(i)->value() <<"\n";
     output <<"  edges:\n";
     for (size_t i=0; i<graph.nEdges(); ++i) {
-        typename Sawyer::Container::Graph<V, E>::ConstEdgeNodeIterator edge = graph.findEdge(i);
+        typename Sawyer::Container::Graph<V, E>::ConstEdgeIterator edge = graph.findEdge(i);
         output <<"    [" <<i <<"]\t" <<edge->source()->id() <<"\t" <<edge->target()->id() <<"\t" <<edge->value() <<"\n";
     }
     return output;
@@ -110,7 +110,7 @@ std::ostream& operator<<(std::ostream &output, const Sawyer::Container::Graph<V,
 
 template<class V, class E>
 void buildGraph(Sawyer::Container::Graph<V, E> &graph, size_t nverts, size_t nedges) {
-    typedef typename Sawyer::Container::Graph<V, E>::VertexNodeIterator Vertex;
+    typedef typename Sawyer::Container::Graph<V, E>::VertexIterator Vertex;
     graph.clear();
     std::vector<Vertex> verts;
     for (size_t i=0; i<nverts; ++i)
@@ -124,8 +124,8 @@ void buildGraph(Sawyer::Container::Graph<V, E> &graph, size_t nverts, size_t ned
 
 template<class V, class E>
 void checkGraphs(const Sawyer::Container::Graph<V, E> &a, const Sawyer::Container::Graph<V, E> &b) {
-    typedef typename Sawyer::Container::Graph<V, E>::ConstVertexNodeIterator Vertex;
-    typedef typename Sawyer::Container::Graph<V, E>::ConstEdgeNodeIterator Edge;
+    typedef typename Sawyer::Container::Graph<V, E>::ConstVertexIterator Vertex;
+    typedef typename Sawyer::Container::Graph<V, E>::ConstEdgeIterator Edge;
 
     ASSERT_always_require(a.nVertices()==b.nVertices());
     ASSERT_always_require(a.nEdges()==b.nEdges());
@@ -152,8 +152,8 @@ int main(int argc, char *argv[]) {
     using namespace StringUtility;
 
     typedef Sawyer::Container::Graph<VertexValue, EdgeValue> Graph;
-    typedef Graph::VertexNodeIterator Vertex;
-    typedef Graph::EdgeNodeIterator Edge;
+    typedef Graph::VertexIterator Vertex;
+    typedef Graph::EdgeIterator Edge;
 
     Diagnostics::initialize();
 

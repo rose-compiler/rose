@@ -5,7 +5,7 @@
 #include <iostream>
 #include "VariableIdMapping.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RDLattice.h"
 #include "WorkList.h"
 #include "RDAstAttribute.h"
@@ -24,6 +24,7 @@
 using namespace std;
 using namespace CodeThorn;
 using namespace DFAstAttributeConversion;
+using namespace SPRAY;
 
 int main(int argc, char* argv[]) {
   bool option_rd_analysis=true;
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
     if(option_rd_analysis)
     {
       cout << "STATUS: creating RD analyzer."<<endl;
-      RDAnalysis* rdAnalysis=new RDAnalysis();
+      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;
@@ -141,7 +142,7 @@ int main(int argc, char* argv[]) {
       if(option_dd_analysis) {
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
         int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
         cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         

@@ -98,7 +98,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
         // We're taking a shortcut here and assuming that data flow edge sequence number == edge ID. This will be true
         // since we inserted the edges in the order of their sequence numbers, but only if we haven't erased any edges
         // since then.
-        const DataFlow::Graph::EdgeNode &edge = *dfg.findEdge(edgeId);
+        const DataFlow::Graph::Edge &edge = *dfg.findEdge(edgeId);
         ASSERT_require(edge.id()==edge.value().sequence);
 
         const DataFlow::Variable &srcVariable = edge.source()->value();

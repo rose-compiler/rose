@@ -7,6 +7,7 @@ namespace BinaryAnalysis {
 
 void DataFlow::initDiagnostics() {}
 void TaintedFlow::initDiagnostics() {}
+void InstructionSemantics2::initDiagnostics() {}
 
 } // namespace
 } // namespace

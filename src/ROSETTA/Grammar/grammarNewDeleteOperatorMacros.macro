@@ -6,14 +6,23 @@
 // and AST. Large blocks of contiguous storage for each RI node is allocated
 // by a new operator written for each class.
 
-#ifndef HAVE_PTHREAD_H
-	#pragma message("pthread.h is not available, synchronization being skipped") 
-	#ifndef ALLOC_MUTEX
-		#define ALLOC_MUTEX(CLASS_NAME, HOW)
-	#endif
+#if defined(_REENTRANT) && defined(HAVE_PTHREAD_H)
+    // User wants multi-thread support and POSIX threads are available.
+#   include <pthread.h>
+    static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_MUTEX_INITIALIZER;
 #else
-	#include <pthread.h>
-	static pthread_mutex_t $CLASSNAME_allocation_mutex = PTHREAD_MUTEX_INITIALIZER;
+     // Cause synchronization to be skipped.
+#    ifndef ALLOC_MUTEX
+#        define ALLOC_MUTEX(CLASS_NAME, HOW)
+#    endif
+#    ifdef _REENTRANT
+        // User wnats multi-thread support, but POSIX is unavailable. Consider using Boost Threads which are more portable.
+#       ifdef _MSC_VER
+#           pragma message("POSIX threads are not available; synchronization being skipped")
+#       else
+#           warning "POSIX threads are not available; synchronization being skipped"
+#       endif
+#    endif
 #endif
 
 // Static variables supporting memory pools

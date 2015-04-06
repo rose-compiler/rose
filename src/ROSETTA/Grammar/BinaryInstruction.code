@@ -8,6 +8,7 @@
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
+class RegisterDictionary;
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
@@ -101,7 +102,7 @@ HEADER_INTERPRETATION_END
 
 HEADER_BINARY_INSTRUCTION_START
         public:
-		static const int64_t INVALID_STACK_DELTA;
+                static const int64_t INVALID_STACK_DELTA;
 
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
@@ -129,7 +130,7 @@ HEADER_BINARY_INSTRUCTION_START
                                                             const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
                 virtual bool isUnknown() const;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -198,7 +199,7 @@ HEADER_FLOAT_VALUE_EXPRESSION_START
         public:
                 SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
                 SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
-		SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
+                SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
                 void set_nativeValue(double);
                 double get_nativeValue() const;
                 void updateBitVector();
@@ -3618,6 +3619,11 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
+                static X86InstructionSize instructionSizeForWidth(size_t);
+                static size_t widthForInstructionSize(X86InstructionSize);
+                static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+		static const RegisterDictionary* registersForWidth(size_t);
+
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
                                                 rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
@@ -3637,7 +3643,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                                                             bool* complete,
                                                             const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
                 virtual bool isUnknown() const;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3647,7 +3653,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3657,7 +3663,7 @@ HEADER_BINARY_ARM_INSTRUCTION_START
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
@@ -3674,7 +3680,7 @@ HEADER_BINARY_MIPS_INSTRUCTION_START
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
                 virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
@@ -3693,7 +3699,7 @@ HEADER_BINARY_M68K_INSTRUCTION_START
                                                             bool* complete,
                                                             const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 
@@ -3788,7 +3794,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
-		FUNC_EXCEPTION_HANDLER
+                FUNC_EXCEPTION_HANDLER
                                  = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
                 FUNC_CALL_TARGET = 0x00020000,  /**< Target of a function call instruction sequence in the CFG. When used as

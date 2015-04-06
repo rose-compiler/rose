@@ -4,14 +4,14 @@
 #include <sstream>
 
 using namespace std;
-SPRAY::LVAstAttribute::LVAstAttribute(LVLattice* elem):_elem(elem) {
+SPRAY::LVAstAttribute::LVAstAttribute(SPRAY::LVLattice* elem):_elem(elem) {
 }
 
-bool SPRAY::LVAstAttribute::isLive(VariableId variableId) {
+bool SPRAY::LVAstAttribute::isLive(SPRAY::VariableId variableId) {
   return _elem->exists(variableId);
 }
 
-void SPRAY::LVAstAttribute::toStream(ostream& os, VariableIdMapping* vim) {
+void SPRAY::LVAstAttribute::toStream(ostream& os, SPRAY::VariableIdMapping* vim) {
   os<<"LV:";
   _elem->toStream(os,vim);
 }
@@ -26,8 +26,8 @@ bool SPRAY::LVAstAttribute::isBottomElement() {
   return _elem->isBot();
 }
 
-VariableIdSet SPRAY::LVAstAttribute::allVariableIds() {
-  VariableIdSet set;
+SPRAY::VariableIdSet SPRAY::LVAstAttribute::allVariableIds() {
+  SPRAY::VariableIdSet set;
   for(SPRAY::LVLattice::iterator i=begin();i!=end();++i) {
     set.insert(*i);
   }

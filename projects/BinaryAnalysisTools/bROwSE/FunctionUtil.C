@@ -268,9 +268,9 @@ functionNReturns(P2::Partitioner &partitioner, const P2::Function::Ptr &function
     size_t nReturns = 0;
     if (function && !function->attr<size_t>(ATTR_NReturns).assignTo(nReturns)) {
         BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
-            P2::ControlFlowGraph::ConstVertexNodeIterator vertex = partitioner.findPlaceholder(bblockVa);
+            P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bblockVa);
             if (vertex != partitioner.cfg().vertices().end()) {
-                BOOST_FOREACH (const P2::ControlFlowGraph::EdgeNode &edge, vertex->outEdges()) {
+                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges()) {
                     if (edge.value().type() == P2::E_FUNCTION_RETURN)
                         ++nReturns;
                 }
@@ -322,7 +322,7 @@ functionAst(P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
 struct MaxInterproceduralDepth: P2::DataFlow::InterproceduralPredicate {
     size_t maxDepth;
     explicit MaxInterproceduralDepth(size_t n): maxDepth(n) {}
-    bool operator()(const P2::ControlFlowGraph&, const P2::ControlFlowGraph::ConstEdgeNodeIterator&, size_t depth) {
+    bool operator()(const P2::ControlFlowGraph&, const P2::ControlFlowGraph::ConstEdgeIterator&, size_t depth) {
         return depth <= maxDepth;
     }
 };
@@ -344,7 +344,7 @@ functionDataFlow(P2::Partitioner &partitioner, const P2::Function::Ptr &function
             MaxInterproceduralDepth ipPredicate(partitioner.stackDeltaInterproceduralLimit());
     
             // Build the CFG for this one function.
-            P2::ControlFlowGraph::VertexNodeIterator startVertex = partitioner.findPlaceholder(function->address());
+            P2::ControlFlowGraph::VertexIterator startVertex = partitioner.findPlaceholder(function->address());
             ASSERT_require(startVertex != partitioner.cfg().vertices().end());
             P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), startVertex, ipPredicate);
 
