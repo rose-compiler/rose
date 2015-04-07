@@ -377,6 +377,8 @@ analyterix_SOURCES = \
   AliasAnalysis.C \
   AnalysisAbstractionLayer.C \
   AnalysisAbstractionLayer.h \
+  AnalysisAstAnnotator.h \
+  AnalysisAstAnnotator.C \
   AstTerm.C \
   AstTerm.h \
   AType.C \
