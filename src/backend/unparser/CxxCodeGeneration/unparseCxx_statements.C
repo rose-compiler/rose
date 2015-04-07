@@ -3384,22 +3384,37 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      newinfo.unset_inConditional();
 
 #if 0
+
+#error "DEAD CODE!"
+
      SgExpression *tmp_expr = NULL;
      if ( (tmp_expr = for_stmt->get_test_expr()))
           unparseExpression(tmp_expr, info);
 #else
   // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
-  // printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
-  // curprint (" /* test */ ");
+#if 0
+     printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
+     curprint (" /* test */ ");
+#endif
      SgStatement *test_stmt = for_stmt->get_test();
      ROSE_ASSERT(test_stmt != NULL);
   // if ( test_stmt != NULL )
      SgUnparse_Info testinfo(info);
      testinfo.set_SkipSemiColon();
      testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#if 0
+     printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#endif
      unparseStatement(test_stmt, testinfo);
 #endif
+
+  // DQ (4/6/2015): If the test is a transformation, then we have to output the semi-colon directly (see inliner tutorial test).
+     if (saved_unparsedPartiallyUsingTokenStream == true && test_stmt->isTransformation() == true)
+        {
+       // ROSE_ASSERT(test_stmt->isTransformation() == true);
+       // curprint (" /* output semi-colon at end of test */ ");
+          curprint (";");
+        }
 
 #if 0
      curprint ( string("; "));

@@ -78,4 +78,7 @@ ROSE_DLL_API SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStateme
 //! Remove the declaration of a given variable
 ROSE_DLL_API void removeVariableDeclaration(SgInitializedName* initname);
 
+//! Check for consistancy of isTransformation flags for nodes marked as a transformation.
+ROSE_DLL_API void checkTransformedFlagsVisitor(SgNode* n);
+
 #endif // INLINERSUPPORT_H

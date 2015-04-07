@@ -20,19 +20,43 @@ int foo()
      return a + 3;
    }
 
+
+int foobar()
+   {
+     int a = 0;
+     while (a < 5)
+        {
+          ++a;
+        }
+
+     return a + 3;
+   }
+
+
+
 int main(int, char**)
    {
   // Two trival function calls to inline
      incrementX();
      incrementX();
 
+     int a = 0;
+     while (a < 5)
+        {
+          ++a;
+        }
+
   // Something more interesting to inline
-  // for (; foo() < 7;)
-     int i = 0;
-     for (; foo() < 7; i++)
+     for (; foo() < 7;)
         {
           x++;
         }
 
-     return x;
+     int b = 0;
+     while (b < 5)
+        {
+          ++b;
+        }
+
+     return 0;
    }
