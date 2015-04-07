@@ -24,9 +24,9 @@ bool sortDataBlocks(const DataBlock::Ptr&, const DataBlock::Ptr&);
 bool sortFunctionsByAddress(const Function::Ptr&, const Function::Ptr&);
 bool sortFunctionNodesByAddress(const SgAsmFunction*, const SgAsmFunction*);
 bool sortByExpression(const BasicBlock::Successor&, const BasicBlock::Successor&);
-bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexNodeIterator&, const ControlFlowGraph::ConstVertexNodeIterator&);
-bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
-bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeNodeIterator&, const ControlFlowGraph::ConstEdgeNodeIterator&);
+bool sortVerticesByAddress(const ControlFlowGraph::ConstVertexIterator&, const ControlFlowGraph::ConstVertexIterator&);
+bool sortEdgesBySrc(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
+bool sortEdgesByDst(const ControlFlowGraph::ConstEdgeIterator&, const ControlFlowGraph::ConstEdgeIterator&);
 bool sortBlocksForAst(SgAsmBlock*, SgAsmBlock*);
 bool sortInstructionsByAddress(SgAsmInstruction*, SgAsmInstruction*);
 
@@ -121,8 +121,8 @@ getUnique(const Container &container, const Value &item, Comparator cmp) {
 std::ostream& operator<<(std::ostream&, const AddressUser&);
 std::ostream& operator<<(std::ostream&, const AddressUsers&);
 std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::VertexNode&);
-std::ostream& operator<<(std::ostream&, const ControlFlowGraph::EdgeNode&);
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Vertex&);
+std::ostream& operator<<(std::ostream&, const ControlFlowGraph::Edge&);
 
 /** Parse an address interval.
  *

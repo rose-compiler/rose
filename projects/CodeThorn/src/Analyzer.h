@@ -19,7 +19,7 @@
 
 #include "AstTerm.h"
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RoseAst.h"
 #include "SgNodeHelper.h"
 #include "ExprAnalyzer.h"
@@ -28,8 +28,6 @@
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
-
-using namespace std;
 
 namespace CodeThorn {
 
@@ -45,7 +43,7 @@ namespace CodeThorn {
   class AstNodeInfo : public AstAttribute {
   public:
   AstNodeInfo():label(0),initialLabel(0){}
-    string toString() { stringstream ss;
+    std::string toString() { std::stringstream ss;
       ss<<"\\n lab:"<<label<<" ";
       ss<<"init:"<<initialLabel<<" ";
       ss<<"final:"<<finalLabelsSet.toString();
@@ -83,13 +81,13 @@ namespace CodeThorn {
     VariableMode getVariableMode(VariableId);
     void update(Analyzer* analyzer, EState* estate);
     bool isHotVariable(Analyzer* analyzer, VariableId varId);
-    string toString(VariableIdMapping* variableIdMapping);
+    std::string toString(VariableIdMapping* variableIdMapping);
 #if 0
     bool isVariableBeyondTreshold(Analyzer* analyzer, VariableId varId);
 #endif
   private:
-    map<VariableId,set<int>* > _variablesMap;
-    map<VariableId,VariableMode> _variablesModeMap;
+    std::map<VariableId,std::set<int>* > _variablesMap;
+    std::map<VariableId,VariableMode> _variablesModeMap;
     long int _threshold;
   };
 
@@ -107,7 +105,7 @@ namespace CodeThorn {
     
     void initAstNodeInfo(SgNode* node);
     bool isActiveGlobalTopify();
-    static string nodeToString(SgNode* node);
+    static std::string nodeToString(SgNode* node);
     void initializeSolver1(std::string functionToStartAt,SgNode* root, bool oneFunctionOnly);
     void initializeTraceSolver(std::string functionToStartAt,SgNode* root);
     void continueAnalysisFrom(EState* newStartEState);
@@ -129,7 +127,7 @@ namespace CodeThorn {
     bool isLTLRelevantLabel(Label label);
     bool isStdIOLabel(Label label);
     bool isStartLabel(Label label);
-    set<const EState*> nonLTLRelevantEStates();
+    std::set<const EState*> nonLTLRelevantEStates();
     bool isTerminationRelevantLabel(Label label);
     
     // 6 experimental functions
@@ -144,7 +142,7 @@ namespace CodeThorn {
     // requires semantically reduced STG
     int semanticExplosionOfInputNodesFromOutputNodeConstraints();
     bool checkEStateSet();
-    bool isConsistentEStatePtrSet(set<const EState*> estatePtrSet);
+    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
     // this function requires that no LTL graph is computed
     void deleteNonRelevantEStates();
@@ -162,7 +160,7 @@ namespace CodeThorn {
     void pruneLeavesRec();
     // connects start, input, output and worklist states according to possible paths in the transition graph. 
     // removes all states and transitions that are not necessary for the graph that only consists of these new transitions. The two parameters allow to select input and/or output states to remain in the STG.
-    void reduceGraphInOutWorklistOnly(bool reduceIn=true, bool reduceOut=true);
+    void reduceGraphInOutWorklistOnly(bool includeIn=true, bool includeOut=true, bool includeErr=false);
     // extracts input sequences leading to each discovered failing assertion where discovered for the first time.
     // stores results in PropertyValueTable "reachabilityResults".
     // returns length of the longest of these sequences if it can be guaranteed that all processed traces are the
@@ -187,11 +185,13 @@ namespace CodeThorn {
     EState createEState(Label label, PState pstate, ConstraintSet cset);
     EState createEState(Label label, PState pstate, ConstraintSet cset, InputOutput io);
 
-    //returns a list of transitions representing existing paths from "startState" to all possible input/output/worklist states (no output -> output)
-    // the returned set has to be deleted by the calling function.
-    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* startState);                                                          
-    boost::unordered_set<Transition*>* transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
-                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited);
+    //returns a list of transitions representing existing paths from "startState" to all possible input/output/error states (no output -> output)
+    // collection of transitions to worklist states currently disabled. the returned set has to be deleted by the calling function.
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* startState, 
+								      bool includeIn, bool includeOut, bool includeErr);                                                          
+    boost::unordered_set<Transition*>* transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState, 
+                                                            	      boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
+								      bool includeIn, bool includeOut, bool includeErr);
     // adds a string representation of the shortest input path from start state to assertEState to reachabilityResults. returns the length of the 
     // counterexample input sequence.
     int addCounterexample(int assertCode, const EState* assertEState);
@@ -201,16 +201,16 @@ namespace CodeThorn {
     // please note: target has to be a predecessor of source (reversed trace)
     list<const EState*> reverseInOutSequenceDijkstra(const EState* source, const EState* target, bool counterexampleWithOutput = false);
     list<const EState*> filterStdInOutOnly(list<const EState*>& states, bool counterexampleWithOutput = false) const;
-    string reversedInOutRunToString(list<const EState*>& run);
+    std::string reversedInOutRunToString(list<const EState*>& run);
     //returns the shortest possible number of input states on the path leading to "target".
     int inputSequenceLength(const EState* target);
     
   public:
     SgNode* getCond(SgNode* node);
     void generateAstNodeInfo(SgNode* node);
-    string generateSpotSTG();
+    std::string generateSpotSTG();
   private:
-    void generateSpotTransition(stringstream& ss, const Transition& t);
+    void generateSpotTransition(std::stringstream& ss, const Transition& t);
     //less than comarisions on two states according to (#input transitions * #output transitions)
     bool indegreeTimesOutdegreeLessThan(const EState* a, const EState* b);
   public:
@@ -218,8 +218,8 @@ namespace CodeThorn {
     void storeStgBackup();
     //load previous backup of the transitionGraph, storing the current version as a backup instead
     void swapStgWithBackup();
-    //reset the analyzer to now use solver 8 (includes choosing solver8-specific analyzer settings)
-    void resetAnalyzerToSolver8(EState* startEState);
+    //solver 8 becomes the active solver used by the analyzer. Deletion of previous data iff "resetAnalyzerData" is set to true.
+    void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     //! requires init
     void runSolver1();
     void runSolver2();
@@ -230,9 +230,9 @@ namespace CodeThorn {
     void runSolver7();
     void runSolver8();
     void runSolver();
-    //! The analyzer requires a CFAnalyzer to obtain the ICFG.
-    void setCFAnalyzer(CFAnalyzer* cf) { cfanalyzer=cf; }
-    CFAnalyzer* getCFAnalyzer() const { return cfanalyzer; }
+    //! The analyzer requires a CFAnalysis to obtain the ICFG.
+    void setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
+    CFAnalysis* getCFAnalyzer() const { return cfanalyzer; }
     
     //void initializeVariableIdMapping(SgProject* project) { variableIdMapping.computeVariableSymbolMapping(project); }
 
@@ -252,7 +252,7 @@ namespace CodeThorn {
     //private: TODO
     Flow flow;
     SgNode* startFunRoot;
-    CFAnalyzer* cfanalyzer;
+    CFAnalysis* cfanalyzer;
     VariableValueMonitor variableValueMonitor;
     void setVariableValueThreshold(int threshold) { variableValueMonitor.setThreshold(threshold); }
   public:
@@ -261,7 +261,7 @@ namespace CodeThorn {
     //! compute the VariableIds of SgInitializedNamePtrList
     VariableIdMapping::VariableIdSet determineVariableIdsOfSgInitializedNames(SgInitializedNamePtrList& namePtrList);
     
-    set<string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
+    std::set<std::string> variableIdsToVariableNames(VariableIdMapping::VariableIdSet);
     typedef list<SgVariableDeclaration*> VariableDeclarationList;
     VariableDeclarationList computeUnusedGlobalVariableDeclarationList(SgProject* root);
     VariableDeclarationList computeUsedGlobalVariableDeclarationList(SgProject* root);
@@ -278,8 +278,8 @@ namespace CodeThorn {
       _assertNodes=listOfLabeledAssertNodes(root);
     }
     size_t getNumberOfErrorLabels();
-    string labelNameOfAssertLabel(Label lab) {
-      string labelName;
+    std::string labelNameOfAssertLabel(Label lab) {
+      std::string labelName;
       for(list<pair<SgLabelStatement*,SgNode*> >::iterator i=_assertNodes.begin();i!=_assertNodes.end();++i)
         if(lab==getLabeler()->getLabel((*i).second))
           labelName=SgNodeHelper::getLabelName((*i).first);
@@ -305,29 +305,31 @@ namespace CodeThorn {
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
     const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
+    const EState* getLatestErrorEState() {return _latestErrorEState;}
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
     int numberOfInputVarValues() { return _inputVarValues.size(); }
     std::set<int> getInputVarValues() { return _inputVarValues; }
     list<pair<SgLabelStatement*,SgNode*> > _assertNodes;
-    void setCsvAssertLiveFileName(string filename) { _csv_assert_live_file=filename; }
-    VariableId globalVarIdByName(string varName) { return globalVarName2VarIdMapping[varName]; }
-    void setStgTraceFileName(string filename) {
+    void setCsvAssertLiveFileName(std::string filename) { _csv_assert_live_file=filename; }
+    VariableId globalVarIdByName(std::string varName) { return globalVarName2VarIdMapping[varName]; }
+    void setStgTraceFileName(std::string filename) {
       _stg_trace_filename=filename;
       std::ofstream fout;
       fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
       fout<<"START"<<endl;
       fout.close();    // close. Will be used with append.
     }
-    string _csv_assert_live_file; // to become private
+    std::string _csv_assert_live_file; // to become private
   private:
-    string _stg_trace_filename;
+    std::string _stg_trace_filename;
  public:
     // only used temporarily for binary-binding prototype
-    map<string,VariableId> globalVarName2VarIdMapping;
-    vector<bool> binaryBindingAssert;
+    std::map<std::string,VariableId> globalVarName2VarIdMapping;
+    std::vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
+    void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
     void eventGlobalTopifyTurnedOn();
     void setMinimizeStates(bool minimizeStates) { _minimizeStates=minimizeStates; }
     bool isIncompleteSTGReady();
@@ -384,12 +386,14 @@ namespace CodeThorn {
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
     long int _maxTransitionsForcedTop;
+    long int _maxIterationsForcedTop;
     bool _treatStdErrLikeFailedAssert;
     bool _skipSelectedFunctionCalls;
     ExplorationMode _explorationMode;
     list<FailedAssertion> _firstAssertionOccurences;
     const EState* _estateBeforeMissingInput;
-    const EState* _latestOutputEstate;
+    const EState* _latestOutputEState;
+    const EState* _latestErrorEState;
     bool _minimizeStates;
     bool _topifyModeActive;
     int _iterations;

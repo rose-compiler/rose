@@ -6,6 +6,8 @@
   * \date 2012.
  */
 
+using namespace std;
+
 template<typename T>
 void EqualityMaintainer<T>::addEquality(T var1, T var2) {
   // a) determine whether var1 exists (found+=1)

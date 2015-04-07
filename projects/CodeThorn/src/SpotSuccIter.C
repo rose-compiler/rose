@@ -41,8 +41,16 @@ bdd SpotSuccIter::current_acceptance_conditions() const {
 bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   bdd transCond = bddtrue;
   const EState* myTarget=t.target;
+
+  // MS: resolved merge conflict 
+  InputOutput io =myTarget->io; 
+  if (io.isStdErrIO() || io.isFailedAssertIO()) { // Error states are ignored and are treated as dead ends. 
+                                                  // They do not contain LTL specific behavior and no states follow them.
+    return bddfalse;
+  } 
+
   AType::ConstIntLattice myIOVal=myTarget->determineUniqueIOValue();
- 
+
   // check if there exists a single input or output value (remove for support of symbolic analysis)
   if(myTarget->io.isStdInIO()||myTarget->io.isStdOutIO()) {
     if(!myIOVal.isConstInt()) {
@@ -52,6 +60,7 @@ bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
     }
   }
   //determine possible input / output values at target state
+  //cout << "DEBUG: generateSpotTransition. target state's label: " << myTarget->label() << "   target state's InputOutput val: " << myTarget->io.op << endl;
   int ioValAtTarget = myIOVal.getIntValue();
 #if 1
   //convert the single input/output value into set representations (for future symbolic analysis mode)

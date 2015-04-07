@@ -1,7 +1,7 @@
 // Author: Markus Schordan, 2013.
 
-#ifndef RDANALYSISASTATTRIBUTE_H
-#define RDANALYSISASTATTRIBUTE_H
+#ifndef RDASTATTRIBUTE_H
+#define RDASTATTRIBUTE_H
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"
@@ -11,22 +11,26 @@
 
 using std::string;
 
+namespace SPRAY {
+
 class RDAstAttribute : public RDAstAttributeInterface {
  public:
   virtual bool isBottomElement();
-  virtual VariableIdSet allVariableIds();
+  virtual SPRAY::VariableIdSet allVariableIds();
   virtual SPRAY::LabelSet allLabels();
-  virtual SPRAY::LabelSet definitionsOfVariableId(VariableId varId);
-  virtual VariableIdSet variableIdsOfDefinition(SPRAY::Label def);
+  virtual SPRAY::LabelSet definitionsOfVariableId(SPRAY::VariableId varId);
+  virtual SPRAY::VariableIdSet variableIdsOfDefinition(SPRAY::Label def);
   virtual iterator begin();
   virtual iterator end();
   virtual ~RDAstAttribute();
  public:
-  RDAstAttribute(RDLattice* elem);
-  void toStream(std::ostream& os, VariableIdMapping* vim);
+  RDAstAttribute(SPRAY::RDLattice* elem);
+  void toStream(std::ostream& os, SPRAY::VariableIdMapping* vim);
   string toString();
  private:
-  RDLattice* _elem;
+  SPRAY::RDLattice* _elem;
 };
+
+}
 
 #endif

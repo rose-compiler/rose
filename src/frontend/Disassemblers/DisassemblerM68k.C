@@ -4793,15 +4793,19 @@ void
 DisassemblerM68k::init()
 {
     // Default register dictionary
+    const RegisterDictionary *regdict = NULL;
     if ((family & m68k_freescale) != 0) {
-        set_registers(RegisterDictionary::dictionary_coldfire_emac());
+        regdict = RegisterDictionary::dictionary_coldfire_emac();
     } else {
-        set_registers(RegisterDictionary::dictionary_m68000());
+        regdict = RegisterDictionary::dictionary_m68000();
     }
+    set_registers(regdict);
     REG_IP = *get_registers()->lookup("pc");
     REG_SP = *get_registers()->lookup("a7");
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
+    p_proto_dispatcher->addressWidth(32);
+    p_proto_dispatcher->set_register_dictionary(regdict);
 
     set_wordsize(2);
     set_alignment(2);

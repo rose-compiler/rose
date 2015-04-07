@@ -208,7 +208,6 @@ void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
                          BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
-    ASSERT_require(32==address->get_width());
     ASSERT_require(8==value->get_width());
     BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }

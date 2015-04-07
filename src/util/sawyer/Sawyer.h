@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_H
 #define Sawyer_H
 
@@ -275,6 +282,13 @@
  *  };
  * @endcode */
 
+// Version numbers (conditional compiliation is only so we can test version mismatch handling)
+#ifndef SAWYER_VERSION_MAJOR
+#define SAWYER_VERSION_MAJOR    0
+#define SAWYER_VERSION_MINOR    1
+#define SAWYER_VERSION_PATCH    0
+#endif
+
 // Macros for thread-safety portability. This allows Sawyer to be compiled with or without thread support and not have a huge
 // proliferation of conditional compilation directives in the main body of source code.
 #ifdef _REENTRANT
@@ -304,15 +318,23 @@
 #   define SAWYER_EXPORT_NORETURN /*void*/
 #endif
 
+#define SAWYER_LINKAGE_INFO SAWYER_VERSION_MAJOR, SAWYER_VERSION_MINOR, SAWYER_VERSION_PATCH, SAWYER_MULTI_THREADED
+#define SAWYER_CHECK_LINKAGE Sawyer::initializeLibrary(SAWYER_LINKAGE_INFO)
+    
 
 /** Name space for the entire library.  All %Sawyer functionality except for some C preprocessor macros exists inside this
  * namespace.  Most of the macros begin with the string "SAWYER_". */
 namespace Sawyer {
-
-/** Explicitly initialize the library. This initializes any global objects provided by the library to users.  This happens
- *  automatically for many API calls, but sometimes needs to be called explicitly. Calling this after the library has already
- *  been initialized does nothing. The function always returns true. */
-SAWYER_EXPORT bool initializeLibrary();
+    
+/** Explicitly initialize the library.
+ *
+ *  This initializes any global objects provided by the library to users.  This happens automatically for many API calls, but
+ *  sometimes needs to be called explicitly. It can be called as often as desired; each call checks caller-callee consistency
+ *  (version number and configuration), but only the first call does any initialization. The function always returns true. */
+SAWYER_EXPORT bool initializeLibrary(size_t vmajor=SAWYER_VERSION_MAJOR,
+                                     size_t vminor=SAWYER_VERSION_MINOR,
+                                     size_t vpatch=SAWYER_VERSION_PATCH,
+                                     bool withThreads=SAWYER_MULTI_THREADED);
 
 /** Portable replacement for ::strtoll
  *
@@ -370,6 +392,7 @@ SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
 # define SAWYER_PRETTY_FUNCTION __FUNCSIG__
 # define SAWYER_MAY_ALIAS /*void*/
 # define SAWYER_STATIC_INIT /*void*/
+# define SAWYER_DEPRECATED(WHY) /*void*/
 
 // Microsoft compiler doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
 // which will be cleaned up propertly at end of scope or exceptions.
@@ -387,6 +410,7 @@ SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
 # define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
 # define SAWYER_MAY_ALIAS /*void*/
 # define SAWYER_STATIC_INIT /*void*/
+# define SAWYER_DEPRECATED(WHY) /*void*/
 
 // Apple compilers doesn't support stack arrays whose size is not known at compile time.  We fudge by using an STL vector,
 // which will be cleaned up propertly at end of scope or exceptions.
@@ -404,10 +428,11 @@ SAWYER_EXPORT std::string generateSequentialName(size_t length=3);
 # define SAWYER_ATTR_NORETURN __attribute__((noreturn))
 # define SAWYER_PRETTY_FUNCTION __PRETTY_FUNCTION__
 # define SAWYER_MAY_ALIAS __attribute__((may_alias))
+# define SAWYER_DEPRECATED(WHY) __attribute__((deprecated))
 
 // Sawyer globals need to be initialized after the C++ standard runtime, but before other user-level stuff. The constant 101
 // causes the initialization to happen as early as possible after the C++ runtime.
-# define SAWYER_STATIC_INIT __attribute__((init_priority(65534)))
+# define SAWYER_STATIC_INIT __attribute__((init_priority(101)))
 
 # define SAWYER_VARIABLE_LENGTH_ARRAY(TYPE, NAME, SIZE) \
     TYPE NAME[SIZE];

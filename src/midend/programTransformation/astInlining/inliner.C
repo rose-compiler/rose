@@ -172,6 +172,38 @@ void removeRedundantCopyInConstruction(SgInitializedName* in) {
   // FIXME -- do we need to delete ai?
 }
 
+// Mark AST as being a transformation
+static void
+markAsTransformation(SgNode *ast) {
+    struct FixFileInfo: AstSimpleProcessing {
+        void visit(SgNode *node) {
+            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                // DQ (3/1/2015): This is now being caught in the DOT file generation, so I think we need to use this
+                // better version.
+                // DQ (4/14/2014): This should be a more complete version to set all of the Sg_File_Info objects on a
+                // SgLocatedNode.
+                if (loc->get_startOfConstruct()) {
+                    loc->get_startOfConstruct()->setTransformation();
+                    loc->get_startOfConstruct()->setOutputInCodeGeneration();
+                }
+
+                if (loc->get_endOfConstruct()) {
+                    loc->get_endOfConstruct()->setTransformation();
+                    loc->get_endOfConstruct()->setOutputInCodeGeneration();
+                }
+
+                if (SgExpression* exp = isSgExpression(loc)) {
+                    if (exp->get_operatorPosition()) {
+                        exp->get_operatorPosition()->setTransformation();
+                        exp->get_operatorPosition()->setOutputInCodeGeneration();
+                    }
+                }
+            }
+        }
+    };
+    FixFileInfo().traverse(ast, preorder);
+}
+
 // Main inliner code.  Accepts a function call as a parameter, and inlines
 // only that single function call.  Returns true if it succeeded, and false
 // otherwise.  The function call must be to a named function, static member
@@ -320,6 +352,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           //thisinitname = lastElementOfContainer(thisdecl->get_variables());
           // thisinitname->set_endOfConstruct(SgNULL_FILE);
           assignInitializer->set_parent(thisinitname);
+          markAsTransformation(assignInitializer);
 
        // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
 
@@ -502,6 +535,10 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
   // checkTransformedFlagsVisitor(funcall->get_parent());
      checkTransformedFlagsVisitor(globalScope);
 #endif
+
+  // DQ (4/7/2015): This fixes something I was required to fix over the weekend and which is fixed more directly, I think.
+  // Mark the things we insert as being transformations so they get inserted into the output by backend()
+     markAsTransformation(funbody_copy);
 
      return true;
    }
