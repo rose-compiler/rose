@@ -2050,6 +2050,24 @@ struct IP_pmovzx: P {
     }
 };
 
+// Multiply packed signed dword integers
+struct IP_pmuldq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            BaseSemantics::SValuePtr prod0 = ops->signedMultiply(ops->extract(src, 0, 32), ops->extract(dst, 0, 32));
+            BaseSemantics::SValuePtr prod1 = ops->signedMultiply(ops->extract(src, 64, 96), ops->extract(dst, 64, 96));
+            BaseSemantics::SValuePtr result = ops->concat(prod0, prod1);
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3009,6 +3027,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pmovzxwd,     new X86::IP_pmovzx(16, 32));
     iproc_set(x86_pmovzxwq,     new X86::IP_pmovzx(16, 64));
     iproc_set(x86_pmovzxdq,     new X86::IP_pmovzx(32, 64));
+    iproc_set(x86_pmuldq,       new X86::IP_pmuldq);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
