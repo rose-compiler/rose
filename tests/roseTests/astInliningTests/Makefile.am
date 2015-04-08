@@ -51,6 +51,20 @@ $(inlineEverything_test_targets): inlineEverything_%.passed: % inlineEverything 
 		TRANSLATOR="$$(pwd)/inlineEverything"								\
 		$(srcdir)/inlineEverything.conf $@
 
+inlineEverything_withTokenStreamUnparsing_specimens = \
+   testWithTokenStreamUnparsing_01.C \
+   testWithTokenStreamUnparsing_02.C
+
+inlineEverything_test_tokenStreamUnparsing_targets = $(addprefix inlineEverything_, $(addsuffix .passed, $(inlineEverything_withTokenStreamUnparsing_specimens)))
+TEST_TOKEN_STREAM_UNPARSING_TARGETS = $(inlineEverything_test_tokenStreamUnparsing_targets)
+$(inlineEverything_test_tokenStreamUnparsing_targets): inlineEverything_%.passed: % inlineEverything inlineEverything.conf
+	@$(RTH_RUN)												\
+		TITLE="inlineEverything $< [$@]"								\
+		SPECIMEN="$(abspath $<)"									\
+		NINLINE="$$(echo $(notdir $<) |sed --regexp-extended 's/specimen[0-9]+_([0-9]+).*/\1/')"	\
+		TRANSLATOR="$$(pwd)/inlineEverything -rose:unparse_tokens"								\
+		$(srcdir)/inlineEverything_withTokenStreamUnparsing.conf $@
+
 #------------------------------------------------------------------------------------------------------------------------
 # additional tests not executed by "make check"
 
@@ -61,7 +75,12 @@ test1.passed: test1A.C test1B.C
 #------------------------------------------------------------------------------------------------------------------------
 # automake boilerplate
 
-check-local: $(TEST_TARGETS)
+test: $(TEST_TOKEN_STREAM_UNPARSING_TARGETS)
+
+check-local: $(TEST_TARGETS) $(TEST_TOKEN_STREAM_UNPARSING_TARGETS)
+	@echo "***************************************************************************************************"
+	@echo "****** ROSE/tests/roseTests/astInliningTests: make check rule complete (terminated normally) ******"
+	@echo "***************************************************************************************************"
 
 clean-local:
 	rm -f $(TEST_TARGETS)

@@ -818,14 +818,30 @@ SgLocatedNode::isTransformation () const
   // DQ (12/4/2014): Added function to define a simple API.
 
      ROSE_ASSERT(get_startOfConstruct() != NULL);
-     ROSE_ASSERT(get_endOfConstruct() != NULL);
 
      bool result = get_startOfConstruct()->isTransformation();
-     ROSE_ASSERT(result == get_endOfConstruct()->isTransformation());
+
+  // DQ (4/6/2015): Allow this to work even when the endOfConstruct is not yet set (required for inlining).
+  // ROSE_ASSERT(get_endOfConstruct() != NULL);
+     if (get_endOfConstruct() != NULL)
+        {
+          ROSE_ASSERT(result == get_endOfConstruct()->isTransformation());
+        }
+       else
+        {
+          printf ("WARNING: In SgLocatedNode::isTransformation(): this = %p = %s testing: get_endOfConstruct() != NULL (failed) \n",this,this->class_name().c_str());
+        }
 
      const SgExpression* expression = isSgExpression(this);
      if (expression != NULL && expression->get_operatorPosition() != NULL)
         {
+#if 0
+          printf ("NOTE: this = %p = %s testing: result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
+#endif
+          if (result != expression->get_operatorPosition()->isTransformation())
+             {
+               printf ("ERROR: this = %p = %s result != expression->get_operatorPosition()->isTransformation() \n",this,this->class_name().c_str());
+             }
           ROSE_ASSERT(result == expression->get_operatorPosition()->isTransformation());
         }
 
