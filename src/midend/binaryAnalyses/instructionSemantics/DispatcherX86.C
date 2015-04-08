@@ -1778,6 +1778,65 @@ struct IP_phadd: P {
     }
 };
 
+// Packed horizontal word unsigned minimum with position information
+//   PHMINPOSUW
+struct IP_phminposuw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            const size_t bitsPerOp = 16;
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            size_t nOps = src->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr minVal;
+            size_t minIndex = 0;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                if (minVal==NULL || ops->isUnsignedLessThan(part, minVal)) {
+                    minVal = part;
+                    minIndex = i;
+                }
+            }
+            BaseSemantics::SValuePtr result = ops->concat(minVal, ops->number_(128-bitsPerOp, minIndex));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed horizontal subtract
+//   PHSUBW
+//   PHSUBD
+struct IP_phsub: P {
+    size_t bitsPerOp;
+    IP_phsub(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr subtrahend = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->subtract(minuend, subtrahend);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr subtrahend = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->subtract(minuend, subtrahend);
+                result = ops->concat(result, sum);
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Move byte mask
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2729,6 +2788,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pextrq,       new X86::IP_pextr(64));
     iproc_set(x86_phaddw,       new X86::IP_phadd(16));
     iproc_set(x86_phaddd,       new X86::IP_phadd(32));
+    iproc_set(x86_phminposuw,   new X86::IP_phminposuw);
+    iproc_set(x86_phsubw,       new X86::IP_phsub(16));
+    iproc_set(x86_phsubd,       new X86::IP_phsub(32));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
