@@ -2324,6 +2324,35 @@ struct IP_psadbw: P {
     }
 };
 
+// Shuffle packed bytes (or set to zero)
+//   PSHUFB
+struct IP_pshufb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr original = d->read(args[0]);
+            BaseSemantics::SValuePtr indices = d->read(args[1]);
+            ASSERT_require(original->get_width() == indices->get_width());
+            size_t nOps = original->get_width() / 8;
+            size_t bitsPerIndex = 64 == original->get_width() ? 3 : 4;
+            BaseSemantics::SValuePtr eight = ops->number_(4, 8);
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr indexMsb = ops->extract(indices, i*8+7, i*8+8);
+                BaseSemantics::SValuePtr index = ops->extract(indices, i*8, i*8+bitsPerIndex);
+                // The extract operator only works with concrete bit indices, so we use right shift and masking instead.
+                BaseSemantics::SValuePtr selected = ops->shiftRight(original, ops->unsignedMultiply(index, eight));
+                selected = ops->unsignedExtend(selected, 8);
+                selected = ops->ite(indexMsb, ops->number_(8, 0), selected);
+                result = result ? ops->concat(result, selected) : selected;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Shuffle packed doublewords
 //   PSHUFD
 struct IP_pshufd: P {
@@ -3191,6 +3220,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_psadbw,       new X86::IP_psadbw);
+    iproc_set(x86_pshufb,       new X86::IP_pshufb);
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
