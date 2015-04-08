@@ -377,6 +377,17 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n") + namespaceDeclarationStatement->get_name();
              }
 
+       // DQ (4/5/2015): Added variable names and associated info to the generated dot file graphs of the AST.
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(genericDeclaration);
+          if (variableDeclaration != NULL)
+             {
+            // This is added to support debugging of multiple variables in the same declaration.
+               nodelabel += string("\\n isAssociatedWithDeclarationList = ") + (variableDeclaration->get_isAssociatedWithDeclarationList() ? "true " : "false ");
+
+            // DQ (4/5/2015): I think this is not used and should be removed.
+            // nodelabel += string("\\n isFirstDeclarationOfDeclarationList = ") + (variableDeclaration->get_isFirstDeclarationOfDeclarationList() ? "true " : "false ");
+             }
+
           nodelabel += string("\\n") + name;
         }
 
