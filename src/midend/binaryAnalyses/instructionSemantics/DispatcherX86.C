@@ -1638,25 +1638,6 @@ struct IP_pblendw: P {
     }
 };
 
-// Move byte mask
-struct IP_pmovmskb: P {
-    void p(D d, Ops ops, I insn, A args) {
-        assert_args(insn, args, 2);
-        if (insn->get_lockPrefix()) {
-            ops->interrupt(x86_exception_ud, 0);
-        } else {
-            BaseSemantics::SValuePtr src = d->read(args[1]);
-            BaseSemantics::SValuePtr result;
-            for (size_t byteIdx=0; byteIdx<src->get_width()/8; ++byteIdx) {
-                BaseSemantics::SValuePtr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
-                result = result ? ops->concat(result, bit) : bit;
-            }
-            result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
-            d->write(args[0], result);
-        }
-    }
-};
-
 // Compare packed data for equal
 struct IP_pcmpeq: P {
     size_t nCmpBits;                                    // number of bits to compare at once
@@ -1724,7 +1705,98 @@ struct IP_pcmpgt: P {
         }
     }
 };
-                
+
+// Extract byte, dword, qword
+//   PEXTRB
+//   PEXTRD
+//   PEXTRW
+//   PEXTRQ
+struct IP_pextr: P {
+    size_t bitsPerOp;
+    IP_pextr(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            uint64_t index = d->read(args[2])->get_number(); // must be an immediate operand
+            switch (bitsPerOp) {
+                case 8:
+                    index &= 0x0f;
+                    break;
+                case 16:
+                    index &= 0x07;
+                    break;
+                case 32:
+                    index &= 0x03;
+                    break;
+                case 64:
+                    index &= 0x01;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+            BaseSemantics::SValuePtr extracted = ops->extract(src, index*bitsPerOp, (index+1)*bitsPerOp);
+            size_t dstWidth = asm_type_width(args[0]->get_type());
+            BaseSemantics::SValuePtr result = ops->unsignedExtend(extracted, dstWidth);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed horizontal add
+//   PHADDW
+//   PHADDD
+struct IP_phadd: P {
+    size_t bitsPerOp;
+    IP_phadd(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr term1 = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr term2 = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(term1, term2);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr term1 = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr term2 = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(term1, term2);
+                result = ops->concat(result, sum);
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Move byte mask
+struct IP_pmovmskb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            for (size_t byteIdx=0; byteIdx<src->get_width()/8; ++byteIdx) {
+                BaseSemantics::SValuePtr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
+                result = result ? ops->concat(result, bit) : bit;
+            }
+            result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2651,6 +2723,12 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pcmpgtw,      new X86::IP_pcmpgt(16));
     iproc_set(x86_pcmpgtd,      new X86::IP_pcmpgt(32));
     iproc_set(x86_pcmpgtq,      new X86::IP_pcmpgt(64));
+    iproc_set(x86_pextrb,       new X86::IP_pextr(8));
+    iproc_set(x86_pextrw,       new X86::IP_pextr(16));
+    iproc_set(x86_pextrd,       new X86::IP_pextr(32));
+    iproc_set(x86_pextrq,       new X86::IP_pextr(64));
+    iproc_set(x86_phaddw,       new X86::IP_phadd(16));
+    iproc_set(x86_phaddd,       new X86::IP_phadd(32));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
