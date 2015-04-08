@@ -8,6 +8,7 @@
 #include <Diagnostics.h>
 #include <DispatcherX86.h>
 #include <Partitioner2/Engine.h>
+#include <sawyer/BitVector.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
@@ -20,7 +21,11 @@ using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 Sawyer::Message::Facility mlog;
 
-struct Settings {};
+struct Settings {
+    bool traceSemantics;
+    Settings()
+        : traceSemantics(false) {}
+};
 
 static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], Settings &settings) {
@@ -52,6 +57,17 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "execution until the end of the instruction.\n\n");
 
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
+
+    gen.insert(Switch("trace")
+               .intrinsicValue(true, settings.traceSemantics)
+               .doc("Trace RISC operators.  The trace is displayed only when a problem is encountered. Tracing slows "
+                    "down the execution substantially even if no output is produced.  The @s{no-trace} switch disables "
+                    "tracing (errors are still reported, just not accompanied by a trace).  The default is to " +
+                    std::string(settings.traceSemantics ? "" : "not ") + "produce a trace."));
+    gen.insert(Switch("no-trace")
+               .key("trace")
+               .intrinsicValue(false, settings.traceSemantics)
+               .hidden(true));
 
     return parser.with(gen).parse(argc, argv).apply().unreachedArgs();
 }
@@ -85,12 +101,12 @@ public:
 public:
     // Reads a register from the subordinate process, unless we've already written to that register.
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor &reg) ROSE_OVERRIDE {
+        using namespace Sawyer::Container;
         RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
         if (regs->is_partly_stored(reg))
             return ConcreteSemantics::RiscOperators::readRegister(reg);
         try {
-            uint64_t value = subordinate_.readRegister(reg);
-            return number_(reg.get_nbits(), value);
+            return svalue_number(subordinate_.readRegister(reg));
         } catch (const std::runtime_error &e) {
             RegisterNames rname(get_state()->get_register_state()->get_register_dictionary());
             throw BaseSemantics::Exception("cannot read register " + rname(reg) + " from subordinate process",
@@ -104,7 +120,9 @@ public:
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
                                                 const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
-        uint8_t buf[8];
+        using namespace Sawyer::Container;
+
+        uint8_t buf[16];
         if (dflt->get_width() > 8*sizeof(buf))
             throw BaseSemantics::Exception("readMemory width not handled: " + StringUtility::plural(dflt->get_width(), "bits"),
                                            get_insn());
@@ -114,28 +132,23 @@ public:
         size_t nRead = subordinate_.readMemory(addr->get_number(), nBytes, buf);
         if (nRead < nBytes)
             throw BaseSemantics::Exception("error reading subordinate memory", get_insn());
-        uint64_t value = 0;
-        switch (get_state()->get_memory_state()->get_byteOrder()) {
-            case ByteOrder::ORDER_MSB:
-                for (size_t i=0; i<nBytes; ++i)
-                    value |= (uint64_t)buf[i] << (8 * (nBytes-i) - 8);
-                break;
-            default:                                    // assuming little endian
-                for (size_t i=0; i<nBytes; ++i)
-                    value |= (uint64_t)buf[i] << (8*i);
-                break;
-        }
-        return number_(dflt->get_width(), value);
+
+        ASSERT_require(get_state()->get_memory_state()->get_byteOrder() != ByteOrder::ORDER_MSB);
+        BitVector bits(dflt->get_width());
+        for (size_t i=0; i<nRead; ++i)
+            bits.fromInteger(BitVector::BitRange::baseSize(8*i, 8), buf[i]);
+        return svalue_number(bits);
     }
 
 public:
     // Compare written-to simulated registers with registers in the subordinate process, reporting differences.
-    void compareRegisters(SgAsmInstruction *insn) {
+    bool checkRegisters(SgAsmInstruction *insn) {
+        bool areSame = true;
         RegisterStatePtr regs = RegisterState::promote(get_state()->get_register_state());
         RegisterState::RegPairs cells = regs->get_stored_registers();
         RegisterNames rname(get_state()->get_register_state()->get_register_dictionary());
         BOOST_FOREACH (const RegisterState::RegPair &cell, cells) {
-            uint64_t nativeValue = 0;
+            Sawyer::Container::BitVector nativeValue;
             try {
                 nativeValue = subordinate_.readRegister(cell.desc);
             } catch (const std::runtime_error &e) {
@@ -143,8 +156,8 @@ public:
                 continue;
             }
                 
-            uint64_t simulatedValue = cell.value->get_number();
-            if (nativeValue != simulatedValue) {
+            Sawyer::Container::BitVector simulatedValue = ConcreteSemantics::SValue::promote(cell.value)->bits();
+            if (0 != nativeValue.compare(simulatedValue)) {
                 // Avoid comparing registers whose values are indicated as "undefined" in the reference manual.
                 bool dontCare = false;
                 if (SgAsmX86Instruction *x86 = isSgAsmX86Instruction(insn)) {
@@ -171,6 +184,14 @@ public:
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_af, 1) ||
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_pf, 1);
                             break;
+                        case x86_div:
+                            dontCare = cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_cf, 1) ||
+                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_of, 1) ||
+                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_sf, 1) ||
+                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_zf, 1) ||
+                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_af, 1) ||
+                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_pf, 1);
+                            break;
                         case x86_imul:
                         case x86_mul:
                             dontCare = cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_sf, 1) ||
@@ -185,11 +206,11 @@ public:
                         case x86_sar:
                         case x86_shl:
                         case x86_shr:
+                        case x86_shrd:
                             // OF is undefined if shift amount != 1
-                            // CF is undefined when the shift amoutn >= width of the destination
                             // AF is undefined when shift amount != 0
+                            // CF is undefined when the shift amoutn >= width of the destination (this seldom happens)
                             dontCare = cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_of, 1) ||
-                                       cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_cf, 1) ||
                                        cell.desc == RegisterDescriptor(x86_regclass_flags, x86_flags_status, x86_flag_af, 1);
                             break;
                         case x86_repe_cmpsb:
@@ -209,12 +230,16 @@ public:
                     }
                 }
                 if (!dontCare) {
+                    if (areSame)
+                        ::mlog[ERROR] <<"at " <<unparseInstructionWithAddress(insn) <<"\n";
                     ::mlog[ERROR] <<"values differ for register " <<rname(cell.desc)
-                                  <<": simulated=" <<StringUtility::toHex2(simulatedValue, cell.desc.get_nbits())
-                                  <<", native=" <<StringUtility::toHex2(nativeValue, cell.desc.get_nbits()) <<"\n";
+                                  <<": simulated=0x" <<simulatedValue.toHex()
+                                  <<", native=0x" <<nativeValue.toHex() <<"\n";
+                    areSame = false;
                 }
             }
         }
+        return areSame;
     }
 };
 
@@ -246,8 +271,15 @@ main(int argc, char *argv[]) {
     // Build instruction semantics framework
     BinaryDebugger debugger(specimen);
     RiscOperatorsPtr checkOps = RiscOperators::instance(debugger, registerDictionary);
-    BaseSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
-    BaseSemantics::DispatcherPtr cpu = DispatcherX86::instance(traceOps, addrWidth);
+    BaseSemantics::DispatcherPtr cpu;
+    std::ostringstream trace;
+    if (settings.traceSemantics) {
+        TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(checkOps);
+        traceOps->stream().destination(Sawyer::Message::StreamSink::instance(trace));
+        cpu = DispatcherX86::instance(traceOps, addrWidth);
+    } else {
+        cpu = DispatcherX86::instance(checkOps, addrWidth);
+    }
     if (!cpu)
         throw std::runtime_error("instruction semantics not supported for this architecture");
 
@@ -282,6 +314,7 @@ main(int argc, char *argv[]) {
         if (insn) {
             SAWYER_MESG(::mlog[DEBUG]) <<unparseInstructionWithAddress(insn) <<"\n";
             try {
+                trace.str("");
                 checkOps->get_state()->clear();
                 cpu->processInstruction(insn);
             } catch (const BaseSemantics::Exception &e) {
@@ -292,7 +325,7 @@ main(int argc, char *argv[]) {
         // Single-step the native execution and then compare written-to registers and memory for the simulated execution with
         // those same registers and memory in the native execution.
         debugger.singleStep();
-        if (insn)
-            checkOps->compareRegisters(insn);
+        if (insn && !checkOps->checkRegisters(insn))
+            std::cerr <<trace.str();
     }
 }

@@ -1101,10 +1101,10 @@ struct IP_loadstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(srcReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->readRegister(srcReg);
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(srcReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            addr = d->fixMemoryAddress(addr);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Load the byte, word, dword, or qword from memory.
             RegisterDescriptor sr(x86_regclass_segment,
@@ -1120,7 +1120,7 @@ struct IP_loadstring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(srcReg.get_nbits(), -nbytes),
                                                      ops->number_(srcReg.get_nbits(), +nbytes));
-            ops->writeRegister(srcReg, ops->add(d->readRegister(srcReg), step));
+            ops->writeRegister(srcReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -1446,6 +1446,61 @@ struct IP_or: P {
     }
 };
 
+// Packed absolute value
+//   PABSB
+//   PABSW
+//   PABSD
+struct IP_pabs: P {
+    size_t bitsPerOp;
+    IP_pabs(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            size_t nOps = src->get_width() / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr signBit = ops->extract(src, (i+1)*bitsPerOp-1, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr absVal = ops->ite(signBit, ops->negate(part), part);
+                result = result ? ops->concat(result, absVal) : absVal;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed integer addition
+//   PADDB
+//   PADDW
+//   PADDD
+//   PADDQ
+struct IP_padd: P {
+    size_t bitsPerOp;
+    IP_padd(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(partA, partB);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Packed align right
 struct IP_palignr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1471,6 +1526,203 @@ struct IP_palignr: P {
     }
 };
 
+// Logical AND
+//   PAND
+struct IP_pand: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr result = ops->and_(a, b);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Logical AND-NOT
+struct IP_pandn: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr result = ops->invert(ops->and_(a, b));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed average
+//   PAVGB
+//   PAVGW
+struct IP_pavg: P {
+    size_t bitsPerOp;
+    IP_pavg(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr sum = ops->add(ops->add(ops->unsignedExtend(partA, bitsPerOp+1),
+                                                                 ops->unsignedExtend(partB, bitsPerOp+1)),
+                                                        ops->number_(bitsPerOp+1, 1));
+                BaseSemantics::SValuePtr ave = ops->extract(sum, 1, bitsPerOp+1);
+                result = result ? ops->concat(result, ave) : ave;
+            }
+        }
+    }
+};
+
+// Variable blend packed bytes
+struct IP_pblendvb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            static const size_t bitsPerOp = 8;
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr xmm0 = ops->readRegister(RegisterDescriptor(x86_regclass_xmm, 0, 0, 128));
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr selector = ops->extract(xmm0, i*8+7, i*8+8);
+                BaseSemantics::SValuePtr selected = ops->ite(selector, b, a);
+                result = result ? ops->concat(result, selected) : selected;
+            }
+        }
+    }
+};
+
+// Blend packed words
+struct IP_pblendw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            static const size_t bitsPerOp = 16;
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            uint64_t mask = d->read(args[2])->get_number(); // must be an immediate operand
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                bool selector = (mask >> i) & 1;
+                BaseSemantics::SValuePtr selected = selector ? b : a;
+                result = result ? ops->concat(result, selected) : selected;
+            }
+        }
+    }
+};
+
+// Move byte mask
+struct IP_pmovmskb: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            for (size_t byteIdx=0; byteIdx<src->get_width()/8; ++byteIdx) {
+                BaseSemantics::SValuePtr bit = ops->extract(src, 8*byteIdx+7, 8*byteIdx+8);
+                result = result ? ops->concat(result, bit) : bit;
+            }
+            result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Compare packed data for equal
+struct IP_pcmpeq: P {
+    size_t nCmpBits;                                    // number of bits to compare at once
+    IP_pcmpeq(size_t nCmpBits): nCmpBits(nCmpBits) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            ASSERT_require(a->get_width() % nCmpBits == 0);
+            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValuePtr zero = ops->number_(nCmpBits, 0);
+            BaseSemantics::SValuePtr ones = ops->invert(zero);
+            for (size_t i=0; i<a->get_width()/nCmpBits; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*nCmpBits, (i+1)*nCmpBits);
+                BaseSemantics::SValuePtr diff = ops->add(partA, ops->negate(partB));
+                BaseSemantics::SValuePtr c = ops->ite(ops->equalToZero(diff), ones, zero);
+                if (0==i) {
+                    result = c;
+                } else {
+                    result = ops->concat(result, c);
+                }
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Compare packed signed integer for greater-than
+//   PCMPGTB
+//   PCMPGTW
+//   PCMPGTD
+//   PCMPGTQ
+struct IP_pcmpgt: P {
+    size_t bitsPerOp;
+    IP_pcmpgt(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr zero = ops->number_(bitsPerOp, 0);
+            BaseSemantics::SValuePtr ones = ops->invert(zero);
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr diff = ops->subtract(ops->signExtend(partA, bitsPerOp+1),
+                                                              ops->signExtend(partB, bitsPerOp+1));
+                BaseSemantics::SValuePtr isLT = ops->extract(diff, bitsPerOp, bitsPerOp+1);
+                BaseSemantics::SValuePtr isEQ = ops->equalToZero(diff);
+                BaseSemantics::SValuePtr isLE = ops->or_(isLT, isEQ);
+                BaseSemantics::SValuePtr answer = ops->ite(isLE, zero, ones);
+                result = result ? ops->concat(result, answer) : answer;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+                
 // Pop from stack
 struct IP_pop: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -1571,6 +1823,117 @@ struct IP_pop_gprs: P {
             ops->writeRegister(d->REG_anySP, newSp);
         } else {
             ops->interrupt(x86_exception_ud, 0);        // 64-bit mode
+        }
+    }
+};
+
+// Shuffle packed doublewords
+//   PSHUFD
+struct IP_pshufd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr order = d->read(args[2]);
+            BaseSemantics::SValuePtr result;
+            ASSERT_require(order->is_number());
+            for (size_t i=0; i<4; ++i) {
+                size_t dwordIdx = ((order->get_number() >> (i*2)) & 0x3);
+                BaseSemantics::SValuePtr dword = ops->extract(src, 32*dwordIdx, 32*(dwordIdx+1));
+                result = result ? ops->concat(result, dword) : dword;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Shift double quadword left logical
+//   PSLLDQ
+struct IP_pslldq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            size_t nBytesShift = d->read(args[1])->get_number();// shift amount is an immediate operand
+            BaseSemantics::SValuePtr sa = ops->number_(8, 8*nBytesShift);
+            BaseSemantics::SValuePtr result = ops->shiftLeft(src, sa);
+            d->write(args[0], result);
+        }
+    }
+};
+        
+// Shift double quadword right logical
+//   PSRLDQ
+struct IP_psrldq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            size_t nBytesShift = d->read(args[1])->get_number();// shift amount is an immediate operand
+            BaseSemantics::SValuePtr sa = ops->number_(8, 8*nBytesShift);
+            BaseSemantics::SValuePtr result = ops->shiftRight(src, sa);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Subtract packed integers
+//   PSUBB
+//   PSUBW
+//   PSUBD
+//   PSUBQ
+struct IP_psub: P {
+    size_t bitsPerOp;
+    IP_psub(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValuePtr result;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr subtrahend = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                result = result ? ops->concat(result, difference) : difference;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Unpack low data
+//   PUNPCKLBW
+//   PUNPCKLWD
+//   PUNPCKLDQ
+//   PUNPCKLQDQ
+struct IP_punpckl: P {
+    size_t bitsPerMove;
+    IP_punpckl(size_t bitsPerMove): bitsPerMove(bitsPerMove) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            for (size_t bitOffset=0; 2*(bitOffset+bitsPerMove)<=a->get_width(); bitOffset+=bitsPerMove) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, bitOffset, bitOffset+bitsPerMove);
+                BaseSemantics::SValuePtr partB = ops->extract(b, bitOffset, bitOffset+bitsPerMove);
+                BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
+                result = result ? ops->concat(result, pair) : pair;
+            }
+            d->write(args[0], result);
         }
     }
 };
@@ -1836,10 +2199,10 @@ struct IP_scanstring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(stringReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->readRegister(stringReg);
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(stringReg);
 
             // Adjust address width based on how memory is accessed.  All addresses in memory have the same width.
-            addr = d->fixMemoryAddress(addr);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Compare values and set status flags.
             RegisterDescriptor compareReg = d->REG_AX; compareReg.set_nbits(nbits);
@@ -1851,7 +2214,7 @@ struct IP_scanstring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(stringReg.get_nbits(), -nbytes),
                                                      ops->number_(stringReg.get_nbits(), +nbytes));
-            ops->writeRegister(stringReg, ops->add(d->readRegister(stringReg), step));
+            ops->writeRegister(stringReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -1978,7 +2341,8 @@ struct IP_storestring: P {
                     ASSERT_not_reachable("invalid instruction address size");
             }
             ASSERT_require(dstReg.is_valid());
-            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(d->readRegister(dstReg));
+            BaseSemantics::SValuePtr stringPtr = d->readRegister(dstReg);
+            BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
 
             // Copy value from AL/AX/EAX/RAX to memory
             RegisterDescriptor regA = d->REG_AX; regA.set_nbits(nbits);
@@ -1988,7 +2352,7 @@ struct IP_storestring: P {
             BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
                                                      ops->number_(dstReg.get_nbits(), -nbytes),
                                                      ops->number_(dstReg.get_nbits(), +nbytes));
-            ops->writeRegister(dstReg, ops->add(d->readRegister(dstReg), step));
+            ops->writeRegister(dstReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
             if (x86_repeat_none != repeat)
@@ -2262,11 +2626,45 @@ DispatcherX86::iproc_init()
     iproc_set(x86_nop,          new X86::IP_nop);
     iproc_set(x86_not,          new X86::IP_not);
     iproc_set(x86_or,           new X86::IP_or);
+    iproc_set(x86_pabsb,        new X86::IP_pabs(8));
+    iproc_set(x86_pabsw,        new X86::IP_pabs(16));
+    iproc_set(x86_pabsd,        new X86::IP_pabs(32));
+    iproc_set(x86_paddb,        new X86::IP_padd(8));
+    iproc_set(x86_paddw,        new X86::IP_padd(16));
+    iproc_set(x86_paddd,        new X86::IP_padd(32));
+    iproc_set(x86_paddq,        new X86::IP_padd(64));
     iproc_set(x86_palignr,      new X86::IP_palignr);
+    iproc_set(x86_pand,         new X86::IP_pand);
+    iproc_set(x86_pandn,        new X86::IP_pandn);
+    iproc_set(x86_pause,        new X86::IP_nop);
+    iproc_set(x86_pavgb,        new X86::IP_pavg(8));
+    iproc_set(x86_pavgw,        new X86::IP_pavg(16));
+    iproc_set(x86_pblendvb,     new X86::IP_pblendvb);
+    iproc_set(x86_pblendw,      new X86::IP_pblendw);
+    iproc_set(x86_pcmpeqb,      new X86::IP_pcmpeq(8));
+    iproc_set(x86_pcmpeqw,      new X86::IP_pcmpeq(16));
+    iproc_set(x86_pcmpeqd,      new X86::IP_pcmpeq(32));
+    iproc_set(x86_pcmpeqq,      new X86::IP_pcmpeq(64));
+    iproc_set(x86_pcmpgtb,      new X86::IP_pcmpgt(8));
+    iproc_set(x86_pcmpgtw,      new X86::IP_pcmpgt(16));
+    iproc_set(x86_pcmpgtd,      new X86::IP_pcmpgt(32));
+    iproc_set(x86_pcmpgtq,      new X86::IP_pcmpgt(64));
+    iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
+    iproc_set(x86_pshufd,       new X86::IP_pshufd);
+    iproc_set(x86_pslldq,       new X86::IP_pslldq);
+    iproc_set(x86_psrldq,       new X86::IP_psrldq);
+    iproc_set(x86_psubb,        new X86::IP_psub(8));
+    iproc_set(x86_psubw,        new X86::IP_psub(16));
+    iproc_set(x86_psubd,        new X86::IP_psub(32));
+    iproc_set(x86_psubq,        new X86::IP_psub(64));
+    iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
+    iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
+    iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
+    iproc_set(x86_punpcklqdq,   new X86::IP_punpckl(64));
     iproc_set(x86_push,         new X86::IP_push);
     iproc_set(x86_pusha,        new X86::IP_push_gprs);
     iproc_set(x86_pushad,       new X86::IP_push_gprs);
@@ -2858,7 +3256,7 @@ DispatcherX86::doShiftOperation(X86InstructionKind kind, const BaseSemantics::SV
     // What is the last bit shifted off the operand?  If we're right shifting by N bits, then the original operand N-1 bit
     // is what should make it into the final CF; if we're left shifting by N bits then we need bit operand->get_width()-N.
     BaseSemantics::SValuePtr bitPosition;
-    if (x86_shr==kind || x86_sar==kind) {
+    if (x86_shr==kind || x86_sar==kind || x86_shrd==kind) {
         bitPosition = operators->add(maskedShiftCount, mask);
     } else {
         bitPosition = operators->add(number_(shiftSignificantBits, operand->get_width() & m), // probably zero modulo

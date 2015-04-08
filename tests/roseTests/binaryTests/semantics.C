@@ -372,6 +372,7 @@ analyze_interp(SgAsmInterpretation *interp)
             sink->defaultPropertiesNS().useColor = false;
             TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(operators);
             trace->stream().destination(sink);
+            trace->stream().enable();
             dispatcher = DispatcherX86::instance(trace, 32);
         } else {
             dispatcher = DispatcherX86::instance(operators, 32);

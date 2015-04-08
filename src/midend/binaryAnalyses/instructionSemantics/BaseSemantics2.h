@@ -2087,7 +2087,7 @@ public:
 
     /** Subtract one value from another.  This is not a virtual function because it can be implemented in terms of @ref add and
      * @ref negate. We define it because it's something that occurs often enough to warrant its own function. */
-    SValuePtr subtract(const SValuePtr &subtrahand, const SValuePtr &minuend);
+    SValuePtr subtract(const SValuePtr &minuend, const SValuePtr &subtrahend);
 
     /** Add two values of equal size and a carry bit.  Carry information is returned via carry_out argument.  The carry_out
      *  value is the tick marks that are written above the first addend when doing long arithmetic like a 2nd grader would do

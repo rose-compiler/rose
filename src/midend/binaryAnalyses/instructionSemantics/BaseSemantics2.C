@@ -1150,8 +1150,8 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
 };
 
 SValuePtr
-RiscOperators::subtract(const SValuePtr &subtrahand, const SValuePtr &minuend) {
-    return add(subtrahand, negate(minuend));
+RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
+    return add(minuend, negate(subtrahend));
 }
 
 SValuePtr
