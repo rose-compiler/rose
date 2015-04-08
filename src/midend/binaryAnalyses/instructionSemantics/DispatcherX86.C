@@ -1973,6 +1973,7 @@ struct IP_pminu: P {
 };
 
 // Move byte mask
+//   PMOVMSKB
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -1986,6 +1987,29 @@ struct IP_pmovmskb: P {
                 result = result ? ops->concat(result, bit) : bit;
             }
             result = ops->unsignedExtend(result, asm_type_width(args[0]->get_type()));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed move with sign extend
+struct IP_pmovsx: P {
+    size_t srcBitsPerOp;
+    size_t dstBitsPerOp;
+    IP_pmovsx(size_t srcBitsPerOp, size_t dstBitsPerOp): srcBitsPerOp(srcBitsPerOp), dstBitsPerOp(dstBitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr result;
+            size_t nOps = asm_type_width(args[0]->get_type()) / dstBitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr part = ops->extract(src, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                part = ops->signExtend(part, dstBitsPerOp);
+                result = result ? ops->concat(result, part) : part;
+            }
             d->write(args[0], result);
         }
     }
@@ -2938,6 +2962,12 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pminuw,       new X86::IP_pminu(16));
     iproc_set(x86_pminud,       new X86::IP_pminu(32));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
+    iproc_set(x86_pmovsxbw,     new X86::IP_pmovsx(8, 16));
+    iproc_set(x86_pmovsxbd,     new X86::IP_pmovsx(8, 32));
+    iproc_set(x86_pmovsxbq,     new X86::IP_pmovsx(8, 64));
+    iproc_set(x86_pmovsxwd,     new X86::IP_pmovsx(16, 32));
+    iproc_set(x86_pmovsxwq,     new X86::IP_pmovsx(16, 64));
+    iproc_set(x86_pmovsxdq,     new X86::IP_pmovsx(32, 64));
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
