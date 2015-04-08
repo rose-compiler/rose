@@ -2275,6 +2275,23 @@ struct IP_pop_gprs: P {
     }
 };
 
+// Bitwise logical-OR (no flags affected)
+//   POR
+struct IP_por: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get-width());
+            BaseSemantics::SValuePtr result = ops->or_(dst, src);
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Shuffle packed doublewords
 //   PSHUFD
 struct IP_pshufd: P {
@@ -3139,6 +3156,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
+    iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
