@@ -1361,6 +1361,7 @@ Grammar::setUpStatements ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/30/2012): Mark this as the first declaration of a declaration list.
+  // DQ (4/5/2015): NOTE: I think this data member is not used!
      VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

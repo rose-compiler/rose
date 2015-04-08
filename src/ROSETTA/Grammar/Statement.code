@@ -9299,6 +9299,11 @@ SgDeclarationStatement::get_type() const
   // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
      printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      return NULL;
    }
 
