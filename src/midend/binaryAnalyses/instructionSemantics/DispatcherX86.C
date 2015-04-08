@@ -1790,15 +1790,20 @@ struct IP_phminposuw: P {
             BaseSemantics::SValuePtr src = d->read(args[1]);
             size_t nOps = src->get_width() / bitsPerOp;
             BaseSemantics::SValuePtr minVal;
-            size_t minIndex = 0;
+            BaseSemantics::SValuePtr minIndex;
             for (size_t i=0; i<nOps; ++i) {
                 BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
-                if (minVal==NULL || ops->isUnsignedLessThan(part, minVal)) {
+                if (minVal) {
+                    BaseSemantics::SValuePtr isLessThan = ops->isUnsignedLessThan(part, minVal);
+                    minVal = ops->ite(isLessThan, part, minVal);
+                    minIndex = ops->ite(isLessThan, ops->number_(3, i), minIndex);
+                } else {
                     minVal = part;
-                    minIndex = i;
+                    minIndex = ops->number_(3, i);
                 }
             }
-            BaseSemantics::SValuePtr result = ops->concat(minVal, ops->number_(128-bitsPerOp, minIndex));
+            BaseSemantics::SValuePtr result = ops->concat(minVal, minIndex);
+            result = ops->unsignedExtend(result, 128);
             d->write(args[0], result);
         }
     }
@@ -1877,6 +1882,91 @@ struct IP_pinsr: P {
             BaseSemantics::SValuePtr result = index > 0 ? ops->concat(ops->extract(dst, 0, index*bitsPerOp), src) : src;
             if ((index+1) * bitsPerOp < dst->get_width())
                 result = ops->concat(result, ops->extract(dst, (index+1)*bitsPerOp, dst->get_width()));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Multiply and add packed integers
+//   PMADDWD
+struct IP_pmaddwd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            const size_t bitsPerOp = 16;
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            size_t nOps = dst->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; i+=2) {
+                BaseSemantics::SValuePtr x0 = ops->extract(src, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr x1 = ops->extract(src, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr y0 = ops->extract(dst, (i+0)*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr y1 = ops->extract(dst, (i+1)*bitsPerOp, (i+2)*bitsPerOp);
+                BaseSemantics::SValuePtr prod0 = ops->unsignedMultiply(x0, y0);
+                BaseSemantics::SValuePtr prod1 = ops->unsignedMultiply(x1, y1);
+                BaseSemantics::SValuePtr sum = ops->add(prod0, prod1);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Maximum of packed unsigned integers
+//   PMAXUB
+//   PMAXUW
+//   PMAXUD
+struct IP_pmaxu: P {
+    size_t bitsPerOp;
+    IP_pmaxu(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr maxVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partB, partA);
+                result = result ? ops->concat(result, maxVal) : maxVal;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Minimum of packed unsigned integers
+//   PMINUB
+//   PMINUW
+//   PMINUD
+struct IP_pminu: P {
+    size_t bitsPerOp;
+    IP_pminu(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr minVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partA, partB);
+                result = result ? ops->concat(result, minVal) : minVal;
+            }
             d->write(args[0], result);
         }
     }
@@ -2840,6 +2930,13 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pinsrw,       new X86::IP_pinsr(16));
     iproc_set(x86_pinsrd,       new X86::IP_pinsr(32));
     iproc_set(x86_pinsrq,       new X86::IP_pinsr(64));
+    iproc_set(x86_pmaddwd,      new X86::IP_pmaddwd);
+    iproc_set(x86_pmaxub,       new X86::IP_pmaxu(8));
+    iproc_set(x86_pmaxuw,       new X86::IP_pmaxu(16));
+    iproc_set(x86_pmaxud,       new X86::IP_pmaxu(32));
+    iproc_set(x86_pminub,       new X86::IP_pminu(8));
+    iproc_set(x86_pminuw,       new X86::IP_pminu(16));
+    iproc_set(x86_pminud,       new X86::IP_pminu(32));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
