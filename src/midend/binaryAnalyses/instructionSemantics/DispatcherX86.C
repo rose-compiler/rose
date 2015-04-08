@@ -2051,6 +2051,7 @@ struct IP_pmovzx: P {
 };
 
 // Multiply packed signed dword integers
+//   PMULDQ
 struct IP_pmuldq: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
@@ -2063,6 +2064,108 @@ struct IP_pmuldq: P {
             BaseSemantics::SValuePtr prod0 = ops->signedMultiply(ops->extract(src, 0, 32), ops->extract(dst, 0, 32));
             BaseSemantics::SValuePtr prod1 = ops->signedMultiply(ops->extract(src, 64, 96), ops->extract(dst, 64, 96));
             BaseSemantics::SValuePtr result = ops->concat(prod0, prod1);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Multiply packed unsigned integers and store high result
+//   PMULHUW
+struct IP_pmulhuw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            const size_t bitsPerOp = 16;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr product = ops->unsignedMultiply(term0, term1);
+                BaseSemantics::SValuePtr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
+                result = result ? ops->concat(result, high) : high;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Multiply packed signed integers and store high result
+//   PMULHW
+struct IP_pmulhw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            const size_t bitsPerOp = 16;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr product = ops->signedMultiply(term0, term1);
+                BaseSemantics::SValuePtr high = ops->extract(product, bitsPerOp, 2*bitsPerOp);
+                result = result ? ops->concat(result, high) : high;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Multiply packed unsigned dword integers
+//   PMULUDQ
+struct IP_pmuludq: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            size_t nOps = dst->get_width() / 64;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr term0 = ops->extract(dst, (2*i+0)*32, (2*i+1)*32);
+                BaseSemantics::SValuePtr term1 = ops->extract(src, (2*i*0)*32, (2*i+1)*32);
+                BaseSemantics::SValuePtr product = ops->unsignedMultiply(term0, term1);
+                result = result ? ops->concat(result, product) : product;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Multiply packed signed dword integers and store low result
+struct IP_pmull: P {
+    size_t bitsPerOp;
+    IP_pmull(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            size_t nOps = dst->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr term0 = ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr term1 = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr product = ops->signedMultiply(term0, term1);
+                BaseSemantics::SValuePtr low = ops->extract(product, 0, bitsPerOp);
+                result = result ? ops->concat(result, low) : low;
+            }
             d->write(args[0], result);
         }
     }
@@ -3028,6 +3131,11 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pmovzxwq,     new X86::IP_pmovzx(16, 64));
     iproc_set(x86_pmovzxdq,     new X86::IP_pmovzx(32, 64));
     iproc_set(x86_pmuldq,       new X86::IP_pmuldq);
+    iproc_set(x86_pmulhuw,      new X86::IP_pmulhuw);
+    iproc_set(x86_pmulhw,       new X86::IP_pmulhw);
+    iproc_set(x86_pmulld,       new X86::IP_pmull(32));
+    iproc_set(x86_pmullw,       new X86::IP_pmull(16));
+    iproc_set(x86_pmuludq,      new X86::IP_pmuludq);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
