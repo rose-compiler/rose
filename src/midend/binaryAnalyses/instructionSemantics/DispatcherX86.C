@@ -1837,6 +1837,51 @@ struct IP_phsub: P {
     }
 };
 
+// Packed insert
+//   PINSRB
+//   PINSRW
+//   PINSRD
+//   PINSRQ
+struct IP_pinsr: P {
+    size_t bitsPerOp;
+    IP_pinsr(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            size_t index = d->read(args[2])->get_number(); // argument must be immediate
+            size_t dstWidth = asm_type_width(args[0]->get_type());
+            switch (bitsPerOp) {
+                case 8:
+                    index &= 0x0f;
+                    break;
+                case 16:
+                    if (64==dstWidth) {
+                        index &= 0x03;
+                    } else {
+                        index &= 0x07;
+                    }
+                    break;
+                case 32:
+                    index &= 0x03;
+                    break;
+                case 64:
+                    index &= 0x01;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+            BaseSemantics::SValuePtr src = ops->extract(d->read(args[1]), 0, bitsPerOp);
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr result = index > 0 ? ops->concat(ops->extract(dst, 0, index*bitsPerOp), src) : src;
+            if ((index+1) * bitsPerOp < dst->get_width())
+                result = ops->concat(result, ops->extract(dst, (index+1)*bitsPerOp, dst->get_width()));
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Move byte mask
 struct IP_pmovmskb: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -2791,6 +2836,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_phminposuw,   new X86::IP_phminposuw);
     iproc_set(x86_phsubw,       new X86::IP_phsub(16));
     iproc_set(x86_phsubd,       new X86::IP_phsub(32));
+    iproc_set(x86_pinsrb,       new X86::IP_pinsr(8));
+    iproc_set(x86_pinsrw,       new X86::IP_pinsr(16));
+    iproc_set(x86_pinsrd,       new X86::IP_pinsr(32));
+    iproc_set(x86_pinsrq,       new X86::IP_pinsr(64));
     iproc_set(x86_pmovmskb,     new X86::IP_pmovmskb);
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
