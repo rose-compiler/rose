@@ -1149,8 +1149,23 @@ RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
 
 SValuePtr
 RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
-    return equalToZero(subtract(a, b));
+    return isEqual(a, b);
 }
+
+SValuePtr
+RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
+    return equalToZero(invert(xor_(a, b)));
+}
+
+SValuePtr
+RiscOperators::isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b) {
+    SValuePtr wideA = unsignedExtend(a, a->get_width()+1);
+    SValuePtr wideB = unsignedExtend(b, b->get_width()+1);
+    SValuePtr diff = subtract(wideA, wideB);
+    return extract(diff, diff->get_width()-1, diff->get_width()); // A < B iff sign(wideA - wideB) == -1
+}
+
+
 
 /*******************************************************************************************************************************
  *                                      Dispatcher
