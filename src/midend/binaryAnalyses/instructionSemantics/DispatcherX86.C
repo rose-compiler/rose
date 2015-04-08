@@ -2285,8 +2285,40 @@ struct IP_por: P {
         } else {
             BaseSemantics::SValuePtr dst = d->read(args[0]);
             BaseSemantics::SValuePtr src = d->read(args[1]);
-            ASSERT_require(dst->get_width() == src->get-width());
+            ASSERT_require(dst->get_width() == src->get_width());
             BaseSemantics::SValuePtr result = ops->or_(dst, src);
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Compute sum of absolute differences
+//   PSADBW
+struct IP_psadbw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]);
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            ASSERT_require(dst->get_width() == src->get_width());
+            ASSERT_require(dst->get_width() == 64 || dst->get_width() == 128);
+            BaseSemantics::SValuePtr result;
+            size_t nSums = dst->get_width() / 64;
+            for (size_t i=0; i<nSums; ++i) {
+                BaseSemantics::SValuePtr sum;
+                for (size_t j=0; j<8; ++j) {
+                    BaseSemantics::SValuePtr partA = ops->extract(dst, i*64+j*8, i*64+j*8+8);
+                    BaseSemantics::SValuePtr partB = ops->extract(src, i*64+j*8, i*64+j*8+8);
+                    BaseSemantics::SValuePtr absDiff = ops->ite(ops->isUnsignedLessThan(partA, partB),
+                                                                ops->subtract(partB, partA),
+                                                                ops->subtract(partA, partB));
+                    sum = sum ? ops->add(sum, absDiff) : absDiff;
+                }
+                sum = ops->unsignedExtend(sum, 64);
+                result = result ? ops->concat(result, sum) : sum;
+            }
             d->write(args[0], result);
         }
     }
@@ -3158,6 +3190,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
     iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
+    iproc_set(x86_psadbw,       new X86::IP_psadbw);
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
