@@ -101,6 +101,7 @@ int main(int argc, char *argv[]) {
     ops->writeRegister(disassembler->instructionPointerRegister(), ops->number_(32, va));
 
     // Execute
+    map.dump(::mlog[INFO]);
     while (1) {
         va = ops->readRegister(disassembler->instructionPointerRegister())->get_number();
         SgAsmInstruction *insn = partitioner.instructionProvider()[va];

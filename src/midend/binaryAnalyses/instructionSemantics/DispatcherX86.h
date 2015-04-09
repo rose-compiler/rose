@@ -104,6 +104,8 @@ public:
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
 
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
