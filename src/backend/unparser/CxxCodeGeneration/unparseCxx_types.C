@@ -1701,6 +1701,13 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
                printf ("In unparseClassType(): nm = %s \n",nm.str());
 #endif
              }
+            else
+             {
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
 #else
           if (decl->get_isUnNamed() == false)
              {
@@ -1882,12 +1889,20 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
             // DQ (10/23/2012): Added support for types of references to un-named class/struct/unions to always include their definitions.
 #if 0
                printf ("In unparseClassType: This is an un-named class declaration: decl = %p name = %s (need to output its class definition) decl->get_definition() = %p \n",decl,decl->get_name().str(),decl->get_definition());
-               printf ("In unparseClassType: Detected un-nmed class declaration: Calling  unset_SkipClassDefinition() \n");
+               printf ("In unparseClassType: Detected un-named class declaration: Calling  unset_SkipClassDefinition() \n");
 #endif
+#if 1
+            // DQ (4/4/2015): Comment out this to support test2015_67.c.
+
                info.unset_SkipClassDefinition();
 
-            // DQ (1/9/2014): Mark Enum and Class declaration handling consistantly (enforces within the unparser now).
+            // DQ (1/9/2014): Mark Enum and Class declaration handling consistantly (enforced within the unparser now).
                info.unset_SkipEnumDefinition();
+#else
+#error "DEAD CODE!"
+            // DQ (4/4/2015): This addresses the handling of test2015_67.c.
+               printf ("In unparseClassType(): Skipping reset of info.unset_SkipClassDefinition() and info.unset_SkipEnumDefinition() \n");
+#endif
 #if 0
                printf ("In unparseClassType(): info.SkipClassDefinition() = %s \n",(info.SkipClassDefinition() == true) ? "true" : "false");
                printf ("In unparseClassType(): info.SkipEnumDefinition()  = %s \n",(info.SkipEnumDefinition() == true) ? "true" : "false");
@@ -2859,8 +2874,6 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      printf ("In unparseFunctionType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
 #endif
 
-
-
      ROSE_ASSERT(info.isReferenceToSomething() == ninfo.isReferenceToSomething());
      ROSE_ASSERT(info.isPointerToSomething()   == ninfo.isPointerToSomething());
 
@@ -2892,8 +2905,8 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                curprint ( string("\n/* ") + ninfo.displayString("Skipping the first part of the return type (in needParen == true case)") + " */ \n");
 #endif
                unparseType(func_type->get_return_type(), ninfo);
-            // curprint("(");
-               curprint("/* unparseFunctionType */ (");
+               curprint("(");
+            // curprint("/* unparseFunctionType */ (");
              }
             else
              {
@@ -2914,7 +2927,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #endif
                if (needParen)
                   {
-#if 1
+#if 0
                     curprint ("/* needParen must be true */ \n ");
 #endif
                     curprint(")");
@@ -2947,8 +2960,8 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #if 0
                curprint ("/* Output the type arguments (with parenthesis) */ \n ");
 #endif
-            // curprint("(");
-               curprint("/* unparseFunctionType:parameters */ (");
+               curprint("(");
+            // curprint("/* unparseFunctionType:parameters */ (");
 
                SgTypePtrList::iterator p = func_type->get_arguments().begin();
                while(p != func_type->get_arguments().end())
@@ -2968,8 +2981,8 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                        }
                   }
 
-            // curprint(")");
-               curprint("/* unparseFunctionType:parameters */ )");
+               curprint(")");
+            // curprint("/* unparseFunctionType:parameters */ )");
 
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
                curprint ("\n/* In unparseFunctionType(): AFTER parenthesis are output */ \n");

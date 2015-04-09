@@ -97,6 +97,19 @@ TEST_TARGETS += graphIO.passed
 graphIO.passed: graphIO
 	@$(RTH_RUN) TITLE="graph I/O [$@]" CMD="$(abspath $<)" $(top_srcdir)/scripts/test_exit_status $@
 
+# tests the RangeMap class
+noinst_PROGRAMS += rangeMapTests
+rangeMapTests_SOURCES = rangeMapTests.C
+rangeMapTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += rangeMapTests.passed
+EXTRA_DIST += rangeMapTests.ans
+rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test_with_answer
+	@$(RTH_RUN)						\
+		TITLE="RangeMap tests [$@]"			\
+		CMD="$(abspath $<)"				\
+		ANS="$(srcdir)/rangeMapTests.ans"		\
+		$(top_srcdir)/scripts/test_with_answer $@
+
 check-local: $(TEST_TARGETS)
 
 clean-local:

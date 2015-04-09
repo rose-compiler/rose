@@ -142,7 +142,7 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    TreeNodePtr expr = LeafNode::create_memory(8);
+    TreeNodePtr expr = LeafNode::create_memory(address->get_width(), dflt->get_width());
     InsnSet definers;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
@@ -713,10 +713,11 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
         if (SgAsmInstruction *insn = get_insn()) {
-            BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
-            BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-            ASSERT_not_null(cell); // we just wrote to it!
-            cell->latestWriter(insn->get_address());
+            if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
+                ASSERT_not_null(cell); // we just wrote to it!
+                cell->latestWriter(insn->get_address());
+            }
         }
     }
 }

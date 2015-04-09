@@ -473,7 +473,7 @@ public:
         if (1==cells.size())
             return cells.front().value();
         // FIXME: This makes no attempt to remove duplicate values
-        TreeNodePtr expr = LeafNode::create_memory(8);
+        TreeNodePtr expr = LeafNode::create_memory(addr.get_expression()->get_nbits(), 8);
         for (typename CellList::const_iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
             expr = InternalNode::create(8, InsnSemanticsExpr::OP_WRITE,
                                         expr, ci->address().get_expression(), ci->value().get_expression());

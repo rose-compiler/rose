@@ -27,6 +27,16 @@ where x means the section did not exist in that version.
 */
 
 
+// We must have available the EXACT version of the dwarf library, otherwise things become undefined. Therefore, only compile
+// this when the user defines COMPILE_DWARF_READER.
+#ifndef COMPILE_DWARF_READER
+
+#include <iostream>
+int main() {
+    std::cerr <<"Not tested unless COMPILE_DWARF_READER is defined.\n";
+}
+#else
+
 
 #include <rose.h>
 
@@ -9696,3 +9706,5 @@ main(int argc, char** argv)
      
      }
    }
+
+#endif
