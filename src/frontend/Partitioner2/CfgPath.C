@@ -246,30 +246,43 @@ findPathsNoCalls(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVerte
     return paths;
 }
 
-void
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstEdgeIterator &pathsCretEdge,
+bool
+insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
                   const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges) {
-    ASSERT_require(paths.isValidEdge(pathsCretEdge));
-    ASSERT_require(pathsCretEdge->value().type() == E_CALL_RETURN);
-
-    ControlFlowGraph::ConstVertexIterator pathsCallSite = pathsCretEdge->source();
-    ControlFlowGraph::ConstVertexIterator pathsRetTgt = pathsCretEdge->target();
-    ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
-
-    // A basic block might call multiple functions if calling through a pointer.
+    ASSERT_require(paths.isValidVertex(pathsCallSite));
     ASSERT_require(cfg.isValidVertex(cfgCallSite));
+    ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
     ASSERT_require2(cfgCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
+    bool somethingInserted = false;
+
+    // At least one of the outgoing edges from the call site must be a call-return edge, otherwise there's no way for the call
+    // to ever return, in which case none of the paths through the function are possible.  Usually a function call has one
+    // call-return edge since most functions return normally. The longjmp function is an example that might have multiple
+    // call-return edges.
+    CfgConstVertexSet pathsReturnTargets;
+    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, pathsCallSite->outEdges()) {
+        if (edge.value().type() == E_CALL_RETURN)
+            pathsReturnTargets.insert(edge.target());
+    }
+    if (pathsReturnTargets.empty()) {
+        mlog[WARN] <<"insertCalleePaths: called for a call site that doesn't return (this is a no-op)\n";
+        return false;
+    }
+
+    // A basic block might call multiple functions if calling through a pointer, but it usually has just one.
     CfgConstVertexSet callees = findCalledFunctions(cfg, cfgCallSite);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &callee, callees) {
         if (callee->value().type() == V_INDETERMINATE) {
             // This is a call to some indeterminate location. Just copy another indeterminate vertex into the paths
             // graph. Normally a CFG will have only one indeterminate vertex and it will have no outgoing edges, but the paths
-            // graph is different.
+            // graph is different. We need separate indeterminate vertices so that each has its own function-return edge(s).
             ControlFlowGraph::ConstVertexIterator indet = paths.insertVertex(CfgVertex(V_INDETERMINATE));
             paths.insertEdge(pathsCallSite, indet, CfgEdge(E_FUNCTION_CALL));
-            paths.insertEdge(indet, pathsRetTgt, CfgEdge(E_FUNCTION_RETURN));
-            mlog[WARN] <<"indeterminate function call from " <<pathsCallSite->value().bblock()->printableName() <<"\n";
+            BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &returnTarget, pathsReturnTargets)
+                paths.insertEdge(indet, returnTarget, CfgEdge(E_FUNCTION_RETURN));
+            mlog[WARN] <<"insertCalleePaths: indeterminate function call from "
+                       <<pathsCallSite->value().bblock()->printableName() <<"\n";
         } else {
             // Call to a normal function.
             ASSERT_require2(callee->value().type() == V_BASIC_BLOCK, "non-basic block callees not implemented yet");
@@ -278,10 +291,13 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
 
             // Find all paths through the callee
             CfgVertexMap vmap1;                             // relates CFG to calleePaths
-            CfgConstVertexSet returns = findFunctionReturns(cfg, callee);
-            ControlFlowGraph calleePaths = findPathsNoCalls(cfg, callee, returns, cfgAvoidVertices, cfgAvoidEdges, vmap1);
-            if (calleePaths.isEmpty())
-                mlog[WARN] <<calleeName <<" has no paths that return\n";
+            CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, callee);
+            ControlFlowGraph calleePaths = findPathsNoCalls(cfg, callee, cfgReturns, cfgAvoidVertices, cfgAvoidEdges, vmap1);
+            if (calleePaths.isEmpty()) {
+                mlog[WARN] <<"insertCalleePaths: " <<calleeName <<" has no paths that return\n";
+                continue;
+            }
+            somethingInserted = true;
 
             // Insert the callee into the paths CFG
             CfgVertexMap vmap2;                             // relates calleePaths to paths
@@ -294,15 +310,17 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
                 paths.insertEdge(pathsCallSite, pathStart, CfgEdge(E_FUNCTION_CALL));
             }
 
-            // Make edges from the callee's return statements back to the return point in the caller
-            BOOST_FOREACH (ControlFlowGraph::ConstVertexIterator ret, returns) {
-                if (vmap.forward().exists(ret)) {
-                    ControlFlowGraph::ConstVertexIterator pathsRetSrc = vmap.forward()[ret];
-                    paths.insertEdge(pathsRetSrc, pathsRetTgt, CfgEdge(E_FUNCTION_RETURN));
+            // Make edges from the callee's return statements back to the return targets in the caller
+            BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &cfgReturnSite, cfgReturns) {
+                if (vmap.forward().exists(cfgReturnSite)) {
+                    ControlFlowGraph::ConstVertexIterator pathsReturnSite = vmap.forward()[cfgReturnSite];
+                    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathsReturnTarget, pathsReturnTargets)
+                        paths.insertEdge(pathsReturnSite, pathsReturnTarget, CfgEdge(E_FUNCTION_RETURN));
                 }
             }
         }
     }
+    return somethingInserted;
 }
 
 

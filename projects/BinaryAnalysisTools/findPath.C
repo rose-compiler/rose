@@ -970,37 +970,54 @@ multiPathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pa
               const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
               const P2::CfgConstVertexSet &pathsEndVertices) {}
 
+P2::ControlFlowGraph
+generateTopLevelPaths(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                      const P2::CfgConstVertexSet &cfgEndVertices, const P2::CfgConstVertexSet &cfgAvoidVertices,
+                      const P2::CfgConstEdgeSet &cfgAvoidEdges, P2::CfgVertexMap &vmap /*out*/) {
+    vmap.clear();
+    P2::ControlFlowGraph paths = findPathsNoCalls(cfg, cfgBeginVertex, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges, vmap);
+    if (!vmap.forward().exists(cfgBeginVertex)) {
+        ::mlog[WARN] <<"no paths found\n";
+    } else {
+        ::mlog[INFO] <<"paths graph has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+                     <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+    }
+    return paths;
+}
+
+
+// Converts vertices from one graph to another based on the vmap
+P2::CfgConstVertexSet
+cfgToPaths(const P2::CfgConstVertexSet &vertices, const P2::CfgVertexMap &vmap) {
+    P2::CfgConstVertexSet retval;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.forward().exists(vertex))
+            retval.insert(vmap.forward()[vertex]);
+    }
+    return retval;
+}
+
 /** Find paths and process them one at a time until we've found the desired number of feasible paths. */
 template<typename PathProcessor, typename FinalProcessor>
 void
-findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &globalBeginVertex,
-                    const P2::CfgConstVertexSet &globalEndVertices, const P2::CfgConstVertexSet &globalAvoidVertices,
-                    const P2::CfgConstEdgeSet &globalAvoidEdges, PathProcessor pathProcessor, FinalProcessor finalProcessor) {
+findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                    const P2::CfgConstVertexSet &cfgEndVertices, const P2::CfgConstVertexSet &cfgAvoidVertices,
+                    const P2::CfgConstEdgeSet &cfgAvoidEdges, PathProcessor pathProcessor, FinalProcessor finalProcessor) {
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
     Stream info(::mlog[INFO] <<"finding top-level paths");
-    P2::CfgVertexMap vmap;                              // relates global CFG vertices to path vertices
-    P2::ControlFlowGraph paths = findPathsNoCalls(partitioner.cfg(), globalBeginVertex, globalEndVertices, globalAvoidVertices,
-                                                  globalAvoidEdges, vmap);
-    if (!vmap.forward().exists(globalBeginVertex)) {
-        ::mlog[WARN] <<"no paths found\n";
-        return;
-    }
-    P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex = vmap.forward()[globalBeginVertex];
-    info <<"; paths-CFG has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
-         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
-    P2::CfgConstVertexSet pathsEndVertices;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &globalEndVertex, globalEndVertices) {
-        if (vmap.forward().exists(globalEndVertex))
-            pathsEndVertices.insert(vmap.forward()[globalEndVertex]);
-    }
+    P2::CfgVertexMap vmap;                              // relates CFG vertices to path vertices
+    P2::ControlFlowGraph paths = generateTopLevelPaths(partitioner.cfg(), cfgBeginVertex, cfgEndVertices, cfgAvoidVertices,
+                                                       cfgAvoidEdges, vmap);
+    P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex = vmap.forward()[cfgBeginVertex];
+    P2::CfgConstVertexSet pathsEndVertices = cfgToPaths(cfgEndVertices, vmap);
 
     // When finding paths through a called function, avoid the usual vertices and edges, but also avoid those vertices that
     // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
     // blocks.
-    P2::CfgConstVertexSet calleeGlobalAvoidVertices = globalAvoidVertices;
-    calleeGlobalAvoidVertices.insert(globalEndVertices.begin(), globalEndVertices.end());
+    P2::CfgConstVertexSet calleeCfgAvoidVertices = cfgAvoidVertices;
+    calleeCfgAvoidVertices.insert(cfgEndVertices.begin(), cfgEndVertices.end());
 
     // Depth-first traversal of the "paths". When a function call is encountered we do one of two things: either expand the
     // called function into the paths-CFG and replace the call-ret edge with an actual function call and return edges, or do
@@ -1031,13 +1048,12 @@ findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGra
             // without specifying any particular paths through the called function. We can expand the callee's paths at this
             // time so we follow paths through the callee instead of this E_CALL_RETURN edge.
             P2::ControlFlowGraph::ConstEdgeIterator pathsCallRetEdge = path.edges().back();
-            P2::ControlFlowGraph::ConstVertexIterator pathsCallReturnTarget = pathsCallRetEdge->target();
             P2::ControlFlowGraph::ConstVertexIterator pathsCallSite = pathsCallRetEdge->source();
             P2::ControlFlowGraph::ConstVertexIterator cfgCallSite =
                 partitioner.findPlaceholder(pathsCallSite->value().address());
             info <<"inlining function call paths at vertex " <<partitioner.vertexName(pathsCallSite) <<"\n";
-            P2::insertCalleePaths(paths, pathsCallRetEdge,
-                                  partitioner.cfg(), cfgCallSite, calleeGlobalAvoidVertices, globalAvoidEdges);
+            P2::insertCalleePaths(paths, pathsCallSite,
+                                  partitioner.cfg(), cfgCallSite, calleeCfgAvoidVertices, cfgAvoidEdges);
             path.popBack();
             ASSERT_require(path.nVisits(pathsCallRetEdge)==0);
             paths.eraseEdge(pathsCallRetEdge); pathsCallRetEdge = paths.edges().end();
