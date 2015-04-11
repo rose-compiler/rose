@@ -563,29 +563,30 @@ TESTCODES_REQUIRED_TO_PASS = \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
-#    test2015_56.c
-#    test2015_84.c 
-#    test2015_85.c 
-#    test2015_86.c 
-#    test2015_87.c 
-#    test2015_88.c 
-#    test2015_89.c 
-#    test2015_90.c 
-#    test2015_91.c 
-#    test2015_92.c 
-#    test2015_93.c 
-#    test2015_94.c 
-#    test2015_95.c 
-#    test2015_96.c 
-#    test2015_97.c 
-#    test2015_98.c 
-#    test2015_99.c 
-#    test2015_100.c 
-#    test2015_101.c 
-#    test2015_102.c 
-#    test2015_103.c 
-#    test2015_104.c 
-#    test2015_105.c 
+FAILING_TESTCODES_XEN = \
+    test2015_56.c \
+    test2015_84.c \
+    test2015_85.c \
+    test2015_86.c \
+    test2015_87.c \
+    test2015_88.c \
+    test2015_89.c \
+    test2015_90.c \
+    test2015_91.c \
+    test2015_92.c \
+    test2015_93.c \
+    test2015_94.c \
+    test2015_95.c \
+    test2015_96.c \
+    test2015_97.c \
+    test2015_98.c \
+    test2015_99.c \
+    test2015_100.c \
+    test2015_101.c \
+    test2015_102.c \
+    test2015_103.c \
+    test2015_104.c \
+    test2015_105.c 
 
 # DQ (3/22/2015): Still failing:
 #    test2015_31.c 
