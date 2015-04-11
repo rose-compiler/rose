@@ -13,6 +13,7 @@ libPartitioner_la_SOURCES =			\
 	AddressUsageMap.C			\
 	Attribute.C				\
 	BasicBlock.C				\
+	CfgPath.C				\
 	Config.C				\
 	ControlFlowGraph.C			\
 	DataBlock.C				\

@@ -121,6 +121,14 @@ endif
 
 
 #------------------------------------------------------------------------------------------------------------------------
+# Generate programs having specific structures (for path testing)
+
+bin_PROGRAMS += generatePaths
+generatePaths_SOURCES = generatePaths.C
+generatePaths_CPPFLAGS = $(ROSE_INCLUDES)
+generatePaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Find paths in the CFG
 
 bin_PROGRAMS += findPath

@@ -45,7 +45,7 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
 void
 Partitioner::init(const Partitioner &other) {
     // All graph vertices need to be converted from other.cfg_ to this->cfg_
-    BOOST_FOREACH (const VertexIndex::Node &node, other.vertexIndex_.nodes())
+    BOOST_FOREACH (const CfgVertexIndex::Node &node, other.vertexIndex_.nodes())
         vertexIndex_.insert(node.key(), convertFrom(other, node.value()));
     undiscoveredVertex_ = convertFrom(other, other.undiscoveredVertex_);
     indeterminateVertex_ = convertFrom(other, other.indeterminateVertex_);
@@ -850,6 +850,13 @@ Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
     basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
     bb->stackDeltaOut().getOptional().assignTo(delta);
     return delta;
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::instructionVertex(rose_addr_t insnVa) const {
+    if (BasicBlock::Ptr bblock = basicBlockContainingInstruction(insnVa))
+        return findPlaceholder(bblock->address());
+    return cfg().vertices().end();
 }
 
 std::vector<SgAsmInstruction*>
@@ -1865,8 +1872,8 @@ Partitioner::discoverFunctionEntryVertices() const {
 
 size_t
 Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         EdgeList *inwardInterFunctionEdges /*out*/,
-                                         EdgeList *outwardInterFunctionEdges /*out*/) {
+                                         CfgEdgeList *inwardInterFunctionEdges /*out*/,
+                                         CfgEdgeList *outwardInterFunctionEdges /*out*/) {
     std::vector<size_t> inwardIds, outwardIds;
     size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
     if (inwardInterFunctionEdges) {
@@ -1882,8 +1889,8 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
 
 size_t
 Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                         ConstEdgeList *outwardInterFunctionEdges /*out*/) const {
+                                         CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                         CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const {
     std::vector<size_t> inwardIds, outwardIds;
     size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
     if (inwardInterFunctionEdges) {

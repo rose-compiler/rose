@@ -174,9 +174,7 @@ public:
         return instance(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        SValuePtr result = SValue::promote(number_(1, value?1:0));
-        result->get_expression()->set_comment(value?"true":"false");
-        return result;
+        return number_(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
