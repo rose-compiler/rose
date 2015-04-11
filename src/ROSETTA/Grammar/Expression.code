@@ -6686,21 +6686,31 @@ $CLASSNAME::get_type() const
      ROSE_ASSERT(block != NULL);
 
      SgStatementPtrList & statementList = block->getStatementList();
-     ROSE_ASSERT(statementList.empty() == false);
-     SgStatement* lastStatement = *(statementList.rbegin());
-     SgExprStatement* expressionStatement = isSgExprStatement(lastStatement);
-     if (expressionStatement != NULL)
+
+  // DQ (4/8/2015): Empty statement expressions have to be allowed.
+  // ROSE_ASSERT(statementList.empty() == false);
+     if (statementList.empty() == true)
         {
-       // The type of the statement expression is the 
-       // SgExpression* expression = expressionStatement->get_the_expr();
-          SgExpression* expression = expressionStatement->get_expression();
-          ROSE_ASSERT(expression != NULL);
-          returnType = expression->get_type();
+       // DQ (4/8/2015): After discusion, this might be better setup as a SgTypeUnknown instead of SgTypeVoid.
+          returnType = SgTypeVoid::createType();
         }
        else
         {
-       // This is the default type if last statement in block is not an expression statement (C++ standard)
-          returnType = SgTypeVoid::createType();
+          SgStatement* lastStatement = *(statementList.rbegin());
+          SgExprStatement* expressionStatement = isSgExprStatement(lastStatement);
+          if (expressionStatement != NULL)
+             {
+            // The type of the statement expression is the 
+            // SgExpression* expression = expressionStatement->get_the_expr();
+               SgExpression* expression = expressionStatement->get_expression();
+               ROSE_ASSERT(expression != NULL);
+               returnType = expression->get_type();
+             }
+            else
+             {
+            // This is the default type if last statement in block is not an expression statement (C++ standard)
+               returnType = SgTypeVoid::createType();
+             }
         }
 
      ROSE_ASSERT(returnType != NULL);
