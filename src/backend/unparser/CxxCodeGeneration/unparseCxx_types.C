@@ -3171,15 +3171,20 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      printf ("In Unparse_Type::unparseArrayType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
 #endif
 
+  // DQ (4/11/2015): Need to handle "[n]" part of array type (see test2015_83.c).
   // DQ (3/31/2015): We can't use the perenthesis in this case (see test2015_49.c).
-     if (isSgTypeOfType(array_type->get_base_type()) != NULL)
+  // if (isSgTypeOfType(array_type->get_base_type()) != NULL)
+     if (isSgTypeOfType(array_type->get_base_type()) != NULL && info.isTypeFirstPart() == true)
         {
        // This is a special case (similar to that for SgPointerType, but not the same).
-#if 0
-          printf("################ In unparseArrayType(): hadle special case of array_type->get_base_type() is SgTypeOfType \n");
+#if DEBUG_ARRAY_TYPE
+          printf("################ In unparseArrayType(): handle special case of array_type->get_base_type() is SgTypeOfType \n");
 #endif
           if (info.isTypeFirstPart() == true)
              {
+#if DEBUG_ARRAY_TYPE
+               printf ("In Unparse_Type::unparseArrayType(): base_type is SgTypeOfType: info.isTypeFirstPart() == true (unset first and second parts and call unparse on SgTypeOfType base type) \n");
+#endif
                SgUnparse_Info ninfo1(info);
                ninfo1.unset_isTypeSecondPart();
                ninfo1.unset_isTypeFirstPart();
@@ -3187,6 +3192,15 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
                unparseType(array_type->get_base_type(), ninfo1);
              }
 
+#if 0
+       // DQ (4/11/2015): This code cannot be executed since we modified the predicate to add "&& info.isTypeFirstPart() == true"
+          if (info.isTypeSecondPart() == true)
+             {
+#if DEBUG_ARRAY_TYPE
+               printf ("In Unparse_Type::unparseArrayType(): base_type is SgTypeOfType: info.isTypeSecondPart() == true (nothing implemented) \n");
+#endif
+             }
+#endif
           return;
         }
 

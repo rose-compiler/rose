@@ -9065,7 +9065,9 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
    {
   // ROSE_ASSERT(base_expression != NULL);
 
-#if 0
+#define DEBUG_TYPEOF_TYPE 0
+
+#if DEBUG_TYPEOF_TYPE
      printf ("In SageBuilder::buildTypeOfType(): base_expression = %p = %s \n",base_expression,base_expression != NULL ? base_expression->class_name().c_str() : "NULL");
      printf ("   ------------------------------- base_type       = %p = %s \n",base_type,base_type != NULL ? base_type->class_name().c_str() : "NULL");
 #endif
@@ -9073,11 +9075,14 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
      SgTypeOfType* result = NULL;
      if (isSgFunctionParameterRefExp(base_expression) != NULL)
         {
+#if DEBUG_TYPEOF_TYPE
+          printf ("In SageBuilder::buildTypeOfType(): isSgFunctionParameterRefExp(base_expression) != NULL: calling new SgTypeOfType(base_expression,NULL) \n");
+#endif
           result = new SgTypeOfType(base_expression,NULL);
 
        // DQ (3/28/2015): Testing for corruption in return value.
           ROSE_ASSERT(result != NULL);
-#if 0
+#if DEBUG_TYPEOF_TYPE
           printf ("In buildTypeOfType(): test 1: result = %p = %s \n",result,result->class_name().c_str());
 #endif
           result->set_base_type(base_type);
@@ -9087,11 +9092,14 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
        // result = SgTypeOfType::createType(base_expression);
           if (base_expression != NULL)
              {
+#if DEBUG_TYPEOF_TYPE
+               printf ("In SageBuilder::buildTypeOfType(): isSgFunctionParameterRefExp(base_expression) == NULL: base_expression != NULL: calling SgTypeOfType::createType(base_expression,NULL) \n");
+#endif
                result = SgTypeOfType::createType(base_expression,NULL);
 
             // DQ (3/28/2015): Testing for corruption in return value.
                ROSE_ASSERT(result != NULL);
-#if 0
+#if DEBUG_TYPEOF_TYPE
                printf ("In buildTypeOfType(): test 2: result = %p = %s \n",result,result->class_name().c_str());
 #endif
              }
@@ -9099,23 +9107,27 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
              {
             // result = SgTypeOfType::createType((SgType*)NULL);
                ROSE_ASSERT(base_type != NULL);
+
+#if DEBUG_TYPEOF_TYPE
+               printf ("In SageBuilder::buildTypeOfType(): isSgFunctionParameterRefExp(base_expression) == NULL: base_expression == NULL: calling SgTypeOfType::createType(base_type,NULL) \n");
+#endif
                result = SgTypeOfType::createType(base_type,NULL);
 
             // DQ (3/28/2015): Testing for corruption in return value.
                ROSE_ASSERT(result != NULL);
-#if 0
+
+#if DEBUG_TYPEOF_TYPE
                printf ("In buildTypeOfType(): test 3: result = %p = %s \n",result,result->class_name().c_str());
 #endif
-
             // result->set_base_type(base_type);
                if (result->get_base_type() != base_type)
                   {
                     ROSE_ASSERT(result->get_base_type() != NULL);
-#if 0
+#if DEBUG_TYPEOF_TYPE
                     printf ("result->get_base_type() = %p = %s \n",result->get_base_type(),result->get_base_type()->class_name().c_str());
 #endif
                     ROSE_ASSERT(base_type != NULL);
-#if 0
+#if DEBUG_TYPEOF_TYPE
                     printf ("base_type               = %p = %s \n",base_type,base_type->class_name().c_str());
 #endif
                   }
@@ -9132,7 +9144,8 @@ SgTypeOfType* SageBuilder::buildTypeOfType(SgExpression *base_expression, SgType
 
   // DQ (3/28/2015): Testing for corruption in return value.
      ROSE_ASSERT(result != NULL);
-#if 0
+
+#if DEBUG_TYPEOF_TYPE
      printf ("In buildTypeOfType(): test 4: result = %p = %s \n",result,result->class_name().c_str());
 #endif
 

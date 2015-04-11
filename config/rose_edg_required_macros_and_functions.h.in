@@ -387,8 +387,11 @@ make this safer.
 
 /* This is not correct, but it should be portable */
 #define __builtin_choose_expr(exp,T1,T2) (T1)
-/* This is not correct, but it should be portable, make it always return false for now */
-#define __builtin_constant_p(exp) (0)
+
+/* DQ (4/9/2015): Comment this out in favor of the supported version.
+   This is not correct, but it should be portable, make it always return false for now 
+#define __builtin_constant_p(exp) (0) 
+*/
 
 
 /* Additional builtin functions:

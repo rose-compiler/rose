@@ -17573,7 +17573,11 @@ void SageInterface::annotateExpressionsWithUniqueNames (SgProject* project)
     SgScopeStatement*         containing_scope = definingDeclaration.get_scope();
     SgType*                   result_type = definingDeclaration.get_type()->get_return_type();
     SgExprListExp*            decorators = deepCopy( definingDeclaration.get_decoratorList() );
-    SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope, decorators);
+
+ // DQ (4/9/2015): Suggested fix for this function.
+ // SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope, decorators);
+    SgFunctionDeclaration*    wrapperfn = SB::buildDefiningFunctionDeclaration(newName, result_type, &param_list, containing_scope);
+
     SgFunctionDefinition*     wrapperdef = wrapperfn->get_definition();
     ROSE_ASSERT(wrapperdef);
 
