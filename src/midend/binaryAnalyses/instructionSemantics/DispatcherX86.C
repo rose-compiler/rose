@@ -2614,6 +2614,30 @@ struct IP_psub: P {
     }
 };
 
+// Logical compare
+//   PTEST
+struct IP_ptest: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            BaseSemantics::SValuePtr zf = ops->equalToZero(ops->and_(a, b));
+            BaseSemantics::SValuePtr cf = ops->equalToZero(ops->and_(a, ops->invert(b)));
+            BaseSemantics::SValuePtr no = ops->boolean_(false);
+            ops->writeRegister(d->REG_ZF, zf);
+            ops->writeRegister(d->REG_CF, cf);
+            ops->writeRegister(d->REG_AF, no);
+            ops->writeRegister(d->REG_OF, no);
+            ops->writeRegister(d->REG_PF, no);
+            ops->writeRegister(d->REG_SF, no);
+        }
+    }
+};
+
 // Unpack low data
 //   PUNPCKLBW
 //   PUNPCKLWD
@@ -3419,6 +3443,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_psubw,        new X86::IP_psub(16));
     iproc_set(x86_psubd,        new X86::IP_psub(32));
     iproc_set(x86_psubq,        new X86::IP_psub(64));
+    iproc_set(x86_ptest,        new X86::IP_ptest);
     iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
     iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
     iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
