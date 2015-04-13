@@ -1,3 +1,6 @@
+// This test code demonstrates a problem using the 
+// -m32 flag and is beter represented in test2015_95.c.
+
 extern unsigned long long RamSizeOver4G;
 
 void foobar()

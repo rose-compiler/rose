@@ -586,7 +586,27 @@ FAILING_TESTCODES_XEN = \
     test2015_102.c \
     test2015_103.c \
     test2015_104.c \
-    test2015_105.c 
+    test2015_105.c \
+    test2015_106.c 
+
+# DQ (4/13/2015): The best examples of remaining bugs are:
+# Makefile rules:
+#    test_using_explicit_output_file_option:
+#    test_rtd_use: 
+#    test_m32_use: 
+# And test codes:
+#    test2015_85.c (demonstrates bug in designated initializer handling)
+#    test2015_87.c (demonstrated need for 32-bit mode for EDG front-end, waiting on fix from EDG)
+#    test2015_88.c (may require edits to source code where this happens)
+#    test2015_89.c (only fails when tested using -m32 -mrtd options using makefile rule: test_rtd_use)
+#    test2015_93.c  (demonstrates use of GNU statement-expression in default case of switch statement)
+#    test2015_95.c  (demonstrates 32-bit mode requirement for EDG front-end)
+#    test2015_100.c (demonstrates that the typeof opertor not output in argument type for function type unparsing)
+#    test2015_102.c (demonstrates unparsing of alias attribute on non-defining declaration)
+#    test2015_103.c (demonstrates unparsing of CPP directive before closing ";" of expanded macro)
+#    test2015_105.c (demonstrates unparsing of __asm__() in wrong position)
+#    test2015_106.c (demonstrated use of volatile with va_list (not allowed)
+
 
 # DQ (3/22/2015): Still failing:
 #    test2015_31.c 
@@ -906,10 +926,10 @@ test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 
 # DQ (4/8/2015): This causes an error due to a bug which outputs a redundant "-o <file>" option
 test_using_explicit_output_file_option:
-	$(testTranslator) -rose:verbose 2 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c -o test2015_86
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c -o test2015_86
 
 test_using_implicit_output_file_option:
-	$(testTranslator) -rose:verbose 2 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
 
 # DQ (4/9/2015): Added test for using -m32 -mrtd options (required for Xen).
 test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h

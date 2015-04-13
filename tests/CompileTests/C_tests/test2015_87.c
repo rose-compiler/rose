@@ -1,3 +1,10 @@
+// This test code demonstrates the requirement in ROSE for a -m32 mode.
+// The cast of an address in 64-bit mode to a 32-bit value is an error in EDG.
+// It is correct that it is an error in EDG since it is interpreted in 64-bit mode.
+// EDG is working on a fix for this issue, providing a 32-bit mode for the front-end.
+
+#define DEMO_BUG 1
+
 typedef unsigned char u8;
 typedef unsigned short u16;
 typedef unsigned int u32;
@@ -35,7 +42,10 @@ u64 rombios32_gdt[] __attribute__((section(".data.varfseg." "src/test2015_01.c" 
 
 struct descloc_s rombios32_gdt_48 __attribute__((section(".data.varfseg." "src/test2015_01.c" "." "161"))) = {
     .length = sizeof(rombios32_gdt) - 1,
-//  .addr = (u32)rombios32_gdt,
+#if DEMO_BUG
+    .addr = (u32)rombios32_gdt,
+#else
     .addr = 0L,
+#endif
 };
 

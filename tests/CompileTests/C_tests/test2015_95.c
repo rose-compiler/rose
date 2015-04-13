@@ -1,3 +1,9 @@
+// This test code is tested using the makefile rule:
+//      test_m32_use
+// and it specific to a problem using the -m32 flag.
+// This is a simpler version of the same problem as 
+// in test2015_94.c.
+
 #define ALIGN(x,a)              __ALIGN_MASK(x,(typeof(x))(a)-1)
 #define __ALIGN_MASK(x,mask)    (((x)+(mask))&~(mask))
 

@@ -1,3 +1,9 @@
+// This code has a simplified representation in test2015_53.c and test2015_93.c.
+
+// This test code demonstrates that the use of the GNU language extension (statement-expression)
+// in the default statement of the switch causes the while statement after the switch to not
+// be unparsed (maybe even not in the AST).
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> 

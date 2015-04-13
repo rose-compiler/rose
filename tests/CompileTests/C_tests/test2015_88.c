@@ -136,6 +136,13 @@ X(14, Bit32u, pmm, void *argp)
 #endif
 #undef X
 
+/* The bug here is that the expansion of the macro happens in the
+   asm command and then the #include is redundantly output; causing
+   the error.  This is a famous issue in the interplay between 
+   the AST and the #include directives.  Not clear if there is
+   much to do about this unless the seperate strings in this case
+   can be seen in the ASt (which I think is not possible).
+ */
 asm (
     "    .text                       \n"
     "     movzwl %bx,%eax            \n"

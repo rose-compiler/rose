@@ -1,59 +1,39 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h> 
+// This is test2015_53.c in the C regression tests in ROSE (tests/CompileTests/C_tests directory):
 
-char *findneedle(char *haystack)
-{
-  return  ({ char * random_var_name179345532=(char *)strstr(haystack,"needle");random_var_name179345532; }) ;
-// need to wrap function above since we can't put a free here after return!
-}
+// This code demonstrates where the internal block handling in ROSE
+// is incorrect when the default statement has a GNU statement-expression
+// that is not wrapped in a SgBaslicBlock.  When DEMO_BUG is set to 1,
+// the while statement will not be unparsed, when it is set to 0, the
+// while statement will be unparsed properly.
 
-int main(int argc,char **argv)
-{
-  const char *test = "testval";
-  int x = 5;
-  printf("testing special character: ");
-// should not split these:
-  printf("\\");
-  printf("\n");
-  printf("Now I know my a b c'");
-// should split 's
-  printf("s\n");
-  if ( ({ char * random_var_name179345533=(char *)strstr(test,"val");random_var_name179345533; })  ||  ({ char * random_var_name179345534=(char *)strstr(test,"test");random_var_name179345534; }) ) {
-    printf("Found test or val!\n");
-    printf("%d\n",x);
-    goto badwrap;
-    x++;
-    badwrap:
-// better not put a declaration here! should add null statement
-    printf("5 should equal %d\n",x);
-  }
-  printf("I found: %s\n",(findneedle("Is the word needle in this haystack?")?"needle" : "nothing"));
-  switch( ({ char * random_var_name179345535=(char *)strstr(test,"val");random_var_name179345535; })  == ((void *)0)){
-    case 0:
-{
-      printf("Case zero!\n");
-      break; 
-    }
-    default:
-     ({ int random_var_name179345536=(int)printf("Default case!\n");random_var_name179345536; });
-  }
-  while( ({ int random_var_name179345537=(int)printf("Hi there\n");random_var_name179345537; }) ){
-    break; 
-  }
-// should print true
-  if ( ({ char * random_var_name179345538=(char *)strstr((x?"(bool)x = true" : "x!=0\n"),"true");random_var_name179345538; }) ) {
-    printf("%s\n",(strstr((x?"(bool)x = true" : "x!=0\n"),"true")));
-  }
-// should NOT print true, should print false
-  if ( ({ char * random_var_name179345539=(char *)strstr((x?"(bool)x = true" : "x!=0\n"),"false");random_var_name179345539; }) ) {
-    printf("%s\n",(strstr((x?"(bool)x = true" : "x!=0"),"true")));
-  }
-   else {
-    printf("%s\n",(strstr((!x?"(bool)x = true" : "!(bool)x = false"),"false")));
-  }
-  do {
-    printf("In Do While Loop!\n");
-  }while (! ({ int random_var_name179345540=(int)printf("Goodbye!\n");random_var_name179345540; }) );
-  return 0;
-}
+#define DEMO_BUG 1
+
+void foobar()
+   {
+     switch( 1 )
+        {
+          case 0:
+             {
+               break;
+             }
+#if DEMO_BUG
+       // BUG: This code causes ROSE to get the internal block handling wrong.
+          default:
+               ({ int random_var_name179345536=(int)0L; random_var_name179345536; }) ;
+#else
+       // This code will work fine and generate and AST that unparses the while loop at the end.
+          default:
+             {
+               ({ int random_var_name179345536=(int)0L; random_var_name179345536; }) ;
+             }
+#endif
+        }
+
+     while( 1 )
+        {
+          break;
+        }
+
+     return 0;
+   }
+

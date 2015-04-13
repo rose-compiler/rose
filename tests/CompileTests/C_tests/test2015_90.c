@@ -1,3 +1,5 @@
+/* Test code used in discussion of ROSE issues. */
+
 int test()
 {
  int x=1;
