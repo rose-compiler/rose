@@ -2542,7 +2542,7 @@ struct IP_psra: P {
         }
     }
 };
-        
+
 // Shift double quadword right logical
 //   PSRLDQ
 struct IP_psrldq: P {
@@ -2560,6 +2560,32 @@ struct IP_psrldq: P {
     }
 };
 
+// Shift packed data right logical
+//   PSRLW
+//   PSRLD
+//   PSRLQ
+struct IP_psrl: P {
+    size_t bitsPerOp;
+    IP_psrl(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValuePtr sa = d->read(args[1]);
+            size_t nOps = src->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr part = ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr shifted = ops->shiftRight(part, sa);
+                result = result ? ops->concat(result, shifted) : shifted;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+    
 // Subtract packed integers
 //   PSUBB
 //   PSUBW
@@ -3386,6 +3412,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_psraw,        new X86::IP_psra(16));
     iproc_set(x86_psrad,        new X86::IP_psra(32));
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
+    iproc_set(x86_psrlw,        new X86::IP_psrl(16));
+    iproc_set(x86_psrld,        new X86::IP_psrl(32));
+    iproc_set(x86_psrlq,        new X86::IP_psrl(64));
     iproc_set(x86_psubb,        new X86::IP_psub(8));
     iproc_set(x86_psubw,        new X86::IP_psub(16));
     iproc_set(x86_psubd,        new X86::IP_psub(32));
