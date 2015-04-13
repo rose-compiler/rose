@@ -43,7 +43,10 @@ void Edge::addType(EdgeType et) {
   }
   if(isType(EDGE_PATH))
     return;
-  if(!isType(EDGE_PATH) && !(et==EDGE_PATH) && !boolOptions["semantic-fold"] && !boolOptions["post-semantic-fold"]) {
+  else {
+    // some checks that ensure that no nodes are merged that cannot
+    // coexist. For arbitrary CFG transformations EDGE_PATH should be
+    // used
     switch(et) {
     case EDGE_FORWARD: if(isType(EDGE_BACKWARD)) ok=false;break;
     case EDGE_BACKWARD: if(isType(EDGE_FORWARD)) ok=false;break;

@@ -17,6 +17,7 @@
 #include "IntervalAnalysis.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
+#include "AnalysisAstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
@@ -135,11 +136,17 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
     intervalAnalyzer->run();
+#if 0
     intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
     intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
     AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
     ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
     ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
+#else
+    AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+    ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
+#endif
+
   }
 
   if(option_lv_analysis) {
@@ -159,16 +166,17 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
 
     lvAnalysis->determineExtremalLabels(startFunRoot);
-#if 1
     lvAnalysis->run();
     cout << "INFO: attaching LV-data to AST."<<endl;
+#if 0
     lvAnalysis->attachInInfoToAst("lv-analysis-in");
     lvAnalysis->attachOutInfoToAst("lv-analysis-out");
     AstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
     ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
     ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
 #else
-    cout << "STATUS: did not run LV analysis."<<endl;      
+    AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
+    ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
 #endif
     delete lvAnalysis;
   }
@@ -198,9 +206,14 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       //printAttributes<RDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"rd-analysis-in");
       cout << "INFO: annotating analysis results as comments."<<endl;
       ROSE_ASSERT(rdAnalysis->getVariableIdMapping());
+#if 0
       AstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
       ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
       ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
+#else
+      AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+#endif
 
 #if 0
       cout << "INFO: substituting uses with rhs of defs."<<endl;

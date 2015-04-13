@@ -39,9 +39,7 @@ public:
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        size_t nBits = dispatcher->REG_anyIP.get_nbits();
-        operators->writeRegister(dispatcher->REG_anyIP, operators->add(operators->number_(nBits, insn->get_address()),
-                                                                       operators->number_(nBits, insn->get_size())));
+        dispatcher->advanceInstructionPointer(insn);
         SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
         check_arg_width(dispatcher.get(), insn, operands);
         p(dispatcher.get(), operators.get(), insn, operands);
@@ -2814,6 +2812,11 @@ DispatcherX86::regcache_init()
         REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
         REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
     }
+}
+
+RegisterDescriptor
+DispatcherX86::instructionPointerRegister() const {
+    return REG_anyIP;
 }
 
 static bool

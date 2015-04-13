@@ -901,18 +901,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048340} expr=0[1] }
+    cf      = { defs={0x08048340} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
-    pf      = { defs={0x08048340} expr=-1[1] }
+    pf      = { defs={0x08048340} expr=true[1] }
     ?3      = { defs={} expr=v14[1] }
     af      = { defs={0x08048340} expr=v15[1] }
     ?5      = { defs={} expr=v16[1] }
-    zf      = { defs={0x08048340} expr=-1[1] }
-    sf      = { defs={0x08048340} expr=0[1] }
+    zf      = { defs={0x08048340} expr=true[1] }
+    sf      = { defs={0x08048340} expr=false[1] }
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048340} expr=0[1] }
+    of      = { defs={0x08048340} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -953,18 +953,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048340} expr=0[1] }
+    cf      = { defs={0x08048340} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
-    pf      = { defs={0x08048340} expr=-1[1] }
+    pf      = { defs={0x08048340} expr=true[1] }
     ?3      = { defs={} expr=v14[1] }
     af      = { defs={0x08048340} expr=v15[1] }
     ?5      = { defs={} expr=v16[1] }
-    zf      = { defs={0x08048340} expr=-1[1] }
-    sf      = { defs={0x08048340} expr=0[1] }
+    zf      = { defs={0x08048340} expr=true[1] }
+    sf      = { defs={0x08048340} expr=false[1] }
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048340} expr=0[1] }
+    of      = { defs={0x08048340} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1017,18 +1017,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048340} expr=0[1] }
+    cf      = { defs={0x08048340} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
-    pf      = { defs={0x08048340} expr=-1[1] }
+    pf      = { defs={0x08048340} expr=true[1] }
     ?3      = { defs={} expr=v14[1] }
     af      = { defs={0x08048340} expr=v15[1] }
     ?5      = { defs={} expr=v16[1] }
-    zf      = { defs={0x08048340} expr=-1[1] }
-    sf      = { defs={0x08048340} expr=0[1] }
+    zf      = { defs={0x08048340} expr=true[1] }
+    sf      = { defs={0x08048340} expr=false[1] }
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048340} expr=0[1] }
+    of      = { defs={0x08048340} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1081,7 +1081,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1092,7 +1092,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1145,7 +1145,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1156,7 +1156,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1221,7 +1221,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1232,7 +1232,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1309,7 +1309,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1320,7 +1320,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1409,7 +1409,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1420,7 +1420,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1521,7 +1521,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1532,7 +1532,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1645,7 +1645,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1656,7 +1656,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1781,7 +1781,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1792,7 +1792,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -1929,7 +1929,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -1940,7 +1940,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -2089,7 +2089,7 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048345} expr=0[1] }
+    cf      = { defs={0x08048345} expr=false[1] }
     ?1      = { defs={} expr=v13[1] }
     pf      = { defs={0x08048342,0x08048345} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] 4[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v14[1] }
@@ -2100,7 +2100,7 @@ registers:
     tf      = { defs={} expr=v17[1] }
     if      = { defs={} expr=v18[1] }
     df      = { defs={} expr=v19[1] }
-    of      = { defs={0x08048345} expr=0[1] }
+    of      = { defs={0x08048345} expr=false[1] }
     iopl0   = { defs={} expr=v20[1] }
     iopl1   = { defs={} expr=v21[1] }
     nt      = { defs={} expr=v22[1] }
@@ -2918,18 +2918,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804837b} expr=0[1] }
+    cf      = { defs={0x0804837b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x08048375,0x0804837b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x08048375,0x0804837b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x0804837b} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x08048375,0x0804837b} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x08048375,0x0804837b} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x08048375,0x0804837b} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x08048375,0x0804837b} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804837b} expr=0[1] }
+    of      = { defs={0x0804837b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -2994,18 +2994,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804837b} expr=0[1] }
+    cf      = { defs={0x0804837b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x08048375,0x0804837b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x08048375,0x0804837b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x0804837b} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x08048375,0x0804837b} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x08048375,0x0804837b} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x08048375,0x0804837b} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x08048375,0x0804837b} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804837b} expr=0[1] }
+    of      = { defs={0x0804837b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -3026,7 +3026,7 @@ registers:
     ?29     = { defs={} expr=v43[1] }
     ?30     = { defs={} expr=v44[1] }
     ?31     = { defs={} expr=v45[1] }
-    ip      = { defs={0x0804836e,0x0804836f,0x08048375,0x0804837b,0x0804837d} expr=(ite[32] (zerop[1] (bv-and[32] v46[32] v46[32])) 0x08048384[32] 0x0804837f[32]) }
+    ip      = { defs={0x0804836e,0x0804836f,0x08048375,0x0804837b,0x0804837d} expr=(ite[32] (zerop[1] v46[32]) 0x08048384[32] 0x0804837f[32]) }
 memory:
 init mem:
     address = { defs={0x0804836e,0x0804836f,0x08048375} expr=(add[32] v3[32] 4953[32]) }
@@ -3940,18 +3940,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483a6} expr=0[1] }
+    cf      = { defs={0x080483a6} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483a4,0x080483a6} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483a4,0x080483a6} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483a6} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483a4,0x080483a6} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483a4,0x080483a6} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483a4,0x080483a6} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483a4,0x080483a6} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483a6} expr=0[1] }
+    of      = { defs={0x080483a6} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -4016,18 +4016,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483a6} expr=0[1] }
+    cf      = { defs={0x080483a6} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483a4,0x080483a6} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483a4,0x080483a6} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483a6} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483a4,0x080483a6} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483a4,0x080483a6} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483a4,0x080483a6} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483a4,0x080483a6} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483a6} expr=0[1] }
+    of      = { defs={0x080483a6} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -4048,7 +4048,7 @@ registers:
     ?29     = { defs={} expr=v43[1] }
     ?30     = { defs={} expr=v44[1] }
     ?31     = { defs={} expr=v45[1] }
-    ip      = { defs={0x0804839f,0x080483a4,0x080483a6,0x080483a8} expr=(ite[32] (zerop[1] (bv-and[32] v46[32] v46[32])) 0x080483c5[32] 0x080483aa[32]) }
+    ip      = { defs={0x0804839f,0x080483a4,0x080483a6,0x080483a8} expr=(ite[32] (zerop[1] v46[32]) 0x080483c5[32] 0x080483aa[32]) }
 memory:
 init mem:
     address = { defs={0x0804839f} expr=(add[32] v0[32] 3[32]) }
@@ -4482,18 +4482,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483c1} expr=0[1] }
+    cf      = { defs={0x080483c1} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483bf,0x080483c1} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483bf,0x080483c1} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483c1} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483bf,0x080483c1} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483bf,0x080483c1} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483bf,0x080483c1} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483bf,0x080483c1} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483c1} expr=0[1] }
+    of      = { defs={0x080483c1} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -4558,18 +4558,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483c1} expr=0[1] }
+    cf      = { defs={0x080483c1} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483bf,0x080483c1} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483bf,0x080483c1} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483c1} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483bf,0x080483c1} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483bf,0x080483c1} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483bf,0x080483c1} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483bf,0x080483c1} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483c1} expr=0[1] }
+    of      = { defs={0x080483c1} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -4590,7 +4590,7 @@ registers:
     ?29     = { defs={} expr=v43[1] }
     ?30     = { defs={} expr=v44[1] }
     ?31     = { defs={} expr=v45[1] }
-    ip      = { defs={0x080483ba,0x080483bf,0x080483c1,0x080483c3} expr=(ite[32] (invert[1] (zerop[1] (bv-and[32] v46[32] v46[32]))) 0x080483b0[32] 0x080483c5[32]) }
+    ip      = { defs={0x080483ba,0x080483bf,0x080483c1,0x080483c3} expr=(ite[32] (invert[1] (zerop[1] v46[32])) 0x080483b0[32] 0x080483c5[32]) }
 memory:
 init mem:
     address = { defs={0x080483ba} expr=(add[32] v0[32] 3[32]) }
@@ -5109,18 +5109,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483db} expr=0[1] }
+    cf      = { defs={0x080483db} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483d6,0x080483db} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483d6,0x080483db} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483db} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483d6,0x080483db} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483d6,0x080483db} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483d6,0x080483db} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483d6,0x080483db} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483db} expr=0[1] }
+    of      = { defs={0x080483db} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -5185,18 +5185,18 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x080483db} expr=0[1] }
+    cf      = { defs={0x080483db} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
-    pf      = { defs={0x080483d6,0x080483db} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] v46[32] v46[32])) (extract[1] 1[32] 2[32] (bv-and[32] v46[32] v46[32])) (extract[1] 2[32] 3[32] (bv-and[32] v46[32] v46[32])) (extract[1] 3[32] 4[32] (bv-and[32] v46[32] v46[32])) (extract[1] 4[32] 5[32] (bv-and[32] v46[32] v46[32])) (extract[1] 5[32] 6[32] (bv-and[32] v46[32] v46[32])) (extract[1] 6[32] 7[32] (bv-and[32] v46[32] v46[32])) (extract[1] 7[32] 8[32] (bv-and[32] v46[32] v46[32])))) }
+    pf      = { defs={0x080483d6,0x080483db} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] v46[32]) (extract[1] 1[32] 2[32] v46[32]) (extract[1] 2[32] 3[32] v46[32]) (extract[1] 3[32] 4[32] v46[32]) (extract[1] 4[32] 5[32] v46[32]) (extract[1] 5[32] 6[32] v46[32]) (extract[1] 6[32] 7[32] v46[32]) (extract[1] 7[32] 8[32] v46[32]))) }
     ?3      = { defs={} expr=v17[1] }
     af      = { defs={0x080483db} expr=v47[1] }
     ?5      = { defs={} expr=v19[1] }
-    zf      = { defs={0x080483d6,0x080483db} expr=(zerop[1] (bv-and[32] v46[32] v46[32])) }
-    sf      = { defs={0x080483d6,0x080483db} expr=(extract[1] 31[32] 32[32] (bv-and[32] v46[32] v46[32])) }
+    zf      = { defs={0x080483d6,0x080483db} expr=(zerop[1] v46[32]) }
+    sf      = { defs={0x080483d6,0x080483db} expr=(extract[1] 31[32] 32[32] v46[32]) }
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x080483db} expr=0[1] }
+    of      = { defs={0x080483db} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -5217,7 +5217,7 @@ registers:
     ?29     = { defs={} expr=v43[1] }
     ?30     = { defs={} expr=v44[1] }
     ?31     = { defs={} expr=v45[1] }
-    ip      = { defs={0x080483d0,0x080483d1,0x080483d3,0x080483d6,0x080483db,0x080483dd} expr=(ite[32] (zerop[1] (bv-and[32] v46[32] v46[32])) 0x08048400[32] 0x080483df[32]) }
+    ip      = { defs={0x080483d0,0x080483d1,0x080483d3,0x080483d6,0x080483db,0x080483dd} expr=(ite[32] (zerop[1] v46[32]) 0x08048400[32] 0x080483df[32]) }
 memory:
     address = { defs={0x080483d0} expr=(add[32] v4[32] -1[32]) }
       value = { defs={0x080483d0} expr=(extract[8] 24[32] 32[32] v5[32]) }
@@ -5316,18 +5316,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x080483e4} expr=0[1] }
+    cf      = { defs={0x080483e4} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
+    pf      = { defs={0x080483df,0x080483e4} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x080483e4} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
-    sf      = { defs={0x080483df,0x080483e4} expr=0[1] }
+    zf      = { defs={0x080483df,0x080483e4} expr=true[1] }
+    sf      = { defs={0x080483df,0x080483e4} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x080483e4} expr=0[1] }
+    of      = { defs={0x080483e4} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -5368,18 +5368,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x080483e4} expr=0[1] }
+    cf      = { defs={0x080483e4} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
+    pf      = { defs={0x080483df,0x080483e4} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x080483e4} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
-    sf      = { defs={0x080483df,0x080483e4} expr=0[1] }
+    zf      = { defs={0x080483df,0x080483e4} expr=true[1] }
+    sf      = { defs={0x080483df,0x080483e4} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x080483e4} expr=0[1] }
+    of      = { defs={0x080483e4} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -5420,18 +5420,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x080483e4} expr=0[1] }
+    cf      = { defs={0x080483e4} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
+    pf      = { defs={0x080483df,0x080483e4} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x080483e4} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
-    sf      = { defs={0x080483df,0x080483e4} expr=0[1] }
+    zf      = { defs={0x080483df,0x080483e4} expr=true[1] }
+    sf      = { defs={0x080483df,0x080483e4} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x080483e4} expr=0[1] }
+    of      = { defs={0x080483e4} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -5472,18 +5472,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x080483e4} expr=0[1] }
+    cf      = { defs={0x080483e4} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
+    pf      = { defs={0x080483df,0x080483e4} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x080483e4} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
-    sf      = { defs={0x080483df,0x080483e4} expr=0[1] }
+    zf      = { defs={0x080483df,0x080483e4} expr=true[1] }
+    sf      = { defs={0x080483df,0x080483e4} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x080483e4} expr=0[1] }
+    of      = { defs={0x080483e4} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -5536,18 +5536,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x080483e4} expr=0[1] }
+    cf      = { defs={0x080483e4} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
+    pf      = { defs={0x080483df,0x080483e4} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x080483e4} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x080483df,0x080483e4} expr=-1[1] }
-    sf      = { defs={0x080483df,0x080483e4} expr=0[1] }
+    zf      = { defs={0x080483df,0x080483e4} expr=true[1] }
+    sf      = { defs={0x080483df,0x080483e4} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x080483e4} expr=0[1] }
+    of      = { defs={0x080483e4} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -6121,7 +6121,7 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804841b} expr=0[1] }
+    cf      = { defs={0x0804841b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
     pf      = { defs={0x08048410,0x08048418,0x0804841b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v17[1] }
@@ -6132,7 +6132,7 @@ registers:
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804841b} expr=0[1] }
+    of      = { defs={0x0804841b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -6185,7 +6185,7 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804841b} expr=0[1] }
+    cf      = { defs={0x0804841b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
     pf      = { defs={0x08048410,0x08048418,0x0804841b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v17[1] }
@@ -6196,7 +6196,7 @@ registers:
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804841b} expr=0[1] }
+    of      = { defs={0x0804841b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -6261,7 +6261,7 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804841b} expr=0[1] }
+    cf      = { defs={0x0804841b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
     pf      = { defs={0x08048410,0x08048418,0x0804841b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v17[1] }
@@ -6272,7 +6272,7 @@ registers:
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804841b} expr=0[1] }
+    of      = { defs={0x0804841b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -6349,7 +6349,7 @@ registers:
     ds      = { defs={} expr=v11[16] }
     fs      = { defs={} expr=v12[16] }
     gs      = { defs={} expr=v13[16] }
-    cf      = { defs={0x0804841b} expr=0[1] }
+    cf      = { defs={0x0804841b} expr=false[1] }
     ?1      = { defs={} expr=v15[1] }
     pf      = { defs={0x08048410,0x08048418,0x0804841b} expr=(invert[1] (bv-xor[1] (extract[1] 0[32] 1[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 1[32] 2[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 2[32] 3[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 3[32] 4[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 4[32] 5[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 5[32] 6[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 6[32] 7[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])) (extract[1] 7[32] 8[32] (bv-and[32] (add[32] v4[32] -12[32]) 4294967280[32])))) }
     ?3      = { defs={} expr=v17[1] }
@@ -6360,7 +6360,7 @@ registers:
     tf      = { defs={} expr=v22[1] }
     if      = { defs={} expr=v23[1] }
     df      = { defs={} expr=v24[1] }
-    of      = { defs={0x0804841b} expr=0[1] }
+    of      = { defs={0x0804841b} expr=false[1] }
     iopl0   = { defs={} expr=v26[1] }
     iopl1   = { defs={} expr=v27[1] }
     nt      = { defs={} expr=v28[1] }
@@ -6504,18 +6504,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048430} expr=0[1] }
+    cf      = { defs={0x08048430} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048430} expr=-1[1] }
+    pf      = { defs={0x08048430} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048430} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048430} expr=-1[1] }
-    sf      = { defs={0x08048430} expr=0[1] }
+    zf      = { defs={0x08048430} expr=true[1] }
+    sf      = { defs={0x08048430} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048430} expr=0[1] }
+    of      = { defs={0x08048430} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -6556,18 +6556,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048430} expr=0[1] }
+    cf      = { defs={0x08048430} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048430} expr=-1[1] }
+    pf      = { defs={0x08048430} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048430} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048430} expr=-1[1] }
-    sf      = { defs={0x08048430} expr=0[1] }
+    zf      = { defs={0x08048430} expr=true[1] }
+    sf      = { defs={0x08048430} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048430} expr=0[1] }
+    of      = { defs={0x08048430} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -6620,18 +6620,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048430} expr=0[1] }
+    cf      = { defs={0x08048430} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048430} expr=-1[1] }
+    pf      = { defs={0x08048430} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048430} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048430} expr=-1[1] }
-    sf      = { defs={0x08048430} expr=0[1] }
+    zf      = { defs={0x08048430} expr=true[1] }
+    sf      = { defs={0x08048430} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048430} expr=0[1] }
+    of      = { defs={0x08048430} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -11391,18 +11391,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048552} expr=0[1] }
+    cf      = { defs={0x08048552} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048552} expr=-1[1] }
+    pf      = { defs={0x08048552} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048552} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048552} expr=-1[1] }
-    sf      = { defs={0x08048552} expr=0[1] }
+    zf      = { defs={0x08048552} expr=true[1] }
+    sf      = { defs={0x08048552} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048552} expr=0[1] }
+    of      = { defs={0x08048552} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -11443,18 +11443,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048552} expr=0[1] }
+    cf      = { defs={0x08048552} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048552} expr=-1[1] }
+    pf      = { defs={0x08048552} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048552} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048552} expr=-1[1] }
-    sf      = { defs={0x08048552} expr=0[1] }
+    zf      = { defs={0x08048552} expr=true[1] }
+    sf      = { defs={0x08048552} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048552} expr=0[1] }
+    of      = { defs={0x08048552} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -11495,18 +11495,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048552} expr=0[1] }
+    cf      = { defs={0x08048552} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048552} expr=-1[1] }
+    pf      = { defs={0x08048552} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048552} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048552} expr=-1[1] }
-    sf      = { defs={0x08048552} expr=0[1] }
+    zf      = { defs={0x08048552} expr=true[1] }
+    sf      = { defs={0x08048552} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048552} expr=0[1] }
+    of      = { defs={0x08048552} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
@@ -11547,18 +11547,18 @@ registers:
     ds      = { defs={} expr=v10[16] }
     fs      = { defs={} expr=v11[16] }
     gs      = { defs={} expr=v12[16] }
-    cf      = { defs={0x08048552} expr=0[1] }
+    cf      = { defs={0x08048552} expr=false[1] }
     ?1      = { defs={} expr=v14[1] }
-    pf      = { defs={0x08048552} expr=-1[1] }
+    pf      = { defs={0x08048552} expr=true[1] }
     ?3      = { defs={} expr=v16[1] }
     af      = { defs={0x08048552} expr=v45[1] }
     ?5      = { defs={} expr=v18[1] }
-    zf      = { defs={0x08048552} expr=-1[1] }
-    sf      = { defs={0x08048552} expr=0[1] }
+    zf      = { defs={0x08048552} expr=true[1] }
+    sf      = { defs={0x08048552} expr=false[1] }
     tf      = { defs={} expr=v21[1] }
     if      = { defs={} expr=v22[1] }
     df      = { defs={} expr=v23[1] }
-    of      = { defs={0x08048552} expr=0[1] }
+    of      = { defs={0x08048552} expr=false[1] }
     iopl0   = { defs={} expr=v25[1] }
     iopl1   = { defs={} expr=v26[1] }
     nt      = { defs={} expr=v27[1] }
