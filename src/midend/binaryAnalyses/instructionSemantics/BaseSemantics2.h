@@ -2064,21 +2064,42 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of
-     * other operations.
+    /** Equality comparison.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b holds. Both operands must be the same
+     *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
      *
      * @{ */
     SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
     SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
     /** @} */
 
-    /** Tests operands for unsigned less-than.
+    /** Comparison for unsigned values.
      *
-     *  Returns a Boolean to indicate whether @p a is less than @p b when they are interpreted as unsigned integers. Both
-     *  operands must be the same width. This is not a virtual function because it can be implemented in terms of other
-     *  operations. */
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as unsigned values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
     SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
+    /** Comparison for signed values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as signed values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Integer Arithmetic Operations
