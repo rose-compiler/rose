@@ -2342,6 +2342,33 @@ struct IP_pmuldq: P {
     }
 };
 
+// Packed multiply high with round and scale
+//   PMULHRSW
+struct IP_pmulhrsw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / 16;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*16, (i+1)*16);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*16, (i+1)*16);
+                BaseSemantics::SValuePtr product = ops->unsignedMultiply(partA, partB);
+                BaseSemantics::SValuePtr scaled = ops->extract(ops->add(ops->shiftRight(product, ops->number_(32, 14)),
+                                                                        ops->number_(32, 1)),
+                                                               1, 17);
+                result = result ? ops->concat(result, scaled) : scaled;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Multiply packed unsigned integers and store high result
 //   PMULHUW
 struct IP_pmulhuw: P {
@@ -3792,6 +3819,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pmovzxwq,     new X86::IP_pmovzx(16, 64));
     iproc_set(x86_pmovzxdq,     new X86::IP_pmovzx(32, 64));
     iproc_set(x86_pmuldq,       new X86::IP_pmuldq);
+    iproc_set(x86_pmulhrsw,     new X86::IP_pmulhrsw);
     iproc_set(x86_pmulhuw,      new X86::IP_pmulhuw);
     iproc_set(x86_pmulhw,       new X86::IP_pmulhw);
     iproc_set(x86_pmulld,       new X86::IP_pmull(32));
