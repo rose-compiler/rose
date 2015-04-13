@@ -3948,6 +3948,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_setpe,        new X86::IP_setcc(x86_setpe));
     iproc_set(x86_setpo,        new X86::IP_setcc(x86_setpo));
     iproc_set(x86_sets,         new X86::IP_setcc(x86_sets));
+    iproc_set(x86_sfence,       new X86::IP_nop);
     iproc_set(x86_shl,          new X86::IP_shift_1(x86_shl));
     iproc_set(x86_shld,         new X86::IP_shift_2(x86_shld));
     iproc_set(x86_shr,          new X86::IP_shift_1(x86_shr));
