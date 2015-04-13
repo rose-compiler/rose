@@ -218,6 +218,7 @@ faketarget:
 	tests/cptest9.C
 	tests/mailinglist2.C
 	tests/mailinglist3.C
+	tests/arraytest2.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -336,6 +337,32 @@ pkglib_LTLIBRARIES = libspray.la
 libspray_la_LDFLAGS= -no-undefined
 libspray_la_LDFLAGS=
 libspray_la_SOURCES=\
+ AliasAnalysis.h \
+ AnalysisAbstractionLayer.h \
+ AnalysisAstAnnotator.h \
+ AstTerm.h \
+ CFAnalysis.h \
+ DFAnalysisBase.h \
+ DFTransferFunctions.h \
+ IntervalAnalysis.h \
+ IntervalAstAttribute.h \
+ IntervalAstAttributeInterface.h \
+ IntervalPropertyState.h \
+ IntervalPropertyStateFactory.h \
+ IntervalTransferFunctions.h \
+ LVAnalysis.h \
+ LVAstAttribute.h \
+ LVAstAttributeInterface.h \
+ LVLattice.h \
+ LVTransferFunctions.h \
+ LanguageRestrictor.h \
+ NumberIntervalLattice.h \
+ PASolver1.h \
+ PointerAnalysisInterface.h \
+ RDAnalysis.h \
+ RDAstAttribute.h \
+ RDTransferFunctions.h \
+ WorkListSeq.h \
  AnalysisAstAnnotator.C \
  AliasAnalysis.C \
  AstTerm.C \
