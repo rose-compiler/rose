@@ -1472,6 +1472,70 @@ struct IP_pabs: P {
     }
 };
 
+// Pack with signed saturation
+//   PACKSSDW
+//   PACKSSWB
+struct IP_packss: P {
+    size_t srcBitsPerOp;
+    size_t dstBitsPerOp;
+    IP_packss(size_t srcBitsPerOp, size_t dstBitsPerOp): srcBitsPerOp(srcBitsPerOp), dstBitsPerOp(dstBitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / srcBitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValuePtr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
+                result = result ? ops->concat(result, dst) : dst;
+            }
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValuePtr dst = d->saturateSignedToSigned(src, dstBitsPerOp);
+                result = result ? ops->concat(result, dst) : dst;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Pack with unsigned saturation
+//   PACKUSDW
+//   PACKUSWB
+struct IP_packus: P {
+    size_t srcBitsPerOp;
+    size_t dstBitsPerOp;
+    IP_packus(size_t srcBitsPerOp, size_t dstBitsPerOp): srcBitsPerOp(srcBitsPerOp), dstBitsPerOp(dstBitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / srcBitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr src = ops->extract(a, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValuePtr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
+                result = result ? ops->concat(result, dst) : dst;
+            }
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr src = ops->extract(b, i*srcBitsPerOp, (i+1)*srcBitsPerOp);
+                BaseSemantics::SValuePtr dst = d->saturateSignedToUnsigned(src, dstBitsPerOp);
+                result = result ? ops->concat(result, dst) : dst;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Packed integer addition
 //   PADDB
 //   PADDW
@@ -3389,6 +3453,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pabsb,        new X86::IP_pabs(8));
     iproc_set(x86_pabsw,        new X86::IP_pabs(16));
     iproc_set(x86_pabsd,        new X86::IP_pabs(32));
+    iproc_set(x86_packssdw,     new X86::IP_packss(32, 16));
+    iproc_set(x86_packsswb,     new X86::IP_packss(16, 8));
+    iproc_set(x86_packusdw,     new X86::IP_packus(32, 16));
+    iproc_set(x86_packuswb,     new X86::IP_packus(16, 8));
     iproc_set(x86_paddb,        new X86::IP_padd(8));
     iproc_set(x86_paddw,        new X86::IP_padd(16));
     iproc_set(x86_paddd,        new X86::IP_padd(32));
@@ -4216,6 +4284,34 @@ DispatcherX86::fixMemoryAddress(const BaseSemantics::SValuePtr &addr) const
             return operators->unsignedExtend(addr, addrWidth);
     }
     return addr;
+}
+
+BaseSemantics::SValuePtr
+DispatcherX86::saturateSignedToUnsigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+    ASSERT_not_null(src);
+    ASSERT_require(src->get_width() >= nBits);
+    if (src->get_width() == nBits)
+        return src;
+    BaseSemantics::SValuePtr signBit = operators->extract(src, src->get_width()-1, src->get_width());
+    BaseSemantics::SValuePtr high = operators->extract(src, nBits, src->get_width());
+    BaseSemantics::SValuePtr noOverflow = operators->equalToZero(high);
+    return operators->ite(noOverflow, operators->extract(src, 0, nBits), operators->signExtend(signBit, nBits));
+}
+
+BaseSemantics::SValuePtr
+DispatcherX86::saturateSignedToSigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+    ASSERT_not_null(src);
+    ASSERT_require(src->get_width() >= nBits);
+    if (src->get_width() == nBits)
+        return src;
+    BaseSemantics::SValuePtr signBit = operators->extract(src, src->get_width()-1, src->get_width());
+    BaseSemantics::SValuePtr high = operators->extract(src, nBits-1, src->get_width());
+    BaseSemantics::SValuePtr zero = operators->number_(high->get_width(), 0);
+    BaseSemantics::SValuePtr allSet = operators->invert(zero);
+    BaseSemantics::SValuePtr noOverflow = operators->or_(operators->equalToZero(high), operators->isEqual(high, allSet));
+    BaseSemantics::SValuePtr minResult = operators->concat(operators->number_(nBits-1, 0), operators->boolean_(true));
+    BaseSemantics::SValuePtr maxResult = operators->invert(minResult);
+    return operators->ite(noOverflow, operators->extract(src, 0, nBits), operators->ite(signBit, minResult, maxResult));
 }
 
 } // namespace
