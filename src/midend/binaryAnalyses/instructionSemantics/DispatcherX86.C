@@ -1230,6 +1230,34 @@ struct IP_loop: P {
     }
 };
 
+// Store selected bytes
+//  MASKMOVQ
+struct IP_maskmov: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValuePtr mask = d->read(args[1]);
+            ASSERT_require(src->get_width() == mask->get_width());
+            BaseSemantics::SValuePtr startVa = d->readRegister(d->REG_EDI);
+            BaseSemantics::SValuePtr mem = ops->readMemory(d->REG_DS, startVa, ops->undefined_(src->get_width()),
+                                                           ops->boolean_(true));
+            BaseSemantics::SValuePtr result;
+            size_t nOps = src->get_width() / 8;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partMask = ops->extract(mask, i*8, i*8+1);
+                BaseSemantics::SValuePtr byte = ops->ite(partMask,
+                                                         ops->extract(src, i*8, i*8+8),
+                                                         ops->extract(mem, i*8, i*8+8));
+                result = result ? ops->concat(result, byte) : byte;
+            }
+            ops->writeMemory(d->REG_DS, startVa, result, ops->boolean_(true));
+        }
+    }
+};
+
 // The MOV instruction
 struct IP_mov: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3808,6 +3836,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loop,         new X86::IP_loop(x86_loop));
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
+    iproc_set(x86_maskmovq,     new X86::IP_maskmov);
     iproc_set(x86_mfence,       new X86::IP_nop);
     iproc_set(x86_mov,          new X86::IP_mov);
     iproc_set(x86_movbe,        new X86::IP_movbe);
