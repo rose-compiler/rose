@@ -2638,14 +2638,14 @@ struct IP_ptest: P {
     }
 };
 
-// Unpack low data
-//   PUNPCKLBW
-//   PUNPCKLWD
-//   PUNPCKLDQ
-//   PUNPCKLQDQ
-struct IP_punpckl: P {
-    size_t bitsPerMove;
-    IP_punpckl(size_t bitsPerMove): bitsPerMove(bitsPerMove) {}
+// Unpack high data
+//   PUNPCKHBW
+//   PUNPCKHWD
+//   PUNPCKHDQ
+//   PUNPCKHQDQ
+struct IP_punpckh: P {
+    size_t bitsPerOp;                                   // number of bits read from each source operand for each operation
+    IP_punpckh(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 2);
         if (insn->get_lockPrefix()) {
@@ -2653,10 +2653,43 @@ struct IP_punpckl: P {
         } else {
             BaseSemantics::SValuePtr a = d->read(args[0]);
             BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
             BaseSemantics::SValuePtr result;
-            for (size_t bitOffset=0; 2*(bitOffset+bitsPerMove)<=a->get_width(); bitOffset+=bitsPerMove) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, bitOffset, bitOffset+bitsPerMove);
-                BaseSemantics::SValuePtr partB = ops->extract(b, bitOffset, bitOffset+bitsPerMove);
+            size_t halfWidth = a->get_width() / 2;
+            size_t nOps = halfWidth / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, halfWidth + i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
+                result = result ? ops->concat(result, pair) : pair;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Unpack low data
+//   PUNPCKLBW
+//   PUNPCKLWD
+//   PUNPCKLDQ
+//   PUNPCKLQDQ
+struct IP_punpckl: P {
+    size_t bitsPerOp;                                   // number of bits read from each source operand for each operation
+    IP_punpckl(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            BaseSemantics::SValuePtr result;
+            size_t halfWidth = a->get_width() / 2;
+            size_t nOps = halfWidth / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
                 result = result ? ops->concat(result, pair) : pair;
             }
@@ -3444,6 +3477,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_psubd,        new X86::IP_psub(32));
     iproc_set(x86_psubq,        new X86::IP_psub(64));
     iproc_set(x86_ptest,        new X86::IP_ptest);
+    iproc_set(x86_punpckhbw,    new X86::IP_punpckh(8));
+    iproc_set(x86_punpckhwd,    new X86::IP_punpckh(16));
+    iproc_set(x86_punpckhdq,    new X86::IP_punpckh(32));
+    iproc_set(x86_punpckhqdq,   new X86::IP_punpckh(64));
     iproc_set(x86_punpcklbw,    new X86::IP_punpckl(8));
     iproc_set(x86_punpcklwd,    new X86::IP_punpckl(16));
     iproc_set(x86_punpckldq,    new X86::IP_punpckl(32));
