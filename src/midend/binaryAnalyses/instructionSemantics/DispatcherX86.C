@@ -644,6 +644,36 @@ struct IP_cmpxchg: P {
     }
 };
 
+// Compare and exchange bytes
+//   CMPXCHG8B
+//   CMPXCHG16B
+struct IP_cmpxchg2: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        if (!isSgAsmMemoryReferenceExpression(args[0])) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b, c;
+            switch (a->get_width()) {
+                case 64:
+                    b = ops->concat(d->readRegister(d->REG_EAX), d->readRegister(d->REG_EDX));
+                    c = ops->concat(d->readRegister(d->REG_EBX), d->readRegister(d->REG_ECX));
+                    break;
+                case 128:
+                    b = ops->concat(d->readRegister(d->REG_RAX), d->readRegister(d->REG_RDX));
+                    c = ops->concat(d->readRegister(d->REG_RBX), d->readRegister(d->REG_RCX));
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand width for CMPXCHG8B instruction");
+            }
+            BaseSemantics::SValuePtr eq = ops->isEqual(a, b);
+            ops->writeRegister(d->REG_ZF, eq);
+            d->write(args[0], ops->ite(eq, c, a));
+        }
+    }
+};
+
 // CPU identification
 struct IP_cpuid: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3695,6 +3725,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_cmpsd,        new X86::IP_cmpstrings(x86_repeat_none, 32)); // FIXME: also a floating point instruction
     iproc_set(x86_cmpsq,        new X86::IP_cmpstrings(x86_repeat_none, 64));
     iproc_set(x86_cmpxchg,      new X86::IP_cmpxchg);
+    iproc_set(x86_cmpxchg8b,    new X86::IP_cmpxchg2);
+    iproc_set(x86_cmpxchg16b,   new X86::IP_cmpxchg2);
     iproc_set(x86_cpuid,        new X86::IP_cpuid);
     iproc_set(x86_cqo,          new X86::IP_cqo);
     iproc_set(x86_cwd,          new X86::IP_cwd);
@@ -3977,6 +4009,8 @@ DispatcherX86::regcache_init()
         switch (processorMode()) {
             case x86_insnsize_64:
                 REG_RAX = findRegister("rax", 64);
+                REG_RBX = findRegister("rbx", 64);
+                REG_RCX = findRegister("rcx", 64);
                 REG_RDX = findRegister("rdx", 64);
                 REG_RDI = findRegister("rdi", 64);
                 REG_RSI = findRegister("rsi", 64);
