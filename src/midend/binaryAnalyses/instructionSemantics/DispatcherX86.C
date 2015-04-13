@@ -1061,7 +1061,7 @@ struct IP_ldmxcsr: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            d->write(d->REG_MXCSR, d->read(args[0]));
+            ops->writeRegister(d->REG_MXCSR, d->read(args[0]));
         }
     }
 };
@@ -3781,6 +3781,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_ldmxcsr,      new X86::IP_ldmxcsr);
     iproc_set(x86_lea,          new X86::IP_lea);
     iproc_set(x86_leave,        new X86::IP_leave);
+    iproc_set(x86_lfence,       new X86::IP_nop);
     iproc_set(x86_lodsb,        new X86::IP_loadstring(x86_repeat_none, 8));
     iproc_set(x86_lodsw,        new X86::IP_loadstring(x86_repeat_none, 16));
     iproc_set(x86_lodsd,        new X86::IP_loadstring(x86_repeat_none, 32));
@@ -3788,6 +3789,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loop,         new X86::IP_loop(x86_loop));
     iproc_set(x86_loopnz,       new X86::IP_loop(x86_loopnz));
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
+    iproc_set(x86_mfence,       new X86::IP_nop);
     iproc_set(x86_mov,          new X86::IP_mov);
     iproc_set(x86_movd,         new X86::IP_move_zero_extend);
     iproc_set(x86_movdqa,       new X86::IP_move_same);
