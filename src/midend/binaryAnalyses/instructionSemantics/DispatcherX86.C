@@ -2133,6 +2133,34 @@ struct IP_pmaddwd: P {
     }
 };
 
+// Maximum of packed signed integers
+//   PMAXSB
+//   PMAXSW
+//   PMAXSD
+struct IP_pmaxs: P {
+    size_t bitsPerOp;
+    IP_pmaxs(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr maxVal = ops->ite(ops->isSignedLessThan(partA, partB), partB, partA);
+                result = result ? ops->concat(result, maxVal) : maxVal;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Maximum of packed unsigned integers
 //   PMAXUB
 //   PMAXUW
@@ -2155,6 +2183,34 @@ struct IP_pmaxu: P {
                 BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr maxVal = ops->ite(ops->isUnsignedLessThan(partA, partB), partB, partA);
                 result = result ? ops->concat(result, maxVal) : maxVal;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Minimum of packed signed integers
+//   PMINSB
+//   PMINSW
+//   PMINSD
+struct IP_pmins: P {
+    size_t bitsPerOp;
+    IP_pmins(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr minVal = ops->ite(ops->isSignedLessThan(partA, partB), partA, partB);
+                result = result ? ops->concat(result, minVal) : minVal;
             }
             d->write(args[0], result);
         }
@@ -3653,9 +3709,15 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pinsrq,       new X86::IP_pinsr(64));
     iproc_set(x86_pmaddubsw,    new X86::IP_pmaddubsw);
     iproc_set(x86_pmaddwd,      new X86::IP_pmaddwd);
+    iproc_set(x86_pmaxsb,       new X86::IP_pmaxs(8));
+    iproc_set(x86_pmaxsw,       new X86::IP_pmaxs(16));
+    iproc_set(x86_pmaxsd,       new X86::IP_pmaxs(32));
     iproc_set(x86_pmaxub,       new X86::IP_pmaxu(8));
     iproc_set(x86_pmaxuw,       new X86::IP_pmaxu(16));
     iproc_set(x86_pmaxud,       new X86::IP_pmaxu(32));
+    iproc_set(x86_pminsb,       new X86::IP_pmins(8));
+    iproc_set(x86_pminsw,       new X86::IP_pmins(16));
+    iproc_set(x86_pminsd,       new X86::IP_pmins(32));
     iproc_set(x86_pminub,       new X86::IP_pminu(8));
     iproc_set(x86_pminuw,       new X86::IP_pminu(16));
     iproc_set(x86_pminud,       new X86::IP_pminu(32));
