@@ -1592,6 +1592,33 @@ struct IP_padds: P {
     }
 };
 
+// Add packed unsigned integers with unsigned saturation
+//   PADDUSB
+//   PADDUSW
+struct IP_paddus: P {
+    size_t bitsPerOp;
+    IP_paddus(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValuePtr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValuePtr sum = d->saturateUnsignedToUnsigned(ops->add(partA, partB), bitsPerOp);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Packed align right
 struct IP_palignr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3490,6 +3517,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_paddq,        new X86::IP_padd(64));
     iproc_set(x86_paddsb,       new X86::IP_padds(8));
     iproc_set(x86_paddsw,       new X86::IP_padds(16));
+    iproc_set(x86_paddusb,      new X86::IP_paddus(8));
+    iproc_set(x86_paddusw,      new X86::IP_paddus(16));
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pand,         new X86::IP_pand);
     iproc_set(x86_pandn,        new X86::IP_pandn);
@@ -4343,6 +4372,18 @@ DispatcherX86::saturateSignedToSigned(const BaseSemantics::SValuePtr &src, size_
     return operators->ite(noOverflow, operators->extract(src, 0, nBits), operators->ite(signBit, minResult, maxResult));
 }
 
+BaseSemantics::SValuePtr
+DispatcherX86::saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr &src, size_t nBits) {
+    ASSERT_not_null(src);
+    ASSERT_require(src->get_width() >= nBits);
+    if (src->get_width() == nBits)
+        return src;
+    BaseSemantics::SValuePtr high = operators->extract(src, nBits, src->get_width());
+    BaseSemantics::SValuePtr noOverflow = operators->equalToZero(high);
+    return operators->ite(noOverflow, operators->extract(src, 0, nBits), operators->invert(operators->number_(nBits, 0)));
+}
+
 } // namespace
 } // namespace
 } // namespace
+

@@ -203,6 +203,10 @@ public:
      * represented by the narrower type, in which case the closest signed value is returned. The closest signed value is either
      * 0b1000...0 (minimum signed value) or 0b0111...1 (maximum signed value). */
     virtual BaseSemantics::SValuePtr saturateSignedToSigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
+
+    /** Convert an unsigned value to a narrower unsigned type.  Returns the truncated source value except when the value cannot
+     * be represented by the narrower type, in which case the closest unsigned value is returned. */
+    virtual BaseSemantics::SValuePtr saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
 };
         
 } // namespace
