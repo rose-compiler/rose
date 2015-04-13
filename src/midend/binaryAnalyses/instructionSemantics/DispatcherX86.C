@@ -1980,14 +1980,50 @@ struct IP_phsub: P {
             for (size_t i=0; i<nOps/2; ++i) {
                 BaseSemantics::SValuePtr minuend = ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr subtrahend = ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr sum = ops->subtract(minuend, subtrahend);
-                result = result ? ops->concat(result, sum) : sum;
+                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                result = result ? ops->concat(result, difference) : difference;
             }
             for (size_t i=0; i<nOps/2; ++i) {
                 BaseSemantics::SValuePtr minuend = ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr subtrahend = ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp);
-                BaseSemantics::SValuePtr sum = ops->subtract(minuend, subtrahend);
-                result = ops->concat(result, sum);
+                BaseSemantics::SValuePtr difference = ops->subtract(minuend, subtrahend);
+                result = ops->concat(result, difference);
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed horizontal subtract and saturate
+//   PHSUBSW
+struct IP_phsubs: P {
+    size_t bitsPerOp;
+    IP_phsubs(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(a, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                                                                   bitsPerOp+1);
+                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(a, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                                                                      bitsPerOp+1);
+                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                result = result ? ops->concat(result, difference) : difference;
+            }
+            for (size_t i=0; i<nOps/2; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(b, (2*i+0)*bitsPerOp, (2*i+1)*bitsPerOp),
+                                                                   bitsPerOp+1);
+                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(b, (2*i+1)*bitsPerOp, (2*i+2)*bitsPerOp),
+                                                                      bitsPerOp+1);
+                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                result = ops->concat(result, difference);
             }
             d->write(args[0], result);
         }
@@ -3581,6 +3617,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_phminposuw,   new X86::IP_phminposuw);
     iproc_set(x86_phsubw,       new X86::IP_phsub(16));
     iproc_set(x86_phsubd,       new X86::IP_phsub(32));
+    iproc_set(x86_phsubsw,      new X86::IP_phsubs(16));
     iproc_set(x86_pinsrb,       new X86::IP_pinsr(8));
     iproc_set(x86_pinsrw,       new X86::IP_pinsr(16));
     iproc_set(x86_pinsrd,       new X86::IP_pinsr(32));
