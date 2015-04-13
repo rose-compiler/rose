@@ -2889,6 +2889,63 @@ struct IP_psub: P {
     }
 };
 
+// Subtract packed signed integers with signed saturation
+//   PSUBSB
+//   PSUBSW
+struct IP_psubs: P {
+    size_t bitsPerOp;
+    IP_psubs(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValuePtr result;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
+                                                                   bitsPerOp+1);
+                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
+                                                                      bitsPerOp+1);
+                BaseSemantics::SValuePtr difference = d->saturateSignedToSigned(ops->subtract(minuend, subtrahend), bitsPerOp);
+                result = result ? ops->concat(result, difference) : difference;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Subtract packed unsigned integers with unsigned saturation
+//   PSUBUSB
+//   PSUBUSW
+struct IP_psubus: P {
+    size_t bitsPerOp;
+    IP_psubus(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr dst = d->read(args[0]); // minuends
+            BaseSemantics::SValuePtr src = d->read(args[1]); // subtrahends
+            BaseSemantics::SValuePtr result;
+            size_t nOps = dst->get_width() / bitsPerOp;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr minuend = ops->signExtend(ops->extract(dst, i*bitsPerOp, (i+1)*bitsPerOp),
+                                                                   bitsPerOp+1);
+                BaseSemantics::SValuePtr subtrahend = ops->signExtend(ops->extract(src, i*bitsPerOp, (i+1)*bitsPerOp),
+                                                                      bitsPerOp+1);
+                BaseSemantics::SValuePtr difference = d->saturateUnsignedToUnsigned(ops->subtract(minuend, subtrahend),
+                                                                                    bitsPerOp);
+                result = result ? ops->concat(result, difference) : difference;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Logical compare
 //   PTEST
 struct IP_ptest: P {
@@ -3768,6 +3825,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_psubw,        new X86::IP_psub(16));
     iproc_set(x86_psubd,        new X86::IP_psub(32));
     iproc_set(x86_psubq,        new X86::IP_psub(64));
+    iproc_set(x86_psubsb,       new X86::IP_psubs(8));
+    iproc_set(x86_psubsw,       new X86::IP_psubs(16));
+    iproc_set(x86_psubusb,      new X86::IP_psubus(8));
+    iproc_set(x86_psubusw,      new X86::IP_psubus(16));
     iproc_set(x86_ptest,        new X86::IP_ptest);
     iproc_set(x86_punpckhbw,    new X86::IP_punpckh(8));
     iproc_set(x86_punpckhwd,    new X86::IP_punpckh(16));
