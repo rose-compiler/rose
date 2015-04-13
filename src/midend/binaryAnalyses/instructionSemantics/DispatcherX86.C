@@ -1565,6 +1565,33 @@ struct IP_padd: P {
     }
 };
 
+// Add packed signed integers with signed saturation
+//   PADDSB
+//   PADDSW
+struct IP_padds: P {
+    size_t bitsPerOp;
+    IP_padds(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->signExtend(ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValuePtr partB = ops->signExtend(ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp), bitsPerOp+1);
+                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(partA, partB), bitsPerOp);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Packed align right
 struct IP_palignr: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3461,6 +3488,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_paddw,        new X86::IP_padd(16));
     iproc_set(x86_paddd,        new X86::IP_padd(32));
     iproc_set(x86_paddq,        new X86::IP_padd(64));
+    iproc_set(x86_paddsb,       new X86::IP_padds(8));
+    iproc_set(x86_paddsw,       new X86::IP_padds(16));
     iproc_set(x86_palignr,      new X86::IP_palignr);
     iproc_set(x86_pand,         new X86::IP_pand);
     iproc_set(x86_pandn,        new X86::IP_pandn);
