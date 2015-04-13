@@ -2378,6 +2378,8 @@ struct IP_pshufd: P {
 struct IP_pshufhw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        ASSERT_require(asm_type_width(args[0]->get_type()) == 128);
+        ASSERT_require(asm_type_width(args[1]->get_type()) == 128);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
@@ -2399,6 +2401,8 @@ struct IP_pshufhw: P {
 struct IP_pshuflw: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 3);
+        ASSERT_require(asm_type_width(args[0]->get_type()) == 128);
+        ASSERT_require(asm_type_width(args[1]->get_type()) == 128);
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
@@ -2411,6 +2415,61 @@ struct IP_pshuflw: P {
                 result = result ? ops->concat(result, word) : word;
             }
             result = ops->concat(result, ops->extract(src, 64, 128));
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Shuffle packed words
+//   PSHUFW
+struct IP_pshufw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        ASSERT_require(asm_type_width(args[0]->get_type()) == 64);
+        ASSERT_require(asm_type_width(args[1]->get_type()) == 64);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValuePtr result;
+            size_t order = d->read(args[2])->get_number();// must be an immediate operand
+            for (size_t i=0; i<4; ++i) {
+                size_t wordIdx = (order >> (2*i)) & 3;
+                BaseSemantics::SValuePtr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
+                result = result ? ops->concat(result, word) : word;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Packed sign
+//   PSIGNB
+//   PSIGNW
+//   PSIGND
+struct IP_psign: P {
+    size_t bitsPerOp;
+    IP_psign(size_t bitsPerOp): bitsPerOp(bitsPerOp) {}
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / bitsPerOp;
+            BaseSemantics::SValuePtr result;
+            BaseSemantics::SValuePtr zero = ops->number_(bitsPerOp, 0);
+            BaseSemantics::SValuePtr allSet = ops->invert(zero);
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr isZero = ops->equalToZero(b);
+                BaseSemantics::SValuePtr isNegative = ops->extract(b, bitsPerOp-1, bitsPerOp);
+                BaseSemantics::SValuePtr partC = ops->ite(isNegative, allSet, ops->ite(isZero, zero, partA));
+                result = result ? ops->concat(result, partC) : partC;
+            }
             d->write(args[0], result);
         }
     }
@@ -3265,6 +3324,10 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
     iproc_set(x86_pshufhw,      new X86::IP_pshufhw);
     iproc_set(x86_pshuflw,      new X86::IP_pshuflw);
+    iproc_set(x86_pshufw,       new X86::IP_pshufw);
+    iproc_set(x86_psignb,       new X86::IP_psign(8));
+    iproc_set(x86_psignw,       new X86::IP_psign(16));
+    iproc_set(x86_psignd,       new X86::IP_psign(32));
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
     iproc_set(x86_psubb,        new X86::IP_psub(8));
