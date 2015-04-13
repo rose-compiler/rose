@@ -2373,6 +2373,49 @@ struct IP_pshufd: P {
     }
 };
 
+// Shuffle packed high words
+//   PSHUFHW
+struct IP_pshufhw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValuePtr result = ops->extract(src, 0, 64);
+            size_t order = d->read(args[2])->get_number();// must be an immediate operand
+            for (size_t i=0; i<4; ++i) {
+                size_t wordIdx = (order >> (2*i)) & 3;
+                BaseSemantics::SValuePtr word = ops->extract(src, (4+wordIdx)*16, (4+wordIdx+1)*16);
+                result = ops->concat(result, word);
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
+// Shuffle packed low words
+//   PSHUFLW
+struct IP_pshuflw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 3);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[0]);
+            BaseSemantics::SValuePtr result;
+            size_t order = d->read(args[2])->get_number();// must be an immediate operand
+            for (size_t i=0; i<4; ++i) {
+                size_t wordIdx = (order >> (2*i)) & 3;
+                BaseSemantics::SValuePtr word = ops->extract(src, wordIdx*16, (wordIdx+1)*16);
+                result = result ? ops->concat(result, word) : word;
+            }
+            result = ops->concat(result, ops->extract(src, 64, 128));
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Shift double quadword left logical
 //   PSLLDQ
 struct IP_pslldq: P {
@@ -3220,6 +3263,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_psadbw,       new X86::IP_psadbw);
     iproc_set(x86_pshufb,       new X86::IP_pshufb);
     iproc_set(x86_pshufd,       new X86::IP_pshufd);
+    iproc_set(x86_pshufhw,      new X86::IP_pshufhw);
+    iproc_set(x86_pshuflw,      new X86::IP_pshuflw);
     iproc_set(x86_pslldq,       new X86::IP_pslldq);
     iproc_set(x86_psrldq,       new X86::IP_psrldq);
     iproc_set(x86_psubb,        new X86::IP_psub(8));
