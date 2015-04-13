@@ -1252,6 +1252,25 @@ struct IP_mov: P {
     }
 };
 
+// Move data after swapping bytes
+struct IP_movbe: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            size_t nBytes = src->get_width() / 8;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nBytes; ++i) {
+                BaseSemantics::SValuePtr byte = ops->extract(src, i*8, (i+1)*8);
+                result = result ? ops->concat(byte, result) : byte;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Move source to destination with truncation or zero extend
 // Used for MOVD and MOVQ
 struct IP_move_zero_extend: P {
@@ -3791,6 +3810,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_loopz,        new X86::IP_loop(x86_loopz));
     iproc_set(x86_mfence,       new X86::IP_nop);
     iproc_set(x86_mov,          new X86::IP_mov);
+    iproc_set(x86_movbe,        new X86::IP_movbe);
     iproc_set(x86_movd,         new X86::IP_move_zero_extend);
     iproc_set(x86_movdqa,       new X86::IP_move_same);
     iproc_set(x86_movdqu,       new X86::IP_move_same);
