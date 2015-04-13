@@ -1054,6 +1054,18 @@ struct IP_jcc: P {
     }
 };
 
+// Load MXCSR register
+struct IP_ldmxcsr: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 1);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            d->write(d->REG_MXCSR, d->read(args[0]));
+        }
+    }
+};
+
 // Load effective address
 struct IP_lea: P {
     void p(D d, Ops ops, I insn, A args) {
@@ -3766,6 +3778,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_jpo,          new X86::IP_jcc(x86_jpo));
     iproc_set(x86_js,           new X86::IP_jcc(x86_js));
     iproc_set(x86_lddqu,        new X86::IP_move_same);
+    iproc_set(x86_ldmxcsr,      new X86::IP_ldmxcsr);
     iproc_set(x86_lea,          new X86::IP_lea);
     iproc_set(x86_leave,        new X86::IP_leave);
     iproc_set(x86_lodsb,        new X86::IP_loadstring(x86_repeat_none, 8));
