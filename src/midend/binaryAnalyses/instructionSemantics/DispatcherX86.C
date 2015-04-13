@@ -2075,6 +2075,35 @@ struct IP_pinsr: P {
     }
 };
 
+// Multiply and add packed signed and unsigned bytes
+//   PMADDUBSW
+struct IP_pmaddubsw: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr a = d->read(args[0]);
+            BaseSemantics::SValuePtr b = d->read(args[1]);
+            ASSERT_require(a->get_width() == b->get_width());
+            size_t nOps = a->get_width() / 16;
+            BaseSemantics::SValuePtr result;
+            for (size_t i=0; i<nOps; ++i) {
+                BaseSemantics::SValuePtr x0 = ops->extract(a, i*16+0, i*16+8);
+                BaseSemantics::SValuePtr x1 = ops->extract(a, i*16+8, i*16+16);
+                BaseSemantics::SValuePtr y0 = ops->extract(b, i*16+0, i*16+8);
+                BaseSemantics::SValuePtr y1 = ops->extract(b, i*16+8, i*16+16);
+                BaseSemantics::SValuePtr prod0 = ops->unsignedMultiply(x0, y0);
+                BaseSemantics::SValuePtr prod1 = ops->unsignedMultiply(x1, y1);
+                BaseSemantics::SValuePtr sum = d->saturateSignedToSigned(ops->add(ops->signExtend(prod0, 17),
+                                                                                  ops->signExtend(prod1, 17)), 16);
+                result = result ? ops->concat(result, sum) : sum;
+            }
+            d->write(args[0], result);
+        }
+    }
+};
+
 // Multiply and add packed integers
 //   PMADDWD
 struct IP_pmaddwd: P {
@@ -3622,6 +3651,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pinsrw,       new X86::IP_pinsr(16));
     iproc_set(x86_pinsrd,       new X86::IP_pinsr(32));
     iproc_set(x86_pinsrq,       new X86::IP_pinsr(64));
+    iproc_set(x86_pmaddubsw,    new X86::IP_pmaddubsw);
     iproc_set(x86_pmaddwd,      new X86::IP_pmaddwd);
     iproc_set(x86_pmaxub,       new X86::IP_pmaxu(8));
     iproc_set(x86_pmaxuw,       new X86::IP_pmaxu(16));
