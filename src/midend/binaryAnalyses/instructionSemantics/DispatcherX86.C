@@ -2575,6 +2575,24 @@ struct IP_pop_gprs: P {
     }
 };
 
+// Count number of bits set
+struct IP_popcnt: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr src = d->read(args[1]);
+            BaseSemantics::SValuePtr total = ops->number_(asm_type_width(args[0]->get_type()), 0);
+            for (size_t i=0; i<src->get_width(); ++i) {
+                BaseSemantics::SValuePtr srcBit = ops->extract(src, i, i+1);
+                total = ops->add(total, ops->unsignedExtend(srcBit, total->get_width()));
+            }
+            d->write(args[0], total);
+        }
+    }
+};
+
 // Bitwise logical-OR (no flags affected)
 //   POR
 struct IP_por: P {
@@ -3828,6 +3846,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
+    iproc_set(x86_popcnt,       new X86::IP_popcnt);
     iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
     iproc_set(x86_psadbw,       new X86::IP_psadbw);
