@@ -83,6 +83,22 @@ public:
     virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
 };
 
+/** Match MOV-JMP thunk.
+ *
+ *  Match a thunk of the form:
+ *
+ * @code
+ *  MOV reg, [address]
+ *  JMP reg */
+class MatchMovJmpThunk: public FunctionPrologueMatcher {
+protected:
+    Function::Ptr function_;
+public:
+    static Ptr instance() { return Ptr(new MatchMovJmpThunk); } /**< Allocating constructor. */
+    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+};
+
 /** Match RET followed by PUSH with intervening no-op padding. */
 class MatchRetPadPush: public FunctionPrologueMatcher {
 protected:
