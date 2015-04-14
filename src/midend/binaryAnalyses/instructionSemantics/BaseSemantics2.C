@@ -1236,7 +1236,7 @@ Dispatcher::iproc_get(int key)
 }
 
 const RegisterDescriptor &
-Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing)
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)
