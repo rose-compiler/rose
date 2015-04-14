@@ -1004,6 +1004,10 @@ check-local:
 	@$(MAKE) test_else_case_disambiguation.passed
 	@$(MAKE) test_common_configure_test_with_link.passed
 	@$(MAKE) test2005_168.o
+	@$(MAKE) test_using_explicit_output_file_option
+	@$(MAKE) test_using_implicit_output_file_option
+#	@$(MAKE) test_rtd_use
+#	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"

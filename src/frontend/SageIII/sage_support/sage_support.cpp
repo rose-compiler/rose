@@ -1531,24 +1531,24 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
-    // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
-    // constructor. We can't set any error codes on SgProject since SgProject::parse
-    // is being called from the SgProject::SgProject constructor, meaning the SgProject
-    // object is not properly constructed yet.. The only thing we can do, then, if
-    // there is an error here in the commandline handling, is to halt the program.
-    if (KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL)
-    {
-        std::cout
+  // TOO1 (2014/01/22): TODO: Consider moving CLI processing out of SgProject
+  // constructor. We can't set any error codes on SgProject since SgProject::parse
+  // is being called from the SgProject::SgProject constructor, meaning the SgProject
+  // object is not properly constructed yet.. The only thing we can do, then, if
+  // there is an error here in the commandline handling, is to halt the program.
+     if (KEEP_GOING_CAUGHT_COMMANDLINE_SIGNAL)
+       {
+          std::cout
             << "[FATAL] "
             << "Unrecoverable signal generated during commandline processing"
             << std::endl;
-        exit(1);
-    }
-    else
-    {
-        // builds file list (or none if this is a link line)
-        processCommandLine(argv);
-    }
+          exit(1);
+        }
+       else
+        {
+       // builds file list (or none if this is a link line)
+          processCommandLine(argv);
+        }
 
      int errorCode = 0;
 
@@ -5718,15 +5718,15 @@ SgProject::compileOutput()
              }
 
           // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
-          #ifdef ROSE_BOOST_PATH
+#ifdef ROSE_BOOST_PATH
           if (get_C_only() || get_Cxx_only())
-          {
-              // Search dir for header files, after all directories specified by -I but
-              // before the standard system directories.
-              originalCommandLine.push_back("-isystem");
-              originalCommandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
-          }
-          #endif
+             {
+            // Search dir for header files, after all directories specified by -I but
+            // before the standard system directories.
+               originalCommandLine.push_back("-isystem");
+               originalCommandLine.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+             }
+#endif
 
        // DQ (8/13/2006): Add a space to avoid building "g++-E" as output.
        // compilerNameString += " ";
@@ -5747,12 +5747,12 @@ SgProject::compileOutput()
 
           // Debug: Output commandline arguments before actually executing
           if (SgProject::get_verbose() > 0)
-          {
-              for (unsigned int i=0; i < originalCommandLine.size(); ++i)
-              {
-                   printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
-              }
-          }
+             {
+               for (unsigned int i=0; i < originalCommandLine.size(); ++i)
+                  {
+                    printf ("originalCommandLine[%u] = %s \n", i, originalCommandLine[i].c_str());
+                  }
+             }
 
           errorCode = systemFromVector(originalCommandLine);
 
@@ -5782,57 +5782,62 @@ SgProject::compileOutput()
 
 // case 2: compilation  for each file
        // Typical case
-if (get_Java_only() == true)
-{
-    // DQ (10/16/2005): Handle special case (issue a single compile command for all files)
-      vector<string> argv = get_originalCommandLineArgumentList();
+          if (get_Java_only() == true)
+             {
+            // DQ (10/16/2005): Handle special case (issue a single compile command for all files)
+               vector<string> argv = get_originalCommandLineArgumentList();
 
-    // strip out any rose options before passing the command line.
-      SgFile::stripRoseCommandLineOptions( argv );
+            // strip out any rose options before passing the command line.
+               SgFile::stripRoseCommandLineOptions( argv );
 
-    // strip out edg specific options that would cause an error in the backend linker (compiler).
-      SgFile::stripEdgCommandLineOptions( argv );
+            // strip out edg specific options that would cause an error in the backend linker (compiler).
+               SgFile::stripEdgCommandLineOptions( argv );
 
-    errorCode = Rose::Backend::Java::CompileBatch(this, argv);
-}
-else
-{
-          for (i=0; i < numberOfFiles(); i++)
-          {
-              int localErrorCode = 0;
-              SgFile & file = get_file(i);
+               errorCode = Rose::Backend::Java::CompileBatch(this, argv);
+             }
+            else
+             {
+               for (i=0; i < numberOfFiles(); i++)
+                  {
+                    int localErrorCode = 0;
+                    SgFile & file = get_file(i);
 
-              if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
-              {
-                  std::cout
-                      << "[WARN] "
-                      << "Configured to keep going after catching a "
-                      << "signal in SgProject::compileOutput()"
-                      << std::endl;
+                    if (KEEP_GOING_CAUGHT_BACKEND_COMPILER_SIGNAL)
+                       {
+                         std::cout
+                             << "[WARN] "
+                             << "Configured to keep going after catching a "
+                             << "signal in SgProject::compileOutput()"
+                             << std::endl;
 
-                  localErrorCode = 100;
-                  file.set_backendCompilerErrorCode(localErrorCode);
-              }
-              else
-              {
-                  localErrorCode = file.compileOutput(0);
-                  if (get_Java_only() && this->get_keep_going() == false) {
-                      localErrorCode = 0; // PC: Always keep going for Java!
+                         localErrorCode = 100;
+                         file.set_backendCompilerErrorCode(localErrorCode);
+                       }
+                      else
+                       {
+                         localErrorCode = file.compileOutput(0);
+                         if (get_Java_only() && this->get_keep_going() == false) 
+                            {
+                              localErrorCode = 0; // PC: Always keep going for Java!
+                            }
+                       }
+
+                    if (localErrorCode > errorCode)
+                       {
+                         errorCode = localErrorCode;
+                       }
                   }
-              }
+             }
 
-              if (localErrorCode > errorCode)
-              {
-                  errorCode = localErrorCode;
-              }
-          }
-}
+#if 0
+          printf ("get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+#endif
 
        // case 3: linking at the project level
           if (! (get_Java_only()   ||
                  get_Python_only() ||
                  get_X10_only()))
-          {
+             {
             // Liao, 11/19/2009, 
             // I really want to just move the SgFile::compileOutput() to SgProject::compileOutput() 
             // and have both compilation and linking finished at the same time, just as the original command line does.
@@ -5844,15 +5849,30 @@ else
             // The two level scheme is needed to support mixed language input, like a C file and a Fortran file
             // In this case, we cannot have a single one level command line to compile and link those two files
             // We have to compile each of them first and finally link the object files.
+
+            // DQ (4/13/2015): Check if the compile line supported the link step.
+            // Could this call the linker even we we don't want it called, or skipp calling it when we do want it to be called?
+               if (get_compileOnly() == true)
+                  {
+#if 0
+                    printf ("In SgProject::compileOutput(): Calling the linker if the compile line dodn't handle the link step! \n");
+#endif
 #ifndef _MSC_VER
-            // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
-            // todo windows: put this back in.
-            // linkingReturnVal = link (compilerName);
-               linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
+                 // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
+                 // todo windows: put this back in.
+                 // linkingReturnVal = link (compilerName);
+                    linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
 #else
    #pragma message ("sageSupport.C : linkingReturnVal = link (compilerName); not implemented yet.")
 #endif
-          }
+                  }
+                 else
+                  {
+#if 0
+                    printf ("In SgProject::compileOutput(): Skip calling the linker if the compile line handled the link step! \n");
+#endif
+                  }
+             }
         } // end if preprocessing-only is false
 
   // return errorCode;
@@ -6135,7 +6155,22 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
      int status = systemFromVector(linkingCommand);
 
      if ( get_verbose() > 1 )
+        {
           printf ("linker error status = %d \n",status);
+        }
+
+  // DQ (4/13/2015): Added testing and exiting on non-zero link status (debugging use of redundant -o option).
+  // If the compile line has triggered the link step then we don't want to do the linking here.  Note
+  // that we can't disable the link in the compilation line because "-MMD -MF .subdirs-install.d" options
+  // require the use of the non-absolute path (at least that is my understanding of the problem).
+     if (status != 0)
+        {
+          printf ("Detected non-zero status in link process \n");
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
      return status;
    }
