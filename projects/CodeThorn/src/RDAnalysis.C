@@ -47,3 +47,15 @@ SPRAY::DFAstAttribute* SPRAY::RDAnalysis::createDFAstAttribute(Lattice* elem) {
   ROSE_ASSERT(rdElem);
   return new RDAstAttribute(rdElem);
 }
+
+SPRAY::LabelSet SPRAY::RDAnalysis::getPreRDs(Label lab, VariableId varId) {
+  SPRAY::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPreInfo(lab));
+  ROSE_ASSERT(rdInfo);
+  return rdInfo->getRDs(varId);
+}
+
+SPRAY::LabelSet SPRAY::RDAnalysis::getPostRDs(Label lab, VariableId varId) {
+  SPRAY::RDLattice* rdInfo=dynamic_cast<RDLattice*>(getPostInfo(lab));
+  ROSE_ASSERT(rdInfo);
+  return rdInfo->getRDs(varId);
+}

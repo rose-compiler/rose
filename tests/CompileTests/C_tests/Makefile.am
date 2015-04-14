@@ -533,7 +533,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_53.c \
      test2015_54.c \
      test2015_55.c \
-     test2015_56.c \
      test2015_57.c \
      test2015_58.c \
      test2015_59.c \
@@ -554,7 +553,60 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_74.c \
      test2015_75.c \
      test2015_76.c \
+     test2015_77.c \
+     test2015_78.c \
+     test2015_79.c \
+     test2015_80.c \
+     test2015_81.c \
+     test2015_82.c \
+     test2015_83.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+# DQ (4/11/2015): New failing tests:
+FAILING_TESTCODES_XEN = \
+    test2015_56.c \
+    test2015_84.c \
+    test2015_85.c \
+    test2015_86.c \
+    test2015_87.c \
+    test2015_88.c \
+    test2015_89.c \
+    test2015_90.c \
+    test2015_91.c \
+    test2015_92.c \
+    test2015_93.c \
+    test2015_94.c \
+    test2015_95.c \
+    test2015_96.c \
+    test2015_97.c \
+    test2015_98.c \
+    test2015_99.c \
+    test2015_100.c \
+    test2015_101.c \
+    test2015_102.c \
+    test2015_103.c \
+    test2015_104.c \
+    test2015_105.c \
+    test2015_106.c 
+
+# DQ (4/13/2015): The best examples of remaining bugs are:
+# Makefile rules:
+#    test_using_explicit_output_file_option:
+#    test_rtd_use: 
+#    test_m32_use: 
+# And test codes:
+#    test2015_85.c (demonstrates bug in designated initializer handling)
+#    test2015_87.c (demonstrated need for 32-bit mode for EDG front-end, waiting on fix from EDG)
+#    test2015_88.c (may require edits to source code where this happens)
+#    test2015_89.c (only fails when tested using -m32 -mrtd options using makefile rule: test_rtd_use)
+#    test2015_93.c  (demonstrates use of GNU statement-expression in default case of switch statement)
+#    test2015_95.c  (demonstrates 32-bit mode requirement for EDG front-end)
+#    test2015_100.c (demonstrates that the typeof opertor not output in argument type for function type unparsing)
+#    test2015_102.c (demonstrates unparsing of alias attribute on non-defining declaration)
+#    test2015_103.c (demonstrates unparsing of CPP directive before closing ";" of expanded macro)
+#    test2015_105.c (demonstrates unparsing of __asm__() in wrong position)
+#    test2015_106.c (demonstrated use of volatile with va_list (not allowed)
+
 
 # DQ (3/22/2015): Still failing:
 #    test2015_31.c 
@@ -854,7 +906,6 @@ test_link_using_alias_attribute: $(testTranslator)
 test_link_using_asm_symbol_injection: $(testTranslator)
 	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
 
-
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
@@ -872,6 +923,22 @@ caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 	@cp $(srcdir)/test2008_02.c else_case_disambiguation_test.c
 	@$(RTH_RUN) CMD="env ROSE_TEST_ELSE_DISAMBIGUATION=x $(testTranslator) $(ROSE_FLAGS) -c else_case_disambiguation_test.c" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (4/8/2015): This causes an error due to a bug which outputs a redundant "-o <file>" option
+test_using_explicit_output_file_option:
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c -o test2015_86
+
+test_using_implicit_output_file_option:
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
+
+# DQ (4/9/2015): Added test for using -m32 -mrtd options (required for Xen).
+test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
+	$(testTranslator) -m32 -mrtd -rose:C89 -c $(srcdir)/test2015_89.c
+
+# DQ (4/10/2015): Added test for using -m32 option which fouces __uint128_t to be undefined (required for Xen).
+test_m32_use: $(testTranslator)
+	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
+
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator

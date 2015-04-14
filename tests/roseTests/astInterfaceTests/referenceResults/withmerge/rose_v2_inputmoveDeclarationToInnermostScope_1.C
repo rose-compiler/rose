@@ -8,16 +8,14 @@ int main()
 {
 {
 {
-        int i;
-        i = 0;
+        int i = 0;
       }
     }
   }
 {
 // use with multiple defs
 {
-      int j;
-      j = 0;
+      int j = 0;
 // deeper scope, should be trimmed
 {
         j = 0;
