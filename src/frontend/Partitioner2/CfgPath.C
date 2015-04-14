@@ -217,6 +217,7 @@ eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
     // If all that's left is the start vertex and the start vertex by itself is not a valid path, then remove it.
     if (paths.nVertices()==1 && endPathVertices.find(beginPathVertex)==endPathVertices.end()) {
         paths.clear();
+        path.clear();
         vmap.clear();
     }
 }
@@ -250,79 +251,82 @@ bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
                   const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges) {
-    ASSERT_require(paths.isValidVertex(pathsCallSite));
-    ASSERT_require(cfg.isValidVertex(cfgCallSite));
-    ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
-    ASSERT_require2(cfgCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
     bool somethingInserted = false;
+    CfgConstEdgeSet cfgCallEdges = findCallEdges(cfgCallSite);
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, cfgCallEdges) {
+        if (insertCalleePaths(paths /*in,out*/, pathsCallSite, cfg, cfgCallEdge, cfgAvoidVertices, cfgAvoidEdges))
+            somethingInserted = true;
+    }
+    return somethingInserted;
+}
 
-    // At least one of the outgoing edges from the call site must be a call-return edge, otherwise there's no way for the call
-    // to ever return, in which case none of the paths through the function are possible.  Usually a function call has one
-    // call-return edge since most functions return normally. The longjmp function is an example that might have multiple
-    // call-return edges.
+bool
+insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
+                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges) {
+    ASSERT_require(paths.isValidVertex(pathsCallSite));
+    ASSERT_require(cfg.isValidEdge(cfgCallEdge));
+    ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
+
+    // Most functions either don't return or have a single return target.  Functions like longjmp might have multiple return
+    // targets. For need to know the return targets in the paths graph because we will create new edges from the inlined
+    // function's return sites to each return target.
     CfgConstVertexSet pathsReturnTargets;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, pathsCallSite->outEdges()) {
         if (edge.value().type() == E_CALL_RETURN)
             pathsReturnTargets.insert(edge.target());
     }
-    if (pathsReturnTargets.empty()) {
-        mlog[WARN] <<"insertCalleePaths: called for a call site that doesn't return (this is a no-op)\n";
+
+
+    // If this is a call to some indeterminate function, just copy another indeterminate vertex into the paths graph. Normally
+    // a CFG will have only one indeterminate vertex and it will have no outgoing edges, but the paths graph is different. We
+    // need separate indeterminate vertices so that each has its own function-return edge(s).
+    ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
+    if (cfgCallTarget->value().type() == V_INDETERMINATE) {
+        ControlFlowGraph::ConstVertexIterator indet = paths.insertVertex(CfgVertex(V_INDETERMINATE));
+        paths.insertEdge(pathsCallSite, indet, CfgEdge(E_FUNCTION_CALL));
+        BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &returnTarget, pathsReturnTargets)
+            paths.insertEdge(indet, returnTarget, CfgEdge(E_FUNCTION_RETURN));
+        mlog[WARN] <<"insertCalleePaths: indeterminate function call from "
+                   <<pathsCallSite->value().bblock()->printableName() <<"\n";
+        return true;
+    }
+
+    // Call to a normal function.
+    ASSERT_require2(cfgCallTarget->value().type() == V_BASIC_BLOCK, "non-basic block callees not implemented yet");
+    std::string calleeName = cfgCallTarget->value().function() ? cfgCallTarget->value().function()->printableName() :
+                             cfgCallTarget->value().bblock()->printableName();
+
+    // Find all paths through the callee that return and avoid certain vertices and edges.
+    CfgVertexMap vmap1;                                 // relates CFG to calleePaths
+    CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, cfgCallTarget);
+    ControlFlowGraph calleePaths = findPathsNoCalls(cfg, cfgCallTarget, cfgReturns, cfgAvoidVertices, cfgAvoidEdges, vmap1);
+    if (calleePaths.isEmpty()) {
+        mlog[WARN] <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
         return false;
     }
 
-    // A basic block might call multiple functions if calling through a pointer, but it usually has just one.
-    CfgConstVertexSet callees = findCalledFunctions(cfg, cfgCallSite);
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &callee, callees) {
-        if (callee->value().type() == V_INDETERMINATE) {
-            // This is a call to some indeterminate location. Just copy another indeterminate vertex into the paths
-            // graph. Normally a CFG will have only one indeterminate vertex and it will have no outgoing edges, but the paths
-            // graph is different. We need separate indeterminate vertices so that each has its own function-return edge(s).
-            ControlFlowGraph::ConstVertexIterator indet = paths.insertVertex(CfgVertex(V_INDETERMINATE));
-            paths.insertEdge(pathsCallSite, indet, CfgEdge(E_FUNCTION_CALL));
-            BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &returnTarget, pathsReturnTargets)
-                paths.insertEdge(indet, returnTarget, CfgEdge(E_FUNCTION_RETURN));
-            mlog[WARN] <<"insertCalleePaths: indeterminate function call from "
-                       <<pathsCallSite->value().bblock()->printableName() <<"\n";
-        } else {
-            // Call to a normal function.
-            ASSERT_require2(callee->value().type() == V_BASIC_BLOCK, "non-basic block callees not implemented yet");
-            std::string calleeName = callee->value().function() ? callee->value().function()->printableName() :
-                                     callee->value().bblock()->printableName();
+    // Insert the callee into the paths CFG
+    CfgVertexMap vmap2;                                 // relates calleePaths to paths
+    insertCfg(paths, calleePaths, vmap2);
+    CfgVertexMap vmap(vmap1, vmap2);                    // composite map from the CFG to paths graph
 
-            // Find all paths through the callee
-            CfgVertexMap vmap1;                             // relates CFG to calleePaths
-            CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, callee);
-            ControlFlowGraph calleePaths = findPathsNoCalls(cfg, callee, cfgReturns, cfgAvoidVertices, cfgAvoidEdges, vmap1);
-            if (calleePaths.isEmpty()) {
-                mlog[WARN] <<"insertCalleePaths: " <<calleeName <<" has no paths that return\n";
-                continue;
-            }
-            somethingInserted = true;
+    // Make an edge from call site to the entry block of the callee in the paths graph
+    if (vmap.forward().exists(cfgCallTarget)) {
+        ControlFlowGraph::ConstVertexIterator pathStart = vmap.forward()[cfgCallTarget];
+        paths.insertEdge(pathsCallSite, pathStart, CfgEdge(E_FUNCTION_CALL));
+    }
 
-            // Insert the callee into the paths CFG
-            CfgVertexMap vmap2;                             // relates calleePaths to paths
-            insertCfg(paths, calleePaths, vmap2);
-            CfgVertexMap vmap(vmap1, vmap2);                // composite map from the CFG to paths graph
-
-            // Make an edge from call site to the entry block of the callee in the paths graph
-            if (vmap.forward().exists(callee)) {
-                ControlFlowGraph::ConstVertexIterator pathStart = vmap.forward()[callee];
-                paths.insertEdge(pathsCallSite, pathStart, CfgEdge(E_FUNCTION_CALL));
-            }
-
-            // Make edges from the callee's return statements back to the return targets in the caller
-            BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &cfgReturnSite, cfgReturns) {
-                if (vmap.forward().exists(cfgReturnSite)) {
-                    ControlFlowGraph::ConstVertexIterator pathsReturnSite = vmap.forward()[cfgReturnSite];
-                    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathsReturnTarget, pathsReturnTargets)
-                        paths.insertEdge(pathsReturnSite, pathsReturnTarget, CfgEdge(E_FUNCTION_RETURN));
-                }
-            }
+    // Make edges from the callee's return statements back to the return targets in the caller
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &cfgReturnSite, cfgReturns) {
+        if (vmap.forward().exists(cfgReturnSite)) {
+            ControlFlowGraph::ConstVertexIterator pathsReturnSite = vmap.forward()[cfgReturnSite];
+            BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathsReturnTarget, pathsReturnTargets)
+                paths.insertEdge(pathsReturnSite, pathsReturnTarget, CfgEdge(E_FUNCTION_RETURN));
         }
     }
-    return somethingInserted;
+    return true;
 }
-
 
 } // namespace
 } // namespace

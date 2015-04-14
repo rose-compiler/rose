@@ -484,6 +484,8 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
             return "\"undiscovered\"";
         case V_INDETERMINATE:
             return "\"indeterminate\"";
+        case V_USER_DEFINED:
+            return "\"user defined\"";
     }
     ASSERT_not_reachable("invalid vertex type");
 }
@@ -594,6 +596,9 @@ CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeIterator &edge) const {
                 s = "other";
             break;
         }
+        case E_USER_DEFINED:
+            s = "user";
+            break;
     }
     return "\"" + s + "\"";
 }
