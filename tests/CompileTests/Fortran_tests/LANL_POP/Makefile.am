@@ -415,5 +415,5 @@ EXTRA_DIST = CMakeLists.txt mpif.h $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_T
 clean-local:
 	rm -f *.o *.s *.mod *.rmod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -rf QMTest
-	rm *.passed *.failed
+	rm -f *.passed *.failed
 
