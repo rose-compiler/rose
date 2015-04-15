@@ -433,6 +433,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
 
+    /** Property: partitioner.
+     *
+     *  The partitioner that's being used, set when this emitter was constructed. */
+    const Partitioner& partitioner() { return partitioner_; }
+
     /** Property: use function subgraphs.
      *
      *  When this property is true, GraphViz-emitting methods that adjust the vertex, edge, and/or subgraph organization will
