@@ -5359,6 +5359,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_is_thread_local  = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
 #endif
 
+  // DQ (4/14/2015): This should always be false because there is nothing to partialy unparse within a variable declaration (that we support).
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     ROSE_ASSERT(saved_unparsedPartiallyUsingTokenStream == false);
+
   // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
      bool usingGxx = false;
      #ifdef USE_CMAKE

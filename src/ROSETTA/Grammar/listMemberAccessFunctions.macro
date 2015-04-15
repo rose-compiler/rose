@@ -14,7 +14,11 @@ $DATA_TYPE &
 $CLASSNAME::get_$DATA () 
    {
      assert (this != NULL);
-     set_isModified(true);
+
+  // DQ (4/14/2015): After discussion with Markus we agree that even non-const functions should not have to set the isModified flag.
+  // As a rule only set_ access functions can set the isModified flag.
+  // set_isModified(true);
+
      return p_$DATA;
    }
 

@@ -11022,12 +11022,15 @@ SgInitializedName::get_file_info() const
 void
 SgInitializedName::set_file_info(Sg_File_Info* X)
    {
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
   // This redefines set_file_info() as it is implemented for a SgLocatedNode 
   // to use the "set_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
      return set_startOfConstruct(X);
    }
-
 #endif
+
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
    {
@@ -11601,6 +11604,10 @@ void
 SgInitializedName::set_type(SgType *t)
    {
      assert(this != NULL);
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
      p_typeptr = t;
    }
 
@@ -11624,6 +11631,10 @@ SgInitializedName::set_initializer(SgInitializer* i)
   // The semantics of p_is_initializer appears to not be required.
 
      assert(this != NULL);
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
      p_initptr        = i;
      p_is_initializer = 1;
    }
@@ -11782,6 +11793,9 @@ SgInitializedName::set_definition(SgDeclarationStatement * def)
           set_declptr(NULL);
         }
 #endif
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
 
      set_declptr(def);
    }
