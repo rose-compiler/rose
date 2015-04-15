@@ -227,12 +227,14 @@ add_dependencies(ROSE_DLL
   generate_rosePublicConfig poet)
 
 
-########### next target ###############
+########### next targets ###############
 remove_definitions(-DROSE_DLL_EXPORTS)
 add_executable(testSharedRoseLib testRoseLib.C)
 target_link_libraries(testSharedRoseLib
   ROSE_DLL ${edg_lib} ${link_with_libraries})
 
+add_executable(rose-config rose-config.C)
+target_link_libraries(rose-config ROSE_DLL ${edg_lib} ${link_with_libraries})
 
 ########### install files ###############
 install(TARGETS ROSE_DLL DESTINATION lib)
