@@ -1616,6 +1616,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
 #if 0
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("   --- getFileName() = %s \n",getFileName().c_str());
 #endif
 #if 0
           stmt->get_file_info()->display("WARNING: Skipping calls to output statements that are not recorded as being in the target file: debug");

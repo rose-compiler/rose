@@ -2647,12 +2647,31 @@ SgNode::post_construction_initialization()
 void
 SgNode::set_isModified ( bool isModified)
    {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+#if 0
+  // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
+     if (SgProject::get_verbose() >= 3)
+        {
+          printf ("SgNode::set_isModified() called for node = %p = %s \n",this,this->class_name().c_str());
+
+#if 0
+          printf ("Exiting as a test in SgNode::set_isModified \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      p_isModified = isModified;
    }
 
 bool
 SgNode::get_isModified () const
    {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
      return p_isModified; 
    }                                                                                                   
 
@@ -2660,6 +2679,9 @@ SgNode::get_isModified () const
 void
 SgNode::set_containsTransformation ( bool containsTransformation)
    {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
      p_containsTransformation = containsTransformation;
    }
 
@@ -2667,7 +2689,7 @@ SgNode::set_containsTransformation ( bool containsTransformation)
 bool
 SgNode::get_containsTransformation () const
    {
-     assert (this != NULL);
+     ROSE_ASSERT(this != NULL);
 
      return p_containsTransformation; 
    }
@@ -2678,7 +2700,7 @@ SgNode::get_isVisited () const
    {
   // The p_isVisited flag has been removed, it is an error to call this function.
 
-     assert (this != NULL);
+     ROSE_ASSERT(this != NULL);
 
      printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (get_isVisited). \n");
      ROSE_ASSERT(false);
@@ -2691,7 +2713,7 @@ SgNode::set_isVisited ( bool isVisited )
    {
   // The p_isVisited flag has been removed, it is an error to call this function.
 
-     assert (this != NULL);
+     ROSE_ASSERT(this != NULL);
 
      printf ("Error: The p_isVisited flag has been removed, it is an error to call this function (set_isVisited). \n");
      ROSE_ASSERT(false);

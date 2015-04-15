@@ -5830,7 +5830,7 @@ SgProject::compileOutput()
              }
 
 #if 0
-          printf ("get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+          printf ("In SgProject::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
 
        // case 3: linking at the project level
@@ -5855,7 +5855,7 @@ SgProject::compileOutput()
                if (get_compileOnly() == true)
                   {
 #if 0
-                    printf ("In SgProject::compileOutput(): Calling the linker if the compile line dodn't handle the link step! \n");
+                    printf ("In SgProject::compileOutput(): Calling the linker if the compile line didn't handle the link step! \n");
 #endif
 #ifndef _MSC_VER
                  // tps 08/18/2010 : Do not link right now in Windows - it breaks - want test to pass here for now.
@@ -6166,7 +6166,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
      if (status != 0)
         {
           printf ("Detected non-zero status in link process \n");
-#if 1
+#if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif

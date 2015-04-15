@@ -5608,15 +5608,16 @@ void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
    {
 #if 0
-     printf ("In buildTokenStreamMapping(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
+  // DQ (4/14/2015): After a more detailed evaluation of this function it does not acomplish it's objectives.
   // Note that we first detect the frontier based on a synthysised attribute traversal to record 
   // where nodes can contain transformation even if they are not a transformation directly.
      simpleFrontierDetectionForTokenStreamMapping(sourceFile);
 
 #if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
 #if 0
@@ -5624,21 +5625,19 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      ROSE_ASSERT(false);
 #endif
 
-#if 1
   // DQ (12/6/2014): I think we need the frontier mechanism, and then the partial use of token 
   // streams on nodes containing transformations is required to provide a more precise generated 
   // code (precise representation with minimal diff).
 
 #if 0
-     printf ("In buildTokenStreamMapping(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+     printf ("In buildTokenStreamFrontier(): Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // Note that we first detect the frontier.
      frontierDetectionForTokenStreamMapping(sourceFile);
 
 #if 0
-     printf ("In buildTokenStreamMapping(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
-#endif
+     printf ("In buildTokenStreamFrontier(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
   // ************************************************************************************************
@@ -5661,7 +5660,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap = sourceFile->get_tokenSubsequenceMap();
 
 #if 0
-     printf ("In buildTokenStreamMapping(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
+     printf ("In buildTokenStreamFrontier(): tokenStreamSequenceMap.size() = %zu \n",tokenStreamSequenceMap.size());
 #endif
 
   // DQ (2/28/2015): This assertion will be false where the input is an empty file.
@@ -5695,7 +5694,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
           if (j != tokenSequenceEndMap.end())
              {
 #if 0
-                printf ("In buildTokenStreamMapping(): Found associated tokenStreamSequence = %p for statement = %p = %s (%d,%d) \n",
+                printf ("In buildTokenStreamFrontier(): Found associated tokenStreamSequence = %p for statement = %p = %s (%d,%d) \n",
                      tokenSubsequence,statement,statement->class_name().c_str(),tokenSubsequence->token_subsequence_start,tokenSubsequence->token_subsequence_end);
 #endif
                i->second->redundant_token_subsequence = true;
@@ -5748,6 +5747,9 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
           i++;
         }
 #else
+
+#error "DEAD CODE!"
+
   // DQ (12/6/2014): I ahve deactivated this feature since I think we might not need it.
      printf ("NOTE: Skipping the processing of the frontier nodes \n");
 #endif
@@ -5815,6 +5817,17 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
   // are redundantly mapped to a single token sequence (represented by the last token index).
      sourceFile->set_redundantTokenEndingsSet(redundantTokenEndings);
      sourceFile->set_redundantlyMappedTokensToStatementMultimap(tokenSequenceEndMultimap);
+
+#if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+     SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     generateDOTforMultipleFile(*project);
+#endif
 
 #if 0
      printf ("Identify the frontier IR nodes that redundantly map to a single token sequence \n");
