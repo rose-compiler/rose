@@ -785,7 +785,9 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
      SgTypeOfType* typeof_node = isSgTypeOfType(type);
      ROSE_ASSERT(typeof_node != NULL);
 
-#if 0
+#define DEBUG_TYPEOF_TYPE 0
+
+#if DEBUG_TYPEOF_TYPE
      printf ("In unparseTypeOfType(): typeof_node       = %p \n",typeof_node);
      printf ("   --- typeof_node->get_base_expression() = %p \n",typeof_node->get_base_expression());
      if (typeof_node->get_base_expression() != NULL)
@@ -841,13 +843,13 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
                unparseType(typeof_node->get_base_type(), ninfo1);
 #else
                ninfo1.set_isTypeFirstPart();
-#if 0
+#if DEBUG_TYPEOF_TYPE
                printf("In Unparse_Type::unparseTypeOfType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 1) \n");
                curprint("\n/* In Unparse_Type::unparseTypeOfType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 1) */ \n");
 #endif
                unparseType(typeof_node->get_base_type(), ninfo1);
                ninfo1.set_isTypeSecondPart();
-#if 0
+#if DEBUG_TYPEOF_TYPE
                printf("In Unparse_Type::unparseTypeOfType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 2) \n");
                curprint("\n/* In Unparse_Type::unparseTypeOfType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 2) */ \n");
 #endif
@@ -2847,6 +2849,8 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
      SgFunctionType* func_type = isSgFunctionType(type);
      ROSE_ASSERT (func_type != NULL);
 
+#define DEBUG_FUNCTION_TYPE 0
+
   // DQ (1/8/2014): debugging test2014_25.c.
   // info.unset_isPointerToSomething();
 
@@ -2864,12 +2868,12 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
   // needParen = 0;
 
-#if 0
+#if DEBUG_FUNCTION_TYPE
      printf ("In unparseFunctionType(): needParen = %d \n",needParen);
      curprint("\n/* In unparseFunctionType: needParen = " + StringUtility::numberToString(needParen) + " */ \n");
 #endif
 
-#if 0
+#if DEBUG_FUNCTION_TYPE
      printf ("In unparseFunctionType(): info.isReferenceToSomething() = %s \n",info.isReferenceToSomething() ? "true" : "false");
      printf ("In unparseFunctionType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
 #endif
@@ -2887,7 +2891,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 
      if (ninfo.isTypeFirstPart())
         {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
           curprint ( "\n/* In unparseFunctionType: handling first part */ \n");
           curprint ( "\n/* Skipping the first part of the return type! */ \n");
 #endif
@@ -2896,12 +2900,12 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                ninfo.unset_isReferenceToSomething();
                ninfo.unset_isPointerToSomething();
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
             // DQ (9/21/2004): we don't want this for typedefs of function pointers where the function return type is a pointer
                printf ("Skipping the first part of the return type (in needParen == true case)! \n");
                curprint ( "\n/* Skipping the first part of the return type (in needParen == true case)! */ \n");
 #endif
-#if OUTPUT_DEBUGGING_UNPARSE_INFO
+#if OUTPUT_DEBUGGING_UNPARSE_INFO || DEBUG_FUNCTION_TYPE
                curprint ( string("\n/* ") + ninfo.displayString("Skipping the first part of the return type (in needParen == true case)") + " */ \n");
 #endif
                unparseType(func_type->get_return_type(), ninfo);
@@ -2910,7 +2914,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
              }
             else
              {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
             // DQ (9/21/2004): we don't want this for typedefs of function pointers where the function return type is a pointer
                printf ("Skipping the first part of the return type (in needParen == false case)! \n");
                curprint ( "\n/* Skipping the first part of the return type (in needParen == false case)! */ \n");
@@ -2922,12 +2926,12 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
         {
           if (ninfo.isTypeSecondPart())
              {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ( "\n/* In unparseFunctionType: handling second part */ \n");
 #endif
                if (needParen)
                   {
-#if 0
+#if DEBUG_FUNCTION_TYPE
                     curprint ("/* needParen must be true */ \n ");
 #endif
                     curprint(")");
@@ -2954,10 +2958,10 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
             // ninfo2.set_reference_node_for_qualification(func_type);
                ninfo2.set_reference_node_for_qualification(NULL);
                ROSE_ASSERT(ninfo2.get_reference_node_for_qualification() == NULL);
-#if 0
+#if DEBUG_FUNCTION_TYPE
                printf ("Setting reference_node_for_qualification to SgFunctionType, but this is not correct where name qualification is required. \n");
 #endif
-#if 0
+#if DEBUG_FUNCTION_TYPE
                curprint ("/* Output the type arguments (with parenthesis) */ \n ");
 #endif
                curprint("(");
@@ -2970,7 +2974,7 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
                     curprint ( "\n/* In unparseFunctionType(): Output the function type arguments */ \n");
 #endif
-#if 0
+#if DEBUG_FUNCTION_TYPE
                     printf ("In unparseFunctionType(): calling unparseType(): output function arguments = %p \n",*p);
 #endif
                     unparseType(*p, ninfo2);
@@ -2984,17 +2988,18 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                curprint(")");
             // curprint("/* unparseFunctionType:parameters */ )");
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ("\n/* In unparseFunctionType(): AFTER parenthesis are output */ \n");
 #endif
                unparseType(func_type->get_return_type(), info); // catch the 2nd part of the rtype
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ("\n/* Done: In unparseFunctionType(): handling second part */ \n");
 #endif
              }
             else
              {
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ("\n/* In unparseFunctionType: recursive call with isTypeFirstPart == true */ \n");
 #endif
 #if 0
@@ -3005,19 +3010,20 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
                ninfo.set_isTypeFirstPart();
                unparseType(func_type, ninfo);
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ( "\n/* In unparseFunctionType: recursive call with isTypeSecondPart == true */ \n");
 #endif
                ninfo.set_isTypeSecondPart();
                unparseType(func_type, ninfo);
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
                curprint ( "\n/* In unparseFunctionType: end of recursive call */ \n");
 #endif
              }
         }
 
-#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS
+#if OUTPUT_DEBUGGING_FUNCTION_INTERNALS || DEBUG_FUNCTION_TYPE
+     printf("Leaving unparseFunctionType() \n");
      curprint("\n/* Leaving unparseFunctionType() */ \n");
 #endif
    }

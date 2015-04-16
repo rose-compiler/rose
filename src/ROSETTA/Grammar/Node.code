@@ -2650,7 +2650,7 @@ SgNode::set_isModified ( bool isModified)
   // DQ (4/14/2015): Detect if this is called from a NULL pointer.
      ROSE_ASSERT(this != NULL);
 
-#if 0
+#if 1
   // DQ (4/14/2015): Adding testing to identify side-effects in the AST.
      if (SgProject::get_verbose() >= 3)
         {
