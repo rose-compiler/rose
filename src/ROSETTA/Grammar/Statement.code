@@ -652,7 +652,7 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-#if 1
+#if 0
           if (SgProject::get_verbose() >= 1)
              {
                printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
@@ -1101,7 +1101,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-#if 1
+#if 0
                     if (SgProject::get_verbose() >= 1)
                        {
                          printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
@@ -1210,7 +1210,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-#if 1
+#if 0
                          if (SgProject::get_verbose() >= 1)
                             {
                               printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
@@ -1249,7 +1249,7 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-#if 1
+#if 0
                          if (SgProject::get_verbose() >= 1)
                             {
                               printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
