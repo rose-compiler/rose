@@ -151,24 +151,36 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
        // DQ (4/14/2015): We need to detect modified IR nodes and then set there coresponding parent statement as being transformed.
           if (locatedNode->get_isModified() == true)
              {
-#if 1
+#if 0
                printf ("Found locatedNode = %p = %s as get_isModified = %s \n",locatedNode,locatedNode->class_name().c_str(),locatedNode->get_isModified() ? "true" : "false");
             // ROSE_ASSERT(false);
 #endif
 
             // DQ (4/14/2015): We need to detect modified IR nodes and then set there coresponding parent statement as being transformed.
                SgStatement* statement = TransformationSupport::getStatement(locatedNode);
+
+            // DQ (4/16/2015): I want to verify that we have not returned a statement at
+            // a higher position in the AST than the locatedNode if it was a SgStatement.
+               if (isSgStatement(locatedNode) != NULL)
+                  {
+                    ROSE_ASSERT(statement == locatedNode);
+                  }
+               ROSE_ASSERT(isSgStatement(locatedNode) == NULL || statement == locatedNode);
+
                if (statement != NULL)
                   {
-#if 1
+#if 0
                     printf ("Marking statement = %p = %s to be a transformation and output in code generation \n",statement,statement->class_name().c_str());
 #endif
+#if 1
+                 // Note that both of these must be set.
                     statement->setTransformation();
                     statement->setOutputInCodeGeneration();
+#endif
                   }
                  else
                   {
-#if 1
+#if 0
                     printf ("WARNING: In SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): parent statement == NULL for locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
                   }

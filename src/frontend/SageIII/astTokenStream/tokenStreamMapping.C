@@ -1464,6 +1464,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                  // DQ (10/14/2013): Added consistancy test.
                     consistancyCheck();
 
+#if 0
                  // DQ (1/6/2015): Adding assertions to eliminate possible null entries in the tokenStreamSequenceMap.
                  // ROSE_ASSERT(childAttributes[i].node != NULL);
                     if (childAttributes[i].node == NULL)
@@ -1480,6 +1481,7 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                          counter++;
                        }
+#endif
 
                  // Look up these children in the tokenStreamSequenceMap
                  // if (tokenStreamSequenceMap.find(childAttributes[i].node) != tokenStreamSequenceMap.end())
@@ -2315,15 +2317,19 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                         if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
                                            {
+#if 0
                                              printf ("WARNING: (in leading whitespace computation): Need logic to look at the outer scope! \n");
                                           // ROSE_ASSERT(false);
+#endif
                                            }
                                       }
 
                                 // DQ (1/28/2015): Added assertion.
                                    if (previous_mappingInfo->node == mappingInfo->node)
                                       {
+#if 0
                                         printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+#endif
                                       }
                                 // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
 
@@ -2449,8 +2455,10 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #endif
                                         if (temp_i == 0 && previous_mappingInfo->node == mappingInfo->node)
                                            {
+#if 0
                                              printf ("WARNING: (in trailing whitespace computation): Need logic to look at the outer scope! \n");
                                           // ROSE_ASSERT(false);
+#endif
                                            }
                                       }
 
@@ -2464,7 +2472,9 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
                                 // DQ (1/28/2015): Added assertion.
                                    if (previous_mappingInfo->node == mappingInfo->node)
                                       {
+#if 0
                                         printf ("WARNING: previous_mappingInfo->node == mappingInfo->node: I think this should not happen! i = %d temp_i = %d \n",i,temp_i);
+#endif
                                       }
                                 // ROSE_ASSERT(previous_mappingInfo->node != mappingInfo->node);
 
@@ -4352,7 +4362,9 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                  // DQ (1/26/2015): This appears to be triggered by a SgNullStatement.
                     if (subtreeHasValidSourcePosition == true && process_node == false)
                        {
+#if 0
                          printf ("WARNING: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false): n = %p = %s \n",n,n->class_name().c_str());
+#endif
                       // printf ("ERROR: This does not make sense: (subtreeHasValidSourcePosition == true && process_node == false) \n");
                       // ROSE_ASSERT(false);
                        }
