@@ -47,7 +47,7 @@ public:
      *
      * @{ */
     RegisterDescriptor REG_anyIP, REG_anySP, REG_anyBP, REG_anyCX;
-    RegisterDescriptor REG_RAX, REG_RDX,          REG_RDI,          REG_RSI, REG_RSP,          REG_RFLAGS;
+    RegisterDescriptor REG_RAX, REG_RBX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_RSP,          REG_RFLAGS;
     RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP, REG_EFLAGS;
     RegisterDescriptor REG_AX,  REG_BX,  REG_CX,  REG_DX,  REG_DI,  REG_SI,  REG_SP,  REG_BP,  REG_FLAGS;
     RegisterDescriptor REG_AL, REG_AH;
@@ -103,6 +103,8 @@ public:
     /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
+
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
@@ -192,6 +194,19 @@ public:
 
     /** Extend or truncate value to propert memory address width. */
     virtual BaseSemantics::SValuePtr fixMemoryAddress(const BaseSemantics::SValuePtr &address) const;
+
+    /** Convert a signed value to a narrower unsigned type.  Returns the truncated source value except when the value cannot
+     *  be represented in the narrower type, in which case the closest unsigned value is returned (zero or all bits set). */
+    virtual BaseSemantics::SValuePtr saturateSignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
+
+    /** Convert a signed value to a narrower signed type.  Returns the truncated source value except when the value cannot be
+     * represented by the narrower type, in which case the closest signed value is returned. The closest signed value is either
+     * 0b1000...0 (minimum signed value) or 0b0111...1 (maximum signed value). */
+    virtual BaseSemantics::SValuePtr saturateSignedToSigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
+
+    /** Convert an unsigned value to a narrower unsigned type.  Returns the truncated source value except when the value cannot
+     * be represented by the narrower type, in which case the closest unsigned value is returned. */
+    virtual BaseSemantics::SValuePtr saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
 };
         
 } // namespace

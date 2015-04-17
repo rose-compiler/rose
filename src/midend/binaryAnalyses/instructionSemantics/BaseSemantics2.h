@@ -1,4 +1,4 @@
-#ifndef Rose_BaseSemantics2_H 
+#ifndef Rose_BaseSemantics2_H  
 #define Rose_BaseSemantics2_H
 
 #include "Diagnostics.h"
@@ -871,6 +871,11 @@ public:
      * that are stored in the state. This does not return the value of any parts of stored registers--one gets that with
      * readRegister(). The return value does not contain any bits that are not part of the specified register. */
     virtual ExtentMap stored_parts(const RegisterDescriptor&) const;
+
+    /** Cause a register to not be stored.  Erases all record of the specified register. The RiscOperators pointer is used for
+     *  its extract operation if the specified register is not exactly stored in the state, such as if the state
+     *  stores RIP and one wants to erase only the 32-bits overlapping with EIP. */
+    virtual void erase_register(const RegisterDescriptor&, RiscOperators*);
 
     /** Functors for traversing register values in a register state. */
     class Visitor {
@@ -1925,6 +1930,7 @@ public:
         cur_insn = NULL;
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value Construction Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1945,7 +1951,6 @@ public:
     virtual SValuePtr boolean_(bool value) {
         return protoval->boolean_(value);
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1980,6 +1985,7 @@ public:
 
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
     virtual SValuePtr rdtsc() { return undefined_(64); }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Boolean Operations
@@ -2044,6 +2050,7 @@ public:
      *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Comparison Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2057,10 +2064,42 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of @ref
-     * subtract and @ref equalToZero. */
-    SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
+    /** Equality comparison.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b holds. Both operands must be the same
+     *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
+     *
+     * @{ */
+    SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
+    SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
+    /** Comparison for unsigned values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as unsigned values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
+
+    /** Comparison for signed values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as signed values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Integer Arithmetic Operations
@@ -2124,6 +2163,7 @@ public:
     /** Multiply two unsigned values. The width of the result is the sum of the widths of @p a and @p b. */
     virtual SValuePtr unsignedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Interrupt and system calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2133,6 +2173,7 @@ public:
      *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
      *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
     virtual void interrupt(int majr, int minr) {}
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations
@@ -2244,6 +2285,7 @@ protected:
     RiscOperatorsPtr operators;
     const RegisterDictionary *regdict;                  /**< See set_register_dictionary(). */
     size_t addrWidth_;                                  /**< Width of memory addresses in bits. */
+    bool autoResetInstructionPointer_;                  /**< Reset instruction pointer register for each instruction. */
 
     // Dispatchers keep a table of all the kinds of instructions they can handle.  The lookup key is typically some sort of
     // instruction identifier, such as from SgAsmX86Instruction::get_kind(), and comes from the iproc_key() virtual method.
@@ -2254,14 +2296,14 @@ protected:
     // Real constructors
 protected:
     // Prototypical constructor
-    Dispatcher(): regdict(NULL), addrWidth_(0) {}
+    Dispatcher(): regdict(NULL), addrWidth_(0), autoResetInstructionPointer_(true) {}
 
     // Prototypical constructor
     Dispatcher(size_t addrWidth, const RegisterDictionary *regs)
-        : regdict(regs), addrWidth_(addrWidth) {}
+        : regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {}
 
     Dispatcher(const RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : operators(ops), regdict(regs), addrWidth_(addrWidth) {
+        : operators(ops), regdict(regs), addrWidth_(addrWidth), autoResetInstructionPointer_(true) {
         ASSERT_not_null(operators);
         ASSERT_not_null(regs);
     }
@@ -2380,9 +2422,34 @@ public:
     void addressWidth(size_t nbits);
     /** @} */
 
+    /** Returns the instruction pointer register. */
+    virtual RegisterDescriptor instructionPointerRegister() const = 0;
+
+    /** Property: Reset instruction pointer register for each instruction.
+     *
+     *  If this property is set, then each time an instruction is processed, the first thing that happens is that the
+     *  instruction pointer register is reset to the concrete address of the instruction.
+     *
+     * @{ */
+    bool autoResetInstructionPointer() const { return autoResetInstructionPointer_; }
+    void autoResetInstructionPointer(bool b) { autoResetInstructionPointer_ = b; }
+    /** @} */
+    
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous methods that tend to be the same for most dispatchers
 public:
+
+    /** Update the instruction pointer register.
+     *
+     *  Causes the instruction pointer register to point to the address following the specified instruction.  Since every
+     *  instruction has a concrete address, we could simply set the instruction pointer to that concrete address. However, some
+     *  analyses depend on having an instruction pointer value that's built up by processing one instruction after
+     *  another.  Therefore, if we can recognize the register state implementation and determine that the instruction pointer
+     *  registers' value is already stored, we'll increment that value, which might result in a concrete value depending on the
+     *  semantic domain. Otherwise we just explicitly assign a new concrete value to that register. */
+    virtual void advanceInstructionPointer(SgAsmInstruction*);
+
     /** Returns a register descriptor for the segment part of a memory reference expression.  Many architectures don't use
      *  segment registers (they have a flat virtual address space), in which case the returned register descriptor's is_valid()
      *  method returns false. */

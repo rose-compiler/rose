@@ -12,13 +12,11 @@ void foo(int cond,int *blockx,int loSt)
 {
 // if-stmt , eligible to move into two branches
   if (cond) {
-    int tmp;
-    tmp = 6;
+    int tmp = 6;
     printf("%d",tmp);
   }
    else {
-    int tmp;
-    tmp = 7;
+    int tmp = 7;
     printf("%d",tmp);
   }
 // another if-stmt case

@@ -456,22 +456,21 @@ int main(int argc, char * argv[])
 #endif
       }
 
-  SgFilePtrList file_ptr_list = project->get_fileList();
-  visitorTraversal exampleTraversal;
   if (!isIdentity)
      {
-       for (size_t i = 0; i<file_ptr_list.size(); i++)
-          {
-            SgFilePtrList file_ptr_list = project->get_fileList();
-            visitorTraversal exampleTraversal;
-            for (size_t i = 0; i<file_ptr_list.size(); i++)
+         SgFilePtrList file_ptr_list = project->get_fileList();
+         visitorTraversal exampleTraversal;
+         for (size_t i = 0; i<file_ptr_list.size(); i++)
                {
                  SgFile* cur_file = file_ptr_list[i];
                  SgSourceFile* s_file = isSgSourceFile(cur_file);
                  if (s_file != NULL)
                     {
+                      inserted_decls.clear(); // For each file, reset this.
                    // exampleTraversal.traverseInputFiles(project,preorder);
                       exampleTraversal.traverseWithinFile(s_file, preorder);
+                    if (inserted_decls.size()>0 && merge_decl_assign)
+                        collectiveMergeDeclarationAndAssignment (inserted_decls);
                     }
                }
             string filename= SageInterface::generateProjectName(project);
@@ -479,7 +478,6 @@ int main(int argc, char * argv[])
          // DQ (1/14/2015): This is a problem since it causes us to run out of disk space on large projects.
             generateDOTforMultipleFile(*project);
 #endif
-          }
      }
 
   // string filename= SageInterface::generateProjectName(project);
@@ -494,15 +492,6 @@ int main(int argc, char * argv[])
      // Output an optional graph of the AST (the whole graph, of bounded complexity, when active)
         const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
         generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
-
-        inserted_decls.clear(); // For each file, reset this.
-        //exampleTraversal.traverseInputFiles(project,preorder);
-        // exampleTraversal.traverseWithinFile(s_file, preorder);
-        if (inserted_decls.size()>0 && merge_decl_assign)
-        {
-          collectiveMergeDeclarationAndAssignment (inserted_decls);
-        }
-
       }
 
 // DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
