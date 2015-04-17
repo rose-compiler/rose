@@ -105,8 +105,11 @@ public:
      *
      *  Pops edges from the path until a vertex is reached where some other (later) edge can be followed, then push that edge
      *  onto the path.  If no subsequent path through the CFG is available, then modify this path to be empty. This happens
-     *  when this path's edges are all final outgoing edges for each vertex in the path. */
-    void backtrack();
+     *  when this path's edges are all final outgoing edges for each vertex in the path.
+     *
+     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
+     *  the path is at the front of the returned vector. */
+    std::vector<ControlFlowGraph::ConstEdgeIterator>  backtrack();
 
     /** Number of times vertex appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstVertexIterator &vertex) const;
@@ -116,8 +119,11 @@ public:
 
     /** Truncate the path.
      *
-     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path. */
-    void truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
+     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path.
+     *
+     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
+     *  the path is at the front of the returned vector. */
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
 
     /** Call depth.
      *
@@ -148,8 +154,10 @@ findPathEdges(const ControlFlowGraph &graph,
  *  Removes those edges that aren't reachable in both forward and reverse directions between the specified begin and end
  *  vertices. Specified vertices must belong to the paths-CFG, although end vertices are allowed.  After edges are removed,
  *  dangling vertices are removed.  Vertices and edges are removed from the @p paths graph, the @p vmap, and the @p
- *  path. Removal of edges from @p path causes the path to be truncated. */
-void
+ *  path. Removal of edges from @p path causes the path to be truncated.
+ *
+ *  Returns the number of edges that were removed from the @p path. */
+size_t
 eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
                       const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
 

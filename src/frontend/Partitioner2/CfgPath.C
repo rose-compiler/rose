@@ -41,16 +41,20 @@ CfgPath::popBack() {
     }
 }
 
-void
+std::vector<ControlFlowGraph::ConstEdgeIterator>
 CfgPath::backtrack() {
+    std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges;
     while (!edges_.empty()) {
-        ControlFlowGraph::ConstVertexIterator vertex = edges_.back()->source();
+        ControlFlowGraph::ConstEdgeIterator edgeToRemove = edges_.back();
+        ControlFlowGraph::ConstVertexIterator vertex = edgeToRemove->source();
+        removedEdges.push_back(edgeToRemove);
         ++edges_.back();
         if (edges_.back() != vertex->outEdges().end())
-            return;
+            return removedEdges;
         edges_.pop_back();
     }
     clear();
+    return removedEdges;
 }
 
 size_t
@@ -77,14 +81,17 @@ CfgPath::nVisits(const ControlFlowGraph::ConstEdgeIterator &edge) const {
     return retval;
 }
 
-void
+std::vector<ControlFlowGraph::ConstEdgeIterator>
 CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
     for (Edges::iterator ei=edges_.begin(); ei!=edges_.end(); ++ei) {
         if (*ei == edge) {
+            std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges(ei, edges_.end());
+            std::reverse(removedEdges.begin(), removedEdges.end());
             edges_.erase(ei, edges_.end());
-            return;
+            return removedEdges;
         }
     }
+    return std::vector<ControlFlowGraph::ConstEdgeIterator>();
 }
 
 size_t
@@ -177,13 +184,16 @@ findPathEdges(const ControlFlowGraph &graph, ControlFlowGraph::ConstVertexIterat
     return significant;
 }
 
-void
+size_t
 eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
                       const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
+    size_t nPathEdgesRemoved = 0;
     if (beginPathVertex == paths.vertices().end()) {
+        nPathEdgesRemoved = path.nEdges();
         paths.clear();
         vmap.clear();
-        return;
+        path.clear();
+        return nPathEdgesRemoved;
     }
     ASSERT_require(paths.isValidVertex(beginPathVertex));
 
@@ -199,7 +209,7 @@ eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
 
     // Erase bad edges from the path and the CFG
     BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, badEdges) {
-        path.truncate(edge);
+        nPathEdgesRemoved += path.truncate(edge).size();
         paths.eraseEdge(edge);
     }
 
@@ -217,9 +227,11 @@ eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
     // If all that's left is the start vertex and the start vertex by itself is not a valid path, then remove it.
     if (paths.nVertices()==1 && endPathVertices.find(beginPathVertex)==endPathVertices.end()) {
         paths.clear();
+        ASSERT_require(path.nEdges()==0);
         path.clear();
         vmap.clear();
     }
+    return nPathEdgesRemoved;
 }
 
 ControlFlowGraph
