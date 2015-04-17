@@ -113,6 +113,16 @@ escape(const std::string &s) {
     return "\"" + quotedEscape(s) + "\"";
 }
 
+std::string
+concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator) {
+    if (oldStuff.empty())
+        return "\"" + quotedEscape(newStuff) + "\"";
+    if ('"'==oldStuff[0] && '"'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+    if ('<'==oldStuff[0] && '>'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + htmlEscape(separator) + htmlEscape(newStuff) + ">";
+    return "\"" + quotedEscape(oldStuff) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      CfgEmitter

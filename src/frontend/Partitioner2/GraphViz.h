@@ -33,6 +33,14 @@ std::string htmlEscape(const std::string&);
  *  The returned string will include double quote or angle-brackets as necessary depending on the input string. */
 std::string escape(const std::string&);
 
+/** Append a value to an existing string.
+ *
+ *  Appends @p newStuff to the end of @p oldStuff taking into account that @p oldStuff is already quoted and escaped. The @p
+ *  newStuff should not be quoted or escaped.  This is useful for appending additional information to a label. The @p separator
+ *  is escaped and inserted between the @p oldStuff and @p newStuff if @p oldStuff is not empty. Returns a new string that is
+ *  also quoted and escaped. */
+std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
+
 /** Determins if a string is a valid GraphViz ID.
  *
  *  True if s forms a valid GraphViz ID.  ID strings do not need special quoting in the GraphViz language. */
@@ -355,6 +363,11 @@ public:
         BOOST_FOREACH (Organization &org, edgeOrganization_)
             org.select(b);
     }
+
+    /** Deselect all but one parallel edge.
+     *
+     *  For parallel edges between a pair of vertices, all but one is deselected.  Which one remains selected is arbitrary. */
+    void deselectParallelEdges();
     
     /** Dump selected vertices, edges, and subgraphs.
      *
@@ -833,6 +846,20 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
     
     out <<"}\n";
+}
+
+template<class G>
+void
+BaseEmitter<G>::deselectParallelEdges() {
+    BOOST_FOREACH (const typename G::Vertex &src, graph_.vertices()) {
+        if (vertexOrganization(src).isSelected()) {
+            std::set<size_t> targets;
+            BOOST_FOREACH (const typename G::Edge &edge, src.outEdges()) {
+                if (edgeOrganization(edge).isSelected() && !targets.insert(edge.target()->id()).second)
+                    edgeOrganization(edge).select(false);
+            }
+        }
+    }
 }
 
 } // namespace
