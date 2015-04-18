@@ -14595,6 +14595,9 @@ X aggressive
 
   // DQ (6/7/2013): Added support for using experimental forntran frontend.
      p_experimental_fortran_frontend = false;
+
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     p_multifile_support = false;
    }
 
 #if 0
@@ -15191,6 +15194,9 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      printf ("     p_experimental_fortran_frontend        = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     printf ("     p_multifile_support                    = %s \n",(p_multifile_support == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 
