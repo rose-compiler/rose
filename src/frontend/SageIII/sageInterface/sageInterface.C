@@ -4104,6 +4104,8 @@ SageInterface::generateFileList()
 
 // #ifndef USE_ROSE
 
+// DQ (4/17/2015): I think this function should be removed since it interferes 
+// with the concept of having more than one SgProject node.
 // This function uses a memory pool traversal specific to the SgProject IR nodes
 SgProject*
 SageInterface::getProject()

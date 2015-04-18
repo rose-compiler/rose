@@ -831,14 +831,15 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-if !ROSE_USE_EDG_VERSION_4_4
-if !ROSE_USE_EDG_VERSION_4_7
+# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
+# if !ROSE_USE_EDG_VERSION_4_4
+# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-endif
-endif
+# endif
+# endif
 
 testTranslator = ../../testTranslator
 
@@ -914,6 +915,9 @@ caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 # default case: generate executable a.out from any number of input files	
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(testTranslator) $(ROSE_FLAGS) $^ -o caller.out
+# DQ (4/18/2015): Add the execution of the generated executable.
+	./caller.out
+
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 # test2008_02.o: $(srcdir)/test2008_02.c
