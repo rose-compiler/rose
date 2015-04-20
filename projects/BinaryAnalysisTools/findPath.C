@@ -61,6 +61,21 @@ static Settings settings;
 // to the architecture.
 static const RegisterDescriptor REG_PATH(99, 0, 0, 1);
 
+// This is the register where functions will store their return value.
+static RegisterDescriptor REG_RETURN;
+
+// Information stored per V_USER_DEFINED vertices.
+struct FunctionSummary {
+    P2::Function::Ptr function;
+    FunctionSummary() {}
+    explicit FunctionSummary(const P2::Function::Ptr &function): function(function) {}
+};
+typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, FunctionSummary> FunctionSummaries;
+static FunctionSummaries functionSummaries;
+
+// Stack of states per vertex
+typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, std::vector<BaseSemantics::StatePtr> > StateStacks;
+
 // Describe and parse the command-line
 static Sawyer::CommandLine::ParserResult
 parseCommandLine(int argc, char *argv[])
@@ -255,6 +270,19 @@ parseCommandLine(int argc, char *argv[])
     return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
 }
 
+rose_addr_t
+virtualAddress(const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
+    if (vertex->value().type() == P2::V_BASIC_BLOCK)
+        return vertex->value().address();
+    if (vertex->value().type() == P2::V_USER_DEFINED) {
+        ASSERT_require(functionSummaries.exists(vertex));
+        const FunctionSummary &summary = functionSummaries[vertex];
+        ASSERT_not_null(summary.function);
+        return summary.function->address();
+    }
+    ASSERT_not_reachable("invalid vertex type");
+}
+
 P2::ControlFlowGraph::ConstVertexIterator
 vertexForInstruction(const P2::Partitioner &partitioner, const std::string &nameOrVa) {
     const char *s = nameOrVa.c_str();
@@ -311,29 +339,65 @@ eraseBackEdges(P2::ControlFlowGraph &cfg /*in,out*/, const P2::ControlFlowGraph:
         cfg.eraseEdge(edge);
 }
 
-/** Determines whether a function call should be inlined. */
-bool shouldInline(const P2::Partitioner &partitioner, const P2::CfgPath &path) {
-    ASSERT_require(path.nEdges() > 0);
-    P2::ControlFlowGraph::ConstEdgeIterator pathsCRetEdge = path.edges().back();
-    ASSERT_require(pathsCRetEdge->value().type() == P2::E_CALL_RETURN);
-    P2::ControlFlowGraph::ConstVertexIterator pathsCallSite = pathsCRetEdge->source();
-    P2::CfgConstVertexSet globalCallees =
-        P2::findCalledFunctions(partitioner.cfg(), partitioner.findPlaceholder(pathsCallSite->value().address()));
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &globalCallee, globalCallees) {
-        if (globalCallee->value().type() == P2::V_BASIC_BLOCK) {
-            if (P2::Function::Ptr callee = globalCallee->value().function()) {
-                if (path.callDepth(callee) >= settings.expansionDepthLimit) {
-                    ::mlog[WARN] <<"call depth exceeded; skipping call at " <<partitioner.vertexName(pathsCallSite) <<"\n";
-                    return false;
-                }
-            } else {
-                ::mlog[WARN] <<"skipping call to non-function at " <<partitioner.vertexName(pathsCallSite) <<"\n";
-                return false;
-            }
-        }
+// True if path ends with a function call.
+bool
+pathEndsWithFunctionCall(const P2::Partitioner &partitioner, const P2::CfgPath &path) {
+    if (path.isEmpty())
+        return false;
+    P2::ControlFlowGraph::ConstVertexIterator pathVertex = path.backVertex();
+    P2::ControlFlowGraph::ConstVertexIterator cfgVertex = partitioner.findPlaceholder(virtualAddress(pathVertex));
+    ASSERT_require(partitioner.cfg().isValidVertex(cfgVertex));
+    BOOST_FOREACH (P2::ControlFlowGraph::Edge edge, cfgVertex->outEdges()) {
+        if (edge.value().type() == P2::E_FUNCTION_CALL)
+            return true;
     }
+    return false;
+}
+
+/** Determines whether a function call should be summarized instead of inlined. */
+bool shouldSummarizeCall(const P2::CfgPath &path, const P2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget) {
+    if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
+        return false;
+    P2::Function::Ptr callee = cfgCallTarget->value().function();
+    if (!callee)
+        return false;
+    if (boost::ends_with(callee->name(), "@plt"))
+        return true;                                    // this is probably dynamically linked ELF function
+    return false;
+}
+
+/** Determines whether a function call should be inlined. */
+bool shouldInline(const P2::CfgPath &path, const P2::ControlFlowGraph::ConstVertexIterator &cfgCallTarget) {
+    if (cfgCallTarget->value().type() != P2::V_BASIC_BLOCK)
+        return false;
+    P2::Function::Ptr callee = cfgCallTarget->value().function();
+    if (!callee)
+        return false;
+    if (path.callDepth(callee) >= settings.expansionDepthLimit)
+        return false;
     return true;
 }
+
+// The GraphViz writer, extended to print something more useful for user-defined vertices (function summaries)
+class GraphVizEmitter: public P2::GraphViz::CfgEmitter {
+public:
+    typedef P2::GraphViz::CfgEmitter Super;
+    const P2::ControlFlowGraph &gref;
+
+    GraphVizEmitter(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &cfg)
+        : Super(partitioner, cfg), gref(cfg) {}
+
+    virtual std::string vertexLabel(const P2::ControlFlowGraph::ConstVertexIterator &vertex) const ROSE_OVERRIDE {
+        if (vertex->value().type() == P2::V_USER_DEFINED) {
+            P2::ControlFlowGraph::ConstVertexIterator origVertex = gref.findVertex(vertex->id());
+            ASSERT_require(functionSummaries.exists(origVertex));
+            const FunctionSummary &summary = functionSummaries[origVertex];
+            return P2::GraphViz::escape("summary for " + summary.function->printableName());
+        } else {
+            return Super::vertexLabel(vertex);
+        }
+    }
+};
 
 static void
 printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::ControlFlowGraph &cfg,
@@ -343,7 +407,7 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     Color::HSV exitColor(0.088, 1.0, 0.6);              // bright orange
     Color::HSV pathColor(0.84, 1.0, 0.4);               // dark magenta
 
-    P2::GraphViz::CfgEmitter gv(partitioner, cfg);
+    GraphVizEmitter gv(partitioner, cfg);
 #if 1 // normal output
     gv.srcMapper(srcMapper);
     gv.defaultGraphAttributes().insert("overlap", "scale");
@@ -358,16 +422,31 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     gv.showInstructionStackDeltas(false);
 #endif
     gv.selectWholeGraph();
+    gv.deselectParallelEdges();
+
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &endVertex, endVertices)
         gv.vertexOrganization(endVertex).attributes().insert("fillcolor", exitColor.toHtml());
     gv.vertexOrganization(beginVertex).attributes().insert("fillcolor", entryColor.toHtml());
+
+    typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstEdgeIterator, size_t> EdgeCounts;
+    EdgeCounts edgeCounts;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, path.edges()) {
         gv.edgeOrganization(edge).attributes()
             .insert("penwidth", "3")
             .insert("arrowsize", "3")
             .insert("style", "solid")
             .insert("color", pathColor.toHtml());
+        ++edgeCounts.insertMaybe(edge, 0);
     }
+
+    BOOST_FOREACH (const EdgeCounts::Node &edgeCount, edgeCounts.nodes()) {
+        if (edgeCount.value() > 1) {
+            std::string label = gv.edgeOrganization(edgeCount.key()).label();
+            label = P2::GraphViz::concatenate(label, "("+StringUtility::numberToString(edgeCount.value())+"x)", " ");
+            gv.edgeOrganization(edgeCount.key()).label(label);
+        }
+    }
+
     gv.emit(out);
 }
 
@@ -399,16 +478,16 @@ class RiscOperators: public SymbolicSemantics::RiscOperators {
 public:
     typedef Sawyer::Container::Map<std::string /*name*/, std::string /*comment*/> VarComments;
     VarComments varComments_;                           // information about certain symbolic variables
-    size_t pathInsnIndex_;                              // current location in path
+    size_t pathInsnIndex_;                              // current location in path, or -1
 
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : Super(protoval, solver), pathInsnIndex_(0) {
+        : Super(protoval, solver), pathInsnIndex_(-1) {
         set_name("FindPath");
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : Super(state, solver), pathInsnIndex_(0) {
+        : Super(state, solver), pathInsnIndex_(-1) {
         set_name("FindPath");
     }
 
@@ -459,6 +538,22 @@ public:
 public:
     const VarComments& varComments() const { return varComments_; }
 
+    void varComment(const std::string &name, const std::string &comment) {
+        varComments_.insertMaybe(name, comment);
+    }
+
+    std::string varComment(const std::string &name) {
+        return varComments_.getOptional(name).orElse("");
+    }
+
+    size_t pathInsnIndex() const {
+        return pathInsnIndex_;
+    }
+
+    void pathInsnIndex(size_t n) {
+        pathInsnIndex_ = n;
+    }
+
 private:
     /** Create a comment to describe a memory address if possible. The nBytes will be non-zero when we're describing
      *  an address as opposed to a value stored across some addresses. */
@@ -466,8 +561,8 @@ private:
                                    size_t byteNumber=0, size_t nBytes=0) {
         using namespace InsnSemanticsExpr;
         std::string varComment = "first " + accessMode + " at ";
-        if (pathInsnIndex_ > 0)
-            varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_-1) + ", ";
+        if (pathInsnIndex_ != (size_t)(-1))
+            varComment += "path position #" + StringUtility::numberToString(pathInsnIndex_) + ", ";
         varComment += "instruction " + unparseInstructionWithAddress(get_insn());
 
         // Sometimes we can save useful information about the address.
@@ -514,8 +609,6 @@ private:
 public:
     virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
         Super::startInstruction(insn);
-        if (!settings.multiPathSmt)
-            ++pathInsnIndex_;
         if (::mlog[DEBUG]) {
             SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
             ::mlog[DEBUG] <<"  +-------------------------------------------------\n"
@@ -550,8 +643,8 @@ public:
         // Save a description of the variable
         InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(retval)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
-            std::string varComment = commentForVariable(addr, "read");
-            varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
+            std::string comment = commentForVariable(addr, "read");
+            varComment(valExpr->isLeafNode()->toString(), comment);
         }
         
         // Save a description for its addresses
@@ -559,8 +652,8 @@ public:
         for (size_t i=0; i<nBytes; ++i) {
             SymbolicSemantics::SValuePtr va = SymbolicSemantics::SValue::promote(add(addr, number_(addr->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
-                std::string varComment = commentForVariable(addr, "read", i, nBytes);
-                varComments_.insertMaybe(va->get_expression()->isLeafNode()->toString(), varComment);
+                std::string comment = commentForVariable(addr, "read", i, nBytes);
+                varComment(va->get_expression()->isLeafNode()->toString(), comment);
             }
         }
         return retval;
@@ -580,8 +673,8 @@ public:
         // Save a description of the variable
         InsnSemanticsExpr::TreeNodePtr valExpr = SymbolicSemantics::SValue::promote(value)->get_expression();
         if (valExpr->isLeafNode() && valExpr->isLeafNode()->is_variable()) {
-            std::string varComment = commentForVariable(addr, "write");
-            varComments_.insertMaybe(valExpr->isLeafNode()->toString(), varComment);
+            std::string comment = commentForVariable(addr, "write");
+            varComment(valExpr->isLeafNode()->toString(), comment);
         }
 
         // Save a description for its addresses
@@ -589,8 +682,8 @@ public:
         for (size_t i=0; i<nBytes; ++i) {
             SymbolicSemantics::SValuePtr va = SymbolicSemantics::SValue::promote(add(addr, number_(addr->get_width(), i)));
             if (va->get_expression()->isLeafNode()) {
-                std::string varComment = commentForVariable(addr, "read", i, nBytes);
-                varComments_.insertMaybe(va->get_expression()->isLeafNode()->toString(), varComment);
+                std::string comment = commentForVariable(addr, "read", i, nBytes);
+                varComment(va->get_expression()->isLeafNode()->toString(), comment);
             }
         }
     }
@@ -606,8 +699,16 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
         myRegs = new RegisterDictionary("findPath");
         myRegs->insert(partitioner.instructionProvider().registerDictionary());
         myRegs->insert("path", REG_PATH);
-    }
 
+        // Where are return values stored?
+        const RegisterDescriptor *r = NULL;
+        if ((r = myRegs->lookup("rax")) || (r = myRegs->lookup("eax")) || (r = myRegs->lookup("ax"))) {
+            REG_RETURN = *r;
+        } else {
+            ASSERT_not_implemented("function return value register is not implemented for this ISA/ABI");
+        }
+    }
+    
     // We could use an SMT solver here also, but it seems to slow things down more than speed them up.
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(myRegs, solver);
@@ -624,14 +725,13 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
 
 /** Process instructions for one basic block on the specified virtual CPU. */
 void
-processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu) {
+processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::DispatcherPtr &cpu, size_t pathInsnIndex) {
     using namespace InsnSemanticsExpr;
 
     ASSERT_not_null(bblock);
-    Stream error(::mlog[ERROR]);
     
     // Update the path constraint "register"
-    BaseSemantics::RiscOperatorsPtr ops = cpu->get_operators();
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
     BaseSemantics::SValuePtr va = ops->number_(ip->get_width(), bblock->address());
     BaseSemantics::SValuePtr pathConstraint = ops->equal(ip, va);
@@ -640,12 +740,42 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
     // Process each instruction in the basic block
     try {
         BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            if (pathInsnIndex != size_t(-1))
+                ops->pathInsnIndex(pathInsnIndex++);
             cpu->processInstruction(insn);
         }
     } catch (const BaseSemantics::Exception &e) {
-        error <<"semantics failed: " <<e <<"\n";
+        ::mlog[ERROR] <<"semantics failed: " <<e <<"\n";
         return;
     }
+}
+
+/** Process a function summary vertex. */
+void
+processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &vertex, const BaseSemantics::DispatcherPtr &cpu,
+                       size_t pathInsnIndex) {
+    ASSERT_require(functionSummaries.exists(vertex));
+    const FunctionSummary &summary = functionSummaries[vertex];
+    //::mlog[INFO] <<"processFunctionSummary: " <<summary.function->printableName() <<"\n";
+
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    if (pathInsnIndex != size_t(-1))
+        ops->pathInsnIndex(pathInsnIndex);
+
+    // Make the function return an unknown value
+    SymbolicSemantics::SValuePtr retval = SymbolicSemantics::SValue::promote(ops->undefined_(REG_RETURN.get_nbits()));
+    std::string comment = "return value from " + summary.function->printableName() + "\n" +
+                          "at path position #" + StringUtility::numberToString(ops->pathInsnIndex());
+    ops->varComment(retval->get_expression()->isLeafNode()->toString(), comment);
+    ops->writeRegister(REG_RETURN, retval);
+
+    // Cause the function to return by popping the return target address off the top of the stack
+    BaseSemantics::SValuePtr stackPointer = ops->readRegister(cpu->stackPointerRegister());
+    BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+                                                            ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
+    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), returnTarget->get_width()/8));
+    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+    ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 }
 
 void
@@ -666,6 +796,49 @@ showPathEvidence(SMTSolver &solver, const RiscOperatorsPtr &ops) {
                 std::cout <<StringUtility::prefixLines(varComment, "      ") <<"\n";
         }
     }
+}
+
+P2::ControlFlowGraph
+generateTopLevelPaths(const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                      const P2::CfgConstVertexSet &cfgEndVertices, const P2::CfgConstVertexSet &cfgAvoidVertices,
+                      const P2::CfgConstEdgeSet &cfgAvoidEdges, P2::CfgVertexMap &vmap /*out*/) {
+    vmap.clear();
+    P2::ControlFlowGraph paths = findPathsNoCalls(cfg, cfgBeginVertex, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges, vmap);
+    if (!vmap.forward().exists(cfgBeginVertex)) {
+        ::mlog[WARN] <<"no paths found\n";
+    } else {
+        ::mlog[INFO] <<"paths graph has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+                     <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+    }
+    return paths;
+}
+
+// Converts vertices from one graph to another based on the vmap
+P2::CfgConstVertexSet
+cfgToPaths(const P2::CfgConstVertexSet &vertices, const P2::CfgVertexMap &vmap) {
+    P2::CfgConstVertexSet retval;
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.forward().exists(vertex))
+            retval.insert(vmap.forward()[vertex]);
+    }
+    return retval;
+}
+
+void
+insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                  const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge) {
+    ASSERT_require(cfg.isValidEdge(cfgCallEdge));
+    P2::ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
+    ASSERT_require(cfgCallTarget->value().type() == P2::V_BASIC_BLOCK);
+    ASSERT_not_null(cfgCallTarget->value().function());
+
+    P2::ControlFlowGraph::VertexIterator summaryVertex = paths.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
+    paths.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
+        paths.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
+
+    FunctionSummary summary(cfgCallTarget->value().function());
+    functionSummaries.insert(summaryVertex, summary);
 }
 
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
@@ -694,33 +867,32 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
     ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
     ops->writeRegister(cpu->instructionPointerRegister(),
-                       ops->number_(cpu->instructionPointerRegister().get_nbits(), path.frontVertex()->value().address()));
+                       ops->number_(cpu->instructionPointerRegister().get_nbits(), virtualAddress(path.frontVertex())));
     std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
 
+    size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
-        if (pathEdge->source()->value().type() != P2::V_BASIC_BLOCK) {
-            error <<"cannot compute path feasibility across a non-basic-block vertex at "
-                  <<partitioner.vertexName(pathEdge->source()) <<"\n";
-            return SMTSolver::SAT_NO;
+        if (pathEdge->source()->value().type() == P2::V_BASIC_BLOCK) {
+            processBasicBlock(pathEdge->source()->value().bblock(), cpu, pathInsnIndex);
+            pathInsnIndex += pathEdge->source()->value().bblock()->instructions().size();
+        } else if (pathEdge->source()->value().type() == P2::V_USER_DEFINED) {
+            processFunctionSummary(pathEdge->source(), cpu, pathInsnIndex);
+            ++pathInsnIndex;
         } else {
-            processBasicBlock(pathEdge->source()->value().bblock(), cpu);
-        }
-
-        if (pathEdge->target()->value().type() != P2::V_BASIC_BLOCK) {
-            error <<"cannot compute path feasibility when path edge target is not a basic block: "
-                  <<partitioner.edgeName(pathEdge) <<"\n";
+            error <<"cannot compute path feasibility; invalid vertex type at "
+                  <<partitioner.vertexName(pathEdge->source()) <<"\n";
             return SMTSolver::SAT_NO;
         }
         BaseSemantics::SValuePtr ip = ops->readRegister(partitioner.instructionProvider().instructionPointerRegister());
         if (ip->is_number()) {
-            if (ip->get_number() != pathEdge->target()->value().address()) {
+            if (ip->get_number() != virtualAddress(pathEdge->target())) {
                 // Executing the path forces us to go a different direction than where the path indicates we should go. We
                 // don't need an SMT solver to tell us that when the values are just integers.
                 info <<"  not feasible according to ROSE semantics\n";
                 return SMTSolver::SAT_NO;
             }
         } else {
-            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathEdge->target()->value().address());
+            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), virtualAddress(pathEdge->target()));
             TreeNodePtr constraint = InternalNode::create(1, OP_EQ,
                                                           targetVa, SymbolicSemantics::SValue::promote(ip)->get_expression());
             pathConstraints.push_back(constraint);
@@ -762,9 +934,16 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
                     std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
                 }
                 if (settings.showInstructions) {
-                    BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
+                    if (pathVertex->value().type() == P2::V_BASIC_BLOCK) {
+                        BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
+                            std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
+                                      <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                        }
+                    } else if (pathVertex->value().type() == P2::V_USER_DEFINED) {
+                        ASSERT_require(functionSummaries.exists(pathVertex));
+                        const FunctionSummary &summary = functionSummaries[pathVertex];
                         std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
-                                  <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                                  <<" summary for " <<summary.function->printableName() <<"\n";
                     }
                 }
                 ++pathIdx;
@@ -798,6 +977,109 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     return isSatisfied;
 }
 
+/** Find paths and process them one at a time until we've found the desired number of feasible paths. */
+void 
+findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                          const P2::CfgConstVertexSet &cfgEndVertices, const P2::CfgConstVertexSet &cfgAvoidVertices,
+                          const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+
+    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
+    // vertex.
+    Stream info(::mlog[INFO]);
+    P2::CfgVertexMap vmap;                              // relates CFG vertices to path vertices
+    P2::ControlFlowGraph paths = generateTopLevelPaths(partitioner.cfg(), cfgBeginVertex, cfgEndVertices, cfgAvoidVertices,
+                                                       cfgAvoidEdges, vmap /*out*/);
+    if (paths.isEmpty())
+        return;
+    P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex = vmap.forward()[cfgBeginVertex];
+    P2::CfgConstVertexSet pathsEndVertices = cfgToPaths(cfgEndVertices, vmap);
+
+    // When finding paths through a called function, avoid the usual vertices and edges, but also avoid those vertices that
+    // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
+    // blocks.
+    P2::CfgConstVertexSet calleeCfgAvoidVertices = cfgAvoidVertices;
+    calleeCfgAvoidVertices.insert(cfgEndVertices.begin(), cfgEndVertices.end());
+
+    // Depth-first traversal of the "paths". When a function call is encountered we do one of two things: either expand the
+    // called function into the paths graph and replace the call-ret edge with an actual function call and return edges, or do
+    // nothing but skip over the function call.  When expanding a function call, we want to insert only those edges and
+    // vertices that can participate in a path from the callee's entry point to any of its returning points.
+    P2::CfgPath path(pathsBeginVertex);
+    while (!path.isEmpty()) {
+        P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
+        P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = partitioner.findPlaceholder(virtualAddress(backVertex));
+        ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
+        bool doBacktrack = false;
+        bool atEndOfPath = pathsEndVertices.find(backVertex) != pathsEndVertices.end();
+
+        // Test path feasibility
+        SMTSolver::Satisfiable isFeasible = singlePathFeasibility(partitioner, paths, path, atEndOfPath);
+        if (atEndOfPath && isFeasible == SMTSolver::SAT_YES) {
+            if (0 == --settings.maxPaths) {
+                info <<"terminating because the maximum number of feasiable paths has been found\n";
+                exit(0);
+            }
+            doBacktrack = true;
+        } else if (atEndOfPath || isFeasible == SMTSolver::SAT_NO) {
+            doBacktrack = true;
+        }
+        
+        // If we've visited a vertex too many times (e.g., because of a loop or recursion), then don't go any further.
+        if (path.nVisits(backVertex) > settings.vertexVisitLimit)
+            doBacktrack = true;
+
+        // If we're visiting a function call site, then inline callee paths into the paths graph, but continue to avoid any
+        // paths that go through user-specified avoidance vertices and edges. We can modify the paths graph during the
+        // traversal because we're modifying parts of the graph that aren't part of the current path.  This is where having
+        // insert- and erase-stable graph iterators is a huge help!
+        if (!doBacktrack && pathEndsWithFunctionCall(partitioner, path) && !P2::findCallReturnEdges(backVertex).empty()) {
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgBackVertex)) {
+                if (shouldSummarizeCall(path, cfgCallEdge->target())) {
+                    insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
+                } else if (shouldInline(path, cfgCallEdge->target())) {
+                    info <<"inlining function call paths at vertex " <<partitioner.vertexName(backVertex) <<"\n";
+                    P2::insertCalleePaths(paths, backVertex,
+                                          partitioner.cfg(), cfgBackVertex, calleeCfgAvoidVertices, cfgAvoidEdges);
+                }
+            }
+
+            // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No need
+            // to worry about adjusting the path because these edges aren't on the current path.
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callRetEdge, P2::findCallReturnEdges(backVertex))
+                paths.eraseEdge(callRetEdge);
+
+            // If the inlined function had no return sites yet the call site had a call-return edge, then part of the paths
+            // graph might now be unreachable. In fact, there might now be no paths from the begin vertex to any end vertex.
+            // Erase those parts of the paths graph that are now unreachable.
+            P2::eraseUnreachablePaths(paths, pathsBeginVertex, pathsEndVertices, vmap /*in,out*/, path /*in,out*/);
+            ASSERT_require2(!paths.isEmpty() || path.isEmpty(), "path is empty only if paths graph is empty");
+            if (path.isEmpty())
+                break;
+            backVertex = path.backVertex();
+            cfgBackVertex = partitioner.findPlaceholder(virtualAddress(backVertex));
+
+            info <<"paths graph has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+                 <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+        }
+        
+        // We've reached a dead end that isn't a final vertex.  This shouldn't ever happen.
+        ASSERT_require2(doBacktrack || backVertex->nOutEdges()!=0,
+                        "non-final vertex " + partitioner.vertexName(backVertex) + " has no out edges");
+
+        // Advance to next path.
+        if (doBacktrack) {
+            // Backtrack and follow a different path.  The backtrack not only pops edges off the path, but then also appends
+            // the next edge.  We must adjust visit counts for the vertices we backtracked.
+            path.backtrack();
+        } else {
+            // Push next edge onto path.
+            ASSERT_require(paths.isValidEdge(backVertex->outEdges().begin()));
+            path.pushBack(backVertex->outEdges().begin());
+        }
+    }
+}
+
+
 /** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
  * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
  * expressions. */
@@ -805,6 +1087,11 @@ BaseSemantics::StatePtr
 mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
                      const BaseSemantics::StatePtr &s1, const BaseSemantics::StatePtr &s2) {
     using namespace InsnSemanticsExpr;
+
+    ASSERT_not_null(ops);
+    ASSERT_not_null(s2);
+    if (s1 == NULL)
+        return s2->clone();
 
     // The instruction pointer constraint to use values from s1, otherwise from s2.
     SymbolicSemantics::SValuePtr s1Constraint = SymbolicSemantics::SValue::promote(s1->readRegister(REG_PATH, ops.get()));
@@ -850,11 +1137,33 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     return ops->get_state()->create(mergedReg, mergedMem);
 }
 
+// Merge all the predecessor outgoing states to create a new incoming state for the specified vertex.
+BaseSemantics::StatePtr
+mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::ControlFlowGraph::ConstVertexIterator vertex,
+                       const StateStacks &outStates) {
+    // If this is the initial vertex, then use the state that the caller has initialized already.
+    if (0 == vertex->nInEdges())
+        return ops->get_state();
+
+    // Create the incoming state for this vertex by merging the outgoing states of all predecessors.
+    BaseSemantics::StatePtr state;
+    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->inEdges()) {
+        P2::ControlFlowGraph::ConstVertexIterator predecessorVertex = edge.source();
+        ASSERT_require(outStates.exists(predecessorVertex));
+        ASSERT_forbid(outStates[predecessorVertex].empty());
+        BaseSemantics::StatePtr predecessorOutState = outStates[predecessorVertex].back();
+        state = mergeMultipathStates(ops, state, predecessorOutState);
+    }
+    ASSERT_not_null(state);
+    return state;
+}
+
 /** Process all paths at once by sending everything to the SMT solver. */
 void
 multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
                      const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
                      const P2::CfgConstVertexSet &pathsEndVertices) {
+#if 0 // [Robb P. Matzke 2015-04-16]
     using namespace Sawyer::Container::Algorithm;
     using namespace InsnSemanticsExpr;
 
@@ -872,61 +1181,115 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
         info <<"  saved as \"" <<StringUtility::cEscape(dotFileName) <<"\"\n";
     }
 
-    // Cycles are not allowed for multi-path feasibility analysis. Loops and recursion must have already been unrolled.
-    ASSERT_require(paths.isValidVertex(pathsBeginVertex));
-    P2::CfgConstEdgeSet backEdges = findBackEdges(paths, pathsBeginVertex);
-    if (!backEdges.empty()) {
-        ::mlog[ERROR] <<"Cyclic paths are not allowed for multi-path feasibility analysis. The back edges are:\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, backEdges)
-            ::mlog[ERROR] <<"  " <<partitioner.edgeName(edge) <<"\n";
-        ASSERT_not_implemented("cyclic paths not allowed for multi-path feasibility analysis");
-    }
+    // Keep track of the output state from each vertex in the paths graph.  Also, since we can encounter a vertex more than
+    // once during loop/recursion unrolling, and these states are context sensitive, we keep a vector of the output
+    // states for each vertex.  The order of the states in the vector is the same as the order that the vertex is
+    // visited, thus the vector acts like a stack per vertex as we perform a depth-first traversal.
+    StateStacks outStates;
 
+    // Build the semantics framework and initialize the path constraints.
+    YicesSolver solver;
+    solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
+    ops->writeRegister(cpu->instructionPointerRegister(),
+                       ops->number_(cpu->instructionPointerRegister().get_nbits(), virtualAddress(pathsBeginVertex)));
+
+    // Perform a depth-first traversal of the paths graph. Loop/recursion unrolling is performed by allowing a path to revisit
+    // the same vertex multiple times, up to some user-specified maximum per path.
     info <<"  building path constraints expression\n";
-    ASSERT_require(pathsBeginVertex->nInEdges() == 0);
-    std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex, pathsEndVertices) {
-        // Build the semantics framework and initialize the path constraints.
-        YicesSolver solver;
-        solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
-        BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-        ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
-        ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(),
-                                        pathsBeginVertex->value().address()));
+    P2::CfgPath path(pathsBeginVertex);
+    static const size_t pathInsnIndex = -1;
+    while (!path.isEmpty()) {
+        P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
+        if (path.nVisits(backVertex) > settings.vertexVisitLimit) {
+            // Path visits a vertex too many times.  Backtrack to find some other path.
+            // FIXME[Robb P. Matzke 2015-04-16]: we should be comparing in the CFG, not the paths graph, due to inlining
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &removedEdge, path.backtrack())
+                outStates[removedEdge->target()].pop_back();
 
-        // This loop is a little bit like a data-flow, except we don't have to worry about cycles in the CFG, which simplifies
-        // things quite a bit. We can process the vertices by doing a depth-first traversal starting at the end, and building
-        // the intermediate states as we back out of the traversal.  This guarantees that the final states for each of a
-        // vertex's CFG predecessors are already computed when we're ready to compute this vertex's final state.
-        typedef DepthFirstReverseGraphTraversal<const P2::ControlFlowGraph> Traversal;
-        for (Traversal t(paths, pathsEndVertex, LEAVE_VERTEX); t; ++t) {
-            // Build the initial state by merging all incoming states.
-            BaseSemantics::StatePtr state;
-            ASSERT_require(outState[t.vertex()->id()]==NULL);
-            if (0 == t.vertex()->nInEdges()) {
-                ASSERT_require(t.vertex() == pathsBeginVertex);
-                state = cpu->get_state();               // the initial state
+        } else if (pathsEndVertices.find(backVertex) != pathsEndVertices.end()) {
+            // We've reached the end of the path.  The input state at the end of the path contains the SMT expression that
+            // needs to be solved to prove feasibility.  The input state is created by merging the outgoing states from all the
+            // predecessors.  We don't need to process the final vertex itself because we're only interested in how we got to
+            // it, not what the state was at its end.
+            finalStates.push_back(mergePredecessorStates(ops, backVertex, outStates));
+
+            // Backtrack to follow some other path to some final vertex
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &removedEdge, path.backtrack())
+                outStates[removedEdge->target()].pop_back();
+
+        } else if (pathEndsWithFunctionCall(partitioner, path) && !P2::findCallReturnEdges(backVertex).empty()) {
+            // Inline callee paths into the paths graph, but continue to avoid any paths that go through user-specified
+            // avoidance vertices and edges. We can modify the paths graph during the traversal because we're modifying parts
+            // of the graph that aren't part of the current path.  This is where having insert- and erase-stable graph
+            // iterators is a huge help!
+            P2::ControlFlowGraph::ConstVertexIterator cfgCallSite = partitioner.findPlaceholder(virtualAddress(backVertex));
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, P2::findCallEdges(cfgCallSite)) {
+                if (shouldSummarizeCall(path, cfgCallEdge->target())) {
+                    insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
+                } else if (shouldInline(path, cfgCallEdge->target())) {
+                    info <<"inlining function call paths at vertex " <<partitioner.vertexName(backVertex) <<"\n";
+                    P2::insertCalleePaths(paths, backVertex,
+                                          partitioner.cfg(), cfgCallSite, calleeCfgAvoidVertices, cfgAvoidEdges);
+                }
+            }
+
+            // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. None of
+            // these edges are in the current path, so we don't need to make any adjustments to the outStates stacks.
+            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callRetEdge, P2::findCallReturnEdges(backVertex))
+                paths.eraseEdge(callRetEdge);
+
+            // If the inlined function has no edges that return, and now that we've removed the call-return edges, there might
+            // be large parts of the paths graph that are no longer reachable.  We can prune those parts away and we don't need
+            // to adjust the outStates because none of those parts would have been on any path.
+            size_t removedPathEdges =
+                P2::eraseUnreachablePaths(paths, pathsBeginVertex, pathsEndVertices, vmap /*in,out*/, path /*in,out*/).size();
+            ASSERT_always_require2(removedPathEdges == 0, "cannot prune away anything that is part of the current path");
+            info <<"paths graph has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
+                 <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
+            ASSERT_require(!paths.isEmpty() || path.isEmpty());
+
+        } else if (backVertex->nOutEdges() == 0) {
+            // We've reached a dead end. This shouldn't normally happen since we're traversing the paths graph and would have
+            // caught this case in a previous "if" condition. I.e., the only vertices in the paths graph that don't have out
+            // edges are those in the endVertices set.
+            ASSERT_not_reachable("vertex " + partitioner.vertexName(backVertex) + " has no out edges");
+
+        } else {
+            // Path is incomplete, so append another edge.
+            BaseSemantics::StatePtr state;              // incoming state for this vertex
+            if (0 == backVertex->nInEdges()) {
+                // Create the incoming state from scratch since this is the starting vertex.
+                ASSERT_require(backVertex == pathsBeginVertex);
+                state = cpu->get_state();
             } else {
-                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->inEdges()) {
+                // Create the incoming state for this vertex by merging the outgoing states of all predecessors.
+                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, backVertex->inEdges()) {
                     P2::ControlFlowGraph::ConstVertexIterator predecessorVertex = edge.source();
-                    ASSERT_not_null(outState[predecessorVertex->id()]);
-                    if (edge.id() == t.vertex()->inEdges().begin()->id()) {
-                        state = outState[predecessorVertex->id()]->clone();
-                    } else {
-                        state = mergeMultipathStates(ops, state, outState[predecessorVertex->id()]);
-                    }
+                    ASSERT_require(outStates.exists(predecessorVertex));
+                    ASSERT_forbid(outStates[predecessorVertex].empty());
+                    BaseSemantics::StatePtr predecessorOutState = outStates[predecessorVertex].back();
+                    state = mergeMultipathStates(ops, state, predecessorState);
                 }
             }
             
-            // Compute and save the final state. The final state for the ending vertex is the same as its initial state because
-            // we want to "get to" the final vertex, not necessarily "get to the end of" the final vertex.
+            // Compute and save the final state.
             ops->set_state(state);
-            if (t.vertex() != pathsEndVertex)
-                processBasicBlock(t.vertex()->value().bblock(), cpu);
-            outState[t.vertex()->id()] = cpu->get_state()->clone();
+            processBasicBlock(t.vertex()->value().bblock(), cpu, pathInsnIndex);
+            outStates.insertMaybeDefault(backVertex).push_back(cpu->get_state()->clone());
+            
+            // Extend the path
+            path.pushBack(backVertex->outEdges().begin());
         }
+    }
+    
+            
+    ASSERT_require(pathsBeginVertex->nInEdges() == 0);
+    std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
+    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex, pathsEndVertices) {
+
         ASSERT_not_null(outState[pathsEndVertex->id()]);
         if (settings.showFinalState) {
             SymbolicSemantics::Formatter fmt = symbolicFormat();
@@ -957,427 +1320,32 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
             info <<"  constraint satisfiability could not be determined.\n";
         }
     }
+#endif
 };
 
-SMTSolver::Satisfiable
-singlePathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths, const P2::CfgPath &path,
-               bool emitResults) {
-    return SMTSolver::SAT_UNKNOWN;
-}
-
+/** Find paths and process them all at once. */
 void
-multiPathNoOp(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &paths,
-              const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
-              const P2::CfgConstVertexSet &pathsEndVertices) {}
-
-/** Find paths and process them one at a time until we've found the desired number of feasible paths. */
-template<typename PathProcessor, typename FinalProcessor>
-void
-findAndProcessPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &globalBeginVertex,
-                    const P2::CfgConstVertexSet &globalEndVertices, const P2::CfgConstVertexSet &globalAvoidVertices,
-                    const P2::CfgConstEdgeSet &globalAvoidEdges, PathProcessor pathProcessor, FinalProcessor finalProcessor) {
+findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                         const P2::CfgConstVertexSet &cfgEndVertices, const P2::CfgConstVertexSet &cfgAvoidVertices,
+                         const P2::CfgConstEdgeSet &cfgAvoidEdges) {
 
     // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
     // vertex.
-    Stream info(::mlog[INFO] <<"finding top-level paths");
-    P2::CfgVertexMap vmap;                              // relates global CFG vertices to path vertices
-    P2::ControlFlowGraph paths = findPathsNoCalls(partitioner.cfg(), globalBeginVertex, globalEndVertices, globalAvoidVertices,
-                                                  globalAvoidEdges, vmap);
-    if (!vmap.forward().exists(globalBeginVertex)) {
-        ::mlog[WARN] <<"no paths found\n";
-        return;
-    }
-    P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex = vmap.forward()[globalBeginVertex];
-    info <<"; paths-CFG has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
-         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
-    P2::CfgConstVertexSet pathsEndVertices;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &globalEndVertex, globalEndVertices) {
-        if (vmap.forward().exists(globalEndVertex))
-            pathsEndVertices.insert(vmap.forward()[globalEndVertex]);
-    }
+    Stream info(::mlog[INFO]);
+    P2::CfgVertexMap vmap;                              // relates CFG vertices to path vertices
+    P2::ControlFlowGraph paths = generateTopLevelPaths(partitioner.cfg(), cfgBeginVertex, cfgEndVertices, cfgAvoidVertices,
+                                                       cfgAvoidEdges, vmap /*out*/);
+    P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex = vmap.forward()[cfgBeginVertex];
+    P2::CfgConstVertexSet pathsEndVertices = cfgToPaths(cfgEndVertices, vmap);
 
     // When finding paths through a called function, avoid the usual vertices and edges, but also avoid those vertices that
     // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
     // blocks.
-    P2::CfgConstVertexSet calleeGlobalAvoidVertices = globalAvoidVertices;
-    calleeGlobalAvoidVertices.insert(globalEndVertices.begin(), globalEndVertices.end());
+    P2::CfgConstVertexSet calleeCfgAvoidVertices = cfgAvoidVertices;
+    calleeCfgAvoidVertices.insert(cfgEndVertices.begin(), cfgEndVertices.end());
 
-    // Depth-first traversal of the "paths". When a function call is encountered we do one of two things: either expand the
-    // called function into the paths-CFG and replace the call-ret edge with an actual function call and return edges, or do
-    // nothing but skip over the function call.  When expanding a function call, we want to insert only those edges and
-    // vertices that can participate in a path from the callee's entry point to any of its returning points.
-    P2::CfgPath path(pathsBeginVertex);
-    while (!path.isEmpty()
-#if 1 // DEBUGGING [Robb P. Matzke 2015-04-02]
-           && !settings.multiPathSmt // no need for a full DFS just to expand function calls
-#endif
-           ) {
-        if (path.nVisits(path.backVertex()) > settings.vertexVisitLimit) {
-            // Path visits the final vertex too many times. Backtrack to find some other path.
-            path.backtrack();
-        } else if (pathsEndVertices.find(path.backVertex()) != pathsEndVertices.end()) {
-            // We've reached the end of the path. Backtrack and follow a different path.
-            if (pathProcessor(partitioner, paths, path, true/*emit results*/) == SMTSolver::SAT_YES) {
-                if (0 == --settings.maxPaths) {
-                    info <<"terminating because the maximum number of feasiable paths has been found\n";
-                    exit(0);
-                }
-            }
-            path.backtrack();
-        } else if (path.nEdges()>0 &&
-                   path.edges().back()->value().type() == P2::E_CALL_RETURN &&
-                   shouldInline(partitioner, path)) {
-            // This is a call-return edge representing an entire function call (or calls to multiple functions via pointer)
-            // without specifying any particular paths through the called function. We can expand the callee's paths at this
-            // time so we follow paths through the callee instead of this E_CALL_RETURN edge.
-            P2::ControlFlowGraph::ConstEdgeIterator pathsCallRetEdge = path.edges().back();
-            P2::ControlFlowGraph::ConstVertexIterator pathsCallReturnTarget = pathsCallRetEdge->target();
-            P2::ControlFlowGraph::ConstVertexIterator pathsCallSite = pathsCallRetEdge->source();
-            P2::ControlFlowGraph::ConstVertexIterator cfgCallSite =
-                partitioner.findPlaceholder(pathsCallSite->value().address());
-            info <<"inlining function call paths at vertex " <<partitioner.vertexName(pathsCallSite) <<"\n";
-            P2::insertCalleePaths(paths, pathsCallRetEdge,
-                                  partitioner.cfg(), cfgCallSite, calleeGlobalAvoidVertices, globalAvoidEdges);
-            path.popBack();
-            ASSERT_require(path.nVisits(pathsCallRetEdge)==0);
-            paths.eraseEdge(pathsCallRetEdge); pathsCallRetEdge = paths.edges().end();
-            if (pathsCallSite->nOutEdges() > 0) {
-                path.pushBack(pathsCallSite->outEdges().begin());
-            } else {
-                path.backtrack();
-            }
-            P2::eraseUnreachablePaths(paths, pathsBeginVertex, pathsEndVertices, vmap /*in,out*/, path /*in,out*/);
-            info <<"; paths-CFG has " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
-                 <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
-        } else if (path.backVertex()->nOutEdges() == 0) {
-            // We've reached a dead end. This shouldn't normally happen since we're traversing a the paths-CFG and would have
-            // caught this case in the previous "if" condition. I.e., the only vertices in the paths-CFG that don't have out
-            // edges are those in the endVertices set.
-            ASSERT_not_reachable("vertex " + partitioner.vertexName(path.backVertex()) + " has no out edges (output in x.dot)");
-        } else {
-            // Path is incomplete, so append another edge.  But if the path so far is provably not feasible, then don't bother
-            // considering any path that has the current path as a prefix.
-            path.pushBack(path.backVertex()->outEdges().begin());
-            if (pathProcessor(partitioner, paths, path, false/*quiet*/) == SMTSolver::SAT_NO)
-                path.backtrack();
-        }
-    }
-    finalProcessor(partitioner, paths, pathsBeginVertex, pathsEndVertices);
+    multiPathFeasibility(partitioner, paths, pathsBeginVertex, pathsEndVertices);
 }
-
-
-
-
-#if 0 // [Robb P. Matzke 2015-03-04]
-
-P2::ControlFlowGraph::ConstEdgeIterator
-findFirstCallReturnEdge(const P2::ControlFlowGraph &graph, const P2::ControlFlowGraph::ConstVertexIterator &beginVertex) {
-    ASSERT_require(graph.isValidVertex(beginVertex));
-    typedef BreadthFirstForwardEdgeTraversal<const P2::ControlFlowGraph> Traversal;
-    for (Traversal t(graph, beginVertex); t; ++t) {
-        if (t->value().type() == P2::E_CALL_RETURN)
-            return t.edge();
-    }
-    return graph.edges().end();
-}
-
-void
-robb(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &beginVertex,
-     const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
-
-    //------------------------------------------------------------------------------------------------------------------------
-    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
-    // vertex.
-    Stream info(mlog[INFO] <<"finding top-level paths");
-    VMap vmap;                                          // relates global CFG vertices to path vertices
-    P2::ControlFlowGraph paths = findPathsNoCalls(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges, vmap);
-    if (!vmap.forward().exists(beginVertex)) {
-        mlog[WARN] <<"no paths found\n";
-        return;
-    }
-    P2::ControlFlowGraph::ConstVertexIterator beginPath = vmap.forward()[beginVertex];
-    info <<"; " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
-         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
-
-    //------------------------------------------------------------------------------------------------------------------------
-    // Inline calls to functions. We must do this because in order to calculate the feasibility of a path we must know the
-    // effect of calling the function.
-    info <<"inlining function call paths";
-    CfgVertexSet calleeAvoidVertices = avoidVertices;
-    calleeAvoidVertices.insert(endVertices.begin(), endVertices.end());
-    for (size_t nSubst=0; nSubst<settings.expansionDepthLimit; ++nSubst) {
-        P2::ControlFlowGraph::ConstEdgeIterator callRetEdge = findFirstCallReturnEdge(paths, beginPath);
-        if (callRetEdge == paths.edges().end())
-            break;
-        P2::ControlFlowGraph::ConstVertexIterator callReturnTarget = callRetEdge->target();
-        insertCallee(paths, callRetEdge, partitioner, calleeAvoidVertices, avoidEdges);
-        paths.eraseEdge(callRetEdge); callRetEdge = paths.edges().end();
-
-        // If there are no edges coming into the return point and the return point is not the begin vertex, then the
-        // return point is now unreachable. We need to prune away all parts of the paths-CFG that are not part of a
-        // valid path.
-        if (callReturnTarget->nInEdges()==0)
-            eraseUnreachable(partitioner, paths, beginVertex, endVertices, vmap);
-    }
-    if (!vmap.forward().exists(beginVertex)) {
-        mlog[WARN] <<"no paths found\n";
-        return;
-    }
-    info <<"; " <<StringUtility::plural(paths.nVertices(), "vertices", "vertex")
-         <<" and " <<StringUtility::plural(paths.nEdges(), "edges") <<"\n";
-
-}
-
-// Print a CFG path
-void
-showVertex(std::ostream &out, const P2::ControlFlowGraph::ConstVertexIterator &vertex) {
-    if (vertex->value().type() == P2::V_BASIC_BLOCK) {
-        out <<"  " <<StringUtility::addrToString(vertex->value().address());
-        if (P2::Function::Ptr function = vertex->value().function())
-            out <<" in " <<function->printableName();
-        out <<"\n";
-        if (settings.showInstructions) {
-            if (P2::BasicBlock::Ptr bblock = vertex->value().bblock()) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions())
-                    out <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
-            }
-        }
-    }
-}
-
-void
-showPath(std::ostream &out, const P2::Partitioner &partitioner, const P2::CfgPath &path) {
-    out <<"Path (" <<StringUtility::plural(path.edges().size(), "edges") <<"):\n";
-    if (path.isEmpty()) {
-        out <<" empty\n";
-    } else {
-        showVertex(out, path.frontVertex());
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, path.edges()) {
-            out <<"    edge " <<partitioner.edgeName(edge) <<"\n";
-            showVertex(out, edge->target());
-        }
-    }
-}
-
-/** Find non-cyclic paths.
- *
- *  Finds all non-cyclic paths in the CFG starting at the @p beginVertex and ending at any of the @p endVertices (the first
- *  reached in each case), but not passing through any of the @p avoidVertices or @p avoidEdges.  Function calls are skipped
- *  over if the call does not reach any @p endVertex. */
-std::vector<P2::CfgPath>
-findPaths(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &beginVertex,
-          const CfgVertexSet &endVertices, const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges,
-          FollowCalls followCalls, const std::vector<bool> &significantEdges = std::vector<bool>()) {
-    ASSERT_forbid(beginVertex == partitioner.cfg().vertices().end());
-    std::vector<P2::CfgPath> paths;
-    if (endVertices.empty())
-        return paths;                                   // no end point specified
-    if (avoidVertices.find(beginVertex) != avoidVertices.end())
-        return paths;                                   // all paths would start with a vertex-to-be-avoided
-
-    if (endVertices.find(beginVertex) != endVertices.end()) {
-        paths.push_back(P2::CfgPath(beginVertex));
-        return paths;
-    }
-    if (beginVertex->nOutEdges() == 0)
-        return paths;
-
-    if (mlog[DEBUG]) {
-        std::string beginName;
-        if (beginVertex->value().type() == P2::V_BASIC_BLOCK) {
-            if (P2::Function::Ptr function = beginVertex->value().function())
-                beginName = function->printableName();
-        }
-        if (beginName.empty())
-            beginName = "vertex " + partitioner.vertexName(beginVertex);
-        mlog[DEBUG] <<"findPaths: begin=" <<beginName <<"\n";
-    }
-
-    // Edges in the current path
-    std::list<P2::ControlFlowGraph::ConstEdgeIterator> pathEdges;
-    pathEdges.push_back(beginVertex->outEdges().begin());
-
-    // Vertices visited by the current path. pathEdges.back()->target() is not ever counted in these totals.
-    std::vector<size_t> visitingVertex(partitioner.cfg().nVertices(), 0);
-    visitingVertex[beginVertex->id()] = 1;
-
-    // The original implementation used a graph traversal, but it's hard to have fine control over how often a traversal is
-    // allowed to visit each vertex. Therefore, we do it by hand.
-    while (!pathEdges.empty()) {
-        P2::ControlFlowGraph::ConstVertexIterator nextVertex = pathEdges.back()->target();
-        if (!significantEdges.empty() && !significantEdges[pathEdges.back()->id()]) {
-            // this edge cannot be on a valid path -- we proved that earlier
-        } else if (followCalls==SINGLE_FUNCTION && pathEdges.back()->value().type() == P2::E_FUNCTION_CALL) {
-            // don't follow function calls
-        } else if (visitingVertex[nextVertex->id()] >= settings.vertexVisitLimit) {
-            // don't visit the vertex again
-        } else if (avoidVertices.find(nextVertex) != avoidVertices.end()) {
-            // don't visit this vertex even once!
-        } else if (avoidEdges.find(pathEdges.back()) != avoidEdges.end()) {
-            // don't follow this path
-        } else if (endVertices.find(nextVertex) != endVertices.end()) {
-            // found a complete path; don't go farther
-            paths.pushBack(P2::CfgPath(pathEdges));
-        } else if (nextVertex->nOutEdges() > 0) {
-            // enter next vertex and append its first outgoing edge
-            ++visitingVertex[nextVertex->id()];
-            pathEdges.push_back(nextVertex->outEdges().begin());
-            continue;
-        }
-
-        // Replace the last edge in the path with the next outgoing edge from the same vertex, but if we've reached the last
-        // outgoing edge then pop vertices from the stack until we reach one that has another outgoing edge.
-        while (!pathEdges.empty()) {
-            P2::ControlFlowGraph::ConstVertexIterator source = pathEdges.back()->source();
-            ASSERT_require(source != partitioner.cfg().vertices().end());
-            if (++pathEdges.back() != partitioner.cfg().edges().end())
-                break;
-            pathEdges.pop_back();
-            ASSERT_require(visitingVertex[source->id()] > 0);
-            --visitingVertex[source->id()];
-        }
-    }
-    return paths;
-}
-
-/** Find functions called by this vertex.
- *
- *  Returns a set of CFG function call edges for functions the @p caller calls. */
-CfgEdgeSet
-findFunctionCalls(const P2::ControlFlowGraph::ConstVertexIterator &caller) {
-    CfgEdgeSet calls;
-    for (P2::ControlFlowGraph::ConstEdgeIterator edge=caller->outEdges().begin(); edge!=caller->outEdges().end(); ++edge) {
-        if (edge->value().type() == P2::E_FUNCTION_CALL)
-            calls.insert(edge);
-    }
-    return calls;
-}
-
-std::string
-edgeName(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstEdgeIterator &edge) {
-    std::string s;
-    if (edge == partitioner.cfg().edges().end())
-        return "end";
-    if (edge->value().type() == P2::E_FUNCTION_CALL || edge->value().type() == P2::E_FUNCTION_XFER) {
-        s = edge->value().type() == P2::E_FUNCTION_CALL ? "call" : "xfer";
-        if (edge->source()->value().type() == P2::V_BASIC_BLOCK && edge->source()->value().function())
-            s += " from " + edge->source()->value().function()->printableName();
-        s += " at " + partitioner.vertexName(edge->source());
-        if (edge->target()->value().type() == P2::V_BASIC_BLOCK && edge->target()->value().function()) {
-            s += " to " + edge->target()->value().function()->printableName();
-        } else {
-            s += " to " + partitioner.vertexName(edge->target());
-        }
-    } else {
-        s = partitioner.edgeName(edge);
-    }
-    return s;
-}
-
-void
-showCallStack(std::ostream &out, const P2::Partitioner &partitioner,
-              const std::vector<P2::ControlFlowGraph::ConstVertexIterator> &callStack) {
-    if (callStack.empty()) {
-        out <<"call stack: empty\n";
-    } else {
-        out <<"call stack:\n";
-        for (size_t i=0; i<callStack.size(); ++i) {
-            out <<"  #" <<i <<": ";
-            out <<partitioner.vertexName(callStack[i]);
-            if (callStack[i] != partitioner.cfg().vertices().end() &&
-                callStack[i]->value().type() == P2::V_BASIC_BLOCK &&
-                callStack[i]->value().function())
-                out <<" in " <<callStack[i]->value().function()->printableName();
-            out <<"\n";
-        }
-    }
-}
-
-/** Expands function calls in a path.
- *
- *  Any function call in a path that was skipped over because the call to the function does not directly reach an endVertex is
- *  expanded by replacing that vertex of the path with all possible non-cyclic paths through the called function. */
-std::vector<P2::CfgPath>
-expandPath(const P2::Partitioner &partitioner, const P2::CfgPath &toExpand,
-           const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges,
-           std::vector<P2::ControlFlowGraph::ConstVertexIterator> &callStack) {
-    std::vector<P2::CfgPath> retval;
-    if (toExpand.isEmpty())
-        return retval;
-    if (toExpand.edges().empty()) {
-        retval.push_back(P2::CfgPath(toExpand.firstVertex()));
-        return retval;
-    }
-
-    retval.push_back(P2::CfgPath());
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator edge, toExpand.edges()) {
-        if (edge->value().type() == P2::E_CALL_RETURN && callStack.size() < settings.expansionDepthLimit) {
-            // This vertex represents a function that was skipped over.  Recursively expand all paths through that function and
-            // then join them with the return value. If the return value has N paths and the callee has M paths then the new
-            // return value will have N*M paths.  Also, we must handle the case of multiple callees (i.e., indirect call).
-            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &call, findFunctionCalls(edge->source())) {
-                if (std::find(callStack.begin(), callStack.end(), call->target()) != callStack.end()) {
-                    // This is a recursive call to the function. We need to break the recursion to prevent this from running
-                    // forever. We do so by not expanding the function call -- we treat it like a regular path node instead.
-                    if (mlog[WARN]) {
-                        mlog[WARN] <<"expandPath: recursive edge " <<edgeName(partitioner, edge) <<" avoided\n";
-                        showCallStack(mlog[WARN], partitioner, callStack);
-                    }
-                    BOOST_FOREACH (P2::CfgPath &path, retval)
-                        path.append(edge);
-
-                } else {
-                    // Find all paths through the called function
-                    CfgVertexSet returns = findFunctionReturns(partitioner, call->target());
-                    std::vector<P2::CfgPath> calleePaths = findPaths(partitioner, call->target(), returns,
-                                                                 avoidVertices, avoidEdges, SINGLE_FUNCTION);
-                    if (calleePaths.empty()) {
-                        if (mlog[WARN]) {
-                            mlog[WARN] <<"expandPath: no paths through " <<edgeName(partitioner, call) <<"\n";
-                            showCallStack(mlog[WARN], partitioner, callStack);
-                        }
-                        BOOST_FOREACH (P2::CfgPath &path, retval)
-                            path.append(edge);
-                    } else {
-                        std::vector<P2::CfgPath> newRetval;
-                        BOOST_FOREACH (const P2::CfgPath &oldPath, retval) {
-                            BOOST_FOREACH (const P2::CfgPath &calleePath, calleePaths) {
-                                callStack.push_back(call->target());
-                                std::vector<P2::CfgPath> expandedCalleePaths = expandPath(partitioner, calleePath,
-                                                                                      avoidVertices, avoidEdges, callStack);
-                                ASSERT_require(!callStack.empty());
-                                ASSERT_require(callStack.back() == call->target());
-                                callStack.pop_back();
-                                BOOST_FOREACH (const P2::CfgPath &expandedCalleePath, expandedCalleePaths) {
-                                    P2::CfgPath path = oldPath;
-                                    path.append(call);
-                                    path.append(expandedCalleePath);
-                                    path.append(edge);
-                                    newRetval.push_back(path);
-                                }
-                            }
-                        }
-                        std::swap(retval, newRetval);
-                        SAWYER_MESG(mlog[DEBUG]) <<"expandPath: depth=" <<callStack.size() <<", npaths=" <<retval.size() <<"\n";
-                    }
-                }
-            }
-        } else {
-            // This is not a call, so add it to each of the retval paths
-            BOOST_FOREACH (P2::CfgPath &path, retval)
-                path.append(edge);
-        }
-    }
-    return retval;
-}
-
-std::vector<P2::CfgPath>
-expandPath(const P2::Partitioner &partitioner, const P2::CfgPath &toExpand,
-           const CfgVertexSet &avoidVertices, const CfgEdgeSet &avoidEdges) {
-    std::vector<P2::ControlFlowGraph::ConstVertexIterator> callStack;
-    return expandPath(partitioner, toExpand, avoidVertices, avoidEdges, callStack);
-}
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1477,10 +1445,8 @@ int main(int argc, char *argv[]) {
     
     // Process individual paths
     if (settings.multiPathSmt) {
-        findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
-                            singlePathNoOp, multiPathFeasibility);
+        findAndProcessMultiPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
     } else {
-        findAndProcessPaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges,
-                            singlePathFeasibility, multiPathNoOp);
+        findAndProcessSinglePaths(partitioner, beginVertex, endVertices, avoidVertices, avoidEdges);
     }
 }

@@ -34,6 +34,16 @@ findBackEdges(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIt
     return backEdges;
 }
 
+CfgConstEdgeSet
+findCallEdges(const ControlFlowGraph::ConstVertexIterator &callSite) {
+    CfgConstEdgeSet retval;
+    for (ControlFlowGraph::ConstEdgeIterator ei=callSite->outEdges().begin(); ei!=callSite->outEdges().end(); ++ei) {
+        if (ei->value().type() == E_FUNCTION_CALL)
+            retval.insert(ei);
+    }
+    return retval;
+}
+
 CfgConstVertexSet
 findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &callSite) {
     ASSERT_require2(cfg.isValidVertex(callSite), "callSite vertex must belong to the CFG");
@@ -41,6 +51,16 @@ findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, callSite->outEdges()) {
         if (edge.value().type() == E_FUNCTION_CALL)
             retval.insert(cfg.findVertex(edge.target()->id()));
+    }
+    return retval;
+}
+
+CfgConstEdgeSet
+findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite) {
+    CfgConstEdgeSet retval;
+    for (ControlFlowGraph::ConstEdgeIterator ei=callSite->outEdges().begin(); ei!=callSite->outEdges().end(); ++ei) {
+        if (ei->value().type() == E_CALL_RETURN)
+            retval.insert(ei);
     }
     return retval;
 }

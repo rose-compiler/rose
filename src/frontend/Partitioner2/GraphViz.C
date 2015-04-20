@@ -113,6 +113,16 @@ escape(const std::string &s) {
     return "\"" + quotedEscape(s) + "\"";
 }
 
+std::string
+concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator) {
+    if (oldStuff.empty())
+        return "\"" + quotedEscape(newStuff) + "\"";
+    if ('"'==oldStuff[0] && '"'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+    if ('<'==oldStuff[0] && '>'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + htmlEscape(separator) + htmlEscape(newStuff) + ">";
+    return "\"" + quotedEscape(oldStuff) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      CfgEmitter
@@ -484,6 +494,8 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
             return "\"undiscovered\"";
         case V_INDETERMINATE:
             return "\"indeterminate\"";
+        case V_USER_DEFINED:
+            return "\"user defined\"";
     }
     ASSERT_not_reachable("invalid vertex type");
 }
@@ -594,6 +606,9 @@ CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeIterator &edge) const {
                 s = "other";
             break;
         }
+        case E_USER_DEFINED:
+            s = "user";
+            break;
     }
     return "\"" + s + "\"";
 }

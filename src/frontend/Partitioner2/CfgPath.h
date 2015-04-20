@@ -105,8 +105,11 @@ public:
      *
      *  Pops edges from the path until a vertex is reached where some other (later) edge can be followed, then push that edge
      *  onto the path.  If no subsequent path through the CFG is available, then modify this path to be empty. This happens
-     *  when this path's edges are all final outgoing edges for each vertex in the path. */
-    void backtrack();
+     *  when this path's edges are all final outgoing edges for each vertex in the path.
+     *
+     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
+     *  the path is at the front of the returned vector. */
+    std::vector<ControlFlowGraph::ConstEdgeIterator>  backtrack();
 
     /** Number of times vertex appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstVertexIterator &vertex) const;
@@ -116,8 +119,11 @@ public:
 
     /** Truncate the path.
      *
-     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path. */
-    void truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
+     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path.
+     *
+     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
+     *  the path is at the front of the returned vector. */
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
 
     /** Call depth.
      *
@@ -148,8 +154,10 @@ findPathEdges(const ControlFlowGraph &graph,
  *  Removes those edges that aren't reachable in both forward and reverse directions between the specified begin and end
  *  vertices. Specified vertices must belong to the paths-CFG, although end vertices are allowed.  After edges are removed,
  *  dangling vertices are removed.  Vertices and edges are removed from the @p paths graph, the @p vmap, and the @p
- *  path. Removal of edges from @p path causes the path to be truncated. */
-void
+ *  path. Removal of edges from @p path causes the path to be truncated.
+ *
+ *  Returns the number of edges that were removed from the @p path. */
+size_t
 eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
                       const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
 
@@ -174,20 +182,42 @@ findPathsNoCalls(const ControlFlowGraph &srcCfg, const ControlFlowGraph::ConstVe
                  const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
                  CfgVertexMap &vmap /*out*/);
 
-/** Replace a call-return edge with a function call.
+/** Inline a functioon at the specified call site.
  *
- *  The @p paths graph is modified in place by insert an inlined copy of the function(s) called from the specified @p
- *  pathsCretEdge call-return edge's source vertex. The @p pathsCretEdge usually goes from a CALL instruction to the CALL's
- *  fall-through address.  Edges are inserted from the new inlined return sites to the return target. The call-return edge is
- *  not erased, but the caller often does that as the next step.
+ *  The @p paths graph is modified in place by inserting an inlined copy of the function(s) called from the specified @p
+ *  pathsCallSite vertex.  The @p pathsCallSite only serves as the attachment point--it must have the @ref E_CALL_RETURN
+ *  edge(s) but does not need any @ref E_FUNCTION_CALL edges.  The @p cfgCallSite is the vertex in the @p cfg corresponding to
+ *  the @p pathsCallSite in the paths graph and provides information about which functions are called.
  *
- *  The @p cfgCallSite is the vertex in the @p cfg corresponding to the source vertex for @p pathsCretEdge in the paths graph
- *  and provides information about which functions are called.  The vertices and edges in the inlined version that correspond
- *  to the @p cfgAvoidEVertices and @p cfgAvoidEdges are not copied into the destination graph. */
-void
-insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstEdgeIterator &pathsCretEdge,
+ *  There are two versions of this function: one takes a specific function call edge and inlines only that single call. The
+ *  other takes a call site vertex and inlines all functions called at that vertex.
+ *
+ *  Usually, @p cfgCallSite has one outgoing @ref E_FUNCTION_CALL edge and @p pathsCallSite (and @p cfgCallSite) has one
+ *  outgoing @ref E_CALL_RETURN edge. If the @p pathsCallSite has no @ref E_CALL_RETURN edge, or the called function has no
+ *  return sites, this operation is a no-op.  A call site may call multiple functions, in which case each is inserted, even if
+ *  some @ref E_FUNCTION_CALL edges point to the same function.  A called function may return to multiple addresses, such as
+ *  longjmp, in which case multiple @ref E_CALL_RETURN edges may be present--all return sites are linked to all return targets
+ *  by this operation.
+ *
+ *  The vertices and edges in the inlined version that correspond to the @p cfgAvoidEVertices and @p cfgAvoidEdges are not
+ *  copied into the @ref paths graph. If this results in the called function having no paths that can return, then that
+ *  function is not inserted into @p paths.
+ *
+ *  The @ref E_CALL_RETURN edges in @p paths are not erased by this operation, but are usually subsequently erased by the
+ *  user since they are redundant after this insertion--they represent a short-circuit over the called function(s).
+ *
+ *  Returns true if some function was inserted, false if no changes were made to @p paths.
+ *
+ * @{ */
+bool
+insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
                   const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+bool
+insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                  const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
+                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+/** @} */
 
 
 

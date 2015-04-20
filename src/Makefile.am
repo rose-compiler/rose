@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+bin_PROGRAMS =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS = util ROSETTA roseSupport frontend midend backend \
@@ -253,6 +254,18 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS =
+
+# This tool spits out information that tells users how to compile and link programs that use ROSE. Therefore, we have to pass
+# that information to the program when we compile it, and we do so with the "-DCXX", etc compiler switches.
+bin_PROGRAMS += rose-config
+rose_config_SOURCES = rose-config.C
+rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
+rose_config_CPPFLAGS =					\
+	-DCXX='"$(subst ",\",$(CXX))"'			\
+	-DCPPFLAGS='"$(subst ",\",$(ROSE_INCLUDES))"'	\
+	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'		\
+	-DLDFLAGS='"$(subst ",\",$(LIBS_WITH_RPATH) $(ROSE_LIBS))"'
+rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"

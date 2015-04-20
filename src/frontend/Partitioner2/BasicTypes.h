@@ -16,6 +16,9 @@ enum VertexType {
     V_UNDISCOVERED,                                     /**< The special "undiscovered" vertex. */
     V_INDETERMINATE,                                    /**< Special vertex destination for indeterminate edges. */
     V_NONEXISTING,                                      /**< Special vertex destination for non-existing basic blocks. */
+    V_USER_DEFINED,                                     /**< User defined vertex. These vertices don't normally appear in the
+                                                         *   global control flow graph but might appear in other kinds of
+                                                         *   graphs that are closely related to a CFG, such as a paths graph. */
 };
 
 /** Partitioner control flow edge types. */
@@ -37,6 +40,9 @@ enum EdgeType {
                                                          *   considered part of the call stack; a return from the target
                                                          *   function will skip over this function. Function call transfers
                                                          *   most often occur as the edge leaving a thunk. */
+    E_USER_DEFINED,                                     /**< User defined edge.  These edges don't normally appear in the
+                                                         *   global control flow graph but might appear in other kinds of
+                                                         *   graphs that are closely related to a CFG, such as a paths graph. */
 };
 
 /** How sure are we of something. */
