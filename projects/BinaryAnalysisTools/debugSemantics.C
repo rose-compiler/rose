@@ -514,8 +514,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     if (!dispatcher)
         throw std::runtime_error("no semantics dispatcher available for architecture");
     if (settings.trace) {
+        // Wrap the RISC operators in TraceSemantics::RiscOperators and adjust the output stream to be standard output since
+        // the trace is considered the main output from this command and needs to be properly interleaved with the other output
+        // on stdout.
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(ops);
-        trace->set_stream(stdout);
+        trace->stream().destination(Sawyer::Message::FileSink::instance(stdout, Sawyer::Message::Prefix::silentInstance()));
         dispatcher = dispatcher->create(trace);
     } else {
         dispatcher = dispatcher->create(ops);
