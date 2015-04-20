@@ -13,7 +13,7 @@ void foobar()
    }
 #endif
 
-#if 0
+#if 1
 // This will unparse fine!
 int (foobar_function) ( const char *text, typeof ( ( ( struct echo_options * ) ((void *)0) )->no_newline ) * );
 #endif

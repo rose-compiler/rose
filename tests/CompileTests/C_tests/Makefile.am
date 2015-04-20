@@ -560,6 +560,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
+     test2015_100.c \
+     test2015_107.c \
+     test2015_108.c \
+     test2015_109.c \
+     test2015_110.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -581,7 +586,6 @@ FAILING_TESTCODES_XEN = \
     test2015_97.c \
     test2015_98.c \
     test2015_99.c \
-    test2015_100.c \
     test2015_101.c \
     test2015_102.c \
     test2015_103.c \
