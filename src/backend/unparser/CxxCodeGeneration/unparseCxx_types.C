@@ -1097,7 +1097,10 @@ Unparse_Type::unparseQualifiedNameType ( SgType* type, SgUnparse_Info& info )
 
 void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
    {
-#if 0
+
+#define DEBUG_UNPARSE_POINTER_TYPE 0
+
+#if DEBUG_UNPARSE_POINTER_TYPE
      printf("Inside of Unparse_Type::unparsePointerType \n");
      curprint("\n/* Inside of Unparse_Type::unparsePointerType */ \n");
 #endif
@@ -1106,7 +1109,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
      info.display("Inside of Unparse_Type::unparsePointerType");
 #endif
 
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
      printf ("In unparsePointerType(): info.isWithType()       = %s \n",(info.isWithType()       == true) ? "true" : "false");
      printf ("In unparsePointerType(): info.SkipBaseType()     = %s \n",(info.SkipBaseType()     == true) ? "true" : "false");
      printf ("In unparsePointerType(): info.isTypeFirstPart()  = %s \n",(info.isTypeFirstPart()  == true) ? "true" : "false");
@@ -1116,7 +1119,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
      SgPointerType* pointer_type = isSgPointerType(type);
      ROSE_ASSERT(pointer_type != NULL);
 
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
      printf ("In unparsePointerType(): isSgReferenceType(pointer_type->get_base_type())      = %s \n",(isSgReferenceType(pointer_type->get_base_type())      != NULL) ? "true" : "false");
      printf ("In unparsePointerType(): isSgPointerType(pointer_type->get_base_type())        = %s \n",(isSgPointerType(pointer_type->get_base_type())        != NULL) ? "true" : "false");
      printf ("In unparsePointerType(): isSgArrayType(pointer_type->get_base_type())          = %s \n",(isSgArrayType(pointer_type->get_base_type())          != NULL) ? "true" : "false");
@@ -1130,7 +1133,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
   // if (isSgTypeOfType(pointer_type->get_base_type()) != NULL && (info.isTypeFirstPart() == true) )
      if (isSgTypeOfType(pointer_type->get_base_type()) != NULL)
         {
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
           printf ("############### Warning: unparsePointerType(): pointer_type->get_base_type() is SgTypeOfType \n");
 #endif
           if (info.isTypeFirstPart() == true)
@@ -1140,19 +1143,40 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                ninfo1.unset_isTypeFirstPart();
 
                ninfo1.set_isTypeFirstPart();
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("In Unparse_Type::unparsePointerType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 1) \n");
                curprint("\n/* In Unparse_Type::unparsePointerType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 1) */ \n");
 #endif
                unparseType(pointer_type->get_base_type(), ninfo1);
                ninfo1.set_isTypeSecondPart();
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("In Unparse_Type::unparsePointerType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 2) \n");
                curprint("\n/* In Unparse_Type::unparsePointerType(): TypeOf GNU extension needs to be supported as a special case: (call on base type: part 2) */ \n");
 #endif
                unparseType(pointer_type->get_base_type(), ninfo1);
 
                curprint("*");
+             }
+            else
+             {
+#if DEBUG_UNPARSE_POINTER_TYPE
+               printf ("TypeofType not output because info.isTypeFirstPart() == false \n");
+#endif
+            // DQ (4/19/2015): We need to output the typeof operator when it appears as a parameter in function type arguments.
+            // See test2015_110.c for an example.
+               if (info.isTypeFirstPart() == false && info.isTypeSecondPart() == false)
+                  {
+#if DEBUG_UNPARSE_POINTER_TYPE
+                    printf ("info.isTypeFirstPart() == false && info.isTypeSecondPart() == false (need to output typeof type) \n");
+#endif
+                    SgUnparse_Info ninfo1(info);
+                    ninfo1.unset_isTypeSecondPart();
+                    ninfo1.unset_isTypeFirstPart();
+
+                    unparseType(pointer_type->get_base_type(), ninfo1);
+
+                    curprint("*");
+                  }
              }
 
           return;
@@ -1173,7 +1197,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
 
          false)
         {
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
           printf ("In unparsePointerType(): calling info.set_isPointerToSomething() \n");
 #endif
           info.set_isPointerToSomething();
@@ -1188,7 +1212,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
 
      if (info.isTypeFirstPart() == true)
         {
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
           curprint("\n /* Calling unparseType from unparsePointerType (1st part) */ \n");
 #endif
        // DQ (5/3/2013): The base type can not be unparsed if this is part of a list of types in a SgForInitStmt.
@@ -1212,7 +1236,8 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
        // DQ (9/21/2004): I think we can assert this, and if so we can simplify the logic below
           ROSE_ASSERT(info.isTypeSecondPart() == false);
        // if ( ( info.isWithType() && info.SkipBaseType() ) || info.isTypeSecondPart() )
-#if 0
+
+#if DEBUG_UNPARSE_POINTER_TYPE
           printf ("info.isWithType()   = %s \n",info.isWithType()   ? "true" : "false");
           printf ("info.SkipBaseType() = %s \n",info.SkipBaseType() ? "true" : "false");
           curprint ( string("\n/* info.isWithType()           = ") + (info.isWithType()   ? "true" : "false") + " */ \n");
@@ -1243,12 +1268,13 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
         {
           if (info.isTypeSecondPart() == true)
              {
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("In Unparse_Type::unparsePointerType(): unparse 2nd part of type \n");
                curprint("\n/* In Unparse_Type::unparsePointerType(): unparse 2nd part of type */ \n");
 #endif
                unparseType(pointer_type->get_base_type(), info);
-#if 0
+
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("DONE: Unparse_Type::unparsePointerType(): unparse 2nd part of type \n");
                curprint("\n/* DONE: Unparse_Type::unparsePointerType(): unparse 2nd part of type */ \n");
 #endif
@@ -1258,13 +1284,15 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
             // DQ (11/27/2004): I think that this is important for unparing functions or function pointers
                SgUnparse_Info ninfo(info);
                ninfo.set_isTypeFirstPart();
-#if 0
+
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("In Unparse_Type::unparsePointerType(): (call on base type: part 1) \n");
                curprint("\n/* In Unparse_Type::unparsePointerType(): (call on base type: part 1) */ \n");
 #endif
                unparseType(pointer_type, ninfo);
                ninfo.set_isTypeSecondPart();
-#if 0
+
+#if DEBUG_UNPARSE_POINTER_TYPE
                printf("In Unparse_Type::unparsePointerType(): (call on base type: part 2) \n");
                curprint("\n/* In Unparse_Type::unparsePointerType(): (call on base type: part 2) */ \n");
 #endif
@@ -1272,7 +1300,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
              }
         }
 
-#if 0
+#if DEBUG_UNPARSE_POINTER_TYPE
      printf("Leaving of Unparse_Type::unparsePointerType \n");
      curprint("\n /* Leaving of Unparse_Type::unparsePointerType */ \n");
 #endif
@@ -2976,9 +3004,14 @@ Unparse_Type::unparseFunctionType(SgType* type, SgUnparse_Info& info)
 #endif
 #if DEBUG_FUNCTION_TYPE
                     printf ("In unparseFunctionType(): calling unparseType(): output function arguments = %p \n",*p);
+                    printf ("   --- *p = %p = %s \n",*p,(*p)->class_name().c_str());
+                    printf ("   --- ninfo2.isTypeFirstPart()  = %s \n",ninfo2.isTypeFirstPart() ? "true" : "false");
+                    printf ("   --- ninfo2.isTypeSecondPart() = %s \n",ninfo2.isTypeSecondPart() ? "true" : "false");
 #endif
                     unparseType(*p, ninfo2);
+
                     p++;
+
                     if (p != func_type->get_arguments().end())
                        { 
                          curprint(", ");
