@@ -560,6 +560,7 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
+     test2015_89.c \
      test2015_100.c \
      test2015_107.c \
      test2015_108.c \
