@@ -1930,6 +1930,7 @@ public:
         cur_insn = NULL;
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value Construction Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1950,7 +1951,6 @@ public:
     virtual SValuePtr boolean_(bool value) {
         return protoval->boolean_(value);
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1985,6 +1985,7 @@ public:
 
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
     virtual SValuePtr rdtsc() { return undefined_(64); }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Boolean Operations
@@ -2049,6 +2050,7 @@ public:
      *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Comparison Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2062,10 +2064,42 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of
-     *  other operations. */
-    SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
+    /** Equality comparison.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b holds. Both operands must be the same
+     *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
+     *
+     * @{ */
+    SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
+    SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
+    /** Comparison for unsigned values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as unsigned values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
+
+    /** Comparison for signed values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as signed values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Integer Arithmetic Operations
@@ -2129,6 +2163,7 @@ public:
     /** Multiply two unsigned values. The width of the result is the sum of the widths of @p a and @p b. */
     virtual SValuePtr unsignedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Interrupt and system calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2138,6 +2173,7 @@ public:
      *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
      *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
     virtual void interrupt(int majr, int minr) {}
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations
