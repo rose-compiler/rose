@@ -592,7 +592,8 @@ FAILING_TESTCODES_XEN = \
     test2015_103.c \
     test2015_104.c \
     test2015_105.c \
-    test2015_106.c 
+    test2015_106.c \
+    test2015_111.c 
 
 # DQ (4/13/2015): The best examples of remaining bugs are:
 # Makefile rules:
