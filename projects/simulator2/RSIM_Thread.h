@@ -17,7 +17,7 @@ public:
      *  thread that will be simulating the speciment's thread described by this object. */
     RSIM_Thread(RSIM_Process *process)
         : process(process), my_tid(-1),
-          mesg_prefix(this), report_interval(10.0), do_coredump(true), show_exceptions(true),
+          report_interval(10.0), do_coredump(true), show_exceptions(true),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         real_thread = pthread_self();
@@ -134,7 +134,7 @@ public:
 
     /** Handle futex death.  This function is invoked for each futex on the robust list if it's owned by the calling
      * thread. See the Linux version of this function for details. */
-    int handle_futex_death(uint32_t futex_va, RTS_Message*);
+    int handle_futex_death(uint32_t futex_va, Sawyer::Message::Stream&);
 
     /** Simulate thread exit. Return values is that which would be returned as the status for waitpid. */
     int sys_exit(const RSIM_Process::Exit &e);
@@ -149,18 +149,7 @@ public:
      *                                  Debugging and tracing
      **************************************************************************************************************************/
 private:
-    class Prefix: public RTS_Message::Prefix {
-        RSIM_Thread *thread;
-    public:
-        Prefix(RSIM_Thread *thread)
-            : thread(thread) {}
-        virtual void operator()(FILE *f) {
-            fputs(thread->id().c_str(), f);
-        }
-    };
-
-    Prefix mesg_prefix;
-    RTS_Message *trace_mesg[TRACE_NFACILITIES];         /**< Array indexed by TraceFacility */
+    Sawyer::Message::Stream *trace_mesg[TRACE_NFACILITIES];
     struct timeval last_report;                         /**< Time of last progress report for TRACE_PROGRESS */
     double report_interval;                             /**< Minimum seconds between progress reports for TRACE_PROGRESS */
     bool do_coredump;                                   /**< Simulatate a core dump (when true), or throw an exception. */
@@ -171,15 +160,14 @@ private:
 
 public:
     /** Return the object used for a debugging facility.  The return value is always non-null, although the returned message
-     *  object may have a null output file if the facility is disabled.  This permits the return value to be dereferenced
-     *  regardless of whether the facility is enable. For example:
+     *  object may be disabled. For example:
      *
      *  @code
-     *  tracing(TRACE_SIGNAL)->mesg("signal generated");
+     *  tracing(TRACE_SIGNAL) <<"signal generated\n";
      *  @endcode
      *
      *  Each facility has its own message object so that multipart output can be mixed. */
-    RTS_Message *tracing(TracingFacility);
+    Sawyer::Message::Stream& tracing(TracingFacility);
 
     /** Print a progress report if progress reporting is enabled and enough time has elapsed since the previous report. */
     void report_progress_maybe();
@@ -189,14 +177,13 @@ public:
      *  register to locate both the next EBP and the return address.  If @p bp_not_saved is true, then the return address of
      *  the inner-most function is assumed to be on the top of the stack (ss:[esp]), as is the case immediately after a CALL
      *  instruction before the called function has a chance to "PUSH EBP; MOV EBP, ESP". */
-    void report_stack_frames(RTS_Message*, const std::string &title="", bool bp_not_saved=false);
+    void report_stack_frames(Sawyer::Message::Stream&, const std::string &title="", bool bp_not_saved=false);
 
     /** Create, open, or reassign all tracing facilities.  This method is called when a thread is constructed or when a thread
-     *  is reassigned to a new process after a fork.  For each tracing facility, an RTS_Message object is created (if
-     *  necessary) to point to either the specified file or no file, depending on whether the corresponding trace flag is set
-     *  for the containing process.  If an RTS_Message object already exists, then its set_file() method is called to make it
-     *  point to the specified file. */
-    void reopen_trace_facilities(FILE*);
+     *  is reassigned to a new process after a fork.  For each tracing facility, a message stream is created (if necessary) to
+     *  point to either the specified file or no file, depending on whether the corresponding trace flag is set for the
+     *  containing process.  If an message stream already exists, then its output is directed to the specified C++ stream. */
+    void reopen_trace_facilities();
 
     /** The do_core_dump property determines whether a failing thread should simulate a specimen core dump or throw an
      *  exception. When the property is false, an exception is thrown.  @{ */

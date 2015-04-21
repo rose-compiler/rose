@@ -4,6 +4,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include "Diagnostics.h"
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -12,6 +13,7 @@
 #include <sys/types.h>
 
 using namespace rose::BinaryAnalysis;
+using namespace rose::Diagnostics;
 
 void
 RSIM_Process::ctor()
@@ -426,7 +428,7 @@ RSIM_Process::load(const char *name)
     delete loader;
 
     pid_t tid = syscall(SYS_gettid);
-    thread->tracing(TRACE_THREAD)->mesg("new thread with tid %d", tid);
+    mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", tid);
 
     return fhdr;
 }
@@ -1077,7 +1079,7 @@ RSIM_Process::mem_transaction_commit(const std::string &name)
 }
 
 int
-RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
+RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
 {
     int retval = -ENOSYS;
 
@@ -1096,7 +1098,7 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
         }
         retval= brk_va;
 
-        if (mesg && mesg->get_file())
+        if (mesg)
             mem_showmap(mesg, "memory map after brk syscall:\n");
     } RTS_WRITE_END;
 
@@ -1104,7 +1106,7 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg)
 }
 
 int
-RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
+RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &mesg)
 {
     int retval = -ENOSYS;
     RTS_WRITE(rwlock()) {
@@ -1130,7 +1132,7 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
         get_memory().erase(AddressInterval::baseSize(va, sz));
 
         /* Tracing */
-        if (mesg && mesg->get_file())
+        if (mesg)
             mem_showmap(mesg, "memory map after munmap syscall:\n");
 
         retval = 0;
@@ -1139,17 +1141,17 @@ RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg)
 }
 
 void
-RSIM_Process::mem_showmap(RTS_Message *mesg, const char *intro, const char *prefix)
+RSIM_Process::mem_showmap(Sawyer::Message::Stream &mesg, const char *intro, const char *prefix)
 {
     if (!intro || !*intro) intro = "memory map\n";
     if (!prefix) prefix = "    ";
 
-    if (mesg && mesg->get_file()) {
+    if (mesg) {
         RTS_READ(rwlock()) {
             std::ostringstream ss;
             get_memory().dump(ss, prefix);
-            mesg->mesg("%s%susing memory transaction %zu \"%s\"\n%s",
-                       intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
+            mfprintf(mesg)("%s%susing memory transaction %zu \"%s\"\n%s\n",
+                           intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
         } RTS_READ_END;
     }
 }
@@ -1608,7 +1610,7 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
     pid_t tid = syscall(SYS_gettid);
     ROSE_ASSERT(tid>=0);
-    thread->tracing(TRACE_THREAD)->mesg("new thread with tid %d", tid);
+    mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", tid);
 
     RTS_MUTEX(clone_info->mutex) {
         /* Make our TID available to our parent. */
@@ -1682,7 +1684,7 @@ RSIM_Process::sys_exit(int status)
          * signal). Every thread checks its cancelation state before every instruction, and will therefore exit. */
         for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
             RSIM_Thread *thread = ti->second;
-            thread->tracing(TRACE_THREAD)->mesg("process is canceling this thread");
+            thread->tracing(TRACE_THREAD) <<"process is canceling this thread\n";
             pthread_cancel(thread->get_real_thread());
             //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
         }
@@ -1741,7 +1743,7 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 
             /* If signal could not be delivered to any thread... */
             if (signo>0)
-                sighand.generate(info, this, NULL);
+                sighand.generate(info, this, mlog[INFO]);
         }
     } RTS_WRITE_END;
 

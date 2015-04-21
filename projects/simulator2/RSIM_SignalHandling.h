@@ -277,14 +277,14 @@ public:
      *
      *  If a signal's action is SIG_IGN, then the signal is not added to the queue or the pending set (it's just discarded).
      *  The specified process is used to determine if the signal is to be ignored.  Tracing is output to the specified
-     *  RTS_Message, which is normally the signaled thread's TRACE_SIGNAL facility.
+     *  message stream, which is normally the signaled thread's TRACE_SIGNAL facility.
      *
      *  Returns zero on success, negative on failure.  The only recoverable failure that's supported is the generation of a
      *  real-time signal which causes the signal queue to be overflowed, returning -ENOBUFS.
      *
      *  Thread safety: This method is thread safe.  It is normally called by the thread generating the signal, but invoked on
      *  the RSIM_Thread object for the thread to which the signal is being delivered. */
-    int generate(const siginfo_32 &siginfo, RSIM_Process*, RTS_Message*);
+    int generate(const siginfo_32 &siginfo, RSIM_Process*, Sawyer::Message::Stream&);
 
     /** Removes one unmasked signal from the set of pending signals.  Returns a signal number, or negative on failure.  If no
      *  signals are pending which are not masked, then returns zero.  If a mask is specified as an argument, then that mask is

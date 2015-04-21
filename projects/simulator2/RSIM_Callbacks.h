@@ -98,7 +98,7 @@
  *                                NULL;
  *          if (func && func->get_name()!=name) {
  *              name = func->get_name();
- *              args.thread->tracing(TRACE_MISC)->mesg("in function \"%s\"", name.c_str());
+ *              args.thread->tracing(TRACE_MISC) <<"in function \" <<name <<"\"\n";
  *          }
  *          return prev;
  *      }

@@ -132,13 +132,13 @@ namespace RSIM_Semantics {
         void load_sr_shadow(X86SegmentRegister, unsigned gdt_idx);
 
         /** Return the message object for a tracing facility.  Delegates to the RSIM_Thread. */
-        RTS_Message *tracing(TracingFacility what) const;
+        Sawyer::Message::Stream& tracing(TracingFacility what) const;
 
         /** Return concrete value of EFLAGS register */
         uint32_t get_eflags();
 
         /** Print machine register state for debugging */
-        void dump_registers(RTS_Message*);
+        void dump_registers(Sawyer::Message::Stream&);
 
         /** Same as the x86_pop instruction.  This is used during signal handling so the simulator can pop a word from the top
          * of the stack without first generating an x86 POP instruction. */

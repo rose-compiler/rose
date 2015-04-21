@@ -21,8 +21,8 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            m->mesg("MemoryTransactionTester: triggered\n");
+            Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
+            m <<"MemoryTransactionTester: triggered\n";
             RSIM_Process *proc = args.thread->get_process();
             proc->mem_showmap(m, "before starting transaction:\n");
             proc->mem_transaction_start("MemoryTransactionTester");

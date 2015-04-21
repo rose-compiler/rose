@@ -1,4 +1,7 @@
 #include "rose.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 #include "x86print.h"
 
@@ -62,50 +65,51 @@ flags_to_str(const Translate *tlist, uint32_t value)
 }
 
 void
-print_flags(RTS_Message *m, const Translate *tlist, uint32_t value)
+print_flags(Sawyer::Message::Stream &m, const Translate *tlist, uint32_t value)
 {
-    m->more("%s", flags_to_str(tlist, value).c_str());
+    m <<flags_to_str(tlist, value);
 }
 
 void
-print_enum(RTS_Message *m, const Translate *tlist, uint32_t value)
+print_enum(Sawyer::Message::Stream &m, const Translate *tlist, uint32_t value)
 {
     for (const Translate *t=tlist; t->str; t++) {
         if (value==t->val) {
-            m->more("%s", t->str);
+            m <<t->str;
             return;
         }
     }
-    m->more("%"PRId32, value);
+    mfprintf(m)("%"PRId32, value);
 }
 
 void
-print_signed(RTS_Message *m, uint32_t value)
+print_signed(Sawyer::Message::Stream &m, uint32_t value)
 {
-    m->more("%"PRId32, value);
+    mfprintf(m)("%"PRId32, value);
 }
 
 void
-print_pointer(RTS_Message *m, uint32_t value)
+print_pointer(Sawyer::Message::Stream &m, uint32_t value)
 {
     if (0==value) {
-        m->more("NULL");
+        m <<"NULL";
     } else {
-        m->more("0x%08"PRIx32, value);
+        mfprintf(m)("0x%08"PRIx32, value);
     }
 }
 
 void
-print_struct(RTS_Message *m, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have)
+print_struct(Sawyer::Message::Stream &m, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need,
+             size_t have)
 {
     if (0==value) {
-        m->more("NULL");
+        m <<"NULL";
     } else if (have<need) {
-        m->more("0x%08"PRIx32" {<short read>}", value);
+        mfprintf(m)("0x%08"PRIx32" {<short read>}", value);
     } else {
-        m->more("0x%08"PRIx32" {", value);
+        mfprintf(m)("0x%08"PRIx32" {", value);
         (printer)(m, buf, have);
-        m->more("}");
+        m <<"}";
     }
 }
 
@@ -122,90 +126,70 @@ hex_to_str(uint32_t value)
 }
 
 void
-print_hex(RTS_Message *m, uint32_t value)
+print_hex(Sawyer::Message::Stream &m, uint32_t value)
 {
-    m->more("%s", hex_to_str(value).c_str());
+    m <<hex_to_str(value);
 }
 
 void
-print_string(RTS_Message *m, const std::string &value, bool str_fault, bool str_trunc)
+print_string(Sawyer::Message::Stream &m, const std::string &value, bool str_fault, bool str_trunc)
 {
-    m->more("\"");
-    for (size_t i=0; i<value.size(); i++) {
-        switch (value[i]) {
-            case '"' : m->more("\\\""); break;
-            case '\a': m->more("\\a"); break;
-            case '\b': m->more("\\b"); break;
-            case '\f': m->more("\\f"); break;
-            case '\n': m->more("\\n"); break;
-            case '\r': m->more("\\r"); break;
-            case '\t': m->more("\\t"); break;
-            case '\v': m->more("\\v"); break;
-            default:
-                if (isprint(value[i])) {
-                    m->more("%c", value[i]);
-                } else {
-                    m->more("\\%03o", (unsigned)value[i]);
-                }
-                break;
-        }
-    }
-    m->more("\"");
+    m <<"\"" <<StringUtility::cEscape(value) <<"\"";
     if (str_fault || str_trunc)
-        m->more("...");
+        m <<"...";
     if (str_fault)
-        m->more("[EFAULT]");
+        m <<"[EFAULT]";
 }
 
 void
-print_buffer(RTS_Message *m, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
+print_buffer(Sawyer::Message::Stream &m, uint32_t va, const uint8_t *buf, size_t actual_sz, size_t print_sz)
 {
     size_t nchars = 0;
-    m->more("0x%08"PRIx32" [", va);
+    mfprintf(m)("0x%08"PRIx32" [", va);
     for (size_t i=0; i<actual_sz && nchars<print_sz; i++) {
         switch (buf[i]) {
-            case '"' : m->more("\\\""); nchars+=2; break;
-            case '\a': m->more("\\a");  nchars+=2; break;
-            case '\b': m->more("\\b");  nchars+=2; break;
-            case '\f': m->more("\\f");  nchars+=2; break;
-            case '\n': m->more("\\n");  nchars+=2; break;
-            case '\r': m->more("\\r");  nchars+=2; break;
-            case '\t': m->more("\\t");  nchars+=2; break;
-            case '\v': m->more("\\v");  nchars+=2; break;
+            case '"' : m <<"\\\""; nchars+=2; break;
+            case '\a': m <<"\\a";  nchars+=2; break;
+            case '\b': m <<"\\b";  nchars+=2; break;
+            case '\f': m <<"\\f";  nchars+=2; break;
+            case '\n': m <<"\\n";  nchars+=2; break;
+            case '\r': m <<"\\r";  nchars+=2; break;
+            case '\t': m <<"\\t";  nchars+=2; break;
+            case '\v': m <<"\\v";  nchars+=2; break;
             default:
                 if (isprint(buf[i])) {
-                    m->more("%c", buf[i]);
+                    mfprintf(m)("%c", buf[i]);
                     nchars++;
                 } else {
-                    m->more("\\%03o", (unsigned)buf[i]);
+                    mfprintf(m)("\\%03o", (unsigned)buf[i]);
                     nchars+=3;
                 }
                 break;
         }
     }
-    m->more("]");
+    m <<"]";
     if (print_sz<actual_sz)
-        m->more("...");
+        m <<"...";
 }
 
 void
-print_time(RTS_Message *m, uint32_t value)
+print_time(Sawyer::Message::Stream &m, uint32_t value)
 {
     time_t ts = value;
     struct tm tm;
     localtime_r(&ts, &tm);
     char buf[256];
     strftime(buf, sizeof buf, "%c", &tm);
-    m->more("%"PRIu32" (%s)", value, buf);
+    mfprintf(m)("%"PRIu32" (%s)", value, buf);
 }
 
 /* letters are documented in RSIM_Thread::syscall_enter() */
 void
-print_single(RTS_Message *m, char fmt, const ArgInfo *info)
+print_single(Sawyer::Message::Stream &m, char fmt, const ArgInfo *info)
 {
     switch (fmt) {
         case '-':
-            m->more("<unused>");
+            m <<"<unused>";
             break;
         case 'b':
             print_buffer(m, info->val, info->struct_buf, info->struct_nread, info->struct_size);

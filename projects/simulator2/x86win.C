@@ -39,7 +39,7 @@ public:
             args.thread->policy.writeRegister(args.thread->policy.reg_edx, args.thread->policy.number<32>(edx));
             args.thread->policy.writeRegister(args.thread->policy.reg_eip, args.thread->policy.number<32>(newip));
             enabled = false;
-            args.thread->tracing(TRACE_MISC)->mesg("RDTSC adjustment; returning 0x%016"PRIx64, value);
+            mfprintf(args.thread->tracing(TRACE_MISC))("RDTSC adjustment; returning 0x%016"PRIx64"\n", value);
         }
         return enabled;
     }
@@ -110,7 +110,7 @@ class FutexFooler: public RSIM_Simulator::SystemCall::Callback {
 public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && 0x68000832==args.thread->policy.readRegister<32>(args.thread->policy.reg_eip).known_value()) {
-            args.thread->tracing(TRACE_MISC)->mesg("FutexFooler triggered: returning zero");
+            args.thread->tracing(TRACE_MISC) <<"FutexFooler triggered: returning zero\n";
             args.thread->syscall_return(0);
             enabled = false;
         }

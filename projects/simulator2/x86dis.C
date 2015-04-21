@@ -42,8 +42,8 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==trigger_va) {
             args.thread->get_process()->get_simulator()->deactivate();
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            m->mesg("disassembly triggered; disassembling now...\n");
+            Sawyer::Message::Stream m = args.thread->tracing(TRACE_MISC);
+            m <<"disassembly triggered; disassembling now...\n";
             SgAsmBlock *gblk = args.thread->get_process()->disassemble(false); // full disassembly with partitioning
             AsmUnparser unparser;
             unparser.set_organization(org);

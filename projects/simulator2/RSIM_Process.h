@@ -216,19 +216,19 @@ public:
     rose_addr_t mem_map(rose_addr_t va, size_t size, unsigned rose_perms, unsigned flags, size_t offset, int fd);
 
     /** Set the process brk value and adjust the specimen's memory map accordingly.  The return value is either a negative
-     *  error number (such as -ENOMEM) or the new brk value.  The optional @p mesg pointer will be used to show the memory map
+     *  error number (such as -ENOMEM) or the new brk value.  The @p stream will be used to show the memory map
      *  after it is adjusted.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    int mem_setbrk(rose_addr_t newbrk, RTS_Message *mesg=NULL);
+    int mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &stream);
 
-    /** Unmap some specimen memory.  The starting virtual address, @p va, and number of bytes, @p sz, need not be page
-     *  aligned, but if they are then the real munmap() is also called, substituting the real address for @p va.  The return
-     *  value is a negative error number on failure, or zero on success.  The optional @p mesg pointer will be used to show the
-     *  memory map after it is adjusted.
+    /** Unmap some specimen memory.  The starting virtual address, @p va, and number of bytes, @p sz, need not be page aligned,
+     *  but if they are then the real munmap() is also called, substituting the real address for @p va.  The return value is a
+     *  negative error number on failure, or zero on success.  The @p stream will be used to show the memory map after it is
+     *  adjusted.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    int mem_unmap(rose_addr_t va, size_t sz, RTS_Message *mesg=NULL);
+    int mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &stream);
 
     /** Change protection bits on part of the specimen virtual memory.  The @p rose_perms specify the desired permission bits
      *  to set in the specimen's memory map (in terms of MemoryMap::Protection bits) while the @p real_perms are the desired
@@ -239,12 +239,12 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     int mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsigned real_perms);
     
-    /** Dump a memory map description to the specified message object.  If @p mesg is a null pointer then this method does
-     *  nothing.  The @p intro is an optional message to be printed before the map (it should include a newline character), and
-     *  @p prefix is an optional string to print before each line of the map (defaulting to four spaces).
+    /** Dump a memory map description to the specified message object.  The @p intro is an optional message to be printed
+     *  before the map (it should include a newline character), and @p prefix is an optional string to print before each line
+     *  of the map (defaulting to four spaces).
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    void mem_showmap(RTS_Message *mesg, const char *intro=NULL, const char *prefix=NULL);
+    void mem_showmap(Sawyer::Message::Stream &stream, const char *intro=NULL, const char *prefix=NULL);
 
     /** Returns true if the specified specimen virtual address is mapped; false otherwise.
      *

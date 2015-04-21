@@ -83,8 +83,8 @@ namespace RSIM_Semantics {
         }
 
         /** See InnerPolicy::dump_registers() */
-        void dump_registers(RTS_Message *m) {
-            this->policy0.dump_registers(m);
+        void dump_registers(Sawyer::Message::Stream &stream) {
+            this->policy0.dump_registers(stream);
         }
 
         /** See InnerPolicy::load_sr_shadow() */
@@ -93,7 +93,7 @@ namespace RSIM_Semantics {
         }
 
         /** See InnerPolicy::tracing() */
-        RTS_Message *tracing(TracingFacility what) const {
+        Sawyer::Message::Stream& tracing(TracingFacility what) const {
             return this->policy0.tracing(what);
         }
 

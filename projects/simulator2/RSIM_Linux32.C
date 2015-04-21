@@ -10,6 +10,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux32.h"
+#include "Diagnostics.h"
 
 #include <errno.h>
 #include <syscall.h>
@@ -40,6 +41,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <grp.h>
+
+using namespace rose::Diagnostics;
 
 /* This leave callback just prints using the "d" format and is used by lots of system calls. */
 static void syscall_default_leave(RSIM_Thread *t, int callno);
@@ -470,7 +473,7 @@ syscall_exit(RSIM_Thread *t, int callno)
 
     /* Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as
      * well). The simulated thread is effectively dead at this point. */
-    t->tracing(TRACE_SYSCALL)->more(" = <throwing Exit>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
     throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), false); /* false=>exit only this thread */
 }
 
@@ -478,7 +481,7 @@ static void
 syscall_exit_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the exit system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
 }
 
 /*******************************************************************************************************************************/
@@ -742,9 +745,9 @@ syscall_execve(RSIM_Thread *t, int callno)
     std::vector<std::string> argv = t->get_process()->read_string_vector(t->syscall_arg(1), &error);
     if (!argv.empty()) {
         for (size_t i=0; i<argv.size(); i++) {
-            t->tracing(TRACE_SYSCALL)->more("    argv[%zu] = ", i);
+            mfprintf(t->tracing(TRACE_SYSCALL))("    argv[%zu] = ", i);
             print_string(t->tracing(TRACE_SYSCALL), argv[i], false, false);
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            t->tracing(TRACE_SYSCALL) <<"\n";
         }
     }
     if (error) {
@@ -760,9 +763,9 @@ syscall_execve(RSIM_Thread *t, int callno)
     std::vector<std::string> envp = t->get_process()->read_string_vector(t->syscall_arg(2), &error);
     if (!envp.empty()) {
         for (size_t i=0; i<envp.size(); i++) {
-            t->tracing(TRACE_SYSCALL)->more("    envp[%zu] = ", i);
+            mfprintf(t->tracing(TRACE_SYSCALL))("    envp[%zu] = ", i);
             print_string(t->tracing(TRACE_SYSCALL), envp[i], false, false);
-            t->tracing(TRACE_SYSCALL)->more("\n");
+            t->tracing(TRACE_SYSCALL) <<"\n";
         }
     }
     if (error) {
@@ -964,10 +967,10 @@ syscall_pause_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d");
     if (t->syscall_info.signo>0) {
-        t->tracing(TRACE_SYSCALL)->multipart("", "    retured due to ");
+        t->tracing(TRACE_SYSCALL) <<"    retured due to ";
         print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
-        t->tracing(TRACE_SYSCALL)->more("(%d)", t->syscall_info.signo);
-        t->tracing(TRACE_SYSCALL)->multipart_end();
+        mfprintf(t->tracing(TRACE_SYSCALL))("(%d)\n", t->syscall_info.signo);
+
     }
 }
 
@@ -2078,7 +2081,7 @@ static size_t cmsg_needed(const void *control, size_t controllen)
 }
 
 template<class ControlHeader>
-static void cmsg_dump(const void *control, size_t controllen, FILE *f, const std::string prefix="")
+static void cmsg_dump(const void *control, size_t controllen, Sawyer::Message::Stream &f, const std::string prefix="")
 {
     std::string hexdump_prefix = prefix + "            ";
     HexdumpFormat fmt;
@@ -2093,8 +2096,8 @@ static void cmsg_dump(const void *control, size_t controllen, FILE *f, const std
          ctl=cmsg_next<ControlHeader>(control, controllen, ctl)) {
         size_t payload_advertised_len = cmsg_payload_size(ctl);
         size_t payload_actual_len = cmsg_payload_size(control, controllen, ctl);
-        fprintf(f, "%smessage #%zd: size: total=%zu; payload=%zu; actual_payload=%zu\n",
-                prefix.c_str(), i++, (size_t)ctl->cmsg_len, payload_advertised_len, payload_actual_len);
+        mfprintf(f)("%smessage #%zd: size: total=%zu; payload=%zu; actual_payload=%zu\n",
+                    prefix.c_str(), i++, (size_t)ctl->cmsg_len, payload_advertised_len, payload_actual_len);
         SgAsmExecutableFileFormat::hexdump(f, 0, (const unsigned char*)(ctl+1), payload_actual_len, fmt);
     }
 }
@@ -2269,36 +2272,36 @@ syscall_socketcall_enter(RSIM_Thread *t, int callno)
         case 16: /* SYS_SENDMSG */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
                 t->syscall_enter(a, "sendmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
-                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
-                if (trace->get_file() && sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[1], sizeof msghdr)) {
+                if (trace && sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[1], sizeof msghdr)) {
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<100; i++) {
                         uint32_t vasz[2];
                         if (8==t->get_process()->mem_read(vasz, msghdr.msg_iov+i*8, 8)) {
                             uint8_t *buf = new uint8_t[vasz[1]];
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
-                                trace->more("\n    iov #%u: ", i);
+                                mfprintf(trace)("\n    iov #%u: ", i);
                                 print_buffer(trace, vasz[0], buf, vasz[1], 1024);
-                                trace->more("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
+                                mfprintf(trace)("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
                             } else {
-                                trace->more("\n    iov #%u: short read of data", i);
+                                mfprintf(trace)("\n    iov #%u: short read of data", i);
                             }
                             delete[] buf;
                         } else {
-                            trace->more("\n    iov #%u: short read of iov", i);
+                            mfprintf(trace)("\n    iov #%u: short read of iov", i);
                             break;
                         }
                     }
                     if (msghdr.msg_iovlen>100)
-                        trace->more("\n    iov ... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                        mfprintf(trace)("\n    iov ... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
                     if (msghdr.msg_iovlen>0)
-                        trace->more("\n");
+                        trace <<"\n";
 
                     if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
                         uint8_t control[msghdr.msg_controllen];
                         size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
                         if (nread==msghdr.msg_controllen)
-                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace, std::string(16, ' '));
                     }
                 }
             } else {
@@ -2526,7 +2529,7 @@ static void
 sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 {
     int retval = 0;
-    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
     /* Read guest information */
     msghdr_32 guest;
@@ -2547,7 +2550,7 @@ sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
     iovec_32 *guest_iov = new iovec_32[guest.msg_iovlen];
     size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
     if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
-        strace->more("<segfault reading iov>");
+        strace <<"<segfault reading iov>";
         retval = -EFAULT;
     }
 
@@ -2596,7 +2599,7 @@ static void
 sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 {
     int retval = 0;
-    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
     /* Read guest information */
     msghdr_32 guest;
@@ -2613,7 +2616,7 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
     size_t guest_iov_sz = guest.msg_iovlen * sizeof(iovec_32);
     memset(guest_iov, 0, guest_iov_sz);
     if (guest_iov_sz!=t->get_process()->mem_read(guest_iov, guest.msg_iov, guest_iov_sz)) {
-        strace->more("<segfault reading iov>");
+        strace <<"<segfault reading iov>";
         retval = -EFAULT;
     }
 
@@ -2845,12 +2848,11 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
                 t->syscall_leave(a, "d-P-", sizeof(msghdr_32), print_msghdr_32);
-                RTS_Message *trace = t->tracing(TRACE_SYSCALL);
+                Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
-                if (trace->get_file() &&
+                if (trace &&
                     (int32_t)a[0] > 0 &&
                     sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[2], sizeof msghdr)) {
-                    trace->multipart("recvmsg", "%s", ""); // this way to fix compiler warning
                     uint32_t nbytes = a[0];
                     for (unsigned i=0; i<msghdr.msg_iovlen && i<100 && nbytes>0; i++) {
                         uint32_t vasz[2];
@@ -2859,22 +2861,22 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
                             nbytes -= nused;
                             uint8_t *buf = new uint8_t[nused];
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], nused)) {
-                                trace->more("    iov #%u: ", i);
+                                mfprintf(trace)("    iov #%u: ", i);
                                 print_buffer(trace, vasz[0], buf, nused, 1024);
-                                trace->more("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
+                                mfprintf(trace)("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
                             }
                             delete[] buf;
                         }
                     }
                     if (msghdr.msg_iovlen>100)
-                        trace->more("    iov... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
+                        mfprintf(trace)("    iov... (%zu in total)\n", (size_t)msghdr.msg_iovlen);
                     if (msghdr.msg_controllen>0 && msghdr.msg_controllen<4096) {
                         uint8_t control[msghdr.msg_controllen];
                         size_t nread = t->get_process()->mem_read(control, msghdr.msg_control, msghdr.msg_controllen);
                         if (nread==msghdr.msg_controllen)
-                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace->get_file(), std::string(16, ' '));
+                            cmsg_dump<cmsghdr_32>((void*)control, msghdr.msg_controllen, trace, std::string(16, ' '));
                     }
-                    trace->multipart_end();
+                    trace <<"\n";
                 }
                 return;
             }
@@ -3135,7 +3137,7 @@ syscall_ipc_enter(RSIM_Thread *t, int callno)
 static void
 sys_semtimedop(RSIM_Thread *t, uint32_t semid, uint32_t sops_va, uint32_t nsops, uint32_t timeout_va)
 {
-    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
     static const Translate sem_flags[] = {
         TF(IPC_NOWAIT), TF(SEM_UNDO), T_END
@@ -3153,10 +3155,10 @@ sys_semtimedop(RSIM_Thread *t, uint32_t semid, uint32_t sops_va, uint32_t nsops,
         return;
     }
     for (uint32_t i=0; i<nsops; i++) {
-        strace->more("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
-                     i, sops[i].sem_num, sops[i].sem_op);
+        mfprintf(strace)("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
+                         i, sops[i].sem_num, sops[i].sem_op);
         print_flags(strace, sem_flags, sops[i].sem_flg);
-        strace->more(" }\n");
+        strace <<" }\n";
     }
 
     timespec host_timeout;
@@ -3188,7 +3190,7 @@ sys_semget(RSIM_Thread *t, uint32_t key, uint32_t nsems, uint32_t semflg)
 static void
 sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32_t semun_va)
 {
-    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
     int version = cmd & 0x0100/*IPC_64*/;
     cmd &= ~0x0100;
@@ -3366,7 +3368,7 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
             }
             if (host_ds.sem_nsems>0) {
                 for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                    strace->mesg("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
+                    mfprintf(strace)("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
                 }
             }
             delete[] sem_values;
@@ -3392,9 +3394,8 @@ sys_semctl(RSIM_Thread *t, uint32_t semid, uint32_t semnum, uint32_t cmd, uint32
                 t->syscall_return(-EFAULT);
                 return;
             }
-            for (size_t i=0; i<host_ds.sem_nsems; i++) {
-                strace->more("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
-            }
+            for (size_t i=0; i<host_ds.sem_nsems; i++)
+                mfprintf(strace)("    value[%zu] = %"PRId16"\n", i, sem_values[i]);
 #ifdef SYS_ipc  /* i686 */
             semun_native semun;
             semun.ptr = sem_values;
@@ -3969,7 +3970,7 @@ syscall_ipc(RSIM_Thread *t, int callno)
 static void
 syscall_ipc_leave(RSIM_Thread *t, int callno)
 {
-    RTS_Message *mtrace = t->tracing(TRACE_MMAP);
+    Sawyer::Message::Stream mtrace(t->tracing(TRACE_MMAP));
     unsigned call = t->syscall_arg(0) & 0xffff;
     int version = t->syscall_arg(0) >> 16;
     uint32_t second=t->syscall_arg(2);
@@ -4053,7 +4054,7 @@ syscall_sigreturn(RSIM_Thread *t, int callno)
 {
     int status = t->sys_sigreturn();
     if (status>=0) {
-        t->tracing(TRACE_SYSCALL)->more(" = <does not return>\n");
+        t->tracing(TRACE_SYSCALL) <<" = <does not return>\n";
         throw RSIM_SignalHandling::mk_kill(0, 0);
     }
     t->syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
@@ -4063,7 +4064,7 @@ static void
 syscall_sigreturn_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the sigreturn system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
 }
 
 /*******************************************************************************************************************************/
@@ -4515,7 +4516,7 @@ syscall_writev_enter(RSIM_Thread *t, int callno)
 static void
 syscall_writev(RSIM_Thread *t, int callno)
 {
-    RTS_Message *strace = t->tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
     uint32_t fd=t->syscall_arg(0), iov_va=t->syscall_arg(1);
     int niov=t->syscall_arg(2), idx=0;
     int retval = 0;
@@ -4523,16 +4524,16 @@ syscall_writev(RSIM_Thread *t, int callno)
         retval = -EINVAL;
     } else {
         if (niov>0)
-            strace->more("\n");
+            strace <<"\n";
         for (idx=0; idx<niov; idx++) {
             /* Obtain buffer address and size */
-            strace->more("    iov %d: ", idx);
+            mfprintf(strace)("    iov %d: ", idx);
 
             iovec_32 iov;
             if (sizeof(iov)!=t->get_process()->mem_read(&iov, iov_va+idx*sizeof(iov), sizeof(iov))) {
                 if (0==idx)
                     retval = -EFAULT;
-                strace->more("<segfault reading iovec>\n");
+                strace <<"<segfault reading iovec>\n";
                 break;
             }
 
@@ -4540,7 +4541,7 @@ syscall_writev(RSIM_Thread *t, int callno)
             if ((iov.iov_len & 0x80000000) || ((uint32_t)retval+iov.iov_len) & 0x80000000) {
                 if (0==idx)
                     retval = -EINVAL;
-                strace->more("<size overflow>\n");
+                strace <<"<size overflow>\n";
                 break;
             }
 
@@ -4550,31 +4551,31 @@ syscall_writev(RSIM_Thread *t, int callno)
             if (iov.iov_len != t->get_process()->mem_read(buf, iov.iov_base, iov.iov_len)) {
                 if (0==idx)
                     retval = -EFAULT;
-                strace->more("<seg fault reading buffer>\n");
+                strace <<"<seg fault reading buffer>\n";
                 break;
             }
             print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
-            strace->more(" (size=%"PRIu32")", iov.iov_len);
+            mfprintf(strace)(" (size=%"PRIu32")", iov.iov_len);
 
             /* Write data to the file */
             ssize_t nwritten = write(fd, buf, iov.iov_len);
             if (-1==nwritten) {
                 if (0==idx)
                     retval = -errno;
-                strace->more(" <write failed (%s)>\n", strerror(errno));
+                mfprintf(strace)(" <write failed (%s)>\n", strerror(errno));
                 break;
             }
             retval += nwritten;
             if ((uint32_t)nwritten<iov.iov_len) {
-                strace->more(" <short write of %zd bytes>\n", nwritten);
+                mfprintf(strace)(" <short write of %zd bytes>\n", nwritten);
                 break;
             }
-            strace->more("\n");
+            strace <<"\n";
         }
     }
     t->syscall_return(retval);
     if (niov>0 && niov<=1024)
-        strace->more("writev return");
+        strace <<"writev return";
 }
 
 /*******************************************************************************************************************************/
@@ -4793,7 +4794,7 @@ syscall_rt_sigreturn(RSIM_Thread *t, int callno)
 {
     int status = t->sys_rt_sigreturn();
     if (status>=0) {
-        t->tracing(TRACE_SYSCALL)->more(" = <does not return>\n");
+        t->tracing(TRACE_SYSCALL) <<" = <does not return>\n";
         throw RSIM_SignalHandling::mk_kill(0, 0);
     }
     t->syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
@@ -4803,7 +4804,7 @@ static void
 syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the rt_sigreturn system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
 }
 
 /*******************************************************************************************************************************/
@@ -4955,10 +4956,9 @@ syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d");
     if (t->syscall_info.signo>0) {
-        t->tracing(TRACE_SYSCALL)->multipart("", "    retured due to ");
+        t->tracing(TRACE_SYSCALL) <<"    retured due to ";
         print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
-        t->tracing(TRACE_SYSCALL)->more("(%d)", t->syscall_info.signo);
-        t->tracing(TRACE_SYSCALL)->multipart_end();
+        mfprintf(t->tracing(TRACE_SYSCALL))("(%d)\n", t->syscall_info.signo);
     }
 }
 
@@ -5181,7 +5181,7 @@ syscall_stat64(RSIM_Thread *t, int callno)
     /* On amd64 we need to translate the 64-bit struct that we got back from the host kernel to the 32-bit struct
      * that the specimen should get back from the guest kernel. */           
     if (sizeof(kernel_stat_64)==kernel_stat_size) {
-        t->tracing(TRACE_SYSCALL)->brief("64-to-32");
+        t->tracing(TRACE_SYSCALL) <<"[64-to-32]";
         kernel_stat_64 *in = (kernel_stat_64*)kernel_stat;
         kernel_stat_32 out;
         out.dev = in->dev;
@@ -5856,7 +5856,7 @@ syscall_exit_group(RSIM_Thread *t, int callno)
         ROSE_ASSERT(nwoke>=0);
     }
 
-    t->tracing(TRACE_SYSCALL)->more(" = <throwing Exit>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
     throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), true); /* true=>exit entire process */
 }
 
@@ -5864,7 +5864,7 @@ static void
 syscall_exit_group_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the exit_group system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL)->more(" = <should not have returned>\n");
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
 }
 
 /*******************************************************************************************************************************/

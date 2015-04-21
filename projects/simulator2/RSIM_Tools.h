@@ -206,16 +206,17 @@ public:
     virtual FunctionIndex *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+            Sawyer::Message::Stream &m = args.thread->tracing(TRACE_MISC);
 
             /* Traversal just prints information about each individual function. */
             struct T1: public AstSimpleProcessing {
                 RSIM_Process *process;
-                RTS_Message *m;
+                Sawyer::Message::Stream &m;
                 size_t nfuncs;
-                explicit T1(RSIM_Process *process, RTS_Message *m): process(process), m(m), nfuncs(0) {}
+                explicit T1(RSIM_Process *process, Sawyer::Message::Stream &m): process(process), m(m), nfuncs(0) {}
                 void visit(SgNode *node) {
                     SgAsmFunction *defn = isSgAsmFunction(node);
                     if (defn!=NULL) {
@@ -245,9 +246,9 @@ public:
                             name += " (" + StringUtility::addrToString(defn->get_entry_va()) + ")";
 
                         /* Print the whole line at once */
-                        m->more("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu %s %s\n",
-                                ++nfuncs, func_start, func_end, insns.size(), nbytes,
-                                defn->reason_str(true).c_str(), name.c_str());
+                        mfprintf(m)("    %3zu 0x%08"PRIx64" 0x%08"PRIx64" %5zu/%-6zu %s %s\n",
+                                    ++nfuncs, func_start, func_end, insns.size(), nbytes,
+                                    defn->reason_str(true).c_str(), name.c_str());
 
                     }
                 }
@@ -261,22 +262,22 @@ public:
             SgNode *top = args.thread->get_process()->get_instruction(when);
             assert(top!=NULL);
             while (top->get_parent()) top = top->get_parent();
-            m->multipart("FunctionIndex", "FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
-                         top?rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
-            m->more("    Key for reason(s) address is a suspected function:\n");
-            m->more("      E = entry address         C = function call(*)      X = exception frame\n");
-            m->more("      S = function symbol       P = instruction pattern   G = interblock branch graph\n");
-            m->more("      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n");
-            m->more("      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n");
-            m->more("    Note: \"c\" means this is the target of a call-like instruction or instruction sequence but\n");
-            m->more("          the sequence is not present in the set of nodes of the control flow graph.\n");
-            m->more("    Note: Functions detected in memory that's not part of the executable loaded by the simulator\n");
-            m->more("          will probably not have names because the simulator never parsed those ELF containers.\n");
-            m->more("\n");
-            m->more("    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Name or memory region\n");
-            m->more("    --- ---------- ---------- ------------ ----------- ------------------------\n");
+            mfprintf(m)("FunctionIndex triggered: showing all functions in the AST rooted at (%s*)%p\n",
+                        top?rose::stringifyVariantT(top->variantT(), "V_").c_str() : "void", top);
+            m <<"    Key for reason(s) address is a suspected function:\n";
+            m <<"      E = entry address         C = function call(*)      X = exception frame\n";
+            m <<"      S = function symbol       P = instruction pattern   G = interblock branch graph\n";
+            m <<"      U = user-def detection    N = NOP/Zero padding      D = discontiguous blocks\n";
+            m <<"      H = insn sequence head    I = imported/dyn-linked   L = leftover blocks\n";
+            m <<"    Note: \"c\" means this is the target of a call-like instruction or instruction sequence but\n";
+            m <<"          the sequence is not present in the set of nodes of the control flow graph.\n";
+            m <<"    Note: Functions detected in memory that's not part of the executable loaded by the simulator\n";
+            m <<"          will probably not have names because the simulator never parsed those ELF containers.\n";
+            m <<"\n";
+            m <<"    Num  Low-Addr   End-Addr  Insns/Bytes  Reason      Name or memory region\n";
+            m <<"    --- ---------- ---------- ------------ ----------- ------------------------\n";
             t1.traverse(top, preorder);
-            m->more("    --- ---------- ---------- ------------ ----------- ------------------------\n");
+            m <<"    --- ---------- ---------- ------------ ----------- ------------------------\n";
         }
         return enabled;
     }
@@ -317,6 +318,7 @@ public:
     virtual FunctionReporter *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         RSIM_Process *process = args.thread->get_process();
         SgAsmBlock *basic_block = isSgAsmBlock(args.insn->get_parent());
         SgAsmFunction *func = basic_block ? basic_block->get_enclosing_function() : NULL;
@@ -351,9 +353,9 @@ public:
                 args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC), "FunctionReporter: stack frames",
                                                  bp_not_pushed);
             } else if (name.empty()) {
-                args.thread->tracing(TRACE_MISC)->mesg("FunctionReporter: in unknown function");
+                args.thread->tracing(TRACE_MISC) <<"FunctionReporter: in unknown function\n";
             } else {
-                args.thread->tracing(TRACE_MISC)->mesg("FunctionReporter: in function \"%s\"", name.c_str());
+                mfprintf(args.thread->tracing(TRACE_MISC))("FunctionReporter: in function \"%s\"\n", name.c_str());
             }
         }
         return enabled;
@@ -388,8 +390,7 @@ private:
  *    RSIM_Linux32 sim;
  *    unsigned operations = MemoryMap::MM_PROT_READ | MemoryMap::MM_PROT_WRITE;
  *    unsigned req_perms = MemoryMap::MM_PROT_ANY; //read, write, or execute
- *    RTS_Message mesg(stdout, NULL)
- *    sim.install_callback(new MemoryAccessWatcher(0, 4096, operations, req_perms, &mesg);
+ *    sim.install_callback(new MemoryAccessWatcher(0, 4096, operations, req_perms, mlog[INFO]);
  *  @endcode
  *
  *  Example: Here's how to use a memory watch to detect when instructions are executed on the stack, which might indicate a
@@ -405,7 +406,7 @@ private:
  */
 class MemoryAccessWatcher: public RSIM_Callbacks::MemoryCallback {
 public:
-    RTS_Message *mesg;                          /**< Tracing facility, since no thread is available. */
+    Sawyer::Message::Stream &mesg;              /**< Tracing facility, since no thread is available. */
     rose_addr_t va;                             /**< Starting address for watched memory region. */
     size_t nbytes;                              /**< Size of watched memory region. */
     unsigned how;                               /**< What kind of operations we are watching. This should be the bits
@@ -415,21 +416,19 @@ public:
                                                  *   or RSIM_Process::mem_write().  If the intersection is empty then this
                                                  *   callback will not be triggered. */
 
-    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how=0, unsigned req_perms=0, RTS_Message *mesg=NULL)
-        : mesg(mesg), va(va), nbytes(nbytes), how(how), req_perms(req_perms) {
-        if (!mesg)
-            this->mesg = new RTS_Message(stderr, NULL);
-    }
+    MemoryAccessWatcher(rose_addr_t va, size_t nbytes, unsigned how, unsigned req_perms, Sawyer::Message::Stream &mesg)
+        : mesg(mesg), va(va), nbytes(nbytes), how(how), req_perms(req_perms) {}
 
     virtual MemoryAccessWatcher *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         if (enabled && 0!=(args.how & how) && 0!=(args.req_perms & req_perms) && args.va<va+nbytes && args.va+args.nbytes>=va) {
             std::string operation = args.how==MemoryMap::READABLE ? "READ" : "WRITE";
             for (size_t i=0; i<operation.size(); i++)
                 operation[i] = tolower(operation[i]);
-            mesg->mesg("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
-                       operation.c_str(), args.va, args.nbytes, 1==args.nbytes?"":"s");
+            mfprintf(mesg)("MemoryAccessWatcher: triggered for %s access at 0x%08"PRIx64" for %zu byte%s\n",
+                           operation.c_str(), args.va, args.nbytes, 1==args.nbytes?"":"s");
         }
         return enabled;
     }
@@ -475,16 +474,17 @@ public:
     virtual MemoryChecker *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         if (armed) {
             size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
             if (nread<nbytes && report_short) {
-                args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: read failed at 0x%08"PRIx64, va+nread);
+                mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: read failed at 0x%08"PRIx64"\n", va+nread);
                 armed = false;
             } else {
                 for (size_t i=0; i<nread && i<nbytes; i++) {
                     if (answer[i]!=buffer[i]) {
-                        args.thread->tracing(TRACE_MISC)->mesg("MemoryChecker: memory changed at 0x%08"PRIx64
-                                                               " from 0x%02x to 0x%02x", va+i, answer[i], buffer[i]);
+                        mfprintf(args.thread->tracing(TRACE_MISC))("MemoryChecker: memory changed at 0x%08"PRIx64
+                                                                   " from 0x%02x to 0x%02x", va+i, answer[i], buffer[i]);
                         if (show_stack_frames)
                             args.thread->report_stack_frames(args.thread->tracing(TRACE_MISC));
                         if (update_answer) {
@@ -531,8 +531,8 @@ public:
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && !triggered && args.insn->get_address()==when) {
             triggered = true;
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            m->mesg("MemoryDisassembler triggered: disassembling now...");
+            Sawyer::Message::Stream &m = args.thread->tracing(TRACE_MISC);
+            m <<"MemoryDisassembler triggered: disassembling now...\n";
             SgAsmBlock *block = args.thread->get_process()->disassemble();
             if (show)
                 rose::BinaryAnalysis::AsmUnparser().unparse(std::cout, block);
@@ -547,8 +547,9 @@ public:
  *  reached. The output is a hexdump-like format controlled by the public HexdumpFormat fmt data member.  Output is sent to the
  *  TRACE_MISC facility.
  *
- *  Note: SgAsmExecutableFileFormat isn't able to write directly to an RTS_Message object. Therefore we buffer up the output
- *  from hexdump before sending it to the tracing facility.  In other words, don't try to print huge memory traces.
+ *  Note: SgAsmExecutableFileFormat isn't able to write directly to an std::ostream such as Sawyer::Message::Stream. Therefore
+ *  we buffer up the output from hexdump before sending it to the tracing facility.  In other words, don't try to print huge
+ *  memory traces.
  *
  *  See also MemoryChecker and the "--debug=mem" switch.
  *
@@ -583,16 +584,17 @@ public:
     virtual MemoryDumper *clone() { return this; }
 
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         if (enabled && args.insn->get_address()==when) {
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            m->multipart("MemoryDumper", "MemoryDumper triggered: dumping %zu byte%s at 0x%08"PRIx64"\n",
-                         nbytes, 1==nbytes?"":"s", va);
+            Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
+            m <<"MemoryDumper triggered: dumping " <<StringUtility::plural(nbytes, "bytse")
+              <<" at " <<StringUtility::addrToString(va) <<"\n";
             if (do_binary) {
                 /* Raw output to a file */
                 assert(!filename.empty());
                 int fd = open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666);
                 if (fd<=0) {
-                    m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                    mfprintf(m)("MemoryDumper: %s: %s\n", filename.c_str(), strerror(errno));
                     goto error;
                 }
                 uint8_t buffer[4096];
@@ -604,14 +606,14 @@ public:
                     for (size_t nwrite=0; nwrite<nread; /*void*/) {
                         ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
                         if (n<0) {
-                            m->mesg("MemoryDumper: write failed\n");
+                            m <<"MemoryDumper: write failed\n";
                             close(fd);
                             goto error;
                         }
                         nwrite += n;
                     }
                     if (nread<to_read) {
-                        m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                        mfprintf(m)("MemoryDumper: read failed at 0x%08"PRIx64"\n", va+nread);
                         close(fd);
                         goto error;
                     }
@@ -625,18 +627,18 @@ public:
                 size_t nread = args.thread->get_process()->mem_read(buffer, va, nbytes);
                 int fd = -1;
                 if (nread < nbytes)
-                    m->mesg("MemoryDumper: read failed at 0x%08"PRIx64, va+nread);
+                    mfprintf(m)("MemoryDumper: read failed at 0x%08"PRIx64"\n", va+nread);
                 std::string s = SgAsmExecutableFileFormat::hexdump(va, buffer, nread, fmt);
                 if (!filename.empty()) {
                     if (-1==(fd=open(filename.c_str(), O_TRUNC|O_CREAT|O_RDWR, 0666))) {
-                        m->mesg("MemoryDumper: %s: %s", filename.c_str(), strerror(errno));
+                        mfprintf(m)("MemoryDumper: %s: %s\n", filename.c_str(), strerror(errno));
                         delete[] buffer;
                         goto error;
                     }
                     for (size_t nwrite=0; nwrite<nread; /*void*/) {
                         ssize_t n = write(fd, buffer+nwrite, nread-nwrite);
                         if (n<0) {
-                            m->mesg("MemoryDumper: write failed\n");
+                            m <<"MemoryDumper: write failed\n";
                             close(fd);
                             delete[] buffer;
                             goto error;
@@ -645,12 +647,12 @@ public:
                     }
                     close(fd);
                 } else {
-                    m->more("%s", s.c_str());
+                    m <<s;
                 }
                 delete[] buffer;
             }
         error:
-            m->multipart_end();
+            m <<"\n";
         }
         return enabled;
     }
@@ -727,8 +729,9 @@ public:
                 }
                 close(fd);
             }
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
-            m->mesg("MemoryInitializer triggered: wrote 0x%zx bytes at 0x%08"PRIx64, total_written, memaddr);
+            Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
+            m <<"MemoryInitializer triggered: wrote " <<StringUtility::plural(total_written, "bytes")
+              <<" at " <<StringUtility::addrToString(memaddr) <<"\n";
         }
         return enabled;
     }
@@ -847,10 +850,11 @@ public:
 
     virtual UnhandledInstruction *clone() { return this; }
     virtual bool operator()(bool enabled, const Args &args) {
+        using namespace rose::Diagnostics;
         static const char *fmt = "UnhandledInstruction triggered for %s\n";
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
         if (enabled && insn) {
-            RTS_Message *m = args.thread->tracing(TRACE_MISC);
+            Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
             const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
             uint32_t newip_va = insn->get_address() + insn->get_size();
             RSIM_SEMANTICS_VTYPE<32> newip = args.thread->policy.number<32>(newip_va);
@@ -860,7 +864,7 @@ public:
                     SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[0]);
                     if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
                         int mmx_number = mre->get_descriptor().get_minor();
-                        m->mesg(fmt, unparseInstruction(insn).c_str());
+                        mfprintf(m)(fmt, unparseInstruction(insn).c_str());
                         mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
                         mmx[mmx_number].hi = args.thread->policy.number<32>(0);
                         args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
@@ -874,7 +878,7 @@ public:
                     SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[1]);
                     if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
                         int mmx_number = mre->get_descriptor().get_minor();
-                        m->mesg(fmt, unparseInstruction(insn).c_str());
+                        mfprintf(m)(fmt, unparseInstruction(insn).c_str());
                         RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                         args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
                         addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
@@ -897,7 +901,7 @@ public:
                     /* Store value of mxcsr register (which we don't actually have) to a doubleword in memory.  The value we
                      * store was obtained by running GDB under "i386 -LRB3", stopping at the first instruction, and looking at
                      * the mxcsr register. */
-                    m->mesg(fmt, unparseInstruction(insn).c_str());
+                    mfprintf(m)(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
                     RSIM_SEMANTICS_VTYPE<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
                     RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
@@ -910,7 +914,7 @@ public:
                 case x86_ldmxcsr: {
                     /* Load the mxcsr register (which we don't actually have) from a doubleword in memory.  We read the memory
                      * (for possible side effects) but then just throw away the value. */
-                    m->mesg(fmt, unparseInstruction(insn).c_str());
+                    mfprintf(m)(fmt, unparseInstruction(insn).c_str());
                     assert(1==operands.size());
                     RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
                     (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());

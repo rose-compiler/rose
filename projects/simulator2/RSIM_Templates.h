@@ -1,6 +1,7 @@
 #ifndef ROSE_RSIM_Templates_H
 #define ROSE_RSIM_Templates_H
 
+#include "Diagnostics.h"
 #include <errno.h>
 #include <syscall.h>
 
@@ -83,6 +84,8 @@ template <size_t Len>
 ValueType<Len>
 RSIM_Semantics::InnerPolicy<State, ValueType>::readMemory(X86SegmentRegister sr, const ValueType<32> &addr,
                                                           const ValueType<1> &cond) {
+    using namespace rose::Diagnostics;
+
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();
@@ -90,7 +93,7 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::readMemory(X86SegmentRegister sr,
     ROSE_ASSERT(offset <= sr_shadow[sr].limit);
     ROSE_ASSERT(offset + (Len/8) - 1 <= sr_shadow[sr].limit);
 
-    RTS_Message *mesg = tracing(TRACE_MEM);
+    Sawyer::Message::Stream &mesg = tracing(TRACE_MEM);
 
     ROSE_ASSERT(cond.is_known());
     if (cond.known_value()) {
@@ -104,9 +107,9 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::readMemory(X86SegmentRegister sr,
         for (size_t i=0, j=0; i<Len; i+=8, j++)
             result |= buf[j] << i;
 
-        mesg->mesg("  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
-                   Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
-                   ValueType<Len>(result).known_value());
+        mfprintf(mesg)("  readMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32") -> 0x%08"PRIx64"\n",
+                       Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset,
+                       ValueType<Len>(result).known_value());
 
         return ValueType<Len>(result);
     } else {
@@ -122,6 +125,8 @@ template<
 template <size_t Len> void
 RSIM_Semantics::InnerPolicy<State, ValueType>::writeMemory(X86SegmentRegister sr, const ValueType<32> &addr,
                                                            const ValueType<Len> &data, const ValueType<1> &cond) {
+    using namespace rose::Diagnostics;
+
     ROSE_ASSERT(0==Len % 8 && Len<=64);
     RSIM_Process *process = thread->get_process();
     uint32_t offset = addr.known_value();
@@ -131,11 +136,11 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::writeMemory(X86SegmentRegister sr
     ROSE_ASSERT(data.is_known());
     ROSE_ASSERT(cond.is_known());
 
-    RTS_Message *mesg = tracing(TRACE_MEM);
+    Sawyer::Message::Stream &mesg = tracing(TRACE_MEM);
 
     if (cond.known_value()) {
-        mesg->mesg("  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
-                   Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset, data.known_value());
+        mfprintf(mesg)("  writeMemory<%zu>(0x%08"PRIx32"+0x%08"PRIx32"=0x%08"PRIx32", 0x%08"PRIx64")\n",
+                       Len, sr_shadow[sr].base, offset, sr_shadow[sr].base+offset, data.known_value());
             
         uint8_t buf[Len/8];
         for (size_t i=0, j=0; i<Len; i+=8, j++)
@@ -217,7 +222,7 @@ template<
     template <template <size_t> class> class State,
     template <size_t> class ValueType
     >
-RTS_Message *
+Sawyer::Message::Stream&
 RSIM_Semantics::InnerPolicy<State, ValueType>::tracing(TracingFacility what) const
 {
     return thread->tracing(what);
@@ -298,43 +303,43 @@ template<
     template <size_t> class ValueType
     >
 void
-RSIM_Semantics::InnerPolicy<State, ValueType>::dump_registers(RTS_Message *mesg)
+RSIM_Semantics::InnerPolicy<State, ValueType>::dump_registers(Sawyer::Message::Stream &_mesg)
 {
     /* lock, so entire state is all together in the output */
-    RTS_MESSAGE(*mesg) {
-        mesg->multipart("state",
-                        "    eax=0x%08"PRIx64" ebx=0x%08"PRIx64" ecx=0x%08"PRIx64" edx=0x%08"PRIx64"\n",
-                        this->template readRegister<32>(reg_eax).known_value(),
-                        this->template readRegister<32>(reg_ebx).known_value(),
-                        this->template readRegister<32>(reg_ecx).known_value(),
-                        this->template readRegister<32>(reg_edx).known_value());
-        mesg->more("    esi=0x%08"PRIx64" edi=0x%08"PRIx64" ebp=0x%08"PRIx64" esp=0x%08"PRIx64" eip=0x%08"PRIx64"\n",
-                   this->template readRegister<32>(reg_esi).known_value(),
-                   this->template readRegister<32>(reg_edi).known_value(),
-                   this->template readRegister<32>(reg_ebp).known_value(),
-                   this->template readRegister<32>(reg_esp).known_value(),
-                   this->get_ip().known_value());
+    Sawyer::Message::Stream mesg(_mesg);
+    mesg <<"   "
+         <<" eax=" <<StringUtility::toHex2(this->template readRegister<32>(reg_eax).known_value(), 32)
+         <<" ebx=" <<StringUtility::toHex2(this->template readRegister<32>(reg_ebx).known_value(), 32)
+         <<" ecx=" <<StringUtility::toHex2(this->template readRegister<32>(reg_ecx).known_value(), 32)
+         <<" edx=" <<StringUtility::toHex2(this->template readRegister<32>(reg_edx).known_value(), 32) <<"\n";
+    mesg <<"   "
+         <<" esi=" <<StringUtility::toHex2(this->template readRegister<32>(reg_esi).known_value(), 32)
+         <<" edi=" <<StringUtility::toHex2(this->template readRegister<32>(reg_edi).known_value(), 32)
+         <<" ebp=" <<StringUtility::toHex2(this->template readRegister<32>(reg_ebp).known_value(), 32)
+         <<" esp=" <<StringUtility::toHex2(this->template readRegister<32>(reg_esp).known_value(), 32)
+         <<" eip=" <<StringUtility::toHex2(this->get_ip().known_value(), 32) <<"\n";
 
-        for (int i=0; i<6; i++) {
-            std::string segreg_name = segregToString((X86SegmentRegister)i);
-            mesg->more("    %s=0x%04"PRIx64" base=0x%08"PRIx32" limit=0x%08"PRIx32" present=%s\n",
-                       segreg_name.c_str(), this->template readRegister<16>(segreg_name.c_str()).known_value(),
-                       sr_shadow[i].base, sr_shadow[i].limit, sr_shadow[i].present?"yes":"no");
-        }
+    for (int i=0; i<6; i++) {
+        std::string segreg_name = segregToString((X86SegmentRegister)i);
+        mesg <<"   "
+             <<" " <<segreg_name
+             <<"=" <<StringUtility::toHex2(this->template readRegister<16>(segreg_name.c_str()).known_value(), 16)
+             <<" base=" <<StringUtility::toHex2(sr_shadow[i].base, 32)
+             <<" limit=" <<StringUtility::toHex2(sr_shadow[i].limit, 32)
+             <<" present=" <<(sr_shadow[i].present?"yes":"no") <<"\n";
+    }
 
-        uint32_t eflags = get_eflags();
-        mesg->more("    flags: 0x%08"PRIx32":", eflags);
-        static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
-                                          "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
-                                          "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
-                                          "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
-        for (uint32_t i=0; i<32; i++) {
-            if (eflags & (1u<<i))
-                mesg->more(" %s", flag_name[i]);
-        }
-        mesg->more("\n");
-        mesg->multipart_end();
-    } RTS_MESSAGE_END(true);
+    uint32_t eflags = get_eflags();
+    mesg <<"    flags: " <<StringUtility::toHex2(eflags, 32);
+    static const char *flag_name[] = {"cf",  "#1",  "pf",   "#3",    "af",    "#5",  "zf",  "sf",
+                                      "tf",  "if",  "df",   "of", "iopl0", "iopl1",  "nt", "#15",
+                                      "rf",  "vm",  "ac",  "vif",   "vip",    "id", "#22", "#23",
+                                      "#24", "#25", "#26", "#27",   "#28",   "#29", "#30", "#31"};
+    for (uint32_t i=0; i<32; i++) {
+        if (eflags & (1u<<i))
+            mesg <<" " <<flag_name[i];
+    }
+    mesg <<"\n";
 }
 
 template<
@@ -367,16 +372,8 @@ template<
 void
 RSIM_Semantics::InnerPolicy<State, ValueType>::startInstruction(SgAsmInstruction* insn)
 {
-    RTS_Message *mesg = tracing(TRACE_INSN);
-    if (mesg->get_file()) {
-        if (isatty(fileno(mesg->get_file()))) {
-            fprintf(mesg->get_file(), "\033[K\n%s\033[K\r\033[1A",
-                    unparseInstructionWithAddress(insn).c_str());
-        } else {
-            mesg->mesg("%s", unparseInstruction(insn).c_str());
-        }
-    }
-    RSIM_SEMANTICS_INNER_BASE::Policy<State, ValueType>::startInstruction(insn);
+    Sawyer::Message::Stream &mesg = tracing(TRACE_INSN);
+    SAWYER_MESG(mesg) <<unparseInstruction(insn) <<"\n";
 }
 
 template<

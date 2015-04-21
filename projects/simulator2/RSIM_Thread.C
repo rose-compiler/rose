@@ -3,6 +3,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include "Diagnostics.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <syscall.h>
@@ -12,6 +13,7 @@
 #include <sys/ipc.h>
 #include <sys/sem.h>
 
+using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
 size_t RSIM_Thread::next_sequence_number = 1;
@@ -26,7 +28,7 @@ RSIM_Thread::ctor()
     memset(&last_report, 0, sizeof last_report);
     memset(tls_array, 0, sizeof tls_array);
 
-    reopen_trace_facilities(process->get_tracing_file());
+    reopen_trace_facilities();
 }
 
 void
@@ -37,13 +39,13 @@ RSIM_Thread::set_tid()
 }
 
 void
-RSIM_Thread::reopen_trace_facilities(FILE *file)
+RSIM_Thread::reopen_trace_facilities()
 {
     for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
         if (trace_mesg[tf]==NULL)
-            trace_mesg[tf] = new RTS_Message(NULL, &mesg_prefix);
-        if ((process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf)))
-            trace_mesg[tf]->set_file(file);
+            trace_mesg[tf] = new Sawyer::Message::Stream(mlog[INFO]);
+        bool shouldEnable = (process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf));
+        trace_mesg[tf]->enable(shouldEnable);
     }
 }
 
@@ -72,12 +74,12 @@ RSIM_Thread::id()
 
 }
 
-RTS_Message *
+Sawyer::Message::Stream&
 RSIM_Thread::tracing(TracingFacility tf)
 {
     assert(tf>=0 && tf<TRACE_NFACILITIES);
     assert(trace_mesg[tf]!=NULL);
-    return trace_mesg[tf];
+    return *trace_mesg[tf];
 }
 
 SgAsmX86Instruction *
@@ -127,22 +129,20 @@ RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *
 void
 RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
 {
-    RTS_Message *m = tracing(TRACE_SYSCALL);
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
 
-    if (m->get_file()) {
+    if (m) {
         assert(strlen(format)<=6);
         ArgInfo args[6];
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
 
-        RTS_MESSAGE(*m) {
-            m->multipart(name, "%s[%d](", name, syscall_arg(-1));
-            for (size_t i=0; format && format[i]; i++) {
-                if (i>0) m->more(", ");
-                print_single(m, format[i], args+i);
-            }
-            m->more(")");
-        } RTS_MESSAGE_END(false);
+        mfprintf(m)("%s[%d](", name, syscall_arg(-1));
+        for (size_t i=0; format && format[i]; i++) {
+            if (i>0) m <<", ";
+            print_single(m, format[i], args+i);
+        }
+        m <<")";
     }
 }
 
@@ -177,45 +177,42 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
     }
 
     ROSE_ASSERT(strlen(format)>=1);
-    RTS_Message *mesg = tracing(TRACE_SYSCALL);
-    if (mesg->get_file()) {
+    Sawyer::Message::Stream &mesg = tracing(TRACE_SYSCALL);
+    if (mesg) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
         uint32_t retval = values ? values[0] : policy.readRegister<32>(policy.reg_eax).known_value();
         syscall_arginfo(format[0], retval, &info, app);
 
         RTS_WRITE(process->rwlock()) {
-            RTS_MESSAGE(*mesg) {
-                mesg->more(" = ");
+            mesg <<" = ";
 
-                /* Return value */
-                int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
-                if (returns_errno && error_number!=0) {
-                    mesg->more("%"PRId32" ", retval);
-                    print_enum(mesg, error_numbers, error_number);
-                    mesg->more(" (%s)\n", strerror(error_number));
-                } else {
-                    print_single(mesg, format[0], &info);
-                    mesg->more("\n");
-                }
+            /* Return value */
+            int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
+            if (returns_errno && error_number!=0) {
+                mfprintf(mesg)("%"PRId32" ", retval);
+                print_enum(mesg, error_numbers, error_number);
+                mfprintf(mesg)(" (%s)\n", strerror(error_number));
+            } else {
+                print_single(mesg, format[0], &info);
+                mesg <<"\n";
+            }
 
-                /* Additionally, output any other buffer values that were filled in by a successful system call. */
-                int signed_retval = (int)retval;
-                if (!returns_errno || (signed_retval<-1024 || signed_retval>=0) || -EINTR==signed_retval) {
-                    for (size_t i=1; format[i]; i++) {
-                        if ('-'!=format[i]) {
-                            uint32_t value = values ? values[i] : syscall_arg(i-1);
-                            syscall_arginfo(format[i], value, &info, app);
-                            if ('P'!=format[i] || 0!=value) { /* no need to show null pointers */
-                                mesg->more("    result arg%zu = ", i-1);
-                                print_single(mesg, format[i], &info);
-                                mesg->more("\n");
-                            }
+            /* Additionally, output any other buffer values that were filled in by a successful system call. */
+            int signed_retval = (int)retval;
+            if (!returns_errno || (signed_retval<-1024 || signed_retval>=0) || -EINTR==signed_retval) {
+                for (size_t i=1; format[i]; i++) {
+                    if ('-'!=format[i]) {
+                        uint32_t value = values ? values[i] : syscall_arg(i-1);
+                        syscall_arginfo(format[i], value, &info, app);
+                        if ('P'!=format[i] || 0!=value) { /* no need to show null pointers */
+                            mfprintf(mesg)("    result arg%zu = ", i-1);
+                            print_single(mesg, format[i], &info);
+                            mesg <<"\n";
                         }
                     }
                 }
-                mesg->multipart_end();
-            } RTS_MESSAGE_END(true);
+            }
         } RTS_WRITE_END;
     }
 }
@@ -266,21 +263,20 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
     if (cb_status && signo>0) {
         assert(signo<=64);
 
-        RTS_Message *mesg = tracing(TRACE_SIGNAL);
+        Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
         sigaction_32 sa;
         int status = get_process()->sys_sigaction(signo, NULL, &sa);
         assert(status>=0);
 
         if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
             /* The signal action may have changed since the signal was generated, so we need to check this again. */
-            mesg->multipart("delivery", "signal delivery ignored: ");
+            mesg <<"signal delivery ignored: ";
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-            mesg->multipart_end();
-
+            mesg <<"\n";
         } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
-            mesg->multipart("delivery", "signal delivery via default: ");
+            mesg <<"signal delivery via default: ";
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-            mesg->multipart_end();
+            mesg <<"\n";
 
             switch (signo) {
                 case SIGFPE:
@@ -291,7 +287,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 case SIGTRAP:
                 case SIGSYS:
                     /* Exit process with core dump */
-                    tracing(TRACE_MISC)->mesg("dumping core...\n");
+                    tracing(TRACE_MISC) <<"dumping core...\n";
                     get_process()->mem_showmap(tracing(TRACE_MISC), "map at time of core dump:\n");
                     get_process()->dump_core(signo);
                     report_stack_frames(tracing(TRACE_MISC));
@@ -328,9 +324,9 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
 
         } else {
             /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
-            mesg->multipart("delivery", "signal delivery to 0x%08"PRIx32": ", sa.handler_va);
+            mfprintf(mesg)("signal delivery to 0x%08"PRIx32": ", sa.handler_va);
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
-            mesg->multipart_end();
+            mesg <<"\n";
 
             pt_regs_32 regs = get_regs();
             RSIM_SignalHandling::sigset_32 signal_mask;
@@ -451,7 +447,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
 int
 RSIM_Thread::sys_rt_sigreturn()
 {
-    RTS_Message *mesg = tracing(TRACE_SIGNAL);
+    Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
 
     /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
      * pretcode. Unlike the sigframe_32 stack frame, the rt_sigframe_32 stack frame's retcode does not pop the signal number
@@ -461,17 +457,14 @@ RSIM_Thread::sys_rt_sigreturn()
 
     RSIM_SignalHandling::rt_sigframe_32 frame;
     if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
-        mesg->mesg("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")", frame_va, sp);
+        mfprintf(mesg)("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")\n", frame_va, sp);
         return -EFAULT;
     }
 
-    if (mesg->get_file()) {
-        RTS_MESSAGE(*mesg) {
-            mesg->multipart("sigreturn", "returning from ");
-            print_enum(mesg, signal_names, frame.signo);
-            mesg->more(" handler");
-            mesg->multipart_end();
-        } RTS_MESSAGE_END(true);
+    if (mesg) {
+        mesg <<"returning from ";
+        print_enum(mesg, signal_names, frame.signo);
+        mesg <<" handler\n";
     }
 
     /* Restore previous signal mask */
@@ -492,7 +485,7 @@ RSIM_Thread::sys_rt_sigreturn()
 int
 RSIM_Thread::sys_sigreturn()
 {
-    RTS_Message *mesg = tracing(TRACE_SIGNAL);
+    Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
 
     /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
      * pretcode, and the retcode popped the signo. */
@@ -501,17 +494,14 @@ RSIM_Thread::sys_sigreturn()
 
     RSIM_SignalHandling::sigframe_32 frame;
     if (sizeof(frame)!=process->mem_read(&frame, frame_va, sizeof frame)) {
-        mesg->mesg("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")", frame_va, sp);
+        mfprintf(mesg)("bad frame 0x%08"PRIu32" in sigreturn (sp=0x%08"PRIu32")\n", frame_va, sp);
         return -EFAULT;
     }
 
-    if (mesg->get_file()) {
-        RTS_MESSAGE(*mesg) {
-            mesg->multipart("sigreturn", "returning from ");
-            print_enum(mesg, signal_names, frame.signo);
-            mesg->more(" handler");
-            mesg->multipart_end();
-        } RTS_MESSAGE_END(true);
+    if (mesg) {
+        mesg <<"returning from ";
+        print_enum(mesg, signal_names, frame.signo);
+        mesg <<" handler\n";
     }
 
     /* Restore previous signal mask */
@@ -626,7 +616,7 @@ RSIM_Thread::atfork_child()
     /* Redirect tracing output for new process */
     p->open_tracing_file();
     p->btrace_close();
-    reopen_trace_facilities(p->get_tracing_file());
+    reopen_trace_facilities();
 
     /* FIXME: According to the Linux 2.6.32 man page for pthread_atfork(), all mutexes must be reinitialized with
      * pthread_mutex_init. (FIXME: There may be mutexes in other parts of ROSE that need to be reinitialized--we need to make
@@ -637,8 +627,8 @@ RSIM_Thread::atfork_child()
 void
 RSIM_Thread::report_progress_maybe()
 {
-    RTS_Message *mesg = tracing(TRACE_PROGRESS);
-    if (mesg->get_file()) {
+    Sawyer::Message::Stream mesg(tracing(TRACE_PROGRESS));
+    if (mesg) {
         struct timeval now;
         gettimeofday(&now, NULL);
         double report_delta = (now.tv_sec - last_report.tv_sec) + 1e-6 * (now.tv_usec - last_report.tv_usec);
@@ -646,29 +636,30 @@ RSIM_Thread::report_progress_maybe()
             const struct timeval &ctime = get_process()->get_ctime();
             double elapsed = (now.tv_sec - ctime.tv_sec) + 1e-6 * (now.tv_usec - ctime.tv_usec);
             double insn_rate = elapsed>0.0 ? get_ninsns() / elapsed : 0;
-            mesg->mesg("processed %zu insns in %d sec (%d insns/sec)\n", get_ninsns(), (int)(elapsed+0.5), (int)(insn_rate+0.5));
+            mfprintf(mesg)("processed %zu insns in %d sec (%d insns/sec)\n",
+                           get_ninsns(), (int)(elapsed+0.5), (int)(insn_rate+0.5));
             last_report = now;
         }
     }
 }
 
 void
-RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*=""*/, bool bp_not_saved/*=false*/)
+RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::string &title/*=""*/, bool bp_not_saved/*=false*/)
 {
-    if (!mesg || !mesg->get_file())
+    if (!mesg)
         return;
     RTS_WRITE(get_process()->rwlock()) {
         if (title.empty()) {
-            mesg->multipart("stack", "stack frames:");
+            mesg <<"stack frames:";
         } else {
-            mesg->multipart("stack", "%s", title.c_str());
+            mfprintf(mesg)("%s", title.c_str());
         }
 
         uint32_t bp = policy.readRegister<32>(policy.reg_ebp).known_value();
         uint32_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
 
         for (int i=0; i<32; i++) {
-            mesg->more("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
+            mfprintf(mesg)("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
             SgAsmInstruction *insn = NULL;
             try {
                 insn = process->get_instruction(ip);
@@ -677,11 +668,11 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
             }
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
             if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
-                mesg->more(" in function %s", func->get_name().c_str());
+                mfprintf(mesg)(" in function %s", func->get_name().c_str());
             } else if (process->get_memory().at(ip).exists()) {
                 const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
                 if (!sgmt.name().empty())
-                    mesg->more(" in memory region %s", sgmt.name().c_str());
+                    mfprintf(mesg)(" in memory region %s", sgmt.name().c_str());
             }
 
             if (bp_not_saved) {
@@ -692,7 +683,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
                 if (4!=process->mem_read(&ip, sp, 4))
                     break;
                 bp_not_saved = false;
-                mesg->more(" [no stack frame]");
+                mesg <<" [no stack frame]";
             } else {
                 /* This function has stored its incoming EBP on the stack at ss:[ebp].  This is usually accomplished by the
                  * instructions PUSH EBP; MOV EBP, ESP. */
@@ -702,7 +693,7 @@ RSIM_Thread::report_stack_frames(RTS_Message *mesg, const std::string &title/*="
                     break;
             }
         }
-        mesg->multipart_end();
+        mesg <<"\n";
     } RTS_WRITE_END;
 }
 
@@ -781,18 +772,18 @@ RSIM_Thread::main()
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
-            RTS_Message *mesg = tracing(TRACE_STATE);
-            if (mesg->get_file())
+            Sawyer::Message::Stream &mesg = tracing(TRACE_STATE);
+            if (mesg)
                 policy.dump_registers(mesg);
         } catch (const Disassembler::Exception &e) {
             post_insn_semaphore();
             if (show_exceptions) {
                 std::ostringstream s;
                 s <<e;
-                tracing(TRACE_MISC)->mesg("caught Disassembler::Exception: %s\n", s.str().c_str());
+                mfprintf(tracing(TRACE_MISC))("caught Disassembler::Exception: %s\n", s.str().c_str());
             }
             if (do_coredump) {
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                mfprintf(tracing(TRACE_MISC))("dumping core...\n");
                 process->dump_core(SIGSEGV);
                 report_stack_frames(tracing(TRACE_MISC));
             }
@@ -803,11 +794,11 @@ RSIM_Thread::main()
             if (show_exceptions) {
                 std::ostringstream s;
                 s <<e;
-                tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
+                mfprintf(tracing(TRACE_MISC))("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
             }
 #ifdef X86SIM_STRICT_EMULATION
             if (do_coredump) {
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                tracing(TRACE_MISC) <<"dumping core...\n";
                 process->dump_core(SIGILL);
                 report_stack_frames(tracing(TRACE_MISC));
                 abort();
@@ -817,30 +808,30 @@ RSIM_Thread::main()
 #else
             if (show_exceptions) {
                 report_stack_frames(tracing(TRACE_MISC));
-                tracing(TRACE_MISC)->mesg("exception ignored; continuing with a corrupt state...\n");
+                tracing(TRACE_MISC) <<"exception ignored; continuing with a corrupt state...\n";
             }
 #endif
         } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
             // Thrown for the HLT instruction
             post_insn_semaphore();
             if (show_exceptions)
-                tracing(TRACE_MISC)->mesg("caught RSIM_Semantics::InnerPolicy<>::Halt");
+                tracing(TRACE_MISC) <<"caught RSIM_Semantics::InnerPolicy<>::Halt\n";
             throw;
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // thrown for the INT instruction if the interrupt is not handled
             post_insn_semaphore();
             if (show_exceptions)
-                tracing(TRACE_MISC)->mesg("unhandled specimen interrupt from INT insn");
+                tracing(TRACE_MISC) <<"unhandled specimen interrupt from INT insn\n";
             throw;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             post_insn_semaphore();
             if (show_exceptions) {
                 std::ostringstream s;
                 s <<e;
-                tracing(TRACE_MISC)->mesg("caught semantic policy exception: %s\n", s.str().c_str());
+                mfprintf(tracing(TRACE_MISC))("caught semantic policy exception: %s\n", s.str().c_str());
             }
             if (do_coredump) {
-                tracing(TRACE_MISC)->mesg("dumping core...\n");
+                tracing(TRACE_MISC) <<"dumping core...\n";
                 process->dump_core(SIGILL);
                 report_stack_frames(tracing(TRACE_MISC));
                 abort();
@@ -962,7 +953,7 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
         if (idx < 0)
             return idx;
         info->entry_number = idx;
-        tracing(TRACE_SYSCALL)->brief("entry #%d", idx);
+        mfprintf(tracing(TRACE_SYSCALL))("[entry #%d]", idx);
     }
 
     if (idx<(int)RSIM_Process::GDT_ENTRY_TLS_MIN || idx>(int)RSIM_Process::GDT_ENTRY_TLS_MAX)
@@ -973,37 +964,37 @@ RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
 }
 
 int
-RSIM_Thread::handle_futex_death(uint32_t futex_va, RTS_Message *trace)
+RSIM_Thread::handle_futex_death(uint32_t futex_va, Sawyer::Message::Stream &trace)
 {
     uint32_t futex;
-    trace->more("\n  handling death for futex at 0x%08"PRIx32"\n", futex_va);
+    mfprintf(trace)("\n  handling death for futex at 0x%08"PRIx32"\n", futex_va);
 
     if (4!=get_process()->mem_read(&futex, futex_va, 4)) {
-        trace->more("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
+        mfprintf(trace)("    failed to read futex at 0x%08"PRIx32"\n", futex_va);
         return -EFAULT;
     }
 
     /* If this thread owns the futex then set the FUTEX_OWNER_DIED and signal the futex. */
     if (get_tid()==(int)(futex & 0x1fffffff)) {
         /* Set the FUTEX_OWNER_DIED bit */
-        trace->more("    setting FUTEX_OWNER_DIED bit\n");
+        mfprintf(trace)("    setting FUTEX_OWNER_DIED bit\n");
         futex |= 0x40000000;
         if (4!=get_process()->mem_write(&futex, futex_va, 4)) {
-            trace->more("      failed to set FUTEX_OWNER_DIED for futex at 0x%08"PRIx32"\n", futex_va);
+            mfprintf(trace)("      failed to set FUTEX_OWNER_DIED for futex at 0x%08"PRIx32"\n", futex_va);
             return -EFAULT;
         }
 
         /* Wake another thread there's one waiting */
         if (futex & 0x80000000) {
-            trace->more("    waking futex 0x%08"PRIx32"\n", futex_va);
+            mfprintf(trace)("    waking futex 0x%08"PRIx32"\n", futex_va);
             int result = futex_wake(futex_va, 1);
             if (result<0) {
-                trace->more("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
+                mfprintf(trace)("      wake failed for futex at 0x%08"PRIu32"\n", futex_va);
                 return result;
             }
         }
     } else {
-        trace->more("    futex is not owned by this thread; skipping\n");
+        mfprintf(trace)("    futex is not owned by this thread; skipping\n");
     }
     return 0;
 }
@@ -1016,12 +1007,12 @@ RSIM_Thread::exit_robust_list()
     if (0==robust_list_head_va)
         return 0;
 
-    RTS_Message *trace = tracing(TRACE_THREAD);
-    trace->multipart("futex_death", "exit_robust_list()...");
+    Sawyer::Message::Stream trace(tracing(TRACE_THREAD));
+    trace <<"exit_robust_list()...";
 
     robust_list_head_32 head;
     if (sizeof(head)!=get_process()->mem_read(&head, robust_list_head_va, sizeof head)) {
-        trace->more(" <failed to read robust list head at 0x%08"PRIx32">", robust_list_head_va);
+        mfprintf(trace)(" <failed to read robust list head at 0x%08"PRIx32">", robust_list_head_va);
         retval = -EFAULT;
     } else {
         static const size_t max_locks = 1000000;
@@ -1037,7 +1028,7 @@ RSIM_Thread::exit_robust_list()
         
             /* Advance lock_entry_va to next item in the list. */
             if (4!=get_process()->mem_read(&lock_entry_va, lock_entry_va, 4)) {
-                trace->more(" <list pointer read failed at 0x%08"PRIx32">", lock_entry_va);
+                mfprintf(trace)(" <list pointer read failed at 0x%08"PRIx32">", lock_entry_va);
                 retval = -EFAULT;
                 break;
             }
@@ -1046,8 +1037,7 @@ RSIM_Thread::exit_robust_list()
             retval = handle_futex_death(head.pending_va, trace);
     }
 
-    trace->more(" done.\n");
-    trace->multipart_end();
+    trace <<" done.\n";
     return retval;
 }
 
@@ -1055,16 +1045,16 @@ void
 RSIM_Thread::do_clear_child_tid()
 {
     if (clear_child_tid) {
-        tracing(TRACE_SYSCALL)->mesg("clearing child tid...");
+        tracing(TRACE_SYSCALL) <<"clearing child tid...\n";
         uint32_t zero = 0;
         size_t n = get_process()->mem_write(&zero, clear_child_tid, sizeof zero);
         if (n!=sizeof zero) {
-            tracing(TRACE_SYSCALL)->mesg("cannot write clear_child_tid address 0x%08"PRIx32, clear_child_tid);
+            mfprintf(tracing(TRACE_SYSCALL))("cannot write clear_child_tid address 0x%08"PRIx32"\n", clear_child_tid);
         } else {
-            tracing(TRACE_SYSCALL)->mesg("waking futex 0x%08"PRIx32, clear_child_tid);
+            mfprintf(tracing(TRACE_SYSCALL))("waking futex 0x%08"PRIx32"\n", clear_child_tid);
             int nwoke = futex_wake(clear_child_tid, INT_MAX);
             if (nwoke<0)
-                tracing(TRACE_SYSCALL)->mesg("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
+                mfprintf(tracing(TRACE_SYSCALL))("wake futex 0x%08"PRIx32" failed with %d\n", clear_child_tid, nwoke);
         }
     }
 }
@@ -1074,7 +1064,7 @@ RSIM_Thread::sys_exit(const RSIM_Process::Exit &e)
 {
     RSIM_Process *process = get_process(); /* while we still have a chance */
 
-    tracing(TRACE_THREAD)->mesg("this thread is terminating%s", e.exit_process?" (for entire process)":"");
+    mfprintf(tracing(TRACE_THREAD))("this thread is terminating%s\n", e.exit_process?" (for entire process)":"");
 
     /* Clean up robust futexes */
     exit_robust_list();
@@ -1183,13 +1173,12 @@ RSIM_Thread::emulate_syscall()
         } else {
             char name[32];
             sprintf(name, "syscall_%u", callno);
-            tracing(TRACE_MISC)->multipart(name, "syscall_%u(", callno);
+            mfprintf(tracing(TRACE_MISC))("syscall_%u(", callno);
             for (int i=0; i<6; i++)
-                tracing(TRACE_MISC)->more("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
-            tracing(TRACE_MISC)->more(") is not implemented yet");
-            tracing(TRACE_MISC)->multipart_end();
+                mfprintf(tracing(TRACE_MISC))("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+            tracing(TRACE_MISC) <<") is not implemented yet\n";
 
-            tracing(TRACE_MISC)->mesg("dumping core...\n");
+            tracing(TRACE_MISC) <<"dumping core...\n";
             get_process()->dump_core(SIGSYS);
             report_stack_frames(tracing(TRACE_MISC));
             abort();
@@ -1202,7 +1191,7 @@ RSIM_Thread::emulate_syscall()
 rose_addr_t
 RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
 {
-    RTS_Message *trace = tracing(TRACE_FUTEX);
+    Sawyer::Message::Stream trace(tracing(TRACE_FUTEX));
 
     /* Futexes must be word aligned */
     if (va & 3)
@@ -1211,7 +1200,7 @@ RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
     /* Find the simulator address. */
     *val_ptr = (uint32_t*)process->my_addr(va, 4);
     rose_addr_t addr = (rose_addr_t)*val_ptr;
-    trace->mesg("futex: specimen va 0x%08"PRIx64" is at simulator address 0x%08"PRIx64, va, addr);
+    mfprintf(trace)("futex: specimen va 0x%08"PRIx64" is at simulator address 0x%08"PRIx64"\n", va, addr);
 
     /* Does the simulator address fall inside a file? */
     FILE *f = fopen("/proc/self/maps", "r");
@@ -1264,18 +1253,18 @@ RSIM_Thread::futex_key(rose_addr_t va, uint32_t **val_ptr)
         if (devno!=0 && addr>=lo_addr && addr+4<=hi_addr) {
             struct stat sb;
             if (stat(filename, &sb)<0) {
-                trace->mesg("futex: cannot stat file \"%s\"", filename);
+                mfprintf(trace)("futex: cannot stat file \"%s\"\n", filename);
                 break;
             }
 
             rose_addr_t addr_in_file = (addr - lo_addr) + map_offset;
-            trace->mesg("futex: simulator address 0x%08"PRIx64" is at %s+0x%08"PRIx64, addr, filename, addr_in_file);
+            mfprintf(trace)("futex: simulator address 0x%08"PRIx64" is at %s+0x%08"PRIx64"\n", addr, filename, addr_in_file);
             addr = - ((map_offset<<16) + addr_in_file);
             addr ^= sb.st_ino;
             addr &= 0xffffffff;
             addr |= 1; // so as not to conflict with simulator addresses, which are most likely word aligned.
             assert(0!=addr);
-            trace->mesg("futex: using generated address 0x%08"PRIx64, addr);
+            mfprintf(trace)("futex: using generated address 0x%08"PRIx64"\n", addr);
             break;
         }
     }
@@ -1287,7 +1276,7 @@ int
 RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
 {
     int retval = 0;
-    RTS_Message *trace = tracing(TRACE_FUTEX);
+    Sawyer::Message::Stream trace(tracing(TRACE_FUTEX));
 
     /* We need to access the futex memory atomically with respect to instructions from other threads and/or processes.  So we'll
      * use the simulator's global semaphore for that purpose. */
@@ -1302,7 +1291,7 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
     if (!key || !futex_ptr) {
         retval = -EFAULT;
     } else if (oldval != *futex_ptr) {
-        trace->mesg("futex wait: futex value %"PRIu32" but need %"PRIu32, *futex_ptr, oldval);
+        mfprintf(trace)("futex wait: futex value %"PRIu32" but need %"PRIu32"\n", *futex_ptr, oldval);
         retval = -EWOULDBLOCK;
     }
 
@@ -1320,14 +1309,14 @@ RSIM_Thread::futex_wait(rose_addr_t va, uint32_t oldval, uint32_t bitset)
 
     if (futex_number>=0) {
         /* Block until we're signaled */
-        trace->mesg("futex wait: about to block...");
+        trace <<"futex wait: about to block...\n";
         status = process->get_futexes()->wait(futex_number);
         if (-EINTR==status) {
-            trace->mesg("futex wait: interrupted by signal");
+            trace <<"futex wait: interrupted by signal\n";
             retval = -EINTR;
         } else {
             assert(0==status);
-            trace->mesg("futex wait: resumed");
+            trace <<"futex wait: resumed\n";
         }
 
         /* Remove the semaphore from the table. */
@@ -1342,7 +1331,7 @@ int
 RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
 {
     int retval = 0;
-    RTS_Message *trace = tracing(TRACE_FUTEX);
+    Sawyer::Message::Stream trace(tracing(TRACE_FUTEX));
 
     /* The futex wait queues are protected by the simulator global semaphore (the same one used to make instructions atomic). */
     assert(insn_semaphore_posted);
@@ -1360,9 +1349,9 @@ RSIM_Thread::futex_wake(rose_addr_t va, int nprocs, uint32_t bitset)
     /* Wake processes that are waiting on this semaphore */
     retval = process->get_futexes()->signal(key, bitset, nprocs, RSIM_FutexTable::LOCKED);
     if (retval<0) {
-        trace->mesg("futex wake: failed with error %d", retval);
+        mfprintf(trace)("futex wake: failed with error %d\n", retval);
     } else {
-        trace->mesg("futex wake: %d proc%s have been signaled", retval, 1==retval?"":"s");
+        mfprintf(trace)("futex wake: %d proc%s have been signaled\n", retval, 1==retval?"":"s");
     }
 
     /* Release the lock */

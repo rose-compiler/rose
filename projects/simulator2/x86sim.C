@@ -6,7 +6,9 @@
 
 #include "RSIM_Linux32.h"
 #include "RSIM_Adapter.h"
+#include "Diagnostics.h"
 
+using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
 static RTS_mutex_t global_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
@@ -35,7 +37,7 @@ public:
         } RTS_MUTEX_END;
 
         if (dis) {
-            args.thread->tracing(TRACE_MISC)->mesg("disassembling at 0x%08"PRIx64"...\n", args.insn->get_address());
+            mfprintf(args.thread->tracing(TRACE_MISC))("disassembling at 0x%08"PRIx64"...\n", args.insn->get_address());
             SgAsmBlock *block = process->disassemble();
             if (do_show_disassembly)
                 AsmUnparser().unparse(std::cout, block);
@@ -56,9 +58,9 @@ public:
     virtual DisassembleAtCoreDump *clone() { return this; }
     virtual bool operator()(bool prev, const Args &args) {
         if (args.reason==COREDUMP) {
-            RTS_Message tracer(args.process->get_tracing_file(), NULL);
+            Sawyer::Message::Stream tracer(mlog[INFO]);
             fprintf(stderr, "disassembling at core dump\n");
-            args.process->mem_showmap(&tracer);
+            args.process->mem_showmap(tracer);
             SgAsmBlock *block = args.process->disassemble();
             if (do_show_disassembly)
                 AsmUnparser().unparse(std::cout, block);
@@ -237,9 +239,9 @@ main(int argc, char *argv[], char *envp[])
             virtual ShowMmapAtCoredump *clone() { return this; }
             virtual bool operator()(bool enabled, const Args &args) {
                 if (args.reason==RSIM_Callbacks::ProcessCallback::COREDUMP) {
-                    RTS_Message m(stderr, NULL);
+                    Sawyer::Message::Stream m(mlog[INFO]);
                     std::string title = "ShowMmapAtCoreDump triggered for process" + StringUtility::numberToString(getpid());
-                    args.process->mem_showmap(&m, title.c_str(), "  ");
+                    args.process->mem_showmap(m, title.c_str(), "  ");
                 }
                 return enabled;
             }
@@ -285,7 +287,7 @@ main(int argc, char *argv[], char *envp[])
         sim.deactivate();
 
     /* Describe termination status, and then exit ourselves with that same status. */
-    sim.describe_termination(stderr);
+    std::cerr <<sim.describe_termination();
     sim.terminate_self(); // probably doesn't return
     return 0;
 }

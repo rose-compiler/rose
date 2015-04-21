@@ -4,8 +4,11 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Simulator.h"
+#include "Diagnostics.h"
 
 #include <sys/wait.h>
+
+using namespace rose::Diagnostics;
 
 RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
@@ -374,7 +377,7 @@ RSIM_Simulator::exec(int argc, char **argv)
         process->get_memory().dump(process->get_tracing_file(), "  ");
     }
 
-    main_thread->tracing(TRACE_STATE)->mesg("Initial state:\n");
+    main_thread->tracing(TRACE_STATE) <<"Initial state:\n";
     main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
 
     return 0;
@@ -555,7 +558,7 @@ RSIM_Simulator::main_loop()
                                                                              RSIM_Callbacks::ProcessCallback::START,
                                                                              true);
     bool cb_thread_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
-    thread->tracing(TRACE_THREAD)->mesg("main thread is starting");
+    thread->tracing(TRACE_THREAD) <<"main thread is starting";
     thread->main();
     thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_thread_status);
     process->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, process,
@@ -565,29 +568,27 @@ RSIM_Simulator::main_loop()
     return process->get_termination_status();
 }
 
-void
-RSIM_Simulator::describe_termination(FILE *f)
+std::string
+RSIM_Simulator::describe_termination()
 {
-    RTS_Message m(f, NULL);
+    std::ostringstream m;
     RSIM_Process *process = get_process();
     if (process->has_terminated()) {
         int status = process->get_termination_status();
         if (WIFEXITED(status)) {
-            m.mesg("specimen %d exited with status %d\n", getpid(), WEXITSTATUS(status));
+            mfprintf(m)("specimen %d exited with status %d", getpid(), WEXITSTATUS(status));
         } else if (WIFSIGNALED(status)) {
-            m.multipart("", "specimen %d exited due to signal ", getpid());
-            print_enum(&m, signal_names, WTERMSIG(status));
-            m.more(" (%s)%s\n", strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
+            mfprintf(m)("specimen %d exited due to signal %s %s",
+                        getpid(), strsignal(WTERMSIG(status)), WCOREDUMP(status)?" core dumped":"");
         } else if (WIFSTOPPED(status)) {
-            m.multipart("", "specimen %d is stopped due to signal ", getpid());
-            print_enum(&m, signal_names, WSTOPSIG(status));
-            m.more(" (%s)\n", strsignal(WSTOPSIG(status)));
+            mfprintf(m)("specimen %d is stopped due to signal %s", getpid(), strsignal(WSTOPSIG(status)));
         } else {
-            m.mesg("specimen %d has unknown termination status: 0x%08x\n", getpid(), status);
+            mfprintf(m)("specimen %d has unknown termination status: 0x%08x", getpid(), status);
         }
     } else {
-        m.mesg("specimen %d has not exited yet\n", getpid());
+        mfprintf(m)("specimen %d has not exited yet", getpid());
     }
+    return m.str();
 }
 
 void

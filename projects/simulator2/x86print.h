@@ -64,7 +64,7 @@ struct ArgInfo {
     bool str_fault;             /**< True if a segmentation fault occurred while reading the string. */
     bool str_trunc;             /**< True if the string is truncated. */
     const Translate *xlate;     /**< Pointer to a translation table. */
-    typedef int (*StructPrinter)(RTS_Message*, const uint8_t*, size_t);
+    typedef int (*StructPrinter)(Sawyer::Message::Stream&, const uint8_t*, size_t);
     StructPrinter struct_printer;/**< Prints a pointer to something, usually a struct. */
     uint8_t *struct_buf;        /**< Memory to be printed by struct_printer. */
     size_t struct_size;         /**< Desired size of struct_buf in bytes. */
@@ -75,15 +75,16 @@ struct ArgInfo {
 std::string flags_to_str(const Translate*, uint32_t value);
 std::string hex_to_str(uint32_t value);
 
-void print_flags(RTS_Message*, const Translate*, uint32_t value);
-void print_enum(RTS_Message*, const Translate*, uint32_t value);
-void print_signed(RTS_Message*, uint32_t value);
-void print_pointer(RTS_Message*, uint32_t value);
-void print_hex(RTS_Message*, uint32_t value);
-void print_string(RTS_Message*, const std::string &value, bool str_fault=false, bool str_trunc=false);
-void print_buffer(RTS_Message*, uint32_t addr, const uint8_t *buffer, size_t sz, size_t print_sz);
-void print_time(RTS_Message*, uint32_t value);
-void print_single(RTS_Message*, char fmt, const ArgInfo *info);
-void print_struct(RTS_Message*, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf, size_t need, size_t have);
+void print_flags(Sawyer::Message::Stream&, const Translate*, uint32_t value);
+void print_enum(Sawyer::Message::Stream&, const Translate*, uint32_t value);
+void print_signed(Sawyer::Message::Stream&, uint32_t value);
+void print_pointer(Sawyer::Message::Stream&, uint32_t value);
+void print_hex(Sawyer::Message::Stream&, uint32_t value);
+void print_string(Sawyer::Message::Stream&, const std::string &value, bool str_fault=false, bool str_trunc=false);
+void print_buffer(Sawyer::Message::Stream&, uint32_t addr, const uint8_t *buffer, size_t sz, size_t print_sz);
+void print_time(Sawyer::Message::Stream&, uint32_t value);
+void print_single(Sawyer::Message::Stream&, char fmt, const ArgInfo *info);
+void print_struct(Sawyer::Message::Stream&, uint32_t value, ArgInfo::StructPrinter printer, const uint8_t *buf,
+                  size_t need, size_t have);
 
 #endif

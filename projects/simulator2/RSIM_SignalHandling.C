@@ -3,7 +3,10 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include "Diagnostics.h"
 #include <cassert>
+
+using namespace rose::Diagnostics;
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */
 
@@ -279,7 +282,7 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
         
         /* If nothing arrived then block until another signal arrives. */
         if (!retval) {
-            thread->tracing(TRACE_SIGNAL)->brief("sigsuspend is blocking");
+            thread->tracing(TRACE_SIGNAL) <<"[sigsuspend is blocking]";
             sigset_t susp_mask;
             sigemptyset(&susp_mask);
             ::sigsuspend(&susp_mask);
@@ -343,7 +346,7 @@ RSIM_SignalHandling::clear_all_pending()
 }
 
 int
-RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, RTS_Message *mesg)
+RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Sawyer::Message::Stream &mesg)
 {
     int result = 0;
     const char *s = "";
@@ -377,21 +380,20 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, RTS
         /* Print messsage before we release the RSIM_SignalHandling mutex, otherwise the tracing output might have this signal
          * arrival message after the target thread's signal delivery message. */
         if (mesg) {
-            mesg->multipart("signal", "arrival of ");
+            mesg <<"arrival of ";
             print_enum(mesg, signal_names, signo);
-            mesg->more("(%d)%s", signo, s);
-            mesg->more(" {errno=%d, code=%d", info.si_errno, info.si_code);
+            mfprintf(mesg)("(%d)%s", signo, s);
+            mfprintf(mesg)(" {errno=%d, code=%d", info.si_errno, info.si_code);
             if (signo>=FIRST_RT) {
-                mesg->more(", pid=%d, uid=%d, sigval=%d", info.rt.pid, info.rt.uid, info.rt.sigval);
+                mfprintf(mesg)(", pid=%d, uid=%d, sigval=%d", info.rt.pid, info.rt.uid, info.rt.sigval);
             } else if (signo==SIGILL || signo==SIGFPE || signo==SIGSEGV || signo==SIGBUS) {
-                mesg->more(", addr=0x%08"PRIx32, info.sigfault.addr);
+                mfprintf(mesg)(", addr=0x%08"PRIx32, info.sigfault.addr);
             } else if (signo==SIGCHLD) {
-                mesg->more(", pid=%d, uid=%d, status=%u", info.sigchld.pid, info.sigchld.uid, info.sigchld.status);
+                mfprintf(mesg)(", pid=%d, uid=%d, status=%u", info.sigchld.pid, info.sigchld.uid, info.sigchld.status);
             } else {
-                mesg->more(", pid=%d, uid=%d", info.kill.pid, info.kill.uid);
+                mfprintf(mesg)(", pid=%d, uid=%d", info.kill.pid, info.kill.uid);
             }
-            mesg->more("}\n");
-            mesg->multipart_end();
+            mesg <<"}\n";
         }
     } RTS_MUTEX_END;
 

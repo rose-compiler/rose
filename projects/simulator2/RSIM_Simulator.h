@@ -269,8 +269,8 @@ public:
      *  this method to return the would-be exit status. */
     int main_loop();
 
-    /** Prints termination status in a human friendly manner. */
-    void describe_termination(FILE*);
+    /** Human-friendly termination string. */
+    std::string describe_termination();
 
     /** Terminates the calling process with the same exit status or signal as the specimen. The @p status argument should be
      *  the status returned by waitpid(). */
@@ -534,7 +534,7 @@ public:
      *  class NotifyOnce: public RSIM_Simulator::SystemCall::Callback {
      *  public:
      *      bool operator()(bool b, const Args &args) {
-     *          args.thread->tracing(TRACE_SYSCALL)->more("[FIRST CALL]");
+     *          args.thread->tracing(TRACE_SYSCALL) <<"[FIRST CALL]";
      *          RSIM_Simulator *sim = args.thread->get_process()->get_simulator();
      *          sim->syscall_implementation(args.callno)->enter.erase(this);
      *          return b;
@@ -581,7 +581,7 @@ public:
      *  class NoOp: public RSIM_Simulator::SystemCall::Callback {
      *  public:
      *      bool operator()(bool b, const Args &args) {
-     *          args.thread->tracing(TRACE_SYSCALL)->more("[NOOP]");
+     *          args.thread->tracing(TRACE_SYSCALL) <<"[NOOP]";
      *          args.thread->syscall_return(-ENOSYS);
      *          return b;
      *      }

@@ -4,6 +4,9 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Adapter.h"
+#include "Diagnostics.h"
+
+using namespace rose::Diagnostics;
 
 /******************************************************************************************************************************
  *                                      Adapter Base Class
@@ -12,8 +15,8 @@
 bool
 RSIM_Adapter::AdapterBase::NotImplemented::operator()(bool b, const Args &args)
 {
-    args.thread->tracing(TRACE_MISC)->mesg("%ssyscall %d is not implemented for I/O tracing; dumping core",
-                                           adapter->prefix().c_str(), args.callno);
+    mfprintf(args.thread->tracing(TRACE_MISC))("%ssyscall %d is not implemented for I/O tracing; dumping core\n",
+                                               adapter->prefix().c_str(), args.callno);
     args.thread->get_process()->dump_core(SIGILL);
     throw RSIM_Process::Exit(SIGILL & 0x7f, true);
 }
@@ -56,8 +59,8 @@ bool
 RSIM_Adapter::SyscallDisabler::SyscallCB::operator()(bool state, const Args &args)
 {
     if (state && !adapter->is_enabled(args.callno)) {
-        RTS_Message *strace = args.thread->tracing(TRACE_SYSCALL);
-        RTS_Message *mtrace = args.thread->tracing(TRACE_MISC);
+        Sawyer::Message::Stream strace(args.thread->tracing(TRACE_SYSCALL));
+        Sawyer::Message::Stream mtrace(args.thread->tracing(TRACE_MISC));
         RSIM_Simulator *sim = args.thread->get_process()->get_simulator();
         RSIM_Simulator::SystemCall *sc = sim->syscall_is_implemented(args.callno) ?
                                          sim->syscall_implementation(args.callno) : NULL;
@@ -65,7 +68,7 @@ RSIM_Adapter::SyscallDisabler::SyscallCB::operator()(bool state, const Args &arg
         /* Run the system call's "enter" callbacks in order to generate syscall trace, and add our own note. */
         if (sc)
             sc->enter.apply(true, RSIM_Simulator::SystemCall::Callback::Args(args.thread, args.callno));
-        mtrace->mesg("%ssyscall %d is disabled", adapter->prefix().c_str(), args.callno);
+        mfprintf(mtrace)("%ssyscall %d is disabled\n", adapter->prefix().c_str(), args.callno);
 
         /* Set the syscall return value to "Function not implemented". The following callbacks may change the value. */
         uint32_t old_eax = args.thread->syscall_arg(-1);
@@ -75,8 +78,7 @@ RSIM_Adapter::SyscallDisabler::SyscallCB::operator()(bool state, const Args &arg
          * false to true, then make the system call enabled now. */
         if ((state=adapter->cblist.apply(false, RSIM_Simulator::SystemCall::Callback::Args(args.thread, args.callno)))) {
             adapter->enable_syscall(args.callno);
-            strace->multipart_end(); /* because we won't be invoking the "leave" callbacks here */
-            mtrace->mesg("%ssyscall %d is now enabled", adapter->prefix().c_str(), args.callno);
+            mfprintf(mtrace)("%ssyscall %d is now enabled\n", adapter->prefix().c_str(), args.callno);
             args.thread->syscall_return(old_eax); /* restore the system call number */
         } else if (sc) {
             /* Run the system call "leave" callbacks to show the return value due to skipping. */
@@ -112,16 +114,15 @@ RSIM_Adapter::TraceIO::ReadWriteSyscall::operator()(bool b, const Args &args)
     int32_t     fd     = args.thread->syscall_arg(0);
     rose_addr_t buf_va = args.thread->syscall_arg(1);
     if (nbytes>0 && tracer->is_tracing_fd(fd)) {
-        RTS_Message *mesg = args.thread->tracing(TRACE_MISC);
-        mesg->mesg("%s%s fd=%"PRId32", nbytes=%"PRIu32":\n", tracer->prefix().c_str(),
-                   label.c_str(), fd, (uint32_t)nbytes);
+        Sawyer::Message::Stream mesg(args.thread->tracing(TRACE_MISC));
+        mfprintf(mesg)("%s%s fd=%"PRId32", nbytes=%"PRIu32":\n", tracer->prefix().c_str(),
+                       label.c_str(), fd, (uint32_t)nbytes);
         unsigned char *buf = new unsigned char[nbytes];
         if ((size_t)nbytes!=args.thread->get_process()->mem_read(buf, buf_va, nbytes)) {
-            mesg->mesg("    short read");
+            mesg <<"    short read\n";
         } else {
-            RTS_MESSAGE(*mesg) {
-                SgAsmExecutableFileFormat::hexdump(mesg->get_file(), (rose_addr_t)0, buf, nbytes, tracer->hd_format);
-            } RTS_MESSAGE_END(true);
+            if (mesg)
+                SgAsmExecutableFileFormat::hexdump(mesg, (rose_addr_t)0, buf, nbytes, tracer->hd_format);
         }
         delete[] buf;
     }
@@ -134,25 +135,24 @@ RSIM_Adapter::TraceIO::ReadWriteVectorSyscall::operator()(bool b, const Args &ar
     int32_t nbytes = args.thread->syscall_arg(-1);
     int32_t fd = args.thread->syscall_arg(0);
     rose_addr_t iov_va = args.thread->syscall_arg(1);
-    RTS_Message *mesg = args.thread->tracing(TRACE_MISC);
+    Sawyer::Message::Stream mesg(args.thread->tracing(TRACE_MISC));
     if (nbytes>0 && tracer->is_tracing_fd(fd)) {
-        mesg->mesg("%s%s fd=%"PRId32", nbytes=%"PRIu32":\n", tracer->prefix().c_str(),
-                   label.c_str(), fd, (uint32_t)nbytes);
+        mfprintf(mesg)("%s%s fd=%"PRId32", nbytes=%"PRIu32":\n", tracer->prefix().c_str(),
+                       label.c_str(), fd, (uint32_t)nbytes);
     }
     while (nbytes>0) {
         uint32_t vasz[2];
         if (8!=args.thread->get_process()->mem_read(vasz, iov_va, 8)) {
-            mesg->mesg("    short read");
+            mesg <<"    short read\n";
             nbytes = 0;
         } else {
             uint32_t sz = std::min(vasz[1], (uint32_t)nbytes);
             unsigned char *buf = new unsigned char[sz];
             if (sz!=args.thread->get_process()->mem_read(buf, vasz[0], sz)) {
-                mesg->mesg("    short read");
+                mesg <<"    short read\n";
             } else {
-                RTS_MESSAGE(*mesg) {
-                    SgAsmExecutableFileFormat::hexdump(mesg->get_file(), (rose_addr_t)0, buf, sz, tracer->hd_format);
-                } RTS_MESSAGE_END(true);
+                if (mesg)
+                    SgAsmExecutableFileFormat::hexdump(mesg, (rose_addr_t)0, buf, sz, tracer->hd_format);
             }
             delete[] buf;
             iov_va += 8;
@@ -168,7 +168,7 @@ RSIM_Adapter::TraceIO::MmapSyscall::operator()(bool b, const Args &args)
     uint32_t result = args.thread->syscall_arg(-1);
     int32_t fd = args.thread->syscall_arg(4);
     if (result!=0 && tracer->is_tracing_fd(fd))
-        args.thread->tracing(TRACE_MISC)->mesg("%snot tracing mmap'd fd=%"PRId32, tracer->prefix().c_str(), fd);
+        mfprintf(args.thread->tracing(TRACE_MISC))("%snot tracing mmap'd fd=%"PRId32"\n", tracer->prefix().c_str(), fd);
     return b;
 }
 
@@ -179,8 +179,8 @@ RSIM_Adapter::TraceIO::FtruncateSyscall::operator()(bool b, const Args &args)
     int32_t fd = args.thread->syscall_arg(0);
     if (result>=0 && tracer->is_tracing_fd(fd)) {
         off_t len = args.thread->syscall_arg(1);
-        args.thread->tracing(TRACE_MISC)->mesg("%struncating fd=%"PRId32", offset=%ld", tracer->prefix().c_str(),
-                                               fd, (long)len);
+        mfprintf(args.thread->tracing(TRACE_MISC))("%struncating fd=%"PRId32", offset=%ld\n", tracer->prefix().c_str(),
+                                                   fd, (long)len);
     }
     return b;
 }
@@ -266,7 +266,7 @@ RSIM_Adapter::TraceFileIO::OpenSyscall::operator()(bool b, const Args &args)
 {
     int32_t fd = args.thread->syscall_arg(-1);
     if (fd>=0) {
-        args.thread->tracing(TRACE_MISC)->mesg("%sactivating fd=%"PRId32, tracer->prefix().c_str(), fd);
+        mfprintf(args.thread->tracing(TRACE_MISC))("%sactivating fd=%"PRId32"\n", tracer->prefix().c_str(), fd);
         tracer->trace_fd(fd, true);
     }
     return b;
@@ -279,10 +279,10 @@ RSIM_Adapter::TraceFileIO::DupSyscall::operator()(bool b, const Args &args)
     int32_t old_fd = args.thread->syscall_arg(0);
     if (new_fd>0) {
         if (tracer->is_tracing_fd(old_fd)) {
-            args.thread->tracing(TRACE_MISC)->mesg("%sactivating fd=%"PRId32, tracer->prefix().c_str(), new_fd);
+            mfprintf(args.thread->tracing(TRACE_MISC))("%sactivating fd=%"PRId32"\n", tracer->prefix().c_str(), new_fd);
             tracer->trace_fd(new_fd, true);
         } else if (tracer->is_tracing_fd(new_fd)) {
-            args.thread->tracing(TRACE_MISC)->mesg("%sdeactivating fd=%"PRId32, tracer->prefix().c_str(), new_fd);
+            mfprintf(args.thread->tracing(TRACE_MISC))("%sdeactivating fd=%"PRId32"\n", tracer->prefix().c_str(), new_fd);
             tracer->trace_fd(new_fd, false);
         }
     }
@@ -297,10 +297,10 @@ RSIM_Adapter::TraceFileIO::PipeSyscall::operator()(bool b, const Args &args)
     if (result>=0) {
         int32_t fds[2];
         if (8!=args.thread->get_process()->mem_read(fds, fds_va, 8)) {
-            args.thread->tracing(TRACE_MISC)->mesg("    short read");
+            args.thread->tracing(TRACE_MISC) <<"    short read\n";
         } else {
-            args.thread->tracing(TRACE_MISC)->mesg("%sactivating fd=%"PRId32",%"PRId32, tracer->prefix().c_str(),
-                                                   fds[0], fds[1]);
+            mfprintf(args.thread->tracing(TRACE_MISC))("%sactivating fd=%"PRId32",%"PRId32"\n", tracer->prefix().c_str(),
+                                                       fds[0], fds[1]);
             tracer->trace_fd(fds[0], true);
             tracer->trace_fd(fds[1], true);
         }
@@ -314,7 +314,7 @@ RSIM_Adapter::TraceFileIO::CloseSyscall::operator()(bool b, const Args &args)
     int32_t result = args.thread->syscall_arg(-1);
     int32_t fd = args.thread->syscall_arg(0);
     if (result>=0 && tracer->is_tracing_fd(fd)) {
-        args.thread->tracing(TRACE_MISC)->mesg("%sdeactivating fd=%"PRId32"\n", tracer->prefix().c_str(), fd);
+        mfprintf(args.thread->tracing(TRACE_MISC))("%sdeactivating fd=%"PRId32"\n", tracer->prefix().c_str(), fd);
         tracer->trace_fd(fd, false);
     }
     return b;
