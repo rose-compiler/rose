@@ -1151,10 +1151,8 @@ RSIM_Process::btrace_close()
 int
 RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsigned real_perms)
 {
-    int retval = -ENOSYS;
-    size_t aligned_sz = alignUp(sz, (size_t)PAGE_SIZE);
-
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    size_t aligned_sz = alignUp(sz, (size_t)PAGE_SIZE);
 
     /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory that's
      * mapped from a read-only file), then also set the protection in the simulated memory map so the simulator can make
@@ -1566,7 +1564,7 @@ RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_
     pthread_t t;
     int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
     if (0==err)
-        pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
+        clone_info.cond.wait(clone_info.mutex);                     // wait for child to initialize
     return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }
 
@@ -1628,12 +1626,11 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
         clone_info->newtid = tid;
     } while (0);
 
-    /* Parent is still blocked on pthread_cond_wait because we haven't signalled it yet.  We must signal after we've released
-     * the mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the
-     * stack.  It's not always safe to call pthread_cond_signal without holding the mutex, but in this case it is because we
-     * couldn't have gotten this far (we couldn't have acquired the mutex above) until the parent is inside
-     * pthread_cond_wait(). */
-    pthread_cond_signal(&clone_info->cond);       /* tell parent we're done initializing */
+    /* Parent is still blocked on cond.wait() because we haven't signalled it yet.  We must signal after we've released the
+     * mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the stack.  We
+     * know the parent is already blocked on the cond.wait(), otherwise we couldn't have gotten this far (we couldn't have
+     * acquired the mutex above) until the parent is inside cond.wait(). */
+    clone_info->cond.notify_one();                      // tell parent we're done initializing
     clone_info = NULL; /* won't be valid after we signal the parent */
 
     if (tid<0)

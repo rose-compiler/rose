@@ -288,7 +288,7 @@ main(int argc, char *argv[], char *envp[])
         sim.deactivate();
 
     /* Describe termination status, and then exit ourselves with that same status. */
-    std::cerr <<sim.describe_termination();
+    std::cerr <<sim.describe_termination() <<"\n";
     sim.terminate_self(); // probably doesn't return
     return 0;
 }

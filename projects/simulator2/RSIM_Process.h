@@ -526,13 +526,8 @@ public:
 private:
     /**< Contains various things that are needed while we clone a new thread to handle a simulated clone call. */
     struct Clone {
-        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
-            : process(process), flags(flags), newtid(-1), seq(-1),
-              parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {
-            pthread_cond_init(&cond, NULL);
-        }
         SAWYER_THREAD_TRAITS::RecursiveMutex mutex; /**< Protects entire structure. */
-        pthread_cond_t  cond;                   /**< For coordinating between creating thread and created thread. */
+        SAWYER_THREAD_TRAITS::ConditionVariable cond; /**< For coordinating between creating thread and created thread. */
         RSIM_Process    *process;               /**< Process creating the new thread. */
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */
         pid_t           newtid;                 /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
@@ -540,6 +535,10 @@ private:
         uint32_t        parent_tid_va;          /**< Optional address at which to write created thread's TID; clone() argument */
         uint32_t        child_tls_va;           /**< Address of TLS user_desc_32 to load into GDT; clone() argument */
         pt_regs_32      regs;                   /**< Initial registers for child thread. */
+
+        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
+            : process(process), flags(flags), newtid(-1), seq(-1),
+              parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {}
     };
     static Clone clone_info;
     
