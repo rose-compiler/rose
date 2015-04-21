@@ -234,13 +234,12 @@ public:
                         /* Compute name string */
                         std::string name = defn->get_name();
                         if (name.empty()) {
-                            RTS_READ(process->rwlock()) {
-                                if (process->get_memory().at(defn->get_entry_va()).exists()) {
-                                    const MemoryMap::Segment &sgmt = process->get_memory().find(defn->get_entry_va())->value();
-                                    if (!sgmt.name().empty())
-                                        name = "in " + sgmt.name();
-                                }
-                            } RTS_READ_END;
+                            SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
+                            if (process->get_memory().at(defn->get_entry_va()).exists()) {
+                                const MemoryMap::Segment &sgmt = process->get_memory().find(defn->get_entry_va())->value();
+                                if (!sgmt.name().empty())
+                                    name = "in " + sgmt.name();
+                            }
                         }
                         if (defn->get_entry_va()!=func_start)
                             name += " (" + StringUtility::addrToString(defn->get_entry_va()) + ")";

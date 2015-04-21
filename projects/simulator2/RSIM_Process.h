@@ -19,7 +19,6 @@ public:
           terminated(false), termination_status(0), project(NULL), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
-        RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_PROCESS_OBJ, NULL);
         ctor();
     }
 
@@ -40,24 +39,23 @@ private:
      *                                  Thread synchronization
      **************************************************************************************************************************/
 private:
-    mutable RTS_rwlock_t instance_rwlock;       /**< One read-write lock per object.  See rwlock(). */
+    mutable SAWYER_THREAD_TRAITS::RecursiveMutex  instance_rwlock; /**< One read-write lock per object.  See rwlock(). */
 
 public:
 
     /** Returns the read-write lock for this object.
      *
      *  Although most RSIM_Process methods are already thread safe, it is sometimes necessary to protect access to data members
-     *  This method returns a per-object read-write lock that can be used with the usual ROSE Thread Support macros, RTS_READ
-     *  and RTS_WRITE.  The returned lock is the same lock as the inherently thread-safe methods of this class already use.
-     *  See RTS_rwlock_rdlock() and RTS_rwlock_wrlock() for a description of the semantics.
+     *  This method returns a per-object lock.  The returned lock is the same lock as the inherently thread-safe methods of
+     *  this class already use.
      *
      *  These locks should be held for as little time as possible, and certainly not over a system call that might block.
      *
      *  @{ */
-    RTS_rwlock_t &rwlock() {
+    SAWYER_THREAD_TRAITS::RecursiveMutex &rwlock() {
         return instance_rwlock;
     }
-    RTS_rwlock_t &rwlock() const {
+    SAWYER_THREAD_TRAITS::RecursiveMutex &rwlock() const {
         return instance_rwlock;
     }
     /** @} */
@@ -531,10 +529,9 @@ private:
         Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
             : process(process), flags(flags), newtid(-1), seq(-1),
               parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {
-            RTS_mutex_init(&mutex, RTS_LAYER_RSIM_PROCESS_CLONE_OBJ, NULL);
             pthread_cond_init(&cond, NULL);
         }
-        RTS_mutex_t mutex;                      /**< Protects entire structure. */
+        SAWYER_THREAD_TRAITS::RecursiveMutex mutex; /**< Protects entire structure. */
         pthread_cond_t  cond;                   /**< For coordinating between creating thread and created thread. */
         RSIM_Process    *process;               /**< Process creating the new thread. */
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */

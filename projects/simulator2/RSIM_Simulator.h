@@ -698,8 +698,8 @@ private:
     /* Other */
     RSIM_Process *process;              /**< Main process. */
     rose_addr_t entry_va;               /**< Main entry address. */
-    static RTS_rwlock_t class_rwlock;   /**< For methods that access class variables. */
-    mutable RTS_rwlock_t instance_rwlock;/**< Read-write lock per simulator object. */
+    static SAWYER_THREAD_TRAITS::RecursiveMutex class_rwlock;   /**< For methods that access class variables. */
+    mutable SAWYER_THREAD_TRAITS::RecursiveMutex instance_rwlock;/**< Read-write lock per simulator object. */
     RSIM_Callbacks callbacks;           /**< Callbacks used to initialize the RSIM_Process callbacks. */
 };
 

@@ -73,15 +73,13 @@ RSIM_Process::set_tracing(FILE *file, unsigned flags)
 RSIM_Thread *
 RSIM_Process::create_thread()
 {
-    RSIM_Thread *thread = NULL;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     pid_t tid = syscall(SYS_gettid);
     ROSE_ASSERT(tid>=0);
-    RTS_WRITE(rwlock()) {
-        ROSE_ASSERT(threads.find(tid)==threads.end());
-        thread = new RSIM_Thread(this);
-        thread->set_callbacks(callbacks);
-        threads.insert(std::make_pair(tid, thread));
-    } RTS_WRITE_END;
+    ROSE_ASSERT(threads.find(tid)==threads.end());
+    RSIM_Thread *thread = new RSIM_Thread(this);
+    thread->set_callbacks(callbacks);
+    threads.insert(std::make_pair(tid, thread));
     return thread;
 }
 
@@ -103,32 +101,27 @@ RSIM_Process::get_main_thread() const
 void
 RSIM_Process::remove_thread(RSIM_Thread *thread)
 {
-    RTS_WRITE(rwlock()) {
-        std::map<pid_t, RSIM_Thread*>::iterator ti = threads.find(thread->get_tid());
-        assert(ti!=threads.end());
-        threads.erase(ti);
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    std::map<pid_t, RSIM_Thread*>::iterator ti = threads.find(thread->get_tid());
+    assert(ti!=threads.end());
+    threads.erase(ti);
 }
 
 RSIM_Thread *
 RSIM_Process::get_thread(pid_t tid) const
 {
-    RSIM_Thread *retval = NULL;
-    RTS_READ(rwlock()) {
-        std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
-        retval = ti==threads.end() ? NULL : ti->second;
-    } RTS_READ_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.find(tid);
+    return ti==threads.end() ? NULL : ti->second;
 }
 
 std::vector<RSIM_Thread*>
 RSIM_Process::get_all_threads() const
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     std::vector<RSIM_Thread*> retval;
-    RTS_READ(rwlock()) {
-        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
-            retval.push_back(ti->second);
-    } RTS_READ_END;
+    for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+        retval.push_back(ti->second);
     return retval;
 }
 
@@ -138,10 +131,11 @@ RSIM_Process::mem_write(const void *buf, rose_addr_t va, size_t size, unsigned r
     size_t retval = 0;
     bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::WRITABLE, req_perms,
                                                      va, size, (void*)buf, retval, true);
-    RTS_WRITE(rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         if (cb_status)
             retval = get_memory().at(va).limit(size).require(req_perms).write((uint8_t*)buf).size();
-    } RTS_WRITE_END;
+    }
     callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::WRITABLE, req_perms,
                                     va, size, (void*)buf, retval, cb_status);
     return retval;
@@ -153,10 +147,11 @@ RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perm
     size_t retval = 0;
     bool cb_status = callbacks.call_memory_callbacks(RSIM_Callbacks::BEFORE, this, MemoryMap::READABLE, req_perms,
                                                      va, size, buf, retval, true);
-    RTS_READ(rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         if (cb_status)
             retval = get_memory().at(va).limit(size).require(req_perms).read((uint8_t*)buf).size();
-    } RTS_READ_END;
+    }
     callbacks.call_memory_callbacks(RSIM_Callbacks::AFTER, this, MemoryMap::READABLE, req_perms, va, size,
                                     buf, retval, cb_status);
     return retval;
@@ -165,21 +160,17 @@ RSIM_Process::mem_read(void *buf, rose_addr_t va, size_t size, unsigned req_perm
 bool
 RSIM_Process::mem_is_mapped(rose_addr_t va) const
 {
-    bool retval;
-    RTS_READ(rwlock()) {
-        retval = get_memory().at(va).exists();
-    } RTS_READ_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    return get_memory().at(va).exists();
 }
 
 size_t
 RSIM_Process::get_ninsns() const
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     size_t retval = 0;
-    RTS_READ(rwlock()) {
-        for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
-            retval += ti->second->get_ninsns();
-    } RTS_READ_END;
+    for (std::map<pid_t, RSIM_Thread*>::const_iterator ti=threads.begin(); ti!=threads.end(); ++ti)
+        retval += ti->second->get_ninsns();
     return retval;
 }
 
@@ -893,10 +884,11 @@ RSIM_Process::get_instruction(rose_addr_t va)
     SgAsmInstruction *insn = NULL;
 
     /* Use a cached instruction if possible. */
-    RTS_READ(rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         Disassembler::InstructionMap::iterator found = icache.find(va);
         insn = found!=icache.end() ? found->second : NULL;
-    } RTS_READ_END;
+    }
 
     /* If we found a cached instruction, make sure memory still contains that value. If we didn't find an instruction, read one
      * word from the address anyway (and discard it) so that memory access callbacks will see the memory access.  We'll read
@@ -917,11 +909,12 @@ RSIM_Process::get_instruction(rose_addr_t va)
     /* Disassemble (and cache) a new instruction. At this time it is not safe to be multi-threaded inside a single Disassemble
      * object, so we'll protect the whole call with a write lock.  We need one anyway in order to update the icache.
      * [RPM 2011-02-09] */
-    RTS_WRITE(rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         insn = isSgAsmX86Instruction(disassembler->disassembleOne(&get_memory(), va)); /* might throw Disassembler::Exception */
         ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
         icache[va] = insn;
-    } RTS_WRITE_END;
+    }
 
     /* Read the rest of the instruction if necessary so that memory access callbacks have a chance to see the access. */
     for (uint32_t i=4; i<insn->get_size(); i+=4) {
@@ -935,39 +928,35 @@ RSIM_Process::get_instruction(rose_addr_t va)
 void *
 RSIM_Process::my_addr(uint32_t va, size_t nbytes)
 {
-    void *retval = NULL;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
-    RTS_READ(rwlock()) {
-        /* Obtain mapping information and check that the specified number of bytes are mapped. */
-        if (!get_memory().at(va).exists())
-            break;
-        const MemoryMap::Node &me = *get_memory().find(va);
-        size_t offset = me.value().offset() + va - me.key().least();
-        uint8_t *base = const_cast<uint8_t*>(me.value().buffer()->data());
-        if (!base)
-            break;
-        retval = base + offset;
-    } RTS_READ_END;
-    return retval;
+    /* Obtain mapping information and check that the specified number of bytes are mapped. */
+    if (!get_memory().at(va).exists())
+        return NULL;
+    const MemoryMap::Node &me = *get_memory().find(va);
+    size_t offset = me.value().offset() + va - me.key().least();
+    uint8_t *base = const_cast<uint8_t*>(me.value().buffer()->data());
+    if (!base)
+        return NULL;
+    return base + offset;
 }
 
 uint32_t
 RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     uint32_t retval = 0;
-    RTS_READ(rwlock()) {
-        BOOST_FOREACH (const MemoryMap::Node &node, get_memory().nodes()) {
-            const AddressInterval &range = node.key();
-            const MemoryMap::Segment &segment = node.value();
-            const uint8_t *base = segment.buffer()->data();
-            rose_addr_t offset = segment.offset();
-            size_t size = range.size();
-            if (base && addr>=base+offset && (uint8_t*)addr+nbytes<=base+offset+size) {
-                retval = range.least() + ((uint8_t*)addr - (base+offset));
-                break;
-            }
+    BOOST_FOREACH (const MemoryMap::Node &node, get_memory().nodes()) {
+        const AddressInterval &range = node.key();
+        const MemoryMap::Segment &segment = node.value();
+        const uint8_t *base = segment.buffer()->data();
+        rose_addr_t offset = segment.offset();
+        size_t size = range.size();
+        if (base && addr>=base+offset && (uint8_t*)addr+nbytes<=base+offset+size) {
+            retval = range.least() + ((uint8_t*)addr - (base+offset));
+            break;
         }
-    } RTS_READ_END;
+    }
     return retval;
 }
 
@@ -978,7 +967,8 @@ RSIM_Process::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
     if (error)
         *error = false;
 
-    RTS_READ(rwlock()) {
+    do {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         while (1) {
             uint8_t byte;
             size_t nread = get_memory().at(va++).limit(1).read(&byte).size();
@@ -994,7 +984,7 @@ RSIM_Process::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
             if (limit>0 && retval.size()>=limit)
                 break;
         }
-    } RTS_READ_END;
+    } while (0);
     return retval;
 }
 
@@ -1081,26 +1071,23 @@ RSIM_Process::mem_transaction_commit(const std::string &name)
 int
 RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
 {
-    int retval = -ENOSYS;
-
     if (newbrk >= 0xb0000000ul)
         return -ENOMEM;
 
-    RTS_WRITE(rwlock()) {
-        if (newbrk > brk_va) {
-            size_t size = newbrk - brk_va;
-            get_memory().insert(AddressInterval::baseSize(brk_va, size),
-                                MemoryMap::Segment::anonymousInstance(size, MemoryMap::READABLE|MemoryMap::WRITABLE, "[heap]"));
-            brk_va = newbrk;
-        } else if (newbrk>0 && newbrk<brk_va) {
-            get_memory().erase(AddressInterval::baseSize(newbrk, brk_va-newbrk));
-            brk_va = newbrk;
-        }
-        retval= brk_va;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    if (newbrk > brk_va) {
+        size_t size = newbrk - brk_va;
+        get_memory().insert(AddressInterval::baseSize(brk_va, size),
+                            MemoryMap::Segment::anonymousInstance(size, MemoryMap::READABLE|MemoryMap::WRITABLE, "[heap]"));
+        brk_va = newbrk;
+    } else if (newbrk>0 && newbrk<brk_va) {
+        get_memory().erase(AddressInterval::baseSize(newbrk, brk_va-newbrk));
+        brk_va = newbrk;
+    }
+    int retval= brk_va;
 
-        if (mesg)
-            mem_showmap(mesg, "memory map after brk syscall:\n");
-    } RTS_WRITE_END;
+    if (mesg)
+        mem_showmap(mesg, "memory map after brk syscall:\n");
 
     return retval;
 }
@@ -1108,36 +1095,32 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
 int
 RSIM_Process::mem_unmap(rose_addr_t va, size_t sz, Sawyer::Message::Stream &mesg)
 {
-    int retval = -ENOSYS;
-    RTS_WRITE(rwlock()) {
-        /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
-        if (!get_memory().contains(AddressInterval::baseSize(va, sz))) {
-            retval = -ENOMEM;
-            break;
-        }
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
-        /* Unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
-         * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
-        const uint8_t *ptr = NULL;
-        try {
-            const MemoryMap::Node &me = *get_memory().find(va);// existence checked above
-            size_t offset = me.value().offset() + va - me.key().least();
-            ptr = me.value().buffer()->data() + offset;
-            if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
-                (void)munmap((void*)ptr, sz);
-        } catch (const MemoryMap::NotMapped) {
-        }
+    /* Make sure that the specified memory range is actually mapped, or return -ENOMEM. */
+    if (!get_memory().contains(AddressInterval::baseSize(va, sz)))
+        return -ENOMEM;
 
-        /* Erase the mapping from the simulation */
-        get_memory().erase(AddressInterval::baseSize(va, sz));
+    /* Unmap for real, because if we don't, and the mapping was not anonymous, and the file that was mapped is
+     * unlinked, and we're on NFS, an NFS temp file is created in place of the unlinked file. */
+    const uint8_t *ptr = NULL;
+    try {
+        const MemoryMap::Node &me = *get_memory().find(va);// existence checked above
+        size_t offset = me.value().offset() + va - me.key().least();
+        ptr = me.value().buffer()->data() + offset;
+        if (0==(uint64_t)ptr % (uint64_t)PAGE_SIZE && 0==(uint64_t)sz % (uint64_t)PAGE_SIZE)
+            (void)munmap((void*)ptr, sz);
+    } catch (const MemoryMap::NotMapped) {
+    }
 
-        /* Tracing */
-        if (mesg)
-            mem_showmap(mesg, "memory map after munmap syscall:\n");
+    /* Erase the mapping from the simulation */
+    get_memory().erase(AddressInterval::baseSize(va, sz));
 
-        retval = 0;
-    } RTS_WRITE_END;
-    return retval;
+    /* Tracing */
+    if (mesg)
+        mem_showmap(mesg, "memory map after munmap syscall:\n");
+
+    return 0;
 }
 
 void
@@ -1147,24 +1130,22 @@ RSIM_Process::mem_showmap(Sawyer::Message::Stream &mesg, const char *intro, cons
     if (!prefix) prefix = "    ";
 
     if (mesg) {
-        RTS_READ(rwlock()) {
-            std::ostringstream ss;
-            get_memory().dump(ss, prefix);
-            mfprintf(mesg)("%s%susing memory transaction %zu \"%s\"\n%s\n",
-                           intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
-        } RTS_READ_END;
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+        std::ostringstream ss;
+        get_memory().dump(ss, prefix);
+        mfprintf(mesg)("%s%susing memory transaction %zu \"%s\"\n%s\n",
+                       intro, prefix, mem_ntransactions(), mem_transaction_name().c_str(), ss.str().c_str());
     }
 }
 
 void
 RSIM_Process::btrace_close()
 {
-    RTS_WRITE(rwlock()) {
-        if (btrace_file) {
-            fclose(btrace_file);
-            btrace_file = NULL;
-        }
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    if (btrace_file) {
+        fclose(btrace_file);
+        btrace_file = NULL;
+    }
 }
 
 int
@@ -1173,25 +1154,22 @@ RSIM_Process::mem_protect(rose_addr_t va, size_t sz, unsigned rose_perms, unsign
     int retval = -ENOSYS;
     size_t aligned_sz = alignUp(sz, (size_t)PAGE_SIZE);
 
-    RTS_WRITE(rwlock()) {
-        /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory that's
-         * mapped from a read-only file), then also set the protection in the simulated memory map so the simulator can make
-         * queries about memory access.  Some of the underlying memory points to parts of an ELF file that was read into ROSE's
-         * memory in such a way that segments are not aligned on page boundaries. We cannot change protections on these
-         * non-aligned sections. */
-        if (-1==mprotect(my_addr(va, sz), sz, real_perms) && EINVAL!=errno) {
-            retval = -errno;
-            break;
-        } else {
-            try {
-                get_memory().at(va).limit(aligned_sz).changeAccess(rose_perms, ~rose_perms);
-                retval = 0;
-            } catch (const MemoryMap::NotMapped &e) {
-                retval = -ENOMEM;
-            }
-        }
-    } RTS_WRITE_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+
+    /* Set protection in the underlying real memory (to catch things like trying to add write permission to memory that's
+     * mapped from a read-only file), then also set the protection in the simulated memory map so the simulator can make
+     * queries about memory access.  Some of the underlying memory points to parts of an ELF file that was read into ROSE's
+     * memory in such a way that segments are not aligned on page boundaries. We cannot change protections on these
+     * non-aligned sections. */
+    if (-1==mprotect(my_addr(va, sz), sz, real_perms) && EINVAL!=errno)
+        return -errno;
+
+    try {
+        get_memory().at(va).limit(aligned_sz).changeAccess(rose_perms, ~rose_perms);
+        return 0;
+    } catch (const MemoryMap::NotMapped &e) {
+        return -ENOMEM;
+    }
 }
 
 rose_addr_t
@@ -1203,7 +1181,8 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                      (rose_perms & MemoryMap::WRITABLE ? PROT_WRITE : 0) |
                      (rose_perms & MemoryMap::EXECUTABLE  ? PROT_EXEC  : 0));
 
-    RTS_WRITE(rwlock()) {
+    do {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
         if (0==start) {
             if (0!=(flags & MAP_FIXED)) {
                 start = (rose_addr_t)(int64_t)-EPERM; /* Linux does not allow addr 0 to be mapped */
@@ -1249,28 +1228,24 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
             get_memory().insert(AddressInterval::baseSize(start, aligned_size),
                                 MemoryMap::Segment::staticInstance(buf, aligned_size, rose_perms, "mmap("+melmt_name+")"));
         }
-    } RTS_WRITE_END;
+    } while (0);
     return start;
 }
 
 void
 RSIM_Process::set_gdt(const user_desc_32 *ud)
 {
-    RTS_WRITE(rwlock()) {
-        *(gdt_entry(ud->entry_number)) = *ud;
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    *(gdt_entry(ud->entry_number)) = *ud;
 }
 
 user_desc_32 *
 RSIM_Process::gdt_entry(int idx)
 {
-    user_desc_32 *retval;
-    RTS_READ(rwlock()) {
-        ROSE_ASSERT(idx>=0 && idx<GDT_ENTRIES);
-        ROSE_ASSERT(idx<GDT_ENTRY_TLS_MIN || idx>GDT_ENTRY_TLS_MAX); /* call only from RSIM_Thread::set_gdt */
-        retval = gdt + idx;
-    } RTS_READ_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    ROSE_ASSERT(idx>=0 && idx<GDT_ENTRIES);
+    ROSE_ASSERT(idx<GDT_ENTRY_TLS_MIN || idx>GDT_ENTRY_TLS_MAX); /* call only from RSIM_Thread::set_gdt */
+    return gdt + idx;
 }
 
 
@@ -1280,302 +1255,301 @@ void
 RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
 {
     FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
-    RTS_WRITE(rwlock()) {
-        RSIM_Thread *main_thread = get_thread(getpid());
-        ROSE_ASSERT(main_thread!=NULL);
+    RSIM_Thread *main_thread = get_thread(getpid());
+    ROSE_ASSERT(main_thread!=NULL);
 
-        /* We only handle ELF for now */
-        SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
-        ROSE_ASSERT(fhdr!=NULL);
+    /* We only handle ELF for now */
+    SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
+    ROSE_ASSERT(fhdr!=NULL);
 
-        /* Allocate the stack */
-        static const size_t stack_size = 0x00015000;
-        size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
-        size_t stack_addr = sp - stack_size;
-        get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
-                            MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
-                                                                  "[stack]"));
+    /* Allocate the stack */
+    static const size_t stack_size = 0x00015000;
+    size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
+    size_t stack_addr = sp - stack_size;
+    get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
+                        MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
+                                                              "[stack]"));
 
-        /* Save specimen arguments in RSIM_Process object. The executable name is already there. */
-        assert(exeargs.size()==1);
-        for (int i=1; i<argc; i++)
-            exeargs.push_back(std::string(argv[i]));
+    /* Save specimen arguments in RSIM_Process object. The executable name is already there. */
+    assert(exeargs.size()==1);
+    for (int i=1; i<argc; i++)
+        exeargs.push_back(std::string(argv[i]));
 
-        /* Not sure what the first eight bytes are */
-        static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
-        sp -= sizeof unknown_top;
-        mem_write(unknown_top, sp, sizeof unknown_top);
+    /* Not sure what the first eight bytes are */
+    static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
+    sp -= sizeof unknown_top;
+    mem_write(unknown_top, sp, sizeof unknown_top);
 
-        /* Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv. */
-        sp -= exeargs[0].size() + 1;
-        uint32_t execfn_va = sp;
-        mem_write(exeargs[0].c_str(), sp, exeargs[0].size()+1);
+    /* Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv. */
+    sp -= exeargs[0].size() + 1;
+    uint32_t execfn_va = sp;
+    mem_write(exeargs[0].c_str(), sp, exeargs[0].size()+1);
 
-        /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
-         * value to override the non-X86SIM_ value, if any.  We try to make sure the variables are in the same order as if the
-         * X86SIM_ overrides were not present. In other words, if X86SIM_FOO and FOO are both present, then X86SIM_FOO is
-         * deleted from the list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the
-         * name to FOO and leave it at that location. We do all this so that variables are in the same order whether run
-         * natively or under the simulator. */
-        std::vector<size_t> env_offsets;
-        std::string env_buffer;
-        std::map<std::string, std::string> envvars;
-        std::map<std::string, std::string>::iterator found;
-        for (int i=0; environ[i]; i++) {
-            char *eq = strchr(environ[i], '=');
-            ROSE_ASSERT(eq!=NULL);
-            std::string var(environ[i], eq-environ[i]);
-            std::string val(eq+1);
-            envvars.insert(std::make_pair(var, val));
-        }
-        for (int i=0; environ[i]; i++) {
-            char *eq = strchr(environ[i], '=');
-            ROSE_ASSERT(eq!=NULL);
-            std::string var(environ[i], eq-environ[i]);
-            std::string val(eq+1);
-            if (!strncmp(var.c_str(), "X86SIM_", 7) && environ[i]+7!=eq) {
-                std::string var_short = var.substr(7);
-                if ((found=envvars.find(var_short))==envvars.end()) {
-                    var = var_short;
-                    val = eq+1;
-                } else {
-                    continue;
-                }
+    /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
+     * value to override the non-X86SIM_ value, if any.  We try to make sure the variables are in the same order as if the
+     * X86SIM_ overrides were not present. In other words, if X86SIM_FOO and FOO are both present, then X86SIM_FOO is
+     * deleted from the list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the
+     * name to FOO and leave it at that location. We do all this so that variables are in the same order whether run
+     * natively or under the simulator. */
+    std::vector<size_t> env_offsets;
+    std::string env_buffer;
+    std::map<std::string, std::string> envvars;
+    std::map<std::string, std::string>::iterator found;
+    for (int i=0; environ[i]; i++) {
+        char *eq = strchr(environ[i], '=');
+        ROSE_ASSERT(eq!=NULL);
+        std::string var(environ[i], eq-environ[i]);
+        std::string val(eq+1);
+        envvars.insert(std::make_pair(var, val));
+    }
+    for (int i=0; environ[i]; i++) {
+        char *eq = strchr(environ[i], '=');
+        ROSE_ASSERT(eq!=NULL);
+        std::string var(environ[i], eq-environ[i]);
+        std::string val(eq+1);
+        if (!strncmp(var.c_str(), "X86SIM_", 7) && environ[i]+7!=eq) {
+            std::string var_short = var.substr(7);
+            if ((found=envvars.find(var_short))==envvars.end()) {
+                var = var_short;
+                val = eq+1;
             } else {
-                std::string var_long = "X86SIM_" + var;
-                if ((found=envvars.find(var_long))!=envvars.end()) {
-                    val = found->second;
-                }
+                continue;
             }
-            std::string env = var + "=" + val;
-            env_offsets.push_back(env_buffer.size());
-            env_buffer += env + (char)0;
+        } else {
+            std::string var_long = "X86SIM_" + var;
+            if ((found=envvars.find(var_long))!=envvars.end()) {
+                val = found->second;
+            }
         }
-        sp -= env_buffer.size();
-        uint32_t env_va = sp;
-        mem_write(env_buffer.c_str(), env_va, env_buffer.size());
+        std::string env = var + "=" + val;
+        env_offsets.push_back(env_buffer.size());
+        env_buffer += env + (char)0;
+    }
+    sp -= env_buffer.size();
+    uint32_t env_va = sp;
+    mem_write(env_buffer.c_str(), env_va, env_buffer.size());
 
-        /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
-         * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
-        std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
-        pointers[0] = exeargs.size();
-        for (size_t i=exeargs.size(); i>0; --i) {
-            size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
-            sp -= len;
-            mem_write(exeargs[i-1].c_str(), sp, len);
-            pointers[i] = sp;
+    /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
+     * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
+    std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
+    pointers[0] = exeargs.size();
+    for (size_t i=exeargs.size(); i>0; --i) {
+        size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
+        sp -= len;
+        mem_write(exeargs[i-1].c_str(), sp, len);
+        pointers[i] = sp;
+    }
+    if (trace) {
+        for (size_t i=0; i<exeargs.size(); i++) {
+            fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
+                    exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
         }
+    }
+    pointers.push_back(0); /*the argv NULL terminator*/
+
+    /* Add envp pointers to the stack */
+    for (size_t i=0; i<env_offsets.size(); i++) {
+        pointers.push_back(env_va+env_offsets[i]);
         if (trace) {
-            for (size_t i=0; i<exeargs.size(); i++) {
-                fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
-                        exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
+            fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
+                    i, strlen(&(env_buffer[env_offsets[i]]))+1, env_va+env_offsets[i], &(env_buffer[env_offsets[i]]));
+        }
+    }
+    pointers.push_back(0); /*environment NULL terminator*/
+
+    /* Push certain auxv data items onto the stack. */
+    sp &= ~0xf;
+
+    static const char *platform = "i686";
+    sp -= strlen(platform)+1;
+    uint32_t platform_va = sp;
+    mem_write(platform, platform_va, strlen(platform)+1);
+
+    static const uint8_t random_data[] = {                  /* use hard-coded values for reproducibility */
+        0x00, 0x11, 0x22, 0x33,
+        0xff, 0xee, 0xdd, 0xcc,
+        0x88, 0x99, 0xaa, 0xbb,
+        0x77, 0x66, 0x55, 0x44
+    };
+    sp -= sizeof random_data;
+    uint32_t random_data_va = sp;
+    mem_write(random_data, random_data_va, sizeof random_data);
+
+
+    /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
+     * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
+     * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
+    struct T1: public SgSimpleProcessing {
+        rose_addr_t segtab_offset;
+        size_t segtab_size;
+        T1(): segtab_offset(0), segtab_size(0) {}
+        void visit(SgNode *node) {
+            SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
+            if (0==segtab_offset && segtab!=NULL) {
+                segtab_offset = segtab->get_offset();
+                segtab_size = segtab->get_size();
             }
         }
-        pointers.push_back(0); /*the argv NULL terminator*/
+    } t1;
+    t1.traverse(fhdr, preorder);
+    assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
 
-        /* Add envp pointers to the stack */
-        for (size_t i=0; i<env_offsets.size(); i++) {
-            pointers.push_back(env_va+env_offsets[i]);
-            if (trace) {
-                fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
-                        i, strlen(&(env_buffer[env_offsets[i]]))+1, env_va+env_offsets[i], &(env_buffer[env_offsets[i]]));
-            }
+    struct T2: public SgSimpleProcessing {
+        rose_addr_t segtab_offset, segtab_va;
+        size_t segtab_size;
+        T2(rose_addr_t segtab_offset, size_t segtab_size)
+            : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
+            {}
+        void visit(SgNode *node) {
+            SgAsmElfSection *section = isSgAsmElfSection(node);
+            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+            if (entry && section->get_offset()<=segtab_offset &&
+                section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
+                segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
         }
-        pointers.push_back(0); /*environment NULL terminator*/
+    } t2(t1.segtab_offset, t1.segtab_size);
+    t2.traverse(fhdr, preorder);
+    assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
 
-        /* Push certain auxv data items onto the stack. */
-        sp &= ~0xf;
+    /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
+     * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
+    auxv.clear();
 
-        static const char *platform = "i686";
-        sp -= strlen(platform)+1;
-        uint32_t platform_va = sp;
-        mem_write(platform, platform_va, strlen(platform)+1);
-
-        static const uint8_t random_data[] = {                  /* use hard-coded values for reproducibility */
-            0x00, 0x11, 0x22, 0x33,
-            0xff, 0xee, 0xdd, 0xcc,
-            0x88, 0x99, 0xaa, 0xbb,
-            0x77, 0x66, 0x55, 0x44
-        };
-        sp -= sizeof random_data;
-        uint32_t random_data_va = sp;
-        mem_write(random_data, random_data_va, sizeof random_data);
-
-
-        /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
-         * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
-         * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
-        struct T1: public SgSimpleProcessing {
-            rose_addr_t segtab_offset;
-            size_t segtab_size;
-            T1(): segtab_offset(0), segtab_size(0) {}
-            void visit(SgNode *node) {
-                SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
-                if (0==segtab_offset && segtab!=NULL) {
-                    segtab_offset = segtab->get_offset();
-                    segtab_size = segtab->get_size();
-                }
-            }
-        } t1;
-        t1.traverse(fhdr, preorder);
-        assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
-
-        struct T2: public SgSimpleProcessing {
-            rose_addr_t segtab_offset, segtab_va;
-            size_t segtab_size;
-            T2(rose_addr_t segtab_offset, size_t segtab_size)
-                : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
-                {}
-            void visit(SgNode *node) {
-                SgAsmElfSection *section = isSgAsmElfSection(node);
-                SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
-                if (entry && section->get_offset()<=segtab_offset &&
-                    section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
-                    segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
-            }
-        } t2(t1.segtab_offset, t1.segtab_size);
-        t2.traverse(fhdr, preorder);
-        assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
-        
-        /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
-         * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
-        auxv.clear();
-
-        if (vdso_mapped_va!=0) {
-            /* AT_SYSINFO */
-            auxv.push_back(32);
-            auxv.push_back(vdso_entry_va);
-            if (trace)
-                fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
-
-            /* AT_SYSINFO_PHDR */
-            auxv.push_back(33);
-            auxv.push_back(vdso_mapped_va);
-            if (trace)
-                fprintf(trace, "AT_SYSINFO_EHDR:  0x%08"PRIx32"\n", auxv.back());
-        }
-
-        /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
-        auxv.push_back(16);
-        uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
-        auxv.push_back(hwcap);
+    if (vdso_mapped_va!=0) {
+        /* AT_SYSINFO */
+        auxv.push_back(32);
+        auxv.push_back(vdso_entry_va);
         if (trace)
-            fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
+            fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_PAGESZ */
-        auxv.push_back(6);
-        auxv.push_back(PAGE_SIZE);
+        /* AT_SYSINFO_PHDR */
+        auxv.push_back(33);
+        auxv.push_back(vdso_mapped_va);
         if (trace)
-            fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
+            fprintf(trace, "AT_SYSINFO_EHDR:  0x%08"PRIx32"\n", auxv.back());
+    }
 
-        /* AT_CLKTCK */
-        auxv.push_back(17);
-        auxv.push_back(100);
-        if (trace)
-            fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
+    /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
+    auxv.push_back(16);
+    uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
+    auxv.push_back(hwcap);
+    if (trace)
+        fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_PHDR */
-        auxv.push_back(3); /*AT_PHDR*/
-        auxv.push_back(t2.segtab_va);
-        if (trace)
-            fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
+    /* AT_PAGESZ */
+    auxv.push_back(6);
+    auxv.push_back(PAGE_SIZE);
+    if (trace)
+        fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
 
-        /*AT_PHENT*/
-        auxv.push_back(4);
-        auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-        if (trace)
-            fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
+    /* AT_CLKTCK */
+    auxv.push_back(17);
+    auxv.push_back(100);
+    if (trace)
+        fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
 
-        /* AT_PHNUM */
-        auxv.push_back(5);
-        auxv.push_back(fhdr->get_e_phnum());
-        if (trace)
-            fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
+    /* AT_PHDR */
+    auxv.push_back(3); /*AT_PHDR*/
+    auxv.push_back(t2.segtab_va);
+    if (trace)
+        fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_BASE */
-        auxv.push_back(7);
-        auxv.push_back(fhdr->get_section_by_name(".interp") ? ld_linux_base_va : 0);
-        if (trace)
-            fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
+    /*AT_PHENT*/
+    auxv.push_back(4);
+    auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+    if (trace)
+        fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
 
-        /* AT_FLAGS */
-        auxv.push_back(8);
-        auxv.push_back(0);
-        if (trace)
-            fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
+    /* AT_PHNUM */
+    auxv.push_back(5);
+    auxv.push_back(fhdr->get_e_phnum());
+    if (trace)
+        fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
 
-        /* AT_ENTRY */
-        auxv.push_back(9);
-        auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-        if (trace)
-            fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
+    /* AT_BASE */
+    auxv.push_back(7);
+    auxv.push_back(fhdr->get_section_by_name(".interp") ? ld_linux_base_va : 0);
+    if (trace)
+        fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_UID */
-        auxv.push_back(11);
-        auxv.push_back(getuid());
-        if (trace)
-            fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
+    /* AT_FLAGS */
+    auxv.push_back(8);
+    auxv.push_back(0);
+    if (trace)
+        fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_EUID */
-        auxv.push_back(12);
-        auxv.push_back(geteuid());
-        if (trace)
-            fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
+    /* AT_ENTRY */
+    auxv.push_back(9);
+    auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+    if (trace)
+        fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
 
-        /* AT_GID */
-        auxv.push_back(13);
-        auxv.push_back(getgid());
-        if (trace)
-            fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
+    /* AT_UID */
+    auxv.push_back(11);
+    auxv.push_back(getuid());
+    if (trace)
+        fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
 
-        /* AT_EGID */
-        auxv.push_back(14);
-        auxv.push_back(getegid());
-        if (trace)
-            fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
+    /* AT_EUID */
+    auxv.push_back(12);
+    auxv.push_back(geteuid());
+    if (trace)
+        fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
 
-        /* AT_SECURE */
-        auxv.push_back(23); /* 0x17 */
-        auxv.push_back(false);
-        if (trace)
-            fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
+    /* AT_GID */
+    auxv.push_back(13);
+    auxv.push_back(getgid());
+    if (trace)
+        fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
 
-        /* AT_RANDOM */
-        auxv.push_back(25);/* 0x19 */
-        auxv.push_back(random_data_va);
-        if (trace)
-            fprintf(trace, "AT_RANDOM:       0x%08"PRIx32"\n", auxv.back());
+    /* AT_EGID */
+    auxv.push_back(14);
+    auxv.push_back(getegid());
+    if (trace)
+        fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
 
-        /* AT_EXECFN */
-        auxv.push_back(31); /* 0x1f */
-        auxv.push_back(execfn_va);
-        if (trace)
-            fprintf(trace, "AT_EXECFN:       0x%08"PRIx32" (%s)\n", auxv.back(), exeargs[0].c_str());
-    
-        /* AT_PLATFORM */
-        auxv.push_back(15);
-        auxv.push_back(platform_va);
-        if (trace)
-            fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+    /* AT_SECURE */
+    auxv.push_back(23); /* 0x17 */
+    auxv.push_back(false);
+    if (trace)
+        fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
 
-        /* AT_NULL */
-        auxv.push_back(0);
-        auxv.push_back(0);
-        pointers.insert(pointers.end(), auxv.begin(), auxv.end());
+    /* AT_RANDOM */
+    auxv.push_back(25);/* 0x19 */
+    auxv.push_back(random_data_va);
+    if (trace)
+        fprintf(trace, "AT_RANDOM:       0x%08"PRIx32"\n", auxv.back());
 
-        /* Finalize stack initialization by writing all the pointers to data we've pushed:
-         *    argc
-         *    argv with NULL terminator
-         *    environment with NULL terminator
-         *    auxv pairs terminated with (AT_NULL,0)
-         */
-        sp -= 4 * pointers.size();
-        sp &= ~0xf; /*align to 16 bytes*/
-        mem_write(&(pointers[0]), sp, 4*pointers.size());
+    /* AT_EXECFN */
+    auxv.push_back(31); /* 0x1f */
+    auxv.push_back(execfn_va);
+    if (trace)
+        fprintf(trace, "AT_EXECFN:       0x%08"PRIx32" (%s)\n", auxv.back(), exeargs[0].c_str());
 
-        main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, RSIM_SEMANTICS_VTYPE<32>(sp));
-    } RTS_WRITE_END;
+    /* AT_PLATFORM */
+    auxv.push_back(15);
+    auxv.push_back(platform_va);
+    if (trace)
+        fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
+
+    /* AT_NULL */
+    auxv.push_back(0);
+    auxv.push_back(0);
+    pointers.insert(pointers.end(), auxv.begin(), auxv.end());
+
+    /* Finalize stack initialization by writing all the pointers to data we've pushed:
+     *    argc
+     *    argv with NULL terminator
+     *    environment with NULL terminator
+     *    auxv pairs terminated with (AT_NULL,0)
+     */
+    sp -= 4 * pointers.size();
+    sp &= ~0xf; /*align to 16 bytes*/
+    mem_write(&(pointers[0]), sp, 4*pointers.size());
+
+    main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, RSIM_SEMANTICS_VTYPE<32>(sp));
 }
 
 /* The "thread" arg must be the calling thread */
@@ -1588,12 +1562,11 @@ RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_
     abort();
 #endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
-    RTS_MUTEX(clone_info.mutex) {
-        pthread_t t;
-        int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
-        if (0==err)
-            pthread_cond_wait(&clone_info.cond, &clone_info.mutex.mutex); /* wait for child to initialize */
-    } RTS_MUTEX_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info.mutex);
+    pthread_t t;
+    int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
+    if (0==err)
+        pthread_cond_wait(&clone_info.cond, &clone_info.mutex); /* wait for child to initialize */
     return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
 }
 
@@ -1612,7 +1585,9 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     ROSE_ASSERT(tid>=0);
     mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", tid);
 
-    RTS_MUTEX(clone_info->mutex) {
+    do {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info->mutex);
+
         /* Make our TID available to our parent. */
         clone_info->newtid = tid;
         clone_info->seq = thread->get_seq();
@@ -1622,12 +1597,12 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
             user_desc_32 ud;
             if (sizeof(ud)!=process->mem_read(&ud, clone_info->child_tls_va, sizeof ud)) {
                 tid = -EFAULT;
-                goto release_mutex;
+                break;
             }
             int status = thread->set_thread_area(&ud, false);
             if (status<0) {
                 tid = status;
-                goto release_mutex;
+                break;
             }
         }
         
@@ -1638,22 +1613,20 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
         if ((clone_info->flags & CLONE_PARENT_SETTID) &&
             4!=process->mem_write(&tid, clone_info->parent_tid_va, 4)) {
             tid = -EFAULT;
-            goto release_mutex;
+            break;
         }
         if ((clone_info->flags & CLONE_CHILD_SETTID) &&
             4!=process->mem_write(&tid, clone_info->child_tls_va, 4)) {
             tid = -EFAULT;
-            goto release_mutex;
+            break;
         }
 
         /* Should a memory location be cleared (and futex signaled) when the thread dies? */
         if (clone_info->flags & CLONE_CHILD_CLEARTID)
             thread->clear_child_tid = clone_info->parent_tid_va;
 
-
-    release_mutex:
         clone_info->newtid = tid;
-    } RTS_MUTEX_END;
+    } while (0);
 
     /* Parent is still blocked on pthread_cond_wait because we haven't signalled it yet.  We must signal after we've released
      * the mutex, because once we signal, the parent could return from clone_thread(), thus removing clone_info from the
@@ -1676,19 +1649,18 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 void
 RSIM_Process::sys_exit(int status)
 {
-    RTS_WRITE(rwlock()) {
-        terminated = true;
-        termination_status = status;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    terminated = true;
+    termination_status = status;
 
-        /* Tell all threads to exit. We do this by making sure they return from any blocking system call (by sending a
-         * signal). Every thread checks its cancelation state before every instruction, and will therefore exit. */
-        for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
-            RSIM_Thread *thread = ti->second;
-            thread->tracing(TRACE_THREAD) <<"process is canceling this thread\n";
-            pthread_cancel(thread->get_real_thread());
-            //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
-        }
-    } RTS_WRITE_END;
+    /* Tell all threads to exit. We do this by making sure they return from any blocking system call (by sending a
+     * signal). Every thread checks its cancelation state before every instruction, and will therefore exit. */
+    for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
+        RSIM_Thread *thread = ti->second;
+        thread->tracing(TRACE_THREAD) <<"process is canceling this thread\n";
+        pthread_cancel(thread->get_real_thread());
+        //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
+    }
 }
 
 int
@@ -1698,18 +1670,18 @@ RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction
         return -EINVAL;
 
     int retval = 0;
-    RTS_WRITE(rwlock()) {
-        if (old_action)
-            *old_action = signal_action[signo-1];
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    if (old_action)
+        *old_action = signal_action[signo-1];
 
-        if (new_action) {
-            if (SIGKILL==signo || SIGSTOP==signo) {
-                retval = -EINVAL;
-            } else {
-                signal_action[signo-1] = *new_action;
-            }
+    if (new_action) {
+        if (SIGKILL==signo || SIGSTOP==signo) {
+            retval = -EINVAL;
+        } else {
+            signal_action[signo-1] = *new_action;
         }
-    } RTS_WRITE_END;
+    }
+
     return retval;
 }
 
@@ -1724,28 +1696,27 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
     if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
         return -EINVAL;
 
-    RTS_WRITE(rwlock()) {
-        if (pid!=getpid()) {
-            retval = kill(pid, signo);
-        } else {
-            /* Send the signal to any one of our threads where it is not masked. */
-            for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); signo>0 && ti!=threads.end(); ti++) {
-                RSIM_Thread *thread = ti->second;
-                int status = thread->signal_accept(info);
-                if (status>=0) {
-                    if (!pthread_equal(pthread_self(), thread->get_real_thread())) {
-                        status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
-                        assert(0==status);
-                    }
-                    signo = 0;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    if (pid!=getpid()) {
+        retval = kill(pid, signo);
+    } else {
+        /* Send the signal to any one of our threads where it is not masked. */
+        for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); signo>0 && ti!=threads.end(); ti++) {
+            RSIM_Thread *thread = ti->second;
+            int status = thread->signal_accept(info);
+            if (status>=0) {
+                if (!pthread_equal(pthread_self(), thread->get_real_thread())) {
+                    status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
+                    assert(0==status);
                 }
+                signo = 0;
             }
-
-            /* If signal could not be delivered to any thread... */
-            if (signo>0)
-                sighand.generate(info, this, mlog[INFO]);
         }
-    } RTS_WRITE_END;
+
+        /* If signal could not be delivered to any thread... */
+        if (signo>0)
+            sighand.generate(info, this, mlog[INFO]);
+    }
 
     return retval;
 }
@@ -1775,13 +1746,12 @@ RSIM_Process::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
 {
     assert(info!=NULL);
     int retval = 0;
-    RTS_WRITE(rwlock()) {
-        if (sq.head!=sq.tail) {
-            *info = sq.info[sq.head];
-            retval = info->si_signo;
-            sq.head = (sq.head + 1) % sq.size;
-        }
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    if (sq.head!=sq.tail) {
+        *info = sq.info[sq.head];
+        retval = info->si_signo;
+        sq.head = (sq.head + 1) % sq.size;
+    }
     return retval;
 }
 
@@ -1800,55 +1770,52 @@ RSIM_Process::signal_dispatch()
 SgAsmBlock *
 RSIM_Process::disassemble(bool fast, MemoryMap *map/*=null*/)
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock()); // while using the memory map
     SgAsmBlock *block = NULL;
-
-    RTS_WRITE(rwlock()) { /* while using the memory map */
-        Disassembler::InstructionMap insns;
-        MemoryMap *allocated_map = NULL;
-        if (fast) {
-            if (!map) {
-                map = allocated_map = new MemoryMap;
-                *map = get_memory();                    // shallow copy: new segments point to same old data
-                map->require(MemoryMap::EXECUTABLE).keep();
-            }
-            rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
-            unsigned search = disassembler->get_search();
-            disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
-            Disassembler::AddressSet successors;
-            Disassembler::BadMap bad;
-            insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
-            disassembler->set_search(search);
-        } else {
-            if (!map) {
-                map = allocated_map = new MemoryMap;
-                *map = get_memory();                    // shallow copy: new segments point to same old data
-                map->require(MemoryMap::READABLE).keep(); // keep only readable memory; probably includes all executable too
-            }
-            Partitioner partitioner;
-            block = partitioner.partition(interpretation, disassembler, map);
-            insns = partitioner.get_instructions();
+    Disassembler::InstructionMap insns;
+    MemoryMap *allocated_map = NULL;
+    if (fast) {
+        if (!map) {
+            map = allocated_map = new MemoryMap;
+            *map = get_memory();                    // shallow copy: new segments point to same old data
+            map->require(MemoryMap::EXECUTABLE).keep();
         }
-        delete allocated_map; allocated_map=NULL;
-
-        /* Add new instructions to cache */
-        icache.insert(insns.begin(), insns.end());
-
-        /* Fast disassembly puts all the instructions in a single SgAsmBlock */
-        if (!block) {
-            block = new SgAsmBlock;
-            for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
-                block->get_statementList().push_back(ii->second);
+        rose_addr_t start_va = 0; // arbitrary since we set the disassembler's SEARCH_UNUSED bit
+        unsigned search = disassembler->get_search();
+        disassembler->set_search(search | Disassembler::SEARCH_UNUSED);
+        Disassembler::AddressSet successors;
+        Disassembler::BadMap bad;
+        insns = disassembler->disassembleBuffer(map, start_va, &successors, &bad);
+        disassembler->set_search(search);
+    } else {
+        if (!map) {
+            map = allocated_map = new MemoryMap;
+            *map = get_memory();                    // shallow copy: new segments point to same old data
+            map->require(MemoryMap::READABLE).keep(); // keep only readable memory; probably includes all executable too
         }
-    } RTS_WRITE_END;
+        Partitioner partitioner;
+        block = partitioner.partition(interpretation, disassembler, map);
+        insns = partitioner.get_instructions();
+    }
+    delete allocated_map; allocated_map=NULL;
+
+    /* Add new instructions to cache */
+    icache.insert(insns.begin(), insns.end());
+
+    /* Fast disassembly puts all the instructions in a single SgAsmBlock */
+    if (!block) {
+        block = new SgAsmBlock;
+        for (Disassembler::InstructionMap::const_iterator ii=icache.begin(); ii!=icache.end(); ++ii)
+            block->get_statementList().push_back(ii->second);
+    }
     return block;
 }
 
 void
 RSIM_Process::set_callbacks(const RSIM_Callbacks &cb)
 {
-    RTS_WRITE(rwlock()) {
-        callbacks = cb; // overloaded, thread safe
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    callbacks = cb; // overloaded, thread safe
 }
 
 /* Install callback in process and optionally in all existing threads. */

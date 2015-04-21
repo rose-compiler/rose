@@ -10,7 +10,7 @@
 
 using namespace rose::Diagnostics;
 
-RTS_rwlock_t RSIM_Simulator::class_rwlock = RTS_RWLOCK_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
+SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
 
 /******************************************************************************************************************************
@@ -165,8 +165,6 @@ syscall_RSIM_transaction_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Simulator::ctor()
 {
-    RTS_rwlock_init(&instance_rwlock, RTS_LAYER_RSIM_SIMULATOR_OBJ, NULL);
-
     /* Some special syscalls that are available to specimens when they're being simulated. */
     syscall_define(1000000, syscall_RSIM_is_present_enter,  syscall_RSIM_is_present,  syscall_RSIM_is_present_leave);
     syscall_define(1000001, syscall_RSIM_message_enter,     syscall_RSIM_message,     syscall_RSIM_message_leave);
@@ -403,92 +401,85 @@ RSIM_Simulator::create_process()
 void
 RSIM_Simulator::activate()
 {
-    RTS_WRITE(class_rwlock) {
-        if (!active_sim) {
-            ROSE_ASSERT(0==active);
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(class_rwlock);
+    if (!active_sim) {
+        ROSE_ASSERT(0==active);
 
-            /* Make this simulator active before we install the signal handlers. This is necessary because the signal handlers
-             * reference this without using a mutex lock.  On the other hand, increment the "active" counter at the end of the
-             * function, which allows the signal handler to determine when the sigaction vector is not fully initialized. */
-            active_sim = this;
-            memset(signal_installed, 0, sizeof signal_installed); /* no handler installed yet */
-            memset(signal_restore, 0, sizeof signal_restore); /* cleaned up only for debugging */
+        /* Make this simulator active before we install the signal handlers. This is necessary because the signal handlers
+         * reference this without using a mutex lock.  On the other hand, increment the "active" counter at the end of the
+         * function, which allows the signal handler to determine when the sigaction vector is not fully initialized. */
+        active_sim = this;
+        memset(signal_installed, 0, sizeof signal_installed); /* no handler installed yet */
+        memset(signal_restore, 0, sizeof signal_restore); /* cleaned up only for debugging */
 
-            /* Register the inter-process signal reception handler for signals that are typically sent from one process to
-             * another.  This signal handler simply places the signal onto a process-wide queue. */
-            struct sigaction sa;
-            sa.sa_flags = SA_RESTART | SA_SIGINFO;
-            sa.sa_handler = NULL;
-            sa.sa_sigaction = signal_receiver;
-            sigfillset(&sa.sa_mask);
-            for (int signo=1; signo<__SIGRTMIN; signo++) {
-                switch (signo) {
-                    case SIGFPE:
-                    case SIGILL:
-                    case SIGSEGV:
-                    case SIGBUS:
-                    case SIGABRT:
-                    case SIGTRAP:
-                    case SIGSYS:
-                        break;
-                    default:
-                        signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
-                        break;
-                }
+        /* Register the inter-process signal reception handler for signals that are typically sent from one process to
+         * another.  This signal handler simply places the signal onto a process-wide queue. */
+        struct sigaction sa;
+        sa.sa_flags = SA_RESTART | SA_SIGINFO;
+        sa.sa_handler = NULL;
+        sa.sa_sigaction = signal_receiver;
+        sigfillset(&sa.sa_mask);
+        for (int signo=1; signo<__SIGRTMIN; signo++) {
+            switch (signo) {
+                case SIGFPE:
+                case SIGILL:
+                case SIGSEGV:
+                case SIGBUS:
+                case SIGABRT:
+                case SIGTRAP:
+                case SIGSYS:
+                    break;
+                default:
+                    signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
+                    break;
             }
-
-            /* Register the wakeup signal handler. This handler's only purpose is to interrupt blocked system calls. */
-            sa.sa_handler = signal_wakeup;
-            sigemptyset(&sa.sa_mask);
-            sa.sa_flags = 0;
-            int signo = RSIM_SignalHandling::SIG_WAKEUP;
-            signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
-        } else {
-            ROSE_ASSERT(active_sim==this);
         }
-        active++;
-    } RTS_WRITE_END;
+
+        /* Register the wakeup signal handler. This handler's only purpose is to interrupt blocked system calls. */
+        sa.sa_handler = signal_wakeup;
+        sigemptyset(&sa.sa_mask);
+        sa.sa_flags = 0;
+        int signo = RSIM_SignalHandling::SIG_WAKEUP;
+        signal_installed[signo] = -1 == sigaction(signo, &sa, signal_restore+signo) ? -errno : 1;
+    } else {
+        ROSE_ASSERT(active_sim==this);
+    }
+    active++;
 }
 
 void
 RSIM_Simulator::deactivate()
 {
-    RTS_WRITE(class_rwlock) {
-        /* The "active_sim" and "active" data members are adjusted in the opposite order as activate() in order that the signal
-         * handlers can detect the current state of activation without using thread synchronization. */
-        ROSE_ASSERT(this==active_sim);
-        ROSE_ASSERT(active>0);
-        if (0==--active) {
-            for (int i=1; i<=_NSIG; i++) {
-                if (signal_installed[i]>0) {
-                    int status = sigaction(i, signal_restore+i, NULL);
-                    ROSE_ASSERT(status>=0);
-                }
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(class_rwlock);
+
+    /* The "active_sim" and "active" data members are adjusted in the opposite order as activate() in order that the signal
+     * handlers can detect the current state of activation without using thread synchronization. */
+    ROSE_ASSERT(this==active_sim);
+    ROSE_ASSERT(active>0);
+    if (0==--active) {
+        for (int i=1; i<=_NSIG; i++) {
+            if (signal_installed[i]>0) {
+                int status = sigaction(i, signal_restore+i, NULL);
+                ROSE_ASSERT(status>=0);
             }
-            active_sim = NULL;
         }
-    } RTS_WRITE_END;
+        active_sim = NULL;
+    }
 }
 
 bool
 RSIM_Simulator::is_active() const
 {
-    bool retval;
-    RTS_READ(class_rwlock) {
-        retval = active!=0;
-    } RTS_READ_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(class_rwlock);
+    return active!=0;
 }
 
 /* Class method */
 RSIM_Simulator *
 RSIM_Simulator::which_active() 
 {
-    RSIM_Simulator *retval = NULL;
-    RTS_READ(class_rwlock) {
-        retval = active_sim;
-    } RTS_READ_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(class_rwlock);
+    return active_sim;
 }
 
 /* Class method. This is a signal handler -- do not use thread synchronization or functions that are not async signal safe. */
@@ -598,52 +589,48 @@ RSIM_Simulator::terminate_self()
     if (!process->has_terminated())
         return;
 
-    RTS_WRITE(class_rwlock) {
-        int status = process->get_termination_status();
-        if (WIFEXITED(status)) {
-            exit(WEXITSTATUS(status));
-        } else if (WIFSIGNALED(status)) {
-            struct sigaction sa, old;
-            memset(&sa, 0, sizeof sa);
-            sa.sa_handler = SIG_DFL;
-            sigaction(WTERMSIG(status), &sa, &old);
-            raise(WTERMSIG(status));
-            sigaction(WTERMSIG(status), &old, NULL);
-        } else if (WIFSTOPPED(status)) {
-            struct sigaction sa, old;
-            memset(&sa, 0, sizeof sa);
-            sa.sa_handler = SIG_DFL;
-            sigaction(WTERMSIG(status), &sa, &old);
-            raise(WTERMSIG(status));
-            sigaction(WTERMSIG(status), &old, NULL);
-        }
-    } RTS_WRITE_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(class_rwlock);
+    int status = process->get_termination_status();
+    if (WIFEXITED(status)) {
+        exit(WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        struct sigaction sa, old;
+        memset(&sa, 0, sizeof sa);
+        sa.sa_handler = SIG_DFL;
+        sigaction(WTERMSIG(status), &sa, &old);
+        raise(WTERMSIG(status));
+        sigaction(WTERMSIG(status), &old, NULL);
+    } else if (WIFSTOPPED(status)) {
+        struct sigaction sa, old;
+        memset(&sa, 0, sizeof sa);
+        sa.sa_handler = SIG_DFL;
+        sigaction(WTERMSIG(status), &sa, &old);
+        raise(WTERMSIG(status));
+        sigaction(WTERMSIG(status), &old, NULL);
+    }
 }
 
 bool
 RSIM_Simulator::syscall_is_implemented(int callno) const
 {
-    bool retval = false;
-    RTS_READ(instance_rwlock) {
-        std::map<int, SystemCall*>::const_iterator found = syscall_table.find(callno);
-        retval = (found!=syscall_table.end() &&
-                  (!found->second->enter.empty() || !found->second->body.empty() || !found->second->leave.empty()));
-    } RTS_READ_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+    std::map<int, SystemCall*>::const_iterator found = syscall_table.find(callno);
+    bool retval = (found!=syscall_table.end() &&
+                   (!found->second->enter.empty() || !found->second->body.empty() || !found->second->leave.empty()));
     return retval;
 }
 
 RSIM_Simulator::SystemCall *
 RSIM_Simulator::syscall_implementation(int callno)
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
     SystemCall *retval = NULL;
-    RTS_READ(instance_rwlock) {
-        std::map<int, SystemCall*>::iterator found = syscall_table.find(callno);
-        if (found==syscall_table.end()) {
-            retval = syscall_table[callno] = new SystemCall;
-        } else {
-            retval = found->second;
-        }
-    } RTS_READ_END;
+    std::map<int, SystemCall*>::iterator found = syscall_table.find(callno);
+    if (found==syscall_table.end()) {
+        retval = syscall_table[callno] = new SystemCall;
+    } else {
+        retval = found->second;
+    }
     return retval;
 }
 

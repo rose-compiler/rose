@@ -62,7 +62,8 @@ public:
             }
 
             if (filename=="/proc/self/maps") {
-                RTS_WRITE(t->get_process()->rwlock()) {
+                {
+                    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
                     FILE *f = fopen("x-maps", "w");
                     assert(f);
 
@@ -79,7 +80,7 @@ public:
                     }
                     fclose(f);
                     filename = "x-maps";
-                } RTS_WRITE_END;
+                }
 
                 uint32_t flags=t->syscall_arg(1), mode=(flags & O_CREAT)?t->syscall_arg(2):0;
                 int fd = open(filename.c_str(), flags, mode);

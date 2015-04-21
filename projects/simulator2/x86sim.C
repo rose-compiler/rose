@@ -11,7 +11,7 @@
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
-static RTS_mutex_t global_mutex = RTS_MUTEX_INITIALIZER(RTS_LAYER_RSIM_SIMULATOR_CLASS);
+static SAWYER_THREAD_TRAITS::RecursiveMutex global_mutex;
 static bool do_disassemble_at_coredump = false;         /* disassemble when specimen is about to dump core? */
 static std::set<rose_addr_t> do_disassemble_at_addr;    /* disassemble first time these instructions are hit. */
 static bool do_show_disassembly = false;                /* show assembly code whenever we disassemble? */
@@ -25,7 +25,8 @@ public:
         RSIM_Process *process = args.thread->get_process();
 
         bool dis=false, clean=false;
-        RTS_MUTEX(global_mutex) {
+        {
+            SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(global_mutex);
             if (do_disassemble_at_addr.empty()) {
                 clean = true;
             } else if (do_disassemble_at_addr.find(args.insn->get_address())!=do_disassemble_at_addr.end()) {
@@ -34,7 +35,7 @@ public:
                 if (do_disassemble_at_addr.empty())
                     clean = true;
             }
-        } RTS_MUTEX_END;
+        }
 
         if (dis) {
             mfprintf(args.thread->tracing(TRACE_MISC))("disassembling at 0x%08"PRIx64"...\n", args.insn->get_address());

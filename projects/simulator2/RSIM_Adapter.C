@@ -30,28 +30,25 @@ RSIM_Adapter::AdapterBase::NotImplemented::operator()(bool b, const Args &args)
 void
 RSIM_Adapter::SyscallDisabler::enable_syscall(int callno, bool state/*=true*/) 
 {
-    RTS_MUTEX(mutex) {
-        syscall_state[callno] = state;
-    } RTS_MUTEX_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
+    syscall_state[callno] = state;
 }
 
 void
 RSIM_Adapter::SyscallDisabler::set_default(bool state)
 {
-    RTS_MUTEX(mutex) {
-        dflt_state = state;
-    } RTS_MUTEX_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
+    dflt_state = state;
 }
 
 bool
 RSIM_Adapter::SyscallDisabler::is_enabled(int callno) const
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
     bool retval = dflt_state;
-    RTS_MUTEX(mutex) {
-        std::map<int, bool>::const_iterator found = syscall_state.find(callno);
-        if (found!=syscall_state.end())
-            retval = found->second;
-    } RTS_MUTEX_END;
+    std::map<int, bool>::const_iterator found = syscall_state.find(callno);
+    if (found!=syscall_state.end())
+        retval = found->second;
     return retval;
 }
 
@@ -188,23 +185,19 @@ RSIM_Adapter::TraceIO::FtruncateSyscall::operator()(bool b, const Args &args)
 bool
 RSIM_Adapter::TraceIO::is_tracing_fd(int fd)
 {
-    bool retval = false;
-    RTS_MUTEX(mutex) {
-        retval = tracefd.find(fd)!=tracefd.end();
-    } RTS_MUTEX_END;
-    return retval;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
+    return tracefd.find(fd)!=tracefd.end();
 }
 
 void
 RSIM_Adapter::TraceIO::trace_fd(int fd, bool how/*=true*/)
 {
-    RTS_MUTEX(mutex) {
-        if (how) {
-            tracefd.insert(fd);
-        } else {
-            tracefd.erase(fd);
-        }
-    } RTS_MUTEX_END;
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
+    if (how) {
+        tracefd.insert(fd);
+    } else {
+        tracefd.erase(fd);
+    }
 }
 
 void

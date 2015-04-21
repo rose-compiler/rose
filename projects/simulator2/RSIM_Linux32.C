@@ -3641,9 +3641,10 @@ sys_msgctl(RSIM_Thread *t, uint32_t msqid, uint32_t cmd, uint32_t buf_va)
 static void
 sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
     int result = -ENOSYS;
 
-    RTS_WRITE(t->get_process()->rwlock()) {
+    do {
         if (!t->get_process()->get_memory().at(shmaddr_va).exists()) {
             result = -EINVAL;
             break;
@@ -3664,7 +3665,8 @@ sys_shmdt(RSIM_Thread *t, uint32_t shmaddr_va)
 
         t->get_process()->mem_unmap(me.key().least(), me.key().size(), t->tracing(TRACE_MMAP));
         result = 0;
-    } RTS_WRITE_END;
+    } while (0);
+
     t->syscall_return(result);
 }
 
@@ -3850,9 +3852,10 @@ sys_shmctl(RSIM_Thread *t, uint32_t shmid, uint32_t cmd, uint32_t buf_va)
 static void
 sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, uint32_t shmaddr)
 {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
     int result = -ENOSYS;
 
-    RTS_WRITE(t->get_process()->rwlock()) {
+    do {
         if (0==shmaddr) {
             const MemoryMap &mm = t->get_process()->get_memory();
             AddressInterval freeArea = mm.unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
@@ -3896,7 +3899,7 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         }
         t->syscall_return(shmaddr);
         result = 0;
-    } RTS_WRITE_END;
+    } while (0);
     if (result)
         t->syscall_return(result);
 }
@@ -5288,13 +5291,15 @@ syscall_getgroups32_enter(RSIM_Thread *t, int callno)
 static void
 syscall_getgroups32(RSIM_Thread *t, int callno)
 {
+
     int nelmts = t->syscall_arg(0);
     uint32_t list_ptr = t->syscall_arg(1);
     int ngroups = 0;
     gid_t *list = NULL;
 
     /* Use the process mutex so we can figure out how much memory will be needed before we obtain the groups. */
-    RTS_READ(t->get_process()->rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
         if (-1==(ngroups = getgroups(0, NULL)))
             t->syscall_return(-errno); // capture errno before we lose it
         if (ngroups>0 && nelmts>0 && ngroups<=nelmts) {
@@ -5302,7 +5307,7 @@ syscall_getgroups32(RSIM_Thread *t, int callno)
             int ngroups2 __attribute__((unused)) = getgroups(ngroups, list);
             assert(ngroups2==ngroups);
         }
-    } RTS_READ_END;
+    }
 
     if (-1==ngroups) {
         // errno already captured
@@ -5368,10 +5373,11 @@ syscall_setgroups32(RSIM_Thread *t, int callno)
 
     /* The write lock is required by syscall_getgroups32() */
     int retval = 0;
-    RTS_WRITE(t->get_process()->rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
         retval = setgroups(nelmts, list);
         t->syscall_return(-1==retval ? -errno : retval); // capture errno before we lose it
-    } RTS_WRITE_END;
+    }
 
     delete[] list;
 }
@@ -5458,10 +5464,11 @@ syscall_madvise(RSIM_Thread *t, int callno)
 
     /* If pages are unmapped, return -ENOMEM */
     ExtentMap mapped_mem;
-    RTS_READ(t->get_process()->rwlock()) {
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
         AddressIntervalSet addresses(t->get_process()->get_memory());
         mapped_mem = toExtentMap(addresses);
-    } RTS_READ_END;
+    }
     ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
     if (unmapped.size()>0) {
         t->syscall_return(-ENOMEM);

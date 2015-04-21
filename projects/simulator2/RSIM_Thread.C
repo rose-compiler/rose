@@ -184,7 +184,8 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
         uint32_t retval = values ? values[0] : policy.readRegister<32>(policy.reg_eax).known_value();
         syscall_arginfo(format[0], retval, &info, app);
 
-        RTS_WRITE(process->rwlock()) {
+        {
+            SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
             mesg <<" = ";
 
             /* Return value */
@@ -213,7 +214,7 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
                     }
                 }
             }
-        } RTS_WRITE_END;
+        }
     }
 }
 
@@ -648,53 +649,52 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 {
     if (!mesg)
         return;
-    RTS_WRITE(get_process()->rwlock()) {
-        if (title.empty()) {
-            mesg <<"stack frames:";
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(get_process()->rwlock());
+    if (title.empty()) {
+        mesg <<"stack frames:";
+    } else {
+        mfprintf(mesg)("%s", title.c_str());
+    }
+
+    uint32_t bp = policy.readRegister<32>(policy.reg_ebp).known_value();
+    uint32_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
+
+    for (int i=0; i<32; i++) {
+        mfprintf(mesg)("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
+        SgAsmInstruction *insn = NULL;
+        try {
+            insn = process->get_instruction(ip);
+        } catch (const Disassembler::Exception&) {
+            /* IP is probably pointing to non-executable memory or a bad address. */
+        }
+        SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
+        if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
+            mfprintf(mesg)(" in function %s", func->get_name().c_str());
+        } else if (process->get_memory().at(ip).exists()) {
+            const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
+            if (!sgmt.name().empty())
+                mfprintf(mesg)(" in memory region %s", sgmt.name().c_str());
+        }
+
+        if (bp_not_saved) {
+            /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
+             * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
+             * frames. */
+            uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
+            if (4!=process->mem_read(&ip, sp, 4))
+                break;
+            bp_not_saved = false;
+            mesg <<" [no stack frame]";
         } else {
-            mfprintf(mesg)("%s", title.c_str());
+            /* This function has stored its incoming EBP on the stack at ss:[ebp].  This is usually accomplished by the
+             * instructions PUSH EBP; MOV EBP, ESP. */
+            if (4!=process->mem_read(&ip, bp+4, 4))
+                break;
+            if (4!=process->mem_read(&bp, bp, 4))
+                break;
         }
-
-        uint32_t bp = policy.readRegister<32>(policy.reg_ebp).known_value();
-        uint32_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
-
-        for (int i=0; i<32; i++) {
-            mfprintf(mesg)("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
-            SgAsmInstruction *insn = NULL;
-            try {
-                insn = process->get_instruction(ip);
-            } catch (const Disassembler::Exception&) {
-                /* IP is probably pointing to non-executable memory or a bad address. */
-            }
-            SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
-            if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
-                mfprintf(mesg)(" in function %s", func->get_name().c_str());
-            } else if (process->get_memory().at(ip).exists()) {
-                const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
-                if (!sgmt.name().empty())
-                    mfprintf(mesg)(" in memory region %s", sgmt.name().c_str());
-            }
-
-            if (bp_not_saved) {
-                /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
-                 * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
-                 * frames. */
-                uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
-                if (4!=process->mem_read(&ip, sp, 4))
-                    break;
-                bp_not_saved = false;
-                mesg <<" [no stack frame]";
-            } else {
-                /* This function has stored its incoming EBP on the stack at ss:[ebp].  This is usually accomplished by the
-                 * instructions PUSH EBP; MOV EBP, ESP. */
-                if (4!=process->mem_read(&ip, bp+4, 4))
-                    break;
-                if (4!=process->mem_read(&bp, bp, 4))
-                    break;
-            }
-        }
-        mesg <<"\n";
-    } RTS_WRITE_END;
+    }
+    mesg <<"\n";
 }
 
 void
