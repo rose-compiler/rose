@@ -24,6 +24,7 @@ using namespace Fortran_to_C;
 bool isLinearlizeArray = false;
 vector<SgArrayType*> arrayTypeList;
 vector<SgVarRefExp*> parameterRefList;
+vector<SgForStatement*> forStmtList;
 vector<SgVariableDeclaration*> variableDeclList;
 vector<SgPntrArrRefExp*> pntrArrRefList;
 vector<SgEquivalenceStatement*> equivalenceList;
@@ -90,6 +91,18 @@ class parameterTraversal : public ROSE_VisitorPattern
 void parameterTraversal::visit(SgVarRefExp* parameterRef)
 {
   parameterRefList.push_back(parameterRef);
+}
+
+// memory pool traversal for forStatement 
+class forloopTraversal : public ROSE_VisitorPattern
+{
+  public:
+    void visit(SgForStatement* forStmt);
+};
+
+void forloopTraversal::visit(SgForStatement* forStmt)
+{
+  forStmtList.push_back(forStmt);
 }
 
 // simple traversal for general translation
@@ -284,21 +297,26 @@ int main( int argc, char * argv[] )
     SgInitializedNamePtrList initializedNameList = variableDeclaration->get_variables();
     for(SgInitializedNamePtrList::iterator i=initializedNameList.begin(); i!=initializedNameList.end();++i)
     {
-      SgInitializedName* initiallizedName = isSgInitializedName(*i);
-      SgType* baseType = initiallizedName->get_type();
+      SgInitializedName* initializedName = isSgInitializedName(*i);
+      SgType* baseType = initializedName->get_type();
       if(baseType->variantT() == V_SgArrayType)
       {
         SgArrayType* arrayBase = isSgArrayType(baseType);
         // At this moment, we are still working on the Fortran-stype AST.  Therefore, there is no nested types for multi-dim array.
         if(arrayBase->findBaseType()->variantT() == V_SgTypeString)
         {
-          arrayBase->reset_base_type(translateType(arrayBase->findBaseType()));
-          arrayBase->set_rank(arrayBase->get_rank()+1);
+          //arrayBase->reset_base_type(translateType(arrayBase->findBaseType()));
+          //arrayBase->set_rank(arrayBase->get_rank()+1);
+          SgExpression* stringLength = deepCopy(isSgTypeString(arrayBase->findBaseType())->get_lengthExpression());
+          arrayBase->get_dim_info()->prepend_expression(stringLength);
         }
+        else
+          arrayBase->set_base_type(translateType(arrayBase->findBaseType()));
       }
       else
       {
-        initiallizedName->set_type(translateType(baseType));
+//cout << initializedName->get_name() << endl;
+        initializedName->set_type(translateType(baseType));
       }
     }
   }
@@ -413,6 +431,154 @@ int main( int argc, char * argv[] )
   {
     removeStatement(*i);
     (*i)->set_parent(NULL);
+  }
+
+  // The last step to refactor loops to have a 0-based C-style loop
+  forloopTraversal translateforLoop;
+  traverseMemoryPoolVisitorPattern(translateforLoop);
+  for(vector<SgForStatement*>::iterator i=forStmtList.begin(); i!=forStmtList.end(); ++i)
+  {
+    SgStatementPtrList &init = (*i) ->get_init_stmt();
+    if (init.size() !=1) // We only handle one statement case
+      {
+        cout << "Skipping index shifting: loop contains multiple init statements" << endl;
+        continue;
+      }
+    SgStatement* init1 = init.front();
+    SgExprStatement* assign = isSgExprStatement(init1);
+    if(assign)
+    {
+      SgAssignOp* assignOp = isSgAssignOp(assign->get_expression());
+      ROSE_ASSERT(assignOp);
+      SgExpression* lowBound = isSgExpression(assignOp->get_rhs_operand());
+      ROSE_ASSERT(lowBound);
+      int offSet = 0;
+      SgBinaryOp* binOpHolder;
+      if(isSgIntVal(lowBound))
+      {
+        offSet = isSgIntVal(lowBound)->get_value();
+        binOpHolder = assignOp;
+      }
+      else if(isSgAddOp(lowBound))
+      {
+        SgAddOp* addop = isSgAddOp(lowBound);
+        if(!isSgIntVal(addop->get_rhs_operand()))
+          continue;
+        offSet = isSgIntVal(addop->get_rhs_operand())->get_value();
+        binOpHolder = addop;
+      }
+      else
+      {
+        cout << "Skipping index shifting: loop init statement is not SgExprStatement" << endl;
+        continue;
+      }
+// convert test statement
+      if(offSet != 1)  // Now only test offSet = 1
+      {
+        cout << "Skipping index shifting: Offset is not 1" << endl;
+        continue;
+      }
+      SgExprStatement* testStmt = isSgExprStatement((*i)->get_test());
+      ROSE_ASSERT(testStmt);
+      SgExpression* testExpr = testStmt->get_expression();
+      SgExpression* oldExp;
+      SgExpression* newExp;
+      if(isSgLessOrEqualOp(testExpr))
+      {
+        SgLessOrEqualOp* oldTest = isSgLessOrEqualOp(testExpr);
+        SgLessThanOp* newTest = buildLessThanOp(deepCopy(oldTest->get_lhs_operand()),deepCopy(oldTest->get_rhs_operand()));
+        oldExp = oldTest;
+        newExp = newTest;
+      }
+      else if(isSgLessThanOp(testExpr))
+      {
+        SgLessThanOp* oldTest = isSgLessThanOp(testExpr);
+        SgSubtractOp* newUpbound = buildSubtractOp(deepCopy(oldTest->get_rhs_operand()), buildIntVal(1));
+        oldExp = oldTest->get_rhs_operand();
+        newExp = newUpbound;
+      }
+      else
+        continue;
+// convert all subscript
+      bool validSubscript = true;
+      SgInitializedName* indexName = getLoopIndexVariable(*i);
+      SgSymbol* indexSym = indexName->get_symbol_from_symbol_table();
+      Rose_STL_Container<SgNode*> varRefs = NodeQuery::querySubTree((*i)->get_loop_body(),V_SgVarRefExp);
+      for (Rose_STL_Container<SgNode *>::iterator j = varRefs.begin(); j != varRefs.end(); j++)
+      {
+// need to find the "-n" in subscript
+        SgVarRefExp* varRef = isSgVarRefExp(*j);
+        SgVariableSymbol* varSym = varRef->get_symbol();
+        if(varSym != indexSym)  
+          continue;
+        SgNode* parentNode = varRef;
+        while(!isSgPntrArrRefExp(parentNode->get_parent()))
+        {
+          if(parentNode->get_parent())
+            parentNode = parentNode->get_parent();
+          else 
+          {
+           cout << "Skipping index shifting: index is used not only in subscript" << endl;
+            validSubscript = false;
+            break;
+          }
+        }
+        if(!isSgSubtractOp(parentNode))
+        {
+          validSubscript = false;
+          break;
+        }
+        SgSubtractOp* subOp = isSgSubtractOp(parentNode);
+        SgIntVal* rhsOp = isSgIntVal(subOp->get_rhs_operand());
+        if(!rhsOp)
+        {
+          validSubscript = false;
+          break;
+        }
+        if(rhsOp->get_value() != offSet)
+        {
+          validSubscript = false;
+          break;
+        }
+      }
+// perform replacement
+      if(!validSubscript)
+      {
+        cout << "Skipping index shifting: invalid array subscript" << endl;
+        continue;
+      }
+//      cout << "Perform loop shifting!!" << endl;
+      // reset the lowerbound to 0
+      binOpHolder->set_rhs_operand(buildIntVal(0));
+      // replace new test statement
+      replaceExpression(oldExp, newExp,false);
+      for (Rose_STL_Container<SgNode *>::iterator j = varRefs.begin(); j != varRefs.end(); j++)
+      {
+// need to find the "-n" in subscript
+        SgVarRefExp* varRef = isSgVarRefExp(*j);
+        SgVariableSymbol* varSym = varRef->get_symbol();
+        if(varSym != indexSym)  
+          continue;
+        SgNode* parentNode = varRef;
+        while(!isSgPntrArrRefExp(parentNode->get_parent()))
+        {
+          if(parentNode->get_parent())
+            parentNode = parentNode->get_parent();
+          else 
+            break;
+        }
+        SgSubtractOp* subOp = isSgSubtractOp(parentNode);
+        ROSE_ASSERT(subOp);
+        SgExpression* lhsOp = isSgExpression(subOp->get_lhs_operand());
+        SgIntVal* rhsOp = isSgIntVal(subOp->get_rhs_operand());
+        ROSE_ASSERT(lhsOp);
+        ROSE_ASSERT(rhsOp);
+        replaceExpression(subOp,deepCopy(lhsOp), true);
+        deleteAST(rhsOp);
+      }
+    }
+    else
+      cout << "Skipping index shifting: loop init statement is not SgExprStatement" << endl;
   }
       
   // deepDelete the removed nodes 

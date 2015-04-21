@@ -26,6 +26,11 @@ void Fortran_to_C::translateDoubleVal(SgFloatVal* floatVal)
     doubleVal->set_valueString(valString);
     replaceExpression(floatVal, doubleVal, false);
   }
+  else
+  {
+    valString = valString.append("f");
+    floatVal->set_valueString(valString);
+  }
 }
 
 void Fortran_to_C::translateExponentiationOp(SgExponentiationOp* expOp)
@@ -50,7 +55,7 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
   SgExprListExp* exprListExp = funcCallExp->get_args();
   SgExpressionPtrList operandList = exprListExp->get_expressions();
   SgName functionName = functionRefExp->get_symbol()->get_name();
-
+// cout << "function name=" << functionName << endl;
   SgFunctionCallExp* newFunctionCallExp = NULL;
   // case 1: same argument for both C and Fortran
   SgName newFunctionName;
@@ -73,8 +78,27 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
       conditionalExp = buildConditionalExp(buildLessThanOp(deepCopy(operand1), deepCopy(operand2)),deepCopy(operand1), deepCopy(operand2));
     replaceExpression(funcCallExp, conditionalExp,false);
   }
+  else if(convertConvertFunctionName(functionName, &newFunctionName, funcCallExp->get_type()))
+  {
+    const char* charPtr = functionName.str();
+    ROSE_ASSERT(operandList.size() == 1);
+    SgExpression* expr = operandList[0]; 
+    SgCastExp* castExp;
+    if((strncmp(charPtr, "achar",4) == 0))
+      castExp  = buildCastExp(deepCopy(expr),buildCharType(),SgCastExp::e_C_style_cast);
+    else if((strncmp(charPtr, "ichar",4) == 0))
+      castExp  = buildCastExp(deepCopy(expr),buildIntType(),SgCastExp::e_C_style_cast);
+    ROSE_ASSERT(castExp);
+    replaceExpression(funcCallExp, castExp,false);
+    
+  }
   else
   {
+    SgFunctionSymbol* calledFuncSymbol = lookupFunctionSymbolInParentScopes(functionName,scope);
+    SgFunctionDeclaration* funcDecl = calledFuncSymbol->get_declaration();
+    SgFunctionParameterList* calledArgsList = funcDecl->get_parameterList ();
+    SgInitializedNamePtrList argList = calledArgsList->get_args();
+    SgInitializedNamePtrList::iterator j = argList.begin();
     for(SgExpressionPtrList::iterator i=operandList.begin(); i != operandList.end(); ++i)
     {
       // Argument is scalar, or base address of array
@@ -83,32 +107,53 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
         SgVarRefExp* varRefExp = isSgVarRefExp(*i);
         if (isScalarType(varRefExp->get_symbol()->get_type()))
         {
-          //cout << " this is a scalar type" << endl;
+//          cout << " this is a scalar type" << endl;
           // Passing the address of scalar variable
-          SgAddressOfOp* addrOrExp = buildAddressOfOp(deepCopy(varRefExp));
-          replaceExpression(varRefExp, addrOrExp, false);
+          SgAddressOfOp* addrOfExp = buildAddressOfOp(deepCopy(varRefExp));
+          replaceExpression(varRefExp, addrOfExp, false);
           
         }
         else if (isSgArrayType(varRefExp->get_symbol()->get_type()))
         {
-          // cout << " this is a array type" << endl;
+           SgType* calledType = (*j)->get_type();
+
+// This works only when the called function is translated.
+// cout << "in ArrayType type:" << calledType->class_name() << endl;
+//           if(isSgPointerType(calledType))
+//           {
+//             SgCastExp* castExp  = buildCastExp(deepCopy(varRefExp),calledType,SgCastExp::e_C_style_cast);
+//             replaceExpression(varRefExp, castExp, false);
+//           }
+
+//           cout << " this is an array type" << varRefExp->get_symbol()->get_name() <<  endl;
           // doing nothing for base address of array 
         }
       }
       // Argument is an array element
       else if(isSgPntrArrRefExp(*i) != NULL)
       {
-          // cout << " this is a array element" << endl;
+//           cout << " this is a array element" << endl;
           // Passing the address of array element
           SgPntrArrRefExp* pntrArrRefExp = isSgPntrArrRefExp(*i);
-          SgAddressOfOp* addrOrExp = buildAddressOfOp(deepCopy(pntrArrRefExp));
-          replaceExpression(pntrArrRefExp, addrOrExp, false);
+          SgAddressOfOp* addrOfExp = buildAddressOfOp(deepCopy(pntrArrRefExp));
+          SgType* calledType = (*j)->get_type();
+
+// This works only when the called function is translated.
+// cout << "in PntrArr type:" << calledType->class_name() << endl;
+//          if(isSgPointerType(calledType))
+//          {
+//            SgCastExp* castExp  = buildCastExp(deepCopy(addrOfExp),calledType,SgCastExp::e_C_style_cast);
+//            replaceExpression(pntrArrRefExp, castExp, false);
+//          }
+//          else
+
+            replaceExpression(pntrArrRefExp, addrOfExp, false);
       }
-      else if(isSgValueExp(*i) != NULL)
+      else if(isSgValueExp(*i) != NULL || isSgBinaryOp(*i) != NULL)
       {
           // Passing the constant arugment
           // A temp variable is required to store the constant value.
-           SgValueExp* valExp = isSgValueExp(*i);
+           SgExpression* valExp = isSgExpression(*i);
            SgScopeStatement* scope = getScope(valExp);
            string tmpName = generateUniqueVariableName(scope);
            SgType* type = (*i)->get_type();
@@ -117,8 +162,10 @@ void Fortran_to_C::translateImplicitFunctionCallExp(SgFunctionCallExp* funcCallE
            SgVariableDeclaration* declaration = buildVariableDeclaration(tmpName,type, initializer,getScope(valExp));
            insertList.push(declaration);
            fixVariableDeclaration(declaration,scope);
-           replaceExpression(valExp, buildAddressOfOp(buildVarRefExp(tmpName)), false);           
+           SgAddressOfOp* addrOfExp = buildAddressOfOp(buildVarRefExp(tmpName));
+           replaceExpression(valExp, addrOfExp, false);           
       }
+      ++j;
     }
   }
 }
@@ -184,11 +231,27 @@ bool Fortran_to_C::convertMathFunctionName(SgName inputName, SgName* output, SgT
     *output = "exp";
   else if((strncmp(charPtr, "sqrt",4) == 0) || (strncmp(charPtr, "dsqrt",5) == 0))
     *output = "sqrt";
+  else if((strncmp(charPtr, "abs",3) == 0))
+    {
+      if(isSgTypeFloat(inputType) || isSgTypeDouble(inputType))
+        *output = "fabs";
+      else 
+        *output = "abs";
+    }
   else
   {
     return false;
   }
   return true;
+}
+
+bool Fortran_to_C::convertConvertFunctionName(SgName inputName, SgName* output, SgType* inputType)
+{
+  const char* charPtr = inputName.str();
+  if((strncmp(charPtr, "achar",4) == 0) || (strncmp(charPtr, "ichar",4) == 0))
+    return true;
+  else 
+    return false;
 }
 
 bool Fortran_to_C::isMaxMinFunctionName(SgName inputName, SgType* inputType)

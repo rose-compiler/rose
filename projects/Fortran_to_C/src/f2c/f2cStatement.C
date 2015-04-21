@@ -214,7 +214,14 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
      AST tree. Translator has to link these variable declaration to the main basic block under function declaration. 
   */
   //fixFortranSymbolTable(functionDefinition,procedureHeaderStatement->isFunction());
-  
+//  SgFunctionDeclaration* forwardDecl = buildNondefiningFunctionDeclaration(functionName,
+//                                                                        functionType,
+//                                                                        functionParameterList,
+//                                                                        scopeStatement);
+//  SgFunctionDeclaration* forwardDecl = buildNondefiningFunctionDeclaration(cFunctionDeclaration,
+//                                                                        scopeStatement);
+//  forwardDecl->setForward();
+//  scopeStatement->prepend_statement(forwardDecl);  
   procedureHeaderStatement->set_parent(NULL);
   procedureHeaderStatement->set_result_name(NULL);
 }  // End of Fortran_to_C::translateProcedureHeaderStatement
@@ -229,13 +236,13 @@ void Fortran_to_C::translateProcedureHeaderStatement(SgProcedureHeaderStatement*
 void Fortran_to_C::updateVariableDeclarationList(SgVariableDeclaration* variableDeclaration)
 {
   SgInitializedNamePtrList varList = variableDeclaration->get_variables();
-  SgScopeStatement* scope = variableDeclaration->get_scope(); 
+  //SgScopeStatement* scope = variableDeclaration->get_scope(); 
   for(vector<SgInitializedName*>::iterator i=varList.begin(); i<varList.end(); ++i)
   {
-    SgVariableDeclaration* newDecl = SageBuilder::buildVariableDeclaration((*i)->get_name(), (*i)->get_type(),(*i)->get_initializer(),scope);
-    insertStatementBefore(variableDeclaration,newDecl,true);
     SgVariableSymbol* symbol = isSgVariableSymbol((*i)->search_for_symbol_from_symbol_table());
     ROSE_ASSERT(symbol);
+    SgVariableDeclaration* newDecl = SageBuilder::buildVariableDeclaration((*i)->get_name(), (*i)->get_type(),(*i)->get_initializer(),symbol->get_scope());
+    insertStatementBefore(variableDeclaration,newDecl,true);
     SgInitializedName* newIntializedName = *((newDecl->get_variables()).begin());
     newIntializedName->set_prev_decl_item(NULL);
     symbol->set_declaration(newIntializedName);
@@ -468,6 +475,7 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
             variable declaration would appear.
             TODO:  We need to see more example to decide if we need to put all the declarations in the top scope.
           */
+/*
           SgBasicBlock* localScope = isSgBasicBlock(getScope(localVariableInitailizedName));
           ROSE_ASSERT(localScope);
           SgStatementPtrList statementList = localScope->get_statements();
@@ -476,6 +484,26 @@ void Fortran_to_C::fixFortranSymbolTable(SgNode* root, bool hasReturnVariable)
           if(it == statementList.end()){
             localScope->get_statements().insert(localScope->get_statements().begin(), variableDeclaration);
           }
+*/
+          SgBasicBlock* localScope = isSgBasicBlock(getScope(localVariableInitailizedName));
+          SgStatementPtrList statementList = basicBlock->get_statements();
+          Rose_STL_Container<SgStatement*>::iterator it;
+          it = find(statementList.begin(),statementList.end(),variableDeclaration);
+// this will only add delcartion to the outermost scope, assume all implicit variable are global variable in function
+          if(it == statementList.end()){
+            if(localScope == basicBlock)
+              basicBlock->get_statements().insert(basicBlock->get_statements().begin(), variableDeclaration);
+            else
+            {
+              if(!basicBlock->get_symbol_table()->exists(localVariableSymbol->get_name()))
+              {
+                basicBlock->get_statements().insert(basicBlock->get_statements().begin(), variableDeclaration);
+                basicBlock->get_symbol_table()->insert(localVariableSymbol->get_name(), localVariableSymbol);
+              }
+            }
+          }
+
+
         }
       }
     }  
@@ -677,8 +705,14 @@ void Fortran_to_C::translateAttributeSpecificationStatement(SgAttributeSpecifica
                                                                 "Transformation generated",
                                                                 0, 0, 0, PreprocessingInfo::before);
           defInfo->set_file_info(attributeSpecificationStatement->get_file_info());
-          attributeSpecificationStatement->get_scope()->addToAttachedPreprocessingInfo(defInfo,PreprocessingInfo::before);
+          attributeSpecificationStatement->get_scope()->addToAttachedPreprocessingInfo(defInfo,PreprocessingInfo::after);
           parameterSymbolList.insert(pair<SgVariableSymbol*,SgExpression*>(parameterSymbol,returnExpr)); 
+          PreprocessingInfo* undefInfo = new PreprocessingInfo(PreprocessingInfo::CpreprocessorUndefDeclaration,
+                                                                "#undef "+ parameterSymbol->get_name(), 
+                                                                "Transformation generated",
+                                                                0, 0, 0, PreprocessingInfo::after);
+          attributeSpecificationStatement->get_scope()->addToAttachedPreprocessingInfo(undefInfo,PreprocessingInfo::after);
+          defInfo->set_file_info(attributeSpecificationStatement->get_file_info());
         }
         removeList.push_back(attributeSpecificationStatement->get_parameter_list());
         break;
@@ -899,8 +933,13 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
             This following case is tested in equivalence2.F
             real*4 a(4,16), b(4,4)
             equivalence(a,b)
-          */ 
-          assignInitializer = buildAssignInitializer(buildCastExp(buildAddressOfOp(buildVarRefExp(symbol1)),
+          */
+          SgExpression* castExpr;
+          if(isSgPointerType(symbol1->get_type()))
+            castExpr = buildVarRefExp(symbol1);
+          else
+            castExpr = buildAddressOfOp(buildVarRefExp(symbol1));
+          assignInitializer = buildAssignInitializer(buildCastExp(castExpr,
                                                                   newType,
                                                                   SgCastExp::e_C_style_cast));
         }
@@ -929,6 +968,53 @@ void Fortran_to_C::translateEquivalenceStatement(SgEquivalenceStatement* equival
 //        replaceStatement(sym2OldDecl,sym2NewDecl,true);
         statementList.push_back(sym2OldDecl);
         removeList.push_back(sym2OldDecl);
+      }
+      else if(isSgPointerType(var2OriginalType) != NULL)
+      {
+        printf("already pointer type\n");
+        SgArrayType* tmpArrayType = isSgArrayType(var1OriginalType);
+        vector<SgExpression*> arrayInfo;
+        arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        SgType* baseType = tmpArrayType->get_base_type();
+        while((tmpArrayType = isSgArrayType(tmpArrayType->get_base_type())) != NULL)
+        {
+          baseType = tmpArrayType->get_base_type();
+          arrayInfo.insert(arrayInfo.begin(),tmpArrayType->get_index());
+        }
+        // Now baseType should have the base type of multi-dimensional array.
+        SgType* newType = NULL;
+        for(vector<SgExpression*>::iterator i=arrayInfo.begin(); i <arrayInfo.end()-1;++i)
+        {
+          SgArrayType* tmpType;
+          tmpType = buildArrayType(baseType,*i);
+          baseType = isSgType(tmpType);
+        }
+        // build the new PointerType
+        newType = buildPointerType(baseType);
+
+        SgAssignInitializer* assignInitializer = NULL;
+        if(isEquivToVarRef)
+        {
+          SgExpression* castExpr = buildVarRefExp(symbol2);
+          assignInitializer = buildAssignInitializer(buildCastExp(castExpr,
+                                                                  newType,
+                                                                  SgCastExp::e_C_style_cast));
+        }
+        else
+        {
+//to be done
+        }
+        SgVariableDeclaration* sym1NewDecl = buildVariableDeclaration(symbol1->get_name(),
+                                                                      newType,
+                                                                      assignInitializer,
+                                                                      scope);        
+        SgInitializedName* sym1NewIntializedName = *((sym1NewDecl->get_variables()).begin());
+        sym1NewIntializedName->set_prev_decl_item(NULL);
+        symbol1->set_declaration(sym1NewIntializedName);
+        insertStatementAfter(sym2OldDecl,sym1NewDecl);
+//        replaceStatement(sym2OldDecl,sym2NewDecl,true);
+        statementList.push_back(sym1OldDecl);
+        removeList.push_back(sym1OldDecl);
       }
       else
       {

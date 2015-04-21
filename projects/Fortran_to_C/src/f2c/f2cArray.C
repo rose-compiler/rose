@@ -179,6 +179,10 @@ void Fortran_to_C::translateArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
 
   // get rhs operand
   SgExprListExp*  arraySubscript = isSgExprListExp(pntrArrRefExp->get_rhs_operand());
+  if(arrayType->findBaseType()->variantT() == V_SgTypeString)
+  {
+    arraySubscript->prepend_expression(buildIntVal(1));
+  }
   /*
     No matter it is single or multi dimensional array,  pntrArrRefExp always has a
     child, SgExprListExp, to store the subscript information.
@@ -251,6 +255,10 @@ void Fortran_to_C::linearizeArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
     No matter it is single or multi dimensional array,  pntrArrRefExp always has a
     child, SgExprListExp, to store the subscript information.
   */
+  if(arrayType->findBaseType()->variantT() == V_SgTypeString)
+  {
+    arraySubscript->prepend_expression(buildIntVal(1));
+  }
   if(arraySubscript != NULL)
   {
     // get the list of subscript

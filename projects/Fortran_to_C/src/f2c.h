@@ -75,6 +75,7 @@ namespace Fortran_to_C
     void translateDoubleVal(SgFloatVal*);
     void insertSystemHeader(const std::string&,SgScopeStatement*);
     bool convertMathFunctionName(SgName, SgName*, SgType*);
+    bool convertConvertFunctionName(SgName, SgName*, SgType*);
     bool isMaxMinFunctionName(SgName, SgType*);
     void removeFortranMaxMinFunction(SgGlobal*);
     bool isFuncArg(SgFunctionParameterList* argList, SgVariableDeclaration* varDecl);
