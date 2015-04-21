@@ -71,13 +71,15 @@ RSIM_Process::set_tracing(FILE *file, unsigned flags)
 }
 
 RSIM_Thread *
-RSIM_Process::create_thread()
+RSIM_Process::create_thread(boost::thread &hostThread)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
+    ASSERT_require(hostThread.get_id() == boost::this_thread::get_id());
+
     pid_t tid = syscall(SYS_gettid);
     ROSE_ASSERT(tid>=0);
     ROSE_ASSERT(threads.find(tid)==threads.end());
-    RSIM_Thread *thread = new RSIM_Thread(this);
+    RSIM_Thread *thread = new RSIM_Thread(this, hostThread); // hostThread is moved into the RSIM_Thread
     thread->set_callbacks(callbacks);
     threads.insert(std::make_pair(tid, thread));
     return thread;
@@ -91,11 +93,9 @@ RSIM_Process::set_main_thread(RSIM_Thread *t)
 }
 
 RSIM_Thread *
-RSIM_Process::get_main_thread() const
-{
-    std::map<pid_t, RSIM_Thread*>::const_iterator found = threads.find(getpid());
-    assert(found!=threads.end());
-    return found->second;
+RSIM_Process::get_main_thread() const {
+    ASSERT_require(threads.size() == 1);
+    return threads.begin()->second;
 }
 
 void
@@ -325,8 +325,18 @@ RSIM_Process::load(const char *name)
     frontend_args[3] = NULL;
     project = frontend(3, frontend_args);
 
-    /* Create the main thread */
-    RSIM_Thread *thread = create_thread();
+    // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
+    // special about the main thread other than its ID is the thread group for the process.
+    pt_regs_32 initialRegisters;
+    memset(&initialRegisters, 0, sizeof initialRegisters);
+    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
+    initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
+    initialRegisters.cs = 0x23;
+    initialRegisters.ds = 0x2b;
+    initialRegisters.es = 0x2b;
+    initialRegisters.ss = 0x2b;
+    pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
+    RSIM_Thread *thread = get_thread(mainTid);
 
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
@@ -418,8 +428,7 @@ RSIM_Process::load(const char *name)
 
     delete loader;
 
-    pid_t tid = syscall(SYS_gettid);
-    mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", tid);
+    mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", thread->get_tid());
 
     return fhdr;
 }
@@ -1255,8 +1264,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
     FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
-    RSIM_Thread *main_thread = get_thread(getpid());
-    ROSE_ASSERT(main_thread!=NULL);
+    RSIM_Thread *main_thread = get_main_thread();
 
     /* We only handle ELF for now */
     SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
@@ -1552,8 +1560,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
 /* The "thread" arg must be the calling thread */
 pid_t
-RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va,
-                           const pt_regs_32 &regs)
+RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs,
+                           bool startRunning)
 {
 #ifndef ROSE_THREADS_ENABLED
     fprintf(stderr, "ROSE library is not thread safe; multiple threads cannot be simulated.\n");
@@ -1561,14 +1569,24 @@ RSIM_Process::clone_thread(RSIM_Thread *thread, unsigned flags, uint32_t parent_
 #endif
     Clone clone_info(this, flags, parent_tid_va, child_tls_va, regs);
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info.mutex);
-    pthread_t t;
-    int err = -pthread_create(&t, NULL, RSIM_Process::clone_thread_helper, &clone_info);
-    if (0==err)
-        clone_info.cond.wait(clone_info.mutex);                     // wait for child to initialize
-    return clone_info.newtid; /* filled in by clone_thread_helper; negative on error */
+    try {
+        clone_info.hostThread = boost::thread(RSIM_Process::clone_thread_helper, &clone_info);
+    } catch (const boost::thread_resource_error&) {
+        return -1;
+    }
+
+    // wait for child thread to finish initializing and write its thread ID into the clone_info and create an RSIM_Thread and
+    // register it with the process.
+    clone_info.cond.wait(clone_info.mutex);
+
+    RSIM_Thread *child = get_thread(clone_info.newtid);
+    if (startRunning)
+        child->start();
+
+    return clone_info.newtid;
 }
 
-void *
+void
 RSIM_Process::clone_thread_helper(void *_clone_info)
 {
     /* clone_info points to the creating thread's stack (inside clone_thread). Since the creator's clone_thread doesn't return
@@ -1577,17 +1595,18 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     ROSE_ASSERT(clone_info!=NULL);
     RSIM_Process *process = clone_info->process;
     ROSE_ASSERT(process!=NULL);
-    RSIM_Thread *thread = process->create_thread();
 
-    pid_t tid = syscall(SYS_gettid);
-    ROSE_ASSERT(tid>=0);
+    // Create the RSIM_Thread abstraction and move the hostThread information into it.
+    RSIM_Thread *thread = process->create_thread(clone_info->hostThread);
+    pid_t tid = thread->get_tid();
     mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", tid);
 
     do {
-        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(clone_info->mutex);
+        // Blocks until clone_thread enters the clone_info.cond.wait call.
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock1(clone_info->mutex);
 
-        /* Make our TID available to our parent. */
-        clone_info->newtid = tid;
+        /* Make some info available to our parent. */
+        clone_info->newtid = thread->get_tid();
         clone_info->seq = thread->get_seq();
 
         /* Set up thread local storage */
@@ -1636,11 +1655,7 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
     if (tid<0)
         pthread_exit(NULL);
 
-    /* Allow the real thread to simulate the specimen thread. */
-    bool cb_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
-    void *retval = thread->main();
-    thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_status);
-    return retval;
+    thread->main();
 }
 
 void
@@ -1655,7 +1670,7 @@ RSIM_Process::sys_exit(int status)
     for (std::map<pid_t, RSIM_Thread*>::iterator ti=threads.begin(); ti!=threads.end(); ti++) {
         RSIM_Thread *thread = ti->second;
         thread->tracing(TRACE_THREAD) <<"process is canceling this thread\n";
-        pthread_cancel(thread->get_real_thread());
+        thread->get_real_thread().interrupt();
         //pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP); /* in case it's blocked */
     }
 }
@@ -1702,8 +1717,9 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
             RSIM_Thread *thread = ti->second;
             int status = thread->signal_accept(info);
             if (status>=0) {
-                if (!pthread_equal(pthread_self(), thread->get_real_thread())) {
-                    status = pthread_kill(thread->get_real_thread(), RSIM_SignalHandling::SIG_WAKEUP);
+                if (boost::this_thread::get_id() != thread->get_real_thread().get_id()) {
+                    pthread_t t = thread->get_real_thread().native_handle();
+                    status = pthread_kill(t, RSIM_SignalHandling::SIG_WAKEUP);
                     assert(0==status);
                 }
                 signo = 0;

@@ -12,15 +12,23 @@
 
 class RSIM_Thread {
 public:
+    enum RunState { INITIALIZING, RUNNING, TERMINATED };
+
+private:
+    SAWYER_THREAD_TRAITS::RecursiveMutex mutex_;        // for data accessible from other threads
+    SAWYER_THREAD_TRAITS::ConditionVariable runStateChanged_;
+    RunState runState_;
+    
+public:
 
     /** Constructs a new thread which belongs to the specified process.  RSIM_Thread objects should only be constructed by the
      *  thread that will be simulating the speciment's thread described by this object. */
-    RSIM_Thread(RSIM_Process *process)
-        : process(process), my_tid(-1),
+    RSIM_Thread(RSIM_Process *process, boost::thread &hostThread)
+        : runState_(INITIALIZING), process(process),
+          real_thread(boost::detail::thread_move_t<boost::thread>(hostThread)), my_tid(-1),
           report_interval(10.0), do_coredump(true), show_exceptions(true),
           policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
-        real_thread = pthread_self();
         memset(trace_mesg, 0, sizeof trace_mesg);
         ctor();
     }
@@ -43,6 +51,18 @@ public:
         return process;
     }
 
+    /** Cause a thread to start running.  This must be called after a thread is created in order for it to start doing
+     * anything.
+     *
+     * Thread safety: This can be called from any thread. */
+    void start();
+
+    /** Wait for thread to enter specific state. */
+    void waitForState(RunState);
+
+    /** Set thread to a specific state and notify waiters. */
+    void setState(RunState);
+
     /** Main loop. This loop simulates a single specimen thread and returns when the simulated thread exits. */
     void *main();
 
@@ -59,7 +79,7 @@ public:
      **************************************************************************************************************************/
 private:
     /** The real thread that is simulating this specimen thread.  Valid until the "process" data member is null. */
-    pthread_t real_thread;
+    boost::thread real_thread;
     
     /** The TID of the real thread that is simulating the specimen thread described by this RSIM_Thread object.  Valid until
      * the "process" data member is null.   This value is updated for the main thread of a child process after a fork (see
@@ -105,8 +125,8 @@ public:
      *  other parts of the simulator. */
     void set_tid();
 
-    /** Returns the POSIX thread object describing the real thread that's simulating this specimen thread. */
-    pthread_t get_real_thread() const { assert(process!=NULL); return real_thread; }
+    /** Returns the thread object describing the real thread that's simulating this specimen thread. */
+    boost::thread& get_real_thread() { assert(process!=NULL); return real_thread; }
     
     /** Assigns a value to one of the thread TLS array elements (part of the GDT). Returns the index number on success,
      *  negative on failure.  If info's entry_number is -1 then this method chooses an empty TLS slot and updates

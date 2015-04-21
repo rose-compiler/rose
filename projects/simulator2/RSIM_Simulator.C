@@ -364,8 +364,7 @@ RSIM_Simulator::exec(int argc, char **argv)
     SgAsmGenericHeader *fhdr = process->load(argv[0]);
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
 
-    RSIM_Thread *main_thread = process->get_thread(getpid());
-    assert(main_thread!=NULL);
+    RSIM_Thread *main_thread = process->get_main_thread();
     process->initialize_stack(fhdr, argc, argv);
 
     process->binary_trace_start();
@@ -540,18 +539,18 @@ int
 RSIM_Simulator::main_loop()
 {
     RSIM_Process *process = get_process();
-    RSIM_Thread *thread = process->get_thread(getpid());
-    assert(thread!=NULL);
+    RSIM_Thread *thread = process->get_main_thread();
 
     /* The simulator's main thread is executed by the calling thread because the simulator's main thread must be a thread group
      * leader. */
     bool cb_process_status = process->get_callbacks().call_process_callbacks(RSIM_Callbacks::BEFORE, process,
                                                                              RSIM_Callbacks::ProcessCallback::START,
                                                                              true);
-    bool cb_thread_status = thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, thread, true);
-    thread->tracing(TRACE_THREAD) <<"main thread is starting";
-    thread->main();
-    thread->get_callbacks().call_thread_callbacks(RSIM_Callbacks::AFTER, thread, cb_thread_status);
+
+    // The process' main thread has already been created and initialized but has not started running yet.
+    thread->start();
+    thread->waitForState(RSIM_Thread::TERMINATED);
+
     process->get_callbacks().call_process_callbacks(RSIM_Callbacks::AFTER, process,
                                                     RSIM_Callbacks::ProcessCallback::FINISH,
                                                     cb_process_status);

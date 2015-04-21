@@ -719,17 +719,36 @@ RSIM_Thread::post_insn_semaphore()
     }
 }
 
+void
+RSIM_Thread::waitForState(RunState state) {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex_);
+    while (runState_ != state)
+        runStateChanged_.wait(mutex_);
+}
+
+void
+RSIM_Thread::setState(RunState state) {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex_);
+    runState_ = state;
+    runStateChanged_.notify_all();
+}
+
+void
+RSIM_Thread::start() {
+    setState(RUNNING);
+}
+
 /* Executed by a real thread to simulate a specimen's thread. */
 void *
 RSIM_Thread::main()
 {
+    waitForState(RUNNING);
+    get_callbacks().call_thread_callbacks(RSIM_Callbacks::BEFORE, this, true);
     RSIM_Process *process = get_process();
 
-    pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, NULL);
-    pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
-
+    boost::this_thread::disable_interruption interruptionsAreDisabled;
     while (true) {
-        pthread_testcancel();
+        boost::this_thread::interruption_point();
         report_progress_maybe();
         try {
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
@@ -787,6 +806,7 @@ RSIM_Thread::main()
                 process->dump_core(SIGSEGV);
                 report_stack_frames(tracing(TRACE_MISC));
             }
+            setState(TERMINATED);
             throw;
         } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
@@ -803,6 +823,7 @@ RSIM_Thread::main()
                 report_stack_frames(tracing(TRACE_MISC));
                 abort();
             } else {
+                setState(TERMINATED);
                 throw;
             }
 #else
@@ -816,12 +837,14 @@ RSIM_Thread::main()
             post_insn_semaphore();
             if (show_exceptions)
                 tracing(TRACE_MISC) <<"caught RSIM_Semantics::InnerPolicy<>::Halt\n";
+            setState(TERMINATED);
             throw;
         } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
             // thrown for the INT instruction if the interrupt is not handled
             post_insn_semaphore();
             if (show_exceptions)
                 tracing(TRACE_MISC) <<"unhandled specimen interrupt from INT insn\n";
+            setState(TERMINATED);
             throw;
         } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
             post_insn_semaphore();
@@ -836,11 +859,13 @@ RSIM_Thread::main()
                 report_stack_frames(tracing(TRACE_MISC));
                 abort();
             } else {
+                setState(TERMINATED);
                 throw;
             }
         } catch (const RSIM_Process::Exit &e) {
             post_insn_semaphore();
             sys_exit(e);
+            setState(TERMINATED);
             return NULL;
         } catch (RSIM_SignalHandling::siginfo_32 &e) {
             post_insn_semaphore();
@@ -854,6 +879,7 @@ RSIM_Thread::main()
             }
         } catch (...) {
             post_insn_semaphore();
+            setState(TERMINATED);
             throw;
         }
     }

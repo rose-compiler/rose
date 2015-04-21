@@ -528,6 +528,7 @@ private:
     struct Clone {
         SAWYER_THREAD_TRAITS::RecursiveMutex mutex; /**< Protects entire structure. */
         SAWYER_THREAD_TRAITS::ConditionVariable cond; /**< For coordinating between creating thread and created thread. */
+        boost::thread   hostThread;             /**< Real thread hosting the simulated thread; moved to RSIM_Thread obj. */
         RSIM_Process    *process;               /**< Process creating the new thread. */
         unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */
         pid_t           newtid;                 /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
@@ -550,13 +551,16 @@ private:
      *  clone_mutex, clone_cond, and clone_newtid class data members are used.  The creating thread blocks on the clone_cond
      *  condition variable while the new thread fills in clone_newtid with its own ID and then signals the condition
      *  variable. The clone_mutex is only used to protect the clone_newtid. */
-    static void *clone_thread_helper(void *process);
+    static void clone_thread_helper(void *process);
 
-    /** Create a new thread.  This should be called only by the real thread which will be simulating the specimen's
-     * thread. Each real thread should simulate a single specimen thread. This is normally invoked by clone_thread_helper().
+    /** Create a new thread.
+     *
+     *  This should be called only by the real thread which will be simulating the specimen's thread, i.e., the
+     *  hostThread. Each real thread should simulate a single specimen thread. This is normally invoked by
+     *  clone_thread_helper().
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    RSIM_Thread *create_thread();
+    RSIM_Thread *create_thread(boost::thread &hostThread);
 
 public:
     /** Sets the main thread.  This discards all known threads from the "threads" map and reinitializes the map with the single
@@ -565,18 +569,19 @@ public:
      *  Thread safety:  Not thread safe.  This should only be called during process initialization. */
     void set_main_thread(RSIM_Thread *t);
 
-    /** Returns the main thread. */
+    /** Returns the main (only) thread.  Fails if there is more than one thread. */
     RSIM_Thread *get_main_thread() const;
 
     /** Creates a new simulated thread and corresponding real thread.  Returns the ID of the new thread, or a negative errno.
      *  The @p parent_tid_va and @p child_tid_va are optional addresses at which to write the new thread's TID if the @p flags
-     *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before the
-     *  simulated child starts executing.  The @p child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
-     *  set.  The @p regs are the values with which to initialize the new threads registers.
+     *  contain the CLONE_PARENT_TID and/or CLONE_CHILD_TID bits.  We gaurantee that the TID is written to both before this
+     *  method returns.  The @p child_tls_va also points to a segment descriptor if the CLONE_SETTLS bit is
+     *  set.  The @p regs are the values with which to initialize the new threads registers.  The new thread does not start
+     *  executing.
      *
-     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. Each
-     *  calling thread should pass its own RSIM_Thread as the first argument. */
-    pid_t clone_thread(RSIM_Thread*, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs);
+     *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
+    pid_t clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs,
+                       bool startExecuting);
 
     /** Returns the thread having the specified thread ID, or null if there is no thread with the specified ID.  Thread objects
      *  are never deleted while a simulator is running, but they are unlinked from their parent RSIM_Process when the simulated

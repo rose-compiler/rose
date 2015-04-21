@@ -158,7 +158,7 @@ main(int argc, char *argv[], char *envp[])
     sim.exec(argc-n, argv+n);
     RSIM_Process *proc = sim.get_process();
     assert(proc);
-    RSIM_Thread *thread = proc->get_thread(getpid()); /* main thread */
+    RSIM_Thread *thread = proc->get_thread(getpid()); /* main thread; FIXME[Robb P. Matzke 2015-04-21]: won't work anymore*/
     assert(thread);
 
     /* Initialize the stack from data saved when the program was run natively. */

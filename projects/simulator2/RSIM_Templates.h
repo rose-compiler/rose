@@ -199,6 +199,8 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::ctor(RSIM_Thread *thread)
     reg_df  = this->findRegister("df", 1);
     reg_tf  = this->findRegister("tf", 1);
 
+    // See also: RSIM_Process::load
+#if 0 // [Robb P. Matzke 2015-04-21]
     this->writeRegister(reg_eip,    ValueType<32>(0));
     this->writeRegister(reg_eax,    ValueType<32>(0));
     this->writeRegister(reg_ebx,    ValueType<32>(0));
@@ -216,6 +218,7 @@ RSIM_Semantics::InnerPolicy<State, ValueType>::ctor(RSIM_Thread *thread)
     this->writeRegister(reg_ss,     ValueType<16>(0x2b));
     this->writeRegister(reg_fs,     ValueType<16>(0));
     this->writeRegister(reg_gs,     ValueType<16>(0));
+#endif
 }
 
 template<
