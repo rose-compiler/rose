@@ -6,6 +6,46 @@ using namespace SageBuilder;
 using namespace Fortran_to_C;
 
 extern vector<SgNode*> removeList;
+SgExpression* Fortran_to_C::foldBinaryOp(SgExpression* inputExpression)
+{
+  SgExpression* foldedExp;
+  if(isSgBinaryOp(inputExpression))
+  {
+    SgBinaryOp* binOp = isSgBinaryOp(inputExpression);
+    SgIntVal* rhs = isSgIntVal(binOp->get_rhs_operand());
+    if(!rhs) return inputExpression;
+    SgIntVal* lhs = isSgIntVal(binOp->get_lhs_operand());
+    if(!lhs) return inputExpression;
+    int foldedVal;
+    switch(binOp->variantT())
+    {
+      case V_SgAddOp:
+        {
+         foldedVal = lhs->get_value() + rhs->get_value();
+         break;
+        }
+      case V_SgSubtractOp:
+        {
+         foldedVal = lhs->get_value() - rhs->get_value();
+         break;
+        }
+      case V_SgMultiplyOp:
+        {
+         foldedVal = lhs->get_value() * rhs->get_value();
+         break;
+        }
+      default:
+       { 
+         cerr<<"warning: calculuate - unhandled operator type:"<<binOp->class_name() << endl;
+         return inputExpression;
+       } 
+    }
+    foldedExp = buildIntVal(foldedVal);     
+  }
+  else
+    return inputExpression;
+  return foldedExp;
+}
 
 SgExpression* Fortran_to_C::getFortranDimensionSize(SgExpression* inputExpression)
 {
@@ -28,6 +68,8 @@ SgExpression* Fortran_to_C::getFortranDimensionSize(SgExpression* inputExpressio
                                       deepCopy(subscriptExpression->get_lowerBound()));
     indexExpression = buildAddOp(indexExpression,buildIntVal(1));
   }
+  constantFolding(indexExpression);
+  indexExpression = foldBinaryOp(indexExpression);
   return indexExpression;
 }
 
@@ -53,6 +95,7 @@ void Fortran_to_C::translateArrayDeclaration(SgArrayType* originalArrayType)
     originalArrayType->set_base_type(baseType);
     originalArrayType->set_index(indexExpression);
     indexExpression->set_parent(originalArrayType);
+    constantFolding(indexExpression);
   }
   else
   {
@@ -136,6 +179,10 @@ void Fortran_to_C::translateArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
 
   // get rhs operand
   SgExprListExp*  arraySubscript = isSgExprListExp(pntrArrRefExp->get_rhs_operand());
+  if(arrayType->findBaseType()->variantT() == V_SgTypeString)
+  {
+    arraySubscript->prepend_expression(buildIntVal(1));
+  }
   /*
     No matter it is single or multi dimensional array,  pntrArrRefExp always has a
     child, SgExprListExp, to store the subscript information.
@@ -208,6 +255,10 @@ void Fortran_to_C::linearizeArraySubscript(SgPntrArrRefExp* pntrArrRefExp)
     No matter it is single or multi dimensional array,  pntrArrRefExp always has a
     child, SgExprListExp, to store the subscript information.
   */
+  if(arrayType->findBaseType()->variantT() == V_SgTypeString)
+  {
+    arraySubscript->prepend_expression(buildIntVal(1));
+  }
   if(arraySubscript != NULL)
   {
     // get the list of subscript
@@ -307,6 +358,7 @@ SgExpression* Fortran_to_C::get0basedIndex(SgExpression* subscript, SgExpression
 
   // convert the 1-based subscript to 0-based subscript
   newDimIndex = buildSubtractOp(deepCopy(subscript), dimLowerBound);
+  newDimIndex = foldBinaryOp(newDimIndex);
 
   return newDimIndex;
 }
