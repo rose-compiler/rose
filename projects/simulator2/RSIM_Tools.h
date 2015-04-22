@@ -330,18 +330,28 @@ public:
                  * address of a CALL instruction in executable memory.  This only handles CALLs encoded in two or five
                  * bytes. */
                 bool bp_not_pushed = false;
-                uint32_t esp = args.thread->policy.readRegister<32>(args.thread->policy.reg_esp).known_value();
-                uint32_t top_word;
-                SgAsmX86Instruction *call_insn;
+                const RegisterDescriptor &REG_SP = args.thread->dispatcher()->REG_anySP;
+                uint64_t sp = args.thread->operators()->readRegister(REG_SP)->get_number();
+                uint64_t top = 0;
+                bool isTopValid = false;
+                SgAsmX86Instruction *call_insn = NULL;
                 try {
-                    if (4==process->mem_read(&top_word, esp, 4)) {
-                        if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-5))) &&
+                    if (REG_SP.get_nbits() == 32) {
+                        uint32_t top32 = 0;
+                        isTopValid = 4 == process->mem_read(&top32, sp, 4);
+                        top = top32;
+                    } else {
+                        ASSERT_require(REG_SP.get_nbits() == 64);
+                        isTopValid = 8 == process->mem_read(&top, sp, 8);
+                    }
+                    if (isTopValid) {
+                        if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-5))) &&
                             (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
-                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-2))) &&
+                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-2))) &&
                                    (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
-                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top_word-6))) &&
+                        } else if (NULL!=(call_insn=isSgAsmX86Instruction(process->get_instruction(top-6))) &&
                                    (x86_call==call_insn->get_kind() || x86_farcall==call_insn->get_kind())) {
                             bp_not_pushed = true;
                         }
@@ -789,7 +799,7 @@ public:
 
     virtual bool operator()(bool enabled, const Args &args) {
         if (enabled && args.insn->get_address()==when)
-            args.thread->policy.dump_registers(args.thread->tracing(TRACE_MISC));
+            SAWYER_MESG(args.thread->tracing(TRACE_MISC)) <<*args.thread->operators()->get_state()->get_register_state();
         return enabled;
     }
 };
@@ -827,108 +837,5 @@ public:
     }
 };
 
-/** Provides implementations for functions not in ROSE.
- *
- *  These few functions are sometimes encountered in ld-linux.so and are important for its correct operation.  Eventually
- *  they'll be moved into ROSE's instruction semantics layer and this callback will no longer be necessary.  However, we'll
- *  probably keep it around as an example of how to modify the behavior of an instruction.
- *
- *  Example:
- *  @code
- *    RSIM_Linux32 sim;
- *    sim.install_callback(new UnhandledInstruction);
- *  @endcode
- */
-class UnhandledInstruction: public RSIM_Callbacks::InsnCallback {
-public:
-    struct MmxValue {
-        RSIM_SEMANTICS_VTYPE<32> lo, hi;
-    };
-
-    MmxValue mmx[8];                    // MMX registers 0-7
-
-    virtual UnhandledInstruction *clone() { return this; }
-    virtual bool operator()(bool enabled, const Args &args) {
-        using namespace rose::Diagnostics;
-        static const char *fmt = "UnhandledInstruction triggered for %s\n";
-        SgAsmX86Instruction *insn = isSgAsmX86Instruction(args.insn);
-        if (enabled && insn) {
-            Sawyer::Message::Stream m(args.thread->tracing(TRACE_MISC));
-            const SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-            uint32_t newip_va = insn->get_address() + insn->get_size();
-            RSIM_SEMANTICS_VTYPE<32> newip = args.thread->policy.number<32>(newip_va);
-            switch (insn->get_kind()) {
-                case x86_movd: {
-                    assert(2==operands.size());
-                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[0]);
-                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
-                        int mmx_number = mre->get_descriptor().get_minor();
-                        mfprintf(m)(fmt, unparseInstruction(insn).c_str());
-                        mmx[mmx_number].lo = args.thread->semantics.read32(operands[1]);
-                        mmx[mmx_number].hi = args.thread->policy.number<32>(0);
-                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
-                        enabled = false;
-                    }
-                    break;
-                }
-
-                case x86_movq: {
-                    assert(2==operands.size());
-                    SgAsmRegisterReferenceExpression *mre = isSgAsmRegisterReferenceExpression(operands[1]);
-                    if (mre && mre->get_descriptor().get_major()==x86_regclass_xmm) {
-                        int mmx_number = mre->get_descriptor().get_minor();
-                        mfprintf(m)(fmt, unparseInstruction(insn).c_str());
-                        RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
-                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].lo, args.thread->policy.true_());
-                        addr = args.thread->policy.add<32>(addr, args.thread->policy.number<32>(4));
-                        args.thread->policy.writeMemory(x86_segreg_ss, addr, mmx[mmx_number].hi, args.thread->policy.true_());
-                        args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
-                        enabled = false;
-                    }
-                    break;
-                }
-
-                case x86_pause: {
-                    /* PAUSE is treated as a CPU hint, and is a no-op on some architectures. */
-                    assert(0==operands.size());
-                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
-                    enabled = false;
-                    break;
-                }
-
-                case x86_stmxcsr: {
-                    /* Store value of mxcsr register (which we don't actually have) to a doubleword in memory.  The value we
-                     * store was obtained by running GDB under "i386 -LRB3", stopping at the first instruction, and looking at
-                     * the mxcsr register. */
-                    mfprintf(m)(fmt, unparseInstruction(insn).c_str());
-                    assert(1==operands.size());
-                    RSIM_SEMANTICS_VTYPE<32> value = args.thread->policy.number<32>(0x1f80); // from GDB
-                    RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
-                    args.thread->policy.writeMemory(x86_segreg_ss, addr, value, args.thread->policy.true_());
-                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
-                    enabled = false;
-                    break;
-                }
-
-                case x86_ldmxcsr: {
-                    /* Load the mxcsr register (which we don't actually have) from a doubleword in memory.  We read the memory
-                     * (for possible side effects) but then just throw away the value. */
-                    mfprintf(m)(fmt, unparseInstruction(insn).c_str());
-                    assert(1==operands.size());
-                    RSIM_SEMANTICS_VTYPE<32> addr = args.thread->semantics.readEffectiveAddress(operands[0]);
-                    (void)args.thread->policy.readMemory<32>(x86_segreg_ss, addr, args.thread->policy.true_());
-                    args.thread->policy.writeRegister(args.thread->policy.reg_eip, newip);
-                    enabled = false;
-                    break;
-                }
-
-                default:                // to shut up warnings about the zillion instructions we don't handle here
-                    break;
-            }
-        }
-        return enabled;
-    }
-};
-
-};
+} // namespace
 #endif

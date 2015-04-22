@@ -1,6 +1,8 @@
 #ifndef ROSE_RSIM_Callbacks_H
 #define ROSE_RSIM_Callbacks_H
 
+#include "RSIM_SignalHandling.h"
+
 #include "callbacks.h" /* for ROSE_Callbacks namespace */
 
 /** Set of callbacks.  Callbacks are user-supplied objects whose operator() is invoked at particular points during a

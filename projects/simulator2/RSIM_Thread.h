@@ -1,15 +1,14 @@
 #ifndef ROSE_RSIM_Thread_H
 #define ROSE_RSIM_Thread_H
 
+#include "RSIM_Semantics.h"
+#include "RSIM_Process.h"
+
 /** Class to represent a single simulated thread.
  *
  *  Each simulated thread runs in a single thread of the simulator. When a specimen creates a new simulated thread, ROSE creates
  *  a new real thread to simulate it; when the simulated thread exits, the real thread also exits.  Therefore, the methods
- *  defined for the RSIM_Thread class are intended to be called by only one thread at a time per RSIM_Thread object.
- *
- *  The RSIM_Thread object contains an instruction semantics policy object which defines how instructions are executed and
- *  contains the register state for the thread. */
-
+ *  defined for the RSIM_Thread class are intended to be called by only one thread at a time per RSIM_Thread object. */
 class RSIM_Thread {
 public:
     enum RunState { INITIALIZING, RUNNING, TERMINATED };
@@ -18,6 +17,7 @@ private:
     SAWYER_THREAD_TRAITS::RecursiveMutex mutex_;        // for data accessible from other threads
     SAWYER_THREAD_TRAITS::ConditionVariable runStateChanged_;
     RunState runState_;
+    RSIM_Semantics::DispatcherPtr dispatcher_;
     
 public:
 
@@ -27,7 +27,6 @@ public:
         : runState_(INITIALIZING), process(process),
           real_thread(boost::detail::thread_move_t<boost::thread>(hostThread)), my_tid(-1),
           report_interval(10.0), do_coredump(true), show_exceptions(true),
-          policy(this), semantics(policy),
           robust_list_head_va(0), clear_child_tid(0) {
         memset(trace_mesg, 0, sizeof trace_mesg);
         ctor();
@@ -372,7 +371,7 @@ public:
      *  sets the value which will eventually be returned.
      *
      *  @{ */
-    void syscall_return(const RSIM_SEMANTICS_VTYPE<32> &value);
+    void syscall_return(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value);
     void syscall_return(int value);
     /** @} */
 
@@ -583,7 +582,7 @@ public:
 
     /* Return number of instructions executed */
     size_t get_ninsns() const {
-        return policy.get_ninsns();
+        return operators()->get_ninsns();
     }
 
     /** Returns instruction at current IP, disassembling it if necessary, and caching it.  Since the simulated memory belongs
@@ -592,6 +591,20 @@ public:
     SgAsmX86Instruction *current_insn();
 
 
+    /***************************************************************************************************************************
+     *                                  Instruction processing
+     ***************************************************************************************************************************/
+public:
+    RSIM_Semantics::DispatcherPtr dispatcher() const {
+        return dispatcher_;
+    }
+
+    RSIM_Semantics::RiscOperatorsPtr operators() const {
+        return RSIM_Semantics::RiscOperators::promote(dispatcher_->get_operators());
+    }
+
+    rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
+    
     /**************************************************************************************************************************
      *                                  Dynamic Linking
      **************************************************************************************************************************/
@@ -632,10 +645,6 @@ protected:
 
 public: //FIXME
     template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
-    
-    mutable RSIM_SEMANTICS_POLICY policy;       /* Mutable because some policies aren't careful about using const "this" ptrs. */
-    RSIM_Semantics::Dispatcher semantics;
-
 
     /* Stuff related to threads */
     uint32_t robust_list_head_va;               /* Address of robust futex list head. See set_robust_list() syscall */

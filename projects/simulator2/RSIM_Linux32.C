@@ -4160,21 +4160,8 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // Return register values in child
         // does not work for linux 2.6.32; perhaps this was only necessary for 2.5.32-2.5.48? [Robb P. Matzke 2015-02-09]
         if (isChild && flags==(CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD)) {
-            pt_regs_32 regs;
-            regs.bx = t->policy.readRegister<32>(t->policy.reg_ebx).known_value();
-            regs.cx = t->policy.readRegister<32>(t->policy.reg_ecx).known_value();
-            regs.dx = t->policy.readRegister<32>(t->policy.reg_edx).known_value();
-            regs.si = t->policy.readRegister<32>(t->policy.reg_esi).known_value();
-            regs.di = t->policy.readRegister<32>(t->policy.reg_edi).known_value();
-            regs.bp = t->policy.readRegister<32>(t->policy.reg_ebp).known_value();
-            regs.sp = t->policy.readRegister<32>(t->policy.reg_esp).known_value();
-            regs.cs = t->policy.readRegister<16>(t->policy.reg_cs).known_value();
-            regs.ds = t->policy.readRegister<16>(t->policy.reg_ds).known_value();
-            regs.es = t->policy.readRegister<16>(t->policy.reg_es).known_value();
-            regs.fs = t->policy.readRegister<16>(t->policy.reg_fs).known_value();
-            regs.gs = t->policy.readRegister<16>(t->policy.reg_gs).known_value();
-            regs.ss = t->policy.readRegister<16>(t->policy.reg_ss).known_value();
-            regs.flags = t->policy.readRegister<32>(t->policy.reg_eflags).known_value();
+            pt_regs_32 regs = t->get_regs();
+            regs.ip = regs.ax = regs.bx = 0; // these three weren't in old initialization [Robb P. Matzke 2015-04-22]
             if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
         }

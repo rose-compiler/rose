@@ -374,8 +374,8 @@ RSIM_Simulator::exec(int argc, char **argv)
         process->get_memory().dump(process->get_tracing_file(), "  ");
     }
 
-    main_thread->tracing(TRACE_STATE) <<"Initial state:\n";
-    main_thread->policy.dump_registers(main_thread->tracing(TRACE_STATE));
+    main_thread->tracing(TRACE_STATE) <<"Initial state:\n"
+                                      <<*main_thread->operators()->get_state()->get_register_state();
 
     return 0;
 }

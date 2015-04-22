@@ -15,6 +15,7 @@
 
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
+using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 size_t RSIM_Thread::next_sequence_number = 1;
 
@@ -29,6 +30,19 @@ RSIM_Thread::ctor()
     memset(tls_array, 0, sizeof tls_array);
 
     reopen_trace_facilities();
+
+    dispatcher_ = RSIM_Semantics::createDispatcher(this);
+}
+
+BaseSemantics::SValuePtr
+RSIM_Thread::pop() {
+    size_t resultWidth = dispatcher()->REG_anySP.get_nbits();         // number of bits to read from memory
+    BaseSemantics::SValuePtr oldSp = operators()->readRegister(dispatcher()->REG_anySP);
+    BaseSemantics::SValuePtr dflt = operators()->undefined_(resultWidth);
+    BaseSemantics::SValuePtr retval = operators()->readMemory(dispatcher()->REG_SS, oldSp, dflt, operators()->boolean_(true));
+    BaseSemantics::SValuePtr newSp = operators()->add(oldSp, operators()->number_(oldSp->get_width(), resultWidth/8));
+    operators()->writeRegister(dispatcher()->REG_anySP, newSp);
+    return retval;
 }
 
 void
@@ -62,8 +76,9 @@ RSIM_Thread::id()
     sprintf(buf1, "%1.3f", elapsed);
 
     char buf2[64];
-    uint64_t eip = policy.readRegister<32>(policy.reg_eip).is_known() ? policy.readRegister<32>(policy.reg_eip).known_value() : 0;
-    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, policy.get_ninsns());
+    uint64_t eip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+
+    int n = snprintf(buf2, sizeof(buf2), "0x%08"PRIx64"[%zu]: ", eip, operators()->get_ninsns());
     assert(n>=0 && (size_t)n<sizeof(buf2)-1);
     memset(buf2+n, ' ', sizeof(buf2)-n);
     buf2[std::max(n, 21)] = '\0';
@@ -85,7 +100,7 @@ RSIM_Thread::tracing(TracingFacility tf)
 SgAsmX86Instruction *
 RSIM_Thread::current_insn()
 {
-    rose_addr_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
+    rose_addr_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
     SgAsmX86Instruction *insn = isSgAsmX86Instruction(get_process()->get_instruction(ip));
     ROSE_ASSERT(insn!=NULL); /*only happens if our disassembler is not an x86 disassembler!*/
     return insn;
@@ -181,7 +196,7 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
     if (mesg) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t retval = values ? values[0] : policy.readRegister<32>(policy.reg_eax).known_value();
+        uint32_t retval = values ? values[0] : operators()->readRegister(dispatcher()->REG_EAX)->get_number();
         syscall_arginfo(format[0], retval, &info, app);
 
         {
@@ -239,16 +254,19 @@ RSIM_Thread::syscall_leave(const char *format, ...)
 uint32_t
 RSIM_Thread::syscall_arg(int idx)
 {
+    RegisterDescriptor reg;
     switch (idx) {
-        case -1: return policy.readRegister<32>(policy.reg_eax).known_value();      /* syscall return value */
-        case 0:  return policy.readRegister<32>(policy.reg_ebx).known_value();
-        case 1:  return policy.readRegister<32>(policy.reg_ecx).known_value();
-        case 2:  return policy.readRegister<32>(policy.reg_edx).known_value();
-        case 3:  return policy.readRegister<32>(policy.reg_esi).known_value();
-        case 4:  return policy.readRegister<32>(policy.reg_edi).known_value();
-        case 5:  return policy.readRegister<32>(policy.reg_ebp).known_value();
-        default: assert(!"invalid argument number"); abort();
+        case -1: reg = dispatcher()->REG_EAX; break;    // syscall return value
+        case 0: reg = dispatcher()->REG_EBX; break;
+        case 1: reg = dispatcher()->REG_ECX; break;
+        case 2: reg = dispatcher()->REG_EDX; break;
+        case 3: reg = dispatcher()->REG_ESI; break;
+        case 4: reg = dispatcher()->REG_EDI; break;
+        case 5: reg = dispatcher()->REG_EBP; break;
+        default:
+            ASSERT_not_reachable("invalid syscall argument number");
     }
+    return operators()->readRegister(reg)->get_number();
 }
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
@@ -423,20 +441,18 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             sighand.sigprocmask(SIG_SETMASK, &signal_mask, NULL);
 
             /* Clear flags per ABI for function entry. */
-            policy.writeRegister(policy.reg_df, policy.false_());
-            policy.writeRegister(policy.reg_tf, policy.false_());
+            operators()->writeRegister(dispatcher()->REG_DF, operators()->boolean_(false));
+            operators()->writeRegister(dispatcher()->REG_TF, operators()->boolean_(false));
 
-            /* Set up registers for signal handler. See RSIM_Semantics::InnerPolicy::ctor() for details about the segment
-             * register values. */
-            policy.writeRegister(policy.reg_eax, policy.number<32>(signo));
-            policy.writeRegister(policy.reg_edx, policy.number<32>(0));
-            policy.writeRegister(policy.reg_ecx, policy.number<32>(0));
-            policy.writeRegister(policy.reg_ds,  policy.number<16>(0x2b));
-            policy.writeRegister(policy.reg_es,  policy.number<16>(0x2b));
-            policy.writeRegister(policy.reg_ss,  policy.number<16>(0x2b));
-            policy.writeRegister(policy.reg_cs,  policy.number<16>(0x23));
-            policy.writeRegister(policy.reg_esp, policy.number<32>(frame_va));
-            policy.writeRegister(policy.reg_eip, policy.number<32>(sa.handler_va)); /* we're now in the signal handler... */
+            /* Set up registers for signal handler. */
+            operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, signo));
+            operators()->writeRegister(dispatcher()->REG_ECX, operators()->number_(32, 0));
+            operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, 0x2b));
+            operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, 0x2b));
+            operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, 0x2b));
+            operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, 0x23));
+            operators()->writeRegister(dispatcher()->REG_ESP, operators()->number_(32, frame_va));
+            operators()->writeRegister(dispatcher()->REG_EIP, operators()->number_(32, sa.handler_va));
         }
     }
 
@@ -453,7 +469,7 @@ RSIM_Thread::sys_rt_sigreturn()
     /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
      * pretcode. Unlike the sigframe_32 stack frame, the rt_sigframe_32 stack frame's retcode does not pop the signal number
      * nor the other handler arguments, and why should it since we're about to restore the hardware context anyway. */
-    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
+    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
     uint32_t frame_va = sp - 4;
 
     RSIM_SignalHandling::rt_sigframe_32 frame;
@@ -475,7 +491,8 @@ RSIM_Thread::sys_rt_sigreturn()
 
     /* Restore hardware context */
     pt_regs_32 regs;
-    sighand.restore_sigcontext(frame.uc.uc_mcontext, policy.get_eflags(), &regs);
+    uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->get_number();
+    sighand.restore_sigcontext(frame.uc.uc_mcontext, eflags, &regs);
     init_regs(regs);
     return 0;
 }
@@ -490,7 +507,7 @@ RSIM_Thread::sys_sigreturn()
 
     /* Sighandler frame address is eight less than the current SP because the return from sighandler popped the frame's
      * pretcode, and the retcode popped the signo. */
-    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
+    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
     uint32_t frame_va = sp - 8; 
 
     RSIM_SignalHandling::sigframe_32 frame;
@@ -514,7 +531,8 @@ RSIM_Thread::sys_sigreturn()
 
     /* Restore hardware context.  Restore only certain flags. */
     pt_regs_32 regs;
-    sighand.restore_sigcontext(frame.sc, policy.get_eflags(), &regs);
+    uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->get_number();
+    sighand.restore_sigcontext(frame.sc, eflags, &regs);
     init_regs(regs);
     return 0;
 }
@@ -612,7 +630,7 @@ RSIM_Thread::atfork_child()
 
     /* Thread (re)initialization */
     signal_clear_pending();     /* pending signals are for the parent process */
-    policy.set_ninsns(0);       /* restart instruction counter for trace output */
+    operators()->set_ninsns(0); /* restart instruction counter for trace output */
 
     /* Redirect tracing output for new process */
     p->open_tracing_file();
@@ -656,8 +674,8 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         mfprintf(mesg)("%s", title.c_str());
     }
 
-    uint32_t bp = policy.readRegister<32>(policy.reg_ebp).known_value();
-    uint32_t ip = policy.readRegister<32>(policy.reg_eip).known_value();
+    uint32_t bp = operators()->readRegister(dispatcher()->REG_EBP)->get_number();
+    uint32_t ip = operators()->readRegister(dispatcher()->REG_EIP)->get_number();
 
     for (int i=0; i<32; i++) {
         mfprintf(mesg)("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
@@ -680,7 +698,7 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
             /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
              * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
              * frames. */
-            uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
+            uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
             if (4!=process->mem_read(&ip, sp, 4))
                 break;
             bp_not_saved = false;
@@ -698,15 +716,15 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 }
 
 void
-RSIM_Thread::syscall_return(const RSIM_SEMANTICS_VTYPE<32> &retval)
+RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
 {
-    policy.writeRegister(policy.reg_eax, retval);
+    operators()->writeRegister(dispatcher()->REG_anyAX, retval);
 }
 
 void
 RSIM_Thread::syscall_return(int retval)
 {
-    policy.writeRegister(policy.reg_eax, policy.number<32>(retval));
+    operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, retval));
 }
 
 void
@@ -752,13 +770,17 @@ RSIM_Thread::main()
         report_progress_maybe();
         try {
             /* Returned from signal handler? This code simulates the sigframe_32 or rt_sigframe_32 "retcode" */
-            if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RETURN) {
-                policy.pop();
-                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(119));
+            uint64_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+            if (ip == SIGHANDLER_RETURN) {
+                pop();
+                operators()->writeRegister(dispatcher()->REG_anyAX,
+                                           operators()->number_(dispatcher()->REG_anyAX.get_nbits(), 119));
                 sys_sigreturn();
                 continue;
-            } else if (policy.readRegister<32>(policy.reg_eip).known_value()==SIGHANDLER_RT_RETURN) {
-                policy.writeRegister<32>(policy.reg_eax, RSIM_SEMANTICS_VTYPE<32>(173));
+                
+            } else if (ip == SIGHANDLER_RT_RETURN) {
+                operators()->writeRegister(dispatcher()->REG_anyAX,
+                                           operators()->number_(dispatcher()->REG_anyAX.get_nbits(), 173));
                 sys_rt_sigreturn();
                 continue;
             }
@@ -777,7 +799,7 @@ RSIM_Thread::main()
             do {
                 insn = current_insn();
                 cb_status = callbacks.call_insn_callbacks(RSIM_Callbacks::BEFORE, this, insn, true);
-            } while (insn->get_address()!=policy.readRegister<32>(policy.reg_eip).known_value());
+            } while (insn->get_address()!=operators()->readRegister(dispatcher()->REG_anyIP)->get_number());
 
             /* Simulate an instruction.  In order to make our simulated instructions atomic (at least among the simulators) we
              * use a shared semaphore that was created in RSIM_Thread::ctor(). */
@@ -786,14 +808,14 @@ RSIM_Thread::main()
                 int status __attribute__((unused)) = TEMP_FAILURE_RETRY(sem_wait(process->get_simulator()->get_semaphore()));
                 assert(0==status);
                 insn_semaphore_posted = false;
-                semantics.processInstruction(insn);             // blocking syscalls will post, and set insn_semaphore_posted
+                dispatcher()->processInstruction(insn); // blocking syscalls will post, and set insn_semaphore_posted
                 post_insn_semaphore();
             }
             callbacks.call_insn_callbacks(RSIM_Callbacks::AFTER, this, insn, cb_status);
 
             Sawyer::Message::Stream &mesg = tracing(TRACE_STATE);
             if (mesg)
-                policy.dump_registers(mesg);
+                mesg <<*operators()->get_state()->get_register_state();
         } catch (const Disassembler::Exception &e) {
             post_insn_semaphore();
             if (show_exceptions) {
@@ -890,44 +912,44 @@ RSIM_Thread::get_regs() const
 {
     pt_regs_32 regs;
     memset(&regs, 0, sizeof regs);
-    regs.ip = policy.readRegister<32>(policy.reg_eip).known_value();
-    regs.ax = policy.readRegister<32>(policy.reg_eax).known_value();
-    regs.bx = policy.readRegister<32>(policy.reg_ebx).known_value();
-    regs.cx = policy.readRegister<32>(policy.reg_ecx).known_value();
-    regs.dx = policy.readRegister<32>(policy.reg_edx).known_value();
-    regs.si = policy.readRegister<32>(policy.reg_esi).known_value();
-    regs.di = policy.readRegister<32>(policy.reg_edi).known_value();
-    regs.bp = policy.readRegister<32>(policy.reg_ebp).known_value();
-    regs.sp = policy.readRegister<32>(policy.reg_esp).known_value();
-    regs.cs = policy.readRegister<16>(policy.reg_cs).known_value();
-    regs.ds = policy.readRegister<16>(policy.reg_ds).known_value();
-    regs.es = policy.readRegister<16>(policy.reg_es).known_value();
-    regs.fs = policy.readRegister<16>(policy.reg_fs).known_value();
-    regs.gs = policy.readRegister<16>(policy.reg_gs).known_value();
-    regs.ss = policy.readRegister<16>(policy.reg_ss).known_value();
-    regs.flags = policy.readRegister<32>(policy.reg_eflags).known_value();
+    regs.ip = operators()->readRegister(dispatcher()->REG_EIP).get_number();
+    regs.ax = operators()->readRegister(dispatcher()->REG_EAX).get_number();
+    regs.bx = operators()->readRegister(dispatcher()->REG_EBX).get_number();
+    regs.cx = operators()->readRegister(dispatcher()->REG_ECX).get_number();
+    regs.dx = operators()->readRegister(dispatcher()->REG_EDX).get_number();
+    regs.si = operators()->readRegister(dispatcher()->REG_ESI).get_number();
+    regs.di = operators()->readRegister(dispatcher()->REG_EDI).get_number();
+    regs.bp = operators()->readRegister(dispatcher()->REG_EBP).get_number();
+    regs.sp = operators()->readRegister(dispatcher()->REG_ESP).get_number();
+    regs.cs = operators()->readRegister(dispatcher()->REG_CS).get_number();
+    regs.ds = operators()->readRegister(dispatcher()->REG_DS).get_number();
+    regs.es = operators()->readRegister(dispatcher()->REG_ES).get_number();
+    regs.fs = operators()->readRegister(dispatcher()->REG_FS).get_number();
+    regs.gs = operators()->readRegister(dispatcher()->REG_GS).get_number();
+    regs.ss = operators()->readRegister(dispatcher()->REG_SS).get_number();
+    regs.flags = operators()->readRegister(dispatcher()->REG_EFLAGS).get_number();
     return regs;
 }
 
 void
 RSIM_Thread::init_regs(const pt_regs_32 &regs)
 {
-    policy.writeRegister(policy.reg_eip,    RSIM_SEMANTICS_VTYPE<32>(regs.ip));
-    policy.writeRegister(policy.reg_eax,    RSIM_SEMANTICS_VTYPE<32>(regs.ax));
-    policy.writeRegister(policy.reg_ebx,    RSIM_SEMANTICS_VTYPE<32>(regs.bx));
-    policy.writeRegister(policy.reg_ecx,    RSIM_SEMANTICS_VTYPE<32>(regs.cx));
-    policy.writeRegister(policy.reg_edx,    RSIM_SEMANTICS_VTYPE<32>(regs.dx));
-    policy.writeRegister(policy.reg_esi,    RSIM_SEMANTICS_VTYPE<32>(regs.si));
-    policy.writeRegister(policy.reg_edi,    RSIM_SEMANTICS_VTYPE<32>(regs.di));
-    policy.writeRegister(policy.reg_ebp,    RSIM_SEMANTICS_VTYPE<32>(regs.bp));
-    policy.writeRegister(policy.reg_esp,    RSIM_SEMANTICS_VTYPE<32>(regs.sp));
-    policy.writeRegister(policy.reg_cs,     RSIM_SEMANTICS_VTYPE<16>(regs.cs));
-    policy.writeRegister(policy.reg_ds,     RSIM_SEMANTICS_VTYPE<16>(regs.ds));
-    policy.writeRegister(policy.reg_es,     RSIM_SEMANTICS_VTYPE<16>(regs.es));
-    policy.writeRegister(policy.reg_fs,     RSIM_SEMANTICS_VTYPE<16>(regs.fs));
-    policy.writeRegister(policy.reg_gs,     RSIM_SEMANTICS_VTYPE<16>(regs.gs));
-    policy.writeRegister(policy.reg_ss,     RSIM_SEMANTICS_VTYPE<16>(regs.ss));
-    policy.writeRegister(policy.reg_eflags, RSIM_SEMANTICS_VTYPE<32>(regs.flags));
+    operators()->writeRegister(dispatcher()->REG_EIP, operators()->number_(32, regs.ip));
+    operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, regs.ax));
+    operators()->writeRegister(dispatcher()->REG_EBX, operators()->number_(32, regs.bx));
+    operators()->writeRegister(dispatcher()->REG_ECX, operators()->number_(32, regs.cx));
+    operators()->writeRegister(dispatcher()->REG_EDX, operators()->number_(32, regs.dx));
+    operators()->writeRegister(dispatcher()->REG_ESI, operators()->number_(32, regs.si));
+    operators()->writeRegister(dispatcher()->REG_EDI, operators()->number_(32, regs.di));
+    operators()->writeRegister(dispatcher()->REG_EBP, operators()->number_(32, regs.bp));
+    operators()->writeRegister(dispatcher()->REG_ESP, operators()->number_(32, regs.sp));
+    operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, regs.cs));
+    operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, regs.ds));
+    operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, regs.es));
+    operators()->writeRegister(dispatcher()->REG_FS, operators()->number_(16, regs.fs));
+    operators()->writeRegister(dispatcher()->REG_GS, operators()->number_(16, regs.gs));
+    operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, regs.ss));
+    operators()->writeRegister(dispatcher()->REG_EFLAGS, operators()->number_(32, regs.flags));
 }
 
 int
@@ -937,12 +959,12 @@ RSIM_Thread::set_gdt(const user_desc_32 *ud)
     *entry = *ud;
 
     /* Make sure all affected shadow registers are reloaded. */
-    policy.writeRegister(policy.reg_cs, policy.readRegister<16>(policy.reg_cs));
-    policy.writeRegister(policy.reg_ds, policy.readRegister<16>(policy.reg_ds));
-    policy.writeRegister(policy.reg_es, policy.readRegister<16>(policy.reg_es));
-    policy.writeRegister(policy.reg_fs, policy.readRegister<16>(policy.reg_fs));
-    policy.writeRegister(policy.reg_gs, policy.readRegister<16>(policy.reg_gs));
-    policy.writeRegister(policy.reg_ss, policy.readRegister<16>(policy.reg_ss));
+    operators()->writeRegister(dispatcher()->REG_CS, operators->readRegister(dispatcher()->REG_CS));
+    operators()->writeRegister(dispatcher()->REG_DS, operators->readRegister(dispatcher()->REG_DS));
+    operators()->writeRegister(dispatcher()->REG_ES, operators->readRegister(dispatcher()->REG_ES));
+    operators()->writeRegister(dispatcher()->REG_FS, operators->readRegister(dispatcher()->REG_FS));
+    operators()->writeRegister(dispatcher()->REG_GS, operators->readRegister(dispatcher()->REG_GS));
+    operators()->writeRegister(dispatcher()->REG_SS, operators->readRegister(dispatcher()->REG_SS));
 
     return ud->entry_number;
 }
@@ -1175,7 +1197,7 @@ RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask) {
 int
 RSIM_Thread::sys_sigaltstack(const stack_32 *in, stack_32 *out)
 {
-    uint32_t sp = policy.readRegister<32>(policy.reg_esp).known_value();
+    uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
     return sighand.sigaltstack(in, out, sp);
 }
 
@@ -1187,7 +1209,7 @@ RSIM_Thread::emulate_syscall()
     assert(0==status);
     insn_semaphore_posted = true;
 
-    unsigned callno = policy.readRegister<32>(policy.reg_eax).known_value();
+    unsigned callno = operators()->readRegister(dispatcher()->REG_EAX)->get_number();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
         RSIM_Simulator *sim = get_process()->get_simulator();

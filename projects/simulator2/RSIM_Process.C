@@ -15,6 +15,10 @@
 using namespace rose::BinaryAnalysis;
 using namespace rose::Diagnostics;
 
+RSIM_Process::~RSIM_Process() {
+    delete futexes;
+}
+
 void
 RSIM_Process::ctor()
 {
@@ -344,7 +348,8 @@ RSIM_Process::load(const char *name)
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
     headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
-    thread->policy.writeRegister<32>(thread->policy.reg_eip, RSIM_SEMANTICS_VTYPE<32>(ep_orig_va));
+    const RegisterDescriptor &REG_IP = thread->dispatcher()->instructionPointerRegister();
+    thread->operators()->writeRegister(REG_IP, thread->operators()->number_(REG_IP.get_nbits(), ep_orig_va));
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, interpname);
@@ -358,7 +363,7 @@ RSIM_Process::load(const char *name)
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
         ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
-        thread->policy.writeRegister<32>(thread->policy.reg_eip, RSIM_SEMANTICS_VTYPE<32>(ep_start_va));
+        thread->operators()->writeRegister(REG_IP, thread->operators()->number_(REG_IP.get_nbits(), ep_start_va));
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -826,64 +831,51 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, btrace_file);
     assert(1==n);
 
-    uint32_t r = thread->policy.readRegister<32>(thread->policy.reg_eflags).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    pt_regs_32 regs = thread->get_regs();
+
+    n = fwrite(&regs.flags, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<32>(thread->policy.reg_eax).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.ax, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_ebx).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.bx, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_ecx).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.cx, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_edx).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.dx, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_esi).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.si, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_edi).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.di, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_ebp).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.bp, 4, 1, btrace_file);
     assert(1==n);
     
-    r = thread->policy.readRegister<32>(thread->policy.reg_esp).known_value();
-    n = fwrite(&r, 4, 1, btrace_file);
+    n = fwrite(&regs.sp, 4, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_cs).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.cs, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_ss).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.ss, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_es).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.es, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_ds).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.ds, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_fs).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.fs, 2, 1, btrace_file);
     assert(1==n);
 
-    r = thread->policy.readRegister<16>(thread->policy.reg_gs).known_value();
-    n = fwrite(&r, 2, 1, btrace_file);
+    n = fwrite(&regs.gs, 2, 1, btrace_file);
     assert(1==n);
 }
 
@@ -1272,8 +1264,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
     /* Allocate the stack */
     static const size_t stack_size = 0x00015000;
-    size_t sp = main_thread->policy.readRegister<32>(main_thread->policy.reg_esp).known_value();
-    size_t stack_addr = sp - stack_size;
+    rose_addr_t sp = main_thread->operators()->readRegister(main_thread->dispatcher()->REG_anySP)->get_number();
+    rose_addr_t stack_addr = sp - stack_size;
     get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
                         MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
                                                               "[stack]"));
@@ -1555,7 +1547,8 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
     sp &= ~0xf; /*align to 16 bytes*/
     mem_write(&(pointers[0]), sp, 4*pointers.size());
 
-    main_thread->policy.writeRegister<32>(main_thread->policy.reg_esp, RSIM_SEMANTICS_VTYPE<32>(sp));
+    const RegisterDescriptor &REG_SP = main_thread->dispatcher()->stackPointerRegister();
+    main_thread->operators()->writeRegister(REG_SP, main_thread->operators()->number_(REG_SP.get_nbits(), sp));
 }
 
 /* The "thread" arg must be the calling thread */

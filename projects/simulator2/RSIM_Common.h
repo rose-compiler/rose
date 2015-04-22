@@ -40,7 +40,6 @@
 class RSIM_Process;
 class RSIM_Thread;
 
-
 /** Styles of core dump. */
 enum CoreStyle {
     CORE_ELF=0x0001,

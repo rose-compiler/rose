@@ -1,8 +1,11 @@
 #ifndef ROSE_RSIM_Process_H
 #define ROSE_RSIM_Process_H
 
+#include "RSIM_Callbacks.h"
+
 class RSIM_Thread;
 class RSIM_Simulator;
+class RSIM_FutexTable;
 
 /** Represents a single simulated process. The process object holds resources that are shared among its threads. Some of the
  *  properties of a simulated process (such as PID) are shared with the real process (the process running the simulator).
@@ -22,9 +25,7 @@ public:
         ctor();
     }
 
-    ~RSIM_Process() {
-        delete futexes;
-    }
+    ~RSIM_Process();
 
     RSIM_Simulator *get_simulator() const {
         return simulator;
