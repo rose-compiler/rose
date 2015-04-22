@@ -115,8 +115,8 @@ RiscOperators::instance(const RegisterDictionary *regdict)
     // extra function calls.
 #endif
 #endif
-    BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
-    BaseSemantics::MemoryCellListPtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
+    BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
+    MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->set_byte_restricted(false); // because extracting bytes from a word results in new variables for this domain
     BaseSemantics::StatePtr state = State::instance(registers, memory);
     SMTSolver *solver = NULL;
