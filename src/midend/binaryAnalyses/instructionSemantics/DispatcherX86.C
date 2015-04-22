@@ -19,69 +19,70 @@ static inline size_t asm_type_width(SgAsmType* ty) {
 }
 
 /*******************************************************************************************************************************
- *                                      Functors that handle individual x86 instructions kinds
+ *                                      Base x86 instruction processor
  *******************************************************************************************************************************/
-
 namespace X86 {
 
-// An intermediate class that reduces the amount of typing in all that follows.  Its process() method does some up-front
-// checking, dynamic casting, and pointer dereferencing and then calls the p() method that does the real work.
-class P: public BaseSemantics::InsnProcessor {
-public:
-    typedef DispatcherX86 *D;
-    typedef BaseSemantics::RiscOperators *Ops;
-    typedef SgAsmX86Instruction *I;
-    typedef const SgAsmExpressionPtrList &A;
-    virtual void p(D, Ops, I, A) = 0;
+void
+InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) {
+    DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
+    BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
+    ASSERT_require(insn!=NULL && insn==operators->get_insn());
+    dispatcher->advanceInstructionPointer(insn);
+    SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+    check_arg_width(dispatcher.get(), insn, operands);
+    p(dispatcher.get(), operators.get(), insn, operands);
+}
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
-        DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
-        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-        ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        dispatcher->advanceInstructionPointer(insn);
-        SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-        check_arg_width(dispatcher.get(), insn, operands);
-        p(dispatcher.get(), operators.get(), insn, operands);
+void
+InsnProcessor::assert_args(I insn, A args, size_t nargs) {
+    if (args.size()!=nargs) {
+        std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
+        throw BaseSemantics::Exception(mesg, insn);
     }
+}
 
-    void assert_args(I insn, A args, size_t nargs) {
-        if (args.size()!=nargs) {
-            std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
-            throw BaseSemantics::Exception(mesg, insn);
-        }
-    }
-
-    // This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
-    // E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
-    // Note that even 32-bit x86 architectures might have registers that are larger than 32 bits (e.g., xmm registers on a
-    // Pentium4). Therefore, we consult the register dictionary and only fail if the operand is larger than 32 bits and
-    // contains a register which isn't part of the dictionary.
-    void check_arg_width(D d, I insn, A args) {
-        struct T1: AstSimpleProcessing {
-            D d;
-            I insn;
-            size_t argWidth;
-            T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
-            void visit(SgNode *node) {
-                if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                    const RegisterDictionary *regdict = d->get_register_dictionary();
-                    ASSERT_not_null(regdict);
-                    if (regdict->lookup(rre->get_descriptor()).empty())
-                        throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
-                                                       "-bit operands not supported for " +
-                                                       regdict->get_architecture_name(),
-                                                       insn);
-                }
+// This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
+// E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
+// Note that even 32-bit x86 architectures might have registers that are larger than 32 bits (e.g., xmm registers on a
+// Pentium4). Therefore, we consult the register dictionary and only fail if the operand is larger than 32 bits and
+// contains a register which isn't part of the dictionary.
+void
+InsnProcessor::check_arg_width(D d, I insn, A args) {
+    struct T1: AstSimpleProcessing {
+        D d;
+        I insn;
+        size_t argWidth;
+        T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDictionary *regdict = d->get_register_dictionary();
+                ASSERT_not_null(regdict);
+                if (regdict->lookup(rre->get_descriptor()).empty())
+                    throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
+                                                   "-bit operands not supported for " +
+                                                   regdict->get_architecture_name(),
+                                                   insn);
             }
-        };
-        for (size_t i=0; i<args.size(); ++i) {
-            size_t nbits = asm_type_width(args[i]->get_type());
-            if (nbits > 32)
-                T1(d, insn, nbits).traverse(args[i], preorder);
         }
+    };
+    for (size_t i=0; i<args.size(); ++i) {
+        size_t nbits = asm_type_width(args[i]->get_type());
+        if (nbits > 32)
+            T1(d, insn, nbits).traverse(args[i], preorder);
     }
-};
+}
+
+} // namespace
+
+
+/*******************************************************************************************************************************
+ *                                      Functors that handle individual x86 instructions kinds
+ *******************************************************************************************************************************/
+namespace X86 {
+
+typedef InsnProcessor P;
 
 // ASCII adjust after addition
 struct IP_aaa: P {
