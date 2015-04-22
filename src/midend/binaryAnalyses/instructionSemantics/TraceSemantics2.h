@@ -204,7 +204,7 @@ protected:
                 size_t);
     void before(const std::string&, const RegisterDescriptor&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
-    void before(const std::string&, SgAsmInstruction*);
+    void before(const std::string&, SgAsmInstruction*, bool showAddress);
     void before(const std::string&, size_t);
     void before(const std::string&, size_t, uint64_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&);

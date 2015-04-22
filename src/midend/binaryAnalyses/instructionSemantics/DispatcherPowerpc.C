@@ -1071,6 +1071,11 @@ DispatcherPowerpc::instructionPointerRegister() const {
     return REG_IAR;
 }
 
+RegisterDescriptor
+DispatcherPowerpc::stackPointerRegister() const {
+    return findRegister("r1");
+}
+
 void
 DispatcherPowerpc::record(const BaseSemantics::SValuePtr &result)
 {

@@ -2410,7 +2410,7 @@ public:
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
      *  register cannot be found then either an exception is thrown or an invalid register is returned depending on whether
      *  @p allowMissing is false or true, respectively. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false);
+    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
 
     /** Property: Width of memory addresses.
      *
@@ -2424,6 +2424,9 @@ public:
 
     /** Returns the instruction pointer register. */
     virtual RegisterDescriptor instructionPointerRegister() const = 0;
+
+    /** Returns the stack pointer register. */
+    virtual RegisterDescriptor stackPointerRegister() const = 0;
 
     /** Property: Reset instruction pointer register for each instruction.
      *

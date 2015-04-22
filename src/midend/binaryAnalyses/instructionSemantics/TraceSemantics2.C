@@ -111,10 +111,14 @@ RiscOperators::before(const std::string &operator_name, const RegisterDescriptor
 }
 
 void
-RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn)
+RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn, bool showAddress)
 {
     linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstruction(insn)) <<")";
+    if (showAddress) {
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstructionWithAddress(insn)) <<")";
+    } else {
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstruction(insn)) <<")";
+    }
     checkSubdomain();
 }
 
@@ -277,7 +281,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn)
 {
     ++nInsns_;
     cur_insn = insn;
-    before("startInstruction", insn);
+    before("startInstruction", insn, true /*show address*/);
     try {
         subdomain_->startInstruction(insn);
         after();
@@ -293,7 +297,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn)
 void
 RiscOperators::finishInstruction(SgAsmInstruction *insn)
 {
-    before("finishInstruction", insn);
+    before("finishInstruction", insn, false /*hide address*/); // address is part of prefix
     try {
         subdomain_->finishInstruction(insn);
         after();
