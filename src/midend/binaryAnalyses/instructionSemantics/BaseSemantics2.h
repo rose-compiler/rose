@@ -2343,7 +2343,6 @@ public:
      *  instruction itself is only used for the duration of this call. */
     virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
 
-protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 

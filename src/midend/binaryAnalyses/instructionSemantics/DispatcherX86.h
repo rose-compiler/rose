@@ -7,6 +7,11 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Dispatcher
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
@@ -30,6 +35,8 @@ protected:
         regcache_init();
         iproc_init();
     }
+
+public:
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
@@ -211,6 +218,32 @@ public:
     virtual BaseSemantics::SValuePtr saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
 };
         
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Instruction processors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace X86 {
+
+/** Base class for all x86 instruction processors.
+ *
+ *  This class provides single-letter names for some types that are used in all instructions: D, I, A, and Ops for the
+ *  dispatcher raw pointer, instruction pointer, argument list pointer, and RISC operators raw pointer.  It also takes care
+ *  of advancing the instruction pointer prior to handing the instruction to the subclass, which by the way is done via
+ *  @ref p method (short for "process").  See examples in DispatcherX86.C -- there are <em>lots</em> of them. */
+class InsnProcessor: public BaseSemantics::InsnProcessor {
+public:
+    typedef DispatcherX86 *D;
+    typedef BaseSemantics::RiscOperators *Ops;
+    typedef SgAsmX86Instruction *I;
+    typedef const SgAsmExpressionPtrList &A;
+    virtual void p(D, Ops, I, A) = 0;
+    virtual void process(const BaseSemantics::DispatcherPtr&, SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void assert_args(I insn, A args, size_t nargs);
+    void check_arg_width(D d, I insn, A args);
+};
+
+} // namespace
+
 } // namespace
 } // namespace
 } // namespace
