@@ -4139,6 +4139,11 @@ DispatcherX86::instructionPointerRegister() const {
     return REG_anyIP;
 }
 
+RegisterDescriptor
+DispatcherX86::stackPointerRegister() const {
+    return REG_anySP;
+}
+
 static bool
 isStatusRegister(const RegisterDescriptor &reg) {
     return reg.get_major()==x86_regclass_flags && reg.get_minor()==x86_flags_status;

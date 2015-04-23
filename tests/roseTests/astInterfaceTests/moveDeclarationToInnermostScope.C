@@ -24,6 +24,9 @@
  * -rose:identity  will turn off any transformations and act like an identity translator. Useful for debugging purposes. 
  *
  * -rose:merge_decl_assign  will merge the moved declaration with an immediately followed assignment. 
+ *
+ * -rose:trans-tracking   will turn on the transformation tracking mode, showing the source statements of a move/merged declaration 
+ *
  * ********************************************************************************************** 
  *  Internals: (For people who are interested in how this tool works internally) 
  *
@@ -101,6 +104,8 @@ bool useAlgorithmV2 = true;
 extern bool tool_keep_going;
 // Users want to see conservative and aggressive moving
 extern bool decl_mover_conservative;
+
+bool transTracking = false;  // if we keep track of transformation, mapping nodes back to original input nodes
 
 //! Move a declaration to a scope which is the closest to the declaration's use places. It may generate new declarations to be considered later on so worklist is used.
 bool moveDeclarationToInnermostScope_v1(SgVariableDeclaration* decl, std::queue<SgVariableDeclaration *> &worklist, bool debug/*= false */);
@@ -260,7 +265,15 @@ static void collectiveMergeDeclarationAndAssignment (std::vector <SgVariableDecl
          if (isAssignmentStmtOf (next_stmt, init_name) )
          {  
            if (isMergeable (current_decl, isSgExprStatement (next_stmt)))
+           {
                SageInterface::mergeDeclarationAndAssignment (current_decl, isSgExprStatement (next_stmt));
+              if (transTracking)
+              {
+                // No need to patch up IDs for a merge transformation
+                // directly record input node 
+                TransformationTracking::addInputNode (current_decl, next_stmt);
+              }
+           } // end if Mergeable
              next_stmt = NULL; // We stop when the first match is found
          } 
          else
@@ -393,7 +406,6 @@ GetSourceFilenamesFromCommandline(const std::vector<std::string>& argv)
 }
 
 int main(int argc, char * argv[])
-
 {
   bool isIdentity = false;
 
@@ -411,6 +423,13 @@ int main(int argc, char * argv[])
     debug = true;
     cout<<"Turing on debugging model..."<<endl;
   }
+
+  if (CommandlineProcessing::isOption (argvList,"-rose:trans-tracking","",true))
+  {
+    transTracking = true;
+    cout<<"Turing on transformation tracking model..."<<endl;
+  }
+
 
   // TOO1 (2014/12/05): Temporarily added this to support keep-going in rose-sh.
   if (CommandlineProcessing::isOption (argvList,"--list-filenames","",true))
@@ -446,6 +465,10 @@ int main(int argc, char * argv[])
   }
 
   SgProject *project = frontend (argvList);
+
+  // assign unique ID's for all nodes
+  if (transTracking)
+    TransformationTracking::registerAstSubtreeIds (project);  
 
 // DQ (12/11/2014): Added output of graph after transformations.
    if (SgProject::get_verbose() > 0)
@@ -497,6 +520,43 @@ int main(int argc, char * argv[])
 // DQ (1/18/2015): Denormalize some specific normalized bodies as a test.
    SageInterface::cleanupNontransformedBasicBlockNode();
 
+  if (transTracking)
+  { 
+#if 0
+    for (size_t i =1; i<TransformationTracking::getNextId(); i++)
+    {
+      std::pair<Sg_File_Info*, Sg_File_Info*> info_pair = TransformationTracking::getFileInfo(i);
+      Sg_File_Info* start_info = info_pair.first;
+      Sg_File_Info* end_info = info_pair.second;
+      cout<<"====>>Node :"<<i<<endl;
+      if (start_info != NULL)
+      {start_info->display();}
+      if (end_info != NULL)
+      {end_info->display();}
+    }
+#endif
+    std::map<AST_NODE_ID, std::set<AST_NODE_ID> >::iterator iter;
+    for (iter = TransformationTracking::inputIDs.begin(); iter != TransformationTracking::inputIDs.end(); iter++)
+    {
+      std::set<AST_NODE_ID> ids = (*iter).second; 
+      if (ids.size()>0)
+      {
+        cout<<"Found a node with IR mapping info"<<endl;
+        SgNode* affected_node = TransformationTracking::getNode((*iter).first);
+        cout<<isSgLocatedNode(affected_node)->unparseToString()<<endl;
+        cout<<"-- with input nodes ----------"<<endl;
+        std::set<AST_NODE_ID>::iterator iditer;
+        for(iditer = ids.begin(); iditer != ids.end(); iditer ++)
+        {
+           SgNode* input_node = TransformationTracking::getNode((*iditer));
+           SgLocatedNode* lnode = isSgLocatedNode(input_node); 
+           cout<<lnode->unparseToString()<<endl; 
+           cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
+        }
+      } // end if ids.size() >0
+    }  // end for inputIDs
+  } // end if transTracking 
+
  // run all tests
   AstTests::runAllTests(project);
   return backend(project);
@@ -505,7 +565,7 @@ int main(int argc, char * argv[])
 
 //==================================================================================
 
-// Three types of scope fo a varialbe access
+// Three types of scope for a varialbe access
 // 1. variable is being declared.
 // 2. variable is being used: read or written 
 // 3. not either of the above cases, juse a scope in between them. 
@@ -1638,13 +1698,28 @@ void findFinalTargetScopes(SgVariableDeclaration* declaration, std::vector <SgSc
 void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std::vector <SgVariableDeclaration*>& my_inserted_decls, bool debug = false)
 {
 //  std::vector <SgVariableDeclaration* > inserted_decl; 
+  SgScopeStatement* orig_scope = declaration->get_scope();
+  ROSE_ASSERT  (orig_scope != NULL );
   std::vector <SgScopeStatement *> target_scopes;
   findFinalTargetScopes (declaration, target_scopes, debug);
   std::queue<SgVariableDeclaration*> worklist;   // not really useful in this algorithm, dummy parameter
   if (target_scopes.size() > 0)
   {
     copyMoveVariableDeclaration (declaration, target_scopes, worklist, my_inserted_decls);
-  }
+
+// support transformation tracking/ IR mapping
+  if (transTracking)
+    {
+      // patch up IDs for the changed subtree 
+      TransformationTracking::registerAstSubtreeIds (orig_scope);
+      std::vector <SgVariableDeclaration*>::iterator iter;
+
+      for (iter = my_inserted_decls.begin(); iter!= my_inserted_decls.end(); iter++)
+      {
+        TransformationTracking::addInputNode (*iter, declaration); 
+      }
+    }  // end if transTracking
+  } // end target_scopes.size()
 }
 
 // Old algorithm: iteratively find target scopes and actualy move declarations.

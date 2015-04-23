@@ -73,7 +73,7 @@ struct GraphTraits<const G> {
  *  is always used as the name of a graph component (i.e., a graph has vertices and edges), and the term "node" always refers
  *  to a unit of storage.
  *
- *  A graph doesn't necessarily need to store data at each vertex or edge. The vertex and node types default to @ref Nothing,
+ *  A graph doesn't necessarily need to store data at each vertex or edge. The vertex and edge types default to @ref Nothing,
  *  which is similar to @c void.
  *
  * @section iterators Iterators

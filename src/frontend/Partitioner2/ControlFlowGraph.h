@@ -203,10 +203,21 @@ void insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap 
  *  back to some vertex in the current traversal path is added to the returned edge set. */
 CfgConstEdgeSet findBackEdges(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &begin);
 
+/** Find function call edges.
+ *
+ *  Returns the list of function call edges for the specified vertex. */
+CfgConstEdgeSet findCallEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+
 /** Find called functions.
  *
  *  Given some vertex in a CFG, return the vertices representing the functions that are called. */
 CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Return outgoing call-return edges.
+ *
+ *  A call-return edge represents a short-circuit control flow path across a function call, from the call site to the return
+ *  target. */
+CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
 
 /** Find function return vertices.
  *
