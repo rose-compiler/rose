@@ -8151,7 +8151,7 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgAsmStmt* asm_stmt = isSgAsmStmt(stmt);
      ROSE_ASSERT(asm_stmt != NULL);
 
-#define ASM_DEBUGGING 1
+#define ASM_DEBUGGING 0
 
 #if ASM_DEBUGGING
      printf ("In unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
@@ -9655,7 +9655,6 @@ Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnp
       ROSE_ASSERT(false);
 #endif
    }
-
 
 
  // EOF
