@@ -473,7 +473,7 @@ int main( int argc, char * argv[] )
         continue;
       }
 // convert test statement
-      if(offSet != 1)  // Now only test offSet = 1
+      if(offSet%2 != 1)  // Now only test offSet = 1
       {
         cout << "Skipping index shifting: Offset is not 1" << endl;
         continue;
@@ -535,7 +535,8 @@ int main( int argc, char * argv[] )
           validSubscript = false;
           break;
         }
-        if(rhsOp->get_value() != offSet)
+// this might need more consideration
+        if(rhsOp->get_value() != 1)
         {
           validSubscript = false;
           break;
