@@ -183,6 +183,10 @@ main(int argc, char *argv[])
     SnippetFile::loadVariableNames("/usr/share/dict/words");
 #endif
 
+ // DQ (4/16/2015): Adding -c option to avoid linking in the backend compiler (required 
+ // due to recent bug fixes in the command line option generation from the backend).
+    frontend_args.push_back("-c");
+
     // Parse the source code into which the snippet will be inserted and find a place to insert.
     SgProject *project = frontend(frontend_args);
     assert(project!=NULL);

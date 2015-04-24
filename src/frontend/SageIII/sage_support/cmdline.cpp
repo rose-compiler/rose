@@ -626,12 +626,21 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
   // printf ("DONE with copy of command line in SgProject constructor! \n");
 
-  // printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
+#if 0
+     printf ("SgProject::processCommandLine(): local_commandLineArgumentList.size() = %" PRIuPTR " \n",local_commandLineArgumentList.size());
+     printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
+#endif
 
+#if 0
+  // DQ (4/13/2015): The value of get_verbose() has not yet been set, so this is always the default value (zero).
      if (SgProject::get_verbose() > 1)
         {
           printf ("SgProject::processCommandLine(): local_commandLineArgumentList = %s \n",StringUtility::listToString(local_commandLineArgumentList).c_str());
+
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
         }
+#endif
 
   // Build the empty STL lists
 #if ROSE_USING_OLD_PROJECT_FILE_LIST_SUPPORT
@@ -937,7 +946,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
   // if ( CommandlineProcessing::isOption(argc,argv,"-","c",false) == true )
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-","c",false) == true )
         {
-       // printf ("Option -c found (compile only)! \n");
+#if 0
+          printf ("Option -c found (compile only)! \n");
+#endif
           set_compileOnly(true);
         }
 
@@ -1055,7 +1066,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
         {
        // Make our own copy of the filename string
           p_outputFileName = tempOutputFilename;
-       // printf ("option -o|output found outputFileName = %s \n",p_outputFileName.c_str());
+#if 0
+          printf ("option -o|output found outputFileName = %s \n",p_outputFileName.c_str());
+#endif
         }
        else
         {
@@ -1407,15 +1420,6 @@ SgProject::processCommandLine(const vector<string>& input_argv)
              }
         }
 
-#if 1
-     if ( get_verbose() > 1 )
-        {
-       // Find out what file we are doing transformations upon
-          printf ("In SgProject::processCommandLine() (verbose mode ON): \n");
-          display ("In SgProject::processCommandLine()");
-        }
-#endif
-
   // DQ (6/17/2005): Added support for AST merging (sharing common parts of the AST most often represented in common header files of a project)
   //
   // specify AST merge option
@@ -1473,10 +1477,23 @@ SgProject::processCommandLine(const vector<string>& input_argv)
           ROSE_ASSERT (get_suppressConstantFoldingPostProcessing() == true);
         }
 
+#if 1
+     if ( get_verbose() > 1 )
+        {
+       // Find out what file we are doing transformations upon
+          printf ("In SgProject::processCommandLine() (verbose mode ON): \n");
+          display ("In SgProject::processCommandLine()");
+        }
+#endif
 
 #if 0
      printf ("Leaving SgProject::processCommandLine() \n");
      display("At base of SgProject::processCommandLine()");
+#endif
+
+#if 0
+     printf ("Exiting as a test at base of SgProject::processCommandLine() \n");
+     ROSE_ASSERT(false);
 #endif
    }
 
@@ -2031,25 +2048,20 @@ Process (SgProject* project, std::vector<std::string>& argv)
 void
 Rose::Cmdline::Java::
 ProcessJavaOnly (SgProject* project, std::vector<std::string>& argv)
-{
-  project->set_Java_only(false);
-  bool is_java_only =
-      CommandlineProcessing::isOption(
-          argv,
-          "-rose:java",
-          "",
-          true);
+   {
+     project->set_Java_only(false);
+     bool is_java_only = CommandlineProcessing::isOption(argv,"-rose:java","",true);
 
-  if (is_java_only)
-  {
-      if (SgProject::get_verbose() > 1)
-          std::cout << "[INFO] Turning on Java only mode" << std::endl;
+     if (is_java_only)
+        {
+          if (SgProject::get_verbose() > 1)
+               std::cout << "[INFO] Turning on Java only mode" << std::endl;
 
-      // Java code is only compiled, not linked as is C/C++ and Fortran.
-      project->set_compileOnly(true);
-      project->set_Java_only(true);
-  }
-}
+       // Java code is only compiled, not linked as is C/C++ and Fortran.
+          project->set_compileOnly(true);
+          project->set_Java_only(true);
+        }
+   }
 
 void
 Rose::Cmdline::Java::
@@ -6685,7 +6697,9 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      bool autoInstantiation = false;
      if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
         {
-       // printf ("In build_EDG_CommandLine(): Option -c found (compile only)! \n");
+#if 0
+          printf ("In build_EDG_CommandLine(): Option -c found (compile only)! \n");
+#endif
           set_compileOnly(true);
         }
        else
@@ -6696,7 +6710,7 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
 
      if ( CommandlineProcessing::isOption(argv,"-rose:","wave",ROSE_WAVE_DEFAULT) == true )
         {
-       // printf ("Option -c found (compile only)! \n");
+       // printf ("Option -rose:wave found (use of Boost wave library)! \n");
           set_wave(true);
         }
 
@@ -6874,7 +6888,13 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
   // display("Data in SgFile in buildCompilerCommandLineOptions()");
 
-     if ( SgProject::get_verbose() >= 1 )
+#define DEBUG_COMPILER_COMMAND_LINE 0
+
+#if DEBUG_COMPILER_COMMAND_LINE
+          printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
+#endif
+
+     if ( SgProject::get_verbose() > 0 )
         {
           printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
         }
@@ -6885,23 +6905,27 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      vector<string> compilerNameString;
      compilerNameString.push_back(compilerName);
 
-    // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
-    #ifdef ROSE_BOOST_PATH
-    if (get_C_only() || get_Cxx_only())
-    {
-        // Search dir for header files, after all directories specified by -I but
-        // before the standard system directories.
-        compilerNameString.push_back("-isystem");
-        compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
-    }
-    #endif
+  // TOO1 (2014-10-09): Use the correct Boost version that ROSE was configured --with-boost
+#ifdef ROSE_BOOST_PATH
+  // DQ (4/13/2015): Only add boost path for C++ applications, never for C applications
+  // (though this does not to have ever caused an error that I know of).
+  // if (get_C_only() || get_Cxx_only())
+     if (get_Cxx_only() == true)
+        {
+       // Search dir for header files, after all directories specified by -I but
+       // before the standard system directories.
+          compilerNameString.push_back("-isystem");
+          compilerNameString.push_back(std::string(ROSE_BOOST_PATH) + "/include");
+        }
+#endif
 
   // DQ (1/17/2006): test this
   // ROSE_ASSERT(get_fileInfo() != NULL);
 
 #if 0
-  // display("SgFile::buildCompilerCommandLineOptions()");
-
+     display("SgFile::buildCompilerCommandLineOptions()");
+#endif
+#if 0
      printf ("In buildCompilerCommandLineOptions(): compilerName = %s \n",compilerName.c_str());
      printf ("   --- C   compiler              = %s \n",BACKEND_C_COMPILER_NAME_WITH_PATH);
      printf ("   --- C++ compiler              = %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
@@ -7156,18 +7180,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
      printf ("Selected compilerNameString.size() = %" PRIuPTR " compilerNameString = %s \n",compilerNameString.size(),StringUtility::listToString(compilerNameString).c_str());
 #endif
 
 #ifdef ROSE_USE_NEW_EDG_INTERFACE
-if (get_C_only() ||
-    get_Cxx_only())
-{
-  // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
-  // is in use to be properly passed on the compilation of the generated code.
-     compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
-}
+     if (get_C_only() || get_Cxx_only())
+        {
+       // DQ (1/12/2009): Allow in internal indicator that EDG version 3.10 or 4.0 (or greater)
+       // is in use to be properly passed on the compilation of the generated code.
+          compilerNameString.push_back("-DROSE_USE_NEW_EDG_INTERFACE");
+        }
 #endif
 
   // Since we need to do this often, support is provided in the utility_functions.C
@@ -7176,14 +7199,14 @@ if (get_C_only() ||
 
   // printf ("In buildCompilerCommandLineOptions(): currentDirectory = %s \n",currentDirectory);
 
-    if (get_C_only() ||
-        get_Cxx_only() ||
-        get_Fortran_only())
-    {
+     if (get_C_only() || get_Cxx_only() || get_Fortran_only())
+        {
        // specify compilation only option (new style command line processing)
           if ( CommandlineProcessing::isOption(argv,"-","c",false) == true )
              {
-            // printf ("Option -c found (compile only)! \n");
+#if DEBUG_COMPILER_COMMAND_LINE
+               printf ("Option -c found (compile only)! \n");
+#endif
                set_compileOnly(true);
              }
             else
@@ -7209,24 +7232,34 @@ if (get_C_only() ||
        // Liao, 9/4/2009. If OpenMP lowering is activated. -D_OPENMP should be added
        // since we don't remove condition compilation preprocessing info. during OpenMP lowering
           if (get_openmp_lowering()||get_openmp())  
-          {
-            compilerNameString.push_back("-D_OPENMP");
-          }
-    }
+             {
+               compilerNameString.push_back("-D_OPENMP");
+             }
+        }
+
   // DQ (3/31/2004): New cleaned up source file handling
      Rose_STL_Container<string> argcArgvList = argv;
+
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: After initialization: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
 
   // DQ (9/25/2007): Moved to std::vector from std::list uniformly within ROSE.
   // Remove the first argument (argv[0])
   // argcArgvList.pop_front();
      argcArgvList.erase(argcArgvList.begin());
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: After argcArgvList.erase(argcArgvList.begin()): argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: test 1: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
   // DQ (1/24/2010): Moved this inside of the true branch below.
-     SgProject* project = isSgProject(this->get_parent());
+  // SgProject* project = isSgProject(this->get_parent());
+     SgProject* project = SageInterface::getProject(this);
      ROSE_ASSERT (project != NULL);
      Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
 
@@ -7243,12 +7276,12 @@ if (get_C_only() ||
           SgProject* project = TransformationSupport::getProject(this);
           ROSE_ASSERT (project != NULL);
           Rose_STL_Container<string> sourceFilenames = project->get_sourceFileNameList();
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
           printf ("sourceFilenames.size() = %" PRIuPTR " sourceFilenames = %s \n",sourceFilenames.size(),StringUtility::listToString(sourceFilenames).c_str());
 #endif
           for (Rose_STL_Container<string>::iterator i = sourceFilenames.begin(); i != sourceFilenames.end(); i++)
              {
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
                printf ("Removing sourceFilenames list element i = %s \n",(*i).c_str());
 #endif
 
@@ -7281,11 +7314,90 @@ if (get_C_only() ||
              }
         }
 
-#if 0
-     printf ("After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: After removing source file name: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
   // ROSE_ASSERT(false);
 #endif
 
+     bool  objectNameSpecified = false;
+     for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+        {
+          if (i->substr(0,2) == "-o")
+             {
+            // DQ (6/12/2005): Added error checking!
+               if (objectNameSpecified == true)
+                  {
+                 // Error: "-o" has been specified twice
+                    printf ("Error: In SgFile::buildCompilerCommandLineOptions: \"-o \" has been specified twice \n");
+                    ROSE_ASSERT(false);
+                  }
+                 else
+                  {
+                 // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+                     Rose_STL_Container<string>::iterator j = i;
+                     j++;
+                     ROSE_ASSERT(j != argcArgvList.end());
+#if DEBUG_COMPILER_COMMAND_LINE
+                     printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
+#endif
+                     set_objectFileNameWithPath(*j);
+                  }
+               
+               ROSE_ASSERT(objectNameSpecified == false);
+               objectNameSpecified = true;
+             }
+        }
+
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("get_objectFileNameWithPath().length() = %zu \n",get_objectFileNameWithPath().length());
+#endif
+
+     if (get_objectFileNameWithPath().length() > 0)
+        {
+          if (get_multifile_support() == true)
+             {
+            // Strip the -o <file> option and subsitute a *.o file based on the source file name.
+#if DEBUG_COMPILER_COMMAND_LINE
+               printf ("get_objectFileNameWithPath() = %s: get_multifile_support() == true: Strip the -o <file> option and subsitute a *.o file based on the source file name \n",get_objectFileNameWithPath().c_str());
+#endif
+               std::vector<Rose_STL_Container<string>::iterator> deleteList;
+               for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
+                  {
+                    if (i->substr(0,2) == "-o")
+                       {
+                      // argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*i));
+                         deleteList.push_back(i);
+                         Rose_STL_Container<string>::iterator j = i;
+                         j++;
+                         deleteList.push_back(j);
+                       }
+                  }
+
+               for (std::vector<Rose_STL_Container<string>::iterator>::iterator i = deleteList.begin(); i != deleteList.end(); i++)
+                  {
+                    argcArgvList.erase(find(argcArgvList.begin(),argcArgvList.end(),*(*i)));
+                  }
+
+            // Next we add a new object file specification based on the source file name. A later step will 
+            // build the link line using the executable name from the original -o <file> specification.
+             }
+            else
+             {
+#if DEBUG_COMPILER_COMMAND_LINE
+               printf ("get_objectFileNameWithPath() = %s: get_multifile_support() == false: leaving the originally specified -o output option in place \n",get_objectFileNameWithPath().c_str());
+#endif
+             }
+        }
+
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: After processing executable specification: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
+  // ROSE_ASSERT(false);
+#endif
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+#if 0
   // AS(080704) Fix so that if user specifies name of -o file rose do not specify another in addition
      bool  objectNameSpecified = false;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
@@ -7303,12 +7415,17 @@ if (get_C_only() ||
                if (objectNameSpecified == true)
                   {
                  // Error: "-o" has been specified twice
-                    printf ("Error: \"-o \" has been specified twice \n");
+                    printf ("Error: In buildCompilerCommandLineOptions: \"-o \" has been specified twice \n");
                   }
                ROSE_ASSERT(objectNameSpecified == false);
                objectNameSpecified = true;
              }
         }
+#endif
+
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s \n",objectNameSpecified ? "true" : "false");
+#endif
 
      Rose_STL_Container<string> tempArgcArgv;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
@@ -7317,12 +7434,14 @@ if (get_C_only() ||
           // We now only handles compilation for SgFile::compileOutput(),
           // so we need to remove linking related flags such as '-lxx' from the original command line
           // Otherwise gcc will complain:  -lm: linker input file unused because linking not done
-          if(i->substr(0,2) != "-l")
-          {
-            tempArgcArgv.push_back(*i);
-          }
+          if (i->substr(0,2) != "-l")
+             {
+               tempArgcArgv.push_back(*i);
+             }
         }
+
      argcArgvList.swap(tempArgcArgv);
+
   // DQ (4/14/2005): Fixup quoted strings in args fix "-DTEST_STRING_MACRO="Thu Apr 14 08:18:33 PDT 2005"
   // to be -DTEST_STRING_MACRO=\""Thu Apr 14 08:18:33 PDT 2005"\"  This is a problem in the compilation of
   // a Kull file (version.cc), when the backend is specified as /usr/apps/kull/tools/mpig++-3.4.1.  The
@@ -7387,7 +7506,7 @@ if (get_C_only() ||
              }
         }
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: test 2: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
      printf ("argcArgvList.size()                                            = %" PRIuPTR " \n",argcArgvList.size());
      printf ("In buildCompilerCommandLineOptions: test 2: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
@@ -7422,7 +7541,7 @@ if (get_C_only() ||
              }
         }
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: test 3: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 
@@ -7492,13 +7611,13 @@ if (get_C_only() ||
              }
         }
 
-#if 0
+#if DEBUG_COMPILER_COMMAND_LINE
      printf ("In buildCompilerCommandLineOptions: test 4: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 
-    // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
-    // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
-    // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
+  // Liao 3/30/2011. the search path for the installation path should be the last one, after paths inside
+  // source trees, such as -I../../../../sourcetree/src/frontend/SageIII and 
+  // -I../../../../sourcetree/src/midend/programTransformation/ompLowering
      if (get_openmp_lowering())  
      {
        vector<string>::iterator iter, iter_last_inc=compilerNameString.begin();
@@ -7546,18 +7665,25 @@ if (get_C_only() ||
        // printf ("Case of skip_unparse() == true: original source file name should be present compilerNameString = %s \n",compilerNameString.c_str());
         }
 
-    if ( get_compileOnly() == true )
-    {
-          std::string objectFileName = generateOutputFileName();
-       // printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: test 5: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+#endif
 
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("In buildCompilerCommandLineOptions: get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
+#endif
+
+     if ( get_compileOnly() == true )
+        {
+          std::string objectFileName = generateOutputFileName();
+#if DEBUG_COMPILER_COMMAND_LINE
+          printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
+#endif
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
        // Currently we explicitly output "-d ." so that generated class files will be put into the current directory (build tree), but this
        // is not standard semantics for Java (though it makes the Java support in ROSE consistent with other languages supported in ROSE).
-        if (get_C_only() ||
-            get_Cxx_only() ||
-            get_Fortran_only())
-        {
+          if (get_C_only() || get_Cxx_only() || get_Fortran_only())
+             {
             // DQ (7/14/2004): Suggested fix from Andreas, make the object file name explicit
                if (objectNameSpecified == false)
                   {
@@ -7565,31 +7691,86 @@ if (get_C_only() ||
                     compilerNameString.push_back("-o");
                     compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                   }
+                 else
+                  {
+#if DEBUG_COMPILER_COMMAND_LINE
+                    printf ("In buildCompilerCommandLineOptions: get_compileOnly() == true: get_multifile_support() = %s \n",get_multifile_support() ? "true" : "false");
+#endif
+                    if (get_multifile_support() == true)
+                       {
+                         printf ("In buildCompilerCommandLineOptions: Need to suppress the generation of object file specification in backend compiler link line \n");
+
+                      // For multi-file handling we have to build a output (object file) using the name of the source file.
+                         compilerNameString.push_back("-c");
+                         std::string objectFileName = generateOutputFileName();
+                         compilerNameString.push_back("-o");
+                         compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                       }
+                      else
+                       {
+                         printf ("get_compileOnly() == true: get_multifile_support() == false: \n");
+                       }
+                  }
+             }
         }
-    }
-    else
-    {
+       else
+        {
        // Liao 11/19/2009, changed to support linking multiple source files within one command line
        // We change the compilation mode for each individual file to compile-only even
        // when the original command line is to generate the final executable.
        // We generate the final executable at the SgProject level from object files of each source file
 
-        if (get_C_only() ||
-            get_Cxx_only() ||
-            get_Fortran_only())
-        {
-            // cout<<"turn on compilation only at the file compilation level"<<endl;
-               compilerNameString.push_back("-c");
-            // For compile+link mode, -o is used for the final executable, if it exists
-            // We make -o objectfile explicit 
-               std::string objectFileName = generateOutputFileName();
-               compilerNameString.push_back("-o");
-               compilerNameString.push_back(currentDirectory + "/" + objectFileName);
-        }
-    }
-
+          if (get_C_only() || get_Cxx_only() || get_Fortran_only())
+             {
+#if DEBUG_COMPILER_COMMAND_LINE
+               printf ("In buildCompilerCommandLineOptions: get_compileOnly() == false: get_multifile_support() = %s \n",get_multifile_support() ? "true" : "false");
+#endif
+               if (get_multifile_support() == true)
+                  {
+                    printf ("In buildCompilerCommandLineOptions: Need to suppress the generation of object file specification in backend compiler link line \n");
+#if 1
+                 // For multi-file handling we have to build a output (object file) using the name of the source file.
+                    compilerNameString.push_back("-c");
+                    std::string objectFileName = generateOutputFileName();
+                    compilerNameString.push_back("-o");
+                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+#else
+                 // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
+                    if (objectNameSpecified == false)
+                       {
+                      // cout<<"turn on compilation only at the file compilation level"<<endl;
+                         compilerNameString.push_back("-c");
+                      // For compile+link mode, -o is used for the final executable, if it exists
+                      // We make -o objectfile explicit 
+                         std::string objectFileName = generateOutputFileName();
+#error "DEAD CODE!"
+                         compilerNameString.push_back("-o");
+                         compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                       }
+#endif
 #if 0
-     printf ("At base of buildCompilerCommandLineOptions: compilerNameString = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
+                 // OLD CODE
+                 // DQ (4/13/2015): If the compilation only is not specified, then never output an explicit -o option to specify the output file.
+#error "DEAD CODE!"
+                 // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
+                    if (objectNameSpecified == false)
+                       {
+                      // cout<<"turn on compilation only at the file compilation level"<<endl;
+                         compilerNameString.push_back("-c");
+                      // For compile+link mode, -o is used for the final executable, if it exists
+                      // We make -o objectfile explicit 
+                         std::string objectFileName = generateOutputFileName();
+
+                         compilerNameString.push_back("-o");
+                         compilerNameString.push_back(currentDirectory + "/" + objectFileName);
+                       }
+#endif
+                  }
+             }
+        }
+
+#if DEBUG_COMPILER_COMMAND_LINE
+     printf ("At base of buildCompilerCommandLineOptions: test 6: compilerNameString = \n\n%s\n\n",CommandlineProcessing::generateStringFromArgList(compilerNameString,false,false).c_str());
 #endif
 #if 0
      printf ("\n\nExiting at base of buildCompilerCommandLineOptions() ... \n");
@@ -7599,10 +7780,10 @@ if (get_C_only() ||
 #if 0
      cout<<"Debug: SgFile::buildCompilerCommandLineOptions() compilerNameString is "<<endl;
      for (vector<string>::iterator iter = compilerNameString.begin(); iter != compilerNameString.end(); iter++)
-     {
-       std::string str = *iter;
-       cout<<"\t"<<str<<endl;
-      }
+        {
+          std::string str = *iter;
+          cout<<"\t"<<str<<endl;
+        }
 #endif
 
      return compilerNameString;

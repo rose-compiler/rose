@@ -23,6 +23,12 @@ bin_PROGRAMS += testLinearization
 testLinearization_SOURCES = testLinearization.C  
 testLinearization_LDADD = $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# Type Transformations
+bin_PROGRAMS += testTypeTransformation
+testSctestTypeTransformation_SOURCES = testTypeTransformation.C
+testTypeTransformation_LDADD = $(ROSE_LIBS)
+
 LIN_SPECIMENS = testLin1.c testLin2.c
 LIN_TEST_TARGETS = $(addprefix lin_, $(addsuffix .passed, $(LIN_SPECIMENS)))
 LIN_TEST_CONFIG = $(srcdir)/testLinearization.conf
@@ -1234,6 +1240,9 @@ test_unparsingFileWithCR_UsingTokens : testUnparsingUsingTokenStream
 
 test_unparsingFileWithText_UsingTokens : testUnparsingUsingTokenStream
 	./testUnparsingUsingTokenStream -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_test_file_with_text.c 
+
+test_typeTransformation_UsingTokens : testTypeTransformation
+	./testTypeTransformation -rose:C89 -rose:unparse_tokens -rose:verbose 0 -c $(srcdir)/input_test_type_transformations.c 
 
 #------------------------------------------------------------------------------------------------------------------------
 

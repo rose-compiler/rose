@@ -1260,6 +1260,19 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+  // SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     printf ("In frontierDetectionForTokenStreamMapping(): Output dot file for project \n");
+
+     generateDOTforMultipleFile(*project);
+#endif
+
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
