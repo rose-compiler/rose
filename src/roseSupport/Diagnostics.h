@@ -5,6 +5,11 @@
 #include "sawyer/Assert.h"
 #include "sawyer/Message.h"
 
+// How failed assertions behave
+#define ROSE_ASSERTION_ABORT    1                       // call abort()
+#define ROSE_ASSERTION_EXIT     2                       // call exit(1)
+#define ROSE_ASSERTION_THROW    3                       // throw rose::Diagnostics::FailedAssertion
+
 namespace rose {
 
 /** Controls diagnostic messages from ROSE.
