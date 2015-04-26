@@ -414,6 +414,35 @@ echo "CPPFLAGS = $CPPFLAGS"
 # a $(CXX_TEMPLATE_REPOSITORY_PATH) directory in the top level build directory (a minor error)
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 
+# *****************************************************************
+
+AC_ARG_ENABLE(assertion-behavior,
+    AS_HELP_STRING([--enable-assertion-behavior[=MODE]],
+        [Specifies the default behavior for failing ROSE assertions. This behavior can be changed at runtime either
+	 via ROSE command-line switches or the rose API. Most developers (the ROSE team and users that
+	 are developing transformations) will probably want "abort" since this gives the most useful post-mortem
+	 information. On the other hand, end users usually don't need or expect post-mortem capabilities and sometimes
+	 even perceive them as low code quality, in which case "exit" with non-zero status is the best behavior. Finally,
+	 the "throw" behavior can be used as a compromise for tool developers to more gracefully recover from a ROSE
+	 error that would otherwise be fatal.  When --enable-assertion-behavior is not specified then "exit" is used.
+	 Some assertions can be disabled altogether (e.g., when an optimized library is desired) by defining NDEBUG.
+	 Caveats: this switch affects the behavior of the ROSE_ASSERT macro and the Sawyer ASSERT_* macros, but not
+	 plain old "assert"; the NDEBUG define applies to Sawyer ASSERT_* macros and plain old "assert" but not
+         ROSE_ASSERT.]))
+
+case "$enable_assertion_behavior" in
+    abort)    assertion_behavior=ROSE_ASSERTION_ABORT ;;
+    exit|"")  assertion_behavior=ROSE_ASSERTION_EXIT ;;
+    throw)    assertion_behavior=ROSE_ASSERTION_THROW ;;
+    *)
+        AC_MSG_ERROR(["--enable-assertion-behavior should be "abort", "exit", or "throw"])
+	;;
+esac
+
+AC_DEFINE_UNQUOTED([ROSE_ASSERTION_BEHAVIOR], [$assertion_behavior], [Determines how failed assertions should behave.])
+    
+# *****************************************************************
+
 # ROSE_HOME should be relative to top_srcdir or top_builddir.
 ROSE_HOME=.
 # ROSE_HOME=`pwd`/$top_srcdir
