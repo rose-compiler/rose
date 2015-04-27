@@ -1,4 +1,5 @@
-#include <rose.h>
+#include <sage3basic.h>
+
 #include <boost/foreach.hpp>
 #include <sawyer/CommandLine.h>
 #include <string>
