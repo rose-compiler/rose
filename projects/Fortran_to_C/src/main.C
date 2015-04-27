@@ -453,11 +453,11 @@ int main( int argc, char * argv[] )
       SgExpression* lowBound = isSgExpression(assignOp->get_rhs_operand());
       ROSE_ASSERT(lowBound);
       int offSet = 0;
-      SgBinaryOp* binOpHolder;
+//      SgExpression* newLowerBound;
       if(isSgIntVal(lowBound))
       {
         offSet = isSgIntVal(lowBound)->get_value();
-        binOpHolder = assignOp;
+//        newLowerBound = isSgIntVal(lowBound);
       }
       else if(isSgAddOp(lowBound))
       {
@@ -465,7 +465,7 @@ int main( int argc, char * argv[] )
         if(!isSgIntVal(addop->get_rhs_operand()))
           continue;
         offSet = isSgIntVal(addop->get_rhs_operand())->get_value();
-        binOpHolder = addop;
+//        newLowerBound = addop;
       }
       else
       {
@@ -550,7 +550,10 @@ int main( int argc, char * argv[] )
       }
 //      cout << "Perform loop shifting!!" << endl;
       // reset the lowerbound to 0
-      binOpHolder->set_rhs_operand(buildIntVal(0));
+      if(isSgIntVal(lowBound))
+        assignOp->set_rhs_operand(buildIntVal(isSgIntVal(lowBound)->get_value()-1));
+      else
+        assignOp->set_rhs_operand(isSgAddOp(lowBound)->get_rhs_operand());
       // replace new test statement
       replaceExpression(oldExp, newExp,false);
       for (Rose_STL_Container<SgNode *>::iterator j = varRefs.begin(); j != varRefs.end(); j++)
