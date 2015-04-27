@@ -560,7 +560,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
+     test2015_89.c \
      test2015_100.c \
+     test2015_105.c \
      test2015_107.c \
      test2015_108.c \
      test2015_109.c \
@@ -590,8 +592,8 @@ FAILING_TESTCODES_XEN = \
     test2015_102.c \
     test2015_103.c \
     test2015_104.c \
-    test2015_105.c \
-    test2015_106.c 
+    test2015_106.c \
+    test2015_111.c 
 
 # DQ (4/13/2015): The best examples of remaining bugs are:
 # Makefile rules:
@@ -1014,7 +1016,7 @@ check-local:
 	@$(MAKE) test2005_168.o
 	@$(MAKE) test_using_explicit_output_file_option
 	@$(MAKE) test_using_implicit_output_file_option
-#	@$(MAKE) test_rtd_use
+	@$(MAKE) test_rtd_use
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
