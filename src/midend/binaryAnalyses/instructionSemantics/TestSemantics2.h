@@ -111,7 +111,7 @@ public:
               const BaseSemantics::StatePtr &state,
               const BaseSemantics::RiscOperatorsPtr &ops) {
 
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
+        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         const RegisterDescriptor *reg32_ = regdict->lookup("eip");
         require(reg32_!=NULL, "register lookup");
         const RegisterDescriptor reg32 = *reg32_;

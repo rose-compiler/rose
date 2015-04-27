@@ -309,6 +309,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-rose:compilationPerformanceFile" || // Use to output performance information about ROSE compilation phases
           argument == "-rose:verbose" ||                    // Used to specify output of internal information about ROSE phases
           argument == "-rose:log" ||                        // Used to conntrol rose::Diagnostics
+          argument == "-rose:assert" ||                     // Controls behavior of failed assertions
           argument == "-rose:test" ||
           argument == "-rose:backendCompileFormat" ||
           argument == "-rose:outputFormat" ||
@@ -3155,6 +3156,11 @@ SgFile::usage ( int status )
 "     -rose:log WHAT\n"
 "                             Control diagnostic output. See '-rose:log help' for\n"
 "                             more information.\n"
+"     -rose:assert HOW\n"
+"                             Determines how a failed assertion is handled. The value\n"
+"                             for HOW should be 'abort', 'exit' with non-zero status, or\n"
+"                             'throw' a rose::Diagnostics::FailedAssertion exception. Only\n"
+"                             assertions that use the Sawyer mechanism are affected.\n"
 "     -rose:output_parser_actions\n"
 "                             call parser with --dump option (fortran only)\n"
 "     -rose:unparse_tokens    unparses code using original token stream where possible.\n"
@@ -3434,7 +3440,7 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // specifically the part about being able to return an array of values.
   //
      Diagnostics::initialize();                         // this maybe should go somewhere else?
-     static const std::string removalString = "-rose:log (REMOVE_ME)";
+     static const std::string removalString = "(--REMOVE_ME--)";
      for (size_t i=0; i<argv.size(); ++i) {
          if ((0==strcmp(argv[i].c_str(), "-rose:log")) && i+1 < argv.size()) {
              argv[i] = removalString;
@@ -3458,6 +3464,28 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
      }
      argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
      
+  //
+  // -rose:assert abort|exit|throw
+  //
+     for (size_t i=0; i<argv.size(); ++i) {
+         if (argv[i] == std::string("-rose:assert") && i+1 < argv.size()) {
+             std::string switchValue = argv[i+1];
+             Sawyer::Assert::AssertFailureHandler handler = NULL;
+             if (switchValue == "abort") {
+                 handler = rose::abortOnFailedAssertion;
+             } else if (switchValue == "exit") {
+                 handler = rose::exitOnFailedAssertion;
+             } else if (switchValue == "throw") {
+                 handler = rose::throwOnFailedAssertion;
+             }
+             if (handler != NULL) {
+                 argv[i] = argv[i+1] = removalString;
+                 rose::failedAssertionBehavior(handler);
+             }
+         }
+     }
+     argv.erase(std::remove(argv.begin(), argv.end(), removalString), argv.end());
+
   //
   // markGeneratedFiles option
   //

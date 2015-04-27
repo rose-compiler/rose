@@ -71,6 +71,11 @@ Stopwatch::start(bool clear) {
 }
 
 SAWYER_EXPORT double
+Stopwatch::restart() {
+    return start(true);
+}
+
+SAWYER_EXPORT double
 Stopwatch::stop(bool clear) {
     double retval = report(clear);
     running_ = false;

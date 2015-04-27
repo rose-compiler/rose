@@ -224,11 +224,6 @@ if ROSE_PCH
 else
 	@echo "Automake conditional ROSE_PCH: NOT defined"
 endif
-if ROSE_USE_ASSEMBLY_SEMANTICS
-	@echo "Automake conditional ROSE_USE_ASSEMBLY_SEMANTICS: DEFINED"
-else
-	@echo "Automake conditional ROSE_USE_ASSEMBLY_SEMANTICS: NOT defined"
-endif
 if ROSE_USE_BDDBDDB
 	@echo "Automake conditional ROSE_USE_BDDBDDB: DEFINED"
 else
