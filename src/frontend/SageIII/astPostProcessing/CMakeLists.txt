@@ -37,6 +37,11 @@ add_library( astPostProcessing OBJECT
   fixupSelfReferentialMacros.C
   fixupDeclarationScope.C
   checkPhysicalSourcePosition.C)
+
+if(enable-c)
+  add_library(astPostProcessing OBJECT dummy.C)
+endif()
+
 add_dependencies(astPostProcessing rosetta_generated)
 
 
