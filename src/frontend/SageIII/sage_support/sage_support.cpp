@@ -6266,8 +6266,10 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
   // require the use of the non-absolute path (at least that is my understanding of the problem).
      if (status != 0)
         {
-          printf ("Detected non-zero status in link process \n");
-#if 1
+#if 0
+          printf ("Detected non-zero status in link process: status = %d \n",status);
+#endif
+#if 0
           printf ("Exiting as a test! \n");
           ROSE_ASSERT(false);
 #endif
