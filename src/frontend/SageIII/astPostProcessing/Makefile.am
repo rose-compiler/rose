@@ -44,6 +44,10 @@ libastPostProcessing_la_SOURCES      = \
      checkPhysicalSourcePosition.C \
      fixupDeclarationScope.C
 
+if !ROSE_BUILD_CXX_LANGUAGE_SUPPORT
+libastPostProcessing_la_SOURCES += dummy.C
+endif
+
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
 
