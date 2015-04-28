@@ -2,32 +2,31 @@
 #include <sstream>
 #include "Lattice.h"
 
-using namespace SPRAY;
-
-Lattice::Lattice() {
+SPRAY::Lattice::Lattice() {
 }
 
-Lattice::~Lattice() {
+SPRAY::Lattice::~Lattice() {
 }
 
-void Lattice::toStream(std::ostream& os, VariableIdMapping* vim) {
+void SPRAY::Lattice::toStream(std::ostream& os, VariableIdMapping* vim) {
+  os<<"<lattice-element>";
 }
 
-std::string Lattice::toString(VariableIdMapping* vim) {
+std::string SPRAY::Lattice::toString(VariableIdMapping* vim) {
   std::stringstream ss;
   toStream(ss,vim);
   return ss.str();
 }
 
 #if 0
-bool Lattice::approximatedBy(Lattice& other) {
+bool SPRAY::Lattice::approximatedBy(Lattice& other) {
   return false;
 }
 #endif
 
-void Lattice::combine(Lattice& other){
+void SPRAY::Lattice::combine(Lattice& other){
 }
 
-bool Lattice::isBot(){
+bool SPRAY::Lattice::isBot(){
   ROSE_ASSERT(false);
 }

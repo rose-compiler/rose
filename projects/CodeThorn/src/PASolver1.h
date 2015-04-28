@@ -2,7 +2,7 @@
 #define PASOLVER1_H
 
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "WorkListSeq.h"
 #include "Flow.h"
 #include "Lattice.h"
@@ -10,6 +10,8 @@
 #include "DFTransferFunctions.h"
 
 #include <vector>
+
+namespace SPRAY {
 
 class PASolver1 {
  public:
@@ -31,6 +33,12 @@ class PASolver1 {
   PropertyStateFactory& _initialElementFactory;
   Flow& _flow;
   DFTransferFunctions& _transferFunctions;
+ public:
+  void setTrace(bool trace) { _trace=trace; }
+ private:
+  bool _trace;
 };
+
+}
 
 #endif

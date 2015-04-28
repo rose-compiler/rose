@@ -84,7 +84,9 @@ AstDOTGeneration::evaluateInheritedAttribute(SgNode* node, DOTInheritedAttribute
   // I think this may no longer be required, but I will leave it in place for now
      visitedNodes.insert(node);
 
-  // printf ("AstDOTGeneration::evaluateInheritedAttribute(): node = %s \n",node->class_name().c_str());
+#if 0
+     printf ("AstDOTGeneration::evaluateInheritedAttribute(): node = %s \n",node->class_name().c_str());
+#endif
 
   // We might not want to increment the trace position information for
   // the IR nodes from rose_edg_required_macros_and_functions.h

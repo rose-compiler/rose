@@ -3,26 +3,29 @@
 
 #include "DFTransferFunctions.h"
 #include "IntervalPropertyState.h"
-#include "AbstractEvaluator.h"
+#include "CppExprEvaluator.h"
 
-using namespace std;
+namespace SPRAY {
 
 class IntervalTransferFunctions : public DFTransferFunctions {
 public:
   IntervalTransferFunctions();
   ~IntervalTransferFunctions();
-  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
-  void transferExpression(SPRAY::Label label, SgExpression* expr, IntervalPropertyState& element);
-  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, IntervalPropertyState& element);
-  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, IntervalPropertyState& element);
-  void transferFunctionCallReturn(SPRAY::Label lab, SgFunctionCallExp* callExp, IntervalPropertyState& element);
-  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, IntervalPropertyState& element);
-  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, IntervalPropertyState& element);
+  //  IntervalTransferFunctions(NumberIntervalLattice* domain, PropertyState* p, SPRAY::Labeler* l, VariableIdMapping* vid);
+  void transferExpression(SPRAY::Label label, SgExpression* expr, Lattice& element);
+  void transferDeclaration(SPRAY::Label label, SgVariableDeclaration* decl, Lattice& element);
+  void transferFunctionCall(SPRAY::Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element);
+  void transferFunctionCallReturn(SPRAY::Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element);
+  void transferFunctionEntry(SPRAY::Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element);
+  void transferFunctionExit(SPRAY::Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element);
+  void setPropertyState(PropertyState* p) { _cppExprEvaluator->setPropertyState(p); }
+  //private:
+  CppExprEvaluator* getCppExprEvaluator();
+  void setCppExprEvaluator(SPRAY::CppExprEvaluator* expEval);
 private:
-  CppExprEvaluator* _cppExprEvaluator;
+  SPRAY::CppExprEvaluator* _cppExprEvaluator;
   NumberIntervalLattice* _domain;
-  SPRAY::Labeler* _labeler;
-  VariableIdMapping* _variableIdMapping;
 };
 
+} // end of namespace SPRAY
 #endif

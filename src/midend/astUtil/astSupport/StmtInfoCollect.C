@@ -267,14 +267,14 @@ AppendFuncCall( AstInterface& fa, const AstNodePtr& fc)
  if (funcanal == 0 || !funcanal->get_read(fa, fc, &read))  {
       readunknown = true;
       if (DebugLocalInfoCollect()) 
-         std::cerr << "no interprecedural read info for : " << AstToString(fc) << std::endl;
+         std::cerr << "no interprocedural read info for : " << AstToString(fc) << std::endl;
       AppendFuncCallArguments(fa, fc);
   }
 
   CollectModRefWrap mod(fa, funcanal, curstmt, readcollect, modcollect);
   if (funcanal == 0 || !funcanal->get_modify( fa, fc, &mod))  {
       if (DebugLocalInfoCollect()) 
-         std::cerr << "no interprecedural mod info for : " << AstToString(fc) << std::endl;
+         std::cerr << "no interprocedural mod info for : " << AstToString(fc) << std::endl;
        AppendFuncCallWrite(fa, fc);
        modunknown = true;
   }

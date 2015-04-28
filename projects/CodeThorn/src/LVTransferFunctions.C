@@ -3,8 +3,6 @@
 using namespace std;
 
 #include "CollectionOperators.h"
-using namespace CodeThorn;
-
 #include "LVTransferFunctions.h"
 #include "AnalysisAbstractionLayer.h"
 
@@ -66,7 +64,9 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
     VariableId var=*defVarIds.begin();
     element.removeVariableId(var);
   }
-  VariableIdSet useVarIds=AnalysisAbstractionLayer::useVariables(node,*_variableIdMapping);  
+
+  SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(declnode);  
+  VariableIdSet useVarIds=AnalysisAbstractionLayer::astSubTreeVariables(initExp,*_variableIdMapping);  
   for(VariableIdMapping::VariableIdSet::iterator i=useVarIds.begin();i!=useVarIds.end();++i) {
     element.insertVariableId(*i);
   }
@@ -76,7 +76,7 @@ void SPRAY::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclar
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
+void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
   LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
   ROSE_ASSERT(element1);
   LVLattice& element=*element1;
@@ -90,8 +90,12 @@ void SPRAY::LVTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallE
   * \author Markus Schordan
   * \date 2014.
  */
-void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgFunctionCallExp* callExp, Lattice& element0) {
-  //TODO: def in x=f(...) (not seen as assignment)
+void SPRAY::LVTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element0) {
+  if(lhsVar) {
+    LVLattice* element1=dynamic_cast<LVLattice*>(&element0);
+    VariableId varId=_variableIdMapping->variableId(lhsVar);
+    element1->insertVariableId(varId);
+  }
 }
 /*! 
   * \author Markus Schordan

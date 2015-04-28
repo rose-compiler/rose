@@ -119,6 +119,7 @@ class Specialization {
   void createSsaNumbering(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping);
   // specializes function with name funNameToFind and replace variable of parameter param with constInt
   int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, VariableIdMapping* variableIdMapping);
+  int specializeFunction(SgProject* project, string funNameToFind, int param, int constInt, string varInitName, int initConst, VariableIdMapping* variableIdMapping);
   SgFunctionDefinition* getSpecializedFunctionRootNode() { return _specializedFunctionRootNode; }
   static int numParLoops(LoopInfoSet& loopInfoSet, VariableIdMapping* variableIdMapping);
  private:
@@ -131,6 +132,7 @@ class Specialization {
 
   // replaces each use of a SgVarRefExp of variableId with constInt.
   int substituteVariablesWithConst(SgNode* node, VariableIdMapping* variableIdMapping, VariableId variableId, int constInt);
+  int substituteVarInitWithConst(SgFunctionDefinition* funDef, VariableIdMapping* variableIdMapping, string varInitName, int varInitConstInt);
 
   // replace each use of a SgVarRefExp according to constReporter
   int substituteVariablesWithConst(SgNode* node, ConstReporter* constReporter);

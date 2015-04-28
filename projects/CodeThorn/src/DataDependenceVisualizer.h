@@ -7,50 +7,48 @@
 #include "VariableIdMapping.h"
 
 #include <set>
-using std::set;
 #include <string>
-using std::string;
 
 #include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
-#include "CFAnalyzer.h"
-
-using namespace CodeThorn;
-
+#include "CFAnalysis.h"
 #include "UDAstAttribute.h"
 
+namespace SPRAY {
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
 class DataDependenceVisualizer {
  public:
-  DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName);
+  DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, std::string useDefAttributeName);
   VariableIdSet useVars(SgNode* expr);
   LabelSet defLabels(SgNode* expr, VariableId useVar);
   Label getLabel(SgNode* stmt);
   SgNode* getNode(Label lab);
   //! requires UDAstAttribute
-  void generateDefUseDotGraph(SgNode* root, string fileName);
+  void generateDefUseDotGraph(SgNode* root, std::string fileName);
   //! requires UDAstAttribute
-  void generateUseDefDotGraph(SgNode* root, string fileName);
+  void generateUseDefDotGraph(SgNode* root, std::string fileName);
   void includeFlowGraphEdges(Flow* flow) { _flow=flow; }
-  void generateDotFunctionClusters(SgNode* root, CFAnalyzer* cfanalyzer, string fileName, bool withDataDependencies);
-  string nodeSourceCode(Label lab);
+  void generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, std::string fileName, bool withDataDependencies);
+  std::string nodeSourceCode(Label lab);
   bool _showSourceCode;
   void setFunctionLabelSetSets(LabelSetSet);
  private:
   enum DDVMode { DDVMODE_USEDEF, DDVMODE_DEFUSE };
-  void generateDot(SgNode* root, string fileName);
-  UDAstAttribute* getUDAstAttribute(SgNode* expr,string attributeName);
-  bool existsUDAstAttribute(SgNode* expr,string attributeName);
+  void generateDot(SgNode* root, std::string fileName);
+  UDAstAttribute* getUDAstAttribute(SgNode* expr,std::string attributeName);
+  bool existsUDAstAttribute(SgNode* expr,std::string attributeName);
   Labeler* _labeler;
   VariableIdMapping* _variableIdMapping;
-  string  _useDefAttributeName;
+  std::string  _useDefAttributeName;
   DDVMode _mode;
   Flow* _flow;
-  string _dotFunctionClusters;
+  std::string _dotFunctionClusters;
   LabelSetSet _functionLabelSetSets;
 };
+
+}
 
 #endif

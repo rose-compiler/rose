@@ -16890,6 +16890,8 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
     LoopTransformInterface::set_arrayInfo(&array_interface);
   }
   LoopTransformInterface::set_astInterface(fa);
+  // Liao, 3/27/2015. connect to annotations for function side effect
+  LoopTransformInterface::set_sideEffectInfo(annot);
 
   // variables to store results
   DoublyLinkedListWrap<AstNodePtr> rRef1, wRef1;
