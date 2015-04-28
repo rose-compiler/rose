@@ -1,4 +1,4 @@
-add_library( astPostProcessing OBJECT
+set(astPostProcessingSources
   astPostProcessing.C
   fixupSymbolTables.C
   markForOutputInCodeGeneration.C
@@ -37,10 +37,11 @@ add_library( astPostProcessing OBJECT
   fixupSelfReferentialMacros.C
   fixupDeclarationScope.C
   checkPhysicalSourcePosition.C)
-
-if(enable-c)
-  add_library(astPostProcessing OBJECT dummy.C)
+if(NOT enable-c)
+  set(astPostProcessingSources ${astPostProcessingSources} dummy.C)
 endif()
+
+add_library(astPostProcessing OBJECT ${astPostProcessingSources})
 
 add_dependencies(astPostProcessing rosetta_generated)
 
