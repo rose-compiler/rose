@@ -53,13 +53,23 @@ public:
      *  defined only on architectures that support them.
      *
      * @{ */
-    RegisterDescriptor REG_anyIP, REG_anySP, REG_anyBP, REG_anyCX;
-    RegisterDescriptor REG_RAX, REG_RBX, REG_RCX, REG_RDX, REG_RDI, REG_RSI, REG_RSP,          REG_RFLAGS;
-    RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_ESI, REG_ESP, REG_EBP, REG_EFLAGS;
-    RegisterDescriptor REG_AX,  REG_BX,  REG_CX,  REG_DX,  REG_DI,  REG_SI,  REG_SP,  REG_BP,  REG_FLAGS;
-    RegisterDescriptor REG_AL, REG_AH;
-    RegisterDescriptor REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
-    RegisterDescriptor REG_DS, REG_ES, REG_SS, REG_FS, REG_GS;
+    RegisterDescriptor REG_anyAX, REG_anyBX, REG_anyCX, REG_anyDX;
+    RegisterDescriptor REG_RAX,   REG_RBX,   REG_RCX,   REG_RDX;
+    RegisterDescriptor REG_EAX,   REG_EBX,   REG_ECX,   REG_EDX;
+    RegisterDescriptor REG_AX,    REG_BX,    REG_CX,    REG_DX;
+    RegisterDescriptor REG_AL,    REG_BL,    REG_CL,    REG_DL;
+    RegisterDescriptor REG_AH,    REG_BH,    REG_CH,    REG_DH;
+
+    RegisterDescriptor REG_anyDI, REG_anySI, REG_anySP, REG_anyBP, REG_anyIP;
+    RegisterDescriptor REG_RDI,   REG_RSI,   REG_RSP,   REG_RBP,   REG_RIP;
+    RegisterDescriptor REG_EDI,   REG_ESI,   REG_ESP,   REG_EBP,   REG_EIP;
+    RegisterDescriptor REG_DI,    REG_SI,    REG_SP,    REG_BP,    REG_IP;
+
+    RegisterDescriptor REG_CS, REG_DS, REG_ES, REG_SS, REG_FS, REG_GS;
+
+    RegisterDescriptor REG_anyFLAGS, REG_RFLAGS, REG_EFLAGS, REG_FLAGS;
+    RegisterDescriptor REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_TF, REG_ZF;
+
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 

@@ -4081,6 +4081,8 @@ DispatcherX86::regcache_init()
                 REG_RDI = findRegister("rdi", 64);
                 REG_RSI = findRegister("rsi", 64);
                 REG_RSP = findRegister("rsp", 64);
+                REG_RBP = findRegister("rbp", 64);
+                REG_RIP = findRegister("rip", 64);
                 REG_RFLAGS = findRegister("rflags", 64);
                 // fall through...
             case x86_insnsize_32:
@@ -4092,6 +4094,7 @@ DispatcherX86::regcache_init()
                 REG_ESI = findRegister("esi", 32);
                 REG_ESP = findRegister("esp", 32);
                 REG_EBP = findRegister("ebp", 32);
+                REG_EIP = findRegister("eip", 32);
                 REG_EFLAGS= findRegister("eflags", 32);
                 REG_ST0 = findRegister("st0", 80);
                 REG_FPSTATUS = findRegister("fpstatus", 16);
@@ -4110,8 +4113,15 @@ DispatcherX86::regcache_init()
                 REG_SI = findRegister("si", 16);
                 REG_SP = findRegister("sp", 16);
                 REG_BP = findRegister("bp", 16);
+                REG_IP = findRegister("ip", 16);
                 REG_AL = findRegister("al", 8);
+                REG_BL = findRegister("bl", 8);
+                REG_CL = findRegister("cl", 8);
+                REG_DL = findRegister("dl", 8);
                 REG_AH = findRegister("ah", 8);
+                REG_BH = findRegister("bh", 8);
+                REG_CH = findRegister("ch", 8);
+                REG_DH = findRegister("dh", 8);
                 REG_FLAGS = findRegister("flags", 16);
                 REG_AF = findRegister("af", 1);
                 REG_CF = findRegister("cf", 1);
@@ -4119,7 +4129,9 @@ DispatcherX86::regcache_init()
                 REG_OF = findRegister("of", 1);
                 REG_PF = findRegister("pf", 1);
                 REG_SF = findRegister("sf", 1);
+                REG_TF = findRegister("tf", 1);
                 REG_ZF = findRegister("zf", 1);
+                REG_CS = findRegister("cs", 16);
                 REG_DS = findRegister("ds", 16);
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
@@ -4128,10 +4140,19 @@ DispatcherX86::regcache_init()
                 ASSERT_not_reachable("invalid instruction size");
         }
 
+        REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax);
+        REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx);
+        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
+        REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx);
+
+        REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di);
+        REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si);
+
         REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
         REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
-        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
+
+        REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status);
     }
 }
 
