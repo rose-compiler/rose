@@ -252,7 +252,7 @@ main(int argc, char *argv[], char *envp[])
 #endif
 
     /***************************************************************************************************************************/
-#   if 1 /* Example: providing implementation for instructions not recognized by ROSE proper. */
+#   if 0 /* Example: providing implementation for instructions not recognized by ROSE proper. */
     sim.install_callback(new RSIM_Tools::UnhandledInstruction);
 #   endif
 

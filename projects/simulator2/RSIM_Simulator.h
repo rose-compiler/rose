@@ -172,6 +172,8 @@
  */
 class RSIM_Simulator {
 public:
+    static Sawyer::Message::Facility mlog;
+public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()

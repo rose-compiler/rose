@@ -329,27 +329,12 @@ RSIM_Process::load(const char *name)
     frontend_args[3] = NULL;
     project = frontend(3, frontend_args);
 
-    // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
-    // special about the main thread other than its ID is the thread group for the process.
-    pt_regs_32 initialRegisters;
-    memset(&initialRegisters, 0, sizeof initialRegisters);
-    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
-    initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
-    initialRegisters.cs = 0x23;
-    initialRegisters.ds = 0x2b;
-    initialRegisters.es = 0x2b;
-    initialRegisters.ss = 0x2b;
-    pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
-    RSIM_Thread *thread = get_thread(mainTid);
-
     /* Find the best interpretation and file header.  Windows PE programs have two where the first is DOS and the second is PE
      * (we'll use the PE interpretation). */
     interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
     headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
-    const RegisterDescriptor &REG_IP = thread->dispatcher()->instructionPointerRegister();
-    thread->operators()->writeRegister(REG_IP, thread->operators()->number_(REG_IP.get_nbits(), ep_orig_va));
 
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, interpname);
@@ -363,7 +348,6 @@ RSIM_Process::load(const char *name)
         if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
             loader->interpreter->set_base_va(ld_linux_base_va);
         ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
-        thread->operators()->writeRegister(REG_IP, thread->operators()->number_(REG_IP.get_nbits(), ep_start_va));
     }
 
     /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
@@ -432,6 +416,20 @@ RSIM_Process::load(const char *name)
 #endif
 
     delete loader;
+
+    // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
+    // special about the main thread other than its ID is the thread group for the process.
+    pt_regs_32 initialRegisters;
+    memset(&initialRegisters, 0, sizeof initialRegisters);
+    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
+    initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
+    initialRegisters.cs = 0x23;
+    initialRegisters.ds = 0x2b;
+    initialRegisters.es = 0x2b;
+    initialRegisters.ss = 0x2b;
+    initialRegisters.ip = ep_start_va;
+    pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
+    RSIM_Thread *thread = get_thread(mainTid);
 
     mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", thread->get_tid());
 

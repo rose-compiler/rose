@@ -12,6 +12,7 @@ using namespace rose::Diagnostics;
 
 SAWYER_THREAD_TRAITS::RecursiveMutex RSIM_Simulator::class_rwlock;
 RSIM_Simulator *RSIM_Simulator::active_sim = NULL;
+Sawyer::Message::Facility RSIM_Simulator::mlog;
 
 /******************************************************************************************************************************
  *                                      Simulator system calls
@@ -165,6 +166,14 @@ syscall_RSIM_transaction_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Simulator::ctor()
 {
+    static bool classInitialized = false;
+    if (!classInitialized) {
+        rose::Diagnostics::initialize();
+        mlog = Sawyer::Message::Facility("RSIM", rose::Diagnostics::destination);
+        rose::Diagnostics::mfacilities.insertAndAdjust(mlog);
+        classInitialized = true;
+    }
+    
     /* Some special syscalls that are available to specimens when they're being simulated. */
     syscall_define(1000000, syscall_RSIM_is_present_enter,  syscall_RSIM_is_present,  syscall_RSIM_is_present_leave);
     syscall_define(1000001, syscall_RSIM_message_enter,     syscall_RSIM_message,     syscall_RSIM_message_leave);

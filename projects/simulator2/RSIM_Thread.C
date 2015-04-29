@@ -57,7 +57,7 @@ RSIM_Thread::reopen_trace_facilities()
 {
     for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
         if (trace_mesg[tf]==NULL)
-            trace_mesg[tf] = new Sawyer::Message::Stream(mlog[INFO]);
+            trace_mesg[tf] = new Sawyer::Message::Stream(RSIM_Simulator::mlog[INFO]);
         bool shouldEnable = (process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf));
         trace_mesg[tf]->enable(shouldEnable);
     }
@@ -445,14 +445,16 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             operators()->writeRegister(dispatcher()->REG_TF, operators()->boolean_(false));
 
             /* Set up registers for signal handler. */
-            operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, signo));
-            operators()->writeRegister(dispatcher()->REG_ECX, operators()->number_(32, 0));
+            size_t wordWidth = dispatcher()->REG_anyIP.get_nbits();
+            ASSERT_require(wordWidth==32 || wordWidth==64);
+            operators()->writeRegister(dispatcher()->REG_anyAX, operators()->number_(wordWidth, signo));
+            operators()->writeRegister(dispatcher()->REG_anyCX, operators()->number_(wordWidth, 0));
             operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, 0x2b));
             operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, 0x2b));
             operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, 0x2b));
             operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, 0x23));
-            operators()->writeRegister(dispatcher()->REG_ESP, operators()->number_(32, frame_va));
-            operators()->writeRegister(dispatcher()->REG_EIP, operators()->number_(32, sa.handler_va));
+            operators()->writeRegister(dispatcher()->REG_anySP, operators()->number_(wordWidth, frame_va));
+            operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, sa.handler_va));
         }
     }
 
@@ -665,6 +667,8 @@ RSIM_Thread::report_progress_maybe()
 void
 RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::string &title/*=""*/, bool bp_not_saved/*=false*/)
 {
+    using namespace StringUtility;
+
     if (!mesg)
         return;
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(get_process()->rwlock());
@@ -674,11 +678,13 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         mfprintf(mesg)("%s", title.c_str());
     }
 
-    uint32_t bp = operators()->readRegister(dispatcher()->REG_EBP)->get_number();
-    uint32_t ip = operators()->readRegister(dispatcher()->REG_EIP)->get_number();
+    size_t wordWidth = dispatcher()->REG_anyIP.get_nbits();
+    rose_addr_t bp = operators()->readRegister(dispatcher()->REG_anyBP)->get_number();
+    rose_addr_t ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
 
-    for (int i=0; i<32; i++) {
-        mfprintf(mesg)("\n  #%d: bp=0x%08"PRIx32" ip=0x%08"PRIx32, i, bp, ip);
+    static const int maxStackFrames = 32;               // arbitrary
+    for (int i=0; i<maxStackFrames; i++) {
+        mesg <<"\n  #" <<i <<": bp=" <<addrToString(bp) <<" ip=" <<addrToString(ip);
         SgAsmInstruction *insn = NULL;
         try {
             insn = process->get_instruction(ip);
@@ -687,29 +693,53 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
         }
         SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(insn);
         if (func && !func->get_name().empty() && 0==(func->get_reason() & SgAsmFunction::FUNC_LEFTOVERS)) {
-            mfprintf(mesg)(" in function %s", func->get_name().c_str());
+            mesg <<" in function " <<func->get_name();
         } else if (process->get_memory().at(ip).exists()) {
             const MemoryMap::Segment &sgmt = process->get_memory().find(ip)->value();
             if (!sgmt.name().empty())
-                mfprintf(mesg)(" in memory region %s", sgmt.name().c_str());
+                mesg <<" in memory region " <<sgmt.name();
         }
 
         if (bp_not_saved) {
             /* Presumably being called after a CALL but before EBP is saved on the stack.  In this case, the return address
              * of the inner-most function should be at ss:[esp], and containing functions have set up their stack
              * frames. */
-            uint32_t sp = operators()->readRegister(dispatcher()->REG_ESP)->get_number();
-            if (4!=process->mem_read(&ip, sp, 4))
-                break;
+            rose_addr_t sp = operators()->readRegister(dispatcher()->REG_anySP)->get_number();
+            if (32 == wordWidth) {
+                uint32_t tmp;
+                if (4!=process->mem_read(&tmp, sp, 4))
+                    break;
+                ip = tmp;
+            } else {
+                ASSERT_require(64 == wordWidth);
+                uint64_t tmp;
+                if (8!=process->mem_read(&tmp, sp, 8))
+                    break;
+                ip = tmp;
+            }
             bp_not_saved = false;
             mesg <<" [no stack frame]";
         } else {
             /* This function has stored its incoming EBP on the stack at ss:[ebp].  This is usually accomplished by the
              * instructions PUSH EBP; MOV EBP, ESP. */
-            if (4!=process->mem_read(&ip, bp+4, 4))
-                break;
-            if (4!=process->mem_read(&bp, bp, 4))
-                break;
+            if (32 == wordWidth) {
+                uint32_t tmp;
+                if (4!=process->mem_read(&tmp, bp+4, 4))
+                    break;
+                ip = tmp;
+                if (4!=process->mem_read(&tmp, bp, 4))
+                    break;
+                bp = tmp;
+            } else {
+                ASSERT_require(64 == wordWidth);
+                uint64_t tmp;
+                if (8!=process->mem_read(&tmp, bp+8, 8))
+                    break;
+                ip = tmp;
+                if (8!=process->mem_read(&tmp, bp, 8))
+                    break;
+                bp = tmp;
+            }
         }
     }
     mesg <<"\n";
@@ -830,13 +860,13 @@ RSIM_Thread::main()
             }
             setState(TERMINATED);
             throw;
-        } catch (const RSIM_Semantics::Dispatcher::Exception &e) {
+        } catch (const BaseSemantics::Exception &e) {
             /* Thrown for instructions whose semantics are not implemented yet. */
             post_insn_semaphore();
             if (show_exceptions) {
                 std::ostringstream s;
                 s <<e;
-                mfprintf(tracing(TRACE_MISC))("caught RSIM_Semantics::Dispatcher::Exception: %s\n", s.str().c_str());
+                mfprintf(tracing(TRACE_MISC))("semantics exception: %s\n", s.str().c_str());
             }
 #ifdef X86SIM_STRICT_EMULATION
             if (do_coredump) {
@@ -854,36 +884,20 @@ RSIM_Thread::main()
                 tracing(TRACE_MISC) <<"exception ignored; continuing with a corrupt state...\n";
             }
 #endif
-        } catch (const RSIM_Semantics::InnerPolicy<>::Halt &e) {
+        } catch (const RSIM_Semantics::Halt &e) {
             // Thrown for the HLT instruction
             post_insn_semaphore();
             if (show_exceptions)
-                tracing(TRACE_MISC) <<"caught RSIM_Semantics::InnerPolicy<>::Halt\n";
+                tracing(TRACE_MISC) <<"semantics halt exception\n";
             setState(TERMINATED);
             throw;
-        } catch (const RSIM_Semantics::InnerPolicy<>::Interrupt &e) {
+        } catch (const RSIM_Semantics::Interrupt &e) {
             // thrown for the INT instruction if the interrupt is not handled
             post_insn_semaphore();
             if (show_exceptions)
                 tracing(TRACE_MISC) <<"unhandled specimen interrupt from INT insn\n";
             setState(TERMINATED);
             throw;
-        } catch (const RSIM_SEMANTICS_POLICY::Exception &e) {
-            post_insn_semaphore();
-            if (show_exceptions) {
-                std::ostringstream s;
-                s <<e;
-                mfprintf(tracing(TRACE_MISC))("caught semantic policy exception: %s\n", s.str().c_str());
-            }
-            if (do_coredump) {
-                tracing(TRACE_MISC) <<"dumping core...\n";
-                process->dump_core(SIGILL);
-                report_stack_frames(tracing(TRACE_MISC));
-                abort();
-            } else {
-                setState(TERMINATED);
-                throw;
-            }
         } catch (const RSIM_Process::Exit &e) {
             post_insn_semaphore();
             sys_exit(e);
@@ -912,44 +926,45 @@ RSIM_Thread::get_regs() const
 {
     pt_regs_32 regs;
     memset(&regs, 0, sizeof regs);
-    regs.ip = operators()->readRegister(dispatcher()->REG_EIP).get_number();
-    regs.ax = operators()->readRegister(dispatcher()->REG_EAX).get_number();
-    regs.bx = operators()->readRegister(dispatcher()->REG_EBX).get_number();
-    regs.cx = operators()->readRegister(dispatcher()->REG_ECX).get_number();
-    regs.dx = operators()->readRegister(dispatcher()->REG_EDX).get_number();
-    regs.si = operators()->readRegister(dispatcher()->REG_ESI).get_number();
-    regs.di = operators()->readRegister(dispatcher()->REG_EDI).get_number();
-    regs.bp = operators()->readRegister(dispatcher()->REG_EBP).get_number();
-    regs.sp = operators()->readRegister(dispatcher()->REG_ESP).get_number();
-    regs.cs = operators()->readRegister(dispatcher()->REG_CS).get_number();
-    regs.ds = operators()->readRegister(dispatcher()->REG_DS).get_number();
-    regs.es = operators()->readRegister(dispatcher()->REG_ES).get_number();
-    regs.fs = operators()->readRegister(dispatcher()->REG_FS).get_number();
-    regs.gs = operators()->readRegister(dispatcher()->REG_GS).get_number();
-    regs.ss = operators()->readRegister(dispatcher()->REG_SS).get_number();
-    regs.flags = operators()->readRegister(dispatcher()->REG_EFLAGS).get_number();
+    regs.ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
+    regs.ax = operators()->readRegister(dispatcher()->REG_anyAX)->get_number();
+    regs.bx = operators()->readRegister(dispatcher()->REG_anyBX)->get_number();
+    regs.cx = operators()->readRegister(dispatcher()->REG_anyCX)->get_number();
+    regs.dx = operators()->readRegister(dispatcher()->REG_anyDX)->get_number();
+    regs.si = operators()->readRegister(dispatcher()->REG_anySI)->get_number();
+    regs.di = operators()->readRegister(dispatcher()->REG_anyDI)->get_number();
+    regs.bp = operators()->readRegister(dispatcher()->REG_anyBP)->get_number();
+    regs.sp = operators()->readRegister(dispatcher()->REG_anySP)->get_number();
+    regs.cs = operators()->readRegister(dispatcher()->REG_CS)->get_number();
+    regs.ds = operators()->readRegister(dispatcher()->REG_DS)->get_number();
+    regs.es = operators()->readRegister(dispatcher()->REG_ES)->get_number();
+    regs.fs = operators()->readRegister(dispatcher()->REG_FS)->get_number();
+    regs.gs = operators()->readRegister(dispatcher()->REG_GS)->get_number();
+    regs.ss = operators()->readRegister(dispatcher()->REG_SS)->get_number();
+    regs.flags = operators()->readRegister(dispatcher()->REG_anyFLAGS)->get_number();
     return regs;
 }
 
 void
 RSIM_Thread::init_regs(const pt_regs_32 &regs)
 {
-    operators()->writeRegister(dispatcher()->REG_EIP, operators()->number_(32, regs.ip));
-    operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, regs.ax));
-    operators()->writeRegister(dispatcher()->REG_EBX, operators()->number_(32, regs.bx));
-    operators()->writeRegister(dispatcher()->REG_ECX, operators()->number_(32, regs.cx));
-    operators()->writeRegister(dispatcher()->REG_EDX, operators()->number_(32, regs.dx));
-    operators()->writeRegister(dispatcher()->REG_ESI, operators()->number_(32, regs.si));
-    operators()->writeRegister(dispatcher()->REG_EDI, operators()->number_(32, regs.di));
-    operators()->writeRegister(dispatcher()->REG_EBP, operators()->number_(32, regs.bp));
-    operators()->writeRegister(dispatcher()->REG_ESP, operators()->number_(32, regs.sp));
+    size_t wordWidth = 32;
+    operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, regs.ip));
+    operators()->writeRegister(dispatcher()->REG_anyAX, operators()->number_(wordWidth, regs.ax));
+    operators()->writeRegister(dispatcher()->REG_anyBX, operators()->number_(wordWidth, regs.bx));
+    operators()->writeRegister(dispatcher()->REG_anyCX, operators()->number_(wordWidth, regs.cx));
+    operators()->writeRegister(dispatcher()->REG_anyDX, operators()->number_(wordWidth, regs.dx));
+    operators()->writeRegister(dispatcher()->REG_anySI, operators()->number_(wordWidth, regs.si));
+    operators()->writeRegister(dispatcher()->REG_anyDI, operators()->number_(wordWidth, regs.di));
+    operators()->writeRegister(dispatcher()->REG_anyBP, operators()->number_(wordWidth, regs.bp));
+    operators()->writeRegister(dispatcher()->REG_anySP, operators()->number_(wordWidth, regs.sp));
     operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, regs.cs));
     operators()->writeRegister(dispatcher()->REG_DS, operators()->number_(16, regs.ds));
     operators()->writeRegister(dispatcher()->REG_ES, operators()->number_(16, regs.es));
     operators()->writeRegister(dispatcher()->REG_FS, operators()->number_(16, regs.fs));
     operators()->writeRegister(dispatcher()->REG_GS, operators()->number_(16, regs.gs));
     operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, regs.ss));
-    operators()->writeRegister(dispatcher()->REG_EFLAGS, operators()->number_(32, regs.flags));
+    operators()->writeRegister(dispatcher()->REG_anyFLAGS, operators()->number_(wordWidth, regs.flags));
 }
 
 int
@@ -959,12 +974,12 @@ RSIM_Thread::set_gdt(const user_desc_32 *ud)
     *entry = *ud;
 
     /* Make sure all affected shadow registers are reloaded. */
-    operators()->writeRegister(dispatcher()->REG_CS, operators->readRegister(dispatcher()->REG_CS));
-    operators()->writeRegister(dispatcher()->REG_DS, operators->readRegister(dispatcher()->REG_DS));
-    operators()->writeRegister(dispatcher()->REG_ES, operators->readRegister(dispatcher()->REG_ES));
-    operators()->writeRegister(dispatcher()->REG_FS, operators->readRegister(dispatcher()->REG_FS));
-    operators()->writeRegister(dispatcher()->REG_GS, operators->readRegister(dispatcher()->REG_GS));
-    operators()->writeRegister(dispatcher()->REG_SS, operators->readRegister(dispatcher()->REG_SS));
+    operators()->writeRegister(dispatcher()->REG_CS, operators()->readRegister(dispatcher()->REG_CS));
+    operators()->writeRegister(dispatcher()->REG_DS, operators()->readRegister(dispatcher()->REG_DS));
+    operators()->writeRegister(dispatcher()->REG_ES, operators()->readRegister(dispatcher()->REG_ES));
+    operators()->writeRegister(dispatcher()->REG_FS, operators()->readRegister(dispatcher()->REG_FS));
+    operators()->writeRegister(dispatcher()->REG_GS, operators()->readRegister(dispatcher()->REG_GS));
+    operators()->writeRegister(dispatcher()->REG_SS, operators()->readRegister(dispatcher()->REG_SS));
 
     return ud->entry_number;
 }
