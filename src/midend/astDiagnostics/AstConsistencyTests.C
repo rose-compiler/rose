@@ -175,6 +175,11 @@ AstTests::runAllTests(SgProject* sageProject)
   // DQ (3/30/2004): This function is called by the 
   //      ROSE/src/roseTranslator.C RoseTestTranslator class
 
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+        {
+          printf ("At TOP of AstTests::runAllTests() \n");
+        }
+
 #ifdef NDEBUG
   // DQ (6/30/20133): If we have compiled with NDEBUG then nothing identified in this function 
   // will be caught because every place we detect a problem we expect to end with ROSE_ASSERT() 
@@ -826,6 +831,11 @@ AstTests::runAllTests(SgProject* sageProject)
 
   // DQ (12/13/2012): Verify that their are no SgPartialFunctionType IR nodes in the memory pool.
      ROSE_ASSERT(SgPartialFunctionType::numberOfNodes() == 0);
+
+     if ( SgProject::get_verbose() >= DIAGNOSTICS_VERBOSE_LEVEL )
+        {
+          printf ("At BOTTOM of AstTests::runAllTests() \n");
+        }
    }
 
 
