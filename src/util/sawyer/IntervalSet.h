@@ -38,7 +38,7 @@ namespace Container {
  *  // Build the functionExtent and count total instruction size
  *  Sawyer::Container::IntervalSet<AddressInterval> functionExtent;
  *  uint32_t insnTotalSize = 0;
- *  BOOST_FOREACH (const AddressInterval insnInterval, instructionIntervals) {
+ *  BOOST_FOREACH (const AddressInterval &insnInterval, instructionIntervals) {
  *      functionExtent.insert(insnInterval);
  *      insnTotalSize += insnInterval.size();
  *  }
