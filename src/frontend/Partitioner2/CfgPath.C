@@ -82,9 +82,10 @@ CfgPath::nVisits(const ControlFlowGraph::ConstEdgeIterator &edge) const {
 }
 
 std::vector<ControlFlowGraph::ConstEdgeIterator>
-CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
+CfgPath::truncate(const CfgConstEdgeSet &toRemove) {
     for (Edges::iterator ei=edges_.begin(); ei!=edges_.end(); ++ei) {
-        if (*ei == edge) {
+        if (toRemove.find(*ei) != toRemove.end()) {
+            // Remove path edges from here to the end
             std::vector<ControlFlowGraph::ConstEdgeIterator> removedEdges(ei, edges_.end());
             std::reverse(removedEdges.begin(), removedEdges.end());
             edges_.erase(ei, edges_.end());
@@ -92,6 +93,13 @@ CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
         }
     }
     return std::vector<ControlFlowGraph::ConstEdgeIterator>();
+}
+
+std::vector<ControlFlowGraph::ConstEdgeIterator>
+CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
+    CfgConstEdgeSet toRemove;
+    toRemove.insert(edge);
+    return truncate(toRemove);
 }
 
 size_t
@@ -133,9 +141,9 @@ operator<<(std::ostream &out, const CfgPath &path) {
 }
 
 std::vector<bool>
-findPathEdges(const ControlFlowGraph &graph, ControlFlowGraph::ConstVertexIterator beginVertex,
-                        const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
-                        const CfgConstEdgeSet &avoidEdges) {
+findPathEdges(const ControlFlowGraph &graph, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+              const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
+              const CfgConstEdgeSet &avoidEdges) {
     using namespace Sawyer::Container::Algorithm;
 
     // Mark edges that are reachable with a forward traversal from the starting vertex, avoiding certain vertices and edges.
@@ -184,60 +192,78 @@ findPathEdges(const ControlFlowGraph &graph, ControlFlowGraph::ConstVertexIterat
     return significant;
 }
 
+CfgConstEdgeSet
+findPathReachableEdges(const ControlFlowGraph &graph,
+                       const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                       const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
+    CfgConstEdgeSet retval;
+    std::vector<bool> goodEdges = findPathEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges);
+    ASSERT_require(goodEdges.size() == graph.nEdges());
+    for (size_t i=0; i<graph.nEdges(); ++i) {
+        if (goodEdges[i])
+            retval.insert(graph.findEdge(i));
+    }
+    return retval;
+}
+    
+CfgConstEdgeSet
+findPathUnreachableEdges(const ControlFlowGraph &graph,
+                         const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                         const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
+    CfgConstEdgeSet retval;
+    std::vector<bool> goodEdges = findPathEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges);
+    ASSERT_require(goodEdges.size() == graph.nEdges());
+    for (size_t i=0; i<graph.nEdges(); ++i) {
+        if (!goodEdges[i])
+            retval.insert(graph.findEdge(i));
+    }
+    return retval;
+}
+
 size_t
-eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
-                      const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
-    size_t nPathEdgesRemoved = 0;
-    if (beginPathVertex == paths.vertices().end()) {
-        nPathEdgesRemoved = path.nEdges();
-        paths.clear();
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                      const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
+    size_t origPathSize = path.nEdges();
+    if (beginVertex == graph.vertices().end()) {
+        graph.clear();
         vmap.clear();
         path.clear();
-        return nPathEdgesRemoved;
+        return origPathSize;
     }
-    ASSERT_require(paths.isValidVertex(beginPathVertex));
+    ASSERT_require(graph.isValidVertex(beginVertex));
 
-    // Find edges that are reachable -- i.e., those that are part of a valid path
+    // Erase unreachable edges from the graph and path
     CfgConstVertexSet avoidVertices;
     CfgConstEdgeSet avoidEdges;
-    std::vector<bool> goodEdges = findPathEdges(paths, beginPathVertex, endPathVertices, avoidVertices, avoidEdges);
-    CfgConstEdgeSet badEdges;
-    for (size_t i=0; i<goodEdges.size(); ++i) {
-        if (!goodEdges[i])
-            badEdges.insert(paths.findEdge(i));
-    }
+    CfgConstEdgeSet badEdges = findPathUnreachableEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges);
+    CfgConstVertexSet incidentVertices = findIncidentVertices(badEdges);
+    path.truncate(badEdges);
+    eraseEdges(graph, badEdges);
 
-    // Erase bad edges from the path and the CFG
-    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, badEdges) {
-        nPathEdgesRemoved += path.truncate(edge).size();
-        paths.eraseEdge(edge);
-    }
-
-    // Remove vertices that have no edges, except don't remove the start vertex yet.
-    ControlFlowGraph::ConstVertexIterator vertex=paths.vertices().begin();
-    while (vertex!=paths.vertices().end()) {
-        if (vertex->degree()==0 && vertex!=beginPathVertex) {
+    // This might leave some vertices having no incident edges, so remove them since they can't participate on any path. Don't
+    // remove the beginVertex if it can be a singleton path. Avoid scanning the entire graph by considering only vertices that
+    // are incident to the edges we just removed.
+    if (endVertices.find(beginVertex) != endVertices.end())
+        incidentVertices.erase(beginVertex);                 // beginVertex is a valid singleton path
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, incidentVertices) {
+        if (vertex->degree() == 0) {
             vmap.eraseTarget(vertex);
-            vertex = paths.eraseVertex(vertex);
-        } else {
-            ++vertex;
+            graph.eraseVertex(vertex);
         }
     }
 
-    // If all that's left is the start vertex and the start vertex by itself is not a valid path, then remove it.
-    if (paths.nVertices()==1 && endPathVertices.find(beginPathVertex)==endPathVertices.end()) {
-        paths.clear();
-        ASSERT_require(path.nEdges()==0);
+    // If we removed the begin vertex (and thus all vertices) from the graph, then the path should also be emptied.
+    if (graph.isEmpty())
         path.clear();
-        vmap.clear();
-    }
-    return nPathEdgesRemoved;
+
+    return origPathSize - path.nEdges();
 }
 
 ControlFlowGraph
-findPathsNoCalls(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+findPathsNoCalls(const ControlFlowGraph &cfg, CfgVertexMap &vmap /*out*/,
+                 const ControlFlowGraph::ConstVertexIterator &beginVertex,
                  const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
-                 const CfgConstEdgeSet &avoidEdges, CfgVertexMap &vmap /*out*/) {
+                 const CfgConstEdgeSet &avoidEdges) {
     ASSERT_require(cfg.isValidVertex(beginVertex));
     vmap.clear();
     ControlFlowGraph paths;
@@ -312,7 +338,7 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     // Find all paths through the callee that return and avoid certain vertices and edges.
     CfgVertexMap vmap1;                                 // relates CFG to calleePaths
     CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, cfgCallTarget);
-    ControlFlowGraph calleePaths = findPathsNoCalls(cfg, cfgCallTarget, cfgReturns, cfgAvoidVertices, cfgAvoidEdges, vmap1);
+    ControlFlowGraph calleePaths = findPathsNoCalls(cfg, vmap1, cfgCallTarget, cfgReturns, cfgAvoidVertices, cfgAvoidEdges);
     if (calleePaths.isEmpty()) {
         mlog[WARN] <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
         return false;

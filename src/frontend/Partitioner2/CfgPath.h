@@ -119,11 +119,15 @@ public:
 
     /** Truncate the path.
      *
-     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path.
+     *  Erase edges from the end of this path until this path contains none of the specified edges.
      *
      *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
-     *  the path is at the front of the returned vector. */
-    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
+     *  the path is at the front of the returned vector.
+     *
+     * @{ */
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator&);
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const CfgConstEdgeSet&);
+    /** @} */
 
     /** Call depth.
      *
@@ -146,20 +150,41 @@ public:
  *  incident to any vertex in @p avoidVertices. */
 std::vector<bool>
 findPathEdges(const ControlFlowGraph &graph,
-              ControlFlowGraph::ConstVertexIterator beginVertex, const CfgConstVertexSet &endVertices,
-              const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges);
+              const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+              const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+              const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
+
+/** Find edges that are reachable.
+ *
+ *  Finds edges that are part of some path from the @p beginVertex to any of the @p endVertices. The paths that are
+ *  considered must not traverse the @p avoidEdges or @p avoidVertices. */
+CfgConstEdgeSet
+findPathReachableEdges(const ControlFlowGraph &graph,
+                       const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                       const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                       const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
+
+/** Find edges that are unreachable.
+ *
+ *  Finds edges that are not part of any path from the @p beginVertex to any of the @p endVertices. The paths that are
+ *  considered must not traverse the @p avoidEdges or @p avoidVertices. */
+CfgConstEdgeSet
+findPathUnreachableEdges(const ControlFlowGraph &graph,
+                         const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                         const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                         const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
 
 /** Remove edges and vertices that cannot be on the paths.
  *
  *  Removes those edges that aren't reachable in both forward and reverse directions between the specified begin and end
- *  vertices. Specified vertices must belong to the paths-CFG, although end vertices are allowed.  After edges are removed,
- *  dangling vertices are removed.  Vertices and edges are removed from the @p paths graph, the @p vmap, and the @p
- *  path. Removal of edges from @p path causes the path to be truncated.
+ *  vertices. Specified vertices must belong to the graph, although end vertices are allowed.  After edges are removed,
+ *  dangling vertices are removed.  Vertices and edges are removed from the @p graph, the @p vmap, and the @p path. Removal of
+ *  edges from @p path causes the path to be truncated.
  *
  *  Returns the number of edges that were removed from the @p path. */
 size_t
-eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
-                      const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                      const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
 
 /** Compute all paths.
  *
@@ -178,9 +203,11 @@ eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
  *  serves as both the begin and end of the path (i.e., a single path of unit length).  The @p vmap is updated to indicate the
  *  mapping from @p srcCfg vertices in the corresponding vertices in the returned graph. */
 ControlFlowGraph
-findPathsNoCalls(const ControlFlowGraph &srcCfg, const ControlFlowGraph::ConstVertexIterator &beginVertex,
-                 const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
-                 CfgVertexMap &vmap /*out*/);
+findPathsNoCalls(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
+                 const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                 const CfgConstVertexSet &endVertices,
+                 const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                 const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
 
 /** Inline a functioon at the specified call site.
  *
@@ -212,11 +239,13 @@ findPathsNoCalls(const ControlFlowGraph &srcCfg, const ControlFlowGraph::ConstVe
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet());
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet());
 /** @} */
 
 
