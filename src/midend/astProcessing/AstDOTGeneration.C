@@ -405,6 +405,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (initializedName != NULL)
         {
           nodelabel += string("\\n") + initializedName->get_name();
+
+       // DQ (4/14/2015): We need to have these additional data members output (similar to SgStatement).
+          nodelabel += string("\\n") + string("isModified = ") + string(initializedName->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(initializedName->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(initializedName->isTransformation() ? "true" : "false");
         }
 
   // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.

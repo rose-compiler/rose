@@ -560,6 +560,13 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
+     test2015_89.c \
+     test2015_100.c \
+     test2015_105.c \
+     test2015_107.c \
+     test2015_108.c \
+     test2015_109.c \
+     test2015_110.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -581,13 +588,12 @@ FAILING_TESTCODES_XEN = \
     test2015_97.c \
     test2015_98.c \
     test2015_99.c \
-    test2015_100.c \
     test2015_101.c \
     test2015_102.c \
     test2015_103.c \
     test2015_104.c \
-    test2015_105.c \
-    test2015_106.c 
+    test2015_106.c \
+    test2015_111.c 
 
 # DQ (4/13/2015): The best examples of remaining bugs are:
 # Makefile rules:
@@ -831,14 +837,15 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-if !ROSE_USE_EDG_VERSION_4_4
-if !ROSE_USE_EDG_VERSION_4_7
+# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
+# if !ROSE_USE_EDG_VERSION_4_4
+# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-endif
-endif
+# endif
+# endif
 
 testTranslator = ../../testTranslator
 
@@ -914,6 +921,9 @@ caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 # default case: generate executable a.out from any number of input files	
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(testTranslator) $(ROSE_FLAGS) $^ -o caller.out
+# DQ (4/18/2015): Add the execution of the generated executable.
+	./caller.out
+
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 # test2008_02.o: $(srcdir)/test2008_02.c
@@ -1004,6 +1014,10 @@ check-local:
 	@$(MAKE) test_else_case_disambiguation.passed
 	@$(MAKE) test_common_configure_test_with_link.passed
 	@$(MAKE) test2005_168.o
+	@$(MAKE) test_using_explicit_output_file_option
+	@$(MAKE) test_using_implicit_output_file_option
+	@$(MAKE) test_rtd_use
+#	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"

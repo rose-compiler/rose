@@ -1521,6 +1521,15 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #endif
                curprint( "__attribute__((work_group_size_hint(X, Y, Z))) ");
              }
+
+       // DQ (4/20/2015): Added support for GNU cdecl attribute.
+          if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() == true)
+             {
+#if 0
+               printf ("Output GNU cdecl attribute: functionDeclaration = %p \n",functionDeclaration);
+#endif
+               curprint( "__attribute__((cdecl)) ");
+             }
         }
 
 
