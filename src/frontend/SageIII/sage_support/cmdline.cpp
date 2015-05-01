@@ -7425,7 +7425,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
-#if 0
+#if 0 
   // AS(080704) Fix so that if user specifies name of -o file rose do not specify another in addition
      bool  objectNameSpecified = false;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
@@ -7735,14 +7735,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
                       else
-                       {
+                       { // compilation only, object name is already specified, single file case, nothing else to tweak for the command line
                          printf ("get_compileOnly() == true: get_multifile_support() == false: \n");
                        }
                   }
              }
         }
        else
-        {
+        { // the case for both compiling and linking 
        // Liao 11/19/2009, changed to support linking multiple source files within one command line
        // We change the compilation mode for each individual file to compile-only even
        // when the original command line is to generate the final executable.
@@ -7764,6 +7764,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                     compilerNameString.push_back(currentDirectory + "/" + objectFileName);
 #else
                  // DQ (4/13/2015): Only output a -c and -o option to specify the executable if one has not already been specified.
+                 // Liao 5/1/2015: for the case of doing both compiling and linking, and with multiple files, 
+                 // we remove the original -o options.  We compose our own -o  originalfilename.o options
+                 // 
                     if (objectNameSpecified == false)
                        {
                       // cout<<"turn on compilation only at the file compilation level"<<endl;
@@ -7793,6 +7796,18 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
 #endif
+                  } 
+                  // Liao 5/1/2015: support single file case like: identityTranslator main.c
+                  // TODO: discuss with Dan to merge this branch with the previous one, removing if (get_multifile_support() == true)
+                  else 
+                  { 
+                    // introduce -c to compile this single file first.
+                    // the linking step will happen when handling SgProject
+                    compilerNameString.push_back("-c");
+                  // compilation step of the two (compile+ link) steps
+                    std::string objectFileName = generateOutputFileName();
+                    compilerNameString.push_back("-o");
+                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                   }
              }
         }

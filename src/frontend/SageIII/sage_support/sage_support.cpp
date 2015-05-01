@@ -5957,6 +5957,10 @@ SgProject::compileOutput()
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
                          printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
 #endif
+                         // Liao 5/1/2015
+                         // support single file case: e.g. identityTranslator main.c // this is still split into two steps: compiliation and linking
+                         // TODO: discuss with Dan to merge this branch with the previous one, removing if (get_multifile_support() == true)
+                         linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                        }
                   }
                  else
@@ -6244,7 +6248,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 #endif
         }
 
-#if 1
+#if 0
      printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
 #endif
 
