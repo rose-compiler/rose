@@ -115,8 +115,12 @@ public:
                     break;
                 case CharacterEncodingColumn:
                     switch (row.meta.characterEncoding()) {
-                        case StringFinder::ASCII:
-                            return Wt::WString("ASCII");
+                        case StringFinder::UTF8:
+                            return Wt::WString("UTF-8");
+                        case StringFinder::UTF16:
+                            return Wt::WString("UTF-16");
+                        case StringFinder::UTF32:
+                            return Wt::WString("UTF-32");
                     }
                     break;
                 case NCharsColumn:

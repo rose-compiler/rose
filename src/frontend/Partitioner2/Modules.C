@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryString.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -486,25 +487,24 @@ nameStrings(const Partitioner &partitioner) {
                     rose_addr_t va = ival->get_absoluteValue();
                     std::string label;
                     if (!seen.getOptional(va).assignTo(label) && partitioner.instructionsOverlapping(va).empty()) {
-                        // Read a NUL-terminated string from memory which is readable but not writable. We need to make sure it
-                        // ends with the NUL character even though we're only going to display the first part of it, therefore
-                        // we'll read up to a fairly large amount of data looking for the NUL.
-                        std::string c_str = partitioner.memoryMap().readString(va, 8192, validStringChar, NULL,
-                                                                               MemoryMap::READABLE, MemoryMap::WRITABLE);
-                        if (!c_str.empty()) {
-                            static const size_t displayLength = 25; // arbitrary
+                        StringFinder stringFinder;
+                        MemoryMap::ConstConstraints where = partitioner.memoryMap().at(va);
+                        if (Sawyer::Optional<StringFinder::String> string = stringFinder.findString(where)) {
+                            ASSERT_require(string->address() == va);
+                            std::string str = stringFinder.decode(partitioner.memoryMap(), *string);
+                            static const size_t displayLength = 25;// arbitrary
                             static const size_t maxLength = displayLength + 7; // strlen("+N more")
-                            size_t truncated = 0;
-                            if (c_str.size() > maxLength) {
-                                truncated = c_str.size() - displayLength;
-                                c_str = c_str.substr(0, displayLength);
+                            size_t nTruncated = 0;
+                            if (str.size() > maxLength) {
+                                nTruncated = str.size() - displayLength;
+                                str = str.substr(0, displayLength);
                             }
-                            label = "\"" + StringUtility::cEscape(c_str) + "\"";
-                            if (truncated)
-                                label += "+" + StringUtility::numberToString(truncated) + " more";
+                            label = "\"" + StringUtility::cEscape(str) + "\"";
+                            if (nTruncated)
+                                label += "+" + StringUtility::numberToString(nTruncated) + " more";
                             ival->set_comment(label);
                         }
-                        seen.insert(va, label);         // even if it's empty
+                        seen.insert(va, label);
                     } else if (!label.empty()) {
                         ival->set_comment(label);
                     }

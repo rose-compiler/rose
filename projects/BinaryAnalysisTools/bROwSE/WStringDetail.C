@@ -42,7 +42,9 @@ WStringDetail::changeString(const StringFinder::String &meta, std::string value)
         default: title += " " + stringifyBinaryAnalysisStringFinderLengthEncoding(meta.lengthEncoding()); break;
     }
     switch (meta.characterEncoding()) {
-        case StringFinder::ASCII:               title += " ASCII"; break;
+        case StringFinder::UTF8:                title += " UTF-8"; break;
+        case StringFinder::UTF16:               title += " UTF-16"; break;
+        case StringFinder::UTF32:               title += " UTF-32"; break;
         default: title += " " + stringifyBinaryAnalysisStringFinderCharacterEncoding(meta.characterEncoding()); break;
     }
     title += " string occupying " + plural(meta.nBytes(), "bytes") + " at " + addrToString(meta.address());

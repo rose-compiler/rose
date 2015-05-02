@@ -28,7 +28,9 @@ public:
 
     /** How string characters are represented. */
     enum CharacterEncoding {
-        ASCII,                                          /**< One byte per character. */
+        UTF8,                                           /**< Eight bits per character. */
+        UTF16,                                          /**< 16 bits per character. */
+        UTF32,                                          /**< 32 bits per character. */
     };
 
     /** A string of characters.  This type holds all the information that's necessary to decode a string from some interval of
@@ -45,7 +47,7 @@ public:
          *  Internally, the encoding is set to BYTE_LENGTH but the number of bytes is zero, which is an impossible valid
          *  combination. This constructor is mostly present for those STL containers that need a default constructor. */
         String()
-            : va_(0), nBytes_(0), nCharacters_(0), lengthEncoding_(BYTE_LENGTH), characterEncoding_(ASCII) {}
+            : va_(0), nBytes_(0), nCharacters_(0), lengthEncoding_(BYTE_LENGTH), characterEncoding_(UTF8) {}
 
         /** Construct a string with specified parameters. The @p nCharacters represents the number of actual characters in the
          *  string, not counting termination characters. */
@@ -57,7 +59,7 @@ public:
         /** Construct a NUL-terminated ASCII string.  The @p nCharactes does not include the terminating NUL character. In
          *  other words, its the same as the value returned if the string had been passed to the C @c strlen function. */
         static String createCString(rose_addr_t va, size_t nCharacters) {
-            return String(va, nCharacters+1, nCharacters, NUL_TERMINATED, ASCII);
+            return String(va, nCharacters+1, nCharacters, NUL_TERMINATED, UTF8);
         }
 
         /** Check whether the string is valid.  In particular, a default-constructed string is invalid. */
@@ -105,11 +107,19 @@ public:
     /** Predicate determining valid ASCII character.
      *
      *  This predicate returns true if the specified byte is considered to be a valid character for an ASCII string.  The base
-     *  implementation returns true for white space or characters having a graphic. */
-    virtual bool isAsciiCharacter(uint8_t) const;
+     *  implementation returns true for white space or characters having a graphic.  The vector version represents a character
+     *  as a vector of bytes that were read from memory, the length of which depends on the encoding for each character; UTF-8
+     *  is one byte, UTF-16 is two bytes, etc.
+     *
+     *  @{ */
+    virtual bool isAsciiCharacter(const std::vector<uint8_t> &characterBytes) const;
+    bool isAsciiCharacter(uint8_t byte) const { return isAsciiCharacter(std::vector<uint8_t>(1, byte)); }
+    /** @} */
     
-    /** Find the starting address for the next sequence of ASCII characters.  If a sequence of at least @p minChars characters
-     *  can be found in the memory map then return the address for the starting character, otherwise return nothing.
+    /** Find the starting address for the next sequence of ASCII characters.
+     *
+     *  If a sequence of at least @p minChars characters can be found in the memory map then return the address for the
+     *  starting character, otherwise return nothing. Each character is encoded using the specified character encoding.
      *
      *  The following example shows how to find a string of at least five characters in readable memory and starting the search
      *  at a particular address.
@@ -119,25 +129,29 @@ public:
      *  const MemoryMap &map = ...;      // the memory to be searched
      *  rose_addr_t va = ...;            // where to start searching for ASCII strings
      *  size_t minChars = 5;             // minimum number of characters to find
-     *  if (stringFinder.findAsciiSequence(map.require(READABLE).atOrAfter(va), minChars).assignTo(va))
+     *  if (stringFinder.findAsciiSequence(map.require(READABLE).atOrAfter(va), minChars, UTF16).assignTo(va))
      *      std::cout <<"found an ASCII string starting at " <<StringUtility::addrToString(va) <<"\n";
      * @endcode
      *
      * @{ */
-    Sawyer::Optional<rose_addr_t> findAsciiSequence(MemoryMap::ConstConstraints where, size_t minChars) const;
+    Sawyer::Optional<rose_addr_t> findAsciiSequence(MemoryMap::ConstConstraints where, size_t minChars, CharacterEncoding) const;
     /** @} */
 
-    /** Length of longest sequence of ASCII characters.  Returns the length of the longest sequence of ASCII characters
-     *  beginning at the specified address. Here's an example sans error checking:
+    /** Length of longest sequence of ASCII characters.
+     *
+     *  Returns the length in characters of the longest sequence of ASCII characters beginning at the specified address.  Each
+     *  character is encoded as specified.
+     *
+     *  Here's an example sans error checking:
      *
      * @code
      *  MemoryMap map = ...;
      *  rose_addr_t stringVa = stringFinder.findAsciiSequence(map.atOrAfter(startVa), 5).orElse(-1);
-     *  size_t nChars = stringFinder.asciiSequenceLength(map.at(stringVa));
+     *  size_t nChars = stringFinder.asciiSequenceLength(map.at(stringVa), UTF16);
      * @endcode
      *
      * @{ */
-    size_t asciiSequenceLength(MemoryMap::ConstConstraints where) const;
+    size_t asciiSequenceLength(MemoryMap::ConstConstraints where, CharacterEncoding) const;
     /** @} */
 
     /** Find the first string in the specified memory.

@@ -44,7 +44,9 @@ StringFinder::String::isRunLengthEncoded() const {
         case LE32_LENGTH:
         case BE32_LENGTH:
             switch (characterEncoding_) {
-                case ASCII:
+                case UTF8:
+                case UTF16:
+                case UTF32:
                     return false;
             }
             break;
@@ -56,26 +58,46 @@ StringFinder::String::isRunLengthEncoded() const {
 //                                      StringFinder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+static size_t
+bytesPerChar(StringFinder::CharacterEncoding e) {
+    switch (e) {
+        case StringFinder::UTF8: return 1;
+        case StringFinder::UTF16: return 2;
+        case StringFinder::UTF32: return 4;
+    }
+    ASSERT_not_implemented("invalid character encoding");
+}
+
 bool
-StringFinder::isAsciiCharacter(uint8_t ch) const {
+StringFinder::isAsciiCharacter(const std::vector<uint8_t> &character) const {
+    ASSERT_forbid2(character.empty(), "character encoding must be at least one byte");
+
+    // FIXME[Robb P. Matzke 2015-05-01]: Assuming little-endian
+    for (size_t i=1; i<character.size(); ++i) {
+        if (character[i]!=0)
+            return false;
+    }
+
+    uint8_t ch = character[0];
     return isgraph(ch) || isspace(ch);
 }
 
 struct AsciiSequenceLength {
     const StringFinder *self;
-    size_t nBytes;
-    AsciiSequenceLength(const StringFinder *self): self(self), nBytes(0) {}
+    size_t nChars, bytesPerChar;
+
+    AsciiSequenceLength(const StringFinder *self, size_t bytesPerChar): self(self), nChars(0), bytesPerChar(bytesPerChar) {}
+
     bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
         rose_addr_t va = interval.least();
         while (va <= interval.greatest()) {
-            uint8_t byte;
-            map.at(va).limit(1).read(&byte);
-            if (!self->isAsciiCharacter(byte))
+            std::vector<uint8_t> bytes(bytesPerChar);
+            if (bytesPerChar != map.at(va).read(bytes).size() || !self->isAsciiCharacter(bytes))
                 return false;
-            ++nBytes;
-            if (va == interval.greatest())
+            ++nChars;
+            if (va+(bytesPerChar-1) == interval.greatest())
                 return true;                            // prevent overflow
-            ++va;
+            va += bytesPerChar;
         }
         return true;
     }
@@ -83,25 +105,27 @@ struct AsciiSequenceLength {
 
 // Given a memory location, find the length of the longest sequence of ASCII characters.
 size_t
-StringFinder::asciiSequenceLength(MemoryMap::ConstConstraints where) const {
-    AsciiSequenceLength visitor(this);
+StringFinder::asciiSequenceLength(MemoryMap::ConstConstraints where, CharacterEncoding characterEncoding) const {
+    AsciiSequenceLength visitor(this, bytesPerChar(characterEncoding));
     where.traverse(visitor, Sawyer::Container::MATCH_CONTIGUOUS);
-    return visitor.nBytes;
+    return visitor.nChars;
 }
 
 struct AsciiSequenceLocation {
     const StringFinder *self;
     rose_addr_t startVa;
-    size_t nChars, minChars;
-    AsciiSequenceLocation(const StringFinder *self, size_t minChars): self(self), startVa(0), nChars(0), minChars(minChars) {}
+    size_t nChars, minChars, bytesPerChar;
+
+    AsciiSequenceLocation(const StringFinder *self, size_t minChars, size_t bytesPerChar)
+        : self(self), startVa(0), nChars(0), minChars(minChars), bytesPerChar(bytesPerChar) {}
+
     bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
         rose_addr_t va = interval.least();
-        if (startVa + nChars != va)
+        if (startVa + nChars*bytesPerChar != va)
             nChars = 0;
         while (va <= interval.greatest()) {
-            uint8_t byte;
-            map.at(va).limit(1).read(&byte);
-            if (self->isAsciiCharacter(byte)) {
+            std::vector<uint8_t> bytes(bytesPerChar);
+            if (bytesPerChar == map.at(va).read(bytes).size() && self->isAsciiCharacter(bytes)) {
                 if (1 == ++nChars)
                     startVa = va;
                 if (nChars >= minChars)
@@ -109,9 +133,9 @@ struct AsciiSequenceLocation {
             } else {
                 nChars = 0;
             }
-            if (va == interval.greatest())
+            if (va+(bytesPerChar-1) == interval.greatest())
                 return true;                            // prevent overflow
-            ++va;
+            va += bytesPerChar;;
         }
         return true;
     }
@@ -119,8 +143,8 @@ struct AsciiSequenceLocation {
 
 // Find the starting address for the next sequence of ASCII characters.
 Sawyer::Optional<rose_addr_t>
-StringFinder::findAsciiSequence(MemoryMap::ConstConstraints where, size_t minChars) const {
-    AsciiSequenceLocation visitor(this, minChars);
+StringFinder::findAsciiSequence(MemoryMap::ConstConstraints where, size_t minChars, CharacterEncoding characterEncoding) const {
+    AsciiSequenceLocation visitor(this, minChars, bytesPerChar(characterEncoding));
     where.traverse(visitor);
     if (visitor.nChars >= minChars)
         return visitor.startVa;
@@ -130,29 +154,48 @@ StringFinder::findAsciiSequence(MemoryMap::ConstConstraints where, size_t minCha
 // Find first string
 Sawyer::Optional<StringFinder::String>
 StringFinder::findString(MemoryMap::ConstConstraints where) const {
-    static const size_t minChars = 5;
-    rose_addr_t stringVa = 0;
-    while (findAsciiSequence(where, minChars).assignTo(stringVa)) {
-        uint8_t byte;
-        size_t nBytes = minChars + asciiSequenceLength(where.at(stringVa+minChars));
+    static const size_t minChars = 5;                   // arbitrary
+    static const CharacterEncoding charEncodings[] = {UTF32, UTF16, UTF8};
+    static const size_t nTries = sizeof(charEncodings)/sizeof(charEncodings[0]);
+    static const rose_addr_t NO_ADDRESS(-1);
 
-        // Read the byte following the ASCII sequence if possible
-        if (stringVa + nBytes < stringVa) {             // overflow
-            return String(stringVa, nBytes, nBytes, MAP_TERMINATED, ASCII);
-        } else if (!where.at(stringVa+nBytes).limit(1).read(&byte)) {
-            return String(stringVa, nBytes, nBytes, MAP_TERMINATED, ASCII);
+    CharacterEncoding charEncoding;
+    rose_addr_t stringVa = NO_ADDRESS;
+    for (size_t i=0; i<nTries; ++i) {
+        rose_addr_t x = findAsciiSequence(where, minChars, charEncodings[i]).orElse(NO_ADDRESS);
+        if (x < stringVa) {
+            stringVa = x;
+            charEncoding = charEncodings[i];
         }
-
-        // Is the following byte a NUL character?
-        if (0 == byte)
-            return String(stringVa, nBytes+1, nBytes, NUL_TERMINATED, ASCII);
-
-        // FIXME[Robb P. Matzke 2015-01-17]: Other encoding methods are defined but not implemented yet.
-
-        // Catch-all for ASCII sequences that we found but which don't seem to have a length or NUL termination.
-        return String(stringVa, nBytes, nBytes, SEQUENCE_TERMINATED, ASCII);
     }
-    return Sawyer::Nothing();
+    if (stringVa == NO_ADDRESS)
+        return Sawyer::Nothing();
+
+    if (where.isAnchored() && stringVa != where.anchored().least())
+        return Sawyer::Nothing();
+
+    size_t nChars = asciiSequenceLength(where.at(stringVa), charEncoding);
+    size_t bpc = bytesPerChar(charEncoding);
+    size_t nBytes = nChars * bpc;
+            
+    // Read the (multi-byte) character following the sequence if possible
+    if (stringVa + nBytes < stringVa) // overflow
+        return String(stringVa, nBytes, nChars, MAP_TERMINATED, charEncoding);
+    std::vector<uint8_t> charBytes(bpc);
+    if (bpc != where.at(stringVa+nBytes).read(charBytes).size())
+        return String(stringVa, nBytes, nChars, MAP_TERMINATED, charEncoding);
+
+    // Is the following character a NUL character?
+    bool isNul = true;
+    for (size_t i=0; i<bpc && isNul; ++i)
+        isNul = charBytes[i] == 0;
+    if (isNul)
+        return String(stringVa, nBytes+bpc, nChars, NUL_TERMINATED, charEncoding);
+
+    // FIXME[Robb P. Matzke 2015-01-17]: Other encoding methods are defined but not implemented yet.
+
+    // Catch-all for ASCII sequences that we found but which don't seem to have a length or NUL termination.
+    return String(stringVa, nBytes, nChars, SEQUENCE_TERMINATED, charEncoding);
 }
 
 // Find all strings
@@ -195,7 +238,8 @@ StringFinder::decode(const MemoryMap &map, const String &string) const {
         case SEQUENCE_TERMINATED:
             break;
         case NUL_TERMINATED:
-            --dataSize;
+            ASSERT_require(dataSize >= bytesPerChar(string.characterEncoding()));
+            dataSize -= bytesPerChar(string.characterEncoding());
             break;
         case BYTE_LENGTH: {
             size_t n = *data++;
@@ -236,8 +280,20 @@ StringFinder::decode(const MemoryMap &map, const String &string) const {
     // Decode the string
     std::string s;
     switch (string.characterEncoding()) {
-        case ASCII:
+        case UTF8:
             s = std::string((const char*)data, dataSize);
+            break;
+        case UTF16:
+            // Store only the low-order bytes since ROSE is not supporting UTF encodings yet [Robb P. Matzke 2015-05-01]
+            ASSERT_require(dataSize % 2 == 0);
+            for (size_t i=0; i<dataSize; i+=2)
+                s += (char)data[i];
+            break;
+        case UTF32:
+            // Store only the low-order bytes since ROSE is not supporting UTF encodings yet [Robb P. Matzke 2015-05-01]
+            ASSERT_require(dataSize % 4 == 0);
+            for (size_t i=0; i<dataSize; i+=4)
+                s += (char)data[i];
             break;
     }
 
