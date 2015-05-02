@@ -46,6 +46,12 @@ public:
         return !frontVertex_;
     }
 
+    /** Verify that path edges are connected.
+     *
+     *  Checks whether adjacent edges in the path go through a common vertex. Returns true if they do, false otherwise. Returns
+     *  true for a path with no edges. */
+    bool isConnected() const;
+
     /** Number of edges in a path.
      *
      *  A path with zero edges is not necessarily empty; it may have an initial vertex. */
@@ -117,6 +123,33 @@ public:
     /** Number of times edge appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstEdgeIterator &edge) const;
 
+    /** Number of function calls.
+     *
+     *  Counts the number of E_FUNCTION_CALL edges in a path.  If a non-null function is supplied then only count those edges
+     *  that enter the specified function. */
+    size_t nCalls(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Number of function returns.
+     *
+     *  Counts the number of E_FUNCTION_RETURN edges in a path. If a non-null function is supplied then only count those edges
+     *  that return from the specified function. */
+    size_t nReturns(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Call depth.
+     *
+     *  Returns the function call depth at the end of the path.  The call depth is incremented for each E_FUNCTION_CALL edge
+     *  and decremented for each E_FUNCTION_RETURN edge, and the value at the end of the path is returned. If a non-null
+     *  function is specified, then count only calls to that function and returns from that function. The return value may be
+     *  negative if more return edges than call edges are encountered. */
+    ssize_t callDepth(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Maximum call depth.
+     *
+     *  Returns the maximum function call depth in the path.  The call depth is incremented for each E_FUNCTION_CALL edge and
+     *  decremented for each E_FUNCTION_RETURN edge, and its maximum value is returned. If a non-null function is specified,
+     *  then count only calls to that function and returns from that function. */
+    size_t maxCallDepth(const Function::Ptr &function = Function::Ptr()) const;
+
     /** Truncate the path.
      *
      *  Erase edges from the end of this path until this path contains none of the specified edges.
@@ -128,12 +161,6 @@ public:
     std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator&);
     std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const CfgConstEdgeSet&);
     /** @} */
-
-    /** Call depth.
-     *
-     *  Counts the number of E_FUNCTION_CALL edges in a path.  If a non-null function is supplied then only count those edges
-     *  that enter the specified function. */
-    size_t callDepth(const Function::Ptr &function = Function::Ptr()) const;
 
     /** Print the path. */
     void print(std::ostream &out) const;
@@ -233,19 +260,22 @@ findPathsNoCalls(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
  *  The @ref E_CALL_RETURN edges in @p paths are not erased by this operation, but are usually subsequently erased by the
  *  user since they are redundant after this insertion--they represent a short-circuit over the called function(s).
  *
- *  Returns true if some function was inserted, false if no changes were made to @p paths.
+ *  Returns true if some function was inserted, false if no changes were made to @p paths.  If @p newVertices is non-null then
+ *  the all newly inserted vertices are also pushed onto the end of the vector.
  *
  * @{ */
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
                   const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet());
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
                   const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
-                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet());
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 /** @} */
 
 

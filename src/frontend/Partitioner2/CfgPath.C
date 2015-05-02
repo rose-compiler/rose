@@ -10,6 +10,19 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+bool
+CfgPath::isConnected() const {
+    if (!isEmpty()) {
+        ControlFlowGraph::ConstVertexIterator vertex = frontVertex();
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
+            if (edge->source() != vertex)
+                return false;
+            vertex = edge->target();
+        }
+    }
+    return true;
+}
+
 CfgPath::Vertices
 CfgPath::vertices() const {
     Vertices retval;
@@ -81,6 +94,80 @@ CfgPath::nVisits(const ControlFlowGraph::ConstEdgeIterator &edge) const {
     return retval;
 }
 
+size_t
+CfgPath::nCalls(const Function::Ptr &function) const {
+    size_t retval = 0;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
+        if (edge->value().type() == E_FUNCTION_CALL) {
+            if (!function) {
+                ++retval;
+            } else if (edge->target()->value().type() == V_BASIC_BLOCK &&
+                       edge->target()->value().function() == function)
+                ++retval;
+        }
+    }
+    return retval;
+}
+
+size_t
+CfgPath::nReturns(const Function::Ptr &function) const {
+    size_t retval = 0;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
+        if (edge->value().type() == E_FUNCTION_RETURN) {
+            if (!function) {
+                ++retval;
+            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
+                       edge->source()->value().function() == function)
+                ++retval;
+        }
+    }
+    return retval;
+}
+
+ssize_t
+CfgPath::callDepth(const Function::Ptr &function) const {
+    ssize_t depth = 0;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
+        if (edge->value().type() == E_FUNCTION_CALL) {
+            if (!function) {
+                ++depth;
+            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
+                       edge->source()->value().function() == function)
+                ++depth;
+        } else if (edge->value().type() == E_FUNCTION_RETURN) {
+            if (!function) {
+                --depth;
+            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
+                       edge->source()->value().function() == function)
+                --depth;
+        }
+    }
+    return depth;
+}
+
+size_t
+CfgPath::maxCallDepth(const Function::Ptr &function) const {
+    ssize_t depth = 0;
+    ssize_t retval = 0;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
+        if (edge->value().type() == E_FUNCTION_CALL) {
+            if (!function) {
+                ++depth;
+            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
+                       edge->source()->value().function() == function)
+                ++depth;
+        } else if (edge->value().type() == E_FUNCTION_RETURN) {
+            if (!function) {
+                --depth;
+            } else if (edge->source()->value().type() == V_BASIC_BLOCK &&
+                       edge->source()->value().function() == function)
+                --depth;
+        }
+        retval = std::max(retval, depth);
+    }
+    return retval;
+}
+
 std::vector<ControlFlowGraph::ConstEdgeIterator>
 CfgPath::truncate(const CfgConstEdgeSet &toRemove) {
     for (Edges::iterator ei=edges_.begin(); ei!=edges_.end(); ++ei) {
@@ -100,21 +187,6 @@ CfgPath::truncate(const ControlFlowGraph::ConstEdgeIterator &edge) {
     CfgConstEdgeSet toRemove;
     toRemove.insert(edge);
     return truncate(toRemove);
-}
-
-size_t
-CfgPath::callDepth(const Function::Ptr &function) const {
-    size_t retval = 0;
-    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges_) {
-        if (edge->value().type() == E_FUNCTION_CALL) {
-            if (!function) {
-                ++retval;
-            } else if (edge->target()->value().type() == V_BASIC_BLOCK &&
-                       edge->target()->value().function() == function)
-                ++retval;
-        }
-    }
-    return retval;
 }
 
 void
@@ -288,11 +360,12 @@ findPathsNoCalls(const ControlFlowGraph &cfg, CfgVertexMap &vmap /*out*/,
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges) {
+                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
     bool somethingInserted = false;
     CfgConstEdgeSet cfgCallEdges = findCallEdges(cfgCallSite);
     BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, cfgCallEdges) {
-        if (insertCalleePaths(paths /*in,out*/, pathsCallSite, cfg, cfgCallEdge, cfgAvoidVertices, cfgAvoidEdges))
+        if (insertCalleePaths(paths /*in,out*/, pathsCallSite, cfg, cfgCallEdge, cfgAvoidVertices, cfgAvoidEdges, newVertices))
             somethingInserted = true;
     }
     return somethingInserted;
@@ -301,7 +374,8 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges) {
+                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges,
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newVertices /*=NULL*/) {
     ASSERT_require(paths.isValidVertex(pathsCallSite));
     ASSERT_require(cfg.isValidEdge(cfgCallEdge));
     ASSERT_require2(pathsCallSite->value().type() == V_BASIC_BLOCK, "only basic blocks can call functions");
@@ -322,11 +396,13 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
     if (cfgCallTarget->value().type() == V_INDETERMINATE) {
         ControlFlowGraph::ConstVertexIterator indet = paths.insertVertex(CfgVertex(V_INDETERMINATE));
+        if (newVertices)
+            newVertices->push_back(indet);
         paths.insertEdge(pathsCallSite, indet, CfgEdge(E_FUNCTION_CALL));
         BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &returnTarget, pathsReturnTargets)
             paths.insertEdge(indet, returnTarget, CfgEdge(E_FUNCTION_RETURN));
-        mlog[WARN] <<"insertCalleePaths: indeterminate function call from "
-                   <<pathsCallSite->value().bblock()->printableName() <<"\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"insertCalleePaths: indeterminate function call from "
+                                 <<pathsCallSite->value().bblock()->printableName() <<"\n";
         return true;
     }
 
@@ -340,13 +416,19 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, cfgCallTarget);
     ControlFlowGraph calleePaths = findPathsNoCalls(cfg, vmap1, cfgCallTarget, cfgReturns, cfgAvoidVertices, cfgAvoidEdges);
     if (calleePaths.isEmpty()) {
-        mlog[WARN] <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
         return false;
     }
 
     // Insert the callee into the paths CFG
     CfgVertexMap vmap2;                                 // relates calleePaths to paths
     insertCfg(paths, calleePaths, vmap2);
+    if (newVertices) {
+        BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vmap2.forward().values()) {
+            ASSERT_require(paths.isValidVertex(vertex));
+            newVertices->push_back(vertex);
+        }
+    }
     CfgVertexMap vmap(vmap1, vmap2);                    // composite map from the CFG to paths graph
 
     // Make an edge from call site to the entry block of the callee in the paths graph
