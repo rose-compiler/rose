@@ -50,14 +50,19 @@ namespace CodeThorn {
   public:
     // initializing the CounterexampleAnalyzer, using "analyzer" to trace paths of the original program
     CounterexampleAnalyzer(Analyzer* analyzer);
+    CounterexampleAnalyzer(Analyzer* analyzer, stringstream* csvOutput);
     // Check whether or not the "counterexample" is spurious. 
     // If "returnSpuriousLabel" is set to true: In the case of a spurious counterexample, the result includes a label that should not 
     //                                        be reachable according to the original program but is reachable in the counterexample
     // If "startState" != NULL it will be taken as the start state for tracing the original program's execution path.
     // "resetAnaylzerData" indicates whether or not previously discovered states should be deleted initially.
     CEAnalysisResult analyzeCounterexample(string counterexample, const EState* startState, bool returnSpuriousLabel, bool resetAnalyzerData);
+    // iterative verification attempts using the cegar prefix mode for LTL. Iterates over all LTL properties, respects the limit for 
+    // analyzed counterexamples for each individual property.
+    PropertyValueTable* cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
     // iterative verification attempts of a given ltl property. Prefix of the state space is explored using individual counterexample traces.
     PropertyValueTable* cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, set<int> ltlInAlphabet, set<int> ltlOutAlphabet);
+    void setMaxCounterexamples(int max) { _maxCounterexamples=max; };
     
   private: 
     // parse a counterexample string
@@ -81,25 +86,35 @@ namespace CodeThorn {
 
     /// functions related to the cegar prefix mode.
     // updates the information about error branches regarding the latest addition to the traces stored in "model". 
-    void removeAndMarkErroneousBranches(InputsAtEState* erroneousBranches, TransitionGraph* model);
+    void removeAndMarkErroneousBranches(TransitionGraph* model);
     // Returns a boolean vector indicating for which input alphabet value a successor of "eState" exists in "model".
     vector<bool> hasFollowingInputStates(vector<bool> v, const EState* eState, TransitionGraph* model) ;   
     // Retrieves a vector of input states that are successors of "eState" in "model". "eState" has to have one input
     // successor for all possible input values.
     vector<const EState*> getFollowingInputStates(vector<const EState*> v, const EState* startEState, TransitionGraph* model);
     // marks index in "v" as true iff the entry in "erroneousBranches" that corresponds to "eState" containts (index+1) in its mapping.
-    vector<bool> setErrorBranches(vector<bool> v, const EState* eState, InputsAtEState erroneousBranches);
+    vector<bool> setErrorBranches(vector<bool> v, const EState* eState);
     list<pair<const EState*, int> > removeTraceLeadingToErrorState(const EState* errorState, TransitionGraph* stg);
     // Adds all output states in the prefix to "startAndOuputStatesPrefix" and returns the set.
     EStatePtrSet addAllPrefixOutputStates(EStatePtrSet& startAndOuputStatesPrefix, TransitionGraph* model);
-    //deprecated: now implemented as function of EState ("isRersTopified(...)");
+    // identify states needed to disconnect the concrete prefix and the over-approximated part in the initial abstract model
+    pair<EStatePtrSet, EStatePtrSet> getConcreteOutputAndAbstractInput(TransitionGraph* model);
+    // sort the |<input_alphabet>| abstract input states according to their input value and insert them into the vector "v". 
+    vector<const EState*> sortAbstractInputStates(vector<const EState*> v, EStatePtrSet abstractInputStates);
+    // deprecated: now implemented as function of EState ("isRersTopified(...)");
     bool isPrefixState(const EState* state);
+    // prints #transitions, details about states and #counterexamples analyzed
+    void printStgSizeAndCeCount(TransitionGraph* model, int counterexampleCount, int property);
 
     //for debugging purposes
     string ceIoValToString(CeIoVal& ioVal);
     string ioErrTraceToString(list<pair<int, IoType> > trace);
+    void writeDotGraphToDisk(string filename, Visualizer& visualizer);
 
     Analyzer* _analyzer;
+    stringstream* _csvOutput;
+    int _maxCounterexamples;
+    InputsAtEState _erroneousBranches;
   };
 
 } // end of namespace CodeThorn

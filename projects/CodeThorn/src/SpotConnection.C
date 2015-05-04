@@ -31,7 +31,7 @@ std::list<LtlProperty>* SpotConnection::getUnknownFormulae() {
 
 PropertyValueTable* SpotConnection::getLtlResults() {
   if (ltlResults) {
-    return new PropertyValueTable(*ltlResults); 
+    return ltlResults; 
   } else {
     cout<< "ERROR: LTL results requested even though the SpotConnection has not been initialized yet." << endl;
     assert(0);
@@ -40,6 +40,11 @@ PropertyValueTable* SpotConnection::getLtlResults() {
 
 void SpotConnection::resetLtlResults() { 
   ltlResults->init(ltlResults->size()); 
+}
+
+void SpotConnection::resetLtlResults(int property) { 
+  ltlResults->setPropertyValue(property, PROPERTY_VALUE_UNKNOWN);
+  ltlResults->setCounterexample(property, "");
 }
 
 void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 

@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#$1: CodeThorn's src directory
+#$2: CodeThorn's build directory
+
+SRCDIR=$1
+BUILDDIR=$2
+
+P1="Problem1401"
+P2="Problem1402"
+P3="Problem1403"
+
+MAKE_CHECK="_make_check"
+
+
+echo ".==================================================================."
+echo "| testing counterexample-guided prefix refinement analysis (CEGPRA)|"
+echo "*==================================================================*"
+
+#create a temp directory
+CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
+TEMP_DIR="make_check_log_cegpra_"${CURRENT_TIME}
+mkdir ${2}/${TEMP_DIR}
+echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+
+for i in {1..3} #test all systems listed as P1,P2,... above
+do
+  for p in 0 1 46 67 79 84 95 96 #test different properties
+  do
+    #run cegpra and generate the results (do not keep error states as part of the model)
+    eval ${SRCDIR}/scripts/test_cases_cegpra \${P${i}} ${p} ${1} ${2} ${2}/${TEMP_DIR}
+
+    #compare LTL results with RERS'14 solutions
+    eval $SRCDIR/scripts/check_consistency ${2}/${TEMP_DIR}/\${P${i}}_ltl_results_make_check.csv $SRCDIR/regressiondata2/\${P${i}}_ltl_solutions.csv 2>&1
+    if [ ! $? -eq 0 ] 
+    then 
+      eval echo "ERROR: RERS ltl regression data could not be correctly reproduced by CEGPRA. Mismatch in problem: \${P${i}}"
+      echo "(Please take a look at directory <CodeThorn build dir>/src/${TEMP_DIR} for files that could not be matched)"
+      exit 1 
+    else
+      eval echo "Success: all properties analyzed by cegpra with \${P${i}}, property#${p} succesfully verified."
+    fi
+
+    #remove all temporary files generated for the tests
+    eval rm ${2}/${TEMP_DIR}/\${P${i}}_ltl_results_make_check.csv
+    eval echo "file " ${2}/${TEMP_DIR}/\${P${i}}_ltl_results_make_check.csv "succesfully removed."
+  done
+done
+
+#remove temp directory
+rm -rf ${2}/${TEMP_DIR}
+echo "removed directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
+    
+echo ".==============================================."
+echo "| CEGPRA tests (LTL) completed successfully    |"
+echo "*==============================================*"
+
+
+
