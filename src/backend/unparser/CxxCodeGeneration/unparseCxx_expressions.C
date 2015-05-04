@@ -2598,7 +2598,14 @@ Unparse_ExprStmt::unparseMFuncRefSupport ( SgExpression* expr, SgUnparse_Info& i
   // operator syntax (e.g. "x+y"), see test2013_100.C for an example of where this is required.
      ROSE_ASSERT(mfunc_ref->get_parent() != NULL);
      SgNode* possibleFunctionCall = mfunc_ref->get_parent()->get_parent();
-     ROSE_ASSERT(possibleFunctionCall != NULL);
+	//CI Debugging	
+     if (possibleFunctionCall==NULL)
+     {	
+	printf("File: <%s> Line: <%i>\n",
+		mfunc_ref->get_file_info()->get_filenameString().c_str(),
+		mfunc_ref->get_file_info()->get_line());
+	ROSE_ASSERT(possibleFunctionCall != NULL);
+     }
      SgFunctionCallExp* functionCallExp = isSgFunctionCallExp(possibleFunctionCall);
      bool uses_operator_syntax = false;
 //   bool is_compiler_generated = false;
