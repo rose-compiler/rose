@@ -156,6 +156,16 @@ public:
             insert(otherIter->key());
     }
 
+    /** Construct from an iterator range.
+     *
+     *  The newly constructed set will contain copies of the intervals from the specified iterator range.  The range's
+     *  dereferenced iterators must be convertible to the set's interval type. */
+    template<class Iterator>
+    IntervalSet(const boost::iterator_range<Iterator> &intervals) {
+        for (Iterator iter=intervals.begin(); iter!=intervals.end(); ++iter)
+            insert(*iter);
+    }
+    
     /** Assignment from another set.
      *
      *  Causes this set to contain the same intervals as the @p other set. The other set's intervals must be convertible to
@@ -184,6 +194,18 @@ public:
         return *this;
     }
 
+    /** Assignment from an iterator range.
+     *
+     *  The newly constructed set will contain copies of the intervals from the specified iterator range.  The range's
+     *  dereferenced iterators must be convertible to the set's interval type. */
+    template<class Iterator>
+    IntervalSet& operator=(const boost::iterator_range<Iterator> &intervals) {
+        clear();
+        for (Iterator iter=intervals.begin(); iter!=intervals.end(); ++iter)
+            insert(*iter);
+        return *this;
+    }
+    
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Iteration
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
