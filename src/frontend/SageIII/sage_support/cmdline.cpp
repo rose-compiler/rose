@@ -7382,7 +7382,9 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      if (get_objectFileNameWithPath().length() > 0)
         {
-// Liao 5/5/2015, handle single and multiple files the same way          
+// Liao 5/5/2015, handle single and multiple files the same way
+// This is needed only if we see the combined compilation and linking (without -c specified)
+            if (!get_compileOnly())
 //          if (get_multifile_support() == true)
              {
             // Strip the -o <file> option and subsitute a *.o file based on the source file name.
