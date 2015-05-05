@@ -7382,7 +7382,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      if (get_objectFileNameWithPath().length() > 0)
         {
-          if (get_multifile_support() == true)
+// Liao 5/5/2015, handle single and multiple files the same way          
+//          if (get_multifile_support() == true)
              {
             // Strip the -o <file> option and subsitute a *.o file based on the source file name.
 #if DEBUG_COMPILER_COMMAND_LINE
@@ -7409,12 +7410,14 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
             // Next we add a new object file specification based on the source file name. A later step will 
             // build the link line using the executable name from the original -o <file> specification.
              }
+#if 0 //Liao 5/5/2015, handle single and multiple files the same way
             else
              {
 #if DEBUG_COMPILER_COMMAND_LINE
                printf ("get_objectFileNameWithPath() = %s: get_multifile_support() == false: leaving the originally specified -o output option in place \n",get_objectFileNameWithPath().c_str());
 #endif
              }
+#endif             
         }
 
 #if DEBUG_COMPILER_COMMAND_LINE
@@ -7726,7 +7729,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
                     if (get_multifile_support() == true)
                        {
-                         printf ("In buildCompilerCommandLineOptions: Need to suppress the generation of object file specification in backend compiler link line \n");
+//                         printf ("In buildCompilerCommandLineOptions: Need to suppress the generation of object file specification in backend compiler link line \n");
 
                       // For multi-file handling we have to build a output (object file) using the name of the source file.
                          compilerNameString.push_back("-c");
@@ -7753,6 +7756,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if DEBUG_COMPILER_COMMAND_LINE
                printf ("In buildCompilerCommandLineOptions: get_compileOnly() == false: get_multifile_support() = %s \n",get_multifile_support() ? "true" : "false");
 #endif
+
+#if 0 // Liao               
                if (get_multifile_support() == true)
                   {
                     printf ("In buildCompilerCommandLineOptions: Need to suppress the generation of object file specification in backend compiler link line \n");
@@ -7796,19 +7801,17 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                          compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                        }
 #endif
-                  } 
-                  // Liao 5/1/2015: support single file case like: identityTranslator main.c
-                  // TODO: discuss with Dan to merge this branch with the previous one, removing if (get_multifile_support() == true)
-                  else 
-                  { 
-                    // introduce -c to compile this single file first.
-                    // the linking step will happen when handling SgProject
-                    compilerNameString.push_back("-c");
-                  // compilation step of the two (compile+ link) steps
-                    std::string objectFileName = generateOutputFileName();
-                    compilerNameString.push_back("-o");
-                    compilerNameString.push_back(currentDirectory + "/" + objectFileName);
                   }
+#endif                  
+                 // Liao 5/1/2015: support both single and multiple files like: identityTranslator main.c
+                 // introduce -c to compile this single file first.
+                 // the linking step will happen when handling SgProject
+                 compilerNameString.push_back("-c");
+                 // compilation step of the two (compile+ link) steps
+                 std::string objectFileName = generateOutputFileName();
+
+                 compilerNameString.push_back("-o");
+                 compilerNameString.push_back(currentDirectory + "/" + objectFileName);
              }
         }
 

@@ -5938,6 +5938,7 @@ SgProject::compileOutput()
             // if (get_compileOnly() == true)
                if (get_compileOnly() == false)
                   {
+#if 0 // Liao 5/5/2015, comment out this, using a uniform handling for both single file and multiple-file cases
                     if (multifile_support_compile_only_flag == true)
                        {
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
@@ -5957,11 +5958,10 @@ SgProject::compileOutput()
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
                          printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
 #endif
-                         // Liao 5/1/2015
-                         // support single file case: e.g. identityTranslator main.c // this is still split into two steps: compiliation and linking
-                         // TODO: discuss with Dan to merge this branch with the previous one, removing if (get_multifile_support() == true)
-                         linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                        }
+#endif 
+                       // Liao 5/1/2015
+                      linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                   }
                  else
                   {
