@@ -4,301 +4,824 @@
 
 namespace rose {
 namespace BinaryAnalysis {
+namespace Strings {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      StringFinder::String
+//                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool
-StringFinder::String::isValid() const {
-    switch (lengthEncoding_) {
-        case MAP_TERMINATED:
-            return true;
-
-        case NUL_TERMINATED:
-        case SEQUENCE_TERMINATED:
-        case BYTE_LENGTH:
-            return nBytes_ >= 1;
-
-        case LE16_LENGTH:
-        case BE16_LENGTH:
-            return nBytes_ >= 2;
-
-        case LE32_LENGTH:
-        case BE32_LENGTH:
-            return nBytes_ >= 4;
-    }
-    ASSERT_not_reachable("unexpected length encoding");
+isDone(State st) {
+    return st == FINAL_STATE || st == COMPLETED_STATE;
 }
 
-bool
-StringFinder::String::isRunLengthEncoded() const {
-    switch (lengthEncoding_) {
-        case MAP_TERMINATED:
-        case NUL_TERMINATED:
-        case SEQUENCE_TERMINATED:
-            return true;
-        case BYTE_LENGTH:
-        case LE16_LENGTH:
-        case BE16_LENGTH:
-        case LE32_LENGTH:
-        case BE32_LENGTH:
-            switch (characterEncoding_) {
-                case UTF8:
-                case UTF16:
-                case UTF32:
-                    return false;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      NoopCharacterEncodingForm
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CodeValues
+NoopCharacterEncodingForm::encode(CodePoint cp) {
+    return CodeValues(1, cp);
+}
+
+State
+NoopCharacterEncodingForm::decode(CodeValue cv) {
+    if (state_ != INITIAL_STATE)
+        return state_ = ERROR_STATE;
+    cp_ = cv;
+    return state_ = FINAL_STATE;
+}
+
+CodePoint
+NoopCharacterEncodingForm::consume() {
+    ASSERT_require(isDone(state_));
+    state_ = INITIAL_STATE;
+    return cp_;
+}
+
+void
+NoopCharacterEncodingForm::reset() {
+    state_ = INITIAL_STATE;
+    cp_ = 0;
+}
+
+NoopCharacterEncodingForm::Ptr
+noopCharacterEncodingForm() {
+    return NoopCharacterEncodingForm::instance();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Utf8CharacterEncodingForm
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CodeValues
+Utf8CharacterEncodingForm::encode(CodePoint cp) {
+    CodeValues cvs;
+    if (cp <= 0x7f) {
+        cvs.push_back(cp);
+    } else {
+        unsigned prefixLength = 3;                                                      // 0b110x_xxxx
+        while (1) {
+            cvs.push_back(0x80 | (cp & 0x3f));
+            cp >>= 6;
+            
+            unsigned mask = ((unsigned)1 << (8-prefixLength)) - 1;                      // 0b0001_1111 if prefixLength==3
+            if ((cp & ~mask) == 0) {
+                unsigned prefix = ((unsigned)1 << prefixLength) - 2;                    // 0bxxxx_x110 if prefixLength==3
+                prefix <<= 8 - prefixLength;                                            // 0b110x_xxxx if prefixLength==3
+                cvs.push_back(prefix | cp);
+                break;
             }
-            break;
+
+            if (++prefixLength >= 8)
+                throw std::runtime_error("invalid code point for " + name() + ": " + StringUtility::addrToString(cp));
+        }
+        std::reverse(cvs.begin(), cvs.end());
     }
-    ASSERT_not_reachable("unexpected encoding");
+    return cvs;
 }
+
+State
+Utf8CharacterEncodingForm::decode(CodeValue cv) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+        case COMPLETED_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+            if (cv <= 0x7f) {                           // 0b0xxx_xxxx
+                cp_ = cv;
+                return state_ = FINAL_STATE;
+            } else if ((cv & 0xe0) == 0xc0) {           // 0x110x_xxxx
+                cp_ = cv & 0x1f;
+                return state_ = State(1);
+            } else if ((cv & 0xf0) == 0xe0) {           // 0x1110_xxxx
+                cp_ = cv & 0x0f;
+                return state_ = State(2);
+            } else if ((cv & 0xf8) == 0xf0) {           // 0x1111_0xxx
+                cp_ = cv & 0x07;
+                return state_ = State(3);
+            } else if ((cv & 0xfc) == 0xf8) {           // 0x1111_10xx
+                cp_ = cv & 0x03;
+                return state_ = State(4);
+            } else if ((cv & 0xfe) == 0xfc) {           // 0x1111_110x
+                cp_ = cv & 0x01;
+                return state_ = State(5);
+            } else {                                    // invalid prefix
+                return state_ = ERROR_STATE;
+            }
+        default:
+            ASSERT_require(state_ >= 1 && state_ <= 5);
+            if ((cv & 0xc0) == 0x80) {                  // 0x10xx_xxxx
+                cp_ = (cp_ << 6) | (cv & 0x3f);
+                return state_ = (1==state_ ? FINAL_STATE : State(state_ - 1));
+            } else {
+                return state_ = ERROR_STATE;                   // invalid continuation octet
+            }
+    }
+}
+
+CodePoint
+Utf8CharacterEncodingForm::consume() {
+    ASSERT_require(isDone(state_));
+    state_ = INITIAL_STATE;
+    return cp_;
+}
+
+void
+Utf8CharacterEncodingForm::reset() {
+    state_ = INITIAL_STATE;
+    cp_ = 0;
+}
+
+Utf8CharacterEncodingForm::Ptr
+utf8CharacterEncodingForm() {
+    return Utf8CharacterEncodingForm::instance();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Utf16CharacterEncodingForm
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CodeValues
+Utf16CharacterEncodingForm::encode(CodePoint cp) {
+    CodeValues cvs;
+    if (cp <= 0x0000d7ff || (cp >= 0x0000e000 && cp <= 0x0000ffff)) {
+        cvs.push_back(cp);
+    } else if (cp >= 0x00010000 && cp <= 0x0010ffff) {
+        CodePoint hiSurrogate = ((cp - 0x0001000) >> 10) + 0x0000d800;   // a.k.a., leading surrogate
+        CodePoint loSurrogate = ((cp - 0x0001000) & 0x3ff) + 0x0000dc00; // a.k.a., trailing surrogate
+        ASSERT_require(hiSurrogate >= 0xd800 && hiSurrogate <= 0xdbff);
+        ASSERT_require(loSurrogate >= 0xdc00 && loSurrogate <= 0xdfff);
+        cvs.push_back(hiSurrogate);
+        cvs.push_back(loSurrogate);
+    } else {
+        throw std::runtime_error("attempt to encode a reserved Unicode code point");
+    }
+    return cvs;
+}
+
+State
+Utf16CharacterEncodingForm::decode(CodeValue cv) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+        case COMPLETED_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+            if (cv <= 0xd7ff || (cv >= 0xe000 && cv <= 0xffff)) {
+                cp_ = cv;
+                return state_ = FINAL_STATE;
+            } else if (cv >= 0xd800 && cv <= 0xdbff) {
+                cp_ = (cv - 0xd800) << 10;              // high/leasing surrogate
+                return state_ = State(1);
+            }
+        case 1:                                         // second of two 16-bit code values
+            if (cv >= 0xdc00 && cv <= 0xdfff) {
+                cp_ |= cv - 0xdc00;
+                return state_ = FINAL_STATE;
+            } else {
+                return state_ = ERROR_STATE;            // expected a low/trailing surrogate
+            }
+        default:
+            ASSERT_not_reachable("invalid decoder state");
+    }
+}
+
+CodePoint
+Utf16CharacterEncodingForm::consume() {
+    ASSERT_require(isDone(state_));
+    state_ = INITIAL_STATE;
+    return cp_;
+}
+
+void
+Utf16CharacterEncodingForm::reset() {
+    state_ = INITIAL_STATE;
+    cp_ = 0;
+}
+
+Utf16CharacterEncodingForm::Ptr
+utf16CharacterEncodingForm() {
+    return Utf16CharacterEncodingForm::instance();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      BasicCharacterEncodingScheme
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+BasicCharacterEncodingScheme::name() const {
+    std::string s = StringUtility::numberToString(octetsPerValue_) + "-byte";
+    if (octetsPerValue_ > 1) {
+        switch (sex_) {
+            case ByteOrder::ORDER_LSB:
+                s += " little-endian";
+                break;
+            case ByteOrder::ORDER_MSB:
+                s += " big-endian";
+                break;
+            default:
+                s += " unknown-endian";
+                break;
+        }
+    }
+    return s;
+}
+
+Octets
+BasicCharacterEncodingScheme::encode(CodeValue cv) {
+    Octets octets;
+    for (size_t i=0; i<octetsPerValue_; ++i) {
+        octets.push_back(cv & 0xff);
+        cv >>= 8;
+    }
+    if (cv)
+        throw std::runtime_error("encoding overflow: value too large to encode");
+    if (octetsPerValue_>1 && sex_==ByteOrder::ORDER_MSB)
+        std::reverse(octets.begin(), octets.end());
+    return octets;
+}
+
+State
+BasicCharacterEncodingScheme::decode(Octet octet) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+        case COMPLETED_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+            cv_ = octet;
+            return state_ = (1==octetsPerValue_ ? FINAL_STATE : State(octetsPerValue_ - 1));
+        default:
+            ASSERT_require(state_ >= 1 && (size_t)state_ < octetsPerValue_);
+            switch (sex_) {
+                case ByteOrder::ORDER_LSB:
+                    cv_ |= octet << (8*(octetsPerValue_ - state_));
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    cv_ = (cv_ << 8) | octet;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid byte order");
+            }
+            return state_ = (1==state_ ? FINAL_STATE : State(state_-1));
+    }
+}
+
+CodeValue
+BasicCharacterEncodingScheme::consume() {
+    ASSERT_require(isDone(state_));
+    state_ = INITIAL_STATE;
+    return cv_;
+}
+                    
+void
+BasicCharacterEncodingScheme::reset() {
+    state_ = INITIAL_STATE;
+    cv_ = 0;
+};
+
+BasicCharacterEncodingScheme::Ptr
+basicCharacterEncodingScheme(size_t octetsPerValue, ByteOrder::Endianness sex) {
+    return BasicCharacterEncodingScheme::instance(octetsPerValue, sex);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      BasicLengthEncodingScheme
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+BasicLengthEncodingScheme::name() const {
+    std::string s = StringUtility::numberToString(octetsPerValue_) + "-byte";
+    if (octetsPerValue_ > 1) {
+        switch (sex_) {
+            case ByteOrder::ORDER_LSB:
+                s += " little-endian";
+                break;
+            case ByteOrder::ORDER_MSB:
+                s += " big-endian";
+                break;
+            default:
+                s += " unknown-endian";
+                break;
+        }
+    }
+    return s;
+}
+
+Octets
+BasicLengthEncodingScheme::encode(size_t length) {
+    Octets octets;
+    for (size_t i=0; i<octetsPerValue_; ++i) {
+        octets.push_back(length & 0xff);
+        length >>= 8;
+    }
+    if (length)
+        throw std::runtime_error("encoding overflow: value too large to encode");
+    if (octetsPerValue_>1 && sex_==ByteOrder::ORDER_MSB)
+        std::reverse(octets.begin(), octets.end());
+    return octets;
+}
+
+State
+BasicLengthEncodingScheme::decode(Octet octet) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+        case COMPLETED_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+            length_ = octet;
+            return state_ = (1==octetsPerValue_ ? FINAL_STATE : State(octetsPerValue_-1));
+        default:
+            ASSERT_require(state_ >= 1 && (size_t)state_ < octetsPerValue_);
+            switch (sex_) {
+                case ByteOrder::ORDER_LSB:
+                    length_ |= octet << (8*(octetsPerValue_ - state_));
+                    break;
+                case ByteOrder::ORDER_MSB:
+                    length_ = (length_ << 8) | octet;
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid byte order");
+            }
+            return state_ = (1==state_ ? FINAL_STATE : State(state_-1));
+    }
+}
+
+size_t
+BasicLengthEncodingScheme::consume() {
+    ASSERT_require(isDone(state_));
+    state_ = INITIAL_STATE;
+    return length_;
+}
+                    
+void
+BasicLengthEncodingScheme::reset() {
+    state_ = INITIAL_STATE;
+    length_ = 0;
+};
+
+BasicLengthEncodingScheme::Ptr
+basicLengthEncodingScheme(size_t octetsPerValue, ByteOrder::Endianness sex) {
+    return BasicLengthEncodingScheme::instance(octetsPerValue, sex);
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      PrintableAscii
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool
+PrintableAscii::isValid(CodePoint cp) {
+    return cp <= 0x7f && (isprint(cp) || isspace(cp));
+}
+
+PrintableAscii::Ptr
+printableAscii() {
+    return PrintableAscii::instance();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      StringEncodingScheme
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CodePoints
+StringEncodingScheme::consume() {
+    CodePoints retval;
+    std::swap(retval, codePoints_);
+    return retval;
+}
+
+void
+StringEncodingScheme::reset() {
+    state_ = INITIAL_STATE;
+    codePoints_.clear();
+    nCodePoints_ = 0;
+    cef_->reset();
+    ces_->reset();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      LengthEncodedString
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+LengthEncodedString::name() const {
+    return les_->name() + " length"
+        " followed by " + cef_->name() + " code points"
+        " and " + ces_->name() + " code values"
+        " for " + cpp_->name();
+}
+
+Octets
+LengthEncodedString::encode(const CodePoints &cps) {
+
+    // Encode the code points
+    Octets charOctets;
+    BOOST_FOREACH (CodePoint cp, cps) {
+        BOOST_FOREACH (CodeValue cv, cef_->encode(cp)) {
+            Octets v = ces_->encode(cv);
+            charOctets.insert(charOctets.end(), v.begin(), v.end());
+        }
+    }
+
+    // Encode the length
+    // FIXME[Robb P. Matzke 2015-05-05]: is length always measured in characters, or can it be octets?
+    Octets retval = les_->encode(cps.size());
+    retval.insert(retval.end(), charOctets.begin(), charOctets.end());
+    return retval;
+}
+
+State
+LengthEncodedString::decode(Octet octet) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+        case COMPLETED_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+        case 1: {                                       // 1 means we're decodig the length
+            State st = les_->decode(octet);
+            if (isDone(st)) {
+                declaredLength_ = les_->consume();
+                return state_ = (*declaredLength_==0 ? FINAL_STATE : State(2));
+            } else if (st==ERROR_STATE) {
+                return state_ = ERROR_STATE;
+            } else {
+                return state_ = State(1);
+            }
+        }
+        case 2: {                                       // 2 means we're decoding the characters
+            State st = les_->decode(octet);
+            if (isDone(st)) {
+                CodeValue cv = les_->consume();
+                st = cef_->decode(cv);
+                if (isDone(st)) {
+                    CodePoint cp = cef_->consume();
+                    if (cpp_->isValid(cp)) {
+                        codePoints_.push_back(cp);
+                        if (++nCodePoints_ == *declaredLength_)
+                            return state_ = FINAL_STATE;
+                    } else {
+                        return state_ = ERROR_STATE;    // not a valid character
+                    }
+                }
+            }
+            return state_ = (st==ERROR_STATE ? ERROR_STATE : State(2));
+        }
+        default:
+            ASSERT_not_reachable("invalid decoder state");
+    }
+}
+
+void
+LengthEncodedString::reset() {
+    StringEncodingScheme::reset();
+    declaredLength_ = Sawyer::Nothing();
+}
+
+LengthEncodedString::Ptr
+lengthEncodedString(const LengthEncodingScheme::Ptr &les, const CharacterEncodingForm::Ptr &cef,
+                    const CharacterEncodingScheme::Ptr &ces, const CodePointPredicate::Ptr &cpp) {
+    return LengthEncodedString::instance(les, cef, ces, cpp);
+}
+
+LengthEncodedString::Ptr
+lengthEncodedPrintableAscii(size_t lengthSize, ByteOrder::Endianness order) {
+    return lengthEncodedString(basicLengthEncodingScheme(lengthSize, order),
+                               noopCharacterEncodingForm(),
+                               basicCharacterEncodingScheme(1),
+                               printableAscii());
+}
+
+LengthEncodedString::Ptr
+lengthEncodedPrintableAsciiWide(size_t lengthSize, ByteOrder::Endianness order, size_t charSize) {
+    return lengthEncodedString(basicLengthEncodingScheme(lengthSize, order),
+                               noopCharacterEncodingForm(),
+                               basicCharacterEncodingScheme(charSize, order),
+                               printableAscii());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      TerminatedString
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+TerminatedString::name() const {
+    std::string s;
+    if (terminators_.size()==1 && terminators_.front()==0) {
+        s = "zero-terminated";
+    } else {
+        s = "terminated";
+    }
+    s += " " + cef_->name() + " code points"
+         " and " + ces_->name() + " code values"
+         " for " + cpp_->name();
+    return s;
+}
+
+Octets
+TerminatedString::encode(const CodePoints &cps) {
+    Octets retval;
+
+    // Encode the characters of the string
+    BOOST_FOREACH (CodePoint cp, cps) {
+        BOOST_FOREACH (CodeValue cv, cef_->encode(cp)) {
+            Octets v = ces_->encode(cv);
+            retval.insert(retval.end(), v.begin(), v.end());
+        }
+    }
+
+    // Encode the terminator
+    if (!terminators_.empty()) {
+        BOOST_FOREACH (CodeValue cv, cef_->encode(terminators_.front())) {
+            Octets v = ces_->encode(cv);
+            retval.insert(retval.end(), v.begin(), v.end());
+        }
+    }
+
+    return retval;
+}
+
+State
+TerminatedString::decode(Octet octet) {
+    switch (state_) {
+        case ERROR_STATE:
+        case FINAL_STATE:
+            return state_ = ERROR_STATE;
+        case INITIAL_STATE:
+        case COMPLETED_STATE:
+        case 1: {                                       // 1 means we're decoding characters
+            State st = ces_->decode(octet);
+            if (isDone(st)) {
+                CodeValue cv = ces_->consume();
+                st = cef_->decode(cv);
+                if (isDone(st)) {
+                    CodePoint cp = cef_->consume();
+                    if (std::find(terminators_.begin(), terminators_.end(), cp) != terminators_.end()) {
+                        terminated_ = cp;
+                        return state_ = FINAL_STATE;
+                    } else if (cpp_->isValid(cp)) {
+                        codePoints_.push_back(cp);
+                        ++nCodePoints_;
+                        return state_ = (terminators_.empty() ? COMPLETED_STATE : State(1));
+                    } else {
+                        return state_ = ERROR_STATE;    // not a valid character
+                    }
+                }
+            }
+            return state_ = (st==ERROR_STATE ? ERROR_STATE : State(1));
+        }
+        default:
+            ASSERT_not_reachable("invalid decoder state");
+    }
+}
+
+void
+TerminatedString::reset() {
+    StringEncodingScheme::reset();
+    terminated_ = Sawyer::Nothing();
+}
+
+TerminatedString::Ptr
+nulTerminatedPrintableAscii() {
+    return TerminatedString::instance(noopCharacterEncodingForm(),
+                                      basicCharacterEncodingScheme(1),
+                                      printableAscii(),
+                                      CodePoints(1, 0));
+}
+
+TerminatedString::Ptr
+nulTerminatedPrintableAsciiWide(size_t charSize, ByteOrder::Endianness order) {
+    return TerminatedString::instance(noopCharacterEncodingForm(),
+                                      basicCharacterEncodingScheme(charSize, order),
+                                      printableAscii(),
+                                      CodePoints(1, 0));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      EncodedString
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string
+EncodedString::narrow() const {
+    std::string s;
+    BOOST_FOREACH (CodePoint cp, codePoints())
+        s += char(cp);
+    return s;
+}
+
+std::wstring
+EncodedString::wide() const {
+    std::wstring s;
+    BOOST_FOREACH (CodePoint cp, codePoints())
+        s += wchar_t(cp);
+    return s;
+}
+
+void
+EncodedString::decode(const MemoryMap &map) {
+    std::vector<uint8_t> octets(where_.size());
+    if (where_.size() != map.at(where_).read(octets).size())
+        throw std::runtime_error("short read when decoding string");
+    encoder_->reset();
+    BOOST_FOREACH (uint8_t octet, octets)
+        encoder_->decode(octet);
+    if (!isDone(encoder_->state()))
+        throw std::runtime_error("error decoding string");
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      StringFinder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static size_t
-bytesPerChar(StringFinder::CharacterEncoding e) {
-    switch (e) {
-        case StringFinder::UTF8: return 1;
-        case StringFinder::UTF16: return 2;
-        case StringFinder::UTF32: return 4;
-    }
-    ASSERT_not_implemented("invalid character encoding");
+void
+StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
+    encoders_.push_back(nulTerminatedPrintableAscii());
+    encoders_.push_back(nulTerminatedPrintableAsciiWide(2, sex));
+    encoders_.push_back(nulTerminatedPrintableAsciiWide(4, sex));
+
+    encoders_.push_back(lengthEncodedPrintableAscii(2, sex));
+    encoders_.push_back(lengthEncodedPrintableAscii(4, sex));
+    encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 2));
+    encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 4));
+    encoders_.push_back(lengthEncodedPrintableAsciiWide(4, sex, 4));
 }
 
-bool
-StringFinder::isAsciiCharacter(const std::vector<uint8_t> &character) const {
-    ASSERT_forbid2(character.empty(), "character encoding must be at least one byte");
-
-    // FIXME[Robb P. Matzke 2015-05-01]: Assuming little-endian
-    for (size_t i=1; i<character.size(); ++i) {
-        if (character[i]!=0)
-            return false;
-    }
-
-    uint8_t ch = character[0];
-    return isgraph(ch) || isspace(ch);
-}
-
-struct AsciiSequenceLength {
-    const StringFinder *self;
-    size_t nChars, bytesPerChar;
-
-    AsciiSequenceLength(const StringFinder *self, size_t bytesPerChar): self(self), nChars(0), bytesPerChar(bytesPerChar) {}
-
-    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
-        rose_addr_t va = interval.least();
-        while (va <= interval.greatest()) {
-            std::vector<uint8_t> bytes(bytesPerChar);
-            if (bytesPerChar != map.at(va).read(bytes).size() || !self->isAsciiCharacter(bytes))
-                return false;
-            ++nChars;
-            if (va+(bytesPerChar-1) == interval.greatest())
-                return true;                            // prevent overflow
-            va += bytesPerChar;
-        }
-        return true;
-    }
-};
-
-// Given a memory location, find the length of the longest sequence of ASCII characters.
-size_t
-StringFinder::asciiSequenceLength(MemoryMap::ConstConstraints where, CharacterEncoding characterEncoding) const {
-    AsciiSequenceLength visitor(this, bytesPerChar(characterEncoding));
-    where.traverse(visitor, Sawyer::Container::MATCH_CONTIGUOUS);
-    return visitor.nChars;
-}
-
-struct AsciiSequenceLocation {
-    const StringFinder *self;
+struct Finding {
+    StringEncodingScheme::Ptr encoder;
     rose_addr_t startVa;
-    size_t nChars, minChars, bytesPerChar;
-
-    AsciiSequenceLocation(const StringFinder *self, size_t minChars, size_t bytesPerChar)
-        : self(self), startVa(0), nChars(0), minChars(minChars), bytesPerChar(bytesPerChar) {}
-
-    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) {
-        rose_addr_t va = interval.least();
-        if (startVa + nChars*bytesPerChar != va)
-            nChars = 0;
-        while (va <= interval.greatest()) {
-            std::vector<uint8_t> bytes(bytesPerChar);
-            if (bytesPerChar == map.at(va).read(bytes).size() && self->isAsciiCharacter(bytes)) {
-                if (1 == ++nChars)
-                    startVa = va;
-                if (nChars >= minChars)
-                    return false;
-            } else {
-                nChars = 0;
-            }
-            if (va+(bytesPerChar-1) == interval.greatest())
-                return true;                            // prevent overflow
-            va += bytesPerChar;;
-        }
-        return true;
+    rose_addr_t nBytes;
+    Finding()
+        : startVa(0), nBytes(0) {}
+    Finding(const StringEncodingScheme::Ptr &enc, rose_addr_t va)
+        : encoder(enc->clone()), startVa(va), nBytes(0) {
+        encoder->reset();
     }
 };
 
-// Find the starting address for the next sequence of ASCII characters.
-Sawyer::Optional<rose_addr_t>
-StringFinder::findAsciiSequence(MemoryMap::ConstConstraints where, size_t minChars, CharacterEncoding characterEncoding) const {
-    AsciiSequenceLocation visitor(this, minChars, bytesPerChar(characterEncoding));
-    where.traverse(visitor);
-    if (visitor.nChars >= minChars)
-        return visitor.startVa;
-    return Sawyer::Nothing();
+static bool
+hasNullEncoder(const Finding &finding) {
+    return finding.encoder == NULL;
 }
 
-// Find first string
-Sawyer::Optional<StringFinder::String>
-StringFinder::findString(MemoryMap::ConstConstraints where) const {
-    static const size_t minChars = 5;                   // arbitrary
-    static const CharacterEncoding charEncodings[] = {UTF32, UTF16, UTF8};
-    static const size_t nTries = sizeof(charEncodings)/sizeof(charEncodings[0]);
-    static const rose_addr_t NO_ADDRESS(-1);
-
-    CharacterEncoding charEncoding;
-    rose_addr_t stringVa = NO_ADDRESS;
-    for (size_t i=0; i<nTries; ++i) {
-        rose_addr_t x = findAsciiSequence(where, minChars, charEncodings[i]).orElse(NO_ADDRESS);
-        if (x < stringVa) {
-            stringVa = x;
-            charEncoding = charEncodings[i];
-        }
-    }
-    if (stringVa == NO_ADDRESS)
-        return Sawyer::Nothing();
-
-    if (where.isAnchored() && stringVa != where.anchored().least())
-        return Sawyer::Nothing();
-
-    size_t nChars = asciiSequenceLength(where.at(stringVa), charEncoding);
-    size_t bpc = bytesPerChar(charEncoding);
-    size_t nBytes = nChars * bpc;
-            
-    // Read the (multi-byte) character following the sequence if possible
-    if (stringVa + nBytes < stringVa) // overflow
-        return String(stringVa, nBytes, nChars, MAP_TERMINATED, charEncoding);
-    std::vector<uint8_t> charBytes(bpc);
-    if (bpc != where.at(stringVa+nBytes).read(charBytes).size())
-        return String(stringVa, nBytes, nChars, MAP_TERMINATED, charEncoding);
-
-    // Is the following character a NUL character?
-    bool isNul = true;
-    for (size_t i=0; i<bpc && isNul; ++i)
-        isNul = charBytes[i] == 0;
-    if (isNul)
-        return String(stringVa, nBytes+bpc, nChars, NUL_TERMINATED, charEncoding);
-
-    // FIXME[Robb P. Matzke 2015-01-17]: Other encoding methods are defined but not implemented yet.
-
-    // Catch-all for ASCII sequences that we found but which don't seem to have a length or NUL termination.
-    return String(stringVa, nBytes, nChars, SEQUENCE_TERMINATED, charEncoding);
+static bool
+byDecreasingLength(const EncodedString &a, const EncodedString &b) {
+    return a.length() >= b.length();
 }
 
-// Find all strings
-StringFinder::Strings
-StringFinder::findAllStrings(MemoryMap::ConstConstraints where) const {
-    Strings retval;
-    while (Sawyer::Optional<String> string = findString(where)) {
-        retval.insert(string->address(), *string);
-        where = where.atOrAfter(string->address() + string->nBytes());
-    }
-    return retval;
+static bool
+isNullString(const EncodedString &a) {
+    return a.where().isEmpty();
 }
 
-// Read a string from memory
-std::string
-StringFinder::decode(const MemoryMap &map, const String &string) const {
-    ASSERT_require(string.isValid());
-
-    struct Resources {
-        uint8_t *buffer;
-        Resources(): buffer(NULL) {}
-        ~Resources() { delete buffer; }
-    } r;
-
-    // Read the data for the string
-    r.buffer = new uint8_t[string.nBytes()];
-    size_t nRead = map.at(string.address()).limit(string.nBytes()).read(r.buffer).size();
-    if (nRead < string.nBytes()) {
-        throw MemoryMap::NotMapped("short read for " + StringUtility::numberToString(string.nBytes()) + "-byte string at " + 
-                                   StringUtility::addrToString(string.address()),
-                                   &map, string.address() + nRead);
+class StringSearcher {
+    typedef std::vector<StringEncodingScheme::Ptr> StringEncodingSchemes;
+    StringEncodingSchemes protoEncoders_;
+    std::vector<std::vector<Finding> > findings_;
+    std::vector<Finding> results_;
+    rose_addr_t bufferVa_;
+    size_t minLength_, maxLength_;                      // limits on number of code points per string
+    bool discardCodePoints_;                            // throw away decoded code points?
+    size_t maxOverlap_;                                 // allow one encoder to match overlapping strings?
+    Sawyer::Optional<rose_addr_t> anchored_;            // are strings anchored to starting address?
+public:
+    StringSearcher(const std::vector<StringEncodingScheme::Ptr> &encoders,
+                   size_t minLength, size_t maxLength, bool discardCodePoints, size_t maxOverlap)
+        : protoEncoders_(encoders), bufferVa_(0), minLength_(minLength), maxLength_(maxLength),
+          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap) {
+        findings_.resize(encoders.size());
     }
 
-    // Decode the string length
-    uint8_t *data = r.buffer;
-    size_t dataSize = string.nBytes();
-    ASSERT_require(string.isValid());                   // checks string length for encoding
-    switch (string.lengthEncoding()) {
-        case MAP_TERMINATED:
-        case SEQUENCE_TERMINATED:
-            break;
-        case NUL_TERMINATED:
-            ASSERT_require(dataSize >= bytesPerChar(string.characterEncoding()));
-            dataSize -= bytesPerChar(string.characterEncoding());
-            break;
-        case BYTE_LENGTH: {
-            size_t n = *data++;
-            --dataSize;
-            ASSERT_require2(n == dataSize, "mismatched lengths in byte-length encoded string");
-            break;
-        }
-        case LE16_LENGTH: {
-            size_t n = ByteOrder::le_to_host(*(uint16_t*)data);
-            data += 2;
-            dataSize -= 2;
-            ASSERT_require2(n == dataSize, "mismatched lengths in le16-length encoded string");
-            break;
-        }
-        case BE16_LENGTH: {
-            size_t n = ByteOrder::be_to_host(*(uint16_t*)data);
-            data += 2;
-            dataSize -= 2;
-            ASSERT_require2(n == dataSize, "mismatched lengths in be16-length encoded string");
-            break;
-        }
-        case LE32_LENGTH: {
-            size_t n = ByteOrder::le_to_host(*(uint32_t*)data);
-            data += 4;
-            dataSize -= 4;
-            ASSERT_require2(n == dataSize, "mismatched lengths in le32-length encoded string");
-            break;
-        }
-        case BE32_LENGTH: {
-            size_t n = ByteOrder::be_to_host(*(uint32_t*)data);
-            data += 4;
-            dataSize -= 4;
-            ASSERT_require2(n == dataSize, "mismatched lengths in be32-length encoded string");
-            break;
-        }
-    }
+    // anchor the search to a particular address
+    void anchor(rose_addr_t startVa) { anchored_ = startVa; }
 
-    // Decode the string
-    std::string s;
-    switch (string.characterEncoding()) {
-        case UTF8:
-            s = std::string((const char*)data, dataSize);
-            break;
-        case UTF16:
-            // Store only the low-order bytes since ROSE is not supporting UTF encodings yet [Robb P. Matzke 2015-05-01]
-            ASSERT_require(dataSize % 2 == 0);
-            for (size_t i=0; i<dataSize; i+=2)
-                s += (char)data[i];
-            break;
-        case UTF32:
-            // Store only the low-order bytes since ROSE is not supporting UTF encodings yet [Robb P. Matzke 2015-05-01]
-            ASSERT_require(dataSize % 4 == 0);
-            for (size_t i=0; i<dataSize; i+=4)
-                s += (char)data[i];
-            break;
-    }
+    // obtain the final results
+    const std::vector<Finding>& results() const { return results_; }
 
-    return s;
+    // search for strings
+    bool operator()(const MemoryMap::Super &map, const AddressInterval &interval) ROSE_OVERRIDE {
+        if (interval.least() > bufferVa_) {
+            // We skipped across some unmapped memory, so reap all decoders, saving strings for those decoders that are in a
+            // COMPLETED_STATE.
+            for (size_t i=0; i<findings_.size(); ++i) {
+                for (size_t j=0; j<findings_[i].size(); ++j) {
+                    if (findings_[i][j].encoder->state() == COMPLETED_STATE &&
+                        findings_[i][j].encoder->length() >= minLength_ &&
+                        findings_[i][j].encoder->length() <= maxLength_) {
+                        results_.push_back(findings_[i][j]);
+                    }
+                }
+                findings_[i].clear();
+            }
+        }
+
+        std::vector<uint8_t> buffer(4096);              // arbitrary
+        rose_addr_t bufferVa = interval.least();
+        while (1) {
+            size_t nread = map.at(bufferVa).atOrBefore(interval.greatest()).read(buffer).size();
+            ASSERT_require(nread > 0);
+            for (size_t offset=0; offset<nread; ++offset) {
+
+                // Create new encoders starting at this address. It the string searching is configured so as to find only those
+                // strings that start at a particular address, then terminate the search early once all those strings are done
+                // being parsed.
+                if (!anchored_ || *anchored_==bufferVa+offset) {
+                    for (size_t i=0; i<findings_.size(); ++i) {
+                        if (findings_[i].size() < maxOverlap_)
+                            findings_[i].push_back(Finding(protoEncoders_[i], bufferVa + offset));
+                    }
+                } else {
+                    bool haveDecoders = false;
+                    for (size_t i=0; i<findings_.size(); ++i) {
+                        if (!findings_[i].empty()) {
+                            haveDecoders = true;
+                            break;
+                        }
+                    }
+                    if (!haveDecoders)
+                        return false;
+                }
+
+                // Decode this next octet, removing decoders that encounter errors, and saving those which enter their final
+                // state.
+                Octet octet = buffer[offset];
+                for (size_t i=0; i<findings_.size(); ++i) {
+                    for (size_t j=0; j<findings_[i].size(); ++j) {
+                        State st = findings_[i][j].encoder->decode(octet);
+                        ++findings_[i][j].nBytes;
+                        if (discardCodePoints_)
+                            findings_[i][j].encoder->consume();
+                        if (ERROR_STATE == st || findings_[i][j].encoder->length() > maxLength_) {
+                            findings_[i][j].encoder = StringEncodingScheme::Ptr();
+                        } else if (FINAL_STATE == st) {
+                            if (findings_[i][j].encoder->length() >= minLength_ &&
+                                findings_[i][j].encoder->length() <= maxLength_) {
+                                results_.push_back(findings_[i][j]);
+                            }
+                            findings_[i][j].encoder = StringEncodingScheme::Ptr();
+                        }
+                    }
+                    findings_[i].erase(std::remove_if(findings_[i].begin(), findings_[i].end(), hasNullEncoder),
+                                       findings_[i].end());
+                }
+            }
+            if (bufferVa + (nread-1) == interval.greatest())
+                break;                                  // prevent possible overflow
+            bufferVa += nread;
+        }
+        return true;                                    // keep going
+    }
+};
+
+std::vector<EncodedString>
+StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Container::MatchFlags flags) {
+    std::vector<EncodedString> result;
+    if (minLength_ > maxLength_ || encoders_.empty())
+        return result;
+
+    StringSearcher stringFinder(encoders_, minLength_, maxLength_, discardCodePoints_, maxOverlap_);
+    if (constraints.isAnchored())
+        stringFinder.anchor(constraints.anchored().least());
+    constraints.traverse(stringFinder, flags);
+
+    BOOST_FOREACH (const Finding &finding, stringFinder.results())
+        result.push_back(EncodedString(finding.encoder, AddressInterval::baseSize(finding.startVa, finding.nBytes)));
+
+    if (keepOnlyLongest_) {
+        AddressIntervalSet stringAddresses;
+#if 0 // [Robb P. Matzke 2015-05-05]: null pointer exception from std::sort, but works find with O(n^2) sort
+        std::sort(result.begin(), result.end(), byDecreasingLength);
+#else
+        for (size_t i=0; i+1<result.size(); ++i) {
+            for (size_t j=i+1; j<result.size(); ++j) {
+                if (!byDecreasingLength(result[i], result[j]))
+                    std::swap(result[i], result[j]);
+            }
+        }
+#endif
+        BOOST_FOREACH (EncodedString &string, result) {
+            if (stringAddresses.isOverlapping(string.where())) {
+                string = EncodedString();               // mark for erasing
+            } else {
+                stringAddresses.insert(string.where());
+            }
+        }
+        result.erase(std::remove_if(result.begin(), result.end(), isNullString), result.end());
+    }
+    
+    return result;
 }
 
+} // namespace
 } // namespace
 } // namespace
