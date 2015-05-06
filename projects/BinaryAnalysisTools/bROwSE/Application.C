@@ -53,8 +53,10 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
     // Generic switches
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("config")
-               .argument("name", anyParser(settings.configurationName))
-               .doc("Directory containing configuration files, or a configuration file itself.  A directory is searched "
+               .argument("names", listParser(anyParser(settings.configurationNames), ":"))
+               .whichValue(SAVE_ALL)
+               .explosiveLists(true)
+               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
                     "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
                     "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
                     "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "

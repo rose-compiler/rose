@@ -85,7 +85,7 @@ struct Settings {
     bool gvCfgGlobal;                                   // produce GraphViz file containing a global CFG?
     AddressInterval gvCfgInterval;                      // show part of the global CFG
     bool gvCallGraph;                                   // produce a function call graph?
-    std::string configurationName;                      // config file or directory containing such
+    std::vector<std::string> configurationNames;        // config files or directories containing such
     Settings()
         : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
           findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
@@ -129,8 +129,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                .hidden(true));
 
     gen.insert(Switch("config")
-               .argument("name", anyParser(settings.configurationName))
-               .doc("Directory containing configuration files, or a configuration file itself.  A directory is searched "
+               .argument("names", listParser(anyParser(settings.configurationNames), ":"))
+               .explosiveLists(true)
+               .whichValue(SAVE_ALL)
+               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
                     "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
                     "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
                     "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
@@ -866,10 +868,11 @@ int main(int argc, char *argv[]) {
                                                           SgAsmFunction::FUNC_USERDEF)); 
     }
     engine.labelAddresses(partitioner, interp);         // label addresses from container before loading configuration
-    if (!settings.configurationName.empty()) {
+    if (!settings.configurationNames.empty()) {
         Sawyer::Message::Stream info(mlog[INFO]);
         info <<"loading configuration files";
-        partitioner.configuration().loadFromFile(settings.configurationName);
+        BOOST_FOREACH (const std::string &configName, settings.configurationNames)
+            partitioner.configuration().loadFromFile(configName);
         info <<"; configured\n";
 #if 0 // DEBUGGING [Robb P. Matzke 2015-01-23]
         std::cout <<partitioner.configuration();
@@ -916,6 +919,7 @@ int main(int argc, char *argv[]) {
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
     engine.makeContainerFunctions(partitioner, interp);
+    engine.makeConfiguredFunctions(partitioner, partitioner.configuration());
 
     // Do an initial pass to discover functions and partition them into basic blocks and functions. Functions for which the CFG
     // is a bit wonky won't get assigned any basic blocks (other than the entry blocks we just added above).
