@@ -338,6 +338,7 @@ Application::instantiateMainTabs() {
             case HexDumpTab: {
                 tabName = "Hexdump";
                 tabContent = wHexDump_ = new WHexDump;
+                wHexDump_->byteClicked().connect(boost::bind(&Application::updateAddressCrossReferences, this, _1));
                 break;
             }
             case MagicTab: {
@@ -416,7 +417,7 @@ void
 Application::showHideTools() {
     MainTab curTab = (MainTab)wMainTabs_->currentIndex();
     wSemantics_->setHidden(curTab != FunctionCfgTab && curTab != AssemblyTab);
-    wCrossRefs_->setHidden(curTab != StringsTab);
+    wCrossRefs_->setHidden(curTab != StringsTab && curTab != HexDumpTab);
 }
 
 void
@@ -440,6 +441,7 @@ Application::handleSpecimenPartitioned(bool done) {
     wMemoryMap_->isEditable(!done);                     // disallow memory map editing once the partitioner has run
     wFunctionList_->reload();
     wStrings_->partitioner(ctx_.partitioner);           // updates string-code cross references
+    wHexDump_->partitioner(ctx_.partitioner);           // updates address cross references
     if (!done) 
         currentFunction_ = P2::Function::Ptr();
     showHideTabs();
@@ -534,6 +536,13 @@ Application::updateStringCrossReferences(size_t stringIdx) {
     const P2::ReferenceSet &xrefs = wStrings_->crossReferences(stringIdx);
     wCrossRefs_->refs(xrefs);
     wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->string(stringIdx).address()));
+}
+
+void
+Application::updateAddressCrossReferences(rose_addr_t va) {
+    const P2::ReferenceSet &xrefs = wHexDump_->crossReferences(va);
+    wCrossRefs_->refs(xrefs);
+    wCrossRefs_->name("Address " + StringUtility::addrToString(va));
 }
 
 void

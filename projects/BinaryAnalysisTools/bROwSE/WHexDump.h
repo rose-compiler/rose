@@ -53,6 +53,9 @@ public:
      *  bytes displayed per row (exclusive).  Not all cells have addresses; this method returns nothing for those rows. */
     Sawyer::Optional<rose_addr_t> cellAddress(size_t row, size_t pseudoColumn) const;
 
+    /** Return the virtual address for a table cell. */
+    Sawyer::Optional<rose_addr_t> cellAddress(const Wt::WModelIndex&) const;
+
     /** Return the byte at the specified cell address.
      *
      *  If no address is specified or the address is not mapped then nothing is returned. */
@@ -87,13 +90,22 @@ private:
 /** Widget that shows a hexdump. */
 class WHexDump: public Wt::WContainerWidget {
     Wt::WLineEdit *wAddressEdit_;                       // for entering a goto address
+    Wt::WLineEdit *wSearchEdit_;                        // something to search for
+    Wt::WPushButton *wSearchNext_;                      // goto next match
+    Wt::WText *wSearchResults_;                         // messages about searching
+    AddressInterval searchRegion_;                      // region of memory to search
+
     HexDumpModel *model_;
     Wt::WTableView *tableView_;
+
+    Wt::Signal<rose_addr_t> byteClicked_;               // emitted when a byte is clicked.
+    P2::CrossReferences xrefs_;                         // cross references
 
 public:
     /** Default constructor. Displays an empty memory map. */
     explicit WHexDump(Wt::WContainerWidget *parent = NULL)
-        : WContainerWidget(parent), wAddressEdit_(NULL), model_(NULL), tableView_(NULL) {
+        : WContainerWidget(parent), wAddressEdit_(NULL), wSearchEdit_(NULL), wSearchNext_(NULL), wSearchResults_(NULL),
+          model_(NULL), tableView_(NULL) {
         init();
     }
 
@@ -107,10 +119,21 @@ public:
     void memoryMap(const MemoryMap &m) { model_->memoryMap(m); }
     /** @} */
 
+    /** Emitted when a byte is clicked. */
+    Wt::Signal<rose_addr_t>& byteClicked() { return byteClicked_; }
+
+    /** Cross references for current address. */
+    const P2::ReferenceSet& crossReferences(rose_addr_t va) const;
+
+    /** Update address cross references from new partitioner. */
+    void partitioner(const P2::Partitioner&);
+
 private:
     void init();
-
     void handleGoto();
+    void resetSearch();
+    void handleSearch();
+    void handleClick(const Wt::WModelIndex&);
 };
 
 
