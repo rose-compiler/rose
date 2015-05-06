@@ -480,19 +480,30 @@ nameStrings(const Partitioner &partitioner) {
     struct T1: AstSimpleProcessing {
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
         const Partitioner &partitioner;
-        T1(const Partitioner &partitioner): partitioner(partitioner) {}
+        Strings::StringFinder stringFinder;
+
+        T1(const Partitioner &partitioner): partitioner(partitioner) {
+            stringFinder.minLength(3);
+            stringFinder.maxLength(65536);
+            stringFinder.keepOnlyLongest(true);
+            ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
+            if (sex == ByteOrder::ORDER_UNSPECIFIED)
+                sex = ByteOrder::ORDER_LSB;
+            stringFinder.insertCommonEncoders(sex);
+        }
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                 if (ival->get_comment().empty()) {
                     rose_addr_t va = ival->get_absoluteValue();
                     std::string label;
-                    if (!seen.getOptional(va).assignTo(label) && partitioner.instructionsOverlapping(va).empty()) {
-                        StringFinder stringFinder;
-                        MemoryMap::ConstConstraints where = partitioner.memoryMap().at(va);
-                        if (Sawyer::Optional<StringFinder::String> string = stringFinder.findString(where)) {
-                            ASSERT_require(string->address() == va);
-                            std::string str = stringFinder.decode(partitioner.memoryMap(), *string);
-                            static const size_t displayLength = 25;// arbitrary
+                    if (seen.getOptional(va).assignTo(label)) {
+                        ival->set_comment(label);
+                    } else if (partitioner.instructionsOverlapping(va).empty()) {
+                        std::vector<Strings::EncodedString> strings = stringFinder.find(partitioner.memoryMap().at(va));
+                        if (!strings.empty()) {
+                            ASSERT_require(strings.front().address() == va);
+                            std::string str = strings.front().narrow(); // front is the longest string
+                            static const size_t displayLength = 25;     // arbitrary
                             static const size_t maxLength = displayLength + 7; // strlen("+N more")
                             size_t nTruncated = 0;
                             if (str.size() > maxLength) {
@@ -504,9 +515,7 @@ nameStrings(const Partitioner &partitioner) {
                                 label += "+" + StringUtility::numberToString(nTruncated) + " more";
                             ival->set_comment(label);
                         }
-                        seen.insert(va, label);
-                    } else if (!label.empty()) {
-                        ival->set_comment(label);
+                        seen.insert(va, label); // even if label is empty, so we don't spend time re-searching strings
                     }
                 }
             }

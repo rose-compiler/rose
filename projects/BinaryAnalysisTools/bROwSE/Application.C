@@ -453,7 +453,6 @@ Application::changeTab(MainTab tab) {
         case PartitionerTab:
         case HexDumpTab:
         case MagicTab:
-        case StringsTab:
             break;
         case FunctionListTab:
             wFunctionList_->changeFunction(currentFunction_);
@@ -469,6 +468,10 @@ Application::changeTab(MainTab tab) {
         case AssemblyTab:
             wAssembly_->changeFunction(currentFunction_);
             wAssembly_->show();
+            break;
+        case StringsTab:
+            wStrings_->updateModelIfNecessary();
+            wStrings_->show();
             break;
         case StatusTab:
             wStatus_->redraw();
@@ -528,7 +531,7 @@ void
 Application::updateStringCrossReferences(size_t stringIdx) {
     const P2::ReferenceSet &xrefs = wStrings_->crossReferences(stringIdx);
     wCrossRefs_->refs(xrefs);
-    wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->meta(stringIdx).address()));
+    wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->string(stringIdx).address()));
 }
 
 void

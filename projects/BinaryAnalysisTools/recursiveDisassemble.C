@@ -347,7 +347,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
 
     out.insert(Switch("list-strings")
                .intrinsicValue(true, settings.doListStrings)
-               .doc("Produce a listing of all ASCII strings.  The listing is disabled with the @s{no-list-strings} "
+               .doc("Produce a listing of all string constants.  The listing is disabled with the @s{no-list-strings} "
                     "switch. The default is to " + std::string(settings.doListStrings?"":"not ") +
                     "show this information."));
     out.insert(Switch("no-list-strings")
@@ -1037,16 +1037,14 @@ int main(int argc, char *argv[]) {
     }
 
     if (settings.doListStrings) {
-        StringFinder analyzer;
-        StringFinder::Strings strings = analyzer.findAllStrings(partitioner.memoryMap().any());
-        Stringifier charEncodingName(stringifyBinaryAnalysisStringFinderCharacterEncoding);
-        Stringifier lengthEncodingName(stringifyBinaryAnalysisStringFinderLengthEncoding);
-        BOOST_FOREACH (const StringFinder::String &string, strings.values()) {
-            std::cout <<boost::to_lower_copy(lengthEncodingName(string.lengthEncoding())) <<" "
-                      <<boost::to_lower_copy(charEncodingName(string.characterEncoding())) <<" string at "
-                      <<StringUtility::addrToString(string.address());
-            std::string s = analyzer.decode(partitioner.memoryMap(), string);
-            std::cout <<" \"" <<StringUtility::cEscape(s) <<"\"\n";
+        Strings::StringFinder analyzer;
+        analyzer.maxLength(8192);
+        analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
+
+        std::vector<Strings::EncodedString> strings = analyzer.find(partitioner.memoryMap().any());
+        BOOST_FOREACH (const Strings::EncodedString &string, strings) {
+            std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";
+            std::cout <<"  \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
         }
     }
     
