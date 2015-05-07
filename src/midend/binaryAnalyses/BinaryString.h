@@ -484,6 +484,21 @@ public:
 /** Returns a new printable ASCII predicate. */
 PrintableAscii::Ptr printableAscii();
 
+/** Matches any code point.
+ *
+ *  Returns true for all code points. */
+class AnyCodePoint: public CodePointPredicate {
+protected:
+    AnyCodePoint() {}
+public:
+    static Ptr instance() { return Ptr(new AnyCodePoint); }
+    virtual std::string name() const ROSE_OVERRIDE { return "any code point"; }
+    virtual bool isValid(CodePoint) ROSE_OVERRIDE { return true; }
+};
+
+/** Returns a new predicate that matches all code points. */
+AnyCodePoint::Ptr anyCodePoint();
+
 /** String encoding scheme.
  *
  *  A string encoding scheme indicates how a string (sequence of code points) is encoded as a sequence of octets and vice
