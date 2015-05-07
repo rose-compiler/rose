@@ -179,7 +179,7 @@ namespace ROSE
           void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
       //! Functions to move to SgStatement object in SAGE III later
-          SgStatement* getPreviousStatement ( SgStatement *targetStatement );
+          SgStatement* getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope = true);
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
        // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.
