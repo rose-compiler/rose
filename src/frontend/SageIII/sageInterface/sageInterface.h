@@ -1559,8 +1559,8 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 //! Get next statement within the same scope of current statement
   ROSE_DLL_API SgStatement* getNextStatement(SgStatement * currentStmt);
 
-//! Get previous statement within the same scope of current statement
-  ROSE_DLL_API SgStatement* getPreviousStatement(SgStatement * currentStmt);
+//! Get previous statement of the current statement. It may return a previous statement of a parent scope by default (climbOutScope is true), otherwise only a previous statement of the same scope is returned.  
+  ROSE_DLL_API SgStatement* getPreviousStatement(SgStatement * currentStmt, bool climbOutScope = true);
 #if 0 //TODO
   // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
   SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
