@@ -652,12 +652,23 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
+#if 0
+          if (SgProject::get_verbose() >= 1)
+             {
+               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+             }
+#endif
+       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+       // parent->set_isModified(true);
+
           return true;
         }
      return false;
    }
 #else
+
+#error "DEAD CODE!"
+
 // DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
 // If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
 // "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
@@ -679,6 +690,9 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
         }
      return false;
    }
+
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -1087,8 +1101,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
+#if 0
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                       }
+#endif
+                 // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                 // parent->set_isModified(true);
                   }
 
                if (!inFront)
@@ -1190,7 +1210,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1222,7 +1249,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -9298,6 +9332,11 @@ SgDeclarationStatement::get_type() const
 
   // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
      printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
 
      return NULL;
    }

@@ -3384,22 +3384,37 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
      newinfo.unset_inConditional();
 
 #if 0
+
+#error "DEAD CODE!"
+
      SgExpression *tmp_expr = NULL;
      if ( (tmp_expr = for_stmt->get_test_expr()))
           unparseExpression(tmp_expr, info);
 #else
   // DQ (12/13/2005): New code for handling the test (which could be a declaration!)
-  // printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
-  // curprint (" /* test */ ");
+#if 0
+     printf ("Output the test in the for statement format newinfo.inConditional() = %s \n",newinfo.inConditional() ? "true" : "false");
+     curprint (" /* test */ ");
+#endif
      SgStatement *test_stmt = for_stmt->get_test();
      ROSE_ASSERT(test_stmt != NULL);
   // if ( test_stmt != NULL )
      SgUnparse_Info testinfo(info);
      testinfo.set_SkipSemiColon();
      testinfo.set_inConditional();
-  // printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#if 0
+     printf ("Output the test in the for statement format testinfo.inConditional() = %s \n",testinfo.inConditional() ? "true" : "false");
+#endif
      unparseStatement(test_stmt, testinfo);
 #endif
+
+  // DQ (4/6/2015): If the test is a transformation, then we have to output the semi-colon directly (see inliner tutorial test).
+     if (saved_unparsedPartiallyUsingTokenStream == true && test_stmt->isTransformation() == true)
+        {
+       // ROSE_ASSERT(test_stmt->isTransformation() == true);
+       // curprint (" /* output semi-colon at end of test */ ");
+          curprint (";");
+        }
 
 #if 0
      curprint ( string("; "));
@@ -5344,6 +5359,10 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseVarDeclStmt(): vardecl_stmt->get_is_thread_local  = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
 #endif
 
+  // DQ (4/14/2015): This should always be false because there is nothing to partialy unparse within a variable declaration (that we support).
+     bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
+     ROSE_ASSERT(saved_unparsedPartiallyUsingTokenStream == false);
+
   // DQ (7/25/2014): We can assume that if this is g++ then we are using gcc for the backend C compiler.
      bool usingGxx = false;
      #ifdef USE_CMAKE
@@ -6129,16 +6148,22 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                          curprint(tmp_name.str());
                        }
+#if 0
+                 // DQ (4/20/2015): Moved the output of the asm declaration specified to after the 2nd part of
+                 // the type has been output (required for variable declarations of type array).See test2015_105.c.
 
                  // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
                  // ROSE_ASSERT(decl_item->get_register_name() == 0);
                     if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
                        {
+#if 1
+                         printf ("In unparseVarDeclStmt(): Output asm register name code \n");
+#endif
                       // an asm ("<register name>") is in use
-                          curprint ( string(" asm (\""));
-                       // curprint ( string("<unparse register name>";
-                          curprint ( unparse_register_name(decl_item->get_register_name_code()));
-                          curprint ( string("\")"));
+                         curprint ( string(" asm (\""));
+                      // curprint ( string("<unparse register name>";
+                         curprint ( unparse_register_name(decl_item->get_register_name_code()));
+                         curprint ( string("\")"));
                        }
 
                  // DQ (1/25/2009): If we are not using the Assembly Register codes then we might be using the string 
@@ -6146,11 +6171,15 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                  // support the use of either Assembly Register codes or raw strings.
                     if (decl_item->get_register_name_string().empty() == false)
                        {
+#if 1
+                         printf ("In unparseVarDeclStmt(): Output asm register name \n");
+#endif
                       // an asm ("<register name>") is in use
-                          curprint ( string(" asm (\""));
-                          curprint ( decl_item->get_register_name_string() );
-                          curprint ( string("\")"));
+                         curprint ( string(" asm (\""));
+                         curprint ( decl_item->get_register_name_string() );
+                         curprint ( string("\")"));
                        }
+#endif
                   }
                  else
                   {
@@ -6190,7 +6219,44 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #if 0
                curprint("/* END: output using unp->u_type->unparseType (2nd part) */");
 #endif
+            // DQ (4/20/2015): Moved the output of the asm declaration specified to after the 2nd part of
+            // the type has been output (required for variable declarations of type array). See test2015_105.c.
+               if (tmp_name.is_null() == false)
+                  {
+#if 0
+                    printf ("After output --- Variable Name: tmp_name = %s (and second part of type) \n",tmp_name.str());
+#endif
+                    ROSE_ASSERT(decl_item != NULL);
 
+                 // DQ (7/25/2006): Support for asm register naming within variable declarations (should also be explicitly marked as "register")
+                 // ROSE_ASSERT(decl_item->get_register_name() == 0);
+                    if (decl_item->get_register_name_code() != SgInitializedName::e_invalid_register)
+                       {
+#if 0
+                         printf ("In unparseVarDeclStmt(): Output asm register name code \n");
+#endif
+                      // an asm ("<register name>") is in use
+                         curprint ( string(" asm (\""));
+                      // curprint ( string("<unparse register name>";
+                         curprint ( unparse_register_name(decl_item->get_register_name_code()));
+                         curprint ( string("\")"));
+                       }
+
+                 // DQ (1/25/2009): If we are not using the Assembly Register codes then we might be using the string 
+                 // mechanism (stored in SgInitializedName::p_register_name_string). The new EDG/Sage interface can
+                 // support the use of either Assembly Register codes or raw strings.
+                    if (decl_item->get_register_name_string().empty() == false)
+                       {
+#if 0
+                         printf ("In unparseVarDeclStmt(): Output asm register name \n");
+#endif
+                      // an asm ("<register name>") is in use
+                         curprint ( string(" asm (\""));
+                         curprint ( decl_item->get_register_name_string() );
+                         curprint ( string("\")"));
+                       }
+                  }
+               
 #if 0
                printf ("Calling printAttributes() \n");
                curprint("\n/* Calling printAttributes() */ \n ");
@@ -9589,7 +9655,6 @@ Unparse_ExprStmt::unparseMicrosoftAttributeDeclaration (SgStatement* stmt, SgUnp
       ROSE_ASSERT(false);
 #endif
    }
-
 
 
  // EOF

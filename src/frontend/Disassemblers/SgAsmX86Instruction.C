@@ -26,7 +26,44 @@ SgAsmX86Instruction::terminatesBasicBlock() {
     return x86InstructionIsControlTransfer(this);
 }
 
+// class method
+X86InstructionSize
+SgAsmX86Instruction::instructionSizeForWidth(size_t nbits) {
+    switch (nbits) {
+        case 16: return x86_insnsize_16;
+        case 32: return x86_insnsize_32;
+        case 64: return x86_insnsize_64;
+    }
+    ASSERT_not_reachable("invalid width: " + StringUtility::numberToString(nbits));
+}
 
+// class method
+size_t
+SgAsmX86Instruction::widthForInstructionSize(X86InstructionSize isize) {
+    switch (isize) {
+        case x86_insnsize_16: return 16;
+        case x86_insnsize_32: return 32;
+        case x86_insnsize_64: return 64;
+        default: ASSERT_not_reachable("invalid x86 instruction size");
+    }
+}
+
+// class method
+const RegisterDictionary*
+SgAsmX86Instruction::registersForInstructionSize(X86InstructionSize isize) {
+    switch (isize) {
+        case x86_insnsize_16: return RegisterDictionary::dictionary_i286();
+        case x86_insnsize_32: return RegisterDictionary::dictionary_pentium4();
+        case x86_insnsize_64: return RegisterDictionary::dictionary_amd64();
+        default: ASSERT_not_reachable("invalid x86 instruction size");
+    }
+}
+
+// class method
+const RegisterDictionary*
+SgAsmX86Instruction::registersForWidth(size_t nbits) {
+    return registersForInstructionSize(instructionSizeForWidth(nbits));
+}
 
 // see base class
 bool
@@ -68,7 +105,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
 
     // Slow method: Emulate the instructions and then look at the EIP and stack.  If the EIP points outside the current
     // function and the top of the stack holds an address of an instruction within the current function, then this must be a
-    // function call.  FIXME: The implementation here assumes a 32-bit machine. [Robb P. Matzke 2013-09-06]
+    // function call.
     if (interp && insns.size()<=EXECUTION_LIMIT) {
         using namespace rose::BinaryAnalysis;
         using namespace rose::BinaryAnalysis::InstructionSemantics2;
@@ -77,8 +114,9 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops);
-        SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_ESP));
+        const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
+        SValuePtr orig_esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -87,7 +125,7 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If the next instruction address is concrete but does not point to a function entry point, then this is not a call.
-        SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
+        SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
         if (eip->is_number()) {
             rose_addr_t target_va = eip->get_number();
             SgAsmFunction *target_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(target_va, NULL));
@@ -96,15 +134,17 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // If nothing was pushed onto the stack, then this isn't a function call.
-        SValuePtr esp = SValue::promote(ops->readRegister(dispatcher->REG_ESP));
+        const size_t spWidth = dispatcher->REG_anySP.get_nbits();
+        SValuePtr esp = SValue::promote(ops->readRegister(dispatcher->REG_anySP));
         SValuePtr stack_delta = SValue::promote(ops->add(esp, ops->negate(orig_esp)));
-        SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, 31, 32));
+        SValuePtr stack_delta_sign = SValue::promote(ops->extract(stack_delta, spWidth-1, spWidth));
         if (stack_delta_sign->is_number() && 0==stack_delta_sign->get_number())
             return false;
 
         // If the top of the stack does not contain a concrete value or the top of the stack does not point to an instruction
         // in this basic block's function, then this is not a function call.
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(32), esp->boolean_(true)));
+        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, esp, esp->undefined_(ipWidth), esp->boolean_(true)));
         if (top->is_number()) {
             rose_addr_t va = top->get_number();
             SgAsmFunction *return_func = SageInterface::getEnclosingNode<SgAsmFunction>(imap.get_value_or(va, NULL));
@@ -131,10 +171,17 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         using namespace rose::BinaryAnalysis;
         using namespace rose::BinaryAnalysis::InstructionSemantics2;
         using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
-        const RegisterDictionary *regdict = RegisterDictionary::dictionary_pentium4();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
+        SgAsmX86Instruction *x86insn = isSgAsmX86Instruction(insns.front());
+        ASSERT_not_null(x86insn);
+#if 1 // [Robb P. Matzke 2015-03-03]: FIXME[Robb P. Matzke 2015-03-03]: not ready yet; x86-64 semantics still under construction
+        if (x86insn->get_addressSize() != x86_insnsize_32)
+            return false;
+#endif
+        const RegisterDictionary *regdict = registersForInstructionSize(x86insn->get_addressSize());
+        const RegisterDescriptor SP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops);
+        DispatcherX86Ptr dispatcher = DispatcherX86::instance(ops, SP.get_nbits());
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -143,12 +190,13 @@ SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& in
         }
 
         // Look at the top of the stack
-        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(dispatcher->REG_ESP),
-                                                        ops->get_protoval()->undefined_(32),
+        const size_t ipWidth = dispatcher->REG_anyIP.get_nbits();
+        SValuePtr top = SValue::promote(ops->readMemory(dispatcher->REG_SS, ops->readRegister(SP),
+                                                        ops->get_protoval()->undefined_(ipWidth),
                                                         ops->get_protoval()->boolean_(true)));
         if (top->is_number() && top->get_number() == last->get_address()+last->get_size()) {
             if (target) {
-                SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_EIP));
+                SValuePtr eip = SValue::promote(ops->readRegister(dispatcher->REG_anyIP));
                 if (eip->is_number())
                     *target = eip->get_number();
             }

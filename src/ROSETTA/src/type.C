@@ -52,6 +52,9 @@ Grammar::setUpTypes ()
   // DQ (8/2/2014): Adding support for C++11 decltype() (which should be an new SgType in the IR).
      NEW_TERMINAL_MACRO ( DeclType            , "DeclType",             "T_DECLTYPE" );
 
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     NEW_TERMINAL_MACRO ( TypeOfType          , "TypeOfType",             "T_TYPEOF_TYPE" );
+
      NEW_TERMINAL_MACRO ( TypeCAFTeam         , "TypeCAFTeam",          "T_CAFTEAM" );
 
   // DQ (3/24/2014): Adding support for 128 bit integers.
@@ -179,7 +182,7 @@ Grammar::setUpTypes ()
           ArrayType            | TypeEllipse             | TemplateType              | QualifiedNameType    |
           TypeComplex          | TypeImaginary           | TypeDefault               | TypeCAFTeam          |
           TypeCrayPointer      | TypeLabel               | JavaUnionType             | RvalueReferenceType  | 
-          TypeNullptr          | DeclType , "Type","TypeTag", false);
+          TypeNullptr          | DeclType                | TypeOfType , "Type","TypeTag", false);
 
 #if 1
   // ***********************************************************************
@@ -254,6 +257,10 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      Type.setDataPrototype("SgDeclType*","decltype_ref_to","= NULL",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     Type.setDataPrototype("SgTypeOfType*","typeof_ref_to","= NULL",
                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 1
@@ -342,6 +349,10 @@ Grammar::setUpTypes ()
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      DeclType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
+     TypeOfType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
      TemplateType.excludeFunctionPrototype        ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TemplateType.excludeFunctionSource           ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
@@ -510,6 +521,11 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_DECL_TYPE",
             "SgExpression* expr = NULL");
 
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     CUSTOM_CREATE_TYPE_MACRO(TypeOfType,
+            "SOURCE_CREATE_TYPE_FOR_TYPEOF_TYPE",
+            "SgExpression* expr = NULL");
+
   // DQ (12/4/2011): Adding support for template declarations into the AST.
   // CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgClassDeclaration* decl = NULL");
      CUSTOM_CREATE_TYPE_MACRO(ClassType,"SOURCE_CREATE_TYPE_FOR_CLASS_TYPE","SgDeclarationStatement* decl = NULL");
@@ -623,6 +639,14 @@ Grammar::setUpTypes ()
                                 CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      DeclType.setFunctionPrototype ("HEADER_GET_BASE_TYPE", "../Grammar/Type.code" );
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.setFunctionPrototype ("HEADER_TYPEOF_TYPE", "../Grammar/Type.code" );
+     TypeOfType.setDataPrototype ("SgExpression*","base_expression","= NULL",
+                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeOfType.setDataPrototype ("SgType*","base_type","= NULL",
+                                CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     TypeOfType.setFunctionPrototype ("HEADER_GET_BASE_TYPE", "../Grammar/Type.code" );
 
      PointerMemberType.setFunctionPrototype  ("HEADER_POINTER_MEMBER_TYPE", "../Grammar/Type.code" );
      PointerMemberType.setDataPrototype ("SgType*","class_type","= NULL",
@@ -929,6 +953,11 @@ Grammar::setUpTypes ()
      DeclType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      DeclType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+  // DQ (4/8/2015): We need a specific version of this function for the typeof() operator.
+  // TypeOfType.setFunctionSource     ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
+
      ArrayType.excludeFunctionSource ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
   // ArrayType.setFunctionSource ( "SOURCE_GET_MANGLED_BASE_TYPE", "../Grammar/Type.code");
 
@@ -1012,6 +1041,9 @@ Grammar::setUpTypes ()
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.editSubstitute( "MANGLED_ID_STRING", "decltype" );
 
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.editSubstitute( "MANGLED_ID_STRING", "typeOftype" );
+
   // ArrayType.editSubstitute( "MANGLED_ID_STRING", "A_" );
      TypeEllipse.editSubstitute( "MANGLED_ID_STRING", "e" );
   // JavaWildcardType.editSubstitute( "MANGLED_ID_STRING", "?" );
@@ -1049,6 +1081,9 @@ Grammar::setUpTypes ()
 
   // DQ (8/2/2014): Adding support for C++11 decltype().
      DeclType.setFunctionSource ( "SOURCE_DECL_TYPE", "../Grammar/Type.code");
+
+  // DQ (3/27/2015): Adding support for GNU C language extension "typeof" operator (works similar to decltype in C++11).
+     TypeOfType.setFunctionSource ( "SOURCE_TYPEOF_TYPE", "../Grammar/Type.code");
 
      ArrayType.setFunctionSource           ( "SOURCE_ARRAY_TYPE", "../Grammar/Type.code");
      ModifierType.setFunctionSource        ( "SOURCE_MODIFIER_TYPE", "../Grammar/Type.code");

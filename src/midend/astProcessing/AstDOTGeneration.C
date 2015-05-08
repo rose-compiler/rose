@@ -377,6 +377,17 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                nodelabel += string("\\n") + namespaceDeclarationStatement->get_name();
              }
 
+       // DQ (4/5/2015): Added variable names and associated info to the generated dot file graphs of the AST.
+          SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(genericDeclaration);
+          if (variableDeclaration != NULL)
+             {
+            // This is added to support debugging of multiple variables in the same declaration.
+               nodelabel += string("\\n isAssociatedWithDeclarationList = ") + (variableDeclaration->get_isAssociatedWithDeclarationList() ? "true " : "false ");
+
+            // DQ (4/5/2015): I think this is not used and should be removed.
+            // nodelabel += string("\\n isFirstDeclarationOfDeclarationList = ") + (variableDeclaration->get_isFirstDeclarationOfDeclarationList() ? "true " : "false ");
+             }
+
           nodelabel += string("\\n") + name;
         }
 
@@ -394,6 +405,11 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
      if (initializedName != NULL)
         {
           nodelabel += string("\\n") + initializedName->get_name();
+
+       // DQ (4/14/2015): We need to have these additional data members output (similar to SgStatement).
+          nodelabel += string("\\n") + string("isModified = ") + string(initializedName->get_isModified() ? "true" : "false");
+          nodelabel += string("\\n") + string("containsTransformation = ") + string(initializedName->get_containsTransformation() ? "true" : "false");
+          nodelabel += string("\\n") + string("isTransformation = ") + string(initializedName->isTransformation() ? "true" : "false");
         }
 
   // DQ (4/6/2011): Added support for output of the value within SgIntVal IR nodes.

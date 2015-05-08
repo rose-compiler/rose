@@ -441,7 +441,10 @@ void postProcessingSupport (SgNode* node)
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
        // step.
-          checkIsModifiedFlag(node);
+
+       // DQ (4/16/2015): This is replaced with a better implementation.
+       // checkIsModifiedFlag(node);
+          unsetNodesMarkedAsModified(node);
 
           if (SgProject::get_verbose() > 1)
              {
@@ -813,10 +816,12 @@ void postProcessingSupport (SgNode* node)
   // Make sure that compiler-generated AST nodes are marked for Sg_File_Info::isCompilerGenerated().
      checkIsCompilerGeneratedFlag(node);
 
+  // DQ (4/16/2015): This is replaced with a better implementation.
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 
-     checkIsModifiedFlag(node);
+  // checkIsModifiedFlag(node);
+     unsetNodesMarkedAsModified(node);
 
 #if 0
      ROSE_MemoryUsage memoryUsage4;
