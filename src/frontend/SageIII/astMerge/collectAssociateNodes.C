@@ -301,6 +301,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (8/2/2014): Added C++11 SgDeclType support.
           case V_SgDeclType:
 
+       // DQ (3/29/2015): Added support for GNU C language extension typeof.
+          case V_SgTypeOfType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:

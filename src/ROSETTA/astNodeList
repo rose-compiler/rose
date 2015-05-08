@@ -662,6 +662,7 @@ SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
 SgTypeNullptr
+SgTypeOfType
 SgTypeShort
 SgTypeSigned128bitInteger
 SgTypeSignedChar

@@ -5,6 +5,7 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
 
+#include <sawyer/BiMap.h>
 #include <sawyer/Graph.h>
 #include <sawyer/Map.h>
 
@@ -102,21 +103,41 @@ public:
 typedef Sawyer::Container::Graph<CfgVertex, CfgEdge> ControlFlowGraph;
 
 /** Mapping from basic block starting address to CFG vertex. */
-typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexNodeIterator> VertexIndex;
+typedef Sawyer::Container::Map<rose_addr_t, ControlFlowGraph::VertexIterator> CfgVertexIndex;
 
 /** List of CFG vertex pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::VertexNodeIterator> VertexList;
-typedef std::list<ControlFlowGraph::ConstVertexNodeIterator> ConstVertexList;
+typedef std::list<ControlFlowGraph::VertexIterator> CfgVertexList;
+typedef std::list<ControlFlowGraph::ConstVertexIterator> CfgConstVertexList;
 /** @} */
 
 /** List of CFG edge pointers.
  *
  * @{ */
-typedef std::list<ControlFlowGraph::EdgeNodeIterator> EdgeList;
-typedef std::list<ControlFlowGraph::ConstEdgeNodeIterator> ConstEdgeList;
+typedef std::list<ControlFlowGraph::EdgeIterator> CfgEdgeList;
+typedef std::list<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeList;
 /** @} */
+
+/** Set of CFG vertex pointers.
+ *
+ * @{ */
+typedef std::set<ControlFlowGraph::VertexIterator> CfgVertexSet;
+typedef std::set<ControlFlowGraph::ConstVertexIterator> CfgConstVertexSet;
+/** @} */
+
+/** Set of CFG edge pointers.
+ *
+ * @{ */
+typedef std::set<ControlFlowGraph::EdgeIterator> CfgEdgeSet;
+typedef std::set<ControlFlowGraph::ConstEdgeIterator> CfgConstEdgeSet;
+/** @} */
+
+/** Map vertices from one CFG to another CFG and vice versa. */
+typedef Sawyer::Container::BiMap<ControlFlowGraph::ConstVertexIterator, ControlFlowGraph::ConstVertexIterator> CfgVertexMap;
+
+
+
 
 /** Base class for CFG-adjustment callbacks.
  *
@@ -165,6 +186,45 @@ public:
     /** Called when basic block is detached or placeholder erased. */
     virtual bool operator()(bool chain, const DetachedBasicBlock&) = 0;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Control flow graph utility functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Insert one control flow graph into another.
+ *
+ *  The @p vmap is updated with the mapping of vertices from source to destination. Upon return, <code>vmap[srcVertex]</code>
+ *  will point to the corresponding vertex in the destination graph. */
+void insertCfg(ControlFlowGraph &dst, const ControlFlowGraph &src, CfgVertexMap &vmap /*out*/);
+
+/** Find back edges.
+ *
+ *  Performs a depth-first forward traversal of the @p cfg beginning at the specified vertex. Any edge encountered which points
+ *  back to some vertex in the current traversal path is added to the returned edge set. */
+CfgConstEdgeSet findBackEdges(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &begin);
+
+/** Find function call edges.
+ *
+ *  Returns the list of function call edges for the specified vertex. */
+CfgConstEdgeSet findCallEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Find called functions.
+ *
+ *  Given some vertex in a CFG, return the vertices representing the functions that are called. */
+CfgConstVertexSet findCalledFunctions(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Return outgoing call-return edges.
+ *
+ *  A call-return edge represents a short-circuit control flow path across a function call, from the call site to the return
+ *  target. */
+CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &callSite);
+
+/** Find function return vertices.
+ *
+ *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
+CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex);
+
+
 
 } // namespace
 } // namespace

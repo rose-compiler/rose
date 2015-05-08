@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+bin_PROGRAMS =
 
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 SUBDIRS = util ROSETTA roseSupport frontend midend backend \
@@ -253,6 +254,69 @@ testSharedRoseLib_LDADD  = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 # AM_LDFLAGS = $(ROSE_LIBS) $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS = $(ROSE_DWARF_LIBS_WITH_PATH)
 # AM_LDFLAGS =
+
+# This tool spits out information that tells users how to compile and link programs that use ROSE. Therefore, we have to pass
+# that information to the program when we compile it, and we do so with the "-DCXX", etc compiler switches.
+bin_PROGRAMS += rose-config
+rose_config_SOURCES = rose-config.C
+rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
+
+rose_config_installed_cppflags =		\
+	-I@includedir@/rose			\
+	$(ROSE_QT_INCLUDE)			\
+	$(ROSE_SQLITE_DATABASE_INCLUDE)		\
+	$(ROSE_PHP_INCLUDES)			\
+	$(ROSE_YICES_INCLUDES)			\
+	$(ROSE_YAML_INCLUDES)			\
+	$(ROSE_LIBMAGIC_INCLUDES)		\
+	$(ROSE_DWARF_INCLUDES)			\
+	$(ROSE_WINE_INCLUDES)			\
+	$(ROSE_PCH_INCLUDE)			\
+	$(INTEL_PIN_INCLUDE_PATHS)		\
+	$(ROSE_ETHER_INCLUDE)			\
+	$(ROSE_ATERM_INCLUDE)			\
+	$(BOOST_CPPFLAGS)
+rose_config_build_cppflags = $(ROSE_INCLUDES)
+
+rose_config_installed_ldflags =			\
+	-L@libdir@ -lrose			\
+	$(BOOST_LDFLAGS)			\
+	$(BOOST_DATE_TIME_LIB)			\
+	$(BOOST_THREAD_LIB)			\
+	$(BOOST_FILESYSTEM_LIB)			\
+	$(BOOST_PROGRAM_OPTIONS_LIB)		\
+	$(BOOST_REGEX_LIB)			\
+	$(BOOST_SYSTEM_LIB)			\
+	$(BOOST_SERIALIZATION_LIB)		\
+	$(BOOST_WAVE_LIB)			\
+	$(BOOST_IOSTREAMS_LIB)			\
+	$(JAVA_JVM_LINK)			\
+	$(SQLITE_DATABASE_LIBS)			\
+	$(RT_LIBS)				\
+	$(ROSE_YICES_LIBS_WITH_PATH)		\
+	$(ROSE_PHP_LIBS_WITH_PATH)		\
+	$(ROSE_DWARF_LIBS_WITH_PATH)		\
+	$(ROSE_QT_LIBS_WITH_PATH)		\
+	$(ROSE_SSL_LIBS)			\
+	$(ROSE_ETHER_LIBS)			\
+	$(ROSE_INTEL_COMPILER_MATH_LIBS)	\
+	$(ROSE_ATERM_LIBS)			\
+	$(ROSE_YAML_LIBS_WITH_PATH)		\
+	$(ROSE_LIBMAGIC_LIBS_WITH_PATH)		\
+	-lm
+rose_config_build_ldflags =			\
+	$(LIBS_WITH_RPATH)			\
+	$(ROSE_LIBS)
+
+rose_config_CPPFLAGS =									\
+	-DCXX='"$(subst ",\",$(CXX))"'							\
+	-DINSTALLED_CPPFLAGS='"$(subst ",\",$(rose_config_installed_cppflags))"'	\
+	-DBUILD_CPPFLAGS='"$(subst ",\",$(rose_config_build_cppflags))"'		\
+	-DCFLAGS='"$(subst ",\",$(CFLAGS))"'						\
+	-DINSTALLED_LDFLAGS='"$(subst ",\",$(rose_config_installed_ldflags))"'		\
+	-DBUILD_LDFLAGS='"$(subst ",\",$(rose_config_build_ldflags))"'
+
+rose_config_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 print:
 	@echo "libroseLibraries = $(libroseLibraries)"

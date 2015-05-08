@@ -167,7 +167,7 @@ main(int argc, char *argv[])
     X86InstructionSemantics<MyPolicy, MyValueType> dispatcher(operators);
 #else
     BaseSemantics::RiscOperatorsPtr operators = make_ops();
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(operators, 32);
 #endif
 
     struct sigaction sa;

@@ -12,6 +12,7 @@
 #include <Partitioner2/ModulesM68k.h>
 #include <Partitioner2/ModulesPe.h>
 #include <Partitioner2/ModulesX86.h>
+#include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
 #include <sawyer/GraphTraversal.h>
 
@@ -210,6 +211,7 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+    p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
@@ -237,6 +239,7 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -244,6 +247,70 @@ Engine::createTunedPartitioner() {
     }
 
     return createGenericPartitioner();
+}
+
+Partitioner
+Engine::createPartitionerFromAst(SgAsmInterpretation *interp) {
+    ASSERT_not_null(interp);
+    interp_ = interp;
+    map_.clear();
+    load(std::vector<std::string>());
+    Partitioner partitioner = createTunedPartitioner();
+
+    // Cache all the instructions so they're available by address in O(log N) time in the future.
+    BOOST_FOREACH (SgAsmInstruction *insn, SageInterface::querySubTree<SgAsmInstruction>(interp))
+        partitioner.instructionProvider().insert(insn);
+
+    // Create and attach basic blocks
+    BOOST_FOREACH (SgAsmNode *node, SageInterface::querySubTree<SgAsmNode>(interp)) {
+        SgAsmBlock *blockAst = isSgAsmBlock(node);
+        if (!blockAst || !blockAst->has_instructions())
+            continue;
+        BasicBlock::Ptr bblock = BasicBlock::instance(blockAst->get_address(), &partitioner);
+        bblock->comment(blockAst->get_comment());
+
+        // Instructions
+        const SgAsmStatementPtrList &stmts = blockAst->get_statementList();
+        for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
+            if (SgAsmInstruction *insn = isSgAsmInstruction(*si))
+                bblock->append(insn);
+        }
+
+        // Successors
+        const SgAsmIntegerValuePtrList &successors = blockAst->get_successors();
+        BOOST_FOREACH (SgAsmIntegerValueExpression *ival, successors)
+            bblock->insertSuccessor(ival->get_absoluteValue(), ival->get_significantBits());
+        if (!blockAst->get_successors_complete()) {
+            size_t nbits = partitioner.instructionProvider().instructionPointerRegister().get_nbits();
+            bblock->insertSuccessor(Semantics::SValue::instance(nbits));
+        }
+
+        partitioner.attachBasicBlock(bblock);
+    }
+
+    // Create and attach functions
+    BOOST_FOREACH (SgAsmFunction *funcAst, SageInterface::querySubTree<SgAsmFunction>(interp)) {
+        if (0!=(funcAst->get_reason() & SgAsmFunction::FUNC_LEFTOVERS))
+            continue;                                   // this isn't really a true function
+        Function::Ptr function = Function::instance(funcAst->get_entry_va(), funcAst->get_name());
+        function->comment(funcAst->get_comment());
+        function->reasons(funcAst->get_reason());
+
+        BOOST_FOREACH (SgAsmBlock *blockAst, SageInterface::querySubTree<SgAsmBlock>(funcAst)) {
+            if (blockAst->has_instructions())
+                function->insertBasicBlock(blockAst->get_address());
+        }
+
+        BOOST_FOREACH (SgAsmStaticData *dataAst, SageInterface::querySubTree<SgAsmStaticData>(funcAst)) {
+            DataBlock::Ptr dblock = DataBlock::instance(dataAst->get_address(), dataAst->get_size());
+            partitioner.attachDataBlock(dblock);
+            function->insertDataBlock(dblock);
+        }
+
+        partitioner.attachFunction(function);
+    }
+
+    return partitioner;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -632,8 +699,8 @@ Engine::makeNextDataReferencedFunction(const Partitioner &partitioner, rose_addr
 
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
 static bool
-hasCallReturnEdges(const ControlFlowGraph::ConstVertexNodeIterator &vertex) {
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex->outEdges()) {
+hasCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &vertex) {
+    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->outEdges()) {
         if (edge.value().type() == E_CALL_RETURN)
             return true;
     }
@@ -642,9 +709,9 @@ hasCallReturnEdges(const ControlFlowGraph::ConstVertexNodeIterator &vertex) {
 
 // True if any callee may-return is positive; false if all callees are negative; indeterminate if any are indeterminate
 static boost::logic::tribool
-hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexNodeIterator &caller) {
+hasAnyCalleeReturn(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &caller) {
     bool hasIndeterminateCallee = false;
-    for (ControlFlowGraph::ConstEdgeNodeIterator edge=caller->outEdges().begin(); edge != caller->outEdges().end(); ++edge) {
+    for (ControlFlowGraph::ConstEdgeIterator edge=caller->outEdges().begin(); edge != caller->outEdges().end(); ++edge) {
         if (edge->value().type() == E_FUNCTION_CALL) {
             bool mayReturn = false;
             if (!partitioner.basicBlockOptionalMayReturn(edge->target()).assignTo(mayReturn)) {
@@ -678,7 +745,7 @@ Engine::BasicBlockWorkList::operator()(bool chain, const AttachedBasicBlock &arg
             // If a new function call is inserted and it has no E_CALL_RETURN edge and at least one of its callees has an
             // indeterminate value for its may-return analysis, then add this block to the list of blocks for which we may need
             // to later add a call-return edge.
-            ControlFlowGraph::ConstVertexNodeIterator placeholder = p->findPlaceholder(args.startVa);
+            ControlFlowGraph::ConstVertexIterator placeholder = p->findPlaceholder(args.startVa);
             ASSERT_require(placeholder != p->cfg().vertices().end());
             boost::logic::tribool mayReturn = hasAnyCalleeReturn(*p, placeholder);
             if (!hasCallReturnEdges(placeholder) && (mayReturn || boost::logic::indeterminate(mayReturn)))
@@ -725,7 +792,7 @@ Engine::BasicBlockWorkList::moveAndSortCallReturn(const Partitioner &partitioner
     std::vector<bool> seen(partitioner.cfg().nVertices(), false);
     while (!pending.empty()) {
         rose_addr_t startVa = *pending.begin();
-        ControlFlowGraph::ConstVertexNodeIterator startVertex = partitioner.findPlaceholder(startVa);
+        ControlFlowGraph::ConstVertexIterator startVertex = partitioner.findPlaceholder(startVa);
         if (startVertex == partitioner.cfg().vertices().end()) {
             pending.erase(pending.begin());             // this worklist item is no longer valid
         } else {
@@ -757,7 +824,7 @@ Engine::makeNextCallReturnEdge(Partitioner &partitioner, boost::logic::tribool a
     Sawyer::Container::DistinctList<rose_addr_t> &workList = basicBlockWorkList_->pendingCallReturn();
     while (!workList.isEmpty()) {
         rose_addr_t va = workList.popBack();
-        ControlFlowGraph::VertexNodeIterator caller = partitioner.findPlaceholder(va);
+        ControlFlowGraph::VertexIterator caller = partitioner.findPlaceholder(va);
 
         // Some sanity checks because it could be possible for this list to be out-of-date if the user monkeyed with the
         // partitioner's CFG adjuster.
@@ -807,7 +874,7 @@ Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
     // Pick the first (as LIFO) item from the undiscovered worklist. Make sure the item is truly undiscovered
     while (!basicBlockWorkList_->undiscovered().isEmpty()) {
         rose_addr_t va = basicBlockWorkList_->undiscovered().popBack();
-        ControlFlowGraph::VertexNodeIterator placeholder = partitioner.findPlaceholder(va);
+        ControlFlowGraph::VertexIterator placeholder = partitioner.findPlaceholder(va);
         if (placeholder == partitioner.cfg().vertices().end()) {
             mlog[WARN] <<"makeNextBasicBlockFromPlaceholder: block " <<StringUtility::addrToString(va)
                        <<" was on the undiscovered worklist but not in the CFG\n";
@@ -828,7 +895,7 @@ Engine::makeNextBasicBlockFromPlaceholder(Partitioner &partitioner) {
     // about. The order in which such placeholder blocks are discovered is arbitrary.
     if (partitioner.undiscoveredVertex()->nInEdges() > 0) {
         mlog[WARN] <<"partitioner engine undiscovered worklist is empty but CFG undiscovered vertex is not\n";
-        ControlFlowGraph::VertexNodeIterator placeholder = partitioner.undiscoveredVertex()->inEdges().begin()->source();
+        ControlFlowGraph::VertexIterator placeholder = partitioner.undiscoveredVertex()->inEdges().begin()->source();
         ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         BasicBlock::Ptr bb = partitioner.discoverBasicBlock(placeholder);
         partitioner.attachBasicBlock(placeholder, bb);
@@ -892,7 +959,7 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
         partitioner.detachFunction(function);           // must be detached in order to modify block ownership
-        EdgeList inwardConflictEdges, outwardConflictEdges;
+        CfgEdgeList inwardConflictEdges, outwardConflictEdges;
         size_t nFailures = partitioner.discoverFunctionBasicBlocks(function, &inwardConflictEdges, &outwardConflictEdges);
         if (nFailures > 0) {
             insertUnique(retval, function, sortFunctionsByAddress);
@@ -900,11 +967,11 @@ Engine::attachBlocksToFunctions(Partitioner &partitioner, bool emitWarnings) {
                 mlog[WARN] <<"discovery for " <<partitioner.functionName(function)
                                <<" had " <<StringUtility::plural(inwardConflictEdges.size(), "inward conflicts")
                                <<" and " <<StringUtility::plural(outwardConflictEdges.size(), "outward conflicts") <<"\n";
-                BOOST_FOREACH (const ControlFlowGraph::EdgeNodeIterator &edge, inwardConflictEdges) {
+                BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, inwardConflictEdges) {
                     mlog[WARN] <<"  inward conflict " <<*edge
                                <<" from " <<partitioner.functionName(edge->source()->value().function()) <<"\n";
                 }
-                BOOST_FOREACH (const ControlFlowGraph::EdgeNodeIterator &edge, outwardConflictEdges) {
+                BOOST_FOREACH (const ControlFlowGraph::EdgeIterator &edge, outwardConflictEdges) {
                     mlog[WARN] <<"  outward conflict " <<*edge
                                <<" to " <<partitioner.functionName(edge->target()->value().function()) <<"\n";
                 }

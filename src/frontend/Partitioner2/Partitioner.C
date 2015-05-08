@@ -45,7 +45,7 @@ Partitioner::init(Disassembler *disassembler, const MemoryMap &map) {
 void
 Partitioner::init(const Partitioner &other) {
     // All graph vertices need to be converted from other.cfg_ to this->cfg_
-    BOOST_FOREACH (const VertexIndex::Node &node, other.vertexIndex_.nodes())
+    BOOST_FOREACH (const CfgVertexIndex::Node &node, other.vertexIndex_.nodes())
         vertexIndex_.insert(node.key(), convertFrom(other, node.value()));
     undiscoveredVertex_ = convertFrom(other, other.undiscoveredVertex_);
     indeterminateVertex_ = convertFrom(other, other.indeterminateVertex_);
@@ -60,11 +60,11 @@ Partitioner::clear() {
     functions_.clear();
 }
 
-ControlFlowGraph::VertexNodeIterator
-Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertexNodeIterator otherIter) {
+ControlFlowGraph::VertexIterator
+Partitioner::convertFrom(const Partitioner &other, ControlFlowGraph::ConstVertexIterator otherIter) {
     if (otherIter==other.cfg_.vertices().end())
         return cfg_.vertices().end();
-    ControlFlowGraph::VertexNodeIterator thisIter = cfg_.findVertex(otherIter->id());
+    ControlFlowGraph::VertexIterator thisIter = cfg_.findVertex(otherIter->id());
     ASSERT_forbid(thisIter == cfg_.vertices().end());
     return thisIter;
 }
@@ -171,7 +171,7 @@ Partitioner::placeholderExists(rose_addr_t startVa) const {
 }
 
 BasicBlock::Ptr
-Partitioner::erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeholder) {
+Partitioner::erasePlaceholder(const ControlFlowGraph::VertexIterator &placeholder) {
     BasicBlock::Ptr bblock;
     if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
         rose_addr_t startVa = placeholder->value().address();
@@ -210,7 +210,7 @@ Partitioner::nBasicBlocks() const {
 
 BasicBlock::Ptr
 Partitioner::basicBlockExists(rose_addr_t startVa) const {
-    ControlFlowGraph::ConstVertexNodeIterator vertex = findPlaceholder(startVa);
+    ControlFlowGraph::ConstVertexIterator vertex = findPlaceholder(startVa);
     if (vertex!=cfg_.vertices().end())
         return vertex->value().bblock();
     return BasicBlock::Ptr();
@@ -237,7 +237,7 @@ Partitioner::newDispatcher(const BaseSemantics::RiscOperatorsPtr &ops) const {
 }
 
 BasicBlock::Ptr
-Partitioner::detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder) {
+Partitioner::detachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder) {
     BasicBlock::Ptr bblock;
     if (placeholder != cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK) {
         bblock = placeholder->value().bblock();
@@ -258,7 +258,7 @@ Partitioner::detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
 BasicBlock::Ptr
 Partitioner::detachBasicBlock(const BasicBlock::Ptr &bblock) {
     if (bblock!=NULL) {
-        ControlFlowGraph::VertexNodeIterator placeholder = findPlaceholder(bblock->address());
+        ControlFlowGraph::VertexIterator placeholder = findPlaceholder(bblock->address());
         if (placeholder!=cfg_.vertices().end() && placeholder->value().bblock()==bblock)
             return detachBasicBlock(placeholder);
     }
@@ -270,16 +270,16 @@ Partitioner::detachBasicBlock(rose_addr_t startVa) {
     return detachBasicBlock(findPlaceholder(startVa));
 }
 
-ControlFlowGraph::EdgeNodeIterator
-Partitioner::adjustPlaceholderEdges(const ControlFlowGraph::VertexNodeIterator &placeholder) {
+ControlFlowGraph::EdgeIterator
+Partitioner::adjustPlaceholderEdges(const ControlFlowGraph::VertexIterator &placeholder) {
     ASSERT_require(placeholder!=cfg_.vertices().end());
     ASSERT_require2(NULL==placeholder->value().bblock(), "vertex must be strictly a placeholder");
     cfg_.clearOutEdges(placeholder);
     return cfg_.insertEdge(placeholder, undiscoveredVertex_);
 }
 
-ControlFlowGraph::EdgeNodeIterator
-Partitioner::adjustNonexistingEdges(const ControlFlowGraph::VertexNodeIterator &vertex) {
+ControlFlowGraph::EdgeIterator
+Partitioner::adjustNonexistingEdges(const ControlFlowGraph::VertexIterator &vertex) {
     ASSERT_require(vertex!=cfg_.vertices().end());
     ASSERT_not_null2(vertex->value().bblock(), "vertex must have been discovered");
     ASSERT_require2(vertex->value().bblock()->isEmpty(), "vertex must be non-existing");
@@ -288,7 +288,7 @@ Partitioner::adjustNonexistingEdges(const ControlFlowGraph::VertexNodeIterator &
 }
 
 BasicBlock::Ptr
-Partitioner::discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator &placeholder) const {
+Partitioner::discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const {
     ASSERT_require2(placeholder != cfg_.vertices().end(), "invalid basic block placeholder");
     BasicBlock::Ptr bb = placeholder->value().bblock();
     return bb!=NULL ? bb : discoverBasicBlockInternal(placeholder->value().address());
@@ -296,7 +296,7 @@ Partitioner::discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator 
 
 BasicBlock::Ptr
 Partitioner::discoverBasicBlock(rose_addr_t startVa) const {
-    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(startVa);
+    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(startVa);
     return placeholder==cfg_.vertices().end() ? discoverBasicBlockInternal(startVa) : discoverBasicBlock(placeholder);
 }
 
@@ -387,8 +387,8 @@ done:
     return retval;
 }
 
-ControlFlowGraph::VertexNodeIterator
-Partitioner::truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, SgAsmInstruction *insn) {
+ControlFlowGraph::VertexIterator
+Partitioner::truncateBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, SgAsmInstruction *insn) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_not_null(insn);
     BasicBlock::Ptr bblock = placeholder->value().bblock();
@@ -407,19 +407,19 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &plac
 
     // For now we do a niave approach; this could be faster [Robb P. Matzke 2014-08-02]
     detachBasicBlock(placeholder);                      // throw away the original block
-    ControlFlowGraph::VertexNodeIterator newPlaceholder = insertPlaceholder(insn->get_address());
+    ControlFlowGraph::VertexIterator newPlaceholder = insertPlaceholder(insn->get_address());
     BasicBlock::Ptr newBlock = discoverBasicBlock(placeholder); // rediscover original block, but terminate at newPlaceholder
     attachBasicBlock(placeholder, newBlock);            // insert new block at original placeholder and insert successor edge
     return newPlaceholder;
 }
 
-ControlFlowGraph::VertexNodeIterator
+ControlFlowGraph::VertexIterator
 Partitioner::insertPlaceholder(rose_addr_t startVa) {
-    ControlFlowGraph::VertexNodeIterator placeholder = findPlaceholder(startVa);
+    ControlFlowGraph::VertexIterator placeholder = findPlaceholder(startVa);
     if (placeholder == cfg_.vertices().end()) {
         AddressUser addressUser;
         if (instructionExists(startVa).assignTo(addressUser)) {
-            ControlFlowGraph::VertexNodeIterator conflictBlock = findPlaceholder(addressUser.basicBlock()->address());
+            ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(addressUser.basicBlock()->address());
             placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
             ASSERT_require(placeholder->value().address() == startVa);
         } else {
@@ -435,12 +435,12 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
 void
 Partitioner::attachBasicBlock(const BasicBlock::Ptr &bblock) {
     ASSERT_not_null(bblock);
-    ControlFlowGraph::VertexNodeIterator placeholder = insertPlaceholder(bblock->address()); // insert or find existing
+    ControlFlowGraph::VertexIterator placeholder = insertPlaceholder(bblock->address()); // insert or find existing
     attachBasicBlock(placeholder, bblock);
 }
 
 void
-Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr &bblock) {
+Partitioner::attachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, const BasicBlock::Ptr &bblock) {
     ASSERT_require(placeholder != cfg_.vertices().end());
     ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
     ASSERT_not_null(bblock);
@@ -479,7 +479,7 @@ Partitioner::attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeh
 
     // Make sure placeholders exist for the concrete successors
     bool hadIndeterminate = false;
-    typedef std::pair<ControlFlowGraph::VertexNodeIterator, CfgEdge> VertexEdgePair;
+    typedef std::pair<ControlFlowGraph::VertexIterator, CfgEdge> VertexEdgePair;
     std::vector<VertexEdgePair> successors;
     BOOST_FOREACH (const BasicBlock::Successor &successor, basicBlockSuccessors(bblock)) {
         EdgeType edgeType = successor.type();
@@ -570,7 +570,7 @@ Partitioner::basicBlockDataExtent(const BasicBlock::Ptr &bblock) const {
 Function::Ptr
 Partitioner::basicBlockFunctionOwner(const BasicBlock::Ptr &bblock) const {
     ASSERT_not_null(bblock);
-    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblock->address());
+    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblock->address());
     if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
         placeholder->value().function()!=NULL) {
         return placeholder->value().function();
@@ -582,7 +582,7 @@ std::vector<Function::Ptr>
 Partitioner::basicBlockFunctionOwners(const std::set<rose_addr_t> &bblockVas) const {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (rose_addr_t va, bblockVas) {
-        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(va);
+        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(va);
         if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
             placeholder->value().function()!=NULL) {
             insertUnique(retval, placeholder->value().function(), sortFunctionsByAddress);
@@ -595,7 +595,7 @@ std::vector<Function::Ptr>
 Partitioner::basicBlockFunctionOwners(const std::vector<BasicBlock::Ptr> &bblocks) const {
     std::vector<Function::Ptr> retval;
     BOOST_FOREACH (const BasicBlock::Ptr &bblock, bblocks) {
-        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblock->address());
+        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblock->address());
         if (placeholder!=cfg_.vertices().end() && placeholder->value().type()==V_BASIC_BLOCK &&
             placeholder->value().function()!=NULL) {
             insertUnique(retval, placeholder->value().function(), sortFunctionsByAddress);
@@ -822,7 +822,7 @@ Partitioner::basicBlockStackDeltaIn(const BasicBlock::Ptr &bb) const {
 
     // The basic block must be owned by a function, and we use that function's entry point to generate a CFG, which is then
     // used as the basis of a dataflow analysis to compute the final stack offset.
-    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bb->address());
+    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
     if (!bb->isFrozen() || placeholder == cfg_.vertices().end()) {
         mlog[ERROR] <<"cannot compute stack delta for detached " <<bb->printableName() <<"\n";
         return BaseSemantics::SValuePtr();
@@ -850,6 +850,13 @@ Partitioner::basicBlockStackDeltaOut(const BasicBlock::Ptr &bb) const {
     basicBlockStackDeltaIn(bb);                         // caches stackDeltaOut by side effect
     bb->stackDeltaOut().getOptional().assignTo(delta);
     return delta;
+}
+
+ControlFlowGraph::ConstVertexIterator
+Partitioner::instructionVertex(rose_addr_t insnVa) const {
+    if (BasicBlock::Ptr bblock = basicBlockContainingInstruction(insnVa))
+        return findPlaceholder(bblock->address());
+    return cfg().vertices().end();
 }
 
 std::vector<SgAsmInstruction*>
@@ -1025,7 +1032,7 @@ Partitioner::attachFunctionDataBlock(const Function::Ptr &function, const DataBl
 
 Function::Ptr
 Partitioner::findFunctionOwningBasicBlock(rose_addr_t bblockVa) const {
-    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblockVa);
+    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
     return placeholder != cfg_.vertices().end() ? placeholder->value().function() : Function::Ptr();
 }
 
@@ -1076,7 +1083,7 @@ Partitioner::functionsOverlapping(const AddressInterval &interval) const {
     AddressUsers overlapping = aum_.overlapping(interval);
     BOOST_FOREACH (const AddressUser &user, overlapping.addressUsers()) {
         if (BasicBlock::Ptr bb = user.basicBlock()) {
-            ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bb->address());
+            ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bb->address());
             ASSERT_require(placeholder != cfg_.vertices().end());
             ASSERT_require(placeholder->value().bblock()==bb);
             if (Function::Ptr function = placeholder->value().function())
@@ -1097,7 +1104,7 @@ Partitioner::functionExtent(const Function::Ptr &function) const {
 
     // Basic blocks and their data
     BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(bblockVa);
+        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bblockVa);
         if (placeholder != cfg_.vertices().end()) {
             if (BasicBlock::Ptr bblock = placeholder->value().bblock()) {
                 retval.insertMultiple(basicBlockInstructionExtent(bblock));
@@ -1116,7 +1123,7 @@ Partitioner::functionExtent(const Function::Ptr &function) const {
 }
 
 void
-Partitioner::bblockAttached(const ControlFlowGraph::VertexNodeIterator &newVertex) {
+Partitioner::bblockAttached(const ControlFlowGraph::VertexIterator &newVertex) {
     ASSERT_require(newVertex!=cfg_.vertices().end());
     ASSERT_require(newVertex->value().type() == V_BASIC_BLOCK);
     if (isReportingProgress_)
@@ -1182,14 +1189,14 @@ Partitioner::checkConsistency() const {
     Stream debug(mlog[DEBUG]);
     if (extraDebuggingOutput)
         debug <<"checking partitioner consistency...\n";
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, cfg_.vertices()) {
         if (vertex.value().type() == V_BASIC_BLOCK) {
             if (extraDebuggingOutput && debug) {
                 debug <<"  basic block" <<(vertex.value().bblock()?"":" placeholder")
                       <<" " <<addrToString(vertex.value().address()) <<"\n";
                 debug <<"    outgoing edges:";
-                BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.outEdges()) {
-                    const ControlFlowGraph::VertexNode &target = *edge.target();
+                BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
+                    const ControlFlowGraph::Vertex &target = *edge.target();
                     switch (target.value().type()) {
                         case V_BASIC_BLOCK:
                             debug <<" " <<addrToString(target.value().address());
@@ -1203,6 +1210,9 @@ Partitioner::checkConsistency() const {
                         case V_UNDISCOVERED:
                             debug <<" undiscovered";
                             break;
+                        case V_USER_DEFINED:
+                            debug <<" user-defined";
+                            break;
                     }
                 }
                 debug <<"\n";
@@ -1215,7 +1225,7 @@ Partitioner::checkConsistency() const {
                     // Non-existing basic block
                     ASSERT_require2(vertex.nOutEdges()==1,
                                     "nonexisting block " + addrToString(bb->address()) + " must have one outgoing edge");
-                    ControlFlowGraph::ConstEdgeNodeIterator edge = vertex.outEdges().begin();
+                    ControlFlowGraph::ConstEdgeIterator edge = vertex.outEdges().begin();
                     ASSERT_require2(edge->target() == nonexistingVertex_,
                                     "nonexisting block " + addrToString(bb->address()) + " edges must go to a special vertex");
                 } else {
@@ -1240,7 +1250,7 @@ Partitioner::checkConsistency() const {
                 ASSERT_require2(vertex.nOutEdges() == 1,
                                 "placeholder " + addrToString(vertex.value().address()) +
                                 " must have exactly one outgoing edge");
-                ControlFlowGraph::ConstEdgeNodeIterator edge = vertex.outEdges().begin();
+                ControlFlowGraph::ConstEdgeIterator edge = vertex.outEdges().begin();
                 ASSERT_require2(edge->target() == undiscoveredVertex_,
                                 "placeholder " + addrToString(vertex.value().address()) +
                                 " edge must go to a special vertex");
@@ -1279,7 +1289,7 @@ Partitioner::functionName(const Function::Ptr &function) {
 
 // class method
 std::string
-Partitioner::vertexName(const ControlFlowGraph::VertexNode &vertex) {
+Partitioner::vertexName(const ControlFlowGraph::Vertex &vertex) {
     switch (vertex.value().type()) {
         case V_BASIC_BLOCK: {
             std::string retval = StringUtility::addrToString(vertex.value().address()) +
@@ -1298,12 +1308,14 @@ Partitioner::vertexName(const ControlFlowGraph::VertexNode &vertex) {
             return "non-existing<" + StringUtility::numberToString(vertex.id()) + ">";
         case V_UNDISCOVERED:
             return "undiscovered<" + StringUtility::numberToString(vertex.id()) + ">";
+        case V_USER_DEFINED:
+            return "user-defined<" + StringUtility::numberToString(vertex.id()) + ">";
     }
     ASSERT_not_reachable("invalid vertex type");
 }
 
 std::string
-Partitioner::vertexName(const ControlFlowGraph::ConstVertexNodeIterator &vertex) const {
+Partitioner::vertexName(const ControlFlowGraph::ConstVertexIterator &vertex) const {
     if (vertex != cfg_.vertices().end())
         return vertexName(*vertex);
     return "no-vertex";
@@ -1311,7 +1323,7 @@ Partitioner::vertexName(const ControlFlowGraph::ConstVertexNodeIterator &vertex)
 
 // class method
 std::string
-Partitioner::vertexNameEnd(const ControlFlowGraph::VertexNode &vertex) {
+Partitioner::vertexNameEnd(const ControlFlowGraph::Vertex &vertex) {
     if (vertex.value().type() == V_BASIC_BLOCK) {
         if (BasicBlock::Ptr bb = vertex.value().bblock()) {
             if (!bb->isEmpty()) {
@@ -1324,7 +1336,7 @@ Partitioner::vertexNameEnd(const ControlFlowGraph::VertexNode &vertex) {
 
 // class method
 std::string
-Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) {
+Partitioner::edgeNameDst(const ControlFlowGraph::Edge &edge) {
     std::string retval;
     switch (edge.value().type()) {
         case E_NORMAL:
@@ -1341,12 +1353,15 @@ Partitioner::edgeNameDst(const ControlFlowGraph::EdgeNode &edge) {
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
+        case E_USER_DEFINED:
+            retval += "<user>";
+            break;
     }
     return retval + vertexName(*edge.target());
 }
 
 std::string
-Partitioner::edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+Partitioner::edgeNameDst(const ControlFlowGraph::ConstEdgeIterator &edge) const {
     if (edge != cfg_.edges().end())
         return edgeNameDst(*edge);
     return "no-edge";
@@ -1354,8 +1369,8 @@ Partitioner::edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator &edge) co
 
 // class method
 std::string
-Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
-    const ControlFlowGraph::VertexNode &source = *edge.source();
+Partitioner::edgeNameSrc(const ControlFlowGraph::Edge &edge) {
+    const ControlFlowGraph::Vertex &source = *edge.source();
     std::string retval = vertexNameEnd(source);
     switch (edge.value().type()) {
         case E_NORMAL:
@@ -1372,12 +1387,15 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::EdgeNode &edge) {
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
+        case E_USER_DEFINED:
+            retval += "<user>";
+            break;
     }
     return retval;
 }
 
 std::string
-Partitioner::edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+Partitioner::edgeNameSrc(const ControlFlowGraph::ConstEdgeIterator &edge) const {
     if (edge != cfg_.edges().end())
         return edgeNameSrc(*edge);
     return "no-edge";
@@ -1385,7 +1403,7 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator &edge) co
 
 // class method
 std::string
-Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
+Partitioner::edgeName(const ControlFlowGraph::Edge &edge) {
     std::string retval = vertexNameEnd(*edge.source()) + " ";
     switch (edge.value().type()) {
         case E_NORMAL:
@@ -1402,12 +1420,15 @@ Partitioner::edgeName(const ControlFlowGraph::EdgeNode &edge) {
         case E_CALL_RETURN:
             retval += "(callret)";
             break;
+        case E_USER_DEFINED:
+            retval += "(user)";
+            break;
     }
     return retval + "-> " + vertexName(*edge.target());
 }
 
 std::string
-Partitioner::edgeName(const ControlFlowGraph::ConstEdgeNodeIterator &edge) const {
+Partitioner::edgeName(const ControlFlowGraph::ConstEdgeIterator &edge) const {
     if (edge != cfg_.edges().end())
         return edgeName(*edge);
     return "no-edge";
@@ -1421,13 +1442,13 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
     unparser.set_registers(instructionProvider_->registerDictionary());
 
     // Sort the vertices according to basic block starting address.
-    std::vector<ControlFlowGraph::ConstVertexNodeIterator> sortedVertices;
-    for (ControlFlowGraph::ConstVertexNodeIterator vi=cfg_.vertices().begin(); vi!=cfg_.vertices().end(); ++vi) {
+    std::vector<ControlFlowGraph::ConstVertexIterator> sortedVertices;
+    for (ControlFlowGraph::ConstVertexIterator vi=cfg_.vertices().begin(); vi!=cfg_.vertices().end(); ++vi) {
         if (vi->value().type() == V_BASIC_BLOCK)
             sortedVertices.push_back(vi);
     }
     std::sort(sortedVertices.begin(), sortedVertices.end(), sortVerticesByAddress);
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexNodeIterator &vertex, sortedVertices) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, sortedVertices) {
         out <<prefix <<"basic block " <<vertexName(*vertex);
         if (vertex->value().function()) {
             if (vertex->value().function()->address() == vertex->value().address()) {
@@ -1439,15 +1460,15 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         out <<"\n";
 
         // Sort incoming edges according to source (makes comparisons easier)
-        std::vector<ControlFlowGraph::ConstEdgeNodeIterator> sortedInEdges;
-        for (ControlFlowGraph::ConstEdgeNodeIterator ei=vertex->inEdges().begin(); ei!=vertex->inEdges().end(); ++ei)
+        std::vector<ControlFlowGraph::ConstEdgeIterator> sortedInEdges;
+        for (ControlFlowGraph::ConstEdgeIterator ei=vertex->inEdges().begin(); ei!=vertex->inEdges().end(); ++ei)
             sortedInEdges.push_back(ei);
         std::sort(sortedInEdges.begin(), sortedInEdges.end(), sortEdgesBySrc);
         out <<prefix <<"  predecessors:";
         if (sortedInEdges.empty()) {
             out <<" none\n";
         } else {
-            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedInEdges)
+            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, sortedInEdges)
                 out <<" " <<edgeNameSrc(*edge);
             out <<"\n";
         }
@@ -1533,15 +1554,15 @@ Partitioner::dumpCfg(std::ostream &out, const std::string &prefix, bool showBloc
         }
         
         // Sort outgoing edges according to destination (makes comparisons easier)
-        std::vector<ControlFlowGraph::ConstEdgeNodeIterator> sortedOutEdges;
-        for (ControlFlowGraph::ConstEdgeNodeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
+        std::vector<ControlFlowGraph::ConstEdgeIterator> sortedOutEdges;
+        for (ControlFlowGraph::ConstEdgeIterator ei=vertex->outEdges().begin(); ei!=vertex->outEdges().end(); ++ei)
             sortedOutEdges.push_back(ei);
         std::sort(sortedOutEdges.begin(), sortedOutEdges.end(), sortEdgesByDst);
         out <<prefix <<"  successors:";
         if (sortedOutEdges.empty()) {
             out <<" none\n";
         } else {
-            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeNodeIterator &edge, sortedOutEdges)
+            BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, sortedOutEdges)
                 out <<" " <<edgeNameDst(*edge);
             out <<"\n";
         }
@@ -1746,7 +1767,7 @@ Partitioner::attachFunctionBasicBlocks(const Function::Ptr &function) {
     size_t nNewBlocks = 0;
     bool functionExists = functions_.exists(function->address());
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::VertexNodeIterator placeholder = findPlaceholder(blockVa);
+        ControlFlowGraph::VertexIterator placeholder = findPlaceholder(blockVa);
         if (placeholder == cfg_.vertices().end()) {
             placeholder = insertPlaceholder(blockVa);
             ++nNewBlocks;
@@ -1771,7 +1792,7 @@ Partitioner::detachFunction(const Function::Ptr &function) {
 
     // Unlink basic block ownership, but do not detach basic blocks from CFG/AUM
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::VertexNodeIterator placeholder = findPlaceholder(blockVa);
+        ControlFlowGraph::VertexIterator placeholder = findPlaceholder(blockVa);
         ASSERT_require(placeholder != cfg_.vertices().end());
         ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
         ASSERT_require(placeholder->value().function() == function);
@@ -1794,7 +1815,7 @@ AddressUsageMap
 Partitioner::aum(const Function::Ptr &function) const {
     AddressUsageMap retval;
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(blockVa);
+        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(blockVa);
         if (placeholder != cfg_.vertices().end()) {
             ASSERT_require(placeholder->value().type() == V_BASIC_BLOCK);
             if (BasicBlock::Ptr bb = placeholder->value().bblock()) {
@@ -1818,7 +1839,7 @@ Partitioner::ghostSuccessors() const {
         if (vertex.type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bb = vertex.bblock()) {
                 BOOST_FOREACH (rose_addr_t ghost, basicBlockGhostSuccessors(bb)) {
-                    ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(ghost);
+                    ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(ghost);
                     if (placeholder == cfg_.vertices().end())
                         ghosts.insert(ghost);
                 }
@@ -1841,9 +1862,9 @@ Partitioner::functions() const {
 std::vector<Function::Ptr>
 Partitioner::discoverCalledFunctions() const {
     std::vector<Function::Ptr> functions;
-    BOOST_FOREACH (const ControlFlowGraph::VertexNode &vertex, cfg_.vertices()) {
+    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, cfg_.vertices()) {
         if (vertex.value().type() == V_BASIC_BLOCK && !functions_.exists(vertex.value().address())) {
-            BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, vertex.inEdges()) {
+            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.inEdges()) {
                 if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                     rose_addr_t entryVa = vertex.value().address();
                     insertUnique(functions, Function::instance(entryVa), sortFunctionsByAddress);
@@ -1865,8 +1886,8 @@ Partitioner::discoverFunctionEntryVertices() const {
 
 size_t
 Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         EdgeList *inwardInterFunctionEdges /*out*/,
-                                         EdgeList *outwardInterFunctionEdges /*out*/) {
+                                         CfgEdgeList *inwardInterFunctionEdges /*out*/,
+                                         CfgEdgeList *outwardInterFunctionEdges /*out*/) {
     std::vector<size_t> inwardIds, outwardIds;
     size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
     if (inwardInterFunctionEdges) {
@@ -1882,8 +1903,8 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
 
 size_t
 Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
-                                         ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                         ConstEdgeList *outwardInterFunctionEdges /*out*/) const {
+                                         CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                         CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const {
     std::vector<size_t> inwardIds, outwardIds;
     size_t retval = discoverFunctionBasicBlocks(function, inwardIds /*out*/, outwardIds /*out*/);
     if (inwardInterFunctionEdges) {
@@ -1949,7 +1970,7 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
 
     // Find the vertices that this function already owns
     BOOST_FOREACH (rose_addr_t startVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(startVa);
+        ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(startVa);
         if (placeholder == cfg_.vertices().end()) {
             throw Exception("block " + StringUtility::addrToString(startVa) + " of " + functionName(function) +
                             " must exist in the CFG");
@@ -1964,10 +1985,10 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
     // same time.  The loop is also therefore guaranteed to not visit an edge more than once.
     Sawyer::Container::Stack<size_t> worklist(ownership.keys());
     while (!worklist.isEmpty()) {
-        const ControlFlowGraph::VertexNode &source = *cfg_.findVertex(worklist.pop());
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, source.outEdges()) {
+        const ControlFlowGraph::Vertex &source = *cfg_.findVertex(worklist.pop());
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, source.outEdges()) {
             if (edge.value().type()!=E_FUNCTION_CALL && edge.value().type()!=E_FUNCTION_XFER && !edge.isSelfEdge()) {
-                const ControlFlowGraph::VertexNode &target = *edge.target();
+                const ControlFlowGraph::Vertex &target = *edge.target();
                 if (target.value().type()==V_BASIC_BLOCK && !ownership.exists(target.id())) {
                     if (target.value().function()) {
                         // Some other function already owns this vertex.  The edge is therefore an inter-function edge which
@@ -1992,11 +2013,11 @@ Partitioner::discoverFunctionBasicBlocks(const Function::Ptr &function,
     // wanted them in the function regardless of problems).
     BOOST_FOREACH (const VertexOwnership::Node &node, ownership.nodes()) {
         if (node.value() == Function::OWN_PROVISIONAL) {
-            const ControlFlowGraph::VertexNode &target = *cfg_.findVertex(node.key());
+            const ControlFlowGraph::Vertex &target = *cfg_.findVertex(node.key());
             SAWYER_MESG(debug) <<"  testing provisional vertex " <<vertexName(target) <<"\n";
             if (target.value().address() != function->address()) {
-                BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, target.inEdges()) {
-                    const ControlFlowGraph::VertexNode &source = *edge.source();
+                BOOST_FOREACH (const ControlFlowGraph::Edge &edge, target.inEdges()) {
+                    const ControlFlowGraph::Vertex &source = *edge.source();
                     SAWYER_MESG(debug) <<"    testing edge " <<edgeName(edge);
                     if (!ownership.exists(source.id())) {
                         // This edge crosses a function boundary yet is not labeled as a function call.
@@ -2034,7 +2055,7 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
         if (BasicBlock::Ptr bb = basicBlockExists(blockVa)) {
             BOOST_FOREACH (rose_addr_t ghost, basicBlockGhostSuccessors(bb)) {
-                ControlFlowGraph::ConstVertexNodeIterator placeholder = findPlaceholder(ghost);
+                ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(ghost);
                 if (placeholder == cfg_.vertices().end())
                     ghosts.insert(ghost);
             }
@@ -2046,7 +2067,7 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 FunctionCallGraph
 Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
-    BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfg_.edges()) {
+    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
             Function::Ptr target = edge.target()->value().function();

@@ -165,4 +165,15 @@ void SPRAY::RDLattice::setEmptySet() {
   rdSet.clear();
 }
 
+SPRAY::LabelSet SPRAY::RDLattice::getRDs(VariableId varId) {
+  SPRAY::LabelSet rdSet;
+  for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
+    if((*i).second==varId) {
+      rdSet.insert((*i).first);
+    }
+  }
+  return rdSet;
+}
+
+
 #endif

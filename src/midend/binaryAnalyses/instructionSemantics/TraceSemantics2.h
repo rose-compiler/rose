@@ -2,7 +2,7 @@
 #define Rose_TraceSemantics2_H
 
 #include "BaseSemantics2.h"
-#include "threadSupport.h"
+#include "Diagnostics.h"
 
 namespace rose {
 namespace BinaryAnalysis {                      // documented elsewhere
@@ -59,49 +59,36 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Wraps RISC operators so they can be traced. */
 class RiscOperators: public BaseSemantics::RiscOperators {
-protected:
-    class LinePrefix: public RTS_Message::Prefix {
-    private:
-        BaseSemantics::RiscOperatorsPtr ops;
-        SgAsmInstruction *cur_insn;
-        size_t ninsns;
-    public:
-        LinePrefix(): cur_insn(NULL), ninsns(0) {}
-        void set_ops(const BaseSemantics::RiscOperatorsPtr &ops) { this->ops = ops; }
-        void set_insn(SgAsmInstruction *insn);
-        virtual void operator()(FILE*) ROSE_OVERRIDE;
-    };
-
-    BaseSemantics::RiscOperatorsPtr subdomain;          // Domain to which all our RISC operators chain
-    LinePrefix line_prefix;
-    RTS_Message mesg;                                   // Formats tracing output
-
+    BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
+    Sawyer::Message::Stream stream_;                    // stream to which output is emitted
+    size_t nInsns_;                                     // number of instructions processed
+    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
-        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()), subdomain(subdomain),
-          mesg(stderr, &line_prefix) {
+        : BaseSemantics::RiscOperators(subdomain->get_state(), subdomain->get_solver()),
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), nInsns_(0) {
         set_name("Trace");
-        line_prefix.set_ops(subdomain);
     }
 
 public:
     virtual ~RiscOperators() {
-        mesg.mesg("operators destroyed");
+        linePrefix();
+        stream_ <<"operators destroyed\n";
     }
     
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,8 +115,7 @@ public:
         RiscOperatorsPtr self = subdomain->get_state()!=NULL ?
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_state(), subdomain->get_solver())) :
                                 RiscOperatorsPtr(new RiscOperators(subdomain->get_protoval(), subdomain->get_solver()));
-        self->subdomain = subdomain;
-        self->line_prefix.set_ops(subdomain);
+        self->subdomain_ = subdomain;
         return self;
     }
 
@@ -166,30 +152,45 @@ public:
     // Methods first defined at this level of the class hierarchy
 public:
     /** Obtain a pointer to the subdomain's RISC operators.  The subdomain is the one that is being traced. */
-    virtual BaseSemantics::RiscOperatorsPtr get_subdomain() const {
-        return subdomain;
+    virtual BaseSemantics::RiscOperatorsPtr get_subdomain() const ROSE_DEPRECATED("use subdomain instead") {
+        return subdomain();
     }
+
 
     /** Set the subdomain that is to be traced. All our RISC operators will simply chain to the subdomain operators. */
-    void set_subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain) {
-        this->subdomain = subdomain;
-        line_prefix.set_ops(subdomain);
+    void set_subdomain(const BaseSemantics::RiscOperatorsPtr &sd) ROSE_DEPRECATED("use subdomain instead") {
+        subdomain(sd);
     }
 
-    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception. */
-    void check_subdomain() const {
-        if (subdomain==NULL)
+    /** Property: Subdomain to which operations are forwarded.
+     *
+     * @{ */
+    const BaseSemantics::RiscOperatorsPtr& subdomain() const { return subdomain_; }
+    void subdomain(const BaseSemantics::RiscOperatorsPtr &subdomain) { subdomain_ = subdomain; }
+    /** @} */
+
+    /** Check that we have a valid subdomain.  If the subdomain isn't value (hasn't been set) then throw an exception.
+     *
+     *  @{ */
+    void check_subdomain() const ROSE_DEPRECATED("use checkSubodmain instead") {
+        checkSubdomain();
+    }
+    void checkSubdomain() const {
+        if (subdomain_==NULL)
             throw BaseSemantics::Exception("subdomain is not set; nothing to trace", NULL);
     }
+    /** @} */
 
-    /** Set the I/O stream to which tracing will be emitted.  The default is standard error. */
-    void set_stream(FILE *f) { mesg.set_file(f); }
-
-    /** Obtain the I/O stream to which tracing is being emitted. */
-    FILE *get_stream() const { return mesg.get_file(); }
-        
+    /** Property: output stream to which tracing is emitted.  The default is the INFO stream of the
+     * rose::BinaryAnalysis::InstructionSemantics2 message facility. Output will only show up when this stream is enabled.
+     *
+     * @{ */
+    Sawyer::Message::Stream& stream() { return stream_; }
+    void stream(Sawyer::Message::Stream &s) { stream_ = s; }
+    /** @} */
 
 protected:
+    void linePrefix();
     std::string toString(const BaseSemantics::SValuePtr&);
     void check_equal_widths(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits,
@@ -203,7 +204,7 @@ protected:
                 size_t);
     void before(const std::string&, const RegisterDescriptor&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
-    void before(const std::string&, SgAsmInstruction*);
+    void before(const std::string&, SgAsmInstruction*, bool showAddress);
     void before(const std::string&, size_t);
     void before(const std::string&, size_t, uint64_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&);

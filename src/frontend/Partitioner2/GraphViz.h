@@ -33,6 +33,14 @@ std::string htmlEscape(const std::string&);
  *  The returned string will include double quote or angle-brackets as necessary depending on the input string. */
 std::string escape(const std::string&);
 
+/** Append a value to an existing string.
+ *
+ *  Appends @p newStuff to the end of @p oldStuff taking into account that @p oldStuff is already quoted and escaped. The @p
+ *  newStuff should not be quoted or escaped.  This is useful for appending additional information to a label. The @p separator
+ *  is escaped and inserted between the @p oldStuff and @p newStuff if @p oldStuff is not empty. Returns a new string that is
+ *  also quoted and escaped. */
+std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
+
 /** Determins if a string is a valid GraphViz ID.
  *
  *  True if s forms a valid GraphViz ID.  ID strings do not need special quoting in the GraphViz language. */
@@ -129,10 +137,10 @@ public:
 
 protected:
     struct PseudoEdge {
-        typename G::ConstVertexNodeIterator src, dst;
+        typename G::ConstVertexIterator src, dst;
         std::string label;
         Attributes attributes;
-        PseudoEdge(const typename G::ConstVertexNodeIterator &src, const typename G::ConstVertexNodeIterator &dst,
+        PseudoEdge(const typename G::ConstVertexIterator &src, const typename G::ConstVertexIterator &dst,
                    const std::string &label)
             : src(src), dst(dst), label(label) {}
     };
@@ -246,16 +254,16 @@ public:
         ASSERT_require(vertexId < vertexOrganization_.size());
         return vertexOrganization_[vertexId];
     }
-    const Organization& vertexOrganization(const typename G::ConstVertexNodeIterator &vertex) const {
+    const Organization& vertexOrganization(const typename G::ConstVertexIterator &vertex) const {
         return vertexOrganization(vertex->id());
     }
-    const Organization& vertexOrganization(const typename G::VertexNode &vertex) const {
+    const Organization& vertexOrganization(const typename G::Vertex &vertex) const {
         return vertexOrganization(vertex.id());
     }
-    Organization& vertexOrganization(const typename G::ConstVertexNodeIterator &vertex) {
+    Organization& vertexOrganization(const typename G::ConstVertexIterator &vertex) {
         return vertexOrganization(vertex->id());
     }
-    Organization& vertexOrganization(const typename G::VertexNode &vertex) {
+    Organization& vertexOrganization(const typename G::Vertex &vertex) {
         return vertexOrganization(vertex.id());
     }
     /** @} */
@@ -284,16 +292,16 @@ public:
         ASSERT_require(edgeId < edgeOrganization_.size());
         return edgeOrganization_[edgeId];
     }
-    const Organization& edgeOrganization(const typename G::ConstEdgeNodeIterator &edge) const {
+    const Organization& edgeOrganization(const typename G::ConstEdgeIterator &edge) const {
         return edgeOrganization(edge->id());
     }
-    const Organization& edgeOrganization(const typename G::EdgeNode &edge) const {
+    const Organization& edgeOrganization(const typename G::Edge &edge) const {
         return edgeOrganization(edge.id());
     }
-    Organization& edgeOrganization(const typename G::ConstEdgeNodeIterator &edge) {
+    Organization& edgeOrganization(const typename G::ConstEdgeIterator &edge) {
         return edgeOrganization(edge->id());
     }
-    Organization& edgeOrganization(const typename G::EdgeNode &edge) {
+    Organization& edgeOrganization(const typename G::Edge &edge) {
         return edgeOrganization(edge.id());
     }
     /** @} */
@@ -355,6 +363,11 @@ public:
         BOOST_FOREACH (Organization &org, edgeOrganization_)
             org.select(b);
     }
+
+    /** Deselect all but one parallel edge.
+     *
+     *  For parallel edges between a pair of vertices, all but one is deselected.  Which one remains selected is arbitrary. */
+    void deselectParallelEdges();
     
     /** Dump selected vertices, edges, and subgraphs.
      *
@@ -366,10 +379,10 @@ protected:
     /** Emit a single vertex if it hasn't been emitted already.
      *
      *  In any case, returns the GraphViz ID number for the vertex. */
-    size_t emitVertex(std::ostream&, const typename G::ConstVertexNodeIterator&, const Organization&, const VMap&) const;
+    size_t emitVertex(std::ostream&, const typename G::ConstVertexIterator&, const Organization&, const VMap&) const;
 
     /** Emit a single edge.  The vertices must have been emitted already. */
-    void emitEdge(std::ostream&, const typename G::ConstEdgeNodeIterator&, const Organization&, const VMap&) const;
+    void emitEdge(std::ostream&, const typename G::ConstEdgeIterator&, const Organization&, const VMap&) const;
 
 };
 
@@ -432,6 +445,11 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
+
+    /** Property: partitioner.
+     *
+     *  The partitioner that's being used, set when this emitter was constructed. */
+    const Partitioner& partitioner() { return partitioner_; }
 
     /** Property: use function subgraphs.
      *
@@ -643,8 +661,8 @@ public:
     /** Returns true if the edge spans two different functions.
      *
      * @{ */
-    static bool isInterFunctionEdge(const ControlFlowGraph::EdgeNode&);
-    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeNodeIterator &e) { return isInterFunctionEdge(*e); }
+    static bool isInterFunctionEdge(const ControlFlowGraph::Edge&);
+    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
     /** @} */
 
     /** Function that owns a vertex.
@@ -652,8 +670,8 @@ public:
      *  Returns a pointer to the function that owns the specified vertex, or null if there is no owner.
      *
      *  @{ */
-    static Function::Ptr owningFunction(const ControlFlowGraph::VertexNode&);
-    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexNodeIterator &v) { return owningFunction(*v); }
+    static Function::Ptr owningFunction(const ControlFlowGraph::Vertex&);
+    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunction(*v); }
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
@@ -669,7 +687,7 @@ public:
      *
      *  Returns a string indicating the source code location for a vertex.  If no information is available then an empty string
      *  is returned. */
-    virtual std::string sourceLocation(const ControlFlowGraph::ConstVertexNodeIterator&) const;
+    virtual std::string sourceLocation(const ControlFlowGraph::ConstVertexIterator&) const;
 
     /** Label for CFG vertex.
      *
@@ -677,8 +695,8 @@ public:
      *  The returned lable must include the delimiting double quotes or angle brackets and have proper escaping of contents.
      *
      *  @{ */
-    virtual std::string vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    std::string vertexLabel(const ControlFlowGraph::VertexNode&) const;
+    virtual std::string vertexLabel(const ControlFlowGraph::ConstVertexIterator&) const;
+    std::string vertexLabel(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Detailed label for CFG vertex.
@@ -688,15 +706,15 @@ public:
      *  showInstructionStackDeltas properties.
      *
      *  @{ */
-    virtual std::string vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    std::string vertexLabelDetailed(const ControlFlowGraph::VertexNode&) const;
+    virtual std::string vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator&) const;
+    std::string vertexLabelDetailed(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Attributes for a CFG vertex.
      *
      * @{ */
-    virtual Attributes vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    Attributes vertexAttributes(const ControlFlowGraph::VertexNode&) const;
+    virtual Attributes vertexAttributes(const ControlFlowGraph::ConstVertexIterator&) const;
+    Attributes vertexAttributes(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Label for CFG edge.
@@ -704,15 +722,15 @@ public:
      *  The returned lable must include the delimiting double quotes or angle brackets and have  proper escaping of contents.
      *
      *  @{ */
-    virtual std::string edgeLabel(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
-    std::string edgeLabel(const ControlFlowGraph::EdgeNode&) const;
+    virtual std::string edgeLabel(const ControlFlowGraph::ConstEdgeIterator&) const;
+    std::string edgeLabel(const ControlFlowGraph::Edge&) const;
     /** @} */
 
     /** Attributes for a CFG edge.
      *
      *  @{ */
-    virtual Attributes edgeAttributes(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
-    Attributes edgeAttributes(const ControlFlowGraph::EdgeNode&) const;
+    virtual Attributes edgeAttributes(const ControlFlowGraph::ConstEdgeIterator&) const;
+    Attributes edgeAttributes(const ControlFlowGraph::Edge&) const;
     /** @} */
 
     /** Label for function vertex.
@@ -746,7 +764,7 @@ public:
 
 template<class G>
 size_t
-BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexNodeIterator &vertex,
+BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexIterator &vertex,
                            const Organization &org, const VMap &vmap) const {
     size_t id = NO_ID;
     if (org.isSelected() && !vmap.getOptional(vertex->id()).assignTo(id)) {
@@ -759,7 +777,7 @@ BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexNodeI
 
 template<class G>
 void
-BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeNodeIterator &edge, const Organization &org,
+BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeIterator &edge, const Organization &org,
                          const VMap &vmap) const {
     ASSERT_require2(vmap.exists(edge->source()->id()), "edge source vertex has not yet been emitted");
     ASSERT_require2(vmap.exists(edge->target()->id()), "edge target vertex has not yet been emitted");
@@ -783,7 +801,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     Subgraphs subgraphs;
 
     // Emit vertices to subgraphs
-    for (typename G::ConstVertexNodeIterator vertex=graph_.vertices().begin(); vertex!=graph_.vertices().end(); ++vertex) {
+    for (typename G::ConstVertexIterator vertex=graph_.vertices().begin(); vertex!=graph_.vertices().end(); ++vertex) {
         const Organization &org = vertexOrganization(vertex);
         if (org.isSelected() && !vmap.exists(vertex->id())) {
             std::ostringstream ss;
@@ -794,7 +812,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
 
     // Emit edges to subgraphs
-    for (typename G::ConstEdgeNodeIterator edge=graph_.edges().begin(); edge!=graph_.edges().end(); ++edge) {
+    for (typename G::ConstEdgeIterator edge=graph_.edges().begin(); edge!=graph_.edges().end(); ++edge) {
         const Organization &org = edgeOrganization(edge);
         if (org.isSelected() &&
             vertexOrganization(edge->source()).isSelected() && vertexOrganization(edge->target()).isSelected()) {
@@ -828,6 +846,20 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
     
     out <<"}\n";
+}
+
+template<class G>
+void
+BaseEmitter<G>::deselectParallelEdges() {
+    BOOST_FOREACH (const typename G::Vertex &src, graph_.vertices()) {
+        if (vertexOrganization(src).isSelected()) {
+            std::set<size_t> targets;
+            BOOST_FOREACH (const typename G::Edge &edge, src.outEdges()) {
+                if (edgeOrganization(edge).isSelected() && !targets.insert(edge.target()->id()).second)
+                    edgeOrganization(edge).select(false);
+            }
+        }
+    }
 }
 
 } // namespace

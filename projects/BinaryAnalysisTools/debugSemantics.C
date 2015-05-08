@@ -59,6 +59,7 @@ Sawyer::Message::Facility mlog;
 // Command-line settings
 struct Settings {
     std::string isaName;                                // name of instruction set architecture
+    std::vector<rose_addr_t> startVas;                  // where to start disassembling
     std::string valueClassName;                         // name of semantic values class, abbreviated
     std::string rstateClassName;                        // name of register state class, abbreviated
     std::string mstateClassName;                        // name of memory state class, abbreviated
@@ -88,6 +89,15 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .doc("Instruction set architecture.  If the specimen has a binary container (e.g., ELF, PE) then the "
                      "architecture is obtained from the container (overridden by this switch), otherwise the user must "
                      "specify an architecture. Use \"@s{isa} list\" to see a list of recognized names."));
+
+    load.insert(Switch("start")
+                .argument("addresses", listParser(nonNegativeIntegerParser(settings.startVas)))
+                .whichValue(SAVE_ALL)
+                .explosiveLists(true)
+                .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
+                    "other methods. Each address listed by this switch will be considered the entry point of a function. "
+                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
+
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
@@ -504,8 +514,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     if (!dispatcher)
         throw std::runtime_error("no semantics dispatcher available for architecture");
     if (settings.trace) {
+        // Wrap the RISC operators in TraceSemantics::RiscOperators and adjust the output stream to be standard output since
+        // the trace is considered the main output from this command and needs to be properly interleaved with the other output
+        // on stdout.
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(ops);
-        trace->set_stream(stdout);
+        trace->stream().destination(Sawyer::Message::FileSink::instance(stdout, Sawyer::Message::Prefix::silentInstance()));
         dispatcher = dispatcher->create(trace);
     } else {
         dispatcher = dispatcher->create(ops);
@@ -548,7 +561,13 @@ main(int argc, char *argv[]) {
     (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
-    P2::Partitioner partitioner = engine.partition(specimenNames);
+    engine.load(specimenNames);
+    P2::Partitioner partitioner = engine.createTunedPartitioner();
+    BOOST_FOREACH (rose_addr_t va, settings.startVas) {
+        P2::Function::Ptr function = P2::Function::instance(va, SgAsmFunction::FUNC_USERDEF);
+        partitioner.attachOrMergeFunction(function);
+    }
+    engine.runPartitioner(partitioner, engine.interpretation());
     testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block

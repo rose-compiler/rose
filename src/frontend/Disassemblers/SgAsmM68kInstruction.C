@@ -168,7 +168,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_for_isa(interp);
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         SValuePtr orig_sp = SValue::promote(ops->readRegister(dispatcher->REG_A[7]));
         try {
             for (size_t i=0; i<insns.size(); ++i)
@@ -226,7 +226,7 @@ SgAsmM68kInstruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>& i
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
         SMTSolver *solver = NULL; // using a solver would be more accurate, but slower
         BaseSemantics::RiscOperatorsPtr ops = RiscOperators::instance(regdict, solver);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         try {
             for (size_t i=0; i<insns.size(); ++i)
                 dispatcher->processInstruction(insns[i]);
@@ -447,7 +447,7 @@ SgAsmM68kInstruction::getSuccessors(const std::vector<SgAsmInstruction*>& insns,
         const RegisterDictionary *regdict = RegisterDictionary::dictionary_coldfire_emac();
         RiscOperatorsPtr ops = RiscOperators::instance(regdict);
         ops->set_memory_map(initial_memory);
-        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops);
+        DispatcherM68kPtr dispatcher = DispatcherM68k::instance(ops, 32);
         
         try {
             for (size_t i=0; i<insns.size(); ++i) {

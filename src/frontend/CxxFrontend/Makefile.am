@@ -1,4 +1,26 @@
+################################################################################
+# How to install ROSE without EDG source code on a machine with no network:
+#   On a machine with a network connection:
+#     1. git-clone the ROSE sources
+#     2. copy the ROSE source tree to the other machine
+#     3. create a build directory and configure (minimal config is okay)
+#     4. in $BUILD/src/frontend/CxxFrontend run "make download-edg"
+#     5. follow the instructions to copy some files to the other machine
+# 
+#   On the non-networked machine:
+#     1. create a build directory and configure like usual
+#     2. copy the two files and symlink from step 5 above (*)
+#     3. run make
+# 
+#   *Note: the files must be copied such that the mtime for the
+#    tarball is not earlier than the other file, or else make will try
+#    to download on the non-networked machine.  The easiest way to
+#    ensure proper mtimes is to touch(1) the tarball after copying
+#    the files.
+################################################################################
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+MOSTLYCLEANFILES =
 
 SUBDIRS = Clang
 DIST_SUBDIRS = Clang
@@ -95,16 +117,34 @@ edg-generate-sig.output:
 # but others will need to go to a Web server.  We use wget rather than curl because curl was sometimes placing error
 # messages inside the tarball.  Note, we can't have two make targets with the same name even if they are in separate parts
 # of an automake 'if' statement; so we add a 'download-' prefix to this one.
-download-$(EDGBIN_BEST_NAME).tar.gz: edg-generate-sig.output
+EDG.tar.gz: edg-generate-sig.output
 	@if [ "$(EDGBIN_SIGNATURE)" = "" ]; then \
 	    echo "Invalid EDG binary compatibility signature "$(EDGBIN_SIGNATURE)" in filename '$(EDGBIN_BEST_NAME)'." >&2; \
 	    echo "Please contact rose-public@nersc.gov to troubleshoot this error message." >&2; \
 	    exit 1; \
 	fi
-	wget -O "$@" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
+	wget -O "$(EDGBIN_BEST_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"
+	touch $(EDGBIN_BEST_NAME).tar.gz
+	ln -sf $(EDGBIN_BEST_NAME).tar.gz $@
+
+# This target can be used to explicitly download the EDG tarball without needing to know its name.
+.PHONY: download-edg
+download-edg: EDG.tar.gz
+	@echo
+	@echo "The EDG tarball is $(EDGBIN_BEST_NAME).tar.gz"
+	@echo "To compile on a system with no network, copy this EDG tarball, the EDG.tar.gz symlink, and"
+	@echo "the edg-generate-sig.output file to the $$ROSE_BUILD/src/frontend/CxxFrontend directory on"
+	@echo "the machine with no network."
+
+# This target is for the user to obtain the EDG tarball name without downloading anything
+.PHONY: show-edg-name show-edg-url
+show-edg-name: edg-generate-sig.output
+	@echo $(EDGBIN_BEST_NAME).tar.gz
+show-edg-url: edg-generate-sig.output
+	@echo $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz
 
 # Unpack the EDG tarball. Note: $(am__untar) comes from configure and if it's not set then there's something wrong with configure.
-EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
+EDG/libroseEDG.la: EDG.tar.gz
 	GZIP=$(GZIP_ENV) gunzip -c $< |$(am__untar)
 	rm -rf EDG
 	mkdir -p EDG
@@ -115,6 +155,8 @@ EDG/libroseEDG.la: download-$(EDGBIN_BEST_NAME).tar.gz
 
 installdir = ${datadir}
 
+MOSTLYCLEANFILES += edg-generate-sig.output edg_binaries.txt EDG.tar.gz
+
 endif
 
 ###############################################################################################################################
@@ -122,7 +164,7 @@ endif
 ###############################################################################################################################
 
 # Cleanup
-MOSTLYCLEANFILES = EDG/libroseEDG.la
+MOSTLYCLEANFILES += EDG/libroseEDG.la
 clean-local:
 	rm -rf EDG/.libs {download-,}$(EDGBIN_NAME_PREFIX)-*.tar.gz
 endif

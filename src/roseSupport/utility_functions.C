@@ -265,9 +265,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // DQ (3/31/2004): If there are templates used then we need to modify the *.ti file build by EDG.
   // buildTemplateInstantiationSupportFile ( project );
 
-     /* Make sure the isModified boolean is clear for all newly-parsed nodes. */
-     checkIsModifiedFlag(project);
-     // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // Make sure the isModified boolean is clear for all newly-parsed nodes.
+  // checkIsModifiedFlag(project);
+     unsetNodesMarkedAsModified(project);
+
+  // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
      return project;

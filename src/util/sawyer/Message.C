@@ -639,6 +639,18 @@ Gang::removeInstance(int id) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// class method
+PrefixPtr
+Prefix::silentInstance() {
+    PrefixPtr prefix = instance();
+    prefix->showProgramName(false);
+    prefix->showThreadId(false);
+    prefix->showFacilityName(NEVER);
+    prefix->showImportance(false);
+    prefix->showElapsedTime(false);
+    return prefix;
+}
+
 // thread-safe (assuming Windows API is thread-safe)
 SAWYER_EXPORT void
 Prefix::setProgramName() {

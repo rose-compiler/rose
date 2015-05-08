@@ -20,18 +20,18 @@ NotInterprocedural NOT_INTERPROCEDURAL;
 class DfCfgBuilder {
 public:
     const Partitioner &partitioner;
-    const ControlFlowGraph &cfg;                                 // global control flow graph
-    const ControlFlowGraph::ConstVertexNodeIterator startVertex; // where to start in the global CFG
-    DfCfg dfCfg;                                                 // dataflow control flow graph we are building
-    InterproceduralPredicate &interproceduralPredicate;          // returns true when a call should be inlined
+    const ControlFlowGraph &cfg;                             // global control flow graph
+    const ControlFlowGraph::ConstVertexIterator startVertex; // where to start in the global CFG
+    DfCfg dfCfg;                                             // dataflow control flow graph we are building
+    InterproceduralPredicate &interproceduralPredicate;      // returns true when a call should be inlined
 
     // maps CFG vertex ID to dataflow vertex
-    typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexNodeIterator, DfCfg::VertexNodeIterator> VertexMap;
+    typedef Sawyer::Container::Map<ControlFlowGraph::ConstVertexIterator, DfCfg::VertexIterator> VertexMap;
 
     // Info about one function call
     struct CallFrame {
         VertexMap vmap;
-        DfCfg::VertexNodeIterator functionReturnVertex;
+        DfCfg::VertexIterator functionReturnVertex;
         bool wasFaked;
         CallFrame(DfCfg &dfCfg): functionReturnVertex(dfCfg.vertices().end()), wasFaked(false) {}
     };
@@ -42,52 +42,52 @@ public:
     
 
     DfCfgBuilder(const Partitioner &partitioner, const ControlFlowGraph &cfg,
-                 const ControlFlowGraph::ConstVertexNodeIterator &startVertex, InterproceduralPredicate &predicate)
+                 const ControlFlowGraph::ConstVertexIterator &startVertex, InterproceduralPredicate &predicate)
         : partitioner(partitioner), cfg(cfg), startVertex(startVertex), interproceduralPredicate(predicate),
           maxCallStackSize(10) {}
     
     typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> CfgTraversal;
 
-    DfCfg::VertexNodeIterator findVertex(const ControlFlowGraph::ConstVertexNodeIterator cfgVertex) {
+    DfCfg::VertexIterator findVertex(const ControlFlowGraph::ConstVertexIterator cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
         return callFrame.vmap.getOrElse(cfgVertex, dfCfg.vertices().end());
     }
 
-    bool isValidVertex(const DfCfg::VertexNodeIterator &dfVertex) {
+    bool isValidVertex(const DfCfg::VertexIterator &dfVertex) {
         return dfVertex != dfCfg.vertices().end();
     }
 
-    DfCfg::VertexNodeIterator insertVertex(const DfCfgVertex &dfVertex,
-                                           const ControlFlowGraph::ConstVertexNodeIterator &cfgVertex) {
+    DfCfg::VertexIterator insertVertex(const DfCfgVertex &dfVertex,
+                                       const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(!callFrame.vmap.exists(cfgVertex));
-        DfCfg::VertexNodeIterator dfVertexIter = dfCfg.insertVertex(dfVertex);
+        DfCfg::VertexIterator dfVertexIter = dfCfg.insertVertex(dfVertex);
         callFrame.vmap.insert(cfgVertex, dfVertexIter);
         return dfVertexIter;
     }
 
-    DfCfg::VertexNodeIterator insertVertex(const DfCfgVertex &dfVertex) {
+    DfCfg::VertexIterator insertVertex(const DfCfgVertex &dfVertex) {
         return dfCfg.insertVertex(dfVertex);
     }
 
-    DfCfg::VertexNodeIterator insertVertex(DfCfgVertex::Type type) {
+    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type) {
         return insertVertex(DfCfgVertex(type));
     }
 
-    DfCfg::VertexNodeIterator insertVertex(DfCfgVertex::Type type, const ControlFlowGraph::ConstVertexNodeIterator &cfgVertex) {
+    DfCfg::VertexIterator insertVertex(DfCfgVertex::Type type, const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
         return insertVertex(DfCfgVertex(type), cfgVertex);
     }
 
     // Insert basic block if it hasn't been already
-    DfCfg::VertexNodeIterator findOrInsertBasicBlockVertex(const ControlFlowGraph::ConstVertexNodeIterator &cfgVertex) {
+    DfCfg::VertexIterator findOrInsertBasicBlockVertex(const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
         ASSERT_require(!callStack.empty());
         CallFrame &callFrame = callStack.back();
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(cfgVertex->value().type() == V_BASIC_BLOCK);
-        DfCfg::VertexNodeIterator retval = dfCfg.vertices().end();
+        DfCfg::VertexIterator retval = dfCfg.vertices().end();
         if (!callFrame.vmap.getOptional(cfgVertex).assignTo(retval)) {
             BasicBlock::Ptr bblock = cfgVertex->value().bblock();
             ASSERT_not_null(bblock);
@@ -105,11 +105,11 @@ public:
 
     // Returns the dfCfg vertex for a CALL return-to vertex, creating it if necessary.  There might be none, in which case the
     // vertex end iterator is returned.
-    DfCfg::VertexNodeIterator findOrInsertCallReturnVertex(const ControlFlowGraph::ConstVertexNodeIterator &cfgVertex) {
+    DfCfg::VertexIterator findOrInsertCallReturnVertex(const ControlFlowGraph::ConstVertexIterator &cfgVertex) {
         ASSERT_require(cfgVertex != cfg.vertices().end());
         ASSERT_require(cfgVertex->value().type() == V_BASIC_BLOCK);
-        DfCfg::VertexNodeIterator retval = dfCfg.vertices().end();
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, cfgVertex->outEdges()) {
+        DfCfg::VertexIterator retval = dfCfg.vertices().end();
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfgVertex->outEdges()) {
             if (edge.value().type() == E_CALL_RETURN) {
                 ASSERT_require(edge.target()->value().type() == V_BASIC_BLOCK);
                 ASSERT_require2(retval == dfCfg.vertices().end(),
@@ -134,20 +134,20 @@ public:
                 }
             } else {
                 ASSERT_require(t.event()==ENTER_EDGE || t.event()==LEAVE_EDGE);
-                ControlFlowGraph::ConstEdgeNodeIterator edge = t.edge();
+                ControlFlowGraph::ConstEdgeIterator edge = t.edge();
 
                 if (edge->value().type() == E_CALL_RETURN) {
                     // Do nothing; we handle call-return edges as part of function calls.
 
                 } else if (edge->value().type() == E_FUNCTION_CALL) {
                     if (t.event() == ENTER_EDGE) {
-                        DfCfg::VertexNodeIterator callFrom = findVertex(edge->source());
+                        DfCfg::VertexIterator callFrom = findVertex(edge->source());
                         ASSERT_require(isValidVertex(callFrom));
                         callStack.push_back(CallFrame(dfCfg));
                         if (callStack.size() <= maxCallStackSize && edge->target()->value().type()==V_BASIC_BLOCK &&
                             interproceduralPredicate(cfg, edge, callStack.size())) {
                             // Incorporate the call into the dfCfg
-                            DfCfg::VertexNodeIterator callTo = findOrInsertBasicBlockVertex(edge->target());
+                            DfCfg::VertexIterator callTo = findOrInsertBasicBlockVertex(edge->target());
                             ASSERT_require(isValidVertex(callTo));
                             dfCfg.insertEdge(callFrom, callTo);
                         } else {
@@ -160,9 +160,9 @@ public:
 
                         if (!callStack.back().wasFaked) {
                             // Wire up the return from the called function back to the return-to point in the caller.
-                            DfCfg::VertexNodeIterator returnFrom = callStack.back().functionReturnVertex;
+                            DfCfg::VertexIterator returnFrom = callStack.back().functionReturnVertex;
                             callStack.pop_back();
-                            DfCfg::VertexNodeIterator returnTo = findOrInsertCallReturnVertex(edge->source());
+                            DfCfg::VertexIterator returnTo = findOrInsertCallReturnVertex(edge->source());
                             if (isValidVertex(returnFrom) && isValidVertex(returnTo))
                                 dfCfg.insertEdge(returnFrom, returnTo);
                             ASSERT_require(!callStack.empty());
@@ -173,11 +173,11 @@ public:
                             Function::Ptr callee;
                             if (edge->target()->value().type() == V_BASIC_BLOCK)
                                 callee = edge->target()->value().function();
-                            DfCfg::VertexNodeIterator dfSource = findVertex(edge->source());
+                            DfCfg::VertexIterator dfSource = findVertex(edge->source());
                             ASSERT_require(isValidVertex(dfSource));
-                            DfCfg::VertexNodeIterator faked = insertVertex(DfCfgVertex(callee));
+                            DfCfg::VertexIterator faked = insertVertex(DfCfgVertex(callee));
                             dfCfg.insertEdge(dfSource, faked);
-                            DfCfg::VertexNodeIterator returnTo = findOrInsertCallReturnVertex(edge->source());
+                            DfCfg::VertexIterator returnTo = findOrInsertCallReturnVertex(edge->source());
                             if (isValidVertex(returnTo))
                                 dfCfg.insertEdge(faked, returnTo);
                         }
@@ -186,9 +186,9 @@ public:
                 } else {
                     // Generic edges
                     if (t.event() == LEAVE_EDGE) {
-                        DfCfg::VertexNodeIterator dfSource = findVertex(edge->source());
+                        DfCfg::VertexIterator dfSource = findVertex(edge->source());
                         ASSERT_require(isValidVertex(dfSource));
-                        DfCfg::VertexNodeIterator dfTarget = findVertex(edge->target()); // the called function
+                        DfCfg::VertexIterator dfTarget = findVertex(edge->target()); // the called function
                         if (isValidVertex(dfTarget))
                             dfCfg.insertEdge(dfSource, dfTarget);
                     }
@@ -201,7 +201,7 @@ public:
         
 DfCfg
 buildDfCfg(const Partitioner &partitioner,
-           const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexNodeIterator &startVertex,
+           const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &startVertex,
            InterproceduralPredicate &predicate) {
     return DfCfgBuilder(partitioner, cfg, startVertex, predicate).build().dfCfg;
 }
@@ -210,7 +210,7 @@ void
 dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
     out <<"digraph dfCfg {\n";
 
-    BOOST_FOREACH (const DfCfg::VertexNode &vertex, dfCfg.vertices()) {
+    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
         out <<vertex.id() <<" [ label=";
         switch (vertex.value().type()) {
             case DfCfgVertex::BBLOCK:
@@ -233,7 +233,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
         out <<" ];\n";
     }
 
-    BOOST_FOREACH (const DfCfg::EdgeNode &edge, dfCfg.edges()) {
+    BOOST_FOREACH (const DfCfg::Edge &edge, dfCfg.edges()) {
         out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
     }
     
@@ -558,7 +558,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const State::P
     State::Ptr retval = incomingState->clone();
     ops->set_state(retval->semanticState());
 
-    DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
+    DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
     ASSERT_require(vertex != dfCfg.vertices().end());
     if (DfCfgVertex::FAKED_CALL == vertex->value().type()) {
         // Adjust the stack pointer as if the function call returned.  If we know the function delta then use it, otherwise

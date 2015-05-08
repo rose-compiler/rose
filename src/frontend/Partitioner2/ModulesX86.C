@@ -125,6 +125,44 @@ MatchLeaJmpThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
 }
 
 bool
+MatchMovJmpThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
+    // MOV reg1 [address]
+    rose_addr_t movVa = anchor;
+    if (partitioner.instructionExists(movVa))
+        return false;
+    SgAsmX86Instruction *mov = isSgAsmX86Instruction(partitioner.discoverInstruction(movVa));
+    if (!mov || mov->get_kind() != x86_mov)
+        return false;
+    const SgAsmExpressionPtrList &movArgs = mov->get_operandList()->get_operands();
+    if (movArgs.size() != 2)
+        return false;
+    SgAsmDirectRegisterExpression *movArg0 = isSgAsmDirectRegisterExpression(movArgs[0]);
+    SgAsmMemoryReferenceExpression *movArg1 = isSgAsmMemoryReferenceExpression(movArgs[1]);
+    if (!movArg0 || !movArg1)
+        return false;
+    
+    // JMP reg1
+    rose_addr_t jmpVa = movVa + mov->get_size();
+    if (partitioner.instructionExists(jmpVa))
+        return false;
+    SgAsmX86Instruction *jmp = isSgAsmX86Instruction(partitioner.discoverInstruction(jmpVa));
+    if (!jmp || jmp->get_kind() != x86_jmp)
+        return false;
+    const SgAsmExpressionPtrList &jmpArgs = jmp->get_operandList()->get_operands();
+    if (jmpArgs.size() != 1)
+        return false;
+    SgAsmDirectRegisterExpression *jmpArg0 = isSgAsmDirectRegisterExpression(jmpArgs[0]);
+    if (!jmpArg0)
+        return false;
+    if (jmpArg0->get_descriptor() != movArg0->get_descriptor())
+        return false;
+
+    // The thunk is a function, but we know not to which it points.
+    function_ = Function::instance(anchor, SgAsmFunction::FUNC_THUNK);
+    return true;
+}
+
+bool
 MatchRetPadPush::match(const Partitioner &partitioner, rose_addr_t anchor) {
     // RET (prior to anchor) must already exist in the CFG/AUM
     // The RET instruction can be 1 or 3 bytes.
