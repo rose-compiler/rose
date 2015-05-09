@@ -1336,6 +1336,9 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                      const P2::CfgConstVertexSet &pathsEndVertices) {
     using namespace Sawyer::Container::Algorithm;
     using namespace InsnSemanticsExpr;
+#if 1 // [Robb P. Matzke 2015-05-09]
+    TODO("[Robb P. Matzke 2015-05-09]");
+#else
 
     Stream debug(::mlog[DEBUG]);
     Stream info(::mlog[INFO]);
@@ -1370,35 +1373,27 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     size_t pathInsnIndex(-1);
     info <<"  building path constraints expression\n";
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathsEndVertex, pathsEndVertices) {
-        std::vector<std::vector<BaseSemantics::StatePtr> > incomingStates(paths.nVertices()); // stack per vertex
+        std::vector<std::vector<BaseSemantics::StatePtr> > outgoingStates(paths.nVertices());
+        std::vector<size_t> nVisits(paths.nVertices(), 0); // number of times this vertex appears in the current traversal path
         for (ReverseMultiVisitDfsTraversal t(pathsEndVertex); t; ++t) {
             size_t vId = t.vertex()->id();
             if (t.event() == ENTER_VERTEX) {
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-07]
-                std::cerr <<"ROBB: [" <<t.depth() <<"] + " <<partitioner.vertexName(t.vertex()) <<"\n";
-#endif
-                // As we enter a vertex, allocate a new, empty incoming state on the vertex's stack. Predecessors in the CFG
-                // will merge their outgoing states into this vertex's incoming state. This vertex will eventually be processed
-                // when the traversal leaves this vertex.
-                BaseSemantics::StatePtr newState = cpu->get_state()->clone();
-                newState->clear();
-                incomingStates[vId].push_back(newState);
-                if (incomingStates[vId].size() > settings.vertexVisitLimit)
-                    t.skipChildren();                   // just use the empty state as the input
+                if (++nVisits[vId] > settings.vertexVisitLimit)
+                    t.skipChildren();                   // break cycles in the CFG
             } else if (t.depth() == 1) {
                 // We're leaving the pathsEndVertex for the last time. There's no need to process this vertex since are goal is
                 // to only reach it by some path.
+                ASSERT_require(t.event() == LEAVE_VERTEX);
+                ASSERT_require(t.vertex() == pathsEndVertex);
                 TODO("end of traversal");
             } else {
-                // As we leave a vertex we know that all its CFG predecessors have been processed (if applicable due to CFG
-                // cycles), and the predecessors have merged their outgoing states into this vertex's incoming state.  So we're
-                // ready to process this vertex and transition it's state from an incoming state to an outgoing state.
-                ASSERT_require(t.event() == LEAVE_VERTEX);
-#if 1 // DEBUGGING [Robb P. Matzke 2015-05-07]
-                std::cerr <<"ROBB: [" <<t.depth() <<"] - " <<partitioner.vertexName(t.vertex()) <<"\n";
-#endif
-                ASSERT_require(!incomingStates[vId].empty());
-                ops->set_state(incomingStates[vId].back()); // modifing incoming state in place
+                // As we leave a vertex we know that all its CFG predecessors have been processed.  Compute an incoming state
+                // for this vertex based on the outgoing states of its predecessors.
+                
+
+                BaseSemantics::StatePtr state = cpu->state()->clone();
+                state->reset();
+                ops->set_state(state); // modifing incoming state in place, changing it to an outgoing state
                 if (t.vertex()->value().type() == P2::V_BASIC_BLOCK) {
                     processBasicBlock(t.vertex()->value().bblock(), cpu, pathInsnIndex);
                 } else if (t.vertex()->value().type() == P2::V_INDETERMINATE) {
@@ -1408,6 +1403,20 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                 } else {
                     ASSERT_not_reachable("invalid vertex type at " + partitioner.vertexName(t.vertex()));
                 }
+                
+
+
+                outgoingStates[vId] = cpu->state()->clone();
+                outgoingStates[vId]->reset();
+
+                ASSERT_require(t.event() == LEAVE_VERTEX);
+                ASSERT_require(!outgoingStates[vId].empty());
+                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->inEdges()) {
+                    P2::ControlFlowGraph::ConstVertexIterator predecessor = edge.target();
+                    ASSERT_require(!outgoingStates[predecessor->id()].empty());
+                    outgoingStates[
+
+
                 BaseSemantics::StatePtr outgoingState = ops->get_state();
                 incomingStates[vId].pop_back();
 
@@ -1462,6 +1471,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
             info <<"  constraint satisfiability could not be determined.\n";
         }
     }
+#endif
 #endif
 }
 
