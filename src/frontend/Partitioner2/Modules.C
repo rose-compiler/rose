@@ -483,7 +483,7 @@ nameStrings(const Partitioner &partitioner) {
         Strings::StringFinder stringFinder;
 
         T1(const Partitioner &partitioner): partitioner(partitioner) {
-            stringFinder.minLength(3);
+            stringFinder.minLength(1);
             stringFinder.maxLength(65536);
             stringFinder.keepOnlyLongest(true);
             ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
