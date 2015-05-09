@@ -818,7 +818,7 @@
 0x0100155a: Successor blocks: 0x010015e6
 
 0x0100155f: Basic block reasons: 
-0x0100155f: 68 30 10 00 01          |h0...   |<sp-24>   push   0x01001030<"S">
+0x0100155f: 68 30 10 00 01          |h0...   |<sp-24>   push   0x01001030<"SOFTWARE\\Microsoft\\Window"+46 more>
 0x01001564: 68 17 27 00 00          |h.'..   |<sp-28>   push   0x00002717<10007>
 0x01001569: e8 8c fc ff ff          |.....   |<sp-32>   call   0x010011fa<<Func>>
 0x01001569: Outgoing stack delta: -36
