@@ -81,6 +81,44 @@ findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVe
     return endVertices;
 }
 
+void
+eraseEdges(ControlFlowGraph &graph, const CfgConstEdgeSet &toErase) {
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, toErase) {
+        ASSERT_require(graph.isValidEdge(edge));
+        graph.eraseEdge(edge);
+    }
+}
+
+CfgConstVertexSet
+findIncidentVertices(const CfgConstEdgeSet &edges) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &edge, edges) {
+        retval.insert(edge->source());
+        retval.insert(edge->target());
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+findDetachedVertices(const ControlFlowGraph &graph) {
+    CfgConstVertexSet retval;
+    for (ControlFlowGraph::ConstVertexIterator vertex=graph.vertices().begin(); vertex!=graph.vertices().end(); ++vertex) {
+        if (0 == vertex->degree())
+            retval.insert(vertex);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+findDetachedVertices(const CfgConstVertexSet &vertices) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (0 == vertex->degree())
+            retval.insert(vertex);
+    }
+    return retval;
+}
+
 } // namespace
 } // namespace
 } // namespace

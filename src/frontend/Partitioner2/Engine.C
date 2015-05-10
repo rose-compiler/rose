@@ -618,6 +618,21 @@ Engine::makeCalledFunctions(Partitioner &partitioner) {
     return retval;
 }
 
+// Make functions according to config info
+std::vector<Function::Ptr>
+Engine::makeConfiguredFunctions(Partitioner &partitioner, const Configuration &configuration) {
+    std::vector<Function::Ptr> retval;
+    BOOST_FOREACH (const FunctionConfig &fconfig, configuration.functionConfigsByAddress().values()) {
+        rose_addr_t entryVa = 0;
+        if (fconfig.address().assignTo(entryVa)) {
+            Function::Ptr function = Function::instance(entryVa, fconfig.name(), SgAsmFunction::FUNC_USERDEF);
+            function->comment(fconfig.comment());
+            insertUnique(retval, partitioner.attachOrMergeFunction(function), sortFunctionsByAddress);
+        }
+    }
+    return retval;
+}
+
 // Looks for a function prologue at or above the specified starting address and makes a function there.
 std::vector<Function::Ptr>
 Engine::makeNextPrologueFunction(Partitioner &partitioner, rose_addr_t startVa) {
