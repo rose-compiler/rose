@@ -6534,6 +6534,12 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
   // DQ (8/2/2014): I think that decltype reference types can't have a kind parameter, so this should be NULL.
      ROSE_ASSERT(optional_fortran_type_kind == NULL);
 
+#define DEBUG_TYPEOF_CREATETYPE_TYPE 0
+
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+     printf ("Building a typeoftype (type argument) base_type->p_typeof_ref_to = %p \n",base_type->p_typeof_ref_to);
+#endif
+
      if (base_type->p_typeof_ref_to)
         {
           return base_type->p_typeof_ref_to;
@@ -6545,12 +6551,15 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
 
           SgName name = newType->get_mangled();
 
-#if 0
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
           printf ("Building a typeoftype (type argument) reference to base_type = %p = %s name = %s \n",base_type,base_type->class_name().c_str(),name.str());
 #endif
        // Only look for pointers to type in the global type table.
           SgType* t = get_globalTypeTable()->lookup_type(name);
 
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
+          printf ("Building a typeoftype (type argument) get_globalTypeTable()->lookup_type(name = %s) = %p = %s \n",name.str(),t,t != NULL ? t->class_name().c_str() : "null");
+#endif
           if (t == NULL)
              {
             // The pointer type was not found in the type table, put it into the global type table.
@@ -6558,14 +6567,14 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
                ROSE_ASSERT(root_type != NULL);
                if (handledUsingLocalTable(root_type) == false)
                   {
-#if 0
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
                     printf ("Mangled type name for $CLASSNAME = %s (does NOT exist in type table) interting it... \n",name.str());
 #endif
                     get_globalTypeTable()->insert_type(name,newType);
                   }
                  else
                   {
-#if 0
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
                     printf ("Skip putting the SgTypeOfType into the global type table for specific root types = %s name = %s \n",root_type->class_name().c_str(),name.str());
 #endif
                   }
@@ -6573,7 +6582,7 @@ SgTypeOfType::createType(SgType* base_type, SgExpression* optional_fortran_type_
             else
              {
             // If it is already present in the type table then delete the type (so that it will remain unique).
-#if 0
+#if DEBUG_TYPEOF_CREATETYPE_TYPE
                printf ("Mangled type name for SgTypeOfType = %s (already exists in type table) \n",name.str());
 #endif
                ROSE_ASSERT(t != newType);

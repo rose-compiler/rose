@@ -6353,12 +6353,54 @@ HEADER_UNPARSE_INFO_START
           void set_SkipParen();
           void unset_SkipParen();
 
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Tests the setting of the flag to permit output of 2nd part of type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           bool isTypeSecondPart() const;
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Sets flag to permit output of 2nd part of type.
+
+          This sets the flag for output of the 2nd part of a type and unsets the flag for the 1st part of the type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           void set_isTypeSecondPart();
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Unsets the flag to permit output of 2nd part of type.
+
+          This only unsets the flag for the output of the 2nd part of a type (no change to the flag for the 1st part of the type).
+
+          \internal This and the isTypeFirstPart flag can both be false or only one can be true.
+       */
           void unset_isTypeSecondPart();
 
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Tests the setting of the flag to permit output of 1st part of type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           bool isTypeFirstPart() const;
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Sets flag to permit output of 1st part of type.
+
+          This sets the flag for output of the 1st part of a type and unsets the flag for the 2nd part of the type.
+
+          \internal This and the isTypeSecondPart flag are mutually exclusive.
+       */
           void set_isTypeFirstPart();
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Unsets the flag to permit output of 1st part of type.
+
+          This only unsets the flag for the output of the 1st part of a type (not change to the flag for the 2nd part of the type).
+
+          \internal This and the isTypeSecondPart flag can both be false or only one can be true.
+       */
           void unset_isTypeFirstPart();
 
           bool SkipInitializer() const;
