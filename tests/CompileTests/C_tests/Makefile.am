@@ -560,6 +560,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_81.c \
      test2015_82.c \
      test2015_83.c \
+     test2015_84.c \
+     test2015_85.c \
      test2015_89.c \
      test2015_100.c \
      test2015_105.c \
@@ -571,6 +573,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_114.c \
      test2015_115.c \
      test2015_116.c \
+     test2015_117.c \
+     test2015_118.c \
+     test2015_119.c \
+     test2015_120.c \
+     test2015_121.c \
+     test2015_122.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
