@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryString.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -479,34 +480,42 @@ nameStrings(const Partitioner &partitioner) {
     struct T1: AstSimpleProcessing {
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
         const Partitioner &partitioner;
-        T1(const Partitioner &partitioner): partitioner(partitioner) {}
+        Strings::StringFinder stringFinder;
+
+        T1(const Partitioner &partitioner): partitioner(partitioner) {
+            stringFinder.minLength(1);
+            stringFinder.maxLength(65536);
+            stringFinder.keepOnlyLongest(true);
+            ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
+            if (sex == ByteOrder::ORDER_UNSPECIFIED)
+                sex = ByteOrder::ORDER_LSB;
+            stringFinder.insertCommonEncoders(sex);
+        }
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                 if (ival->get_comment().empty()) {
                     rose_addr_t va = ival->get_absoluteValue();
                     std::string label;
-                    if (!seen.getOptional(va).assignTo(label) && partitioner.instructionsOverlapping(va).empty()) {
-                        // Read a NUL-terminated string from memory which is readable but not writable. We need to make sure it
-                        // ends with the NUL character even though we're only going to display the first part of it, therefore
-                        // we'll read up to a fairly large amount of data looking for the NUL.
-                        std::string c_str = partitioner.memoryMap().readString(va, 8192, validStringChar, NULL,
-                                                                               MemoryMap::READABLE, MemoryMap::WRITABLE);
-                        if (!c_str.empty()) {
-                            static const size_t displayLength = 25; // arbitrary
+                    if (seen.getOptional(va).assignTo(label)) {
+                        ival->set_comment(label);
+                    } else if (partitioner.instructionsOverlapping(va).empty()) {
+                        std::vector<Strings::EncodedString> strings = stringFinder.find(partitioner.memoryMap().at(va));
+                        if (!strings.empty()) {
+                            ASSERT_require(strings.front().address() == va);
+                            std::string str = strings.front().narrow(); // front is the longest string
+                            static const size_t displayLength = 25;     // arbitrary
                             static const size_t maxLength = displayLength + 7; // strlen("+N more")
-                            size_t truncated = 0;
-                            if (c_str.size() > maxLength) {
-                                truncated = c_str.size() - displayLength;
-                                c_str = c_str.substr(0, displayLength);
+                            size_t nTruncated = 0;
+                            if (str.size() > maxLength) {
+                                nTruncated = str.size() - displayLength;
+                                str = str.substr(0, displayLength);
                             }
-                            label = "\"" + StringUtility::cEscape(c_str) + "\"";
-                            if (truncated)
-                                label += "+" + StringUtility::numberToString(truncated) + " more";
+                            label = "\"" + StringUtility::cEscape(str) + "\"";
+                            if (nTruncated)
+                                label += "+" + StringUtility::numberToString(nTruncated) + " more";
                             ival->set_comment(label);
                         }
-                        seen.insert(va, label);         // even if it's empty
-                    } else if (!label.empty()) {
-                        ival->set_comment(label);
+                        seen.insert(va, label); // even if label is empty, so we don't spend time re-searching strings
                     }
                 }
             }

@@ -31,11 +31,21 @@ public:
         return *this;
     }
 
+    Callbacks& append(const Callbacks &other) {
+        callbacks_.insert(callbacks_.end(), other.callbacks_.begin(), other.callbacks_.end());
+        return *this;
+    }
+    
     Callbacks& prepend(const Callback &callback) {
         callbacks_.push_front(callback);
         return *this;
     }
 
+    Callback& prepend(const Callbacks &other) {
+        callbacks_.insert(callbacks_.begin(), other.callbacks_.begin(), other.callbacks_.end());
+        return *this;
+    }
+    
     Callbacks& eraseFirst(const Callback &callback) {
         for (typename CbList::iterator iter=callbacks_.begin(); iter!=callbacks_.end(); ++iter) {
             if (*iter == callback) {

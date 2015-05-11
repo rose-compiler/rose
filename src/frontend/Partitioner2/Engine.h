@@ -484,6 +484,11 @@ public:
      *  Returns a list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<Function::Ptr> makeCalledFunctions(Partitioner&);
 
+    /** Make functions based on configuration information.
+     *
+     *  Uses the supplied function configuration information to make functions. */
+    virtual std::vector<Function::Ptr> makeConfiguredFunctions(Partitioner&, const Configuration&);
+
     /** Make function at prologue pattern.
      *
      *  Scans executable memory starting at the specified address and which is not represented in the CFG/AUM and looks for

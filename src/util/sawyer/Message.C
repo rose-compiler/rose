@@ -1857,7 +1857,7 @@ Facilities::importanceFromString(const std::string &str) {
 // Parses a StreamControlList. On success, returns a non-empty vector and adjust 'str' to point to the next character after the
 // list.  On failure, throw a ControlError.
 SAWYER_EXPORT std::list<Facilities::ControlTerm>
-Facilities::parseImportanceList(const std::string &facilityName, const char *&str) {
+Facilities::parseImportanceList(const std::string &facilityName, const char *&str, bool isGlobal) {
     const char *s = str;
     std::list<ControlTerm> retval;
 
@@ -1886,7 +1886,7 @@ Facilities::parseImportanceList(const std::string &facilityName, const char *&st
         const char *importanceStart = s;
         std::string importance = parseImportanceName(s);
         if (importance.empty()) {
-            if (!enablement.empty() || !relation.empty() || (isalpha(s[0]) && !retval.empty()))
+            if (!enablement.empty() || !relation.empty() || !isGlobal)
                 throw ControlError("message importance level expected", importanceStart);
             s = elmtStart;
             break;
@@ -1943,7 +1943,7 @@ Facilities::control(const std::string &ss) {
 
     try {
         while (1) {
-            std::list<ControlTerm> t2 = parseImportanceList("", s);
+            std::list<ControlTerm> t2 = parseImportanceList("", s, true);
             if (t2.empty()) {
                 // facility name
                 while (isspace(*s)) ++s;
@@ -1959,7 +1959,7 @@ Facilities::control(const std::string &ss) {
                 if ('('!=*s)
                     throw ControlError("expected '(' after message facility name '"+facilityName+"'", s);
                 ++s;
-                t2 = parseImportanceList(facilityName, s);
+                t2 = parseImportanceList(facilityName, s, false);
                 if (t2.empty())
                     throw ControlError("expected stream control list after '('", s);
                 while (isspace(*s)) ++s;

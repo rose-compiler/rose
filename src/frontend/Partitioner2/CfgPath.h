@@ -46,6 +46,12 @@ public:
         return !frontVertex_;
     }
 
+    /** Verify that path edges are connected.
+     *
+     *  Checks whether adjacent edges in the path go through a common vertex. Returns true if they do, false otherwise. Returns
+     *  true for a path with no edges. */
+    bool isConnected() const;
+
     /** Number of edges in a path.
      *
      *  A path with zero edges is not necessarily empty; it may have an initial vertex. */
@@ -117,19 +123,44 @@ public:
     /** Number of times edge appears in path. */
     size_t nVisits(const ControlFlowGraph::ConstEdgeIterator &edge) const;
 
-    /** Truncate the path.
-     *
-     *  Erases all edges starting at the specified edge.  The specified edge will not be in the resulting path.
-     *
-     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
-     *  the path is at the front of the returned vector. */
-    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator &edge);
-
-    /** Call depth.
+    /** Number of function calls.
      *
      *  Counts the number of E_FUNCTION_CALL edges in a path.  If a non-null function is supplied then only count those edges
      *  that enter the specified function. */
-    size_t callDepth(const Function::Ptr &function = Function::Ptr()) const;
+    size_t nCalls(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Number of function returns.
+     *
+     *  Counts the number of E_FUNCTION_RETURN edges in a path. If a non-null function is supplied then only count those edges
+     *  that return from the specified function. */
+    size_t nReturns(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Call depth.
+     *
+     *  Returns the function call depth at the end of the path.  The call depth is incremented for each E_FUNCTION_CALL edge
+     *  and decremented for each E_FUNCTION_RETURN edge, and the value at the end of the path is returned. If a non-null
+     *  function is specified, then count only calls to that function and returns from that function. The return value may be
+     *  negative if more return edges than call edges are encountered. */
+    ssize_t callDepth(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Maximum call depth.
+     *
+     *  Returns the maximum function call depth in the path.  The call depth is incremented for each E_FUNCTION_CALL edge and
+     *  decremented for each E_FUNCTION_RETURN edge, and its maximum value is returned. If a non-null function is specified,
+     *  then count only calls to that function and returns from that function. */
+    size_t maxCallDepth(const Function::Ptr &function = Function::Ptr()) const;
+
+    /** Truncate the path.
+     *
+     *  Erase edges from the end of this path until this path contains none of the specified edges.
+     *
+     *  Returns the edges that were removed in the order that they were removed. I.e., the first edge popped from the end of
+     *  the path is at the front of the returned vector.
+     *
+     * @{ */
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const ControlFlowGraph::ConstEdgeIterator&);
+    std::vector<ControlFlowGraph::ConstEdgeIterator> truncate(const CfgConstEdgeSet&);
+    /** @} */
 
     /** Print the path. */
     void print(std::ostream &out) const;
@@ -143,23 +174,47 @@ public:
  *
  *  Returns a Boolean vector indicating whether an edge is significant.  An edge is significant if it appears on some path that
  *  originates at the @p beginVertex and reaches some vertex in @p endVertices but is not a member of @p avoidEdges and is not
- *  incident to any vertex in @p avoidVertices. */
+ *  incident to any vertex in @p avoidVertices. An edge is not significant if it is a function call or function return and @ref
+ *  avoidCallsAndReturns is true. */
 std::vector<bool>
 findPathEdges(const ControlFlowGraph &graph,
-              ControlFlowGraph::ConstVertexIterator beginVertex, const CfgConstVertexSet &endVertices,
-              const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges);
+              const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+              const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+              const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(), bool avoidCallsAndReturns = false);
+
+/** Find edges that are reachable.
+ *
+ *  Finds edges that are part of some path from the @p beginVertex to any of the @p endVertices. The paths that are
+ *  considered must not traverse the @p avoidEdges or @p avoidVertices. */
+CfgConstEdgeSet
+findPathReachableEdges(const ControlFlowGraph &graph,
+                       const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                       const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                       const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(),
+                       bool avoidCallsAndReturns = false);
+
+/** Find edges that are unreachable.
+ *
+ *  Finds edges that are not part of any path from the @p beginVertex to any of the @p endVertices. The paths that are
+ *  considered must not traverse the @p avoidEdges or @p avoidVertices. */
+CfgConstEdgeSet
+findPathUnreachableEdges(const ControlFlowGraph &graph,
+                         const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                         const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                         const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(),
+                         bool avoidCallsAndReturns = false);
 
 /** Remove edges and vertices that cannot be on the paths.
  *
  *  Removes those edges that aren't reachable in both forward and reverse directions between the specified begin and end
- *  vertices. Specified vertices must belong to the paths-CFG, although end vertices are allowed.  After edges are removed,
- *  dangling vertices are removed.  Vertices and edges are removed from the @p paths graph, the @p vmap, and the @p
- *  path. Removal of edges from @p path causes the path to be truncated.
+ *  vertices. Specified vertices must belong to the graph, although end vertices are allowed.  After edges are removed,
+ *  dangling vertices are removed.  Vertices and edges are removed from the @p graph, the @p vmap, and the @p path. Removal of
+ *  edges from @p path causes the path to be truncated.
  *
  *  Returns the number of edges that were removed from the @p path. */
 size_t
-eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginPathVertex,
-                      const CfgConstVertexSet &endPathVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                      const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
 
 /** Compute all paths.
  *
@@ -169,18 +224,42 @@ eraseUnreachablePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph
  *  cannot appear on a path from the @p beginVertex to any @p endVertices, and any vertex that has degree zero provided it is
  *  not the beginVertex.
  *
- *  Function calls are not expanded. The E_FUNCTION_CALL edges will be pruned away unless one of the @p endVertices is
- *  reachable by following the call (function return instructions don't have edges back to their call sites).  Instead,
- *  function calls are effectively skipped over by following the E_CALL_RETURN edge from the call site to the return target
- *  (usually the fall-through address of a CALL instruction).
+ *  If @p avoidCallsAndReturns is true then E_FUNCTION_CALL and E_FUNCTION_RETURN edges are not followed.  Note that the normal
+ *  partitioner CFG will have E_CALL_RETURN edges that essentially short circuit a call to a function that might return, and
+ *  that E_FUNCTION_RETURN edges normally point to the indeterminate vertex rather than concrete return targets.
  *
  *  If the returned graph is empty then no paths were found.  If the returned graph has a vertex but no edges then the vertex
  *  serves as both the begin and end of the path (i.e., a single path of unit length).  The @p vmap is updated to indicate the
  *  mapping from @p srcCfg vertices in the corresponding vertices in the returned graph. */
 ControlFlowGraph
-findPathsNoCalls(const ControlFlowGraph &srcCfg, const ControlFlowGraph::ConstVertexIterator &beginVertex,
-                 const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
-                 CfgVertexMap &vmap /*out*/);
+findPaths(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
+          const ControlFlowGraph::ConstVertexIterator &beginVertex,
+          const CfgConstVertexSet &endVertices,
+          const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+          const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet(),
+          bool avoidCallsAndReturns = false);
+
+/** Compute all paths within one function.
+ *
+ *  This is a convenience method for @ref findPaths in a mode that avoids function call and return edges. */
+ControlFlowGraph
+findFunctionPaths(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
+                  const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                  const CfgConstVertexSet &endVertices,
+                  const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
+
+/** Compute all paths across function calls and returns.
+ *
+ *  This is a convenience method for @ref findpaths in a mode that follows function call and return edges. Note that in the
+ *  normal partitioner CFG function return edges point to the indeterminate vertex rather than back to the place the function
+ *  was called.  In order to get call-sensitive paths you'll have to do something else. */
+ControlFlowGraph
+findInterFunctionPaths(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
+                       const ControlFlowGraph::ConstVertexIterator &beginVertex,
+                       const CfgConstVertexSet &endVertices,
+                       const CfgConstVertexSet &avoidVertices = CfgConstVertexSet(),
+                       const CfgConstEdgeSet &avoidEdges = CfgConstEdgeSet());
 
 /** Inline a functioon at the specified call site.
  *
@@ -206,17 +285,22 @@ findPathsNoCalls(const ControlFlowGraph &srcCfg, const ControlFlowGraph::ConstVe
  *  The @ref E_CALL_RETURN edges in @p paths are not erased by this operation, but are usually subsequently erased by the
  *  user since they are redundant after this insertion--they represent a short-circuit over the called function(s).
  *
- *  Returns true if some function was inserted, false if no changes were made to @p paths.
+ *  Returns true if some function was inserted, false if no changes were made to @p paths.  If @p newVertices is non-null then
+ *  the all newly inserted vertices are also pushed onto the end of the vector.
  *
  * @{ */
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &cfgCallSite,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 bool
 insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                   const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge,
-                  const CfgConstVertexSet &cfgAvoidVertices, const CfgConstEdgeSet &cfgAvoidEdges);
+                  const CfgConstVertexSet &cfgAvoidVertices = CfgConstVertexSet(),
+                  const CfgConstEdgeSet &cfgAvoidEdges = CfgConstEdgeSet(),
+                  std::vector<ControlFlowGraph::ConstVertexIterator> *newEdges = NULL);
 /** @} */
 
 
