@@ -1527,6 +1527,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                     std::vector<P2::ControlFlowGraph::ConstVertexIterator> insertedVertices;
                     P2::insertCalleePaths(paths, work.vertex, partitioner.cfg(), cfgCallEdge,
                                           calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
                     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         ++nVertsProcessed;
                         if (isFunctionCall(partitioner, vertex) && !P2::findCallReturnEdges(vertex).empty())
