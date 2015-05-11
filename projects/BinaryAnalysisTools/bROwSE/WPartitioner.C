@@ -87,12 +87,12 @@ WPartitioner::init() {
         tip = "A configuration file can be specified on the command-line when the server is started. This item is mostly "
               "just a placeholder for when we eventually allow configuration files to be uploaded from the browser.";
         new Wt::WBreak(c);
+        std::string configNameList = StringUtility::join("; ", ctx_.settings.configurationNames);
         wUseConfiguration_ =
-            new Wt::WCheckBox("Use configuration \"" +
-                              StringUtility::htmlEscape(StringUtility::cEscape(ctx_.settings.configurationName)) + "\"?", c);
+            new Wt::WCheckBox("Use configuration " + StringUtility::htmlEscape(StringUtility::cEscape(configNameList)) + "?", c);
         wUseConfiguration_->setToolTip(tip);
         wUseConfiguration_->setCheckState(Wt::Checked);
-        wUseConfiguration_->setHidden(ctx_.settings.configurationName.empty());
+        wUseConfiguration_->setHidden(ctx_.settings.configurationNames.empty());
 
         tip = "Overrides the ISA found in an ELF/PE container, or provides an ISA if the specimen has "
               "no container (e.g., raw data).";
@@ -399,13 +399,15 @@ public:
         Sawyer::Message::Stream info(mlog[INFO]);
 
         // Load configuration information from files
-        if (!ctx_->settings.configurationName.empty()) {
+        if (!ctx_->settings.configurationNames.empty()) {
             info <<"loading configuration files";
             ctx_->busy->replaceWork("Loading configuration files...", 0);
             Sawyer::Stopwatch timer;
-            ctx_->partitioner.configuration().loadFromFile(ctx_->settings.configurationName);
+            BOOST_FOREACH (const std::string &configName, ctx_->settings.configurationNames)
+                ctx_->partitioner.configuration().loadFromFile(configName);
             info <<"; took " <<timer <<" seconds\n";
         }
+        ctx_->engine.makeConfiguredFunctions(ctx_->partitioner, ctx_->partitioner.configuration());
 
         // Disassemble and partition
         info <<"disassembling and partitioning";
@@ -502,11 +504,11 @@ WPartitioner::undoPartitionSpecimen() {
     specimenPartitioned_.emit(false);
 }
 
-std::string
+std::vector<std::string>
 WPartitioner::useConfiguration() const {
     if (wUseConfiguration_->checkState() != Wt::Checked)
-        return "";
-    return ctx_.settings.configurationName;
+        return std::vector<std::string>();
+    return ctx_.settings.configurationNames;
 }
 
 std::string
