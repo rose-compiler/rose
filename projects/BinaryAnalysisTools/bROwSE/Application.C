@@ -53,8 +53,10 @@ Application::parseCommandLine(int argc, char *argv[], Settings &settings)
     // Generic switches
     SwitchGroup gen = CommandlineProcessing::genericSwitches();
     gen.insert(Switch("config")
-               .argument("name", anyParser(settings.configurationName))
-               .doc("Directory containing configuration files, or a configuration file itself.  A directory is searched "
+               .argument("names", listParser(anyParser(settings.configurationNames), ":"))
+               .whichValue(SAVE_ALL)
+               .explosiveLists(true)
+               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
                     "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
                     "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
                     "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
@@ -336,6 +338,7 @@ Application::instantiateMainTabs() {
             case HexDumpTab: {
                 tabName = "Hexdump";
                 tabContent = wHexDump_ = new WHexDump;
+                wHexDump_->byteClicked().connect(boost::bind(&Application::updateAddressCrossReferences, this, _1));
                 break;
             }
             case MagicTab: {
@@ -414,7 +417,7 @@ void
 Application::showHideTools() {
     MainTab curTab = (MainTab)wMainTabs_->currentIndex();
     wSemantics_->setHidden(curTab != FunctionCfgTab && curTab != AssemblyTab);
-    wCrossRefs_->setHidden(curTab != StringsTab);
+    wCrossRefs_->setHidden(curTab != StringsTab && curTab != HexDumpTab);
 }
 
 void
@@ -438,6 +441,7 @@ Application::handleSpecimenPartitioned(bool done) {
     wMemoryMap_->isEditable(!done);                     // disallow memory map editing once the partitioner has run
     wFunctionList_->reload();
     wStrings_->partitioner(ctx_.partitioner);           // updates string-code cross references
+    wHexDump_->partitioner(ctx_.partitioner);           // updates address cross references
     if (!done) 
         currentFunction_ = P2::Function::Ptr();
     showHideTabs();
@@ -453,7 +457,6 @@ Application::changeTab(MainTab tab) {
         case PartitionerTab:
         case HexDumpTab:
         case MagicTab:
-        case StringsTab:
             break;
         case FunctionListTab:
             wFunctionList_->changeFunction(currentFunction_);
@@ -469,6 +472,10 @@ Application::changeTab(MainTab tab) {
         case AssemblyTab:
             wAssembly_->changeFunction(currentFunction_);
             wAssembly_->show();
+            break;
+        case StringsTab:
+            wStrings_->updateModelIfNecessary();
+            wStrings_->show();
             break;
         case StatusTab:
             wStatus_->redraw();
@@ -528,7 +535,14 @@ void
 Application::updateStringCrossReferences(size_t stringIdx) {
     const P2::ReferenceSet &xrefs = wStrings_->crossReferences(stringIdx);
     wCrossRefs_->refs(xrefs);
-    wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->meta(stringIdx).address()));
+    wCrossRefs_->name("String " + StringUtility::addrToString(wStrings_->string(stringIdx).address()));
+}
+
+void
+Application::updateAddressCrossReferences(rose_addr_t va) {
+    const P2::ReferenceSet &xrefs = wHexDump_->crossReferences(va);
+    wCrossRefs_->refs(xrefs);
+    wCrossRefs_->name("Address " + StringUtility::addrToString(va));
 }
 
 void

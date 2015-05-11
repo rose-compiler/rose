@@ -19,7 +19,7 @@ public:
         init();
     }
 
-    void changeString(const rose::BinaryAnalysis::StringFinder::String &meta, std::string value);
+    void changeString(const rose::BinaryAnalysis::Strings::EncodedString&);
 
     Wt::WPushButton* button() { return wButton_; }
 
