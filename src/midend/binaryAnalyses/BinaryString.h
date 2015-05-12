@@ -620,6 +620,9 @@ public:
         CharacterEncodingScheme::Ptr ces = ces_->clone();
         CodePointPredicate::Ptr cpp = cpp_;             // not cloned since they have no state
         LengthEncodedString *inst = new LengthEncodedString(les, cef, ces, cpp);
+        inst->state_ = state_;
+        inst->codePoints_ = codePoints_;
+        inst->nCodePoints_ = nCodePoints_;
         inst->declaredLength_ = declaredLength_;
         return Ptr(inst);
     }
@@ -685,6 +688,9 @@ public:
         CharacterEncodingScheme::Ptr ces = ces_->clone();
         CodePointPredicate::Ptr cpp = cpp_;             // not cloned since they have no state
         TerminatedString *inst = new TerminatedString(cef, ces, cpp, terminators_);
+        inst->state_ = state_;
+        inst->codePoints_ = codePoints_;
+        inst->nCodePoints_ = nCodePoints_;
         inst->terminated_ = terminated_;
         return Ptr(inst);
     }

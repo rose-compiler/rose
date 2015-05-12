@@ -665,6 +665,11 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 2));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 4));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(4, sex, 4));
+
+    // This encoder finds printable ASCII that's not necessarily NUL-terminated
+    TerminatedString::Ptr te = nulTerminatedPrintableAscii();
+    te->terminators().clear();
+    encoders_.push_back(te);
 }
 
 struct Finding {
@@ -763,7 +768,8 @@ public:
                 }
 
                 // Decode this next octet, removing decoders that encounter errors, and saving those which enter their final
-                // state.
+                // state. If a decoder enters the complete (but not final) state then save the string as it exists at that
+                // point, but do not remove the decoder.
                 Octet octet = buffer[offset];
                 for (size_t i=0; i<findings_.size(); ++i) {
                     for (size_t j=0; j<findings_[i].size(); ++j) {
@@ -779,6 +785,12 @@ public:
                                 results_.push_back(findings_[i][j]);
                             }
                             findings_[i][j].encoder = StringEncodingScheme::Ptr();
+                        } else if (COMPLETED_STATE == st &&
+                                   findings_[i][j].encoder->length() >= minLength_ &&
+                                   findings_[i][j].encoder->length() <= maxLength_) {
+                            Finding fcopy = findings_[i][j];
+                            fcopy.encoder = fcopy.encoder->clone();
+                            results_.push_back(fcopy);
                         }
                     }
                     findings_[i].erase(std::remove_if(findings_[i].begin(), findings_[i].end(), hasNullEncoder),
