@@ -1043,6 +1043,15 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
     stream <<" value=" <<(*value_+fmt);
 }
 
+void
+MemoryCellList::clearNonWritten() {
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+        if (!(*ci)->latestWriter())
+            *ci = MemoryCellPtr();
+    }
+    cells.erase(std::remove(cells.begin(), cells.end(), MemoryCellPtr()), cells.end());
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
@@ -1088,9 +1097,23 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 {
     ASSERT_not_null(addr);
     ASSERT_require(!byte_restricted || value->get_width()==8);
-    MemoryCellPtr cell = protocell->create(addr, value);
-    cells.push_front(cell);
-    latest_written_cell = cell;
+    MemoryCellPtr newCell = protocell->create(addr, value);
+
+    // Prune away all cells that must-alias this new one since they will be occluded by this new one.
+    if (occlusionsErased_) {
+        for (CellList::iterator cli=cells.begin(); cli!=cells.end(); /*void*/) {
+            MemoryCellPtr oldCell = *cli;
+            if (newCell->must_alias(oldCell, addrOps)) {
+                cli = cells.erase(cli);
+            } else {
+                ++cli;
+            }
+        }
+    }
+
+    // Insert the new cell
+    cells.push_front(newCell);
+    latest_written_cell = newCell;
 }
 
 void
