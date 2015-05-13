@@ -874,6 +874,13 @@ public:
      *  The specified endianness is used for all multi-byte values. */
     void insertCommonEncoders(ByteOrder::Endianness);
 
+    /** Inserts less common encodings.
+     *
+     *  Inserts the following string encodings into the analyses:
+     *
+     *  @li Printable ASCII terminated by other code points or non-readable memory. */
+    void insertUncommonEncoders(ByteOrder::Endianness);
+
     /** Finds strings by searching memory.
      *
      *  The memory constraints indicate where to search for strings, and the properties of this StringFinder class determine

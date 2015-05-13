@@ -665,7 +665,10 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 2));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 4));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(4, sex, 4));
+}
 
+void
+StringFinder::insertUncommonEncoders(ByteOrder::Endianness sex) {
     // This encoder finds printable ASCII that's not necessarily NUL-terminated
     TerminatedString::Ptr te = nulTerminatedPrintableAscii();
     te->terminators().clear();
