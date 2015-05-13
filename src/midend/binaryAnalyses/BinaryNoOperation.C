@@ -66,23 +66,24 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 NoOperation::NoOperation(Disassembler *disassembler) {
-    ASSERT_not_null(disassembler);
     normalizer_ = StateNormalizer::instance();
 
-    const RegisterDictionary *registerDictionary = disassembler->get_registers();
-    ASSERT_not_null(registerDictionary);
-    size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
+    if (disassembler) {
+        const RegisterDictionary *registerDictionary = disassembler->get_registers();
+        ASSERT_not_null(registerDictionary);
+        size_t addrWidth = disassembler->instructionPointerRegister().get_nbits();
 
-    SMTSolver *solver = NULL;
-    SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
-    ops->set_compute_usedef(false);
-    ops->set_compute_memwriters(false);
+        SMTSolver *solver = NULL;
+        SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(registerDictionary, solver);
+        ops->set_compute_usedef(false);
+        ops->set_compute_memwriters(false);
 
-    BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
-    ASSERT_not_null(mstate);
-    mstate->occlusionsErased(true);
+        BaseSemantics::MemoryCellListPtr mstate = BaseSemantics::MemoryCellList::promote(ops->get_state()->get_memory_state());
+        ASSERT_not_null(mstate);
+        mstate->occlusionsErased(true);
 
-    cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
+        cpu_ = disassembler->dispatcher()->create(ops, addrWidth, registerDictionary);
+    }
 }
 
 std::string
