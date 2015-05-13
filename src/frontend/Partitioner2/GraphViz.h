@@ -2,6 +2,7 @@
 #define ROSE_Partitioner2_GraphViz_H
 
 #include <ostream>
+#include <BinaryNoOperation.h>
 #include <Color.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
@@ -426,10 +427,13 @@ class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     bool showInstructionStackDeltas_;                   // show stack deltas for instructions
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
+    bool strikeNoopSequences_;                          // render no-op sequences in a different style
     Color::HSV funcEnterColor_;                         // background color for function entrance blocks
     Color::HSV funcReturnColor_;                        // background color for function return blocks
     Color::HSV warningColor_;                           // background color for special nodes and warnings
     DwarfLineMapper srcMapper_;                         // maps addresses to source code (optional)
+    static unsigned long versionDate_;                  // date code from "dot -V", like 20100126
+    NoOperation noOpAnalysis_;
 
 public:
     /** Constructor.
@@ -493,6 +497,19 @@ public:
     bool showInstructionStackDeltas() const { return showInstructionStackDeltas_; }
     void showInstructionStackDeltas(bool b) { showInstructionStackDeltas_ = b; }
     /** @} */
+
+    /** Property: strike no-op sequences.
+     *
+     *  Those instructions that are part of a no-op sequence are rendered in a different font (such as strike-through). When
+     *  two or more sequences overlap, the largest sequence is struck and all overlapping sequences are not processed. For
+     *  nested squences, this causes all instructions to be struck; for overlapping but non-nested sequences, only the largest
+     *  one is struck.
+     *
+     * @{ */
+    bool strikeNoopSequences() const { return strikeNoopSequences_; }
+    void strikeNoopSequences(bool b) { strikeNoopSequences_ = b; }
+    /** @} */
+
 
     /** Property: color to use for background of function entrance nodes.
      *
@@ -740,6 +757,9 @@ public:
 
     /** Attributes for function vertex. */
     virtual Attributes functionAttributes(const Function::Ptr&) const;
+
+private:
+    void init();
 };
 
 

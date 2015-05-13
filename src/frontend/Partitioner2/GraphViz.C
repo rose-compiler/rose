@@ -5,6 +5,7 @@
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
 #include <sawyer/GraphTraversal.h>
+#include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;
 using namespace Sawyer::Container::Algorithm;
@@ -128,23 +129,61 @@ concatenate(const std::string &oldStuff, const std::string &newStuff, const std:
 //                                      CfgEmitter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+unsigned long CfgEmitter::versionDate_ = 0;
+
 CfgEmitter::CfgEmitter(const Partitioner &partitioner)
     : BaseEmitter<ControlFlowGraph>(partitioner.cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
-      showInNeighbors_(true), showOutNeighbors_(true),
+      showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
       warningColor_(0, 1.0, 0.80)                   // light red
-    {}
+    {
+        init();
+    }
 
 CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g)
     : BaseEmitter<ControlFlowGraph>(g), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
-      showInNeighbors_(true), showOutNeighbors_(true),
+      showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
       warningColor_(0, 1.0, 0.80)                   // light red
-    {}
+    {
+        init();
+    }
+
+void
+CfgEmitter::init() {
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+
+    // Class initialization
+    if (0 == versionDate_) {
+        FILE *dot = popen("dot -V", "r");
+        if (dot) {
+            char buffer[256];
+            if (size_t n = fread(buffer, 1, sizeof(buffer)-1, dot)) {
+                // The full string is something like this: dot - graphviz version 2.26.3 (20100126.1600)
+                buffer[n] = '\0';
+                if (char *ltparen = strchr(buffer, '('))
+                    versionDate_ = strtoul(ltparen+1, NULL, 0);
+            }
+            pclose(dot);
+        }
+    } else {
+        versionDate_ = 1;                               // something low, and other than zero
+    }
+
+    // Instance initialization
+    if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
+        SMTSolver *solver = NULL;
+        const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
+        size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
+        noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------------
 //                                      CfgEmitter selectors
@@ -509,13 +548,32 @@ std::string
 CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &vertex) const {
     BasicBlock::Ptr bb;
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
+        const std::vector<SgAsmInstruction*> insns = bb->instructions();
+
+        // Decide which instructions are part of a no-op sequence and which sequences should be struck out in the bb label.
+        std::vector<bool> isPartOfNoopSequence(insns.size(), false);
+        if (strikeNoopSequences_ && !isPartOfNoopSequence.empty()) {
+            NoOperation::IndexIntervals noopSequences = noOpAnalysis_.findNoopSubsequences(insns);
+            noopSequences = NoOperation::largestEarliestNonOverlapping(noopSequences);
+            BOOST_FOREACH (const NoOperation::IndexInterval &where, noopSequences) {
+                for (size_t i=where.least(); i<where.greatest(); ++i)
+                    isPartOfNoopSequence[i] = true;
+            }
+        }
+
+        // Source code position for this BB if known.
         std::string srcLoc = sourceLocation(vertex);
         if (!srcLoc.empty())
             srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
         std::string s = srcLoc;
-        BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
+
+        // Instructions for this BB.
+        for (size_t i=0; i<insns.size(); ++i) {
+            SgAsmInstruction *insn = insns[i];
+
             if (showInstructionAddresses_)
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
+
             if (showInstructionStackDeltas_) {
                 int64_t delta = insn->get_stackDelta();
                 if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
@@ -532,8 +590,20 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                     s += " ?? ";
                 }
             }
-            s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
+
+            if (isPartOfNoopSequence[i]) {
+                if (versionDate_ >= 20130915) {
+                    // Strike out each insn of the no-op sequence
+                    s += "<s>" + htmlEscape(unparseInstruction(insn)) + "</s><br align=\"left\"/>";
+                } else {
+                    // Put the no-op in parentheses because we graphViz doesn't have strike-through capability
+                    s += "no-op (" + htmlEscape(unparseInstruction(insn)) + ")<br align=\"left\"/>"; 
+                }
+            } else {
+                s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
+            }
         }
+
         if (s.empty())
             s = "(no insns)";
         return "<" + s + ">";
