@@ -397,6 +397,8 @@ Engine::obtainDisassembler(Disassembler *disassembler) {
 Engine&
 Engine::runPartitioner(Partitioner &partitioner, SgAsmInterpretation *interp) {
     labelAddresses(partitioner, interp);
+    makeConfiguredDataBlocks(partitioner, partitioner.configuration());
+    makeConfiguredFunctions(partitioner, partitioner.configuration());
     makeContainerFunctions(partitioner, interp);
     discoverFunctions(partitioner);
     if (opaquePredicateSearch_)
@@ -481,6 +483,22 @@ Engine::applyPostPartitionFixups(Partitioner &partitioner, SgAsmInterpretation *
     Modules::nameConstants(partitioner);
     Modules::nameStrings(partitioner);
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Functions to make data blocks
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<DataBlock::Ptr>
+Engine::makeConfiguredDataBlocks(Partitioner &partitioner, const Configuration &configuration) {
+    // FIXME[Robb P. Matzke 2015-05-12]: This just adds labels to addresses right now.
+    BOOST_FOREACH (const DataBlockConfig &dconfig, configuration.dataBlocks().values()) {
+        if (!dconfig.name().empty())
+            partitioner.addressName(dconfig.address(), dconfig.name());
+    }
+    return std::vector<DataBlock::Ptr>();
+}
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Function-making functions
