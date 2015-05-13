@@ -407,7 +407,6 @@ public:
                 ctx_->partitioner.configuration().loadFromFile(configName);
             info <<"; took " <<timer <<" seconds\n";
         }
-        ctx_->engine.makeConfiguredFunctions(ctx_->partitioner, ctx_->partitioner.configuration());
 
         // Disassemble and partition
         info <<"disassembling and partitioning";
@@ -428,6 +427,11 @@ public:
         timer.start(true /*reset*/);
         ctx_->engine.updateAnalysisResults(ctx_->partitioner);
         info <<"; took " <<timer <<" seconds\n";
+
+#if 0 // [Robb P. Matzke 2015-05-11]
+        // Build a CFG so that each instruction has an SgAsmInterpretation ancestor. This is needed for some kinds of analysis.
+        ctx_->engine.buildAst(ctx_->partitioner);
+#endif
 
         // All done, update app, which is in some other thread.
         Wt::WApplication::UpdateLock lock(ctx_->application);

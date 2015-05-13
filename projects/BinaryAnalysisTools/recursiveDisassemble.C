@@ -919,6 +919,7 @@ int main(int argc, char *argv[]) {
     // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
     // specimen entry points, exception handling, imports and exports, and symbol tables.
     engine.makeContainerFunctions(partitioner, interp);
+    engine.makeConfiguredDataBlocks(partitioner, partitioner.configuration());
     engine.makeConfiguredFunctions(partitioner, partitioner.configuration());
 
     // Do an initial pass to discover functions and partition them into basic blocks and functions. Functions for which the CFG
@@ -1042,7 +1043,10 @@ int main(int argc, char *argv[]) {
 
     if (settings.doListStrings) {
         Strings::StringFinder analyzer;
+        analyzer.minLength(1);
         analyzer.maxLength(8192);
+        analyzer.discardCodePoints(false);
+        analyzer.keepOnlyLongest(true);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
 
         std::vector<Strings::EncodedString> strings = analyzer.find(partitioner.memoryMap().any());
