@@ -6045,8 +6045,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
 
      SgUnparse_Info newinfo(info);
 
-#if 0
+#define DEBUG_AGGREGATE_INITIALIZER 0
+
+#if DEBUG_AGGREGATE_INITIALIZER
      printf ("In unparseAggrInit(): aggr_init->get_uses_compound_literal() = %s \n",aggr_init->get_uses_compound_literal() ? "true" : "false");
+     curprint ("/* In unparseAggrInit() */ ");
 #endif
 
   // DQ (7/27/2013): Added support for aggregate initializers.
@@ -6118,7 +6121,7 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
   // DQ (9/29/2012): We don't want to use the explicit "{}" inside of function argument lists (see C test code: test2012_10.c).
      bool need_explicit_braces = aggr_init->get_need_explicit_braces();
 
-#if 0
+#if DEBUG_AGGREGATE_INITIALIZER
      printf ("In unparseAggrInit(): after output of type: need_explicit_braces          = %s \n",need_explicit_braces ? "true" : "false");
      printf ("In unparseAggrInit(): after output of type: newinfo.SkipEnumDefinition()  = %s \n",newinfo.SkipEnumDefinition() ? "true" : "false");
      printf ("In unparseAggrInit(): after output of type: newinfo.SkipClassDefinition() = %s \n",newinfo.SkipClassDefinition() ? "true" : "false");
@@ -6188,11 +6191,16 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
      bool skipTestForSourcePosition = containsIncludeDirective(aggr_init);
      if (skipTestForSourcePosition == true)
         {
-#if 0
+#if DEBUG_AGGREGATE_INITIALIZER
           printf ("In unparseAggrInit(): Found an include directive to be removed \n");
 #endif
           removeIncludeDirective(aggr_init);
         }
+
+#if DEBUG_AGGREGATE_INITIALIZER
+     printf ("In unparseAggrInit(): list.size() = %zu \n",list.size());
+     curprint ("/* output list elements in unparseAggrInit() */ ");
+#endif
 
      for (size_t index = 0; index < list.size(); index ++)
         {
@@ -6231,6 +6239,11 @@ Unparse_ExprStmt::unparseAggrInit(SgExpression* expr, SgUnparse_Info& info)
         {
           curprint("}");
         }
+
+#if DEBUG_AGGREGATE_INITIALIZER
+     printf ("Leaving unparseAggrInit() \n");
+     curprint ("/* Leaving unparseAggrInit() */ ");
+#endif
    }
 
 
@@ -7080,6 +7093,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("In unparseDesignatedInitializer: expr = %p \n",expr);
+     curprint (string("\n/* In unparseDesignatedInitializer(") + expr->class_name().c_str() + ") */ \n");
 #endif
 #if 0
      expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
@@ -7096,6 +7110,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      SgInitializer* initializer = di->get_memberInit();
 
      SgVarRefExp* varRefExp = isSgVarRefExp(designator);
+     SgValueExp*  valueExp  = isSgValueExp(designator);
 
      bool isDataMemberDesignator   = (varRefExp != NULL);
      bool isArrayElementDesignator = (isSgUnsignedLongVal(designator) != NULL);
@@ -7143,10 +7158,65 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                if (designatedInitializer != NULL)
                   {
 #if 1
-#if DEBUG_DESIGNATED_INITIALIZER
+                 // DQ (5/10/2015): This fails for test2015_85.c.
+#if DEBUG_DESIGNATED_INITIALIZER || 0
+                    printf ("--- Before possible reset: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
                     printf ("--- Mark outputDesignatedInitializerAssignmentOperator as false since there is a nested SgDesignatedInitializer \n");
 #endif
+#if 0
+                 // DQ (5/10/2015): This code works for test2015_119.c, but fails for test2015_117.c.
                     outputDesignatedInitializerAssignmentOperator = false;
+#else
+                 // DQ (5/10/2015): Handle the different between test2015_119.c and test2015_117.c.
+                    SgAggregateInitializer* nested_aggregateInitializer = isSgAggregateInitializer(designatedInitializer->get_memberInit());
+                    SgAssignInitializer*    nested_assignInitializer    = isSgAssignInitializer(designatedInitializer->get_memberInit());
+
+                 // Check the lhs to be a SgVarRef expression and not an array index (see test2013_37.c for case of array index).
+                    SgExpression* nested_designator = designatedInitializer->get_designatorList()->get_expressions()[0];
+                    SgVarRefExp*  nested_varRefExp  = isSgVarRefExp(nested_designator);
+
+                    bool isArrayReference = (nested_aggregateInitializer != NULL && isSgArrayType(nested_aggregateInitializer->get_type()) != NULL);
+                 // bool isClassReference = (nested_aggregateInitializer != NULL && isSgClassType(nested_aggregateInitializer->get_type()) != NULL);
+                    bool isClassReference = (aggregateInitializer != NULL && isSgClassType(aggregateInitializer->get_type()) != NULL);
+                    bool isArrayReference_outer = (aggregateInitializer != NULL && isSgArrayType(aggregateInitializer->get_type()) != NULL);
+#if DEBUG_DESIGNATED_INITIALIZER
+                    printf ("varRefExp                   = %p \n",varRefExp);
+                    printf ("valueExp                    = %p \n",valueExp);
+                    printf ("nested_aggregateInitializer = %p \n",nested_aggregateInitializer);
+                    printf ("nested_assignInitializer    = %p \n",nested_assignInitializer);
+                    printf ("nested_varRefExp            = %p \n",nested_varRefExp);
+                    printf ("isArrayReference            = %s \n",isArrayReference ? "true" : "false");
+                    printf ("isArrayReference_outer      = %s \n",isArrayReference_outer ? "true" : "false");
+                    printf ("isClassReference            = %s \n",isClassReference ? "true" : "false");
+#endif
+                 // For test2015_119.c: (nested_aggregateInitializer != NULL && nested_varRefExp != NULL)
+                 // For test2013_37.c: (nested_assignInitializer != NULL && nested_varRefExp == NULL)
+
+                 // if (nested_assignInitializer != NULL)
+                 // if (nested_aggregateInitializer != NULL)
+                 // if (nested_aggregateInitializer != NULL && nested_varRefExp != NULL)
+                 // if (nested_assignInitializer == NULL && nested_varRefExp != NULL)
+                 // if (nested_aggregateInitializer != NULL && nested_varRefExp == NULL)
+                 // if (nested_assignInitializer == NULL && nested_varRefExp != NULL)
+#if 1
+                 // DQ (5/10/2015): This is an overly complex rule, so we need a better one.  However, this will pass all regression tests.
+                 // if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true)
+                    if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true || 
+                         (nested_assignInitializer != NULL && nested_varRefExp != NULL && isClassReference == true && varRefExp == NULL) )
+#else
+#error "DEAD CODE!"
+                    if ( (nested_assignInitializer != NULL && nested_varRefExp == NULL) || (nested_aggregateInitializer != NULL && nested_varRefExp != NULL) || isArrayReference == true || isClassReference == true)
+#endif
+                       {
+#if DEBUG_DESIGNATED_INITIALIZER
+                         printf ("In unparseDesignatedInitializer: RESET outputDesignatedInitializerAssignmentOperator \n");
+#endif
+                         outputDesignatedInitializerAssignmentOperator = false;
+                       }
+#if DEBUG_DESIGNATED_INITIALIZER
+                    printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
+#endif
+#endif
 #else
                  // DQ (4/11/2015): Testing for test2015_85.c.
                     printf ("--- Skip the reset of outputDesignatedInitializerAssignmentOperator as false for detected nesting of SgDesignatedInitializer \n");
@@ -7163,6 +7233,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("In unparseDesignatedInitializer: isAggregateInitializer                        = %s \n",isAggregateInitializer ? "true" : "false");
      printf ("In unparseDesignatedInitializer: isAssignInitializer                           = %s \n",isAssignInitializer ? "true" : "false");
      printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer            = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
+     printf ("In unparseDesignatedInitializer: isDataMemberDesignator                        = %s \n",isDataMemberDesignator ? "true" : "false");
      printf ("In unparseDesignatedInitializer: outputDesignatedInitializerAssignmentOperator = %s \n",outputDesignatedInitializerAssignmentOperator ? "true" : "false");
 #endif
 
@@ -7182,7 +7253,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
              }
 
           bool isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
-#if 0
+#if DEBUG_DESIGNATED_INITIALIZER
           printf ("In unparseDesignatedInitializer: isInUnion = %s info.SkipClassDefinition() = %s \n",isInUnion ? "true" : "false",info.SkipClassDefinition() ? "true" : "false");
 #endif
        // DQ (7/24/2013): Force isInUnion to false so that we can handle test2012_46.c:
