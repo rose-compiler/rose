@@ -7944,9 +7944,9 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
   return ROSE::getNextStatement(currentStmt);
 }
 
-  SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt)
+  SgStatement* SageInterface::getPreviousStatement(SgStatement * currentStmt, bool climbOutScope /*= true*/)
 {
-  return ROSE::getPreviousStatement(currentStmt);
+  return ROSE::getPreviousStatement(currentStmt, climbOutScope);
 }
 
 bool SageInterface::isEqualToIntConst(SgExpression* e, int value) {
