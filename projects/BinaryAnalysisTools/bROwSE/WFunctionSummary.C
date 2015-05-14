@@ -3,6 +3,8 @@
 #include <Color.h>                                      // ROSE
 #include <Wt/WTable>
 #include <Wt/WText>
+#include <Wt/WTextArea>
+#include <Wt/WVBoxLayout>
 
 using namespace rose;
 
@@ -12,6 +14,9 @@ static const size_t NCOLS = 4;                          // number of columns for
 
 void
 WFunctionSummary::init() {
+    Wt::WVBoxLayout *vbox = new Wt::WVBoxLayout;
+    this->setLayout(vbox);
+
     analyzers().push_back(FunctionEntryAddress::instance());
     analyzers().push_back(FunctionName::instance());
     analyzers().push_back(FunctionSizeBytes::instance());
@@ -30,8 +35,9 @@ WFunctionSummary::init() {
     // Build a table to hold analysis results. The results will be organized into NCOLS each occupying two table columns (one
     // for the name and one for the value).
     const size_t NROWS = (analyzers_.size() + NCOLS - 1) / NCOLS;
-    wAnalysisResultTable_ = new Wt::WTable(this);
-    //wAnalysisResultTable_->setWidth("100%");
+    wAnalysisResultTable_ = new Wt::WTable();
+    vbox->addWidget(wAnalysisResultTable_);
+
     Wt::WCssDecorationStyle labelDecor;
     labelDecor.setBackgroundColor(toWt(Color::HSV(0, 0, 0.95)));
     for (size_t col=0, i=0; col<NCOLS && i<analyzers_.size(); ++col) {
@@ -52,6 +58,13 @@ WFunctionSummary::init() {
             ++i;
         }
     }
+
+    // Text area to hold function comments
+    wFunctionComments_ = new Wt::WTextArea;
+    vbox->addWidget(wFunctionComments_, 1 /*stretch*/);
+
+    // FIXME[Robb P. Matzke 2015-05-06]: We don't provide a way to save results yet, so don't allow comment editing
+    wFunctionComments_->setEnabled(false);
 }
 
 void
@@ -72,6 +85,8 @@ WFunctionSummary::changeFunction(const P2::Function::Ptr &function) {
             ++i;
         }
     }
+
+    wFunctionComments_->setText(function_->comment());
 }
 
 } // namespace

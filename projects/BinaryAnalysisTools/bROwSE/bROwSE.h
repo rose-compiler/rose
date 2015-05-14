@@ -44,7 +44,7 @@ struct Settings {
     std::string httpAddress;                            // IP address at which to listen for HTTP connections
     unsigned short httpPort;                            // TCP port at which to listen for HTTP connections
     std::string docRoot;                                // document root directory for HTTP server
-    std::string configurationName;                      // name of config file or directory containing such
+    std::vector<std::string> configurationNames;        // names of config files or directories containing such
     Settings()
         : deExecuteZeros(0), allowDownloads(true), httpAddress("0.0.0.0"), httpPort(80), docRoot(".") {}
 };

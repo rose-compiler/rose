@@ -3,6 +3,7 @@
 #include <boost/regex.hpp>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WStringDetail.h>
+#include <sawyer/Stopwatch.h>
 #include <stringify.h>                                  // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
@@ -15,14 +16,16 @@
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
+using namespace rose::Diagnostics;
 
 namespace bROwSE {
 
 enum ColumnNumber {
     AddressColumn,
     CrossRefsColumn,
-    LengthEncodingColumn,
-    CharacterEncodingColumn,
+    LengthEncodingSchemeColumn,
+    CharacterEncodingFormColumn,
+    CharacterEncodingSchemeColumn,
     NCharsColumn,
     ViewColumn,
     ValueColumn,
@@ -36,28 +39,37 @@ enum ColumnNumber {
 class StringsModel: public Wt::WAbstractTableModel {
 public:
     struct Row {
-        StringFinder::String meta;
+        Strings::EncodedString string;
         size_t nrefs;
-        std::string value;
         bool isMatching;
-        Row(const StringFinder::String &meta, size_t nrefs, const std::string &value)
-            : meta(meta), nrefs(nrefs), value(value), isMatching(false) {}
+        Row(const Strings::EncodedString &string, size_t nrefs)
+            : string(string), nrefs(nrefs), isMatching(false) {}
     };
 
     MemoryMap memoryMap_;
+    bool isOutOfDate_;                                  // true if memoryMap has changed since rows_ and xrefs_ were set
     std::vector<Row> rows_;
     P2::CrossReferences xrefs_;                         // from string address to instruction
 
+    StringsModel(): isOutOfDate_(false) {}
+
+    bool isOutOfDate() const {
+        return isOutOfDate_;
+    }
+
     virtual int rowCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
+        ASSERT_forbid(isOutOfDate_);
         return parent.isValid() ? 0 : rows_.size();
     }
 
     virtual int columnCount(const Wt::WModelIndex &parent=Wt::WModelIndex()) const ROSE_OVERRIDE {
+        ASSERT_forbid(isOutOfDate_);
         return parent.isValid() ? 0 : NColumns;
     }
 
     virtual boost::any headerData(int column, Wt::Orientation orientation=Wt::Horizontal,
                                   int role=Wt::DisplayRole) const ROSE_OVERRIDE {
+        ASSERT_forbid(isOutOfDate_);
         if (Wt::Horizontal == orientation) {
             if (Wt::DisplayRole == role) {
                 switch (column) {
@@ -65,10 +77,12 @@ public:
                         return Wt::WString("Address");
                     case CrossRefsColumn:
                         return Wt::WString("NRefs");
-                    case LengthEncodingColumn:
-                        return Wt::WString("Encoding");
-                    case CharacterEncodingColumn:
-                        return Wt::WString("CharType");
+                    case LengthEncodingSchemeColumn:
+                        return Wt::WString("Length Scheme");
+                    case CharacterEncodingFormColumn:
+                        return Wt::WString("Char Form");
+                    case CharacterEncodingSchemeColumn:
+                        return Wt::WString("Char Scheme");
                     case NCharsColumn:
                         return Wt::WString("nChars");
                     case ViewColumn:
@@ -84,49 +98,44 @@ public:
     }
 
     virtual boost::any data(const Wt::WModelIndex &index, int role=Wt::DisplayRole) const ROSE_OVERRIDE {
+        ASSERT_forbid(isOutOfDate_);
         ASSERT_require(index.isValid());
         ASSERT_require(index.row()>=0 && (size_t)index.row()<rows_.size());
         const Row &row = rows_[index.row()];
+        Strings::LengthEncodedString::Ptr lengthStr = row.string.encoder().dynamicCast<Strings::LengthEncodedString>();
+        Strings::TerminatedString::Ptr terminatedStr = row.string.encoder().dynamicCast<Strings::TerminatedString>();
         if (Wt::DisplayRole == role) {
             switch (index.column()) {
                 case AddressColumn:
-                    return Wt::WString(StringUtility::addrToString(row.meta.address()));
+                    return Wt::WString(StringUtility::addrToString(row.string.address()));
                 case CrossRefsColumn:
                     return Wt::WString(StringUtility::numberToString(row.nrefs));
-                case LengthEncodingColumn:
-                    switch (row.meta.lengthEncoding()) {
-                        case StringFinder::MAP_TERMINATED:
-                            return Wt::WString("mmap boundary");
-                        case StringFinder::NUL_TERMINATED:
+                case LengthEncodingSchemeColumn:
+                    if (lengthStr) {
+                        return Wt::WString(lengthStr->lengthEncodingScheme()->name());
+                    } else if (terminatedStr) {
+                        if (1==terminatedStr->terminators().size() && terminatedStr->terminators()[0]==0) {
                             return Wt::WString("NUL-terminated");
-                        case StringFinder::SEQUENCE_TERMINATED:
-                            return Wt::WString("sequence");
-                        case StringFinder::BYTE_LENGTH:
-                            return Wt::WString("byte");
-                        case StringFinder::LE16_LENGTH:
-                            return Wt::WString("le-16");
-                        case StringFinder::BE16_LENGTH:
-                            return Wt::WString("be-16");
-                        case StringFinder::LE32_LENGTH:
-                            return Wt::WString("le-32");
-                        case StringFinder::BE32_LENGTH:
-                            return Wt::WString("be-32");
+                        } else {
+                            return Wt::WString("terminated");
+                        }
+                    } else {
+                        return Wt::WString("");
                     }
                     break;
-                case CharacterEncodingColumn:
-                    switch (row.meta.characterEncoding()) {
-                        case StringFinder::ASCII:
-                            return Wt::WString("ASCII");
-                    }
-                    break;
+                case CharacterEncodingFormColumn:
+                    return Wt::WString(row.string.encoder()->characterEncodingForm()->name());
+                case CharacterEncodingSchemeColumn:
+                    return Wt::WString(row.string.encoder()->characterEncodingScheme()->name());
                 case NCharsColumn:
-                    return Wt::WString(StringUtility::numberToString(row.meta.nCharacters()));
+                    return Wt::WString(StringUtility::numberToString(row.string.length()));
                 case ValueColumn: {
                     // The WTableView widget adds elipses when the value overflows the width of the column, but we should add
                     // our own just to be sure that they appear even when our limit is less than the width of the column.
                     static const size_t nCharsToDisplay = 300;
-                    return Wt::WString(StringUtility::cEscape(row.value.substr(0, nCharsToDisplay)) +
-                                       (row.value.size()>nCharsToDisplay?"...":""));
+                    std::string s = row.string.narrow();
+                    return Wt::WString(StringUtility::cEscape(s.substr(0, nCharsToDisplay)) +
+                                       (s.size()>nCharsToDisplay?"...":""));
                 }
             }
         } else if (Wt::DecorationRole == role) {
@@ -141,14 +150,49 @@ public:
         return boost::any();
     }
 
-    static bool addressOrder(const Row &a, const Row &b) { return a.meta.address() < b.meta.address(); }
-    static bool nRefsOrder(const Row &a, const Row &b) { return a.nrefs < b.nrefs; }
-    static bool lengthEncodingOrder(const Row &a, const Row &b) { return a.meta.lengthEncoding() < b.meta.lengthEncoding(); }
-    static bool charEncodingOrder(const Row &a, const Row &b) { return a.meta.characterEncoding() < b.meta.characterEncoding(); }
-    static bool lengthOrder(const Row &a, const Row &b) { return a.meta.nCharacters() < b.meta.nCharacters(); }
-    static bool valueOrder(const Row &a, const Row &b) { return a.value < b.value; }
+    static bool addressOrder(const Row &a, const Row &b) {
+        return a.string.address() < b.string.address();
+    }
+    static bool nRefsOrder(const Row &a, const Row &b) {
+        return a.nrefs < b.nrefs;
+    }
+    static bool lengthEncodingOrder(const Row &a, const Row &b) {
+        Strings::LengthEncodedString::Ptr al = a.string.encoder().dynamicCast<Strings::LengthEncodedString>();
+        Strings::LengthEncodedString::Ptr bl = b.string.encoder().dynamicCast<Strings::LengthEncodedString>();
+        Strings::TerminatedString::Ptr at = a.string.encoder().dynamicCast<Strings::TerminatedString>();
+        Strings::TerminatedString::Ptr bt = b.string.encoder().dynamicCast<Strings::TerminatedString>();
+        std::string as, bs;
+        if (al) {
+            as = al->lengthEncodingScheme()->name();
+        } else if (at && at->terminators().size()==1 && at->terminators()[0]==0) {
+            as = "NUL-terminated";
+        } else if (at) {
+            as = "terminated";
+        }
+        if (bl) {
+            bs = bl->lengthEncodingScheme()->name();
+        } else if (bt && bt->terminators().size()==1 && bt->terminators()[0]==0) {
+            bs = "NUL-terminated";
+        } else if (bt) {
+            bs = "terminated";
+        }
+        return as < bs;
+    }
+    static bool charEncodingFormOrder(const Row &a, const Row &b) {
+        return a.string.encoder()->characterEncodingForm()->name() < b.string.encoder()->characterEncodingForm()->name();
+    }
+    static bool charEncodingSchemeOrder(const Row &a, const Row &b) {
+        return a.string.encoder()->characterEncodingScheme()->name() < b.string.encoder()->characterEncodingScheme()->name();
+    }
+    static bool lengthOrder(const Row &a, const Row &b) {
+        return a.string.length() < b.string.length();
+    }
+    static bool valueOrder(const Row &a, const Row &b) {
+        return a.string.wide() < b.string.wide();
+    }
 
     void sort(int column, Wt::SortOrder order) ROSE_OVERRIDE {
+        updateMemoryMap();
         ASSERT_require(column>=0 && (ColumnNumber)column < NColumns);
         if (ViewColumn == column)
             return;                                     // not a sortable column
@@ -161,11 +205,14 @@ public:
             case CrossRefsColumn:
                 std::sort(rows_.begin(), rows_.end(), nRefsOrder);
                 break;
-            case LengthEncodingColumn:
+            case LengthEncodingSchemeColumn:
                 std::sort(rows_.begin(), rows_.end(), lengthEncodingOrder);
                 break;
-            case CharacterEncodingColumn:
-                std::sort(rows_.begin(), rows_.end(), charEncodingOrder);
+            case CharacterEncodingFormColumn:
+                std::sort(rows_.begin(), rows_.end(), charEncodingFormOrder);
+                break;
+            case CharacterEncodingSchemeColumn:
+                std::sort(rows_.begin(), rows_.end(), charEncodingSchemeOrder);
                 break;
             case NCharsColumn:
                 std::sort(rows_.begin(), rows_.end(), lengthOrder);
@@ -180,39 +227,54 @@ public:
     }
     
     void memoryMap(const MemoryMap &map) {
-        layoutAboutToBeChanged().emit();
         memoryMap_ = map;
-        rows_.clear();
-        xrefs_.clear();
-    
-        StringFinder analyzer;
-        StringFinder::Strings strings = analyzer.findAllStrings(memoryMap_.require(MemoryMap::READABLE));
-        BOOST_FOREACH (const StringFinder::String &string, strings.values()) {
-            size_t nrefs = xrefs_.getOrDefault(P2::Reference(string.address())).size();
-            std::string value = analyzer.decode(memoryMap_, string);
-            rows_.push_back(Row(string, nrefs, value));
+        isOutOfDate_ = true;
+    }
+
+    void updateMemoryMap() {
+        if (isOutOfDate_) {
+            Sawyer::Stopwatch timer;
+            Sawyer::Message::Stream info(mlog[INFO] <<"scanning for string literals");
+            layoutAboutToBeChanged().emit();
+            rows_.clear();
+            xrefs_.clear();
+
+            ByteOrder::Endianness sex = memoryMap_.byteOrder();
+            if (ByteOrder::ORDER_UNSPECIFIED == sex)
+                sex = ByteOrder::ORDER_LSB;
+
+            Strings::StringFinder analyzer;
+            analyzer.minLength(5);
+            analyzer.maxLength(65536);
+            analyzer.discardCodePoints(false);
+            analyzer.keepOnlyLongest(true);
+            analyzer.insertCommonEncoders(sex);
+            BOOST_FOREACH (const Strings::EncodedString &string, analyzer.find(memoryMap_.require(MemoryMap::READABLE))) {
+                size_t nrefs = xrefs_.getOrDefault(P2::Reference(string.address())).size();
+                rows_.push_back(Row(string, nrefs));
+            }
+            isOutOfDate_ = false;
+            layoutChanged().emit();
+            info <<"; took " <<timer <<" seconds\n";
         }
-        layoutChanged().emit();
     }
 
     void updateCrossReferences(const P2::Partitioner &partitioner) {
+        updateMemoryMap();
         layoutAboutToBeChanged().emit();
-
-        // Find all possible strings
-        memoryMap(partitioner.memoryMap());
 
         // Find all references to those strings
         AddressIntervalSet stringAddresses;
         BOOST_FOREACH (const Row &row, rows_)
-            stringAddresses.insert(row.meta.address());
+            stringAddresses.insert(row.string.address());
         xrefs_ = partitioner.instructionCrossReferences(stringAddresses);
 
         // Update reference counts and prune away non-referenced strings that overlap with code. Pruning away the
         // non-referenced strings that overlap with code is a good way to get rid of lots of false positives.
         std::vector<Row> keep;
         BOOST_FOREACH (Row &row, rows_) {
-            row.nrefs = xrefs_.getOrDefault(P2::Reference(row.meta.address())).size();
-            if (0!=row.nrefs || partitioner.instructionsOverlapping(row.meta.address()).empty())
+            row.nrefs = xrefs_.getOrDefault(P2::Reference(row.string.address())).size();
+            if (0!=row.nrefs || partitioner.instructionsOverlapping(row.string.address()).empty())
                 keep.push_back(row);
         }
         rows_ = keep;
@@ -289,8 +351,9 @@ WStrings::init() {
     wTableView_->setEditTriggers(Wt::WAbstractItemView::NoEditTrigger);
     wTableView_->setColumnWidth(AddressColumn, Wt::WLength(6, Wt::WLength::FontEm));
     wTableView_->setColumnWidth(CrossRefsColumn, Wt::WLength(4, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(LengthEncodingColumn, Wt::WLength(7, Wt::WLength::FontEm));
-    wTableView_->setColumnWidth(CharacterEncodingColumn, Wt::WLength(5, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(LengthEncodingSchemeColumn, Wt::WLength(7, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(CharacterEncodingFormColumn, Wt::WLength(5, Wt::WLength::FontEm));
+    wTableView_->setColumnWidth(CharacterEncodingSchemeColumn, Wt::WLength(5, Wt::WLength::FontEm));
     wTableView_->setColumnWidth(NCharsColumn, Wt::WLength(4, Wt::WLength::FontEm));
     wTableView_->setColumnWidth(ViewColumn, Wt::WLength(3, Wt::WLength::FontEm));
     wTableView_->setColumnWidth(ValueColumn, Wt::WLength(100, Wt::WLength::FontEm));
@@ -325,7 +388,7 @@ WStrings::search(Wt::WLineEdit *wSearch) {
             boost::regex re(wSearch->text().narrow());
             for (size_t i=0; i<model_->rows_.size(); ++i) {
                 StringsModel::Row &row = model_->rows_[i];
-                std::string lower = boost::to_lower_copy(row.value); // simulate case-insensitive matching
+                std::string lower = boost::to_lower_copy(row.string.narrow()); // simulate case-insensitive matching
                 if ((row.isMatching = boost::regex_search(lower, re, boost::regex_constants::match_perl))) {
                     ++nFound;
                     firstMatch = std::min(firstMatch, i);
@@ -379,23 +442,30 @@ WStrings::memoryMap() const {
 }
 
 void
+WStrings::memoryMap(const MemoryMap &map) {
+    model_->memoryMap(map);
+}
+
+void
 WStrings::redrawAddressSpace(const MemoryMap &map) {
     wAddressSpace_->insert(map, SegmentsBar);
     WAddressSpace::HeatMap &hmap = wAddressSpace_->map(StringsBar);
     WAddressSpace::HeatMap &gutter = wAddressSpace_->bottomGutterMap();
     hmap.clear();
     gutter.clear();
-    BOOST_FOREACH (const StringsModel::Row &string, model_->rows_) {
-        hmap.insert(AddressInterval::baseSize(string.meta.address(), string.meta.nBytes()), 1.0);
-        gutter.insert(string.meta.address(), 1.0);
+    BOOST_FOREACH (const StringsModel::Row &row, model_->rows_) {
+        hmap.insert(AddressInterval::baseSize(row.string.address(), row.string.size()), 1.0);
+        gutter.insert(row.string.address(), 1.0);
     }
     wAddressSpace_->redraw();
 }
 
 void
-WStrings::memoryMap(const MemoryMap &map) {
-    model_->memoryMap(map);
-    redrawAddressSpace(map);
+WStrings::updateModelIfNecessary() {
+    if (model_->isOutOfDate()) {
+        model_->updateMemoryMap();
+        redrawAddressSpace(memoryMap());
+    }
 }
 
 void
@@ -411,7 +481,7 @@ WStrings::selectStringByRow(const Wt::WModelIndex &idx) {
         if (idx.column() == ViewColumn) {
             ASSERT_require(idx.row()>=0 && (size_t)idx.row()<model_->rows_.size());
             const StringsModel::Row &row = model_->rows_[idx.row()];
-            wDetails_->changeString(row.meta, row.value);
+            wDetails_->changeString(row.string);
             wStack_->setCurrentIndex(DETAILS);
         }
         stringClicked_.emit(idx.row());
@@ -421,14 +491,14 @@ WStrings::selectStringByRow(const Wt::WModelIndex &idx) {
 const P2::ReferenceSet&
 WStrings::crossReferences(size_t stringIdx) {
     ASSERT_require(stringIdx < model_->rows_.size());
-    rose_addr_t stringVa = model_->rows_[stringIdx].meta.address();
+    rose_addr_t stringVa = model_->rows_[stringIdx].string.address();
     return model_->xrefs_.getOrDefault(P2::Reference(stringVa));
 }
 
-const rose::BinaryAnalysis::StringFinder::String&
-WStrings::meta(size_t stringIdx) {
+const rose::BinaryAnalysis::Strings::EncodedString&
+WStrings::string(size_t stringIdx) {
     ASSERT_require(stringIdx < model_->rows_.size());
-    return model_->rows_[stringIdx].meta;
+    return model_->rows_[stringIdx].string;
 }
 
 } // namespace

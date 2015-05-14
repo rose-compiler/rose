@@ -91,9 +91,6 @@ ROSE_SUPPORT_DWARF
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
-AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
-AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
-
 # Xen and Ether [RPM 2009-10-28]
 AC_ARG_WITH(ether,
         [  --with-ether=PATH   prefix of Xen/Ether installation

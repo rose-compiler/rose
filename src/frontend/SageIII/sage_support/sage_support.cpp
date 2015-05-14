@@ -5938,6 +5938,7 @@ SgProject::compileOutput()
             // if (get_compileOnly() == true)
                if (get_compileOnly() == false)
                   {
+#if 0 // Liao 5/5/2015, comment out this, using a uniform handling for both single file and multiple-file cases
                     if (multifile_support_compile_only_flag == true)
                        {
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE
@@ -5958,6 +5959,9 @@ SgProject::compileOutput()
                          printf ("In SgProject::compileOutput(): multifile_support_compile_only_flag == false: Linking as a seperate step is not required when multifile_support_compile_only_flag == false \n");
 #endif
                        }
+#endif 
+                       // Liao 5/1/2015
+                      linkingReturnVal = link (BACKEND_CXX_COMPILER_NAME_WITH_PATH);
                   }
                  else
                   {
@@ -6244,7 +6248,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 #endif
         }
 
-#if 1
+#if 0
      printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
 #endif
 

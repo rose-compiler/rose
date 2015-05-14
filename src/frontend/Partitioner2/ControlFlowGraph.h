@@ -224,7 +224,23 @@ CfgConstEdgeSet findCallReturnEdges(const ControlFlowGraph::ConstVertexIterator 
  *  Returns the list of vertices with outgoing E_FUNCTION_RETURN edges. */
 CfgConstVertexSet findFunctionReturns(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstVertexIterator &beginVertex);
 
+/** Erase multiple edges.
+ *
+ *  Erases each edge in the @p toErase set. */
+void eraseEdges(ControlFlowGraph&, const CfgConstEdgeSet &toErase);
 
+/** Vertices that are incident to specified edges. */
+CfgConstVertexSet findIncidentVertices(const CfgConstEdgeSet&);
+
+/** Find vertices that have zero degree.
+ *
+ *  Returns a set of vertices that have no incoming or outgoing edges. If @p vertices are specified, then limit the return
+ *  value to the specified vertices; this mode of operation can be significantly faster than scanning the entire graph.
+ *
+ * @{ */
+CfgConstVertexSet findDetachedVertices(const ControlFlowGraph&);
+CfgConstVertexSet findDetachedVertices(const CfgConstVertexSet &vertices);
+/** @} */
 
 } // namespace
 } // namespace

@@ -357,6 +357,14 @@ TEST_TARGETS += cory003.passed
 cory003.passed: $(TEST_EXIT_STATUS) cory003
 	@$(RTH_RUN) CMD=./cory003 $< $@
 
+# Test register clearing in subclass constructor
+noinst_PROGRAMS += cory004
+cory004_SOURCES = cory004.C
+cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory004.passed
+cory004.passed: $(TEST_EXIT_STATUS) cory004
+	@$(RTH_RUN) CMD=./cory004 $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C

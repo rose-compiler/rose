@@ -84,7 +84,7 @@
 0x08048324: ================================== Function (function call, import, graph) <fprintf@plt>
 
 0x08048324: Basic block reasons: entry point
-0x08048324: ff 25 64 96 04 08       |.%d...  |<sp+0 >   jmp    dword ds:[0x08049664<.got.plt+0x10>]
+0x08048324: ff 25 64 96 04 08       |.%d...  |<sp+0 >   jmp    dword ds:[0x08049664<"p,'">]
 0x08048324: Outgoing stack delta: +0
 0x08048324: Successor blocks: unknown
 
