@@ -16,21 +16,28 @@ struct Settings {
     Settings(): step(1), maxBytes(256) {}
 };
 
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], BinaryAnalysis::Partitioner2::Engine &engine, Settings &settings /*in,out*/) {
     using namespace Sawyer::CommandLine;
-    Parser parser;
 
+    std::string purpose = "looks for magic numbers in binaries";
+    std::string description =
+        "Parses and loads the specimen, then looks for a magic number at each address.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
+    // switches since this tool doesn't disassemble or partition.
+    Parser parser;
     parser
-        .purpose("looks for magic numbers in binary specimens")
+        .purpose(purpose)
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis", "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description", "Parses and loads the specimen, then looks for magic numbers at each address.")
-        .doc("Specimens", BinaryAnalysis::Partitioner2::Engine::specimenNameDocumentation());
-
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
+        .doc("Description", description)
+        .doc("Specimens", engine.specimenNameDocumentation())
+        .with(engine.engineSwitches())
+        .with(engine.loaderSwitches());
+    
     SwitchGroup tool("Switches specific to this tool");
     tool.insert(Switch("addresses")
                 .argument("interval", BinaryAnalysis::Partitioner2::addressIntervalParser(settings.limits))
@@ -51,7 +58,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings /*in,out*/) {
                      "more accurate, but small values are faster.  The ROSE library's detector also has a hard-coded " +
                      "limit which will never be exceeded regardless of this setting."));
 
-    return parser.with(gen).with(tool).parse(argc, argv).apply();
+    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
 
 static std::string
@@ -77,14 +84,14 @@ int
 main(int argc, char *argv[]) {
     Diagnostics::initialize();
 
+    BinaryAnalysis::Partitioner2::Engine engine;
     Settings settings;
-    Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings /*in,out*/);
-    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings /*in,out*/);
 
     BinaryAnalysis::MagicNumber analyzer;
     analyzer.maxBytesToCheck(settings.maxBytes);
 
-    MemoryMap map = BinaryAnalysis::Partitioner2::Engine().load(specimenNames);
+    MemoryMap map = engine.loadSpecimens(specimenNames);
     map.dump(mlog[INFO]);
 
     size_t step = std::max(size_t(1), settings.step);

@@ -47,21 +47,8 @@ enum FunctionSelector {
     CONSTADDR_FUNCTIONS,                                // select functions having address mentioned by instructions
 };
 
-// Convenient struct to hold settings from the command-line all in one place.
+// Convenient struct to hold settings specific to this tool. Settings related to disassembling are in the engine.
 struct Settings {
-    std::string isaName;                                // instruction set architecture name
-    std::vector<rose_addr_t> startVas;                  // where to start disassembling
-    size_t deExecuteZeros;                              // threshold for removing execute permissions of zeros (zero disables)
-    bool useSemantics;                                  // should we use symbolic semantics?
-    bool followGhostEdges;                              // do we ignore opaque predicates?
-    bool allowDiscontiguousBlocks;                      // can basic blocks be discontiguous in memory?
-    bool findFunctionPadding;                           // look for pre-entry-point padding?
-    bool findDeadCode;                                  // do we look for unreachable basic blocks?
-    rose_addr_t peScramblerDispatcherVa;                // run the PeDescrambler module if non-zero
-    bool intraFunctionCode;                             // suck up unused addresses as intra-function code
-    bool intraFunctionData;                             // suck up unused addresses as intra-function data
-    AddressInterval interruptVector;                    // table of interrupt handling functions
-    bool doPostAnalysis;                                // perform post-partitioning analysis phase?
     bool doListCfg;                                     // list the control flow graph
     bool doListAum;                                     // list the address usage map
     bool doListAsm;                                     // produce an assembly-like listing with AsmUnparser
@@ -75,7 +62,6 @@ struct Settings {
     bool doListUnused;                                  // list unused addresses
     FunctionSelector selectFunctions;                   // which functions should be shown
     bool selectFunctionsInverted;                       // invert sense of selectFunctions?
-    bool assumeFunctionsReturn;                         // do functions usually return to their caller?
     std::vector<std::string> triggers;                  // debugging aids
     std::string gvBaseName;                             // base name for GraphViz files
     bool gvUseFunctionSubgraphs;                        // use subgraphs in GraphViz files?
@@ -85,189 +71,24 @@ struct Settings {
     bool gvCfgGlobal;                                   // produce GraphViz file containing a global CFG?
     AddressInterval gvCfgInterval;                      // show part of the global CFG
     bool gvCallGraph;                                   // produce a function call graph?
-    std::vector<std::string> configurationNames;        // config files or directories containing such
     Settings()
-        : deExecuteZeros(0), useSemantics(false), followGhostEdges(false), allowDiscontiguousBlocks(true),
-          findFunctionPadding(true), findDeadCode(true), peScramblerDispatcherVa(0), intraFunctionCode(true),
-          intraFunctionData(true), doPostAnalysis(true), doListCfg(false), doListAum(false), doListAsm(true),
-          doListFunctions(false), doListFunctionAddresses(false), doListInstructionAddresses(false), doListContainer(false),
-          doListStrings(false), doShowMap(false), doShowStats(false), doListUnused(false), selectFunctions(ALL_FUNCTIONS),
-          selectFunctionsInverted(false), assumeFunctionsReturn(true), gvUseFunctionSubgraphs(true), gvShowInstructions(true),
-          gvShowFunctionReturns(false), gvCfgGlobal(false), gvCallGraph(false) {}
+        : doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
+          doListInstructionAddresses(false), doListContainer(false), doListStrings(false), doShowMap(false),
+          doShowStats(false), doListUnused(false), selectFunctions(ALL_FUNCTIONS), selectFunctionsInverted(false),
+          gvUseFunctionSubgraphs(true), gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false),
+          gvCallGraph(false) {}
 };
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings)
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 {
     using namespace Sawyer::CommandLine;
 
-    Parser parser;
-    parser
-        .purpose("disassembles and partitions binary specimens")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation())
-        .doc("Bugs", "[999]-bugs",
-             "Probably many, and we're interested in every one.  Send bug reports to <matzke1@llnl.gov>.");
-    
-    // Generic switches
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-    gen.insert(Switch("use-semantics")
-               .intrinsicValue(true, settings.useSemantics)
-               .doc("The partitioner can either use quick and naive methods of determining instruction characteristics, or "
-                    "it can use slower but more accurate methods, such as symbolic semantics.  This switch enables use of "
-                    "the slower symbolic semantics, or the feature can be disabled with @s{no-use-semantics}. The default is " +
-                    std::string(settings.useSemantics?"true":"false") + "."));
-    gen.insert(Switch("no-use-semantics")
-               .key("use-semantics")
-               .intrinsicValue(false, settings.useSemantics)
-               .hidden(true));
-
-    gen.insert(Switch("config")
-               .argument("names", listParser(anyParser(settings.configurationNames), ":"))
-               .explosiveLists(true)
-               .whichValue(SAVE_ALL)
-               .doc("Directories containing configuration files, or configuration files themselves.  A directory is searched "
-                    "recursively searched for files whose names end with \".json\" or and each file is parsed and used to "
-                    "to configure the partitioner.  The JSON file contents is defined by the Carnegie Mellon University "
-                    "Software Engineering Institute. It should have a top-level \"config.exports\" table whose keys are "
-                    "function names and whose values are have a \"function.delta\" integer. The delta does not include "
-                    "popping the return address from the stack in the final RET instruction.  Function names of the form "
-                    "\"lib:func\" are translated to the ROSE format \"func@lib\"."));
-
-    // Switches for disassembly
-    SwitchGroup dis("Disassembly switches");
-    dis.insert(Switch("isa")
-               .argument("architecture", anyParser(settings.isaName))
-               .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-
-    dis.insert(Switch("start")
-               .argument("addresses", listParser(nonNegativeIntegerParser(settings.startVas)))
-               .whichValue(SAVE_ALL)
-               .explosiveLists(true)
-               .doc("List of addresses where recursive disassembly should start in addition to addresses discovered by "
-                    "other methods. Each address listed by this switch will be considered the entry point of a function. "
-                    "This switch may appear multiple times, each of which may have multiple comma-separated addresses."));
-
-    dis.insert(Switch("allow-discontiguous-blocks")
-               .intrinsicValue(true, settings.allowDiscontiguousBlocks)
-               .doc("This setting allows basic blocks to contain instructions that are discontiguous in memory as long as "
-                    "the other requirements for a basic block are still met. Discontiguous blocks can be formed when a "
-                    "compiler fails to optimize away an opaque predicate for a conditional branch, or when basic blocks "
-                    "are scattered in memory by the introduction of unconditional jumps.  The @s{no-allow-discontiguous-blocks} "
-                    "switch disables this feature and can slightly improve partitioner performance by avoiding cases where "
-                    "an unconditional branch initially creates a larger basic block which is later discovered to be "
-                    "multiple blocks.  The default is to " + std::string(settings.allowDiscontiguousBlocks?"":"not ") +
-                    "allow discontiguous basic blocks."));
-    dis.insert(Switch("no-allow-discontiguous-blocks")
-               .key("allow-discontiguous-blocks")
-               .intrinsicValue(false, settings.allowDiscontiguousBlocks)
-               .hidden(true));
-
-    dis.insert(Switch("find-function-padding")
-               .intrinsicValue(true, settings.findFunctionPadding)
-               .doc("Look for padding such as zero bytes and certain instructions like no-ops that occur prior to the "
-                    "lowest address of a function and attach them to the function as static data.  The "
-                    "@s{no-find-function-padding} switch turns this off.  The default is to " +
-                    std::string(settings.findFunctionPadding?"":"not ") + "search for padding."));
-    dis.insert(Switch("no-find-function-padding")
-               .key("find-function-padding")
-               .intrinsicValue(false, settings.findFunctionPadding)
-               .hidden(true));
-
-    dis.insert(Switch("follow-ghost-edges")
-               .intrinsicValue(true, settings.followGhostEdges)
-               .doc("When discovering the instructions for a basic block, treat instructions individually rather than "
-                    "looking for opaque predicates.  The @s{no-follow-ghost-edges} switch turns this off.  The default "
-                    "is " + std::string(settings.followGhostEdges?"true":"false") + "."));
-    dis.insert(Switch("no-follow-ghost-edges")
-               .key("follow-ghost-edges")
-               .intrinsicValue(false, settings.followGhostEdges)
-               .hidden(true));
-
-    dis.insert(Switch("find-dead-code")
-               .intrinsicValue(true, settings.findDeadCode)
-               .doc("Use ghost edges (non-followed control flow from branches with opaque predicates) to locate addresses "
-                    "for unreachable code, then recursively discover basic blocks at those addresses and add them to the "
-                    "same function.  The @s{no-find-dead-code} switch turns this off.  The default is " +
-                    std::string(settings.findDeadCode?"true":"false") + "."));
-    dis.insert(Switch("no-find-dead-code")
-               .key("find-dead-code")
-               .intrinsicValue(false, settings.findDeadCode)
-               .hidden(true));
-
-    dis.insert(Switch("pe-scrambler")
-               .argument("dispatcher_address", nonNegativeIntegerParser(settings.peScramblerDispatcherVa))
-               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
-                    "that go into the specified @v{dispatcher_address} are immediately rewritten so they appear to go "
-                    "instead to the function contained in the dispatcher table which normally immediately follows the "
-                    "dispatcher function.  The dispatcher function is quite easy to find in a call graph because nearly "
-                    "everything calls it -- it will likely have far and away more callers than anything else.  Setting the "
-                    "address to zero disables this module (which is the default)."));
-
-    dis.insert(Switch("intra-function-code")
-               .intrinsicValue(true, settings.intraFunctionCode)
-               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                    "followed by the same single function then a basic block is create at the beginning of that region and "
-                    "added as a member of the surrounding function.  A function block discover phase follows in order to "
-                    "find the instructions for the new basic blocks and to follow their control flow to add additional "
-                    "blocks to the functions.  These two steps are repeated until no new code can be created.  This step "
-                    "occurs before the @s{intra-function-data} step if both are enabled.  The @s{no-intra-function-code} "
-                    "switch turns this off. The default is to " + std::string(settings.intraFunctionCode?"":"not ") +
-                    "perform this analysis."));
-    dis.insert(Switch("no-intra-function-code")
-               .key("intra-function-code")
-               .intrinsicValue(false, settings.intraFunctionCode)
-               .hidden(true));
-
-    dis.insert(Switch("intra-function-data")
-               .intrinsicValue(true, settings.intraFunctionData)
-               .doc("Near the end of processing, if there are regions of unused memory that are immediately preceded and "
-                    "followed by the same function then add that region of memory to that function as a static data block."
-                    "The @s{no-intra-function-data} switch turns this feature off.  The default is " +
-                    std::string(settings.intraFunctionData?"true":"false") + "."));
-    dis.insert(Switch("no-intra-function-data")
-               .key("intra-function-data")
-               .intrinsicValue(false, settings.intraFunctionData)
-               .hidden(true));
-
-    dis.insert(Switch("remove-zeros")
-               .argument("size", nonNegativeIntegerParser(settings.deExecuteZeros), "128")
-               .doc("This switch causes execute permission to be removed from sequences of contiguous zero bytes. The "
-                    "switch argument is the minimum number of consecutive zeros that will trigger the removal, and "
-                    "defaults to 128.  An argument of zero disables the removal.  When this switch is not specified at "
-                    "all, this tool assumes a value of " + StringUtility::plural(settings.deExecuteZeros, "bytes") + "."));
-
-    dis.insert(Switch("functions-return")
-               .argument("boolean", booleanParser(settings.assumeFunctionsReturn))
-               .doc("If the disassembler's may-return analysis is inconclusive then either assume that such functions may "
-                    "return to their caller or never return.  The default is that they " +
-                    std::string(settings.assumeFunctionsReturn?"may":"never") + " return."));
-
-    dis.insert(Switch("post-analysis")
-               .intrinsicValue(true, settings.doPostAnalysis)
-               .doc("Run all post-partitioning analysis functions.  For instance, calculate stack deltas for each "
-                    "instruction, and may-return analysis for each function.  Some of these phases will only work if "
-                    "instruction semantics are enabled (see @s{use-semantics}).  The @s{no-post-analysis} switch turns "
-                    "this off, although analysis will still be performed where it is needed for partitioning.  The "
-                    "default is to " + std::string(settings.doPostAnalysis?"":"not ") + "perform the post analysis phase."));
-    dis.insert(Switch("no-post-analysis")
-               .key("post-analysis")
-               .intrinsicValue(false, settings.doPostAnalysis)
-               .hidden(true));
-
-    dis.insert(Switch("interrupt-vector")
-               .argument("addresses", P2::addressIntervalParser(settings.interruptVector))
-               .doc("A table containing addresses of functions invoked for various kinds of interrupts. " +
-                    P2::AddressIntervalParser::docString() + " The length and contents of the table is architecture "
-                    "specific, and the disassembler will use available information about the architecture to decode the "
-                    "table.  If a single address is specified, then the length of the table is architecture dependent, "
-                    "otherwise the entire table is read."));
+    std::string purpose = "disassembles binary specimens";
+    std::string description =
+        "Disassembles the specimens and presents various information depending on switches.";
+    Parser parser = engine.commandLineParser(purpose, description);
 
     // Switches for output
     SwitchGroup out("Output switches");
@@ -510,7 +331,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     ));
     
 
-    return parser.with(gen).with(dis).with(out).with(dot).with(dbg).parse(argc, argv).apply();
+    return parser.with(out).with(dot).with(dbg).parse(argc, argv).apply().unreachedArgs();
 }
 
 
@@ -741,7 +562,7 @@ static SgAsmBlock *
 buildAst(P2::Engine &engine, const P2::Partitioner &partitioner) {
     static SgAsmBlock *gblock = NULL;
     if (NULL==gblock)
-        gblock = engine.buildAst(partitioner);
+        gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
     return gblock;
 }
 
@@ -799,93 +620,32 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char *argv[]) {
-    // Do this explicitly since librose doesn't do this automatically yet
-    Diagnostics::initialize();
-
-#if 0 // DEBUGGING [Robb P. Matzke 2014-08-16]: make progress reporting more fluid than normal
-    Sawyer::ProgressBarSettings::initialDelay(0.5);
-    Sawyer::ProgressBarSettings::minimumUpdateInterval(0.05);
-#endif
+    // Use a partitioning engine since this makes this tool much easier to write.
+    P2::Engine engine;
 
     // Parse the command-line
     Settings settings;
-    Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
-    Disassembler *disassembler = NULL;
-    if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
-    // Create an engine to drive the partitioning.  This is entirely optional.  All an engine does is define the sequence of
-    // partitioning calls that need to be made in order to recognize instructions, basic blocks, data blocks, and functions.
-    // We instantiate the engine early because it has some nice methods that we can use.
-    P2::Engine engine;
-
     // Load the specimen as raw data or an ELF or PE container.
-    MemoryMap map = engine.load(specimenNames);
+    MemoryMap map = engine.loadSpecimens(specimenNames);
     SgAsmInterpretation *interp = engine.interpretation();
-    if (NULL==(disassembler = engine.obtainDisassembler(disassembler)))
-        throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-
-#if 0 // [Robb P. Matzke 2014-08-29]
-    // Remove execute permission from all segments of memory except those with ".text" as part of their name.
-    BOOST_FOREACH (MemoryMap::Segment &segment, map.segments()) {
-        if (!boost::contains(segment.name(), ".text")) {
-            std::cerr <<"ROBB: removing execute from " <<segment.name() <<"\n";
-            unsigned newPerms = segment.accessibility() & ~MemoryMap::EXECUTABLE;
-            segment.accessibility(newPerms);
-        }
-    }
-#endif
-
-    // Remove execute permission from regions of memory that contain only zero.  This will prevent them from being disassembled
-    // since they're almost always padding at the end of sections (e.g., MVC pads all sections to 256 bytes by appending zeros).
-    P2::Modules::deExecuteZeros(map /*in,out*/, settings.deExecuteZeros);
 
     // Some analyses need to know what part of the address space is being disassembled.
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Node &node, map.nodes()) {
+    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap().nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
 
     // Create a partitioner that's tuned for a certain architecture, and then tune it even more depending on our command-line.
-    Sawyer::Stopwatch partitionTime;
-    P2::Partitioner partitioner = engine.createTunedPartitioner();
-    partitioner.enableSymbolicSemantics(settings.useSemantics);
-    partitioner.assumeFunctionsReturn(settings.assumeFunctionsReturn);
-    if (settings.followGhostEdges)
-        partitioner.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
-    if (!settings.allowDiscontiguousBlocks)
-        partitioner.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
-    if (settings.peScramblerDispatcherVa) {
-        P2::ModulesPe::PeDescrambler::Ptr cb = P2::ModulesPe::PeDescrambler::instance(settings.peScramblerDispatcherVa);
-        cb->nameKeyAddresses(partitioner);              // give names to certain PEScrambler things
-        partitioner.basicBlockCallbacks().append(cb);
-        partitioner.attachFunction(P2::Function::instance(settings.peScramblerDispatcherVa,
-                                                          partitioner.addressName(settings.peScramblerDispatcherVa),
-                                                          SgAsmFunction::FUNC_USERDEF)); 
-    }
-    engine.labelAddresses(partitioner, interp);         // label addresses from container before loading configuration
-    if (!settings.configurationNames.empty()) {
-        Sawyer::Message::Stream info(mlog[INFO]);
-        info <<"loading configuration files";
-        BOOST_FOREACH (const std::string &configName, settings.configurationNames)
-            partitioner.configuration().loadFromFile(configName);
-        info <<"; configured\n";
-#if 0 // DEBUGGING [Robb P. Matzke 2015-01-23]
-        std::cout <<partitioner.configuration();
-#endif
-    }
+    P2::Partitioner partitioner = engine.createPartitioner();
     if (false)
         partitioner.cfgAdjustmentCallbacks().append(Monitor::instance());// fun, but very verbose
     if (false)
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
-    BOOST_FOREACH (rose_addr_t va, settings.startVas) {
-        P2::Function::Ptr function = P2::Function::instance(va, SgAsmFunction::FUNC_USERDEF);
-        partitioner.attachOrMergeFunction(function);
-    }
 
     // Insert debugging aids
     BOOST_FOREACH (const std::string &s, settings.triggers) {
@@ -911,51 +671,10 @@ int main(int argc, char *argv[]) {
     if (settings.doShowMap)
         partitioner.memoryMap().dump(std::cout);
 
-    Stream info(mlog[INFO] <<"Disassembling and partitioning");
-
-    // Find functions for an interrupt vector.
-    engine.makeInterruptVectorFunctions(partitioner, settings.interruptVector);
-    
-    // Find interesting places at which to disassemble.  This traverses the interpretation (if any) to find things like
-    // specimen entry points, exception handling, imports and exports, and symbol tables.
-    engine.makeContainerFunctions(partitioner, interp);
-    engine.makeConfiguredDataBlocks(partitioner, partitioner.configuration());
-    engine.makeConfiguredFunctions(partitioner, partitioner.configuration());
-
-    // Do an initial pass to discover functions and partition them into basic blocks and functions. Functions for which the CFG
-    // is a bit wonky won't get assigned any basic blocks (other than the entry blocks we just added above).
-    engine.discoverFunctions(partitioner);
-
-    // Various fix-ups
-    if (settings.findDeadCode)
-        engine.attachDeadCodeToFunctions(partitioner);  // find unreachable code and add it to functions
-    if (settings.findFunctionPadding)
-        engine.attachPaddingToFunctions(partitioner);   // find function alignment padding before entry points
-    if (settings.intraFunctionCode)
-        engine.attachAllSurroundedCodeToFunctions(partitioner);
-    if (settings.intraFunctionData)
-        engine.attachSurroundedDataToFunctions(partitioner); // find data areas that are enclosed by functions
-
-    // Perform a final pass over all functions and issue reports about which functions have unreasonable control flow.
-    engine.attachBlocksToFunctions(partitioner, true/*emit warnings*/);
-
-    // Now that the partitioner's work is all done, try to give names to some things.  Most functions will have been given
-    // names when we marked their locations, but import thunks can be scattered all over the place and its nice if we give them
-    // the same name as the imported function to which they point.  This is especially important if there's no basic block at
-    // the imported function's address (i.e., the dynamic linker hasn't run) because ROSE's AST can't represent basic blocks
-    // that have no instructions, and therefore the imported function's address doesn't even show up in ROSE.
-    engine.applyPostPartitionFixups(partitioner, interp);
-
-    // Analyze each basic block and function and cache results.  We do this before listing the CFG or building the AST.
-    if (settings.doPostAnalysis) {
-        mlog[INFO] <<"running all post analysis phases (--post-analysis)\n";
-        engine.updateAnalysisResults(partitioner);
-    }
-    
-    info <<"; completed in " <<partitionTime <<" seconds.\n";
-
-    if (partitioner.functions().empty() && settings.startVas.empty())
-        mlog[WARN] <<"no starting points for recursive disassembly; prehaps you need --start?\n";
+    // Run the partitioner
+    engine.runPartitioner(partitioner);
+    if (partitioner.functions().empty() && engine.startingVas().empty())
+        mlog[WARN] <<"no starting points for recursive disassembly; perhaps you need --start?\n";
 
     //-------------------------------------------------------------- 
     // The rest of main() is just about showing the results...
@@ -1076,9 +795,9 @@ int main(int argc, char *argv[]) {
     if (settings.doListAsm) {
         SgAsmBlock *gblock = buildAst(engine, partitioner);
         AsmUnparser unparser;
-        unparser.set_registers(disassembler->get_registers());
+        unparser.set_registers(partitioner.instructionProvider().registerDictionary());
         unparser.add_control_flow_graph(ControlFlow().build_block_cfg_from_ast<ControlFlow::BlockGraph>(gblock));
-        unparser.staticDataDisassembler.init(disassembler);
+        unparser.staticDataDisassembler.init(engine.disassembler());
         unparser.unparse(std::cout, gblock);
     }
 

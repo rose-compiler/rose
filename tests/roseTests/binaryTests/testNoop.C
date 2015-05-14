@@ -8,40 +8,24 @@ using namespace rose;
 using namespace rose::BinaryAnalysis;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
-struct Settings {};                                     // command-line settings.
-
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine &engine) {
     using namespace Sawyer::CommandLine;
 
-    Parser parser;
-    parser
-        .purpose("looks for instruction sequences that are no-op equivalent")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line, "
-             "and then scans the instructions of each basic block individually to find all sequences of instructions "
-             "that have no effect.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
+    std::string purpose = "finds instruction sequences that are no-op equivalent";
+    std::string description =
+         "Parses, disassembles and partitions the specimens given as positional arguments on the command-line, "
+         "and then scans the instructions of each basic block individually to find all sequences of instructions "
+        "that have no effect.";
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
-    return parser.with(gen).parse(argc, argv).apply().unreachedArgs();
+    return engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
 }
 
 int
 main(int argc, char *argv[]) {
-    Diagnostics::initialize();
-
-    Settings settings;
-    std::vector<std::string> fileNames = parseCommandLine(argc, argv, settings /*out*/);
-
     P2::Engine engine;
-    engine.useSemantics(true);
-    P2::Partitioner partitioner = engine.partition(fileNames);
+    engine.usingSemantics(true); // test specimens contain opaque predicates
+    P2::Partitioner partitioner = engine.partition(parseCommandLine(argc, argv, engine));
 
     // Get a list of basic blocks to analyze, sorted by starting address.
     std::vector<P2::BasicBlock::Ptr> bblocks;
