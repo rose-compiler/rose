@@ -38,6 +38,15 @@ Engine::init() {
     Diagnostics::initialize();
 }
 
+void
+Engine::reset() {
+    interp_ = NULL;
+    binaryLoader_ = NULL;
+    disassembler_ = NULL;
+    map_.clear();
+    basicBlockWorkList_ = BasicBlockWorkList::instance();
+}
+
 // Returns true if the specified vertex has at least one E_CALL_RETURN edge
 static bool
 hasCallReturnEdges(const ControlFlowGraph::ConstVertexIterator &vertex) {

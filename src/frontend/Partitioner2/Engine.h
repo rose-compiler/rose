@@ -266,6 +266,13 @@ public:
     //                                  Basic top-level steps
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Reset the engine to its initial state.
+     *
+     *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets
+     *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
+     *  a useful way to re-use the same partitioner to process multiple specimens. */
+    void reset();
+
     /** Parse the command-line.
      *
      *  This method parses the command-line and uses it to update this engine's settings.  Since a command line is usually more
