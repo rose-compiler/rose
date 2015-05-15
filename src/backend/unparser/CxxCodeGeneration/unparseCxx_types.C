@@ -762,7 +762,7 @@ Unparse_Type::unparseDeclType(SgType* type, SgUnparse_Info& info)
              {
             // In this case just use the type directly.
                ROSE_ASSERT(decltype_node->get_base_type() != NULL);
-#if 1
+#if 0
                printf ("In unparseDeclType(): detected SgFunctionParameterRefExp: using decltype_node->get_base_type() = %p = %s \n",decltype_node->get_base_type(),decltype_node->get_base_type()->class_name().c_str());
 #endif
                unparseType(decltype_node->get_base_type(),info);
@@ -787,7 +787,7 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
 
 #define DEBUG_TYPEOF_TYPE 0
 
-#if DEBUG_TYPEOF_TYPE
+#if DEBUG_TYPEOF_TYPE || 0
      printf ("In unparseTypeOfType(): typeof_node       = %p \n",typeof_node);
      printf ("   --- typeof_node->get_base_expression() = %p \n",typeof_node->get_base_expression());
      if (typeof_node->get_base_expression() != NULL)
@@ -836,9 +836,11 @@ Unparse_Type::unparseTypeOfType(SgType* type, SgUnparse_Info& info)
 
                ninfo1.unset_isTypeSecondPart();
                ninfo1.unset_isTypeFirstPart();
-#if 0
 
-#error "DEAD CODE!"
+// DQ (5/10/2015): Changing this back to calling "unparseType(typeof_node->get_base_type(), ninfo1);" once.
+#if 1
+
+// #error "DEAD CODE!"
 
                unparseType(typeof_node->get_base_type(), ninfo1);
 #else
@@ -1156,6 +1158,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                unparseType(pointer_type->get_base_type(), ninfo1);
 
                curprint("*");
+               curprint(" /* unparsePointerType(): typeof: first part */ ");
              }
             else
              {
@@ -1176,6 +1179,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                     unparseType(pointer_type->get_base_type(), ninfo1);
 
                     curprint("*");
+                    curprint(" /* unparsePointerType(): typeof: first and second part false */ ");
                   }
              }
 
@@ -1262,6 +1266,7 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
 #else
        // if (info.SkipDefinition() == true)
           curprint("*");
+       // curprint(" /* unparsePointerType(): first part */ ");
 #endif
         }
        else
@@ -3194,6 +3199,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      string firstPartString  = (info.isTypeFirstPart()  == true) ? "true" : "false";
      string secondPartString = (info.isTypeSecondPart() == true) ? "true" : "false";
      printf ("\nIn Unparse_Type::unparseArrayType(): type = %p type->class_name() = %s firstPart = %s secondPart = %s \n",type,type->class_name().c_str(),firstPartString.c_str(),secondPartString.c_str());
+     printf ("In Unparse_Type::unparseArrayType(): array_type->get_base_type() = %p = %s \n",array_type->get_base_type(),array_type->get_base_type()->class_name().c_str());
 #endif
 
 #if 0
@@ -3209,6 +3215,10 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
      printf ("In Unparse_Type::unparseArrayType(): info.isReferenceToSomething() = %s \n",info.isReferenceToSomething() ? "true" : "false");
      printf ("In Unparse_Type::unparseArrayType(): info.isPointerToSomething()   = %s \n",info.isPointerToSomething()   ? "true" : "false");
 #endif
+
+#if 0
+  // DQ (5/10/2015): Removing this special case now that other parts of the unparsing of
+  // typeof operators are more refined.  This is done as part of debugging: test2015_115.c.
 
   // DQ (4/11/2015): Need to handle "[n]" part of array type (see test2015_83.c).
   // DQ (3/31/2015): We can't use the perenthesis in this case (see test2015_49.c).
@@ -3242,6 +3252,9 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
           return;
         }
+#else
+//   printf ("In Unparse_Type::unparseArrayType(): Commented out special case handling for SgTypeOf base type \n");
+#endif
 
      SgUnparse_Info ninfo(info);
      bool needParen = false;
@@ -3261,7 +3274,7 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #endif
         }
 
-#if DEBUG_ARRAY_TYPE
+#if DEBUG_ARRAY_TYPE || 0
      printf ("In unparseArrayType(): needParen = %s \n",(needParen == true) ? "true" : "false");
      curprint(string("/* In  unparseArrayType() needParen = ") + string((needParen == true) ? "true" : "false") + string(" */ \n "));
 #endif
@@ -3279,8 +3292,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_ARRAY_TYPE
                printf ("DONE: ninfo.isTypeFirstPart() == true: needParen == true: Calling unparseType(array_type->get_base_type(), ninfo); \n");
 #endif
-            // curprint("(");
-               curprint(" /* unparseArrayType */ (");
+               curprint("(");
+            // curprint(" /* unparseArrayType */ (");
              }
             else
              {
@@ -3302,8 +3315,8 @@ Unparse_Type::unparseArrayType(SgType* type, SgUnparse_Info& info)
 #if DEBUG_ARRAY_TYPE
                     printf ("ninfo.isTypeSecondPart() == true: needParen == true: output parenthisis and unparse the array index \n");
 #endif
-                 // curprint(")");
-                    curprint(" /* unparseArrayType */ )");
+                    curprint(")");
+                 // curprint(" /* unparseArrayType */ )");
 #if 0
 #error "DEAD CODE!"
                  // DQ (3/24/2015): Original code.

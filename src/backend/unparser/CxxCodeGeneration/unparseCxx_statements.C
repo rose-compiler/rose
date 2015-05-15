@@ -7361,6 +7361,13 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      SgUnparse_Info newinfo(info);
 
+  // DQ (5/9/2015): Added assertion.
+     ROSE_ASSERT(expr_stmt->get_expression() != NULL);
+
+#if 0
+     printf ("\n\nTop of unparseExprStmt() expr_stmt->get_expression() = %p = %s \n",expr_stmt->get_expression(),expr_stmt->get_expression()->class_name().c_str());
+#endif
+
   // Expressions are another place where a class definition should NEVER be unparsed
   // DQ (5/23/2007): Note that statement expressions can have class definition
   // (so they are exceptions, see test2007_51.C).
@@ -7385,17 +7392,25 @@ Unparse_ExprStmt::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseExpression(expr_stmt->get_expression(), newinfo);
         }
        else
+        {
           assert(false);
+        }
 
      if (newinfo.inVarDecl())
         {
           curprint ( string(","));
         }
        else
+        {
           if (!newinfo.inConditional() && !newinfo.SkipSemiColon())
              {
                curprint ( string(";"));
              }
+        }
+
+#if 0
+     printf ("Leaving unparseExprStmt() expr_stmt->get_expression() = %p = %s \n",expr_stmt->get_expression(),expr_stmt->get_expression()->class_name().c_str());
+#endif
    }
 
 

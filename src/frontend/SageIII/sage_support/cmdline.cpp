@@ -412,6 +412,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-diag-warning" ||
           argument == "-diag-remark"  ||
 
+       // TOO1 (5/14/2015): Add support for GCC --param, e.g. "--param inline-unit-growth=900" found in Valgrind
+          argument == "--param" ||    // --param variable=value
+
           false)
         {
           result = true;
@@ -1006,6 +1009,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
       Rose::Cmdline::Unparser::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Fortran::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
+      Rose::Cmdline::Gnu::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
@@ -1939,6 +1943,49 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
       #endif
   }// has_fortran_remote_debug
 }// Cmdline::Fortran::Ofp::ProcessEnableRemoteDebugging
+
+//------------------------------------------------------------------------------
+//                                  Gnu
+//------------------------------------------------------------------------------
+//
+bool
+Rose::Cmdline::Gnu::
+OptionRequiresArgument (const std::string& option)
+{
+  return
+      option == "--param"    ||   // --param variable=value
+      false;
+}// Cmdline:Java:::OptionRequiresArgument
+
+void
+Rose::Cmdline::Gnu::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing GNU commandline options" << std::endl;
+
+  ProcessParam(project, argv);
+}
+
+void
+Rose::Cmdline::Gnu::
+ProcessParam (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string param;
+  bool has_param =
+      CommandlineProcessing::isOptionWithParameter(
+        argv,
+        "--",
+        "(param)",
+        param,
+        true);
+
+  if (has_param)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Detected GNU --param " << param << std::endl;
+  }
+}
 
 //------------------------------------------------------------------------------
 //                                  Java
