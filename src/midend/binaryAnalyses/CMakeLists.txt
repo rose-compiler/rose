@@ -7,6 +7,7 @@ add_library(midend_binary OBJECT
   BinaryDominance.C
   BinaryFunctionCall.C
   BinaryMagic.C
+  BinaryNoOperation.C
   BinaryReturnValueUsed.C
   BinaryString.C
   BinaryTaintedFlow.C
