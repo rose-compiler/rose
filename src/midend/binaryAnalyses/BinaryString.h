@@ -159,6 +159,9 @@ namespace BinaryAnalysis {
  * @endcode */
 namespace Strings {
 
+/** Diagnostics specific to string analysis. */
+extern Sawyer::Message::Facility mlog;
+
 typedef uint8_t Octet;                                  /**< One byte in a sequence that encodes a code value. */
 typedef std::vector<Octet> Octets;                      /**< A sequence of octets. */
 typedef unsigned CodeValue;                             /**< One value in a sequence that encodes a code point. */
@@ -190,6 +193,9 @@ enum State {
 
 /** Returns true for COMPLETED_STATE or FINAL_STATE. */
 bool isDone(State st);
+
+/** Initialize the diagnostics facility. This is called by @ref rose::Diagnostics::initialize. */
+void initDiagnostics();
 
 /** Defines mapping between code points and code values.
  *
