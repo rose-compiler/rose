@@ -71,12 +71,13 @@ struct Settings {
     bool gvCfgGlobal;                                   // produce GraphViz file containing a global CFG?
     AddressInterval gvCfgInterval;                      // show part of the global CFG
     bool gvCallGraph;                                   // produce a function call graph?
+    bool gvInlineImports;                               // inline imports when emitting a call graph?
     Settings()
         : doListCfg(false), doListAum(false), doListAsm(true), doListFunctions(false), doListFunctionAddresses(false),
           doListInstructionAddresses(false), doListContainer(false), doListStrings(false), doShowMap(false),
           doShowStats(false), doListUnused(false), selectFunctions(ALL_FUNCTIONS), selectFunctionsInverted(false),
           gvUseFunctionSubgraphs(true), gvShowInstructions(true), gvShowFunctionReturns(false), gvCfgGlobal(false),
-          gvCallGraph(false) {}
+          gvCallGraph(false), gvInlineImports(false) {}
 };
 
 // Describe and parse the command-line
@@ -293,6 +294,18 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     dot.insert(Switch("no-gv-call-graph")
                .key("gv-call-graph")
                .intrinsicValue(false, settings.gvCallGraph)
+               .hidden(true));
+
+    dot.insert(Switch("gv-inline-imports")
+               .intrinsicValue(true, settings.gvInlineImports)
+               .doc("When emitting a function call graph, inline imports into their callers and display the names of inlined "
+                    "functions in the output.  This sometimes makes the output much cleaner.  Import functions are identified "
+                    "by their names only: any name ending with \".dll\" or \"@plt\" is considered an imported function. This "
+                    "feature is disabled with the @s{no-gv-inline-imports} switch.  The default is to " +
+                    std::string(settings.gvInlineImports?"":"not ") + "perform this inlining."));
+    dot.insert(Switch("no-gv-inline-imports")
+               .key("gv-inline-imports")
+               .intrinsicValue(false, settings.gvInlineImports)
                .hidden(true));
 
     // Switches for debugging
@@ -547,9 +560,16 @@ emitFunctionCallGraph(const P2::Partitioner &partitioner, const Settings &settin
         mlog[ERROR] <<"cannot write to CG file \"" <<fileName <<"\"\n";
     } else {
         mlog[INFO] <<"generating call graph: " <<fileName <<"\n";
-        P2::GraphViz::CgEmitter gv(partitioner);
-        gv.defaultGraphAttributes().insert("overlap", "scale");
-        gv.emitCallGraph(out);
+        if (settings.gvInlineImports) {
+            P2::GraphViz::CgInlinedEmitter gv(partitioner, boost::regex("(\\.dll|@plt)$"));
+            gv.highlight(boost::regex("."));            // highlight anything with a name
+            gv.defaultGraphAttributes().insert("overlap", "scale");
+            gv.emitCallGraph(out);
+        } else {
+            P2::GraphViz::CgEmitter gv(partitioner);
+            gv.defaultGraphAttributes().insert("overlap", "scale");
+            gv.emitCallGraph(out);
+        }
     }
 }
 
@@ -767,7 +787,6 @@ int main(int argc, char *argv[]) {
         analyzer.discardCodePoints(false);
         analyzer.keepOnlyLongest(true);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
-
         std::vector<Strings::EncodedString> strings = analyzer.find(partitioner.memoryMap().any());
         BOOST_FOREACH (const Strings::EncodedString &string, strings) {
             std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";

@@ -733,7 +733,18 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
-    : partitioner_(partitioner), cg_(partitioner.functionCallGraph(false/*no parallel edges*/)) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+}
+
+CgEmitter::CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg)
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    callGraph(cg);
+}
+
+void
+CgEmitter::callGraph(const FunctionCallGraph &cg) {
+    cg_ = cg;
     graph(cg_.graph());
 }
 
@@ -744,12 +755,21 @@ CgEmitter::functionLabel(const Function::Ptr &function) const {
     return "\"\"";
 }
 
+void
+CgEmitter::highlight(const boost::regex &re) {
+    highlightNameMatcher_ = re;
+}
+
 Attributes
 CgEmitter::functionAttributes(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     Attributes attr;
     attr.insert("style", "filled");
-    attr.insert("fillcolor", subgraphColor().toHtml());
+    if (boost::regex_search(function->name(), highlightNameMatcher_)) {
+        attr.insert("fillcolor", functionHighlightColor_.toHtml());
+    } else {
+        attr.insert("fillcolor", subgraphColor().toHtml());
+    }
     return attr;
 }
 
@@ -782,6 +802,61 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
     out <<"}\n";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Function callgraph with inlined functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher)
+    : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
+    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+}
+
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher)
+    : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
+    callGraph(cg);
+}
+
+void
+CgInlinedEmitter::callGraph(const FunctionCallGraph &fullCg) {
+    FunctionCallGraph cg;                               // the call graph with some calls removed
+    inlines_.clear();
+
+    // Insert all vertices that will be needed.
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, fullCg.graph().vertices()) {
+        Function::Ptr function = vertex.value();
+        if (!shouldInline(function) || fullCg.nCallees(function)>0) {
+            cg.insertFunction(function);
+            inlines_.insert(function, InlinedFunctions());
+        }
+    }
+
+    // Insert call edges
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Edge &edge, fullCg.graph().edges()) {
+        Function::Ptr caller = edge.source()->value();
+        Function::Ptr callee = edge.target()->value();
+        if (shouldInline(callee)) {
+            insertUnique(inlines_[caller], callee, sortFunctionsByAddress);
+        } else {
+            ASSERT_require(inlines_.exists(callee));
+            cg.insertCall(caller, callee, edge.value().type(), edge.value().count());
+        }
+    }
+    CgEmitter::callGraph(cg);
+}
+
+bool
+CgInlinedEmitter::shouldInline(const Function::Ptr &function) const {
+    return boost::regex_search(function->name(), nameMatcher_);
+}
+
+std::string
+CgInlinedEmitter::functionLabel(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    std::string s = htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+    BOOST_FOREACH (const Function::Ptr &inlined, inlines_[function])
+        s += "  " + htmlEscape(inlined->printableName()) + "<br align=\"left\"/>";
+    return "<" + s + ">";
+}
 
 } // namespace
 } // namespace

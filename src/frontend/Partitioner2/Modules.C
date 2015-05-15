@@ -470,11 +470,6 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
     t1.traverse(fileHeader, preorder);
 }
 
-static int
-validStringChar(int ch) {
-    return isascii(ch) && (isgraph(ch) || isspace(ch));
-}
-
 void
 nameStrings(const Partitioner &partitioner) {
     struct T1: AstSimpleProcessing {

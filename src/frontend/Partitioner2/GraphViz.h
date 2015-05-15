@@ -3,6 +3,7 @@
 
 #include <ostream>
 #include <BinaryNoOperation.h>
+#include <boost/regex.hpp>
 #include <Color.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
@@ -771,11 +772,41 @@ private:
 class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     const Partitioner &partitioner_;
     FunctionCallGraph cg_;
+    Color::HSV functionHighlightColor_;                 // highlight certain functions
+    boost::regex highlightNameMatcher_;                 // which functions to highlight
 public:
-    CgEmitter(const Partitioner &partitioner);
-    std::string functionLabel(const Function::Ptr&) const;
-    Attributes functionAttributes(const Function::Ptr&) const;
-    void emitCallGraph(std::ostream &out) const;
+    explicit CgEmitter(const Partitioner &partitioner);
+    CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual Attributes functionAttributes(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual void emitCallGraph(std::ostream &out) const ROSE_OVERRIDE;
+    virtual const FunctionCallGraph& callGraph() const { return cg_; }
+    virtual void callGraph(const FunctionCallGraph &cg);
+    virtual void highlight(const boost::regex&);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                              Callgraph emitter with inlined imports
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Emits a modified function call graph.
+ *
+ *  The function call graph is modified by removing all vertices whose function names match a user-specified pattern and
+ *  compensating by listing the names of removed functions in the vertices of the callers.  This is a little bit like inlining,
+ *  thus the name of the class. */
+class CgInlinedEmitter: public CgEmitter {
+    boost::regex nameMatcher_;
+    typedef std::vector<Function::Ptr> InlinedFunctions;
+    typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
+    Inlines inlines_;
+public:
+    CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
+    virtual const FunctionCallGraph& callGraph() const ROSE_OVERRIDE { return CgEmitter::callGraph(); }
+    virtual void callGraph(const FunctionCallGraph&) ROSE_OVERRIDE;
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual bool shouldInline(const Function::Ptr&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
