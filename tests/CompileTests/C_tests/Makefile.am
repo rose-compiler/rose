@@ -586,6 +586,20 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_127.c \
      test2015_128.c \
      test2015_129.c \
+     test2015_130.c \
+     test2015_131.c \
+     test2015_132.c \
+     test2015_136.c \
+     test2015_137.c \
+     test2015_138.c \
+     test2015_139.c \
+     test2015_140.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_143.c \
+     test2015_144.c \
+     test2015_145.c \
+     test2015_146.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -968,6 +982,9 @@ test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
 test_m32_use: $(testTranslator)
 	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
 
+# DQ (5/12/2015): Test demonstrated by Xen build system (where test2015_133.S is a generated C source code file).
+test_file_suffix: $(testTranslator) 
+	$(testTranslator) -c $(srcdir)/test2015_133.S
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator

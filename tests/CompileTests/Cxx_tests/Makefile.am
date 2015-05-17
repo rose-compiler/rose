@@ -364,7 +364,9 @@ TESTS_NOT_PASSING = \
    test2014_119.C \
    test2014_120.C \
    test2014_121.C \
-   test2014_164.C 
+   test2014_164.C \
+   test2015_24.C \
+   test2015_25.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_113.C 
