@@ -670,7 +670,11 @@ FILES_NOT_PASSING = \
      test2014_96.c \
      test2014_97.c \
      test2014_98.c \
-     test2014_99.c 
+     test2014_99.c \
+     test2015_46.c \
+     test2015_112.c \
+     test2015_147.c \
+     test2015_148.c
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
@@ -1028,7 +1032,10 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
 	     test2014_60_data_members.h \
 	     test2014_60_values.h \
 	     test2014_66.h \
-	     test2014_73.h
+	     test2014_73.h \
+        test2015_103.h \
+        test2015_77.h \
+        test2015_88.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
