@@ -7140,6 +7140,10 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
 #endif
 
+#if 0
+  // DQ (5/11/2015): This is part of an overly sophisticated approach to control the use of "={}" syntax.
+  // It is easier to just always normalize to the use of "={}" and then restrict specific cases where it is not allowed.
+
      if (isInitializer_AggregateInitializer == true)
         {
 #if DEBUG_DESIGNATED_INITIALIZER
@@ -7224,6 +7228,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                   }
              }
         }
+#endif
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
@@ -7369,7 +7374,21 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
           SgCastExp*        castExp        = isSgCastExp(assignInitializer->get_operand());
           SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(assignInitializer->get_operand());
 
-          if (valueExp != NULL || castExp != NULL || functionRefExp != NULL)
+       // DQ (5/12/2015): We need to supress "={}" when the types are classes (so that the class assignment operator will be called).
+          ROSE_ASSERT(assignInitializer->get_operand() != NULL);
+          ROSE_ASSERT(assignInitializer->get_operand()->get_type() != NULL);
+
+       // Calling SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
+          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
+          bool isClassType = (classType != NULL);
+
+#if DEBUG_DESIGNATED_INITIALIZER
+          printf ("assignInitializer->get_operand()->get_type() = %p = %s \n",assignInitializer->get_operand()->get_type(),assignInitializer->get_operand()->get_type()->class_name().c_str());
+          printf ("   --- isClassType = %s \n",isClassType ? "true" : "false");
+#endif
+
+       // if (valueExp != NULL || castExp != NULL || functionRefExp != NULL)
+          if (valueExp != NULL || castExp != NULL || functionRefExp != NULL || isClassType == true)
              {
 #if DEBUG_DESIGNATED_INITIALIZER
                printf ("In unparseDesignatedInitializer: reset need_explicit_braces to false \n");
