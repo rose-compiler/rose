@@ -252,14 +252,15 @@ main(int argc, char *argv[], char *envp[]) {
     // The new partioning API uses a customizable Engine to drive a Partitioner final class.
     P2::Engine engine;                                  // use the engine supplied by ROSE
     engine.memoryMap(mm);                               // use this memory rather than the one from the ELF container
-    engine.postPartitionAnalyses(false);                // no need for this expensive final step
-    P2::Partitioner partitioner = engine.partition(interp);
+    engine.interpretation(interp);                      // interpretation to partition
+    engine.doingPostAnalysis(false);                    // no need for this expensive final step
+    P2::Partitioner partitioner = engine.partition(std::vector<std::string>()); // no files to parse or load
 
     // We've already parsed the ELF container and created an AST, but we haven't yet created the part of the AST representing
     // functions, basic blocks, instructions, and expressions.  Most user-level analysis is written in terms of the AST, so
     // we'll create one here for demo purposes.  The global block will contain children which are functions (SgAsmFunction),
     // whose children are basic blocks (SgAsmBlock), whose children are instructions (SgAsmInstruction).
-    SgAsmBlock *gblock = engine.buildAst(partitioner);
+    SgAsmBlock *gblock = P2::Modules::buildAst(partitioner, engine.interpretation());
 
     // Since we're not destroying the partitioner, we should make sure its progress message is cleaned up.
     P2::mlog[Diagnostics::MARCH] <<"done partitioning\n";

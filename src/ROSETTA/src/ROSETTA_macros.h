@@ -132,21 +132,17 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #endif
 
 #ifdef _MSC_VER
-// DQ (11/28/2009): This is a problem for MSVC ("warning C4273: 'abort' : inconsistent dll linkage").
-//#define __builtin_constant_p(exp) (0)
-#define ROSE_ASSERT assert
+    // DQ (11/28/2009): This is a problem for MSVC ("warning C4273: 'abort' : inconsistent dll linkage").
+    //#define __builtin_constant_p(exp) (0)
+    #define ROSE_ASSERT assert
+#elif defined(ROSE_ASSERTION_BEHAVIOR)
+    // ROSE_ASSERT should use Sawyer ASSERT macros which support various termination behaviors that are configurable at compile
+    // time and can be overridden at runtime by the command-line or the rose::Diagnostics API.  They also produce nicer output.
+    #define ROSE_ASSERT ASSERT_require
+    #define ROSE_ABORT  abort
 #else
-#define ROSE_ASSERT assert
-
-//#ifdef __GNUC__
-//#  include <features.h>
-//#if __GNUC_PREREQ(4,3)
-//       If gcc_version >= 4.3
-//#define ROSE_ABORT
-//#else
-#define ROSE_ABORT  abort
-//#endif
-//#endif
+    #define ROSE_ASSERT assert
+    #define ROSE_ABORT  abort
 #endif
 
 // JJW (8/26/2008): Removing these

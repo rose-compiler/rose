@@ -1,0 +1,140 @@
+/* Interpretation ELF */
+0x080480a0: ================================== Function (entry point, graph, discontiguous) <_start>
+0x080480a0: Function does not return to caller.
+
+0x080480a0: Basic block reasons: entry point, CFG head
+0x080480a0: e9 41 00 00 00          |.A...   |<sp+0 >   jmp    0x080480e6<main>
+0x080480e6: e8 ba ff ff ff          |.....   |<sp+0 >   call   0x080480a5<test1>
+0x080480e6: Outgoing stack delta: -4
+0x080480e6: Successor blocks: 0x080480a5, 0x080480eb
+
+0x080480eb: Basic block reasons: 
+0x080480eb: e8 be ff ff ff          |.....   |<sp+0 >   call   0x080480ae<test2>
+0x080480eb: Outgoing stack delta: -4
+0x080480eb: Successor blocks: 0x080480ae, 0x080480f0
+
+0x080480f0: Basic block reasons: 
+0x080480f0: e8 bc ff ff ff          |.....   |<sp+0 >   call   0x080480b1<test3>
+0x080480f0: Outgoing stack delta: -4
+0x080480f0: Successor blocks: 0x080480b1, 0x080480f5
+
+0x080480f5: Basic block reasons: 
+0x080480f5: e8 c7 ff ff ff          |.....   |<sp+0 >   call   0x080480c1<test4a>
+0x080480f5: Outgoing stack delta: -4
+0x080480f5: Successor blocks: 0x080480c1, 0x080480fa
+
+0x080480fa: Basic block reasons: 
+0x080480fa: e8 d1 ff ff ff          |.....   |<sp+0 >   call   0x080480d0<test4b>
+0x080480fa: Outgoing stack delta: -4
+0x080480fa: Successor blocks: 0x080480d0, 0x080480ff
+
+0x080480ff: Basic block reasons: 
+0x080480ff: e8 da ff ff ff          |.....   |<sp+0 >   call   0x080480de<test5>
+0x080480ff: Outgoing stack delta: -4
+0x080480ff: Successor blocks: 0x080480de, 0x08048104
+
+0x08048104: Basic block reasons: 
+0x08048104: e8 d8 ff ff ff          |.....   |<sp+0 >   call   0x080480e1<test6>
+0x08048104: Outgoing stack delta: -4
+0x08048104: Successor blocks: 0x080480e1, 0x08048109
+
+0x08048109: Basic block reasons: 
+0x08048109: f4                      |.       |<sp+0 >   hlt    
+0x08048109: Outgoing stack delta: +0
+0x08048109: Successor blocks: none
+
+0x080480a5: ================================== Function (function call, graph) <test1>
+0x080480a5: Function stack delta: +4
+
+0x080480a5: Basic block reasons: entry point
+0x080480a5: 90                      |.       |<sp+0 >   nop    
+0x080480a6: b8 00 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000000
+0x080480ab: 90                      |.       |<sp+0 >   nop    
+0x080480ac: 90                      |.       |<sp+0 >   nop    
+0x080480ad: c3                      |.       |<sp+0 >   ret    
+0x080480ad: Outgoing stack delta: +4
+0x080480ad: Successor blocks: unknown
+
+0x080480ae: ================================== Function (function call, graph) <test2>
+0x080480ae: Function stack delta: +4
+
+0x080480ae: Basic block reasons: entry point
+0x080480ae: 93                      |.       |<sp+0 >   xchg   ebx, eax
+0x080480af: 93                      |.       |<sp+0 >   xchg   ebx, eax
+0x080480b0: c3                      |.       |<sp+0 >   ret    
+0x080480b0: Outgoing stack delta: +4
+0x080480b0: Successor blocks: unknown
+
+0x080480b1: ================================== Function (function call, graph) <test3>
+0x080480b1: Function stack delta: +4
+
+0x080480b1: Basic block reasons: entry point
+0x080480b1: e9 05 00 00 00          |.....   |<sp+0 >   jmp    0x080480bb<test3.b>
+0x080480bb: e9 f6 ff ff ff          |.....   |<sp+0 >   jmp    0x080480b6<test3.a>
+0x080480b6: e9 05 00 00 00          |.....   |<sp+0 >   jmp    0x080480c0<test3.c>
+0x080480c0: c3                      |.       |<sp+0 >   ret    
+0x080480c0: Outgoing stack delta: +4
+0x080480c0: Successor blocks: unknown
+
+0x080480c1: ================================== Function (function call, graph) <test4a>
+0x080480c1: Function stack delta: +4
+
+0x080480c1: Basic block reasons: entry point
+0x080480c1: b8 00 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000000
+0x080480c6: 85 c0                   |..      |<sp+0 >   test   eax, eax
+0x080480c8: 74 05                   |t.      |<sp+0 >   je     0x080480cf<test4a.a>
+0x080480c8: Outgoing stack delta: +0
+0x080480c8: Successor blocks: 0x080480ca, 0x080480cf
+
+0x080480ca: Basic block reasons: 
+0x080480ca: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480ca: Outgoing stack delta: +0
+0x080480ca: Successor blocks: 0x080480cf
+
+0x080480cf: Basic block reasons: 
+0x080480cf: c3                      |.       |<sp+0 >   ret    
+0x080480cf: Outgoing stack delta: +4
+0x080480cf: Successor blocks: unknown
+
+0x080480d0: ================================== Function (function call, graph) <test4b>
+0x080480d0: Function stack delta: +4
+
+0x080480d0: Basic block reasons: entry point
+0x080480d0: 8b 44 24 64             |.D$d    |<sp+0 >   mov    eax, dword ss:[esp + 0x64]
+0x080480d4: 85 c0                   |..      |<sp+0 >   test   eax, eax
+0x080480d6: 74 05                   |t.      |<sp+0 >   je     0x080480dd<test4b.a>
+0x080480d6: Outgoing stack delta: +0
+0x080480d6: Successor blocks: 0x080480d8, 0x080480dd
+
+0x080480d8: Basic block reasons: 
+0x080480d8: b8 01 00 00 00          |.....   |<sp+0 >   mov    eax, 0x00000001
+0x080480d8: Outgoing stack delta: +0
+0x080480d8: Successor blocks: 0x080480dd
+
+0x080480dd: Basic block reasons: 
+0x080480dd: c3                      |.       |<sp+0 >   ret    
+0x080480dd: Outgoing stack delta: +4
+0x080480dd: Successor blocks: unknown
+
+0x080480de: ================================== Function (function call, graph) <test5>
+0x080480de: Function stack delta: +4
+
+0x080480de: Basic block reasons: entry point
+0x080480de: 50                      |P       |<sp+0 >   push   eax
+0x080480df: 58                      |X       |<sp-4 >   pop    eax
+0x080480e0: c3                      |.       |<sp+0 >   ret    
+0x080480e0: Outgoing stack delta: +4
+0x080480e0: Successor blocks: unknown
+
+0x080480e1: ================================== Function (function call, graph) <test6>
+0x080480e1: Function stack delta: +4
+
+0x080480e1: Basic block reasons: entry point
+0x080480e1: 50                      |P       |<sp+0 >   push   eax
+0x080480e2: 58                      |X       |<sp-4 >   pop    eax
+0x080480e3: 50                      |P       |<sp+0 >   push   eax
+0x080480e4: 58                      |X       |<sp-4 >   pop    eax
+0x080480e5: c3                      |.       |<sp+0 >   ret    
+0x080480e5: Outgoing stack delta: +4
+0x080480e5: Successor blocks: unknown
+

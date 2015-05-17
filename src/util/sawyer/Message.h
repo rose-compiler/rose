@@ -1874,7 +1874,7 @@ private:
     static std::string parseRelation(const char* &input);
     static std::string parseImportanceName(const char* &input);
     static Importance importanceFromString(const std::string&);
-    static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input);
+    static std::list<ControlTerm> parseImportanceList(const std::string &facilityName, const char* &input, bool isGlobal);
 
 };
 

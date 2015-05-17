@@ -357,6 +357,14 @@ TEST_TARGETS += cory003.passed
 cory003.passed: $(TEST_EXIT_STATUS) cory003
 	@$(RTH_RUN) CMD=./cory003 $< $@
 
+# Test register clearing in subclass constructor
+noinst_PROGRAMS += cory004
+cory004_SOURCES = cory004.C
+cory004_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += cory004.passed
+cory004.passed: $(TEST_EXIT_STATUS) cory004
+	@$(RTH_RUN) CMD=./cory004 $< $@
+
 # Test symbolic semantics memory read-after-write
 noinst_PROGRAMS += testSymReadWrite
 testSymReadWrite_SOURCES = testSymReadWrite.C
@@ -927,6 +935,31 @@ $(taintedFlow_TestTargets): taint_%.passed: $(BINARY_SAMPLES)/% taintedFlow tain
 .PHONY: check-taint
 check-taint: $(taintedFlow_TestTargets)
 
+###############################################################################################################################
+# No-op analysis tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testNoop
+testNoop_SOURCES = testNoop.C
+testNoop_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
+
+testNoop_Specimens = i386-noop
+testNoop_TestTargets = $(addprefix noop_, $(addsuffix .passed, $(testNoop_Specimens)))
+testNoop_TestAnswers = $(addprefix noop_, $(addsuffix .ans, $(testNoop_Specimens)))
+
+TEST_TARGETS += $(testNoop_TestTargets)
+EXTRA_DIST += $(testNoop_TestAnswers)
+
+$(testNoop_TestTargets): noop_%.passed: $(BINARY_SAMPLES)/% testNoop
+	@$(RTH_RUN)						\
+		TITLE="testNoop $* [$@]"			\
+		USE_SUBDIR=yes					\
+		CMD="$(abspath ./testNoop) $(abspath $<)"	\
+		ANS="$(abs_srcdir)/noop_$*.ans"			\
+		$(top_srcdir)/scripts/test_with_answer $@
+
+.PHONY: check-noop
+check-noop: $(testNoop_TestTargets)
 
 ###############################################################################################################################
 # DEMOS

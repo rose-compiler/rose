@@ -87,12 +87,12 @@ WPartitioner::init() {
         tip = "A configuration file can be specified on the command-line when the server is started. This item is mostly "
               "just a placeholder for when we eventually allow configuration files to be uploaded from the browser.";
         new Wt::WBreak(c);
+        std::string configNameList = StringUtility::join("; ", ctx_.settings.configurationNames);
         wUseConfiguration_ =
-            new Wt::WCheckBox("Use configuration \"" +
-                              StringUtility::htmlEscape(StringUtility::cEscape(ctx_.settings.configurationName)) + "\"?", c);
+            new Wt::WCheckBox("Use configuration " + StringUtility::htmlEscape(StringUtility::cEscape(configNameList)) + "?", c);
         wUseConfiguration_->setToolTip(tip);
         wUseConfiguration_->setCheckState(Wt::Checked);
-        wUseConfiguration_->setHidden(ctx_.settings.configurationName.empty());
+        wUseConfiguration_->setHidden(ctx_.settings.configurationNames.empty());
 
         tip = "Overrides the ISA found in an ELF/PE container, or provides an ISA if the specimen has "
               "no container (e.g., raw data).";
@@ -294,7 +294,7 @@ bool
 WPartitioner::parseSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"parse ELF/PE containers");
-    ctx_.engine.parse(ctx_.specimenNames);
+    ctx_.engine.parseContainers(ctx_.specimenNames);
     info <<"; took " <<timer <<" seconds.\n";
 
     // Offer interpretations (if there are any), but default to the one chosen by the engine
@@ -342,7 +342,7 @@ bool
 WPartitioner::loadSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"load specimen");
-    ctx_.engine.load(ctx_.specimenNames);
+    ctx_.engine.loadSpecimens(ctx_.specimenNames);
     info <<"; took " <<timer <<" seconds\n";
     specimenLoaded_.emit(true);
     return true;
@@ -390,42 +390,41 @@ public:
 class LaunchPartitioner {
     Context *ctx_;
     Wt::Signal<bool> *finished_;
-    SgAsmInterpretation *interp_;
 public:
-    LaunchPartitioner(Context *ctx, Wt::Signal<bool> *finished, SgAsmInterpretation *interp)
-        : ctx_(ctx), finished_(finished), interp_(interp) {}
+    LaunchPartitioner(Context *ctx, Wt::Signal<bool> *finished)
+        : ctx_(ctx), finished_(finished) {}
 
     void operator()() {
         Sawyer::Message::Stream info(mlog[INFO]);
 
         // Load configuration information from files
-        if (!ctx_->settings.configurationName.empty()) {
+        if (!ctx_->settings.configurationNames.empty()) {
             info <<"loading configuration files";
             ctx_->busy->replaceWork("Loading configuration files...", 0);
             Sawyer::Stopwatch timer;
-            ctx_->partitioner.configuration().loadFromFile(ctx_->settings.configurationName);
+            BOOST_FOREACH (const std::string &configName, ctx_->settings.configurationNames)
+                ctx_->partitioner.configuration().loadFromFile(configName);
             info <<"; took " <<timer <<" seconds\n";
         }
 
         // Disassemble and partition
-        info <<"disassembling and partitioning";
         size_t expectedTotal = 0;
         BOOST_FOREACH (const MemoryMap::Node &node, ctx_->engine.memoryMap().nodes()) {
             if (0 != (node.value().accessibility() & MemoryMap::EXECUTABLE))
                 expectedTotal += node.key().size();
         }
         ctx_->busy->replaceWork("Disassembling and partitioning...", expectedTotal);
-        Sawyer::Stopwatch timer;
-        ctx_->engine.runPartitioner(ctx_->partitioner, interp_);
-        info <<"; took " <<timer <<" seconds\n";
+        ctx_->engine.runPartitioner(ctx_->partitioner);
 
         // Post-partitioning analysis
         info <<"running post-partitioning analyses";
         ctx_->busy->replaceWork("Post-partitioning anlaysis...", 0);
-        ctx_->engine.postPartitionAnalyses(true);
-        timer.start(true /*reset*/);
         ctx_->engine.updateAnalysisResults(ctx_->partitioner);
-        info <<"; took " <<timer <<" seconds\n";
+
+#if 0 // [Robb P. Matzke 2015-05-11]
+        // Build a CFG so that each instruction has an SgAsmInterpretation ancestor. This is needed for some kinds of analysis.
+        ctx_->engine.buildAst(ctx_->partitioner);
+#endif
 
         // All done, update app, which is in some other thread.
         Wt::WApplication::UpdateLock lock(ctx_->application);
@@ -438,41 +437,36 @@ public:
 
 bool
 WPartitioner::partitionSpecimen() {
-    SgAsmInterpretation *interp = ctx_.engine.interpretation();// null if no ELF/PE container
-
-    BinaryAnalysis::Disassembler *disassembler = ctx_.engine.obtainDisassembler(isaName());
-    if (NULL==disassembler) {
+    BinaryAnalysis::Disassembler *disassembler = NULL;
+    try {
+        ctx_.engine.disassembler(NULL);
+        ctx_.engine.isaName(isaName());
+        disassembler = ctx_.engine.obtainDisassembler();
+    } catch (const std::runtime_error&) {
         wIsaError_->setText("ISA must be specified when there is no ELF/PE container.");
         wIsaError_->show();
         return false;
     }
 
     // Adjust some engine settings
-    ctx_.engine.opaquePredicateSearch(findDeadCode());
-    ctx_.engine.intraFunctionCodeSearch(followGhostEdges()==FOLLOW_LATER);
+    ctx_.engine.findingDeadCode(findDeadCode());
+    ctx_.engine.findingIntraFunctionCode(followGhostEdges()==FOLLOW_LATER);
+    ctx_.engine.usingSemantics(useSemantics());
+    ctx_.engine.functionReturnsAssumed(assumeFunctionsReturn());
+    ctx_.engine.followingGhostEdges(followGhostEdges());
+    ctx_.engine.discontiguousBlocks(allowDiscontiguousBlocks());
+    if (defeatPeScrambler())
+        ctx_.engine.peScramblerDispatcherVa(peScramblerDispatcherVa());
+    ctx_.engine.doingPostAnalysis(false);               // we'll do it explicitly to get progress reports
     
     // Obtain the memory map which might have been edited by now.
     if (wMemoryMap_)
         ctx_.engine.memoryMap(wMemoryMap_->memoryMap());
 
     // Create the partitioner
-    P2::Partitioner &p = ctx_.partitioner = ctx_.engine.createTunedPartitioner();
-    p.enableSymbolicSemantics(useSemantics());
-    p.assumeFunctionsReturn(assumeFunctionsReturn());
+    P2::Partitioner &p = ctx_.partitioner = ctx_.engine.createPartitioner();
     p.stackDeltaInterproceduralLimit(wStackDeltaDepth_->value());
-    if (followGhostEdges())
-        p.basicBlockCallbacks().append(P2::Modules::AddGhostSuccessors::instance());
-    if (!allowDiscontiguousBlocks())
-        p.basicBlockCallbacks().append(P2::Modules::PreventDiscontiguousBlocks::instance());
-    if (defeatPeScrambler()) {
-        rose_addr_t dispatcherVa = peScramblerDispatcherVa();
-        P2::ModulesPe::PeDescrambler::Ptr cb = P2::ModulesPe::PeDescrambler::instance(dispatcherVa);
-        cb->nameKeyAddresses(p);                        // give names to certain PEScrambler things
-        p.basicBlockCallbacks().append(cb);
-        p.attachFunction(P2::Function::instance(dispatcherVa, p.addressName(dispatcherVa), SgAsmFunction::FUNC_USERDEF));
-    }
-    ctx_.engine.labelAddresses(p, interp);
-    ctx_.engine.postPartitionAnalyses(false);           // we do them explicitly in order to get timing info
+    ctx_.engine.labelAddresses(p);
     if (interruptVector()) {
         try {
             ctx_.engine.makeInterruptVectorFunctions(p, interruptVectorVa());
@@ -490,7 +484,7 @@ WPartitioner::partitionSpecimen() {
     ctx_.partitioner.cfgAdjustmentCallbacks().prepend(bupper);
 
     // Run the partitioner (this could take a long time)
-    LaunchPartitioner launcher(&ctx_, &specimenPartitioned_, interp);
+    LaunchPartitioner launcher(&ctx_, &specimenPartitioned_);
     boost::thread thread(launcher);
 
     return true;
@@ -502,11 +496,11 @@ WPartitioner::undoPartitionSpecimen() {
     specimenPartitioned_.emit(false);
 }
 
-std::string
+std::vector<std::string>
 WPartitioner::useConfiguration() const {
     if (wUseConfiguration_->checkState() != Wt::Checked)
-        return "";
-    return ctx_.settings.configurationName;
+        return std::vector<std::string>();
+    return ctx_.settings.configurationNames;
 }
 
 std::string

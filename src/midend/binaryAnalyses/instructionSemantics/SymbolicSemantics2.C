@@ -222,7 +222,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     BaseSemantics::StatePtr state = get_state();
 
     // Substitute in registers
-    struct RegSubst: BaseSemantics::RegisterStateGeneric::Visitor {
+    struct RegSubst: RegisterState::Visitor {
         SValuePtr from, to;
         RegSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
         virtual BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
@@ -230,7 +230,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
             return val->substitute(from, to);
         }
     } regsubst(from, to);
-    BaseSemantics::RegisterStateGeneric::promote(state->get_register_state())->traverse(regsubst);
+    RegisterState::promote(state->get_register_state())->traverse(regsubst);
 
     // Substitute in memory
     struct MemSubst: BaseSemantics::MemoryCellList::Visitor {
@@ -645,10 +645,9 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 
     // Update latest writer info when appropriate and able to do so.
     if (SgAsmInstruction *insn = get_insn()) {
-        BaseSemantics::RegisterStatePtr regs = get_state()->get_register_state();
-        BaseSemantics::RegisterStateGenericPtr gregs = boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(regs);
-        if (gregs!=NULL)
-            gregs->set_latest_writer(reg, insn->get_address());
+        RegisterStatePtr regs = boost::dynamic_pointer_cast<RegisterState>(get_state()->get_register_state());
+        if (regs!=NULL)
+            regs->set_latest_writer(reg, insn->get_address());
     }
 }
 
@@ -712,11 +711,13 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         state->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
-        if (SgAsmInstruction *insn = get_insn()) {
-            if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
-                BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-                ASSERT_not_null(cell); // we just wrote to it!
-                cell->latestWriter(insn->get_address());
+        if (compute_memwriters) {
+            if (SgAsmInstruction *insn = get_insn()) {
+                if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                    BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
+                    ASSERT_not_null(cell); // we just wrote to it!
+                    cell->latestWriter(insn->get_address());
+                }
             }
         }
     }
