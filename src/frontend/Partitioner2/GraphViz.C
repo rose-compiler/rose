@@ -159,7 +159,7 @@ CfgEmitter::init() {
 
     // Class initialization
     if (0 == versionDate_) {
-        FILE *dot = popen("dot -V", "r");
+        FILE *dot = popen("dot -V 2>&1", "r");
         if (dot) {
             char buffer[256];
             if (size_t n = fread(buffer, 1, sizeof(buffer)-1, dot)) {
