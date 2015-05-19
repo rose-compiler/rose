@@ -52,6 +52,14 @@ simulate_CPPFLAGS = $(ROSE_INCLUDES)
 simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Decode encoded strings
+
+bin_PROGRAMS += stringDecoder
+stringDecoder_SOURCES = stringDecoder.C
+stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
+stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo
 
 detectConstants: detectConstants.C
