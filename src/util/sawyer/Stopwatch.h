@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_Stopwatch_H
 #define Sawyer_Stopwatch_H
 
@@ -66,6 +73,11 @@ public:
      *  Reports the time accumulated as of this call, resets the accumulated time to zero if @p clear is true, then restarts
      *  the stopwatch if not already running. */
     double start(bool clear=false);
+
+    /** Restart the timer.
+     *
+     *  Reports the accumulated time as of this call, then resets it to zero and starts or restarts the clock running. */
+    double restart();
 
     /** Stop the timer and report accumulated time.
      *

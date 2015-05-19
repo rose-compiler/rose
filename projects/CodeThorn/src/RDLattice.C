@@ -11,19 +11,19 @@ using namespace SPRAY;
   * \author Markus Schordan
   * \date 2013.
  */
-RDLattice::RDLattice() {
+SPRAY::RDLattice::RDLattice() {
   setBot();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
+void SPRAY::RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   if(isBot()) {
     os<<"bot";
   } else {
     os<<"{";
-    for(RDLattice::iterator i=begin();i!=end();++i) {
+    for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
       if(i!=begin())
         os<<",";
       os<<"(";
@@ -43,28 +43,28 @@ void RDLattice::toStream(ostream& os, VariableIdMapping* vim) {
   * \author Markus Schordan
   * \date 2013.
  */
-RDLattice::iterator RDLattice::begin() {
+SPRAY::RDLattice::iterator SPRAY::RDLattice::begin() {
   return rdSet.begin();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-RDLattice::iterator RDLattice::end() {
+SPRAY::RDLattice::iterator SPRAY::RDLattice::end() {
   return rdSet.end();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-size_t RDLattice::size() {
+size_t SPRAY::RDLattice::size() {
   return rdSet.size();
 }
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::insertPair(Label lab,VariableId var) {
+void SPRAY::RDLattice::insertPair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.insert(p);
   _bot=false;
@@ -73,7 +73,7 @@ void RDLattice::insertPair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::erasePair(Label lab,VariableId var) {
+void SPRAY::RDLattice::erasePair(Label lab,VariableId var) {
   pair<Label,VariableId> p=make_pair(lab,var);
   rdSet.erase(p);
 }
@@ -81,8 +81,8 @@ void RDLattice::erasePair(Label lab,VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::removeAllPairsWithVariableId(VariableId var) {
-  RDLattice::iterator i=rdSet.begin();
+void SPRAY::RDLattice::removeAllPairsWithVariableId(VariableId var) {
+  SPRAY::RDLattice::iterator i=rdSet.begin();
   while(i!=rdSet.end()) {
     if(var==(*i).second) {
        rdSet.erase(i++);
@@ -95,14 +95,14 @@ void RDLattice::removeAllPairsWithVariableId(VariableId var) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool RDLattice::isBot() {
+bool SPRAY::RDLattice::isBot() {
   return _bot;
 } 
 /*! 
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::setBot() {
+void SPRAY::RDLattice::setBot() {
   _bot=true;
 } 
 
@@ -111,13 +111,13 @@ void RDLattice::setBot() {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::combine(Lattice& b) {
+void SPRAY::RDLattice::combine(Lattice& b) {
   RDLattice* other=dynamic_cast<RDLattice*>(&b);
   ROSE_ASSERT(other);
   if(b.isBot()) {
     return;
   }
-  for(RDLattice::iterator i=other->begin();i!=other->end();++i) {
+  for(SPRAY::RDLattice::iterator i=other->begin();i!=other->end();++i) {
     rdSet.insert(*i);
   }
   _bot=false;
@@ -127,7 +127,7 @@ void RDLattice::combine(Lattice& b) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool RDLattice::approximatedBy(Lattice& b0) {
+bool SPRAY::RDLattice::approximatedBy(Lattice& b0) {
   RDLattice& b=dynamic_cast<RDLattice&>(b0);
   if(isBot()&&b.isBot())
     return true;
@@ -141,7 +141,7 @@ bool RDLattice::approximatedBy(Lattice& b0) {
   assert(!isBot()&&!b.isBot());
   if(size()>b.size())
      return false;
-  for(RDLattice::iterator i=begin();i!=end();++i) {
+  for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
     if(!b.exists(*i))
       return false;
   }
@@ -152,7 +152,7 @@ bool RDLattice::approximatedBy(Lattice& b0) {
   * \author Markus Schordan
   * \date 2013.
  */
-bool RDLattice::exists(pair<Label,VariableId> p) {
+bool SPRAY::RDLattice::exists(pair<Label,VariableId> p) {
   return rdSet.find(p)!=end();
 }
 
@@ -160,9 +160,20 @@ bool RDLattice::exists(pair<Label,VariableId> p) {
   * \author Markus Schordan
   * \date 2013.
  */
-void RDLattice::setEmptySet() {
+void SPRAY::RDLattice::setEmptySet() {
   _bot=false;
   rdSet.clear();
 }
+
+SPRAY::LabelSet SPRAY::RDLattice::getRDs(VariableId varId) {
+  SPRAY::LabelSet rdSet;
+  for(SPRAY::RDLattice::iterator i=begin();i!=end();++i) {
+    if((*i).second==varId) {
+      rdSet.insert((*i).first);
+    }
+  }
+  return rdSet;
+}
+
 
 #endif

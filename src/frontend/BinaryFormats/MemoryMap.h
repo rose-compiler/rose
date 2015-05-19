@@ -328,9 +328,21 @@ public:
      *
      *  Searches for all of the specified bytes simultaneously and returns the lowest address (subject to @p limits) where one
      *  of the specified values appears.  If none of the specified bytes appear within the given address extent, then this
-     *  method returns none. */
+     *  method returns none.
+     *
+     *  @{ */
     Sawyer::Optional<rose_addr_t> findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
                                           unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    Sawyer::Optional<rose_addr_t> findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
+                                          unsigned requiredPerms=READABLE, unsigned prohibitedPerms=0) const;
+    /** @} */
+
+    /** Search for a byte sequence.
+     *
+     *  Searches for the bytes specified by @p sequence occuring within the specified @p interval.  If the @p interval is empty
+     *  or the sequence cannot be found then nothing is returned. Otherwise, the virtual address for the start of the sequence
+     *  is returned. An empty sequence matches at the beginning of the @p interval. */
+    Sawyer::Optional<rose_addr_t> findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const;
 
     /** Prints the contents of the map for debugging. The @p prefix string is added to the beginning of every line of output
      *  and typically is used to indent the output.

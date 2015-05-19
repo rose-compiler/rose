@@ -1,6 +1,7 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 EXTRA_DIST =
+MOSTLYCLEANFILES =
 
 #------------------------------------------------------------------------------------------------------------------------
 # dump specimen memory to files
@@ -49,6 +50,27 @@ bin_PROGRAMS += simulate
 simulate_SOURCES = simulate.C
 simulate_CPPFLAGS = $(ROSE_INCLUDES)
 simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Not distributed; not part of the Git repo
+
+detectConstants: detectConstants.C
+	libtool --mode=compile			\
+	    $(CXX) -c				\
+	    -DUSE_PARTITIONER2			\
+	    $(CFLAGS)				\
+	    $(CPPFLAGS)				\
+	    -I$(top_builddir)			\
+	    $(ROSE_INCLUDES)			\
+	    -o detectConstants.o $^
+	libtool --mode=link			\
+	    $(CXX)				\
+	    $(CFLAGS)				\
+	    $(LIBS_WITH_RPATH)			\
+	    $(ROSE_LIBS)			\
+	    -o $@ detectConstants.o
+
+MOSTLYCLEANFILES += detectConstants detectConstants.o
 
 #------------------------------------------------------------------------------------------------------------------------
 # Experimental "binary ROSE on-line workbench for specimen exploration"
@@ -121,6 +143,14 @@ endif
 
 
 #------------------------------------------------------------------------------------------------------------------------
+# Generate programs having specific structures (for path testing)
+
+bin_PROGRAMS += generatePaths
+generatePaths_SOURCES = generatePaths.C
+generatePaths_CPPFLAGS = $(ROSE_INCLUDES)
+generatePaths_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Find paths in the CFG
 
 bin_PROGRAMS += findPath
@@ -172,3 +202,9 @@ x86_function_vas_SOURCES = x86-function-vas.C
 x86_function_vas_CPPFLAGS = $(ROSE_INCLUDES)
 x86_function_vas_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
+#------------------------------------------------------------------------------------------------------------------------
+# Makefile boilerplate
+
+.PHONY: clean-local
+clean-local:
+	rm -f $(MOSTLYCLEANFILES)

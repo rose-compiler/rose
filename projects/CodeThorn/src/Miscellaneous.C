@@ -8,6 +8,8 @@
 #include "CommandLineOptions.h"
 #include <cctype>
 
+using namespace std;
+
 void CodeThorn::nocheck(string checkIdentifier, bool checkResult) {
   check(checkIdentifier,checkResult,false);
 }

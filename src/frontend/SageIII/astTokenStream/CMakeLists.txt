@@ -5,7 +5,9 @@ add_library( astTokenStream OBJECT
   unparseMacro.C
   tokenStreamMapping.C
   frontierDetection.C
-  previousAndNextNode.C)
+  simpleFrontierDetection.C
+  previousAndNextNode.C
+  maxExtents.C)
 add_dependencies(astTokenStream rosetta_generated)
 
 
@@ -14,5 +16,6 @@ add_dependencies(astTokenStream rosetta_generated)
 
 install(FILES
   createMap.h  doCompleteMapping.h  linearizeAST.h unparseMacro.h
-  tokenStreamMapping.h frontierDetection.h previousAndNextNode.h
+  tokenStreamMapping.h frontierDetection.h simpleFrontierDetection.h previousAndNextNode.h
+  maxExtents.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

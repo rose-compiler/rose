@@ -8,15 +8,16 @@
 #include "VariableIdMapping.h"
 #include "Labeler.h"
 #include "WorkList.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "RDLattice.h"
-#include "DFAnalysis2.h"
+#include "DFAnalysisBase.h"
 #include "RDAnalysis.h"
 #include "RoseRDAnalysis.h"
 #include "LVAnalysis.h"
 #include "IntervalAnalysis.h"
 #include "RDAstAttribute.h"
 #include "AstAnnotator.h"
+#include "AnalysisAstAnnotator.h"
 #include "DataDependenceVisualizer.h"
 #include "Miscellaneous.h"
 #include "ProgramStats.h"
@@ -46,6 +47,9 @@
 // ROSE analyses
 #include "VariableRenaming.h"
 
+// temporary
+#include "IntervalTransferFunctions.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace AType;
@@ -65,6 +69,7 @@ bool option_ud_analysis=false;
 bool option_lv_analysis=false;
 bool option_interval_analysis=false;
 bool option_at_analysis=false;
+bool option_trace=false;
 
 //boost::program_options::variables_map args;
 
@@ -83,6 +88,8 @@ void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
 }
 
 void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableIdMapping) {
+
+  SPRAY::DFAnalysisBase::normalizeProgram(root);
 
   if(option_fi_constanalysis) {
     VarConstSetMap varConstSetMap;
@@ -115,7 +122,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
   
   if(option_interval_analysis) {
     cout << "STATUS: creating interval analyzer."<<endl;
-    IntervalAnalysis* intervalAnalyzer=new IntervalAnalysis();
+    SPRAY::IntervalAnalysis* intervalAnalyzer=new SPRAY::IntervalAnalysis();
     cout << "STATUS: initializing interval analyzer."<<endl;
     intervalAnalyzer->initialize(root);
     cout << "STATUS: initializing interval transfer functions."<<endl;
@@ -123,15 +130,23 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     cout << "STATUS: initializing interval global variables."<<endl;
     intervalAnalyzer->initializeGlobalVariables(root);
       
+    intervalAnalyzer->setSolverTrace(option_trace);
     std::string funtofind="main";
     RoseAst completeast(root);
     SgFunctionDefinition* startFunRoot=completeast.findFunctionByName(funtofind);
     intervalAnalyzer->determineExtremalLabels(startFunRoot);
-#if 1
     intervalAnalyzer->run();
+#if 0
+    intervalAnalyzer->attachInInfoToAst("iv-analysis-in");
+    intervalAnalyzer->attachOutInfoToAst("iv-analysis-out");
+    AstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+    ara.annotateAstAttributesAsCommentsBeforeStatements(root, "iv-analysis-in");
+    ara.annotateAstAttributesAsCommentsAfterStatements(root, "iv-analysis-out");
 #else
-    cout << "STATUS: did not run interval analysis."<<endl;      
+    AnalysisAstAnnotator ara(intervalAnalyzer->getLabeler(),intervalAnalyzer->getVariableIdMapping());
+    ara.annotateAnalysisPrePostInfoAsComments(root,"iv-analysis",intervalAnalyzer);
 #endif
+
   }
 
   if(option_lv_analysis) {
@@ -151,23 +166,24 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
     write_file("icfg_backward.dot", lvAnalysis->getFlow()->toDot(lvAnalysis->getLabeler()));
 
     lvAnalysis->determineExtremalLabels(startFunRoot);
-#if 1
     lvAnalysis->run();
     cout << "INFO: attaching LV-data to AST."<<endl;
+#if 0
     lvAnalysis->attachInInfoToAst("lv-analysis-in");
     lvAnalysis->attachOutInfoToAst("lv-analysis-out");
     AstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
     ara.annotateAstAttributesAsCommentsBeforeStatements(root, "lv-analysis-in");
     ara.annotateAstAttributesAsCommentsAfterStatements(root, "lv-analysis-out");
 #else
-    cout << "STATUS: did not run LV analysis."<<endl;      
+    AnalysisAstAnnotator ara(lvAnalysis->getLabeler(),lvAnalysis->getVariableIdMapping());
+    ara.annotateAnalysisPrePostInfoAsComments(root,"lv-analysis",lvAnalysis);
 #endif
     delete lvAnalysis;
   }
 
   if(option_rd_analysis) {
       cout << "STATUS: creating RD analyzer."<<endl;
-      RDAnalysis* rdAnalysis=new RDAnalysis();
+      SPRAY::RDAnalysis* rdAnalysis=new SPRAY::RDAnalysis();
       cout << "STATUS: initializing RD analyzer."<<endl;
       rdAnalysis->initialize(root);
       cout << "STATUS: initializing RD transfer functions."<<endl;
@@ -190,9 +206,14 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
       //printAttributes<RDAstAttribute>(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping(),"rd-analysis-in");
       cout << "INFO: annotating analysis results as comments."<<endl;
       ROSE_ASSERT(rdAnalysis->getVariableIdMapping());
+#if 0
       AstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
       ara.annotateAstAttributesAsCommentsBeforeStatements(root, "rd-analysis-in");
       ara.annotateAstAttributesAsCommentsAfterStatements(root, "rd-analysis-out");
+#else
+      AnalysisAstAnnotator ara(rdAnalysis->getLabeler(),rdAnalysis->getVariableIdMapping());
+      ara.annotateAnalysisPrePostInfoAsComments(root,"rd-analysis",rdAnalysis);
+#endif
 
 #if 0
       cout << "INFO: substituting uses with rhs of defs."<<endl;
@@ -204,7 +225,7 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         createUDAstAttributeFromRDAttribute(rdAnalysis->getLabeler(),"rd-analysis-in", "ud-analysis");
         Flow* flow=rdAnalysis->getFlow();
         cout<<"Flow label-set size: "<<flow->nodeLabels().size()<<endl;
-        CFAnalyzer* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
+        CFAnalysis* cfAnalyzer0=rdAnalysis->getCFAnalyzer();
         int red=cfAnalyzer0->reduceBlockBeginNodes(*flow);
         cout<<"INFO: eliminated "<<red<<" block-begin nodes in ICFG."<<endl;
         
@@ -271,7 +292,7 @@ int main(int argc, char* argv[]) {
      // Command line option handling.
     namespace po = boost::program_options;
     po::options_description desc
-      ("analyterix V0.1\n"
+      ("analyterix V0.2\n"
        "Written by Markus Schordan\n"
        "Supported options");
   
@@ -287,8 +308,11 @@ int main(int argc, char* argv[]) {
       ("lv-analysis", "perform live variables analysis.")
       ("ud-analysis", "use-def analysis.")
       ("at-analysis", "address-taken analysis.")
+      ("icfg-dot", "generates the ICFG as dot file.")
       ("interval-analysis", "perform interval analysis.")
+      ("trace", "show operations as performed by selected solver.")
       ("print-varidmapping", "prints variableIdMapping")
+      ("print-varidmapping-array", "prints variableIdMapping with array element varids.")
       ("prefix",po::value< string >(), "set prefix for all generated files.")
       ;
   //    ("int-option",po::value< int >(),"option info")
@@ -313,6 +337,9 @@ int main(int argc, char* argv[]) {
       option_prefix=args["prefix"].as<string>().c_str();
     }
 
+    if (args.count("trace")) {
+      option_trace=true;
+    }
     if(args.count("stats")) {
       option_stats=true;
     }
@@ -325,7 +352,7 @@ int main(int argc, char* argv[]) {
     if(args.count("interval-analysis")) {
       option_interval_analysis=true;
     }
-    if(args.count("dd-analysis")) {
+    if(args.count("ud-analysis")) {
       option_rd_analysis=true; // required
       option_ud_analysis=true;
     }
@@ -366,6 +393,9 @@ int main(int argc, char* argv[]) {
 
   cout<<"STATUS: computing variableid mapping"<<endl;
   VariableIdMapping variableIdMapping;
+  if (args.count("print-varidmapping-array")) {
+    variableIdMapping.setModeVariableIdForEachArrayElement(true);
+  }
   variableIdMapping.computeVariableSymbolMapping(root);
   cout<<"VariableIdMapping size: "<<variableIdMapping.getVariableIdSet().size()<<endl;
   Labeler* labeler=new Labeler(root);
@@ -376,7 +406,7 @@ int main(int argc, char* argv[]) {
   //cout<<"IOLabelling:\n"<<iolabeler->toString()<<endl;
 #endif
 
-  if (args.count("print-varidmapping")) {
+  if (args.count("print-varidmapping")||args.count("print-varidmapping-array")) {
     variableIdMapping.toStream(cout);
   }
 

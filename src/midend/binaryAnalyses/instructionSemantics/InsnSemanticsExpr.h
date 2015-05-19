@@ -98,7 +98,9 @@ struct Formatter {
         CMT_AFTER,                              /**< Show comments after the node. */
         CMT_INSTEAD,                            /**< Like CMT_AFTER, but show comments instead of variable names. */
     };
-    Formatter(): show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true), max_depth(0) {}
+    Formatter()
+        : show_comments(CMT_INSTEAD), do_rename(false), add_renames(true), use_hexadecimal(true),
+          max_depth(0), cur_depth(0), show_width(true) {}
     ShowComments show_comments;                 /**< Show node comments when printing? */
     bool do_rename;                             /**< Use the @p renames map to rename variables to shorter names? */
     bool add_renames;                           /**< Add additional entries to the @p renames as variables are encountered? */
@@ -106,6 +108,7 @@ struct Formatter {
     size_t max_depth;                           /**< If non-zero, then replace deep parts of expressions with "...". */
     size_t cur_depth;                           /**< Depth in expression. */
     RenameMap renames;                          /**< Map for renaming variables to use smaller integers. */
+    bool show_width;                            /**< Show width in bits inside square brackets. */
 };
 
 /** Return type for visitors. */
@@ -114,6 +117,12 @@ enum VisitAction {
     TRUNCATE,                               /**< For a pre-order depth-first visit, do not descend into children. */
     TERMINATE,                              /**< Terminate the traversal. */
 };
+
+/** Maximum number of nodes that can be reported.
+ *
+ *  If @ref nnodes returns this value then the size of the expressions could not be counted. This can happens when the
+ *  expression contains a large number of common subexpressions. */
+extern const uint64_t MAX_NNODES;       // defined in .C so we don't pollute user namespace with limit macros
 
 /** Base class for visiting nodes during expression traversal.  The preVisit method is called before children are visited, and
  *  the postVisit method is called after children are visited.  If preVisit returns TRUNCATE, then the children are not
@@ -136,12 +145,15 @@ public:
  *  own the pointer to the tree node and thus the tree node pointer should never be deleted explicitly. */
 class TreeNode: public Sawyer::SharedObject, public Sawyer::SharedFromThis<TreeNode>, public Sawyer::SmallObject {
 protected:
-    size_t nbits;               /**< Number of significant bits. Constant over the life of the node. */
+    size_t nbits;                /**< Number of significant bits. Constant over the life of the node. */
+    size_t domainWidth_;         /**< Width of domain for unary functions. E.g., memory. */
     mutable std::string comment; /**< Optional comment. Only for debugging; not significant for any calculation. */
-    mutable uint64_t hashval;   /**< Optional hash used as a quick way to indicate that two expressions are different. */
-public:
-    TreeNode(size_t nbits, std::string comment=""): nbits(nbits), comment(comment), hashval(0) { ASSERT_require(nbits>0); }
+    mutable uint64_t hashval;    /**< Optional hash used as a quick way to indicate that two expressions are different. */
 
+protected:
+    TreeNode(std::string comment=""): nbits(0), domainWidth_(0), comment(comment), hashval(0) {}
+
+public:
     /** Returns true if two expressions must be equal (cannot be unequal).  If an SMT solver is specified then that solver is
      * used to answer this question, otherwise equality is established by looking only at the structure of the two
      * expressions. Two expressions can be equal without being the same width (e.g., a 32-bit constant zero is equal to a
@@ -166,10 +178,7 @@ public:
      * structural equivalence, the equivalent_to() predicate. The @p from and @p to expressions must have the same width. */
     virtual TreeNodePtr substitute(const TreeNodePtr &from, const TreeNodePtr &to) const = 0;
 
-    /** Returns true if the expression is a known value.
-     *
-     *  FIXME: The current implementation returns true only when @p this node is leaf node with a known value. Since
-     *         InsnSemanticsExpr does not do constant folding, this is of limited use. [RPM 2010-06-08]. */
+    /** Returns true if the expression is a known value. */
     virtual bool is_known() const = 0;
 
     /** Returns the integer value of a node for which is_known() returns true.  The high-order bits, those beyond the number of
@@ -187,6 +196,16 @@ public:
     /** Returns the number of significant bits.  An expression with a known value is guaranteed to have all higher-order bits
      *  cleared. */
     size_t get_nbits() const { return nbits; }
+
+    /** Returns address width for memory expressions.
+     *
+     *  The return value is non-zero if and only if this tree node is a memory expression. */
+    size_t domainWidth() const { return domainWidth_; }
+
+    /** Check whether expression is scalar.
+     *
+     *  Everything is scalar except for memory. */
+    bool isScalar() const { return 0 == domainWidth_; }
 
     /** Traverse the expression.  The expression is traversed in a depth-first visit.  The final return value is the final
      *  return value of the last call to the visitor. */
@@ -206,6 +225,9 @@ public:
      *
      *  @sa nnodesUnique */
     virtual uint64_t nnodes() const = 0;
+
+    /** Number of unique nodes in expression. */
+    uint64_t nnodesUnique() const;
 
     /** Returns the variables appearing in the expression. */
     std::set<LeafNodePtr> get_variables() const;
@@ -266,6 +288,12 @@ public:
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
     void assert_acyclic() const;
 
+    /** Find common subexpressions.
+     *
+     *  Returns a vector of the largest common subexpressions. The list is computed by performing a depth-first search on this
+     *  expression and adding expressions to the return vector whenever a subtree is encountered a second time. Therefore the
+     *  if a common subexpression A contains another common subexpression B then B will appear earlier in the list than A. */
+    std::vector<TreeNodePtr> findCommonSubexpressions() const;
 };
 
 /** Operator-specific simplification methods. */
@@ -414,28 +442,34 @@ private:
 
     // Constructors should not be called directly.  Use the create() class method instead. This is to help prevent
     // accidently using pointers to these objects -- all access should be through shared-ownership pointers.
-    InternalNode(size_t nbits, Operator op, const std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {}
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodePtr &a, const TreeNodePtr &b, const TreeNodePtr &c,
                  std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         add_child(a);
         add_child(b);
         add_child(c);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
     InternalNode(size_t nbits, Operator op, const TreeNodes &children, std::string comment="")
-        : TreeNode(nbits, comment), op(op), nnodes_(1) {
+        : TreeNode(comment), op(op), nnodes_(1) {
         for (size_t i=0; i<children.size(); ++i)
             add_child(children[i]);
+        adjustWidth();
+        ASSERT_require(get_nbits() == nbits);
     }
 
 public:
@@ -443,10 +477,6 @@ public:
      *  a leaf node. Use these class methods instead of c'tors.
      *
      *  @{ */
-    static TreeNodePtr create(size_t nbits, Operator op, const std::string comment="") {
-        InternalNodePtr retval(new InternalNode(nbits, op, comment));
-        return retval->simplifyTop();
-    }
     static TreeNodePtr create(size_t nbits, Operator op, const TreeNodePtr &a, const std::string comment="") {
         InternalNodePtr retval(new InternalNode(nbits, op, a, comment));
         return retval->simplifyTop();
@@ -535,8 +565,11 @@ public:
 protected:
     /** Appends @p child as a new child of this node. The modification is done in place, so one must be careful that this node
      *  is not part of other expressions.  It is safe to call add_child() on a node that was just created and not used anywhere
-     *  yet. */
+     *  yet. If you add a new child, then you probably need to call adjustWidth after the last one is added. */
     void add_child(const TreeNodePtr &child);
+
+    /** Adjust width based on operands. */
+    void adjustWidth();
 };
 
 /** Leaf node of an expression tree for instruction semantics.
@@ -550,7 +583,10 @@ private:
     uint64_t name;                     /**< Variable ID number when 'known' is false. */
 
     // Private to help prevent creating pointers to leaf nodes.  See create_* methods instead.
-    LeafNode(std::string comment=""): TreeNode(32, comment), leaf_type(CONSTANT), name(0) {}
+    LeafNode()
+        : TreeNode(""), leaf_type(CONSTANT), name(0) {}
+    explicit LeafNode(const std::string &comment)
+        : TreeNode(comment), leaf_type(CONSTANT), name(0) {}
 
     static uint64_t name_counter;
 
@@ -567,11 +603,11 @@ public:
 
     /** Create a new Boolean, a single-bit integer. */
     static LeafNodePtr create_boolean(bool b, std::string comment="") {
-        return create_integer(1, (uint64_t)(b?1:0), comment.empty() ? std::string(b?"true":"false") : comment);
+        return create_integer(1, (uint64_t)(b?1:0), comment);
     }
 
-    /** Construct a new memory state.  A memory state is a function that maps a 32-bit address to a value of specified size. */
-    static LeafNodePtr create_memory(size_t nbits, std::string comment="");
+    /** Construct a new memory state.  A memory state is a function that maps addresses to values. */
+    static LeafNodePtr create_memory(size_t addressWidth, size_t valueWidth, std::string comment="");
 
     /* see superclass, where these are pure virtual */
     virtual bool is_known() const;
@@ -595,6 +631,12 @@ public:
      *  that this method returns.  It should only be invoked on leaf nodes for which is_known() returns false. */
     uint64_t get_name() const;
 
+    /** Returns a string for the leaf.
+     *
+     *  Variables are returned as "vN", memory is returned as "mN", and constants are returned as a hexadecimal string, where N
+     *  is a variable or memory number. */
+    std::string toString() const;
+
     // documented in super class
     virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
 
@@ -607,6 +649,25 @@ public:
 
 std::ostream& operator<<(std::ostream &o, const TreeNode&);
 std::ostream& operator<<(std::ostream &o, const TreeNode::WithFormatter&);
+
+/** Counts the number of nodes.
+ *
+ *  Counts the total number of nodes in multiple expressions.  The return value is a saturated sum, returning MAX_NNODES if an
+ *  overflow occurs. */
+template<typename InputIterator>
+uint64_t
+nnodes(InputIterator begin, InputIterator end) {
+    uint64_t total = 0;
+    for (InputIterator ii=begin; ii!=end; ++ii) {
+        uint64_t n = (*ii)->nnodes();
+        if (MAX_NNODES==n)
+            return MAX_NNODES;
+        if (total + n < total)
+            return MAX_NNODES;
+        total += n;
+    }
+    return total;
+}
 
 /** Counts the number of unique nodes.
  *
@@ -643,6 +704,40 @@ nnodesUnique(InputIterator begin, InputIterator end)
         status = (*ii)->depth_first_traversal(visitor);
     return visitor.nUnique;
 }
+
+/** Find common subexpressions.
+ *
+ *  This is similar to @ref TreeNodePtr::findCommonSubexpressions except the analysis is over a collection of expressions
+ *  rather than a single expression.
+ *
+ * @{ */
+std::vector<TreeNodePtr> findCommonSubexpressions(const std::vector<TreeNodePtr>&);
+
+template<typename InputIterator>
+std::vector<TreeNodePtr>
+findCommonSubexpressions(InputIterator begin, InputIterator end) {
+    typedef Sawyer::Container::Map<TreeNodePtr, size_t> NodeCounts;
+    struct T1: Visitor {
+        NodeCounts nodeCounts;
+        std::vector<TreeNodePtr> result;
+
+        VisitAction preVisit(const TreeNodePtr &node) ROSE_OVERRIDE {
+            size_t &nSeen = nodeCounts.insertMaybe(node, 0);
+            if (2 == ++nSeen)
+                result.push_back(node);
+            return nSeen>1 ? TRUNCATE : CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr&) ROSE_OVERRIDE {
+            return CONTINUE;
+        }
+    } visitor;
+
+    for (InputIterator ii=begin; ii!=end; ++ii)
+        (*ii)->depth_first_traversal(visitor);
+    return visitor.result;
+}
+/** @} */
 
 } // namespace
 } // namespace

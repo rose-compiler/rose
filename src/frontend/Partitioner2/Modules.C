@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "AsmUnparser_compat.h"
 
+#include <BinaryString.h>
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
@@ -469,44 +470,47 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
     t1.traverse(fileHeader, preorder);
 }
 
-static int
-validStringChar(int ch) {
-    return isascii(ch) && (isgraph(ch) || isspace(ch));
-}
-
 void
 nameStrings(const Partitioner &partitioner) {
     struct T1: AstSimpleProcessing {
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
         const Partitioner &partitioner;
-        T1(const Partitioner &partitioner): partitioner(partitioner) {}
+        Strings::StringFinder stringFinder;
+
+        T1(const Partitioner &partitioner): partitioner(partitioner) {
+            stringFinder.minLength(1);
+            stringFinder.maxLength(65536);
+            stringFinder.keepOnlyLongest(true);
+            ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
+            if (sex == ByteOrder::ORDER_UNSPECIFIED)
+                sex = ByteOrder::ORDER_LSB;
+            stringFinder.insertCommonEncoders(sex);
+        }
         void visit(SgNode *node) {
             if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                 if (ival->get_comment().empty()) {
                     rose_addr_t va = ival->get_absoluteValue();
                     std::string label;
-                    if (!seen.getOptional(va).assignTo(label) && partitioner.instructionsOverlapping(va).empty()) {
-                        // Read a NUL-terminated string from memory which is readable but not writable. We need to make sure it
-                        // ends with the NUL character even though we're only going to display the first part of it, therefore
-                        // we'll read up to a fairly large amount of data looking for the NUL.
-                        std::string c_str = partitioner.memoryMap().readString(va, 8192, validStringChar, NULL,
-                                                                               MemoryMap::READABLE, MemoryMap::WRITABLE);
-                        if (!c_str.empty()) {
-                            static const size_t displayLength = 25; // arbitrary
+                    if (seen.getOptional(va).assignTo(label)) {
+                        ival->set_comment(label);
+                    } else if (partitioner.instructionsOverlapping(va).empty()) {
+                        std::vector<Strings::EncodedString> strings = stringFinder.find(partitioner.memoryMap().at(va));
+                        if (!strings.empty()) {
+                            ASSERT_require(strings.front().address() == va);
+                            std::string str = strings.front().narrow(); // front is the longest string
+                            static const size_t displayLength = 25;     // arbitrary
                             static const size_t maxLength = displayLength + 7; // strlen("+N more")
-                            size_t truncated = 0;
-                            if (c_str.size() > maxLength) {
-                                truncated = c_str.size() - displayLength;
-                                c_str = c_str.substr(0, displayLength);
+                            size_t nTruncated = 0;
+                            if (str.size() > maxLength) {
+                                nTruncated = str.size() - displayLength;
+                                str = str.substr(0, displayLength);
                             }
-                            label = "\"" + StringUtility::cEscape(c_str) + "\"";
-                            if (truncated)
-                                label += "+" + StringUtility::numberToString(truncated) + " more";
+                            label = "\"" + StringUtility::cEscape(str) + "\"";
+                            if (nTruncated)
+                                label += "+" + StringUtility::numberToString(nTruncated) + " more";
                             ival->set_comment(label);
                         }
-                        seen.insert(va, label);         // even if it's empty
-                    } else if (!label.empty()) {
-                        ival->set_comment(label);
+                        seen.insert(va, label); // even if label is empty, so we don't spend time re-searching strings
                     }
                 }
             }
@@ -622,7 +626,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
         }
     }
 
-    ControlFlowGraph::ConstVertexNodeIterator bblockVertex = partitioner.findPlaceholder(bb->address());
+    ControlFlowGraph::ConstVertexIterator bblockVertex = partitioner.findPlaceholder(bb->address());
     SgAsmBlock *ast = SageBuilderAsm::buildBasicBlock(bb->instructions());
     ast->set_comment(bb->comment());
     unsigned reasons = 0;
@@ -660,8 +664,8 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, bo
     // higher up on the AST-building stack.
     if (bblockVertex != partitioner.cfg().vertices().end()) {
         bool isComplete = true;
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, bblockVertex->outEdges()) {
-            const ControlFlowGraph::VertexNode &target = *edge.target();
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, bblockVertex->outEdges()) {
+            const ControlFlowGraph::Vertex &target = *edge.target();
             if (target.value().type() == V_INDETERMINATE || target.value().type() == V_NONEXISTING) {
                 isComplete = false;
             } else {
@@ -704,7 +708,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
     BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
-        ControlFlowGraph::ConstVertexNodeIterator vertex = partitioner.findPlaceholder(blockVa);
+        ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(blockVa);
         if (vertex == partitioner.cfg().vertices().end()) {
             mlog[WARN] <<function->printableName() <<" bblock "
                        <<StringUtility::addrToString(blockVa) <<" does not exist in the CFG; no AST node created\n";
@@ -739,7 +743,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     unsigned reasons = function->reasons();
 
     // Is the function part of the CFG?
-    ControlFlowGraph::ConstVertexNodeIterator entryVertex = partitioner.findPlaceholder(function->address());
+    ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(function->address());
     if (entryVertex != partitioner.cfg().vertices().end())
         reasons |= SgAsmFunction::FUNC_GRAPH;
     
@@ -749,7 +753,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 
     // Is the function the target of a function call?
     if (entryVertex != partitioner.cfg().vertices().end()) {
-        BOOST_FOREACH (const ControlFlowGraph::EdgeNode &edge, entryVertex->inEdges()) {
+        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
             if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                 reasons |= SgAsmFunction::FUNC_CALL_TARGET;
                 break;
@@ -815,6 +819,12 @@ SgAsmBlock*
 buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
     if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
         fixupAstPointers(global, interp);
+        if (interp) {
+            if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
+                oldGlobalBlock->set_parent(NULL);
+            interp->set_global_block(global);
+            global->set_parent(interp);
+        }
         return global;
     }
     return NULL;

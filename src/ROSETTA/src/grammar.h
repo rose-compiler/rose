@@ -33,6 +33,7 @@
 #include <vector>
 #include <set>
 #include <map>
+#include <set>
 
 #include "string_functions.h"
 
@@ -503,6 +504,7 @@ class Grammar
                                                                std::vector<GrammarSynthesizedAttribute> v);
           void buildGrammarDotFile(Terminal* rootNode, std::ostream& GrammarDotFile);
           void buildAbstractTreeGrammarFile(Terminal* rootNode, std::ostream& AbstractTreeGrammarFile);
+          void buildSDFTreeGrammarFile(Terminal* rootNode, std::ostream& RoseTreeGrammarFile);
 
           // MS: generate source for implementation of the RTI interface
           GrammarSynthesizedAttribute generateRTIImplementation(Terminal* grammarnode,
@@ -620,7 +622,9 @@ class Grammar
           std::set<std::string> traversedTerminals;
           GrammarSynthesizedAttribute CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode, std::vector<GrammarSynthesizedAttribute> v);
           bool isAbstractTreeGrammarSymbol(std::string);
-
+   private:
+          bool generateSDFTreeGrammar;
+          std::set<std::string> sdfTreeGrammarContainerTypes;
    // JH (01/13/2006) Added to build code for ast file IO
      public:
        // JH (11/04/2005): declaration of methods, needed to build the code for the

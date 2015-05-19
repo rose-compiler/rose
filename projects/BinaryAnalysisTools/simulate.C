@@ -14,43 +14,42 @@ Diagnostics::Facility mlog;
 
 // Settings from the command-line
 struct Settings {
-    std::string isaName;                                // instruction set architecture name
     Sawyer::Optional<rose_addr_t> startVa;              // where to start executing
 };
 static Settings settings;
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[])
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Partitioner2::Engine &engine)
 {
     using namespace Sawyer::CommandLine;
 
-    //--------------------------- 
+    std::string purpose = "simulate execution using concrete semantics";
+    std::string description =
+        "Parses and loads the specimen and then executes its instructions in a concrete domain.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any partitioning switches since
+    // this tool doesn't partition.
     Parser parser;
     parser
-        .purpose("simulate execution using concrete semantics")
+        .purpose(purpose)
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen...}")
-        .doc("Description",
-             "Parses and loads the specimen and then executes its instructions in a concrete domain.")
-        .doc("Specimens", Partitioner2::Engine::specimenNameDocumentation());
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
+        .doc("Description", description)
+        .doc("Specimens", engine.specimenNameDocumentation())
+        .with(engine.engineSwitches())
+        .with(engine.loaderSwitches())
+        .with(engine.disassemblerSwitches());
     
-    //--------------------------- 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
-    //---------------------------
     SwitchGroup tool("Tool switches");
-    tool.insert(Switch("isa")
-               .argument("architecture", anyParser(settings.isaName))
-               .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-
     tool.insert(Switch("start")
                 .argument("address", nonNegativeIntegerParser(settings.startVa))
                 .doc("Address at which to start executing. If no address is specified then execution starts at the "
                      "lowest address having execute permission."));
 
-    return parser.with(gen).with(tool).parse(argc, argv).apply();
+    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -62,18 +61,16 @@ int main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv).unreachedArgs();
     Partitioner2::Engine engine;
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load specimen into memory
-    MemoryMap map = engine.load(specimenNames);
+    MemoryMap map = engine.loadSpecimens(specimenNames);
 
     // Configure instruction semantics
-    Partitioner2::Partitioner partitioner = engine.createTunedPartitioner();
+    Partitioner2::Partitioner partitioner = engine.createPartitioner();
     Disassembler *disassembler = engine.obtainDisassembler();
     const RegisterDictionary *regdict = disassembler->get_registers();
     if (disassembler->dispatcher() == NULL)
@@ -86,7 +83,7 @@ int main(int argc, char *argv[]) {
     rose_addr_t va = 0;
     if (settings.startVa) {
         va = *settings.startVa;
-    } else if (settings.isaName == "coldfire") {
+    } else if (engine.isaName() == "coldfire") {
         // Use the interrupt vector to initialize the stack pointer and instruction pointer.
         uint32_t sp, ip;
         if (4 != map.at(0).limit(4).read((uint8_t*)&sp).size())
@@ -101,6 +98,7 @@ int main(int argc, char *argv[]) {
     ops->writeRegister(disassembler->instructionPointerRegister(), ops->number_(32, va));
 
     // Execute
+    map.dump(::mlog[INFO]);
     while (1) {
         va = ops->readRegister(disassembler->instructionPointerRegister())->get_number();
         SgAsmInstruction *insn = partitioner.instructionProvider()[va];

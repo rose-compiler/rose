@@ -143,7 +143,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
     // So we create a symbolic domain and link it into an instruction dispatcher that knows about Intel x86 instructions.  The
     // rose::BinaryAnalysis::DataFlow object provides the API for discovering intra-function or intra-block data flows.
     BaseSemantics::RiscOperatorsPtr symbolicOps = SymbolicSemantics::RiscOperators::instance(regdict);
-    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps); // assuming the specimen is x86-based
+    DispatcherX86Ptr cpu = DispatcherX86::instance(symbolicOps, 32); // assuming the specimen is x86-based
 #if 0
     // The initial state can be modified if you like.  Here we use a constant for the stack pointer.
     symbolicOps->writeRegister(cpu->REG_ESP, symbolicOps->number_(32, 0x02800000)); // arbitrary
@@ -175,7 +175,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
             BOOST_FOREACH (SgAsmInstruction *insn, insns)
                 ::mlog[DEBUG] <<"    " <<unparseInstructionWithAddress(insn) <<"\n";
             ::mlog[DEBUG] <<"  Data flow edges:\n";
-            BOOST_FOREACH (const DataFlow::Graph::EdgeNode &edge, indexNode.value().edges()) {
+            BOOST_FOREACH (const DataFlow::Graph::Edge &edge, indexNode.value().edges()) {
                 ::mlog[DEBUG] <<"    data flow #" <<edge.value().sequence
                               <<" from " <<edge.source()->value()
                               <<(DataFlow::Graph::EdgeValue::CLOBBER==edge.value().edgeType ? " clobbers " : " augments ")
@@ -206,7 +206,7 @@ static void analyze(SgAsmFunction *specimen, TaintedFlow::Approximation approxim
 
     // Print the final data flow state for each CFG vertex that has no successors.
     ::mlog[TRACE] <<"Printing results...\n";
-    BOOST_FOREACH (const typename CFG::VertexNode &vertex, cfg.vertices()) {
+    BOOST_FOREACH (const typename CFG::Vertex &vertex, cfg.vertices()) {
         if (vertex.nOutEdges()==0) {
             rose_addr_t lastInsnAddr = SageInterface::querySubTree<SgAsmInstruction>(vertex.value()).back()->get_address();
             std::cout <<"\nTaint for each variable at " <<StringUtility::addrToString(lastInsnAddr) <<":\n";

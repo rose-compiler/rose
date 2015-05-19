@@ -37,6 +37,12 @@ WFunctionCfg::init() {
         wAddresses_->clicked().connect(this, &WFunctionCfg::emitAddressClicked);
         hbox->addWidget(wAddresses_);
         hbox->addWidget(new Wt::WText, 1 /*stretch*/);  // padding
+
+        // Download link for the GraphViz CFG file
+        wDownloadAnchor_ = new Wt::WAnchor("", "Download GraphViz file");
+        wDownloadAnchor_->hide();
+        hbox->addWidget(wDownloadAnchor_);
+        
     }
 
     wMessage_ = new Wt::WText("No function.");
@@ -80,13 +86,20 @@ WFunctionCfg::changeFunctionNoSignal(const P2::Function::Ptr &function) {
     wImage_ = new Wt::WImage();
     wScrollArea_->setWidget(wImage_);
 
-    // Get the CFG image
     if (NULL==function_) {
         wMessage_->setText("No function.");
         wMessage_->show();
         wImage_->hide();
         return;
     }
+
+    // Adjust the GraphViz download link
+    boost::filesystem::path graphVizPath = functionCfgGraphvizFile(ctx_.partitioner, function);
+    wDownloadAnchor_->setLink(graphVizPath.string());
+    wDownloadAnchor_->setTarget(Wt::TargetNewWindow);
+    wDownloadAnchor_->show();
+
+    // Get the CFG image
     wMessage_->setText("Building CFG...");
     wMessage_->show();
     boost::filesystem::path imagePath = functionCfgImage(ctx_.partitioner, function);

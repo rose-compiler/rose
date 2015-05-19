@@ -6,7 +6,8 @@ EXTRA_DIST = EqualityMaintainer.C Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 codethorn_YFLAGS = -p ltl_ # yacc flags for LTL parser
 
-bin_PROGRAMS = codethorn matcher_demo varwatch rdmain woodpecker analyterix reverser
+bin_PROGRAMS = codethorn matcher_demo varwatch woodpecker analyterix
+
 #ast_demo matcher_demo iterator_test
 CLEANFILES = 
 
@@ -21,17 +22,16 @@ INCLUDES = $(ROSE_INCLUDES) -I$(top_builddir) -I$(SPOT_PREFIX)/include/spot -I$(
 # in V1.2 there are no KNOBS
 KNOBS = 
 
+# this line create speparately named object files
 codethorn_CXXFLAGS = $(KNOBS) -fopenmp -Wall -O3 -march=native -ftree-vectorize
-codethorn_LDADD = -lrose -lspot -lbdd
+
+codethorn_DEPENDENCIES=libspray.la
+codethorn_LDADD = -lrose -lspot -lbdd -lspray
 codethorn_SOURCES = \
   AType.C                          \
   AType.h                          \
   Analyzer.C                       \
   Analyzer.h                       \
-  AstTerm.C                        \
-  AstTerm.h                        \
-  CFAnalyzer.C                     \
-  CFAnalyzer.h                     \
   CollectionOperators.h            \
   CommandLineOptions.C             \
   CommandLineOptions.h             \
@@ -47,8 +47,6 @@ codethorn_SOURCES = \
   InternalChecks.h                 \
   LTL.h                            \
   LTLParser.y++                    \
-  LanguageRestrictor.C             \
-  LanguageRestrictor.h             \
   LanguageRestrictorCollection.C   \
   LanguageRestrictorCollection.h   \
   Miscellaneous.C                  \
@@ -60,27 +58,10 @@ codethorn_SOURCES = \
   Timer.h                          \
   Visualizer.C                     \
   Visualizer.h                     \
-  Lattice.h \
-  Lattice.C \
-  RDLattice.h                      \
-  RDLattice.C                      \
   Evaluator.h                      \
-  WorkListSeq.h                    \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
   RERS_empty_specialization.C      \
-  Flow.h \
-  Flow.C \
   PropertyValueTable.h \
   PropertyValueTable.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
   RewriteSystem.C \
   RewriteSystem.h \
   SpotConnection.C \
@@ -104,21 +85,14 @@ codethorn_SOURCES = \
 
 addressTakenAnalysis_SOURCES = \
   Timer.cpp \
-  AstTerm.C \
-  AnalysisAbstractionLayer.C \
   Miscellaneous.C \
   CommandLineOptions.C \
-  addressTakenAnalysis.h \
-  addressTakenAnalysis.C \
-  defUseQuery.h \
-  defUseQuery.C \
-  VariableIdUtils.h \
-  VariableIdUtils.C \
   addressTakenAnalysisDriver.C
 
-addressTakenAnalysis_LDADD = -lrose
+addressTakenAnalysis_LDADD = -lrose -lspray
+addressTakenAnalysis_DEPENDENCIES=libspray.la
 
-# used only in specialized analyzer
+# workaround to intentionally fool policy
 faketarget:
 	RERS_Problem10_specialization.C
 	RERS_Problem1_specialization.C
@@ -162,7 +136,8 @@ faketarget:
 	tests/rdtest3.C 
 	tests/rdtest4.C 
 	tests/rers13_mini1.C 
-	AbstractEvaluator.h
+	CppExprEvaluator.h
+	CppExprEvaluator.C
 	AbstractValue.C
 	AbstractValue.h
 	CPDomain.hpp
@@ -231,6 +206,19 @@ faketarget:
 	tests/rers/Problem1_pmod.c
 	tests/rers/inputsequencepack/Problem1_pmod.c
 	tests/rev1.C
+	tests/cptest10.C
+	tests/cptest1.C
+	tests/cptest2.C
+	tests/cptest3.C
+	tests/cptest4.C
+	tests/cptest5.C
+	tests/cptest6.C
+	tests/cptest7.C
+	tests/cptest8.C
+	tests/cptest9.C
+	tests/mailinglist2.C
+	tests/mailinglist3.C
+	tests/arraytest2.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
@@ -238,29 +226,23 @@ REGRESSION_DATA_DIR=regressiondata
 .PHONY: codethorn-dist viz bsps docs test checkdemos
 
 # MS: matcher_demo
-matcher_demo_LDADD = -lrose
-matcher_demo_SOURCES = Timer.cpp AstTerm.C matcher_demo.C
+matcher_demo_DEPENDENCIES=libspray.la
+matcher_demo_LDADD = -lrose -lspray
+matcher_demo_SOURCES = Timer.cpp matcher_demo.C
 BUILT_SOURCES = 
 AM_YFLAGS =
 AM_LFLAGS =
 
-varwatch_LDADD = -lrose
+varwatch_DEPENDENCIES=libspray.la
+varwatch_LDADD = -lrose -lspray
 varwatch_SOURCES = varwatch.C CommandLineOptions.h CommandLineOptions.C
 
-rdmain_LDADD = -lrose
-rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
- CFAnalyzer.h CFAnalyzer.C \
-  LanguageRestrictor.h LanguageRestrictor.C \
+#rdmain_LDADD = -lrose
+#rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
   DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AnalysisAbstractionLayer.h \
-  AnalysisAbstractionLayer.C \
-  RDAstAttribute.h         \
-  RDAstAttribute.C         \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
-  AstTerm.h                        \
-  AstTerm.C                        \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   ProgramStats.h                 \
@@ -268,80 +250,27 @@ rdmain_SOURCES = CommandLineOptions.h CommandLineOptions.C \
   Flow.h \
   Flow.C \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  Lattice.h \
-  Lattice.C \
   PropertyState.h \
   PropertyState.C \
-  IntervalAstAttribute.h \
-  IntervalAstAttribute.C \
-  IntervalPropertyState.h \
-  IntervalPropertyState.C \
-  IntervalAnalysis.h \
-  IntervalAnalysis.C \
-  IntervalPropertyStateFactory.h \
-  IntervalPropertyStateFactory.C \
-  IntervalTransferFunctions.hpp \
-  IntervalTransferFunctions.C \
-  IntervalAstAttributeInterface.h \
-  IntervalAstAttributeInterface.C \
-  NumberIntervalLattice.h \
-  NumberIntervalLattice.C \
-  PASolver1.h \
-  PASolver1.C \
-  DFTransferFunctions.h \
-  DFTransferFunctions.C \
-  DFAnalysis2.h \
-  DFAnalysis2.C \
-  RDLattice.h RDLattice.C \
-  RDTransferfunctions.h RDTransferFunctions.C \
-  RDAnalysis.h \
-  RDAnalysis.C \
-  LVLattice.h \
-  LVLattice.C \
-  LVTransferFunctions.h \
-  LVTransferFunctions.C \
-  LVAnalysis.h \
-  LVAnalysis.C \
-  LVAstAttributeInterface.h \
-  LVAstAttributeInterface.C \
-  LVAstAttribute.h \
-  LVAstAttribute.C \
-  addressTakenAnalysis.h \
-  addressTakenAnalysis.C \
   FIPointerAnalysis.h \
   FIPointerAnalysis.C \
-  PointerAnalysisInterface.h \
-  PointerAnalysisInterface.C \
   rdmain.C 
 
-woodpecker_LDADD = -lrose
-woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAnalyzer.C LanguageRestrictor.h LanguageRestrictor.C LanguageRestrictorCollection.h LanguageRestrictorCollection.C DataDependenceVisualizer.h DataDependenceVisualizer.C \
-  AnalysisAbstractionLayer.h       \
-  AnalysisAbstractionLayer.C       \
+woodpecker_DEPENDENCIES=libspray.la
+woodpecker_LDADD = -lrose -lspray
+woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C \
+ LanguageRestrictorCollection.h LanguageRestrictorCollection.C \
+  DataDependenceVisualizer.h DataDependenceVisualizer.C \
   AType.h                          \
   AType.C                          \
   CPAstAttribute.h CPAstAttribute.C \
   UDAstAttribute.h                 \
   UDAstAttribute.C                 \
-  AstTerm.h                        \
-  AstTerm.C                        \
   Miscellaneous.C                  \
   Miscellaneous.h                  \
   ProgramStats.h                 \
   ProgramStats.C                 \
-  Flow.h \
-  Flow.C \
   FIConstAnalysis.h FIConstAnalysis.C \
-  defUseQuery.C \
-  defUseQuery.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
   PropertyValueTable.h \
   PropertyValueTable.C \
   TrivialInlining.C                \
@@ -353,106 +282,38 @@ woodpecker_SOURCES = CommandLineOptions.h CommandLineOptions.C CFAnalyzer.h CFAn
   woodpecker.C
 
 
-analyterix_LDADD = -lrose
+#  DFAnalysisBase.C \
+#  DFAnalysisBase.h
+
+analyterix_DEPENDENCIES=libspray.la
+analyterix_LDADD = -lrose -lspray
 analyterix_SOURCES = \
-  addressTakenAnalysis.C \
-  addressTakenAnalysis.h \
-  AliasAnalysis.h \
-  AliasAnalysis.C \
-  AnalysisAbstractionLayer.C \
-  AnalysisAbstractionLayer.h \
-  AstTerm.C \
-  AstTerm.h \
   AType.C \
   AType.h \
-  CFAnalyzer.C \
-  CFAnalyzer.h \
   CPAstAttribute.h CPAstAttribute.C \
   CommandLineOptions.h \
   CommandLineOptions.C \
   DataDependenceVisualizer.C \
   DataDependenceVisualizer.h \
-  defUseQuery.C \
-  defUseQuery.h \
-  DFAnalysis2.C \
-  DFAnalysis2.h \
   DFAstAttributeConversion.h DFAstAttributeConversion.C \
-  DFTransferFunctions.C \
-  DFTransferFunctions.h \
   FIConstAnalysis.h FIConstAnalysis.C \
   FIPointerAnalysis.C \
   FIPointerAnalysis.h \
-  Flow.C \
-  Flow.h \
-  IntervalAnalysis.C \
-  IntervalAnalysis.h \
-  IntervalAstAttribute.C \
-  IntervalAstAttribute.h \
-  IntervalAstAttributeInterface.C \
-  IntervalAstAttributeInterface.h \
-  IntervalPropertyState.C \
-  IntervalPropertyState.h \
-  IntervalPropertyStateFactory.C \
-  IntervalPropertyStateFactory.h \
-  IntervalTransferFunctions.C \
-  IntervalTransferFunctions.h \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
   LanguageRestrictorCollection.C \
   LanguageRestrictorCollection.h \
-  Lattice.C \
-  Lattice.h \
-  LVAnalysis.C \
-  LVAnalysis.h \
-  LVAstAttribute.C \
-  LVAstAttribute.h \
-  LVAstAttributeInterface.C \
-  LVAstAttributeInterface.h \
-  LVLattice.C \
-  LVLattice.h \
-  LVTransferFunctions.C \
-  LVTransferFunctions.h \
   Miscellaneous.C \
   Miscellaneous.h \
-  NumberIntervalLattice.C \
-  NumberIntervalLattice.h \
-  PASolver1.C \
-  PASolver1.h \
-  PointerAnalysisInterface.C \
-  PointerAnalysisInterface.h \
   ProgramStats.C \
   ProgramStats.h \
-  PropertyState.C \
-  PropertyState.h \
   PropertyValueTable.C \
   PropertyValueTable.h \
-  RDAnalysis.C \
-  RDAnalysis.h \
-  RDAstAttribute.C \
-  RDAstAttribute.h \
-  RDLattice.h \
-  RDLattice.C \
-  RDTransferFunctions.C \
-  RDTransferFunctions.h \
   RoseRDAnalysis.C \
   RoseRDAnalysis.h \
   TransformationOperators.h \
   TransformationOperators.C \
   UDAstAttribute.C \
   UDAstAttribute.h \
-  VariableIdUtils.C \
-  VariableIdUtils.h \
   analyterix.C
-
-reverser_LDADD = -lrose
-reverser_SOURCES = \
-  LanguageRestrictor.h \
-  LanguageRestrictor.C \
-  LanguageRestrictorCollection.h \
-  LanguageRestrictorCollection.C \
-  AstTerm.h \
-  AstTerm.C \
-  reverser.C
 
 # obsolete since integration into ROSE
 # explicit rules because of multiple bison parser
@@ -468,10 +329,73 @@ reverser_SOURCES = \
 #iterator_test_LDADD = -lrose libmatcher.la
 
 #MS: ast_demo not integrated yet
-#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h AstTerm.C AstTerm.h
+#ast_demo_SOURCES = ast_demo.C Timer.cpp Timer.h  RoseAst.C RoseAst.h
 #ast_demo_LFLAGS = -Pmatcher
 #ast_demo_YFLAGS = -d -p matcher
 
+pkglib_LTLIBRARIES = libspray.la
+libspray_la_LDFLAGS= -no-undefined
+libspray_la_LDFLAGS=
+libspray_la_SOURCES=\
+ AliasAnalysis.h \
+ AnalysisAbstractionLayer.h \
+ AnalysisAstAnnotator.h \
+ AstTerm.h \
+ CFAnalysis.h \
+ DFAnalysisBase.h \
+ DFTransferFunctions.h \
+ IntervalAnalysis.h \
+ IntervalAstAttribute.h \
+ IntervalAstAttributeInterface.h \
+ IntervalPropertyState.h \
+ IntervalPropertyStateFactory.h \
+ IntervalTransferFunctions.h \
+ LVAnalysis.h \
+ LVAstAttribute.h \
+ LVAstAttributeInterface.h \
+ LVLattice.h \
+ LVTransferFunctions.h \
+ LanguageRestrictor.h \
+ NumberIntervalLattice.h \
+ PASolver1.h \
+ PointerAnalysisInterface.h \
+ RDAnalysis.h \
+ RDAstAttribute.h \
+ RDTransferFunctions.h \
+ WorkListSeq.h \
+ AnalysisAstAnnotator.C \
+ AliasAnalysis.C \
+ AstTerm.C \
+ CFAnalysis.C \
+ CppExprEvaluator.C \
+ DFAnalysisBase.C \
+ DFTransferFunctions.C \
+ Flow.C \
+ IntervalAnalysis.C \
+ IntervalAstAttribute.C \
+ IntervalPropertyStateFactory.C \
+ IntervalPropertyState.C \
+ IntervalTransferFunctions.C \
+ IntervalAstAttributeInterface.C \
+ LanguageRestrictor.C \
+ Lattice.C \
+ LVAnalysis.C \
+ LVAstAttribute.C \
+ LVAstAttributeInterface.C \
+ LVLattice.C \
+ LVTransferFunctions.C \
+ NumberIntervalLattice.C \
+ PASolver1.C \
+ PointerAnalysisInterface.C \
+ PropertyState.C \
+ RDAnalysis.C \
+ RDAstAttribute.C \
+ RDLattice.C \
+ RDTransferFunctions.C \
+ VariableIdUtils.C \
+ AnalysisAbstractionLayer.C \
+ addressTakenAnalysis.C \
+ defUseQuery.C
 
 check-local:
 	./codethorn --internal-checks				 

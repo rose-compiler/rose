@@ -544,6 +544,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (1/10/2015): We need to save a pointer to the SgSourceFile to support the token based unparsing efficiently.
+     Unparse_Info.setDataPrototype("SgSourceFile*","current_source_file","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 
@@ -1036,6 +1040,15 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "std::string"  , "unparse_output_filename", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/17/2015): Adding support to save the original specification of the object file name from the command line (as specified using the "-o" option).
+  // This is required for multiple file support which is using the "-o" option to specify the executable name when linking.  We have to split up the 
+  // command so that we can call ROSE seperately with each file to generate a new source file and then call the backend compiler to generate the object 
+  // file, and then call the linker seperately to using the object files to generate the named executable.
+     File.setDataPrototype         ( "std::string" , "objectFileNameWithPath", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "std::string" , "objectFileNameWithoutPath", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (2/2/2003): Added to support -E and -H options (calling the backend directly)
      File.setDataPrototype         ( "bool", "useBackendOnly", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1314,10 +1327,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
-     Project.setDataPrototype("bool", "appendPID", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
   // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.
@@ -1327,6 +1336,9 @@ Grammar::setUpSupport ()
   // File.setDataPrototype ("bool", "shared_memory_dsl", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     File.setDataPrototype ("bool", "multifile_support", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // ******************************************************************************
   // ******************************************************************************
@@ -1951,6 +1963,10 @@ Grammar::setUpSupport ()
   // post-processing phase, except that it appears to be relied upon by the OpenMP and 
   // C++ support (both of which can be fixed).
      Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
+     Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 

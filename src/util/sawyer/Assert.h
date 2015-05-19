@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_Assert_H
 #define Sawyer_Assert_H
 
@@ -89,6 +96,15 @@ namespace Assert {
  *  when an assertion fails. Calls to this function do not return. */
 SAWYER_EXPORT_NORETURN void fail(const char *mesg, const char *expr, const std::string &note,
                                  const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
+
+/** Type for user-defined assertion failure handler. */
+typedef void (*AssertFailureHandler)(const char *mesg, const char *expr, const std::string &note,
+                                     const char *filename, unsigned linenum, const char *funcname);
+
+/** %Optional user callback to handle assertion failures.  If this variable has a non-null value, then that function is called
+ *  after the failed assertion message is emitted. This allows the user to terminate the program some other way than the
+ *  default @c abort call.  In any case, this function should not return; if it does, then @c abort is called. */
+extern AssertFailureHandler assertFailureHandler;
 
 } // namespace
 } // namespace

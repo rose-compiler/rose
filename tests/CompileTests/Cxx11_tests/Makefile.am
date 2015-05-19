@@ -72,6 +72,20 @@ test2014_86.C \
 test2014_87.C \
 test2014_89.C \
 test2014_90.C \
+test2015_01.C \
+test2015_02.C \
+test2015_03.C \
+test2015_04.C \
+test2015_05.C \
+test2015_06.C \
+test2015_07.C \
+test2015_08.C \
+test2015_09.C \
+test2015_10.C \
+test2015_11.C \
+test2015_12.C \
+test2015_13.C \
+test2015_14.C \
 last.C
 
 # Failing tests:

@@ -38,6 +38,15 @@ void outputPredefinedMacros();
 ROSE_DLL_API SgProject* frontend ( int argc, char** argv, bool frontendConstantFolding = false );
 ROSE_DLL_API SgProject* frontend ( const std::vector<std::string>& argv, bool frontendConstantFolding = false );
 
+// DQ (4/17/2015): After discussion with Liao, Markus, and Pei-Hung, we have agreed that
+// we want to support multiple SgProject IR nodes.  So in addition to the SgProject* frontend()
+// function we will in the future support:
+//   1) A SgProject member function "frontend()" that can be used to generate a new SgFile in
+//      an existing SgProject.
+//   2) A SgBuilder function for building an empty SgProject (without files).
+//   3) We will remove the use of the SageInterface::getProject() (which asserts that there 
+//      is only one SgProject).
+
 // This builds a shell of a frontend SgProject with associated SgFile objects (but with empty 
 // SgGlobal objects) supporting only commandline processing and requiring the frontend to be 
 // called explicitly for each SgFile object.  See tutorial/selectedFileTranslation.C for example.
@@ -179,7 +188,7 @@ namespace ROSE
           void filterInputFile ( const std::string inputFileName, const std::string outputFileName );
 
       //! Functions to move to SgStatement object in SAGE III later
-          SgStatement* getPreviousStatement ( SgStatement *targetStatement );
+          SgStatement* getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope = true);
           SgStatement* getNextStatement     ( SgStatement *targetStatement );
 
        // DQ (10/28/2013): Put the token sequence map here, it is set and accessed via member functions on the SgSourceFile IR node.

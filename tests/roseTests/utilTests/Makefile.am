@@ -46,6 +46,16 @@ TEST_TARGETS += testStrings.passed
 testStrings.passed: tests.conf testStrings
 	@$(RTH_RUN) CMD=./testStrings $< $@
 
+# Tests that diagnostics are working
+noinst_PROGRAMS += testDiagnostics
+testDiagnostics_SOURCES = testDiagnostics.C
+testDiagnostics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += testDiagnostics.passed
+testDiagnostics.passed: $(top_srcdir)/scripts/test_exit_status testDiagnostics
+	@$(RTH_RUN)				\
+		TITLE="diagnostics [$@]"	\
+		CMD=./testDiagnostics $< $@
+
 # Test file name support
 noinst_PROGRAMS += filenameSupport
 filenameSupport_SOURCES = filenameSupport.C
@@ -86,6 +96,19 @@ graphIO_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 TEST_TARGETS += graphIO.passed
 graphIO.passed: graphIO
 	@$(RTH_RUN) TITLE="graph I/O [$@]" CMD="$(abspath $<)" $(top_srcdir)/scripts/test_exit_status $@
+
+# tests the RangeMap class
+noinst_PROGRAMS += rangeMapTests
+rangeMapTests_SOURCES = rangeMapTests.C
+rangeMapTests_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+TEST_TARGETS += rangeMapTests.passed
+EXTRA_DIST += rangeMapTests.ans
+rangeMapTests.passed: rangeMapTests rangeMapTests.ans $(top_srcdir)/scripts/test_with_answer
+	@$(RTH_RUN)						\
+		TITLE="RangeMap tests [$@]"			\
+		CMD="$(abspath $<)"				\
+		ANS="$(srcdir)/rangeMapTests.ans"		\
+		$(top_srcdir)/scripts/test_with_answer $@
 
 check-local: $(TEST_TARGETS)
 

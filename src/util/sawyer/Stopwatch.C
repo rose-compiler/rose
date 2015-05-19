@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #include <sawyer/Sawyer.h>
 #include <sawyer/Stopwatch.h>
 #include <iostream>
@@ -61,6 +68,11 @@ Stopwatch::start(bool clear) {
         running_ = true;
     }
     return retval;
+}
+
+SAWYER_EXPORT double
+Stopwatch::restart() {
+    return start(true);
 }
 
 SAWYER_EXPORT double

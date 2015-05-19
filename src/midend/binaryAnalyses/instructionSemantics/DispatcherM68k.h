@@ -12,10 +12,11 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 protected:
     // prototypical constructor
-    DispatcherM68k() {}
+    DispatcherM68k(): BaseSemantics::Dispatcher(32, RegisterDictionary::dictionary_coldfire_emac()) {}
 
-    explicit DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_coldfire_emac());
+    DispatcherM68k(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : RegisterDictionary::dictionary_coldfire_emac()) {
+        ASSERT_require(32==addrWidth);
         regcache_init();
         iproc_init();
     }
@@ -45,13 +46,19 @@ public:
     }
 
     /** Constructor. */
-    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherM68kPtr(new DispatcherM68k(ops));
+    static DispatcherM68kPtr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
+                                      const RegisterDictionary *regs=NULL) {
+        return DispatcherM68kPtr(new DispatcherM68k(ops, addrWidth, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (0==addrWidth)
+            addrWidth = addressWidth();
+        if (!regs)
+            regs = get_register_dictionary();
+        return instance(ops, addrWidth, regs);
     }
 
     /** Dynamic cast to DispatcherM68kPtr with assertion. */
@@ -63,13 +70,17 @@ public:
 
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
+
+    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
+
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         return insn->get_kind();
     }
 
-    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=32) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) ROSE_OVERRIDE;
 
     /** Determines if an instruction should branch. */
     BaseSemantics::SValuePtr condition(M68kInstructionKind, BaseSemantics::RiscOperators*);

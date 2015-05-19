@@ -7,11 +7,13 @@
 #include "defUseQuery.h"
 
 using namespace SPRAY;
+using namespace AnalysisAbstractionLayer;
+using namespace std;
 
-VariableIdSet
+SPRAY::VariableIdSet
 AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
-  VariableIdMapping::VariableIdSet globalVarsIdSet;
+  SPRAY::VariableIdMapping::VariableIdSet globalVarsIdSet;
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     VariableId globalVarId=variableIdMapping->variableId(*i);
     globalVarsIdSet.insert(globalVarId);
@@ -19,11 +21,25 @@ AnalysisAbstractionLayer::globalVariables(SgProject* project, VariableIdMapping*
   return globalVarsIdSet;
 }
 
-VariableIdSet 
+SPRAY::VariableIdSet
+AnalysisAbstractionLayer::usedVariablesInGlobalVariableInitializers(SgProject* project, VariableIdMapping* variableIdMapping) {
+  list<SgVariableDeclaration*> globalVars=SgNodeHelper::listOfGlobalVars(project);
+  SPRAY::VariableIdMapping::VariableIdSet usedVarsInInitializersIdSet;
+  for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
+    SgExpression* initExp=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(*i);
+    SPRAY::VariableIdSet usedVarsInInitializer;
+    usedVarsInInitializer=AnalysisAbstractionLayer::astSubTreeVariables(initExp, *variableIdMapping);
+    usedVarsInInitializersIdSet.insert(usedVarsInInitializer.begin(),usedVarsInInitializer.end());
+  }
+  return usedVarsInInitializersIdSet;
+}
+
+
+SPRAY::VariableIdSet 
 AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
   //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
-  VariableIdSet setOfUsedVars;
+  SPRAY::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
     setOfUsedVars.insert(variableIdMapping->variableId(*i));
   }
@@ -31,22 +47,22 @@ AnalysisAbstractionLayer::usedVariablesInsideFunctions(SgProject* project, Varia
 }
 
 // TODO: this function ignores all reported memory access to unnamed memory cells
-void extractVariableIdSetFromVarsInfo(VariableIdSet& varIdSet, VarsInfo& varsInfo) {
+void extractVariableIdSetFromVarsInfo(SPRAY::VariableIdSet& varIdSet, VarsInfo& varsInfo) {
     VariableIdInfoMap& vim=varsInfo.first;
     for(VariableIdInfoMap::iterator i=vim.begin();i!=vim.end();++i) {
       varIdSet.insert((*i).first);
     }
 }
 
-VariableIdSet AnalysisAbstractionLayer::useVariables(SgNode* node, VariableIdMapping& vidm) {
-  VariableIdSet resultSet;
+SPRAY::VariableIdSet AnalysisAbstractionLayer::useVariables(SgNode* node, VariableIdMapping& vidm) {
+  SPRAY::VariableIdSet resultSet;
   VarsInfo useVarsInfo=getDefUseVarsInfo(node, vidm).getUseVarsInfo();
   extractVariableIdSetFromVarsInfo(resultSet,useVarsInfo);
   return resultSet;
 }
 
-VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMapping& vidm) {
-  VariableIdSet resultSet;
+SPRAY::VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMapping& vidm) {
+  SPRAY::VariableIdSet resultSet;
   VarsInfo defVarsInfo=getDefUseVarsInfo(node, vidm).getDefVarsInfo();
   //cout<<"DEFISEVARSINFO: "<<DefUseVarsInfo::varsInfoPrettyPrint(defVarsInfo,vidm)<<endl;
   //cout<<"VariableIdInfoMap-size:"<<defVarsInfo.first.size()<<endl;
@@ -56,8 +72,8 @@ VariableIdSet AnalysisAbstractionLayer::defVariables(SgNode* node, VariableIdMap
   return resultSet;
 }
 
-VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
-  VariableIdSet vset;
+SPRAY::VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, VariableIdMapping& vidm) {
+  SPRAY::VariableIdSet vset;
   RoseAst ast(node);
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     VariableId vid; // default creates intentionally an invalid id.
@@ -73,3 +89,4 @@ VariableIdSet AnalysisAbstractionLayer::astSubTreeVariables(SgNode* node, Variab
   }
   return vset;
 }
+

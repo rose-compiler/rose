@@ -33,7 +33,7 @@ void foo()
 // End of added part
     x = a + b;
   }
-  else {
+   else {
   }
   if ((unknown())) {
     cachevar__1 = a + b;
@@ -41,21 +41,19 @@ void foo()
       y = cachevar__1;
     }
   }
-  else {
+   else if ((unknown())) {
+    while((unknown())){
+    }
     if ((unknown())) {
-      while((unknown())){
-      }
-      if ((unknown())) {
-        cachevar__1 = a + b;
-        y = cachevar__1;
-      }
-      else {
-        goto L9;
-      }
+      cachevar__1 = a + b;
+      y = cachevar__1;
     }
-    else {
-      goto L10;
+     else {
+      goto L9;
     }
+  }
+   else {
+    goto L10;
   }
   z = cachevar__1;
   a = c;

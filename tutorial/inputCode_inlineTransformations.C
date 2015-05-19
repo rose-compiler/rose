@@ -26,8 +26,10 @@ int main(int, char**)
      incrementX();
      incrementX();
 
-  // Somthing more interesting to inline 
-     for (; foo() < 7;)
+  // Something more interesting to inline
+  // for (; foo() < 7;)
+     int i = 0;
+     for (; foo() < 7; i++)
         {
           x++;
         }

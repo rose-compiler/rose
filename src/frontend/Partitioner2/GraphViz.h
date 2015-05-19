@@ -2,7 +2,10 @@
 #define ROSE_Partitioner2_GraphViz_H
 
 #include <ostream>
+#include <BinaryNoOperation.h>
+#include <boost/regex.hpp>
 #include <Color.h>
+#include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/FunctionCallGraph.h>
 
@@ -31,6 +34,14 @@ std::string htmlEscape(const std::string&);
  *
  *  The returned string will include double quote or angle-brackets as necessary depending on the input string. */
 std::string escape(const std::string&);
+
+/** Append a value to an existing string.
+ *
+ *  Appends @p newStuff to the end of @p oldStuff taking into account that @p oldStuff is already quoted and escaped. The @p
+ *  newStuff should not be quoted or escaped.  This is useful for appending additional information to a label. The @p separator
+ *  is escaped and inserted between the @p oldStuff and @p newStuff if @p oldStuff is not empty. Returns a new string that is
+ *  also quoted and escaped. */
+std::string concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator="");
 
 /** Determins if a string is a valid GraphViz ID.
  *
@@ -128,10 +139,10 @@ public:
 
 protected:
     struct PseudoEdge {
-        typename G::ConstVertexNodeIterator src, dst;
+        typename G::ConstVertexIterator src, dst;
         std::string label;
         Attributes attributes;
-        PseudoEdge(const typename G::ConstVertexNodeIterator &src, const typename G::ConstVertexNodeIterator &dst,
+        PseudoEdge(const typename G::ConstVertexIterator &src, const typename G::ConstVertexIterator &dst,
                    const std::string &label)
             : src(src), dst(dst), label(label) {}
     };
@@ -245,16 +256,16 @@ public:
         ASSERT_require(vertexId < vertexOrganization_.size());
         return vertexOrganization_[vertexId];
     }
-    const Organization& vertexOrganization(const typename G::ConstVertexNodeIterator &vertex) const {
+    const Organization& vertexOrganization(const typename G::ConstVertexIterator &vertex) const {
         return vertexOrganization(vertex->id());
     }
-    const Organization& vertexOrganization(const typename G::VertexNode &vertex) const {
+    const Organization& vertexOrganization(const typename G::Vertex &vertex) const {
         return vertexOrganization(vertex.id());
     }
-    Organization& vertexOrganization(const typename G::ConstVertexNodeIterator &vertex) {
+    Organization& vertexOrganization(const typename G::ConstVertexIterator &vertex) {
         return vertexOrganization(vertex->id());
     }
-    Organization& vertexOrganization(const typename G::VertexNode &vertex) {
+    Organization& vertexOrganization(const typename G::Vertex &vertex) {
         return vertexOrganization(vertex.id());
     }
     /** @} */
@@ -283,16 +294,16 @@ public:
         ASSERT_require(edgeId < edgeOrganization_.size());
         return edgeOrganization_[edgeId];
     }
-    const Organization& edgeOrganization(const typename G::ConstEdgeNodeIterator &edge) const {
+    const Organization& edgeOrganization(const typename G::ConstEdgeIterator &edge) const {
         return edgeOrganization(edge->id());
     }
-    const Organization& edgeOrganization(const typename G::EdgeNode &edge) const {
+    const Organization& edgeOrganization(const typename G::Edge &edge) const {
         return edgeOrganization(edge.id());
     }
-    Organization& edgeOrganization(const typename G::ConstEdgeNodeIterator &edge) {
+    Organization& edgeOrganization(const typename G::ConstEdgeIterator &edge) {
         return edgeOrganization(edge->id());
     }
-    Organization& edgeOrganization(const typename G::EdgeNode &edge) {
+    Organization& edgeOrganization(const typename G::Edge &edge) {
         return edgeOrganization(edge.id());
     }
     /** @} */
@@ -354,6 +365,11 @@ public:
         BOOST_FOREACH (Organization &org, edgeOrganization_)
             org.select(b);
     }
+
+    /** Deselect all but one parallel edge.
+     *
+     *  For parallel edges between a pair of vertices, all but one is deselected.  Which one remains selected is arbitrary. */
+    void deselectParallelEdges();
     
     /** Dump selected vertices, edges, and subgraphs.
      *
@@ -365,10 +381,10 @@ protected:
     /** Emit a single vertex if it hasn't been emitted already.
      *
      *  In any case, returns the GraphViz ID number for the vertex. */
-    size_t emitVertex(std::ostream&, const typename G::ConstVertexNodeIterator&, const Organization&, const VMap&) const;
+    size_t emitVertex(std::ostream&, const typename G::ConstVertexIterator&, const Organization&, const VMap&) const;
 
     /** Emit a single edge.  The vertices must have been emitted already. */
-    void emitEdge(std::ostream&, const typename G::ConstEdgeNodeIterator&, const Organization&, const VMap&) const;
+    void emitEdge(std::ostream&, const typename G::ConstEdgeIterator&, const Organization&, const VMap&) const;
 
 };
 
@@ -412,9 +428,13 @@ class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     bool showInstructionStackDeltas_;                   // show stack deltas for instructions
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
+    bool strikeNoopSequences_;                          // render no-op sequences in a different style
     Color::HSV funcEnterColor_;                         // background color for function entrance blocks
     Color::HSV funcReturnColor_;                        // background color for function return blocks
     Color::HSV warningColor_;                           // background color for special nodes and warnings
+    DwarfLineMapper srcMapper_;                         // maps addresses to source code (optional)
+    static unsigned long versionDate_;                  // date code from "dot -V", like 20100126
+    NoOperation noOpAnalysis_;
 
 public:
     /** Constructor.
@@ -430,6 +450,11 @@ public:
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Properties
+
+    /** Property: partitioner.
+     *
+     *  The partitioner that's being used, set when this emitter was constructed. */
+    const Partitioner& partitioner() { return partitioner_; }
 
     /** Property: use function subgraphs.
      *
@@ -473,6 +498,19 @@ public:
     bool showInstructionStackDeltas() const { return showInstructionStackDeltas_; }
     void showInstructionStackDeltas(bool b) { showInstructionStackDeltas_ = b; }
     /** @} */
+
+    /** Property: strike no-op sequences.
+     *
+     *  Those instructions that are part of a no-op sequence are rendered in a different font (such as strike-through). When
+     *  two or more sequences overlap, the largest sequence is struck and all overlapping sequences are not processed. For
+     *  nested squences, this causes all instructions to be struck; for overlapping but non-nested sequences, only the largest
+     *  one is struck.
+     *
+     * @{ */
+    bool strikeNoopSequences() const { return strikeNoopSequences_; }
+    void strikeNoopSequences(bool b) { strikeNoopSequences_ = b; }
+    /** @} */
+
 
     /** Property: color to use for background of function entrance nodes.
      *
@@ -528,6 +566,16 @@ public:
      * @{ */
     bool showReturnEdges() const { return showReturnEdges_; }
     void showReturnEdges(bool b) { showReturnEdges_ = b; }
+    /** @} */
+
+    /** Property: Address-to-source mapping.
+     *
+     *  If an address to source mapping is provided then source location information will be shown in each vertex.
+     *
+     * @{ */
+    const DwarfLineMapper& srcMapper() const { return srcMapper_; }
+    DwarfLineMapper& srcMapper() { return srcMapper_; }
+    void srcMapper(const DwarfLineMapper &mapper) { srcMapper_ = mapper; }
     /** @} */
 
 
@@ -631,8 +679,8 @@ public:
     /** Returns true if the edge spans two different functions.
      *
      * @{ */
-    static bool isInterFunctionEdge(const ControlFlowGraph::EdgeNode&);
-    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeNodeIterator &e) { return isInterFunctionEdge(*e); }
+    static bool isInterFunctionEdge(const ControlFlowGraph::Edge&);
+    static bool isInterFunctionEdge(const ControlFlowGraph::ConstEdgeIterator &e) { return isInterFunctionEdge(*e); }
     /** @} */
 
     /** Function that owns a vertex.
@@ -640,8 +688,8 @@ public:
      *  Returns a pointer to the function that owns the specified vertex, or null if there is no owner.
      *
      *  @{ */
-    static Function::Ptr owningFunction(const ControlFlowGraph::VertexNode&);
-    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexNodeIterator &v) { return owningFunction(*v); }
+    static Function::Ptr owningFunction(const ControlFlowGraph::Vertex&);
+    static Function::Ptr owningFunction(const ControlFlowGraph::ConstVertexIterator &v) { return owningFunction(*v); }
     /** @} */
 
     /** Assign vertices and edges to subgraphs.
@@ -653,14 +701,20 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Formatting: these are expected to be overridden by subclasses
 
+    /** Source location for vertex.
+     *
+     *  Returns a string indicating the source code location for a vertex.  If no information is available then an empty string
+     *  is returned. */
+    virtual std::string sourceLocation(const ControlFlowGraph::ConstVertexIterator&) const;
+
     /** Label for CFG vertex.
      *
      *  Returns the simple label for a CFG vertex.  The simple label is usually just an address rather than instructions, etc.
      *  The returned lable must include the delimiting double quotes or angle brackets and have proper escaping of contents.
      *
      *  @{ */
-    virtual std::string vertexLabel(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    std::string vertexLabel(const ControlFlowGraph::VertexNode&) const;
+    virtual std::string vertexLabel(const ControlFlowGraph::ConstVertexIterator&) const;
+    std::string vertexLabel(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Detailed label for CFG vertex.
@@ -670,15 +724,15 @@ public:
      *  showInstructionStackDeltas properties.
      *
      *  @{ */
-    virtual std::string vertexLabelDetailed(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    std::string vertexLabelDetailed(const ControlFlowGraph::VertexNode&) const;
+    virtual std::string vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator&) const;
+    std::string vertexLabelDetailed(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Attributes for a CFG vertex.
      *
      * @{ */
-    virtual Attributes vertexAttributes(const ControlFlowGraph::ConstVertexNodeIterator&) const;
-    Attributes vertexAttributes(const ControlFlowGraph::VertexNode&) const;
+    virtual Attributes vertexAttributes(const ControlFlowGraph::ConstVertexIterator&) const;
+    Attributes vertexAttributes(const ControlFlowGraph::Vertex&) const;
     /** @} */
 
     /** Label for CFG edge.
@@ -686,15 +740,15 @@ public:
      *  The returned lable must include the delimiting double quotes or angle brackets and have  proper escaping of contents.
      *
      *  @{ */
-    virtual std::string edgeLabel(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
-    std::string edgeLabel(const ControlFlowGraph::EdgeNode&) const;
+    virtual std::string edgeLabel(const ControlFlowGraph::ConstEdgeIterator&) const;
+    std::string edgeLabel(const ControlFlowGraph::Edge&) const;
     /** @} */
 
     /** Attributes for a CFG edge.
      *
      *  @{ */
-    virtual Attributes edgeAttributes(const ControlFlowGraph::ConstEdgeNodeIterator&) const;
-    Attributes edgeAttributes(const ControlFlowGraph::EdgeNode&) const;
+    virtual Attributes edgeAttributes(const ControlFlowGraph::ConstEdgeIterator&) const;
+    Attributes edgeAttributes(const ControlFlowGraph::Edge&) const;
     /** @} */
 
     /** Label for function vertex.
@@ -704,6 +758,9 @@ public:
 
     /** Attributes for function vertex. */
     virtual Attributes functionAttributes(const Function::Ptr&) const;
+
+private:
+    void init();
 };
 
 
@@ -715,11 +772,41 @@ public:
 class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     const Partitioner &partitioner_;
     FunctionCallGraph cg_;
+    Color::HSV functionHighlightColor_;                 // highlight certain functions
+    boost::regex highlightNameMatcher_;                 // which functions to highlight
 public:
-    CgEmitter(const Partitioner &partitioner);
-    std::string functionLabel(const Function::Ptr&) const;
-    Attributes functionAttributes(const Function::Ptr&) const;
-    void emitCallGraph(std::ostream &out) const;
+    explicit CgEmitter(const Partitioner &partitioner);
+    CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual Attributes functionAttributes(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual void emitCallGraph(std::ostream &out) const ROSE_OVERRIDE;
+    virtual const FunctionCallGraph& callGraph() const { return cg_; }
+    virtual void callGraph(const FunctionCallGraph &cg);
+    virtual void highlight(const boost::regex&);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                              Callgraph emitter with inlined imports
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Emits a modified function call graph.
+ *
+ *  The function call graph is modified by removing all vertices whose function names match a user-specified pattern and
+ *  compensating by listing the names of removed functions in the vertices of the callers.  This is a little bit like inlining,
+ *  thus the name of the class. */
+class CgInlinedEmitter: public CgEmitter {
+    boost::regex nameMatcher_;
+    typedef std::vector<Function::Ptr> InlinedFunctions;
+    typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
+    Inlines inlines_;
+public:
+    CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
+    virtual const FunctionCallGraph& callGraph() const ROSE_OVERRIDE { return CgEmitter::callGraph(); }
+    virtual void callGraph(const FunctionCallGraph&) ROSE_OVERRIDE;
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual bool shouldInline(const Function::Ptr&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -728,7 +815,7 @@ public:
 
 template<class G>
 size_t
-BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexNodeIterator &vertex,
+BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexIterator &vertex,
                            const Organization &org, const VMap &vmap) const {
     size_t id = NO_ID;
     if (org.isSelected() && !vmap.getOptional(vertex->id()).assignTo(id)) {
@@ -741,13 +828,13 @@ BaseEmitter<G>::emitVertex(std::ostream &out, const typename G::ConstVertexNodeI
 
 template<class G>
 void
-BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeNodeIterator &edge, const Organization &org,
+BaseEmitter<G>::emitEdge(std::ostream &out, const typename G::ConstEdgeIterator &edge, const Organization &org,
                          const VMap &vmap) const {
     ASSERT_require2(vmap.exists(edge->source()->id()), "edge source vertex has not yet been emitted");
     ASSERT_require2(vmap.exists(edge->target()->id()), "edge target vertex has not yet been emitted");
 
     out <<vmap[edge->source()->id()] <<" -> " <<vmap[edge->target()->id()]
-        <<" [ label=" <<org.label()
+        <<" [ label=" <<org.label() <<" "
         <<toString(org.attributes()) <<" ];\n";
 }
 
@@ -765,7 +852,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     Subgraphs subgraphs;
 
     // Emit vertices to subgraphs
-    for (typename G::ConstVertexNodeIterator vertex=graph_.vertices().begin(); vertex!=graph_.vertices().end(); ++vertex) {
+    for (typename G::ConstVertexIterator vertex=graph_.vertices().begin(); vertex!=graph_.vertices().end(); ++vertex) {
         const Organization &org = vertexOrganization(vertex);
         if (org.isSelected() && !vmap.exists(vertex->id())) {
             std::ostringstream ss;
@@ -776,7 +863,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
 
     // Emit edges to subgraphs
-    for (typename G::ConstEdgeNodeIterator edge=graph_.edges().begin(); edge!=graph_.edges().end(); ++edge) {
+    for (typename G::ConstEdgeIterator edge=graph_.edges().begin(); edge!=graph_.edges().end(); ++edge) {
         const Organization &org = edgeOrganization(edge);
         if (org.isSelected() &&
             vertexOrganization(edge->source()).isSelected() && vertexOrganization(edge->target()).isSelected()) {
@@ -810,6 +897,20 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
     
     out <<"}\n";
+}
+
+template<class G>
+void
+BaseEmitter<G>::deselectParallelEdges() {
+    BOOST_FOREACH (const typename G::Vertex &src, graph_.vertices()) {
+        if (vertexOrganization(src).isSelected()) {
+            std::set<size_t> targets;
+            BOOST_FOREACH (const typename G::Edge &edge, src.outEdges()) {
+                if (edgeOrganization(edge).isSelected() && !targets.insert(edge.target()->id()).second)
+                    edgeOrganization(edge).select(false);
+            }
+        }
+    }
 }
 
 } // namespace

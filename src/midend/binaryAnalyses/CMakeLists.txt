@@ -1,4 +1,18 @@
 add_library(midend_binary OBJECT
+  AbstractLocation.C
+  binary_analysis.C
+  BinaryCallingConvention.C
+  BinaryControlFlow.C
+  BinaryDataFlow.C
+  BinaryDominance.C
+  BinaryFunctionCall.C
+  BinaryMagic.C
+  BinaryNoOperation.C
+  BinaryReturnValueUsed.C
+  BinaryString.C
+  BinaryTaintedFlow.C
+  DwarfLineMapper.C
+  GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
   RoseBin_FlowAnalysis.cpp
   RoseBin_DataFlowAnalysis.cpp
@@ -27,11 +41,12 @@ add_library(midend_binary OBJECT
   instructionSemantics/PartialSymbolicSemantics.C
   instructionSemantics/PartialSymbolicSemantics2.C
   instructionSemantics/SMTSolver.C
+  instructionSemantics/SymbolicMemory2.C
   instructionSemantics/SymbolicSemantics.C
   instructionSemantics/SymbolicSemantics2.C
   instructionSemantics/TraceSemantics2.C
   instructionSemantics/YicesSolver.C)
-add_dependencies(midend_binary rosetta_generated generate_stringify)
+add_dependencies(midend_binary rosetta_generated)
 
 ########### install files ###############
 
@@ -46,6 +61,7 @@ install(
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryMagic.h
+    BinaryNoOperation.h
     BinaryPointerDetection.h
     BinaryString.h
     BinaryTaintedFlow.h
@@ -78,6 +94,7 @@ install(
     instructionSemantics/PartialSymbolicSemantics.h
     instructionSemantics/ReadWriteRegisterFragment.h
     instructionSemantics/SMTSolver.h
+    instructionSemantics/SymbolicMemory2.h
     instructionSemantics/SymbolicSemantics2.h
     instructionSemantics/SymbolicSemantics.h
     instructionSemantics/TestSemantics2.h

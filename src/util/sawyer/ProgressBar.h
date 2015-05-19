@@ -1,3 +1,10 @@
+// WARNING: Changes to this file must be contributed back to Sawyer or else they will
+//          be clobbered by the next update from Sawyer.  The Sawyer repository is at
+//          github.com:matzke1/sawyer.
+
+
+
+
 #ifndef Sawyer_ProgressBar_H
 #define Sawyer_ProgressBar_H
 
@@ -150,12 +157,12 @@ public:
         value_.curValue = curValue;
         value_.rightValue = rightValue;
         bar_.shouldSpin_ = isEmpty();
-        configUpdated();
+        valueUpdated();
     }
     void value(ValueType leftValue, ValueType curValue, ValueType rightValue) {
         value_ = Position(leftValue, curValue, rightValue);
         bar_.shouldSpin_ = isEmpty();
-        configUpdated();
+        valueUpdated();
     }
     /** @} */
 

@@ -35,6 +35,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/PartialSymbolicSemantics.C		\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/SMTSolver.C				\
+    instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
@@ -45,6 +46,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
+    BinaryNoOperation.C						\
     BinaryReturnValueUsed.C					\
     BinaryString.C						\
     BinaryTaintedFlow.C						\
@@ -96,6 +98,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/PartialSymbolicSemantics.h	\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/SMTSolver.h			\
+    instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
@@ -112,6 +115,7 @@ pkginclude_HEADERS =					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
     BinaryMagic.h					\
+    BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\

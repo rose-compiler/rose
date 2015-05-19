@@ -40,10 +40,10 @@ int main(int argc, char * argv[])
   TransformationTracking::registerAstSubtreeIds (project);
   astdotgen.generate(project,AstDOTGeneration::TOPDOWNBOTTOMUP, "v2");
 
-#if 0
+#if 0 // it works!
   // test File info retrieval 
   // iterate all node ids 
-  for (int i =1; i<TransformationTracking::getNextId(); i++)
+  for (size_t i =1; i<TransformationTracking::getNextId(); i++)
   {
     std::pair<Sg_File_Info*, Sg_File_Info*> info_pair = TransformationTracking::getFileInfo(i);
     Sg_File_Info* start_info = info_pair.first;

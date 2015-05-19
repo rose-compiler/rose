@@ -15,10 +15,11 @@ class WFunctionSummary: public Wt::WContainerWidget {
     std::vector<FunctionAnalyzer::Ptr> analyzers_;
     Wt::WTable *wAnalysisResultTable_;
     std::vector<Wt::WText*> analyzerResults_;           // one per analyzer
+    Wt::WTextArea *wFunctionComments_;
 
 public:
     WFunctionSummary(Context &ctx, Wt::WContainerWidget *parent=NULL)
-        : Wt::WContainerWidget(parent), ctx_(ctx), wAnalysisResultTable_(NULL) {
+        : Wt::WContainerWidget(parent), ctx_(ctx), wAnalysisResultTable_(NULL), wFunctionComments_(NULL) {
         init();
     }
 

@@ -147,7 +147,8 @@ static bool returnValueUsed(const Cfg &cfg, CfgVertex startVertex, const Registe
     BaseSemantics::MemoryStatePtr memory = BaseSemantics::MemoryCellList::instance(protoval, protoval);
     BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
     BaseSemantics::RiscOperatorsPtr ops = NullSemantics::RiscOperators::instance(state);
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    size_t addrWidth = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp).get_nbits();
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, addrWidth);
 
     WorkList<CfgVertex> worklist(true);
     Map<CfgVertex, size_t> seen;

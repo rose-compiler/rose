@@ -58,7 +58,6 @@ Sawyer::Message::Facility mlog;
 
 // Command-line settings
 struct Settings {
-    std::string isaName;                                // name of instruction set architecture
     std::string valueClassName;                         // name of semantic values class, abbreviated
     std::string rstateClassName;                        // name of register state class, abbreviated
     std::string mstateClassName;                        // name of memory state class, abbreviated
@@ -75,19 +74,19 @@ struct Settings {
           bblockInterval(AddressInterval::whole()) {}
 };
 
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    std::string purpose = "runs instruction semantics for testing";
+    std::string description =
+        "Parses, disassembles and partitions the specimens given as positional arguments on the command-line and then "
+        "instantiates and runs the specified instruction semantics for each basic block.  A semantic class must be "
+        "specified with the @s{semantics} switch, and its default component types can be overridden with other "
+        "class-specifying switches. However, not all combinations of semantic class and component types make sense (a "
+        "well implemented class will complain when the combination is nonsensical).";
 
-    //------------------------------------------------
-    SwitchGroup load("Specimen loading switches");
-    load.insert(Switch("isa")
-                .argument("architecture", anyParser(settings.isaName))
-                .doc("Instruction set architecture.  If the specimen has a binary container (e.g., ELF, PE) then the "
-                     "architecture is obtained from the container (overridden by this switch), otherwise the user must "
-                     "specify an architecture. Use \"@s{isa} list\" to see a list of recognized names."));
+    Parser parser = engine.commandLineParser(purpose, description);
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
@@ -183,22 +182,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                .hidden(true));
     
     //------------------------------------------------
-    Parser parser;
-    parser
-        .purpose("runs instruction semantics for testing")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Testing")
-        .doc("synopsis",
-             "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line and then "
-             "instantiates and runs the specified instruction semantics for each basic block.  A semantic class must be "
-             "specified with the @s{semantics} switch, and its default component types can be overridden with other "
-             "class-specifying switches. However, not all combinations of semantic class and component types make sense (a "
-             "well implemented class will complain when the combination is nonsensical).")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
-    
-    return parser.with(gen).with(load).with(sem).with(ctl).with(out).parse(argc, argv).apply();
+    parser.doc("Synopsis", "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}");
+    return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
 static SMTSolver *
@@ -504,8 +489,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     if (!dispatcher)
         throw std::runtime_error("no semantics dispatcher available for architecture");
     if (settings.trace) {
+        // Wrap the RISC operators in TraceSemantics::RiscOperators and adjust the output stream to be standard output since
+        // the trace is considered the main output from this command and needs to be properly interleaved with the other output
+        // on stdout.
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(ops);
-        trace->set_stream(stdout);
+        trace->stream().destination(Sawyer::Message::FileSink::instance(stdout, Sawyer::Message::Prefix::silentInstance()));
         dispatcher = dispatcher->create(trace);
     } else {
         dispatcher = dispatcher->create(ops);
@@ -539,16 +527,17 @@ main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line to load, disassemble, and partition the specimen
-    Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
-    adjustSettings(settings);
     P2::Engine engine;
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
+    Settings settings;
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
+    adjustSettings(settings);
     (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
+
+    // Parse, disassemble, and partition
     P2::Partitioner partitioner = engine.partition(specimenNames);
+
     testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block

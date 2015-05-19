@@ -36,7 +36,7 @@ public:
     typedef Sawyer::Container::Graph<Function::Ptr, Edge> Graph;
 
     /** Maps function address to function call graph vertex. */
-    typedef Sawyer::Container::Map<rose_addr_t, Graph::VertexNodeIterator> Index;
+    typedef Sawyer::Container::Map<rose_addr_t, Graph::VertexIterator> Index;
 
 private:
     Graph graph_;
@@ -60,8 +60,13 @@ public:
 
     /** Copy constructor. */
     FunctionCallGraph(const FunctionCallGraph &other): graph_(other.graph_) {
-        for (Graph::VertexNodeIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
+        for (Graph::VertexIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
             index_.insert(iter->value()->address(), iter);
+    }
+
+    /** Return all functions in the call graph. */
+    boost::iterator_range<Graph::ConstVertexValueIterator> functions() {
+        return graph_.vertexValues();
     }
     
     /** Find function in call graph.
@@ -70,12 +75,12 @@ public:
      *  does not exist in the call graph.  The function can be specified by its pointer or entry address.
      *
      * @{ */
-    Graph::ConstVertexNodeIterator findFunction(const Function::Ptr &function) const {
+    Graph::ConstVertexIterator findFunction(const Function::Ptr &function) const {
         return function ? findFunction(function->address()) : graph_.vertices().end();
     }
-    Graph::ConstVertexNodeIterator findFunction(rose_addr_t entryVa) const {
+    Graph::ConstVertexIterator findFunction(rose_addr_t entryVa) const {
         Index::ConstValueIterator found = index_.find(entryVa);
-        return found==index_.values().end() ? graph_.vertices().end() : Graph::ConstVertexNodeIterator(*found);
+        return found==index_.values().end() ? graph_.vertices().end() : Graph::ConstVertexIterator(*found);
     }
     /** @} */
 
@@ -97,23 +102,26 @@ public:
      *
      *  Inserts the specified function into the call graph if it is not a member of the call graph, otherwise does nothing. In
      *  any case, it returns the vertex for the function. */
-    Graph::VertexNodeIterator insertFunction(const Function::Ptr &function);
+    Graph::VertexIterator insertFunction(const Function::Ptr &function);
 
     /** Insert a call edge.
      *
      *  Inserts an edge representing a call from source (caller) to target (callee). The @p type can be @ref E_FUNCTION_CALL or
-     *  @ref E_FUNCTION_XFER. If @p allowParallelEdges is false and such an edge is already present in the graph, then the
-     *  existing edge's counter is incremented rather than adding a new parallel edge.
+     *  @ref E_FUNCTION_XFER.
+     *
+     *  If @p edgeCount is non-zero an an edge of the correct type already exists between the @p source and @p target, then the
+     *  count on that edge is incremented instead. Otherwise, when @p edgeCount is zero, a new edge with unit count is inserted
+     *  even if it means creating an edge parallel to an existing edge.
      *
      *  Returns the edge that was inserted or incremented.
      *
      * @{ */
-    Graph::EdgeNodeIterator insertCall(const Function::Ptr &source, const Function::Ptr &target,
-                                       EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true) {
-        return insertCall(insertFunction(source), insertFunction(target), type, allowParallelEdges);
+    Graph::EdgeIterator insertCall(const Function::Ptr &source, const Function::Ptr &target,
+                                   EdgeType type = E_FUNCTION_CALL, size_t edgeCount = 0) {
+        return insertCall(insertFunction(source), insertFunction(target), type, edgeCount);
     }
-    Graph::EdgeNodeIterator insertCall(const Graph::VertexNodeIterator &source, const Graph::VertexNodeIterator &target,
-                                       EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true);
+    Graph::EdgeIterator insertCall(const Graph::VertexIterator &source, const Graph::VertexIterator &target,
+                                   EdgeType type = E_FUNCTION_CALL, size_t edgeCount = 0);
     /** @} */
     
     /** List of all functions that call the specified function.
@@ -124,7 +132,7 @@ public:
     std::vector<Function::Ptr> callers(const Function::Ptr &target) const {
         return callers(findFunction(target));
     }
-    std::vector<Function::Ptr> callers(const Graph::ConstVertexNodeIterator &target) const;
+    std::vector<Function::Ptr> callers(const Graph::ConstVertexIterator &target) const;
     /** @} */
 
     /** Number of functions that call the specified function.
@@ -135,7 +143,7 @@ public:
     size_t nCallers(const Function::Ptr &target) const {
         return nCallers(findFunction(target));
     }
-    size_t nCallers(const Graph::ConstVertexNodeIterator &target) const;
+    size_t nCallers(const Graph::ConstVertexIterator &target) const;
     /** @} */
 
     /** List of all functions called by the specified function.
@@ -147,7 +155,7 @@ public:
     std::vector<Function::Ptr> callees(const Function::Ptr &source) const {
         return callees(findFunction(source));
     }
-    std::vector<Function::Ptr> callees(const Graph::ConstVertexNodeIterator &source) const;
+    std::vector<Function::Ptr> callees(const Graph::ConstVertexIterator &source) const;
     /** @} */
         
     /** Number of functions that the specified function calls.
@@ -158,7 +166,7 @@ public:
     size_t nCallees(const Function::Ptr &source) const {
         return nCallees(findFunction(source));
     }
-    size_t nCallees(const Graph::ConstVertexNodeIterator &source) const;
+    size_t nCallees(const Graph::ConstVertexIterator &source) const;
     /** @} */
 
     /** Total number of calls to a function.
@@ -170,7 +178,7 @@ public:
     size_t nCallsIn(const Function::Ptr &target) const {
         return nCallsIn(findFunction(target));
     }
-    size_t nCallsIn(const Graph::ConstVertexNodeIterator &target) const;
+    size_t nCallsIn(const Graph::ConstVertexIterator &target) const;
     /** @} */
 
     /** Total number of calls from a function.
@@ -182,7 +190,7 @@ public:
     size_t nCallsOut(const Function::Ptr &source) const {
         return nCallsOut(findFunction(source));
     }
-    size_t nCallsOut(const Graph::ConstVertexNodeIterator &source) const;
+    size_t nCallsOut(const Graph::ConstVertexIterator &source) const;
     /** @} */
 
     /** Number of calls between two specific functions.
@@ -193,7 +201,7 @@ public:
     size_t nCalls(const Function::Ptr &source, const Function::Ptr &target) const {
         return nCalls(findFunction(source), findFunction(target));
     }
-    size_t nCalls(const Graph::ConstVertexNodeIterator &source, const Graph::ConstVertexNodeIterator &target) const;
+    size_t nCalls(const Graph::ConstVertexIterator &source, const Graph::ConstVertexIterator &target) const;
     /** @} */
 };
         

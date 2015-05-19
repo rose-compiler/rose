@@ -2256,7 +2256,7 @@
 
 0x08049d94: Basic block reasons: entry point
 0x08049d94: 6a 01                   |j.      |<sp+0 >   push   0x01
-0x08049d96: 68 3c c8 04 08          |h<...   |<sp-4 >   push   0x0804c83c<.data+0x48>
+0x08049d96: 68 3c c8 04 08          |h<...   |<sp-4 >   push   0x0804c83c<" ">
 0x08049d9b: ff 74 24 0c             |.t$.    |<sp-8 >   push   dword ss:[esp + 0x0c]
 0x08049d9f: e8 6c ff ff ff          |.l...   |<sp-12>   call   0x08049d10<<Func>>
 0x08049d9f: Outgoing stack delta: -16
@@ -3515,32 +3515,34 @@
 0x0804a2d8: ================================== Function (function call, graph) unknown name
 
 0x0804a2d8: Basic block reasons: entry point
-0x0804a2d8: 55                      |U       |          push   ebp
-0x0804a2d9: 57                      |W       |          push   edi
-0x0804a2da: 56                      |V       |          push   esi
-0x0804a2db: 53                      |S       |          push   ebx
-0x0804a2dc: 89 e7                   |..      |          mov    edi, esp
-0x0804a2de: 8b 47 28                |.G(     |          mov    eax, dword ds:[edi + 0x28]
-0x0804a2e1: 8b 57 2c                |.W,     |          mov    edx, dword ds:[edi + 0x2c]
-0x0804a2e4: a9 ff 0f 00 00          |.....   |          test   eax, 0x00000fff<4095>
-0x0804a2e9: 75 39                   |u9      |          jne    0x0804a324<<BBlock>>
+0x0804a2d8: 55                      |U       |<sp+0 >   push   ebp
+0x0804a2d9: 57                      |W       |<sp-4 >   push   edi
+0x0804a2da: 56                      |V       |<sp-8 >   push   esi
+0x0804a2db: 53                      |S       |<sp-12>   push   ebx
+0x0804a2dc: 89 e7                   |..      |<sp-16>   mov    edi, esp
+0x0804a2de: 8b 47 28                |.G(     |<sp-16>   mov    eax, dword ds:[edi + 0x28]
+0x0804a2e1: 8b 57 2c                |.W,     |<sp-16>   mov    edx, dword ds:[edi + 0x2c]
+0x0804a2e4: a9 ff 0f 00 00          |.....   |<sp-16>   test   eax, 0x00000fff<4095>
+0x0804a2e9: 75 39                   |u9      |<sp-16>   jne    0x0804a324<<BBlock>>
+0x0804a2e9: Outgoing stack delta: -16
 0x0804a2e9: Successor blocks: 0x0804a2eb, 0x0804a324
 
 0x0804a2eb: Basic block reasons: 
-0x0804a2eb: 0f ac d0 0c             |....    |          shrd   eax, edx, 0x0c
-0x0804a2ef: c1 ea 0c                |...     |          shr    edx, 0x0c
-0x0804a2f2: 75 30                   |u0      |          jne    0x0804a324<<BBlock>>
+0x0804a2eb: 0f ac d0 0c             |....    |<sp-16>   shrd   eax, edx, 0x0c
+0x0804a2ef: c1 ea 0c                |...     |<sp-16>   shr    edx, 0x0c
+0x0804a2f2: 75 30                   |u0      |<sp-16>   jne    0x0804a324<<BBlock>>
+0x0804a2f2: Outgoing stack delta: -16
 0x0804a2f2: Successor blocks: 0x0804a2f4, 0x0804a324
 
 0x0804a2f4: Basic block reasons: 
-0x0804a2f4: 89 c5                   |..      |          mov    ebp, eax
-0x0804a2f6: 8b 5f 14                |._.     |          mov    ebx, dword ds:[edi + 0x14]
-0x0804a2f9: 8b 4f 18                |.O.     |          mov    ecx, dword ds:[edi + 0x18]
-0x0804a2fc: 8b 57 1c                |.W.     |          mov    edx, dword ds:[edi + 0x1c]
-0x0804a2ff: 8b 77 20                |.w      |          mov    esi, dword ds:[edi + 0x20]
-0x0804a302: 8b 7f 24                |..$     |          mov    edi, dword ds:[edi + 0x24]
-0x0804a305: b8 c0 00 00 00          |.....   |          mov    eax, 0x000000c0
-0x0804a30a: cd 80                   |..      |          int    0x80<-128>
+0x0804a2f4: 89 c5                   |..      |<sp-16>   mov    ebp, eax
+0x0804a2f6: 8b 5f 14                |._.     |<sp-16>   mov    ebx, dword ds:[edi + 0x14]
+0x0804a2f9: 8b 4f 18                |.O.     |<sp-16>   mov    ecx, dword ds:[edi + 0x18]
+0x0804a2fc: 8b 57 1c                |.W.     |<sp-16>   mov    edx, dword ds:[edi + 0x1c]
+0x0804a2ff: 8b 77 20                |.w      |<sp-16>   mov    esi, dword ds:[edi + 0x20]
+0x0804a302: 8b 7f 24                |..$     |<sp-16>   mov    edi, dword ds:[edi + 0x24]
+0x0804a305: b8 c0 00 00 00          |.....   |<sp-16>   mov    eax, 0x000000c0
+0x0804a30a: cd 80                   |..      |<sp-16>   int    0x80<-128>
 0x0804a30c: 83 f8 84                |...     |          cmp    eax, 0x84<-124>
 0x0804a30f: 76 0e                   |v.      |          jbe    0x0804a31f<<BBlock>>
 0x0804a30f: Successor blocks: 0x0804a311, 0x0804a31f
@@ -3568,8 +3570,9 @@
 0x0804a323: Successor blocks: unknown
 
 0x0804a324: Basic block reasons: 
-0x0804a324: b8 16 00 00 00          |.....   |          mov    eax, 0x00000016
-0x0804a329: eb e8                   |..      |          jmp    0x0804a313<<BBlock>>
+0x0804a324: b8 16 00 00 00          |.....   |<sp-16>   mov    eax, 0x00000016
+0x0804a329: eb e8                   |..      |<sp-16>   jmp    0x0804a313<<BBlock>>
+0x0804a329: Outgoing stack delta: -16
 0x0804a329: Successor blocks: 0x0804a313
 
 0x0804a32c: ================================== Function (function call, graph) unknown name

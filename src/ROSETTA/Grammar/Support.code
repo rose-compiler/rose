@@ -6227,6 +6227,12 @@ HEADER_UNPARSE_INFO_START
             // DQ (9/3/2014): Supress output of this operator where compiler generated (required to support lambda function code generation).
                b_supressImplicitThisOperator = 47, /*!< Supress output of SgThisExp (required to support lambda function code generation). */
 
+            // DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+               b_unparsedPartiallyUsingTokenStream = 48, /*!< Record that the statement was partially unparsed using the token stream. */
+
+            // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+               b_skipCompilerGeneratedSubExpressions = 49, /*!< Supress compiler generated subexpressions (used to output fields in the 2nd parameter of the offsetof() function family. */
+
             //! DQ (12/6/2003): Added last value to use a upper bound in loops
                UNPARSE_TYPE_LAST /*!< last value used for debugging */
              };
@@ -6347,12 +6353,54 @@ HEADER_UNPARSE_INFO_START
           void set_SkipParen();
           void unset_SkipParen();
 
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Tests the setting of the flag to permit output of 2nd part of type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           bool isTypeSecondPart() const;
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Sets flag to permit output of 2nd part of type.
+
+          This sets the flag for output of the 2nd part of a type and unsets the flag for the 1st part of the type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           void set_isTypeSecondPart();
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Unsets the flag to permit output of 2nd part of type.
+
+          This only unsets the flag for the output of the 2nd part of a type (no change to the flag for the 1st part of the type).
+
+          \internal This and the isTypeFirstPart flag can both be false or only one can be true.
+       */
           void unset_isTypeSecondPart();
 
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Tests the setting of the flag to permit output of 1st part of type.
+
+          \internal This and the isTypeFirstPart flag are mutually exclusive.
+       */
           bool isTypeFirstPart() const;
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Sets flag to permit output of 1st part of type.
+
+          This sets the flag for output of the 1st part of a type and unsets the flag for the 2nd part of the type.
+
+          \internal This and the isTypeSecondPart flag are mutually exclusive.
+       */
           void set_isTypeFirstPart();
+
+       // DQ (5/10/2015): Added documentation for how these are tested, set and unset.
+      /*! \brief Unsets the flag to permit output of 1st part of type.
+
+          This only unsets the flag for the output of the 1st part of a type (not change to the flag for the 2nd part of the type).
+
+          \internal This and the isTypeSecondPart flag can both be false or only one can be true.
+       */
           void unset_isTypeFirstPart();
 
           bool SkipInitializer() const;
@@ -6477,6 +6525,15 @@ HEADER_UNPARSE_INFO_START
           void set_supressImplicitThisOperator();
           void unset_supressImplicitThisOperator();
 
+       // DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+          bool unparsedPartiallyUsingTokenStream() const;
+          void set_unparsedPartiallyUsingTokenStream();
+          void unset_unparsedPartiallyUsingTokenStream();
+
+       // DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+          bool skipCompilerGeneratedSubExpressions() const;
+          void set_skipCompilerGeneratedSubExpressions();
+          void unset_skipCompilerGeneratedSubExpressions();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -11007,12 +11064,15 @@ SgInitializedName::get_file_info() const
 void
 SgInitializedName::set_file_info(Sg_File_Info* X)
    {
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
   // This redefines set_file_info() as it is implemented for a SgLocatedNode 
   // to use the "set_startOfConstruct()" for consistancy with SgLocatedNode IR nodes.
      return set_startOfConstruct(X);
    }
-
 #endif
+
 SgStorageModifier &
 SgInitializedName::get_storageModifier()
    {
@@ -11586,6 +11646,10 @@ void
 SgInitializedName::set_type(SgType *t)
    {
      assert(this != NULL);
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
      p_typeptr = t;
    }
 
@@ -11609,6 +11673,10 @@ SgInitializedName::set_initializer(SgInitializer* i)
   // The semantics of p_is_initializer appears to not be required.
 
      assert(this != NULL);
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
+
      p_initptr        = i;
      p_is_initializer = 1;
    }
@@ -11767,6 +11835,9 @@ SgInitializedName::set_definition(SgDeclarationStatement * def)
           set_declptr(NULL);
         }
 #endif
+
+  // DQ (4/14/2015): Added call to set_isModified() function to record change to this IR node.
+     set_isModified(true);
 
      set_declptr(def);
    }
@@ -14566,6 +14637,9 @@ X aggressive
 
   // DQ (6/7/2013): Added support for using experimental forntran frontend.
      p_experimental_fortran_frontend = false;
+
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     p_multifile_support = false;
    }
 
 #if 0
@@ -15162,6 +15236,9 @@ SgFile::display ( const std::string & label ) const
 
   // DQ (6/8/2013): Added support for experimental fortran frontend.
      printf ("     p_experimental_fortran_frontend        = %s \n",(p_experimental_fortran_frontend == true) ? "true" : "false");
+
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     printf ("     p_multifile_support                    = %s \n",(p_multifile_support == true) ? "true" : "false");
 
 #if 0
 // Order of data member entries in support.C, matched against the 
@@ -16710,7 +16787,7 @@ SgUnparse_Info::set_forceDefaultConstructorToTriggerError( bool forceDefaultCons
 // Default constructor defined here because the automatically generated constructor
 // would not be generated with the error checking that I require to debug the use of
 // the SgUnparse_Info object as an inherited attribute in the unparser.
-SgUnparse_Info::SgUnparse_Info (  )
+SgUnparse_Info::SgUnparse_Info ()
    : SgSupport()
    {
      static int counter = 0;
@@ -16746,7 +16823,7 @@ SgUnparse_Info::SgUnparse_Info (  )
      assert(isSgUnparse_Info(this) != NULL);
 
   // Initialize the nesting level to 0 (for python).
-       p_nestingLevel = 0;
+     p_nestingLevel = 0;
    }
 
 // DQ (1/5/2008): I think this is a redundant function with the one in sageInterface.C
@@ -16770,8 +16847,12 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
      assert (p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
   // assert (SgNO_UNPARSE_INFO.p_unparse_attribute.size() == UNPARSE_TYPE_LAST);
 
-     // Copy nesting level (for python).
+  // Copy nesting level (for python).
      p_nestingLevel = X.p_nestingLevel;
+
+  // DQ (1/10/2014): Added to support token based unparsing.
+     ROSE_ASSERT(p_current_source_file == X.p_current_source_file);
+  // p_current_source_file = X.p_current_source_file;
    }
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
@@ -16817,6 +16898,9 @@ SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
   // DQ (9/15/2012): Added mechanism to specify the language more directly.
   // Required to know when to unparse boolean values as integer for C and C99/C++
      p_language = X.p_language;
+
+  // DQ (1/10/2014): Added to support token based unparsing.
+     p_current_source_file = X.p_current_source_file;
 
      return *this;
    }
@@ -16924,6 +17008,9 @@ SgUnparse_Info::post_construction_initialization()
 
   // DQ (5/21/2011): New support for name qualification.
      p_reference_node_for_qualification = NULL;
+
+  // DQ (1/10/2014): Added to support token based unparsing.
+     p_current_source_file = NULL;
    }
 
 bool
@@ -17653,6 +17740,26 @@ void SgUnparse_Info::set_supressImplicitThisOperator()
 void SgUnparse_Info::unset_supressImplicitThisOperator()
    { unsetBit(b_supressImplicitThisOperator); }
 
+// DQ (12/5/2014): Record that the statement was partially unparsed using the token stream.
+bool SgUnparse_Info::unparsedPartiallyUsingTokenStream() const
+   { return checkBit(b_unparsedPartiallyUsingTokenStream); }
+
+void SgUnparse_Info::set_unparsedPartiallyUsingTokenStream()
+   { setBit(b_unparsedPartiallyUsingTokenStream); }
+
+void SgUnparse_Info::unset_unparsedPartiallyUsingTokenStream()
+   { unsetBit(b_unparsedPartiallyUsingTokenStream); }
+
+// DQ (3/25/2015): This is the support required for the offsetof() function family (__offsetof(), __builtin_offsetof(), etc.).
+bool SgUnparse_Info::skipCompilerGeneratedSubExpressions() const
+   { return checkBit(b_skipCompilerGeneratedSubExpressions); }
+
+void SgUnparse_Info::set_skipCompilerGeneratedSubExpressions()
+   { setBit(b_skipCompilerGeneratedSubExpressions); }
+
+void SgUnparse_Info::unset_skipCompilerGeneratedSubExpressions()
+   { unsetBit(b_skipCompilerGeneratedSubExpressions); }
+
 
 void
 SgUnparse_Info::display ( const std::string & label ) const
@@ -17737,6 +17844,8 @@ SgUnparse_Info::display ( const std::string & label ) const
      printf ("requiresGlobalNameQualification        = %s \n",( requiresGlobalNameQualification() == true ) ? "true" : "false");
      printf ("supressArrayBound                      = %s \n",( supressArrayBound() == true ) ? "true" : "false");
      printf ("supressImplicitThisOperator            = %s \n",( supressImplicitThisOperator() == true ) ? "true" : "false");
+     printf ("unparsedPartiallyUsingTokenStream      = %s \n",( unparsedPartiallyUsingTokenStream() == true ) ? "true" : "false");
+     printf ("skipCompilerGeneratedSubExpressions    = %s \n",( skipCompilerGeneratedSubExpressions() == true ) ? "true" : "false");
 #endif
 
      switch (p_access_attribute)
@@ -17792,6 +17901,9 @@ SgUnparse_Info::display ( const std::string & label ) const
 
   // DQ (9/24/2013): Added function to output the name of the language for the generated code.
      printf ("p_language (name)                      = %s \n",SgFile::get_outputLanguageOptionName(p_language).c_str());
+
+  // DQ (1/10/2015): Added support for debugging the SgUnparse_Info object.
+     printf ("p_current_source_file                  = %p = %s \n",p_current_source_file,p_current_source_file != NULL ? p_current_source_file->class_name().c_str() : "EmPtY sTrInG");
    }
 
 string

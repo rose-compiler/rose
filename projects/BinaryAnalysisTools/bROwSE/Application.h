@@ -97,6 +97,7 @@ private:
     void changeBasicBlock(const P2::BasicBlock::Ptr&);
 
     void updateStringCrossReferences(size_t stringIdx);
+    void updateAddressCrossReferences(rose_addr_t va);
 
     void gotoReference(const P2::Reference&);
 };

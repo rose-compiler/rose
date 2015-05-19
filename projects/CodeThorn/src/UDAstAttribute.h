@@ -12,7 +12,7 @@
 #include "RDAstAttribute.h"
 #include "AnalysisAbstractionLayer.h"
 
-
+namespace SPRAY {
 typedef std::pair<VariableId,SPRAY::LabelSet> VariableIdLabelSetPair;
 typedef std::set<VariableIdLabelSetPair> UseDefInfo;
 
@@ -30,5 +30,7 @@ class UDAstAttribute : public AstSgNodeAttribute {
   RDAstAttribute* _rdAttr;
   SgNode* _node;
 };
+
+} // end of namespace SPRAY
 
 #endif

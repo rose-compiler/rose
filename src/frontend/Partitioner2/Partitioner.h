@@ -297,7 +297,7 @@ private:
     InstructionProvider::Ptr instructionProvider_;      // cache for all disassembled instructions
     MemoryMap memoryMap_;                               // description of memory, especially insns and non-writable
     ControlFlowGraph cfg_;                              // basic blocks that will become part of the ROSE AST
-    VertexIndex vertexIndex_;                           // Vertex-by-address index for the CFG
+    CfgVertexIndex vertexIndex_;                        // Vertex-by-address index for the CFG
     AddressUsageMap aum_;                               // How addresses are used for each address represented by the CFG
     SMTSolver *solver_;                                 // Satisfiable modulo theory solver used by semantic expressions
     mutable size_t progressTotal_;                      // Expected total for the progress bar; initialized at first report
@@ -317,9 +317,9 @@ private:
     FunctionPaddingMatchers functionPaddingMatchers_;
 
     // Special CFG vertices.
-    ControlFlowGraph::VertexNodeIterator undiscoveredVertex_;
-    ControlFlowGraph::VertexNodeIterator indeterminateVertex_;
-    ControlFlowGraph::VertexNodeIterator nonexistingVertex_;
+    ControlFlowGraph::VertexIterator undiscoveredVertex_;
+    ControlFlowGraph::VertexIterator indeterminateVertex_;
+    ControlFlowGraph::VertexIterator nonexistingVertex_;
     static const size_t nSpecialVertices = 3;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,10 +443,10 @@ public:
      *  The incoming edges for this vertex originate from the basic block placeholder vertices.
      *
      * @{ */
-    ControlFlowGraph::VertexNodeIterator undiscoveredVertex() /*final*/ {
+    ControlFlowGraph::VertexIterator undiscoveredVertex() /*final*/ {
         return undiscoveredVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator undiscoveredVertex() const /*final*/ {
+    ControlFlowGraph::ConstVertexIterator undiscoveredVertex() const /*final*/ {
         return undiscoveredVertex_;
     }
     /** @} */
@@ -459,10 +459,10 @@ public:
      *  Indeterminate successors result from, among other things, indirect jump instructions, like x86 "JMP [EAX]".
      *
      * @{ */
-    ControlFlowGraph::VertexNodeIterator indeterminateVertex() /*final*/ {
+    ControlFlowGraph::VertexIterator indeterminateVertex() /*final*/ {
         return indeterminateVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator indeterminateVertex() const /*final*/ {
+    ControlFlowGraph::ConstVertexIterator indeterminateVertex() const /*final*/ {
         return indeterminateVertex_;
     }
     /** @} */
@@ -474,10 +474,10 @@ public:
      *  memory which is not mapped or memory which is mapped without execute permission.
      *
      *  @{ */
-    ControlFlowGraph::VertexNodeIterator nonexistingVertex() /*final*/ {
+    ControlFlowGraph::VertexIterator nonexistingVertex() /*final*/ {
         return nonexistingVertex_;
     }
-    ControlFlowGraph::ConstVertexNodeIterator nonexistingVertex() const /*final*/ {
+    ControlFlowGraph::ConstVertexIterator nonexistingVertex() const /*final*/ {
         return nonexistingVertex_;
     }
     /** @} */
@@ -527,6 +527,12 @@ public:
         return insn==NULL ? Sawyer::Nothing() : instructionExists(insn->get_address());
     }
     /** @} */
+
+    /** Returns the CFG vertex containing specified instruction.
+     *
+     *  Returns the control flow graph vertex that contains the specified instruction. If the instruction does not exist in the
+     *  CFG then the end vertex is returned. */
+    ControlFlowGraph::ConstVertexIterator instructionVertex(rose_addr_t insnVa) const;
 
     /** Returns instructions that overlap with specified address interval.
      *
@@ -608,13 +614,13 @@ public:
      *  @sa placeholderExists
      *
      *  @{ */
-    ControlFlowGraph::VertexNodeIterator findPlaceholder(rose_addr_t startVa) /*final*/ {
-        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
+    ControlFlowGraph::VertexIterator findPlaceholder(rose_addr_t startVa) /*final*/ {
+        if (Sawyer::Optional<ControlFlowGraph::VertexIterator> found = vertexIndex_.getOptional(startVa))
             return *found;
         return cfg_.vertices().end();
     }
-    ControlFlowGraph::ConstVertexNodeIterator findPlaceholder(rose_addr_t startVa) const /*final*/ {
-        if (Sawyer::Optional<ControlFlowGraph::VertexNodeIterator> found = vertexIndex_.getOptional(startVa))
+    ControlFlowGraph::ConstVertexIterator findPlaceholder(rose_addr_t startVa) const /*final*/ {
+        if (Sawyer::Optional<ControlFlowGraph::VertexIterator> found = vertexIndex_.getOptional(startVa))
             return *found;
         return cfg_.vertices().end();
     }
@@ -634,7 +640,7 @@ public:
      *
      *  This method returns a pointer to either the existing placeholder (which may already point to an attached basic block)
      *  or the new placeholder. */
-    ControlFlowGraph::VertexNodeIterator insertPlaceholder(rose_addr_t startVa) /*final*/;
+    ControlFlowGraph::VertexIterator insertPlaceholder(rose_addr_t startVa) /*final*/;
 
     /** Remove a basic block placeholder from the CFG/AUM.
      *
@@ -647,7 +653,7 @@ public:
      *  returned.
      *
      *  @{ */
-    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexNodeIterator &placeholder) /*final*/;
+    BasicBlock::Ptr erasePlaceholder(const ControlFlowGraph::VertexIterator &placeholder) /*final*/;
     BasicBlock::Ptr erasePlaceholder(rose_addr_t startVa) /*final*/;
     /** @} */
 
@@ -804,7 +810,7 @@ public:
      *  @{ */
     BasicBlock::Ptr detachBasicBlock(rose_addr_t startVa) /*final*/;
     BasicBlock::Ptr detachBasicBlock(const BasicBlock::Ptr &basicBlock) /*final*/;
-    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder) /*final*/;
+    BasicBlock::Ptr detachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder) /*final*/;
     /** @} */
 
     /** Truncate an attached basic-block.
@@ -817,8 +823,8 @@ public:
      *  first instruction of the block.
      *
      *  The return value is the vertex for the new placeholder. */
-    ControlFlowGraph::VertexNodeIterator truncateBasicBlock(const ControlFlowGraph::VertexNodeIterator &basicBlock,
-                                                            SgAsmInstruction *insn) /*final*/;
+    ControlFlowGraph::VertexIterator truncateBasicBlock(const ControlFlowGraph::VertexIterator &basicBlock,
+                                                        SgAsmInstruction *insn) /*final*/;
 
     /** Attach a basic block to the CFG/AUM.
      *
@@ -849,7 +855,7 @@ public:
      *
      *  @{ */
     void attachBasicBlock(const BasicBlock::Ptr&) /*final*/;
-    void attachBasicBlock(const ControlFlowGraph::VertexNodeIterator &placeholder, const BasicBlock::Ptr&) /*final*/;
+    void attachBasicBlock(const ControlFlowGraph::VertexIterator &placeholder, const BasicBlock::Ptr&) /*final*/;
     /** @} */
 
     /** Discover instructions for a detached basic block.
@@ -936,7 +942,7 @@ public:
      *
      *  @{ */
     BasicBlock::Ptr discoverBasicBlock(rose_addr_t startVa) const /*final*/;
-    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexNodeIterator &placeholder) const /*final*/;
+    BasicBlock::Ptr discoverBasicBlock(const ControlFlowGraph::ConstVertexIterator &placeholder) const /*final*/;
     /** @} */
 
     /** Determine successors for a basic block.
@@ -1101,7 +1107,7 @@ public:
      * @{ */
     Sawyer::Optional<bool> basicBlockOptionalMayReturn(const BasicBlock::Ptr&) const /*final*/;
 
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator&) const /*final*/;
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIterator&) const /*final*/;
     /** @} */
 
     /** Clear all may-return properties.
@@ -1122,19 +1128,19 @@ private:
     };
 
     // Is edge significant for analysis? See .C file for full documentation.
-    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeNodeIterator &edge,
+    bool mayReturnIsSignificantEdge(const ControlFlowGraph::ConstEdgeIterator &edge,
                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Determine (and cache in vertexInfo) whether any callees return.
-    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
+    boost::logic::tribool mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexIterator &vertex,
                                                     std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // Maximum may-return result from significant successors including phantom call-return edge.
-    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexNodeIterator &vertex,
+    boost::logic::tribool mayReturnDoesSuccessorReturn(const ControlFlowGraph::ConstVertexIterator &vertex,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     // The guts of the may-return analysis
-    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexNodeIterator &start,
+    Sawyer::Optional<bool> basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIterator &start,
                                                        std::vector<MayReturnVertexInfo> &vertexInfo) const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1447,11 +1453,11 @@ public:
      *
      *  @{ */
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       EdgeList *inwardInterFunctionEdges /*out*/,
-                                       EdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
+                                       CfgEdgeList *inwardInterFunctionEdges /*out*/,
+                                       CfgEdgeList *outwardInterFunctionEdges /*out*/) /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr&,
-                                       ConstEdgeList *inwardInterFunctionEdges /*out*/,
-                                       ConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
+                                       CfgConstEdgeList *inwardInterFunctionEdges /*out*/,
+                                       CfgConstEdgeList *outwardInterFunctionEdges /*out*/) const /*final*/;
     size_t discoverFunctionBasicBlocks(const Function::Ptr &function,
                                        std::vector<size_t> &inwardInterFunctionEdges /*out*/,
                                        std::vector<size_t> &outwardInterFunctionEdges /*out*/) const /*final*/;
@@ -1612,32 +1618,32 @@ public:
     /** Name of a vertex.
      *
      *  @{ */
-    static std::string vertexName(const ControlFlowGraph::VertexNode&) /*final*/;
-    std::string vertexName(const ControlFlowGraph::ConstVertexNodeIterator&) const /*final*/;
+    static std::string vertexName(const ControlFlowGraph::Vertex&) /*final*/;
+    std::string vertexName(const ControlFlowGraph::ConstVertexIterator&) const /*final*/;
     /** @} */
 
     /** Name of last instruction in vertex. */
-    static std::string vertexNameEnd(const ControlFlowGraph::VertexNode&) /*final*/;
+    static std::string vertexNameEnd(const ControlFlowGraph::Vertex&) /*final*/;
 
     /** Name of an incoming edge.
      *
      * @{ */
-    static std::string edgeNameSrc(const ControlFlowGraph::EdgeNode&) /*final*/;
-    std::string edgeNameSrc(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
+    static std::string edgeNameSrc(const ControlFlowGraph::Edge&) /*final*/;
+    std::string edgeNameSrc(const ControlFlowGraph::ConstEdgeIterator&) const /*final*/;
     /** @} */
 
     /** Name of an outgoing edge.
      *
      * @{ */
-    static std::string edgeNameDst(const ControlFlowGraph::EdgeNode&) /*final*/;
-    std::string edgeNameDst(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
+    static std::string edgeNameDst(const ControlFlowGraph::Edge&) /*final*/;
+    std::string edgeNameDst(const ControlFlowGraph::ConstEdgeIterator&) const /*final*/;
     /** @} */
 
     /** Name of an edge.
      *
      * @{ */
-    static std::string edgeName(const ControlFlowGraph::EdgeNode&) /*final*/;
-    std::string edgeName(const ControlFlowGraph::ConstEdgeNodeIterator&) const /*final*/;
+    static std::string edgeName(const ControlFlowGraph::Edge&) /*final*/;
+    std::string edgeName(const ControlFlowGraph::ConstEdgeIterator&) const /*final*/;
     /** @} */
 
     /** Name of a basic block. */
@@ -1743,16 +1749,16 @@ public:
 private:
     // Convert a CFG vertex iterator from one partitioner to another.  This is called during copy construction when the source
     // and destination CFGs are identical.
-    ControlFlowGraph::VertexNodeIterator convertFrom(const Partitioner &other,
-                                                     ControlFlowGraph::ConstVertexNodeIterator otherIter);
+    ControlFlowGraph::VertexIterator convertFrom(const Partitioner &other,
+                                                 ControlFlowGraph::ConstVertexIterator otherIter);
     
     // Adjusts edges for a placeholder vertex. This method erases all outgoing edges for the specified placeholder vertex and
     // then inserts a single edge from the placeholder to the special "undiscovered" vertex. */
-    ControlFlowGraph::EdgeNodeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexNodeIterator &placeholder);
+    ControlFlowGraph::EdgeIterator adjustPlaceholderEdges(const ControlFlowGraph::VertexIterator &placeholder);
 
     // Adjusts edges for a non-existing basic block.  This method erases all outgoing edges for the specified vertex and
     // then inserts a single edge from the vertex to the special "non-existing" vertex. */
-    ControlFlowGraph::EdgeNodeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexNodeIterator &vertex);
+    ControlFlowGraph::EdgeIterator adjustNonexistingEdges(const ControlFlowGraph::VertexIterator &vertex);
 
     // Implementation for the discoverBasicBlock methods.  The startVa must not be the address of an existing placeholder.
     BasicBlock::Ptr discoverBasicBlockInternal(rose_addr_t startVa) const;
@@ -1762,7 +1768,7 @@ private:
 
     // This method is called whenever a new placeholder is inserted into the CFG or a new basic block is attached to the
     // CFG/AUM. The call happens immediately after the CFG/AUM are updated.
-    void bblockAttached(const ControlFlowGraph::VertexNodeIterator &newVertex);
+    void bblockAttached(const ControlFlowGraph::VertexIterator &newVertex);
 
     // This method is called whenever a basic block is detached from the CFG/AUM or when a placeholder is erased from the CFG.
     // The call happens immediately after the CFG/AUM are updated.
