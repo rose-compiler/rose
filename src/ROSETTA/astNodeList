@@ -484,6 +484,7 @@ SgNaryBooleanOp
 SgNaryComparisonOp
 SgNewExp
 SgNode
+SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
@@ -661,6 +662,7 @@ SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
 SgTypeNullptr
+SgTypeOfType
 SgTypeShort
 SgTypeSigned128bitInteger
 SgTypeSignedChar

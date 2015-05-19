@@ -155,7 +155,7 @@ char* PreprocessingInfo::packed()  const
      return returnData;
    }
 
-// JH (01/03/2006) This unpack method wors conremplary to packed ...
+// JH (01/03/2006) This unpack method works complementary to packed ...
 void PreprocessingInfo::unpacked( char* storePointer )
    {
      ROSE_ASSERT(this != NULL);
@@ -302,6 +302,9 @@ PreprocessingInfo::PreprocessingInfo(token_container tokCont, DirectiveType type
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
+
   // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
      if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
@@ -374,6 +377,8 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_call* mcall, RelativePositionTyp
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
@@ -460,6 +465,8 @@ PreprocessingInfo::PreprocessingInfo(rose_macro_definition* mdef, RelativePositi
   // DQ (12/23/2006): Mark this as a comment or directive (mostly so that we can know that the parent being NULL is not meaningful.
      file_info->setCommentOrDirective();
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      internalString = string("#define\t")+string(boost::wave::util::impl::as_string(*tokenStream).c_str());
 
@@ -513,6 +520,9 @@ PreprocessingInfo::PreprocessingInfo(rose_include_directive* inclDir, RelativePo
 #endif
 
      internalString = std::string(inclDir->directive.get_value().c_str()) ;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 
@@ -540,6 +550,9 @@ PreprocessingInfo::PreprocessingInfo( token_type directive, token_list_container
      copy (expression.begin(), expression.end(), inserter(*tokenStream, tokenStream->end()));
 
      internalString = string(boost::wave::util::impl::as_string(*tokenStream).c_str()) +"\n";
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
 
      if (SgProject::get_verbose() >= 1)
           std::cout << "INTERNAL IF STRING: " << internalString << std::endl;
@@ -576,6 +589,9 @@ PreprocessingInfo::PreprocessingInfo()
      numberOfLines       = -1;
      whatSortOfDirective = CpreprocessorUnknownDeclaration;
      relativePosition    = before;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 // Typical constructor used by lex-based code retrieve comments and preprocessor control directives
@@ -619,6 +635,9 @@ PreprocessingInfo::PreprocessingInfo (
   // file_info->set_parent(SgTypeLongLong::createType());
      file_info->set_parent(SgTypeDefault::createType());
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
+
   // DQ (4/15/2007): Temp code to trace common position in unparsing.
   // internalString = inputString;
 #if 0
@@ -658,6 +677,9 @@ PreprocessingInfo::PreprocessingInfo(const PreprocessingInfo & prepInfo)
      relativePosition    = prepInfo.getRelativePosition();
      internalString      = prepInfo.internalString;
 
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = prepInfo.p_isTransformation;
+
   // DQ (1/13/2014): Added checking for logic to compute macro name for #define macros.
      if (whatSortOfDirective == PreprocessingInfo::CpreprocessorDefineDeclaration)
         {
@@ -682,6 +704,9 @@ PreprocessingInfo::~PreprocessingInfo()
      relativePosition    = undef;
      whatSortOfDirective = CpreprocessorUnknownDeclaration;
      internalString      = "";
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+     p_isTransformation = false;
    }
 
 /* starting column == 1 (DQ (10/27/2006): used to be 0, but changed to 1 for consistancy with EDG) */
@@ -1256,6 +1281,30 @@ PreprocessingInfo::isSelfReferential()
    }
 
 
+// DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+bool
+PreprocessingInfo::isTransformation() const
+   {
+     ROSE_ASSERT(this != NULL);
+     return p_isTransformation;
+   }
+
+void
+PreprocessingInfo::setAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = true;
+   }
+
+void
+PreprocessingInfo::unsetAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = false;
+   }
+
+
+
 // *********************************************
 // Member functions for class ROSEATTRIBUTESList
 // *********************************************
@@ -1269,6 +1318,9 @@ ROSEAttributesList::ROSEAttributesList()
   // Note: data members: attributeList, fileName, and filenameIdSet will default 
   // to proper values using there default constrcutors.
      rawTokenStream = NULL;
+
+  // DQ (1/15/2015): Adding support for token-based unparsing, initialization of new data member.
+  // p_isTransformation = false;
    }
 
 ROSEAttributesList::~ROSEAttributesList()
@@ -2615,6 +2667,31 @@ ROSEAttributesList::numberByRelativePosition(PreprocessingInfo::RelativePosition
      return returnValue;
    }
 #endif
+
+#if 0
+// DQ (1/15/2015): Adding support for token-based unparsing. Access function for new data member.
+bool
+ROSEAttributesList::isTransformation() const
+   {
+     ROSE_ASSERT(this != NULL);
+     return p_isTransformation;
+   }
+
+void
+ROSEAttributesList::setAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = true;
+   }
+
+void
+ROSEAttributesList::unsetAsTransformation()
+   {
+     ROSE_ASSERT(this != NULL);
+     p_isTransformation = false;
+   }
+#endif
+
 
 //##############################################################################
 //

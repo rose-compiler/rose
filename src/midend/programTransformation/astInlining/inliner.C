@@ -172,6 +172,38 @@ void removeRedundantCopyInConstruction(SgInitializedName* in) {
   // FIXME -- do we need to delete ai?
 }
 
+// Mark AST as being a transformation
+static void
+markAsTransformation(SgNode *ast) {
+    struct FixFileInfo: AstSimpleProcessing {
+        void visit(SgNode *node) {
+            if (SgLocatedNode *loc = isSgLocatedNode(node)) {
+                // DQ (3/1/2015): This is now being caught in the DOT file generation, so I think we need to use this
+                // better version.
+                // DQ (4/14/2014): This should be a more complete version to set all of the Sg_File_Info objects on a
+                // SgLocatedNode.
+                if (loc->get_startOfConstruct()) {
+                    loc->get_startOfConstruct()->setTransformation();
+                    loc->get_startOfConstruct()->setOutputInCodeGeneration();
+                }
+
+                if (loc->get_endOfConstruct()) {
+                    loc->get_endOfConstruct()->setTransformation();
+                    loc->get_endOfConstruct()->setOutputInCodeGeneration();
+                }
+
+                if (SgExpression* exp = isSgExpression(loc)) {
+                    if (exp->get_operatorPosition()) {
+                        exp->get_operatorPosition()->setTransformation();
+                        exp->get_operatorPosition()->setOutputInCodeGeneration();
+                    }
+                }
+            }
+        }
+    };
+    FixFileInfo().traverse(ast, preorder);
+}
+
 // Main inliner code.  Accepts a function call as a parameter, and inlines
 // only that single function call.  Returns true if it succeeded, and false
 // otherwise.  The function call must be to a named function, static member
@@ -184,6 +216,16 @@ void removeRedundantCopyInConstruction(SgInitializedName* in) {
 bool
 doInline(SgFunctionCallExp* funcall, bool allowRecursion)
    {
+#if 0
+  // DQ (4/6/2015): Adding code to check for consitancy of checking the isTransformed flag.
+     ROSE_ASSERT(funcall != NULL);
+     ROSE_ASSERT(funcall->get_parent() != NULL);
+     SgGlobal* globalScope = TransformationSupport::getGlobalScope(funcall);
+     ROSE_ASSERT(globalScope != NULL);
+  // checkTransformedFlagsVisitor(funcall->get_parent());
+     checkTransformedFlagsVisitor(globalScope);
+#endif
+
      SgExpression* funname = funcall->get_function();
      SgExpression* funname2 = isSgFunctionRefExp(funname);
      SgDotExp* dotexp = isSgDotExp(funname);
@@ -202,6 +244,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
             if (!is_lvalue) {
               SgAssignInitializer* ai = SageInterface::splitExpression(lhs);
               ROSE_ASSERT (isSgInitializer(ai->get_operand()));
+#if 1
+              printf ("ai = %p ai->isTransformation() = %s \n",ai,ai->isTransformation() ? "true" : "false");
+#endif
               SgInitializedName* in = isSgInitializedName(ai->get_parent());
               ROSE_ASSERT (in);
               removeRedundantCopyInConstruction(in);
@@ -292,7 +337,13 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
        // cout << thisptrtype->unparseToString() << " --- " << thiscv.isConst() << " " << thiscv.isVolatile() << endl;
           SgAssignInitializer* assignInitializer = new SgAssignInitializer(SgNULL_FILE, thisptr);
           assignInitializer->set_endOfConstruct(SgNULL_FILE);
+#if 1
+          printf ("before new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+#endif
           thisdecl = new SgVariableDeclaration(SgNULL_FILE, thisname, thisptrtype, assignInitializer);
+#if 1
+          printf ("(after new SgVariableDeclaration(): assignInitializer = %p assignInitializer->isTransformation() = %s \n",assignInitializer,assignInitializer->isTransformation() ? "true" : "false");
+#endif
           thisdecl->set_endOfConstruct(SgNULL_FILE);
           thisdecl->get_definition()->set_endOfConstruct(SgNULL_FILE);
           thisdecl->set_definingDeclaration(thisdecl);
@@ -301,6 +352,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
           //thisinitname = lastElementOfContainer(thisdecl->get_variables());
           // thisinitname->set_endOfConstruct(SgNULL_FILE);
           assignInitializer->set_parent(thisinitname);
+          markAsTransformation(assignInitializer);
 
        // printf ("Built new SgVariableDeclaration #1 = %p \n",thisdecl);
 
@@ -372,6 +424,9 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
          SgAssignInitializer* initializer = new SgAssignInitializer(SgNULL_FILE, actualArg, formalArg->get_type());
          ASSERT_not_null(initializer);
          initializer->set_endOfConstruct(SgNULL_FILE);
+#if 1
+         printf ("initializer = %p initializer->isTransformation() = %s \n",initializer,initializer->isTransformation() ? "true" : "false");
+#endif
          SgName shadow_name(formalArg->get_name());
          shadow_name << "__" << ++gensym_counter;
          SgVariableDeclaration* vardecl = new SgVariableDeclaration(SgNULL_FILE, shadow_name, formalArg->get_type(), initializer);
@@ -471,6 +526,19 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
 #ifdef NDEBUG
      AstTests::runAllTests(SageInterface::getProject());
 #endif
+
+#if 0
+  // DQ (4/6/2015): Adding code to check for consitancy of checking the isTransformed flag.
+     ROSE_ASSERT(funcall != NULL);
+     ROSE_ASSERT(funcall->get_parent() != NULL);
+     ROSE_ASSERT(globalScope != NULL);
+  // checkTransformedFlagsVisitor(funcall->get_parent());
+     checkTransformedFlagsVisitor(globalScope);
+#endif
+
+  // DQ (4/7/2015): This fixes something I was required to fix over the weekend and which is fixed more directly, I think.
+  // Mark the things we insert as being transformations so they get inserted into the output by backend()
+     markAsTransformation(funbody_copy);
 
      return true;
    }
