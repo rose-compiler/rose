@@ -22,7 +22,7 @@ struct Settings {
     size_t showCall;                                    // show arguments in call (zero turns it off)
     bool synthesized;                                   // synthesize calls to the decoder
     Settings()
-        : decoderVa(0), stackVa(0xbbbb0000), traceInsns(false), traceSemantics(false), insnLimit(-1),
+        : decoderVa(0), stackVa(0xbbbb0000), traceInsns(false), traceSemantics(false), insnLimit(1000000),
           showCall(0), synthesized(false) {}
 };
 
@@ -186,7 +186,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     sg.insert(Switch("show-call")
               .argument("n", nonNegativeIntegerParser(settings.showCall))
-              .doc("Show calls to the decryption function along with there arguments.  The @v{n} specifies how many arguments "
+              .doc("Show calls to the decryption function along with their arguments.  The @v{n} specifies how many arguments "
                    "(each being the natural length of a word) to display. If @v{n} is zero then call information is not "
                    "displayed.  The default is " + StringUtility::plural(settings.showCall, "arguments") + "."));
 
