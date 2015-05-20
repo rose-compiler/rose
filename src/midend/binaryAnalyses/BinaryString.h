@@ -159,6 +159,9 @@ namespace BinaryAnalysis {
  * @endcode */
 namespace Strings {
 
+/** Diagnostics specific to string analysis. */
+extern Sawyer::Message::Facility mlog;
+
 typedef uint8_t Octet;                                  /**< One byte in a sequence that encodes a code value. */
 typedef std::vector<Octet> Octets;                      /**< A sequence of octets. */
 typedef unsigned CodeValue;                             /**< One value in a sequence that encodes a code point. */
@@ -190,6 +193,9 @@ enum State {
 
 /** Returns true for COMPLETED_STATE or FINAL_STATE. */
 bool isDone(State st);
+
+/** Initialize the diagnostics facility. This is called by @ref rose::Diagnostics::initialize. */
+void initDiagnostics();
 
 /** Defines mapping between code points and code values.
  *
@@ -620,6 +626,9 @@ public:
         CharacterEncodingScheme::Ptr ces = ces_->clone();
         CodePointPredicate::Ptr cpp = cpp_;             // not cloned since they have no state
         LengthEncodedString *inst = new LengthEncodedString(les, cef, ces, cpp);
+        inst->state_ = state_;
+        inst->codePoints_ = codePoints_;
+        inst->nCodePoints_ = nCodePoints_;
         inst->declaredLength_ = declaredLength_;
         return Ptr(inst);
     }
@@ -685,6 +694,9 @@ public:
         CharacterEncodingScheme::Ptr ces = ces_->clone();
         CodePointPredicate::Ptr cpp = cpp_;             // not cloned since they have no state
         TerminatedString *inst = new TerminatedString(cef, ces, cpp, terminators_);
+        inst->state_ = state_;
+        inst->codePoints_ = codePoints_;
+        inst->nCodePoints_ = nCodePoints_;
         inst->terminated_ = terminated_;
         return Ptr(inst);
     }
@@ -867,6 +879,13 @@ public:
      *
      *  The specified endianness is used for all multi-byte values. */
     void insertCommonEncoders(ByteOrder::Endianness);
+
+    /** Inserts less common encodings.
+     *
+     *  Inserts the following string encodings into the analyses:
+     *
+     *  @li Printable ASCII terminated by other code points or non-readable memory. */
+    void insertUncommonEncoders(ByteOrder::Endianness);
 
     /** Finds strings by searching memory.
      *

@@ -30,7 +30,6 @@ enum PathSelection { NO_PATHS, FEASIBLE_PATHS, ALL_PATHS };
 
 // Settings from the command-line
 struct Settings {
-    std::string isaName;                                // instruction set architecture name
     std::string beginVertex;                            // address or function name where paths should begin
     std::vector<std::string> endVertices;               // addresses or function names where paths should end
     std::vector<std::string> avoidVertices;             // vertices to avoid in any path
@@ -90,34 +89,20 @@ static FunctionSummaries functionSummaries;
 typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, std::vector<BaseSemantics::StatePtr> > StateStacks;
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[])
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 {
     using namespace Sawyer::CommandLine;
 
-    //--------------------------- 
-    Parser parser;
-    parser
-        .purpose("finds paths in control flow graph")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@prop{programName} --begin=@v{va} --end=@v{va} [@v{switches}] @v{specimen}")
-        .doc("Description",
-             "Parses, loads, disassembles, and partitions the specimen and then looks for control flow paths. A path "
-             "is a sequence of edges in the global control flow graph beginning and ending at user-specified vertices. "
-             "A vertex is specified as either the name of a function, or an address contained in a basic block. Addresses "
-             "can be decimal, octal, or hexadecimal.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
+    std::string purpose = "finds paths in control flow graph";
+    std::string description =
+        "Parses, loads, disassembles, and partitions the specimen and then looks for control flow paths. A path "
+        "is a sequence of edges in the global control flow graph beginning and ending at user-specified vertices. "
+        "A vertex is specified as either the name of a function, or an address contained in a basic block. Addresses "
+        "can be decimal, octal, or hexadecimal.";
+
+    Parser parser = engine.commandLineParser(purpose, description);
     
-    //--------------------------- 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
-    //--------------------------- 
-    SwitchGroup dis("Disassembly switches");
-    dis.insert(Switch("isa")
-               .argument("architecture", anyParser(settings.isaName))
-               .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-
     //--------------------------- 
     SwitchGroup cfg("Control flow graph switches");
     cfg.insert(Switch("begin")
@@ -291,7 +276,7 @@ parseCommandLine(int argc, char *argv[])
                .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
-    return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
+    return parser.with(cfg).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
 bool
@@ -1527,6 +1512,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                     std::vector<P2::ControlFlowGraph::ConstVertexIterator> insertedVertices;
                     P2::insertCalleePaths(paths, work.vertex, partitioner.cfg(), cfgCallEdge,
                                           calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
                     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         ++nVertsProcessed;
                         if (isFunctionCall(partitioner, vertex) && !P2::findCallReturnEdges(vertex).empty())
@@ -1580,28 +1566,18 @@ int main(int argc, char *argv[]) {
     Diagnostics::initialize();
     ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Sawyer::Message::Stream info(::mlog[INFO]);
 
     // Parse the command-line
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv).unreachedArgs();
     P2::Engine engine;
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
+    engine.doingPostAnalysis(false);
+    engine.usingSemantics(true);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Disassemble and partition
-    Stream info(::mlog[INFO] <<"disassembling");
-    engine.postPartitionAnalyses(false);
-    engine.load(specimenNames);
-#if 0 // [Robb P. Matzke 2015-02-27]
-    // Removing write access (if semantics is enabled) makes it so more indirect jumps have known successors even if those
-    // successors are only a subset of what's possible at runtime.
-    engine.memoryMap().any().changeAccess(0, MemoryMap::WRITABLE);
-#endif
-    P2::Partitioner partitioner = engine.createTunedPartitioner();
-    partitioner.enableSymbolicSemantics(true);
-    engine.partition(partitioner);
-    info <<"; done\n";
+    P2::Partitioner partitioner = engine.partition(specimenNames);
 
     // We must have instruction semantics in order to calculate path feasibility, so we might was well check that up front
     // before we spend a lot of time looking for paths.

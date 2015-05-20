@@ -109,15 +109,29 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                     if (bblock["final_instruction"])
                         config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
                     if (const YAML::Node &successors = bblock["successors"]) {
-                        BOOST_FOREACH (const YAML::Node &successor, successors) {
-#if 1 // DEBUGGING [Robb P. Matzke 2015-01-23]
-                            std::cerr <<"ROBB: inserting successor " <<StringUtility::addrToString(successor.as<rose_addr_t>()) <<"\n";
-#endif
+                        BOOST_FOREACH (const YAML::Node &successor, successors)
                             config.successorVas().insert(successor.as<rose_addr_t>());
-                        }
                     }
                     if (!insertConfiguration(config)) {
                         SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for basic block "
+                                                <<StringUtility::addrToString(addr) <<"\n";
+                    }
+                }
+            }
+            if (YAML::Node dblocks = configFile["rose"]["dblocks"]) {
+                BOOST_FOREACH (const YAML::Node &dblock, dblocks) {
+                    if (!dblock["address"]) {
+                        SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
+                        continue;
+                    }
+                    rose_addr_t addr = dblock["address"].as<rose_addr_t>();
+                    DataBlockConfig config(addr);
+                    if (dblock["name"])
+                        config.name(dblock["name"].as<std::string>());
+                    if (dblock["comment"])
+                        config.comment(dblock["comment"].as<std::string>());
+                    if (!insertConfiguration(config)) {
+                        SAWYER_MESG(mlog[WARN]) <<"multiple configuration records for data block "
                                                 <<StringUtility::addrToString(addr) <<"\n";
                     }
                 }
@@ -164,6 +178,17 @@ printBasicBlockConfig(YAML::Emitter &out, const BasicBlockConfig &config) {
     }
     out <<YAML::EndMap;
 }
+
+static void
+printDataBlockConfig(YAML::Emitter &out, const DataBlockConfig &config) {
+    out <<YAML::BeginMap;
+    out <<YAML::Key <<"address" <<YAML::Value <<StringUtility::addrToString(config.address());
+    if (!config.name().empty())
+        out <<YAML::Key <<"name" <<YAML::Value <<config.name();
+    if (!config.comment().empty())
+        out <<YAML::Key <<"comment" <<YAML::Value <<config.comment();
+    out <<YAML::EndMap;
+}
 #endif
 
 void
@@ -194,6 +219,14 @@ Configuration::print(std::ostream &out) const {
         emitter <<YAML::EndSeq;
     }
 
+    if (!dblockConfigs_.isEmpty()) {
+        emitter <<YAML::Key <<"dblocks" <<YAML::Value;
+        emitter <<YAML::BeginSeq;
+        BOOST_FOREACH (const DataBlockConfig &config, dblockConfigs_.values())
+            printDataBlockConfig(emitter, config);
+        emitter <<YAML::EndSeq;
+    }
+
     emitter <<YAML::EndMap;                             // end of "rose" map
     emitter <<YAML::EndMap;                             // end of document containing "rose"
 
@@ -204,6 +237,11 @@ Configuration::print(std::ostream &out) const {
 BasicBlockConfig&
 Configuration::insertMaybeBasicBlock(rose_addr_t va) {
     return bblockConfigs_.insertMaybe(va, BasicBlockConfig(va));
+}
+
+DataBlockConfig&
+Configuration::insertMaybeDataBlock(rose_addr_t va) {
+    return dblockConfigs_.insertMaybe(va, DataBlockConfig(va));
 }
 
 FunctionConfig&
@@ -220,6 +258,13 @@ bool
 Configuration::insertConfiguration(const BasicBlockConfig &config) {
     bool retval = !bblockConfigs_.exists(config.address());
     bblockConfigs_.insert(config.address(), config);
+    return retval;
+}
+
+bool
+Configuration::insertConfiguration(const DataBlockConfig &config) {
+    bool retval = !dblockConfigs_.exists(config.address());
+    dblockConfigs_.insert(config.address(), config);
     return retval;
 }
 
@@ -250,6 +295,16 @@ std::set<rose_addr_t>
 Configuration::basicBlockSuccessorVas(rose_addr_t bblockVa) const {
     static const BasicBlockConfig emptyConfig;
     return bblockConfigs_.getOptional(bblockVa).orElse(emptyConfig).successorVas();
+}
+
+std::string
+Configuration::dataBlockName(rose_addr_t dblockVa) const {
+    return dblockConfigs_.getOptional(dblockVa).orDefault().name();
+}
+
+std::string
+Configuration::dataBlockComment(rose_addr_t dblockVa) const {
+    return dblockConfigs_.getOptional(dblockVa).orDefault().comment();
 }
 
 std::string

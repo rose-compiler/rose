@@ -541,6 +541,7 @@ int main(int argc, char * argv[])
       std::set<AST_NODE_ID> ids = (*iter).second; 
       if (ids.size()>0)
       {
+        string src_comment = "Transformation generated based on ";
         cout<<"Found a node with IR mapping info"<<endl;
         SgNode* affected_node = TransformationTracking::getNode((*iter).first);
         cout<<isSgLocatedNode(affected_node)->unparseToString()<<endl;
@@ -552,7 +553,13 @@ int main(int argc, char * argv[])
            SgLocatedNode* lnode = isSgLocatedNode(input_node); 
            cout<<lnode->unparseToString()<<endl; 
            cout<<"//Transformation generated based on line #"<< lnode->get_file_info()->get_line() <<endl;
+           src_comment += " line # " + StringUtility::numberToString(lnode->get_file_info()->get_line());
         }
+        src_comment +="\n";
+        SgStatement* enclosing_stmt = getEnclosingStatement(affected_node);
+        cout<<src_comment<<endl;
+//TODO: turn this on and update the reference results
+//        attachComment (enclosing_stmt, src_comment);
       } // end if ids.size() >0
     }  // end for inputIDs
   } // end if transTracking 
@@ -1132,7 +1139,8 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
   ROSE_ASSERT (sym != NULL);
   SgScopeStatement* orig_scope = sym->get_scope();
 
-//  std::vector<SgVariableDeclaration* >  inserted_copied_decls; 
+  // used to keep track of transformation for this copyMoveVariableDeclaration()
+  std::vector<SgVariableDeclaration* >  newly_inserted_copied_decls; 
 
 #if 1 // TODO we should make sure target scopes are all legitimate at this point
   // when we adjust first branch node  (if-stmt with both true and false body )in the scope tree, we may backtrack to the decl's scope 
@@ -1171,6 +1179,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
         {
           SageInterface::prependStatement (decl_copy, adjusted_scope);
           inserted_copied_decls.push_back(decl_copy); 
+          newly_inserted_copied_decls.push_back(decl_copy);
           break;
         }
       case V_SgForStatement:
@@ -1215,6 +1224,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 	      ROSE_ASSERT (decl_copy->get_parent() != NULL); 
               // we already merged with assignment, we skip it so it won't be considered again?
               inserted_copied_decls.push_back(decl_copy);
+              newly_inserted_copied_decls.push_back(decl_copy);
 
 	    }
 	    // TODO: it can be SgCommanOpExp
@@ -1241,6 +1251,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
             adjusted_scope = loop_body;
             SageInterface::prependStatement (decl_copy, adjusted_scope);
             inserted_copied_decls.push_back(decl_copy);
+            newly_inserted_copied_decls.push_back(decl_copy);
           }
           break;
         }
@@ -1374,6 +1385,19 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
   // remove the original declaration , must use false to turn off auto-relocate comments, since it does not work correctly.
   // TODO: fix this in SageInterface or redesign how to store comments in AST: independent vs. attachments
   SageInterface::removeStatement(decl, false);
+
+// support transformation tracking/ IR mapping
+  if (transTracking)
+    {
+      // patch up IDs for the changed subtree 
+      TransformationTracking::registerAstSubtreeIds (orig_scope);
+      std::vector <SgVariableDeclaration*>::iterator iter;
+
+      for (iter = newly_inserted_copied_decls.begin(); iter!= newly_inserted_copied_decls.end(); iter++)
+      { //TransformationTracking::addInputNode (affected_node, input_node)
+        TransformationTracking::addInputNode (*iter, decl); 
+      }
+    }  // end if transTracking
 
   //TODO deepDelete is problematic
   //SageInterface::deepDelete(decl);  // symbol is not deleted?
@@ -1707,6 +1731,8 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
   {
     copyMoveVariableDeclaration (declaration, target_scopes, worklist, my_inserted_decls);
 
+#if 0 // we should not iterate my_inserted_decls here since it may contain previously inserted declarations.
+      // this should be moved inside copyMoveVariableDeclaration() to only recordly newly inserted declarations
 // support transformation tracking/ IR mapping
   if (transTracking)
     {
@@ -1715,10 +1741,11 @@ void moveDeclarationToInnermostScope_v2 (SgVariableDeclaration* declaration, std
       std::vector <SgVariableDeclaration*>::iterator iter;
 
       for (iter = my_inserted_decls.begin(); iter!= my_inserted_decls.end(); iter++)
-      {
+      { //TransformationTracking::addInputNode (affected_node, input_node)
         TransformationTracking::addInputNode (*iter, declaration); 
       }
     }  // end if transTracking
+#endif
   } // end target_scopes.size()
 }
 

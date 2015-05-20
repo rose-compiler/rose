@@ -3549,8 +3549,6 @@ struct IP_storestring: P {
         if (insn->get_lockPrefix()) {
             ops->interrupt(x86_exception_ud, 0);
         } else {
-            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
-
             // Get the address for storing.
             RegisterDescriptor dstReg;
             switch (insn->get_addressSize()) {
@@ -3569,15 +3567,39 @@ struct IP_storestring: P {
             ASSERT_require(dstReg.is_valid());
             BaseSemantics::SValuePtr stringPtr = d->readRegister(dstReg);
             BaseSemantics::SValuePtr addr = d->fixMemoryAddress(stringPtr);
-
-            // Copy value from AL/AX/EAX/RAX to memory
-            RegisterDescriptor regA = d->REG_AX; regA.set_nbits(nbits);
-            ops->writeMemory(d->REG_ES, addr, d->readRegister(regA), inLoop);
-
-            // Advance pointer register
-            BaseSemantics::SValuePtr step = ops->ite(d->readRegister(d->REG_DF),
+            BaseSemantics::SValuePtr directionFlag = d->readRegister(d->REG_DF);
+            BaseSemantics::SValuePtr step = ops->ite(directionFlag,
                                                      ops->number_(dstReg.get_nbits(), -nbytes),
                                                      ops->number_(dstReg.get_nbits(), +nbytes));
+
+            // Source value
+            RegisterDescriptor regA = d->REG_AX; regA.set_nbits(nbits);
+            BaseSemantics::SValuePtr src = d->readRegister(regA);
+
+            // If CX is a known value then we can unroll the loop right now.
+            if (x86_repeat_repe==repeat) {
+                BaseSemantics::SValuePtr cx = ops->readRegister(d->REG_anyCX);
+                if (cx->is_number() && cx->get_number() <= 8192 /*arbitrary*/) {
+                    size_t n = cx->get_number();
+                    BaseSemantics::SValuePtr inLoop = ops->boolean_(true);
+                    for (size_t i=0; i<n; ++i) {
+                        BaseSemantics::SValuePtr va =
+                            ops->add(addr,
+                                     ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->get_width(), i), step),
+                                                         addr->get_width()));
+                        ops->writeMemory(d->REG_ES, va, src, inLoop);
+                    }
+                    return;
+                }
+            }
+            
+            // We chose not to unroll the loop, so simulate the loop by manipulating the instruction pointer
+            BaseSemantics::SValuePtr inLoop = d->repEnter(repeat);
+
+            // Copy value from AL/AX/EAX/RAX to memory
+            ops->writeMemory(d->REG_ES, addr, src, inLoop);
+
+            // Advance pointer register
             ops->writeRegister(dstReg, ops->ite(inLoop, ops->add(stringPtr, step), stringPtr));
 
             // Adjust the instruction pointer register to either repeat the instruction or fall through
