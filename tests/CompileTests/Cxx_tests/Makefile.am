@@ -358,13 +358,29 @@ TESTS_NOT_PASSING = \
    test2014_101.C \
    test2014_102.C \
    test2014_103.C \
+   test2014_104.C \
+   test2014_105.C \
+   test2014_106.C \
    test2014_112.h \
    test2014_113.C \
    test2014_118.C \
    test2014_119.C \
    test2014_120.C \
    test2014_121.C \
-   test2014_164.C 
+   test2014_138.C \
+   test2014_158.C \
+   test2014_164.C \
+   test2014_173.C \
+   test2014_180.C \
+   test2014_181.C \
+   test2014_213.C \
+   test2014_214.C \
+   test2014_227.C \
+   test2014_228.C \
+   test2014_229.C \
+   test2014_237.C \
+   test2015_24.C \
+   test2015_25.C 
 
 # DQ (7/10/2014): Remaining bugs in new application.
 #  test2014_113.C 
@@ -1145,7 +1161,7 @@ EXTRA_DIST = $(EXAMPLE_TESTCODES_REQUIRED_TO_PASS) $(TESTCODE_CURRENTLY_FAILING)
      test2007_101.h test2007_136.h test2007_137.h test2007_160.h test2007_160a.h test2007_167.h \
      test2008_11.h test2014_66.h test2014_112.h LogicalPath.cpp test2005_56.C test2010_25.h test2012_242.h test2012_268.h test2013_09.C \
      test2013_235.C test2013_236.C conftest.C conftest_2.C test2006_112.C test2010_25.C test2003_24.C \
-     test2004_82.C 
+     test2004_82.C test2015_08.h
 
 # DQ (6/18/2008): All of these should be present...
 # confdefs.h     test2001_11.h   test2001_18B.h  test2003_12.h  test2003_25.h   test2005_154.h  test2005_159.h  test2005_26.h  test2005_88.h    test2006_187b.h  test2006_42.h   test2007_113.h  test2007_137.h   test2007_167.h  test2007_42.h  test2007_97.h

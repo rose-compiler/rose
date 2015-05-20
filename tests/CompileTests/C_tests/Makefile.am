@@ -586,6 +586,20 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_127.c \
      test2015_128.c \
      test2015_129.c \
+     test2015_130.c \
+     test2015_131.c \
+     test2015_132.c \
+     test2015_136.c \
+     test2015_137.c \
+     test2015_138.c \
+     test2015_139.c \
+     test2015_140.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_143.c \
+     test2015_144.c \
+     test2015_145.c \
+     test2015_146.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -656,7 +670,11 @@ FILES_NOT_PASSING = \
      test2014_96.c \
      test2014_97.c \
      test2014_98.c \
-     test2014_99.c 
+     test2014_99.c \
+     test2015_46.c \
+     test2015_112.c \
+     test2015_147.c \
+     test2015_148.c
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
@@ -968,6 +986,9 @@ test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
 test_m32_use: $(testTranslator)
 	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
 
+# DQ (5/12/2015): Test demonstrated by Xen build system (where test2015_133.S is a generated C source code file).
+test_file_suffix: $(testTranslator) 
+	$(testTranslator) -c $(srcdir)/test2015_133.S
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -1011,7 +1032,10 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
 	     test2014_60_data_members.h \
 	     test2014_60_values.h \
 	     test2014_66.h \
-	     test2014_73.h
+	     test2014_73.h \
+        test2015_103.h \
+        test2015_77.h \
+        test2015_88.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
