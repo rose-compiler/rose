@@ -734,12 +734,12 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
 }
 
 CgEmitter::CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(cg);
 }
 
