@@ -181,6 +181,7 @@ CfgEmitter::init() {
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
+        noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
 }
 
@@ -556,7 +557,7 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
             NoOperation::IndexIntervals noopSequences = noOpAnalysis_.findNoopSubsequences(insns);
             noopSequences = NoOperation::largestEarliestNonOverlapping(noopSequences);
             BOOST_FOREACH (const NoOperation::IndexInterval &where, noopSequences) {
-                for (size_t i=where.least(); i<where.greatest(); ++i)
+                for (size_t i=where.least(); i<=where.greatest(); ++i)
                     isPartOfNoopSequence[i] = true;
             }
         }

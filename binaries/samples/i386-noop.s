@@ -44,19 +44,34 @@ test4b:
 .a:	ret
 
 ;;; Push/pop
-;;; This isn't a no-op since it affects the stack, but we could implement a mode that
-;;; doesn't look at stack memory beyond the current top-of-stack.
+;;; A push/pop pair is a no-op if we assume normal stack semantics.
 test5:
-	push eax
-	pop eax
+	push eax		;NOP
+	pop eax			;NOP
 	ret
 
 ;;; Repeated push/pop
 test6:
-	push eax
+	push eax		;NOP
 	pop eax			;NOP
 	push eax		;NOP
-	pop eax
+	pop eax			;NOP
+	ret
+
+;;; The pushf/popf pair is not a no-op since PUSHF zeros the VM and RF bits
+;;; while POPF zeroes the VIP and VIF flags and preserves the old IOPL and VM bits.
+test7:
+	pushf
+	popf
+	ret
+
+test8:
+	pushad
+	mov ebx, eax
+	jmp .a
+	mov eax, 0		;not reached
+.a:
+	popad
 	ret
 
 main:
@@ -67,4 +82,6 @@ main:
 	call test4b
 	call test5
 	call test6
+	call test7
+	call test8
 	hlt
