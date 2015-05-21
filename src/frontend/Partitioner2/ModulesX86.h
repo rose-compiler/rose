@@ -89,7 +89,8 @@ public:
  *
  * @code
  *  MOV reg, [address]
- *  JMP reg */
+ *  JMP reg
+ * @endcode */
 class MatchMovJmpThunk: public FunctionPrologueMatcher {
 protected:
     Function::Ptr function_;

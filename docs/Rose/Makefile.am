@@ -394,7 +394,7 @@ EXTRA_DIST = CMakeLists.txt \
    fixme.sty  acknowledgments.tex bothlevel.c \
    bibliography.tex  examples.tex fd-docs.tex overviewOfRose.tex pre-docs.tex loopTransformDoc.tex  \
    mm.tex preprocessorDesign.tex tridvpk.tex writingYourFirstTranslator.tex appendix.tex \
-   developersAppendix.tex designOfRose.tex  FAQ.tex glossary.tex introduction.tex lu.tex \
+   developersAppendix.tex designOfRose.tex  FAQ.tex FAQ-Binary.dox glossary.tex introduction.tex lu.tex \
    preface.tex rose-processing-phases.pdf compass_rose.gif SageIII.tex QueryLibrary.tex \
    AstRewrite.tex ProgramAnalysis.tex AstProcessing.tex testing.tex astMerge.tex installRose.tex \
    roseExecutionOutput.txt roseHelpOutput.txt asm_code_samples_gcc.pdf introduction_start.tex \

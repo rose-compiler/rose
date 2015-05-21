@@ -33,15 +33,15 @@ namespace BinaryAnalysis {
  *
  *  This namespace consists of three major parts and a number of smaller parts.  The major parts are:
  *
- *  @li @ref Partitioner: The partitioner is responsible for organizing instructions into basic blocks and basic blocks into
- *      functions. It has methods to discover new parts of the executable, and methods to control how those parts are organized
- *      into larger parts.  It queries a memory map and an instruction provider and updates a global control flow graph (CFG)
- *      and address usage map (AUM). It's operations are quite low-level and its behavior is customized primarily by
- *      callbacks.
+ *  @li @ref Partitioner2::Partitioner "Partitioner": The partitioner is responsible for organizing instructions into basic
+ *      blocks and basic blocks into functions. It has methods to discover new parts of the executable, and methods to control
+ *      how those parts are organized into larger parts.  It queries a memory map and an instruction provider and updates a
+ *      global control flow graph (CFG) and address usage map (AUM). It's operations are quite low-level and its behavior is
+ *      customized primarily by callbacks.
  *
- *  @il @ref Engine: The engine contains the higher-level functionality that drives the partitioner.  Where the partitioner
- *      knows @em how to make a basic block or a function, the engine know @em where to make a basic block or function.  The
- *      engine is customized by subclassing it and overriding various methods.
+ *  @li @ref Partitioner2::Engine "Engine": The engine contains the higher-level functionality that drives the partitioner.
+ *      Where the partitioner knows @em how to make a basic block or a function, the engine know @em where to make a basic
+ *      block or function.  The engine is customized by subclassing it and overriding various methods.
  *
  *  Disassembly techniques fall into two broad categories: linear disassembly and recursive disassembly.  Linear disassembly
  *  progresses by starting at some low address in the specimen address space, disassembling one instruction, and then moving on
