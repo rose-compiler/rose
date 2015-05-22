@@ -49,14 +49,12 @@ ProgressBarImpl::init() {
     overridesAnsi_.interruptionStr = clearLine;
     overridesAnsi_.cancelationStr = clearLine;
     overridesAnsi_.lineTermination = "";                // empty because we erase lines instead
-
-    if (initialDelay_ > 0)
-        lastUpdateTime_ = Message::now() + initialDelay_;
+    lastUpdateTime_ = Message::now() + initialDelay_ - minUpdateInterval_;
 }
 
 SAWYER_EXPORT void
 ProgressBarImpl::cleanup() {
-    if (*stream_) {
+    if (*stream_ && nUpdates_>0) {
         Message::BakedDestinations baked;
         stream_->destination()->bakeDestinations(stream_->properties(), baked);
         textMesg_.complete();

@@ -17,13 +17,13 @@ FunctionCallGraph::insertFunction(const Function::Ptr &function) {
 
 FunctionCallGraph::Graph::EdgeIterator
 FunctionCallGraph::insertCall(const Graph::VertexIterator &source, const Graph::VertexIterator &target,
-                          EdgeType type, bool allowParallelEdges) {
+                          EdgeType type, size_t edgeCount) {
     ASSERT_forbid(source == graph_.vertices().end());
     ASSERT_forbid(target == graph_.vertices().end());
-    if (!allowParallelEdges) {
+    if (edgeCount) {
         for (Graph::EdgeIterator edge=source->outEdges().begin(); edge!=source->outEdges().end(); ++edge) {
             if (edge->target()==target && edge->value().type()==type) {
-                ++edge->value().count_;
+                edge->value().count_ += edgeCount;
                 return edge;
             }
         }

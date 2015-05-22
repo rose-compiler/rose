@@ -1,15 +1,31 @@
 #include <sage3basic.h>
 
+#include <Diagnostics.h>
 #include <BinaryString.h>
+#include <sawyer/ProgressBar.h>
+
+using namespace rose::Diagnostics;
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace Strings {
 
+Sawyer::Message::Facility mlog;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Utility functions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+initDiagnostics(void) {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::Strings", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
+    
 bool
 isDone(State st) {
     return st == FINAL_STATE || st == COMPLETED_STATE;
@@ -667,6 +683,14 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
     encoders_.push_back(lengthEncodedPrintableAsciiWide(4, sex, 4));
 }
 
+void
+StringFinder::insertUncommonEncoders(ByteOrder::Endianness sex) {
+    // This encoder finds printable ASCII that's not necessarily NUL-terminated
+    TerminatedString::Ptr te = nulTerminatedPrintableAscii();
+    te->terminators().clear();
+    encoders_.push_back(te);
+}
+
 struct Finding {
     StringEncodingScheme::Ptr encoder;
     rose_addr_t startVa;
@@ -686,7 +710,7 @@ hasNullEncoder(const Finding &finding) {
 
 static bool
 byDecreasingLength(const EncodedString &a, const EncodedString &b) {
-    return a.length() >= b.length();
+    return a.length() > b.length();
 }
 
 static bool
@@ -704,12 +728,15 @@ class StringSearcher {
     bool discardCodePoints_;                            // throw away decoded code points?
     size_t maxOverlap_;                                 // allow one encoder to match overlapping strings?
     Sawyer::Optional<rose_addr_t> anchored_;            // are strings anchored to starting address?
+    Sawyer::ProgressBar<size_t> progress_;
 public:
     StringSearcher(const std::vector<StringEncodingScheme::Ptr> &encoders,
-                   size_t minLength, size_t maxLength, bool discardCodePoints, size_t maxOverlap)
+                   size_t minLength, size_t maxLength, bool discardCodePoints, size_t maxOverlap,
+                   size_t nBytesToCheck)
         : protoEncoders_(encoders), bufferVa_(0), minLength_(minLength), maxLength_(maxLength),
-          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap) {
+          discardCodePoints_(discardCodePoints), maxOverlap_(maxOverlap), progress_(mlog[MARCH], "scanned bytes") {
         findings_.resize(encoders.size());
+        progress_.value(0, nBytesToCheck);
     }
 
     // anchor the search to a particular address
@@ -739,6 +766,7 @@ public:
         rose_addr_t bufferVa = interval.least();
         while (1) {
             size_t nread = map.at(bufferVa).atOrBefore(interval.greatest()).read(buffer).size();
+            progress_.value(progress_.value()+nread);
             ASSERT_require(nread > 0);
             for (size_t offset=0; offset<nread; ++offset) {
 
@@ -763,7 +791,8 @@ public:
                 }
 
                 // Decode this next octet, removing decoders that encounter errors, and saving those which enter their final
-                // state.
+                // state. If a decoder enters the complete (but not final) state then save the string as it exists at that
+                // point, but do not remove the decoder.
                 Octet octet = buffer[offset];
                 for (size_t i=0; i<findings_.size(); ++i) {
                     for (size_t j=0; j<findings_[i].size(); ++j) {
@@ -779,6 +808,12 @@ public:
                                 results_.push_back(findings_[i][j]);
                             }
                             findings_[i][j].encoder = StringEncodingScheme::Ptr();
+                        } else if (COMPLETED_STATE == st &&
+                                   findings_[i][j].encoder->length() >= minLength_ &&
+                                   findings_[i][j].encoder->length() <= maxLength_) {
+                            Finding fcopy = findings_[i][j];
+                            fcopy.encoder = fcopy.encoder->clone();
+                            results_.push_back(fcopy);
                         }
                     }
                     findings_[i].erase(std::remove_if(findings_[i].begin(), findings_[i].end(), hasNullEncoder),
@@ -788,6 +823,7 @@ public:
             if (bufferVa + (nread-1) == interval.greatest())
                 break;                                  // prevent possible overflow
             bufferVa += nread;
+            ASSERT_forbid(bufferVa > interval.greatest());
         }
         return true;                                    // keep going
     }
@@ -799,7 +835,11 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
     if (minLength_ > maxLength_ || encoders_.empty())
         return result;
 
-    StringSearcher stringFinder(encoders_, minLength_, maxLength_, discardCodePoints_, maxOverlap_);
+    size_t nBytesToCheck = 0;
+    BOOST_FOREACH (const MemoryMap::Node &node, constraints.nodes(Sawyer::Container::MATCH_NONCONTIGUOUS))
+        nBytesToCheck += node.key().size();
+
+    StringSearcher stringFinder(encoders_, minLength_, maxLength_, discardCodePoints_, maxOverlap_, nBytesToCheck);
     if (constraints.isAnchored())
         stringFinder.anchor(constraints.anchored().least());
     constraints.traverse(stringFinder, flags);
@@ -809,16 +849,7 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
 
     if (keepOnlyLongest_) {
         AddressIntervalSet stringAddresses;
-#if 0 // [Robb P. Matzke 2015-05-05]: null pointer exception from std::sort, but works find with O(n^2) sort
         std::sort(result.begin(), result.end(), byDecreasingLength);
-#else
-        for (size_t i=0; i+1<result.size(); ++i) {
-            for (size_t j=i+1; j<result.size(); ++j) {
-                if (!byDecreasingLength(result[i], result[j]))
-                    std::swap(result[i], result[j]);
-            }
-        }
-#endif
         BOOST_FOREACH (EncodedString &string, result) {
             if (stringAddresses.isOverlapping(string.where())) {
                 string = EncodedString();               // mark for erasing

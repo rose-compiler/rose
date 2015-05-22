@@ -6,6 +6,7 @@
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // BinaryLoader
+#include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
@@ -70,6 +71,7 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::Strings::initDiagnostics();
         EditDistance::initDiagnostics();
     }
 }

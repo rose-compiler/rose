@@ -42,9 +42,9 @@ namespace PartialSymbolicSemantics {
 
 extern uint64_t name_counter;
 
-/*******************************************************************************************************************************
- *                                      Print Formatter
- *******************************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Print formatter
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Formatter that renames variables on the fly.  When this formatter is used, named variables are renamed using lower
  *  numbers. This is useful for human-readable output because variable names tend to get very large (like "v904885611"). */
@@ -58,9 +58,10 @@ public:
     uint64_t rename(uint64_t orig_name);
 };
 
-/*******************************************************************************************************************************
- *                                      Value Type
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -175,17 +176,28 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*******************************************************************************************************************************
- *                                      Memory
- *******************************************************************************************************************************/
+typedef BaseSemantics::RegisterStateGeneric RegisterState;
+typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // PartialSymbolicSemantics uses BaseSemantics::MemoryCellList (or subclass) as its memory state, and does not expect the
 // MemoryCellList to be byte-restricted (i.e., the cells can store multi-byte values).
 
-/*******************************************************************************************************************************
- *                                      Machine State
- *******************************************************************************************************************************/
+typedef BaseSemantics::MemoryCellList MemoryState;
+typedef BaseSemantics::MemoryCellListPtr MemoryStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a State object.  State objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class State> StatePtr;
@@ -207,8 +219,8 @@ protected:
         (void) SValue::promote(memory->get_addr_protoval());
         (void) SValue::promote(memory->get_val_protoval());
 
-        // This state should use a BaseSemantics::MemoryCellList that is not byte restricted.
-        BaseSemantics::MemoryCellListPtr mcl = BaseSemantics::MemoryCellList::promote(memory);
+        // This state should use a memory that is not byte restricted.
+        MemoryStatePtr mcl = MemoryState::promote(memory);
         ASSERT_require(!mcl->get_byte_restricted());
     }
 
@@ -265,9 +277,10 @@ public:
     virtual void discard_popped_memory();
 };
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */

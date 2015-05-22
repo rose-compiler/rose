@@ -107,6 +107,7 @@ functionCfgGraphvizFile(const P2::Partitioner &partitioner, const P2::Function::
         graphViz.useFunctionSubgraphs(false);
         graphViz.showInstructions(true);
         graphViz.showInstructionAddresses(false);
+        graphViz.strikeNoopSequences(true);
         graphViz.defaultNodeAttributes().insert("fontsize", "10");
         graphViz.defaultEdgeAttributes().insert("fontsize", "10");
         graphViz.emitFunctionGraph(out, function);

@@ -249,6 +249,7 @@ public:
             analyzer.discardCodePoints(false);
             analyzer.keepOnlyLongest(true);
             analyzer.insertCommonEncoders(sex);
+            analyzer.insertUncommonEncoders(sex);
             BOOST_FOREACH (const Strings::EncodedString &string, analyzer.find(memoryMap_.require(MemoryMap::READABLE))) {
                 size_t nrefs = xrefs_.getOrDefault(P2::Reference(string.address())).size();
                 rows_.push_back(Row(string, nrefs));

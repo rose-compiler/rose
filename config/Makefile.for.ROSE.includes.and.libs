@@ -98,7 +98,7 @@ endif
 if ROSE_HAVE_LIBYAML
   ROSE_YAML_INCLUDES = -I@ROSE_YAML_PREFIX@/include
   ROSE_YAML_LIBS = -lyaml-cpp
-  ROSE_YAML_LIBS_WITH_PATH = @ROSE_YAML_PREFIX@/lib/libyaml-cpp.a
+  ROSE_YAML_LIBS_WITH_PATH = -L@ROSE_YAML_PREFIX@/lib -lyaml-cpp
 endif
 
 # libmagic for identifying file types based on magic numbers

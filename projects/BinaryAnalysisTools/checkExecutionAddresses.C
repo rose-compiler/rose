@@ -32,13 +32,37 @@ struct Settings {
 };
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings)
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    std::string purpose = "compares actual execution with known instructions";
+    std::string description = 
+        "Reads instruction addresses from a file, the so-called \"expected\" addresses and and then executes the specimen "
+        "and compares actual executed addresses with the expected addresses.  An actual executed address falls into one of "
+        "three categories:  (1) the address is an expected address, or else (2) the address is not mapped, or else (3) the "
+        "address not expected.\n\n"
 
+        "One method of obtaining a list of expected addresses is to use the @man{recursiveDisassemble}{--help} tool's "
+        "@s{list-instruction-addressses} switch. Although this produces output that contains instruction sizes as well as "
+        "addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
+        "instructions that were not also disassembled, thereby testing some aspect of the disassembly quality.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
+    // switches since this tool doesn't disassemble or partition.
+    Parser parser;
+    parser
+        .purpose(purpose)
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
+        .doc("Description", description)
+        .doc("Specimens", engine.specimenNameDocumentation())
+        .with(engine.engineSwitches())
+        .with(engine.loaderSwitches());
+    
     SwitchGroup tool("Tool specific switches");
     tool.insert(Switch("map")
                 .argument("how", enumParser(settings.mapSource)
@@ -94,25 +118,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                      "@s{no-show-unampped} switch turns this listing off.  The default is to " +
                      std::string(settings.showUnmapped?"":"not ") + "show this information."));
 
-    Parser parser;
-    parser
-        .purpose("compares actual execution with known instructions")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("synopsis",
-             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
-        .doc("description",
-             "Reads instruction addresses from a file, the so-called \"expected\" addresses and and then executes the specimen "
-             "and compares actual executed addresses with the expected addresses.  An actual executed address falls into one of "
-             "three categories:  (1) the address is an expected address, or else (2) the address is not mapped, or else (3) the "
-             "address not expected.\n\n"
-
-             "One method of obtaining a list of expected addresses is to use the @man{recursiveDisassemble}{--help} tool's "
-             "@s{list-instruction-addressses} switch. Although this produces output that contains instruction sizes as well as "
-             "addresses, @prop{programName} ignores the sizes.  This can be used to test whether a process executes any "
-             "instructions that were not also disassembled, thereby testing some aspect of the disassembly quality.");
-    
-    return parser.with(gen).with(tool).parse(argc, argv).apply();
+    return parser.with(tool).parse(argc, argv).apply().unreachedArgs();
 }
 
 // File has one address per line
@@ -172,8 +178,9 @@ main(int argc, char *argv[]) {
     Sawyer::ProgressBarSettings::minimumUpdateInterval(0.2); // more fluid spinner
 
     // Parse command-line
+    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> args = parseCommandLine(argc, argv, settings).unreachedArgs();
+    std::vector<std::string> args = parseCommandLine(argc, argv, engine, settings);
     ASSERT_always_require2(args.size() >= 2, "incorrect usage; see --help");
 
     // Parse file containing instruction addresses
@@ -193,7 +200,7 @@ main(int argc, char *argv[]) {
     // Get memory map.
     MemoryMap map;
     if (MAP_ROSE==settings.mapSource) {
-        map = P2::Engine().load(specimen_cmd[0]);
+        map = engine.loadSpecimens(specimen_cmd[0]);
     } else {
         map.insertProcess(":noattach:" + numberToString(pid));
     }
