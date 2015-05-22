@@ -70,8 +70,10 @@ static RegisterDescriptor REG_RETURN;
 // Information stored per V_USER_DEFINED vertices.
 struct FunctionSummary {
     P2::ControlFlowGraph::ConstVertexIterator cfgFuncVertex;
-    FunctionSummary() {}
-    explicit FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex): cfgFuncVertex(cfgFuncVertex) {}
+    int64_t stackDelta;
+    FunctionSummary(): stackDelta(SgAsmInstruction::INVALID_STACK_DELTA) {}
+    FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex, uint64_t stackDelta)
+        : cfgFuncVertex(cfgFuncVertex), stackDelta(stackDelta) {}
     std::string name() const {
         if (cfgFuncVertex->value().type() == P2::V_BASIC_BLOCK) {
             if (P2::Function::Ptr function = cfgFuncVertex->value().function()) {
@@ -400,8 +402,8 @@ bool shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVe
     P2::Function::Ptr callee = cfgCallTarget->value().function();
     if (!callee)
         return false;
-    if (boost::ends_with(callee->name(), "@plt"))
-        return true;                                    // this is probably dynamically linked ELF function
+    if (boost::ends_with(callee->name(), "@plt") || boost::ends_with(callee->name(), ".dll"))
+        return true;                                    // this is probably dynamically linked ELF or PE function
 
     // If the called function calls too many more functions then summarize instead of inlining.  This helps avoid problems with
     // the Partitioner2 not being able to find reasonable function boundaries, especially for GNU libc.
@@ -852,13 +854,18 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &vertex, 
     ops->varComment(retval->get_expression()->isLeafNode()->toString(), comment);
     ops->writeRegister(REG_RETURN, retval);
 
-    // Cause the function to return by popping the return target address off the top of the stack
+    // Cause the function to return to the address stored at the top of the stack.
     BaseSemantics::SValuePtr stackPointer = ops->readRegister(cpu->stackPointerRegister());
     BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                             ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), returnTarget->get_width()/8));
-    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
     ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+
+    // Pop some things from the stack.
+    int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                 summary.stackDelta :
+                 returnTarget->get_width() / 8;
+    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 }
 
 void
@@ -914,13 +921,23 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
                   const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge) {
     ASSERT_require(cfg.isValidEdge(cfgCallEdge));
     P2::ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
+    P2::Function::Ptr function;
+    if (cfgCallTarget->value().type() == P2::V_BASIC_BLOCK)
+        function = cfgCallTarget->value().function();
 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
         paths.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
-    FunctionSummary summary(cfgCallTarget);
+    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
+    if (function && function->stackDelta().isCached()) {
+        BaseSemantics::SValuePtr sd = function->stackDelta().get();
+        if (sd->is_number())
+            stackDelta = sd->get_number();
+    }
+
+    FunctionSummary summary(cfgCallTarget, stackDelta);
     functionSummaries.insert(summaryVertex, summary);
 }
 
@@ -1098,6 +1115,9 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
     // vertices that can participate in a path from the callee's entry point to any of its returning points.
     P2::CfgPath path(pathsBeginVertex);
     while (!path.isEmpty()) {
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+        std::cerr <<"ROBB: path = " <<path <<"\n";
+#endif
         P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
         P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = pathToCfg(partitioner, backVertex);
         ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
@@ -1142,10 +1162,27 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
             }
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+            {
+                std::ofstream out("x-robb-1.dot");
+                P2::CfgConstVertexSet end;
+                end.insert(backVertex);
+                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
+            }
+#endif
 
             // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No need
             // to worry about adjusting the path because these edges aren't on the current path.
             P2::eraseEdges(paths, P2::findCallReturnEdges(backVertex));
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+            {
+                std::ofstream out("x-robb-2.dot");
+                P2::CfgConstVertexSet end;
+                end.insert(backVertex);
+                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
+            }
+#endif
+
 
             // If the inlined function had no return sites but the call site had a call-return edge, then part of the paths
             // graph might now be unreachable. In fact, there might now be no paths from the begin vertex to any end vertex.
