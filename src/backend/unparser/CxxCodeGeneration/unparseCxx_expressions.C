@@ -7092,8 +7092,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #define DEBUG_DESIGNATED_INITIALIZER 0
 
 #if DEBUG_DESIGNATED_INITIALIZER
-     printf ("In unparseDesignatedInitializer: expr = %p \n",expr);
-     curprint (string("\n/* In unparseDesignatedInitializer(") + expr->class_name().c_str() + ") */ \n");
+     printf ("TOP of unparseDesignatedInitializer: expr = %p \n",expr);
+     curprint (string("\n/* Top of unparseDesignatedInitializer(") + expr->class_name().c_str() + ") */ \n");
 #endif
 #if 0
      expr->get_startOfConstruct()->display("In unparseDesignatedInitializer: debug");
@@ -7139,6 +7139,10 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("--- isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
 #endif
+
+#if 0
+  // DQ (5/11/2015): This is part of an overly sophisticated approach to control the use of "={}" syntax.
+  // It is easier to just always normalize to the use of "={}" and then restrict specific cases where it is not allowed.
 
      if (isInitializer_AggregateInitializer == true)
         {
@@ -7224,6 +7228,7 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                   }
              }
         }
+#endif
 
 #if DEBUG_DESIGNATED_INITIALIZER
      printf ("In unparseDesignatedInitializer: designator  = %p = %s \n",designator,designator->class_name().c_str());
@@ -7241,6 +7246,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      info.display("In unparseDesignatedInitializer()");
 #endif
 
+  // DQ (5/11/2015): This needs to be defined outside of this conditional case so that it can be used to supress the output of the "={}" syntax.
+     bool isInUnion = false;
      if (isDataMemberDesignator == true)
         {
        // We need to check if this is a designator that is associated with a union (does it have to be an un-named union).
@@ -7252,7 +7259,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
                classDeclaration = classDefinition->get_declaration();
              }
 
-          bool isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
+       // bool isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
+          isInUnion = (classDeclaration != NULL && classDeclaration->get_class_type() == SgClassDeclaration::e_union);
 #if DEBUG_DESIGNATED_INITIALIZER
           printf ("In unparseDesignatedInitializer: isInUnion = %s info.SkipClassDefinition() = %s \n",isInUnion ? "true" : "false",info.SkipClassDefinition() ? "true" : "false");
 #endif
@@ -7332,6 +7340,8 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
      printf ("In unparseDesignatedInitializer: di->get_memberInit()                          = %p = %s \n",di->get_memberInit(),di->get_memberInit()->class_name().c_str());
 #endif
 
+#if 0
+  // DQ (5/11/2015): Older code.
   // Only unparse the "=" if this is not another in a chain of SgAggregateInitializer IR nodes.
   // if (isSgAggregateInitializer(di->get_memberInit()) == NULL)
   // if (subTreeContainsDesignatedInitializer(initializer) == false)
@@ -7342,6 +7352,91 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
         }
 
      unparseExpression(initializer, info);
+#else
+
+  // DQ (5/11/2015): Use this normalized form for the designated initializer.  It is becoming too difficult to
+  // figure out when to use and not use the "=" operator and it is not available as information explicitly in 
+  // the AST.
+
+  // DQ (5/11/2015): We need to look at the SgAggregateInitializer and see if it will be outputing "{}".
+     SgAggregateInitializer* aggregateInitializer = isSgAggregateInitializer(initializer);
+     bool need_explicit_braces_in_aggregateInitializer = (aggregateInitializer != NULL && aggregateInitializer->get_need_explicit_braces());
+
+  // Variable used to control output of normalized syntax "={}".
+     bool need_explicit_braces = (need_explicit_braces_in_aggregateInitializer == false);
+
+  // DQ (5/11/2015): Supress output of normalized syntax "={}" for specific kinds of initializers (to avoid warnings in generated code).
+     if (need_explicit_braces == true && isAssignInitializer == true)
+        {
+          SgAssignInitializer* assignInitializer = isSgAssignInitializer(initializer);
+          ROSE_ASSERT(assignInitializer != NULL);
+          SgValueExp*       valueExp       = isSgValueExp(assignInitializer->get_operand());
+          SgCastExp*        castExp        = isSgCastExp(assignInitializer->get_operand());
+          SgFunctionRefExp* functionRefExp = isSgFunctionRefExp(assignInitializer->get_operand());
+
+       // DQ (5/12/2015): We need to supress "={}" when the types are classes (so that the class assignment operator will be called).
+          ROSE_ASSERT(assignInitializer->get_operand() != NULL);
+          ROSE_ASSERT(assignInitializer->get_operand()->get_type() != NULL);
+
+       // Calling SgType* stripType (unsigned char bit_array=STRIP_MODIFIER_TYPE|STRIP_REFERENCE_TYPE|STRIP_POINTER_TYPE|STRIP_ARRAY_TYPE|STRIP_TYPEDEF_TYPE) const
+          SgClassType* classType = isSgClassType( assignInitializer->get_operand()->get_type()->stripType(SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_TYPEDEF_TYPE) );
+          bool isClassType = (classType != NULL);
+
+#if DEBUG_DESIGNATED_INITIALIZER
+          printf ("assignInitializer->get_operand()->get_type() = %p = %s \n",assignInitializer->get_operand()->get_type(),assignInitializer->get_operand()->get_type()->class_name().c_str());
+          printf ("   --- isClassType = %s \n",isClassType ? "true" : "false");
+#endif
+
+       // if (valueExp != NULL || castExp != NULL || functionRefExp != NULL)
+          if (valueExp != NULL || castExp != NULL || functionRefExp != NULL || isClassType == true)
+             {
+#if DEBUG_DESIGNATED_INITIALIZER
+               printf ("In unparseDesignatedInitializer: reset need_explicit_braces to false \n");
+#endif
+               need_explicit_braces = false;
+             }
+        }
+
+#if DEBUG_DESIGNATED_INITIALIZER
+     printf ("In unparseDesignatedInitializer: need_explicit_braces = %s \n",need_explicit_braces ? "true" : "false");
+     printf ("In unparseDesignatedInitializer: isInUnion = %s \n",isInUnion ? "true" : "false");
+#endif
+
+  // if (outputDesignatedInitializerAssignmentOperator == true)
+     if (isInUnion == false)
+        {
+          curprint (" = ");
+#if DEBUG_DESIGNATED_INITIALIZER
+          printf ("In unparseDesignatedInitializer: isInitializer_AggregateInitializer = %s \n",isInitializer_AggregateInitializer ? "true" : "false");
+          printf ("In unparseDesignatedInitializer: initializer = %p = %s \n",initializer,initializer->class_name().c_str());
+#endif
+       // if (isInitializer_AggregateInitializer == false)
+       // if (need_explicit_braces == false)
+          if (need_explicit_braces == true)
+             {
+#if DEBUG_DESIGNATED_INITIALIZER
+               curprint (" /* designated initializer */ ");
+#endif
+               curprint ("{");
+             }
+        }
+
+     unparseExpression(initializer, info);
+
+  // if (outputDesignatedInitializerAssignmentOperator == true)
+     if (isInUnion == false)
+        {
+       // if (isInitializer_AggregateInitializer == false)
+       // if (need_explicit_braces == false)
+          if (need_explicit_braces == true)
+             {
+               curprint ("}");
+#if DEBUG_DESIGNATED_INITIALIZER
+               curprint (" /* designated initializer */ ");
+#endif
+             }
+        }
+#endif
 
 #else
   // Liao, fixing bug 355, 6/16/2009
@@ -7426,7 +7521,9 @@ Unparse_ExprStmt::unparseDesignatedInitializer(SgExpression* expr, SgUnparse_Inf
 
        // Don't emit '=' if it is an array element and is not the last designator
           if ( !(isArrayElementDesignator && !lastDesignator) )
+             {
                curprint (" = ");
+             }
 
           unparseExpression(di->get_memberInit(), info);
         }

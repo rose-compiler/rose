@@ -35,6 +35,10 @@ namespace TransformationTracking {
     ROSE_ASSERT (affected_id != 0);
     AST_NODE_ID input_id = getId (input_node);
     ROSE_ASSERT (input_id != 0);
+#if 0 // debugging
+   cout<<"Trans tracking: affected_node id:"<<affected_id <<" line:" << isSgLocatedNode(affected_node)->get_file_info()->get_line() 
+       << " input node id:"<< input_id<<" line:" << isSgLocatedNode(input_node)->get_file_info()->get_line()  <<endl; 
+#endif    
 
     inputIDs[affected_id].insert(input_id);
   }
