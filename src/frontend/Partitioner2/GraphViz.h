@@ -2,6 +2,8 @@
 #define ROSE_Partitioner2_GraphViz_H
 
 #include <ostream>
+#include <BinaryNoOperation.h>
+#include <boost/regex.hpp>
 #include <Color.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/ControlFlowGraph.h>
@@ -426,10 +428,13 @@ class CfgEmitter: public BaseEmitter<ControlFlowGraph> {
     bool showInstructionStackDeltas_;                   // show stack deltas for instructions
     bool showInNeighbors_;                              // show neighbors for incoming edges to selected vertices?
     bool showOutNeighbors_;                             // show neighbors for outgoing edges to selected vertices?
+    bool strikeNoopSequences_;                          // render no-op sequences in a different style
     Color::HSV funcEnterColor_;                         // background color for function entrance blocks
     Color::HSV funcReturnColor_;                        // background color for function return blocks
     Color::HSV warningColor_;                           // background color for special nodes and warnings
     DwarfLineMapper srcMapper_;                         // maps addresses to source code (optional)
+    static unsigned long versionDate_;                  // date code from "dot -V", like 20100126
+    NoOperation noOpAnalysis_;
 
 public:
     /** Constructor.
@@ -493,6 +498,19 @@ public:
     bool showInstructionStackDeltas() const { return showInstructionStackDeltas_; }
     void showInstructionStackDeltas(bool b) { showInstructionStackDeltas_ = b; }
     /** @} */
+
+    /** Property: strike no-op sequences.
+     *
+     *  Those instructions that are part of a no-op sequence are rendered in a different font (such as strike-through). When
+     *  two or more sequences overlap, the largest sequence is struck and all overlapping sequences are not processed. For
+     *  nested squences, this causes all instructions to be struck; for overlapping but non-nested sequences, only the largest
+     *  one is struck.
+     *
+     * @{ */
+    bool strikeNoopSequences() const { return strikeNoopSequences_; }
+    void strikeNoopSequences(bool b) { strikeNoopSequences_ = b; }
+    /** @} */
+
 
     /** Property: color to use for background of function entrance nodes.
      *
@@ -740,6 +758,9 @@ public:
 
     /** Attributes for function vertex. */
     virtual Attributes functionAttributes(const Function::Ptr&) const;
+
+private:
+    void init();
 };
 
 
@@ -751,11 +772,41 @@ public:
 class CgEmitter: public BaseEmitter<FunctionCallGraph::Graph> {
     const Partitioner &partitioner_;
     FunctionCallGraph cg_;
+    Color::HSV functionHighlightColor_;                 // highlight certain functions
+    boost::regex highlightNameMatcher_;                 // which functions to highlight
 public:
-    CgEmitter(const Partitioner &partitioner);
-    std::string functionLabel(const Function::Ptr&) const;
-    Attributes functionAttributes(const Function::Ptr&) const;
-    void emitCallGraph(std::ostream &out) const;
+    explicit CgEmitter(const Partitioner &partitioner);
+    CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg);
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual Attributes functionAttributes(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual void emitCallGraph(std::ostream &out) const ROSE_OVERRIDE;
+    virtual const FunctionCallGraph& callGraph() const { return cg_; }
+    virtual void callGraph(const FunctionCallGraph &cg);
+    virtual void highlight(const boost::regex&);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                              Callgraph emitter with inlined imports
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Emits a modified function call graph.
+ *
+ *  The function call graph is modified by removing all vertices whose function names match a user-specified pattern and
+ *  compensating by listing the names of removed functions in the vertices of the callers.  This is a little bit like inlining,
+ *  thus the name of the class. */
+class CgInlinedEmitter: public CgEmitter {
+    boost::regex nameMatcher_;
+    typedef std::vector<Function::Ptr> InlinedFunctions;
+    typedef Sawyer::Container::Map<Function::Ptr, InlinedFunctions> Inlines;
+    Inlines inlines_;
+public:
+    CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
+    CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
+    virtual const FunctionCallGraph& callGraph() const ROSE_OVERRIDE { return CgEmitter::callGraph(); }
+    virtual void callGraph(const FunctionCallGraph&) ROSE_OVERRIDE;
+    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual bool shouldInline(const Function::Ptr&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

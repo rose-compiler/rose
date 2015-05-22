@@ -560,8 +560,9 @@ SgAsmPEFileHeader::create_table_sections()
         switch (i) {
             case 0: {
                 /* Sometimes export sections are represented by a ".edata" section, and sometimes they're represented by an
-                 * RVA/Size pair, and sometimes both point to the same part of the file. We don't want the exports duplicated
-                 * in the AST, so we only create this table as exports if we haven't already seen some other export section. */
+                 * RVA/Size pair, sometimes both point to the same part of the file, and sometimes the RVA/Size pair points to
+                 * a different part of the file. We don't want the exports duplicated in the AST, so we only create this table
+                 * as exports if we haven't already seen some other export section. */
                 SgAsmGenericSectionPtrList &sections = get_sections()->get_sections();
                 bool seen_exports = false;
                 for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); !seen_exports && si!=sections.end(); ++si)

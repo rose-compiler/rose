@@ -30,7 +30,6 @@ enum PathSelection { NO_PATHS, FEASIBLE_PATHS, ALL_PATHS };
 
 // Settings from the command-line
 struct Settings {
-    std::string isaName;                                // instruction set architecture name
     std::string beginVertex;                            // address or function name where paths should begin
     std::vector<std::string> endVertices;               // addresses or function names where paths should end
     std::vector<std::string> avoidVertices;             // vertices to avoid in any path
@@ -71,8 +70,10 @@ static RegisterDescriptor REG_RETURN;
 // Information stored per V_USER_DEFINED vertices.
 struct FunctionSummary {
     P2::ControlFlowGraph::ConstVertexIterator cfgFuncVertex;
-    FunctionSummary() {}
-    explicit FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex): cfgFuncVertex(cfgFuncVertex) {}
+    int64_t stackDelta;
+    FunctionSummary(): stackDelta(SgAsmInstruction::INVALID_STACK_DELTA) {}
+    FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex, uint64_t stackDelta)
+        : cfgFuncVertex(cfgFuncVertex), stackDelta(stackDelta) {}
     std::string name() const {
         if (cfgFuncVertex->value().type() == P2::V_BASIC_BLOCK) {
             if (P2::Function::Ptr function = cfgFuncVertex->value().function()) {
@@ -90,34 +91,20 @@ static FunctionSummaries functionSummaries;
 typedef Sawyer::Container::Map<P2::ControlFlowGraph::ConstVertexIterator, std::vector<BaseSemantics::StatePtr> > StateStacks;
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[])
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine)
 {
     using namespace Sawyer::CommandLine;
 
-    //--------------------------- 
-    Parser parser;
-    parser
-        .purpose("finds paths in control flow graph")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@prop{programName} --begin=@v{va} --end=@v{va} [@v{switches}] @v{specimen}")
-        .doc("Description",
-             "Parses, loads, disassembles, and partitions the specimen and then looks for control flow paths. A path "
-             "is a sequence of edges in the global control flow graph beginning and ending at user-specified vertices. "
-             "A vertex is specified as either the name of a function, or an address contained in a basic block. Addresses "
-             "can be decimal, octal, or hexadecimal.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
+    std::string purpose = "finds paths in control flow graph";
+    std::string description =
+        "Parses, loads, disassembles, and partitions the specimen and then looks for control flow paths. A path "
+        "is a sequence of edges in the global control flow graph beginning and ending at user-specified vertices. "
+        "A vertex is specified as either the name of a function, or an address contained in a basic block. Addresses "
+        "can be decimal, octal, or hexadecimal.";
+
+    Parser parser = engine.commandLineParser(purpose, description);
     
-    //--------------------------- 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
-    //--------------------------- 
-    SwitchGroup dis("Disassembly switches");
-    dis.insert(Switch("isa")
-               .argument("architecture", anyParser(settings.isaName))
-               .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
-
     //--------------------------- 
     SwitchGroup cfg("Control flow graph switches");
     cfg.insert(Switch("begin")
@@ -291,7 +278,7 @@ parseCommandLine(int argc, char *argv[])
                .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
-    return parser.with(gen).with(dis).with(cfg).with(out).parse(argc, argv).apply();
+    return parser.with(cfg).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
 bool
@@ -415,8 +402,8 @@ bool shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVe
     P2::Function::Ptr callee = cfgCallTarget->value().function();
     if (!callee)
         return false;
-    if (boost::ends_with(callee->name(), "@plt"))
-        return true;                                    // this is probably dynamically linked ELF function
+    if (boost::ends_with(callee->name(), "@plt") || boost::ends_with(callee->name(), ".dll"))
+        return true;                                    // this is probably dynamically linked ELF or PE function
 
     // If the called function calls too many more functions then summarize instead of inlining.  This helps avoid problems with
     // the Partitioner2 not being able to find reasonable function boundaries, especially for GNU libc.
@@ -867,13 +854,18 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &vertex, 
     ops->varComment(retval->get_expression()->isLeafNode()->toString(), comment);
     ops->writeRegister(REG_RETURN, retval);
 
-    // Cause the function to return by popping the return target address off the top of the stack
+    // Cause the function to return to the address stored at the top of the stack.
     BaseSemantics::SValuePtr stackPointer = ops->readRegister(cpu->stackPointerRegister());
     BaseSemantics::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                             ops->undefined_(stackPointer->get_width()), ops->boolean_(true));
-    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), returnTarget->get_width()/8));
-    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
     ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
+
+    // Pop some things from the stack.
+    int64_t sd = summary.stackDelta != SgAsmInstruction::INVALID_STACK_DELTA ?
+                 summary.stackDelta :
+                 returnTarget->get_width() / 8;
+    stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
+    ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
 }
 
 void
@@ -929,13 +921,23 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
                   const P2::ControlFlowGraph &cfg, const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge) {
     ASSERT_require(cfg.isValidEdge(cfgCallEdge));
     P2::ControlFlowGraph::ConstVertexIterator cfgCallTarget = cfgCallEdge->target();
+    P2::Function::Ptr function;
+    if (cfgCallTarget->value().type() == P2::V_BASIC_BLOCK)
+        function = cfgCallTarget->value().function();
 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, P2::findCallReturnEdges(pathsCallSite))
         paths.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
-    FunctionSummary summary(cfgCallTarget);
+    int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA;
+    if (function && function->stackDelta().isCached()) {
+        BaseSemantics::SValuePtr sd = function->stackDelta().get();
+        if (sd->is_number())
+            stackDelta = sd->get_number();
+    }
+
+    FunctionSummary summary(cfgCallTarget, stackDelta);
     functionSummaries.insert(summaryVertex, summary);
 }
 
@@ -1113,6 +1115,9 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
     // vertices that can participate in a path from the callee's entry point to any of its returning points.
     P2::CfgPath path(pathsBeginVertex);
     while (!path.isEmpty()) {
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+        std::cerr <<"ROBB: path = " <<path <<"\n";
+#endif
         P2::ControlFlowGraph::ConstVertexIterator backVertex = path.backVertex();
         P2::ControlFlowGraph::ConstVertexIterator cfgBackVertex = pathToCfg(partitioner, backVertex);
         ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
@@ -1157,10 +1162,27 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 }
             }
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+            {
+                std::ofstream out("x-robb-1.dot");
+                P2::CfgConstVertexSet end;
+                end.insert(backVertex);
+                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
+            }
+#endif
 
             // Remove all call-return edges. This is necessary so we don't re-enter this case with infinite recursion. No need
             // to worry about adjusting the path because these edges aren't on the current path.
             P2::eraseEdges(paths, P2::findCallReturnEdges(backVertex));
+#if 1 // DEBUGGING [Robb P. Matzke 2015-05-15]
+            {
+                std::ofstream out("x-robb-2.dot");
+                P2::CfgConstVertexSet end;
+                end.insert(backVertex);
+                printGraphViz(out, partitioner, paths, path.frontVertex(), end, path);
+            }
+#endif
+
 
             // If the inlined function had no return sites but the call site had a call-return edge, then part of the paths
             // graph might now be unreachable. In fact, there might now be no paths from the begin vertex to any end vertex.
@@ -1527,6 +1549,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                     std::vector<P2::ControlFlowGraph::ConstVertexIterator> insertedVertices;
                     P2::insertCalleePaths(paths, work.vertex, partitioner.cfg(), cfgCallEdge,
                                           calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
                     BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         ++nVertsProcessed;
                         if (isFunctionCall(partitioner, vertex) && !P2::findCallReturnEdges(vertex).empty())
@@ -1580,28 +1603,18 @@ int main(int argc, char *argv[]) {
     Diagnostics::initialize();
     ::mlog = Diagnostics::Facility("tool", Diagnostics::destination);
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
+    Sawyer::Message::Stream info(::mlog[INFO]);
 
     // Parse the command-line
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv).unreachedArgs();
     P2::Engine engine;
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
+    engine.doingPostAnalysis(false);
+    engine.usingSemantics(true);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine);
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
 
     // Disassemble and partition
-    Stream info(::mlog[INFO] <<"disassembling");
-    engine.postPartitionAnalyses(false);
-    engine.load(specimenNames);
-#if 0 // [Robb P. Matzke 2015-02-27]
-    // Removing write access (if semantics is enabled) makes it so more indirect jumps have known successors even if those
-    // successors are only a subset of what's possible at runtime.
-    engine.memoryMap().any().changeAccess(0, MemoryMap::WRITABLE);
-#endif
-    P2::Partitioner partitioner = engine.createTunedPartitioner();
-    partitioner.enableSymbolicSemantics(true);
-    engine.partition(partitioner);
-    info <<"; done\n";
+    P2::Partitioner partitioner = engine.partition(specimenNames);
 
     // We must have instruction semantics in order to calculate path feasibility, so we might was well check that up front
     // before we spend a lot of time looking for paths.
