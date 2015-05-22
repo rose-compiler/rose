@@ -9,5 +9,10 @@ void DataFlow::initDiagnostics() {}
 void TaintedFlow::initDiagnostics() {}
 void InstructionSemantics2::initDiagnostics() {}
 
+namespace Strings {
+void initDiagnostics() {}
+} // namespace
+
+
 } // namespace
 } // namespace
