@@ -405,6 +405,10 @@ none|no)
 	support_php_frontend=no
 	support_python_frontend=no
 	support_opencl_frontend=no
+        with_haskell=no
+        enable_binary_analysis_tests=no
+        enable_projects_directory=no
+        enable_tutorial_directory=no
 	AC_MSG_WARN([you did not enable any language support])
 	;;
 binaries)
@@ -604,6 +608,16 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   if test "x$support_binaries_frontend" = "xyes" ; then
     with_haskell=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
+
+  #
+  # Only cuda  
+  #
+  if test "x$support_cuda_frontend" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
     enable_projects_directory=no
     enable_tutorial_directory=no
   fi
