@@ -511,7 +511,7 @@ elif test $count_of_languages_to_support = 1 ; then
 
     with_haskell=no
     with_php=no
-    with_python=no
+    enable_python=no
     enable_binary_analysis_tests=no
 
     # Allow tests directory to be run so that we can run the Fortran tests.
@@ -546,7 +546,7 @@ elif test $count_of_languages_to_support = 1 ; then
     # So these should be expressed in terms of the "with" and "enable" versions of each option's macro.
     # without_php=yes
     with_php=no
-    with_python=no
+    enable_python=no
 
     # disable_binary_analysis_tests=yes
     enable_binary_analysis_tests=no
@@ -646,9 +646,9 @@ elif test $count_of_languages_to_support = 1 ; then
   #
   # Python
   #
-  if test "x$with_python" = "xyes" ; then
+  if test "x$enable_python" = "xyes" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] with Python"
-  elif test "x$with_python" = "xno" ; then
+  elif test "x$enable_python" = "xno" ; then
     echo "[[$LANGUAGES_TO_SUPPORT-only support]] without Python"
   fi
 
