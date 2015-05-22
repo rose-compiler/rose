@@ -34,6 +34,7 @@ struct Settings {
     std::vector<std::string> endVertices;               // addresses or function names where paths should end
     std::vector<std::string> avoidVertices;             // vertices to avoid in any path
     std::vector<std::string> avoidEdges;                // edges to avoid in any path (even number of vertex addresses)
+    std::vector<rose_addr_t> summarizeFunctions;        // functions to summarize
     size_t maxRecursionDepth;                           // max recursion depth when expanding function calls
     size_t maxCallDepth;                                // max function call depth when expanding function calls
     size_t maxPathLength;                               // maximum length of any path considered
@@ -188,6 +189,13 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .doc("Virtual address to use for the initial stack pointer.  If no stack address is specified then the "
                     "analysis uses a symbolic value.  One benefit of specifying a concrete value is that it helps "
                     "disambiguate stack variables from other variables."));
+
+    cfg.insert(Switch("summarize-function")
+               .argument("va", listParser(nonNegativeIntegerParser(settings.summarizeFunctions)))
+               .whichValue(SAVE_ALL)
+               .explosiveLists(true)
+               .doc("Comma-separated list (or multiple occurrences of this switch) of function entry addresses for "
+                    "functions that should be summarized/approximated instead of traversed."));
 
     //--------------------------- 
     SwitchGroup out("Output switches");
@@ -404,6 +412,11 @@ bool shouldSummarizeCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVe
         return false;
     if (boost::ends_with(callee->name(), "@plt") || boost::ends_with(callee->name(), ".dll"))
         return true;                                    // this is probably dynamically linked ELF or PE function
+
+    // Summarize if the user desires it.
+    if (std::find(settings.summarizeFunctions.begin(), settings.summarizeFunctions.end(), callee->address()) !=
+        settings.summarizeFunctions.end())
+        return true;
 
     // If the called function calls too many more functions then summarize instead of inlining.  This helps avoid problems with
     // the Partitioner2 not being able to find reasonable function boundaries, especially for GNU libc.
