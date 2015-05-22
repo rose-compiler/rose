@@ -3647,6 +3647,14 @@ struct IP_storestring: P {
                                                          addr->get_width()));
                         ops->writeMemory(d->REG_ES, va, src, inLoop);
                     }
+                    ops->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.get_nbits(), 0));
+
+                    // Final value for (E)DI register
+                    BaseSemantics::SValuePtr va =
+                        ops->add(addr,
+                                 ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->get_width(), n), step),
+                                                     addr->get_width()));
+                    ops->writeRegister(dstReg, va);
                     return;
                 }
             }
