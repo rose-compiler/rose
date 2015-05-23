@@ -622,6 +622,15 @@ elif test $count_of_languages_to_support = 1 ; then
     enable_tutorial_directory=no
   fi
 
+  #
+  # Only opencl  
+  #
+  if test "x$support_opencl_frontend" = "xyes" ; then
+    with_haskell=no
+    enable_binary_analysis_tests=no
+    enable_projects_directory=no
+    enable_tutorial_directory=no
+  fi
 #AC_MSG_RESULT([done])
 #end-if $count_of_languages==1 (enable-only-language)
 
