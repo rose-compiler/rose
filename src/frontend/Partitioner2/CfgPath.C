@@ -213,38 +213,42 @@ operator<<(std::ostream &out, const CfgPath &path) {
 }
 
 std::vector<bool>
-findPathEdges(const ControlFlowGraph &graph, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+findPathEdges(const ControlFlowGraph &graph, const CfgConstVertexSet &beginVertices,
               const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
               const CfgConstEdgeSet &avoidEdges, bool avoidCallsAndReturns) {
     using namespace Sawyer::Container::Algorithm;
 
-    // Mark edges that are reachable with a forward traversal from the starting vertex, avoiding certain vertices and edges.
+    // Mark edges that are reachable with a forward traversal from any starting vertex, avoiding certain vertices and edges.
     std::vector<bool> forwardReachable(graph.nEdges(), false);
-    typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> ForwardTraversal;
-    for (ForwardTraversal t(graph, beginVertex, ENTER_EVENTS); t; ++t) {
-        switch (t.event()) {
-            case ENTER_VERTEX:
-                if (avoidVertices.find(t.vertex()) != avoidVertices.end())
-                    t.skipChildren();
-                break;
-            case ENTER_EDGE:
-                if (avoidCallsAndReturns &&
-                    (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_RETURN)) {
-                    t.skipChildren();
-                } else if (avoidEdges.find(t.edge()) != avoidEdges.end()) {
-                    t.skipChildren();
-                } else {
-                    forwardReachable[t.edge()->id()] = true;
-                }
-                break;
-            default:
-                break;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &beginVertex, beginVertices) {
+        ASSERT_require(graph.isValidVertex(beginVertex));
+        typedef DepthFirstForwardGraphTraversal<const ControlFlowGraph> ForwardTraversal;
+        for (ForwardTraversal t(graph, beginVertex, ENTER_EVENTS); t; ++t) {
+            switch (t.event()) {
+                case ENTER_VERTEX:
+                    if (avoidVertices.find(t.vertex()) != avoidVertices.end())
+                        t.skipChildren();
+                    break;
+                case ENTER_EDGE:
+                    if (avoidCallsAndReturns &&
+                        (t.edge()->value().type() == E_FUNCTION_CALL || t.edge()->value().type() == E_FUNCTION_RETURN)) {
+                        t.skipChildren();
+                    } else if (avoidEdges.find(t.edge()) != avoidEdges.end()) {
+                        t.skipChildren();
+                    } else {
+                        forwardReachable[t.edge()->id()] = true;
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
     }
 
     // Mark edges that are reachable with a backward traversal from any ending vertex, avoiding certain vertices and edges.
     std::vector<bool> significant(graph.nEdges(), false);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &endVertex, endVertices) {
+        ASSERT_require(graph.isValidVertex(endVertex));
         typedef DepthFirstReverseGraphTraversal<const ControlFlowGraph> ReverseTraversal;
         for (ReverseTraversal t(graph, endVertex, ENTER_EVENTS); t; ++t) {
             switch (t.event()) {
@@ -272,11 +276,12 @@ findPathEdges(const ControlFlowGraph &graph, const ControlFlowGraph::ConstVertex
 
 CfgConstEdgeSet
 findPathReachableEdges(const ControlFlowGraph &graph,
-                       const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+                       const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                        const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
                        bool avoidCallsAndReturns) {
     CfgConstEdgeSet retval;
-    std::vector<bool> goodEdges = findPathEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
+    std::vector<bool> goodEdges = findPathEdges(graph, beginVertices, endVertices, avoidVertices, avoidEdges,
+                                                avoidCallsAndReturns);
     ASSERT_require(goodEdges.size() == graph.nEdges());
     for (size_t i=0; i<graph.nEdges(); ++i) {
         if (goodEdges[i])
@@ -287,10 +292,12 @@ findPathReachableEdges(const ControlFlowGraph &graph,
     
 CfgConstEdgeSet
 findPathUnreachableEdges(const ControlFlowGraph &graph,
-                         const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
-                         const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges, bool avoidCallsAndReturns) {
+                         const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
+                         const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
+                         bool avoidCallsAndReturns) {
     CfgConstEdgeSet retval;
-    std::vector<bool> goodEdges = findPathEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
+    std::vector<bool> goodEdges = findPathEdges(graph, beginVertices, endVertices, avoidVertices, avoidEdges,
+                                                avoidCallsAndReturns);
     ASSERT_require(goodEdges.size() == graph.nEdges());
     for (size_t i=0; i<graph.nEdges(); ++i) {
         if (!goodEdges[i])
@@ -300,54 +307,52 @@ findPathUnreachableEdges(const ControlFlowGraph &graph,
 }
 
 size_t
-eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const ControlFlowGraph::ConstVertexIterator &beginVertex,
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const CfgConstVertexSet &beginVertices,
                       const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
     size_t origPathSize = path.nEdges();
-    if (beginVertex == graph.vertices().end()) {
+    if (beginVertices.empty() || endVertices.empty()) {
         graph.clear();
         vmap.clear();
         path.clear();
         return origPathSize;
     }
-    ASSERT_require(graph.isValidVertex(beginVertex));
 
     // Erase unreachable edges from the graph and path
     CfgConstVertexSet avoidVertices;
     CfgConstEdgeSet avoidEdges;
-    CfgConstEdgeSet badEdges = findPathUnreachableEdges(graph, beginVertex, endVertices, avoidVertices, avoidEdges, false);
+    CfgConstEdgeSet badEdges = findPathUnreachableEdges(graph, beginVertices, endVertices, avoidVertices, avoidEdges, false);
     CfgConstVertexSet incidentVertices = findIncidentVertices(badEdges);
     path.truncate(badEdges);
     eraseEdges(graph, badEdges);
 
-    // This might leave some vertices having no incident edges, so remove them since they can't participate on any path. Don't
-    // remove the beginVertex if it can be a singleton path. Avoid scanning the entire graph by considering only vertices that
-    // are incident to the edges we just removed.
-    if (endVertices.find(beginVertex) != endVertices.end())
-        incidentVertices.erase(beginVertex);                 // beginVertex is a valid singleton path
+    // This might leave some vertices having no incident edges, so remove them since they can't participate on any path. Avoid
+    // scanning the entire graph by considering only vertices that are incident to the edges we just removed.
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, incidentVertices) {
         if (vertex->degree() == 0) {
-            vmap.eraseTarget(vertex);
-            graph.eraseVertex(vertex);
+            if (beginVertices.find(vertex)!=beginVertices.end() && endVertices.find(vertex)!=endVertices.end()) {
+                // Don't remove this vertex if it can be a singleton path.
+            } else {
+                vmap.eraseTarget(vertex);
+                graph.eraseVertex(vertex);
+            }
         }
     }
-
-    // If we removed the begin vertex (and thus all vertices) from the graph, then the path should also be emptied.
     if (graph.isEmpty())
         path.clear();
 
     return origPathSize - path.nEdges();
 }
 
-ControlFlowGraph
-findPaths(const ControlFlowGraph &cfg, CfgVertexMap &vmap /*out*/,
-          const ControlFlowGraph::ConstVertexIterator &beginVertex,
-          const CfgConstVertexSet &endVertices, const CfgConstVertexSet &avoidVertices,
-          const CfgConstEdgeSet &avoidEdges,
+void
+findPaths(const ControlFlowGraph &cfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+          const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
+          const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges,
           bool avoidCallsAndReturns) {
-    ASSERT_require(cfg.isValidVertex(beginVertex));
+    paths.clear();
     vmap.clear();
-    ControlFlowGraph paths;
-    std::vector<bool> goodEdges = findPathEdges(cfg, beginVertex, endVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
+
+    // Find all edges and insert them along with incident vertices.
+    std::vector<bool> goodEdges = findPathEdges(cfg, beginVertices, endVertices, avoidVertices, avoidEdges, avoidCallsAndReturns);
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg.edges()) {
         if (goodEdges[edge.id()]) {
             if (!vmap.forward().exists(edge.source()))
@@ -357,26 +362,30 @@ findPaths(const ControlFlowGraph &cfg, CfgVertexMap &vmap /*out*/,
             paths.insertEdge(vmap.forward()[edge.source()], vmap.forward()[edge.target()], edge.value());
         }
     }
-    if (!vmap.forward().exists(beginVertex) &&
-        endVertices.find(beginVertex)!=endVertices.end() &&
-        avoidVertices.find(beginVertex)==avoidVertices.end()) {
-        vmap.insert(beginVertex, paths.insertVertex(beginVertex->value()));
+
+    // Make sure begin vertices are present. They were probably inserted above except if the vertex has no incident edges, in
+    // which case the begin vertex should be inserted only if it can be a singleton path.
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &beginVertex, beginVertices) {
+        if (!vmap.forward().exists(beginVertex) &&                      // not inserted above
+            endVertices.find(beginVertex)!=endVertices.end() &&         // can be a singleton path
+            avoidVertices.find(beginVertex)==avoidVertices.end()) {     // not an avoided vertex
+            vmap.insert(beginVertex, paths.insertVertex(beginVertex->value()));
+        }
     }
-    return paths;
 }
 
-ControlFlowGraph
-findFunctionPaths(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
-                  const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+void
+findFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                  const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                   const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
-    return findPaths(srcCfg, vmap, beginVertex, endVertices, avoidVertices, avoidEdges, true);
+    return findPaths(srcCfg, paths, vmap, beginVertices, endVertices, avoidVertices, avoidEdges, true);
 }
 
-ControlFlowGraph
-findInterFunctionPaths(const ControlFlowGraph &srcCfg, CfgVertexMap &vmap /*out*/,
-                       const ControlFlowGraph::ConstVertexIterator &beginVertex, const CfgConstVertexSet &endVertices,
+void
+findInterFunctionPaths(const ControlFlowGraph &srcCfg, ControlFlowGraph &paths /*out*/, CfgVertexMap &vmap /*out*/,
+                       const CfgConstVertexSet &beginVertices, const CfgConstVertexSet &endVertices,
                        const CfgConstVertexSet &avoidVertices, const CfgConstEdgeSet &avoidEdges) {
-    return findPaths(srcCfg, vmap, beginVertex, endVertices, avoidVertices, avoidEdges, false);
+    return findPaths(srcCfg, paths, vmap, beginVertices, endVertices, avoidVertices, avoidEdges, false);
 }
     
 bool
@@ -434,8 +443,10 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
 
     // Find all paths through the callee that return and avoid certain vertices and edges.
     CfgVertexMap vmap1;                                 // relates CFG to calleePaths
+    CfgConstVertexSet cfgCallTargets; cfgCallTargets.insert(cfgCallTarget);
     CfgConstVertexSet cfgReturns = findFunctionReturns(cfg, cfgCallTarget);
-    ControlFlowGraph calleePaths = findFunctionPaths(cfg, vmap1, cfgCallTarget, cfgReturns, cfgAvoidVertices, cfgAvoidEdges);
+    ControlFlowGraph calleePaths;
+    findFunctionPaths(cfg, calleePaths, vmap1, cfgCallTargets, cfgReturns, cfgAvoidVertices, cfgAvoidEdges);
     if (calleePaths.isEmpty()) {
         SAWYER_MESG(mlog[DEBUG]) <<"insertCalleePaths: " <<calleeName <<" has no paths to insert\n";
         return false;
@@ -467,6 +478,126 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
         }
     }
     return true;
+}
+
+bool
+Inliner::ShouldInline::operator()(const Partitioner &partitioner, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
+                                  const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                                  size_t callDepth) {
+    ASSERT_require(partitioner.cfg().isValidEdge(cfgCallEdge));
+    ASSERT_require(paths.isValidVertex(pathsCallSite));
+    return callDepth <= maxCallDepth_;
+}
+
+// class method
+ControlFlowGraph::ConstVertexIterator
+Inliner::pathToCfg(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+    switch (pathVertex->value().type()) {
+        case V_BASIC_BLOCK:
+            return partitioner.findPlaceholder(pathVertex->value().address());
+        case V_INDETERMINATE:
+            return partitioner.indeterminateVertex();
+        case V_NONEXISTING:
+            return partitioner.nonexistingVertex();
+        case V_UNDISCOVERED:
+            return partitioner.undiscoveredVertex();
+        case V_USER_DEFINED:
+            return partitioner.cfg().vertices().end();
+    }
+    ASSERT_not_reachable("invalid vertex type");
+}
+
+// class method
+bool
+Inliner::isFunctionCall(const Partitioner &partitioner, const ControlFlowGraph::ConstVertexIterator &pathVertex) {
+    ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, pathVertex);
+    ASSERT_require(partitioner.cfg().isValidVertex(cfgVertex));
+    BOOST_FOREACH (ControlFlowGraph::Edge edge, cfgVertex->outEdges()) {
+        if (edge.value().type() == E_FUNCTION_CALL)
+            return true;
+    }
+    return false;
+}
+
+void
+Inliner::reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+              const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
+              const CfgConstEdgeSet &cfgAvoidEdges) {
+
+    paths_.clear();
+    vmap_.clear();
+    workList_.clear();
+    if (!shouldInline_)
+        shouldInline_ = ShouldInline::instance();
+
+    // Find top-level paths. These paths don't traverse into function calls unless they must do so in order to reach an ending
+    // vertex.
+    findInterFunctionPaths(partitioner.cfg(), paths_/*out*/, vmap_/*out*/,
+                           cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
+    if (paths_.isEmpty()) {
+        pathsBeginVertices_.clear();
+        pathsEndVertices_.clear();
+        return;
+    }
+    pathsBeginVertices_ = forwardMapped(cfgBeginVertices, vmap_);
+    pathsEndVertices_ = forwardMapped(cfgEndVertices, vmap_);
+
+    // Set up the initial worklist
+    for (ControlFlowGraph::ConstVertexIterator vert=paths_.vertices().begin(); vert!=paths_.vertices().end(); ++vert) {
+        if (isFunctionCall(partitioner, vert) && !findCallReturnEdges(vert).empty())
+            workList_.push_back(CallSite(vert, 0));
+    }
+}
+
+void
+Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,
+                     const CfgConstVertexSet &cfgEndVertices, const CfgConstVertexSet &cfgAvoidVertices,
+                     const CfgConstEdgeSet &cfgAvoidEdges) {
+
+    reset(partitioner, cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
+
+    // When finding paths through a called function, avoid the usual vertices and edges, but also avoid those vertices that
+    // mark the end of paths. We want paths that go all the way from the entry block of the called function to its returning
+    // blocks.
+    CfgConstVertexSet calleeCfgAvoidVertices = cfgAvoidVertices;
+    calleeCfgAvoidVertices.insert(cfgEndVertices.begin(), cfgEndVertices.end());
+
+    while (!workList_.empty()) {
+        CallSite work = workList_.back();
+        workList_.pop_back();
+        ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, work.pathsVertex);
+        BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, findCallEdges(cfgVertex)) {
+            if ((*shouldInline_)(partitioner, cfgCallEdge, paths_, work.pathsVertex, work.callDepth)) {
+                std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
+                insertCalleePaths(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge, calleeCfgAvoidVertices, cfgAvoidEdges,
+                                  &insertedVertices);
+                eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
+                BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
+                    if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())
+                        workList_.push_back(CallSite(vertex, work.callDepth+1));
+                }
+            } else {
+                // FIXME[Robb P. Matzke 2015-05-22]: how to process summaries?
+            }
+        }
+        eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
+    }
+
+    // Remove edges and vertices that cannot be part of any path
+    CfgConstEdgeSet pathsUnreachableEdges = findPathUnreachableEdges(paths_, pathsBeginVertices_, pathsEndVertices_);
+    CfgConstVertexSet pathsIncidentVertices = findIncidentVertices(pathsUnreachableEdges);
+    eraseEdges(paths_, pathsUnreachableEdges);
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathVertex, pathsIncidentVertices) {
+        if (pathVertex->degree() == 0) {
+            if (pathsBeginVertices_.find(pathVertex)!=pathsBeginVertices_.end() &&
+                pathsEndVertices_.find(pathVertex)!=pathsEndVertices_.end()) {
+                // dont erase vertex for a singleton path
+            } else {
+                vmap_.eraseTarget(pathVertex);
+                paths_.eraseVertex(pathVertex);
+            }
+        }
+    }
 }
 
 } // namespace

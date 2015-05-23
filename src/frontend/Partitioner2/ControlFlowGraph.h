@@ -242,6 +242,18 @@ CfgConstVertexSet findDetachedVertices(const ControlFlowGraph&);
 CfgConstVertexSet findDetachedVertices(const CfgConstVertexSet &vertices);
 /** @} */
 
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the forward mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet forwardMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
+/** Return corresponding iterators.
+ *
+ *  Given a set of iterators and a vertex map, return the corresponding iterators by following the reverse mapping. Any vertex
+ *  in the argument that is not present in the mapping is silently ignored. */
+CfgConstVertexSet reverseMapped(const CfgConstVertexSet&, const CfgVertexMap&);
+
 } // namespace
 } // namespace
 } // namespace
