@@ -989,6 +989,12 @@ test_m32_use: $(testTranslator)
 test_file_suffix: $(testTranslator) 
 	$(testTranslator) -c $(srcdir)/test2015_133.S
 
+# DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
+test_mregparm_m32_use: $(testTranslator)
+	$(testTranslator) -mregparm=3 -m32 -rose:C89 -c $(srcdir)/test2015_154.c
+
+
+
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
 
