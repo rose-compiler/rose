@@ -563,7 +563,10 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_84.c \
      test2015_85.c \
      test2015_89.c \
-     test2015_100.c \
+     test2015_90.c \
+     test2015_91.c \
+     test2015_92.c \
+     test2015_104.c \
      test2015_105.c \
      test2015_107.c \
      test2015_108.c \
@@ -608,15 +611,10 @@ TESTCODES_REQUIRED_TO_PASS = \
 # DQ (4/11/2015): New failing tests:
 FAILING_TESTCODES_XEN = \
     test2015_56.c \
-    test2015_84.c \
-    test2015_85.c \
     test2015_86.c \
     test2015_87.c \
     test2015_88.c \
     test2015_89.c \
-    test2015_90.c \
-    test2015_91.c \
-    test2015_92.c \
     test2015_93.c \
     test2015_94.c \
     test2015_95.c \
@@ -624,10 +622,10 @@ FAILING_TESTCODES_XEN = \
     test2015_97.c \
     test2015_98.c \
     test2015_99.c \
+    test2015_100.c \
     test2015_101.c \
     test2015_102.c \
     test2015_103.c \
-    test2015_104.c \
     test2015_106.c \
     test2015_111.c 
 
@@ -643,7 +641,7 @@ FAILING_TESTCODES_XEN = \
 #    test2015_89.c (only fails when tested using -m32 -mrtd options using makefile rule: test_rtd_use)
 #    test2015_93.c  (demonstrates use of GNU statement-expression in default case of switch statement)
 #    test2015_95.c  (demonstrates 32-bit mode requirement for EDG front-end)
-#    test2015_100.c (demonstrates that the typeof opertor not output in argument type for function type unparsing)
+#    test2015_100.c (demonstrates that the typeof operator not output in argument type for function type unparsing)
 #    test2015_102.c (demonstrates unparsing of alias attribute on non-defining declaration)
 #    test2015_103.c (demonstrates unparsing of CPP directive before closing ";" of expanded macro)
 #    test2015_105.c (demonstrates unparsing of __asm__() in wrong position)
