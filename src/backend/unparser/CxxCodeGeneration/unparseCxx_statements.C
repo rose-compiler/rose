@@ -8172,15 +8172,25 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
-     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
-     ROSE_ASSERT(sourceFile != NULL);
+  // DQ (5/23/2015): The p_skip_unparse_asm_commands data member has been changed to be a static data member
+  // so that we can support ASM statments hidden in AST islands (AST subtrees hidden in types and thus not
+  // connected to the AST (since types are shared).  The use of the typeof operator in conjunction with the
+  // GNU statemnet expression can permit this configuration.
+
+  // DQ (5/19/2015): Note that sourceFile will be NULL in the case where the asm statement is in 
+  // a GNU statement expression in a typeof operator. Not clear yet what to do about this case.
+  // See test2015_141.c for an example of this. One solution might be to make the 
+  // skip_unparse_asm_commands variable a static data member.
+  // SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
+  // ROSE_ASSERT(sourceFile != NULL);
 
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
   // frequently machine specific and we are compiling then on architectures for which they were 
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
   // but not unparsed in the code given to the backend compiler, since this can fail. (See 
   // test2007_20.C from Linux Kernel for an example).
-     if (sourceFile->get_skip_unparse_asm_commands() == true)
+  // if (sourceFile->get_skip_unparse_asm_commands() == true)
+     if (SgSourceFile::get_skip_unparse_asm_commands() == true)
         {
        // This is a case were we skip the unparsing of the C language ASM statements, because while 
        // we can read then into the AST to support analysis, we can not always output them correctly.  
