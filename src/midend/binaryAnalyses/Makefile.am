@@ -46,6 +46,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
+    BinaryNoOperation.C						\
     BinaryReturnValueUsed.C					\
     BinaryString.C						\
     BinaryTaintedFlow.C						\
@@ -114,6 +115,7 @@ pkginclude_HEADERS =					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
     BinaryMagic.h					\
+    BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\

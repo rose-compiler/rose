@@ -6,6 +6,7 @@
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // BinaryLoader
+#include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
 #include "Disassembler.h"                               // rose::BinaryAnalysis::Disassembler
@@ -26,6 +27,10 @@ static bool isInitialized_ = false;
 void initialize() {
     if (!isInitialized()) {
         isInitialized_ = true;
+
+        // How do failed assertions behave?  Don't make any changes if this is already initialized by the user.
+        if (!Sawyer::Assert::assertFailureHandler)
+            failedAssertionBehavior(NULL);              // sets it to a default behavior based on configuration
 
         // Allow libsawyer to initialize itself if necessary.  Among other things, this makes Saywer::Message::merr actually
         // point to something.  This is also the place where one might want to assign some other message plumbing to
@@ -66,6 +71,7 @@ void initialize() {
         BinaryAnalysis::TaintedFlow::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+        BinaryAnalysis::Strings::initDiagnostics();
         EditDistance::initDiagnostics();
     }
 }

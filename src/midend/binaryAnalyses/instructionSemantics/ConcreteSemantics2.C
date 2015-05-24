@@ -69,8 +69,10 @@ MemoryState::pageSize(rose_addr_t nBytes) {
 void
 MemoryState::allocatePage(rose_addr_t va) {
     rose_addr_t pageVa = alignDown(va, pageSize_);
+    unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
     map_.insert(AddressInterval::baseSize(pageVa, pageSize_),
-                MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_)));
+                MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
+                                   0, acc, "ConcreteSemantics demand allocated"));
 }
 
 void
@@ -137,7 +139,7 @@ MemoryState::print(std::ostream &out, Formatter&) const {
     while (map_.atOrAfter(pageVa).next().assignTo(pageVa)) {
         uint8_t page[pageSize_];
         size_t nread = map_.at(pageVa).limit(pageSize_).read(page).size();
-        ASSERT_require(nread == pageSize_);
+        ASSERT_always_require(nread == pageSize_);
         HexdumpFormat fmt;
         SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
         out <<"\n";

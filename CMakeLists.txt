@@ -577,6 +577,18 @@ if(enable-yices)
      An executable named /bin/yices should be under the specified prefix.")
 endif()
 
+set(ASSERTION_BEHAVIOR "exit" CACHE STRING
+  "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
+if(ASSERTION_BEHAVIOR STREQUAL "abort")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_ABORT")
+elseif(ASSERTION_BEHAVIOR STREQUAL "exit")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_EXIT")
+elseif(ASSERTION_BEHAVIOR STREQUAL "throw")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_THROW")
+else()
+  message(FATAL_ERROR "ASSERTION_BEHAVIOR should be 'abort', 'exit', or 'throw'")
+endif()
+
 set(with-alternate_backend_Cxx_compiler "" CACHE STRING
   "Specify an alternative C++ back-end compiler")
 if(with-alternate_backend_Cxx_compiler)

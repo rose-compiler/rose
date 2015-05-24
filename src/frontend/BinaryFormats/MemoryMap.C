@@ -604,14 +604,22 @@ MemoryMap::eraseZeros(size_t minsize)
     BOOST_FOREACH (const AddressInterval &interval, toRemove.intervals())
         erase(interval);
 }
-                
+
 Sawyer::Optional<rose_addr_t>
 MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind,
+                   unsigned requiredPerms, unsigned prohibitedPerms) const {
+    if (limits.empty() || bytesToFind.empty())
+        return Sawyer::Nothing();
+    AddressInterval interval = AddressInterval::hull(limits.first(), limits.last());
+    return findAny(interval, bytesToFind, requiredPerms, prohibitedPerms);
+}
+
+Sawyer::Optional<rose_addr_t>
+MemoryMap::findAny(const AddressInterval &limits, const std::vector<uint8_t> &bytesToFind,
                    unsigned requiredPerms, unsigned prohibitedPerms) const
 {
-    Sawyer::Nothing NOT_FOUND;
-    if (limits.empty() || bytesToFind.empty())
-        return NOT_FOUND;
+    if (!limits || bytesToFind.empty())
+        return Sawyer::Nothing();
 
     // Read a bunch of bytes at a time.  If the buffer size is large then we'll have fewer read calls before finding a match,
     // which is good if a match is unlikely.  But if a match is likely, then it's better to use a smaller buffer so we don't
@@ -621,8 +629,8 @@ MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind
     size_t bufsize = 8;                                 // initial buffer size
     uint8_t buffer[4096];                               // full buffer
 
-    Sawyer::Optional<rose_addr_t> atVa = this->at(limits.first()).require(requiredPerms).prohibit(prohibitedPerms).next();
-    while (atVa && *atVa <= limits.last()) {
+    Sawyer::Optional<rose_addr_t> atVa = this->at(limits.least()).require(requiredPerms).prohibit(prohibitedPerms).next();
+    while (atVa && *atVa <= limits.greatest()) {
         if (nremaining > 0)                             // zero implies entire address space
             bufsize = std::min(bufsize, nremaining);
         size_t nread = at(*atVa).limit(bufsize).require(requiredPerms).prohibit(prohibitedPerms).read(buffer).size();
@@ -636,7 +644,32 @@ MemoryMap::findAny(const Extent &limits, const std::vector<uint8_t> &bytesToFind
         nremaining -= nread;                            // ok if nremaining is already zero
     }
 
-    return NOT_FOUND;
+    return Sawyer::Nothing();
+}
+
+Sawyer::Optional<rose_addr_t>
+MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8_t> &sequence) const {
+    if (interval.isEmpty())
+        return Sawyer::Nothing();
+    if (sequence.empty())
+        return interval.least();
+    std::vector<uint8_t> buffer(4096);                  // size is arbitrary
+    ASSERT_require2(sequence.size() <= buffer.size(), "long sequences not implemented yet");
+    rose_addr_t searchVa = interval.least();
+    while (AddressInterval window = atOrAfter(searchVa).read(buffer)) {
+        for (size_t offset=0; offset+sequence.size()<=window.size(); ++offset) {
+            if (std::equal(sequence.begin(), sequence.end(), &buffer[offset]))
+                return window.least() + offset;
+        }
+        if (window.size()==buffer.size()) {
+            searchVa = window.greatest() - buffer.size() + 2; // search for sequence that overlaps window boundary
+        } else if (window.greatest() == hull().greatest()) {
+            break;                                      // avoid possible overflow
+        } else {
+            searchVa = window.greatest() + 1;
+        }
+    }
+    return Sawyer::Nothing();
 }
 
 void

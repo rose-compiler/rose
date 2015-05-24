@@ -63,6 +63,11 @@ public:
         for (Graph::VertexIterator iter=graph_.vertices().begin(); iter!=graph_.vertices().end(); ++iter)
             index_.insert(iter->value()->address(), iter);
     }
+
+    /** Return all functions in the call graph. */
+    boost::iterator_range<Graph::ConstVertexValueIterator> functions() {
+        return graph_.vertexValues();
+    }
     
     /** Find function in call graph.
      *
@@ -102,18 +107,21 @@ public:
     /** Insert a call edge.
      *
      *  Inserts an edge representing a call from source (caller) to target (callee). The @p type can be @ref E_FUNCTION_CALL or
-     *  @ref E_FUNCTION_XFER. If @p allowParallelEdges is false and such an edge is already present in the graph, then the
-     *  existing edge's counter is incremented rather than adding a new parallel edge.
+     *  @ref E_FUNCTION_XFER.
+     *
+     *  If @p edgeCount is non-zero an an edge of the correct type already exists between the @p source and @p target, then the
+     *  count on that edge is incremented instead. Otherwise, when @p edgeCount is zero, a new edge with unit count is inserted
+     *  even if it means creating an edge parallel to an existing edge.
      *
      *  Returns the edge that was inserted or incremented.
      *
      * @{ */
     Graph::EdgeIterator insertCall(const Function::Ptr &source, const Function::Ptr &target,
-                                   EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true) {
-        return insertCall(insertFunction(source), insertFunction(target), type, allowParallelEdges);
+                                   EdgeType type = E_FUNCTION_CALL, size_t edgeCount = 0) {
+        return insertCall(insertFunction(source), insertFunction(target), type, edgeCount);
     }
     Graph::EdgeIterator insertCall(const Graph::VertexIterator &source, const Graph::VertexIterator &target,
-                                   EdgeType type = E_FUNCTION_CALL, bool allowParallelEdges = true);
+                                   EdgeType type = E_FUNCTION_CALL, size_t edgeCount = 0);
     /** @} */
     
     /** List of all functions that call the specified function.

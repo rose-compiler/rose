@@ -74,6 +74,11 @@ public:
      *  the stopwatch if not already running. */
     double start(bool clear=false);
 
+    /** Restart the timer.
+     *
+     *  Reports the accumulated time as of this call, then resets it to zero and starts or restarts the clock running. */
+    double restart();
+
     /** Stop the timer and report accumulated time.
      *
      *  If the timer is running then it is stopped and the elapsed time is accumulated, otherwise the timer

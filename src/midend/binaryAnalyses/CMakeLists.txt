@@ -1,4 +1,18 @@
 add_library(midend_binary OBJECT
+  AbstractLocation.C
+  binary_analysis.C
+  BinaryCallingConvention.C
+  BinaryControlFlow.C
+  BinaryDataFlow.C
+  BinaryDominance.C
+  BinaryFunctionCall.C
+  BinaryMagic.C
+  BinaryNoOperation.C
+  BinaryReturnValueUsed.C
+  BinaryString.C
+  BinaryTaintedFlow.C
+  DwarfLineMapper.C
+  GraphAlgorithms.C
   RoseBin_CallGraphAnalysis.cpp
   RoseBin_FlowAnalysis.cpp
   RoseBin_DataFlowAnalysis.cpp
@@ -47,6 +61,7 @@ install(
     BinaryDominance.h
     BinaryFunctionCall.h
     BinaryMagic.h
+    BinaryNoOperation.h
     BinaryPointerDetection.h
     BinaryString.h
     BinaryTaintedFlow.h

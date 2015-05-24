@@ -113,6 +113,7 @@ rm -rf autom4te.cache
 ###############################################################################################################################
 echo "checking for glibtool..."
 libtoolize_name=
+ACLOCAL_HOME=$(aclocal --print-ac-dir)
 # Liao 2/9/2011. Ensure the libtool on Mac is the gnu one
 #
 # Look for libtoolize, glibtoolize in various places.
@@ -275,7 +276,7 @@ if test "x$do_header_file_dependence_checking" = "xno"; then
 header_file_dependence_checking=--ignore-deps
 fi
 (set -ex
-    aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I /usr/share/aclocal $ACLOCAL_INCLUDES
+    aclocal -I $ROSE_DISTRIBUTION/config -I $ROSE_DISTRIBUTION/acmacros -I $ACLOCAL_HOME $ACLOCAL_INCLUDES
     autoheader
     autoconf
 # DQ (10/17/2011): Allow header file dependencies to be built by default (-a: --add-missing, -c: --copy; made more explicitly clear).

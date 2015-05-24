@@ -120,7 +120,7 @@
 0x080489dc: ================================== Function (function call, import, graph) <fprintf@plt>
 
 0x080489dc: Basic block reasons: entry point
-0x080489dc: ff 25 9c ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad9c<.got.plt+0x24>]
+0x080489dc: ff 25 9c ad 04 08       |.%....  |<sp+0 >   jmp    dword ds:[0x0804ad9c<"p,'">]
 0x080489dc: Outgoing stack delta: +0
 0x080489dc: Successor blocks: unknown
 
