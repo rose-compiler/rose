@@ -627,7 +627,14 @@ FAILING_TESTCODES_XEN = \
     test2015_102.c \
     test2015_103.c \
     test2015_106.c \
-    test2015_111.c 
+    test2015_111.c \
+    test2015_150.c \
+    test2015_151.c \
+    test2015_152.c \
+    test2015_153.c \
+    test2015_154.c \
+    test2015_155.c \
+    test2015_156.c 
 
 # DQ (4/13/2015): The best examples of remaining bugs are:
 # Makefile rules:
@@ -1041,7 +1048,9 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_103.h \
         test2015_77.h \
         test2015_88.h \
-        test2015_149.h
+        test2015_149.h \
+        test2015_154.h \
+        test2015_156.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
