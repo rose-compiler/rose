@@ -100,6 +100,14 @@ public:
      *  If the path is not empty then the source vertex for the new edge must be equal to the  @ref backVertex. */
     void pushBack(const ControlFlowGraph::ConstEdgeIterator &edge);
 
+    /** Append a new edge to the front of the path.
+     *
+     *  If the path is not empty, then the target vertex for the new edge must be equal to the @ref frontVertex.
+     *
+     *  Pushing edges onto the front of a path is not efficient; it requires moving all previous edges, taking time linearly
+     *  proportional to the length of the path. */
+    void pushFront(const ControlFlowGraph::ConstEdgeIterator &edge);
+
     /** Erase the final edge from a path.
      *
      *  Erasing the only remaining edge will leave the path in a state where it has only a starting vertex and no
@@ -318,6 +326,13 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
 class Inliner {
 public:
 
+    /** What action to take for inlining. */
+    enum HowInline {
+        INLINE_NONE,                                    /**< Do not inline anything for this call. */
+        INLINE_NORMAL,                                  /**< Normal inlining for this call. */
+        INLINE_USER,                                    /**< Add a @ref V_USER_DEFINED vertex for this call. */
+    };
+
     /** Predicate to determine whether inlining should be performed.
      *
      *  This is the base class for a predicate that determines whether a function should be inlined. */
@@ -342,9 +357,9 @@ public:
         /** @} */
 
         /** Whether to inline a function. */
-        virtual bool operator()(const Partitioner&, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
-                                const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
-                                size_t callDepth);
+        virtual HowInline operator()(const Partitioner&, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
+                                     const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
+                                     size_t callDepth);
     };
 
 private:
@@ -396,6 +411,18 @@ public:
      *
      *  Returns the paths graph that resulted from inlining. */
     const ControlFlowGraph& paths() const { return paths_; }
+
+    /** Paths begin vertices.
+     *
+     *  This is the set of vertices corresponding to the @c cfgBeginVertices of the @ref inlinePaths function.  Only those
+     *  CFG vertices that are part of a path are in this set. */
+    const CfgConstVertexSet& pathsBeginVertices() const { return pathsBeginVertices_; }
+
+    /** Paths end vertices.
+     *
+     *  This is the set of vertices corresponding to the @c cfgEndVertices of the @ref inlinePaths function. Only those CFG
+     *  vertices that are part of a path are in this set. */
+    const CfgConstVertexSet& pathsEndVertices() const { return pathsEndVertices_; }
 
 private:
     void reset(const Partitioner &partitioner, const CfgConstVertexSet &cfgBeginVertices,

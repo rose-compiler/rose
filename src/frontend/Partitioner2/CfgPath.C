@@ -43,6 +43,13 @@ CfgPath::pushBack(const ControlFlowGraph::ConstEdgeIterator &edge) {
 }
 
 void
+CfgPath::pushFront(const ControlFlowGraph::ConstEdgeIterator &edge) {
+    ASSERT_require(isEmpty() || edge->target()==frontVertex());
+    frontVertex_ = edge->source();
+    edges_.insert(edges_.begin(), edge);                // Warning: linear time
+}
+
+void
 CfgPath::popBack() {
     ASSERT_forbid(isEmpty());
     ASSERT_forbid(isEmpty());
@@ -480,13 +487,13 @@ insertCalleePaths(ControlFlowGraph &paths /*in,out*/, const ControlFlowGraph::Co
     return true;
 }
 
-bool
+Inliner::HowInline
 Inliner::ShouldInline::operator()(const Partitioner &partitioner, const ControlFlowGraph::ConstEdgeIterator cfgCallEdge,
                                   const ControlFlowGraph &paths, const ControlFlowGraph::ConstVertexIterator &pathsCallSite,
                                   size_t callDepth) {
     ASSERT_require(partitioner.cfg().isValidEdge(cfgCallEdge));
     ASSERT_require(paths.isValidVertex(pathsCallSite));
-    return callDepth <= maxCallDepth_;
+    return callDepth <= maxCallDepth_ ? INLINE_NORMAL : INLINE_NONE;
 }
 
 // class method
@@ -567,17 +574,31 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
         workList_.pop_back();
         ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, work.pathsVertex);
         BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, findCallEdges(cfgVertex)) {
-            if ((*shouldInline_)(partitioner, cfgCallEdge, paths_, work.pathsVertex, work.callDepth)) {
-                std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
-                insertCalleePaths(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge, calleeCfgAvoidVertices, cfgAvoidEdges,
-                                  &insertedVertices);
-                eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
-                BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
-                    if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())
-                        workList_.push_back(CallSite(vertex, work.callDepth+1));
+            HowInline how = (*shouldInline_)(partitioner, cfgCallEdge, paths_, work.pathsVertex, work.callDepth);
+            switch (how) {
+                case INLINE_NONE:
+                    break;
+                case INLINE_NORMAL: {
+                    std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
+                    insertCalleePaths(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge,
+                                      calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
+                    eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
+                    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
+                        if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())
+                            workList_.push_back(CallSite(vertex, work.callDepth+1));
+                    }
+                    break;
                 }
-            } else {
-                // FIXME[Robb P. Matzke 2015-05-22]: how to process summaries?
+                case INLINE_USER: {
+                    CfgVertex userdef(V_USER_DEFINED);
+                    ControlFlowGraph::ConstVertexIterator callee = cfgCallEdge->target();
+                    if (callee->value().type() == V_BASIC_BLOCK)
+                        userdef.address(callee->value().address());
+                    ControlFlowGraph::VertexIterator userVertex = paths_.insertVertex(userdef);
+                    paths_.insertEdge(work.pathsVertex, userVertex);
+                    BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cre, findCallReturnEdges(work.pathsVertex))
+                        paths_.insertEdge(userVertex, cre->target(), E_FUNCTION_RETURN);
+                }
             }
         }
         eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
@@ -593,6 +614,8 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
                 pathsEndVertices_.find(pathVertex)!=pathsEndVertices_.end()) {
                 // dont erase vertex for a singleton path
             } else {
+                pathsBeginVertices_.erase(pathVertex);
+                pathsEndVertices_.erase(pathVertex);
                 vmap_.eraseTarget(pathVertex);
                 paths_.eraseVertex(pathVertex);
             }
