@@ -774,6 +774,36 @@ public:
     }
 };
 
+/** Initialize the virtual machine with a new state. */
+static void
+setInitialState(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex) {
+    ASSERT_not_null(cpu);
+
+    // Create the new state from an existing state and make the new state current.
+    BaseSemantics::StatePtr state = cpu->get_state()->clone();
+    state->clear();
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    ops->set_state(state);
+
+    // Start of path is always feasible.
+    ops->writeRegister(REG_PATH, ops->boolean_(true));
+
+    // Initialize instruction pointer register
+    if (pathsBeginVertex->value().type() == P2::V_INDETERMINATE) {
+        ops->writeRegister(cpu->instructionPointerRegister(),
+                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
+    } else {
+        ops->writeRegister(cpu->instructionPointerRegister(),
+                           ops->number_(cpu->instructionPointerRegister().get_nbits(), pathsBeginVertex->value().address()));
+    }
+
+    // Initialize stack pointer register
+    if (settings.initialStackPtr) {
+        const RegisterDescriptor REG_SP = cpu->stackPointerRegister();
+        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings.initialStackPtr));
+    }
+}
+
 /** Build a new virtual CPU. */
 static BaseSemantics::DispatcherPtr
 buildVirtualCpu(const P2::Partitioner &partitioner) {
@@ -798,12 +828,6 @@ buildVirtualCpu(const P2::Partitioner &partitioner) {
     SMTSolver *solver = NULL;
     RiscOperatorsPtr ops = RiscOperators::instance(myRegs, solver);
     BaseSemantics::DispatcherPtr cpu = partitioner.instructionProvider().dispatcher()->create(ops);
-
-    // Initialize the stack pointer
-    if (settings.initialStackPtr) {
-        const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
-        ops->writeRegister(REG_SP, ops->number_(REG_SP.get_nbits(), *settings.initialStackPtr));
-    }
     
     return cpu;
 }
@@ -872,6 +896,32 @@ processFunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &vertex, 
                  returnTarget->get_width() / 8;
     stackPointer = ops->add(stackPointer, ops->number_(stackPointer->get_width(), sd));
     ops->writeRegister(cpu->stackPointerRegister(), stackPointer);
+}
+
+/** Process one path vertex. */
+static void
+processVertex(const BaseSemantics::DispatcherPtr &cpu, const P2::ControlFlowGraph::ConstVertexIterator &pathsVertex,
+              size_t &pathInsnIndex /*in,out*/) {
+    switch (pathsVertex->value().type()) {
+        case P2::V_BASIC_BLOCK:
+            processBasicBlock(pathsVertex->value().bblock(), cpu, pathInsnIndex);
+            pathInsnIndex += pathsVertex->value().bblock()->instructions().size();
+            break;
+        case P2::V_INDETERMINATE:
+            processIndeterminateBlock(pathsVertex, cpu, pathInsnIndex);
+            ++pathInsnIndex;
+            break;
+        case P2::V_USER_DEFINED:
+            processFunctionSummary(pathsVertex, cpu, pathInsnIndex);
+            ++pathInsnIndex;
+        default:
+            ::mlog[ERROR] <<"cannot comput path feasibility; invalid vertex type at "
+                          <<P2::Partitioner::vertexName(*pathsVertex) <<"\n";
+            cpu->get_operators()->writeRegister(cpu->instructionPointerRegister(),
+                                                cpu->get_operators()->number_(cpu->instructionPointerRegister().get_nbits(),
+                                                                              0x911 /*arbitrary, unlikely to be satisfied*/));
+            ++pathInsnIndex;
+    }
 }
 
 static void
@@ -947,6 +997,66 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
     functionSummaries.insert(summaryVertex, summary);
 }
 
+static void
+printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph, const P2::CfgPath &path,
+             size_t pathNumber, const std::vector<InsnSemanticsExpr::TreeNodePtr> &pathConstraints, SMTSolver &solver,
+             const RiscOperatorsPtr &ops) {
+    std::cout <<"Found feasible path #" <<pathNumber
+              <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
+
+    if (FEASIBLE_PATHS == settings.graphVizOutput) {
+        std::string graphVizFileName = printGraphViz(partitioner, pathsGraph, path, pathNumber);
+        std::cout <<"  Saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
+    }
+
+    std::cout <<"  Path:\n";
+    size_t insnIdx=0, pathIdx=0;
+    if (path.nEdges() == 0) {
+        std::cout <<"    path is trivial (contains only vertex " <<partitioner.vertexName(path.frontVertex()) <<")\n";
+    } else {
+        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, path.vertices()) {
+            if (0==pathIdx) {
+                std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
+            } else {
+                std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
+            }
+            if (settings.showInstructions) {
+                if (pathVertex->value().type() == P2::V_BASIC_BLOCK) {
+                    BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
+                        std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
+                                  <<" " <<unparseInstructionWithAddress(insn) <<"\n";
+                    }
+                } else if (pathVertex->value().type() == P2::V_USER_DEFINED) {
+                    ASSERT_require(functionSummaries.exists(pathVertex));
+                    const FunctionSummary &summary = functionSummaries[pathVertex];
+                    std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
+                              <<" summary for " <<summary.name() <<"\n";
+                }
+            }
+            ++pathIdx;
+        }
+    }
+
+    if (settings.showConstraints) {
+        std::cout <<"  Constraints:\n";
+        if (pathConstraints.empty()) {
+            std::cout <<"    none\n";
+        } else {
+            size_t idx = 0;
+            BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
+                std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
+        }
+    }
+
+    showPathEvidence(solver, ops);
+
+    if (settings.showFinalState) {
+        SymbolicSemantics::Formatter fmt = symbolicFormat("    ");
+        std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n"
+                  <<(*ops->get_state() + fmt);
+    }
+}
+
 /** Process one path. Given a path, determine if the path is feasible.  If @p showResults is set, then emit information about
  *  the initial conditions that cause this path to be taken. */
 static SMTSolver::Satisfiable
@@ -971,32 +1081,12 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     solver.set_debug(settings.debugSmtSolver ? stderr : NULL);
     BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
     RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
-    ops->writeRegister(REG_PATH, ops->boolean_(true)); // start of path is always feasible
-    if (path.frontVertex()->value().type() == P2::V_INDETERMINATE) {
-        ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->undefined_(cpu->instructionPointerRegister().get_nbits()));
-    } else {
-        ops->writeRegister(cpu->instructionPointerRegister(),
-                           ops->number_(cpu->instructionPointerRegister().get_nbits(), virtualAddress(path.frontVertex())));
-    }
+    setInitialState(cpu, path.frontVertex());
     std::vector<InsnSemanticsExpr::TreeNodePtr> pathConstraints;
 
     size_t pathInsnIndex = 0;
     BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
-        if (pathEdge->source()->value().type() == P2::V_BASIC_BLOCK) {
-            processBasicBlock(pathEdge->source()->value().bblock(), cpu, pathInsnIndex);
-            pathInsnIndex += pathEdge->source()->value().bblock()->instructions().size();
-        } else if (pathEdge->source()->value().type() == P2::V_INDETERMINATE) {
-            processIndeterminateBlock(pathEdge->source(), cpu, pathInsnIndex);
-            ++pathInsnIndex;
-        } else if (pathEdge->source()->value().type() == P2::V_USER_DEFINED) {
-            processFunctionSummary(pathEdge->source(), cpu, pathInsnIndex);
-            ++pathInsnIndex;
-        } else {
-            error <<"cannot compute path feasibility; invalid vertex type at "
-                  <<partitioner.vertexName(pathEdge->source()) <<"\n";
-            return SMTSolver::SAT_NO;
-        }
+        processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
         BaseSemantics::SValuePtr ip = ops->readRegister(partitioner.instructionProvider().instructionPointerRegister());
         if (ip->is_number()) {
             ASSERT_require(hasVirtualAddress(pathEdge->target()));
@@ -1030,63 +1120,9 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     }
     if (!emitResults)
         return isSatisfied;
-    
+
     if (isSatisfied == SMTSolver::SAT_YES) {
-        info <<"  path is feasible\n";
-        std::cout <<"Found feasible path #" <<npaths
-                  <<" with " <<StringUtility::plural(path.nVertices(), "vertices", "vertex") <<".\n";
-
-        if (FEASIBLE_PATHS == settings.graphVizOutput)
-            graphVizFileName = printGraphViz(partitioner, paths, path, npaths);
-        if (!graphVizFileName.empty())
-            std::cout <<"  Saved as \"" <<StringUtility::cEscape(graphVizFileName) <<"\"\n";
-
-        std::cout <<"  Path:\n";
-        size_t insnIdx=0, pathIdx=0;
-        if (path.nEdges() == 0) {
-            std::cout <<"    path is trivial (contains only vertex " <<partitioner.vertexName(path.frontVertex()) <<")\n";
-        } else {
-            BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, path.vertices()) {
-                if (0==pathIdx) {
-                    std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
-                } else {
-                    std::cout <<"    via path edge " <<partitioner.edgeName(path.edges()[pathIdx-1]) <<"\n";
-                }
-                if (settings.showInstructions) {
-                    if (pathVertex->value().type() == P2::V_BASIC_BLOCK) {
-                        BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
-                            std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
-                                      <<" " <<unparseInstructionWithAddress(insn) <<"\n";
-                        }
-                    } else if (pathVertex->value().type() == P2::V_USER_DEFINED) {
-                        ASSERT_require(functionSummaries.exists(pathVertex));
-                        const FunctionSummary &summary = functionSummaries[pathVertex];
-                        std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
-                                  <<" summary for " <<summary.name() <<"\n";
-                    }
-                }
-                ++pathIdx;
-            }
-        }
-
-        if (settings.showConstraints) {
-            std::cout <<"  Constraints:\n";
-            if (pathConstraints.empty()) {
-                std::cout <<"    none\n";
-            } else {
-                size_t idx = 0;
-                BOOST_FOREACH (const InsnSemanticsExpr::TreeNodePtr &constraint, pathConstraints)
-                    std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
-            }
-        }
-
-        showPathEvidence(solver, ops);
-
-        if (settings.showFinalState) {
-            SymbolicSemantics::Formatter fmt = symbolicFormat("    ");
-            std::cout <<"  Machine state at end of path (prior to entering " <<partitioner.vertexName(path.backVertex()) <<")\n"
-                      <<(*ops->get_state() + fmt);
-        }
+        printResults(partitioner, paths, path, npaths, pathConstraints, solver, ops);
     } else if (isSatisfied == SMTSolver::SAT_NO) {
 //        info <<"  not feasible according to SMT solver\n";
     } else {
@@ -1304,6 +1340,16 @@ std::ostream& operator<<(std::ostream &out, const SinglePathProgress &x) {
     return out;
 }
 
+struct BfsForestVertex {
+    P2::ControlFlowGraph::ConstEdgeIterator pathsEdge;  // last CFG edge in path
+    BaseSemantics::StatePtr state;                      // state at entry to this edge
+    InsnSemanticsExpr::TreeNodePtr constraint;          // optional path constraint
+    size_t nInsns;                                      // number of instructions to start of this edge
+    BfsForestVertex(const P2::ControlFlowGraph::ConstEdgeIterator &pathsEdge, const BaseSemantics::StatePtr &state,
+                    size_t nInsns)
+        : pathsEdge(pathsEdge), state(state), nInsns(nInsns) {}
+};
+
 // This later version of findAndProcessSinglePaths uses the ROSE inliner in a separate initial pass, then uses a breadth-first
 // traversal so process paths in length order.
 static void
@@ -1312,6 +1358,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
                                        const P2::CfgConstVertexSet &cfgEndVertices,
                                        const P2::CfgConstVertexSet &cfgAvoidVertices,
                                        const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+    using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
 
     // Build the paths graph with inlined functions.
     P2::Inliner inliner;
@@ -1337,58 +1384,110 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     // don't all begin with the same edge. We don't have a specific tree container, but we can use Sawyer::Container::Graph as
     // the tree.  The frontier is stored as an std::list whose members point to the tree leaves. We're also using the fact that
     // Sawyer::Container::Graph iterators are stable over insert and erase operations.
-    typedef Sawyer::Container::Graph<P2::ControlFlowGraph::ConstEdgeIterator> BfsForest;
+    typedef Sawyer::Container::Graph<BfsForestVertex> BfsForest;
     typedef std::list<BfsForest::VertexIterator> BfsFrontier;
     BfsForest bfsForest;
     BfsFrontier bfsFrontier;
 
     // Initialize the forest with unit length paths emanating from the beginning vertex. We've already taken care of the
-    // singleton path case above, so we know there's at least one edge in every path.
+    // singleton path case above, so we know there's at least one edge in every path.  Each vertex in the forest points to
+    // a path edge in the paths-graph, and the virtual machine state at the source of that edge (i.e., as the edge is
+    // entered).  Thus we must initialize the states of the first edge of all paths to be the state comuted by executing the
+    // begining vertex.
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    setInitialState(cpu, pathsBeginVertex);
+    size_t nInsns = 0;
+    processVertex(cpu, pathsBeginVertex, nInsns /*in,out*/);
     BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsBeginVertex->outEdges())
-        bfsFrontier.push_back(bfsForest.insertVertex(pathsGraph.findEdge(edge.id())));
+        bfsFrontier.push_back(bfsForest.insertVertex(BfsForestVertex(pathsGraph.findEdge(edge.id()),
+                                                                     cpu->get_state(), nInsns)));
 
     // Process each tree vertex that's in the traversal frontier. If the vertex represents a feasible path prefix then create
     // new paths in the frontier by extending this path one more edge in every possible direction.
+    YicesSolver solver;
+    size_t lastTestedPathLength = 0;
     Sawyer::ProgressBar<size_t, SinglePathProgress> progress(::mlog[MARCH], "paths");
     while (!bfsFrontier.empty()) {
+        // Get applicable vertices and edges
+        bool abandonPrefix = false;                     // abandon searching of paths with this prefix?
         BfsForest::VertexIterator bfsVertex = bfsFrontier.front();
         bfsFrontier.pop_front();
         ASSERT_require(bfsForest.isValidVertex(bfsVertex));
-
-        // Build the path. We do so backward from the end toward the beginning since that's most convenient.
-        P2::ControlFlowGraph::ConstEdgeIterator pathsEdge = bfsVertex->value();
+        P2::ControlFlowGraph::ConstEdgeIterator pathsEdge = bfsVertex->value().pathsEdge;
         ASSERT_require(pathsGraph.isValidEdge(pathsEdge)); // forest vertices point to paths-graph edges
-        P2::CfgPath path(bfsVertex->value()->target()); // end of the path, a vertex in the paths-graph
-        for (BfsForest::VertexIterator vi=bfsVertex; vi!=bfsForest.vertices().end(); vi=vi->inEdges().begin()->source()) {
-            ASSERT_require(bfsForest.isValidVertex(vi));
-            path.pushFront(vi->value());
-            if (0 == vi->nInEdges())
-                break;                                  // made it to root of bfsForest
-            ASSERT_require2(vi->nInEdges()==1, "must form a tree");
+
+        // Initialize the cpu to the incoming state for this path edge.  That way any semantic operations we perform in this
+        // loop will be accessing the correct state.
+        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+        ASSERT_not_null(bfsVertex->value().state);
+        ops->set_state(bfsVertex->value().state);
+
+        // If this edge's incoming instruction pointer is concrete and is not equal to this edge's address then we already know
+        // that this path isn't feasible.
+        BaseSemantics::SValuePtr ip = ops->readRegister(cpu->instructionPointerRegister());
+        if (!abandonPrefix && ip->is_number() &&
+            pathsEdge->target()->value().type() != P2::V_INDETERMINATE && // has no address
+            ip->get_number() != pathsEdge->target()->value().address())
+            abandonPrefix = true;
+
+        // If this edge is not a number and we know the EIP at the end of this path edge, then we have a path constraint that
+        // needs to be solved.
+        if (!abandonPrefix && !ip->is_number() && pathsEdge->target()->value().type() != P2::V_INDETERMINATE) {
+            LeafNodePtr targetVa = LeafNode::create_integer(ip->get_width(), pathsEdge->target()->value().address());
+            TreeNodePtr constraint = InternalNode::create(1, OP_EQ, targetVa,
+                                                          SymbolicSemantics::SValue::promote(ip)->get_expression());
+            bfsVertex->value().constraint = constraint;
         }
+
+        // Accumulate all constraints along this path and invoke the SMT solver.
+        SMTSolver::Satisfiable isFeasible = SMTSolver::SAT_UNKNOWN;
+        std::vector<TreeNodePtr> pathConstraints;
+        if (!abandonPrefix) {
+            BfsForest::VertexIterator vertex=bfsVertex;
+            lastTestedPathLength = 0;
+            while (1) {
+                ++lastTestedPathLength;
+                if (vertex->value().constraint)
+                    pathConstraints.push_back(vertex->value().constraint);
+                if (vertex->nInEdges() != 1)
+                    break;                              // vertex is the root of the tree
+                vertex = vertex->inEdges().begin()->source();
+            }
+            isFeasible = solver.satisfiable(pathConstraints);
+        }
+
+        // Print results
+        bool atEndOfPath = pathsEndVertices.find(pathsEdge->target()) != pathsEndVertices.end();
+        if (isFeasible == SMTSolver::SAT_YES && atEndOfPath) {
+            // Build the path. We do so backward from the end toward the beginning since that's most convenient.
+            P2::CfgPath path(pathsEdge->target()); // end of the path, a vertex in the paths-graph
+            for (BfsForest::VertexIterator vi=bfsVertex; vi!=bfsForest.vertices().end(); vi=vi->inEdges().begin()->source()) {
+                ASSERT_require(bfsForest.isValidVertex(vi));
+                path.pushFront(vi->value().pathsEdge);
+                if (0 == vi->nInEdges())
+                    break;                              // made it to root of bfsForest
+                ASSERT_require2(vi->nInEdges()==1, "must form a tree");
+            }
+            printResults(partitioner, pathsGraph, path, progress.value(), pathConstraints, solver, ops);
+            if (0 == --settings.maxPaths) {
+                ::mlog[INFO] <<"terminating because the maximum number of feasible paths has been found\n";
+                exit(0);
+            }
+            abandonPrefix = true;                       // no need to keep going since we found a feasible path
+        }
+
+        // Progress report
         progress.suffix().nPaths(progress.value()+1);
-        progress.suffix().pathLength(path.nEdges());
+        progress.suffix().pathLength(lastTestedPathLength);
         progress.suffix().forestSize(bfsForest.nVertices());
         progress.suffix().frontierSize(bfsFrontier.size());
         ++progress;
 
-        // Test whether the path is feasible. If not feasible, then any path with this one as a prefix is also not feasible.
-        bool abandonPrefix = false;
-        bool atEndOfPath = pathsEndVertices.find(path.backVertex()) != pathsEndVertices.end();
-        SMTSolver::Satisfiable isFeasible = singlePathFeasibility(partitioner, pathsGraph, path, atEndOfPath);
-        if (atEndOfPath && isFeasible == SMTSolver::SAT_YES) {
-            if (0 == --settings.maxPaths) {
-                ::mlog[INFO] <<"terminating because the maximum number of feasiable paths has been found\n";
-                exit(0);
-            }
-            abandonPrefix = true;
-        } else if (atEndOfPath || isFeasible == SMTSolver::SAT_NO) {
-            abandonPrefix = true;
-        }
-
-        // Extend the path, or abandon this prefix. When abandoning a prefix, erase the part of the bfsForest that isn't needed
-        // any more, but be sure not to erase any prefix of this path that might be a prefix of some other path.
-        ASSERT_require(atEndOfPath || path.backVertex()->nOutEdges() > 0);
+        // Either abandon this path and all paths that have this path as a prefix, or create some new path(s) by adding another
+        // edge to this path.  When abandoning a prefix, erase the part of the bfsForest that isn't needed anymore (be sure not
+        // to erase parts of this path that are prefixes of a path in the bfsFrontier).
+        ASSERT_require(atEndOfPath || pathsEdge->target()->nOutEdges() > 0);
+        ASSERT_require(abandonPrefix || !atEndOfPath);
         if (abandonPrefix) {
             while (1) {
                 ASSERT_require2(bfsVertex->nInEdges() <= 1, "tree nodes have 0 or 1 parent");
@@ -1403,9 +1502,12 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
                     break;
                 }
             }
-        } else {                                        // extend this prefix
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, path.backVertex()->outEdges()) {
-                BfsForest::VertexIterator v = bfsForest.insertVertex(pathsGraph.findEdge(edge.id()));
+        } else {
+            size_t nInsns = bfsVertex->value().nInsns;
+            processVertex(cpu, pathsEdge->target(), nInsns /*in,out*/);
+            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsEdge->target()->outEdges()) {
+                BfsForest::VertexIterator v = bfsForest.insertVertex(BfsForestVertex(pathsGraph.findEdge(edge.id()),
+                                                                                     cpu->get_state(), nInsns));
                 bfsForest.insertEdge(bfsVertex, v);
                 bfsFrontier.push_back(v);
             }
