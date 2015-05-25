@@ -216,13 +216,12 @@ findPathUnreachableEdges(const ControlFlowGraph &graph,
  *
  *  Removes those edges that aren't reachable in both forward and reverse directions between the specified begin and end
  *  vertices. Specified vertices must belong to the graph.  After edges are removed, dangling vertices are removed.  Vertices
- *  and edges are removed from the @p graph, the @p vmap, and the @p path. Removal of edges from @p path causes the path to be
- *  truncated.
+ *  and edges are removed from all arguments. Removal of edges from @p path causes the path to be truncated.
  *
  *  Returns the number of edges that were removed from the @p path. */
 size_t
-eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const CfgConstVertexSet &beginVertices,
-                      const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, CfgConstVertexSet &beginVertices /*in,out*/,
+                      CfgConstVertexSet &endVertices /*in,out*/, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/);
 
 /** Compute all paths.
  *

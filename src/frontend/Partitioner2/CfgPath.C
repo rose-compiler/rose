@@ -314,8 +314,8 @@ findPathUnreachableEdges(const ControlFlowGraph &graph,
 }
 
 size_t
-eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const CfgConstVertexSet &beginVertices,
-                      const CfgConstVertexSet &endVertices, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
+eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, CfgConstVertexSet &beginVertices /*in,out*/,
+                      CfgConstVertexSet &endVertices /*in,out*/, CfgVertexMap &vmap /*in,out*/, CfgPath &path /*in,out*/) {
     size_t origPathSize = path.nEdges();
     if (beginVertices.empty() || endVertices.empty()) {
         graph.clear();
@@ -333,18 +333,30 @@ eraseUnreachablePaths(ControlFlowGraph &graph /*in,out*/, const CfgConstVertexSe
     eraseEdges(graph, badEdges);
 
     // This might leave some vertices having no incident edges, so remove them since they can't participate on any path. Avoid
-    // scanning the entire graph by considering only vertices that are incident to the edges we just removed.
+    // scanning the entire graph by considering only vertices that are incident to the edges we just removed. We also need to
+    // check the beginVertices and endVertices because they might not have had incident edges, yet we'll wwant to remove them.
+    CfgConstVertexSet badVertices;
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, incidentVertices) {
-        if (vertex->degree() == 0) {
-            if (beginVertices.find(vertex)!=beginVertices.end() && endVertices.find(vertex)!=endVertices.end()) {
-                // Don't remove this vertex if it can be a singleton path.
-            } else {
-                vmap.eraseTarget(vertex);
-                graph.eraseVertex(vertex);
-            }
-        }
+        if (vertex->degree() == 0 &&
+            (beginVertices.find(vertex)==beginVertices.end() || endVertices.find(vertex)==endVertices.end()))
+            badVertices.insert(vertex);
     }
-    if (graph.isEmpty())
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, beginVertices) {
+        if (vertex->degree() == 0 && endVertices.find(vertex) == endVertices.end())
+            badVertices.insert(vertex);
+    }
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, endVertices) {
+        if (vertex->degree() == 0 && beginVertices.find(vertex) == beginVertices.end())
+            badVertices.insert(vertex);
+    }
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, badVertices) {
+        beginVertices.erase(vertex);
+        endVertices.erase(vertex);
+        vmap.eraseTarget(vertex);
+        graph.eraseVertex(vertex);
+    }
+
+    if (beginVertices.empty())
         path.clear();
 
     return origPathSize - path.nEdges();
@@ -582,7 +594,6 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
                     std::vector<ControlFlowGraph::ConstVertexIterator> insertedVertices;
                     insertCalleePaths(paths_, work.pathsVertex, partitioner.cfg(), cfgCallEdge,
                                       calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
-                    eraseEdges(paths_, findCallReturnEdges(work.pathsVertex));
                     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
                         if (isFunctionCall(partitioner, vertex) && !findCallReturnEdges(vertex).empty())
                             workList_.push_back(CallSite(vertex, work.callDepth+1));
@@ -598,6 +609,7 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
                     paths_.insertEdge(work.pathsVertex, userVertex);
                     BOOST_FOREACH (const ControlFlowGraph::ConstEdgeIterator &cre, findCallReturnEdges(work.pathsVertex))
                         paths_.insertEdge(userVertex, cre->target(), E_FUNCTION_RETURN);
+                    break;
                 }
             }
         }
@@ -607,19 +619,27 @@ Inliner::inlinePaths(const Partitioner &partitioner, const CfgConstVertexSet &cf
     // Remove edges and vertices that cannot be part of any path
     CfgConstEdgeSet pathsUnreachableEdges = findPathUnreachableEdges(paths_, pathsBeginVertices_, pathsEndVertices_);
     CfgConstVertexSet pathsIncidentVertices = findIncidentVertices(pathsUnreachableEdges);
+    CfgConstVertexSet pathsBadVertices;
     eraseEdges(paths_, pathsUnreachableEdges);
     BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathVertex, pathsIncidentVertices) {
-        if (pathVertex->degree() == 0) {
-            if (pathsBeginVertices_.find(pathVertex)!=pathsBeginVertices_.end() &&
-                pathsEndVertices_.find(pathVertex)!=pathsEndVertices_.end()) {
-                // dont erase vertex for a singleton path
-            } else {
-                pathsBeginVertices_.erase(pathVertex);
-                pathsEndVertices_.erase(pathVertex);
-                vmap_.eraseTarget(pathVertex);
-                paths_.eraseVertex(pathVertex);
-            }
-        }
+        if (pathVertex->degree() == 0 &&
+            (pathsBeginVertices_.find(pathVertex)==pathsBeginVertices_.end() ||
+             pathsEndVertices_.find(pathVertex)==pathsEndVertices_.end()))
+            pathsBadVertices.insert(pathVertex);
+    }
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathVertex, pathsBeginVertices_) {
+        if (pathVertex->degree() == 0 && pathsEndVertices_.find(pathVertex)==pathsEndVertices_.end())
+            pathsBadVertices.insert(pathVertex);
+    }
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathVertex, pathsEndVertices_) {
+        if (pathVertex->degree() == 0 && pathsBeginVertices_.find(pathVertex)==pathsBeginVertices_.end())
+            pathsBadVertices.insert(pathVertex);
+    }
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &pathVertex, pathsBadVertices) {
+        pathsBeginVertices_.erase(pathVertex);
+        pathsEndVertices_.erase(pathVertex);
+        vmap_.eraseTarget(pathVertex);
+        paths_.eraseVertex(pathVertex);
     }
 }
 
