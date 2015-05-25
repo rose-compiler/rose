@@ -14655,6 +14655,9 @@ X aggressive
 
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      p_multifile_support = false;
+
+  // DQ (5/24/2015): Record if optimization was specified on the command line.
+     p_optimization = false;
    }
 
 #if 0
@@ -15756,6 +15759,7 @@ SgProject::initialization()
 
   // DQ (3/19/2014): This option causes the output of source code to an existing file to be an error if it results in a different file.
      p_noclobber_if_different_output_file = false;
+
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
    }
