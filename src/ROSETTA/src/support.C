@@ -1350,6 +1350,13 @@ Grammar::setUpSupport ()
      File.setDataPrototype ("bool", "multifile_support", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/24/2015): Record if optimization is specified on the command line (later maybe also save what level).
+  // This is required to set the __OPTIMIZED__ macro (to follow the GNU API).  See test2015_153.c.
+     File.setDataPrototype("bool", "optimization", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+
   // ******************************************************************************
   // ******************************************************************************
   //                             ROSE Graph IR Nodes
@@ -1978,7 +1985,6 @@ Grammar::setUpSupport ()
   // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
      Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

@@ -1,3 +1,6 @@
+// This bug is fixed enough to now output the __thread keyword (GNU extension).
+// However, the typeof opertor is not output and this might be work investigating 
+// further at a later date.
 
 typedef struct CPUState CPUState;
 

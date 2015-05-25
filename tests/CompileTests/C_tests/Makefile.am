@@ -606,6 +606,9 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_147.c \
      test2015_148.c \
      test2015_149.c \
+     test2015_156.c \
+     test2015_157.c \
+     test2015_158.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -1000,6 +1003,19 @@ test_file_suffix: $(testTranslator)
 test_mregparm_m32_use: $(testTranslator)
 	$(testTranslator) -mregparm=3 -m32 -rose:C89 -c $(srcdir)/test2015_154.c
 
+# DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
+test_optimization_specifier_O: $(testTranslator)
+	$(testTranslator) -O -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_Os: $(testTranslator)
+	$(testTranslator) -Os -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_O1: $(testTranslator)
+	$(testTranslator) -O1 -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_O2: $(testTranslator)
+	$(testTranslator) -O2 -c $(srcdir)/test2015_153.c
+
 
 
 ../../testTranslator:
@@ -1050,7 +1066,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_88.h \
         test2015_149.h \
         test2015_154.h \
-        test2015_156.h
+        test2015_156.h \
+        test2015_157.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
@@ -1075,6 +1092,10 @@ check-local:
 	@$(MAKE) test_using_explicit_output_file_option
 	@$(MAKE) test_using_implicit_output_file_option
 	@$(MAKE) test_rtd_use
+	@$(MAKE) test_optimization_specifier_O
+	@$(MAKE) test_optimization_specifier_Os
+	@$(MAKE) test_optimization_specifier_O1
+	@$(MAKE) test_optimization_specifier_O2
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
