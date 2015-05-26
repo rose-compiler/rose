@@ -1,6 +1,10 @@
 #include <rose.h>
 
 #include <AsmUnparser_compat.h>
+#include <boost/thread/condition_variable.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/mutex.hpp>
+#include <boost/thread/thread.hpp>
 #include <Diagnostics.h>
 #include <DwarfLineMapper.h>
 #include <Partitioner2/CfgPath.h>
@@ -52,11 +56,12 @@ struct Settings {
     bool showExprWidth;                                 // show expression widths in bits?
     bool debugSmtSolver;                                // turn on SMT debugging?
     Sawyer::Optional<rose_addr_t> initialStackPtr;      // concrete value to use for stack pointer register initial value
+    size_t nThreads;                                    // number of threads for algorithms that support multi-threading
     Settings()
         : beginVertex("_start"), maxRecursionDepth(4), maxCallDepth(100), maxPathLength(1600), vertexVisitLimit(1),
           showInstructions(true), showConstraints(false), showFinalState(false), showFunctionSubgraphs(true),
           graphVizPrefix("path-"), graphVizOutput(NO_PATHS), maxPaths(1), searchMode(SEARCH_SINGLE_BFS), maxExprDepth(4),
-          showExprWidth(false), debugSmtSolver(false) {}
+          showExprWidth(false), debugSmtSolver(false), nThreads(1) {}
 };
 static Settings settings;
 
@@ -304,7 +309,13 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine)
                .intrinsicValue(false, settings.debugSmtSolver)
                .hidden(true));
 
-    return parser.with(cfg).with(out).parse(argc, argv).apply().unreachedArgs();
+    ParserResult cmdline = parser.with(cfg).with(out).parse(argc, argv).apply();
+
+    // These switches from the rose library have no Settings struct yet, so we need to query the parser results to get them.
+    if (cmdline.have("threads"))
+        settings.nThreads = cmdline.parsed("threads")[0].asUnsignedLong();
+
+    return cmdline.unreachedArgs();
 }
 
 static bool
@@ -1436,80 +1447,80 @@ struct BfsForestVertex {
     }
 };
 
-// This later version of findAndProcessSinglePaths uses the ROSE inliner in a separate initial pass, then uses a breadth-first
-// traversal so process paths in length order.
+// We'll be performing a breadth-first traversal of the paths graph so we can process paths in order of their length. Some
+// paths may visit a vertex or edge of the paths graph more than once (e.g., loops). Since this is a breadth-first search,
+// we need a work list, but we don't want excessive copying of the edges that make up each path in the work list. We can
+// use the fact that many paths share the same prefix, thus the set of all paths forms a tree. Those paths that need to be
+// processed yet end at the leaves of the tree and form the frontier of the breadth-first search.  Actually, we need a
+// forest because our tree is storing edges and even though the paths all start at the same vertex in the paths-graph, they
+// don't all begin with the same edge. We don't have a specific tree container, but we can use Sawyer::Container::Graph as
+// the tree.  The frontier is stored as an std::list whose members point to the tree leaves. We're also using the fact that
+// Sawyer::Container::Graph iterators are stable over insert and erase operations.
+typedef Sawyer::Container::Graph<BfsForestVertex> BfsForest;
+typedef std::list<BfsForest::VertexIterator> BfsFrontier;
+
+// Shared by all worker threads.
+struct BfsContext {
+    const P2::Partitioner &partitioner;
+    const P2::ControlFlowGraph &pathsGraph;
+    const P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex;
+    const P2::CfgConstVertexSet pathsEndVertices;
+
+    boost::mutex bfsForestMutex;                        // protects "bfs*" data members.
+    BfsForest bfsForest;                                // tree keeping track of all outstanding path prefixes
+    BfsFrontier bfsFrontier;                            // points to leaf nodes of the bfsForest sorted by path length
+    boost::condition_variable bfsFrontierChanged;       // signaled when the frontier changes
+    int nWorking;                                       // number of threads working, protected by bfsForestMutex
+    static const int EXIT_NOW = -1;                     // special value for nWorking
+
+    boost::mutex outputMutex;                           // protects output so things don't get mixed up between threads
+    Sawyer::ProgressBar<size_t, SinglePathProgress> progress;// progress reports protected by outputMutex
+
+    explicit BfsContext(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pathsGraph,
+                        const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex,
+                        const P2::CfgConstVertexSet &pathsEndVertices)
+        : partitioner(partitioner), pathsGraph(pathsGraph), pathsBeginVertex(pathsBeginVertex),
+          pathsEndVertices(pathsEndVertices), nWorking(0), progress(::mlog[MARCH], "paths") {}
+};
+
+
+// Runs in a separate thread.
 static void
-findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
-                                       const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
-                                       const P2::CfgConstVertexSet &cfgEndVertices,
-                                       const P2::CfgConstVertexSet &cfgAvoidVertices,
-                                       const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+singleThreadBfsWorker(BfsContext *ctx) {
     using namespace rose::BinaryAnalysis::InsnSemanticsExpr;
-    Sawyer::Message::Stream debug(::mlog[DEBUG]);
 
-    // Build the paths graph with inlined functions.
-    P2::Inliner inliner;
-    inliner.shouldInline(ShouldInline::instance());
-    P2::CfgConstVertexSet cfgBeginVertices; cfgBeginVertices.insert(cfgBeginVertex);
-    inliner.inlinePaths(partitioner, cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
-    ::mlog[INFO] <<"  final paths graph: " <<StringUtility::plural(inliner.paths().nVertices(), "vertices", "vertex")
-                 <<", " <<StringUtility::plural(inliner.paths().nEdges(), "edges") <<"\n";
-    const P2::ControlFlowGraph &pathsGraph = inliner.paths();
-    if (pathsGraph.nVertices() <= 1)
-        return;                                         // no path, or trivially feasible singleton path
-    ASSERT_require(inliner.pathsBeginVertices().size()==1);
-    const P2::ControlFlowGraph::ConstVertexIterator &pathsBeginVertex = *inliner.pathsBeginVertices().begin();
-    const P2::CfgConstVertexSet &pathsEndVertices = inliner.pathsEndVertices();
-    ASSERT_require(!pathsEndVertices.empty());
-
-    // We'll be performing a breadth-first traversal of the paths graph so we can process paths in order of their length. Some
-    // paths may visit a vertex or edge of the paths graph more than once (e.g., loops). Since this is a breadth-first search,
-    // we need a work list, but we don't want excessive copying of the edges that make up each path in the work list. We can
-    // use the fact that many paths share the same prefix, thus the set of all paths forms a tree. Those paths that need to be
-    // processed yet end at the leaves of the tree and form the frontier of the breadth-first search.  Actually, we need a
-    // forest because our tree is storing edges and even though the paths all start at the same vertex in the paths-graph, they
-    // don't all begin with the same edge. We don't have a specific tree container, but we can use Sawyer::Container::Graph as
-    // the tree.  The frontier is stored as an std::list whose members point to the tree leaves. We're also using the fact that
-    // Sawyer::Container::Graph iterators are stable over insert and erase operations.
-    typedef Sawyer::Container::Graph<BfsForestVertex> BfsForest;
-    typedef std::list<BfsForest::VertexIterator> BfsFrontier;
-    BfsForest bfsForest;
-    BfsFrontier bfsFrontier;
-
-    // Initialize the forest with unit length paths emanating from the beginning vertex. We've already taken care of the
-    // singleton path case above, so we know there's at least one edge in every path.  Each vertex in the forest points to
-    // a path edge in the paths-graph, and the virtual machine state at the source of that edge (i.e., as the edge is
-    // entered).  Thus we must initialize the states of the first edge of all paths to be the state comuted by executing the
-    // begining vertex. Incoming states for an edge are shared.
-    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
-    setInitialState(cpu, pathsBeginVertex);
-    size_t nInsns = 0;
-    processVertex(cpu, pathsBeginVertex, nInsns /*in,out*/);
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsBeginVertex->outEdges()) {
-        bfsFrontier.push_back(bfsForest.insertVertex(BfsForestVertex(pathsGraph.findEdge(edge.id()),
-                                                                     cpu->get_state(), nInsns)));
-    }
-
-    // Process each tree vertex that's in the traversal frontier. If the vertex represents a feasible path prefix then create
-    // new paths in the frontier by extending this path one more edge in every possible direction.
     YicesSolver solver;
     size_t lastTestedPathLength = 0;
-    Sawyer::ProgressBar<size_t, SinglePathProgress> progress(::mlog[MARCH], "paths");
-    while (!bfsFrontier.empty()) {
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(ctx->partitioner);
+    RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
+    Sawyer::Message::Stream debug(::mlog[DEBUG]);
+
+    while (1) {
+        // Get the next item of work. While we are working on it, no other worker will process a path for which our path is a
+        // prefix, and no other worker will delete any part of our path from the bfsForest.
+        BfsForest::VertexIterator bfsVertex;
+        {
+            boost::unique_lock<boost::mutex> lock(ctx->bfsForestMutex);
+            while (ctx->bfsFrontier.empty() && ctx->nWorking != BfsContext::EXIT_NOW)
+                ctx->bfsFrontierChanged.wait(lock);
+            if ((ctx->bfsFrontier.empty() && 0 == ctx->nWorking) || ctx->nWorking == -1)
+                return;                                 // done since no worker is creating more work
+            bfsVertex = ctx->bfsFrontier.front();
+            ctx->bfsFrontier.pop_front();
+            ASSERT_require(ctx->bfsForest.isValidVertex(bfsVertex));
+            ++ctx->nWorking;
+        }
+
         // Get applicable vertices and edges
         bool abandonPrefix = false;                     // abandon searching of paths with this prefix?
-        BfsForest::VertexIterator bfsVertex = bfsFrontier.front();
-        bfsFrontier.pop_front();
-        ASSERT_require(bfsForest.isValidVertex(bfsVertex));
         P2::ControlFlowGraph::ConstEdgeIterator pathsEdge = bfsVertex->value().pathsEdge;
-        ASSERT_require(pathsGraph.isValidEdge(pathsEdge)); // forest vertices point to paths-graph edges
+        ASSERT_require(ctx->pathsGraph.isValidEdge(pathsEdge)); // forest vertices point to paths-graph edges
         SAWYER_MESG(debug) <<"processing path #" <<bfsVertex->value().id
-                           <<" ending with edge " <<partitioner.edgeName(pathsEdge) <<"\n";
+                           <<" ending with edge " <<ctx->partitioner.edgeName(pathsEdge) <<"\n";
 
         // Initialize the cpu to the incoming state for this path edge. Incoming states for edges that originate at the same
         // paths-graph vertex share their state objects, so clone the state.  That way any semantic operations we perform in
         // this loop will be accessing the correct state.
-        RiscOperatorsPtr ops = RiscOperators::promote(cpu->get_operators());
         ASSERT_not_null(bfsVertex->value().state);
         ops->set_state(bfsVertex->value().state->clone());
 
@@ -1556,22 +1567,32 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
         }
 
         // Print results
-        bool atEndOfPath = pathsEndVertices.find(pathsEdge->target()) != pathsEndVertices.end();
+        bool atEndOfPath = ctx->pathsEndVertices.find(pathsEdge->target()) != ctx->pathsEndVertices.end();
+        bool shouldExit = false;
         if (isFeasible == SMTSolver::SAT_YES && atEndOfPath) {
             SAWYER_MESG(debug) <<"  path is feasible and complete (printing results)\n";
             // Build the path. We do so backward from the end toward the beginning since that's most convenient.
             P2::CfgPath path(pathsEdge->target()); // end of the path, a vertex in the paths-graph
-            for (BfsForest::VertexIterator vi=bfsVertex; vi!=bfsForest.vertices().end(); vi=vi->inEdges().begin()->source()) {
-                ASSERT_require(bfsForest.isValidVertex(vi));
-                path.pushFront(vi->value().pathsEdge);
-                if (0 == vi->nInEdges())
-                    break;                              // made it to root of bfsForest
-                ASSERT_require2(vi->nInEdges()==1, "must form a tree");
+
+            {
+                boost::lock_guard<boost::mutex>(ctx->bfsForestMutex);
+                for (BfsForest::VertexIterator vi=bfsVertex;
+                     vi!=ctx->bfsForest.vertices().end();
+                     vi=vi->inEdges().begin()->source()) {
+                    path.pushFront(vi->value().pathsEdge);
+                    if (0 == vi->nInEdges())
+                        break;                          // made it to root of bfsForest
+                    ASSERT_require2(vi->nInEdges()==1, "must form a tree");
+                }
             }
-            printResults(partitioner, pathsGraph, path, bfsVertex->value().id, pathConstraints, solver, ops);
-            if (0 == --settings.maxPaths) {
-                ::mlog[INFO] <<"terminating because the maximum number of feasible paths has been found\n";
-                exit(0);
+            
+            {
+                boost::lock_guard<boost::mutex> lock(ctx->outputMutex);
+                printResults(ctx->partitioner, ctx->pathsGraph, path, bfsVertex->value().id, pathConstraints, solver, ops);
+                if (0 == --settings.maxPaths) {
+                    ::mlog[INFO] <<"terminating because the maximum number of feasible paths has been found\n";
+                    shouldExit = true;
+                }
             }
             abandonPrefix = true;                       // no need to keep going since we found a feasible path
         }
@@ -1581,20 +1602,39 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
             SAWYER_MESG(debug) <<"  path is too long (" <<bfsVertex->value().nInsns <<" instructions)\n";
             abandonPrefix = true;
         }
-        
+
         // Progress report
-        progress.suffix().nPaths(bfsVertex->value().id+1);
-        progress.suffix().pathLength(lastTestedPathLength);
-        progress.suffix().forestSize(bfsForest.nVertices());
-        progress.suffix().frontierSize(bfsFrontier.size());
-        ++progress;
+        static size_t nReports = 0;
+        if (++nReports % 16 == 0) {
+            size_t bfsForestSize = 0;
+            size_t bfsFrontierSize = 0;
+            {
+                boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
+                bfsForestSize = ctx->bfsForest.nVertices();
+                bfsFrontierSize = ctx->bfsFrontier.size();
+            }
+
+            {
+                boost::lock_guard<boost::mutex> lock(ctx->outputMutex);
+                ctx->progress.suffix().nPaths(bfsVertex->value().id+1);
+                ctx->progress.suffix().pathLength(lastTestedPathLength);
+                ctx->progress.suffix().forestSize(bfsForestSize);
+                ctx->progress.suffix().frontierSize(bfsFrontierSize);
+                ++(ctx->progress);
+            }
+        }
 
         // Either abandon this path and all paths that have this path as a prefix, or create some new path(s) by adding another
         // edge to this path.  When abandoning a prefix, erase the part of the bfsForest that isn't needed anymore (be sure not
         // to erase parts of this path that are prefixes of a path in the bfsFrontier).
         ASSERT_require(atEndOfPath || pathsEdge->target()->nOutEdges() > 0);
         ASSERT_require(abandonPrefix || !atEndOfPath);
-        if (abandonPrefix) {
+        if (shouldExit) {
+            boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
+            ctx->nWorking = BfsContext::EXIT_NOW;
+            ctx->bfsFrontierChanged.notify_all();
+        } else if (abandonPrefix) {
+            boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
             SAWYER_MESG(debug) <<"  abandoning path\n";
             while (1) {
                 ASSERT_require2(bfsVertex->nInEdges() <= 1, "tree nodes have 0 or 1 parent");
@@ -1602,13 +1642,18 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
                     break;                              // prefix is being used still
                 if (bfsVertex->nInEdges() == 1) {       // has parent?
                     BfsForest::VertexIterator parent = bfsVertex->inEdges().begin()->source();
-                    bfsForest.eraseVertex(bfsVertex);   // and incident edges
+                    ctx->bfsForest.eraseVertex(bfsVertex);   // and incident edges
                     bfsVertex = parent;
                 } else {
-                    bfsForest.eraseVertex(bfsVertex);
+                    ctx->bfsForest.eraseVertex(bfsVertex);
                     break;
                 }
             }
+            if (ctx->nWorking != BfsContext::EXIT_NOW) {
+                ASSERT_require(ctx->nWorking > 0);
+                --ctx->nWorking;
+            }
+            ctx->bfsFrontierChanged.notify_all();
         } else {
             // We've already given the cpu a private copy of our incoming state. Compute the outgoing state using that copy,
             // and then cause all new paths (the ones created from this path by extending it one edge) to share that same
@@ -1617,19 +1662,76 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
             SAWYER_MESG(debug) <<"  extending path\n";
             size_t nInsns = bfsVertex->value().nInsns;
             processVertex(cpu, pathsEdge->target(), nInsns /*in,out*/);
+            boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
             BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsEdge->target()->outEdges()) {
-                BfsForest::VertexIterator v = bfsForest.insertVertex(BfsForestVertex(pathsGraph.findEdge(edge.id()),
-                                                                                     cpu->get_state(), nInsns));
-                bfsForest.insertEdge(bfsVertex, v);
-                bfsFrontier.push_back(v);
-                SAWYER_MESG(debug) <<"    path #" <<v->value().id <<" for edge " <<partitioner.edgeName(edge) <<"\n";
+                BfsForest::VertexIterator v = ctx->bfsForest.insertVertex(BfsForestVertex(ctx->pathsGraph.findEdge(edge.id()),
+                                                                                          cpu->get_state(), nInsns));
+                ctx->bfsForest.insertEdge(bfsVertex, v);
+                ctx->bfsFrontier.push_back(v);
+                SAWYER_MESG(debug) <<"    path #" <<v->value().id <<" for edge " <<ctx->partitioner.edgeName(edge) <<"\n";
             }
             bfsVertex->value().state = BaseSemantics::StatePtr();
+            if (ctx->nWorking != BfsContext::EXIT_NOW) {
+                ASSERT_require(ctx->nWorking > 0);
+                --ctx->nWorking;
+            }
+            ctx->bfsFrontierChanged.notify_all();
         }
     }
-    SAWYER_MESG(debug) <<"worklist is empty\n";
 }
     
+
+// This later version of findAndProcessSinglePaths uses the ROSE inliner in a separate initial pass, then uses a breadth-first
+// traversal so process paths in length order.
+static void
+findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
+                                       const P2::ControlFlowGraph::ConstVertexIterator &cfgBeginVertex,
+                                       const P2::CfgConstVertexSet &cfgEndVertices,
+                                       const P2::CfgConstVertexSet &cfgAvoidVertices,
+                                       const P2::CfgConstEdgeSet &cfgAvoidEdges) {
+
+    // Build the paths graph with inlined functions.
+    P2::Inliner inliner;
+    inliner.shouldInline(ShouldInline::instance());
+    P2::CfgConstVertexSet cfgBeginVertices; cfgBeginVertices.insert(cfgBeginVertex);
+    inliner.inlinePaths(partitioner, cfgBeginVertices, cfgEndVertices, cfgAvoidVertices, cfgAvoidEdges);
+    ::mlog[INFO] <<"  final paths graph: " <<StringUtility::plural(inliner.paths().nVertices(), "vertices", "vertex")
+                 <<", " <<StringUtility::plural(inliner.paths().nEdges(), "edges") <<"\n";
+    if (inliner.paths().nVertices() <= 1)
+        return;                                         // no path, or trivially feasible singleton path
+    ASSERT_require(inliner.pathsBeginVertices().size()==1);
+    ASSERT_require(!inliner.pathsEndVertices().empty());
+    BfsContext ctx(partitioner, inliner.paths(), *inliner.pathsBeginVertices().begin(), inliner.pathsEndVertices());
+
+    // Initialize the forest with unit length paths emanating from the beginning vertex. We've already taken care of the
+    // singleton path case above, so we know there's at least one edge in every path.  Each vertex in the forest points to
+    // a path edge in the paths-graph, and the virtual machine state at the source of that edge (i.e., as the edge is
+    // entered).  Thus we must initialize the states of the first edge of all paths to be the state comuted by executing the
+    // begining vertex. Incoming states for an edge are shared.
+    Sawyer::Stopwatch searchTime;
+    Sawyer::Message::Stream searching(::mlog[INFO] <<"searching for feasible paths");
+    BaseSemantics::DispatcherPtr cpu = buildVirtualCpu(partitioner);
+    setInitialState(cpu, ctx.pathsBeginVertex);
+    size_t nInsns = 0;
+    processVertex(cpu, ctx.pathsBeginVertex, nInsns /*in,out*/);
+    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, ctx.pathsBeginVertex->outEdges()) {
+        ctx.bfsFrontier.push_back(ctx.bfsForest.insertVertex(BfsForestVertex(ctx.pathsGraph.findEdge(edge.id()),
+                                                                             cpu->get_state(), nInsns)));
+    }
+
+    // Start worker threads.
+    if (settings.nThreads != 1)
+        ::mlog[INFO] <<"starting " <<settings.nThreads <<" worker threads\n";
+    boost::thread *threads = new boost::thread[settings.nThreads];
+    for (size_t i=0; i<settings.nThreads; ++i)
+        threads[i] = boost::thread(singleThreadBfsWorker, &ctx);
+    for (size_t i=0; i<settings.nThreads; ++i)
+        threads[i].join();
+    delete[] threads;
+    ASSERT_require(ctx.bfsFrontier.empty());
+    ASSERT_require(ctx.bfsForest.isEmpty());
+    searching <<"; took " <<searchTime <<" seconds\n";
+}
 
 /** Merge states for multi-path feasibility analysis. Given two paths, such as when control flow merges after an "if"
  * statement, compute a state that represents both paths.  The new state that's returned will consist largely of ite
