@@ -6987,6 +6987,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
        // DQ (11/10/2014): Added support to support this C++11 value.
           case V_SgNullptrValExp:
 
+       // DQ (5/24/2015): Added support for this type.
+          case V_SgUnsignedShortVal:       // return 0;
+          case V_SgShortVal:               // return 0;
+          case V_SgUnsignedCharVal:        // return 0;
+
           case V_SgBoolValExp:             // return 0;
           case V_SgIntVal:                 // return 0;
           case V_SgThrowOp:                // return 0;

@@ -5374,6 +5374,8 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        usingGxx = (backEndCompiler == "g++");
      #endif
 
+#if 0
+  // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
      if (usingGxx)
         {
           SgFile* file = TransformationSupport::getFile(vardecl_stmt);
@@ -5414,8 +5416,18 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                          curprint("thread_local ");
                        }
                   }
+                 else
+                  {
+                 // DQ (5/24/2015): Adding support for GNU __thread keyword (thread local support for older versions of C).
+                 // For older compilers we use the __thread modifier.  This may also we what is required for non-C11 support.
+                    if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                       {
+                         curprint("__thread ");
+                       }
+                  }
              }
         }
+#endif
 
 #if 0
      vardecl_stmt->get_declarationModifier().display("Called from unparseVarDeclStmt()");
@@ -5802,8 +5814,81 @@ Unparse_ExprStmt::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
                unp->u_sage->printSpecifier2(vardecl_stmt, saved_ninfo);
 #if 0
+               printf ("DONE: Calling unp->u_sage->printSpecifier2 \n");
                curprint ("\n/* DONE: Calling unp->u_sage->printSpecifier2() */ \n");
 #endif
+
+#if 1
+            // DQ (5/24/2015): Moved to output specifier after the "extern" and "static" keywords.
+            // Note this this is required for test2009_19.c.
+               if (usingGxx)
+                  {
+                    SgFile* file = TransformationSupport::getFile(vardecl_stmt);
+#if 0
+                    printf ("In unparseVarDeclStmt(): resolving file to be %p \n",file);
+#endif
+                    bool is_Cxx_Compiler = false;
+                    bool is_C_Compiler   = false;
+                    if (file != NULL)
+                       {
+                         is_Cxx_Compiler = file->get_Cxx_only();
+                         is_C_Compiler   = file->get_C_only();
+                       }
+                      else
+                       {
+                         printf ("Warning: TransformationSupport::getFile(vardecl_stmt) == NULL \n");
+                       }
+#if 0
+                    printf ("In unparseVarDeclStmt(): is_C_Compiler = %s is_Cxx_Compiler = %s \n",is_C_Compiler ? "true" : "false",is_Cxx_Compiler ? "true" : "false");
+#endif
+                 // DQ (5/24/2015): I think I menat to say that For C we need to use the EDG 4.9 frontend (?).
+                 // For C we need to use the GNU 4.9 compiler.
+                 // Now check the version of the identified GNU g++ compiler.
+                    if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 9) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+                        {
+                      // DQ (7/25/2014): Adding C11 thread local support.
+                      // if (vardecl_stmt->get_is_thread_local() == true)
+#if 0
+                         printf ("In unparseVarDeclStmt(): GNU or EDG? 4.9 or greater: vardecl_stmt->get_is_thread_local() = %s \n",vardecl_stmt->get_is_thread_local() ? "true" : "false");
+#endif
+                         if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                            {
+                              curprint("_Thread_local ");
+                            }
+                       }
+                      else
+                       {
+                      // For C++ we can use the GNU 4.8 compiler.
+                         if ((BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 4 && BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER >= 8) || (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER > 4))
+                            {
+                           // DQ (8/13/2014): Adding C++11 thread local support.
+                              if (is_Cxx_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                 {
+                                   curprint("thread_local ");
+                                 }
+                                else
+                                 {
+                                // DQ (5/24/2015): Added this case to support the C language work even when using the GNU 4.8 compiler.
+                                   if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                      {
+                                     // curprint("_Thread_local ");
+                                        curprint("__thread ");
+                                      }
+                                 }
+                            }
+                           else
+                            {
+                           // DQ (5/24/2015): Adding support for GNU __thread keyword (thread local support for older versions of C).
+                           // For older compilers we use the __thread modifier.  This may also we what is required for non-C11 support.
+                              if (is_C_Compiler == true && vardecl_stmt->get_is_thread_local() == true)
+                                 {
+                                   curprint("__thread ");
+                                 }
+                            }
+                       }
+                  }
+#endif
+
             // DQ (11/28/2004): Are these true! No! declStmt is really the declaration of any parent scope (excluding global scope!)
             // ROSE_ASSERT(declStmt != NULL);
             // ROSE_ASSERT(isSgTypedefDeclaration(declStmt) == NULL);
@@ -8172,15 +8257,25 @@ Unparse_ExprStmt::unparseAsmStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unparseAsmStmt(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
 
-     SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
-     ROSE_ASSERT(sourceFile != NULL);
+  // DQ (5/23/2015): The p_skip_unparse_asm_commands data member has been changed to be a static data member
+  // so that we can support ASM statments hidden in AST islands (AST subtrees hidden in types and thus not
+  // connected to the AST (since types are shared).  The use of the typeof operator in conjunction with the
+  // GNU statemnet expression can permit this configuration.
+
+  // DQ (5/19/2015): Note that sourceFile will be NULL in the case where the asm statement is in 
+  // a GNU statement expression in a typeof operator. Not clear yet what to do about this case.
+  // See test2015_141.c for an example of this. One solution might be to make the 
+  // skip_unparse_asm_commands variable a static data member.
+  // SgSourceFile* sourceFile = TransformationSupport::getSourceFile(stmt);
+  // ROSE_ASSERT(sourceFile != NULL);
 
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
   // frequently machine specific and we are compiling then on architectures for which they were 
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
   // but not unparsed in the code given to the backend compiler, since this can fail. (See 
   // test2007_20.C from Linux Kernel for an example).
-     if (sourceFile->get_skip_unparse_asm_commands() == true)
+  // if (sourceFile->get_skip_unparse_asm_commands() == true)
+     if (SgSourceFile::get_skip_unparse_asm_commands() == true)
         {
        // This is a case were we skip the unparsing of the C language ASM statements, because while 
        // we can read then into the AST to support analysis, we can not always output them correctly.  
