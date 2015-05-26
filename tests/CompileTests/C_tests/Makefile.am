@@ -609,6 +609,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_156.c \
      test2015_157.c \
      test2015_158.c \
+     test2015_160.c \
+     test2015_161.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
@@ -637,7 +639,8 @@ FAILING_TESTCODES_XEN = \
     test2015_153.c \
     test2015_154.c \
     test2015_155.c \
-    test2015_156.c 
+    test2015_156.c \
+    test2015_159.c 
 
 # DQ (4/13/2015): The best examples of remaining bugs are:
 # Makefile rules:
@@ -1067,7 +1070,8 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
         test2015_149.h \
         test2015_154.h \
         test2015_156.h \
-        test2015_157.h
+        test2015_157.h \
+        test2015_159.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
