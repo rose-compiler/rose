@@ -412,6 +412,9 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           argument == "-diag-warning" ||
           argument == "-diag-remark"  ||
 
+       // TOO1 (5/14/2015): Add support for GCC --param, e.g. "--param inline-unit-growth=900" found in Valgrind
+          argument == "--param" ||    // --param variable=value
+
           false)
         {
           result = true;
@@ -1006,6 +1009,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
       Rose::Cmdline::Unparser::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Fortran::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
+      Rose::Cmdline::Gnu::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
 
   // DQ (9/14/2013): Adding option to copy the location of the input file as the position for the generated output file.
@@ -1939,6 +1943,49 @@ ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv
       #endif
   }// has_fortran_remote_debug
 }// Cmdline::Fortran::Ofp::ProcessEnableRemoteDebugging
+
+//------------------------------------------------------------------------------
+//                                  Gnu
+//------------------------------------------------------------------------------
+//
+bool
+Rose::Cmdline::Gnu::
+OptionRequiresArgument (const std::string& option)
+{
+  return
+      option == "--param"    ||   // --param variable=value
+      false;
+}// Cmdline:Java:::OptionRequiresArgument
+
+void
+Rose::Cmdline::Gnu::
+Process (SgProject* project, std::vector<std::string>& argv)
+{
+  if (SgProject::get_verbose() > 1)
+      std::cout << "[INFO] Processing GNU commandline options" << std::endl;
+
+  ProcessParam(project, argv);
+}
+
+void
+Rose::Cmdline::Gnu::
+ProcessParam (SgProject* project, std::vector<std::string>& argv)
+{
+  std::string param;
+  bool has_param =
+      CommandlineProcessing::isOptionWithParameter(
+        argv,
+        "--",
+        "(param)",
+        param,
+        true);
+
+  if (has_param)
+  {
+      if (SgProject::get_verbose() > 1)
+          std::cout << "[INFO] Detected GNU --param " << param << std::endl;
+  }
+}
 
 //------------------------------------------------------------------------------
 //                                  Java
@@ -3649,6 +3696,29 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
           if ( SgProject::get_verbose() >= 1 )
                printf ("relax syntax check mode ON \n");
           set_relax_syntax_check(true);
+        }
+
+  // DQ (5/24/2015): Record type of optimization (-Os, -O, -O1, -O2, -O3, -O4, -O5), note -O0 means no optimization.
+  // This is required so that when optimization is specified we can turn on the __OPTIMIE__ macro.
+  // See test2015_153.c.
+  // if ( CommandlineProcessing::isOption(argv,"-O","(' '|0|1|2|3|4|5|s)",true) == true )
+     if ( CommandlineProcessing::isOption(argv,"-O","(1|2|3|4|5|s)",true) == true )
+        {
+       // printf ("optimizaztion specified on commend line (specific level provided) \n");
+          set_optimization(true);
+        }
+       else
+        {
+          if ( CommandlineProcessing::isOption(argv,"-O","",true) == true )
+             {
+            // printf ("optimizaztion specified on commend line (default level specified: -O) \n");
+               set_optimization(true);
+             }
+            else
+             {
+            // printf ("optimization not specified on commend line (-O0 or no optimization specified) \n");
+               set_optimization(false);
+             }
         }
 
   //
@@ -5889,6 +5959,15 @@ SgFile::build_EDG_CommandLine ( vector<string> & inputCommandLine, vector<string
      commandLine.push_back("--preinclude");
      commandLine.push_back("rose_edg_required_macros_and_functions.h");
 #endif
+
+  // DQ (5/24/2015): Adding support for specification of optimization to trigger use of __OPTIMIZE__ macro (required for compatability with GNU gcc API).
+     if (get_optimization() == true)
+        {
+#if 0
+          printf ("Adding -D__OPTIMIZE__ flag to EDG command line \n");
+#endif
+          commandLine.push_back("-D__OPTIMIZE__");
+        }
 
 #if 0
      printf ("In SgFile::build_EDG_CommandLine(): includePaths.size() = %zu \n",includePaths.size());

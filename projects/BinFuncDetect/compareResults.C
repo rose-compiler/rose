@@ -242,7 +242,7 @@ int main(int argc, char *argv[]) {
     // Parse the specimen
     if (!settings.specimenName.empty()) {
         P2::Engine engine;
-        MemoryMap map = engine.load(settings.specimenName);
+        MemoryMap map = engine.loadSpecimens(settings.specimenName);
         InstructionProvider::Ptr insns = InstructionProvider::instance(engine.obtainDisassembler(), map);
         map.dump(std::cout);
         listInstructions(insns, map, code1, code2);

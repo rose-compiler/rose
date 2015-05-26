@@ -15,33 +15,179 @@ namespace Partitioner2 {
 
 /** Base class for engines driving the partitioner.
  *
- *  An engine serves two purposes:
+ *  An engine serves these main purposes:
  *
- *  @li It provides a number of utility methods for preparing specimens to be partitioned, namely steps that parse the binary
- *      container (ELF, PE, etc), map sections into virtual memory, perform optional dynamic linking and relocation fixups,
- *      apply map resource strings ("map:" files), and choose disassembler based on architecture.
+ *  @li It holds configuration information related to disassembling and partitioning and provides methods for initializing that
+ *      configuration information.
  *
- *  @li It provides a number of wrapper methods and algorithms for using a partitioner to organize instructions into basic
- *      blocks and functions.
+ *  @li It provides methods for creating components (disassembler, partitioner) from stored configuration information.
  *
- *  Users need not use an engine at all if they don't want to -- everything the engine does can (and was previously) done at
- *  the user level with calls to other APIs.  However, using an engine for as many steps as possible will mean that user code
- *  will automatically benefit from improvements such as new algorithms.
+ *  @li It provides methods that implement the basic steps a program typically goes through in order to disassemble a specimen,
+ *      such as parsing the binary container, mapping files and container sections into simulated specimen memory, calling a
+ *      dynamic linker, disassembling and partitioning, and building an abstract syntax tree.
  *
- *  Besides reimplementing engine algorithms in user code, a user can also modify behavior in these other ways:
+ *  @li It provides a set of behaviors for the partitioner that are suitable for various situations.  For instance, the engine
+ *      controls the order that functions and basic blocks are discovered, what happens when the partitioner encounters
+ *      conflicts when assigning basic blocks to functions, etc.
  *
- *  @li The engine is intended to be a base class for user subclasses so the user can override individual algorithms and still
- *      use the other algorithms.
+ *  Use of an engine is entirely optional.  All of the engine's actions are implemented in terms of public APIs on other
+ *  objects such as @ref Disassembler and @ref Partitioner.  In fact, this particular engine base class is disigned so that
+ *  users can pick and choose to use only those steps they need, or perhaps to call the main actions one step at a time with
+ *  the user making adjustments between steps.
  *
- *  @li The engine API is written in terms of individual steps where the user has a chance to change things between steps.
- *      Each step will automatically execute any previous steps that are necessary. The main steps are: @ref parse, @ref load,
- *      and @ref partition.
+ *  @section extensibility Custimization
  *
- *  @li The engine's partitioning API always takes a partitioner as an argument. The user can modify the partitioner's behavior
- *      by subclassing, registering partitioner callbacks, or modifying the partitioner state between calls to the
- *      engine. However, the partitioner that's provided to these functions should be one that was created with one of the
- *      partitioner-creating functions in this library if you want all features to work. */
+ *  The actions taken by an engine can be customized in a number of ways:
+ *
+ *  @li The engine can be subclassed. All object methods that are intended to be overridable in a subclass are declared as
+ *      virtual.  Some simple functions, like those that return property values, are not virtual since they're not things that
+ *      one normally overrides.  This engine's methods are also designed to be as modular as possible--each method does exactly
+ *      one thing, and higher-level methods sew those things together into sequences.
+ *
+ *  @li Instead of calling one function that does everything from parsing the command-line to generating the final abstract
+ *      syntax tree, the engine breaks things into steps. The user can invoke one step at a time and make adjustments between
+ *      steps.  This is actually the most common custimization within the tools distributed with ROSE.
+ *
+ *  @li The behavior of the @ref Partitioner itself can be modified by attaching callbacks to it. In fact, if the engine is
+ *      used to create a partitioner then certain engine-defined callbacks are added to the partitioner.
+ *
+ *  @section basic Basic usage
+ *
+ *  The most basic use case for the engine is to pass it the command-line arguments and have it do everything, eventually
+ *  returning an abstract syntax tree.
+ *
+ *  @code
+ *   #include <rose.h>
+ *   #include <Partitioner2/Engine.h>
+ *   using namespace rose;
+ *   namespace P2 = rose::BinaryAnalysis::Partitioner2;
+ *
+ *   int main(int argc, char *argv[]) {
+ *       std::string purpose = "disassembles a binary specimen";
+ *       std::string description =
+ *           "This tool disassembles the specified specimen and presents the "
+ *           "results as a pseudo assembly listing, that is, a listing intended "
+ *           "for human consumption rather than assembly.";
+ *       SgProject *project = P2::Engine().frontend(argc, argv, purpose, description);
+ *  @endcode
+ *
+ *  @section topsteps High level operations
+ *
+ *  While @ref frontend does everything, it's often useful to break it down to individual steps so that adjustments can be made
+ *  along the way. This next level of steps are:
+ *
+ *  @li Parse the command-line to adjust engine settings. See @ref parseCommandLine.
+ *
+ *  @li Parse binary containers to create a container abstract syntax tree.  This step parses things like section tables,
+ *      symbol tables, import and export tables, etc. but does not disassemble any instructions.  See @ref parseContainers.
+ *
+ *  @li Create a memory map that simulates process address space for the specimen.  This consists of running a dynamic linker,
+ *      loading raw data into the simulated address space, and adjusting the memory map . All of these steps are optional. See
+ *      @ref loadSpecimens.
+ *
+ *  @li Create a partitioner.  The partitioner is responsible for driving the disassembler based on control flow information
+ *      obtained by examining previously disassembled instructions, user-specified configuration files, command-line switches,
+ *      etc. See @ref createPartitioner.
+ *
+ *  @li Run partitioner.  This step uses the disassembler and partitioner to discover instructions, basic blocks, data blocks,
+ *      and functions and updates the partitioner's internal data structures. See @ref runPartitioner.
+ *
+ *  @li Create an abstract syntax tree from the partitioner's data structures.  Most of ROSE is designed to operate on an AST,
+ *      although many binary analysis capabilities are built directly on the more efficient partitioner data structures.
+ *      Because of this, the partitioner also has a mechanism by which its data structures can be initialized from an AST.
+ */
 class Engine {
+public:
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Settings.  All settings must act like properties, which means the following:
+    //   1. Each setting must have a name that does not begin with a verb.
+    //   2. Each setting must have a command-line switch to manipulate it.
+    //   3. Each setting must have a method that queries the property (same name as the property and taking no arguments).
+    //   4. Each setting must have a modifier method (same name as property but takes a value and returns void)
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /** Settings for loading specimens.
+     *
+     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref loaderSwitches. */
+    struct LoaderSettings {
+        size_t deExecuteZeros;                          /**< Size threshold for removing execute permission from zero data. If
+                                                         *   this data member is non-zero, then the memory map will be adjusted
+                                                         *   by removing execute permission from any region of memory that has
+                                                         *   at least this many consecutive zero bytes. */
+
+        LoaderSettings()
+            : deExecuteZeros(0) {}
+    };
+
+    /** Settings that control the disassembler.
+     *
+     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref disassemblerSwitches. */
+    struct DisassemblerSettings {
+        std::string isaName;                            /**< Name of the instruction set architecture. Specifying a non-empty
+                                                         *   ISA name will override the architecture that's chosen from the
+                                                         *   binary container(s) such as ELF or PE. */
+    };
+
+    /** Settings that control creation of the partitioner.
+     *
+     *  The runtime descriptions and command-line parser for these switches can be obtained from @ref partitionerSwitches. */
+    struct PartitionerSettings {
+        std::vector<rose_addr_t> startingVas;           /**< Addresses at which to start recursive disassembly. These
+                                                         *   addresses are in addition to entry addresses, addresses from
+                                                         *   symbols, addresses from configuration files, etc. */
+        bool usingSemantics;                            /**< Whether instruction semantics are used. If semantics are used,
+                                                         *   then the partitioner will have more accurate reasoning about the
+                                                         *   control flow graph.  For instance, semantics enable the detection
+                                                         *   of certain kinds of opaque predicates. */
+        bool followingGhostEdges;                       /**< Should ghost edges be followed during disassembly?  A ghost edge
+                                                         *   is a CFG edge that is apparent from the instruction but which is
+                                                         *   not taken according to semantics. For instance, a branch
+                                                         *   instruction might have two outgoing CFG edges apparent by looking
+                                                         *   at the instruction syntax, but a semantic analysis might determine
+                                                         *   that only one of those edges can ever be taken. Thus, the branch
+                                                         *   has an opaque predicate with one actual edge and one ghost edge. */
+        bool discontiguousBlocks;                       /**< Should basic blocks be allowed to be discontiguous. If set, then
+                                                         *   the instructions of a basic block do not need to follow one after
+                                                         *   the other in memory--the block can have internal unconditional
+                                                         *   branches. */
+        bool findingFunctionPadding;                    /**< Look for padding before each function entry point? */
+        bool findingDeadCode;                           /**< Look for unreachable basic blocks? */
+        rose_addr_t peScramblerDispatcherVa;            /**< Run the PeDescrambler module if non-zero. */
+        bool findingIntraFunctionCode;                  /**< Suck up unused addresses as intra-function code. */
+        bool findingIntraFunctionData;                  /**< Suck up unused addresses as intra-function data. */
+        AddressInterval interruptVector;                /**< Table of interrupt handling functions. */
+        bool doingPostAnalysis;                         /**< Perform post-partitioning analysis phase? */
+        bool functionReturnsAssumed;                    /**< Assume functions return if cannot prove otherwise? */
+        bool findingDataFunctionPointers;               /**< Look for function pointers in static data. */
+
+        PartitionerSettings()
+            : usingSemantics(false), followingGhostEdges(false), discontiguousBlocks(true), findingFunctionPadding(true),
+              findingDeadCode(true), peScramblerDispatcherVa(0), findingIntraFunctionCode(true), findingIntraFunctionData(true),
+              doingPostAnalysis(true), functionReturnsAssumed(true), findingDataFunctionPointers(false) {}
+    };
+
+    /** Settings for controling the engine behavior.
+     *
+     *  These settings control the behavior of the engine itself irrespective of how the partitioner is configured. The runtime
+     *  descriptions and command-line parser for these switches can be obtained from @ref engineBehaviorSwitches. */
+    struct EngineSettings {
+        std::vector<std::string> configurationNames;    /**< List of configuration files and/or directories. */
+    };
+
+    /** Settings for the engine.
+     *
+     *  The engine is configured by adjusting these settings, usually shortly after the engine is created. */
+    struct Settings {
+        LoaderSettings loader;                          /**< Settings used during specimen loading. */
+        DisassemblerSettings disassembler;              /**< Settings for creating the disassembler. */
+        PartitionerSettings partitioner;                /**< Settings for creating a partitioner. */
+        EngineSettings engine;                          /**< Settings that control engine behavior. */
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Internal data structures
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
     // Basic blocks that need to be worked on next. These lists are adjusted whenever a new basic block (or placeholder) is
     // inserted or erased from the CFG.
     class BasicBlockWorkList: public CfgAdjustmentCallback {
@@ -62,237 +208,287 @@ class Engine {
         void moveAndSortCallReturn(const Partitioner&);
     };
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Data members
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    Settings settings_;                                 // Settings for the partitioner.
     SgAsmInterpretation *interp_;                       // interpretation set by loadSpecimen
-    BinaryLoader *loader_;                              // how to remap, link, and fixup
+    BinaryLoader *binaryLoader_;                        // how to remap, link, and fixup
     Disassembler *disassembler_;                        // not ref-counted yet, but don't destroy it since user owns it
     MemoryMap map_;                                     // memory map initialized by load()
     BasicBlockWorkList::Ptr basicBlockWorkList_;        // what blocks to work on next
-    bool dataMentionedFunctionSearch_;                  // search for functions mentioned in read-only data?
-    bool intraFunctionCodeSearch_;                      // search for unreachable code surrounded by a function?
-    bool opaquePredicateSearch_;                        // search for code opposite opaque predicate edges?
-    bool postPartitionAnalyses_;                        // run various analyses after partitioning?
-    bool useSemantics_;                                 // use instruction semantics
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Constructors
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Default constructor. */
     Engine()
-        : interp_(NULL), loader_(NULL), disassembler_(), basicBlockWorkList_(BasicBlockWorkList::instance()),
-          dataMentionedFunctionSearch_(false), intraFunctionCodeSearch_(true), opaquePredicateSearch_(true),
-          postPartitionAnalyses_(true), useSemantics_(false) {}
+        : interp_(NULL), binaryLoader_(NULL), disassembler_(NULL), basicBlockWorkList_(BasicBlockWorkList::instance()) {
+        init();
+    }
 
     virtual ~Engine() {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Basic steps
-    //
-    // Call these in order specified here, but each one will also automatically run the previous steps if necessary.
+    //                                  The very top-level use case
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Parse specimen binary containers.
+    /** Most basic usage of the partitioner.
      *
-     *  Parses the specimen binary containers (ELF, PE, etc) but does not load segments into memory.  Any specified names that
-     *  are map resources (begin with "map:") are discarded and the remaining names are passed to ROSE's @c frontend
-     *  function. The best SgAsmInterpretation is then chosen and returned.  If the list of names has nothing suitable for
-     *  @c frontend then the null pointer is returned.
+     *  This method does everything from parsing the command-line to generating an abstract syntax tree. If all is successful,
+     *  then an abstract syntax tree is returned.  The return value is a SgAsmBlock node that contains all the detected
+     *  functions. If the specimen consisted of an ELF or PE container then the parent nodes of the returned AST will lead
+     *  eventually to an SgProject node.
+     *
+     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
+     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
+     *
+     *  The command-line supports a "--help" (or "-h") switch to describe all other switches and arguments, essentially
+     *  generating output like a Unix man(1) page.
+     *
+     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
+     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
+     *  specify the purpose as "disassembles a binary specimen".
+     *
+     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
+     *  special meaning.
      *
      * @{ */
-    virtual SgAsmInterpretation* parse(const std::vector<std::string> &fileNames);
-    SgAsmInterpretation* parse(const std::string &fileName) /*final*/ {
-        return parse(std::vector<std::string>(1, fileName));
-    }
+    SgAsmBlock* frontend(int argc, char *argv[],
+                         const std::string &purpose, const std::string &description);
+    virtual SgAsmBlock* frontend(const std::vector<std::string> &args,
+                                 const std::string &purpose, const std::string &description);
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Basic top-level steps
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Reset the engine to its initial state.
+     *
+     *  This does not reset the settings properties since that can be done easily by constructing a new engine.  It only resets
+     *  the interpretation, binary loader, disassembler, and memory map so all the top-level steps get executed again. This is
+     *  a useful way to re-use the same partitioner to process multiple specimens. */
+    void reset();
+
+    /** Parse the command-line.
+     *
+     *  This method parses the command-line and uses it to update this engine's settings.  Since a command line is usually more
+     *  than just engine-related switches, the more usual approach is for the user to obtain engine-related command-line switch
+     *  declarations and parse the command-line in user code.
+     *
+     *  This function automatically applies the command-line when it's successfully parsed, thereby updating this engine's
+     *  settings.  If something goes wrong with the command-line then an <code>std::runtime_error</code> is thrown.
+     *
+     *  The command-line can be provided as a typical @c argc and @c argv pair, or as a vector of arguments. In the latter
+     *  case, the vector should not include <code>argv[0]</code> or <code>argv[argc]</code> (which is always a null pointer).
+     *
+     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
+     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
+     *  specify the purpose as "disassembles a binary specimen".
+     *
+     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
+     *  special meaning.
+     *
+     *  If the tool requires additional switches, an opportunity to adjust the parser, or other special handling, it can call
+     *  @ref commandLineParser to obtain a parser and then call its @c parse and @c apply methods explicitly.
+     *
+     * @{ */
+    Sawyer::CommandLine::ParserResult parseCommandLine(int argc, char *argv[],
+                                                       const std::string &purpose, const std::string &description);
+    virtual Sawyer::CommandLine::ParserResult parseCommandLine(const std::vector<std::string> &args,
+                                                               const std::string &purpose, const std::string &description);
+    /** @} */
+
+    /** Parse specimen binary containers.
+     *
+     *  Parses the ELF and PE binary containers to create an abstract syntax tree (AST).  If @p fileNames contains names that
+     *  are recognized as raw data or other non-containers then they are skipped over at this stage but processed during the
+     *  @ref load stage.
+     *
+     *  This method tries to allocate a disassember if none is set and an ISA name is specified in the settings, otherwise the
+     *  disassembler is chosen later.  It also resets the interpretation to be the return value (see below), and clears the
+     *  memory map.
+     *
+     *  Returns a binary interpretation (perhaps one of many). ELF files have only one interpretation; PE files have a DOS and
+     *  a PE interpretation and this method will return the PE interpretation. The user may, at this point, select a different
+     *  interpretation. If the list of names has nothing suitable for ROSE's @c frontend function (the thing that does the
+     *  container parsing) then the null pointer is returned.
+     *
+     * @{ */
+    virtual SgAsmInterpretation* parseContainers(const std::vector<std::string> &fileNames);
+    SgAsmInterpretation* parseContainers(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Load and/or link interpretation.
      *
-     *  Loads and/or links the engine's interpretation according to the engine's binary loader, first parsing the container if
-     *  necessary. The following steps are performed:
+     *  Loads and/or links the engine's interpretation according to the engine's binary loader with these steps:
      *
-     *  @li If the engine has no interpretation then @ref parse is called first in order to parse the ELF, PE, etc. binary
-     *      container. Only those specimens whose names are not memory map resources are used for this step.
+     *  @li Clears any existing memory map in the engine.
      *
-     *  @li If the engine has an interpretation (either originally or as a result of the previous step), and that
-     *      interpretation lacks a memory map or has an empty memory map, then the @ref BinaryLoader::load method is invoked on
-     *      the interpretation using the loader returned by @ref obtainLoader.  The loader configuration controls whether
-     *      dynamic linking is performed.
+     *  @li If the binary containers have not been parsed (@ref areContainersParsed returns false, i.e., engine has a null
+     *      binary  interpretation) then @ref parseContainers is called with the same arguments.
      *
-     *  @li If there is no interpretation or no memory map then an empty memory map is created, otherwise the interpretation's
-     *      memory map is used for the following steps and the eventual return value.
+     *  @li If binary containers are present but the chosen binary interpretation's memory map is null or empty, then
+     *      initialize the memory map by calling @ref loadContainers with the same arguments.
      *
-     *  @li If any specified specimen names are map resources (begin with "map:") then they are applied to the memory map.
+     *  @li Continue initializing the memory map by processing all non-container arguments via @ref loadNonContainers.
+     *
+     *  Returns a reference to the engine's memory map.
      *
      * @{ */
-    virtual MemoryMap load(const std::vector<std::string> &fileNames = std::vector<std::string>());
-    MemoryMap load(const std::string &fileName) /*FINAL*/ { return load(std::vector<std::string>(1, fileName)); }
+    virtual MemoryMap& loadSpecimens(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    MemoryMap& loadSpecimens(const std::string &fileName) /*final*/;
     /** @} */
-
 
     /** Partition instructions into basic blocks and functions.
      *
-     *  Parses and loads the specimen if necessary, then disassembles and organizes instructions into basic blocks and
-     *  functions. Returns the partitioner that was used and which contains the results.
+     *  Disassembles and organizes instructions into basic blocks and functions with these steps:
+     *
+     *  @li If the specimen is not loaded (@ref areSpecimensLoaded) then call @ref loadSpecimens.
+     *
+     *  @li Obtain a disassembler by calling @ref obtainDisassembler.
+     *
+     *  @li Create a partitioner by calling @ref createPartitioner.
+     *
+     *  @li Run the partitioner by calling @ref runPartitioner.
+     *
+     *  Returns the partitioner that was used and which contains the results.
      *
      * @{ */
-    Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
-    Partitioner partition(const std::string &fileName) /*final*/ { return partition(std::vector<std::string>(1, fileName)); }
-    virtual Partitioner partition(SgAsmInterpretation*);
-    void partition(Partitioner&);
+    virtual Partitioner partition(const std::vector<std::string> &fileNames = std::vector<std::string>());
+    Partitioner partition(const std::string &fileName) /*final*/;
     /** @} */
 
     /** Obtain an abstract syntax tree.
      *
-     *  Constructs a new abstract syntax tree from partitioner information.  The method that takes a file name or list of file
-     *  names calls the @ref partitioner method first on those names, thus it can be a very simple way to disassemble and
-     *  partition all at once, returning a final AST.
+     *  Constructs a new abstract syntax tree (AST) from partitioner information with these steps:
+     *
+     *  @li If the partitioner has not been run yet (according to @ref isPartitioned), then do that now with the same
+     *      arguments.
+     *
+     *  @li Call Modules::buildAst to build the AST.
      *
      * @{ */
     SgAsmBlock* buildAst(const std::vector<std::string> &fileNames = std::vector<std::string>()) /*final*/;
-    SgAsmBlock* buildAst(const std::string &fileName) /*final*/ { return buildAst(std::vector<std::string>(1, fileName)); }
-    SgAsmBlock* buildAst(SgAsmInterpretation*) /*final*/;
-    virtual SgAsmBlock* buildAst(const Partitioner&);
+    SgAsmBlock* buildAst(const std::string &fileName) /*final*/;
     /** @} */
-    
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Some utilities
+    //                                  Command-line parsing
+    //
+    // top-level: parseCommandLine
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Command-line switches related to the loader. */
+    virtual Sawyer::CommandLine::SwitchGroup loaderSwitches();
+
+    /** Command-line switches related to the disassembler. */
+    virtual Sawyer::CommandLine::SwitchGroup disassemblerSwitches();
+
+    /** Command-line switches related to the partitioner. */
+    virtual Sawyer::CommandLine::SwitchGroup partitionerSwitches();
+
+    /** Command-line switches related to engine behavior. */
+    virtual Sawyer::CommandLine::SwitchGroup engineSwitches();
+
     /** Documentation for specimen names. */
     static std::string specimenNameDocumentation();
 
-    /** Obtain a binary loader.
+    /** Creates a command-line parser.
      *
-     *  This is usually called before the engine creates a partitioner. It looks for a suitable loader type and allocates an
-     *  instance of the loader, saving a pointer.  If the caller provides a loader then that loader is used instead of creating
-     *  a new one. Otherwise, if this engine already has a loader it does nothing.  Finally, failing those two situations, the
-     *  engine looks at its interpretation, which must exist, to choose a loader.
+     *  Creates and returns a command-line parser suitable for parsing command-line switches and arguments needed by the
+     *  disassembler.
      *
-     *  If a new loader is created it is configured to map the specimen's sections but not perform linking or relocation
-     *  fixups. */
-    virtual BinaryLoader *obtainLoader(BinaryLoader *hint=NULL);
+     *  The @p purpose should be a single line string that will be shown in the title of the man page and should
+     *  not start with an upper-case letter, a hyphen, white space, or the name of the command. E.g., a disassembler tool might
+     *  specify the purpose as "disassembles a binary specimen".
+     *
+     *  The @p description is a full, multi-line description written in the Sawyer markup language where "@" characters have
+     *  special meaning. */
+    virtual Sawyer::CommandLine::Parser commandLineParser(const std::string &purpose, const std::string &description);
 
-    /** Obtain a disassembler.
+    /** Check settings after command-line is processed.
      *
-     *  This is usually called before the engine creates a partitioner. It looks for a suitable disassembler type and allocates
-     *  an instance of the disassembler, saving a pointer.  If the caller provides a disassembler then that disassembler is
-     *  used instead of allocating a new one.  If the caller provides a non-empty architecture name, then that name is used to
-     *  lookup up a disassembler.  Otherwise, if this engine already has a disassembler it does nothing.  Finally, failing
-     *  those three situations, the engine looks at its interpretation, which must exist, to choose a disassembler.
+     *  This does some checks and further configuration immediately after processing the command line. It's also called by most
+     *  of the top-level operations.
      *
-     *  @{ */
-    virtual Disassembler* obtainDisassembler(Disassembler *hint=NULL);
-    virtual Disassembler* obtainDisassembler(const std::string &isaName);
-    /** @} */
-
-    /** Create a bare partitioner.
-     *
-     *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
-     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor
-     *  is not quite the same--that would produce an even more bare partitioner!  The partitioner must have disassembler and
-     *  memory map properties assigned already. They can be assigned explicitly with @ref disassembler and @ref memoryMap
-     *  methods, and/or they can be allocated implicitly by calling steps up through @ref load. */
-    virtual Partitioner createBarePartitioner();
-
-    /** Create a generic partitioner.
-     *
-     *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
-     *  partitioner must have disassembler and memory map properties assigned already. They can be assigned explicitly with
-     *  @ref disassembler and @ref memoryMap methods, and/or they can be allocated implicitly by calling steps up through @ref
-     *  load. */
-    virtual Partitioner createGenericPartitioner();
-
-    /** Create a tuned partitioner.
-     *
-     *  Returns a partitioner that is tuned to operate on the architecture described by the specified disassembler. The
-     *  partitioner must have disassembler and memory map properties assigned already. They can be assigned explicitly with
-     *  @ref disassembler and @ref memoryMap methods, and/or they can be allocated implicitly by calling steps up through @ref
-     *  load. */
-    virtual Partitioner createTunedPartitioner();
-
-    /** Create a partitioner from an AST.
-     *
-     *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
-     *  the engine and a new partitioner with information from the AST. */
-    virtual Partitioner createPartitionerFromAst(SgAsmInterpretation*);
-
-private:
-    virtual void checkCreatePartitionerPrerequisites() const;
-    
+     *  If an ISA name is specified in the settings and no disassembler has been set yet, then a disassembler is allocated. */
+    virtual void checkSettings();
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Properties
+    //                                  Container parsing
+    //
+    // top-level: parseContainers
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    /** Property: make data-mentioned functions.
+    /** Determine whether a specimen name is a non-container.
      *
-     *  If true, then the @ref discoverFunctions will look for read-only data that mentions addresses that are executable and
-     *  don't correspond to any known instruction or data, and make a function at that address.  This is good for finding
-     *  functions that are used for error handling callbacks, but can introduce a large number of conflicts if those addresses
-     *  aren't really the beginning of functions.
-     *
-     * @{ */
-    bool dataMentionedFunctionSearch() const /*final*/ { return dataMentionedFunctionSearch_; }
-    virtual void dataMentionedFunctionSearch(bool b) { dataMentionedFunctionSearch_ = b; }
-    /** @} */
+     *  Certain strings are recognized as special instructions for how to adjust a memory map and are not intended to be passed
+     *  to ROSE's @c frontend function.  This predicate returns true for such strings. */
+    virtual bool isNonContainer(const std::string&);
 
-    /** Property: find code code surrounded by a function.
+    /** Returns true if containers are parsed.
      *
-     *  If true, then look for code that's surrounded by a function and add it to that function.
-     *
-     * @{ */
-    bool intraFunctionCodeSearch() const /*final*/ { return intraFunctionCodeSearch_; }
-    virtual void intraFunctionCodeSearch(bool b) { intraFunctionCodeSearch_ = b; }
-    /** @} */
+     *  Specifically, returns true if the engine has a non-null interpretation.  If it has a null interpretation then
+     *  @ref parseContainers might have already been called but no binary containers specified, in which case calling it again
+     *  with the same file names will have no effect. */
+    virtual bool areContainersParsed() const;
 
-    /** Property: look for dead code to attach to functions
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Load specimens
+    //
+    // top-level: loadSpecimens
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Returns true if specimens are loaded.
      *
-     *  If true then look for basic block CFG edges that were suppressed due to opaque predicates (ghost edges) and generate
-     *  code at those addresses, also following the new CFG edges recursively to find additional code.
-     *
-     * @{ */
-    bool opaquePredicateSearch() const /*final*/ { return opaquePredicateSearch_; }
-    virtual void opaquePredicateSearch(bool b) { opaquePredicateSearch_ = b; }
-    /** @} */
+     *  Specifically, returns true if the memory map is non-empty. */
+    virtual bool areSpecimensLoaded() const;
 
-    /** Property: run post-partitioning analyses
+    /** Obtain a binary loader.
      *
-     *  If true then @ref runPartitioner will perform various analyses after partitioning. These include things like making
-     *  sure that function may-return and stack-delta results are all computed.
+     *  Find a suitable binary loader by one of the following methods (in this order):
      *
-     * @{ */
-    bool postPartitionAnalyses() const /*final*/ { return postPartitionAnalyses_; }
-    virtual void postPartitionAnalyses(bool b) { postPartitionAnalyses_ = b; }
-    /** @} */
-    
-    /** Property: interpretation.
+     *  @li If this engine's @ref binaryLoader property is non-null, then return that loader.
      *
-     *  Returns the interpretation, if any, that was created by the @ref parse step.  If the interpretation is changed then
-     *  other properties such as @ref loader, @ref memoryMap, and @ref disassembler might also need to be changed in order to
-     *  remain consistent with the interpretation.
+     *  @li If a binary container was parsed (@ref areContainersParsed returns true and @ref interpretation is non-null) then
+     *      a loader is chosen based on the interpretation, and configured to map container sections into memory but not
+     *      perform any linking or relocation fixups.
      *
-     * @{ */
-    SgAsmInterpretation* interpretation() const /*final*/ { return interp_; }
-    virtual void interpretation(SgAsmInterpretation *i) { interp_ = i; }
-    /** @} */
+     *  @li If a @p hint is supplied, use it.
+     *
+     *  @li Fail by throwing an <code>std::runtime_error</code>.
+     *
+     *  In any case, the @ref binaryLoader property is set to this method's return value. */
+    virtual BinaryLoader *obtainLoader(BinaryLoader *hint=NULL);
 
-    /** Property: loader
+    /** Loads memory from binary containers.
      *
-     *  Returns or modifies the binary loader used by this engine during the @ref load step.  The loader is used to map
-     *  interpretation sections into memory, link dynamic libraries, and apply relocation fixups.  Any of these steps can be
-     *  enabled or disabled by adjusting properties of the loader.
+     *  If the engine has an interpretation whose memory map is missing or empty, then the engine obtains a binary loader via
+     *  @ref obtainLoader and invokes its @c load method on the interpretation.  It then copies the interpretation's memory map
+     *  into the engine (if present, or leaves it as is). */
+    virtual void loadContainers(const std::vector<std::string> &fileNames);
+
+    /** Loads memory from non-containers.
      *
-     * @sa obtainLoader
+     *  Processes each non-container string (as determined by @ref isNonContainer) and modifies the memory map according to the
+     *  string. */
+    virtual void loadNonContainers(const std::vector<std::string> &names);
+
+    /** Adjust memory map post-loading.
      *
-     * @{ */
-    BinaryLoader* loader() const /*final*/ { return loader_; }
-    virtual void loader(BinaryLoader *l) { loader_ = l; }
-    /** @} */
+     *  Make adjustments to the memory map after the specimen is loaded. */
+    virtual void adjustMemoryMap();
 
     /** Property: memory map
      *
-     *  Returns the memory map resulting from the @ref load step.  This is a combination of the memory map created by the
-     *  BinaryLoader and stored in the interpretation, and the application of any memory map resources ("map:" files).  During
-     *  partitioning operations the memory map comes from the partitioner itself.
-     *
-     *  If a memory map is created and initialized to non-empty before the @ref load step then the load step does not run the
-     *  BinaryLoader.
+     *  Returns the memory map resulting from the @ref loadSpecimens step.  This is a combination of the memory map created by
+     *  the BinaryLoader (via @ref loadContainers) and stored in the interpretation, and the application of any memory map
+     *  resources (via @ref loadNonContainers). During partitioning operations the memory map comes from the partitioner
+     *  itself.  See @ref loadSpecimens.
      *
      *  The return value is a non-const reference so that the map can be manipulated directly if desired.
      *
@@ -302,128 +498,119 @@ public:
     virtual void memoryMap(const MemoryMap &m) { map_ = m; }
     /** @} */
 
-    /** Property: disassembler.
-     *
-     *  Returns or modifies the disassembler used by this engine.  The disassembler is used when the engine creates a
-     *  partitioner during the @ref partition step.
-     *
-     * @sa obtainDisassembler
-     *
-     * @{ */
-    Disassembler *disassembler() const /*final*/ { return disassembler_; }
-    virtual void disassembler(Disassembler *d) { disassembler_ = d; }
-    /** @} */
-
-    /** Property: use semantics.
-     *
-     *  If this property is true then the partitioner will use instruction semantics to calculate things like control flow
-     *  successors. Using semantics can drastically slow down partitioning, but can also produce more accurate results.
-     *
-     * @{ */
-    bool useSemantics() const /*final*/ { return useSemantics_; }
-    virtual void useSemantics(bool b) { useSemantics_ = b; }
-    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  High-level methods that mostly call low-level stuff
+    //                                  Disassembler
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Obtain a disassembler.
+     *
+     *  Chooses a disassembler based on one of the following (in this order):
+     *
+     *  @li If this engine's @ref disassembler property is non-null, then return that disassembler.
+     *
+     *  @li If this engine's ISA name setting is non-empty, then use it to obtain a disassembler.
+     *
+     *  @li If a binary container was parsed (@ref areContainersParsed returns true and @ref interpretation is non-null) then
+     *      try to obtain a disassembler based on the interpretation.
+     *
+     *  @li If a @p hint is supplied, then use it.
+     *
+     *  @li Fail by throwing an <code>std::runtime_error</code>.
+     *
+     *  In any case, the @ref disassembler property is set to this method's return value. */
+    virtual Disassembler* obtainDisassembler(Disassembler *hint=NULL);
+    /** @} */
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner high-level functions
+    //
+    // top-level: partition
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Check that we have everything necessary to create a partitioner. */
+    virtual void checkCreatePartitionerPrerequisites() const;
+
+    /** Create a bare partitioner.
+     *
+     *  A bare partitioner, as far as the engine is concerned, is one that has characteristics that are common across all
+     *  architectures but which is missing all architecture-specific functionality.  Using the partitioner's own constructor
+     *  is not quite the same--that would produce an even more bare partitioner!  The engine must have @ref disassembler and
+     *  @ref memoryMap properties already either assigned explicitly or as the result of earlier steps. */
+    virtual Partitioner createBarePartitioner();
+
+    /** Create a generic partitioner.
+     *
+     *  A generic partitioner should work for any architecture but is not fine-tuned for any particular architecture. The
+     *  engine must have @ref disassembler and @ref memoryMap properties assigned already, either explicitly or as the result
+     *  of earlier steps. */
+    virtual Partitioner createGenericPartitioner();
+
+    /** Create a tuned partitioner.
+     *
+     *  Returns a partitioner that is tuned to operate on a specific instruction set architecture. The engine must have @ref
+     *  disassembler and @ref memoryMap properties assigned already, either explicitly or as the result of earlier steps. */
+    virtual Partitioner createTunedPartitioner();
+
+    /** Create a partitioner from an AST.
+     *
+     *  Partitioner data structures are often more useful and more efficient for analysis than an AST. This method initializes
+     *  the engine and a new partitioner with information from the AST. */
+    virtual Partitioner createPartitionerFromAst(SgAsmInterpretation*);
+
+    /** Create partitioner.
+     *
+     *  This is the method usually called to create a new partitioner.  The base class just calls @ref
+     *  createTunedPartitioner. */
+    virtual Partitioner createPartitioner();
+
+    /** Finds interesting things to work on initially.
+     *
+     *  Seeds the partitioner with addresses and functions where recursive disassembly should begin. */
+    virtual void runPartitionerInit(Partitioner&);
+
+    /** Runs the recursive part of partioning.
+     *
+     *  This is the long-running guts of the partitioner. */
+    virtual void runPartitionerRecursive(Partitioner&);
+
+    /** Runs the final parts of partitioning.
+     *
+     *  This does anything necessary after the main part of partitioning is finished. For instance, it might give names to some
+     *  functions that don't have names yet. */
+    virtual void runPartitionerFinal(Partitioner&);
+    
     /** Partitions instructions into basic blocks and functions.
      *
      *  This method is a wrapper around a number of lower-level partitioning steps that uses the specified interpretation to
      *  instantiate functions and then uses the specified partitioner to discover basic blocks and use the CFG to assign basic
      *  blocks to functions.  It is often overridden by subclasses. */
-    virtual Engine& runPartitioner(Partitioner&, SgAsmInterpretation*);
+    virtual void runPartitioner(Partitioner&);
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner mid-level functions
+    //
+    // These are the functions called by the partitioner high-level stuff.  These are sometimes overridden in subclasses,
+    // although it is more likely that the high-level stuff is overridden.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Label addresses.
      *
      *  Labels addresses according to symbols, etc.  Address labels are used for things like giving an unnamed function a name
      *  when it's attached to the partitioner's CFG/AUM. */
-    virtual void labelAddresses(Partitioner&, SgAsmInterpretation*);
+    virtual void labelAddresses(Partitioner&);
 
-    /** Discover as many basic blocks as possible.
+    /** Make data blocks based on configuration.
      *
-     *  Processes the "undiscovered" work list until the list becomes empty.  This list is the list of basic block placeholders
-     *  for which no attempt has been made to discover instructions.  This method implements a recursive descent disassembler,
-     *  although it does not process the control flow edges in any particular order. Subclasses are expected to override this
-     *  to implement a more directed approach to discovering basic blocks. */
-    virtual void discoverBasicBlocks(Partitioner&);
+     *  NOTE: for now, all this does is label the datablock addresses. FIXME[Robb P. Matzke 2015-05-12] */
+    virtual std::vector<DataBlock::Ptr> makeConfiguredDataBlocks(Partitioner&, const Configuration&);
 
-    /** Discover as many functions as possible.
+    /** Make functions based on configuration information.
      *
-     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks) Each
-     *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
-     *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
-     *  attachBlocksToFunctions tries to attach each basic block to a function.
-     *
-     *  Returns a list of functions that need more attention.  These are functions for which the CFG is not well behaved--such
-     *  as inter-function edges that are not function call edges. */
-    virtual std::vector<Function::Ptr> discoverFunctions(Partitioner&);
-
-    /** Runs various analysis passes.
-     *
-     *  Runs each analysis over all functions to ensure that results are cached.  This should typically be done after functions
-     *  are discovered and before the final AST is generated, otherwise the AST will not contain cached results for functions
-     *  and blocks for which an analysis was not performed. */
-    virtual void updateAnalysisResults(Partitioner&);
-
-    /** Runs post-partitioning fixups.
-     *
-     *  This method is normally run after the CFG/AUM is built. It does things like give names to some functions. The binary
-     *  interpretation argument is optional, although some functionality is reduced when it is null. */
-    virtual void applyPostPartitionFixups(Partitioner&, SgAsmInterpretation*);
-    
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Methods to make basic blocks
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Discover a basic block.
-     *
-     *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
-     *  basic block:
-     *
-     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockAtPlaceholder
-     *
-     *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
-     *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
-     *      happens in two passes: the first pass only adds an edge for a callee whose may-return analysis is positive; the
-     *      second pass relaxes that requirement and inserts an edge for any callee whose may-return is indeterminate (i.e., if
-     *      ROSE can't prove that a callee never returns then assume it may return).
-     *
-     *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
-    virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
-
-    /** Discover basic block at next placeholder.
-     *
-     *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
-     *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
-     *  into the "undiscovered" vertex. */
-    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(Partitioner&);
-
-    /** Insert a call-return edge and discover its basic block.
-     *
-     *  Inserts a call-return (@ref E_CALL_RETURN) edge for some function call that lacks such an edge and for which the callee
-     *  may return.  The @p assumeCallReturns parameter determines whether a call-return edge should be added or not for
-     *  callees whose may-return analysis is indeterminate.  If @p assumeCallReturns is true then an indeterminate callee will
-     *  have a call-return edge added; if false then no call-return edge is added; if indeterminate then no call-return edge is
-     *  added at this time but the vertex is saved so it can be reprocessed later.
-     *
-     *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
-     *  condition for a false return is that the pendingCallReturn list is empty. */
-    virtual bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Methods to make functions.
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Make functions based on specimen container.
-     *
-     *  Traverses the specified interpretation parsed from, for example, related ELF or PE containers, and make functions at
-     *  certain addresses that correspond to specimen entry points, imports and exports, symbol tables, etc.  This method only
-     *  calls many of the other "make*Functions" methods and accumulates their results.
-     *
-     *  Returns a list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeContainerFunctions(Partitioner&, SgAsmInterpretation*);
+     *  Uses the supplied function configuration information to make functions. */
+    virtual std::vector<Function::Ptr> makeConfiguredFunctions(Partitioner&, const Configuration&);
 
     /** Make functions at specimen entry addresses.
      *
@@ -440,14 +627,6 @@ public:
      *
      *  Returns the list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<Function::Ptr> makeErrorHandlingFunctions(Partitioner&, SgAsmInterpretation*);
-
-    /** Make functions from an interrupt vector.
-     *
-     *  Reads the interrupt vector and builds functions for its entries.  The functions are inserted into the partitioner's
-     *  CFG/AUM.
-     *
-     *  Returns the list of such functions, some of which may have existed prior to this call. */
-    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(Partitioner&, const AddressInterval &vector);
 
     /** Make functions at import trampolines.
      *
@@ -476,6 +655,48 @@ public:
      *  Returns a list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<Function::Ptr> makeSymbolFunctions(Partitioner&, SgAsmInterpretation*);
 
+    /** Make functions based on specimen container.
+     *
+     *  Traverses the specified interpretation parsed from, for example, related ELF or PE containers, and make functions at
+     *  certain addresses that correspond to specimen entry points, imports and exports, symbol tables, etc.  This method only
+     *  calls many of the other "make*Functions" methods and accumulates their results.
+     *
+     *  Returns a list of such functions, some of which may have existed prior to this call. */
+    virtual std::vector<Function::Ptr> makeContainerFunctions(Partitioner&, SgAsmInterpretation*);
+
+    /** Make functions from an interrupt vector.
+     *
+     *  Reads the interrupt vector and builds functions for its entries.  The functions are inserted into the partitioner's
+     *  CFG/AUM.
+     *
+     *  Returns the list of such functions, some of which may have existed prior to this call. */
+    virtual std::vector<Function::Ptr> makeInterruptVectorFunctions(Partitioner&, const AddressInterval &vector);
+
+    /** Make a function at each specified address.
+     *
+     *  A function is created at each address and is attached to the partitioner's CFG/AUM. Returns a list of such functions,
+     *  some of which may have existed prior to this call. */
+    virtual std::vector<Function::Ptr> makeUserFunctions(Partitioner&, const std::vector<rose_addr_t>&);
+
+    /** Discover as many basic blocks as possible.
+     *
+     *  Processes the "undiscovered" work list until the list becomes empty.  This list is the list of basic block placeholders
+     *  for which no attempt has been made to discover instructions.  This method implements a recursive descent disassembler,
+     *  although it does not process the control flow edges in any particular order. Subclasses are expected to override this
+     *  to implement a more directed approach to discovering basic blocks. */
+    virtual void discoverBasicBlocks(Partitioner&);
+
+    /** Scan read-only data to find addresses.
+     *
+     *  Scans read-only data beginning at the specified address in order to find pointers to code, and makes a new function at
+     *  when found.  The pointer must be word aligned and located in memory that's mapped read-only (not writable and not
+     *  executable), and it must not point to an unknown instruction or an instruction that overlaps with any instruction
+     *  that's already in the CFG/AUM.
+     *
+     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
+     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
+    virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
+
     /** Make functions for function call edges.
      *
      *  Scans the partitioner's CFG to find edges that are marked as function calls and makes a function at each target address
@@ -483,11 +704,6 @@ public:
      *
      *  Returns a list of such functions, some of which may have existed prior to this call. */
     virtual std::vector<Function::Ptr> makeCalledFunctions(Partitioner&);
-
-    /** Make functions based on configuration information.
-     *
-     *  Uses the supplied function configuration information to make functions. */
-    virtual std::vector<Function::Ptr> makeConfiguredFunctions(Partitioner&, const Configuration&);
 
     /** Make function at prologue pattern.
      *
@@ -503,29 +719,16 @@ public:
      *  vector. */
     virtual std::vector<Function::Ptr> makeNextPrologueFunction(Partitioner&, rose_addr_t startVa);
 
-    /** Scan read-only data to find addresses.
+    /** Discover as many functions as possible.
      *
-     *  Scans read-only data beginning at the specified address in order to find pointers to code, and makes a new function at
-     *  when found.  The pointer must be word aligned and located in memory that's mapped read-only (not writable and not
-     *  executable), and it must not point to an unknown instruction or an instruction that overlaps with any instruction
-     *  that's already in the CFG/AUM.
+     *  Discover as many functions as possible by discovering as many basic blocks as possible (@ref discoverBasicBlocks) Each
+     *  time we run out of basic blocks to try, we look for another function prologue pattern at the lowest possible address
+     *  and then recursively discover more basic blocks.  When this procedure is exhausted a call to @ref
+     *  attachBlocksToFunctions tries to attach each basic block to a function.
      *
-     *  Returns a pointer to a newly-allocated function that has not yet been attached to the CFG/AUM, or a null pointer if no
-     *  function was found.  In any case, the startVa is updated so it points to the next read-only address to check. */
-    virtual Function::Ptr makeNextDataReferencedFunction(const Partitioner&, rose_addr_t &startVa /*in,out*/);
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    //                                  Methods that adjust existing functions
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:
-    /** Attach basic blocks to functions.
-     *
-     *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
-     *  sophomoric attempt to assign existing basic blocks to functions.  Returns the list of functions that resulted in
-     *  errors.  If @p reportProblems is set then emit messages to mlog[WARN] about problems with the CFG (that stream must
-     *  also be enabled if you want to actually see the warnings). */
-    virtual std::vector<Function::Ptr> attachBlocksToFunctions(Partitioner&, bool emitWarnings=false);
+     *  Returns a list of functions that need more attention.  These are functions for which the CFG is not well behaved--such
+     *  as inter-function edges that are not function call edges. */
+    virtual std::vector<Function::Ptr> discoverFunctions(Partitioner&);
 
     /** Attach dead code to function.
      *
@@ -545,14 +748,6 @@ public:
      *  target blocks. */
     virtual std::set<rose_addr_t> attachDeadCodeToFunction(Partitioner&, const Function::Ptr&, size_t maxIterations=size_t(-1));
 
-    /** Attach dead code to functions.
-     *
-     *  Calls @ref attachDeadCodeToFunction once for each function that exists in the specified partitioner's CFG/AUM, passing
-     *  along @p maxIterations each time.
-     *
-     *  Returns the union of the dead code addresses discovered for each function. */
-    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(Partitioner&, size_t maxIterations=size_t(-1));
-
     /** Attach function padding to function.
      *
      *  Examines the memory immediately prior to the specified function's entry address to determine if it is alignment
@@ -568,15 +763,6 @@ public:
      *  the individual calls. */
     virtual std::vector<DataBlock::Ptr> attachPaddingToFunctions(Partitioner&);
 
-    /** Attach intra-function basic blocks to functions.
-     *
-     *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
-     *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
-     *  created at the beginning of the interval and added to the function.
-     *
-     *  Returns the number of new placeholders created. */
-    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
-
     /** Attach  all possible intra-function basic blocks to functions.
      *
      *  This is similar to @ref attachSurroundedCodeToFunctions except it calls that method repeatedly until it cannot do
@@ -589,6 +775,31 @@ public:
      *  Returns the sum from all the calls to @ref attachSurroundedCodeToFunctions. */
     virtual size_t attachAllSurroundedCodeToFunctions(Partitioner&);
     
+    /** Attach intra-function basic blocks to functions.
+     *
+     *  This method scans the unused address intervals (those addresses that are not represented by the CFG/AUM). For each
+     *  unused interval, if the interval is immediately surrounded by a single function then a basic block placeholder is
+     *  created at the beginning of the interval and added to the function.
+     *
+     *  Returns the number of new placeholders created. */
+    virtual size_t attachSurroundedCodeToFunctions(Partitioner&);
+
+    /** Attach basic blocks to functions.
+     *
+     *  Calls @ref Partitioner::discoverFunctionBasicBlocks once for each known function the partitioner's CFG/AUM in a
+     *  sophomoric attempt to assign existing basic blocks to functions.  Returns the list of functions that resulted in
+     *  errors.  If @p reportProblems is set then emit messages to mlog[WARN] about problems with the CFG (that stream must
+     *  also be enabled if you want to actually see the warnings). */
+    virtual std::vector<Function::Ptr> attachBlocksToFunctions(Partitioner&, bool emitWarnings=false);
+
+    /** Attach dead code to functions.
+     *
+     *  Calls @ref attachDeadCodeToFunction once for each function that exists in the specified partitioner's CFG/AUM, passing
+     *  along @p maxIterations each time.
+     *
+     *  Returns the union of the dead code addresses discovered for each function. */
+    virtual std::set<rose_addr_t> attachDeadCodeToFunctions(Partitioner&, size_t maxIterations=size_t(-1));
+
     /** Attach intra-function data to functions.
      *
      *  Looks for addresses that are not part of the partitioner's CFG/AUM and which are surrounded immediately below and above
@@ -599,6 +810,269 @@ public:
      *  this way because it is more efficient to iterate over all unused addresses and find the surrounding functions than it
      *  is to iterate over one function's unused addresses at a time. [Robb P. Matzke 2014-09-08] */
     virtual std::vector<DataBlock::Ptr> attachSurroundedDataToFunctions(Partitioner&);
+
+    /** Runs various analysis passes.
+     *
+     *  Runs each analysis over all functions to ensure that results are cached.  This should typically be done after functions
+     *  are discovered and before the final AST is generated, otherwise the AST will not contain cached results for functions
+     *  and blocks for which an analysis was not performed. */
+    virtual void updateAnalysisResults(Partitioner&);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Partitioner low-level functions
+    //
+    // These are functions that a subclass seldom overrides, and maybe even shouldn't override because of their complexity or
+    // the way the interact with one another.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Insert a call-return edge and discover its basic block.
+     *
+     *  Inserts a call-return (@ref E_CALL_RETURN) edge for some function call that lacks such an edge and for which the callee
+     *  may return.  The @p assumeCallReturns parameter determines whether a call-return edge should be added or not for
+     *  callees whose may-return analysis is indeterminate.  If @p assumeCallReturns is true then an indeterminate callee will
+     *  have a call-return edge added; if false then no call-return edge is added; if indeterminate then no call-return edge is
+     *  added at this time but the vertex is saved so it can be reprocessed later.
+     *
+     *  Returns true if a new call-return edge was added to some call, or false if no such edge could be added. A post
+     *  condition for a false return is that the pendingCallReturn list is empty. */
+    virtual bool makeNextCallReturnEdge(Partitioner&, boost::logic::tribool assumeCallReturns);
+
+    /** Discover basic block at next placeholder.
+     *
+     *  Discovers a basic block at some arbitrary placeholder.  Returns a pointer to the new basic block if a block was
+     *  discovered, or null if no block is discovered.  A postcondition for a null return is that the CFG has no edges coming
+     *  into the "undiscovered" vertex. */
+    virtual BasicBlock::Ptr makeNextBasicBlockFromPlaceholder(Partitioner&);
+
+    /** Discover a basic block.
+     *
+     *  Discovers another basic block if possible.  A variety of methods will be used to determine where to discover the next
+     *  basic block:
+     *
+     *  @li Discover a block at a placeholder by calling @ref makeNextBasicBlockAtPlaceholder
+     *
+     *  @li Insert a new call-return (@ref E_CALL_RETURN) edge for a function call that may return.  Insertion of such an
+     *      edge may result in a new placeholder for which this method then discovers a basic block.  The call-return insertion
+     *      happens in two passes: the first pass only adds an edge for a callee whose may-return analysis is positive; the
+     *      second pass relaxes that requirement and inserts an edge for any callee whose may-return is indeterminate (i.e., if
+     *      ROSE can't prove that a callee never returns then assume it may return).
+     *
+     *  Returns the basic block that was discovered, or the null pointer if there are no pending undiscovered blocks. */
+    virtual BasicBlock::Ptr makeNextBasicBlock(Partitioner&);
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Build AST
+    //
+    // top-level: buildAst
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    // no helpers necessary since this is implemented in the Modules
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Settings and properties
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Property: interpretation
+     *
+     *  The interpretation which is being analyzed. The interpretation is chosen when an ELF or PE container is parsed, and the
+     *  user can set it to something else if desired. For instance, parsing a PE file will set the interpretation to PE, but
+     *  the user can reset it to DOS to disassemble the DOS part of the executable.
+     *
+     * @{ */
+    SgAsmInterpretation* interpretation() const /*final*/ { return interp_; }
+    virtual void interpretation(SgAsmInterpretation *interp) { interp_ = interp; }
+    /** @} */
+
+    /** Property: binary loader.
+     *
+     *  The binary loader that maps a binary container's sections into simulated memory and optionally performs dynamic linking
+     *  and relocation fixups.  If none is specified then the engine will choose one based on the container.
+     *
+     * @{ */
+    BinaryLoader* binaryLoader() const /*final*/ { return binaryLoader_; }
+    virtual void binaryLoader(BinaryLoader *loader) { binaryLoader_ = loader; }
+    /** @} */
+
+    /** Property: when to remove execute permission from zero bytes.
+     *
+     *  This is the number of consecutive zero bytes that must be present before execute permission is removed from this part
+     *  of the memory map.  A value of zero disables this feature.
+     *
+     * @{ */
+    size_t deExecuteZeros() const /*final*/ { return settings_.loader.deExecuteZeros; }
+    virtual void deExecuteZeros(size_t n) { settings_.loader.deExecuteZeros = n; }
+    /** @} */
+
+    /** Property: Disassembler.
+     *
+     *  This property holds the disassembler to use whenever a new partitioner is created. If null, then the engine will choose
+     *  a disassembler based on the binary container.
+     *
+     * @{ */
+    Disassembler *disassembler() const /*final*/ { return disassembler_; }
+    virtual void disassembler(Disassembler *d) { disassembler_ = d; }
+    /** @} */
+
+    /** Property: Instruction set architecture name.
+     *
+     *  The instruction set architecture name is used to obtain a disassembler and overrides the disassembler that would
+     *  otherwise be found by examining the binary container.
+     *
+     * @{ */
+    const std::string& isaName() const /*final*/ { return settings_.disassembler.isaName; }
+    virtual void isaName(const std::string &s) { settings_.disassembler.isaName = s; }
+    /** @} */
+
+    /** Property: Starting addresses for disassembly.
+     *
+     *  This is a list of addresses where functions will be created in addition to those functions discovered by examining the
+     *  binary container.
+     *
+     * @{ */
+    const std::vector<rose_addr_t>& startingVas() const /*final*/ { return settings_.partitioner.startingVas; }
+    std::vector<rose_addr_t>& startingVas() /*final*/ { return settings_.partitioner.startingVas; }
+    /** @} */
+
+    /** Property: Whether to use instruction semantics.
+     *
+     *  If set, then instruction semantics are used to fine tune certain analyses that happen during partitioning, such as
+     *  determining whether branch conditions are opaque.
+     *
+     * @{ */
+    bool usingSemantics() const /*final*/ { return settings_.partitioner.usingSemantics; }
+    virtual void usingSemantics(bool b) { settings_.partitioner.usingSemantics = b; }
+    /** @} */
+
+    /**  Property: Whether to follow ghost edges.
+     *
+     *   If set, then "ghost" edges are followed during disassembly.  A ghost edge is a control flow edge from a branch
+     *   instruction where the partitioner has decided according to instruction semantics that the branch cannot be taken at
+     *   run time.  If semantics are disabled then ghost edges are always followed since its not possible to determine whether
+     *   an edge is a ghost edge.
+     *
+     * @{ */
+    bool followingGhostEdges() const /*final*/ { return settings_.partitioner.followingGhostEdges; }
+    virtual void followingGhostEdges(bool b) { settings_.partitioner.followingGhostEdges = b; }
+    /** @} */
+
+    /** Property: Whether to allow discontiguous basic blocks.
+     *
+     *  ROSE's definition of a basic block allows two consecutive instructions, A and B, to be arranged in memory such that B
+     *  does not immediately follow A.  Setting this property prevents this and would force A and B to belong to separate basic blocks.
+     *
+     * @{ */
+    bool discontiguousBlocks() const /*final*/ { return settings_.partitioner.discontiguousBlocks; }
+    virtual void discontiguousBlocks(bool b) { settings_.partitioner.discontiguousBlocks = b; }
+    /** @} */
+
+    /** Property: Whether to find function padding.
+     *
+     *  If set, then the partitioner will look for certain padding bytes appearing before the lowest address of a function and
+     *  add those bytes to the function as static data.
+     *
+     * @{ */
+    bool findingFunctionPadding() const /*final*/ { return settings_.partitioner.findingFunctionPadding; }
+    virtual void findingFunctionPadding(bool b) { settings_.partitioner.findingFunctionPadding = b; }
+    /** @} */
+
+    /** Property: Whether to find dead code.
+     *
+     *  If set, then the partitioner looks for code that is reachable by ghost edges after all other code has been found.  This
+     *  is different than @ref followingGhostEdges in that the former follows those edges immediately.
+     *
+     * @{ */
+    bool findingDeadCode() const /*final*/ { return settings_.partitioner.findingDeadCode; }
+    virtual void findingDeadCode(bool b) { settings_.partitioner.findingDeadCode = b; }
+    /** @} */
+
+    /** Property: PE-Scrambler dispatcher address.
+     *
+     *  If non-zero then the partitioner defeats PE-scrambled binary obfuscation by replacing control flow edges that go
+     *  through this function with the de-scrambled control flow edge.
+     *
+     * @{ */
+    rose_addr_t peScramblerDispatcherVa() const /*final*/ { return settings_.partitioner.peScramblerDispatcherVa; }
+    virtual void peScramblerDispatcherVa(rose_addr_t va) { settings_.partitioner.peScramblerDispatcherVa = va; }
+    /** @} */
+
+    /** Property: Whether to find intra-function code.
+     *
+     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
+     *  same function, and will attempt to disassemble that missing part and link it into the surrounding function.
+     *
+     * @{ */
+    bool findingIntraFunctionCode() const /*final*/ { return settings_.partitioner.findingIntraFunctionCode; }
+    virtual void findingIntraFunctionCode(bool b) { settings_.partitioner.findingIntraFunctionCode = b; }
+    /** @} */
+
+    /** Property: Whether to find intra-function data.
+     *
+     *  If set, the partitioner will look for parts of memory that were not disassembled and occur between other parts of the
+     *  same function, and will treat the missing part as static data belonging to that function.
+     *
+     * @{ */
+    bool findingIntraFunctionData() const /*final*/ { return settings_.partitioner.findingIntraFunctionData; }
+    virtual void findingIntraFunctionData(bool b) { settings_.partitioner.findingIntraFunctionData = b; }
+    /** @} */
+
+    /** Property: Location of machine interrupt vector.
+     *
+     *  If non-empty, the partitioner will treat the specified area as a machine interrupt vector. The effect of the vector
+     *  varies by architecture.
+     *
+     * @{ */
+    const AddressInterval& interruptVector() const /*final*/ { return settings_.partitioner.interruptVector; }
+    virtual void interruptVector(const AddressInterval &i) { settings_.partitioner.interruptVector = i; }
+    /** @} */
+
+    /** Property: Whether to perform post-partitioning analysis steps.
+     *
+     *  If set, then various post-partitioning analysis steps are executed.  Some of these can be quite expensive.
+     *
+     * @{ */
+    bool doingPostAnalysis() const /*final*/ { return settings_.partitioner.doingPostAnalysis; }
+    virtual void doingPostAnalysis(bool b) { settings_.partitioner.doingPostAnalysis = b; }
+    /** @} */
+
+    /** Property: Whether to assume that functions return.
+     *
+     *  If the partitioner's may-return analysis fails to reach a conclusion about a function, then either assume that the
+     *  function may return (the usual case) or that it doesn't.  If a function cannot return (e.g., GCC @c noreturn attribute,
+     *  such as for the @c abort function in the C library) then the partitioner will not attempt to discover instructions
+     *  after its call sites.
+     *
+     * @{ */
+    bool functionReturnsAssumed() const /*final*/ { return settings_.partitioner.functionReturnsAssumed; }
+    virtual void functionReturnsAssumed(bool b) { settings_.partitioner.functionReturnsAssumed = b; }
+    /** @} */
+
+    /** Property: Whether to search static data for function pointers.
+     *
+     *  If this property is set, then the partitioner will scan static data to look for things that might be pointers to
+     *  functions.
+     *
+     * @{ */
+    bool findingDataFunctionPointers() const /*final*/ { return settings_.partitioner.findingDataFunctionPointers; }
+    virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
+    /** @} */
+
+    /** Property: Configuration files.
+     *
+     *  This property holds a list of configuration files or directories.
+     *
+     * @{ */
+    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
+    /** @} */
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Internal stuff
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+private:
+    void init();
 };
 
 } // namespace

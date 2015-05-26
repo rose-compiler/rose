@@ -470,11 +470,6 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
     t1.traverse(fileHeader, preorder);
 }
 
-static int
-validStringChar(int ch) {
-    return isascii(ch) && (isgraph(ch) || isspace(ch));
-}
-
 void
 nameStrings(const Partitioner &partitioner) {
     struct T1: AstSimpleProcessing {
@@ -824,6 +819,12 @@ SgAsmBlock*
 buildAst(const Partitioner &partitioner, SgAsmInterpretation *interp/*=NULL*/, bool relaxed) {
     if (SgAsmBlock *global = buildGlobalBlockAst(partitioner, relaxed)) {
         fixupAstPointers(global, interp);
+        if (interp) {
+            if (SgAsmBlock *oldGlobalBlock = interp->get_global_block())
+                oldGlobalBlock->set_parent(NULL);
+            interp->set_global_block(global);
+            global->set_parent(interp);
+        }
         return global;
     }
     return NULL;

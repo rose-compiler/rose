@@ -69,8 +69,10 @@ MemoryState::pageSize(rose_addr_t nBytes) {
 void
 MemoryState::allocatePage(rose_addr_t va) {
     rose_addr_t pageVa = alignDown(va, pageSize_);
+    unsigned acc = MemoryMap::READABLE | MemoryMap::WRITABLE;
     map_.insert(AddressInterval::baseSize(pageVa, pageSize_),
-                MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_)));
+                MemoryMap::Segment(MemoryMap::AllocatingBuffer::instance(pageSize_),
+                                   0, acc, "ConcreteSemantics demand allocated"));
 }
 
 void
@@ -137,7 +139,7 @@ MemoryState::print(std::ostream &out, Formatter&) const {
     while (map_.atOrAfter(pageVa).next().assignTo(pageVa)) {
         uint8_t page[pageSize_];
         size_t nread = map_.at(pageVa).limit(pageSize_).read(page).size();
-        ASSERT_require(nread == pageSize_);
+        ASSERT_always_require(nread == pageSize_);
         HexdumpFormat fmt;
         SgAsmExecutableFileFormat::hexdump(out, pageVa, (const unsigned char*)page, pageSize_, fmt);
         out <<"\n";
@@ -465,6 +467,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
 
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
@@ -491,10 +495,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
+    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
+    if (cond->is_number() && !cond->get_number())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {

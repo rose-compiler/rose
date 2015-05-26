@@ -157,12 +157,12 @@ public:
         value_.curValue = curValue;
         value_.rightValue = rightValue;
         bar_.shouldSpin_ = isEmpty();
-        configUpdated();
+        valueUpdated();
     }
     void value(ValueType leftValue, ValueType curValue, ValueType rightValue) {
         value_ = Position(leftValue, curValue, rightValue);
         bar_.shouldSpin_ = isEmpty();
-        configUpdated();
+        valueUpdated();
     }
     /** @} */
 
