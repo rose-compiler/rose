@@ -30,7 +30,7 @@
 #include <sstream>
 
 #ifndef BOOST_WINDOWS
-#if (__APPLE__ && __MACH__)
+#if defined(__APPLE__) && defined(__MACH__)
 #include <termios.h>
 #else
 #include <termio.h>

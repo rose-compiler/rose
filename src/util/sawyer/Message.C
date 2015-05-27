@@ -673,7 +673,7 @@ Prefix::setProgramName() {
     programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
 # endif
 #else
-#if (__APPLE__ && __MACH__)
+#if defined(__APPLE__) && defined(__MACH__)
     programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
 #else
 // no synchronization necessary for this global state
