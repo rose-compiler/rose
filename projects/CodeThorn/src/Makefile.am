@@ -403,6 +403,7 @@ check-local:
 	@echo RUNNING LTL VERIFICATION TESTS
 	@echo ================================================================
 	rm -f *.consistent
+	$(srcdir)/scripts/run_tests_cegpra $(srcdir) . #run CEGPRA tests
 	$(srcdir)/scripts/runLtlRegressionTests $(srcdir) . #run RERS examples in several versions and compare to previous results
 
 checkdemos: 

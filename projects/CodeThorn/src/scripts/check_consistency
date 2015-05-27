@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# $1: the results to be checked (csv file, one row: <property><result>)
+# $2: the corresponding solutions
+
+# warning: the comparison is currently hard-coded to 100 properties (100 rows in the .csv file).
+
+
+# read result and solution data
+while IFS=, read pid res rest
+do
+  P_CHECK[${pid}]=${res}
+done < "${1}"
+
+while IFS=, read pid res rest
+do
+  P_SOLUTION[${pid}]=${res}
+done < "${2}"
+
+# check for inconsistencies, exit with an error code in the case of a mismatch
+for i in {0..99} ; do
+  if [[ "${P_CHECK[${i}]}" == "yes" ]] && [[ "${P_SOLUTION[${i}]}" != "yes" ]] ; then
+    echo "ERROR! (property ${i}:   result: ${P_CHECK[${i}]}, solution: ${P_SOLUTION[${i}]})"
+    exit 1
+  elif [[ "${P_CHECK[${i}]}" == "no" ]] && [[ "${P_SOLUTION[${i}]}" != "no" ]] ; then
+    echo "ERROR! (property ${i}:   result: ${P_CHECK[${i}]}, solution: ${P_SOLUTION[${i}]})"
+    exit 1
+  fi
+done
+
+
+
+
