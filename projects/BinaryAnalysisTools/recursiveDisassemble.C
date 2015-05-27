@@ -782,13 +782,13 @@ int main(int argc, char *argv[]) {
 
     if (settings.doListStrings) {
         Strings::StringFinder analyzer;
-        analyzer.minLength(1);
-        analyzer.maxLength(8192);
-        analyzer.discardCodePoints(false);
-        analyzer.keepOnlyLongest(true);
+        analyzer.settings().minLength = 1;
+        analyzer.settings().maxLength = 8192;
+        analyzer.settings().keepingOnlyLongest = true;
+        analyzer.discardingCodePoints(false);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
-        std::vector<Strings::EncodedString> strings = analyzer.find(partitioner.memoryMap().any());
-        BOOST_FOREACH (const Strings::EncodedString &string, strings) {
+        analyzer.find(partitioner.memoryMap().any());
+        BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
             std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";
             std::cout <<"  \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
         }

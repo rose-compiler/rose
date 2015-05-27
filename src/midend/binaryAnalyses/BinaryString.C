@@ -91,7 +91,7 @@ Utf8CharacterEncodingForm::encode(CodePoint cp) {
             }
 
             if (++prefixLength >= 8)
-                throw std::runtime_error("invalid code point for " + name() + ": " + StringUtility::addrToString(cp));
+                throw Exception("invalid code point for " + name() + ": " + StringUtility::addrToString(cp));
         }
         std::reverse(cvs.begin(), cvs.end());
     }
@@ -174,7 +174,7 @@ Utf16CharacterEncodingForm::encode(CodePoint cp) {
         cvs.push_back(hiSurrogate);
         cvs.push_back(loSurrogate);
     } else {
-        throw std::runtime_error("attempt to encode a reserved Unicode code point");
+        throw Exception("attempt to encode a reserved Unicode code point");
     }
     return cvs;
 }
@@ -256,7 +256,7 @@ BasicCharacterEncodingScheme::encode(CodeValue cv) {
         cv >>= 8;
     }
     if (cv)
-        throw std::runtime_error("encoding overflow: value too large to encode");
+        throw Exception("encoding overflow: value too large to encode");
     if (octetsPerValue_>1 && sex_==ByteOrder::ORDER_MSB)
         std::reverse(octets.begin(), octets.end());
     return octets;
@@ -338,7 +338,7 @@ BasicLengthEncodingScheme::encode(size_t length) {
         length >>= 8;
     }
     if (length)
-        throw std::runtime_error("encoding overflow: value too large to encode");
+        throw Exception("encoding overflow: value too large to encode");
     if (octetsPerValue_>1 && sex_==ByteOrder::ORDER_MSB)
         std::reverse(octets.begin(), octets.end());
     return octets;
@@ -657,12 +657,12 @@ void
 EncodedString::decode(const MemoryMap &map) {
     std::vector<uint8_t> octets(where_.size());
     if (where_.size() != map.at(where_).read(octets).size())
-        throw std::runtime_error("short read when decoding string");
+        throw Exception("short read when decoding string");
     encoder_->reset();
     BOOST_FOREACH (uint8_t octet, octets)
         encoder_->decode(octet);
     if (!isDone(encoder_->state()))
-        throw std::runtime_error("error decoding string");
+        throw Exception("error decoding string");
 }
 
 
@@ -670,7 +670,64 @@ EncodedString::decode(const MemoryMap &map) {
 //                                      StringFinder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
+// class method
+Sawyer::CommandLine::SwitchGroup
+StringFinder::commandLineSwitches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup sg("String-finder switches");
+
+    sg.insert(Switch("minimum-length")
+              .argument("n", nonNegativeIntegerParser(settings.minLength))
+              .doc("Minimum length for matched strings. The minimum length is measured in terms of code-points, which "
+                   "loosely correspond to characters. Length fields and termination characters are not counted. If the "
+                   "minimum is set to a value larger than the maximum then no strings can be matched. The default is " +
+                   StringUtility::plural(settings.minLength, "code points") + "."));
+
+    sg.insert(Switch("maximum-length")
+              .argument("n", nonNegativeIntegerParser(settings.maxLength))
+              .doc("Maximum length for matched strings. The maximum length is measured in terms of code-points, which "
+                   "loosely correspond to characters. Length fields and termination characters are not counted. If the "
+                   "maximum is set to a value smaller than the minimum then no strings can be matched. The default is " +
+                   StringUtility::plural(settings.maxLength, "code points") + "."));
+
+    sg.insert(Switch("maximum-overlap")
+              .argument("n", nonNegativeIntegerParser(settings.maxOverlap))
+              .doc("The number of strings that can overlap at a single address per encoder.  For instance, for C-style "
+                   "NUL-terminated ASCII strings encoded as bytes, if memory contains the consecutive values 'a', 'n', "
+                   "'i', 'm', 'a', 'l', '\0' then up to seven strings are possible: \"animal\", \"nimal\", \"imal\", "
+                   "\"mal\", \"al\", \"l\", and \"\".  If the maximum overlap is set to three then only \"animal\", "
+                   "\"nimal\", and \"imal\" are found. Setting the maximum overlap to zero has the same effect as setting it "
+                   "to one: no overlapping is allowed.  The overlap limits are applied before results are pruned based "
+                   "on length, so if the minimum legnth is four, the \"imal\" and shorter strings won't be found even "
+                   "though they are decoded under the covers."
+                   "\n\n"
+                   "A maximum overlap of at least two is recommended if two-byte-per-character encoding is used when "
+                   "detecting NUL-terminated ASCII strings. The reason is that one decoder will be active at one address "
+                   "while another decoder is desired for the next address; then if the first address proves to not be part "
+                   "of a string, the second address can still be detected as a string.  Similarly, a maximum overlap of at "
+                   "least four is recommended for four-byte-per-character encodings.  Length-encoded strings will have "
+                   "similar issues."));
+
+    sg.insert(Switch("keep-only-longest")
+              .intrinsicValue(true, settings.keepingOnlyLongest)
+              .doc("Causes only the longest detected strings to be kept.  The altorighm sorts all detected strings by "
+                   "decreasing length, then removes any string whose memory addresses overlap with any prior string "
+                   "in the list.  The @s{keep-all} switch is the inverse. The default is " +
+                   std::string(settings.keepingOnlyLongest?"@s{keep-only-longest}":"@s{keep-all}") + "."));
+    sg.insert(Switch("keep-all")
+              .key("keep-only-longest")
+              .intrinsicValue(false, settings.keepingOnlyLongest)
+              .hidden(true));
+
+    return sg;
+}
+
+Sawyer::CommandLine::SwitchGroup
+StringFinder::commandLineSwitches() {
+    return commandLineSwitches(settings_);
+}
+
+StringFinder&
 StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
     encoders_.push_back(nulTerminatedPrintableAscii());
     encoders_.push_back(nulTerminatedPrintableAsciiWide(2, sex));
@@ -681,14 +738,17 @@ StringFinder::insertCommonEncoders(ByteOrder::Endianness sex) {
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 2));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(2, sex, 4));
     encoders_.push_back(lengthEncodedPrintableAsciiWide(4, sex, 4));
+
+    return *this;
 }
 
-void
+StringFinder&
 StringFinder::insertUncommonEncoders(ByteOrder::Endianness sex) {
     // This encoder finds printable ASCII that's not necessarily NUL-terminated
     TerminatedString::Ptr te = nulTerminatedPrintableAscii();
     te->terminators().clear();
     encoders_.push_back(te);
+    return *this;
 }
 
 struct Finding {
@@ -829,38 +889,54 @@ public:
     }
 };
 
-std::vector<EncodedString>
+StringFinder&
 StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Container::MatchFlags flags) {
-    std::vector<EncodedString> result;
-    if (minLength_ > maxLength_ || encoders_.empty())
-        return result;
+    strings_.clear();
+    if (settings_.minLength > settings_.maxLength || encoders_.empty())
+        return *this;
 
     size_t nBytesToCheck = 0;
     BOOST_FOREACH (const MemoryMap::Node &node, constraints.nodes(Sawyer::Container::MATCH_NONCONTIGUOUS))
         nBytesToCheck += node.key().size();
 
-    StringSearcher stringFinder(encoders_, minLength_, maxLength_, discardCodePoints_, maxOverlap_, nBytesToCheck);
+    StringSearcher stringFinder(encoders_, settings_.minLength, settings_.maxLength, discardingCodePoints_,
+                                settings_.maxOverlap, nBytesToCheck);
     if (constraints.isAnchored())
         stringFinder.anchor(constraints.anchored().least());
     constraints.traverse(stringFinder, flags);
 
     BOOST_FOREACH (const Finding &finding, stringFinder.results())
-        result.push_back(EncodedString(finding.encoder, AddressInterval::baseSize(finding.startVa, finding.nBytes)));
+        strings_.push_back(EncodedString(finding.encoder, AddressInterval::baseSize(finding.startVa, finding.nBytes)));
 
-    if (keepOnlyLongest_) {
+    if (settings_.keepingOnlyLongest) {
         AddressIntervalSet stringAddresses;
-        std::sort(result.begin(), result.end(), byDecreasingLength);
-        BOOST_FOREACH (EncodedString &string, result) {
+        std::sort(strings_.begin(), strings_.end(), byDecreasingLength);
+        BOOST_FOREACH (EncodedString &string, strings_) {
             if (stringAddresses.isOverlapping(string.where())) {
                 string = EncodedString();               // mark for erasing
             } else {
                 stringAddresses.insert(string.where());
             }
         }
-        result.erase(std::remove_if(result.begin(), result.end(), isNullString), result.end());
+        strings_.erase(std::remove_if(strings_.begin(), strings_.end(), isNullString), strings_.end());
     }
     
-    return result;
+    return *this;
+}
+
+std::ostream&
+StringFinder::print(std::ostream &out) const {
+    BOOST_FOREACH (const EncodedString &string, strings_) {
+        out <<StringUtility::addrToString(string.address())
+            <<" " <<string.encoder()->name()
+            <<" \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
+    }
+    return out;
+}
+
+std::ostream&
+operator<<(std::ostream &out, const StringFinder &x) {
+    return x.print(out);
 }
 
 } // namespace

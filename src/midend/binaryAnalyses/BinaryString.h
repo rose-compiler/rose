@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_String_H
 
 #include <MemoryMap.h>
+#include <sawyer/CommandLine.h>
 #include <sawyer/Optional.h>
 
 namespace rose {
@@ -168,6 +169,12 @@ typedef unsigned CodeValue;                             /**< One value in a sequ
 typedef std::vector<CodeValue> CodeValues;              /**< A sequence of code values. */
 typedef unsigned CodePoint;                             /**< One character in a coded character set. */
 typedef std::vector<CodePoint> CodePoints;              /**< A sequence of code points, i.e., a string. */
+
+/** Errors for string analysis. */
+class Exception: public std::runtime_error {
+public:
+    Exception(const std::string &s): std::runtime_error(s) {}
+};
 
 /** Decoder state. Negative values are reserved.
  *
@@ -776,93 +783,105 @@ public:
     void decode(const MemoryMap&);
 };
 
-/** Class holding settings and methods for finding strings. */
+/** Analysis to find encoded strings.
+ *
+ *  This analysis searches user-specified parts of a binary specimen's memory space to find strings encoded in various formats
+ *  specfieid by the user.
+ *
+ *  See the @ref rose::BinaryAnalysis::Strings "Strings" namespace for details. */
 class StringFinder {
-    std::vector<StringEncodingScheme::Ptr> encoders_;
-    size_t minLength_, maxLength_;
-    size_t maxOverlap_;
-    bool discardCodePoints_;
-    bool keepOnlyLongest_;
 public:
-    StringFinder()
-        : minLength_(5), maxLength_(-1), maxOverlap_(8), discardCodePoints_(false), keepOnlyLongest_(true) {}
-
-    /** Property: minimum string length.
+    /** Settings and properties.
      *
-     *  Strings will be found only if they contain at least some minimum number of characters.
+     *  These properties can be set directly or by the command-line parser. */
+    struct Settings {
+        /** Minimum length of matched strings.
+         *
+         *  Strings having fewer than this many code points are discarded. If @ref minLength is larger than @ref maxLength then
+         *  no strings will be matched. */
+        size_t minLength;
+
+        /** Maximum length of matched strings.
+         *
+         *  Strings having more than this many code points are discarded. If @ref maxLength is smaller than @ref minLength then
+         *  no strings will be matched. */
+        size_t maxLength;
+        
+        /** Whether to allow overlapping strings.
+         *
+         *  The number of strings that can overlap at a single address per encoder.  For instance, for C-style NUL-terminated
+         *  ASCII strings encoded as bytes, if memory contains the consecutive values 'a', 'n', 'i', 'm', 'a', 'l', '\0' then
+         *  up to seven strings are possible: "animal", "nimal", "imal", "mal", "al", "l", and "".  If the maximum overlap is
+         *  set to three then only "animal", "nimal", and "imal" are found. Setting the maximum overlap to zero has the same
+         *  effect as setting it to one: no overlapping is allowed.  The overlap limits are applied before results are pruned
+         *  based on length, so if the minimum legnth is four, the "imal" and shorter strings won't be found even though they
+         *  are decoded under the covers.
+         *
+         *  A maximum overlap of at least two is recommended if two-byte-per-character encoding is used when detecting
+         *  NUL-terminated ASCII strings. The reason is that one decoder will be active at one address while another decoder is
+         *  desired for the next address; then if the first address proves to not be part of a string, the second address can
+         *  still be detected as a string.  Similarly, a maximum overlap of at least four is recommended for
+         *  four-byte-per-character encodings.  Length-encoded strings will have similar issues. */
+        size_t maxOverlap;
+
+        /** Whether to keep only longest non-overlapping strings.
+         *
+         *  If set, then only the longest detected strings are kept.  The algorithm sorts all detected strings by decreasing
+         *  length, then removes any string whose memory addresses overlap with any prior string in the list. */
+        bool keepingOnlyLongest;
+
+        Settings(): minLength(5), maxLength(-1), maxOverlap(8), keepingOnlyLongest(true) {}
+    };
+    
+private:
+    Settings settings_;                                 // command-line settings for this analysis
+    bool discardingCodePoints_;                         // whether to store decoded code points
+    std::vector<StringEncodingScheme::Ptr> encoders_;   // encodings to use when searching
+    std::vector<EncodedString> strings_;                // strings that have been found
+
+public:
+    /** Constructor.
+     *
+     *  Initializes the analysis with default settings but no encoders. Encoders will need to be added before this analysis can
+     *  be used to find any strings. */
+    StringFinder(): discardingCodePoints_(false) {}
+
+    /** Property: Analysis settings often set from a command-line.
      *
      * @{ */
-    size_t minLength() const { return minLength_; }
-    void minLength(size_t n) { minLength_ = n; }
+    const Settings& settings() const { return settings_; }
+    Settings& settings() { return settings_; }
     /** @} */
 
-    /** Property: maximum string length.
+    /** Property: Whether to discard code points.
      *
-     *  Strings will be found only if they don't contain more than some maximum number of characters.
+     *  If this property is set, then the process of decoding strings does not actually store the code points (characters)
+     *  of the string.  This is useful when searching for lots of strings to reduce the amount of memory required. A string
+     *  can be decoded again later if the code points are needed.
      *
      * @{ */
-    size_t maxLength() const { return maxLength_; }
-    void maxLength(size_t n) { maxLength_ = n; }
+    bool discardingCodePoints() const { return discardingCodePoints_; }
+    StringFinder& discardingCodePoints(bool b) { discardingCodePoints_=b; return *this; }
     /** @} */
 
-    /** Property: allow overlapping strings.
-     *
-     *  The number of strings that can overlap at a single address per encoder.  For instance, for C-style NUL-terminated ASCII
-     *  strings encoded as bytes, if memory contains the consecutive values 'a', 'n', 'i', 'm', 'a', 'l', '\0' then up to seven
-     *  strings are possible: "animal", "nimal", "imal", "mal", "al", "l", and "".  If the maximum overlap is set to three then
-     *  only "animal", "nimal", and "imal" are found. Setting the maximum overlap to zero has the same effect as setting it to
-     *  one: no overlapping is allowed.  The overlap limits are applied before results are pruned based on length, so if the
-     *  minimum legnth is four, the "imal" and shorter strings won't be found even though they are decoded under the covers.
-     *
-     *  A maximum overlap of at least two is recommended if two-byte-per-character encoding is used when detecting
-     *  NUL-terminated ASCII strings. The reason is that one decoder will be active at one address while another decoder is
-     *  desired for the next address; then if the first address proves to not be part of a string, the second address can still
-     *  be detected as a string.  Similarly, a maximum overlap of at least four is recommended for four-byte-per-character
-     *  encodings.  Length-encoded strings will have similar issues.
-     *
-     * @{ */
-    size_t maxOverlap() const { return maxOverlap_; }
-    void maxOverlap(size_t n) { maxOverlap_ = std::max(n, size_t(1)); }
-    /** @} */
-
-    /** Property: discard code points.
-     *
-     *  If this property is set, then the process of decoding strings does not actually store the code points (characters) of
-     *  the string.  This is useful when searching for lots of strings to reduce the amount of memory required. A string can be
-     *  decoded again later if the code points are needed.
-     *
-     * @{ */
-    bool discardCodePoints() const { return discardCodePoints_; }
-    void discardCodePoints(bool b) { discardCodePoints_ = b; }
-    /** @} */
-
-    /** Property: keep only longest non-overlapping strings.
-     *
-     *  If set, then only the longest detected strings are kept.  The algorithm sorts all detected strings by decreasing
-     *  length, then removes any string whose memory addresses overlap with any prior string in the list.
-     *
-     * @{ */
-    bool keepOnlyLongest() const { return keepOnlyLongest_; }
-    void keepOnlyLongest(bool b) { keepOnlyLongest_ = b; }
-    /** @} */
-
-    /** Property: list of string encodings.
+    /** Property: List of string encodings.
      *
      *  When searching for strings, this analysis must know what kinds of strings to look for, and does that with a vector of
      *  pointers to encoders.  The default is an empty vector, in which no strings will be found.
      *
      * @{ */
-    void encoder(const StringEncodingScheme::Ptr &encoder) {
-        ASSERT_not_null(encoder);
-        encoders_.push_back(encoder);
-    }
-    const std::vector<StringEncodingScheme::Ptr>& encoders() const {
-        return encoders_;
-    }
-    std::vector<StringEncodingScheme::Ptr>& encoders() {
-        return encoders_;
-    }
+    const std::vector<StringEncodingScheme::Ptr>& encoders() const { return encoders_; }
+    std::vector<StringEncodingScheme::Ptr>& encoders() { return encoders_; }
     /** @} */
+
+    /** Command-line parser for analysis settings.
+     *
+     *  Returns the switch group that describes the command-line switches for this analysis. The caller can provide a @ref
+     *  Settings object that will be adjusted when the command-line is parsed and applied; if no argument is supplied then the
+     *  settings of this analysis are affected. In either case, the settings or analysis object must still be allocated when
+     *  the command-line is parsed. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
+    Sawyer::CommandLine::SwitchGroup commandLineSwitches();
 
     /** Inserts common encodings.
      *
@@ -878,16 +897,23 @@ public:
      *  @li 4-byte length-prefixed, 32-bit encoded, printable ASCII characters.
      *
      *  The specified endianness is used for all multi-byte values. */
-    void insertCommonEncoders(ByteOrder::Endianness);
+    StringFinder& insertCommonEncoders(ByteOrder::Endianness);
 
     /** Inserts less common encodings.
      *
      *  Inserts the following string encodings into the analyses:
      *
      *  @li Printable ASCII terminated by other code points or non-readable memory. */
-    void insertUncommonEncoders(ByteOrder::Endianness);
+    StringFinder& insertUncommonEncoders(ByteOrder::Endianness);
+
+    /** Reset analysis results.
+     *
+     *  Clears analysis results but does not change settings or properties. */
+    StringFinder& reset() { strings_.clear(); return *this; }
 
     /** Finds strings by searching memory.
+     *
+     *  Clears previous analysis results and searches for new strings.
      *
      *  The memory constraints indicate where to search for strings, and the properties of this StringFinder class determine
      *  how to find strings. Specifically, this class must have at least one encoding registered in order to find anything (see
@@ -907,13 +933,23 @@ public:
      *  MemoryMap map = ...;
      *  StringFinder sf;
      *  sf.encoder(nulTerminatedPrintableAscii());
-     *  sf.minLength(5);
-     *  sf.maxLength(31);
-     *  sf.allowOverlap(false);
-     *  std::vector<EncodedString> strings = sf.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
+     *  sf.settings().minLength = 5;
+     *  sf.settings().maxLength = 31;
+     *  sf.settings().allowOverlap = false;
+     *  std::vector<EncodedString> strings = sf.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE)).strings();
      * @endcode */
-    std::vector<EncodedString> find(const MemoryMap::ConstConstraints&, Sawyer::Container::MatchFlags flags=0);
+    StringFinder& find(const MemoryMap::ConstConstraints&, Sawyer::Container::MatchFlags flags=0);
+
+    /** Obtain strings that were found. */
+    const std::vector<EncodedString>& strings() const { return strings_; }
+
+    /** Print results.
+     *
+     *  Print information about each string, one string per line.  Strings are displayed with C/C++ string syntax. */
+    std::ostream& print(std::ostream&) const;
 };
+
+std::ostream& operator<<(std::ostream&, const StringFinder&);
 
 } // namespace
 } // namespace
