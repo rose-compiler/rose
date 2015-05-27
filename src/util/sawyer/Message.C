@@ -690,7 +690,6 @@ Prefix::setProgramName() {
         programName_ = name;
     }
 #endif
-#endif
     if (programName_.orElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
 }
