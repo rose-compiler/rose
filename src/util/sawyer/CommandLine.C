@@ -216,6 +216,11 @@ nonNegativeIntegerParser() {
     return NonNegativeIntegerParser<unsigned>::instance();
 }
 
+SAWYER_EXPORT PositiveIntegerParser<unsigned>::Ptr
+positiveIntegerParser() {
+    return PositiveIntegerParser<unsigned>::instance();
+}
+
 SAWYER_EXPORT RealNumberParser<double>::Ptr
 realNumberParser() {
     return RealNumberParser<double>::instance();

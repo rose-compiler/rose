@@ -639,7 +639,7 @@ public:
      *  overflow).  If the parser did not match the entire string, then an <code>std::runtime_error</code> is thrown. */
     ParsedValue matchString(const std::string&) /*final*/;
 
-    /** Parse a value from the beginning of the specified string.  If the parser does not recognize the input then it throw an
+    /** Parse a value from the beginning of the specified string.  If the parser does not recognize the input then it throws an
      *  <code>std::runtime_error</code> without updating the cursor.  If the parser recognizes the input but cannot convert it
      *  to a value (e.g., integer overflow) then the cursor should be updated to show the matching region before the matching
      *  operator throws the <code>std::runtime_error</code> exception. */
@@ -845,7 +845,7 @@ private:
  *  that a leading minus sign is not allowed (yes, strtoull parses negative numbers and returns them as unsigned), plus
  *  trailing white space.
  *
- * @sa @ref integerParser factory, and @ref parser_factories. */
+ * @sa @ref nonNegativeIntegerParser factory, and @ref parser_factories. */
 template<typename T>
 class NonNegativeIntegerParser: public ValueParser {
 protected:
@@ -876,6 +876,54 @@ private:
         boost::uint64_t big = strtoull(input, (char**)rest, 0);
         if (*rest==input)
             throw std::runtime_error("unsigned integer expected");
+        while (isspace(**rest)) ++*rest;
+        std::string parsed(input, *rest-input);
+        if (ERANGE==errno)
+            throw std::range_error("integer overflow when parsing \""+parsed+"\"");
+        return ParsedValue(NumericCast<T, boost::uint64_t>::convert(big, parsed), loc, parsed, valueSaver());
+    }
+};
+
+/** Parses a positive integer and converts it to numeric type @p T.
+ *
+ *  Matches a positive integer in the mathematical sense in C++ decimal, octal, or hexadecimal format, and attempts to
+ *  convert it to the type @p T.  If the integer cannot be converted to type @p T then an <code>std::range_error</code> is
+ *  thrown, which is most likely caught by higher layers of the library and converted to an <code>std::runtime_error</code>
+ *  with additional information about the failure.  The syntax is that which is recognized by the @c strtoull function except
+ *  that a leading minus sign is not allowed (yes, strtoull parses negative numbers and returns them as unsigned), plus
+ *  trailing white space.
+ *
+ * @sa @ref positiveIntegerParser factory, and @ref parser_factories. */
+template<typename T>
+class PositiveIntegerParser: public ValueParser {
+protected:
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
+    PositiveIntegerParser() {}
+
+    /** Constructor for derived classes. Non-subclass users should use @ref instance instead. */
+    PositiveIntegerParser(const ValueSaver::Ptr &valueSaver): ValueParser(valueSaver) {}
+public:
+    /** Reference counting pointer for this class. */
+    typedef SharedPointer<PositiveIntegerParser> Ptr;
+
+    /** Allocating constructor. Returns a pointer to a new PositiveIntegerParser object.  Uses will most likely want to use
+     *  the @ref positiveIntegerParser factory instead, which requires less typing.
+     * @sa parser_factories */
+    static Ptr instance() { return Ptr(new PositiveIntegerParser); }
+
+    /** Allocating constructor. Returns a pointer to a new PositiveIntegerParser object.  Uses will most likely want to use
+     *  the @ref positiveIntegerParser factory instead, which takes the same arguments, but requires less typing.
+     * @sa parser_factories */
+    static Ptr instance(const ValueSaver::Ptr &valueSaver) { return Ptr(new PositiveIntegerParser(valueSaver)); }
+private:
+    virtual ParsedValue operator()(const char *input, const char **rest, const Location &loc) /*override*/ {
+        errno = 0;
+        while (isspace(*input)) ++input;
+        if ('+'!=*input && !isdigit(*input))
+            throw std::runtime_error("positive integer expected");
+        boost::uint64_t big = strtoull(input, (char**)rest, 0);
+        if (*rest==input || big==0)
+            throw std::runtime_error("positive integer expected");
         while (isspace(**rest)) ++*rest;
         std::string parsed(input, *rest-input);
         if (ERANGE==errno)
@@ -1225,6 +1273,16 @@ typename NonNegativeIntegerParser<T>::Ptr nonNegativeIntegerParser() {
     return NonNegativeIntegerParser<T>::instance();
 }
 SAWYER_EXPORT NonNegativeIntegerParser<unsigned>::Ptr nonNegativeIntegerParser();
+
+template<typename T>
+typename PositiveIntegerParser<T>::Ptr positiveIntegerParser(T &storage) {
+    return PositiveIntegerParser<T>::instance(TypedSaver<T>::instance(storage));
+}
+template<typename T>
+typename PositiveIntegerParser<T>::Ptr positiveIntegerParser() {
+    return PositiveIntegerParser<T>::instance();
+}
+SAWYER_EXPORT PositiveIntegerParser<unsigned>::Ptr positiveIntegerParser();
 
 template<typename T>
 typename RealNumberParser<T>::Ptr realNumberParser(T &storage) {
@@ -2559,7 +2617,7 @@ public:
     const Message::SProxy& errorStream() const { return errorStream_; }
     /** @} */
 
-    /** Extra text to print befor exit. This is only used when the @ref errorStream property is non-null.  The default is to
+    /** Extra text to print before exit. This is only used when the @ref errorStream property is non-null.  The default is to
      *  emit the message "invoke with '-\-help' to see usage information." if a switch with the name "help" is present, or
      *  nothing otherwise.
      *
@@ -2591,7 +2649,7 @@ public:
      *  arguments.  Blank lines and lines whose first non-space character is "#" are ignored.  The remaining lines are split
      *  into one or more arguments at white space.  Single and double quoted regions within a line are treated as single
      *  arguments (the quotes are removed).  The backslash can be used to escape quotes, white space, and backslash; any other
-     *  use of the backspace is not special. */
+     *  use of the backslash is not special. */
     std::vector<std::string> readArgsFromFile(const std::string &filename);
 
     /** Program name for documentation.  If no program name is given (or it is set to the empty string) then the name is

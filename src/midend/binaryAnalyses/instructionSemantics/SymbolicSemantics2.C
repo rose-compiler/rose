@@ -659,6 +659,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return dflt;
 
     PartialDisableUsedef du(this);
 
@@ -697,11 +699,13 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
