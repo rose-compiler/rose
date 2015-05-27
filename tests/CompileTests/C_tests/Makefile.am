@@ -1100,6 +1100,7 @@ check-local:
 	@$(MAKE) test_optimization_specifier_Os
 	@$(MAKE) test_optimization_specifier_O1
 	@$(MAKE) test_optimization_specifier_O2
+	@$(MAKE) test_mregparm_m32_use
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
