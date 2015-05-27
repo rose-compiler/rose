@@ -254,13 +254,13 @@ public:
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads
      *  concurrently. However, the address that is returned might be unmapped before the caller can do anything with it. */
-    void *my_addr(uint32_t va, size_t size);
+    void *my_addr(rose_addr_t va, size_t size);
 
     /** Does the opposite, more or less, of my_addr(). Return a specimen virtual address that maps to the specified address in
      *  the simulator.  There may be more than one, in which case we return the lowest.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    uint32_t guest_va(void *addr, size_t nbytes);
+    rose_addr_t guest_va(void *addr, size_t nbytes);
 
     /** Copies data into the specimen address space.  Copies up to @p size bytes from @p buf into specimen memory beginning at
      *  virtual address @p va.  If the requested number of bytes cannot be copied because (part of) the destination address
@@ -292,14 +292,14 @@ public:
      *  characters up to the error.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    std::string read_string(uint32_t va, size_t limit=0, bool *error=NULL);
+    std::string read_string(rose_addr_t va, size_t limit=0, bool *error=NULL);
 
     /** Reads a null-terminated vector of pointers to NUL-terminated strings from specimen memory.  If some sort of
      *  segmentation fault or bus error would occur, then set *error to true and return all that we read, otherwise set it to
      *  false.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    std::vector<std::string> read_string_vector(uint32_t va, bool *error=NULL);
+    std::vector<std::string> read_string_vector(rose_addr_t va, size_t ptrSize, bool *error=NULL);
 
     /** Memory transactions.
      *

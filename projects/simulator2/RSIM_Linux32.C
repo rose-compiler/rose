@@ -742,7 +742,8 @@ syscall_execve(RSIM_Thread *t, int callno)
     }
 
     /* Argument vector */
-    std::vector<std::string> argv = t->get_process()->read_string_vector(t->syscall_arg(1), &error);
+    static const size_t ptrSize = 4;
+    std::vector<std::string> argv = t->get_process()->read_string_vector(t->syscall_arg(1), ptrSize, &error);
     if (!argv.empty()) {
         for (size_t i=0; i<argv.size(); i++) {
             mfprintf(t->tracing(TRACE_SYSCALL))("    argv[%zu] = ", i);
@@ -760,7 +761,7 @@ syscall_execve(RSIM_Thread *t, int callno)
     sys_argv.push_back(NULL);
 
     /* Environment vector */
-    std::vector<std::string> envp = t->get_process()->read_string_vector(t->syscall_arg(2), &error);
+    std::vector<std::string> envp = t->get_process()->read_string_vector(t->syscall_arg(2), ptrSize, &error);
     if (!envp.empty()) {
         for (size_t i=0; i<envp.size(); i++) {
             mfprintf(t->tracing(TRACE_SYSCALL))("    envp[%zu] = ", i);

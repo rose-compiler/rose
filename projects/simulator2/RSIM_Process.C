@@ -925,7 +925,7 @@ RSIM_Process::get_instruction(rose_addr_t va)
 }
         
 void *
-RSIM_Process::my_addr(uint32_t va, size_t nbytes)
+RSIM_Process::my_addr(rose_addr_t va, size_t nbytes)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
 
@@ -940,11 +940,11 @@ RSIM_Process::my_addr(uint32_t va, size_t nbytes)
     return base + offset;
 }
 
-uint32_t
+rose_addr_t
 RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-    uint32_t retval = 0;
+    rose_addr_t retval = 0;
     BOOST_FOREACH (const MemoryMap::Node &node, get_memory().nodes()) {
         const AddressInterval &range = node.key();
         const MemoryMap::Segment &segment = node.value();
@@ -960,7 +960,7 @@ RSIM_Process::guest_va(void *addr, size_t nbytes)
 }
 
 std::string
-RSIM_Process::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
+RSIM_Process::read_string(rose_addr_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
 {
     std::string retval;
     if (error)
@@ -988,17 +988,28 @@ RSIM_Process::read_string(uint32_t va, size_t limit/*=0*/, bool *error/*=NULL*/)
 }
 
 std::vector<std::string>
-RSIM_Process::read_string_vector(uint32_t va, bool *_error/*=NULL*/)
+RSIM_Process::read_string_vector(rose_addr_t va, size_t ptrSize, bool *_error/*=NULL*/)
 {
     bool had_error;
     bool *error = _error ? _error : &had_error;
     *error = false;
 
     std::vector<std::string> retval;
-    for (/*void*/; 1; va+=4) {
-        /* Read the pointer to the string */
-        uint32_t ptr;
-        if (sizeof(ptr) != mem_read(&ptr, va, sizeof ptr)) {
+    for (/*void*/; 1; va+=ptrSize) {
+        // read the pointer to the string
+        rose_addr_t ptr;
+        size_t nread;
+        if (4==ptrSize) {
+            uint32_t buf;
+            nread = mem_read(&buf, va, 4);
+            ptr = buf;
+        } else {
+            ASSERT_require(8==ptrSize);
+            uint64_t buf;
+            nread = mem_read(&buf, va, 8);
+            ptr = buf;
+        }
+        if (nread != ptrSize) {
             *error = true;
             return retval;
         }
