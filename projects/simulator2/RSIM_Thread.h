@@ -92,7 +92,7 @@ private:
 
     /** Load the specified TLS descriptor into the GDT.  The @p idx is the index of the TLS descriptor within this thread
      * (unlike the linux kernel's set_tls_desc() whose idx is with respect to the GDT). */
-    void tls_set_desc(int idx, const user_desc_32 *info);
+    void tls_set_desc(int idx, const SegmentDescriptor &info);
 
     /** Find a free entry in this thread's TLS array and return an index into that array. This is similar to the get_free_idx()
      *  function in the Linux kernel, except this one returns an index in the thread's TLS array rather than an index in the
@@ -101,7 +101,7 @@ private:
 
     /** Global descriptor table entries which the thread overrides.   These are zero-indexed in the thread, but relative to
      * GDT_ENTRY_TLS_MIN in the process. */
-    user_desc_32 tls_array[RSIM_Process::GDT_ENTRY_TLS_ENTRIES];
+    SegmentDescriptor tls_array[RSIM_Process::GDT_ENTRY_TLS_ENTRIES];
 
 public:
     /** Return a thread sequence number.  Thread IDs are assigned by the Linux kernel and are akin to process IDs, and are not
@@ -130,16 +130,16 @@ public:
     /** Assigns a value to one of the thread TLS array elements (part of the GDT). Returns the index number on success,
      *  negative on failure.  If info's entry_number is -1 then this method chooses an empty TLS slot and updates
      *  entry_number. */
-    int set_thread_area(user_desc_32 *info, bool can_allocate);
+    int set_thread_area(SegmentDescriptor &info, bool can_allocate);
 
     /** Copy the specified descriptor into a slot of the GDT. The actual slot to which we copy is stored in either the
      *  RSIM_Process or the RSIM_Thread, depending on whether idx refers to a TLS entry.  Returns the entry number on success,
      *  or negative on failure. */
-    int set_gdt(const user_desc_32*);
+    int set_gdt(const SegmentDescriptor&);
 
-    /** Return a pointer to an entry of the GDT.  The returned pointer might be pointing into the RSIM_Process gdt table or
+    /** Return a reference to an entry of the GDT.  The returned reference might be pointing into the RSIM_Process gdt table or
      *  into the RSIM_Threads tls_array, depending on the value of @p idx. */
-    user_desc_32 *gdt_entry(int idx);
+    SegmentDescriptor& gdt_entry(int idx);
 
     /** Obtain current register values. */
     pt_regs_32 get_regs() const;

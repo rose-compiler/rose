@@ -66,17 +66,24 @@ enum TracingFacility {
 /** Returns a bit mask for a trace facility. Returns zero if the specified trace facility is invalid. */
 unsigned tracingFacilityBit(TracingFacility);
 
-/* From linux/arch/x86/include/asm/ldt.h */
-struct user_desc_32 {
-    unsigned int  entry_number;
-    unsigned int  base_addr;
-    unsigned int  limit;
-    unsigned int  seg_32bit:1;
-    unsigned int  contents:2;
-    unsigned int  read_exec_only:1;
-    unsigned int  limit_in_pages:1;
-    unsigned int  seg_not_present:1;
-    unsigned int  useable:1;
+/** Global or local descriptor table entry.
+ *
+ *  The layout of this struct comes from linux/arch/x86/include/asm/ldt.h */
+struct SegmentDescriptor {
+    unsigned int entry_number;
+    unsigned int base_addr;
+    unsigned int limit;
+    unsigned int seg_32bit:1;
+    unsigned int contents:2;
+    unsigned int read_exec_only:1;
+    unsigned int limit_in_pages:1;
+    unsigned int seg_not_present:1;
+    unsigned int usable:1;                              // "useable" (sic)
+    unsigned int lm:1;                                  // used only for 64-bit
+
+    SegmentDescriptor()
+        : entry_number(-1), base_addr(0), limit(0), seg_32bit(0), contents(0), read_exec_only(0),
+          limit_in_pages(0), seg_not_present(0), usable(0), lm(0) {}
 };
 
 /* Error numbers.  FIXME:  Are we sure that these host numbers are valid for the target machine also? I hope so, because we use
@@ -1429,7 +1436,7 @@ void convert(statfs64_32 *g, const statfs_native *h);
 
 
 /* Functions to print various data structures */
-void print_user_desc_32(Sawyer::Message::Stream &f, const uint8_t *_ud, size_t sz);
+void print_SegmentDescriptor(Sawyer::Message::Stream &f, const uint8_t *_ud, size_t sz);
 void print_int_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_rlimit(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_kernel_stat_32(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);

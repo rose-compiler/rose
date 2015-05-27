@@ -62,7 +62,7 @@ public:
         rose_addr_t base, limit;
         bool present;
         SegmentInfo(): base(0), limit(0), present(false) {}
-        SegmentInfo(const user_desc_32 &ud) {
+        SegmentInfo(const SegmentDescriptor &ud) {
             base = ud.base_addr;
             limit = ud.limit_in_pages ? (ud.limit << 12) | 0xfff : ud.limit;
             present = true;  // present = !ud.seg_not_present && ud.useable; // NOT USED BY LINUX

@@ -27,7 +27,6 @@ RSIM_Thread::ctor()
     my_seq = next_sequence_number++;
 
     memset(&last_report, 0, sizeof last_report);
-    memset(tls_array, 0, sizeof tls_array);
 
     reopen_trace_facilities();
 
@@ -968,10 +967,10 @@ RSIM_Thread::init_regs(const pt_regs_32 &regs)
 }
 
 int
-RSIM_Thread::set_gdt(const user_desc_32 *ud)
+RSIM_Thread::set_gdt(const SegmentDescriptor &ud)
 {
-    user_desc_32 *entry = gdt_entry(ud->entry_number);
-    *entry = *ud;
+    SegmentDescriptor &entry = gdt_entry(ud.entry_number);
+    entry = ud;
 
     /* Make sure all affected shadow registers are reloaded. */
     operators()->writeRegister(dispatcher()->REG_CS, operators()->readRegister(dispatcher()->REG_CS));
@@ -981,15 +980,15 @@ RSIM_Thread::set_gdt(const user_desc_32 *ud)
     operators()->writeRegister(dispatcher()->REG_GS, operators()->readRegister(dispatcher()->REG_GS));
     operators()->writeRegister(dispatcher()->REG_SS, operators()->readRegister(dispatcher()->REG_SS));
 
-    return ud->entry_number;
+    return ud.entry_number;
 }
 
-user_desc_32 *
+SegmentDescriptor&
 RSIM_Thread::gdt_entry(int idx)
 {
     if (idx >= RSIM_Process::GDT_ENTRY_TLS_MIN &&
         idx <= RSIM_Process::GDT_ENTRY_TLS_MAX) {
-        return tls_array + idx - RSIM_Process::GDT_ENTRY_TLS_MIN;
+        return tls_array[idx - RSIM_Process::GDT_ENTRY_TLS_MIN];
     }
     return get_process()->gdt_entry(idx);
 }
@@ -997,25 +996,24 @@ RSIM_Thread::gdt_entry(int idx)
 int
 RSIM_Thread::get_free_tls() const
 {
-    static user_desc_32 zero;
     for (int idx=0; idx<RSIM_Process::GDT_ENTRY_TLS_ENTRIES; idx++) {
-        if (0==memcmp(tls_array+idx, &zero, sizeof zero))
+        if (tls_array[idx].entry_number == SegmentDescriptor().entry_number)
             return idx + RSIM_Process::GDT_ENTRY_TLS_MIN;
     }
     return -ESRCH;
 }
 
 int
-RSIM_Thread::set_thread_area(user_desc_32 *info, bool can_allocate)
+RSIM_Thread::set_thread_area(SegmentDescriptor &info, bool can_allocate)
 {
-    int idx = info->entry_number;
+    int idx = info.entry_number;
 
     if (-1==idx && can_allocate) {
         idx = get_free_tls();
         assert(idx<0x7fffffffLL);
         if (idx < 0)
             return idx;
-        info->entry_number = idx;
+        info.entry_number = idx;
         mfprintf(tracing(TRACE_SYSCALL))("[entry #%d]", idx);
     }
 

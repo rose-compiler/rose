@@ -4094,7 +4094,7 @@ syscall_clone_enter(RSIM_Thread *t, int callno)
     if (flags & CLONE_SETTLS) {
         t->syscall_enter("clone", "fppPP",
                       clone_flags,
-                      sizeof(user_desc_32), print_user_desc_32,
+                      sizeof(SegmentDescriptor), print_SegmentDescriptor,
                       sizeof(pt_regs_32), print_pt_regs_32);
     } else {
         t->syscall_enter("clone", "fpppP",
@@ -5796,25 +5796,24 @@ syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 static void
 syscall_set_thread_area_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("set_thread_area", "P", sizeof(user_desc_32), print_user_desc_32);
+    t->syscall_enter("set_thread_area", "P", sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
 static void
 syscall_set_thread_area(RSIM_Thread *t, int callno)
 {
-    user_desc_32 ud;
+    SegmentDescriptor ud;
     if (sizeof(ud)!=t->get_process()->mem_read(&ud, t->syscall_arg(0), sizeof ud)) {
         t->syscall_return(-EFAULT);
         return;
     }
     int old_idx = ud.entry_number;
-    int new_idx = t->set_thread_area(&ud, true);
+    int new_idx = t->set_thread_area(ud, true);
     if (new_idx<0) {
         t->syscall_return(new_idx);
         return;
     }
-    if (old_idx!=new_idx &&
-        sizeof(ud)!=t->get_process()->mem_write(&ud, t->syscall_arg(0), sizeof ud)) {
+    if (old_idx!=new_idx && sizeof(ud)!=t->get_process()->mem_write(&ud, t->syscall_arg(0), sizeof ud)) {
         t->syscall_return(-EFAULT);
         return;
     }
@@ -5824,7 +5823,7 @@ syscall_set_thread_area(RSIM_Thread *t, int callno)
 static void
 syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(user_desc_32), print_user_desc_32);
+    t->syscall_leave("dP", sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
 

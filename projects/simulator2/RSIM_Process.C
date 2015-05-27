@@ -38,19 +38,25 @@ RSIM_Process::ctor()
     vdso_paths.push_back(X86_VDSO_PATH_2);
 #endif
 
-    memset(gdt, 0, sizeof gdt);
     gdt[0x23>>3].entry_number = 0x23>>3;
+    gdt[0x23>>3].base_addr = 0;
     gdt[0x23>>3].limit = 0x000fffff;
     gdt[0x23>>3].seg_32bit = 1;
+    gdt[0x23>>3].contents = 0;
     gdt[0x23>>3].read_exec_only = 1;
     gdt[0x23>>3].limit_in_pages = 1;
-    gdt[0x23>>3].useable = 1;
+    gdt[0x23>>3].seg_not_present = 0;
+    gdt[0x23>>3].usable = 1;
 
     gdt[0x2b>>3].entry_number = 0x2b>>3;
+    gdt[0x2b>>3].base_addr = 0;
     gdt[0x2b>>3].limit = 0x000fffff;
     gdt[0x2b>>3].seg_32bit = 1;
+    gdt[0x2b>>3].contents = 0;
+    gdt[0x2b>>3].read_exec_only = 1;
     gdt[0x2b>>3].limit_in_pages = 1;
-    gdt[0x2b>>3].useable = 1;
+    gdt[0x2b>>3].seg_not_present = 0;
+    gdt[0x2b>>3].usable = 1;
 
     memset(signal_action, 0, sizeof signal_action);
 }
@@ -1241,19 +1247,19 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
 }
 
 void
-RSIM_Process::set_gdt(const user_desc_32 *ud)
+RSIM_Process::set_gdt(const SegmentDescriptor &ud)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-    *(gdt_entry(ud->entry_number)) = *ud;
+    gdt_entry(ud.entry_number) = ud;
 }
 
-user_desc_32 *
+SegmentDescriptor&
 RSIM_Process::gdt_entry(int idx)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     ROSE_ASSERT(idx>=0 && idx<GDT_ENTRIES);
     ROSE_ASSERT(idx<GDT_ENTRY_TLS_MIN || idx>GDT_ENTRY_TLS_MAX); /* call only from RSIM_Thread::set_gdt */
-    return gdt + idx;
+    return gdt[idx];
 }
 
 
@@ -1613,12 +1619,12 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
         /* Set up thread local storage */
         if (clone_info->flags & CLONE_SETTLS) {
-            user_desc_32 ud;
+            SegmentDescriptor ud;
             if (sizeof(ud)!=process->mem_read(&ud, clone_info->child_tls_va, sizeof ud)) {
                 tid = -EFAULT;
                 break;
             }
-            int status = thread->set_thread_area(&ud, false);
+            int status = thread->set_thread_area(ud, false);
             if (status<0) {
                 tid = status;
                 break;

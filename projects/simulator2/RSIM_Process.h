@@ -371,10 +371,10 @@ public:
      *  RSIM_Thread to override the TLS-related entries.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    void set_gdt(const user_desc_32 *ud);
+    void set_gdt(const SegmentDescriptor&);
 
-    /** Returns a pointer to the segment descriptor in the GDT. */
-    user_desc_32 *gdt_entry(int idx);
+    /** Returns a reference to the segment descriptor in the GDT. */
+    SegmentDescriptor& gdt_entry(int idx);
 
     static const int GDT_ENTRIES = 8192;                     /**< Number of GDT entries. */
     static const int GDT_ENTRY_TLS_MIN = 6;                  /**< First TLS entry (this would be 12 on x86_64) */
@@ -383,7 +383,7 @@ public:
 
 private:
     /**< Global descriptor table. Entries GDT_ENTRY_TLS_MIN through GDT_ENTRY_TLS_MAX are unused. */
-    user_desc_32 gdt[GDT_ENTRIES];
+    SegmentDescriptor gdt[GDT_ENTRIES];
 
 
     

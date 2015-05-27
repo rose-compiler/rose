@@ -15,9 +15,9 @@ tracingFacilityBit(TracingFacility tf)
 }
 
 void
-print_user_desc_32(Sawyer::Message::Stream &m, const uint8_t *_ud, size_t sz)
+print_SegmentDescriptor(Sawyer::Message::Stream &m, const uint8_t *_ud, size_t sz)
 {
-    const user_desc_32 *ud = (const user_desc_32*)_ud;
+    const SegmentDescriptor *ud = (const SegmentDescriptor*)_ud;
     assert(sizeof(*ud)==sz);
 
     const char *content_type = "unknown";
@@ -33,7 +33,7 @@ print_user_desc_32(Sawyer::Message::Stream &m, const uint8_t *_ud, size_t sz)
                 content_type, ud->read_exec_only ? "read_exec" : "writable",
                 ud->limit_in_pages ? "page_gran" : "byte_gran",
                 ud->seg_not_present ? "not_present" : "present",
-                ud->useable ? "usable" : "not_usable");
+                ud->usable ? "usable" : "not_usable");
 }
 
 void

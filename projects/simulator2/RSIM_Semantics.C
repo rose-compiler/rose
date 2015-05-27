@@ -76,8 +76,8 @@ createDispatcher(RSIM_Thread *owningThread) {
 
 void
 RiscOperators::loadShadowRegister(X86SegmentRegister sr, unsigned gdtIdx) {
-    user_desc_32 *segment = thread_->gdt_entry(gdtIdx);
-    segmentInfo_.insert(sr, *segment);
+    const SegmentDescriptor &segment = thread_->gdt_entry(gdtIdx);
+    segmentInfo_.insert(sr, segment);
 }
 
 void
