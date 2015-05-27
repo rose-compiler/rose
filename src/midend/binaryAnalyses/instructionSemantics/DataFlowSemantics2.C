@@ -435,6 +435,8 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                           const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return dflt_;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr dflt = MultiSemantics::SValue::promote(dflt_);
@@ -460,6 +462,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr data = MultiSemantics::SValue::promote(data_);

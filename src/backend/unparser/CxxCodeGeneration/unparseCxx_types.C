@@ -1158,7 +1158,9 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                unparseType(pointer_type->get_base_type(), ninfo1);
 
                curprint("*");
+#if DEBUG_UNPARSE_POINTER_TYPE
                curprint(" /* unparsePointerType(): typeof: first part */ ");
+#endif
              }
             else
              {
@@ -1179,7 +1181,9 @@ void Unparse_Type::unparsePointerType(SgType* type, SgUnparse_Info& info)
                     unparseType(pointer_type->get_base_type(), ninfo1);
 
                     curprint("*");
+#if DEBUG_UNPARSE_POINTER_TYPE
                     curprint(" /* unparsePointerType(): typeof: first and second part false */ ");
+#endif
                   }
              }
 
