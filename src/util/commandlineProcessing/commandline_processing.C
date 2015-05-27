@@ -106,6 +106,13 @@ CommandlineProcessing::genericSwitches() {
                     "or \"throw\" a rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
                     "was configured."));
 
+    // Number of threads to use for algorithms that support multi-threading.  NOTE: we should really have a Settings struct for
+    // these switches, but we don't yet. Users will therefore need to query the ParsserResult object to get the switch's
+    // argument.
+    gen.insert(Switch("threads")
+               .argument("n", positiveIntegerParser())
+               .doc("Number of threads to use for algorithms that support multi-threading."));
+
     return gen;
 }
 
