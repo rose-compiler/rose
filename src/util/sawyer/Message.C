@@ -673,7 +673,10 @@ Prefix::setProgramName() {
     programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
 # endif
 #else
-    // no synchronization necessary for this global state
+#if (__APPLE__ && __MACH__)
+    programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
+#else
+// no synchronization necessary for this global state
     if (FILE *f = fopen("/proc/self/cmdline", "r")) {
         std::string name;
         int c;
@@ -687,6 +690,7 @@ Prefix::setProgramName() {
             name = name.substr(3);
         programName_ = name;
     }
+#endif
 #endif
     if (programName_.orElse("").empty())
         throw std::runtime_error("cannot obtain program name for message prefixes");
