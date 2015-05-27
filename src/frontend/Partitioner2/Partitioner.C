@@ -2067,13 +2067,14 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 FunctionCallGraph
 Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
+    size_t edgeCount = allowParallelEdges ? 0 : 1;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
             Function::Ptr target = edge.target()->value().function();
             if (source!=NULL && target!=NULL &&
                 (source!=target || edge.value().type()==E_FUNCTION_CALL || edge.value().type()==E_FUNCTION_XFER))
-                cg.insertCall(source, target, edge.value().type(), allowParallelEdges);
+                cg.insertCall(source, target, edge.value().type(), edgeCount);
         }
     }
     return cg;

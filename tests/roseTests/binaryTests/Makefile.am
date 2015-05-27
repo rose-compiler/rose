@@ -946,16 +946,17 @@ testNoop_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 testNoop_Specimens = i386-noop
 testNoop_TestTargets = $(addprefix noop_, $(addsuffix .passed, $(testNoop_Specimens)))
 testNoop_TestAnswers = $(addprefix noop_, $(addsuffix .ans, $(testNoop_Specimens)))
+testNoop_Switches = --stack=0xdddd0001 --use-semantics --no-find-dead-code --no-intra-function-code
 
 TEST_TARGETS += $(testNoop_TestTargets)
 EXTRA_DIST += $(testNoop_TestAnswers)
 
 $(testNoop_TestTargets): noop_%.passed: $(BINARY_SAMPLES)/% testNoop
-	@$(RTH_RUN)						\
-		TITLE="testNoop $* [$@]"			\
-		USE_SUBDIR=yes					\
-		CMD="$(abspath ./testNoop) $(abspath $<)"	\
-		ANS="$(abs_srcdir)/noop_$*.ans"			\
+	@$(RTH_RUN)								\
+		TITLE="testNoop $* [$@]"					\
+		USE_SUBDIR=yes							\
+		CMD="$(abspath ./testNoop) $(testNoop_Switches) $(abspath $<)"	\
+		ANS="$(abs_srcdir)/noop_$*.ans"					\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 .PHONY: check-noop

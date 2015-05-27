@@ -8,8 +8,12 @@ using namespace rose;
 using namespace rose::BinaryAnalysis;
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 
+struct Settings {
+    Sawyer::Optional<rose_addr_t> initialStackPointer;
+};
+
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], P2::Engine &engine) {
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
     std::string purpose = "finds instruction sequences that are no-op equivalent";
@@ -18,14 +22,28 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine) {
          "and then scans the instructions of each basic block individually to find all sequences of instructions "
         "that have no effect.";
 
-    return engine.parseCommandLine(argc, argv, purpose, description).unreachedArgs();
+    Parser parser = engine.commandLineParser(purpose, description);
+
+    SwitchGroup sg("Tool-specific switches");
+    sg.insert(Switch("stack")
+              .argument("va", nonNegativeIntegerParser(settings.initialStackPointer))
+              .doc("Concrete value for the initial stack pointer. Using a concrete value for the stack pointer "
+                   "sometimes makes the no-op analysis more accurate as far as being able to reason about which "
+                   "memory was recently popped from the top of the stack. On the other hand, it can also result "
+                   "in false positives (e.g., if the initial stack pointer is word aligned then an instruction "
+                   "like \"and esp, 8\" will be detected as a no-op)."));
+
+    return parser.with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 int
 main(int argc, char *argv[]) {
+    Settings settings;
     P2::Engine engine;
     engine.usingSemantics(true); // test specimens contain opaque predicates
-    P2::Partitioner partitioner = engine.partition(parseCommandLine(argc, argv, engine));
+    engine.followingGhostEdges(false);
+    engine.findingIntraFunctionCode(false);
+    P2::Partitioner partitioner = engine.partition(parseCommandLine(argc, argv, engine, settings));
 
     // Get a list of basic blocks to analyze, sorted by starting address.
     std::vector<P2::BasicBlock::Ptr> bblocks;
@@ -38,6 +56,7 @@ main(int argc, char *argv[]) {
 
     // Analyze each basic block to find no-op equivalents
     NoOperation nopAnalyzer(engine.disassembler());
+    nopAnalyzer.initialStackPointer(settings.initialStackPointer);
     BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
         std::cout <<bblock->printableName() <<":\n";
         const std::vector<SgAsmInstruction*> &insns = bblock->instructions();

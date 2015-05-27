@@ -2593,6 +2593,58 @@ struct IP_pop: P {
     }
 };
 
+// Pop flags register from stack
+//   POPF
+//   POPFD
+//   POPFQ
+struct IP_pop_flags: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr stackVa = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr oldFlags, poppedFlags;
+            RegisterDescriptor flagsReg;
+            switch (insn->get_operandSize()) {
+                case x86_insnsize_16:
+                    oldFlags = d->readRegister(flagsReg = d->REG_FLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(16), ops->boolean_(true));
+                    break;
+                case x86_insnsize_32:
+                    oldFlags = d->readRegister(flagsReg = d->REG_EFLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(32), ops->boolean_(true));
+                    break;
+                case x86_insnsize_64:
+                    oldFlags = d->readRegister(flagsReg = d->REG_RFLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(64), ops->boolean_(true));
+                    poppedFlags = ops->concat(ops->unsignedExtend(poppedFlags, 32), ops->number_(32, 0));
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+            stackVa = ops->add(stackVa, ops->number_(stackVa->get_width(), poppedFlags->get_width()/8));
+            ops->writeRegister(d->REG_anySP, stackVa);
+
+            // Clear VIP (bit 19) and VIF (bit 20); i.e., clear bits 0x00180000
+            // Keep IOPL (bits 12 and 13) and VM (bit 17), i.e., preserve bits 0x00023000
+            BaseSemantics::SValuePtr newFlags = ops->extract(poppedFlags, 0, 12);
+            newFlags = ops->concat(newFlags, ops->extract(oldFlags, 12, 14));        // IOPL (bits 12 & 13) is preserved
+            newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 14, 16));
+            if (oldFlags->get_width() >= 32) {
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 16, 17));
+                newFlags = ops->concat(newFlags, ops->extract(oldFlags, 17, 18));    // VM (bit 17) is preserved
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 18, 19));
+                newFlags = ops->concat(newFlags, ops->number_(2, 0));                // VIP (19) and VIF (20) are cleared
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 21, 32));
+                if (oldFlags->get_width() == 64)
+                    newFlags = ops->concat(newFlags, ops->number_(32, 0));
+            }
+            ops->writeRegister(flagsReg, newFlags);
+        }
+    }
+};
+
 // Pop all general-purpose registers
 //  POPA  - 16-bit registers
 //  POPAD - 32-bit registers
@@ -3267,21 +3319,27 @@ struct IP_push_flags: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             // Get the value to be pushed. Assume non-priviledged.
-            BaseSemantics::SValuePtr valueToPush;
+            BaseSemantics::SValuePtr flags;
             switch (insn->get_operandSize()) {
                 case x86_insnsize_16:
-                    valueToPush = d->readRegister(d->REG_FLAGS);
+                    flags = d->readRegister(d->REG_FLAGS);
                     break;
                 case x86_insnsize_32:
-                    valueToPush = d->readRegister(d->REG_EFLAGS);
-                    valueToPush = ops->and_(valueToPush, ops->number_(32, 0x00fcffff));
+                    flags = d->readRegister(d->REG_EFLAGS);
                     break;
                 case x86_insnsize_64:
-                    valueToPush = d->readRegister(d->REG_RFLAGS);
-                    valueToPush = ops->and_(valueToPush, ops->number_(64, 0x00fcffff));
+                    flags = d->readRegister(d->REG_RFLAGS);
                     break;
                 default:
                     ASSERT_not_reachable("invalid operand size");
+            }
+
+            BaseSemantics::SValuePtr valueToPush = ops->extract(flags, 0, 16);
+            if (flags->get_width() >= 32) {
+                valueToPush = ops->concat(valueToPush, ops->number_(2, 0)); // clear VM and RF, bits 16 and 17
+                valueToPush = ops->concat(valueToPush, ops->extract(flags, 18, 32));
+                if (flags->get_width() == 64)
+                    valueToPush = ops->concat(valueToPush, ops->extract(flags, 32, 64));
             }
 
             // Push value onto stack
@@ -3589,6 +3647,14 @@ struct IP_storestring: P {
                                                          addr->get_width()));
                         ops->writeMemory(d->REG_ES, va, src, inLoop);
                     }
+                    ops->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.get_nbits(), 0));
+
+                    // Final value for (E)DI register
+                    BaseSemantics::SValuePtr va =
+                        ops->add(addr,
+                                 ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->get_width(), n), step),
+                                                     addr->get_width()));
+                    ops->writeRegister(dstReg, va);
                     return;
                 }
             }
@@ -3965,6 +4031,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
+    iproc_set(x86_popf,         new X86::IP_pop_flags);
+    iproc_set(x86_popfd,        new X86::IP_pop_flags);
+    iproc_set(x86_popfq,        new X86::IP_pop_flags);
     iproc_set(x86_popcnt,       new X86::IP_popcnt);
     iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
