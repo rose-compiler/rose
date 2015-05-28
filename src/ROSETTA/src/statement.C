@@ -1066,8 +1066,11 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/27/2015): Note that zero is a ligitimate value to use, so the default should be -1.
   // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
-     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+  // FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= -1",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/9/2014): Example test2014_85.C demonstrates that the declared type of a function can be 
