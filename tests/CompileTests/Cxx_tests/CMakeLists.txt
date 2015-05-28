@@ -6,10 +6,14 @@ set(EXAMPLE_TESTCODES_REQUIRED_TO_PASS
 
 list(APPEND EXAMPLE_TESTCODES_REQUIRED_TO_PASS
   lulesh.C luleshTALC.C test2013_253.C test2013_255.C test2013_256.C
-  test2013_257.C test2013_258.C test2013_259.C test2013_260.C test2013_261.C
+  test2013_257.C test2013_258.C test2013_259.C test2013_261.C
   test2013_271.C test2013_272.C test2013_273.C test2013_274.C test2013_275.C
   test2013_276.C test2013_277.C test2013_278.C test2013_279.C test2013_280.C
   test2013_281.C test2013_282.C)
+
+# DQ (5/28/2015): Removed test2013_257.C and test2013_260.C to avoid race condition.
+# test2013_257.C
+# test2013_260.C
 
 if(NOT "${EDG_VERSION}" EQUAL "4.7")
   # DQ (6/12/2013): This fails to compile with EDG 4.7
@@ -89,4 +93,12 @@ add_test(
   COMMAND testTranslator ${ROSE_FLAGS}
 	        -I${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conftest_2.C
           -o conftest_configure_test_part_2
+)
+
+# DQ (9/22/2013): Added autoconf style link test.
+add_test(
+  NAME common_configure_test_with_link_part_3
+  COMMAND testTranslator ${ROSE_FLAGS}
+	        -I${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/conftest_3.C
+          -o conftest_configure_test_part_3
 )

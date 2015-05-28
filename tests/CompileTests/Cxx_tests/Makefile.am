@@ -25,10 +25,8 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2013_253.C \
    test2013_255.C \
    test2013_256.C \
-   test2013_257.C \
    test2013_258.C \
    test2013_259.C \
-   test2013_260.C \
    test2013_261.C \
    test2013_271.C \
    test2013_272.C \
@@ -281,6 +279,13 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS += \
    test2015_22.C \
    lulesh.C \
    luleshTALC.C
+
+# DQ (5/28/2015): Removed this file because it is used by the makefile rule: 
+# test_unparse_includes_option_with_link.passed and CMake's ctest will cause
+# it to be run in parallel with the list of test codes above.  This is not
+# and issue for autoconf which does not find as much parallelism.
+#  test2013_257.C 
+#  test2013_260.C 
 
 # DQ (12/30/2014): This large file fails:
 # unparseCxx_types.C:418: virtual void Unparse_Type::unparseType(SgType*, SgUnparse_Info&): Assertion `info.SkipClassDefinition() == info.SkipEnumDefinition()' failed.
@@ -1102,7 +1107,8 @@ test_unparse_includes_option.passed: $(TEST_TRANSLATOR)
 # is that va_start() and va_end() must be unparsed to be __builtin_va_start() and __builtin_va_end() (at least for GNU).
 test_unparse_includes_option_with_link.passed: $(TEST_TRANSLATOR)
 #	$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers
-	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+#	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(ROSE_INCLUDES) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TEST_TRANSLATOR) $(ROSE_FLAGS) -rose:unparse_includes -rose:verbose 0 -I$(top_builddir) $(srcdir)/test2013_260.C -o test2013_260_unparse_headers" $(top_srcdir)/scripts/test_exit_status $@
 
 # DQ (9/17/2013): Added autoconf style link test.
 test_common_configure_test_with_link_part_1.passed: $(TEST_TRANSLATOR)
