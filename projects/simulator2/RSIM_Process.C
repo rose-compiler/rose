@@ -1566,7 +1566,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
 /* The "thread" arg must be the calling thread */
 pid_t
-RSIM_Process::clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs,
+RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs,
                            bool startRunning)
 {
 #ifndef ROSE_THREADS_ENABLED

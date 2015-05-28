@@ -529,16 +529,16 @@ private:
     struct Clone {
         SAWYER_THREAD_TRAITS::RecursiveMutex mutex; /**< Protects entire structure. */
         SAWYER_THREAD_TRAITS::ConditionVariable cond; /**< For coordinating between creating thread and created thread. */
-        boost::thread   hostThread;             /**< Real thread hosting the simulated thread; moved to RSIM_Thread obj. */
-        RSIM_Process    *process;               /**< Process creating the new thread. */
-        unsigned        flags;                  /**< Various CLONE_* flags passed to the clone system call. */
-        pid_t           newtid;                 /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
-        int             seq;                    /**< Sequence number for new thread, used for debugging. */
-        uint32_t        parent_tid_va;          /**< Optional address at which to write created thread's TID; clone() argument */
-        uint32_t        child_tls_va;           /**< Address of TLS user_desc_32 to load into GDT; clone() argument */
-        pt_regs_32      regs;                   /**< Initial registers for child thread. */
+        boost::thread   hostThread;          /**< Real thread hosting the simulated thread; moved to RSIM_Thread obj. */
+        RSIM_Process    *process;            /**< Process creating the new thread. */
+        unsigned        flags;               /**< Various CLONE_* flags passed to the clone system call. */
+        pid_t           newtid;              /**< Created thread's TID filled in by clone_thread_helper(); negative on error */
+        int             seq;                 /**< Sequence number for new thread, used for debugging. */
+        rose_addr_t     parent_tid_va;       /**< Optional address at which to write created thread's TID; clone() argument */
+        rose_addr_t     child_tls_va;        /**< Address of TLS user_desc_32 to load into GDT; clone() argument */
+        pt_regs_32      regs;                /**< Initial registers for child thread. */
 
-        Clone(RSIM_Process *process, unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs)
+        Clone(RSIM_Process *process, unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs)
             : process(process), flags(flags), newtid(-1), seq(-1),
               parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {}
     };
@@ -581,7 +581,7 @@ public:
      *  executing.
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    pid_t clone_thread(unsigned flags, uint32_t parent_tid_va, uint32_t child_tls_va, const pt_regs_32 &regs,
+    pid_t clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs,
                        bool startExecuting);
 
     /** Returns the thread having the specified thread ID, or null if there is no thread with the specified ID.  Thread objects
