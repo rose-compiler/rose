@@ -282,16 +282,16 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
         assert(signo<=64);
 
         Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
-        sigaction_32 sa;
+        SigAction sa;
         int status = get_process()->sys_sigaction(signo, NULL, &sa);
         assert(status>=0);
 
-        if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+        if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
             /* The signal action may have changed since the signal was generated, so we need to check this again. */
             mesg <<"signal delivery ignored: ";
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
-        } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL) {
+        } else if (sa.handlerVa==(rose_addr_t)SIG_DFL) {
             mesg <<"signal delivery via default: ";
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
@@ -342,7 +342,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
 
         } else {
             /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
-            mfprintf(mesg)("signal delivery to 0x%08"PRIx32": ", sa.handler_va);
+            mesg <<"signal delivery to " <<StringUtility::addrToString(sa.handlerVa) <<"\n";
             print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
 
@@ -359,7 +359,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 stack_32 stack; /* signal alternate stack */
                 int status __attribute__((unused)) = sighand.sigaltstack(NULL, &stack, regs.sp);
                 assert(status>=0);
-                frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+                frame_va = sighand.get_sigframe(sa, sizeof frame, regs.sp);
 
                 frame.signo = signo;
                 frame.pinfo = frame_va + OFFSET_OF_MEMBER(frame, info);
@@ -379,7 +379,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                  * passed to sigaction. Otherwise pretcode points either to the "retcode" member of the stack frame (eight
                  * bytes of x86 code that invoke syscall 119) or to the rt_sigreturn address in the VDSO. */
                 if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
-                    frame.pretcode = sa.restorer_va;
+                    frame.pretcode = sa.restorerVa;
                 } else {
                     frame.pretcode = SIGHANDLER_RT_RETURN; /* or could point to frame.retcode */
                     //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
@@ -407,13 +407,13 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 /* Use the plain signal handler frame */
                 RSIM_SignalHandling::sigframe_32 frame;
                 memset(&frame, 0, sizeof frame);
-                frame_va = sighand.get_sigframe(&sa, sizeof frame, regs.sp);
+                frame_va = sighand.get_sigframe(sa, sizeof frame, regs.sp);
 
                 frame.signo = signo;
                 sighand.setup_sigcontext(&frame.sc, regs, signal_mask);
                 frame.extramask = signal_mask >> 32;
                 if (sa.flags & 0x04000000/*SA_RESTORER, deprecated*/) {
-                    frame.pretcode = sa.restorer_va;
+                    frame.pretcode = sa.restorerVa;
                 } else {
                     frame.pretcode = SIGHANDLER_RETURN; /* or could point to frame.retcode */
                     //frame.preturn = frame_va + OFFSET_OF_MEMBER(frame, retcode);
@@ -453,7 +453,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
             operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, 0x2b));
             operators()->writeRegister(dispatcher()->REG_CS, operators()->number_(16, 0x23));
             operators()->writeRegister(dispatcher()->REG_anySP, operators()->number_(wordWidth, frame_va));
-            operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, sa.handler_va));
+            operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, sa.handlerVa));
         }
     }
 

@@ -445,7 +445,7 @@ public:
 private:
     /** Simulated actions for signal handling. Array element N is signal N+1. All threads of a process share signal
      *  dispositions (see CLONE_SIGHAND bit). */
-    sigaction_32 signal_action[_NSIG];
+    SigAction signal_action[_NSIG];
 
     /** The asynchronous signal reception queue.  Signals are pushed onto the tail of this queue asynchronously by
      *  signal_enqueue(), and removed synchronously from the head by signal_dequeue(). */
@@ -469,7 +469,7 @@ public:
     /** Simulates a sigaction() system call.  Returns zero on success; negative errno on failure.
      *
      *  Thread safety: This method is thread safe. */
-    int sys_sigaction(int signo, const sigaction_32 *new_action, sigaction_32 *old_action);
+    int sys_sigaction(int signo, const SigAction *new_action, SigAction *old_action);
 
     /** Simulates a kill() system call. Returns zero on success; negative errno on failure.
      *

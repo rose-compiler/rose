@@ -4818,13 +4818,15 @@ syscall_rt_sigaction(RSIM_Thread *t, int callno)
         return;
     }
 
-    sigaction_32 new_action, old_action;
-    sigaction_32 *new_action_p=NULL, *old_action_p=NULL;
+    SigAction new_action, old_action;
+    SigAction *new_action_p=NULL, *old_action_p=NULL;
     if (action_va) {
-        if (sizeof(new_action) != t->get_process()->mem_read(&new_action, action_va, sizeof new_action)) {
+        sigaction_32 new_action_guest;
+        if (sizeof(new_action_guest) != t->get_process()->mem_read(&new_action_guest, action_va, sizeof new_action_guest)) {
             t->syscall_return(-EFAULT);
             return;
         }
+        new_action = SigAction(new_action_guest);
         new_action_p = &new_action;
     }
     if (oldact_va) {
@@ -4833,10 +4835,12 @@ syscall_rt_sigaction(RSIM_Thread *t, int callno)
                 
     int status = t->get_process()->sys_sigaction(signum, new_action_p, old_action_p);
 
-    if (status>=0 && oldact_va &&
-        sizeof(old_action) != t->get_process()->mem_write(&old_action, oldact_va, sizeof old_action)) {
-        t->syscall_return(-EFAULT);
-        return;
+    if (status>=0 && oldact_va) {
+        sigaction_32 old_action_guest = old_action.get_sigaction_32();
+        if (sizeof(old_action_guest) != t->get_process()->mem_write(&old_action_guest, oldact_va, sizeof old_action_guest)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
     }
 
     t->syscall_return(status);

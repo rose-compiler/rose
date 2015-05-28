@@ -210,7 +210,7 @@ public:
     /** Obtain the stack pointer for a signal handler stack frame.
      *
      *  Thread safety: This method is thread safe. */
-    uint32_t get_sigframe(const sigaction_32 *sa, size_t frame_size, uint32_t sp);
+    rose_addr_t get_sigframe(const SigAction &sa, size_t frame_size, rose_addr_t sp);
 
     /** Fill in a sigcontext_32 struct.
      *

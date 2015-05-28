@@ -90,18 +90,18 @@ RSIM_SignalHandling::mask_of(int signo)
     return (sigset_32)1 << (signo-1);
 }
 
-uint32_t
-RSIM_SignalHandling::get_sigframe(const sigaction_32 *sa, size_t frame_size, uint32_t sp)
+rose_addr_t
+RSIM_SignalHandling::get_sigframe(const SigAction &sa, size_t frame_size, rose_addr_t sp)
 {
     bool on_alt_stack = on_signal_stack(sp);
     {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
-        if ((sa->flags & SA_ONSTACK) && !on_alt_stack &&
-            0==(stack.ss_flags & SS_ONSTACK) && 0!=(sa->flags & SA_ONSTACK) && stack.ss_size>0)
+        if ((sa.flags & SA_ONSTACK) && !on_alt_stack &&
+            0==(stack.ss_flags & SS_ONSTACK) && 0!=(sa.flags & SA_ONSTACK) && stack.ss_size>0)
             sp = stack.ss_sp + stack.ss_size;
     }
 
-    uint32_t frame_va = sp - frame_size;
+    rose_addr_t frame_va = sp - frame_size;
     frame_va = ((frame_va+4) & -16ul) - 4; /* Align for i386 ABI: so on function entry ((sp+4) & 0xf == 0 */
     return frame_va;
 }
@@ -251,15 +251,15 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
              * using the default handler and do not terminate the process. */
             sigset_32 cur_mask = new_mask_p ? *new_mask_p : mask;
             for (size_t signo=1; signo<=8*sizeof(cur_mask); signo++) {
-                sigaction_32 sa;
+                SigAction sa;
                 int status = thread->get_process()->sys_sigaction(signo, NULL, &sa);
                 if (status<0) {
                     retval = status;
                     break;
                 }
-                if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to avoid gcc warning */
+                if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
                     cur_mask |= mask_of(signo);
-                } else if (sa.handler_va==(uint32_t)(uint64_t)SIG_DFL && 0==(terminating & mask_of(signo))) {
+                } else if (sa.handlerVa==(rose_addr_t)SIG_DFL && 0==(terminating & mask_of(signo))) {
                     cur_mask |= mask_of(signo);
                 }
             }
@@ -355,13 +355,13 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Saw
     if (signo<1 || (size_t)signo > 8*sizeof(sigset_32))
         return -EINVAL;
 
-    sigaction_32 sa;
+    SigAction sa;
     int status __attribute__((unused)) = process->sys_sigaction(signo, NULL, &sa);
     assert(status>=0);
 
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
 
-    if (sa.handler_va==(uint32_t)(uint64_t)SIG_IGN) { /* double cast to quiet gcc warning */
+    if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
         s = " ignored";
     } else if (signo < FIRST_RT) {
         pending |= mask_of(signo);

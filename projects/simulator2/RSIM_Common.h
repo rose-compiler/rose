@@ -563,12 +563,45 @@ static const Translate siginfo_sigpoll_codes[] = {
     TE(POLL_IN), TE(POLL_OUT), TE(POLL_MSG), TE(POLL_ERR), TE(POLL_PRI), TE(POLL_HUP),
     T_END};
 
+// 32-bit kernel sigaction from arch/x86/include/asm/signal.h
 struct sigaction_32 {
     uint32_t handler_va;
     uint32_t flags;
     uint32_t restorer_va;
     uint64_t mask;
 } __attribute__((packed));
+
+// 64-bit kernel sigaction from arch/x86/include/asm/signal.h
+struct sigaction_64 {
+    uint64_t handler_va;
+    uint64_t flags;
+    uint64_t restorer_va;
+    uint64_t mask;
+} __attribute__((packed));
+
+// Simulator's architecture-independent version of sigaction
+struct SigAction {
+    rose_addr_t handlerVa;
+    uint64_t flags;
+    rose_addr_t restorerVa;
+    uint64_t mask;
+
+    SigAction()
+        : handlerVa(0), flags(0), restorerVa(0), mask(0) {}
+    explicit SigAction(const sigaction_32 &x)
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+    explicit SigAction(const sigaction_64 &x)
+        : handlerVa(x.handler_va), flags(x.flags), restorerVa(x.restorer_va), mask(mask) {}
+    sigaction_32 get_sigaction_32() const {
+        sigaction_32 x;
+        x.handler_va = handlerVa;
+        x.flags = flags;
+        x.restorer_va = restorerVa;
+        x.mask = mask;
+        return x;
+    }
+};
+
 
 static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         TF(O_CREAT), TF(O_EXCL), TF(O_NONBLOCK), TF(O_NOCTTY), TF(O_TRUNC),

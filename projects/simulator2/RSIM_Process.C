@@ -57,8 +57,6 @@ RSIM_Process::ctor()
     gdt[0x2b>>3].limit_in_pages = 1;
     gdt[0x2b>>3].seg_not_present = 0;
     gdt[0x2b>>3].usable = 1;
-
-    memset(signal_action, 0, sizeof signal_action);
 }
 
 FILE *
@@ -1684,7 +1682,7 @@ RSIM_Process::sys_exit(int status)
 }
 
 int
-RSIM_Process::sys_sigaction(int signo, const sigaction_32 *new_action, sigaction_32 *old_action) 
+RSIM_Process::sys_sigaction(int signo, const SigAction *new_action, SigAction *old_action) 
 {
     if (signo<1 || signo>_NSIG)
         return -EINVAL;
