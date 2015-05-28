@@ -119,6 +119,27 @@ findDetachedVertices(const CfgConstVertexSet &vertices) {
     return retval;
 }
 
+CfgConstVertexSet
+forwardMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.forward().exists(vertex))
+            retval.insert(vmap.forward()[vertex]);
+    }
+    return retval;
+}
+
+CfgConstVertexSet
+reverseMapped(const CfgConstVertexSet &vertices, const CfgVertexMap &vmap) {
+    CfgConstVertexSet retval;
+    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, vertices) {
+        if (vmap.reverse().exists(vertex))
+            retval.insert(vmap.reverse()[vertex]);
+    }
+    return retval;
+}
+
+
 } // namespace
 } // namespace
 } // namespace

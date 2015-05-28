@@ -1059,6 +1059,15 @@ public:
     virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
     /** @} */
 
+    /** Property: Configuration files.
+     *
+     *  This property holds a list of configuration files or directories.
+     *
+     * @{ */
+    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Internal stuff
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
