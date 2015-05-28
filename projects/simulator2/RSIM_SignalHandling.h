@@ -88,8 +88,49 @@ public:
         stack.ss_flags = SS_DISABLE;
     }
 
-    /** Data type for holding signal sets in a 32-bit specimen. */
-    typedef uint64_t sigset_32;
+    /** Data type for holding a signal set (mask). Since there are the same number of signals on a 32 bit Linux kernel as a 64
+     *  bit kernel, the type is the same for both. */
+    typedef uint64_t SigSet;
+
+    /** Architecture-independent information about a signal. */
+    struct SigInfo {
+        int si_signo;
+        int si_errno;
+        int si_code;
+        union {
+            struct {                    /* kill() */
+                pid_t pid;              /* sender's pid */
+                uid_t uid;              /* sender's uid */
+            } kill;
+            struct {                    /* POSIX.1b timers */
+                int tid;                /* timer ID */
+                int overrun;            /* overrun count */
+                rose_addr_t sigval;     /* same as below */
+                int sys_private;        /* not to be passed to user */
+            } timer;
+            struct {                    /* POSIX.1b signals */
+                pid_t pid;              /* sender's pid */
+                uid_t uid;              /* sender's uid */
+                rose_addr_t sigval;     /* integer or address of ? */
+            } rt;
+            struct {                    /* SIGCHLD */
+                pid_t pid;              /* which child */
+                uid_t uid;              /* sender's uid */
+                int status;             /* exit code */
+                uint64_t utime;
+                uint64_t stime;
+            } sigchld;
+            struct {                    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
+                rose_addr_t addr;       /* faulting insn/memory ref */
+                uint16_t addr_lsb;      /* LSB of the reported address */
+            } sigfault;
+            struct {                    /* SIGPOLL */
+                int band;               /* POLL_IN, POLL_OUT, POLL_MSG */
+                int fd;
+            } sigpoll;
+        };
+    };
+
 
     /** Kernel sigcontext pushed onto signal handler stack. */
     struct sigcontext_32 {
@@ -117,53 +158,13 @@ public:
         uint32_t cr2;
     } __attribute__((packed));
 
-    struct siginfo_32 {
-        int32_t si_signo;
-        int32_t si_errno;
-        int32_t si_code;
-        union {
-            int32_t pad[28];
-            struct {                    /* kill() */
-                int32_t pid;            /* sender's pid */
-                uint32_t uid;           /* sender's uid */
-            } kill;
-            struct {                    /* POSIX.1b timers */
-                int32_t tid;            /* timer ID */
-                int32_t overrun;        /* overrun count */
-                //int8_t pad[0];
-                sigval_t sigval;        /* same as below */
-                int32_t sys_private;    /* not to be passed to user */
-            } timer;
-            struct {                    /* POSIX.1b signals */
-                int32_t pid;            /* sender's pid */
-                uint32_t uid;           /* sender's uid */
-                uint32_t sigval;        /* integer or address of ? */
-            } rt;
-            struct {                    /* SIGCHLD */
-                int32_t pid;            /* which child */
-                uint32_t uid;           /* sender's uid */
-                uint32_t status;        /* exit code */
-                int32_t utime;
-                int32_t stime;
-            } sigchld;
-            struct {                    /* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
-                uint32_t addr;          /* faulting insn/memory ref */
-                uint16_t addr_lsb;      /* LSB of the reported address */
-            } sigfault;
-            struct {                    /* SIGPOLL */
-                int32_t band;           /* POLL_IN, POLL_OUT, POLL_MSG */
-                int32_t fd;
-            } sigpoll;
-        };
-    } __attribute__((packed));
-
     /** Kernel struct ucontext from linux/include/asm-generic/ucontext.h */
     struct ucontext_32 {
         uint32_t uc_flags;              /* 0 unless cpu_has_xsave (see Linux ia32_setup_rt_frame()) */
         uint32_t uc_link_va;            /* ptr to another ucontext_32 */
         stack_32 uc_stack;
         sigcontext_32 uc_mcontext;
-        sigset_32 uc_sigmask;
+        SigSet uc_sigmask;
     } __attribute((packed));
 
     /** Signal handling stack frame */
@@ -177,6 +178,7 @@ public:
         /* fpstate follows here */
     } __attribute__((packed));
 
+#if 0 // [Robb P. Matzke 2015-05-28]: perhaps we don't need this right now
     /** Signal handling extended stack frame; used if sigaction.sa_flags has SA_SIGINFO bit set */
     struct rt_sigframe_32 {
         uint32_t pretcode;              /* signal handler's return address */
@@ -187,25 +189,26 @@ public:
         ucontext_32 uc;                 /* user context struct */
         uint8_t retcode[8];             /* x86 code to call sigreturn; unused, but GDB magic number */
     } __attribute__((packed));
+#endif
 
     /** Signal to use when notifying a thread that a signal has been added to its queue. */
     static const int SIG_WAKEUP;
 
     /** Class methods to create signal information objects.  The names (after the "mk_" prefix) correspond to the union member
-     *  names in the siginfo_32 struct.
+     *  names in the SigInfo struct.
      *
      *  @{ */
-    static siginfo_32 mk_kill(int signo, int code);
-    static siginfo_32 mk_sigfault(int signo, int code, uint32_t addr);
-    static siginfo_32 mk_rt(int signo, int code);
-    static siginfo_32 mk(const siginfo_t*);
+    static SigInfo mk_kill(int signo, int code);
+    static SigInfo mk_sigfault(int signo, int code, rose_addr_t addr);
+    static SigInfo mk_rt(int signo, int code);
+    static SigInfo mk(const siginfo_t*);
     /** @} */
 
     /** Returns a signal set having only the specified signal. Note: this cannot be named "sigmask" since that's a macro in
      *  some versions of "signal.h".
      *
      *  Thread safety: This method is thread safe. */
-    static sigset_32 mask_of(int signo);
+    static SigSet mask_of(int signo);
 
     /** Obtain the stack pointer for a signal handler stack frame.
      *
@@ -215,7 +218,7 @@ public:
     /** Fill in a sigcontext_32 struct.
      *
      *  Thread safety: This method is thread safe. */
-    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, sigset_32 mask);
+    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, SigSet mask);
 
     /** Initialize registers from signal context.  Not all FLAG bits are restored to their original value, which is why the set
      *  of current flags must be passed as an argument.
@@ -228,7 +231,7 @@ public:
      *  in. If @p out is non-null, then the original mask is returned there.  Returns zero on success, -EINVAL on error.
      *
      *  Thread safety: This method is thread safe. */
-    int sigprocmask(int how, const sigset_32 *in, sigset_32 *out);
+    int sigprocmask(int how, const SigSet *in, SigSet *out);
 
     /** Obtains the set of pending signals. These are the signals that have arrived but have not yet been processed, probably
      *  because they are set in the current sigprocmask. Returns zero on success, negative on error.  Although real-time
@@ -236,7 +239,7 @@ public:
      *  queue of real-time signals waiting to be delivered.
      *
      *  Thread safety: This method is thread safe. */
-    int sigpending(sigset_32 *result) const;
+    int sigpending(SigSet *result) const;
 
     /** Block until a signal arrives.  Temporarily replaces the signal mask with the specified mask, then blocks until the
      *  delivery of a signal whose action is to invoke a signal handler or terminate the specimen. On success, returns the
@@ -247,7 +250,7 @@ public:
      *  method returns and after the original signal mask has been restored. [RPM 2011-03-08]
      *
      *  Thread safety: This method is thread safe. */
-    int sigsuspend(const sigset_32 *new_mask, RSIM_Thread*);
+    int sigsuspend(const SigSet *new_mask, RSIM_Thread*);
 
     /** Determines whether an address is on the signal stack.  Returns true if the specified address is on the signal stack,
      *  false otherwise.
@@ -283,27 +286,27 @@ public:
      *
      *  Thread safety: This method is thread safe.  It is normally called by the thread generating the signal, but invoked on
      *  the RSIM_Thread object for the thread to which the signal is being delivered. */
-    int generate(const siginfo_32 &siginfo, RSIM_Process*, Sawyer::Message::Stream&);
+    int generate(const SigInfo &siginfo, RSIM_Process*, Sawyer::Message::Stream&);
 
     /** Removes one unmasked signal from the set of pending signals.  Returns a signal number, or negative on failure.  If no
      *  signals are pending which are not masked, then returns zero.  If a mask is specified as an argument, then that mask is
      *  used instead of the current signal mask.
      *
      *  Thread safety: This method is thread safe. */
-    int dequeue(siginfo_32 *info/*out*/, const sigset_32 *mask=NULL);
+    int dequeue(SigInfo *info/*out*/, const SigSet *mask=NULL);
 
 private:
     static const size_t QUEUE_SIZE = 20;
     static const int FIRST_RT = 32;     /**< Lowest numbered real-time signal; do not use SIGRTMIN. */
 
     mutable SAWYER_THREAD_TRAITS::RecursiveMutex mutex; /**< Protects all members of this struct. */
-    sigset_32 mask;                     /**< Masked signals. Bit N is set if signal N+1 is masked. */
+    SigSet mask;                        /**< Masked signals. Bit N is set if signal N+1 is masked. */
     stack_32 stack;                     /**< Possible alternative stack to using during signal handling. */
-    siginfo_32 queue[QUEUE_SIZE];       /**< Queue of pending real-time signals. */
+    SigInfo queue[QUEUE_SIZE];          /**< Queue of pending real-time signals. */
     size_t queue_head;                  /**< Head of circular "queue"; points to oldest item in queue. */
     size_t queue_tail;                  /**< Tail of circular "queue"; points one past youngest item; head==tail implies empty. */
-    sigset_32 pending;                  /**< Bit N is set if signal N+1 is pending; excludes real-time signals. */
-    siginfo_32 pending_info[FIRST_RT+1];/**< Info for pending classic signals; rt info is in "queue". Indexed by signo. */
+    SigSet pending;                     /**< Bit N is set if signal N+1 is pending; excludes real-time signals. */
+    SigInfo pending_info[FIRST_RT+1];   /**< Info for pending classic signals; rt info is in "queue". Indexed by signo. */
     bool reprocess;                     /**< Set to true if we might need to deliver signals (e.g., signal_mask changed). */
 };
 

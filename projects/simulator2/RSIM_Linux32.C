@@ -4858,7 +4858,7 @@ static void
 syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno)
 {
     static const Translate flags[] = { TE(SIG_BLOCK), TE(SIG_UNBLOCK), TE(SIG_SETMASK), T_END };
-    t->syscall_enter("rt_sigprocmask", "ePp", flags, sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+    t->syscall_enter("rt_sigprocmask", "ePp", flags, sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 static void
@@ -4867,11 +4867,11 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
     int how=t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2);
     size_t sigsetsize __attribute__((unused)) = t->syscall_arg(3);
-    assert(sigsetsize==sizeof(RSIM_SignalHandling::sigset_32));
+    assert(sigsetsize==sizeof(RSIM_SignalHandling::SigSet));
 
-    RSIM_SignalHandling::sigset_32 in_set, out_set;
-    RSIM_SignalHandling::sigset_32 *in_set_p  = in_va ? &in_set  : NULL;
-    RSIM_SignalHandling::sigset_32 *out_set_p = out_va? &out_set : NULL;
+    RSIM_SignalHandling::SigSet in_set, out_set;
+    RSIM_SignalHandling::SigSet *in_set_p  = in_va ? &in_set  : NULL;
+    RSIM_SignalHandling::SigSet *out_set_p = out_va? &out_set : NULL;
 
     if (in_set_p && sizeof(in_set)!=t->get_process()->mem_read(in_set_p, in_va, sizeof in_set)) {
         t->syscall_return(-EFAULT);
@@ -4892,7 +4892,7 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
 static void
 syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d--P", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+    t->syscall_leave("d--P", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
@@ -4907,7 +4907,7 @@ static void
 syscall_rt_sigpending(RSIM_Thread *t, int callno)
 {
     uint32_t sigset_va=t->syscall_arg(0);
-    RSIM_SignalHandling::sigset_32 pending;
+    RSIM_SignalHandling::SigSet pending;
     int result = t->sys_sigpending(&pending);
     t->syscall_return(result);
     if (result<0)
@@ -4922,7 +4922,7 @@ syscall_rt_sigpending(RSIM_Thread *t, int callno)
 static void
 syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+    t->syscall_leave("dP", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
@@ -4930,14 +4930,14 @@ syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 static void
 syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rt_sigsuspend", "Pd", sizeof(RSIM_SignalHandling::sigset_32), print_sigmask_32);
+    t->syscall_enter("rt_sigsuspend", "Pd", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 static void
 syscall_rt_sigsuspend(RSIM_Thread *t, int callno)
 {
-    assert(sizeof(RSIM_SignalHandling::sigset_32)==t->syscall_arg(1));
-    RSIM_SignalHandling::sigset_32 new_mask;
+    assert(sizeof(RSIM_SignalHandling::SigSet)==t->syscall_arg(1));
+    RSIM_SignalHandling::SigSet new_mask;
     if (sizeof(new_mask)!=t->get_process()->mem_read(&new_mask, t->syscall_arg(0), sizeof new_mask)) {
         t->syscall_return(-EFAULT);
         return;

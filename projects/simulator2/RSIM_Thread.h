@@ -416,15 +416,15 @@ private:
 public:
     /** Removes a non-masked signal from the thread's signal queue. If the thread's queue is empty then the process' queue is
      *  considered. Returns a signal number if one is removed, zero if no signal is available, negative on error.  If a
-     *  positive signal number is returned then the supplied siginfo_32 struct is filled in with information about that
+     *  positive signal number is returned then the supplied @p info struct is filled in with information about that
      *  signal. */
-    int signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/);
+    int signal_dequeue(RSIM_SignalHandling::SigInfo *info/*out*/);
 
     /** Cause a signal to be delivered. The signal is not removed from the pending set or signal queue, nor do we check whether
      *  the signal is masked.  Returns zero on success, negative errno on failure.  However, if the signal is a terminating
      *  signal whose default action is performed, this method will throw an Exit, which will cause all simulated threads to
      *  shut down and the simulator returns to user control. */
-    int signal_deliver(const RSIM_SignalHandling::siginfo_32&);
+    int signal_deliver(const RSIM_SignalHandling::SigInfo&);
 
     /** Clears all pending signals.
      *
@@ -445,11 +445,11 @@ public:
      *  adding the signal to its queue.  A signal can be accepted by this thread if the signal is not blocked.
      *
      *  Returns zero if the signal was accepted; negative if the signal was not accepted. */
-    int signal_accept(const RSIM_SignalHandling::siginfo_32&);
+    int signal_accept(const RSIM_SignalHandling::SigInfo&);
 
     /** Returns, through an argument, the set of signals that are pending.  Returns zero on success, negative errno on
      * failure. */
-    int sys_sigpending(RSIM_SignalHandling::sigset_32 *result);
+    int sys_sigpending(RSIM_SignalHandling::SigSet *result);
 
     /** Sends a signal to a thread or process.  If @p tid is negative, then the signal is send to the specified process, which
      *  then delivers it to one of its threads.  Otherwise the signal is sent to the specified thread of the specified
@@ -470,7 +470,7 @@ public:
      *  returns non-negative on success; negative error number on failure.
      *
      *  Thread safety: This function is thread safe. */
-    int sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32&);
+    int sys_kill(pid_t pid, const RSIM_SignalHandling::SigInfo&);
 
     /** Block until a signal arrives.  Temporarily replaces the signal mask with the specified mask, then blocks until the
      *  delivery of a signal whose action is to invoke a signal handler or terminate the specimen. On success, returns the
@@ -481,12 +481,12 @@ public:
      *  method returns and after the original signal mask has been restored. [RPM 2011-03-08]
      *
      *  Thread safety: This method is thread safe. */
-    int sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask);
+    int sys_sigsuspend(const RSIM_SignalHandling::SigSet *mask);
 
     /** Get and/or set the signal mask for a thread. Returns negative errno on failure.
      *
      *  Thread safety: This method is thread safe. */
-    int sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, RSIM_SignalHandling::sigset_32 *out);
+    int sys_sigprocmask(int how, const RSIM_SignalHandling::SigSet *in, RSIM_SignalHandling::SigSet *out);
 
     /** Defines a new alternate signal stack and/or retrieve the state of an existing alternate signal stack.  This method is
      *  similar in behavior to the real sigaltstack() function, except the return value is zero on success or a negative error

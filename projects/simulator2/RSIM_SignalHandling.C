@@ -10,10 +10,10 @@ using namespace rose::Diagnostics;
 
 const int RSIM_SignalHandling::SIG_WAKEUP = 49; /* arbitrarily SIGRT_17 */
 
-RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::SigInfo
 RSIM_SignalHandling::mk_kill(int signo, int code)
 {
-    siginfo_32 info;
+    SigInfo info;
     memset(&info, 0, sizeof info);
     info.si_signo = signo;
     info.si_code  = code;
@@ -22,10 +22,10 @@ RSIM_SignalHandling::mk_kill(int signo, int code)
     return info;
 }
 
-RSIM_SignalHandling::siginfo_32
-RSIM_SignalHandling::mk_sigfault(int signo, int code, uint32_t addr)
+RSIM_SignalHandling::SigInfo
+RSIM_SignalHandling::mk_sigfault(int signo, int code, rose_addr_t addr)
 {
-    siginfo_32 info;
+    SigInfo info;
     memset(&info, 0, sizeof info);
     info.si_signo = signo;
     info.si_code = code;
@@ -34,16 +34,16 @@ RSIM_SignalHandling::mk_sigfault(int signo, int code, uint32_t addr)
     return info;
 }
 
-RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::SigInfo
 RSIM_SignalHandling::mk_rt(int signo, int code)
 {
     return mk_kill(signo, code);
 }
 
-RSIM_SignalHandling::siginfo_32
+RSIM_SignalHandling::SigInfo
 RSIM_SignalHandling::mk(const siginfo_t *host)
 {
-    siginfo_32 info;
+    SigInfo info;
     memset(&info, 0, sizeof info);
     info.si_signo = host->si_signo;
     info.si_errno = host->si_errno;
@@ -61,7 +61,7 @@ RSIM_SignalHandling::mk(const siginfo_t *host)
         case SIGFPE:
         case SIGSEGV:
         case SIGBUS:
-            info.sigfault.addr  = (uint32_t)(uint64_t)host->si_addr;
+            info.sigfault.addr  = (rose_addr_t)host->si_addr;
             break;
         case SIGPOLL:
             info.sigpoll.band   = host->si_band;
@@ -83,11 +83,11 @@ RSIM_SignalHandling::mk(const siginfo_t *host)
     return info;
 }
 
-RSIM_SignalHandling::sigset_32
+RSIM_SignalHandling::SigSet
 RSIM_SignalHandling::mask_of(int signo)
 {
-    assert(signo>0 && (size_t)signo<=8*sizeof(sigset_32));
-    return (sigset_32)1 << (signo-1);
+    assert(signo>0 && (size_t)signo<=8*sizeof(SigSet));
+    return (SigSet)1 << (signo-1);
 }
 
 rose_addr_t
@@ -107,7 +107,7 @@ RSIM_SignalHandling::get_sigframe(const SigAction &sa, size_t frame_size, rose_a
 }
 
 void
-RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, sigset_32 mask)
+RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, SigSet mask)
 {
     sc->gs = regs.gs;
     sc->fs = regs.fs;
@@ -169,7 +169,7 @@ RSIM_SignalHandling::restore_sigcontext(const sigcontext_32 &sc, uint32_t cur_fl
 }
 
 int
-RSIM_SignalHandling::sigprocmask(int how, const sigset_32 *in, sigset_32 *out)
+RSIM_SignalHandling::sigprocmask(int how, const SigSet *in, SigSet *out)
 {
     /* We don't want to play with some bits of the mask. */
     static bool called = false;
@@ -182,7 +182,7 @@ RSIM_SignalHandling::sigprocmask(int how, const sigset_32 *in, sigset_32 *out)
 
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
     int result = 0;
-    sigset_32 saved = mask;
+    SigSet saved = mask;
 
     if (out)
         *out = mask;
@@ -213,7 +213,7 @@ RSIM_SignalHandling::sigprocmask(int how, const sigset_32 *in, sigset_32 *out)
 }
 
 int
-RSIM_SignalHandling::sigpending(sigset_32 *result) const
+RSIM_SignalHandling::sigpending(SigSet *result) const
 {
     if (result) {
         SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
@@ -225,10 +225,10 @@ RSIM_SignalHandling::sigpending(sigset_32 *result) const
 }
 
 int
-RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread)
+RSIM_SignalHandling::sigsuspend(const SigSet *new_mask_p, RSIM_Thread *thread)
 {
     /* Signals that terminate a process by default */
-    sigset_32 terminating = (sigset_32)(-1); // everything but...
+    SigSet terminating = (SigSet)(-1); // everything but...
     terminating &= ~(mask_of(SIGIO)   |
                      mask_of(SIGURG)  |
                      mask_of(SIGCHLD) |
@@ -249,7 +249,7 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
 
             /* Use user supplied mask (or the current mask) augmented by also masking signals that are ignored or which are
              * using the default handler and do not terminate the process. */
-            sigset_32 cur_mask = new_mask_p ? *new_mask_p : mask;
+            SigSet cur_mask = new_mask_p ? *new_mask_p : mask;
             for (size_t signo=1; signo<=8*sizeof(cur_mask); signo++) {
                 SigAction sa;
                 int status = thread->get_process()->sys_sigaction(signo, NULL, &sa);
@@ -267,7 +267,7 @@ RSIM_SignalHandling::sigsuspend(const sigset_32 *new_mask_p, RSIM_Thread *thread
 
             /* What signals are ready to be delivered (assuming they're not masked). */
             if (!retval) {
-                sigset_32 p = pending;
+                SigSet p = pending;
                 for (size_t i=queue_head; i!=queue_tail; i=(i+1) % QUEUE_SIZE)
                     p |= mask_of(queue[i].si_signo);
 
@@ -344,7 +344,7 @@ RSIM_SignalHandling::clear_all_pending()
 }
 
 int
-RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Sawyer::Message::Stream &mesg)
+RSIM_SignalHandling::generate(const SigInfo &info, RSIM_Process *process, Sawyer::Message::Stream &mesg)
 {
     int result = 0;
     const char *s = "";
@@ -352,7 +352,7 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Saw
     int signo = info.si_signo;
     if (0==signo)
         return 0; /* no-op for signal zero */
-    if (signo<1 || (size_t)signo > 8*sizeof(sigset_32))
+    if (signo<1 || (size_t)signo > 8*sizeof(SigSet))
         return -EINVAL;
 
     SigAction sa;
@@ -381,16 +381,16 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Saw
     if (mesg) {
         mesg <<"arrival of ";
         print_enum(mesg, signal_names, signo);
-        mfprintf(mesg)("(%d)%s", signo, s);
-        mfprintf(mesg)(" {errno=%d, code=%d", info.si_errno, info.si_code);
+        mesg <<"(" <<signo <<")" <<s;
+        mesg <<" {errno=" <<info.si_errno <<", code=" <<info.si_code;
         if (signo>=FIRST_RT) {
-            mfprintf(mesg)(", pid=%d, uid=%d, sigval=%d", info.rt.pid, info.rt.uid, info.rt.sigval);
+            mesg <<", pid=" <<info.rt.pid <<", uid=" <<info.rt.uid <<", sigval=" <<StringUtility::addrToString(info.rt.sigval);
         } else if (signo==SIGILL || signo==SIGFPE || signo==SIGSEGV || signo==SIGBUS) {
-            mfprintf(mesg)(", addr=0x%08"PRIx32, info.sigfault.addr);
+            mesg <<", addr=" <<StringUtility::addrToString(info.sigfault.addr);
         } else if (signo==SIGCHLD) {
-            mfprintf(mesg)(", pid=%d, uid=%d, status=%u", info.sigchld.pid, info.sigchld.uid, info.sigchld.status);
+            mesg <<", pid=" <<info.sigchld.pid <<", uid=" <<info.sigchld.uid <<", status=" <<info.sigchld.status;
         } else {
-            mfprintf(mesg)(", pid=%d, uid=%d", info.kill.pid, info.kill.uid);
+            mesg <<", pid=" <<info.kill.pid <<", uid=" <<info.kill.uid;
         }
         mesg <<"}\n";
     }
@@ -399,11 +399,11 @@ RSIM_SignalHandling::generate(const siginfo_32 &info, RSIM_Process *process, Saw
 }
 
 int
-RSIM_SignalHandling::dequeue(siginfo_32 *info/*out*/, const sigset_32 *alt_mask/*=NULL*/)
+RSIM_SignalHandling::dequeue(SigInfo *info/*out*/, const SigSet *alt_mask/*=NULL*/)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(mutex);
     int result = 0;
-    sigset_32 mask = alt_mask ? *alt_mask : this->mask;
+    SigSet mask = alt_mask ? *alt_mask : this->mask;
 
     if (reprocess || alt_mask) {
         /* Queued real-time signals */

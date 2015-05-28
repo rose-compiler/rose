@@ -208,7 +208,7 @@ RSIM_Callbacks::clear_signal_callbacks(When when)
 }
 
 bool
-RSIM_Callbacks::call_signal_callbacks(When when, RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32 *info,
+RSIM_Callbacks::call_signal_callbacks(When when, RSIM_Thread *thread, int signo, RSIM_SignalHandling::SigInfo *info,
                                       SignalCallback::Reason reason, bool prev)
 {
     if (when==BEFORE)

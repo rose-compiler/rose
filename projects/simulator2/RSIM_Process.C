@@ -1704,14 +1704,14 @@ RSIM_Process::sys_sigaction(int signo, const SigAction *new_action, SigAction *o
 }
 
 int
-RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
+RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::SigInfo &info)
 {
     int signo = info.si_signo;
     int retval = 0;
 
     if (pid<0)
         return -EINVAL;
-    if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::sigset_32))
+    if (signo<0 && (size_t)signo>8*sizeof(RSIM_SignalHandling::SigSet))
         return -EINVAL;
 
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
@@ -1742,7 +1742,7 @@ RSIM_Process::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 
 /* Must be async signal safe */
 void
-RSIM_Process::signal_enqueue(const RSIM_SignalHandling::siginfo_32 &info)
+RSIM_Process::signal_enqueue(const RSIM_SignalHandling::SigInfo &info)
 {
     /* Push the signal number onto the tail of the process-wide queue.  It is safe to do this without thread synchronization
      * because:
@@ -1761,7 +1761,7 @@ RSIM_Process::signal_enqueue(const RSIM_SignalHandling::siginfo_32 &info)
 }
 
 int
-RSIM_Process::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
+RSIM_Process::signal_dequeue(RSIM_SignalHandling::SigInfo *info/*out*/)
 {
     assert(info!=NULL);
     int retval = 0;
@@ -1779,7 +1779,7 @@ void
 RSIM_Process::signal_dispatch()
 {
     /* write lock not required for thread safety here since called functions are already thread safe */
-    RSIM_SignalHandling::siginfo_32 info;
+    RSIM_SignalHandling::SigInfo info;
     for (int signo=signal_dequeue(&info); signo>0; signo=signal_dequeue(&info)) {
         int status __attribute__((unused)) = sys_kill(getpid(), info);
         assert(status>=0);

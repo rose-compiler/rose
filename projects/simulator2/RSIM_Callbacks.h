@@ -470,7 +470,7 @@ public:
 
         /** Arguments passed to signal callbacks. */
         struct Args {
-            Args(RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32 *info, Reason reason)
+            Args(RSIM_Thread *thread, int signo, RSIM_SignalHandling::SigInfo *info, Reason reason)
                 : thread(thread), signo(signo), info(info), reason(reason) {}
             /** The thread at which the signal has arrived or to which the signal is being delivered.  This might not be the
              *    same as the calling thread. */            
@@ -482,7 +482,7 @@ public:
 
             /** Information about the signal being delivered.  Callbacks are permitted to modify this struct in order to
              *  influence the specimen. */
-            RSIM_SignalHandling::siginfo_32 *info;
+            RSIM_SignalHandling::SigInfo *info;
 
             /** Reason for invoking the callback. */
             Reason reason;
@@ -530,7 +530,7 @@ public:
      *  Thread safety:  This method is thread safe.  The callbacks may register and/or unregister themselves or other callbacks
      *  from this RSIM_Callbacks object, but those actions do not affect which callbacks are made by this invocation of
      *  call_thread_callbacks(). */
-    bool call_signal_callbacks(When, RSIM_Thread *thread, int signo, RSIM_SignalHandling::siginfo_32*,
+    bool call_signal_callbacks(When, RSIM_Thread *thread, int signo, RSIM_SignalHandling::SigInfo*,
                                SignalCallback::Reason, bool prev);
 
 

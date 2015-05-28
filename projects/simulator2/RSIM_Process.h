@@ -455,7 +455,7 @@ private:
             memset(info, 0, sizeof info); /* only for debugging */
         }
         static const size_t size = 128; /**< Up to 127 signals can be on the queue, plus one guard entry */
-        RSIM_SignalHandling::siginfo_32 info[size];
+        RSIM_SignalHandling::SigInfo info[size];
         size_t head;                    /**< Index of oldest signal */
         size_t tail;                    /**< One beyond index of youngest signal (incremented asynchronously) */
     } sq;
@@ -474,17 +474,17 @@ public:
     /** Simulates a kill() system call. Returns zero on success; negative errno on failure.
      *
      *  Thread safety: This method is thread safe. */
-    int sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32&);
+    int sys_kill(pid_t pid, const RSIM_SignalHandling::SigInfo&);
 
     /** Signal queue used for asynchronous reception of signals from other processes. Signal numbers are pushed onto the tail
      *  of this queue by signal_enqueue(), called from the RSIM_Simulator::signal_receiver() signal handler.  Therefore, this
      *  function must be async signal safe. */
-    void signal_enqueue(const RSIM_SignalHandling::siginfo_32&);
+    void signal_enqueue(const RSIM_SignalHandling::SigInfo&);
 
     /** Removes one signal from the queue.  Returns the oldest signal on the queue, or zero if the queue is empty.
      *
      *  Thread safety: This method is thread safe. */
-    int signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/);
+    int signal_dequeue(RSIM_SignalHandling::SigInfo *info/*out*/);
 
     /** Assigns process-wide signals to threads.
      *

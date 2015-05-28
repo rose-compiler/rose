@@ -270,9 +270,9 @@ RSIM_Thread::syscall_arg(int idx)
 
 /* Deliver the specified signal. The signal is not removed from the signal_pending vector, nor is it added if it's masked. */
 int
-RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
+RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
 {
-    RSIM_SignalHandling::siginfo_32 info = _info;
+    RSIM_SignalHandling::SigInfo info = _info;
     int signo = info.si_signo;
 
     bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, signo, &info,
@@ -289,11 +289,11 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
         if (sa.handlerVa==(rose_addr_t)SIG_IGN) {
             /* The signal action may have changed since the signal was generated, so we need to check this again. */
             mesg <<"signal delivery ignored: ";
-            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            print_SigInfo(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
         } else if (sa.handlerVa==(rose_addr_t)SIG_DFL) {
             mesg <<"signal delivery via default: ";
-            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            print_SigInfo(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
 
             switch (signo) {
@@ -343,16 +343,20 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
         } else {
             /* Most of the code here is based on __setup_frame() in Linux arch/x86/kernel/signal.c */
             mesg <<"signal delivery to " <<StringUtility::addrToString(sa.handlerVa) <<"\n";
-            print_siginfo_32(mesg, (const uint8_t*)&info, sizeof info);
+            print_SigInfo(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
 
             pt_regs_32 regs = get_regs();
-            RSIM_SignalHandling::sigset_32 signal_mask;
+            RSIM_SignalHandling::SigSet signal_mask;
             status = sighand.sigprocmask(0, NULL, &signal_mask);
             assert(status>=0);
             uint32_t frame_va = 0;
 
             if (sa.flags & SA_SIGINFO) {
+#if 1 // [Robb P. Matzke 2015-05-28]
+                // Perhaps we don't need this right now, otherwise we'll need 32- and 64-bit versions of siginfo
+                ASSERT_not_implemented("[Robb P. Matzke 2015-05-28]");
+#else
                 /* Use the extended signal handler frame */
                 RSIM_SignalHandling::rt_sigframe_32 frame;
                 memset(&frame, 0, sizeof frame);
@@ -403,6 +407,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
                 /* Write frame to stack */
                 if (sizeof(frame)!=process->mem_write(&frame, frame_va, sizeof frame))
                     return -EFAULT;
+#endif
             } else {
                 /* Use the plain signal handler frame */
                 RSIM_SignalHandling::sigframe_32 frame;
@@ -465,6 +470,9 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::siginfo_32 &_info)
 int
 RSIM_Thread::sys_rt_sigreturn()
 {
+#if 1 // [Robb P. Matzke 2015-05-28]
+    ASSERT_not_implemented("[Robb P. Matzke 2015-05-28]");
+#else
     Sawyer::Message::Stream mesg(tracing(TRACE_SIGNAL));
 
     /* Sighandler frame address is four less than the current SP because the return from sighandler popped the frame's
@@ -496,6 +504,7 @@ RSIM_Thread::sys_rt_sigreturn()
     sighand.restore_sigcontext(frame.uc.uc_mcontext, eflags, &regs);
     init_regs(regs);
     return 0;
+#endif
 }
 
 /* Note: if the specimen's signal handler never returns then this function is never invoked.  The specimen may do a longjmp()
@@ -524,7 +533,7 @@ RSIM_Thread::sys_sigreturn()
     }
 
     /* Restore previous signal mask */
-    RSIM_SignalHandling::sigset_32 old_sigmask = frame.extramask;
+    RSIM_SignalHandling::SigSet old_sigmask = frame.extramask;
     old_sigmask = (old_sigmask << 32) | frame.sc.oldmask;
     int status = sighand.sigprocmask(SIG_SETMASK, &old_sigmask, NULL);
     if (status<0)
@@ -539,7 +548,7 @@ RSIM_Thread::sys_sigreturn()
 }
 
 int
-RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::sigset_32 *in, RSIM_SignalHandling::sigset_32 *out)
+RSIM_Thread::sys_sigprocmask(int how, const RSIM_SignalHandling::SigSet *in, RSIM_SignalHandling::SigSet *out)
 {
     return sighand.sigprocmask(how, in, out);
 }
@@ -551,10 +560,10 @@ RSIM_Thread::signal_clear_pending()
 }
 
 int
-RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &_info)
+RSIM_Thread::signal_accept(const RSIM_SignalHandling::SigInfo &_info)
 {
-    RSIM_SignalHandling::siginfo_32 info = _info; /* non-const copy because callbacks may modify it */
-    RSIM_SignalHandling::sigset_32 mask;
+    RSIM_SignalHandling::SigInfo info = _info; /* non-const copy because callbacks may modify it */
+    RSIM_SignalHandling::SigSet mask;
     int status = sighand.sigprocmask(0, NULL, &mask);
     if (status<0)
         return status;
@@ -574,11 +583,11 @@ RSIM_Thread::signal_accept(const RSIM_SignalHandling::siginfo_32 &_info)
 }
 
 int
-RSIM_Thread::signal_dequeue(RSIM_SignalHandling::siginfo_32 *info/*out*/)
+RSIM_Thread::signal_dequeue(RSIM_SignalHandling::SigInfo *info/*out*/)
 {
     int signo = sighand.dequeue(info);
     if (0==signo) {
-        RSIM_SignalHandling::sigset_32 mask;
+        RSIM_SignalHandling::SigSet mask;
         int status __attribute__((unused)) = sighand.sigprocmask(0, NULL, &mask);
         assert(status>=0);
         signo = get_process()->sighand.dequeue(info, &mask);
@@ -815,7 +824,7 @@ RSIM_Thread::main()
             }
 
             /* Handle a signal if we have any pending that aren't masked */
-            RSIM_SignalHandling::siginfo_32 info;
+            RSIM_SignalHandling::SigInfo info;
             process->signal_dispatch(); /* assign process signals to threads */
             if (signal_dequeue(&info)>0)
                 signal_deliver(info);
@@ -902,7 +911,7 @@ RSIM_Thread::main()
             sys_exit(e);
             setState(TERMINATED);
             return NULL;
-        } catch (RSIM_SignalHandling::siginfo_32 &e) {
+        } catch (RSIM_SignalHandling::SigInfo &e) {
             post_insn_semaphore();
             if (e.si_signo) {
                 bool cb_status = get_callbacks().call_signal_callbacks(RSIM_Callbacks::BEFORE, this, e.si_signo, &e,
@@ -1151,7 +1160,7 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
     RSIM_Process *process = get_process();
     assert(process!=NULL);
     
-    RSIM_SignalHandling::siginfo_32 info = RSIM_SignalHandling::mk_rt(signo, SI_TKILL);
+    RSIM_SignalHandling::SigInfo info = RSIM_SignalHandling::mk_rt(signo, SI_TKILL);
 
     if (pid<0) {
         retval = -EINVAL;
@@ -1177,7 +1186,7 @@ RSIM_Thread::sys_tgkill(pid_t pid, pid_t tid, int signo)
 }
 
 int
-RSIM_Thread::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
+RSIM_Thread::sys_kill(pid_t pid, const RSIM_SignalHandling::SigInfo &info)
 {
     RSIM_Process *process = get_process();
     assert(process!=NULL);
@@ -1185,9 +1194,9 @@ RSIM_Thread::sys_kill(pid_t pid, const RSIM_SignalHandling::siginfo_32 &info)
 }
 
 int
-RSIM_Thread::sys_sigpending(RSIM_SignalHandling::sigset_32 *result)
+RSIM_Thread::sys_sigpending(RSIM_SignalHandling::SigSet *result)
 {
-    RSIM_SignalHandling::sigset_32 p1, p2;
+    RSIM_SignalHandling::SigSet p1, p2;
     int status = sighand.sigpending(&p1);
     if (status<0)
         return status;
@@ -1202,7 +1211,7 @@ RSIM_Thread::sys_sigpending(RSIM_SignalHandling::sigset_32 *result)
 }
 
 int
-RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::sigset_32 *mask) {
+RSIM_Thread::sys_sigsuspend(const RSIM_SignalHandling::SigSet *mask) {
     int signo = sighand.sigsuspend(mask, this);
     return signo;
 }

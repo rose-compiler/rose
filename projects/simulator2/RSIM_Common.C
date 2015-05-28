@@ -173,7 +173,7 @@ print_bitvec(Sawyer::Message::Stream &m, const uint8_t *vec, size_t sz)
 }
 
 void
-print_sigmask_32(Sawyer::Message::Stream &m, const uint8_t *vec, size_t sz)
+print_SigSet(Sawyer::Message::Stream &m, const uint8_t *vec, size_t sz)
 {
     int nsigs=0;
     for (size_t i=0; i<sz; i++) {
@@ -392,10 +392,10 @@ print_exit_status_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
-print_siginfo_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
-    assert(sizeof(RSIM_SignalHandling::siginfo_32)==sz);
-    const RSIM_SignalHandling::siginfo_32 *info = (const RSIM_SignalHandling::siginfo_32*)_v;
+    assert(sizeof(RSIM_SignalHandling::SigInfo)==sz);
+    const RSIM_SignalHandling::SigInfo *info = (const RSIM_SignalHandling::SigInfo*)_v;
 
     m <<"signo=";
     print_enum(m, signal_names, info->si_signo);
@@ -404,22 +404,22 @@ print_siginfo_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
         case SIGSEGV:
             m <<", code=";
             print_enum(m, siginfo_sigsegv_codes, info->si_code);
-            mfprintf(m)(", addr=0x%08"PRIx32, info->sigfault.addr);
+            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGBUS:
             m <<", code=";
             print_enum(m, siginfo_sigbus_codes, info->si_code);
-            mfprintf(m)(", addr=0x%08"PRIx32, info->sigfault.addr);
+            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGILL:
             m <<", code=";
             print_enum(m, siginfo_sigill_codes, info->si_code);
-            mfprintf(m)(", addr=0x%08"PRIx32, info->sigfault.addr);
+            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGFPE:
             m <<", code=";
             print_enum(m, siginfo_sigfpe_codes, info->si_code);
-            mfprintf(m)(", addr=0x%08"PRIx32, info->sigfault.addr);
+            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGTRAP:
             m <<", code=";
@@ -428,23 +428,24 @@ print_siginfo_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
         case SIGCHLD:
             m <<", code=";
             print_enum(m, siginfo_sigchld_codes, info->si_code);
-            mfprintf(m)(", pid=%d, uid=%u, status=0x%02x, utime=%d, stime=%d",
-                        info->sigchld.pid, info->sigchld.uid, info->sigchld.status, info->sigchld.utime, info->sigchld.stime);
+            m <<", pid=" <<info->sigchld.pid <<", uid=" <<info->sigchld.uid <<", status=" <<info->sigchld.status
+              <<", utime=" <<info->sigchld.utime <<", stime=" <<info->sigchld.stime;
             break;
         case SIGPOLL:
             m <<", code=";
             print_enum(m, siginfo_sigpoll_codes, info->si_code);
-            mfprintf(m)(", band=%d, fd=%d", info->sigpoll.band, info->sigpoll.fd);
+            m <<", band=" <<info->sigpoll.band <<", fd=" <<info->sigpoll.fd;
             break;
         default:
             m <<", code=";
             print_enum(m, siginfo_generic_codes, info->si_code);
             switch (info->si_code) {
                 case SI_TKILL:
-                    mfprintf(m)(", pid=%d, uid=%d, sigval=%d", info->rt.pid, info->rt.uid, info->rt.sigval);
+                    m <<", pid=" <<info->rt.pid <<", uid=" <<info->rt.uid
+                      <<", sigval=" <<StringUtility::addrToString(info->rt.sigval);
                     break;
                 case SI_USER:
-                    mfprintf(m)(", pid=%d, uid=%d", info->kill.pid, info->kill.uid);
+                    m <<", pid=" <<info->kill.pid <<", uid=" <<info->kill.uid;
                     break;
                 default:
                     // no other info?

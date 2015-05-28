@@ -1480,7 +1480,7 @@ void print_dentries_helper(Sawyer::Message::Stream &f, const uint8_t *_sa, size_
 void print_dentries_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_dentries_64(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_bitvec(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
-void print_sigmask_32(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
+void print_SigSet(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_stack_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
@@ -1497,7 +1497,7 @@ void print_pt_regs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_termios_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_winsize_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
-void print_siginfo_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_SigInfo(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_new_utsname_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
