@@ -16,12 +16,11 @@ class RSIM_Process {
 public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
-        : simulator(simulator), tracing_file(NULL), tracing_flags(0),
-          brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
-          interpretation(NULL), ep_orig_va(0), ep_start_va(0),
+        : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
+          brkVa_(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
+          interpretation(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
           terminated(false), termination_status(0), project(NULL), wordSize_(0), core_flags(0), btrace_file(NULL),
-          vdso_mapped_va(0), vdso_entry_va(0),
-          core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
+          core_styles(CORE_ELF), core_base_name("x-core.rose") {
         ctor();
     }
 
@@ -68,8 +67,8 @@ public:
      **************************************************************************************************************************/
 private:
     std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
-    FILE *tracing_file;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
-    unsigned tracing_flags;             /**< Bit vector of what to trace. See TraceFlags. */
+    FILE *tracingFile_;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
+    unsigned tracingFlags_;             /**< Bit vector of what to trace. See TraceFlags. */
     struct timeval time_created;        /**< Time at which process object was created. */
 
 public:
@@ -89,17 +88,25 @@ public:
      *  pattern should be a printf-style format with an optional integer specifier for the thread ID. */
     void open_tracing_file();
 
-    /** Returns a file for tracing, or NULL if tracing is disabled. All trace facilities use the same file.
+    /** Property: file for tracing, or NULL if tracing is disabled.
      *
-     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    FILE *get_tracing_file() const;
+     *  All trace facilities use the same file.
+     *
+     *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently.
+     *
+     * @{ */
+    FILE *tracingFile() const { return tracingFile_; }
+    void tracingFile(FILE *f) { tracingFile_ = f; }
+    /** @} */
 
     /** Sets tracing file and facilities. */
     void set_tracing(FILE*, unsigned flags);
-    
-    /** Returns a bit mask describing what should be traced by new threads created for this process. The return value is the
-     * bitwise OR of the facilityBitMask() for each enabled facility. */
-    unsigned get_tracing_flags() const;
+
+    /** Property: bits enabling various tracing.
+     *
+     *  A bit mask describing what should be traced by new threads created for this process. The return value is the
+     *  bitwise OR of the facilityBitMask() for each enabled facility. */
+    unsigned tracingFlags() const { return tracingFlags_; }
 
     /** Returns the time at which this process was created. */
     const struct timeval &get_ctime() const {
@@ -187,7 +194,7 @@ public:
 private:
     typedef std::vector<std::pair<MemoryMap, std::string > > MapStack;
     MapStack map_stack;                         /**< Memory map transaction stack. */
-    rose_addr_t brk_va;                         /**< Current value for brk() syscall; initialized by load() */
+    rose_addr_t brkVa_;                         /**< Current value for brk() syscall; initialized by load() */
     rose_addr_t mmap_start;                     /**< Minimum address to use when looking for mmap free space */
     bool mmap_recycle;                          /**< If false, then never reuse mmap addresses */
 
@@ -359,6 +366,15 @@ public:
      *  Returns the number of memory transactions on the transaction stack.  There is normally always at least one transaction,
      *  but the stack might be empty before the specimen is loaded. */
     size_t mem_ntransactions() const;
+
+    /** Property: brk address.
+     *
+     * @sa mem_setbrk, which also adjusts the memory map.
+     *
+     * @{ */
+    rose_addr_t brkVa() const { return brkVa_; }
+    void brkVa(rose_addr_t va) { brkVa_ = va; }
+    /** @} */
 
     /**************************************************************************************************************************
      *                                  Segment registers
@@ -612,13 +628,12 @@ public:
      ***************************************************************************************************************************/
 private:
     SgAsmInterpretation *interpretation;        /**< Chosen by the load() method. */
-    std::string exename;                        /**< Name of executable without any path components */
     std::string interpname;                     /**< Name of interpreter from ".interp" section or "--interp=" switch */
-    rose_addr_t ep_orig_va;                     /**< Original executable entry point (a specimen virtual address). */
-    rose_addr_t ep_start_va;                    /**< Entry point where simulation starts (e.g., the dynamic linker). */
+    rose_addr_t entryPointOriginalVa_;          /**< Original executable entry point (a specimen virtual address). */
+    rose_addr_t entryPointStartVa_;             /**< Entry point where simulation starts (e.g., the dynamic linker). */
     bool terminated;                            /**< True when the process has finished running. */
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
-    std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
+    std::vector<SgAsmGenericHeader*> headers_;   /**< Headers of files loaded into the process (only those that we parse). */
     SgProject *project;                         /**< AST project node for the main specimen (not interpreter or libraries). */
     size_t wordSize_;                                   // natural word size in bits (32 or 64)
 
@@ -629,12 +644,6 @@ public:
         int status;                             /**< Same value as returned by waitpid(). */
         bool exit_process;                      /**< If true, then exit the entire process. */
     };
-
-
-    /** Returns the name of the executable without any path components. */
-    std::string get_exename() const {
-        return exename;
-    }
 
     /** Returns the interpreter name for dynamically linked ELF executables.  This name comes from the ".interp" section of the
      *  ELF file and is usually the name of the dynamic linker, ld-linux.so.   The interpreter name is set automatically when
@@ -650,9 +659,11 @@ public:
         interpname = s;
     }
     
-    /** Loads a new executable image into an existing process.  If the specified name contains no slashes, then the
-     *  corresponding file is found by trying each of the directories listed in the PATH environment variable, otherwise the
-     *  specified name is used directly.
+    /** Loads a new executable image into an existing process.
+     *
+     *  The executable name comes from the parent simulator. If the name contains no slashes, then the corresponding file is
+     *  found by trying each of the directories listed in the PATH environment variable, otherwise the specified name is used
+     *  directly.
      *
      *  Once the executable file is located, the ROSE frontend() is invoked to parse the container (ELF, PE, etc) but
      *  instructions are not disassembled yet.  A particular interpretation (SgAsmInterpretation) is chosen if more than one is
@@ -669,13 +680,15 @@ public:
      *  A disassembler is chosen based on the interpretation. The disassembler can be obtained by calling get_disassembler().
      *
      *  Operating system simulation data is initialized (brk, mmap, etc). */
-    SgAsmGenericHeader *load(const char *name);
+    SgAsmGenericHeader *load();
 
     /** Returns the list of projects loaded for this process.  The list is initialized by the load() method.  The first item in
-     *  the list is the main executable file; additional items are for dynamic libraries, etc. */
-    const std::vector<SgAsmGenericHeader*> get_loads() const {
-        return headers;
-    }
+     *  the list is the main executable file; additional items are for dynamic libraries, etc.
+     *
+     * @{ */
+    const std::vector<SgAsmGenericHeader*>& headers() const { return headers_; }
+    std::vector<SgAsmGenericHeader*>& headers() { return headers_; }
+    /** @} */
 
     /** Word size in bits. This returns null until after @ref load is called. */
     size_t wordSize() const {
@@ -692,26 +705,29 @@ public:
         return interpretation;
     }
 
-    /** Returns the original entry point of the executable. This is the entry point specified in the executable's file header
-     *  and might not necessarily be the same address as where the simulation begins.
+    /** Property: original entry point.
      *
-     *  Thread safety:  This method is thread safe. */
-    rose_addr_t get_ep_orig_va() const {
-        return ep_orig_va;
-    }
-
-    /** Returns the address at which the simulation starts (or started).  This might not be the same as the program entry
-     *  address returned by get_ep_orig_va() -- when an ELF executable is dynamically linked, this is the entry point for the
-     *  dynamic linker.
+     *  This is the entry point specified in the executable's file header and might not necessarily be the same address as
+     *  where the simulation begins.
      *
-     *  Thread safety:  This method is thread safe. */
-    rose_addr_t get_ep_start_va() const {
-        return ep_start_va;
-    }
+     *  Thread safety:  This method is thread safe.
+     *
+     * @{ */
+    rose_addr_t entryPointOriginalVa() const { return entryPointOriginalVa_; }
+    void entryPointOriginalVa(rose_addr_t va) { entryPointOriginalVa_ = va; }
+    /** @} */
 
-    /** Initializes the stack for the main thread.  The argc and argv are the command-line of the specimen, not ROSE or the
-     *  simulator.   Users generally don't need to call this directly. */
-    void initialize_stack(SgAsmGenericHeader*, int argc, char *argv[]);
+    /** Property: address at which simulation starts.
+     *
+     *  This might not be the same as the program entry address returned by @ref entryPointOriginalVa -- when an ELF executable
+     *  is dynamically linked, this is the entry point for the dynamic linker.
+     *
+     *  Thread safety:  This method is thread safe.
+     *
+     * @{ */
+    rose_addr_t entryPointStartVa() const { return entryPointStartVa_; }
+    void entryPointStartVa(rose_addr_t va) { entryPointStartVa_ = va; }
+    /** @} */
 
     /** Exit entire process. Saves the exit status (like that returned from waitpid), then joins all threads except the main
      *  thread.
@@ -757,19 +773,10 @@ private:
 
 public: /* FIXME */
     FILE *btrace_file;                          /**< Stream for binary trace. See projects/traceAnalysis/trace.C for details */
-    std::vector<std::string> exeargs;           /**< Specimen argv with PATH-resolved argv[0] */
 
-    std::vector<uint32_t> auxv;                 /* Auxv vector pushed onto initial stack; also used when dumping core */
     static const uint32_t brk_base=0x08000000;  /* Lowest possible brk() value */
-    std::string vdso_name;                      /* Optional base name of virtual dynamic shared object from kernel */
-    std::vector<std::string> vdso_paths;        /* Directories and/or filenames to search for vdso */
-    rose_addr_t vdso_mapped_va;                 /* Address where vdso is mapped into specimen, or zero */
-    rose_addr_t vdso_entry_va;                  /* Entry address for vdso, or zero */
     unsigned core_styles;                       /* What kind of core dump(s) to make for dump_core() */
     std::string core_base_name;                 /* Name to use for core files ("core") */
-    rose_addr_t ld_linux_base_va;               /* Base address for ld-linux.so if no preferred addresss for "LOAD#0" */
-
-
 };
 
 #endif /* ROSE_RSIM_Process_H */

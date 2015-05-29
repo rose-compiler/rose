@@ -321,7 +321,7 @@ static void syscall_writev(RSIM_Thread *t, int callno);
 static void syscall_writev_enter(RSIM_Thread *t, int callno);
 
 void
-RSIM_Linux32::ctor()
+RSIM_Linux32::init()
 {
 #   define SC_REG(NUM, NAME, LEAVE)                                                                                            \
         syscall_define((NUM), syscall_##NAME##_enter, syscall_##NAME, syscall_##LEAVE##_leave);
@@ -444,6 +444,201 @@ RSIM_Linux32::ctor()
     SC_REG(331, pipe2,                          pipe2);
 
 #undef SC_REG
+}
+
+bool
+RSIM_Linux32::isSupportedArch(SgAsmGenericHeader *fhdr) {
+    return isSgAsmElfFileHeader(fhdr) && fhdr->get_word_size()==4;
+}
+
+rose_addr_t
+RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader *fhdr,
+                            FILE *trace) {
+    static const char *platform = "i686";
+    sp -= strlen(platform)+1;
+    uint32_t platform_va = sp;
+    process->mem_write(platform, platform_va, strlen(platform)+1);
+
+    static const uint8_t random_data[] = {                  /* use hard-coded values for reproducibility */
+        0x00, 0x11, 0x22, 0x33,
+        0xff, 0xee, 0xdd, 0xcc,
+        0x88, 0x99, 0xaa, 0xbb,
+        0x77, 0x66, 0x55, 0x44
+    };
+    sp -= sizeof random_data;
+    uint32_t random_data_va = sp;
+    process->mem_write(random_data, random_data_va, sizeof random_data);
+
+    /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
+     * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
+     * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
+    struct T1: public SgSimpleProcessing {
+        rose_addr_t segtab_offset;
+        size_t segtab_size;
+        T1(): segtab_offset(0), segtab_size(0) {}
+        void visit(SgNode *node) {
+            SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
+            if (0==segtab_offset && segtab!=NULL) {
+                segtab_offset = segtab->get_offset();
+                segtab_size = segtab->get_size();
+            }
+        }
+    } t1;
+    t1.traverse(fhdr, preorder);
+    assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
+
+    struct T2: public SgSimpleProcessing {
+        rose_addr_t segtab_offset, segtab_va;
+        size_t segtab_size;
+        T2(rose_addr_t segtab_offset, size_t segtab_size)
+            : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
+            {}
+        void visit(SgNode *node) {
+            SgAsmElfSection *section = isSgAsmElfSection(node);
+            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+            if (entry && section->get_offset()<=segtab_offset &&
+                section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
+                segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
+        }
+    } t2(t1.segtab_offset, t1.segtab_size);
+    t2.traverse(fhdr, preorder);
+    assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
+
+    /* Initialize stack with auxv, where each entry is two words.  The order and values were determined by running the
+     * simulator with the "--showauxv" switch on hudson-rose-07. */
+    auxv_.clear();
+    if (vdsoMappedVa()!=0) {
+        /* AT_SYSINFO */
+        auxv_.push_back(32);
+        auxv_.push_back(vdsoEntryVa());
+        if (trace)
+            fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv_.back());
+
+        /* AT_SYSINFO_PHDR */
+        auxv_.push_back(33);
+        auxv_.push_back(vdsoMappedVa());
+        if (trace)
+            fprintf(trace, "AT_SYSINFO_EHDR:  0x%08"PRIx32"\n", auxv_.back());
+    }
+    
+    /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
+    auxv_.push_back(16);
+    uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
+    auxv_.push_back(hwcap);
+    if (trace)
+        fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv_.back());
+
+    /* AT_PAGESZ */
+    auxv_.push_back(6);
+    auxv_.push_back(PAGE_SIZE);
+    if (trace)
+        fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv_.back());
+
+    /* AT_CLKTCK */
+    auxv_.push_back(17);
+    auxv_.push_back(100);
+    if (trace)
+        fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv_.back());
+
+    /* AT_PHDR */
+    auxv_.push_back(3); /*AT_PHDR*/
+    auxv_.push_back(t2.segtab_va);
+    if (trace)
+        fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv_.back());
+
+    /*AT_PHENT*/
+    auxv_.push_back(4);
+    auxv_.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
+    if (trace)
+        fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv_.back());
+
+    /* AT_PHNUM */
+    auxv_.push_back(5);
+    auxv_.push_back(fhdr->get_e_phnum());
+    if (trace)
+        fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv_.back());
+
+    /* AT_BASE */
+    auxv_.push_back(7);
+    auxv_.push_back(fhdr->get_section_by_name(".interp") ? interpreterBaseVa() : 0);
+    if (trace)
+        fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv_.back());
+        
+    /* AT_FLAGS */
+    auxv_.push_back(8);
+    auxv_.push_back(0);
+    if (trace)
+        fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv_.back());
+
+    /* AT_ENTRY */
+    auxv_.push_back(9);
+    auxv_.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
+    if (trace)
+        fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv_.back());
+
+    /* AT_UID */
+    auxv_.push_back(11);
+    auxv_.push_back(getuid());
+    if (trace)
+        fprintf(trace, "AT_UID:           %"PRId32"\n", auxv_.back());
+
+    /* AT_EUID */
+    auxv_.push_back(12);
+    auxv_.push_back(geteuid());
+    if (trace)
+        fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv_.back());
+
+    /* AT_GID */
+    auxv_.push_back(13);
+    auxv_.push_back(getgid());
+    if (trace)
+        fprintf(trace, "AT_GID:           %"PRId32"\n", auxv_.back());
+
+    /* AT_EGID */
+    auxv_.push_back(14);
+    auxv_.push_back(getegid());
+    if (trace)
+        fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv_.back());
+
+    /* AT_SECURE */
+    auxv_.push_back(23); /* 0x17 */
+    auxv_.push_back(false);
+    if (trace)
+        fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv_.back());
+
+    /* AT_RANDOM */
+    auxv_.push_back(25);/* 0x19 */
+    auxv_.push_back(random_data_va);
+    if (trace)
+        fprintf(trace, "AT_RANDOM:       0x%08"PRIx32"\n", auxv_.back());
+
+    /* AT_EXECFN */
+    auxv_.push_back(31); /* 0x1f */
+    auxv_.push_back(execfn_va);
+    if (trace)
+        fprintf(trace, "AT_EXECFN:       0x%08"PRIx32" (%s)\n", auxv_.back(), exeArgs()[0].c_str());
+
+    /* AT_PLATFORM */
+    auxv_.push_back(15);
+    auxv_.push_back(platform_va);
+    if (trace)
+        fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv_.back(), platform);
+
+    /* AT_NULL */
+    auxv_.push_back(0);
+    auxv_.push_back(0);
+
+    /* Finalize stack initialization by writing all the pointers to data we've pushed:
+     *    argc
+     *    argv with NULL terminator
+     *    environment with NULL terminator
+     *    auxv pairs terminated with (AT_NULL,0)
+     */
+    sp -= 4 * auxv_.size();
+    sp &= ~0xf; /*align to 16 bytes*/
+    process->mem_write(&auxv_[0], sp, 4*auxv_.size());
+
+    return sp;
 }
 
 static void

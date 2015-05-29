@@ -196,22 +196,22 @@ RSIM_Simulator::ctor()
     syscall_define(1000001, syscall_RSIM_message_enter,     syscall_RSIM_message,     syscall_RSIM_message_leave);
     syscall_define(1000002, syscall_RSIM_delay_enter,       syscall_RSIM_delay,       syscall_RSIM_delay_leave);
     syscall_define(1000003, syscall_RSIM_transaction_enter, syscall_RSIM_transaction, syscall_RSIM_transaction_leave);
+
+    vdsoPaths_.push_back(".");
+#ifdef X86_VDSO_PATH_1
+    vdsoPaths_.push_back(X86_VDSO_PATH_1);
+#endif
+#ifdef X86_VDSO_PATH_2
+    vdsoPaths_.push_back(X86_VDSO_PATH_2);
+#endif
 }
 
-int
-RSIM_Simulator::configure(int argc, char **argv, char **envp)
-{
-    int argno = 1;
+Sawyer::CommandLine::SwitchGroup
+RSIM_Simulator::commandLineSwitches(Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    SwitchGroup sg("Simulator switches");
 
-    if (argno>=argc) {
-        fprintf(stderr, "usage: %s [SIMULATOR_SWITCHES...] [--] SPECIMEN [SPECIMEN_ARGS...]\n", argv[0]);
-        exit(1);
-    }
-
-    while (argno<argc && '-'==argv[argno][0]) {
-        if (!strcmp(argv[argno], "--")) {
-            argno++;
-            break;
+    
 
         } else if (!strncmp(argv[argno], "--log=", 6)) {
             /* Save log file name pattern, extending it to an absolute name in case the specimen changes directories */
@@ -226,34 +226,34 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strncmp(argv[argno], "--debug=", 8)) {
-            tracing_flags = tracingFacilityBit(TRACE_MISC);
+            tracingFlags_ = tracingFacilityBit(TRACE_MISC);
             char *s = argv[argno]+8;
             while (s && *s) {
                 char *comma = strchr(s, ',');
                 std::string word(s, comma?comma-s:strlen(s));
                 s = comma ? comma+1 : NULL;
                 if (word=="all") {
-                    tracing_flags = (unsigned)(-1);
+                    tracingFlags_ = (unsigned)(-1);
                 } else if (word=="insn") {
-                    tracing_flags |= tracingFacilityBit(TRACE_INSN);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_INSN);
                 } else if (word=="state") {
-                    tracing_flags |= tracingFacilityBit(TRACE_STATE);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_STATE);
                 } else if (word=="mem") {
-                    tracing_flags |= tracingFacilityBit(TRACE_MEM);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_MEM);
                 } else if (word=="mmap") {
-                    tracing_flags |= tracingFacilityBit(TRACE_MMAP);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_MMAP);
                 } else if (word=="signal") {
-                    tracing_flags |= tracingFacilityBit(TRACE_SIGNAL);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_SIGNAL);
                 } else if (word=="syscall") {
-                    tracing_flags |= tracingFacilityBit(TRACE_SYSCALL);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_SYSCALL);
                 } else if (word=="loader") {
-                    tracing_flags |= tracingFacilityBit(TRACE_LOADER);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_LOADER);
                 } else if (word=="progress") {
-                    tracing_flags |= tracingFacilityBit(TRACE_PROGRESS);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_PROGRESS);
                 } else if (word=="thread") {
-                    tracing_flags |= tracingFacilityBit(TRACE_THREAD);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_THREAD);
                 } else if (word=="futex") {
-                    tracing_flags |= tracingFacilityBit(TRACE_FUTEX);
+                    tracingFlags_ |= tracingFacilityBit(TRACE_FUTEX);
                 } else {
                     fprintf(stderr, "%s: debug words must be from the set: "
                             "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread, futex\n",
@@ -264,7 +264,7 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             argno++;
 
         } else if (!strcmp(argv[argno], "--debug")) {
-            tracing_flags = tracingFacilityBit(TRACE_MISC);
+            tracingFlags_ = tracingFacilityBit(TRACE_MISC);
             argno++;
 
         } else if (!strncmp(argv[argno], "--core=", 7)) {
@@ -287,10 +287,10 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
             interp_name = argv[argno++]+9;
 
         } else if (!strncmp(argv[argno], "--vdso=", 7)) {
-            vdso_paths.clear();
+            vdsoPaths_.clear();
             for (char *s=argv[argno]+7; s && *s; /*void*/) {
                 char *colon = strchr(s, ':');
-                vdso_paths.push_back(std::string(s, colon?colon-s:strlen(s)));
+                vdsoPaths_.push_back(std::string(s, colon?colon-s:strlen(s)));
                 s = colon ? colon+1 : NULL;
             }
             argno++;
@@ -381,27 +381,34 @@ RSIM_Simulator::configure(int argc, char **argv, char **envp)
 }
 
 int
-RSIM_Simulator::exec(int argc, char **argv)
+RSIM_Simulator::loadSpecimen(int argc, char **argv)
 {
-    assert(argc>0);
+    ASSERT_require2(exeArgs_.empty(), "specimen cannot be loaded twice");
+    ASSERT_require(argc>0);
+    ASSERT_not_null(argv);
+
+    // Save arguments
+    exeName_ = argv[0];
+    for (int i=0; i<argc; ++i)
+        exeArgs_.push_back(argv[i]);
 
     create_process();
 
-    SgAsmGenericHeader *fhdr = process->load(argv[0]);
+    SgAsmGenericHeader *fhdr = process->load();
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
 
-    RSIM_Thread *main_thread = process->get_main_thread();
-    process->initialize_stack(fhdr, argc, argv);
+    RSIM_Thread *mainThread = process->get_main_thread();
+    initializeStackArch(mainThread, fhdr, argc, argv);
 
     process->binary_trace_start();
 
-    if ((process->get_tracing_flags() & tracingFacilityBit(TRACE_MMAP))) {
-        fprintf(process->get_tracing_file(), "memory map after program load:\n");
-        process->get_memory().dump(process->get_tracing_file(), "  ");
+    if ((process->tracingFlags() & tracingFacilityBit(TRACE_MMAP))) {
+        fprintf(process->tracingFile(), "memory map after program load:\n");
+        process->get_memory().dump(process->tracingFile(), "  ");
     }
 
-    main_thread->tracing(TRACE_STATE) <<"Initial state:\n"
-                                      <<*main_thread->operators()->get_state()->get_register_state();
+    mainThread->tracing(TRACE_STATE) <<"Initial state:\n"
+                                     <<*mainThread->operators()->get_state()->get_register_state();
 
     return 0;
 }
@@ -413,10 +420,9 @@ RSIM_Simulator::create_process()
 
     process = new RSIM_Process(this);
     process->set_callbacks(callbacks);
-    process->set_tracing(stderr, tracing_flags);
+    process->set_tracing(stderr, tracingFlags_);
     process->set_core_styles(core_flags);
     process->set_interpname(interp_name);
-    process->vdso_paths = vdso_paths;
 
     process->set_tracing_name(tracing_file_name);
     process->open_tracing_file();

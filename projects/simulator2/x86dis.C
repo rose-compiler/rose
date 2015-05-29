@@ -94,7 +94,7 @@ main(int argc, char *argv[], char *envp[])
     if (0==trigger_va) {
         if (trigger_func.empty() || !trigger_func.compare("oep")) {
             trigger_va = process->get_ep_orig_va();
-        } else if (0==(trigger_va = RSIM_Tools::FunctionFinder().address(process->get_loads(), trigger_func))) {
+        } else if (0==(trigger_va = RSIM_Tools::FunctionFinder().address(process->headers(), trigger_func))) {
             std::cerr <<argv[0] <<": unable to locate address of function: " <<trigger_func <<"\n";
             exit(1);
         }

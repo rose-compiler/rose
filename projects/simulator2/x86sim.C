@@ -1,307 +1,179 @@
 /* Emulates an executable. */
-#include "rose.h"
-#include "RSIM_Private.h"
+#include <rose.h>
+#include <RSIM_Private.h>
 
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
-#include "RSIM_Linux32.h"
-#include "RSIM_Adapter.h"
-#include "Diagnostics.h"
+#include <RSIM_Linux32.h>
+#include <RSIM_Linux64.h>
+#include <Diagnostics.h>
+#include <sawyer/CommandLine.h>
+#include <sawyer/Message.h>
 
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
-static SAWYER_THREAD_TRAITS::RecursiveMutex global_mutex;
-static bool do_disassemble_at_coredump = false;         /* disassemble when specimen is about to dump core? */
-static std::set<rose_addr_t> do_disassemble_at_addr;    /* disassemble first time these instructions are hit. */
-static bool do_show_disassembly = false;                /* show assembly code whenever we disassemble? */
+Sawyer::Message::Facility mlog;
 
-/* Instruction callback to run the disassembler the first time we hit disassemble_at.  Once we hit it, we reset the
- * do_disassemble global and remove the callback from the thread and process. */
-class DisassembleAtAddress: public RSIM_Callbacks::InsnCallback {
-public:
-    virtual DisassembleAtAddress *clone() { return this; }
-    virtual bool operator()(bool prev, const Args &args) {
-        RSIM_Process *process = args.thread->get_process();
+enum GuestOs { GUEST_OS_NONE, GUEST_OS_LINUX_x86, GUEST_OS_LINUX_amd64 };
 
-        bool dis=false, clean=false;
-        {
-            SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(global_mutex);
-            if (do_disassemble_at_addr.empty()) {
-                clean = true;
-            } else if (do_disassemble_at_addr.find(args.insn->get_address())!=do_disassemble_at_addr.end()) {
-                do_disassemble_at_addr.erase(args.insn->get_address());
-                dis = true;
-                if (do_disassemble_at_addr.empty())
-                    clean = true;
-            }
-        }
-
-        if (dis) {
-            mfprintf(args.thread->tracing(TRACE_MISC))("disassembling at 0x%08"PRIx64"...\n", args.insn->get_address());
-            SgAsmBlock *block = process->disassemble();
-            if (do_show_disassembly)
-                AsmUnparser().unparse(std::cout, block);
-        }
-
-        if (clean) {
-            args.thread->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
-            process->get_callbacks().remove_insn_callback(RSIM_Callbacks::BEFORE, this);
-        }
-
-        return prev;
-    }
+struct Settings {
+    GuestOs guestOs;
+    bool catchingSignals;
+    Settings()
+        : guestOs(GUEST_OS_NONE), catchingSignals(false) {}
 };
 
-/* Process callback to run the disassembler when we're about to dump core. */
-class DisassembleAtCoreDump: public RSIM_Callbacks::ProcessCallback {
-public:
-    virtual DisassembleAtCoreDump *clone() { return this; }
-    virtual bool operator()(bool prev, const Args &args) {
-        if (args.reason==COREDUMP) {
-            Sawyer::Message::Stream tracer(mlog[INFO]);
-            fprintf(stderr, "disassembling at core dump\n");
-            args.process->mem_showmap(tracer);
-            SgAsmBlock *block = args.process->disassemble();
-            if (do_show_disassembly)
-                AsmUnparser().unparse(std::cout, block);
-        }
-        return prev;
-    }
-};
+std::vector<std::string>
+parseCommandLine(int argc, char *argv[], Settings &settings) {
+    using namespace Sawyer::CommandLine;
+    Parser parser;
+    parser
+        .purpose("concrete simulation of an executable")
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{specimen_args}...]")
+        .doc("Description",
+             "This tool simulates concrete execution of an executable specimen in an unsafe manner. Any system calls made by "
+             "the specimen are passed along by the underlying operating system after possible translation by this tool. The "
+             "tool emulates various services typically provided by the operating system, such as memory management, signal "
+             "handling, and thread support.\n\n"
 
-int
-main(int argc, char *argv[], char *envp[])
-{
-    RSIM_Linux32 sim;
+             "This tool is not intended to be a full-fledged virtual machine, but rather a dynamic analysis platform. "
+             "The dynamic nature comes from ROSE's ability to \"execute\" an instruction in a concrete domain, and the "
+             "tool's ability to simulate certain aspects of an operating system, including process and thread creation, "
+             "signal delivery, memory management, and system call emulation. There may be other alternatives more "
+             "suitable to your situation:"
 
-    /* Suck out any command-line switches that the tool recognizes.  Leave the others for processing by the RSIM_Simulator
-     * class. */
-    bool do_disassemble_at_oep = false;
-    bool do_activate = true;
-    for (int i=1; i<argc; i++) {
-        bool parsed = false;
-        if (!strncmp(argv[i], "--disassemble=", 14)) {
-            parsed = true;
-            char *at = argv[i]+14;
-            while (*at) {
-                if (!strncmp(at, "oep", 3)) {
-                    do_disassemble_at_oep = true;
-                    at += 3;
-                } else if (!strncmp(at, "core", 4)) {
-                    do_disassemble_at_coredump = true;
-                    at += 4;
-                } else if (!strncmp(at, "show", 4)) {
-                    do_show_disassembly = true;
-                    at += 4;
-                } else {
-                    char *rest;
-                    rose_addr_t addr = strtoull(at, &rest, 0);
-                    if (*rest && *rest!=',') {
-                        fprintf(stderr, "invalid argument for --disassemble switch: %s\n", at);
-                        exit(1);
-                    }
-                    do_disassemble_at_addr.insert(addr);
-                    at = rest;
-                }
-                if (','==*at)
-                    at++;
-            }
-        } else if (!strcmp(argv[i], "--no-activate")) {
-            parsed = true;
-            do_activate = false;
-        } else if (!strcmp(argv[i], "--activate")) {
-            parsed = true;
-            do_activate = true;
-        }
+             "@bullet{ROSE can analyze a natively running process.  It does so by attaching to the process as if it "
+             "were a debugger and querying the process's state (memory and registers) from the operating system. This is "
+             "much less complicated than trying to simulate execution by emulating substantial features of the operating "
+             "system.}"
 
-        if (parsed) {
-            memmove(argv+i, argv+i+1, (argc-i)*sizeof(*argv));
-            --argc;
-            --i;
-        }
-    }
-    
-    if (do_disassemble_at_oep || !do_disassemble_at_addr.empty())
-        sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new DisassembleAtAddress);
-    if (do_disassemble_at_coredump)
-        sim.get_callbacks().add_process_callback(RSIM_Callbacks::BEFORE, new DisassembleAtCoreDump);
+             "@bullet{ROSE has a built-in debugger. ROSE can execute a specimen natively within its own debugger, which "
+             "includes the ability to set breakpoints for entire regions of memory (e.g., all addresses). This allows "
+             "user-written tools to easily customize execution within the debugger. This can be combined with the previous "
+             "bullet to analyze the program both dynamically and staticlly is and is significantly faster than "
+             "simulating each instruction.}")
+        .doc("Caveats", "z",
+             "Speed of simulation is not a primary goal of this tool. ROSE is mostly a static analysis library "
+             "whose capabilities happen to include the ability to write a concrete simulation tool.\n\n"
 
-#if 0
-    sim.get_callbacks().add_signal_callback(RSIM_Callbacks::AFTER, new RSIM_Tools::SignalStackTrace);
-#endif
-        
-        
-#if 0
-    {
-        char **p = envp;
-        while (*p) ++p;
-        for (uint64_t *av=(uint64_t*)(p+1); 0!=*av; av+=2) {
-            if (33==av[0]) {
-                void *sysinfo_ehdr = (void*)(av[1]);
-                std::string vdso_name_temp = "x86sim.vdso";
-                int fd = open(vdso_name_temp.c_str(), O_CREAT|O_EXCL|O_RDWR, 0666);
-                if (fd>=0) {
-                    write(fd, sysinfo_ehdr, 4096);
-                    close(fd);
-                    fprintf(stderr, "%s: saved vdso in %s\n", argv[0], vdso_name_temp.c_str());
-                }
-                break;
-            }
-        }
-    }
-#endif
+             "Specimen memory is managed in a container within the simulating ROSE process. Therefore operations like "
+             "interprocess communication via shared memory will probably never work.  This limitation may also include "
+             "intra-process communication with shared memory mapped at two different addresses, and other \"tricks\" that "
+             "specimens sometimes do with their memory maps.\n\n"
 
-    
-    
+             "The specimen process and threads are simulated inside this tool's process and threads. Certain operations that "
+             "modify process and thread properties will end up modifying the tools process and threads. For instance, reading "
+             "from the Linux \"/proc/<em>n</em>\" filesystem will return information about the simulator tool rather than "
+             "the specimen being simulated. Sending a signal to a process or thread will cause the tool to forward the "
+             "signal to the simulated process or thread only if this behavior is enabled at runtime.");
+
+    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+
+    SwitchGroup sg("Tool-specific switches");
+
+    sg.insert(Switch("arch")
+              .argument("architecture", enumParser<GuestOs>(settings.guestOs)
+                        ->with("linux-x86", GUEST_OS_LINUX_x86)
+                        ->with("linux-amd64", GUEST_OS_LINUX_amd64))
+              .doc("Simulated host architecture.  The supported architectures are:"
+                   "@named{linux-x86}{Linux operating system running on 32-bit x86-compatible hardware.}"
+                   "@named{linux-amd64}{Linux operating system running on 64-bit amd64-compatible hardware.}"));
+
+    sg.insert(Switch("signals")
+              .intrinsicValue(true, settings.catchingSignals)
+              .doc("Causes the simulator to catch signals sent by other processes and deliver them to the "
+                   "specimen by emulating the operating system's entire signal delivery mechanism.  The "
+                   "@s{no-signals} switch disables this feature, in which case signals sent to this tool "
+                   "will cause the default action to occur (e.g., pressing Control-C will likely terminate "
+                   "the tool directly, whereas when signal handling is emulated it will cause a simulated SIGINT "
+                   "to be sent to the specimen possibly causing the an emulated termination. Signals raised by "
+                   "the specimen to be delivered to itself are always emulated; signals raised by the specimen to "
+                   "be delivered to some other process are handled by system call emulation.  The default is that "
+                   "signals generated by some other process and delivered to the simulator process will " +
+                   std::string(settings.catchingSignals ? "be forwarded to the specimen." :
+                               "cause the default signal action within the simulator tool.")));
+    sg.insert(Switch("no-signals")
+              .key("signals")
+              .intrinsicValue(false, settings.catchingSignals)
+              .hidden(true));
 
 
-
-
-    /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: report function names. */
-    sim.get_callbacks().add_insn_callback(RSIM_Callbacks::BEFORE, new FunctionReporter);
-#   endif
-
-    /***************************************************************************************************************************/
-#   if 0 /*EXAMPLE*/
-    {
-        /* Shows how to replace a system call implementation so something else happens instead.  For instance, we replace the
-         * open system call (#5) to ignore the file name and always open "/dev/null".  The system call tracing facility will
-         * still report the original file name--we could supply an entry callback also if we wanted different behavior. */
-        class NullOpen: public RSIM_Simulator::SystemCall::Callback {
-        public:
-            bool operator()(bool b, const Args &args) {
-                uint32_t flags = args.thread->syscall_arg(1); // second argument
-                uint32_t mode  = args.thread->syscall_arg(2); // third argument
-                int fd = open("/dev/null", flags, mode);
-                args.thread->syscall_return(fd);
-                return b;
-            }
-        };
-
-        sim.syscall_implementation(5)->body.clear().append(new NullOpen);
-    }
-#   endif
-
-    /***************************************************************************************************************************/
-#   if 0 /*EXAMPLE: Tracing file I/O */
-    {
-        RSIM_Adapter::TraceFileIO *tracer = new RSIM_Adapter::TraceFileIO;
-        tracer->trace_fd(0); // stdin
-        tracer->trace_fd(1); // stdout
-        tracer->trace_fd(2); // stderr
-        tracer->attach(&sim); //sim->adapt(tracer);
-    }
-#   endif
-
-    /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: disabling network capability */
-    {
-        static RSIM_Adapter::SyscallDisabler no_network(true);
-        no_network.prefix("NoNetwork: ");
-        no_network.disable_syscall(102/*sys_socketcall*/);
-        no_network.attach(&sim);
-    }
-#   endif
-
-    /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: disabling system calls */
-    {
-        struct Ask: public RSIM_Simulator::SystemCall::Callback {
-            std::set<int> asked;
-            bool operator()(bool syscall_enabled, const Args &args) {
-                if (asked.find(args.callno)==asked.end()) {
-                    asked.insert(args.callno);
-                    fprintf(stderr, "System call %d is currently disabled. What should I do? (s=skip, e=enable) [s] ",
-                            args.callno);
-                    char buf[200];
-                    if (fgets(buf, sizeof buf, stdin) && buf[0]=='e')
-                        syscall_enabled = true;
-                }
-                return syscall_enabled;
-            }
-        };
-
-        static RSIM_Adapter::SyscallDisabler disabler(false);
-        disabler.get_callbacks().append(new Ask);
-        disabler.attach(&sim);
-    }
-#   endif
-        
-    /***************************************************************************************************************************/
-#   if 0 /* EXAMPLE: Data injection */
-#   endif
-
-    /***************************************************************************************************************************/
-#   if 1 /* EXAMPLE: Showing the current memory map when the specimen is about to dump core. */
-    {
-        struct ShowMmapAtCoredump: public RSIM_Callbacks::ProcessCallback {
-            virtual ShowMmapAtCoredump *clone() { return this; }
-            virtual bool operator()(bool enabled, const Args &args) {
-                if (args.reason==RSIM_Callbacks::ProcessCallback::COREDUMP) {
-                    Sawyer::Message::Stream m(mlog[INFO]);
-                    std::string title = "ShowMmapAtCoreDump triggered for process" + StringUtility::numberToString(getpid());
-                    args.process->mem_showmap(m, title.c_str(), "  ");
-                }
-                return enabled;
-            }
-        };
-        sim.install_callback(new ShowMmapAtCoredump);
-    }
-#endif
-
-    /***************************************************************************************************************************/
-#   if 0 /* Example: providing implementation for instructions not recognized by ROSE proper. */
-    sim.install_callback(new RSIM_Tools::UnhandledInstruction);
-#   endif
-
-    /***************************************************************************************************************************/
-#if 0 /* DEBUGGING [RPM 2011-12-13] */
-    RSIM_Tools::ForkPauser forkPauser;
-    sim.get_callbacks().add_process_callback(RSIM_Callbacks::AFTER, &forkPauser);
-#endif
-
-    /***************************************************************************************************************************
-     *                                  The main program...
-     ***************************************************************************************************************************/
-    
-    /* Configure the simulator by parsing command-line switches. The return value is the index of the executable name in argv. */
-    int n = sim.configure(argc, argv, envp);
-
-    /* Create the initial process object by loading a program and initializing the stack.   This also creates the main thread,
-     * but does not start executing it. */
-    sim.exec(argc-n, argv+n);
-    if (do_disassemble_at_oep)
-        do_disassemble_at_addr.insert(sim.get_process()->get_ep_orig_va());
-
-    /* Get ready to execute by making the specified simulator active. This sets up signal handlers, etc. */
-    if (do_activate)
-        sim.activate();
-
-    /* Allow executor threads to run and return when the simulated process terminates. The return value is the termination
-     * status of the simulated program. */
-    sim.main_loop();
-
-    /* Not really necessary since we're not doing anything else. */
-    if (do_activate)
-        sim.deactivate();
-
-    /* Describe termination status, and then exit ourselves with that same status. */
-    std::cerr <<sim.describe_termination() <<"\n";
-    sim.terminate_self(); // probably doesn't return
-    return 0;
+    return parser.with(gen).with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
+template<class Simulator>
+static void
+simulate(const Settings &settings, const std::vector<std::string> &args, char *envp[]) {
+    Simulator sim;
 
+    // Local resources that need to be cleaned up
+    struct Resources {
+        int argc;
+        char **argv;
+        Resources(): argc(0), argv(NULL) {}
+        ~Resources() {
+            for (int i=0; i<argc; ++i) {
+                if (argv[i])
+                    free(argv[i]);
+            }
+            delete[] argv;
+        }
+    } r;
 
+    // Build the command-line arguments for the specimen
+    r.argc = args.size();
+    r.argv = new char*[args.size()+1];
+    for (int i=0; i<r.argc; ++i)
+        r.argv[i] = strdup(args[i].c_str());
+    r.argv[r.argc] = NULL;
 
+    // Run the simulator
+    int n = sim.configure(r.argc, r.argv, envp);
+    sim.loadSpecimen(r.argc-n, r.argv+n);
+    if (settings.catchingSignals)
+        sim.activate();
+    sim.main_loop();
+    if (settings.catchingSignals)
+        sim.deactivate();
+    std::cerr <<sim.describe_termination() <<"\n";
+    sim.terminate_self(); // probably doesn't return
+}
+    
+int
+main(int argc, char *argv[], char *envp[]) {
+    // Initialization
+    Diagnostics::initialize();
+    ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
+
+    // Command-line parsing
+    Settings settings;
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, settings);
+
+    // Simulate the specimen execution
+    switch (settings.guestOs) {
+        case GUEST_OS_LINUX_x86:
+            simulate<RSIM_Linux32>(settings, specimen, envp);
+            break;
+        case GUEST_OS_LINUX_amd64:
+            simulate<RSIM_Linux64>(settings, specimen, envp);
+            break;
+        case GUEST_OS_NONE:
+            ::mlog[FATAL] <<"no architecture specified (\"--arch\"); see \"--help\"\n";
+            exit(1);
+    }
+}
 
 #else
+
 int main(int, char *argv[])
 {
-    std::cerr <<argv[0] <<": not supported on this platform" <<std::endl;
-    return 0;
+    std::cerr <<argv[0] <<": not supported on this platform\n";
+    exit(1);
 }
 
 #endif /* ROSE_ENABLE_SIMULATOR */

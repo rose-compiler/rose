@@ -1,13 +1,12 @@
-#ifndef ROSE_RSIM_Linux32_H
-#define ROSE_RSIM_Linux32_H
+#ifndef ROSE_RSIM_Linux64_H
+#define ROSE_RSIM_Linux64_H
 
 #include "RSIM_Linux.h"
 
-/** Simulator for 32-bit Linux guests. */
-class RSIM_Linux32: public RSIM_Linux {
-    std::vector<uint32_t> auxv_;                       // auxv vector pushed onto initial stack; also used when dumping core
+/** Simulator for 64-bit Linux guests. */
+class RSIM_Linux64: public RSIM_Linux {
 public:
-    RSIM_Linux32() {
+    RSIM_Linux64() {
         init();
     }
 
@@ -19,8 +18,4 @@ private:
     void init();
 };
 
-#endif /* ROSE_RSIM_Linux32_H */
-
-
-
-
+#endif

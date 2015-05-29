@@ -1,10 +1,10 @@
 #include "rose.h"
-#include "BinaryLoaderElf.h"
 #include "RSIM_Private.h"
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "Diagnostics.h"
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
@@ -29,15 +29,6 @@ RSIM_Process::ctor()
     futexes = new RSIM_FutexTable(sem, simulator->get_semaphore_name(), do_unlink);
     assert(futexes!=NULL);
 
-    vdso_name = "x86vdso";
-    vdso_paths.push_back(".");
-#ifdef X86_VDSO_PATH_1
-    vdso_paths.push_back(X86_VDSO_PATH_1);
-#endif
-#ifdef X86_VDSO_PATH_2
-    vdso_paths.push_back(X86_VDSO_PATH_2);
-#endif
-
     gdt[0x23>>3].entry_number = 0x23>>3;
     gdt[0x23>>3].base_addr = 0;
     gdt[0x23>>3].limit = 0x000fffff;
@@ -59,23 +50,11 @@ RSIM_Process::ctor()
     gdt[0x2b>>3].usable = 1;
 }
 
-FILE *
-RSIM_Process::get_tracing_file() const
-{
-    return tracing_file;
-}
-
-unsigned
-RSIM_Process::get_tracing_flags() const
-{
-    return tracing_flags;
-}
-
 void
 RSIM_Process::set_tracing(FILE *file, unsigned flags)
 {
-    tracing_file = file;
-    tracing_flags = flags;
+    tracingFile_ = file;
+    tracingFlags_ = flags;
 }
 
 RSIM_Thread *
@@ -182,154 +161,42 @@ RSIM_Process::get_ninsns() const
     return retval;
 }
 
-/* Using the new interface is still about as complicated as the old interface because we need to perform only a partial link.
- * We want ROSE to link the interpreter (usually /lib/ld-linux.so) into the AST but not link in any other shared objects.
- * Then we want ROSE to map the interpreter (if present) and all main ELF Segments into the specimen address space but not
- * make any of the usual adjustments for ELF Sections that also specify a mapping. */
-struct SimLoader: public BinaryLoaderElf {
-public:
-    SgAsmGenericHeader *interpreter;                    /* header linked into AST for .interp section */
-    SgAsmGenericHeader *vdso;                           /* header for the vdso file, if any */
-    rose_addr_t vdso_mapped_va;                         /* base address where vdso is mapped, or zero */
-    rose_addr_t vdso_entry_va;                          /* entry address for the vdso, or zero */
-
-    SimLoader(SgAsmInterpretation *interpretation, std::string default_interpname)
-        : interpreter(NULL), vdso(NULL), vdso_mapped_va(0), vdso_entry_va(0) {
-        set_perform_dynamic_linking(false);             /* we explicitly link in the interpreter and nothing else */
-        set_perform_remap(true);                        /* map interpreter and main binary into specimen memory */
-        set_perform_relocations(false);                 /* allow simulated interpreter to perform relocation fixups */
-
-        /* Link the interpreter into the AST */
-        SgAsmGenericHeader *header = interpretation->get_headers()->get_headers().front();
-        std::string interpreter_name = find_interpreter(header, default_interpname);
-        if (!interpreter_name.empty()) {
-            SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interpretation);
-            ROSE_ASSERT(composite!=NULL);
-            SgAsmGenericFile *ifile = createAsmAST(composite, interpreter_name);
-            interpreter = ifile->get_headers()->get_headers().front();
-        }
-    }
-
-    /* Finds the name of the interpreter (usually "/lib/ld-linux.so") if any. The name comes from the PT_INTERP section,
-     * usually named ".interp".  If an interpreter name is supplied as an argument, then it will be used instead, but only
-     * if a PT_INTERP section is present. */
-    std::string find_interpreter(SgAsmGenericHeader *header, std::string default_interpname="") {
-        struct: public SgSimpleProcessing {
-            std::string interp_name;
-            void visit(SgNode *node) {
-                SgAsmElfSection *section = isSgAsmElfSection(node);
-                SgAsmElfSegmentTableEntry *segment = section ? section->get_segment_entry() : NULL;
-                if (segment && SgAsmElfSegmentTableEntry::PT_INTERP==segment->get_type()) {
-                    char buf[section->get_size()];
-                    section->read_content_local(0, buf, section->get_size());
-                    interp_name = std::string(buf, section->get_size());
-                }
-            }
-        } t1;
-        t1.traverse(header, preorder);
-        return (t1.interp_name.empty() || default_interpname.empty()) ? t1.interp_name : default_interpname;
-    }
-
-    /* Returns ELF PT_LOAD Segments in order by virtual address. */
-    virtual SgAsmGenericSectionPtrList get_remap_sections(SgAsmGenericHeader *header) {
-        SgAsmGenericSectionPtrList retval;
-        SgAsmGenericSectionPtrList sections = BinaryLoaderElf::get_remap_sections(header);
-        for (SgAsmGenericSectionPtrList::iterator si=sections.begin(); si!=sections.end(); si++) {
-            SgAsmElfSection *section = isSgAsmElfSection(*si);
-            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
-            if (entry && entry->get_type()==SgAsmElfSegmentTableEntry::PT_LOAD)
-                retval.push_back(section);
-        }
-        return retval;
-    }
-
-    /* Load the specified file as a virtual dynamic shared object. Returns true if the vdso was found and mapped. The side
-     * effect is that the "vdso", "vdso_mapped_va", and "vdso_entry_va" data members are initialized when the vdso is found and
-     * mapped into memory. */
-    bool map_vdso(const std::string &vdso_name, SgAsmInterpretation *interpretation, MemoryMap *map) {
-        ROSE_ASSERT(vdso==NULL);
-        ROSE_ASSERT(vdso_mapped_va==0);
-        ROSE_ASSERT(vdso_entry_va==0);
-
-        struct stat sb;
-        if (stat(vdso_name.c_str(), &sb)<0 || !S_ISREG(sb.st_mode))
-            return false;
-
-        SgBinaryComposite *composite = SageInterface::getEnclosingNode<SgBinaryComposite>(interpretation);
-        ROSE_ASSERT(composite!=NULL);
-        SgAsmGenericFile *file = createAsmAST(composite, vdso_name);
-        ROSE_ASSERT(file!=NULL);
-        SgAsmGenericHeader *fhdr = file->get_headers()->get_headers()[0];
-        ROSE_ASSERT(isSgAsmElfFileHeader(fhdr)!=NULL);
-        rose_addr_t entry_rva = fhdr->get_entry_rva();
-
-        AddressInterval freeArea = map->unmapped(AddressInterval::whole().greatest(), Sawyer::Container::MATCH_BACKWARD);
-        assert(!freeArea.isEmpty());
-        vdso_mapped_va = alignUp(freeArea.least(), (rose_addr_t)PAGE_SIZE);
-        vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
-
-        unsigned vdso_access = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
-        MemoryMap::Segment vdso_segment = MemoryMap::Segment::fileInstance(vdso_name, vdso_access, "[vdso]");
-        assert((ssize_t)vdso_segment.buffer()->size()==sb.st_size);
-        map->insert(AddressInterval::baseSize(vdso_mapped_va, vdso_segment.buffer()->size()), vdso_segment);
-
-        if (vdso_segment.buffer()->size()!=alignUp(vdso_segment.buffer()->size(), (rose_addr_t)PAGE_SIZE)) {
-            rose_addr_t anon_va = vdso_mapped_va + vdso_segment.buffer()->size();
-            rose_addr_t anon_size = alignUp(vdso_segment.buffer()->size(),
-                                            (rose_addr_t)PAGE_SIZE) - vdso_segment.buffer()->size();
-            map->insert(AddressInterval::baseSize(anon_va, anon_size),
-                        MemoryMap::Segment::anonymousInstance(anon_size, vdso_access, vdso_segment.name()));
-        }
-
-        vdso_entry_va = vdso_mapped_va + entry_rva;
-        vdso = fhdr;
-        return true;
-    }
-};
-
 SgAsmGenericHeader*
-RSIM_Process::load(const char *name)
+RSIM_Process::load()
 {
-    FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
+    FILE *trace = (tracingFlags_ & tracingFacilityBit(TRACE_LOADER)) ? tracingFile_ : NULL;
 
-    /* Find the executable by searching the PATH environment variable. The executable name and full path name are both saved
-     * in the class (exename and exeargs[0]). */ 
-    ROSE_ASSERT(exename.empty() && exeargs.empty());
-    if (strchr(name, '/')) {
-        if (access(name, R_OK)<0) {
-            fprintf(stderr, "%s: %s\n", name, strerror(errno));
-            exit(1);
-        }
-        exename = strrchr(name, '/')+1;
-        exeargs.push_back(std::string(name));
-    } else {
-        assert(getenv("PATH")!=NULL);
+    // Find the executable in $PATH if necessary and update the simulator's exeArgs[0]
+    ASSERT_require(!simulator->exeName().empty() && !simulator->exeArgs().empty());
+    if (!boost::contains(simulator->exeName(), "/")) {
+        ASSERT_not_null(getenv("PATH"));
         std::string path_env = getenv("PATH");
         size_t len;
         for (size_t pos=0; pos!=std::string::npos && pos<path_env.size(); pos+=len+1) {
             size_t colon = path_env.find_first_of(":;", pos);
             len = colon==std::string::npos ? path_env.size()-pos : colon-pos;
             std::string path = path_env.substr(pos, len);
-            std::string fullname = path + "/" + name;
+            std::string fullname = path + "/" + simulator->exeName();
             if (access(fullname.c_str(), R_OK)>=0) {
-                exename = name;
-                exeargs.push_back(fullname);
+                simulator->exeArgs()[0] = fullname;
                 break;
             }
         }
     }
-    if (exeargs.empty()) {
-        fprintf(stderr, "%s: not found\n", name);
+
+    // Make sure the executable is found and readable (it need not be executable since ROSE is simulating execution)
+    if (access(simulator->exeArgs()[0].c_str(), R_OK)<0) {
+        fprintf(stderr, "%s: %s\n", simulator->exeArgs()[0].c_str(), strerror(errno));
         exit(1);
     }
 
     /* Link the main binary into the AST without further linking, mapping, or relocating. */
     if (trace)
-        fprintf(trace, "loading %s...\n", exeargs[0].c_str());
+        fprintf(trace, "loading %s...\n", simulator->exeArgs()[0].c_str());
     char *frontend_args[4];
     frontend_args[0] = strdup("-");
     frontend_args[1] = strdup("-rose:read_executable_file_format_only"); /*delay disassembly until later*/
-    frontend_args[2] = strdup(exeargs[0].c_str());
+    frontend_args[2] = strdup(simulator->exeArgs()[0].c_str());
     frontend_args[3] = NULL;
     project = frontend(3, frontend_args);
 
@@ -337,87 +204,24 @@ RSIM_Process::load(const char *name)
      * (we'll use the PE interpretation). */
     interpretation = SageInterface::querySubTree<SgAsmInterpretation>(project, V_SgAsmInterpretation).back();
     SgAsmGenericHeader *fhdr = interpretation->get_headers()->get_headers().front();
-    headers.push_back(fhdr);
-    ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
+    headers_.push_back(fhdr);
+    entryPointOriginalVa_ = entryPointStartVa_ = fhdr->get_entry_rva() + fhdr->get_base_va();
 
-    // We only support 32 and 64 bit Linux ELF
-    ASSERT_require(fhdr->get_word_size()==4 || fhdr->get_word_size()==8);
+    // Check architecture
+    if (!simulator->isSupportedArch(fhdr)) {
+        mlog[ERROR] <<"specimen architecture is not supported by this simulator class\n";
+        return NULL;
+    }
     wordSize_ = 8 * fhdr->get_word_size();
-    ASSERT_require(isSgAsmElfFileHeader(fhdr));
 
     /* Link the interpreter into the AST */
-    SimLoader *loader = new SimLoader(interpretation, interpname);
-
-    /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
-     * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
-     * accomplish the same thing simply by rebasing the library. */
-    if (loader->interpreter) {
-        headers.push_back(loader->interpreter);
-        SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
-        if (load0 && load0->is_mapped() && load0->get_mapped_preferred_rva()==0 && load0->get_mapped_size()>0)
-            loader->interpreter->set_base_va(ld_linux_base_va);
-        ep_start_va = loader->interpreter->get_entry_rva() + loader->interpreter->get_base_va();
-    }
-
-    /* Sort the headers so they're in order by entry address. In other words, if the interpreter's entry address is below the
-     * entry address of the main executable, then make sure the interpretter gets mapped first. */
-    SgAsmGenericHeaderPtrList &headers = interpretation->get_headers()->get_headers();
-    if (2==headers.size()) {
-        if (headers[0]->get_base_va() + headers[0]->get_entry_rva() >
-            headers[1]->get_base_va() + headers[1]->get_entry_rva())
-            std::swap(headers[0], headers[1]);
-    } else {
-        ROSE_ASSERT(1==headers.size());
-    }
-
-    /* Map all segments into simulated memory */
-    loader->load(interpretation);
-    assert(map_stack.empty());
-    mem_transaction_start("specimen main memory");
-    get_memory() = *interpretation->get_map();          // shallow copy, new segments point to same old data
-
-    /* Load and map the virtual dynamic shared library. */
-    bool vdso_loaded = false;
-    for (size_t i=0; i<vdso_paths.size() && !vdso_loaded; i++) {
-        for (int j=0; j<2 && !vdso_loaded; j++) {
-            std::string vdso_name = vdso_paths[i] + (j ? "" : "/" + this->vdso_name);
-            if (trace)
-                fprintf(trace, "looking for vdso: %s\n", vdso_name.c_str());
-            if ((vdso_loaded = loader->map_vdso(vdso_name, interpretation, &get_memory()))) {
-                vdso_mapped_va = loader->vdso_mapped_va;
-                vdso_entry_va = loader->vdso_entry_va;
-                headers.push_back(loader->vdso);
-                if (trace) {
-                    fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
-                            vdso_name.c_str(), vdso_mapped_va, vdso_entry_va);
-                }
-            }
-        }
-    }
-    if (!vdso_loaded && trace && !vdso_paths.empty())
-        fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
+    simulator->loadSpecimenArch(this, interpretation, interpname);
 
     /* Find a disassembler. */
     if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
         disassembler->set_progress_reporting(-1); /* turn off progress reporting */
     }
-
-    // Initialize the brk value
-    struct FindInitialBrk: public SgSimpleProcessing {
-        FindInitialBrk(): max_mapped_va(0) {}
-        rose_addr_t max_mapped_va;
-        void visit(SgNode *node) {
-            SgAsmGenericSection *section = isSgAsmGenericSection(node);
-            if (section && section->is_mapped())
-                max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
-        }
-    } t1;
-    t1.traverse(fhdr, preorder);
-    AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
-    brk_va = get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0);
-
-    delete loader;
 
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
@@ -428,7 +232,7 @@ RSIM_Process::load(const char *name)
     initialRegisters.ds = 0x2b;
     initialRegisters.es = 0x2b;
     initialRegisters.ss = 0x2b;
-    initialRegisters.ip = ep_start_va;
+    initialRegisters.ip = entryPointStartVa_;
     pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
     RSIM_Thread *thread = get_thread(mainTid);
 
@@ -575,10 +379,10 @@ RSIM_Process::dump_core(int signo, std::string base_name)
     prpsinfo.ppid = getppid();
     prpsinfo.pgrp = getpgrp();
     prpsinfo.sid = getsid(0);
-    strncpy(prpsinfo.fname, exename.c_str(), sizeof(prpsinfo.fname));
+    strncpy(prpsinfo.fname, simulator->exename().c_str(), sizeof(prpsinfo.fname));
     std::string all_args;
-    for (size_t i=0; i<exeargs.size(); i++)
-        all_args += exeargs[i] + " "; /*yes, there's an extra space at the end*/
+    for (size_t i=0; i<simulator->exeArgs().size(); i++)
+        all_args += simulator->exeArgs()[i] + " "; /*yes, there's an extra space at the end*/
     strncpy(prpsinfo.psargs, all_args.c_str(), sizeof(prpsinfo.psargs));
     
     SgAsmElfNoteEntry *prpsinfo_note = new SgAsmElfNoteEntry(notes);
@@ -751,25 +555,25 @@ RSIM_Process::open_tracing_file()
         size_t nprinted = snprintf(name, sizeof name, tracing_file_name.c_str(), getpid());
         if (nprinted > sizeof name) {
             fprintf(stderr, "name pattern overflow: %s\n", tracing_file_name.c_str());
-            tracing_file = stderr;
+            tracingFile_ = stderr;
             return;
         }
     } else {
         name[0] = '\0';
     }
 
-    if (tracing_file && tracing_file!=stderr && tracing_file!=stdout) {
-        fclose(tracing_file);
-        tracing_file = NULL;
+    if (tracingFile_ && tracingFile_!=stderr && tracingFile_!=stdout) {
+        fclose(tracingFile_);
+        tracingFile_ = NULL;
     }
 
     if (name[0]) {
-        if (NULL==(tracing_file = fopen(name, "w"))) {
+        if (NULL==(tracingFile_ = fopen(name, "w"))) {
             fprintf(stderr, "%s: %s\n", strerror(errno), name);
             return;
         }
 #ifdef X86SIM_LOG_UNBUFFERED
-        setbuf(tracing_file, NULL);
+        setbuf(tracingFile_, NULL);
 #endif
     }
 }
@@ -793,7 +597,7 @@ RSIM_Process::binary_trace_start()
     assert(1==n);
 
     char exename_buf[32];
-    strncpy(exename_buf, exename.c_str(), 32);
+    strncpy(exename_buf, simulator->exeName().c_str(), 32);
     exename_buf[31] = '\0';
     n = fwrite(exename_buf, 32, 1, btrace_file);
     assert(1==n);
@@ -1086,16 +890,16 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
         return -ENOMEM;
 
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-    if (newbrk > brk_va) {
-        size_t size = newbrk - brk_va;
-        get_memory().insert(AddressInterval::baseSize(brk_va, size),
+    if (newbrk > brkVa_) {
+        size_t size = newbrk - brkVa_;
+        get_memory().insert(AddressInterval::baseSize(brkVa_, size),
                             MemoryMap::Segment::anonymousInstance(size, MemoryMap::READABLE|MemoryMap::WRITABLE, "[heap]"));
-        brk_va = newbrk;
-    } else if (newbrk>0 && newbrk<brk_va) {
-        get_memory().erase(AddressInterval::baseSize(newbrk, brk_va-newbrk));
-        brk_va = newbrk;
+        brkVa_ = newbrk;
+    } else if (newbrk>0 && newbrk<brkVa_) {
+        get_memory().erase(AddressInterval::baseSize(newbrk, brkVa_-newbrk));
+        brkVa_ = newbrk;
     }
-    int retval= brk_va;
+    int retval= brkVa_;
 
     if (mesg)
         mem_showmap(mesg, "memory map after brk syscall:\n");
@@ -1258,308 +1062,6 @@ RSIM_Process::gdt_entry(int idx)
 }
 
 
-
-/* Initialize the stack of the main thread. */
-void
-RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[])
-{
-    FILE *trace = (tracing_flags & tracingFacilityBit(TRACE_LOADER)) ? tracing_file : NULL;
-    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
-
-    RSIM_Thread *main_thread = get_main_thread();
-
-    /* We only handle ELF for now */
-    SgAsmElfFileHeader *fhdr = isSgAsmElfFileHeader(_fhdr);
-    ROSE_ASSERT(fhdr!=NULL);
-
-    /* Allocate the stack */
-    static const size_t stack_size = 0x00015000;
-    rose_addr_t sp = main_thread->operators()->readRegister(main_thread->dispatcher()->REG_anySP)->get_number();
-    rose_addr_t stack_addr = sp - stack_size;
-    get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
-                        MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
-                                                              "[stack]"));
-
-    /* Save specimen arguments in RSIM_Process object. The executable name is already there. */
-    assert(exeargs.size()==1);
-    for (int i=1; i<argc; i++)
-        exeargs.push_back(std::string(argv[i]));
-
-    /* Not sure what the first eight bytes are */
-    static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
-    sp -= sizeof unknown_top;
-    mem_write(unknown_top, sp, sizeof unknown_top);
-
-    /* Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv. */
-    sp -= exeargs[0].size() + 1;
-    uint32_t execfn_va = sp;
-    mem_write(exeargs[0].c_str(), sp, exeargs[0].size()+1);
-
-    /* Create new environment variables by stripping "X86SIM_" off the front of any environment variable and using that
-     * value to override the non-X86SIM_ value, if any.  We try to make sure the variables are in the same order as if the
-     * X86SIM_ overrides were not present. In other words, if X86SIM_FOO and FOO are both present, then X86SIM_FOO is
-     * deleted from the list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the
-     * name to FOO and leave it at that location. We do all this so that variables are in the same order whether run
-     * natively or under the simulator. */
-    std::vector<size_t> env_offsets;
-    std::string env_buffer;
-    std::map<std::string, std::string> envvars;
-    std::map<std::string, std::string>::iterator found;
-    for (int i=0; environ[i]; i++) {
-        char *eq = strchr(environ[i], '=');
-        ROSE_ASSERT(eq!=NULL);
-        std::string var(environ[i], eq-environ[i]);
-        std::string val(eq+1);
-        envvars.insert(std::make_pair(var, val));
-    }
-    for (int i=0; environ[i]; i++) {
-        char *eq = strchr(environ[i], '=');
-        ROSE_ASSERT(eq!=NULL);
-        std::string var(environ[i], eq-environ[i]);
-        std::string val(eq+1);
-        if (!strncmp(var.c_str(), "X86SIM_", 7) && environ[i]+7!=eq) {
-            std::string var_short = var.substr(7);
-            if ((found=envvars.find(var_short))==envvars.end()) {
-                var = var_short;
-                val = eq+1;
-            } else {
-                continue;
-            }
-        } else {
-            std::string var_long = "X86SIM_" + var;
-            if ((found=envvars.find(var_long))!=envvars.end()) {
-                val = found->second;
-            }
-        }
-        std::string env = var + "=" + val;
-        env_offsets.push_back(env_buffer.size());
-        env_buffer += env + (char)0;
-    }
-    sp -= env_buffer.size();
-    uint32_t env_va = sp;
-    mem_write(env_buffer.c_str(), env_va, env_buffer.size());
-
-    /* Initialize the stack with the specimen's argc and argv.  The argv data must be stored contiguously with arg[0] at
-     * the low address and arg[argc-1] at the high address. (WINE's preloader.c set_process_name() depends on this). */
-    std::vector<uint32_t> pointers(argc+1, 0);              /* pointers pushed onto stack at the end of initialization */
-    pointers[0] = exeargs.size();
-    for (size_t i=exeargs.size(); i>0; --i) {
-        size_t len = exeargs[i-1].size() + 1;               /* inc. NUL terminator */
-        sp -= len;
-        mem_write(exeargs[i-1].c_str(), sp, len);
-        pointers[i] = sp;
-    }
-    if (trace) {
-        for (size_t i=0; i<exeargs.size(); i++) {
-            fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
-                    exeargs[i].size()+1, pointers[i+1], exeargs[i].c_str());
-        }
-    }
-    pointers.push_back(0); /*the argv NULL terminator*/
-
-    /* Add envp pointers to the stack */
-    for (size_t i=0; i<env_offsets.size(); i++) {
-        pointers.push_back(env_va+env_offsets[i]);
-        if (trace) {
-            fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
-                    i, strlen(&(env_buffer[env_offsets[i]]))+1, env_va+env_offsets[i], &(env_buffer[env_offsets[i]]));
-        }
-    }
-    pointers.push_back(0); /*environment NULL terminator*/
-
-    /* Push certain auxv data items onto the stack. */
-    sp &= ~0xf;
-
-    static const char *platform = "i686";
-    sp -= strlen(platform)+1;
-    uint32_t platform_va = sp;
-    mem_write(platform, platform_va, strlen(platform)+1);
-
-    static const uint8_t random_data[] = {                  /* use hard-coded values for reproducibility */
-        0x00, 0x11, 0x22, 0x33,
-        0xff, 0xee, 0xdd, 0xcc,
-        0x88, 0x99, 0xaa, 0xbb,
-        0x77, 0x66, 0x55, 0x44
-    };
-    sp -= sizeof random_data;
-    uint32_t random_data_va = sp;
-    mem_write(random_data, random_data_va, sizeof random_data);
-
-
-    /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
-     * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
-     * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
-    struct T1: public SgSimpleProcessing {
-        rose_addr_t segtab_offset;
-        size_t segtab_size;
-        T1(): segtab_offset(0), segtab_size(0) {}
-        void visit(SgNode *node) {
-            SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
-            if (0==segtab_offset && segtab!=NULL) {
-                segtab_offset = segtab->get_offset();
-                segtab_size = segtab->get_size();
-            }
-        }
-    } t1;
-    t1.traverse(fhdr, preorder);
-    assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
-
-    struct T2: public SgSimpleProcessing {
-        rose_addr_t segtab_offset, segtab_va;
-        size_t segtab_size;
-        T2(rose_addr_t segtab_offset, size_t segtab_size)
-            : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
-            {}
-        void visit(SgNode *node) {
-            SgAsmElfSection *section = isSgAsmElfSection(node);
-            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
-            if (entry && section->get_offset()<=segtab_offset &&
-                section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
-                segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
-        }
-    } t2(t1.segtab_offset, t1.segtab_size);
-    t2.traverse(fhdr, preorder);
-    assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
-
-    /* Initialize stack with auxv, where each entry is two words in the pointers vector.  The order and values were
-     * determined by running the simulator with the "--showauxv" switch on hudson-rose-07. */
-    auxv.clear();
-
-    if (vdso_mapped_va!=0) {
-        /* AT_SYSINFO */
-        auxv.push_back(32);
-        auxv.push_back(vdso_entry_va);
-        if (trace)
-            fprintf(trace, "AT_SYSINFO:       0x%08"PRIx32"\n", auxv.back());
-
-        /* AT_SYSINFO_PHDR */
-        auxv.push_back(33);
-        auxv.push_back(vdso_mapped_va);
-        if (trace)
-            fprintf(trace, "AT_SYSINFO_EHDR:  0x%08"PRIx32"\n", auxv.back());
-    }
-
-    /* AT_HWCAP (see linux <include/asm/cpufeature.h>). */
-    auxv.push_back(16);
-    uint32_t hwcap = 0xbfebfbfful; /* value used by hudson-rose-07, and wortheni(Xeon X5680) */
-    auxv.push_back(hwcap);
-    if (trace)
-        fprintf(trace, "AT_HWCAP:         0x%08"PRIx32"\n", auxv.back());
-
-    /* AT_PAGESZ */
-    auxv.push_back(6);
-    auxv.push_back(PAGE_SIZE);
-    if (trace)
-        fprintf(trace, "AT_PAGESZ:        %"PRId32"\n", auxv.back());
-
-    /* AT_CLKTCK */
-    auxv.push_back(17);
-    auxv.push_back(100);
-    if (trace)
-        fprintf(trace, "AT_CLKTCK:        %"PRId32"\n", auxv.back());
-
-    /* AT_PHDR */
-    auxv.push_back(3); /*AT_PHDR*/
-    auxv.push_back(t2.segtab_va);
-    if (trace)
-        fprintf(trace, "AT_PHDR:          0x%08"PRIx32"\n", auxv.back());
-
-    /*AT_PHENT*/
-    auxv.push_back(4);
-    auxv.push_back(fhdr->get_phextrasz() + sizeof(SgAsmElfSegmentTableEntry::Elf32SegmentTableEntry_disk));
-    if (trace)
-        fprintf(trace, "AT_PHENT:         %"PRId32"\n", auxv.back());
-
-    /* AT_PHNUM */
-    auxv.push_back(5);
-    auxv.push_back(fhdr->get_e_phnum());
-    if (trace)
-        fprintf(trace, "AT_PHNUM:         %"PRId32"\n", auxv.back());
-
-    /* AT_BASE */
-    auxv.push_back(7);
-    auxv.push_back(fhdr->get_section_by_name(".interp") ? ld_linux_base_va : 0);
-    if (trace)
-        fprintf(trace, "AT_BASE:          0x%08"PRIx32"\n", auxv.back());
-
-    /* AT_FLAGS */
-    auxv.push_back(8);
-    auxv.push_back(0);
-    if (trace)
-        fprintf(trace, "AT_FLAGS:         0x%08"PRIx32"\n", auxv.back());
-
-    /* AT_ENTRY */
-    auxv.push_back(9);
-    auxv.push_back(fhdr->get_entry_rva() + fhdr->get_base_va());
-    if (trace)
-        fprintf(trace, "AT_ENTRY:         0x%08"PRIx32"\n", auxv.back());
-
-    /* AT_UID */
-    auxv.push_back(11);
-    auxv.push_back(getuid());
-    if (trace)
-        fprintf(trace, "AT_UID:           %"PRId32"\n", auxv.back());
-
-    /* AT_EUID */
-    auxv.push_back(12);
-    auxv.push_back(geteuid());
-    if (trace)
-        fprintf(trace, "AT_EUID:          %"PRId32"\n", auxv.back());
-
-    /* AT_GID */
-    auxv.push_back(13);
-    auxv.push_back(getgid());
-    if (trace)
-        fprintf(trace, "AT_GID:           %"PRId32"\n", auxv.back());
-
-    /* AT_EGID */
-    auxv.push_back(14);
-    auxv.push_back(getegid());
-    if (trace)
-        fprintf(trace, "AT_EGID:          %"PRId32"\n", auxv.back());
-
-    /* AT_SECURE */
-    auxv.push_back(23); /* 0x17 */
-    auxv.push_back(false);
-    if (trace)
-        fprintf(trace, "AT_SECURE:        %"PRId32"\n", auxv.back());
-
-    /* AT_RANDOM */
-    auxv.push_back(25);/* 0x19 */
-    auxv.push_back(random_data_va);
-    if (trace)
-        fprintf(trace, "AT_RANDOM:       0x%08"PRIx32"\n", auxv.back());
-
-    /* AT_EXECFN */
-    auxv.push_back(31); /* 0x1f */
-    auxv.push_back(execfn_va);
-    if (trace)
-        fprintf(trace, "AT_EXECFN:       0x%08"PRIx32" (%s)\n", auxv.back(), exeargs[0].c_str());
-
-    /* AT_PLATFORM */
-    auxv.push_back(15);
-    auxv.push_back(platform_va);
-    if (trace)
-        fprintf(trace, "AT_PLATFORM:      0x%08"PRIx32" (%s)\n", auxv.back(), platform);
-
-    /* AT_NULL */
-    auxv.push_back(0);
-    auxv.push_back(0);
-    pointers.insert(pointers.end(), auxv.begin(), auxv.end());
-
-    /* Finalize stack initialization by writing all the pointers to data we've pushed:
-     *    argc
-     *    argv with NULL terminator
-     *    environment with NULL terminator
-     *    auxv pairs terminated with (AT_NULL,0)
-     */
-    sp -= 4 * pointers.size();
-    sp &= ~0xf; /*align to 16 bytes*/
-    mem_write(&(pointers[0]), sp, 4*pointers.size());
-
-    const RegisterDescriptor &REG_SP = main_thread->dispatcher()->stackPointerRegister();
-    main_thread->operators()->writeRegister(REG_SP, main_thread->operators()->number_(REG_SP.get_nbits(), sp));
-}
 
 /* The "thread" arg must be the calling thread */
 pid_t

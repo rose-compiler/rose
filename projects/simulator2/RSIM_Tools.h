@@ -117,7 +117,7 @@ public:
 
     /** Search for a function.  Searches for a function named @p fname in all of the specified binary headers and returns the
      *  first one found.  The function must be a global, defined symbol.  If the function cannot be found under any header,
-     *  then the null address is returned.  This function is intended to be called with RSIM_Process::get_loads() as the
+     *  then the null address is returned.  This function is intended to be called with RSIM_Process::headers() as the
      *  argument, which is why the vector uses SgAsmGenericHeader instead of SgNode. */
     rose_addr_t address(const std::vector<SgAsmGenericHeader*> &headers, const std::string &fname) {
         for (std::vector<SgAsmGenericHeader*>::const_iterator hi=headers.begin(); hi!=headers.end(); ++hi) {

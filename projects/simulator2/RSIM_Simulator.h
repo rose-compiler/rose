@@ -11,6 +11,8 @@
 #include "RSIM_Templates.h"
 #include "RSIM_Tools.h"
 
+#include <BinaryLoader.h>
+
 #include <signal.h>
 
 /** @mainpage RSIM: A ROSE x86 Simulator
@@ -119,7 +121,7 @@
  * // Create the initial process object by loading a program
  * // and initializing the stack.  This also creates the main
  * // thread, but does not start executing it.
- * sim.exec(argc-n, argv+n);
+ * sim.loadSpecimen(argc-n, argv+n);
  *
  * // Get ready to execute by making the specified simulator
  * // active.  This sets up signal handlers, etc.
@@ -162,7 +164,7 @@
  *  int main(int argc, char *argv[], char *envp[]) {
  *      RSIM_Linux32 s;                          // RSIM_Linux32 is derived from RSIM_Simulator
  *      int n = s.configure(argc, argv, envp);   // Configure the simulator
- *      s.exec(argc-n, argv+n);                  // Create a simulated process and its initial thread
+ *      s.loadSpecimen(argc-n, argv+n);          // Create a simulated process and its initial thread
  *      s.activate();                            // Allow other real processes to signal this one
  *      s.main_loop();                           // Simulate until exit
  *      s.deactivate();                          // Restore original signal handlers
@@ -173,12 +175,16 @@
 class RSIM_Simulator {
 public:
     static Sawyer::Message::Facility mlog;
+private:
+    std::string exeName_;                               // Specimen name as given on command-line, original argv[0]
+    std::vector<std::string> exeArgs_;                  // Specimen argv, eventually with PATH-resolved argv[0]
+    
 public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
      *  initial process. */
     RSIM_Simulator()
         : global_semaphore(NULL),
-          tracing_flags(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
+          tracingFlags_(0), core_flags(CORE_ELF), btrace_file(NULL), active(0), process(NULL), entry_va(0) {
         ctor();
     }
 
@@ -217,14 +223,33 @@ public:
     sem_t *get_semaphore(bool *unlinked=NULL);
     /** @} */
 
-    /** Load program and create process object.  The argument vector, @p argv, should contain the name of the executable and
-     *  any arguments to pass to the executable.  The executable file is located by consulting the $PATH environment variable,
-     *  and is loaded into memory and an initial RSIM_Thread is created.  The calling thread is the executor for the
-     *  RSIM_Thread.  The return value is zero for success, or a negative error number on failure. This should not be confused
-     *  with the execve system call.
+    /** Load program and create process object.
+     *
+     *  The argument vector, @p argv, should contain the name of the executable and any arguments to pass to the executable.
+     *  The executable file is located by consulting the $PATH environment variable, and is loaded into memory creating an
+     *  RSIM_Process with an and an initial RSIM_Thread. The return value is zero for success, or a negative error number on
+     *  failure.
      *
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. */
-    int exec(int argc, char **argv);
+    int loadSpecimen(int argc, char **argv);
+
+    /** Property: executable name.
+     *
+     *  This is the executable name as set by @ref loadSpecimen.
+     *
+     * @{ */
+    const std::string& exeName() const { return exeName_; }
+    void exeName(const std::string &s) { exeName_ = s; }
+    /** @} */
+
+    /** Property: specimen arguments.
+     *
+     *  These are the argv values for the specimen. The argv[0] might be rewritten based on the $PATH.
+     *
+     * @{ */
+    const std::vector<std::string>& exeArgs() const { return exeArgs_; }
+    std::vector<std::string>& exeArgs() { return exeArgs_; }
+    /** @} */
 
     /** Activate a new simulator. Only one simulator should be active at any given time since activating a simulator causes the
      *  that simulator to trap all signals.  It is not necessary to activate a simulator if the simulator does not expect to
@@ -649,6 +674,18 @@ public:
 private:
     std::map<int/*callno*/, SystemCall*> syscall_table;
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //                                  Architecture-specific stuff
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Returns true if this simulator supports the speciment type. */
+    virtual bool isSupportedArch(SgAsmGenericHeader*) = 0;
+
+    /** Architecture specific loading. */
+    virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) = 0;
+
+    /** Initialize stack for main thread. */
+    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *, int argc, char *argv[]) = 0;
 
     /***************************************************************************************************************************/
     
@@ -676,10 +713,14 @@ private:
 private:
     /* Configuration variables */
     std::string tracing_file_name;      /**< Name pattern for debug trace output, or empty to disable. */
-    unsigned tracing_flags;             /**< What things should be traced for debugging? (See TraceFlags enum) */
+    unsigned tracingFlags_;             /**< What things should be traced for debugging? (See TraceFlags enum) */
     unsigned core_flags;                /**< Kinds of core dumps to produce. (See CoreStyle enum) */
     std::string interp_name;            /**< Name of command-line specified interpreter for dynamic linking. */
-    std::vector<std::string> vdso_paths;/**< Files and/or directories to search for a virtual dynamic shared library. */
+
+protected:
+    std::vector<std::string> vdsoPaths_;/**< Files and/or directories to search for a virtual dynamic shared library. */
+
+private:
     FILE *btrace_file;                  /**< Name for binary trace file, which will log info about process execution. */
 
     /* Simulator activation/deactivation */

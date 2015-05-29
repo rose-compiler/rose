@@ -57,7 +57,7 @@ RSIM_Thread::reopen_trace_facilities()
     for (int tf=0; tf<TRACE_NFACILITIES; tf++) {
         if (trace_mesg[tf]==NULL)
             trace_mesg[tf] = new Sawyer::Message::Stream(RSIM_Simulator::mlog[INFO]);
-        bool shouldEnable = (process->get_tracing_flags() & tracingFacilityBit((TracingFacility)tf));
+        bool shouldEnable = (process->tracingFlags() & tracingFacilityBit((TracingFacility)tf));
         trace_mesg[tf]->enable(shouldEnable);
     }
 }
@@ -608,8 +608,8 @@ RSIM_Thread::atfork_prepare()
     /* Flush some files so buffered content isn't output twice. */
     fflush(stdout);
     fflush(stderr);
-    if (p->get_tracing_file())
-        fflush(p->get_tracing_file());
+    if (p->tracingFile())
+        fflush(p->tracingFile());
 }
 
 /* Called in the parent by the thread that invoked the fork system call. */

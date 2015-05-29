@@ -33,7 +33,9 @@ libRSIM_la_SOURCES =				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
 	RSIM_Futex.C				\
+	RSIM_Linux.C				\
 	RSIM_Linux32.C				\
+	RSIM_Linux64.C				\
 	RSIM_Process.C				\
 	RSIM_Semantics.C			\
 	RSIM_SignalHandling.C			\
@@ -46,7 +48,9 @@ include_HEADERS +=				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
 	RSIM_Futex.h				\
+	RSIM_Linux.h				\
 	RSIM_Linux32.h				\
+	RSIM_Linux64.h				\
 	RSIM_Process.h				\
 	RSIM_Semantics.h			\
 	RSIM_SignalHandling.h			\
@@ -77,9 +81,10 @@ RSIM_Client.o: RSIM_Client.c RSIM_Client.h
 #  PROGRAMS
 ###############################################################################################################################
 
-# The new simulator, which uses ROSE interfaces where possible.  The rest of this makefile deals only with this new simulator.
 # Do not install RSIM_Private.h -- it is only used during compilation.
 EXTRA_DIST += RSIM_Private.h
+
+# The simulator, which uses ROSE interfaces where possible.
 noinst_PROGRAMS += x86sim
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
