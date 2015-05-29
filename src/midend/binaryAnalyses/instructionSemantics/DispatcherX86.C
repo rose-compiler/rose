@@ -3709,6 +3709,18 @@ struct IP_sub: P {
 };
 
 // Fast system call
+struct IP_syscall: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->interrupt(x86_exception_syscall, 0);
+        }
+    }
+};
+
+// Fast system call
 struct IP_sysenter: P {
     void p(D d, Ops ops, I insn, A args) {
         assert_args(insn, args, 0);
@@ -4150,6 +4162,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_stosq,        new X86::IP_storestring(x86_repeat_none, 64));
     iproc_set(x86_stmxcsr,      new X86::IP_stmxcsr);
     iproc_set(x86_sub,          new X86::IP_sub);
+    iproc_set(x86_syscall,      new X86::IP_syscall);
     iproc_set(x86_sysenter,     new X86::IP_sysenter);
     iproc_set(x86_test,         new X86::IP_test);
     iproc_set(x86_ud2,          new X86::IP_ud2);
@@ -4175,6 +4188,14 @@ DispatcherX86::regcache_init()
                 REG_RBP = findRegister("rbp", 64);
                 REG_RIP = findRegister("rip", 64);
                 REG_RFLAGS = findRegister("rflags", 64);
+                REG_R8 = findRegister("r8", 64);
+                REG_R9 = findRegister("r9", 64);
+                REG_R10 = findRegister("r10", 64);
+                REG_R11 = findRegister("r11", 64);
+                REG_R12 = findRegister("r12", 64);
+                REG_R13 = findRegister("r13", 64);
+                REG_R14 = findRegister("r14", 64);
+                REG_R15 = findRegister("r15", 64);
                 // fall through...
             case x86_insnsize_32:
                 REG_EAX = findRegister("eax", 32);
