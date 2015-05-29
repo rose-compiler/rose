@@ -92,7 +92,12 @@ syscall_RSIM_transaction_enter(RSIM_Thread *t, int callno)
 {
     int cmd = t->syscall_arg(0);
     if (1==cmd) { // rollback
-        t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_32), print_pt_regs_32);
+        if (32 == t->get_process()->wordSize()) {
+            t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_32), print_pt_regs_32);
+        } else {
+            ASSERT_require(t->get_process()->wordSize() == 64);
+            t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_64), print_pt_regs_64);
+        }
     } else {
         t->syscall_enter("RSIM_transaction", "ep", transaction_flags);
     }
@@ -109,29 +114,37 @@ syscall_RSIM_transaction(RSIM_Thread *t, int callno)
 
     switch (cmd) {
         case 0: {        // start
-            pt_regs_32 regs = t->get_regs();
-            if (sizeof(regs)!=proc->mem_write(&regs, regs_va, sizeof regs)) {
-                result = -EFAULT;
+            if (32 == t->get_process()->wordSize()) {
+                pt_regs_32 regs_guest = t->get_regs().get_pt_regs_32();
+                if (sizeof(regs_guest)!=proc->mem_write(&regs_guest, regs_va, sizeof regs_guest)) {
+                    result = -EFAULT;
+                } else {
+                    result = proc->mem_transaction_start(transaction_name); // total number of transactions
+                    assert(-1==result || result>0);
+                }
             } else {
-                result = proc->mem_transaction_start(transaction_name); // total number of transactions
-                assert(-1==result || result>0);
+                FIXME("[Robb P. Matzke 2015-05-28]: 64-bit not supported yet");
             }
             break;
         }
 
         case 1: {       // rollback
-            pt_regs_32 regs;
-            if (sizeof(regs)!=proc->mem_read(&regs, regs_va, sizeof regs)) {
-                result = -EFAULT;
-            } else if (0>=(result = t->get_process()->mem_transaction_rollback(transaction_name))) {
-                // error; don't initialize registers; this syscall will return without doing anything
-                if (0==result)
-                    result = -EINVAL; // no such transaction
+            if (32 == t->get_process()->wordSize()) {
+                pt_regs_32 regs_guest;
+                if (sizeof(regs_guest)!=proc->mem_read(&regs_guest, regs_va, sizeof regs_guest)) {
+                    result = -EFAULT;
+                } else if (0>=(result = t->get_process()->mem_transaction_rollback(transaction_name))) {
+                    // error; don't initialize registers; this syscall will return without doing anything
+                    if (0==result)
+                        result = -EINVAL; // no such transaction
+                } else {
+                    // success.  The syscall will return as if we had called transaction start, but with zero to distinguish it
+                    // from transaction start.
+                    result = 0;
+                    t->init_regs(PtRegs(regs_guest));
+                }
             } else {
-                // success.  The syscall will return as if we had called transaction start, but with zero to distinguish it
-                // from transaction start.
-                result = 0; // 
-                t->init_regs(regs);
+                FIXME("[Robb P. Matzke 2015-05-28]: 64-bit not supported yet");
             }
             break;
         }
@@ -149,7 +162,11 @@ syscall_RSIM_transaction_leave(RSIM_Thread *t, int callno)
     int cmd = t->syscall_arg(0);
     int result = t->syscall_arg(-1);
     if (0==cmd && 0!=result) { // start
-        t->syscall_leave("d-P", sizeof(pt_regs_32), print_pt_regs_32);
+        if (32 == t->get_process()->wordSize()) {
+            t->syscall_leave("d-P", sizeof(pt_regs_32), print_pt_regs_32);
+        } else {
+            t->syscall_leave("d-P", sizeof(pt_regs_64), print_pt_regs_64);
+        }
     } else {
         t->syscall_leave("d");
     }

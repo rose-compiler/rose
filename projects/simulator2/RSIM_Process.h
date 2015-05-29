@@ -19,7 +19,7 @@ public:
         : simulator(simulator), tracing_file(NULL), tracing_flags(0),
           brk_va(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), ep_orig_va(0), ep_start_va(0),
-          terminated(false), termination_status(0), project(NULL), core_flags(0), btrace_file(NULL),
+          terminated(false), termination_status(0), project(NULL), wordSize_(0), core_flags(0), btrace_file(NULL),
           vdso_mapped_va(0), vdso_entry_va(0),
           core_styles(CORE_ELF), core_base_name("x-core.rose"), ld_linux_base_va(0x40000000) {
         ctor();
@@ -536,9 +536,9 @@ private:
         int             seq;                 /**< Sequence number for new thread, used for debugging. */
         rose_addr_t     parent_tid_va;       /**< Optional address at which to write created thread's TID; clone() argument */
         rose_addr_t     child_tls_va;        /**< Address of TLS user_desc_32 to load into GDT; clone() argument */
-        pt_regs_32      regs;                /**< Initial registers for child thread. */
+        PtRegs          regs;                /**< Initial registers for child thread. */
 
-        Clone(RSIM_Process *process, unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs)
+        Clone(RSIM_Process *process, unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const PtRegs &regs)
             : process(process), flags(flags), newtid(-1), seq(-1),
               parent_tid_va(parent_tid_va), child_tls_va(child_tls_va), regs(regs) {}
     };
@@ -581,7 +581,7 @@ public:
      *  executing.
      *
      *  Thread safety: This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    pid_t clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs,
+    pid_t clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const PtRegs &regs,
                        bool startExecuting);
 
     /** Returns the thread having the specified thread ID, or null if there is no thread with the specified ID.  Thread objects
@@ -620,6 +620,7 @@ private:
     int termination_status;                     /**< As would be returned by the parent's waitpid() call. */
     std::vector<SgAsmGenericHeader*> headers;   /**< Headers of files loaded into the process (only those that we parse). */
     SgProject *project;                         /**< AST project node for the main specimen (not interpreter or libraries). */
+    size_t wordSize_;                                   // natural word size in bits (32 or 64)
 
 public:
     /** Thrown by exit system calls. */
@@ -676,6 +677,11 @@ public:
         return headers;
     }
 
+    /** Word size in bits. This returns null until after @ref load is called. */
+    size_t wordSize() const {
+        return wordSize_;
+    }
+    
     /** Returns the project node. This returns null until after load() is called. */
     SgProject *get_project() const {
         return project;

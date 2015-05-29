@@ -344,6 +344,23 @@ print_pt_regs_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_pt_regs_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(pt_regs_64)==sz);
+    const pt_regs_64 *v = (const pt_regs_64*)_v;
+    mfprintf(m)("r15=0x%"PRIx64", r14=0x%"PRIx64", r13=0x%"PRIx64", r12=0x%"PRIx64", bp=0x%"PRIx64
+                ", bx=0x%"PRIx64", r11=0x%"PRIx64", r10=0x%"PRIx64", r9=0x%"PRIx64", r8=0x%"PRIx64
+                ", ax=0x%"PRIx64", cx=0x%"PRIx64", dx=0x%"PRIx64", si=0x%"PRIx64", di=0x%"PRIx64
+                ", orig_ax=0x%"PRIx64", ip=0x%"PRIx64", cs=0x%"PRIx64", flags=0x%"PRIx64", sp=0x%"PRIx64
+                ", ss=0x%"PRIx64,
+                v->r15, v->r14, v->r13, v->r12, v->bp,
+                v->bx, v->r11, v->r10, v->r9, v->r8,
+                v->ax, v->cx, v->dx, v->si, v->di,
+                v->orig_ax, v->ip, v->cs, v->flags, v->sp,
+                v->ss);
+}
+
+void
 print_termios_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(termios_32)==sz);

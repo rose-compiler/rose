@@ -4161,7 +4161,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // Return register values in child
         // does not work for linux 2.6.32; perhaps this was only necessary for 2.5.32-2.5.48? [Robb P. Matzke 2015-02-09]
         if (isChild && flags==(CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD)) {
-            pt_regs_32 regs = t->get_regs();
+            pt_regs_32 regs = t->get_regs().get_pt_regs_32();
             regs.ip = regs.ax = regs.bx = 0; // these three weren't in old initialization [Robb P. Matzke 2015-04-22]
             if (sizeof(regs)!=p->mem_write(&regs, pt_regs_va, sizeof regs))
                 return -EFAULT;
@@ -4183,7 +4183,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
                          CLONE_PARENT_SETTID |
                          CLONE_CHILD_CLEARTID)) {
         /* we are creating a new thread */
-        pt_regs_32 regs = t->get_regs();
+        PtRegs regs = t->get_regs();
         regs.sp = newsp;
         regs.ax = 0;
 

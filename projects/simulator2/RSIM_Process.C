@@ -340,6 +340,11 @@ RSIM_Process::load(const char *name)
     headers.push_back(fhdr);
     ep_orig_va = ep_start_va = fhdr->get_entry_rva() + fhdr->get_base_va();
 
+    // We only support 32 and 64 bit Linux ELF
+    ASSERT_require(fhdr->get_word_size()==4 || fhdr->get_word_size()==8);
+    wordSize_ = 8 * fhdr->get_word_size();
+    ASSERT_require(isSgAsmElfFileHeader(fhdr));
+
     /* Link the interpreter into the AST */
     SimLoader *loader = new SimLoader(interpretation, interpname);
 
@@ -398,13 +403,7 @@ RSIM_Process::load(const char *name)
         disassembler->set_progress_reporting(-1); /* turn off progress reporting */
     }
 
-#if 0
-    /* Initialize the brk value to be the lowest page-aligned address that is above the end of the highest mapped address but
-     * below 0x40000000 (the stack, and where ld-linux.so.2 might be loaded when loaded high). */
-    rose_addr_t free_area = std::max(map->find_last_free(std::max(ld_linux_base_va, (rose_addr_t)0x40000000)),
-                                     (rose_addr_t)brk_base);
-    brk_va = alignUp(free_area, PAGE_SIZE);
-#else
+    // Initialize the brk value
     struct FindInitialBrk: public SgSimpleProcessing {
         FindInitialBrk(): max_mapped_va(0) {}
         rose_addr_t max_mapped_va;
@@ -417,14 +416,12 @@ RSIM_Process::load(const char *name)
     t1.traverse(fhdr, preorder);
     AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
     brk_va = get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0);
-#endif
 
     delete loader;
 
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
-    pt_regs_32 initialRegisters;
-    memset(&initialRegisters, 0, sizeof initialRegisters);
+    PtRegs initialRegisters;
     initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
     initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
     initialRegisters.cs = 0x23;
@@ -833,7 +830,7 @@ RSIM_Process::binary_trace_add(RSIM_Thread *thread, const SgAsmInstruction *insn
     n = fwrite(&insn->get_raw_bytes()[0], insn_size, 1, btrace_file);
     assert(1==n);
 
-    pt_regs_32 regs = thread->get_regs();
+    PtRegs regs = thread->get_regs();
 
     n = fwrite(&regs.flags, 4, 1, btrace_file);
     assert(1==n);
@@ -1566,7 +1563,7 @@ RSIM_Process::initialize_stack(SgAsmGenericHeader *_fhdr, int argc, char *argv[]
 
 /* The "thread" arg must be the calling thread */
 pid_t
-RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const pt_regs_32 &regs,
+RSIM_Process::clone_thread(unsigned flags, rose_addr_t parent_tid_va, rose_addr_t child_tls_va, const PtRegs &regs,
                            bool startRunning)
 {
 #ifndef ROSE_THREADS_ENABLED

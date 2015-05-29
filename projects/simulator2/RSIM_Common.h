@@ -984,6 +984,128 @@ struct pt_regs_32 {
     uint32_t ss;
 } __attribute__((packed));
 
+// The layout of the kernel struct pt_regs in a 64-bit specimen
+struct pt_regs_64 {
+    uint64_t r15;
+    uint64_t r14;
+    uint64_t r13;
+    uint64_t r12;
+    uint64_t bp;
+    uint64_t bx;
+    uint64_t r11;
+    uint64_t r10;
+    uint64_t r9;
+    uint64_t r8;
+    uint64_t ax;
+    uint64_t cx;
+    uint64_t dx;
+    uint64_t si;
+    uint64_t di;
+    uint64_t orig_ax;
+    uint64_t ip;
+    uint64_t cs;
+    uint64_t flags;
+    uint64_t sp;
+    uint64_t ss;
+} __attribute__((packed));
+
+// The architecture-independen version of pt_regs used by the simulator, a super-set of the architecture-specific versions.
+struct PtRegs {
+    // Common to 32 and 64 bit
+    uint64_t ax;
+    uint64_t bx;
+    uint64_t cx;
+    uint64_t dx;
+    uint64_t si;
+    uint64_t di;
+    uint64_t flags;
+    uint64_t orig_ax;
+    uint64_t ip;
+    uint64_t sp;
+    uint64_t bp;
+    uint64_t cs;
+    uint64_t ss;
+
+    // Only 32-bit
+    uint64_t ds;
+    uint64_t es;
+    uint64_t fs;
+    uint64_t gs;
+
+    // Only 64-bit
+    uint64_t r8;
+    uint64_t r9;
+    uint64_t r10;
+    uint64_t r11;
+    uint64_t r12;
+    uint64_t r13;
+    uint64_t r14;
+    uint64_t r15;
+
+    PtRegs()
+        : ax(0), bx(0), cx(0), dx(0), si(0), di(0), flags(0), orig_ax(0), ip(0), sp(0), bp(0), cs(0), ss(0),
+          ds(0), es(0), fs(0), gs(0), r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+    explicit PtRegs(const pt_regs_32 &x)
+        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
+          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(x.ds), es(x.es), fs(x.fs), gs(x.gs),
+          r8(0), r9(0), r10(0), r11(0), r12(0), r13(0), r14(0), r15(0) {}
+
+    explicit PtRegs(const pt_regs_64 &x)
+        : ax(x.ax), bx(x.bx), cx(x.cx), dx(x.dx), si(x.si), di(x.di), flags(x.flags), orig_ax(x.orig_ax),
+          ip(x.ip), sp(x.sp), bp(x.bp), cs(x.cs), ss(x.ss), ds(0), es(0), fs(0), gs(0), r8(x.r8), r9(x.r9),
+          r10(x.r10), r11(x.r11), r12(x.r12), r13(x.r13), r14(x.r14), r15(x.r15) {}
+
+    pt_regs_32 get_pt_regs_32() const {
+        pt_regs_32 x;
+        x.ax = ax;
+        x.bx = bx;
+        x.cx = cx;
+        x.dx = dx;
+        x.si = si;
+        x.di = di;
+        x.flags = flags;
+        x.orig_ax = orig_ax;
+        x.ip = ip;
+        x.sp = sp;
+        x.bp = bp;
+        x.cs = cs;
+        x.ss = ss;
+        x.ds = ds;
+        x.es = es;
+        x.fs = fs;
+        x.gs = gs;
+        ASSERT_require(sizeof(x) == 4 * 17); // did we omit an initialization?
+        return x;
+    }
+
+    pt_regs_64 get_pt_regs_64() const {
+        pt_regs_64 x;
+        x.ax = ax;
+        x.bx = bx;
+        x.cx = cx;
+        x.dx = dx;
+        x.si = si;
+        x.di = di;
+        x.flags = flags;
+        x.orig_ax = orig_ax;
+        x.ip = ip;
+        x.sp = sp;
+        x.bp = bp;
+        x.cs = cs;
+        x.ss = ss;
+        x.r8 = r8;
+        x.r9 = r9;
+        x.r10 = r10;
+        x.r11 = r11;
+        x.r12 = r12;
+        x.r13 = r13;
+        x.r14 = r14;
+        x.r15 = r15;
+        ASSERT_require(sizeof(x) == 8 * 21); // did we omit an initialization?
+        return x;
+    }
+};
+
 static const Translate protocol_families[] = {
     //TE2(1, PF_UNIX),
     TE2(1, PF_LOCAL),   /* POSIX name for AF_UNIX */
@@ -1494,6 +1616,7 @@ void print_shmid64_ds_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t s
 void print_shm_info_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_shminfo64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_pt_regs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_pt_regs_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_termios_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_winsize_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_exit_status_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);

@@ -346,7 +346,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
             print_SigInfo(mesg, (const uint8_t*)&info, sizeof info);
             mesg <<"\n";
 
-            pt_regs_32 regs = get_regs();
+            PtRegs regs = get_regs();
             RSIM_SignalHandling::SigSet signal_mask;
             status = sighand.sigprocmask(0, NULL, &signal_mask);
             assert(status>=0);
@@ -540,7 +540,7 @@ RSIM_Thread::sys_sigreturn()
         return -EFAULT;
 
     /* Restore hardware context.  Restore only certain flags. */
-    pt_regs_32 regs;
+    PtRegs regs;
     uint32_t eflags = operators()->readRegister(dispatcher()->REG_EFLAGS)->get_number();
     sighand.restore_sigcontext(frame.sc, eflags, &regs);
     init_regs(regs);
@@ -929,11 +929,12 @@ RSIM_Thread::main()
     }
 }
 
-pt_regs_32
+PtRegs
 RSIM_Thread::get_regs() const
 {
-    pt_regs_32 regs;
-    memset(&regs, 0, sizeof regs);
+    PtRegs regs;
+
+    // 32-bit registers (stored as 64-bit values)
     regs.ip = operators()->readRegister(dispatcher()->REG_anyIP)->get_number();
     regs.ax = operators()->readRegister(dispatcher()->REG_anyAX)->get_number();
     regs.bx = operators()->readRegister(dispatcher()->REG_anyBX)->get_number();
@@ -950,13 +951,28 @@ RSIM_Thread::get_regs() const
     regs.gs = operators()->readRegister(dispatcher()->REG_GS)->get_number();
     regs.ss = operators()->readRegister(dispatcher()->REG_SS)->get_number();
     regs.flags = operators()->readRegister(dispatcher()->REG_anyFLAGS)->get_number();
+
+    // additional 64-bit registers
+    if (get_process()->wordSize() == 64) {
+        regs.r15 = operators()->readRegister(dispatcher()->REG_R15)->get_number();
+        regs.r14 = operators()->readRegister(dispatcher()->REG_R14)->get_number();
+        regs.r13 = operators()->readRegister(dispatcher()->REG_R13)->get_number();
+        regs.r12 = operators()->readRegister(dispatcher()->REG_R12)->get_number();
+        regs.r11 = operators()->readRegister(dispatcher()->REG_R11)->get_number();
+        regs.r10 = operators()->readRegister(dispatcher()->REG_R10)->get_number();
+        regs.r9 = operators()->readRegister(dispatcher()->REG_R9)->get_number();
+        regs.r8 = operators()->readRegister(dispatcher()->REG_R8)->get_number();
+    }
+
     return regs;
 }
 
 void
-RSIM_Thread::init_regs(const pt_regs_32 &regs)
+RSIM_Thread::init_regs(const PtRegs &regs)
 {
-    size_t wordWidth = 32;
+    size_t wordWidth = get_process()->wordSize();
+
+    // Registers in common for a 32-bit and 64-bit architecture
     operators()->writeRegister(dispatcher()->REG_anyIP, operators()->number_(wordWidth, regs.ip));
     operators()->writeRegister(dispatcher()->REG_anyAX, operators()->number_(wordWidth, regs.ax));
     operators()->writeRegister(dispatcher()->REG_anyBX, operators()->number_(wordWidth, regs.bx));
@@ -973,6 +989,18 @@ RSIM_Thread::init_regs(const pt_regs_32 &regs)
     operators()->writeRegister(dispatcher()->REG_GS, operators()->number_(16, regs.gs));
     operators()->writeRegister(dispatcher()->REG_SS, operators()->number_(16, regs.ss));
     operators()->writeRegister(dispatcher()->REG_anyFLAGS, operators()->number_(wordWidth, regs.flags));
+
+    // Registers only existing on a 64-bit architecture
+    if (64 == wordWidth) {
+        operators()->writeRegister(dispatcher()->REG_R15, operators()->number_(wordWidth, regs.r15));
+        operators()->writeRegister(dispatcher()->REG_R14, operators()->number_(wordWidth, regs.r14));
+        operators()->writeRegister(dispatcher()->REG_R13, operators()->number_(wordWidth, regs.r13));
+        operators()->writeRegister(dispatcher()->REG_R12, operators()->number_(wordWidth, regs.r12));
+        operators()->writeRegister(dispatcher()->REG_R11, operators()->number_(wordWidth, regs.r11));
+        operators()->writeRegister(dispatcher()->REG_R10, operators()->number_(wordWidth, regs.r10));
+        operators()->writeRegister(dispatcher()->REG_R9, operators()->number_(wordWidth, regs.r9));
+        operators()->writeRegister(dispatcher()->REG_R8, operators()->number_(wordWidth, regs.r8));
+    }
 }
 
 int

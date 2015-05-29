@@ -142,10 +142,10 @@ public:
     SegmentDescriptor& gdt_entry(int idx);
 
     /** Obtain current register values. */
-    pt_regs_32 get_regs() const;
+    PtRegs get_regs() const;
 
     /** Initialize registers */
-    void init_regs(const pt_regs_32 &regs);
+    void init_regs(const PtRegs &regs);
 
     /** Traverse the robust futex list and handle futex death for each item on the list. See the Linux version of this function
      *  for details. */

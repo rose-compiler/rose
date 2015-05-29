@@ -218,13 +218,13 @@ public:
     /** Fill in a sigcontext_32 struct.
      *
      *  Thread safety: This method is thread safe. */
-    static void setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, SigSet mask);
+    static void setup_sigcontext(sigcontext_32 *sc, const PtRegs &regs, SigSet mask);
 
     /** Initialize registers from signal context.  Not all FLAG bits are restored to their original value, which is why the set
      *  of current flags must be passed as an argument.
      *
      *  Thread safety: This method is thread safe. */
-    static void restore_sigcontext(const sigcontext_32&, uint32_t cur_flags, pt_regs_32*);
+    static void restore_sigcontext(const sigcontext_32&, uint32_t cur_flags, PtRegs*);
 
     /** Adjust the signal mask.  If @p in is non-null, then adjust the signal mask according to @p how: 0 means add signals
      *  from @p in into the mask; 1 means remove signals in @p in from the mask; 2 means set the mask so it's equal to @p

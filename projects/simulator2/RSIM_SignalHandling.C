@@ -107,7 +107,7 @@ RSIM_SignalHandling::get_sigframe(const SigAction &sa, size_t frame_size, rose_a
 }
 
 void
-RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs, SigSet mask)
+RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const PtRegs &regs, SigSet mask)
 {
     sc->gs = regs.gs;
     sc->fs = regs.fs;
@@ -134,7 +134,7 @@ RSIM_SignalHandling::setup_sigcontext(sigcontext_32 *sc, const pt_regs_32 &regs,
 }
 
 void
-RSIM_SignalHandling::restore_sigcontext(const sigcontext_32 &sc, uint32_t cur_flags, pt_regs_32 *regs)
+RSIM_SignalHandling::restore_sigcontext(const sigcontext_32 &sc, uint32_t cur_flags, PtRegs *regs)
 {
     memset(regs, 0, sizeof(*regs));
     regs->gs = sc.gs;
