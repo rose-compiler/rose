@@ -60,6 +60,9 @@ public:
     RegisterDescriptor REG_AL,    REG_BL,    REG_CL,    REG_DL;
     RegisterDescriptor REG_AH,    REG_BH,    REG_CH,    REG_DH;
 
+    RegisterDescriptor REG_R8,    REG_R9,    REG_R10,   REG_R11;
+    RegisterDescriptor REG_R12,   REG_R13,   REG_R14,   REG_R15;
+
     RegisterDescriptor REG_anyDI, REG_anySI, REG_anySP, REG_anyBP, REG_anyIP;
     RegisterDescriptor REG_RDI,   REG_RSI,   REG_RSP,   REG_RBP,   REG_RIP;
     RegisterDescriptor REG_EDI,   REG_ESI,   REG_ESP,   REG_EBP,   REG_EIP;
