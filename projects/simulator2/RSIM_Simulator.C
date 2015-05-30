@@ -206,199 +206,190 @@ RSIM_Simulator::ctor()
 #endif
 }
 
+void
+RSIM_Simulator::configure(const Settings &settings, char **envp) {
+    // Use absolute name in case process changes directory
+    if (!settings.tracingFileName.empty() && '/'!=settings.tracingFileName[0]) {
+        char dirname[4096];
+        char *dirname_p = getcwd(dirname, sizeof dirname);
+        ASSERT_not_null(dirname_p);
+        tracingFileName_ = std::string(dirname) + "/" + settings.tracingFileName;
+    } else {
+        tracingFileName_ = settings.tracingFileName;
+    }
+
+    // Turn on some tracing
+    tracingFlags_ = tracingFacilityBit(TRACE_MISC);
+    BOOST_FOREACH (TracingFacility t, settings.tracing)
+        tracingFlags_ |= tracingFacilityBit(t);
+
+    // Core dump styles
+    core_flags = 0;
+    BOOST_FOREACH (CoreStyle cs, settings.coreStyles)
+        core_flags |= cs;
+
+    // Global semaphore.
+    std::string semname = settings.semaphoreName;
+    if (!semname.empty() && '/'!=semname[0])
+        semname = "/" + semname;
+    if (semname.find_first_of('/', 1)!=std::string::npos) {
+        std::cerr <<"invalid semaphore name \"" <<semname <<"\"; should not contain internal slashes\n";
+        exit(1);
+    }
+    set_semaphore_name(semname);
+
+    if (!settings.binaryTraceName.empty()) {
+        if (btrace_file)
+            fclose(btrace_file);
+        if (NULL==(btrace_file=fopen(settings.binaryTraceName.c_str(), "wb"))) {
+            std::cerr <<strerror(errno) <<": " <<settings.binaryTraceName <<"\n";
+            exit(1);
+        }
+#ifdef X86SIM_BINARY_TRACE_UNBUFFERED
+        setbuf(btrace_file, NULL);
+#endif
+    }
+        
+    // Misc
+    interp_name = settings.interpreterName;
+    vdsoPaths_ = settings.vdsoPaths;
+
+    // Show auxv
+    if (settings.showAuxv) {
+        fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
+        struct auxv_t {
+            unsigned long type;
+            unsigned long val;
+        };
+        char **p = envp;
+        if (!p) {
+            fprintf(stderr, "cannot show auxp (no envp)\n");
+        } else {
+            while (*p++);
+            for (auxv_t *auxvp=(auxv_t*)p; 1; auxvp++) {
+                switch (auxvp->type) {
+                    case 0:  fprintf(stderr, "    0  AT_NULL         %lu\n", auxvp->val); break;
+                    case 1:  fprintf(stderr, "    1  AT_IGNORE       %lu\n", auxvp->val); break;
+                    case 2:  fprintf(stderr, "    2  AT_EXECFD       %lu\n", auxvp->val); break;
+                    case 3:  fprintf(stderr, "    3  AT_PHDR         0x%lx\n", auxvp->val); break;
+                    case 4:  fprintf(stderr, "    4  AT_PHENT        0x%lx\n", auxvp->val); break;
+                    case 5:  fprintf(stderr, "    5  AT_PHNUM        %lu\n", auxvp->val); break;
+                    case 6:  fprintf(stderr, "    6  AT_PAGESZ       %lu\n", auxvp->val); break;
+                    case 7:  fprintf(stderr, "    7  AT_BASE         0x%lx\n", auxvp->val); break;
+                    case 8:  fprintf(stderr, "    8  AT_FLAGS        0x%lx\n", auxvp->val); break;
+                    case 9:  fprintf(stderr, "    9  AT_ENTRY        0x%lx\n", auxvp->val); break;
+                    case 10: fprintf(stderr, "    10 AT_NOTELF       %lu\n", auxvp->val); break;
+                    case 11: fprintf(stderr, "    11 AT_UID          %ld\n", auxvp->val); break;
+                    case 12: fprintf(stderr, "    12 AT_EUID         %ld\n", auxvp->val); break;
+                    case 13: fprintf(stderr, "    13 AT_GID          %ld\n", auxvp->val); break;
+                    case 14: fprintf(stderr, "    14 AT_EGID         %ld\n", auxvp->val); break;
+                    case 15: fprintf(stderr, "    15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
+                    case 16: fprintf(stderr, "    16 AT_HWCAP        0x%lx\n", auxvp->val); break;
+                    case 17: fprintf(stderr, "    17 AT_CLKTCK       %lu\n", auxvp->val); break;
+                    case 18: fprintf(stderr, "    18 AT_FPUCW        %lu\n", auxvp->val); break;
+                    case 19: fprintf(stderr, "    19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 20: fprintf(stderr, "    20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 21: fprintf(stderr, "    21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
+                    case 22: fprintf(stderr, "    22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
+                    case 23: fprintf(stderr, "    23 AT_SECURE       %ld\n", auxvp->val); break;
+
+                    case 32: fprintf(stderr, "    32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
+                    case 33: fprintf(stderr, "    33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
+                    case 34: fprintf(stderr, "    34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
+                    case 35: fprintf(stderr, "    35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
+                    case 36: fprintf(stderr, "    36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
+                    case 37: fprintf(stderr, "    37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
+
+                    default: fprintf(stderr, "    %lu AT_(unknown)   0x%lx\n", auxvp->type, auxvp->val); break;
+                }
+                if (!auxvp->type)
+                    break;
+            }
+        }
+    }
+}
+
 Sawyer::CommandLine::SwitchGroup
 RSIM_Simulator::commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Simulator switches");
 
-    
+    sg.insert(Switch("trace")
+              .argument("filename", anyParser(settings.tracingFileName))
+              .doc("Name of tracing file. Any occurrance of the substring \"${pid}\" will be replaced with the "
+                   "specimen process ID."));
 
-        } else if (!strncmp(argv[argno], "--log=", 6)) {
-            /* Save log file name pattern, extending it to an absolute name in case the specimen changes directories */
-            if (argv[argno][6]=='/') {
-                tracing_file_name = argv[argno]+6;
-            } else {
-                char dirname[4096];
-                char *dirname_p = getcwd(dirname, sizeof dirname);
-                ROSE_ASSERT(dirname_p);
-                tracing_file_name = std::string(dirname) + "/" + (argv[argno]+6);
-            }
-            argno++;
+    sg.insert(Switch("debug")
+              .argument("how", listParser(enumParser<TracingFacility>(settings.tracing)
+                                          ->with("all", TRACE_NFACILITIES)
+                                          ->with("insn", TRACE_INSN)
+                                          ->with("state", TRACE_STATE)
+                                          ->with("mem", TRACE_MEM)
+                                          ->with("mmap", TRACE_MMAP)
+                                          ->with("signal", TRACE_SIGNAL)
+                                          ->with("syscall", TRACE_SYSCALL)
+                                          ->with("loader", TRACE_LOADER)
+                                          ->with("progress", TRACE_PROGRESS)
+                                          ->with("thread", TRACE_THREAD)
+                                          ->with("futex", TRACE_FUTEX)))
+              .whichValue(SAVE_ALL)
+              .explosiveLists(true)
+              .doc("Debugging categories. The following words can be specified either as part of a comma-separated list "
+                   "or with separate instances of this switch: all, insn, state, mem, mmap, signal, syscall, loader, "
+                   "progress, thread, futex."));
 
-        } else if (!strncmp(argv[argno], "--debug=", 8)) {
-            tracingFlags_ = tracingFacilityBit(TRACE_MISC);
-            char *s = argv[argno]+8;
-            while (s && *s) {
-                char *comma = strchr(s, ',');
-                std::string word(s, comma?comma-s:strlen(s));
-                s = comma ? comma+1 : NULL;
-                if (word=="all") {
-                    tracingFlags_ = (unsigned)(-1);
-                } else if (word=="insn") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_INSN);
-                } else if (word=="state") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_STATE);
-                } else if (word=="mem") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_MEM);
-                } else if (word=="mmap") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_MMAP);
-                } else if (word=="signal") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_SIGNAL);
-                } else if (word=="syscall") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_SYSCALL);
-                } else if (word=="loader") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_LOADER);
-                } else if (word=="progress") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_PROGRESS);
-                } else if (word=="thread") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_THREAD);
-                } else if (word=="futex") {
-                    tracingFlags_ |= tracingFacilityBit(TRACE_FUTEX);
-                } else {
-                    fprintf(stderr, "%s: debug words must be from the set: "
-                            "all, insn, state, mem, mmap, syscall, signal, loader, progress, thread, futex\n",
-                            argv[0]);
-                    exit(1);
-                }
-            }
-            argno++;
+    sg.insert(Switch("core")
+              .argument("how", listParser(enumParser<CoreStyle>(settings.coreStyles)
+                                          ->with("elf", CORE_ELF)
+                                          ->with("rose", CORE_ROSE)))
+              .whichValue(SAVE_ALL)
+              .explosiveLists(true)
+              .doc("Controls which style of core dump is created. Values are \"elf\" or \"rose\"."));
 
-        } else if (!strcmp(argv[argno], "--debug")) {
-            tracingFlags_ = tracingFacilityBit(TRACE_MISC);
-            argno++;
+    sg.insert(Switch("interpreter")
+              .argument("name", anyParser(settings.interpreterName))
+              .doc("Name of the interpreter. On Linux, this is the name of the dynamic linker."));
 
-        } else if (!strncmp(argv[argno], "--core=", 7)) {
-            core_flags = 0;
-            for (char *s=argv[argno]+7; s && *s; /*void*/) {
-                if (!strncmp(s, "elf", 3)) {
-                    s += 3;
-                    core_flags |= CORE_ELF;
-                } else if (!strncmp(s, "rose", 4)) {
-                    s += 4;
-                    core_flags |= CORE_ROSE;
-                } else {
-                    fprintf(stderr, "%s: unknown core dump type for %s\n", argv[0], argv[argno]);
-                }
-                while (','==*s) s++;
-            }
-            argno++;
+    sg.insert(Switch("vdso")
+              .argument("name", listParser(anyParser(settings.vdsoPaths)))
+              .whichValue(SAVE_ALL)
+              .explosiveLists(true)
+              .doc("Directory names for searching for the virtual shared dynamic objects."));
 
-        } else if (!strncmp(argv[argno], "--interp=", 9)) {
-            interp_name = argv[argno++]+9;
+    sg.insert(Switch("semaphore")
+              .argument("name", anyParser(settings.semaphoreName))
+              .doc("Name of the semaphore for inter-process synchronization."));
 
-        } else if (!strncmp(argv[argno], "--vdso=", 7)) {
-            vdsoPaths_.clear();
-            for (char *s=argv[argno]+7; s && *s; /*void*/) {
-                char *colon = strchr(s, ':');
-                vdsoPaths_.push_back(std::string(s, colon?colon-s:strlen(s)));
-                s = colon ? colon+1 : NULL;
-            }
-            argno++;
-            
-        } else if (!strncmp(argv[argno], "--semaphore=", 12)) {
-            std::string semname = argv[argno]+12;
-            if (semname[0]!='/')
-                semname = "/" + semname;
-            if (semname.find_first_of('/', 1)!=std::string::npos) {
-                fprintf(stderr, "%s: invalid semaphore name: \"%s\" should not contain internal slashes\n",
-                        argv[0], argv[argno]+12);
-                exit(1);
-            }
-            set_semaphore_name(argv[argno]+12);
-            argno++;
+    sg.insert(Switch("show-auxv")
+              .intrinsicValue(true, settings.showAuxv)
+              .doc("Show the auxiliary vector for this tool."));
 
-        } else if (!strcmp(argv[argno], "--showauxv")) {
-            fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
-            argno++;
-            struct auxv_t {
-                unsigned long type;
-                unsigned long val;
-            };
-            char **p = envp;
-            if (!p) {
-                fprintf(stderr, "cannot show auxp (no envp)\n");
-            } else {
-                while (*p++);
-                for (auxv_t *auxvp=(auxv_t*)p; 1; auxvp++) {
-                    switch (auxvp->type) {
-                        case 0:  fprintf(stderr, "    0  AT_NULL         %lu\n", auxvp->val); break;
-                        case 1:  fprintf(stderr, "    1  AT_IGNORE       %lu\n", auxvp->val); break;
-                        case 2:  fprintf(stderr, "    2  AT_EXECFD       %lu\n", auxvp->val); break;
-                        case 3:  fprintf(stderr, "    3  AT_PHDR         0x%lx\n", auxvp->val); break;
-                        case 4:  fprintf(stderr, "    4  AT_PHENT        0x%lx\n", auxvp->val); break;
-                        case 5:  fprintf(stderr, "    5  AT_PHNUM        %lu\n", auxvp->val); break;
-                        case 6:  fprintf(stderr, "    6  AT_PAGESZ       %lu\n", auxvp->val); break;
-                        case 7:  fprintf(stderr, "    7  AT_BASE         0x%lx\n", auxvp->val); break;
-                        case 8:  fprintf(stderr, "    8  AT_FLAGS        0x%lx\n", auxvp->val); break;
-                        case 9:  fprintf(stderr, "    9  AT_ENTRY        0x%lx\n", auxvp->val); break;
-                        case 10: fprintf(stderr, "    10 AT_NOTELF       %lu\n", auxvp->val); break;
-                        case 11: fprintf(stderr, "    11 AT_UID          %ld\n", auxvp->val); break;
-                        case 12: fprintf(stderr, "    12 AT_EUID         %ld\n", auxvp->val); break;
-                        case 13: fprintf(stderr, "    13 AT_GID          %ld\n", auxvp->val); break;
-                        case 14: fprintf(stderr, "    14 AT_EGID         %ld\n", auxvp->val); break;
-                        case 15: fprintf(stderr, "    15 AT_PLATFORM     0x%lx\n", auxvp->val); break;
-                        case 16: fprintf(stderr, "    16 AT_HWCAP        0x%lx\n", auxvp->val); break;
-                        case 17: fprintf(stderr, "    17 AT_CLKTCK       %lu\n", auxvp->val); break;
-                        case 18: fprintf(stderr, "    18 AT_FPUCW        %lu\n", auxvp->val); break;
-                        case 19: fprintf(stderr, "    19 AT_DCACHEBSIZE  %lu\n", auxvp->val); break;
-                        case 20: fprintf(stderr, "    20 AT_ICACHEBSIZE  %lu\n", auxvp->val); break;
-                        case 21: fprintf(stderr, "    21 AT_UCACHEBSIZE  %lu\n", auxvp->val); break;
-                        case 22: fprintf(stderr, "    22 AT_IGNOREPPC    %lu\n", auxvp->val); break;
-                        case 23: fprintf(stderr, "    23 AT_SECURE       %ld\n", auxvp->val); break;
+    sg.insert(Switch("binary-trace")
+              .argument("filename", anyParser(settings.binaryTraceName))
+              .doc("Name of file for binary tracing."));
 
-                        case 32: fprintf(stderr, "    32 AT_SYSINFO      0x%lx\n", auxvp->val); break;
-                        case 33: fprintf(stderr, "    33 AT_SYSINFO_PHDR 0x%lx\n", auxvp->val); break;
-                        case 34: fprintf(stderr, "    34 AT_L1I_CACHESHAPE 0x%lx\n", auxvp->val); break;
-                        case 35: fprintf(stderr, "    35 AT_L1D_CACHESHAPE 0x%lx\n", auxvp->val); break;
-                        case 36: fprintf(stderr, "    36 AT_L2_CACHESHAPE  0x%lx\n", auxvp->val); break;
-                        case 37: fprintf(stderr, "    37 AT_L3_CACHESHAPE  0x%lx\n", auxvp->val); break;
-
-                        default: fprintf(stderr, "    %lu AT_(unknown)   0x%lx\n", auxvp->type, auxvp->val); break;
-                    }
-                    if (!auxvp->type)
-                        break;
-                }
-            }
-
-        } else if (!strncmp(argv[argno], "--trace=", 8)) {
-            if (btrace_file)
-                fclose(btrace_file);
-            if (NULL==(btrace_file=fopen(argv[argno]+8, "wb"))) {
-                fprintf(stderr, "%s: %s: %s\n", argv[0], argv[argno]+8, strerror(errno));
-                exit(1);
-            }
-#ifdef X86SIM_BINARY_TRACE_UNBUFFERED
-            setbuf(btrace_file, NULL);
-#endif
-            argno++;
-
-        } else {
-            fprintf(stderr, "usage: %s [SWITCHES] PROGRAM ARGUMENTS...\n", argv[0]);
-            exit(1);
-        }
-    }
-    return argno;
+    return sg;
 }
 
 int
-RSIM_Simulator::loadSpecimen(int argc, char **argv)
+RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args)
 {
     ASSERT_require2(exeArgs_.empty(), "specimen cannot be loaded twice");
-    ASSERT_require(argc>0);
-    ASSERT_not_null(argv);
+    ASSERT_forbid2(args.empty(), "we must at least have an executable name");
 
     // Save arguments
-    exeName_ = argv[0];
-    for (int i=0; i<argc; ++i)
-        exeArgs_.push_back(argv[i]);
+    exeName_ = args[0];
+    exeArgs_ = args;
 
     create_process();
 
     SgAsmGenericHeader *fhdr = process->load();
+    if (!fhdr)
+        return -ENOEXEC;
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();
 
     RSIM_Thread *mainThread = process->get_main_thread();
-    initializeStackArch(mainThread, fhdr, argc, argv);
+    initializeStackArch(mainThread, fhdr);
 
     process->binary_trace_start();
 
@@ -424,7 +415,7 @@ RSIM_Simulator::create_process()
     process->set_core_styles(core_flags);
     process->set_interpname(interp_name);
 
-    process->set_tracing_name(tracing_file_name);
+    process->tracingName(tracingFileName_);
     process->open_tracing_file();
     return process;
 }

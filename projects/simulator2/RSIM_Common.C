@@ -3,6 +3,7 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
+#include "integerOps.h"
 #include "Diagnostics.h"
 #include <sys/wait.h>
 
@@ -11,7 +12,9 @@ using namespace rose::Diagnostics;
 unsigned
 tracingFacilityBit(TracingFacility tf)
 {
-    return (unsigned)1 << (unsigned)tf;
+    if (tf == TRACE_NFACILITIES)
+        return IntegerOps::GenMask<unsigned, (unsigned)TRACE_NFACILITIES>::value;
+    return IntegerOps::shl1<unsigned>((unsigned)tf);
 }
 
 void

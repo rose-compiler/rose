@@ -308,6 +308,7 @@ RSIM_Thread::signal_deliver(const RSIM_SignalHandling::SigInfo &_info)
                     tracing(TRACE_MISC) <<"dumping core...\n";
                     get_process()->mem_showmap(tracing(TRACE_MISC), "map at time of core dump:\n");
                     get_process()->dump_core(signo);
+                    tracing(TRACE_MISC) <<*operators();
                     report_stack_frames(tracing(TRACE_MISC));
                     throw RSIM_Process::Exit((signo & 0x7f) | __WCOREFLAG, true);
                 case SIGTERM:

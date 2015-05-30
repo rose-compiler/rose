@@ -186,7 +186,7 @@ RSIM_Process::load()
 
     // Make sure the executable is found and readable (it need not be executable since ROSE is simulating execution)
     if (access(simulator->exeArgs()[0].c_str(), R_OK)<0) {
-        fprintf(stderr, "%s: %s\n", simulator->exeArgs()[0].c_str(), strerror(errno));
+        std::cerr <<simulator->exeArgs()[0] <<": " <<strerror(errno) <<"\n";
         exit(1);
     }
 
@@ -226,7 +226,7 @@ RSIM_Process::load()
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
     PtRegs initialRegisters;
-    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
+    initialRegisters.sp = 0xffffe000ul;                 // high end of stack, exclusive
     initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
     initialRegisters.cs = 0x23;
     initialRegisters.ds = 0x2b;
@@ -549,27 +549,16 @@ RSIM_Process::dump_core(int signo, std::string base_name)
 void
 RSIM_Process::open_tracing_file()
 {
-    char name[4096];
-
-    if (!tracing_file_name.empty()) {
-        size_t nprinted = snprintf(name, sizeof name, tracing_file_name.c_str(), getpid());
-        if (nprinted > sizeof name) {
-            fprintf(stderr, "name pattern overflow: %s\n", tracing_file_name.c_str());
-            tracingFile_ = stderr;
-            return;
-        }
-    } else {
-        name[0] = '\0';
-    }
-
+    std::string fileName = tracingFileName_;
+    boost::replace_all(fileName, "${pid}", StringUtility::numberToString(getpid()));
     if (tracingFile_ && tracingFile_!=stderr && tracingFile_!=stdout) {
         fclose(tracingFile_);
         tracingFile_ = NULL;
     }
 
-    if (name[0]) {
-        if (NULL==(tracingFile_ = fopen(name, "w"))) {
-            fprintf(stderr, "%s: %s\n", strerror(errno), name);
+    if (!fileName.empty()) {
+        if (NULL==(tracingFile_ = fopen(fileName.c_str(), "w"))) {
+            std::cerr <<strerror(errno) <<": " <<fileName <<"\n";
             return;
         }
 #ifdef X86SIM_LOG_UNBUFFERED

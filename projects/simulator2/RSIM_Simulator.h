@@ -114,14 +114,14 @@
  * // details about how a 32-bit Linux kernel operates.
  * RSIM_Linux32 sim;
  *
- * // Configure the simulator from command-line switches.  The
- * // return value is the index of the executable name in argv.
- * int n = sim.configure(argc, argv, envp);
+ * // Configure the simulator
+ * Settings settings = ...; //or parse command line
+ * sim.configure(settings);
  *
  * // Create the initial process object by loading a program
  * // and initializing the stack.  This also creates the main
  * // thread, but does not start executing it.
- * sim.loadSpecimen(argc-n, argv+n);
+ * sim.loadSpecimen(argc-1, argv+1);
  *
  * // Get ready to execute by making the specified simulator
  * // active.  This sets up signal handlers, etc.
@@ -155,16 +155,14 @@
  *  (RSIM_Thread). Each simulated thread runs in a real thread, and just as a simulated process shares certain state with the
  *  simulator process, the simulated threads share certain state with the real threads.
  *
- *  Example of a very simple simulator.  The simulator is configured from the command-line and the name and arguments of the
- *  executable specimen are supplied:
+ *  Example of a very simple simulator.
  *
  *  @code
  *  #include <rose.h>
  *  #include <RSIM_Linux32.h>
  *  int main(int argc, char *argv[], char *envp[]) {
  *      RSIM_Linux32 s;                          // RSIM_Linux32 is derived from RSIM_Simulator
- *      int n = s.configure(argc, argv, envp);   // Configure the simulator
- *      s.loadSpecimen(argc-n, argv+n);          // Create a simulated process and its initial thread
+ *      s.loadSpecimen(argc-1, argv+1);          // Create a simulated process and its initial thread
  *      s.activate();                            // Allow other real processes to signal this one
  *      s.main_loop();                           // Simulate until exit
  *      s.deactivate();                          // Restore original signal handlers
@@ -175,6 +173,21 @@
 class RSIM_Simulator {
 public:
     static Sawyer::Message::Facility mlog;
+
+    /** Properties settable from the command-line. */
+    struct Settings {
+        std::string tracingFileName;
+        std::vector<TracingFacility> tracing;
+        std::vector<CoreStyle> coreStyles;
+        std::string interpreterName;
+        std::vector<std::string> vdsoPaths;
+        std::string semaphoreName;
+        bool showAuxv;
+        std::string binaryTraceName;
+        Settings()
+            : showAuxv(false) {}
+    };
+
 private:
     std::string exeName_;                               // Specimen name as given on command-line, original argv[0]
     std::vector<std::string> exeArgs_;                  // Specimen argv, eventually with PATH-resolved argv[0]
@@ -188,14 +201,16 @@ public:
         ctor();
     }
 
-    /** Configure simulator properties from command-line switches.  The ENVP is used only for the --showauxv switch and may be
-     *  a null pointer.  This should normally be called only by constructors, before the main process is created.  The return
-     *  value is the number of switch arguments that were processed.  In other words, argv[parse_cmdline(...)] is probably the
-     *  name of the executable to load and simulate, and the subsequent arguments are the arguments to pass to that executable.
+    /** Command-line switches for the simulator. */
+    static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings &settings /*in,out*/);
+
+    /** Configure simulator properties from command-line switches.
+     *
+     *  The ENVP is used only for the --showauxv switch and may be a null pointer.
      *
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. Note, however,
      *  that it may call functions registered with atexit(). */
-    int configure(int argc, char **argv,  char **envp=NULL);
+    void configure(const Settings &settings,  char **envp=NULL);
 
     /** Set the name of the global semaphore.
      *
@@ -225,13 +240,13 @@ public:
 
     /** Load program and create process object.
      *
-     *  The argument vector, @p argv, should contain the name of the executable and any arguments to pass to the executable.
+     *  The argument vector, @p args, should contain the name of the executable and any arguments to pass to the executable.
      *  The executable file is located by consulting the $PATH environment variable, and is loaded into memory creating an
      *  RSIM_Process with an and an initial RSIM_Thread. The return value is zero for success, or a negative error number on
      *  failure.
      *
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. */
-    int loadSpecimen(int argc, char **argv);
+    int loadSpecimen(const std::vector<std::string> &args);
 
     /** Property: executable name.
      *
@@ -685,7 +700,7 @@ public:
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) = 0;
 
     /** Initialize stack for main thread. */
-    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *, int argc, char *argv[]) = 0;
+    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) = 0;
 
     /***************************************************************************************************************************/
     
@@ -712,7 +727,7 @@ private:
 
 private:
     /* Configuration variables */
-    std::string tracing_file_name;      /**< Name pattern for debug trace output, or empty to disable. */
+    std::string tracingFileName_;       /**< Name pattern for debug trace output, or empty to disable. */
     unsigned tracingFlags_;             /**< What things should be traced for debugging? (See TraceFlags enum) */
     unsigned core_flags;                /**< Kinds of core dumps to produce. (See CoreStyle enum) */
     std::string interp_name;            /**< Name of command-line specified interpreter for dynamic linking. */

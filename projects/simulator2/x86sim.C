@@ -21,6 +21,7 @@ enum GuestOs { GUEST_OS_NONE, GUEST_OS_LINUX_x86, GUEST_OS_LINUX_amd64 };
 struct Settings {
     GuestOs guestOs;
     bool catchingSignals;
+    RSIM_Simulator::Settings simSettings;
     Settings()
         : guestOs(GUEST_OS_NONE), catchingSignals(false) {}
 };
@@ -71,8 +72,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "the specimen being simulated. Sending a signal to a process or thread will cause the tool to forward the "
              "signal to the simulated process or thread only if this behavior is enabled at runtime.");
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
-
     SwitchGroup sg("Tool-specific switches");
 
     sg.insert(Switch("arch")
@@ -102,7 +101,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .hidden(true));
 
 
-    return parser.with(gen).with(sg).parse(argc, argv).apply().unreachedArgs();
+    return parser
+        .with(CommandlineProcessing::genericSwitches())
+        .with(sg)                                       // tool-specific
+        .with(RSIM_Simulator::commandLineSwitches(settings.simSettings))
+        .parse(argc, argv).apply().unreachedArgs();
 }
 
 template<class Simulator>
@@ -110,30 +113,9 @@ static void
 simulate(const Settings &settings, const std::vector<std::string> &args, char *envp[]) {
     Simulator sim;
 
-    // Local resources that need to be cleaned up
-    struct Resources {
-        int argc;
-        char **argv;
-        Resources(): argc(0), argv(NULL) {}
-        ~Resources() {
-            for (int i=0; i<argc; ++i) {
-                if (argv[i])
-                    free(argv[i]);
-            }
-            delete[] argv;
-        }
-    } r;
-
-    // Build the command-line arguments for the specimen
-    r.argc = args.size();
-    r.argv = new char*[args.size()+1];
-    for (int i=0; i<r.argc; ++i)
-        r.argv[i] = strdup(args[i].c_str());
-    r.argv[r.argc] = NULL;
-
-    // Run the simulator
-    int n = sim.configure(r.argc, r.argv, envp);
-    sim.loadSpecimen(r.argc-n, r.argv+n);
+    sim.configure(settings.simSettings, envp);
+    if (sim.loadSpecimen(args) < 0)
+        return;
     if (settings.catchingSignals)
         sim.activate();
     sim.main_loop();

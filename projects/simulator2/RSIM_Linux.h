@@ -18,7 +18,7 @@ public:
     rose_addr_t vdsoEntryVa() const { return vdsoEntryVa_; }
 
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
-    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *, int argc, char *argv[]) ROSE_OVERRIDE;
+    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
 
     /** Push auxv onto the stack. */
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,

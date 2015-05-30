@@ -199,63 +199,49 @@ pushEnvironmentStrings(RSIM_Process *process, rose_addr_t sp, FILE *trace) {
     // overrides were not present. In other words, if X86SIM_FOO and FOO are both present, then X86SIM_FOO is deleted from the
     // list and its value used for FOO; but if X86SIM_FOO is present without FOO, then we just change the name to FOO and leave
     // it at that location. We do all this so that variables are in the same order whether run natively or under the simulator.
-    std::vector<size_t> env_offsets;
-    std::string env_buffer;
-    std::map<std::string, std::string> envvars;
-    std::map<std::string, std::string>::iterator found;
-    for (int i=0; environ[i]; i++) {
-        char *eq = strchr(environ[i], '=');
-        ROSE_ASSERT(eq!=NULL);
-        std::string var(environ[i], eq-environ[i]);
-        std::string val(eq+1);
-        envvars.insert(std::make_pair(var, val));
-    }
-    for (int i=0; environ[i]; i++) {
-        char *eq = strchr(environ[i], '=');
-        ROSE_ASSERT(eq!=NULL);
-        std::string var(environ[i], eq-environ[i]);
-        std::string val(eq+1);
-        if (!strncmp(var.c_str(), "X86SIM_", 7) && environ[i]+7!=eq) {
-            std::string var_short = var.substr(7);
-            if ((found=envvars.find(var_short))==envvars.end()) {
-                var = var_short;
-                val = eq+1;
-            } else {
-                continue;
-            }
-        } else {
-            std::string var_long = "X86SIM_" + var;
-            if ((found=envvars.find(var_long))!=envvars.end()) {
-                val = found->second;
-            }
-        }
-        std::string env = var + "=" + val;
-        env_offsets.push_back(env_buffer.size());
-        env_buffer += env + (char)0;
-    }
 
-    // Push the environment strings onto the stack
-    sp -= env_buffer.size();
-    rose_addr_t env_va = sp;
-    process->mem_write(env_buffer.c_str(), env_va, env_buffer.size());
-
-    // Create the envp vector.
-    std::vector<Word> pointers;
-    for (size_t i=0; i<env_offsets.size(); i++) {
-        pointers.push_back(env_va+env_offsets[i]);
-        if (trace) {
-            fprintf(trace, "environ[%zu] %zu bytes at 0x%08zx = \"\%s\"\n",
-                    i, strlen(&(env_buffer[env_offsets[i]]))+1, env_va+env_offsets[i], &(env_buffer[env_offsets[i]]));
+    // Get all the X86SIM_*=VALUE pairs and store them without the X86SIM_ prefix.
+    typedef Sawyer::Container::Map<std::string, std::string> VarVal;
+    VarVal varVal;
+    for (int i=0; environ[i]; ++i) {
+        if (0 == strncmp(environ[i], "X86SIM_", 7) && environ[i][7]!='=') {
+            char *eq = strchr(environ[i], '=');
+            ASSERT_not_null(eq);
+            std::string var(environ[i]+7, eq);
+            std::string val(eq+1);
+            varVal.insert(var, val);
         }
     }
-    pointers.push_back(0); /*environment NULL terminator*/
-    return pointers;
+
+    // Build the string for all the non-X86SIM_ vars, using the overrides we found above.
+    std::vector<Word> offsets;
+    std::string envVarBuffer;
+    for (int i=0; environ[i]; ++i) {
+        if (0 != strncmp(environ[i], "X86SIM_", 7)) {
+            char *eq = strchr(environ[i], '=');
+            ASSERT_not_null(eq);
+            std::string var(environ[i], eq);
+            std::string val = varVal.getOptional(var).orElse(std::string(eq+1));
+            offsets.push_back(envVarBuffer.size());
+            envVarBuffer += var + "=" + val + '\0';
+        }
+    }
+
+    // Write the var=val strings to the stack
+    sp -= envVarBuffer.size();
+    process->mem_write(envVarBuffer.c_str(), sp, envVarBuffer.size());
+
+    // Adjust the offsets so they become addresses instead.
+    BOOST_FOREACH (Word &va, offsets)
+        va += sp;
+    offsets.push_back(0);
+    return offsets;
 }
 
 template<typename Word>
 static std::vector<Word>
 pushArgumentStrings(RSIM_Process *process, rose_addr_t sp, FILE *trace) {
-    // Copy argv strings to the stack 
+    // Copy argv strings to the stack
     const std::vector<std::string> &argv = process->get_simulator()->exeArgs();
     std::vector<Word> pointers(argv.size()+1, 0);
     for (size_t i=argv.size(); i>0; --i) {
@@ -276,8 +262,7 @@ pushArgumentStrings(RSIM_Process *process, rose_addr_t sp, FILE *trace) {
 }
 
 void
-RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr, int argc, char *argv[])
-{
+RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) {
     RSIM_Process *process = thread->get_process();
     FILE *trace = (process->tracingFlags() & tracingFacilityBit(TRACE_LOADER)) ? process->tracingFile() : NULL;
 
@@ -286,8 +271,9 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr, 
     ASSERT_not_null(fhdr);
 
     /* Allocate the stack */
-    static const size_t stack_size = 0x00015000;
-    rose_addr_t sp = thread->operators()->readRegister(thread->dispatcher()->REG_anySP)->get_number();
+    static const size_t stack_size = 0x00016000;
+    rose_addr_t origSp = thread->operators()->readRegister(thread->dispatcher()->REG_anySP)->get_number();
+    rose_addr_t sp = origSp;
     rose_addr_t stack_addr = sp - stack_size;
     process->get_memory().insert(AddressInterval::baseSize(stack_addr, stack_size),
                                  MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
@@ -315,18 +301,30 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr, 
 
         sp -= envPointers.size() * sizeof(Word);
         process->mem_write(&envPointers[0], sp, envPointers.size()*sizeof(Word));
-
         sp -= argPointers.size() * sizeof(Word);
         process->mem_write(&argPointers[0], sp, argPointers.size()*sizeof(Word));
 
         Word argc = exeArgs().size();
         sp -= sizeof(argc);
         process->mem_write(&argc, sp, sizeof(argc));
-
     } else {
         ASSERT_require(process->wordSize() == 64);
         TODO("[Robb P. Matzke 2015-05-29]");
     }
+
+#if 0 // DEBUGGING [Robb P. Matzke 2015-05-29]
+    // Dump the stack
+    {
+        std::cerr <<"Initial stack contents:\n";
+        rose_addr_t tmpSp = sp & ~0xf;
+        size_t stackUsed = origSp - tmpSp;
+        uint8_t *buf = new uint8_t[stackUsed];
+        process->mem_read(buf, tmpSp, stackUsed);
+        SgAsmExecutableFileFormat::hexdump(std::cerr, tmpSp, buf, stackUsed, HexdumpFormat());
+        std::cerr <<"\n";
+        delete[] buf;
+    }
+#endif
 
     // Initialize the stack pointer register
     const RegisterDescriptor &REG_SP = thread->dispatcher()->stackPointerRegister();

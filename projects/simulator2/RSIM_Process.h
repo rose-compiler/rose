@@ -66,23 +66,22 @@ public:
      *                                  Tracing and debugging
      **************************************************************************************************************************/
 private:
-    std::string tracing_file_name;      /**< Pattern for trace file names. May include %d for thread ID. */
+    std::string tracingFileName_;       /**< Pattern for trace file names. May include %d for thread ID. */
     FILE *tracingFile_;                 /**< Stream to which debugging output is sent (or NULL to suppress it) */
     unsigned tracingFlags_;             /**< Bit vector of what to trace. See TraceFlags. */
     struct timeval time_created;        /**< Time at which process object was created. */
 
 public:
 
-    /** Sets the pattern to use to generate a file name for trace output.  The name should be a printf-style format string with
-     *  an optional %d conversion which is replaced by the process ID. */
-    void set_tracing_name(const std::string &s) {
-        tracing_file_name = s;
-    }
-
-    /** Returns the pattern used to generate trace file names. */
-    std::string get_tracing_name(void) const {
-        return tracing_file_name;
-    }
+    /** Property: name of tracing file.
+     *
+     *  The name of the file to create for tracing output. All occurrences of the substring "${pid}" are replaced with the
+     *  actual process ID.
+     *
+     * @{ */
+    const std::string& tracingName() const { return tracingFileName_; }
+    void tracingName(const std::string &s) { tracingFileName_ = s; }
+    /** @} */
 
     /** Initialize tracing by (re)opening the trace file with the name pattern that was specified with set_trace_name().  The
      *  pattern should be a printf-style format with an optional integer specifier for the thread ID. */
