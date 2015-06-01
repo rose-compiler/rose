@@ -242,6 +242,7 @@ REQUIRED_LIBS = librose.la
 
 # DQ (3/14/2009): In this file we have to overwrite existing values in LDFLAGS (to build librose.so).
 # DQ (3/14/2009): We have to clear the LDFLAGS variable...  This is not so great.
+LDFLAGS =
 if OS_MACOSX
 if HAS_LIBRARY_GCRYPT
 PORT_PATH = $(shell which port)
@@ -250,8 +251,6 @@ LDFLAGS += -L$(PORT_HOME)/lib -lgcrypt -lgcc_eh
 else
 LDFLAGS += -lgcc_eh
 endif
-else
-LDFLAGS =
 endif
 
 testSharedRoseLib_SOURCES = testRoseLib.C
