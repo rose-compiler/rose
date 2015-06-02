@@ -273,7 +273,7 @@ void traverse2(Processor &processor, Word1 *vec1, const BitRange &range1, Word2 
     size_t offsetInWord = bitIndex<Word2>(range2.least());
     const size_t nWordsTmp = numberOfWords<Word2>(offsetInWord + range2.size());
     SAWYER_VARIABLE_LENGTH_ARRAY(typename RemoveConst<Word1>::Base, tmp, nWordsTmp);
-    memset(tmp, 0, nWordsTmp*sizeof(*tmp));                         // only for making debugging easier
+    memset(tmp, 0, nWordsTmp*sizeof(*tmp));             // only for making debugging easier
     BitRange tmpRange = BitRange::baseSize(offsetInWord, range1.size());
     nonoverlappingCopy(vec1, range1, tmp, tmpRange);
 
