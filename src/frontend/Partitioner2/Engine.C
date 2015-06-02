@@ -403,8 +403,11 @@ Engine::parseContainers(const std::vector<std::string> &fileNames) {
     // Prune away things we recognize as not being binary containers.
     std::vector<std::string> frontendNames;
     BOOST_FOREACH (const std::string &fileName, fileNames) {
-        if (boost::starts_with(fileName, "run:") || !isNonContainer(fileName))
+        if (boost::starts_with(fileName, "run:") && fileName.size()>4) {
+            frontendNames.push_back(fileName.substr(4));
+        } else if (!isNonContainer(fileName)) {
             frontendNames.push_back(fileName);
+        }
     }
 
     // Process through ROSE's frontend()
