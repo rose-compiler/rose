@@ -39,6 +39,14 @@ do
     [ -f "$srcbase.C" ] && ( emit_cpp_warning; cat "$srcbase.C" ) > ./$f.C
 done
 
+# Copy some of Sawyers examples. These are needed by ROSE's doxygen
+mkdir -p docs/examples
+for f in \
+    commandLineEx1.C commandLineEx1.out
+do
+    cp "$SAWYER_ROOT/docs/examples/$f" docs/examples/.
+done
+
 
 # Add a comment to the Message.h file
 sed --in-place -e '1i// See also rose::Diagnostics in $ROSE/src/roseSupport/Diagnostics.h' Message.h
