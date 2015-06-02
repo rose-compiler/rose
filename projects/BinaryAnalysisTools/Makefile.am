@@ -28,6 +28,14 @@ recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Run specimen natively by single stepping
+
+bin_PROGRAMS += nativeExecutionTrace
+nativeExecutionTrace_SOURCES = nativeExecutionTrace.C
+nativeExecutionTrace_CPPFLAGS = $(ROSE_INCLUDES)
+nativeExecutionTrace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Single-step a process and compare execution addresses with a list of addresses
 
 bin_PROGRAMS += checkExecutionAddresses
