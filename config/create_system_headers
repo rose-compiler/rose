@@ -64,7 +64,11 @@ process_headers()
   else
     echo "$src_dir needs to be copied and modified"
     find "$src_dir/." -type d -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|mkdir -p '$target_dir/\\1'|p" | sh -s
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+    find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s -F '&' '$target_dir/\\1'|p" | sh -s
+    else
     find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s --force '&' '$target_dir/\\1'|p" | sh -s
+    fi
   # find "$src_dir/." -type f -a -print | sed -n "s|^${src_dir}\\(.*\\)\$|ln -s '&' '$target_dir/\\1'|p" | sh -s &
     echo "Done copying"
     # Find the special-case files to process
