@@ -35,7 +35,7 @@
 # else
 #  include <termio.h>
 # endif
-# include <sys/ioctl.h>
+#include <sys/ioctl.h>
 #endif
 
 namespace Sawyer {

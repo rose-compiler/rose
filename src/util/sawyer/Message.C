@@ -675,7 +675,7 @@ Prefix::setProgramName() {
 #elif defined(__APPLE__) && defined(__MACH__)
     programName_ = "FIXME(Sawyer::Message::Prefix::setProgramName)";
 #else
-// no synchronization necessary for this global state
+    // no synchronization necessary for this global state
     if (FILE *f = fopen("/proc/self/cmdline", "r")) {
         std::string name;
         int c;
