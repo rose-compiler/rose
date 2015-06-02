@@ -122,6 +122,8 @@ void
 RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpretation, const std::string &interpreterName) {
     FILE *trace = (process->tracingFlags() & tracingFacilityBit(TRACE_LOADER)) ? process->tracingFile() : NULL;
     SimLoader *loader = new SimLoader(interpretation, interpreterName);
+    ASSERT_require(process->headers().size() == 1);
+    SgAsmGenericHeader *mainHeader = process->headers().front();
 
     /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
      * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
@@ -172,7 +174,7 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
     if (!vdso_loaded && trace && !vdsoPaths_.empty())
         fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
 
-    // Initialize the brk value
+    // Initialize the brk value. This is the first free area after the main executable.
     struct FindInitialBrk: public SgSimpleProcessing {
         FindInitialBrk(): max_mapped_va(0) {}
         rose_addr_t max_mapped_va;
@@ -182,8 +184,7 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
                 max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
         }
     } t1;
-    BOOST_FOREACH (SgAsmGenericHeader *fhdr, process->headers())
-        t1.traverse(fhdr, preorder);
+    t1.traverse(mainHeader, preorder);
     AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
     process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
 

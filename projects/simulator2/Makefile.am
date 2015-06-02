@@ -90,6 +90,12 @@ x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES) -DX86_VDSO_PATH_1='"$(srcdir)"' -DX86_VDSO_PATH_2='"$(include_dir)"'
 x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) 
 
+# help debug the initial stack
+noinst_PROGRAMS += show-initial-stack
+show_initial_stack_SOURCES = show-initial-stack.C
+show_initial_stack_CPPFLAGS = $(ROSE_INCLUDES)
+show_initial_stack_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
 ###############################################################################################################################
 #  INTERNAL SIMULATOR TESTS
 ###############################################################################################################################

@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "Diagnostics.h"
+#include "TraceSemantics2.h"
 #include <errno.h>
 #include <stdarg.h>
 #include <syscall.h>
@@ -94,6 +95,25 @@ RSIM_Thread::tracing(TracingFacility tf)
     assert(tf>=0 && tf<TRACE_NFACILITIES);
     assert(trace_mesg[tf]!=NULL);
     return *trace_mesg[tf];
+}
+
+RSIM_Semantics::RiscOperatorsPtr
+RSIM_Thread::operators() const
+{
+    BaseSemantics::RiscOperatorsPtr baseOps = dispatcher_->get_operators();
+
+    // This is the usual case, so keep it here to be fast.
+    if (RSIM_Semantics::RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(baseOps))
+        return retval;
+
+    // This unusual case might happen when we turn on semantic tracing when debugging the simulator.
+    if (TraceSemantics::RiscOperatorsPtr traceOps = boost::dynamic_pointer_cast<TraceSemantics::RiscOperators>(baseOps)) {
+        BaseSemantics::RiscOperatorsPtr subOps = traceOps->subdomain();
+        if (RSIM_Semantics::RiscOperatorsPtr retval = boost::dynamic_pointer_cast<RSIM_Semantics::RiscOperators>(subOps))
+            return retval;
+    }
+
+    ASSERT_not_reachable("invalid RiscOperators type");
 }
 
 SgAsmX86Instruction *

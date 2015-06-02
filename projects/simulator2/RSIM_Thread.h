@@ -599,9 +599,7 @@ public:
         return dispatcher_;
     }
 
-    RSIM_Semantics::RiscOperatorsPtr operators() const {
-        return RSIM_Semantics::RiscOperators::promote(dispatcher_->get_operators());
-    }
+    RSIM_Semantics::RiscOperatorsPtr operators() const;
 
     rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
     

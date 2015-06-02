@@ -4,6 +4,10 @@
 #include "RSIM_Semantics.h"
 #include "RSIM_Thread.h"
 
+#if 1 // DEBUGGING [Robb P. Matzke 2015-06-01]
+#include "TraceSemantics2.h"
+#endif
+
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
@@ -64,7 +68,14 @@ createDispatcher(RSIM_Thread *owningThread) {
     RiscOperatorsPtr ops = RiscOperators::instance(owningThread, regs, NULL);
     size_t wordSize = regs->findLargestRegister(x86_regclass_gpr, x86_gpr_ax).get_nbits();
     ASSERT_require(wordSize == 32 || wordSize == 64);
+#if 0 // DEBUGGING [Robb P. Matzke 2015-06-01]
+    std::cerr <<"Using TraceSemantics for debugging (" <<__FILE__ <<":" <<__LINE__ <<")\n";
+    TraceSemantics::RiscOperatorsPtr traceOps = TraceSemantics::RiscOperators::instance(ops);
+    traceOps->stream().disable();                       // turn it on only when we need it
+    DispatcherPtr dispatcher = DispatcherX86::instance(traceOps, wordSize, regs);
+#else
     DispatcherPtr dispatcher = DispatcherX86::instance(ops, wordSize, regs);
+#endif
     dispatcher->iproc_set(x86_cpuid, new IP_cpuid);
     dispatcher->iproc_set(x86_sysenter, new IP_sysenter);
     return dispatcher;
@@ -178,7 +189,7 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     // Diagnostics
     mesg <<"  readMemory(" <<StringUtility::addrToString(segment.base) <<"+"
          <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr)
-         <<") -> " <<retval <<"\n";
+         <<") -> " <<*retval <<"\n";
 
     return retval;
 }
@@ -209,7 +220,7 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics
 
     mesg <<"  writeMemory(" <<StringUtility::addrToString(segment.base) <<"+"
          <<StringUtility::addrToString(offset) <<"=" <<StringUtility::addrToString(addr)
-         <<", " <<value <<")\n";
+         <<", " <<*value <<")\n";
 
     // Convert to a little-endian value
     uint8_t buffer[16];

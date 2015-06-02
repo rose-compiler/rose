@@ -226,7 +226,7 @@ RSIM_Process::load()
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
     PtRegs initialRegisters;
-    initialRegisters.sp = 0xffffe000ul;                 // high end of stack, exclusive
+    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
     initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
     initialRegisters.cs = 0x23;
     initialRegisters.ds = 0x2b;
