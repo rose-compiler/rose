@@ -52,6 +52,7 @@ C_TESTCODES_REQUIRED_TO_COMPILE = \
 OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         collapse_2.c\
         axpy_ompacc.c \
+        axpy_ompacc3.c \
         matrixmultiply-ompacc.c \
         jacobi-ompacc.c \
         jacobi-ompacc-v2.c \

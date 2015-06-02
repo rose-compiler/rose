@@ -140,6 +140,7 @@ C_TESTCODES_REQUIRED_TO_PASS = \
 C_OMP_ACC_TESTCODES_REQUIRED_TO_PASS = \
         axpy_ompacc.c \
         axpy_ompacc2.c \
+        axpy_ompacc3.c \
 	matrixmultiply-ompacc.c \
 	jacobi-ompacc.c \
 	jacobi-ompacc-v2.c \
