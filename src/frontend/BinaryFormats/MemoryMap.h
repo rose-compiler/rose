@@ -34,8 +34,8 @@ T alignDown(T address, T alignment) {
  *  Sawyer::Container::Buffer).
  *
  *  Buffers come in a variety of kinds, all derived from @ref Sawyer::Container::Buffer and they are reference counted via
- *  shared-ownership smart pointers (@ref Sawyer::SharedPtr).  Always refer to a buffer with its @c Ptr type. They should be
- *  created with various @c instance class methods, and they should never be explicitly freed.
+ *  shared-ownership smart pointers (@ref Sawyer::SharedPointer).  Always refer to a buffer with its @c Ptr type. They should
+ *  be created with various @c instance class methods, and they should never be explicitly freed.
  *
  *  Here's an example of mapping a file into an address space at virtual address 0x08040000 and then temporarily replacing the
  *  second 1kB page of the file with our own data.  We demonstrate using a @ref Sawyer::Container::MappedBuffer because these

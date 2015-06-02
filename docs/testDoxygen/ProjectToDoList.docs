@@ -411,7 +411,7 @@ Rejected modifications for ROSE:
 
 \section SageIII_Details SageIII Details
 
-\subsection{Proposed Mangled Name Tests}
+\subsection mangled_name_tests Proposed Mangled Name Tests
      - Need to test mangled names for uniqueness, and for equality when they
        define the same construct.  This should be a test that can be run on
        any input code, as apposed to hand crafted inputs. A suggested test would be:

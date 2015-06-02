@@ -8,15 +8,14 @@
 namespace rose {
 namespace BinaryAnalysis {
 
-/** %Analysis for finding strings in memory.
+/** Suport for finding strings in memory.
  *
- *  This analysis looks for various kinds of strings in specimen memory.  A string is a sequence of characters encoded in one
- *  of a variety of ways in memory.  For instance, NUL-terminated ASCII is a common encoding from C compilers.  The characters
- *  within the string must all satisfy some valid-character predicate.
- *
- *  The terms used in this analysis are based on the Unicode standard, and are defined here in terms of string encoding
- *  (translation of a string as printed to a sequence of octets). Although this analysis can encode strings, its main purpose
- *  is decoding strings from an octet stream into a sequence of code points.
+ *  This namespace provides support for various kinds of strings in specimen memory, including an @ref StringFinder "analysis"
+ *  that searches for strings in specimen memory.  A string is a sequence of characters encoded in one of a variety of ways in
+ *  memory.  For instance, NUL-terminated ASCII is a common encoding from C compilers.  The characters within the string must
+ *  all satisfy some valid-character predicate.  The terms used in this analysis are based on the Unicode standard, and are
+ *  defined here in terms of string encoding (translation of a string as printed to a sequence of octets). Although this
+ *  analysis can encode strings, its main purpose is decoding strings from an octet stream into a sequence of code points.
  *
  *  Unicode and its parallel standard, the ISO/IEC 10646 Universal Character Set, together constitute a modern, unified
  *  character encoding. Rather than mapping characters directly to octets (bytes), they separately define what characters are
@@ -85,47 +84,50 @@ namespace BinaryAnalysis {
  *  ASCII, etc.
  *
  * @code
- *  #include <rose/BinaryString.h>
+ *  #include <rose/BinaryString.h>              // binary analysis string support
  *  using namespace rose::BinaryAnalysis::Strings;
- *  MemoryMap map = ...;            // initialized elsewhere
+ *  MemoryMap map = ...;                        // initialized elsewhere
  *
- *  StringFinder finder;            // holds settings
- *  finder.minLength(5);            // no strings shorter than 5 characters
- *  finder.maxLength(65536);        // ignore very long strings
- *  finder.includeCommonEncoders(); // how to match strings
+ *  StringFinder finder;                        // holds settings
+ *  finder.settings().minLength = 5;            // no strings shorter than 5 characters
+ *  finder.settings().maxLength = 65536;        // ignore very long strings
+ *  finder.includeCommonEncoders();             // how to match strings
+ *  finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
  *
- *  std::vector<EncodedString> strings = finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
- *  BOOST_FOREACH (const EncodedString &string, strings) {
+ *  BOOST_FOREACH (const EncodedString &string, finder.strings()) {
  *      std::cout <<"string at " <<string.address() <<" for " <<string.size() <<" bytes\n";
  *      std::cout <<"encoding: " <<string.encoder()->name() <<"\n";
  *      std::cout <<"narrow value: \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n"; // std::string
  *      std::cout <<"wide value: " <<string.wide() <<"\n"; // std::wstring
  *  }
+ *
+ *  // This works too if you're not picky about the output format
+ *  std::cout <<finder;
  * @endcode
  *
  * @section ex2 Example 2
  *
- *  This analysis is tuned for searching for strings at unknown locations while trying to decode multiple encodings
- *  simultaneously. If all you want to do is read a single string from a known location having a known encoding then you're
- *  probabily better off reading it directly from the MemoryMap. This analysis can be used for that, but it's probably
- *  overkill. In any case, here's the overkill version to find a 2-byte little endian length-encoded UTF-8 string:
+ *  The @ref StringFinder analysis is tuned for searching for strings at unknown locations while trying to decode multiple
+ *  encodings simultaneously. If all you want to do is read a single string from a known location having a known encoding then
+ *  you're probabily better off reading it directly from the @ref MemoryMap. The @ref StringFinder analysis can be used for
+ *  that, but it's probably overkill. In any case, here's the overkill version to find a 2-byte little endian length-encoded
+ *  UTF-8 string:
  *
  * @code
  *  #include <rose/BinaryString.h>
  *  using namespace rose::BinaryAnalysis::Strings;
- *  MemoryMap map = ...;            // initialized elsewhere
- *  rose_addr_t stringVa = ...;     // starting address of string
+ *  MemoryMap map = ...;                        // initialized elsewhere
+ *  rose_addr_t stringVa = ...;                 // starting address of string
  *
- *  StringFinder finder;            // holds settings
- *  finder.minLength(0);            // no strings shorter than 5 characters
- *  finder.maxLength(65536);        // ignore very long strings
+ *  StringFinder finder;                        // holds settings
+ *  finder.settings().minLength = 0;            // no strings shorter than 5 characters
+ *  finder.settings().maxLength = 65536;        // ignore very long strings
  *  finder.encoder(lengthEncodedString(basicLengthEncoder(2, ByteOrder::ORDER_LSB), // 2-byte little-endian length
  *                                     utf8CharacterEncodingForm(),                 // UTF-8 encoding
  *                                     basicCharacterEncodingScheme(1),             // 1:1 mapping to octets
  *                                     anyCodePoint());                             // allow any characters
- *
  *  std::wstring s;                                   
- *  BOOST_FOREACH (const EncodedString &string, finder.find(map.at(stringVa))) {
+ *  BOOST_FOREACH (const EncodedString &string, finder.find(map.at(stringVa)).strings()) {
  *      s = string.wide();
  *      break;
  *  }
@@ -783,7 +785,7 @@ public:
     void decode(const MemoryMap&);
 };
 
-/** Analysis to find encoded strings.
+/** %Analysis to find encoded strings.
  *
  *  This analysis searches user-specified parts of a binary specimen's memory space to find strings encoded in various formats
  *  specfieid by the user.
@@ -846,7 +848,7 @@ public:
      *  be used to find any strings. */
     StringFinder(): discardingCodePoints_(false) {}
 
-    /** Property: Analysis settings often set from a command-line.
+    /** Property: %Analysis settings often set from a command-line.
      *
      * @{ */
     const Settings& settings() const { return settings_; }
@@ -879,9 +881,12 @@ public:
      *  Returns the switch group that describes the command-line switches for this analysis. The caller can provide a @ref
      *  Settings object that will be adjusted when the command-line is parsed and applied; if no argument is supplied then the
      *  settings of this analysis are affected. In either case, the settings or analysis object must still be allocated when
-     *  the command-line is parsed. */
+     *  the command-line is parsed.
+     *
+     * @{ */
     static Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
     Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+    /** @} */
 
     /** Inserts common encodings.
      *
@@ -913,7 +918,8 @@ public:
 
     /** Finds strings by searching memory.
      *
-     *  Clears previous analysis results and searches for new strings.
+     *  Clears previous analysis results (e.g., @ref reset) and then searches for new strings.  The resulting strings can be
+     *  obtained from the @ref strings method.
      *
      *  The memory constraints indicate where to search for strings, and the properties of this StringFinder class determine
      *  how to find strings. Specifically, this class must have at least one encoding registered in order to find anything (see
@@ -940,8 +946,12 @@ public:
      * @endcode */
     StringFinder& find(const MemoryMap::ConstConstraints&, Sawyer::Container::MatchFlags flags=0);
 
-    /** Obtain strings that were found. */
+    /** Obtain strings that were found.
+     *
+     * @{ */
     const std::vector<EncodedString>& strings() const { return strings_; }
+    std::vector<EncodedString>& strings() { return strings_; }
+    /** @} */
 
     /** Print results.
      *
