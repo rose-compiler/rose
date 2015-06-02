@@ -478,9 +478,9 @@ nameStrings(const Partitioner &partitioner) {
         Strings::StringFinder stringFinder;
 
         T1(const Partitioner &partitioner): partitioner(partitioner) {
-            stringFinder.minLength(1);
-            stringFinder.maxLength(65536);
-            stringFinder.keepOnlyLongest(true);
+            stringFinder.settings().minLength = 1;
+            stringFinder.settings().maxLength = 65536;
+            stringFinder.settings().keepingOnlyLongest = true;
             ByteOrder::Endianness sex = partitioner.instructionProvider().defaultByteOrder();
             if (sex == ByteOrder::ORDER_UNSPECIFIED)
                 sex = ByteOrder::ORDER_LSB;
@@ -494,10 +494,11 @@ nameStrings(const Partitioner &partitioner) {
                     if (seen.getOptional(va).assignTo(label)) {
                         ival->set_comment(label);
                     } else if (partitioner.instructionsOverlapping(va).empty()) {
-                        std::vector<Strings::EncodedString> strings = stringFinder.find(partitioner.memoryMap().at(va));
-                        if (!strings.empty()) {
-                            ASSERT_require(strings.front().address() == va);
-                            std::string str = strings.front().narrow(); // front is the longest string
+                        stringFinder.reset();
+                        stringFinder.find(partitioner.memoryMap().at(va));
+                        if (!stringFinder.strings().empty()) {
+                            ASSERT_require(stringFinder.strings().front().address() == va);
+                            std::string str = stringFinder.strings().front().narrow(); // front is the longest string
                             static const size_t displayLength = 25;     // arbitrary
                             static const size_t maxLength = displayLength + 7; // strlen("+N more")
                             size_t nTruncated = 0;
