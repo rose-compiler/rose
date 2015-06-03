@@ -184,13 +184,15 @@ public:
         std::string semaphoreName;
         bool showAuxv;
         std::string binaryTraceName;
+        bool nativeLoad;
         Settings()
-            : showAuxv(false) {}
+            : showAuxv(false), nativeLoad(false) {}
     };
 
 private:
     std::string exeName_;                               // Specimen name as given on command-line, original argv[0]
     std::vector<std::string> exeArgs_;                  // Specimen argv, eventually with PATH-resolved argv[0]
+    Settings settings_;                                 // Settings from the command-line
     
 public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
@@ -211,6 +213,13 @@ public:
      *  Thread safety: This method is thread safe provided it is not invoked on the same object concurrently. Note, however,
      *  that it may call functions registered with atexit(). */
     void configure(const Settings &settings,  char **envp=NULL);
+
+    /** Obtain simulator settings. These are the settings that are typically changed by the command-line.
+     *
+     * @{ */
+    const Settings& settings() const { return settings_; }
+    Settings& settings() { return settings_; }
+    /** @} */
 
     /** Set the name of the global semaphore.
      *
@@ -696,6 +705,13 @@ public:
     /** Returns true if this simulator supports the speciment type. */
     virtual bool isSupportedArch(SgAsmGenericHeader*) = 0;
 
+    /** Initialize registers. This happens once while the process is being loaded and before its stack is initialized. The
+     * instruction pointer need not be initialized here since the loader will do that later. */
+    virtual PtRegs initialRegistersArch() = 0;
+
+    /** Architecture specific loading and initialization using native method. */
+    virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*) = 0;
+
     /** Architecture specific loading. */
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) = 0;
 
@@ -727,13 +743,8 @@ private:
 
 private:
     /* Configuration variables */
-    std::string tracingFileName_;       /**< Name pattern for debug trace output, or empty to disable. */
     unsigned tracingFlags_;             /**< What things should be traced for debugging? (See TraceFlags enum) */
     unsigned core_flags;                /**< Kinds of core dumps to produce. (See CoreStyle enum) */
-    std::string interp_name;            /**< Name of command-line specified interpreter for dynamic linking. */
-
-protected:
-    std::vector<std::string> vdsoPaths_;/**< Files and/or directories to search for a virtual dynamic shared library. */
 
 private:
     FILE *btrace_file;                  /**< Name for binary trace file, which will log info about process execution. */

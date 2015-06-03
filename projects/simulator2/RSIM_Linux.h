@@ -4,16 +4,17 @@
 #include "RSIM_Simulator.h"
 
 class RSIM_Linux: public RSIM_Simulator {
-    rose_addr_t interpreterBaseVa_;                    // base address for dynamic linker
-    std::string vdsoName_;                             // Optional base name of virtual dynamic shared object from kernel
-    rose_addr_t vdsoMappedVa_;                         // Address where vdso is mapped into specimen, or zero
-    rose_addr_t vdsoEntryVa_;                          // Entry address for vdso, or zero
+    rose_addr_t interpreterBaseVa_;                     // base address for dynamic linker
+    std::string vdsoName_;                              // Optional base name of virtual dynamic shared object from kernel
+    rose_addr_t vdsoMappedVa_;                          // Address where vdso is mapped into specimen, or zero
+    rose_addr_t vdsoEntryVa_;                           // Entry address for vdso, or zero
 public:
-    RSIM_Linux(): interpreterBaseVa_(0x40000000), vdsoName_("x86vdso"), vdsoMappedVa_(0), vdsoEntryVa_(0) {
+    RSIM_Linux(): interpreterBaseVa_(0), vdsoName_("x86vdso"), vdsoMappedVa_(0), vdsoEntryVa_(0) {
         init();
     }
 
     rose_addr_t interpreterBaseVa() const { return interpreterBaseVa_; }
+    void interpreterBaseVa(rose_addr_t va) { interpreterBaseVa_ = va; }
     rose_addr_t vdsoMappedVa() const { return vdsoMappedVa_; }
     rose_addr_t vdsoEntryVa() const { return vdsoEntryVa_; }
 
@@ -26,6 +27,12 @@ public:
 
 private:
     void init();
+
+    template<typename Word>
+    rose_addr_t pushArgcArgvEnvAuxv(RSIM_Process*, FILE *trace, SgAsmElfFileHeader*, rose_addr_t sp, rose_addr_t execfn_va);
+
+protected:
+    rose_addr_t segmentTableVa(SgAsmElfFileHeader *fhdr) const;
 };
 
 #endif

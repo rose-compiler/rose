@@ -162,8 +162,7 @@ RSIM_Process::get_ninsns() const
 }
 
 SgAsmGenericHeader*
-RSIM_Process::load()
-{
+RSIM_Process::load() {
     FILE *trace = (tracingFlags_ & tracingFacilityBit(TRACE_LOADER)) ? tracingFile_ : NULL;
 
     // Find the executable in $PATH if necessary and update the simulator's exeArgs[0]
@@ -214,30 +213,30 @@ RSIM_Process::load()
     }
     wordSize_ = 8 * fhdr->get_word_size();
 
-    /* Link the interpreter into the AST */
-    simulator->loadSpecimenArch(this, interpretation, interpname);
-
     /* Find a disassembler. */
     if (!disassembler) {
         disassembler = Disassembler::lookup(interpretation)->clone();
+        ASSERT_not_null(disassembler);
         disassembler->set_progress_reporting(-1); /* turn off progress reporting */
+    }
+
+    // Initialize state: memory and registers. Stack initialization happens later.
+    if (simulator->settings().nativeLoad) {
+        simulator->loadSpecimenNative(this, disassembler);
+    } else {
+        /* Link the interpreter into the AST */
+        simulator->loadSpecimenArch(this, interpretation, interpname);
     }
 
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
-    PtRegs initialRegisters;
-    initialRegisters.sp = 0xc0000000ul;                 // high end of stack, exclusive
-    initialRegisters.flags = 2;                         // flag bit 1 is set, although this is a reserved bit
-    initialRegisters.cs = 0x23;
-    initialRegisters.ds = 0x2b;
-    initialRegisters.es = 0x2b;
-    initialRegisters.ss = 0x2b;
-    initialRegisters.ip = entryPointStartVa_;
+    PtRegs initialRegisters = simulator->initialRegistersArch();
+    if (!simulator->settings().nativeLoad)
+        initialRegisters.ip = entryPointStartVa_;
     pid_t mainTid = clone_thread(0, 0, 0, initialRegisters, false/*don't start*/);
     RSIM_Thread *thread = get_thread(mainTid);
 
     mfprintf(thread->tracing(TRACE_THREAD))("new thread with tid %d", thread->get_tid());
-
     return fhdr;
 }
 

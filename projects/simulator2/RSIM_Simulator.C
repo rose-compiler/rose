@@ -196,66 +196,55 @@ RSIM_Simulator::ctor()
     syscall_define(1000001, syscall_RSIM_message_enter,     syscall_RSIM_message,     syscall_RSIM_message_leave);
     syscall_define(1000002, syscall_RSIM_delay_enter,       syscall_RSIM_delay,       syscall_RSIM_delay_leave);
     syscall_define(1000003, syscall_RSIM_transaction_enter, syscall_RSIM_transaction, syscall_RSIM_transaction_leave);
-
-    vdsoPaths_.push_back(".");
-#ifdef X86_VDSO_PATH_1
-    vdsoPaths_.push_back(X86_VDSO_PATH_1);
-#endif
-#ifdef X86_VDSO_PATH_2
-    vdsoPaths_.push_back(X86_VDSO_PATH_2);
-#endif
 }
 
 void
-RSIM_Simulator::configure(const Settings &settings, char **envp) {
+RSIM_Simulator::configure(const Settings &providedSettings, char **envp) {
+    settings_ = providedSettings;                       // copy them, then perhaps modify them
+
     // Use absolute name in case process changes directory
-    if (!settings.tracingFileName.empty() && '/'!=settings.tracingFileName[0]) {
+    if (!settings_.tracingFileName.empty() && '/'!=settings_.tracingFileName[0]) {
         char dirname[4096];
         char *dirname_p = getcwd(dirname, sizeof dirname);
         ASSERT_not_null(dirname_p);
-        tracingFileName_ = std::string(dirname) + "/" + settings.tracingFileName;
-    } else {
-        tracingFileName_ = settings.tracingFileName;
+        settings_.tracingFileName = std::string(dirname) + "/" + settings_.tracingFileName;
     }
 
     // Turn on some tracing
     tracingFlags_ = tracingFacilityBit(TRACE_MISC);
-    BOOST_FOREACH (TracingFacility t, settings.tracing)
+    BOOST_FOREACH (TracingFacility t, settings_.tracing)
         tracingFlags_ |= tracingFacilityBit(t);
 
     // Core dump styles
     core_flags = 0;
-    BOOST_FOREACH (CoreStyle cs, settings.coreStyles)
+    BOOST_FOREACH (CoreStyle cs, settings_.coreStyles)
         core_flags |= cs;
 
     // Global semaphore.
-    std::string semname = settings.semaphoreName;
+    std::string semname = settings_.semaphoreName;
     if (!semname.empty() && '/'!=semname[0])
         semname = "/" + semname;
     if (semname.find_first_of('/', 1)!=std::string::npos) {
         std::cerr <<"invalid semaphore name \"" <<semname <<"\"; should not contain internal slashes\n";
         exit(1);
     }
+    settings_.semaphoreName = semname;
     set_semaphore_name(semname);
 
-    if (!settings.binaryTraceName.empty()) {
+    if (!settings_.binaryTraceName.empty()) {
         if (btrace_file)
             fclose(btrace_file);
-        if (NULL==(btrace_file=fopen(settings.binaryTraceName.c_str(), "wb"))) {
-            std::cerr <<strerror(errno) <<": " <<settings.binaryTraceName <<"\n";
+        if (NULL==(btrace_file=fopen(settings_.binaryTraceName.c_str(), "wb"))) {
+            std::cerr <<strerror(errno) <<": " <<settings_.binaryTraceName <<"\n";
             exit(1);
         }
 #ifdef X86SIM_BINARY_TRACE_UNBUFFERED
         setbuf(btrace_file, NULL);
 #endif
     }
-        
-    // Misc
-    interp_name = settings.interpreterName;
-    vdsoPaths_ = settings.vdsoPaths;
 
     // Show auxv
-    if (settings.showAuxv) {
+    if (settings_.showAuxv) {
         fprintf(stderr, "showing the auxiliary vector for x86sim:\n");
         struct auxv_t {
             unsigned long type;
@@ -368,6 +357,21 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
               .argument("filename", anyParser(settings.binaryTraceName))
               .doc("Name of file for binary tracing."));
 
+    sg.insert(Switch("native-load")
+              .intrinsicValue(true, settings.nativeLoad)
+              .doc("If the executable format allows it to be run natively, then a debugger can be used to initialize the "
+                   "simulation machine state. Setting up the simulated machine state to exactly match the state produced "
+                   "by the linux kernel on a particular architecture and machine is complex and prone to slight differences. "
+                   "By using a debugger, the Linux kernel does the loading and initialization in a native process, "
+                   "then ROSE copies that process's memory and register state into ROSE's simulation, and finally the "
+                   "native process is destroyed without it ever executing any instructions. The @s{no-native-load} causes "
+                   "ROSE to simulate all kernel actions internally.  The default is to " +
+                   std::string(settings.nativeLoad?"load natively.":"emulate the load in ROSE.")));
+    sg.insert(Switch("no-native-load")
+              .key("native-load")
+              .intrinsicValue(false, settings.nativeLoad)
+              .hidden(true));
+
     return sg;
 }
 
@@ -413,9 +417,9 @@ RSIM_Simulator::create_process()
     process->set_callbacks(callbacks);
     process->set_tracing(stderr, tracingFlags_);
     process->set_core_styles(core_flags);
-    process->set_interpname(interp_name);
+    process->set_interpname(settings_.interpreterName);
 
-    process->tracingName(tracingFileName_);
+    process->tracingName(settings_.tracingFileName);
     process->open_tracing_file();
     return process;
 }

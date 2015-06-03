@@ -71,7 +71,10 @@ public:
 private:
     RSIM_Thread *thread_;
     typedef Sawyer::Container::Map<X86SegmentRegister, SegmentInfo> SegmentInfoMap;
-    SegmentInfoMap segmentInfo_; // indexed by segment registers
+
+    // In x86-64 the CS, SS, DS, and ES segment selector registers are forced to zero, have a base of zero and a limit of
+    // 2^64. The FS and GS registers can still be used, but only their descriptors' base address is used, not the limit.
+    SegmentInfoMap segmentInfo_;
     
 protected:
     RiscOperators(RSIM_Thread *thread, const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,

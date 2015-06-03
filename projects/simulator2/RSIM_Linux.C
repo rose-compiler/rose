@@ -10,6 +10,9 @@
 #include <sys/user.h>
 #include <sys/types.h>
 
+using namespace rose;
+using namespace rose::BinaryAnalysis;
+
 void
 RSIM_Linux::init() {}
 
@@ -120,14 +123,17 @@ public:
 
 void
 RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpretation, const std::string &interpreterName) {
+    ASSERT_forbid(settings().nativeLoad);
+
     FILE *trace = (process->tracingFlags() & tracingFacilityBit(TRACE_LOADER)) ? process->tracingFile() : NULL;
     SimLoader *loader = new SimLoader(interpretation, interpreterName);
     ASSERT_require(process->headers().size() == 1);
     SgAsmGenericHeader *mainHeader = process->headers().front();
 
-    /* If we found an interpreter then use its entry address as the start of simulation.  When running the specimen directly
-     * in Linux with "setarch i386 -LRB3", the ld-linux.so.2 gets mapped to 0x40000000 if it has no preferred address.  We can
-     * accomplish the same thing simply by rebasing the library. */
+    // Load the interpreter (dynamic linker).
+    // For i386 it's usually ld-linux.so and gets loaded at 0x40000000 (setarch i386 -LRB3)
+    // For x86-64 it's usually ld-linux-x86-64.so and gets loaded at 0x00007ffff7fe1000 (setarch x86_64 -R)
+    // These values are initialized by the subclass constructors.
     if (loader->interpreter) {
         process->headers().push_back(loader->interpreter);
         SgAsmGenericSection *load0 = loader->interpreter->get_section_by_name("LOAD#0");
@@ -155,9 +161,9 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
 
     /* Load and map the virtual dynamic shared library. */
     bool vdso_loaded = false;
-    for (size_t i=0; i<vdsoPaths_.size() && !vdso_loaded; i++) {
+    for (size_t i=0; i<settings().vdsoPaths.size() && !vdso_loaded; i++) {
         for (int j=0; j<2 && !vdso_loaded; j++) {
-            std::string vdsoName = vdsoPaths_[i] + (j ? "" : "/" + vdsoName_);
+            std::string vdsoName = settings().vdsoPaths[i] + (j ? "" : "/" + vdsoName_);
             if (trace)
                 fprintf(trace, "looking for vdso: %s\n", vdsoName.c_str());
             if ((vdso_loaded = loader->map_vdso(vdsoName, interpretation, &process->get_memory()))) {
@@ -171,7 +177,7 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
             }
         }
     }
-    if (!vdso_loaded && trace && !vdsoPaths_.empty())
+    if (!vdso_loaded && trace && !settings().vdsoPaths.empty())
         fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
 
     // Initialize the brk value. This is the first free area after the main executable.
@@ -254,16 +260,84 @@ pushArgumentStrings(RSIM_Process *process, rose_addr_t sp, FILE *trace) {
     pointers[argv.size()] = 0;
     if (trace) {
         for (size_t i=0; i<argv.size(); i++) {
-            fprintf(trace, "argv[%zu] %zu bytes at 0x%08"PRIx32" = \"%s\"\n", i,
-                    argv[i].size()+1, pointers[i], argv[i].c_str());
+            std::ostringstream ss;
+            ss <<"argv[" <<i <<" ] " <<StringUtility::plural(argv[i].size()+1, "bytes")
+               <<" at " <<StringUtility::addrToString(pointers[i])
+               <<" = \"" <<StringUtility::cEscape(argv[i]) <<"\"\n";
+            fputs(ss.str().c_str(), trace);
         }
     }
 
     return pointers;
 }
 
+template<typename Word>
+rose_addr_t
+RSIM_Linux::pushArgcArgvEnvAuxv(RSIM_Process *process, FILE* trace, SgAsmElfFileHeader *fhdr, rose_addr_t sp,
+                                rose_addr_t execfn_va) {
+    std::vector<Word> envPointers = pushEnvironmentStrings<Word>(process, sp, trace);
+    sp = envPointers[0];
+    std::vector<Word> argPointers = pushArgumentStrings<Word>(process, sp, trace);
+    sp = argPointers[0];
+    sp &= ~0xf;
+    sp = pushAuxVector(process, sp, execfn_va, fhdr, trace);
+
+    sp -= envPointers.size() * sizeof(Word);
+    process->mem_write(&envPointers[0], sp, envPointers.size()*sizeof(Word));
+    sp -= argPointers.size() * sizeof(Word);
+    process->mem_write(&argPointers[0], sp, argPointers.size()*sizeof(Word));
+
+    Word argc = exeArgs().size();
+    sp -= sizeof argc;
+    process->mem_write(&argc, sp, sizeof argc);
+
+    return sp;
+}
+
+rose_addr_t
+RSIM_Linux::segmentTableVa(SgAsmElfFileHeader *fhdr) const {
+    /* Find the virtual address of the ELF Segment Table.  We actually only know its file offset directly, but the segment
+     * table is also always included in one of the PT_LOAD segments, so we can compute its virtual address by finding the
+     * PT_LOAD segment tha contains the table, and then looking at the table file offset relative to the segment offset. */
+    struct T1: public SgSimpleProcessing {
+        rose_addr_t segtab_offset;
+        size_t segtab_size;
+        T1(): segtab_offset(0), segtab_size(0) {}
+        void visit(SgNode *node) {
+            SgAsmElfSegmentTable *segtab = isSgAsmElfSegmentTable(node);
+            if (0==segtab_offset && segtab!=NULL) {
+                segtab_offset = segtab->get_offset();
+                segtab_size = segtab->get_size();
+            }
+        }
+    } t1;
+    t1.traverse(fhdr, preorder);
+    assert(t1.segtab_offset>0 && t1.segtab_size>0); /* all ELF executables have a segment table */
+
+    struct T2: public SgSimpleProcessing {
+        rose_addr_t segtab_offset, segtab_va;
+        size_t segtab_size;
+        T2(rose_addr_t segtab_offset, size_t segtab_size)
+            : segtab_offset(segtab_offset), segtab_va(0), segtab_size(segtab_size)
+            {}
+        void visit(SgNode *node) {
+            SgAsmElfSection *section = isSgAsmElfSection(node);
+            SgAsmElfSegmentTableEntry *entry = section ? section->get_segment_entry() : NULL;
+            if (entry && section->get_offset()<=segtab_offset &&
+                section->get_offset()+section->get_size()>=segtab_offset+segtab_size)
+                segtab_va = section->get_mapped_actual_va() + segtab_offset - section->get_offset();
+        }
+    } t2(t1.segtab_offset, t1.segtab_size);
+    t2.traverse(fhdr, preorder);
+    assert(t2.segtab_va>0); /* all ELF executables include the segment table in one of the segments */
+    return t2.segtab_va;
+}
+
 void
 RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) {
+    if (settings().nativeLoad)
+        return;                                         // the stack is already initialized
+    
     RSIM_Process *process = thread->get_process();
     FILE *trace = (process->tracingFlags() & tracingFacilityBit(TRACE_LOADER)) ? process->tracingFile() : NULL;
 
@@ -280,37 +354,23 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
                                  MemoryMap::Segment::anonymousInstance(stack_size, MemoryMap::READABLE|MemoryMap::WRITABLE,
                                                                        "[stack]"));
 
-    /* Not sure what the first eight bytes are */
+    // Top eight bytes on the stack seem to be always zero.
     static const uint8_t unknown_top[] = {0, 0, 0, 0, 0, 0, 0, 0};
     sp -= sizeof unknown_top;
     process->mem_write(unknown_top, sp, sizeof unknown_top);
 
-    /* Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv. */
+    // Copy the executable name to the top of the stack. It will be pointed to by the AT_EXECFN auxv.
     sp -= exeArgs()[0].size() + 1;
     rose_addr_t execfn_va = sp;
     process->mem_write(exeArgs()[0].c_str(), sp, exeArgs()[0].size()+1);
 
-    // Environment variables, argv
+    // Argument count, argument pointer array, argument strings, environment pointer array, environment strings, the aux vector
+    // used by the linker, and any data needed by the auxv.  This varies by architecture and even the environment in which
+    // Linux is executing the program, not only in the sizes of the pointers, but also in what values are pushed.
     if (32 == process->wordSize()) {
-        typedef uint32_t Word;
-        std::vector<Word> envPointers = pushEnvironmentStrings<Word>(process, sp, trace);
-        sp = envPointers[0];
-        std::vector<Word> argPointers = pushArgumentStrings<Word>(process, sp, trace);
-        sp = argPointers[0];
-        sp &= ~0xf;
-        sp = pushAuxVector(process, sp, execfn_va, fhdr, trace);
-
-        sp -= envPointers.size() * sizeof(Word);
-        process->mem_write(&envPointers[0], sp, envPointers.size()*sizeof(Word));
-        sp -= argPointers.size() * sizeof(Word);
-        process->mem_write(&argPointers[0], sp, argPointers.size()*sizeof(Word));
-
-        Word argc = exeArgs().size();
-        sp -= sizeof(argc);
-        process->mem_write(&argc, sp, sizeof(argc));
+        sp = pushArgcArgvEnvAuxv<uint32_t>(process, trace, fhdr, sp, execfn_va);
     } else {
-        ASSERT_require(process->wordSize() == 64);
-        TODO("[Robb P. Matzke 2015-05-29]");
+        sp = pushArgcArgvEnvAuxv<uint64_t>(process, trace, fhdr, sp, execfn_va);
     }
 
 #if 0 // DEBUGGING [Robb P. Matzke 2015-05-29]

@@ -6,6 +6,7 @@
 
 #include <RSIM_Linux32.h>
 #include <RSIM_Linux64.h>
+#include <RSIM_Tools.h>
 #include <Diagnostics.h>
 #include <sawyer/CommandLine.h>
 #include <sawyer/Message.h>
@@ -68,7 +69,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
              "The specimen process and threads are simulated inside this tool's process and threads. Certain operations that "
              "modify process and thread properties will end up modifying the tools process and threads. For instance, reading "
-             "from the Linux \"/proc/<em>n</em>\" filesystem will return information about the simulator tool rather than "
+             "from the Linux \"/proc/@v{n}\" filesystem will return information about the simulator tool rather than "
              "the specimen being simulated. Sending a signal to a process or thread will cause the tool to forward the "
              "signal to the simulated process or thread only if this behavior is enabled at runtime.");
 
@@ -100,7 +101,6 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .intrinsicValue(false, settings.catchingSignals)
               .hidden(true));
 
-
     return parser
         .with(CommandlineProcessing::genericSwitches())
         .with(sg)                                       // tool-specific
@@ -112,6 +112,9 @@ template<class Simulator>
 static void
 simulate(const Settings &settings, const std::vector<std::string> &args, char *envp[]) {
     Simulator sim;
+
+    std::fstream debuggerIo("/dev/tty");
+    sim.install_callback(new RSIM_Tools::InteractiveDebugger(std::cin, std::cout));
 
     sim.configure(settings.simSettings, envp);
     if (sim.loadSpecimen(args) < 0)

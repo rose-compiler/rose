@@ -87,7 +87,12 @@ createDispatcher(RSIM_Thread *owningThread) {
 
 void
 RiscOperators::loadShadowRegister(X86SegmentRegister sr, unsigned gdtIdx) {
-    const SegmentDescriptor &segment = thread_->gdt_entry(gdtIdx);
+    SegmentInfo segment(thread_->gdt_entry(gdtIdx));
+    if (64 == thread_->get_process()->wordSize()) {
+        if (sr != x86_segreg_fs && sr != x86_segreg_gs)
+            segment.base = 0;
+        segment.limit = 0xffffffffffffffffull;
+    }
     segmentInfo_.insert(sr, segment);
 }
 
@@ -131,7 +136,10 @@ RiscOperators::interrupt(int majr, int minr) {
     if (x86_exception_int == majr && 0x80 == minr) {
         thread_->emulate_syscall();
     } else if (x86_exception_sysenter == majr) {
+        // because it needs special processing for the return target
         ASSERT_not_reachable("syscall should have been handled by the dispatcher");
+    } else if (x86_exception_syscall == majr) {
+        thread_->emulate_syscall();
     } else if (x86_exception_int == majr) {
         throw Interrupt(get_insn()->get_address(), minr);
     } else {
