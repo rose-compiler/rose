@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <exception>
 #include "rosedll.h"
-#include <sawyer/Assert.h>
+#include <Sawyer/Assert.h>
 
 ROSE_UTIL_API int systemFromVector(const std::vector<std::string>& argv);
 FILE* popenReadFromVector(const std::vector<std::string>& argv);
@@ -31,7 +31,7 @@ int pcloseFromVector(FILE* f);
 //      show up in bright red.
 //
 // Additional documentation can be found here:
-//   + Sawyer ASSERT_* macros (https://hoosierfocus.com/~matzke/sawyer/namespaceSawyer_1_1Assert.html)
+//   + Sawyer ASSERT_* macros (https://hoosierfocus.com/~matzke/Sawyer/namespaceSawyer_1_1Assert.html)
 //   + rose::Diagnostics (http://rosecompiler.org/ROSE_HTML_Reference/namespacerose_1_1Diagnostics.html)
 #ifndef ROSE_ASSERT
     #if _MSC_VER
