@@ -2,7 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryNoOperation_H
 
 #include <BaseSemantics2.h>
-#include <sawyer/Message.h>
+#include <Sawyer/Message.h>
 
 namespace rose {
 namespace BinaryAnalysis {

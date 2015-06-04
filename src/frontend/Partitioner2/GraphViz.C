@@ -4,7 +4,7 @@
 #include <Diagnostics.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;

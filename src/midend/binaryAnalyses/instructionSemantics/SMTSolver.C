@@ -4,7 +4,7 @@
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 
 namespace rose {
 namespace BinaryAnalysis {

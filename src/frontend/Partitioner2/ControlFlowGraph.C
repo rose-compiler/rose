@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include <Partitioner2/ControlFlowGraph.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 
 namespace rose {
 namespace BinaryAnalysis {

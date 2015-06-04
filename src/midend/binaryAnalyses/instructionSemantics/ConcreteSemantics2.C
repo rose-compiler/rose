@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
-#include <sawyer/BitVectorSupport.h>
+#include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
 typedef Sawyer::Container::BitVector::BitRange BitRange;

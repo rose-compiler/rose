@@ -6,7 +6,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <Diagnostics.h>
 #include <rose_strtoull.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WHBoxLayout>
 #include <Wt/WLineEdit>
 #include <Wt/WPushButton>

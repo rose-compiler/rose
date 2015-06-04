@@ -17,5 +17,5 @@ main() {
     // Emit some message and check that it appeared
     mlog[INFO] <<"-test 1-\n";
     if (!boost::contains(ss.str(), "-test 1-"))
-        throw std::runtime_error("test 1 failed");
+        throw std::runtime_error("test 1 failed: got \"" + StringUtility::cEscape(ss.str()) + "\"\n");
 }

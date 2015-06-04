@@ -7,7 +7,7 @@
 #include "sageBuilderAsm.h"
 #include "DispatcherM68k.h"
 
-#include <sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
+#include <Sawyer/Assert.h>                              // FIXME[Robb P. Matzke 2014-06-19]: replace with "Diagnostics.h"
 
 #if 1 /*DEBUGGING [Robb P. Matzke 2013-10-02]*/
 #include "AsmUnparser_compat.h"

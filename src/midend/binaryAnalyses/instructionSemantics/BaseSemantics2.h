@@ -9,10 +9,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {

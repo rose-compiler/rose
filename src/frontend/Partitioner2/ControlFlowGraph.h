@@ -5,9 +5,9 @@
 #include <Partitioner2/BasicTypes.h>
 #include <Partitioner2/Function.h>
 
-#include <sawyer/BiMap.h>
-#include <sawyer/Graph.h>
-#include <sawyer/Map.h>
+#include <Sawyer/BiMap.h>
+#include <Sawyer/Graph.h>
+#include <Sawyer/Map.h>
 
 #include <list>
 #include <ostream>

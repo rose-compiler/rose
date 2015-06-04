@@ -7,8 +7,8 @@
 #include <Partitioner2/Modules.h>                       // ROSE
 #include <Partitioner2/ModulesPe.h>                     // ROSE
 #include <rose_strtoull.h>
-#include <sawyer/Message.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WBreak>
 #include <Wt/WBorder>
 #include <Wt/WCheckBox>

@@ -15,8 +15,8 @@
 #include <Partitioner2/ModulesX86.h>
 #include <Partitioner2/Semantics.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/Stopwatch.h>
 
 #ifdef ROSE_HAVE_LIBYAML
 #include <yaml-cpp/yaml.h>

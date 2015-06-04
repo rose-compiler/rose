@@ -2,7 +2,7 @@
 #define ROSE_Partitioner2_FunctionCallGraph_H
 
 #include <Partitioner2/Function.h>
-#include <sawyer/Graph.h>
+#include <Sawyer/Graph.h>
 
 namespace rose {
 namespace BinaryAnalysis {
