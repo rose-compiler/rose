@@ -6,7 +6,7 @@
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Function.h>
 
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 
 #include <vector>
 

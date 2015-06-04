@@ -5,9 +5,9 @@
 #include <rose_strtoull.h>
 #include <BinaryDebugger.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/ProgressBar.h>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;

@@ -3,7 +3,7 @@
 #include <boost/regex.hpp>
 #include <bROwSE/WAddressSpace.h>
 #include <bROwSE/WStringDetail.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>                                  // ROSE
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>

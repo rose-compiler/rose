@@ -2,7 +2,7 @@
 #include <AsmUnparser.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 using namespace rose;
 

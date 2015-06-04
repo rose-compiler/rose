@@ -489,19 +489,19 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/projects/rose-master/install/include/rose/setup.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/../../../../include/c++/4.4.7/stack \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/../../../../include/c++/4.4.7/bits/stl_stack.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/CommandLine.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Assert.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Sawyer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/CommandLine.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Assert.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Sawyer.h \
  /home/lin32/Development/opt/boost/include/boost/cstdint.hpp \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/limits.h \
  /usr/lib/gcc/x86_64-redhat-linux/4.4.7/include/syslimits.h \
  /usr/include/limits.h /usr/include/bits/posix1_lim.h \
  /usr/include/bits/local_lim.h /usr/include/linux/limits.h \
  /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Map.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Interval.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Map.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Interval.h \
  /home/lin32/Development/opt/boost/include/boost/integer_traits.hpp \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Optional.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Optional.h \
  /home/lin32/Development/opt/boost/include/boost/range/iterator_range.hpp \
  /home/lin32/Development/opt/boost/include/boost/range/iterator_range_core.hpp \
  /home/lin32/Development/opt/boost/include/boost/range/functions.hpp \
@@ -529,11 +529,11 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/opt/boost/include/boost/range/detail/misc_concept.hpp \
  /home/lin32/Development/opt/boost/include/boost/range/detail/safe_bool.hpp \
  /home/lin32/Development/opt/boost/include/boost/range/iterator_range_io.hpp \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Markup.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/SharedPointer.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/WarningsOff.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/WarningsRestore.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Message.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Markup.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/SharedPointer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/WarningsOff.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/WarningsRestore.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Message.h \
  /home/lin32/Development/opt/boost/include/boost/logic/tribool.hpp \
  /home/lin32/Development/opt/boost/include/boost/logic/tribool_fwd.hpp \
  /home/lin32/Development/opt/boost/include/boost/algorithm/string/case_conv.hpp \
@@ -684,16 +684,16 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/opt/boost/include/boost/unordered_set.hpp \
  /home/lin32/Development/opt/boost/include/boost/unordered/unordered_set.hpp \
  /home/lin32/Development/opt/boost/include/boost/unordered/unordered_set_fwd.hpp \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IntervalSet.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IntervalMap.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IntervalSet.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IntervalMap.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/MemoryMap.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/ByteOrder.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Access.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AddressMap.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AddressSegment.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AllocatingBuffer.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Buffer.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/MappedBuffer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Access.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AddressMap.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AddressSegment.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AllocatingBuffer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Buffer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/MappedBuffer.h \
  /home/lin32/Development/opt/boost/include/boost/iostreams/device/mapped_file.hpp \
  /home/lin32/Development/opt/boost/include/boost/iostreams/close.hpp \
  /home/lin32/Development/opt/boost/include/boost/iostreams/categories.hpp \
@@ -748,9 +748,9 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/opt/boost/include/boost/memory_order.hpp \
  /home/lin32/Development/opt/boost/include/boost/config/abi_prefix.hpp \
  /home/lin32/Development/opt/boost/include/boost/config/abi_suffix.hpp \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/NullBuffer.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/StaticBuffer.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Callbacks.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/NullBuffer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/StaticBuffer.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Callbacks.h \
  /home/lin32/Development/opt/boost/include/boost/algorithm/string/predicate.hpp \
  /home/lin32/Development/opt/boost/include/boost/algorithm/string/compare.hpp \
  /home/lin32/Development/opt/boost/include/boost/algorithm/string/find.hpp \
@@ -764,8 +764,8 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/projects/rose-master/install/include/rose/powerpcInstructionEnum.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/InstructionEnumsMips.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/InstructionEnumsM68k.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/BitVector.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/BitVectorSupport.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/BitVector.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/BitVectorSupport.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/DataConversion.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/atermSupport.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/utility_functions.h \
@@ -1297,23 +1297,23 @@ PolyOpt-Main.o: Main.cpp \
  /home/lin32/Development/opt/boost/include/boost/shared_array.hpp \
  /home/lin32/Development/opt/boost/include/boost/smart_ptr/shared_array.hpp \
  /home/lin32/Development/opt/boost/include/boost/property_map/shared_array_property_map.hpp \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/GraphBoost.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Graph.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/DefaultAllocator.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IndexedList.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/GraphBoost.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Graph.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/DefaultAllocator.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IndexedList.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/BinaryFunctionCall.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/Disassembler.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/Diagnostics.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Assert.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Message.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Assert.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Message.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/Registers.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/integerOps.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/BaseSemantics2.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/FormatRestorer.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/SMTSolver.h \
  /home/lin32/Development/projects/rose-master/install/include/rose/InsnSemanticsExpr.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/SmallObject.h \
- /home/lin32/Development/projects/rose-master/install/include/rose/sawyer/PoolAllocator.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/SmallObject.h \
+ /home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/PoolAllocator.h \
  /home/lin32/Development/opt/boost/include/boost/enable_shared_from_this.hpp \
  /home/lin32/Development/opt/boost/include/boost/smart_ptr/enable_shared_from_this.hpp \
  /home/lin32/Development/opt/boost/include/boost/smart_ptr/weak_ptr.hpp \
@@ -2403,11 +2403,11 @@ PolyOpt-Main.o: Main.cpp \
 
 /usr/lib/gcc/x86_64-redhat-linux/4.4.7/../../../../include/c++/4.4.7/bits/stl_stack.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/CommandLine.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/CommandLine.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Assert.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Assert.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Sawyer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Sawyer.h:
 
 /home/lin32/Development/opt/boost/include/boost/cstdint.hpp:
 
@@ -2427,13 +2427,13 @@ PolyOpt-Main.o: Main.cpp \
 
 /usr/include/bits/xopen_lim.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Map.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Map.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Interval.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Interval.h:
 
 /home/lin32/Development/opt/boost/include/boost/integer_traits.hpp:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Optional.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Optional.h:
 
 /home/lin32/Development/opt/boost/include/boost/range/iterator_range.hpp:
 
@@ -2489,15 +2489,15 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/opt/boost/include/boost/range/iterator_range_io.hpp:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Markup.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Markup.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/SharedPointer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/SharedPointer.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/WarningsOff.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/WarningsOff.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/WarningsRestore.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/WarningsRestore.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Message.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Message.h:
 
 /home/lin32/Development/opt/boost/include/boost/logic/tribool.hpp:
 
@@ -2813,25 +2813,25 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/opt/boost/include/boost/unordered/unordered_set_fwd.hpp:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IntervalSet.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IntervalSet.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IntervalMap.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IntervalMap.h:
 
 /home/lin32/Development/projects/rose-master/install/include/rose/MemoryMap.h:
 
 /home/lin32/Development/projects/rose-master/install/include/rose/ByteOrder.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Access.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Access.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AddressMap.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AddressMap.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AddressSegment.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AddressSegment.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/AllocatingBuffer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/AllocatingBuffer.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Buffer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Buffer.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/MappedBuffer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/MappedBuffer.h:
 
 /home/lin32/Development/opt/boost/include/boost/iostreams/device/mapped_file.hpp:
 
@@ -2941,11 +2941,11 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/opt/boost/include/boost/config/abi_suffix.hpp:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/NullBuffer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/NullBuffer.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/StaticBuffer.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/StaticBuffer.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Callbacks.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Callbacks.h:
 
 /home/lin32/Development/opt/boost/include/boost/algorithm/string/predicate.hpp:
 
@@ -2973,9 +2973,9 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/projects/rose-master/install/include/rose/InstructionEnumsM68k.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/BitVector.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/BitVector.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/BitVectorSupport.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/BitVectorSupport.h:
 
 /home/lin32/Development/projects/rose-master/install/include/rose/DataConversion.h:
 
@@ -4039,13 +4039,13 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/opt/boost/include/boost/property_map/shared_array_property_map.hpp:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/GraphBoost.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/GraphBoost.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Graph.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Graph.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/DefaultAllocator.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/DefaultAllocator.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/IndexedList.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/IndexedList.h:
 
 /home/lin32/Development/projects/rose-master/install/include/rose/BinaryFunctionCall.h:
 
@@ -4053,9 +4053,9 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/projects/rose-master/install/include/rose/Diagnostics.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Assert.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Assert.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/Message.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/Message.h:
 
 /home/lin32/Development/projects/rose-master/install/include/rose/Registers.h:
 
@@ -4069,9 +4069,9 @@ PolyOpt-Main.o: Main.cpp \
 
 /home/lin32/Development/projects/rose-master/install/include/rose/InsnSemanticsExpr.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/SmallObject.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/SmallObject.h:
 
-/home/lin32/Development/projects/rose-master/install/include/rose/sawyer/PoolAllocator.h:
+/home/lin32/Development/projects/rose-master/install/include/rose/Sawyer/PoolAllocator.h:
 
 /home/lin32/Development/opt/boost/include/boost/enable_shared_from_this.hpp:
 

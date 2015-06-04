@@ -2,7 +2,7 @@
 #define bROwSE_WAddressComboBox_H
 
 #include <bROwSE/bROwSE.h>
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 #include <Wt/WContainerWidget>
 
 namespace bROwSE {

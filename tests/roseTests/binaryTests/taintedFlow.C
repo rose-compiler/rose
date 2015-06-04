@@ -75,9 +75,9 @@
 #include <boost/algorithm/string/regex.hpp>
 #include <boost/foreach.hpp>
 #include <list>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Map.h>
-#include <sawyer/Message.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;

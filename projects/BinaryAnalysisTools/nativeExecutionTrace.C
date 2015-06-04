@@ -2,7 +2,7 @@
 #include <BinaryDebugger.h>
 #include <Diagnostics.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
 using namespace rose;

@@ -2,7 +2,7 @@
 #include <Diagnostics.h>
 #include <Partitioner2/CfgPath.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 
 using namespace rose::Diagnostics;
 

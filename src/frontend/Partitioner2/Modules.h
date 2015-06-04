@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Utility.h>
 
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {

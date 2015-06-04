@@ -9,8 +9,8 @@
 
 #include <rose.h>
 #include <EditDistance/TreeEditDistance.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Stopwatch.h>
 
 using namespace std;
 using namespace rose;

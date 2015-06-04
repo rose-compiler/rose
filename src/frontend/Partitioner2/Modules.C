@@ -9,7 +9,7 @@
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <stringify.h>
 
 using namespace rose::Diagnostics;

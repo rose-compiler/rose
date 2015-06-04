@@ -5,7 +5,7 @@
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
-#include <sawyer/Graph.h>
+#include <Sawyer/Graph.h>
 
 namespace rose {
 namespace BinaryAnalysis {

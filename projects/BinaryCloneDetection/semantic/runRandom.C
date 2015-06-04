@@ -10,10 +10,10 @@
 #include <rose_strtoull.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Optional.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 
 // Instruction pointer member from user_regs_struct in <sys/user.h>
 #if __WORDSIZE == 64

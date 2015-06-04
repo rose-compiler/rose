@@ -1,7 +1,7 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
-#include "sawyer/Assert.h"
-#include "sawyer/ProgressBar.h"
+#include "Sawyer/Assert.h"
+#include "Sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow

@@ -8,7 +8,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
-#include <sawyer/GraphBoost.h>
+#include <Sawyer/GraphBoost.h>
 
 class SgNode;
 class SgAsmBlock;

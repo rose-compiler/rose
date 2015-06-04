@@ -13,8 +13,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stack.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stack.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
