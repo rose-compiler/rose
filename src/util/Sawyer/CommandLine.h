@@ -2322,7 +2322,7 @@ class SAWYER_EXPORT SwitchGroup {
 #include <Sawyer/WarningsRestore.h>
 public:
     /** Construct an unnamed group. */
-    SwitchGroup(): switchOrder_(DOCKEY_ORDER) {}
+    SwitchGroup(): switchOrder_(DOCKEY_ORDER) { initializeLibrary(); }
 
     /** Construct a named group.
      *
