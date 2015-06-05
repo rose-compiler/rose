@@ -91,7 +91,7 @@ public:
             bitsPerDigit = 4;
             digits = "0123456789abcdefABCDEF";
             str = str.substr(2);
-        } else if (boost::starts_with(str, "0b")==0) {
+        } else if (boost::starts_with(str, "0b")) {
             bitsPerDigit = 1;
             digits = "01";
             str = str.substr(2);
@@ -128,16 +128,16 @@ public:
         // Parse the string
         BitVector result(nBits);
         switch (bitsPerDigit) {
+            case 0:
+                result.fromDecimal(str);
+                break;
             case 2:
                 result.fromBinary(str);
                 break;
-            case 8:
+            case 3:
                 result.fromOctal(str);
                 break;
-            case 10:
-                result.fromDecimal(str);
-                break;
-            case 16:
+            case 4:
                 result.fromHex(str);
                 break;
         }
