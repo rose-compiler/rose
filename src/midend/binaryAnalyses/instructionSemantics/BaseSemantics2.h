@@ -9,10 +9,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1411,18 +1411,18 @@ class MemoryCellList: public MemoryState {
 public:
     typedef std::list<MemoryCellPtr> CellList;
 protected:
-    MemoryCellPtr protocell;                    // prototypical memory cell used for its virtual constructors
-    CellList cells;                             // list of cells in reverse chronological order
-    bool byte_restricted;                       // are cell values all exactly one byte wide?
-    MemoryCellPtr latest_written_cell;          // the cell whose value was most recently written to, if any
+    MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
+    CellList cells;                                     // list of cells in reverse chronological order
+    bool byte_restricted;                               // are cell values all exactly one byte wide?
+    MemoryCellPtr latest_written_cell;                  // the cell whose value was most recently written to, if any
+    bool occlusionsErased_;                             // prune away old cells that are occluded by newer ones.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:
     explicit MemoryCellList(const MemoryCellPtr &protocell)
         : MemoryState(protocell->get_address(), protocell->get_value()),
-          protocell(protocell),
-          byte_restricted(true) {
+          protocell(protocell), byte_restricted(true), occlusionsErased_(false) {
         ASSERT_not_null(protocell);
         ASSERT_not_null(protocell->get_address());
         ASSERT_not_null(protocell->get_value());
@@ -1431,11 +1431,12 @@ protected:
     MemoryCellList(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryState(addrProtoval, valProtoval),
           protocell(MemoryCell::instance(addrProtoval, valProtoval)),
-          byte_restricted(true) {}
+          byte_restricted(true), occlusionsErased_(false) {}
 
     // deep-copy cell list so that modifying this new state does not modify the existing state
     MemoryCellList(const MemoryCellList &other)
-        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted) {
+        : MemoryState(other), protocell(other.protocell), byte_restricted(other.byte_restricted),
+          occlusionsErased_(other.occlusionsErased_) {
         for (CellList::const_iterator ci=other.cells.begin(); ci!=other.cells.end(); ++ci)
             cells.push_back((*ci)->clone());
     }
@@ -1531,6 +1532,21 @@ public:
     virtual bool get_byte_restricted() const { return byte_restricted; }
     virtual void set_byte_restricted(bool b) { byte_restricted = b; }
     /** @} */
+
+    /** Property: erase occluded cells.
+     *
+     *  If this property is true, then writing a new cell to memory will also erase all older cells that must alias the new
+     *  cell.  Erasing occlusions can adversely affect performance for some semantic domains.
+     *
+     * @{ */
+    bool occlusionsErased() const { return occlusionsErased_; }
+    void occlusionsErased(bool b) { occlusionsErased_ = b; }
+    /** @} */
+
+    /** Remove memory cells that were read but never written.
+     *
+     *  The determination of whether a cell was read but never written is based on whether the cell has a latest writer. */
+    virtual void clearNonWritten();
 
     /** Scans the cell list and returns entries that may alias the given address and value size. The scanning starts at the
      *  beginning of the list (which is normally stored in reverse chronological order) and continues until it reaches either
@@ -1930,6 +1946,7 @@ public:
         cur_insn = NULL;
     };
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Value Construction Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1950,7 +1967,6 @@ public:
     virtual SValuePtr boolean_(bool value) {
         return protoval->boolean_(value);
     }
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1985,6 +2001,7 @@ public:
 
     /** Invoked for the x86 RDTSC instruction. FIXME: x86-specific stuff should be in the dispatcher. */
     virtual SValuePtr rdtsc() { return undefined_(64); }
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Boolean Operations
@@ -2049,6 +2066,7 @@ public:
      *  bits set depending on whether the most significant bit was originally clear or set. */
     virtual SValuePtr shiftRightArithmetic(const SValuePtr &a, const SValuePtr &nbits) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Comparison Operations
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2062,10 +2080,42 @@ public:
      *  value width will be the same as @p a and @p b. */
     virtual SValuePtr ite(const SValuePtr &cond, const SValuePtr &a, const SValuePtr &b) = 0;
 
-    /** Returns a Boolean to indicate equality.  This is not a virtual function because it can be implemented in terms of
-     *  other operations. */
-    SValuePtr equal(const SValuePtr &a, const SValuePtr &b);
+    /** Equality comparison.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b holds. Both operands must be the same
+     *  width. It doesn't matter if they are interpreted as signed or unsigned quantities.
+     *
+     * @{ */
+    SValuePtr equal(const SValuePtr &a, const SValuePtr &b) ROSE_DEPRECATED("use isEqual instead");
+    SValuePtr isEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isNotEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
+    /** Comparison for unsigned values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as unsigned values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
+
+    /** Comparison for signed values.
+     *
+     *  Returns a Boolean to indicate whether the relationship between @p a and @p b is true when @p a and @p b are interpreted
+     *  as signed values.  Both values must have the same width.  This operation is a convenience wrapper around other RISC
+     *  operators.
+     *
+     * @{ */
+    SValuePtr isSignedLessThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b);
+    SValuePtr isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b);
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Integer Arithmetic Operations
@@ -2129,6 +2179,7 @@ public:
     /** Multiply two unsigned values. The width of the result is the sum of the widths of @p a and @p b. */
     virtual SValuePtr unsignedMultiply(const SValuePtr &a, const SValuePtr &b) = 0;
 
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  Interrupt and system calls
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2138,6 +2189,7 @@ public:
      *  Linux system calls), while an x86 SYSENTER instruction uses major number one. The minr operand for INT3 is -3 to
      *  distinguish it from the one-argument "INT 3" instruction which has slightly different semantics. */
     virtual void interrupt(int majr, int minr) {}
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //                                  State Accessing Operations
@@ -2307,7 +2359,6 @@ public:
      *  instruction itself is only used for the duration of this call. */
     virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
 
-protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 
@@ -2374,7 +2425,7 @@ public:
      *  name.  If a bit width is specified (@p nbits) then it must match the size of register that was found.  If a valid
      *  register cannot be found then either an exception is thrown or an invalid register is returned depending on whether
      *  @p allowMissing is false or true, respectively. */
-    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false);
+    virtual const RegisterDescriptor& findRegister(const std::string &regname, size_t nbits=0, bool allowMissing=false) const;
 
     /** Property: Width of memory addresses.
      *
@@ -2388,6 +2439,9 @@ public:
 
     /** Returns the instruction pointer register. */
     virtual RegisterDescriptor instructionPointerRegister() const = 0;
+
+    /** Returns the stack pointer register. */
+    virtual RegisterDescriptor stackPointerRegister() const = 0;
 
     /** Property: Reset instruction pointer register for each instruction.
      *

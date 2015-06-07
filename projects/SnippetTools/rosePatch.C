@@ -1,8 +1,8 @@
 #include <rose.h>
 
 #include <FileSystem.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 #include <string>
 #include <vector>
 

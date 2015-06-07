@@ -72,21 +72,18 @@ void foo::f1(bool allow,int update,int length,double *b)
 {
   if (allow) {
     for (int iz = 0; iz < length; ++iz) {
-      int dens;
-      dens = ((this) -> m_a / b[iz]);
+      int dens = (int )((this) -> m_a / b[iz]);
     }
   }
    else {
     if (update > 0) {
       for (int iz = 0; iz < length; ++iz) {
-        int dens;
-        dens = ((this) -> m_a / b[iz]);
+        int dens = (int )((this) -> m_a / b[iz]);
       }
     }
      else {
       for (int iz = 0; iz < length; ++iz) {
-        int dens;
-        dens = ((this) -> m_a / b[iz]);
+        int dens = (int )((this) -> m_a / b[iz]);
       }
     }
   }

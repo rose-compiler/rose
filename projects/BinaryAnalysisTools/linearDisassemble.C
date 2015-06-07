@@ -8,9 +8,9 @@
 #include <TraceSemantics2.h>
 
 #include <map>
-#include <sawyer/Assert.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 #include <string>
 
 using namespace rose;
@@ -30,25 +30,39 @@ alignUp(rose_addr_t x, rose_addr_t alignment)
 
 // Convenient struct to hold settings from the command-line all in one place.
 struct Settings {
-    std::string isaName;
-    rose_addr_t mapVa;
     rose_addr_t startVa;
     rose_addr_t alignment;
     bool runSemantics;
-    Settings(): mapVa(0), startVa(0), alignment(1), runSemantics(false) {}
+    Settings(): startVa(0), alignment(1), runSemantics(false) {}
 };
 
 // Describe and parse the command-line
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings)
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 {
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+
+    std::string purpose = "disassembles files one address at a time";
+    std::string description =
+        "This program is a very simple disassembler that tries to disassemble in instruction at each executable "
+        "address, one instruction after the next.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any partitioning switches since
+    // this tool doesn't partition.
+    Parser parser;
+    parser
+        .purpose(purpose)
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{specimen_names}")
+        .doc("Description", description)
+        .doc("Specimens", engine.specimenNameDocumentation())
+        .with(engine.engineSwitches())
+        .with(engine.loaderSwitches())
+        .with(engine.disassemblerSwitches());
 
     SwitchGroup switches("Tool-specific switches");
-    switches.insert(Switch("isa")
-                    .argument("architecture", anyParser(settings.isaName))
-                    .doc("Instruction set architecture. Specify \"list\" to see a list of possible ISAs."));
     switches.insert(Switch("start")
                     .argument("virtual-address", nonNegativeIntegerParser(settings.startVa))
                     .doc("Address at which disassembly will start.  The default is to start at the lowest mapped "
@@ -67,53 +81,25 @@ parseCommandLine(int argc, char *argv[], Settings &settings)
                     .intrinsicValue(false, settings.runSemantics)
                     .hidden(true));
 
-    Parser parser;
-    parser
-        .purpose("disassembles files one address at a time")
-        .doc("Synopsis",
-             "@prop{programName} [@v{switches}] @v{specimen_names}")
-        .doc("Description",
-             "This program is a very simple disassembler that tries to disassemble an instruction at each executable "
-             "address of a binary specimen.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
-    
-    return parser.with(generic).with(switches).parse(argc, argv).apply();
+    return parser.with(switches).parse(argc, argv).apply().unreachedArgs();
 }
 
 int main(int argc, char *argv[])
 {
     Diagnostics::initialize();
     ::mlog = Sawyer::Message::Facility("tool", Diagnostics::destination);
-    Diagnostics::mfacilities.insert(::mlog);
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line
+    P2::Engine engine;
     Settings settings;
-    Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv, settings);
-    std::vector<std::string> specimenNames = cmdline.unreachedArgs();
-
-    // Obtain a disassembler (do this before opening the specimen so "--isa=list" has a chance to run)
-    Disassembler *disassembler = NULL;
-    if (!settings.isaName.empty())
-        disassembler = Disassembler::lookup(settings.isaName);
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
 
     // Load the speciem as raw data or an ELF or PE container
-    P2::Engine engine;
-    engine.disassembler(disassembler);
-    MemoryMap map = engine.load(specimenNames);
-    SgAsmInterpretation *interp = engine.interpretation();
-    
-    // Obtain a suitable disassembler if none was specified on the command-line
-    if (!disassembler) {
-        if (!interp)
-            throw std::runtime_error("an instruction set architecture must be specified with the \"--isa\" switch");
-        disassembler = Disassembler::lookup(interp);
-        if (!disassembler)
-            throw std::runtime_error("unable to find an appropriate disassembler");
-        disassembler = disassembler->clone();
-    }
-
+    MemoryMap map = engine.loadSpecimens(specimenNames);
     map.dump(::mlog[INFO]);
     map.dump(std::cout);
+    Disassembler *disassembler = engine.obtainDisassembler();
 
     // Obtain an unparser suitable for this disassembler
     AsmUnparser unparser;

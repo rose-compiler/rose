@@ -227,7 +227,7 @@ add_dependencies(ROSE_DLL
   generate_rosePublicConfig poet)
 
 
-########### next target ###############
+########### next targets ###############
 remove_definitions(-DROSE_DLL_EXPORTS)
 add_executable(testSharedRoseLib testRoseLib.C)
 target_link_libraries(testSharedRoseLib

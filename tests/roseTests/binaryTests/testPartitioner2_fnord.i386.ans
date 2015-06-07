@@ -2256,7 +2256,7 @@
 
 0x08049d94: Basic block reasons: entry point
 0x08049d94: 6a 01                   |j.      |<sp+0 >   push   0x01
-0x08049d96: 68 3c c8 04 08          |h<...   |<sp-4 >   push   0x0804c83c<.data+0x48>
+0x08049d96: 68 3c c8 04 08          |h<...   |<sp-4 >   push   0x0804c83c<" ">
 0x08049d9b: ff 74 24 0c             |.t$.    |<sp-8 >   push   dword ss:[esp + 0x0c]
 0x08049d9f: e8 6c ff ff ff          |.l...   |<sp-12>   call   0x08049d10<<Func>>
 0x08049d9f: Outgoing stack delta: -16

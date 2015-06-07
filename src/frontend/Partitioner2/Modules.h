@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Utility.h>
 
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -381,7 +381,8 @@ SgAsmBlock* buildGlobalBlockAst(const Partitioner&, bool relaxed=false);
  *  violate some invariants.
  *
  *  This function is the same as @ref buildGlobalBlockAst except it also calls various AST fixup functions. Providing an
- *  interpretation allows more fixups to occur. */
+ *  interpretation allows more fixups to occur.  Also, if @p interp is non-null then the returned global block is attached to
+ *  the interpretation in the AST (any previous global block is detached but not destroyed). */
 SgAsmBlock* buildAst(const Partitioner&, SgAsmInterpretation *interp=NULL, bool relaxed=false);
 
 /** Fixes pointers in the AST.

@@ -8,9 +8,9 @@
 #include <Diagnostics.h>
 #include <DispatcherX86.h>
 #include <Partitioner2/Engine.h>
-#include <sawyer/BitVector.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/BitVector.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
 #include <TraceSemantics2.h>
 
 namespace P2 = rose::BinaryAnalysis::Partitioner2;
@@ -28,20 +28,27 @@ struct Settings {
 };
 
 static std::vector<std::string>
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
+    std::string purpose = "test concrete instruction semantics";
+    std::string description =
+        "The @v{specimen} is run as a child process under a simple debugger which single steps through each "
+        "instruction.  At each step, the current instruction is disassembled in ROSE and executed in a simulated "
+        "machine. The registers and memory in the virtual machine are compared with the registers and memory in "
+        "the subordinate process and differences are reported.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any loader or partitioning
+    // switches since this tool doesn't do that.
     Parser parser;
     parser
-        .purpose("test concrete instruction semantics")
+        .purpose(purpose)
         .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
         .chapter(1, "ROSE Command-line Tools")
+        .with(engine.engineSwitches())
+        .with(engine.disassemblerSwitches())
+        .doc("Description", description)
         .doc("Synopsis", "@prop{programName} [@v{switches}] [--] @v{specimen} [@v{arguments}...]")
-        .doc("Description",
-             "The @v{specimen} is run as a child process under a simple debugger which single steps through each "
-             "instruction.  At each step, the current instruction is disassembled in ROSE and executed in a simulated "
-             "machine. The registers and memory in the virtual machine are compared with the registers and memory in "
-             "the subordinate process and differences are reported.")
         .doc("Bugs",
              "Only memory that is accessed in the virtual machine is compared with memory in the subordinate process, "
              "otherwise this mechanism would be much too slow.\n\n"
@@ -56,20 +63,19 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
              "Repeated string instructions (e.g., REPE CMPSB) don't always have consistent status flags in the native "
              "execution until the end of the instruction.\n\n");
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    SwitchGroup sg("Tool-specific switches");
+    sg.insert(Switch("trace")
+              .intrinsicValue(true, settings.traceSemantics)
+              .doc("Trace RISC operators.  The trace is displayed only when a problem is encountered. Tracing slows "
+                   "down the execution substantially even if no output is produced.  The @s{no-trace} switch disables "
+                   "tracing (errors are still reported, just not accompanied by a trace).  The default is to " +
+                   std::string(settings.traceSemantics ? "" : "not ") + "produce a trace."));
+    sg.insert(Switch("no-trace")
+              .key("trace")
+              .intrinsicValue(false, settings.traceSemantics)
+              .hidden(true));
 
-    gen.insert(Switch("trace")
-               .intrinsicValue(true, settings.traceSemantics)
-               .doc("Trace RISC operators.  The trace is displayed only when a problem is encountered. Tracing slows "
-                    "down the execution substantially even if no output is produced.  The @s{no-trace} switch disables "
-                    "tracing (errors are still reported, just not accompanied by a trace).  The default is to " +
-                    std::string(settings.traceSemantics ? "" : "not ") + "produce a trace."));
-    gen.insert(Switch("no-trace")
-               .key("trace")
-               .intrinsicValue(false, settings.traceSemantics)
-               .hidden(true));
-
-    return parser.with(gen).parse(argc, argv).apply().unreachedArgs();
+    return parser.with(sg).parse(argc, argv).apply().unreachedArgs();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -252,14 +258,14 @@ main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse command-line
+    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimen = parseCommandLine(argc, argv, settings);
+    std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);
     if (specimen.empty())
         throw std::runtime_error("no specimen name specified; see --help");
 
     // Obtain info about the specimen, including a disassembler.
-    P2::Engine engine;
-    engine.parse(specimen.front());
+    engine.parseContainers(specimen.front());
     Disassembler *disassembler = engine.obtainDisassembler();
     if (!disassembler)
         throw std::runtime_error("architecture is not supported by this tool");

@@ -4,7 +4,8 @@
 #include <Diagnostics.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
+#include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;
 using namespace Sawyer::Container::Algorithm;
@@ -113,28 +114,77 @@ escape(const std::string &s) {
     return "\"" + quotedEscape(s) + "\"";
 }
 
+std::string
+concatenate(const std::string &oldStuff, const std::string &newStuff, const std::string &separator) {
+    if (oldStuff.empty())
+        return "\"" + quotedEscape(newStuff) + "\"";
+    if ('"'==oldStuff[0] && '"'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+    if ('<'==oldStuff[0] && '>'==oldStuff[oldStuff.size()-1])
+        return oldStuff.substr(0, oldStuff.size()-1) + htmlEscape(separator) + htmlEscape(newStuff) + ">";
+    return "\"" + quotedEscape(oldStuff) + quotedEscape(separator) + quotedEscape(newStuff) + "\"";
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      CfgEmitter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+unsigned long CfgEmitter::versionDate_ = 0;
+
 CfgEmitter::CfgEmitter(const Partitioner &partitioner)
     : BaseEmitter<ControlFlowGraph>(partitioner.cfg()), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
-      showInNeighbors_(true), showOutNeighbors_(true),
+      showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
       warningColor_(0, 1.0, 0.80)                   // light red
-    {}
+    {
+        init();
+    }
 
 CfgEmitter::CfgEmitter(const Partitioner &partitioner, const ControlFlowGraph &g)
     : BaseEmitter<ControlFlowGraph>(g), partitioner_(partitioner), useFunctionSubgraphs_(true),
       showReturnEdges_(true), showInstructions_(false), showInstructionAddresses_(true), showInstructionStackDeltas_(true),
-      showInNeighbors_(true), showOutNeighbors_(true),
+      showInNeighbors_(true), showOutNeighbors_(true), strikeNoopSequences_(false),
       funcEnterColor_(0.33, 1.0, 0.9),              // light green
       funcReturnColor_(0.67, 1.0, 0.9),             // light blue
       warningColor_(0, 1.0, 0.80)                   // light red
-    {}
+    {
+        init();
+    }
+
+void
+CfgEmitter::init() {
+    using namespace rose::BinaryAnalysis::InstructionSemantics2;
+
+    // Class initialization
+    if (0 == versionDate_) {
+        FILE *dot = popen("dot -V 2>&1", "r");
+        if (dot) {
+            char buffer[256];
+            if (size_t n = fread(buffer, 1, sizeof(buffer)-1, dot)) {
+                // The full string is something like this: dot - graphviz version 2.26.3 (20100126.1600)
+                buffer[n] = '\0';
+                if (char *ltparen = strchr(buffer, '('))
+                    versionDate_ = strtoul(ltparen+1, NULL, 0);
+            }
+            pclose(dot);
+        }
+    } else {
+        versionDate_ = 1;                               // something low, and other than zero
+    }
+
+    // Instance initialization
+    if (BaseSemantics::DispatcherPtr cpu = partitioner_.instructionProvider().dispatcher()) {
+        SMTSolver *solver = NULL;
+        const RegisterDictionary *regdict = partitioner_.instructionProvider().registerDictionary();
+        size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
+        BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
+        noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
+        noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
+    }
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------------
 //                                      CfgEmitter selectors
@@ -484,6 +534,8 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
             return "\"undiscovered\"";
         case V_INDETERMINATE:
             return "\"indeterminate\"";
+        case V_USER_DEFINED:
+            return "\"user defined\"";
     }
     ASSERT_not_reachable("invalid vertex type");
 }
@@ -497,13 +549,32 @@ std::string
 CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &vertex) const {
     BasicBlock::Ptr bb;
     if (showInstructions_ && vertex->value().type() == V_BASIC_BLOCK && (bb = vertex->value().bblock())) {
+        const std::vector<SgAsmInstruction*> insns = bb->instructions();
+
+        // Decide which instructions are part of a no-op sequence and which sequences should be struck out in the bb label.
+        std::vector<bool> isPartOfNoopSequence(insns.size(), false);
+        if (strikeNoopSequences_ && !isPartOfNoopSequence.empty()) {
+            NoOperation::IndexIntervals noopSequences = noOpAnalysis_.findNoopSubsequences(insns);
+            noopSequences = NoOperation::largestEarliestNonOverlapping(noopSequences);
+            BOOST_FOREACH (const NoOperation::IndexInterval &where, noopSequences) {
+                for (size_t i=where.least(); i<=where.greatest(); ++i)
+                    isPartOfNoopSequence[i] = true;
+            }
+        }
+
+        // Source code position for this BB if known.
         std::string srcLoc = sourceLocation(vertex);
         if (!srcLoc.empty())
             srcLoc = htmlEscape(srcLoc) + "<br align=\"left\"/>";
         std::string s = srcLoc;
-        BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
+
+        // Instructions for this BB.
+        for (size_t i=0; i<insns.size(); ++i) {
+            SgAsmInstruction *insn = insns[i];
+
             if (showInstructionAddresses_)
                 s += StringUtility::addrToString(insn->get_address()).substr(2) + " ";
+
             if (showInstructionStackDeltas_) {
                 int64_t delta = insn->get_stackDelta();
                 if (delta != SgAsmInstruction::INVALID_STACK_DELTA) {
@@ -520,8 +591,20 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
                     s += " ?? ";
                 }
             }
-            s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
+
+            if (isPartOfNoopSequence[i]) {
+                if (versionDate_ >= 20130915) {
+                    // Strike out each insn of the no-op sequence
+                    s += "<s>" + htmlEscape(unparseInstruction(insn)) + "</s><br align=\"left\"/>";
+                } else {
+                    // Put the no-op in parentheses because we graphViz doesn't have strike-through capability
+                    s += "no-op (" + htmlEscape(unparseInstruction(insn)) + ")<br align=\"left\"/>"; 
+                }
+            } else {
+                s += htmlEscape(unparseInstruction(insn)) + "<br align=\"left\"/>";
+            }
         }
+
         if (s.empty())
             s = "(no insns)";
         return "<" + s + ">";
@@ -594,6 +677,9 @@ CfgEmitter::edgeLabel(const ControlFlowGraph::ConstEdgeIterator &edge) const {
                 s = "other";
             break;
         }
+        case E_USER_DEFINED:
+            s = "user";
+            break;
     }
     return "\"" + s + "\"";
 }
@@ -648,7 +734,18 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
-    : partitioner_(partitioner), cg_(partitioner.functionCallGraph(false/*no parallel edges*/)) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
+    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+}
+
+CgEmitter::CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg)
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
+    callGraph(cg);
+}
+
+void
+CgEmitter::callGraph(const FunctionCallGraph &cg) {
+    cg_ = cg;
     graph(cg_.graph());
 }
 
@@ -659,12 +756,21 @@ CgEmitter::functionLabel(const Function::Ptr &function) const {
     return "\"\"";
 }
 
+void
+CgEmitter::highlight(const boost::regex &re) {
+    highlightNameMatcher_ = re;
+}
+
 Attributes
 CgEmitter::functionAttributes(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     Attributes attr;
     attr.insert("style", "filled");
-    attr.insert("fillcolor", subgraphColor().toHtml());
+    if (boost::regex_search(function->name(), highlightNameMatcher_)) {
+        attr.insert("fillcolor", functionHighlightColor_.toHtml());
+    } else {
+        attr.insert("fillcolor", subgraphColor().toHtml());
+    }
     return attr;
 }
 
@@ -697,6 +803,61 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
     out <<"}\n";
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Function callgraph with inlined functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher)
+    : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
+    callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
+}
+
+CgInlinedEmitter::CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher)
+    : CgEmitter(partitioner), nameMatcher_(nameMatcher) {
+    callGraph(cg);
+}
+
+void
+CgInlinedEmitter::callGraph(const FunctionCallGraph &fullCg) {
+    FunctionCallGraph cg;                               // the call graph with some calls removed
+    inlines_.clear();
+
+    // Insert all vertices that will be needed.
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, fullCg.graph().vertices()) {
+        Function::Ptr function = vertex.value();
+        if (!shouldInline(function) || fullCg.nCallees(function)>0) {
+            cg.insertFunction(function);
+            inlines_.insert(function, InlinedFunctions());
+        }
+    }
+
+    // Insert call edges
+    BOOST_FOREACH (const FunctionCallGraph::Graph::Edge &edge, fullCg.graph().edges()) {
+        Function::Ptr caller = edge.source()->value();
+        Function::Ptr callee = edge.target()->value();
+        if (shouldInline(callee)) {
+            insertUnique(inlines_[caller], callee, sortFunctionsByAddress);
+        } else {
+            ASSERT_require(inlines_.exists(callee));
+            cg.insertCall(caller, callee, edge.value().type(), edge.value().count());
+        }
+    }
+    CgEmitter::callGraph(cg);
+}
+
+bool
+CgInlinedEmitter::shouldInline(const Function::Ptr &function) const {
+    return boost::regex_search(function->name(), nameMatcher_);
+}
+
+std::string
+CgInlinedEmitter::functionLabel(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    std::string s = htmlEscape(function->printableName()) + "<br align=\"left\"/>";
+    BOOST_FOREACH (const Function::Ptr &inlined, inlines_[function])
+        s += "  " + htmlEscape(inlined->printableName()) + "<br align=\"left\"/>";
+    return "<" + s + ">";
+}
 
 } // namespace
 } // namespace

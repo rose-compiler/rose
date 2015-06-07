@@ -525,6 +525,9 @@ StringUtility::cEscape(const std::string &s) {
             case '\"':
                 result += "\\\"";
                 break;
+            case '\\':
+                result += "\\\\";
+                break;
             default:
                 if (isprint(ch)) {
                     result += ch;

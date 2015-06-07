@@ -652,12 +652,23 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
+#if 0
+          if (SgProject::get_verbose() >= 1)
+             {
+               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+             }
+#endif
+       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+       // parent->set_isModified(true);
+
           return true;
         }
      return false;
    }
 #else
+
+#error "DEAD CODE!"
+
 // DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
 // If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
 // "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
@@ -679,6 +690,9 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
         }
      return false;
    }
+
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -1087,8 +1101,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
+#if 0
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                       }
+#endif
+                 // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                 // parent->set_isModified(true);
                   }
 
                if (!inFront)
@@ -1190,7 +1210,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1222,7 +1249,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -4035,13 +4069,23 @@ SgStatement::get_scope(void) const
                  // expression (test case is tests/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {
-                      // printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#if 0
+                         printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#endif
                          stmtTemp = stmtTemp->get_parent();
                        }
                  // while (stmtTemp && !isSgStatement(stmtTemp));
                  // while ((stmtTemp != NULL) && !isSgStatement(stmtTemp));
-                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                 // while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL) && (isSgTypeOfType(stmtTemp) == NULL) );
 
+                 // DQ (5/13/2015): Added debugging support.
+                    if (stmtTemp == NULL)
+                       {
+                          printf ("Error: stmtTemp == NULL: in loop over parents from stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                          ROSE_ASSERT(stmt->get_file_info() != NULL);
+                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
+                       }
                     ROSE_ASSERT (stmtTemp != NULL);
                     stmt = isSgStatement(stmtTemp);
 
@@ -4064,9 +4108,12 @@ SgStatement::get_scope(void) const
                        }
                       else
                        {
+                      // DQ (5/16/2015): This can also be the SgTypeOf operator.
                       // DQ (2/17/2014): This must be the case of an SgArrayType (not clear what to do here, return NULL).
                          SgArrayType* arrayType = isSgArrayType(stmtTemp);
-                         ROSE_ASSERT(arrayType != NULL);
+                         SgTypeOfType* typeOfType = isSgTypeOfType(stmtTemp);
+                      // ROSE_ASSERT(arrayType != NULL);
+                         ROSE_ASSERT(arrayType != NULL || typeOfType != NULL);
 #if 0
                          printf ("In get_scope(): identified input node to be part of SgArrayType: returning NULL \n");
 #endif

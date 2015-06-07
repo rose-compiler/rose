@@ -13,8 +13,8 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/foreach.hpp>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stack.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stack.h>
 
 using namespace rose::BinaryAnalysis::InstructionSemantics2::SymbolicSemantics;
 using namespace rose::Diagnostics;
@@ -1210,6 +1210,9 @@ Partitioner::checkConsistency() const {
                         case V_UNDISCOVERED:
                             debug <<" undiscovered";
                             break;
+                        case V_USER_DEFINED:
+                            debug <<" user-defined";
+                            break;
                     }
                 }
                 debug <<"\n";
@@ -1305,6 +1308,8 @@ Partitioner::vertexName(const ControlFlowGraph::Vertex &vertex) {
             return "non-existing<" + StringUtility::numberToString(vertex.id()) + ">";
         case V_UNDISCOVERED:
             return "undiscovered<" + StringUtility::numberToString(vertex.id()) + ">";
+        case V_USER_DEFINED:
+            return "user-defined<" + StringUtility::numberToString(vertex.id()) + ">";
     }
     ASSERT_not_reachable("invalid vertex type");
 }
@@ -1348,6 +1353,9 @@ Partitioner::edgeNameDst(const ControlFlowGraph::Edge &edge) {
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
+        case E_USER_DEFINED:
+            retval += "<user>";
+            break;
     }
     return retval + vertexName(*edge.target());
 }
@@ -1379,6 +1387,9 @@ Partitioner::edgeNameSrc(const ControlFlowGraph::Edge &edge) {
         case E_CALL_RETURN:
             retval += "<callret>";
             break;
+        case E_USER_DEFINED:
+            retval += "<user>";
+            break;
     }
     return retval;
 }
@@ -1408,6 +1419,9 @@ Partitioner::edgeName(const ControlFlowGraph::Edge &edge) {
             break;
         case E_CALL_RETURN:
             retval += "(callret)";
+            break;
+        case E_USER_DEFINED:
+            retval += "(user)";
             break;
     }
     return retval + "-> " + vertexName(*edge.target());
@@ -2053,13 +2067,14 @@ Partitioner::functionGhostSuccessors(const Function::Ptr &function) const {
 FunctionCallGraph
 Partitioner::functionCallGraph(bool allowParallelEdges) const {
     FunctionCallGraph cg;
+    size_t edgeCount = allowParallelEdges ? 0 : 1;
     BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfg_.edges()) {
         if (edge.source()->value().type()==V_BASIC_BLOCK && edge.target()->value().type()==V_BASIC_BLOCK) {
             Function::Ptr source = edge.source()->value().function();
             Function::Ptr target = edge.target()->value().function();
             if (source!=NULL && target!=NULL &&
                 (source!=target || edge.value().type()==E_FUNCTION_CALL || edge.value().type()==E_FUNCTION_XFER))
-                cg.insertCall(source, target, edge.value().type(), allowParallelEdges);
+                cg.insertCall(source, target, edge.value().type(), edgeCount);
         }
     }
     return cg;

@@ -533,7 +533,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_53.c \
      test2015_54.c \
      test2015_55.c \
-     test2015_56.c \
      test2015_57.c \
      test2015_58.c \
      test2015_59.c \
@@ -554,7 +553,113 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_74.c \
      test2015_75.c \
      test2015_76.c \
+     test2015_77.c \
+     test2015_78.c \
+     test2015_79.c \
+     test2015_80.c \
+     test2015_81.c \
+     test2015_82.c \
+     test2015_83.c \
+     test2015_84.c \
+     test2015_85.c \
+     test2015_89.c \
+     test2015_90.c \
+     test2015_91.c \
+     test2015_92.c \
+     test2015_104.c \
+     test2015_105.c \
+     test2015_107.c \
+     test2015_108.c \
+     test2015_109.c \
+     test2015_110.c \
+     test2015_113.c \
+     test2015_114.c \
+     test2015_115.c \
+     test2015_116.c \
+     test2015_117.c \
+     test2015_118.c \
+     test2015_119.c \
+     test2015_120.c \
+     test2015_121.c \
+     test2015_122.c \
+     test2015_123.c \
+     test2015_124.c \
+     test2015_125.c \
+     test2015_126.c \
+     test2015_127.c \
+     test2015_128.c \
+     test2015_129.c \
+     test2015_130.c \
+     test2015_131.c \
+     test2015_132.c \
+     test2015_136.c \
+     test2015_137.c \
+     test2015_138.c \
+     test2015_139.c \
+     test2015_140.c \
+     test2015_141.c \
+     test2015_142.c \
+     test2015_143.c \
+     test2015_144.c \
+     test2015_145.c \
+     test2015_146.c \
+     test2015_147.c \
+     test2015_148.c \
+     test2015_149.c \
+     test2015_156.c \
+     test2015_157.c \
+     test2015_158.c \
+     test2015_160.c \
+     test2015_161.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
+
+# DQ (4/11/2015): New failing tests:
+FAILING_TESTCODES_XEN = \
+    test2015_56.c \
+    test2015_86.c \
+    test2015_87.c \
+    test2015_88.c \
+    test2015_89.c \
+    test2015_93.c \
+    test2015_94.c \
+    test2015_95.c \
+    test2015_96.c \
+    test2015_97.c \
+    test2015_98.c \
+    test2015_99.c \
+    test2015_100.c \
+    test2015_101.c \
+    test2015_102.c \
+    test2015_103.c \
+    test2015_106.c \
+    test2015_111.c \
+    test2015_150.c \
+    test2015_151.c \
+    test2015_152.c \
+    test2015_153.c \
+    test2015_154.c \
+    test2015_155.c \
+    test2015_156.c \
+    test2015_159.c 
+
+# DQ (4/13/2015): The best examples of remaining bugs are:
+# Makefile rules:
+#    test_using_explicit_output_file_option:
+#    test_rtd_use: 
+#    test_m32_use: 
+# And test codes:
+#    test2015_85.c (demonstrates bug in designated initializer handling)
+#    test2015_87.c (demonstrated need for 32-bit mode for EDG front-end, waiting on fix from EDG)
+#    test2015_88.c (may require edits to source code where this happens)
+#    test2015_89.c (only fails when tested using -m32 -mrtd options using makefile rule: test_rtd_use)
+#    test2015_93.c  (demonstrates use of GNU statement-expression in default case of switch statement)
+#    test2015_95.c  (demonstrates 32-bit mode requirement for EDG front-end)
+#    test2015_100.c (demonstrates that the typeof operator not output in argument type for function type unparsing)
+#    test2015_102.c (demonstrates unparsing of alias attribute on non-defining declaration)
+#    test2015_103.c (demonstrates unparsing of CPP directive before closing ";" of expanded macro)
+#    test2015_105.c (demonstrates unparsing of __asm__() in wrong position)
+#    test2015_106.c (demonstrated use of volatile with va_list (not allowed)
+
 
 # DQ (3/22/2015): Still failing:
 #    test2015_31.c 
@@ -579,7 +684,9 @@ FILES_NOT_PASSING = \
      test2014_96.c \
      test2014_97.c \
      test2014_98.c \
-     test2014_99.c 
+     test2014_99.c \
+     test2015_46.c \
+     test2015_112.c 
 
 # DQ (1/5/2014): Some failing test codes:
 #     test2014_03.c  (demonstrates nested functions (not supported in EDG))
@@ -779,14 +886,15 @@ TEST_Exe_Objects = ${TESTCODES_REQUIRED_TO_RUN:.c=.o}
 
 PASSING_TEST_Executables =  ${TEST_Exe_Objects:.o=.out}
 
-if !ROSE_USE_EDG_VERSION_4_4
-if !ROSE_USE_EDG_VERSION_4_7
+# DQ (4/18/2015): Uncommented this so that it can be properyl tested after being fixed!
+# if !ROSE_USE_EDG_VERSION_4_4
+# if !ROSE_USE_EDG_VERSION_4_7
 # any programs needed by your tests that does not need to be built by make all.
 check_PROGRAMS = $(PASSING_TEST_Executables)
 # a list of programs or scripts to run in order to do the testing 
 TESTS= $(check_PROGRAMS) caller.out 
-endif
-endif
+# endif
+# endif
 
 testTranslator = ../../testTranslator
 
@@ -854,7 +962,6 @@ test_link_using_alias_attribute: $(testTranslator)
 test_link_using_asm_symbol_injection: $(testTranslator)
 	$(testTranslator) -o test2014_83 $(top_srcdir)/tests/CompileTests/C_tests/test2014_83.c
 
-
 # Liao 11/19/2009
 # Custom tests to test rose translators as a linker (generating the final executables) for multiple files
 # simplest case: generate .o with -c
@@ -863,6 +970,9 @@ caller.o: $(srcdir)/callee.c $(srcdir)/caller.c
 # default case: generate executable a.out from any number of input files	
 caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 	$(testTranslator) $(ROSE_FLAGS) $^ -o caller.out
+# DQ (4/18/2015): Add the execution of the generated executable.
+	./caller.out
+
 
 # Customized test that modifies testTranslator to remove empty elses to test dangling else unparsing
 # test2008_02.o: $(srcdir)/test2008_02.c
@@ -872,6 +982,52 @@ caller.out: $(srcdir)/callee.c $(srcdir)/caller.c
 test_else_case_disambiguation.passed: $(srcdir)/test2008_02.c
 	@cp $(srcdir)/test2008_02.c else_case_disambiguation_test.c
 	@$(RTH_RUN) CMD="env ROSE_TEST_ELSE_DISAMBIGUATION=x $(testTranslator) $(ROSE_FLAGS) -c else_case_disambiguation_test.c" $(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (4/8/2015): This causes an error due to a bug which outputs a redundant "-o <file>" option
+test_using_explicit_output_file_option:
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c -o test2015_86
+
+test_using_implicit_output_file_option:
+	$(testTranslator) -rose:verbose 0 -MMD -MF .subdirs-install.d $(srcdir)/test2015_86.c
+
+# DQ (4/9/2015): Added test for using -m32 -mrtd options (required for Xen).
+test_rtd_use: $(testTranslator) $(srcdir)/test2015_89.h
+	$(testTranslator) -m32 -mrtd -rose:C89 -c $(srcdir)/test2015_89.c
+
+# DQ (4/10/2015): Added test for using -m32 option which fouces __uint128_t to be undefined (required for Xen).
+test_m32_use: $(testTranslator)
+	$(testTranslator) -m32 -rose:C89 -c $(srcdir)/test2015_95.c
+
+# DQ (5/12/2015): Test demonstrated by Xen build system (where test2015_133.S is a generated C source code file).
+test_file_suffix: $(testTranslator) 
+	$(testTranslator) -c $(srcdir)/test2015_133.S
+
+# DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
+test_mregparm_m32_use: $(testTranslator)
+	$(testTranslator) -mregparm=3 -m32 -rose:C89 -c $(srcdir)/test2015_154.c
+
+# DQ (5/24/2015): Added test for using -mregparm=3 -m32 option which fouces the regparm(0) parameter in __attribute__ (( cdecl, regparm(0) )) to be significant.
+test_optimization_specifier_O: $(testTranslator)
+	$(testTranslator) -O -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_Os: $(testTranslator)
+	$(testTranslator) -Os -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_O1: $(testTranslator)
+	$(testTranslator) -O1 -c $(srcdir)/test2015_153.c
+
+test_optimization_specifier_O2: $(testTranslator)
+	$(testTranslator) -O2 -c $(srcdir)/test2015_153.c
+
+# DQ (5/27/2015): This was a bug in the internal generation of the backend compiler command line
+# it was removing the 2nd parameter after the "-o" option, instead of the next parameter after 
+# the "-o" option. Note that the isue was independent of what the 2nd parameter was after the 
+# "-o" option, it was just initially demonstrated with -DNDEBUG.
+test_compile_and_link_with_NDEBUG:
+	$(testTranslator) -o test2015_162 -DNDEBUG $(srcdir)/test2015_162.c
+
+test_compile_and_link_without_NDEBUG:
+	$(testTranslator) -o test2015_162 $(srcdir)/test2015_162.c
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -915,7 +1071,15 @@ EXTRA_DIST = $(ALL_TESTCODES) builtin-types.def callee.c caller.c c-common.def \
 	     test2014_60_data_members.h \
 	     test2014_60_values.h \
 	     test2014_66.h \
-	     test2014_73.h
+	     test2014_73.h \
+        test2015_103.h \
+        test2015_77.h \
+        test2015_88.h \
+        test2015_149.h \
+        test2015_154.h \
+        test2015_156.h \
+        test2015_157.h \
+        test2015_159.h
 
 copyFiles:
 	cp $(srcdir)/*.h $(top_srcdir)/tests/CompileTests/C_tests
@@ -937,6 +1101,17 @@ check-local:
 	@$(MAKE) test_else_case_disambiguation.passed
 	@$(MAKE) test_common_configure_test_with_link.passed
 	@$(MAKE) test2005_168.o
+	@$(MAKE) test_using_explicit_output_file_option
+	@$(MAKE) test_using_implicit_output_file_option
+	@$(MAKE) test_rtd_use
+	@$(MAKE) test_optimization_specifier_O
+	@$(MAKE) test_optimization_specifier_Os
+	@$(MAKE) test_optimization_specifier_O1
+	@$(MAKE) test_optimization_specifier_O2
+	@$(MAKE) test_mregparm_m32_use
+	@$(MAKE) test_compile_and_link_with_NDEBUG
+	@$(MAKE) test_compile_and_link_without_NDEBUG
+#	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************"

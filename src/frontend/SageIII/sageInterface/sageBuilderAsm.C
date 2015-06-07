@@ -3,7 +3,7 @@
 #include "BinaryLoader.h"
 
 #include <boost/foreach.hpp>
-#include <sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
+#include <Sawyer/CommandLine.h>                         // needed for CommandLine::Parser.programName(), i.e., argv[0]
 
 namespace rose {
 namespace SageBuilderAsm {

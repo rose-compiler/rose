@@ -214,279 +214,118 @@ TEST_F03_Sources = ${ALL_F03_TESTCODES:.F03=.F03.passed}
 PASSING_TEST_Objects = $(PASSING_TEST_F90_Objects) $(PASSING_TEST_F77_Objects) $(PASSING_TEST_F77_FIXED_FORMAT_Objects) $(PASSING_TEST_F03_Objects) 
 PASSING_TEST_Sources = $(PASSING_TEST_F90_Sources) $(PASSING_TEST_F77_Sources) $(PASSING_TEST_F77_FIXED_FORMAT_Sources) $(PASSING_TEST_F03_Sources) 
 
+# All of the following .o files generated from .F90 sources used the same compile command-line, so I've factored them all out
+# into this implicit rule instead of repeating them for each .o target.  If you need to override this command for some
+# particular .o target then this command can be copied into the specific target and modified there. [Matzke, 2015-04-15]
+%.o: %.F90 $(TRANSLATOR)
+	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE__FLAGS) -I$(srcdir) -c $<" $(top_srcdir)/scripts/test_exit_status $@.passed
 
-kinds_mod.o: $(TRANSLATOR)
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-# constants.o:  $(TRANSLATOR) kinds_mod.o blocks.o
-constants.o: $(TRANSLATOR) kinds_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+constants.o: kinds_mod.o
 
 # DQ (8/5/2010): This test needs access to MPI (not a requirement for ROSE, so it is copied to this directory).
-communicate.o: $(TRANSLATOR) kinds_mod.o 
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+communicate.o: kinds_mod.o 
 
-exit_mod.o: $(TRANSLATOR) communicate.o constants.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-domain.o: $(TRANSLATOR) kinds_mod.o constants.o communicate.o broadcast.o blocks.o distribution.o exit_mod.o io_types.o boundary.o domain_size.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-blocks.o: $(TRANSLATOR) kinds_mod.o exit_mod.o domain_size.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-domain_size.o: $(TRANSLATOR) kinds_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-distribution.o: $(TRANSLATOR) kinds_mod.o communicate.o blocks.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-grid.o: $(TRANSLATOR) domain.o io.o global_reductions.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-io_types.o: $(TRANSLATOR) broadcast.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-broadcast.o: $(TRANSLATOR) kinds_mod.o communicate.o 
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-boundary.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-io.o: $(TRANSLATOR) io_netcdf.o io_binary.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-io_binary.o: $(TRANSLATOR) kinds_mod.o domain_size.o domain.o constants.o boundary.o communicate.o broadcast.o gather_scatter.o exit_mod.o io_types.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-io_netcdf.o: $(TRANSLATOR) gather_scatter.o netcdf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-gather_scatter.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o domain.o domain_size.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-global_reductions.o: $(TRANSLATOR) kinds_mod.o communicate.o constants.o blocks.o distribution.o domain_size.o domain.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-diagnostics.o: $(TRANSLATOR) prognostic.o time_management.o solvers.o forcing.o timers.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-prognostic.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o domain_size.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-time_management.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o domain.o domain_size.o broadcast.o grid.o io.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-solvers.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o global_reductions.o gather_scatter.o broadcast.o grid.o io.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing.o: $(TRANSLATOR) forcing_ap.o forcing_coupled.o forcing_pt_interior.o forcing_sfwf.o forcing_shf.o forcing_s_interior.o forcing_tools.o forcing_ws.o tavg.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_ap.o: $(TRANSLATOR) forcing_tools.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_coupled.o: $(TRANSLATOR) ice.o forcing_shf.o forcing_sfwf.o timers.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_pt_interior.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o broadcast.o boundary.o io.o forcing_tools.o time_management.o prognostic.o grid.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_sfwf.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o global_reductions.o forcing_tools.o forcing_shf.o time_management.o prognostic.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_shf.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o forcing_tools.o time_management.o prognostic.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_s_interior.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o boundary.o io.o forcing_tools.o time_management.o prognostic.o grid.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_tools.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o io.o io_types.o grid.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-forcing_ws.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o boundary.o io.o forcing_tools.o time_management.o grid.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-tavg.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o domain.o prognostic.o grid.o time_management.o global_reductions.o broadcast.o io.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-timers.o: $(TRANSLATOR) kinds_mod.o constants.o domain.o global_reductions.o io.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-ice.o: $(TRANSLATOR) kinds_mod.o blocks.o constants.o broadcast.o io_types.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-state_mod.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o io.o broadcast.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-operators.o: $(TRANSLATOR) kinds_mod.o blocks.o domain_size.o domain.o constants.o grid.o 
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-pressure_grad.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-hmix_gm.o: $(TRANSLATOR) vertical_mix.o vmix_kpp.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-vertical_mix.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o state_mod.o broadcast.o io.o timers.o tavg.o time_management.o diagnostics.o vmix_kpp.o vmix_const.o vmix_rich.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-vmix_kpp.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o exit_mod.o forcing_shf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-vmix_const.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-vmix_rich.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o broadcast.o io.o state_mod.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-horizontal_mix.o: $(TRANSLATOR) kinds_mod.o blocks.o distribution.o domain.o constants.o communicate.o time_management.o broadcast.o grid.o io_types.o hmix_del2.o hmix_del4.o hmix_gm.o hmix_aniso.o topostress.o tavg.o timers.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-pressure_grad.o: $(TRANSLATOR) kinds_mod.o blocks.o constants.o operators.o grid.o broadcast.o communicate.o io.o io_types.o state_mod.o time_management.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-hmix_del2.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o broadcast.o boundary.o constants.o topostress.o diagnostics.o io.o global_reductions.o grid.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-topostress.o: $(TRANSLATOR) kinds_mod.o domain.o blocks.o distribution.o constants.o io.o grid.o broadcast.o boundary.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-output.o: $(TRANSLATOR) kinds_mod.o restart.o history.o movie.o tavg.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-restart.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o blocks.o prognostic.o broadcast.o boundary.o communicate.o operators.o grid.o io.o io_types.o time_management.o ice.o forcing.o forcing_ap.o forcing_ws.o forcing_shf.o forcing_sfwf.o forcing_pt_interior.o forcing_s_interior.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-movie.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o exit_mod.o operators.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-hmix_del4.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o global_reductions.o boundary.o diagnostics.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-hmix_aniso.o: $(TRANSLATOR) kinds_mod.o blocks.o communicate.o distribution.o domain.o constants.o broadcast.o global_reductions.o gather_scatter.o diagnostics.o time_management.o grid.o io.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-step_mod.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o timers.o grid.o io.o diagnostics.o state_mod.o time_management.o xdisplay.o baroclinic.o barotropic.o surface_hgt.o tavg.o forcing.o forcing_coupled.o ice.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-xdisplay.o: $(TRANSLATOR) kinds_mod.o blocks.o domain_size.o domain.o constants.o communicate.o io_types.o broadcast.o prognostic.o grid.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-advection.o: $(TRANSLATOR) kinds_mod.o constants.o blocks.o distribution.o grid.o diagnostics.o state_mod.o operators.o hmix_gm.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-baroclinic.o: $(TRANSLATOR) domain.o prognostic.o broadcast.o boundary.o communicate.o advection.o pressure_grad.o horizontal_mix.o vertical_mix.o vmix_kpp.o diagnostics.o state_mod.o ice.o time_management.o io_types.o tavg.o forcing.o forcing_shf.o forcing_pt_interior.o forcing_s_interior.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-barotropic.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o solvers.o operators.o grid.o time_management.o global_reductions.o forcing.o forcing_ap.o tavg.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-history.o: $(TRANSLATOR) kinds_mod.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o forcing_shf.o exit_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-initial.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o communicate.o broadcast.o prognostic.o solvers.o grid.o io.o io_types.o baroclinic.o barotropic.o pressure_grad.o surface_hgt.o vertical_mix.o horizontal_mix.o advection.o diagnostics.o state_mod.o time_management.o topostress.o ice.o xdisplay.o output.o tavg.o forcing.o forcing_coupled.o exit_mod.o restart.o global_reductions.o timers.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-surface_hgt.o: $(TRANSLATOR) kinds_mod.o blocks.o domain.o constants.o prognostic.o forcing.o grid.o time_management.o tavg.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+exit_mod.o: communicate.o constants.o
+domain.o: kinds_mod.o constants.o communicate.o broadcast.o blocks.o distribution.o exit_mod.o io_types.o boundary.o domain_size.o
+blocks.o: kinds_mod.o exit_mod.o domain_size.o
+domain_size.o: kinds_mod.o
+distribution.o: kinds_mod.o communicate.o blocks.o exit_mod.o
+grid.o: domain.o io.o global_reductions.o
+io_types.o: broadcast.o
+broadcast.o: kinds_mod.o communicate.o 
+boundary.o: kinds_mod.o communicate.o constants.o blocks.o distribution.o exit_mod.o
+io.o: io_netcdf.o io_binary.o
+io_binary.o: kinds_mod.o domain_size.o domain.o constants.o boundary.o communicate.o broadcast.o gather_scatter.o exit_mod.o \
+	io_types.o
+io_netcdf.o: gather_scatter.o netcdf.o
+gather_scatter.o: kinds_mod.o communicate.o constants.o blocks.o distribution.o domain.o domain_size.o exit_mod.o
+global_reductions.o: kinds_mod.o communicate.o constants.o blocks.o distribution.o domain_size.o domain.o
+diagnostics.o: prognostic.o time_management.o solvers.o forcing.o timers.o
+prognostic.o: kinds_mod.o constants.o blocks.o distribution.o domain.o domain_size.o
+time_management.o: kinds_mod.o constants.o blocks.o domain.o domain_size.o broadcast.o grid.o io.o exit_mod.o
+solvers.o: kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o global_reductions.o gather_scatter.o \
+	broadcast.o grid.o io.o time_management.o exit_mod.o
+forcing.o: forcing_ap.o forcing_coupled.o forcing_pt_interior.o forcing_sfwf.o forcing_shf.o forcing_s_interior.o \
+	forcing_tools.o forcing_ws.o tavg.o
+forcing_ap.o: forcing_tools.o
+forcing_coupled.o: ice.o forcing_shf.o forcing_sfwf.o timers.o
+forcing_pt_interior.o: kinds_mod.o domain.o constants.o broadcast.o boundary.o io.o forcing_tools.o time_management.o \
+	prognostic.o grid.o exit_mod.o
+forcing_sfwf.o: kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o global_reductions.o \
+	forcing_tools.o forcing_shf.o time_management.o prognostic.o exit_mod.o
+forcing_shf.o: kinds_mod.o blocks.o distribution.o domain.o constants.o boundary.o grid.o io.o forcing_tools.o \
+	time_management.o prognostic.o exit_mod.o
+forcing_s_interior.o: kinds_mod.o blocks.o domain.o constants.o boundary.o io.o forcing_tools.o time_management.o \
+	prognostic.o grid.o exit_mod.o
+forcing_tools.o: kinds_mod.o blocks.o domain.o constants.o io.o io_types.o grid.o time_management.o exit_mod.o
+forcing_ws.o: kinds_mod.o constants.o blocks.o distribution.o domain.o boundary.o io.o forcing_tools.o time_management.o \
+	grid.o exit_mod.o
+tavg.o: kinds_mod.o constants.o blocks.o distribution.o domain.o prognostic.o grid.o time_management.o global_reductions.o \
+	broadcast.o io.o exit_mod.o
+timers.o: kinds_mod.o constants.o domain.o global_reductions.o io.o exit_mod.o
+ice.o: kinds_mod.o blocks.o constants.o broadcast.o io_types.o time_management.o exit_mod.o
+state_mod.o: kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o io.o broadcast.o time_management.o exit_mod.o
+operators.o: kinds_mod.o blocks.o domain_size.o domain.o constants.o grid.o 
+pressure_grad.o: vertical_mix.o vmix_kpp.o
+hmix_gm.o: vertical_mix.o vmix_kpp.o
+vertical_mix.o: kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o state_mod.o broadcast.o io.o timers.o tavg.o \
+	time_management.o diagnostics.o vmix_kpp.o vmix_const.o vmix_rich.o exit_mod.o
+vmix_kpp.o: kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o \
+	exit_mod.o forcing_shf.o
+vmix_const.o: kinds_mod.o blocks.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o state_mod.o \
+	exit_mod.o
+vmix_rich.o: kinds_mod.o blocks.o distribution.o domain.o constants.o grid.o broadcast.o io.o state_mod.o time_management.o \
+	exit_mod.o
+horizontal_mix.o: kinds_mod.o blocks.o distribution.o domain.o constants.o communicate.o time_management.o broadcast.o grid.o \
+	io_types.o hmix_del2.o hmix_del4.o hmix_gm.o hmix_aniso.o topostress.o tavg.o timers.o exit_mod.o
+pressure_grad.o: kinds_mod.o blocks.o constants.o operators.o grid.o broadcast.o communicate.o io.o io_types.o state_mod.o \
+	time_management.o exit_mod.o
+hmix_del2.o: kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o broadcast.o boundary.o constants.o \
+	topostress.o diagnostics.o io.o global_reductions.o grid.o exit_mod.o
+topostress.o: kinds_mod.o domain.o blocks.o distribution.o constants.o io.o grid.o broadcast.o boundary.o exit_mod.o
+output.o: kinds_mod.o restart.o history.o movie.o tavg.o
+restart.o: kinds_mod.o domain.o constants.o blocks.o prognostic.o broadcast.o boundary.o communicate.o operators.o grid.o \
+	io.o io_types.o time_management.o ice.o forcing.o forcing_ap.o forcing_ws.o forcing_shf.o forcing_sfwf.o \
+	forcing_pt_interior.o forcing_s_interior.o exit_mod.o
+movie.o: kinds_mod.o blocks.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o \
+	exit_mod.o operators.o
+hmix_del4.o: kinds_mod.o blocks.o communicate.o distribution.o domain_size.o domain.o constants.o grid.o broadcast.o io.o \
+	global_reductions.o boundary.o diagnostics.o exit_mod.o
+hmix_aniso.o: kinds_mod.o blocks.o communicate.o distribution.o domain.o constants.o broadcast.o global_reductions.o \
+	gather_scatter.o diagnostics.o time_management.o grid.o io.o exit_mod.o
+step_mod.o: kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o timers.o grid.o io.o diagnostics.o state_mod.o \
+	time_management.o xdisplay.o baroclinic.o barotropic.o surface_hgt.o tavg.o forcing.o forcing_coupled.o ice.o
+xdisplay.o: kinds_mod.o blocks.o domain_size.o domain.o constants.o communicate.o io_types.o broadcast.o prognostic.o grid.o \
+	exit_mod.o
+advection.o: kinds_mod.o constants.o blocks.o distribution.o grid.o diagnostics.o state_mod.o operators.o hmix_gm.o
+baroclinic.o: domain.o prognostic.o broadcast.o boundary.o communicate.o advection.o pressure_grad.o horizontal_mix.o \
+	vertical_mix.o vmix_kpp.o diagnostics.o state_mod.o ice.o time_management.o io_types.o tavg.o forcing.o forcing_shf.o \
+	forcing_pt_interior.o forcing_s_interior.o exit_mod.o
+barotropic.o: kinds_mod.o blocks.o domain.o constants.o prognostic.o boundary.o solvers.o operators.o grid.o time_management.o \
+	global_reductions.o forcing.o forcing_ap.o tavg.o
+history.o: kinds_mod.o domain.o constants.o prognostic.o grid.o io.o broadcast.o time_management.o forcing.o forcing_shf.o \
+	exit_mod.o
+initial.o: kinds_mod.o blocks.o domain.o constants.o communicate.o broadcast.o prognostic.o solvers.o grid.o io.o io_types.o \
+	baroclinic.o barotropic.o pressure_grad.o surface_hgt.o vertical_mix.o horizontal_mix.o advection.o diagnostics.o \
+	state_mod.o time_management.o topostress.o ice.o xdisplay.o output.o tavg.o forcing.o forcing_coupled.o exit_mod.o \
+	restart.o global_reductions.o timers.o
+surface_hgt.o: kinds_mod.o blocks.o domain.o constants.o prognostic.o forcing.o grid.o time_management.o tavg.o
 
 # Main file to compile (includes all other files as modules)
-POP.o: $(TRANSLATOR) kinds_mod.o communicate.o domain.o timers.o time_management.o step_mod.o initial.o xdisplay.o diagnostics.o output.o solvers.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-
-
+POP.o: kinds_mod.o communicate.o domain.o timers.o time_management.o step_mod.o initial.o xdisplay.o diagnostics.o output.o \
+	solvers.o
 
 # DQ (8/23/2010): Added support for NetCDFlib
-netcdf.o: $(TRANSLATOR) typeSizes.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-typeSizes.o: $(TRANSLATOR)
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+netcdf.o: typeSizes.o
 
 # DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
-io_netcdf_testcode_01.o: $(TRANSLATOR) gather_scatter.o netcdf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+io_netcdf_testcode_01.o: gather_scatter.o netcdf.o
 
 # DQ (9/17/2010): This is a test code to demonstrate a bug in the ROSE F90 support.
-io_netcdf_testcode_02.o: $(TRANSLATOR) gather_scatter.o netcdf.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+io_netcdf_testcode_02.o: gather_scatter.o netcdf.o
 
-test_kinds_mod.o:$(TRANSLATOR)
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-test_constants.o:$(TRANSLATOR) test_kinds_mod.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
-
-test_forcing.o:$(TRANSLATOR) test_constants.o
-#	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I. -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+test_constants.o: test_kinds_mod.o
+test_forcing.o: test_constants.o
 
 
 
@@ -501,19 +340,22 @@ $(TEST_F90_Objects): $(TRANSLATOR) $(DEPENDENT_MODULE_FILES)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) ../preprocessor $(ROSE_FLAGS) -rose:f90 -c $(srcdir)/$(@:.o=.f90)
 #	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.F90.passed=.F90)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -c $(srcdir)/$(@:.o=.F90)" \
+		$(top_srcdir)/scripts/test_exit_status $@.passed
 
 $(TEST_F77_Objects): $(TRANSLATOR)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f77)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f77)
 #	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.F77)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -rose:f77 -c $(srcdir)/$(@:.F77.passed=.F77)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -I$(srcdir) -rose:f77 -c $(srcdir)/$(@:.o=.F77)" \
+		$(top_srcdir)/scripts/test_exit_status $@.passed
 
 $(TEST_F77_FIXED_FORMAT_Objects): $(TRANSLATOR)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f)
 #	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.F)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.F.passed=.F)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -rose:f77 -c $(srcdir)/$(@:.o=.F)" \
+		$(top_srcdir)/scripts/test_exit_status $@.passed
 
 # Note: If using gfortran version greater then 4.1, we can't call it with Fortran 2003 code since it is so buggy.
 #       So we use -rose:skip_syntax_check to avoid the frontend syntax checking and -rose:skipfinalCompileStep
@@ -524,7 +366,8 @@ $(TEST_F03_Objects): $(TRANSLATOR)
 #	java parser.java.FortranMain --dump $(srcdir)/$(@:.o=.f03)
 #	java fortran.ofp.FrontEnd --dump $(srcdir)/$(@:.o=.f03)
 #	$(VALGRIND) $(TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.F03)
-	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.F03.passed=.F03)" $(top_srcdir)/scripts/test_exit_status $@
+	@$(RTH_RUN) CMD="$(TRANSLATOR) $(ROSE_FLAGS) -rose:skip_syntax_check -rose:skipfinalCompileStep -rose:f2003 -c $(srcdir)/$(@:.o=.F03)" \
+		$(top_srcdir)/scripts/test_exit_status $@.passed
 #	Build a object file since gfortran fails to do so (avoids remaking the makefile target)
 	touch $@
 
@@ -572,4 +415,5 @@ EXTRA_DIST = CMakeLists.txt mpif.h $(ALL_F77_FIXED_FORMAT_TESTCODES) $(ALL_F77_T
 clean-local:
 	rm -f *.o *.s *.mod *.rmod rose_*.C rose_*.f rose_*.F* rose_*.f77 rose_*.f90 rose_*.f95 rose_*.f03 *_postprocessed.* *.dot *.pdf *~ *.ps *.out *.log rose_performance_report_lockfile.lock
 	rm -rf QMTest
+	rm -f *.passed *.failed
 

@@ -61,7 +61,7 @@ main(int argc, char** argv)
      timer.set_project(project);
 
   // Internal AST consistancy tests.
-     printf ("Internal testing of AST ... numberOfASTnodes = %d \n",numberOfNodes());
+     printf ("Internal testing of AST ... numberOfASTnodes = %zu\n", numberOfNodes());
      AstTests::runAllTests(project);
 
 #if 1

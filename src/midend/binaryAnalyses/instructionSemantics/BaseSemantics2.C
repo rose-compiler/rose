@@ -1043,6 +1043,15 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
     stream <<" value=" <<(*value_+fmt);
 }
 
+void
+MemoryCellList::clearNonWritten() {
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+        if (!(*ci)->latestWriter())
+            *ci = MemoryCellPtr();
+    }
+    cells.erase(std::remove(cells.begin(), cells.end(), MemoryCellPtr()), cells.end());
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
@@ -1088,9 +1097,23 @@ MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscO
 {
     ASSERT_not_null(addr);
     ASSERT_require(!byte_restricted || value->get_width()==8);
-    MemoryCellPtr cell = protocell->create(addr, value);
-    cells.push_front(cell);
-    latest_written_cell = cell;
+    MemoryCellPtr newCell = protocell->create(addr, value);
+
+    // Prune away all cells that must-alias this new one since they will be occluded by this new one.
+    if (occlusionsErased_) {
+        for (CellList::iterator cli=cells.begin(); cli!=cells.end(); /*void*/) {
+            MemoryCellPtr oldCell = *cli;
+            if (newCell->must_alias(oldCell, addrOps)) {
+                cli = cells.erase(cli);
+            } else {
+                ++cli;
+            }
+        }
+    }
+
+    // Insert the new cell
+    cells.push_front(newCell);
+    latest_written_cell = newCell;
 }
 
 void
@@ -1156,7 +1179,69 @@ RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
 
 SValuePtr
 RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
+    return isEqual(a, b);
+}
+
+SValuePtr
+RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
     return equalToZero(xor_(a, b));
+}
+
+SValuePtr
+RiscOperators::isNotEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b) {
+    SValuePtr wideA = unsignedExtend(a, a->get_width()+1);
+    SValuePtr wideB = unsignedExtend(b, b->get_width()+1);
+    SValuePtr diff = subtract(wideA, wideB);
+    return extract(diff, diff->get_width()-1, diff->get_width()); // A < B iff sign(wideA - wideB) == -1
+}
+
+SValuePtr
+RiscOperators::isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return or_(isUnsignedLessThan(a, b), isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isUnsignedLessThanOrEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isUnsignedLessThan(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
+    ASSERT_require(a->get_width() == b->get_width());
+    size_t nbits = a->get_width();
+    SValuePtr aIsNeg = extract(a, nbits-1, nbits);
+    SValuePtr bIsNeg = extract(b, nbits-1, nbits);
+    SValuePtr diff = subtract(signExtend(a, nbits+1), signExtend(b, nbits+1));
+    SValuePtr diffIsNeg = extract(diff, nbits+1, nbits+2);
+    SValuePtr negPos = and_(aIsNeg, invert(bIsNeg));   // A is negative and B is non-negative?
+    SValuePtr sameSigns = invert(xor_(aIsNeg, bIsNeg)); // A and B are both negative or both non-negative?
+    SValuePtr result = or_(negPos, and_(sameSigns, diffIsNeg));
+    return result;
+}
+
+SValuePtr
+RiscOperators::isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return or_(isSignedLessThan(a, b), isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isSignedLessThanOrEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isSignedLessThan(a, b));
 }
 
 /*******************************************************************************************************************************
@@ -1236,7 +1321,7 @@ Dispatcher::iproc_get(int key)
 }
 
 const RegisterDescriptor &
-Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing)
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)

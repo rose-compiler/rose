@@ -4,9 +4,9 @@
 #include "Disassembler.h"
 #include "BaseSemantics2.h"
 
-#include <sawyer/Assert.h>
-#include <sawyer/Map.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/SharedPointer.h>
 
 namespace rose {
 namespace BinaryAnalysis {

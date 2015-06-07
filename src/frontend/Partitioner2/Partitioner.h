@@ -14,12 +14,12 @@
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Reference.h>
 
-#include <sawyer/Callbacks.h>
-#include <sawyer/IntervalSet.h>
-#include <sawyer/Map.h>
-#include <sawyer/Message.h>
-#include <sawyer/Optional.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Callbacks.h>
+#include <Sawyer/IntervalSet.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <ostream>
 #include <set>

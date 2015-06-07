@@ -49,9 +49,34 @@ namespace InstructionSemantics2 {               // documented elsewhere
  */
 namespace TraceSemantics {
 
-/*******************************************************************************************************************************
- *                                      RISC Operators
- *******************************************************************************************************************************/
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void SValue;
+typedef boost::shared_ptr<void> SValuePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void RegisterState;
+typedef boost::shared_ptr<void> RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef void MemoryState;
+typedef boost::shared_ptr<void> MemoryStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
@@ -204,7 +229,7 @@ protected:
                 size_t);
     void before(const std::string&, const RegisterDescriptor&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                 const BaseSemantics::SValuePtr&);
-    void before(const std::string&, SgAsmInstruction*);
+    void before(const std::string&, SgAsmInstruction*, bool showAddress);
     void before(const std::string&, size_t);
     void before(const std::string&, size_t, uint64_t);
     void before(const std::string&, const BaseSemantics::SValuePtr&);

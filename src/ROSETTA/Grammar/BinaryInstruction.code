@@ -42,7 +42,7 @@ class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
@@ -3632,12 +3632,6 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
                 virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
                 virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
-                virtual bool hasEffect() ROSE_OVERRIDE;
-                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                       bool relax_stack_semantics=false) ROSE_OVERRIDE;
-                virtual std::vector<std::pair<size_t,size_t> >
-                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                         bool relax_stack_semantics=false) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                             bool* complete,
