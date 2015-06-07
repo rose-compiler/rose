@@ -114,17 +114,20 @@
   #error "Macro ROSE_LANGUAGE_MODE should have been defined ROSE_LANGUAGE_MODE == 0 for C and C99 and ROSE_LANGUAGE_MODE == 1 for C++ (CUDA == 2, OpenCL == 3)"
 #endif
 
+/* DQ (4/12/2015): Removing this mapping for __builtin_va_start to __builtin_stdarg_start
+   since EDG now supports __builtin_va_start directly.
+ */
 /* PC (9/25/2006): Define __builtin_va_start to the EDG expected symbol
    __builtin_stdarg_start */
-#define __builtin_va_start __builtin_stdarg_start
+/* #define __builtin_va_start __builtin_stdarg_start */
 
 /* DQ (8/28/2012): This is an EDG limitation (stricter interpretation of C and C++, I gather).
    EDG 4.4 no longer supports the GNU extension ``__thread'' so we have to disable this
    by setting it with a macro to defin it away (to nothing).  See the details in the 
    EDG/src/Changes file. This is tested in: C_tests/test2009_19.c.
 */
-
-#define __thread 
+/* DQ (5/24/2015): We need to support this how as part of improved C level support in ROSE. */
+/* #define __thread */
 
 /* Outside strict ISO C mode (-ansi, -std=c89 or -std=c99), the functions _exit, alloca,
     bcmp, bzero, dcgettext, dgettext, dremf, dreml, drem, exp10f, exp10l, exp10, ffsll,
@@ -387,8 +390,11 @@ make this safer.
 
 /* This is not correct, but it should be portable */
 #define __builtin_choose_expr(exp,T1,T2) (T1)
-/* This is not correct, but it should be portable, make it always return false for now */
-#define __builtin_constant_p(exp) (0)
+
+/* DQ (4/9/2015): Comment this out in favor of the supported version.
+   This is not correct, but it should be portable, make it always return false for now 
+#define __builtin_constant_p(exp) (0) 
+*/
 
 
 /* Additional builtin functions:

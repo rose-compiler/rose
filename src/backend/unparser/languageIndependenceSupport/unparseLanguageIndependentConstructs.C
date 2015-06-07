@@ -1196,8 +1196,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                                  }
                             }
 #else
+#if 0
                          printf ("@@@@@@@@@@ I don't know why this is a special case: globalScope != NULL @@@@@@@@@@@ \n");
-
+#endif
                       // This likely needs to be set to avoid redunent output of CPP directives at the end of a file.
                          lastStatementOfGlobalScopeUnparsedUsingTokenStream = true;
 #endif
@@ -1616,6 +1617,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         {
 #if 0
           printf ("WARNING: Skipping calls to output statements that are not recorded as being in the target file: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+          printf ("   --- getFileName() = %s \n",getFileName().c_str());
 #endif
 #if 0
           stmt->get_file_info()->display("WARNING: Skipping calls to output statements that are not recorded as being in the target file: debug");
@@ -3080,9 +3082,9 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 #if 0
                int first_statement_declarationCounter = 0;
 #endif
-
+#if 0
                printf ("WARNING: This logic is causing the first few statement that are a part of a shared token stream to be skipped (see test2015_58.C) \n");
-
+#endif
                while ( statementIterator != globalStatementList.end() )
                   {
                     SgStatement* currentStatement = *statementIterator;
@@ -6984,6 +6986,11 @@ UnparseLanguageIndependentConstructs::getPrecedence(SgExpression* expr)
 
        // DQ (11/10/2014): Added support to support this C++11 value.
           case V_SgNullptrValExp:
+
+       // DQ (5/24/2015): Added support for this type.
+          case V_SgUnsignedShortVal:       // return 0;
+          case V_SgShortVal:               // return 0;
+          case V_SgUnsignedCharVal:        // return 0;
 
           case V_SgBoolValExp:             // return 0;
           case V_SgIntVal:                 // return 0;

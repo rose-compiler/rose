@@ -1,6 +1,7 @@
-// Example ROSE Preprocessor
-// used for testing ROSE infrastructure
-#include "rose.h"
+// Example ROSE Preprocessor used for testing ROSE infrastructure
+
+#include "rose.h" // POLICY_OK because this demos a user-level program rather than being part of the ROSE library.
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
