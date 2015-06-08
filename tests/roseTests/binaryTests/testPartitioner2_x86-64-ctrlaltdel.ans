@@ -1,0 +1,123 @@
+/* Interpretation ELF */
+0x004005f0: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
+
+0x004005f0: Basic block reasons: entry point, CFG head
+0x004005f0: ff 35 7a 06 10 00       |.5z...  |          push   qword ds:[rip + 0x000000000010067a]
+0x004005f6: ff 25 7c 06 10 00       |.%|...  |          jmp    qword ds:[rip + 0x000000000010067c]
+0x004005f6: Successor blocks: unknown
+
+0x00400610: ================================== Function (function call, graph) unknown name
+
+0x00400610: Basic block reasons: entry point
+0x00400610: ff 25 72 06 10 00       |.%r...  |<sp+0 >   jmp    qword ds:[rip + 0x0000000000100672]
+0x00400610: Outgoing stack delta: +0
+0x00400610: Successor blocks: unknown
+
+0x004006a0: ================================== Function (entry point, graph) <_start>
+0x004006a0: Function does not return to caller.
+
+0x004006a0: Basic block reasons: entry point, CFG head
+0x004006a0: 48 31 ed                |H1.     |<sp+0 >   xor    rbp, rbp
+0x004006a3: 49 89 d1                |I..     |<sp+0 >   mov    r9, rdx
+0x004006a6: 5e                      |^       |<sp+0 >   pop    rsi
+0x004006a7: 48 89 e2                |H..     |<sp+8 >   mov    rdx, rsp
+0x004006aa: 48 83 e4 f0             |H...    |<sp+8 >   and    rsp, 0xf0<-16>
+0x004006ae: 50                      |P       |<sp+0 >   push   rax
+0x004006af: 54                      |T       |<sp-8 >   push   rsp
+0x004006b0: 49 c7 c0 a0 08 40 00    |I....@. |<sp-16>   mov    r8, 0x004008a0
+0x004006b7: 48 c7 c1 40 08 40 00    |H..@.@. |<sp-16>   mov    rcx, 0x00400840
+0x004006be: 48 c7 c7 60 07 40 00    |H..`.@. |<sp-16>   mov    rdi, 0x00400760
+0x004006c5: e8 46 ff ff ff          |.F...   |<sp-16>   call   0x0000000000400610<<Func>>
+0x004006c5: Outgoing stack delta: -24
+0x004006c5: Successor blocks: 0x00400610, 0x004006ca
+
+0x004006ca: Basic block reasons: 
+0x004006ca: f4                      |.       |<sp-16>   hlt    
+0x004006ca: Outgoing stack delta: -16
+0x004006ca: Successor blocks: none
+
+0x004006f7: ================================== Function (pattern, graph) unknown name
+
+0x004006f7: Basic block reasons: entry point, CFG head
+0x004006f7: 55                      |U       |          push   rbp
+0x004006f8: 48 89 e5                |H..     |          mov    rbp, rsp
+0x004006fb: 74 10                   |t.      |          je     0x000000000040070d<<BBlock>>
+0x004006fb: Successor blocks: 0x004006fd, 0x0040070d
+
+0x004006fd: Basic block reasons: 
+0x004006fd: eb 24                   |.$      |          jmp    0x0000000000400723<<BBlock>>
+0x004006fd: Successor blocks: 0x00400723
+
+0x004006ff: Basic block reasons: CFG head
+0x004006ff: 90                      |.       |          nop    
+0x004006ff: Successor blocks: 0x00400700
+
+0x00400700: Basic block reasons: 
+0x00400700: 48 83 c0 08             |H...    |          add    rax, 0x08
+0x00400704: 48 89 05 d5 05 10 00    |H...... |          mov    qword ds:[rip + 0x00000000001005d5], rax
+0x0040070b: ff d2                   |..      |          call   rdx
+0x0040070b: Successor blocks: 0x0040070d, unknown
+
+0x0040070d: Basic block reasons: 
+0x0040070d: 48 8b 05 cc 05 10 00    |H...... |          mov    rax, qword ds:[rip + 0x00000000001005cc]
+0x00400714: 48 8b 10                |H..     |          mov    rdx, qword ds:[rax]
+0x00400717: 48 85 d2                |H..     |          test   rdx, rdx
+0x0040071a: 75 e4                   |u.      |          jne    0x0000000000400700<<BBlock>>
+0x0040071a: Successor blocks: 0x00400700, 0x0040071c
+
+0x0040071c: Basic block reasons: 
+0x0040071c: c6 05 cd 05 10 00 01    |....... |          mov    byte ds:[rip + 0x00000000001005cd], 0x01
+0x0040071c: Successor blocks: 0x00400723
+
+0x00400723: Basic block reasons: 
+0x00400723: c9                      |.       |          leave  
+0x00400724: c3                      |.       |          ret    
+0x00400724: Successor blocks: unknown
+
+0x00400749: ================================== Function (pattern, graph) unknown name
+
+0x00400749: Basic block reasons: entry point, CFG head
+0x00400749: c8 0a 50 00             |..P.    |          enter  0x500a<20490>, 0x00
+0x0040074d: 49 89 c3                |I..     |          mov    r11, rax
+0x00400750: c9                      |.       |          leave  
+0x00400751: 41 ff e3                |A..     |          jmp    r11
+0x00400751: Successor blocks: unknown
+
+0x004008e0: ================================== Function (pattern, graph) unknown name
+
+0x004008e0: Basic block reasons: entry point, CFG head
+0x004008e0: 55                      |U       |          push   rbp
+0x004008e1: 48 89 e5                |H..     |          mov    rbp, rsp
+0x004008e4: 53                      |S       |          push   rbx
+0x004008e5: 48 c7 c3 a8 0a 50 00    |H....P. |          mov    rbx, 0x00500aa8<.ctors>
+0x004008ec: 48 83 ec 08             |H...    |          sub    rsp, 0x08
+0x004008f0: 48 8b 05 b1 01 10 00    |H...... |          mov    rax, qword ds:[rip + 0x00000000001001b1]
+0x004008f7: eb 10                   |..      |          jmp    0x0000000000400909<<BBlock>>
+0x004008f7: Successor blocks: 0x00400909
+
+0x004008f9: Basic block reasons: CFG head
+0x004008f9: 66 66 66 90             |fff.    |          nop    
+0x004008fd: 66 66 90                |ff.     |          nop    
+0x004008fd: Successor blocks: 0x00400900
+
+0x00400900: Basic block reasons: 
+0x00400900: 48 83 eb 08             |H...    |          sub    rbx, 0x08
+0x00400904: ff d0                   |..      |          call   rax
+0x00400904: Successor blocks: 0x00400906, unknown
+
+0x00400906: Basic block reasons: 
+0x00400906: 48 8b 03                |H..     |          mov    rax, qword ds:[rbx]
+0x00400906: Successor blocks: 0x00400909
+
+0x00400909: Basic block reasons: 
+0x00400909: 48 83 f8 ff             |H...    |          cmp    rax, 0xff<-1>
+0x0040090d: 75 f1                   |u.      |          jne    0x0000000000400900<<BBlock>>
+0x0040090d: Successor blocks: 0x00400900, 0x0040090f
+
+0x0040090f: Basic block reasons: 
+0x0040090f: 48 83 c4 08             |H...    |          add    rsp, 0x08
+0x00400913: 5b                      |[       |          pop    rbx
+0x00400914: c9                      |.       |          leave  
+0x00400915: c3                      |.       |          ret    
+0x00400915: Successor blocks: unknown
+

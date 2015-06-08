@@ -9,8 +9,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 
 using namespace rose;
 using namespace Sawyer::Message::Common;
@@ -30,10 +30,29 @@ struct Settings {
         : showAsHex(false), showAsSRecords(false), showAsBinary(false), showMap(false), where(AddressInterval::whole()) {}
 };
 
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings/*out*/) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings/*out*/) {
     using namespace Sawyer::CommandLine;
-    SwitchGroup generic = CommandlineProcessing::genericSwitches();
+
+    std::string purpose = "dump specimen memory";
+    std::string description =
+        "Parses and/or loads the specimen into ROSE's analysis memory and then dumps that memory in a variety of formats "
+        "selected with the command-line switches.";
+
+    // The parser is the same as that created by Engine::commandLineParser except we don't need any disassemler or partitioning
+    // switches since this tool doesn't disassemble or partition.
+    Parser parser;
+    parser
+        .purpose(purpose)
+        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
+        .chapter(1, "ROSE Command-line Tools")
+        .doc("Synopsis",
+             "@prop{programName} [@v{switches}] @v{address_file} @v{specimen_name} @v{specimen_arguments}...")
+        .doc("Description", description)
+        .doc("Specimens", engine.specimenNameDocumentation())
+        .with(engine.engineSwitches())
+        .with(engine.loaderSwitches())
+        .errorStream(mlog[FATAL]);
 
     SwitchGroup fmt("Format switches");
     fmt.insert(Switch("hexdump")
@@ -72,19 +91,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings/*out*/) {
                      P2::AddressIntervalParser::docString() + "  The specified interval may include addresses "
                      "that aren't mapped and which are silently ignored."));
 
-    Parser parser;
-    parser
-        .errorStream(mlog[FATAL])
-        .purpose("dump specimen memory")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Command-line Tools")
-        .doc("Synopsis", "@prop{programName} [@v{switches}] @v{specimen}...")
-        .doc("Description",
-             "Parses and/or loads the @v{specimen} into ROSE's analysis memory and then dumps that memory in a variety of "
-             "formats selected with @v{switches}.")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
-
-    return parser.with(generic).with(fmt).with(out).with(misc).parse(argc, argv).apply();
+    return parser.with(fmt).with(out).with(misc).parse(argc, argv).apply().unreachedArgs();
 }
 
 class Dumper {
@@ -167,8 +174,9 @@ main(int argc, char *argv[]) {
     Diagnostics::mfacilities.insertAndAdjust(mlog);
 
     // Parse command-line
+    P2::Engine engine;
     Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
     if (!settings.showAsHex && !settings.showAsSRecords && !settings.showAsBinary) {
         mlog[WARN] <<"no output format selected; see --help\n";
         settings.showMap = true;
@@ -177,8 +185,7 @@ main(int argc, char *argv[]) {
         throw std::runtime_error("the --prefix switch is required when --binary is specified");
 
     // Parse and load the specimen, but do not disassemble or partition.
-    P2::Engine engine;
-    MemoryMap map = engine.load(specimenNames);
+    MemoryMap map = engine.loadSpecimens(specimenNames);
     if (settings.showMap)
         map.dump(std::cout);
 

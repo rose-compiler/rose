@@ -1,0 +1,188 @@
+/* Interpretation ELF */
+0x00400108: ================================== Function (pattern, graph) unknown name
+
+0x00400108: Basic block reasons: entry point, CFG head
+0x00400108: c8 06 00 00             |....    |          enter  0x0006, 0x00
+0x0040010c: 00 00                   |..      |          add    byte ds:[rax], al
+0x0040010e: 00 00                   |..      |          add    byte ds:[rax], al
+0x00400110: c8 06 00 00             |....    |          enter  0x0006, 0x00
+0x00400114: 00 00                   |..      |          add    byte ds:[rax], al
+0x00400116: 00 00                   |..      |          add    byte ds:[rax], al
+0x00400118: 00 00                   |..      |          add    byte ds:[rax], al
+0x0040011a: 10 00                   |..      |          adc    byte ds:[rax], al
+0x0040011c: 00 00                   |..      |          add    byte ds:[rax], al
+0x0040011e: 00 00                   |..      |          add    byte ds:[rax], al
+0x00400120: 02 00                   |..      |          add    al, byte ds:[rax]
+0x00400122: 00 00                   |..      |          add    byte ds:[rax], al
+0x00400124: 06                      |.       |          unknown 
+0x00400124: Successor blocks: unknown
+
+0x00400198: ================================== Function (pattern, graph) unknown name
+
+0x00400198: Basic block reasons: entry point, CFG head
+0x00400198: c8 22 00 00             |."..    |          enter  0x0022, 0x00
+0x0040019c: 00 00                   |..      |          add    byte ds:[rax], al
+0x0040019e: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001a0: c8 22 40 00             |."@.    |          enter  0x4022<16418>, 0x00
+0x004001a4: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001a6: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001a8: c8 22 40 00             |."@.    |          enter  0x4022<16418>, 0x00
+0x004001ac: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001ae: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001b0: 5c                      |\       |          pop    rsp
+0x004001b1: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001b3: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001b5: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001b7: 00 5c 00 00             |.\..    |          add    byte ds:[rax + rax + 0x00], bl
+0x004001bb: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001bd: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001bf: 00 04 00                |...     |          add    byte ds:[rax + rax], al
+0x004001c2: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001c4: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001c6: 00 00                   |..      |          add    byte ds:[rax], al
+0x004001c8: 51                      |Q       |          push   rcx
+0x004001c9: e5 74                   |.t      |          in     eax, 0x74
+0x004001cb: 64                      |d       |          unknown 
+0x004001cb: Successor blocks: unknown
+
+0x00400e88: ================================== Function (import, graph) <DYNAMIC_LINKER_TRAMPOLINE>
+
+0x00400e88: Basic block reasons: entry point, CFG head
+0x00400e88: ff 35 5a 18 10 00       |.5Z...  |          push   qword ds:[rip + 0x000000000010185a]
+0x00400e8e: ff 25 5c 18 10 00       |.%\...  |          jmp    qword ds:[rip + 0x000000000010185c]
+0x00400e8e: Successor blocks: unknown
+
+0x00400ea8: ================================== Function (function call, graph) unknown name
+
+0x00400ea8: Basic block reasons: entry point
+0x00400ea8: ff 25 52 18 10 00       |.%R...  |<sp+0 >   jmp    qword ds:[rip + 0x0000000000101852]
+0x00400ea8: Outgoing stack delta: +0
+0x00400ea8: Successor blocks: unknown
+
+0x00401140: ================================== Function (entry point, graph) <_start>
+0x00401140: Function does not return to caller.
+
+0x00401140: Basic block reasons: entry point, CFG head
+0x00401140: 48 31 ed                |H1.     |<sp+0 >   xor    rbp, rbp
+0x00401143: 49 89 d1                |I..     |<sp+0 >   mov    r9, rdx
+0x00401146: 5e                      |^       |<sp+0 >   pop    rsi
+0x00401147: 48 89 e2                |H..     |<sp+8 >   mov    rdx, rsp
+0x0040114a: 48 83 e4 f0             |H...    |<sp+8 >   and    rsp, 0xf0<-16>
+0x0040114e: 50                      |P       |<sp+0 >   push   rax
+0x0040114f: 54                      |T       |<sp-8 >   push   rsp
+0x00401150: 49 c7 c0 30 1e 40 00    |I..0.@. |<sp-16>   mov    r8, 0x00401e30
+0x00401157: 48 c7 c1 d0 1d 40 00    |H....@. |<sp-16>   mov    rcx, 0x00401dd0
+0x0040115e: 48 c7 c7 d0 13 40 00    |H....@. |<sp-16>   mov    rdi, 0x004013d0
+0x00401165: e8 3e fd ff ff          |.>...   |<sp-16>   call   0x0000000000400ea8<<Func>>
+0x00401165: Outgoing stack delta: -24
+0x00401165: Successor blocks: 0x00400ea8, 0x0040116a
+
+0x0040116a: Basic block reasons: 
+0x0040116a: f4                      |.       |<sp-16>   hlt    
+0x0040116a: Outgoing stack delta: -16
+0x0040116a: Successor blocks: none
+
+0x00401197: ================================== Function (pattern, graph) unknown name
+
+0x00401197: Basic block reasons: entry point, CFG head
+0x00401197: 55                      |U       |          push   rbp
+0x00401198: 48 89 e5                |H..     |          mov    rbp, rsp
+0x0040119b: 74 10                   |t.      |          je     0x00000000004011ad<<BBlock>>
+0x0040119b: Successor blocks: 0x0040119d, 0x004011ad
+
+0x0040119d: Basic block reasons: 
+0x0040119d: eb 24                   |.$      |          jmp    0x00000000004011c3<<BBlock>>
+0x0040119d: Successor blocks: 0x004011c3
+
+0x0040119f: Basic block reasons: CFG head
+0x0040119f: 90                      |.       |          nop    
+0x0040119f: Successor blocks: 0x004011a0
+
+0x004011a0: Basic block reasons: 
+0x004011a0: 48 83 c0 08             |H...    |          add    rax, 0x08
+0x004011a4: 48 89 05 ad 16 10 00    |H...... |          mov    qword ds:[rip + 0x00000000001016ad], rax
+0x004011ab: ff d2                   |..      |          call   rdx
+0x004011ab: Successor blocks: 0x004011ad, unknown
+
+0x004011ad: Basic block reasons: 
+0x004011ad: 48 8b 05 a4 16 10 00    |H...... |          mov    rax, qword ds:[rip + 0x00000000001016a4]
+0x004011b4: 48 8b 10                |H..     |          mov    rdx, qword ds:[rax]
+0x004011b7: 48 85 d2                |H..     |          test   rdx, rdx
+0x004011ba: 75 e4                   |u.      |          jne    0x00000000004011a0<<BBlock>>
+0x004011ba: Successor blocks: 0x004011a0, 0x004011bc
+
+0x004011bc: Basic block reasons: 
+0x004011bc: c6 05 c9 16 10 00 01    |....... |          mov    byte ds:[rip + 0x00000000001016c9], 0x01
+0x004011bc: Successor blocks: 0x004011c3
+
+0x004011c3: Basic block reasons: 
+0x004011c3: c9                      |.       |          leave  
+0x004011c4: c3                      |.       |          ret    
+0x004011c4: Successor blocks: unknown
+
+0x00401e70: ================================== Function (pattern, graph) unknown name
+
+0x00401e70: Basic block reasons: entry point, CFG head
+0x00401e70: 55                      |U       |          push   rbp
+0x00401e71: 48 89 e5                |H..     |          mov    rbp, rsp
+0x00401e74: 53                      |S       |          push   rbx
+0x00401e75: 48 c7 c3 20 25 50 00    |H.. %P. |          mov    rbx, 0x00502520<.ctors>
+0x00401e7c: 48 83 ec 08             |H...    |          sub    rsp, 0x08
+0x00401e80: 48 8b 05 99 06 10 00    |H...... |          mov    rax, qword ds:[rip + 0x0000000000100699]
+0x00401e87: eb 10                   |..      |          jmp    0x0000000000401e99<<BBlock>>
+0x00401e87: Successor blocks: 0x00401e99
+
+0x00401e89: Basic block reasons: CFG head
+0x00401e89: 66 66 66 90             |fff.    |          nop    
+0x00401e8d: 66 66 90                |ff.     |          nop    
+0x00401e8d: Successor blocks: 0x00401e90
+
+0x00401e90: Basic block reasons: 
+0x00401e90: 48 83 eb 08             |H...    |          sub    rbx, 0x08
+0x00401e94: ff d0                   |..      |          call   rax
+0x00401e94: Successor blocks: 0x00401e96, unknown
+
+0x00401e96: Basic block reasons: 
+0x00401e96: 48 8b 03                |H..     |          mov    rax, qword ds:[rbx]
+0x00401e96: Successor blocks: 0x00401e99
+
+0x00401e99: Basic block reasons: 
+0x00401e99: 48 83 f8 ff             |H...    |          cmp    rax, 0xff<-1>
+0x00401e9d: 75 f1                   |u.      |          jne    0x0000000000401e90<<BBlock>>
+0x00401e9d: Successor blocks: 0x00401e90, 0x00401e9f
+
+0x00401e9f: Basic block reasons: 
+0x00401e9f: 48 83 c4 08             |H...    |          add    rsp, 0x08
+0x00401ea3: 5b                      |[       |          pop    rbx
+0x00401ea4: c9                      |.       |          leave  
+0x00401ea5: c3                      |.       |          ret    
+0x00401ea5: Successor blocks: unknown
+
+0x00402d90: ================================== Function (pattern, graph) unknown name
+
+0x00402d90: Basic block reasons: entry point, CFG head
+0x00402d90: c8 22 00 00             |."..    |          enter  0x0022, 0x00
+0x00402d94: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402d96: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402d98: c8 22 40 00             |."@.    |          enter  0x4022<16418>, 0x00
+0x00402d9c: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402d9e: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402da0: c8 22 40 00             |."@.    |          enter  0x4022<16418>, 0x00
+0x00402da4: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402da6: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402da8: 5c                      |\       |          pop    rsp
+0x00402da9: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402dab: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402dad: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402daf: 00 5c 00 00             |.\..    |          add    byte ds:[rax + rax + 0x00], bl
+0x00402db3: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402db5: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402db7: 00 04 00                |...     |          add    byte ds:[rax + rax], al
+0x00402dba: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402dbc: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402dbe: 00 00                   |..      |          add    byte ds:[rax], al
+0x00402dc0: 51                      |Q       |          push   rcx
+0x00402dc1: e5 74                   |.t      |          in     eax, 0x74
+0x00402dc3: 64                      |d       |          unknown 
+0x00402dc3: Successor blocks: unknown
+

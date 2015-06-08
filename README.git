@@ -937,6 +937,12 @@ Working with the new_app branch on zeus:
    145  9:45    smgit fetch origin
    146  9:46    smgit merge origin/dquinlan/dq-new_app-rc
 
+To use the new development Jenkins we have to push to a -dev branch.
+smgit push origin HEAD:refs/heads/dquinlan/dq-development-dev
+
+To merge with master:
+WRONG: smgit pull origin
+git pull origin master
 
 Technique for debugging exceptions:
    1) Look for the name of the exception 

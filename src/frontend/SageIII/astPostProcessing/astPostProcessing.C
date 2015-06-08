@@ -133,6 +133,21 @@ void AstPostProcessing (SgNode* node)
              }
         }
 
+#if 0
+  // DQ (1/12/2015): Save this so that we can check it for where it might be reset to be compiler generated (a bug).
+     extern SgFunctionDeclaration* saved_functionDeclaration;
+     ROSE_ASSERT(saved_functionDeclaration != NULL);
+
+     printf ("saved_functionDeclaration = %p = %s \n",saved_functionDeclaration,saved_functionDeclaration->class_name().c_str());
+     SgFunctionDeclaration* nondefiningDeclaration = isSgFunctionDeclaration(saved_functionDeclaration->get_firstNondefiningDeclaration());
+     SgFunctionDeclaration* definingDeclaration    = isSgFunctionDeclaration(saved_functionDeclaration->get_definingDeclaration());
+     printf ("saved_functionDeclaration nondefiningDeclaration = %p \n",nondefiningDeclaration);
+     printf ("saved_functionDeclaration definingDeclaration    = %p \n",definingDeclaration);
+
+     saved_functionDeclaration->get_startOfConstruct()->display("AstPostProcessing: saved_functionDeclaration source position of the first non-defining declaration that was modified by EDG: START: debug");
+     saved_functionDeclaration->get_endOfConstruct()  ->display("AstPostProcessing: saved_functionDeclaration source position of the first non-defining declaration that was modified by EDG: END: debug");
+#endif
+
   // DQ (3/17/2007): Clear the static globalMangledNameMap, likely this is not enough and the mangled name map 
   // should not be used while the names of scopes are being reset (done in the AST post-processing).
      SgNode::clearGlobalMangledNameMap();
@@ -426,7 +441,10 @@ void postProcessingSupport (SgNode* node)
        // where transformations are done in the AST.  If any transformations on
        // the AST are done, even just building it, this step should be the final
        // step.
-          checkIsModifiedFlag(node);
+
+       // DQ (4/16/2015): This is replaced with a better implementation.
+       // checkIsModifiedFlag(node);
+          unsetNodesMarkedAsModified(node);
 
           if (SgProject::get_verbose() > 1)
              {
@@ -798,10 +816,12 @@ void postProcessingSupport (SgNode* node)
   // Make sure that compiler-generated AST nodes are marked for Sg_File_Info::isCompilerGenerated().
      checkIsCompilerGeneratedFlag(node);
 
+  // DQ (4/16/2015): This is replaced with a better implementation.
   // DQ (5/22/2005): Nearly all AST fixup should be done before this closing step
   // QY: check the isModified flag
   // CheckIsModifiedFlagSupport(node); 
-     checkIsModifiedFlag(node);
+  // checkIsModifiedFlag(node);
+     unsetNodesMarkedAsModified(node);
 
 #if 0
      ROSE_MemoryUsage memoryUsage4;

@@ -2,6 +2,7 @@
 
 #include <rose.h>
 
+#include <ConcreteSemantics2.h>
 #include <Diagnostics.h>
 #include <Disassembler.h>
 #include <DispatcherX86.h>
@@ -57,7 +58,6 @@ Sawyer::Message::Facility mlog;
 
 // Command-line settings
 struct Settings {
-    std::string isaName;                                // name of instruction set architecture
     std::string valueClassName;                         // name of semantic values class, abbreviated
     std::string rstateClassName;                        // name of register state class, abbreviated
     std::string mstateClassName;                        // name of memory state class, abbreviated
@@ -74,19 +74,19 @@ struct Settings {
           bblockInterval(AddressInterval::whole()) {}
 };
 
-static Sawyer::CommandLine::ParserResult
-parseCommandLine(int argc, char *argv[], Settings &settings) {
+static std::vector<std::string>
+parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings) {
     using namespace Sawyer::CommandLine;
 
-    SwitchGroup gen = CommandlineProcessing::genericSwitches();
+    std::string purpose = "runs instruction semantics for testing";
+    std::string description =
+        "Parses, disassembles and partitions the specimens given as positional arguments on the command-line and then "
+        "instantiates and runs the specified instruction semantics for each basic block.  A semantic class must be "
+        "specified with the @s{semantics} switch, and its default component types can be overridden with other "
+        "class-specifying switches. However, not all combinations of semantic class and component types make sense (a "
+        "well implemented class will complain when the combination is nonsensical).";
 
-    //------------------------------------------------
-    SwitchGroup load("Specimen loading switches");
-    load.insert(Switch("isa")
-                .argument("architecture", anyParser(settings.isaName))
-                .doc("Instruction set architecture.  If the specimen has a binary container (e.g., ELF, PE) then the "
-                     "architecture is obtained from the container (overridden by this switch), otherwise the user must "
-                     "specify an architecture. Use \"@s{isa} list\" to see a list of recognized names."));
+    Parser parser = engine.commandLineParser(purpose, description);
 
     //------------------------------------------------
     SwitchGroup sem("Semantics class switches");
@@ -182,22 +182,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                .hidden(true));
     
     //------------------------------------------------
-    Parser parser;
-    parser
-        .purpose("runs instruction semantics for testing")
-        .version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE)
-        .chapter(1, "ROSE Testing")
-        .doc("synopsis",
-             "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}")
-        .doc("description",
-             "Parses, disassembles and partitions the specimens given as positional arguments on the command-line and then "
-             "instantiates and runs the specified instruction semantics for each basic block.  A semantic class must be "
-             "specified with the @s{semantics} switch, and its default component types can be overridden with other "
-             "class-specifying switches. However, not all combinations of semantic class and component types make sense (a "
-             "well implemented class will complain when the combination is nonsensical).")
-        .doc("Specimens", P2::Engine::specimenNameDocumentation());
-    
-    return parser.with(gen).with(load).with(sem).with(ctl).with(out).parse(argc, argv).apply();
+    parser.doc("Synopsis", "@prop{programName} @s{semantics} @v{class} [@v{switches}] @v{specimen_name}");
+    return parser.with(sem).with(ctl).with(out).parse(argc, argv).apply().unreachedArgs();
 }
 
 static SMTSolver *
@@ -225,6 +211,7 @@ makeProtoVal(const Settings &settings) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::SValue\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::SValue\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::SValue\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::SValue\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::SValue\n"
@@ -235,6 +222,8 @@ makeProtoVal(const Settings &settings) {
     } else if (className == "example") {
         return com::example::semantics::SValue::instance();
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::SValue::instance();
     } else if (className == "interval") {
         return IntervalSemantics::SValue::instance();
     } else if (className == "null") {
@@ -258,6 +247,7 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RegisterState\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  generic          rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStateGeneric\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RegisterState\n"
@@ -270,6 +260,8 @@ makeRegisterState(const Settings &settings, const BaseSemantics::SValuePtr &prot
     } else if (className == "example") {
         return com::example::semantics::RegisterState::instance(protoval, regdict);
 #endif
+    } else if (className == "concrete") {
+        return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "generic") {
         return BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
     } else if (className == "interval") {
@@ -298,6 +290,7 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::MemoryState\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::MemoryState\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::MemoryState\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::MemoryState\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics default\n"
@@ -308,6 +301,8 @@ makeMemoryState(const Settings &settings, const BaseSemantics::SValuePtr &protov
     } else if (className == "example") {
         return com::example::semantics::MemoryState::instance(protoval, protoaddr);
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "interval") {
         return IntervalSemantics::MemoryState::instance(protoval, protoaddr);
     } else if (className == "null") {
@@ -332,6 +327,7 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
 #ifdef EXAMPLE_EXTENSIONS
                   <<"  example          com::example::semantics::RiscOperators\n"
 #endif
+                  <<"  concrete         rose::BinaryAnalysis::InstructionSemantics2::ConcreteSemantics::RiscOperators\n"
                   <<"  interval         rose::BinaryAnalysis::InstructionSemantics2::IntervalSemantics::RiscOperators\n"
                   <<"  null             rose::BinaryAnalysis::InstructionSemantics2::NullSemantics::RiscOperators\n"
                   <<"  partial          rose::BinaryAnalysis::InstructionSemantics2::PartialSymbolicSemantics::RiscOperators\n"
@@ -353,6 +349,8 @@ makeRiscOperators(const Settings &settings, const RegisterDictionary *regdict) {
     } else if (className == "example") {
         return com::example::semantics::RiscOperators::instance(state, solver);
 #endif
+    } else if (className == "concrete") {
+        return ConcreteSemantics::RiscOperators::instance(state, solver);
     } else if (className == "interval") {
         return IntervalSemantics::RiscOperators::instance(state, solver);
     } else if (className == "null") {
@@ -403,6 +401,11 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
                           com::example::semantics::RiscOperatorsPtr> tester;
             tester.test(ops);
 #endif
+        } else if (settings.opsClassName == "concrete") {
+            TestSemantics<ConcreteSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
+                          ConcreteSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
+                          ConcreteSemantics::RiscOperatorsPtr> tester;
+            tester.test(ops);
         } else if (settings.opsClassName == "interval") {
             TestSemantics<IntervalSemantics::SValuePtr, BaseSemantics::RegisterStateGenericPtr,
                           IntervalSemantics::MemoryStatePtr, BaseSemantics::StatePtr,
@@ -430,7 +433,7 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" cannot be tested\n";
         }
     } else {
         // There are many more combinations where the operators class need not be the same as the value or state classes. We
@@ -455,14 +458,14 @@ testSemanticsApi(const Settings &settings, const P2::Partitioner &partitioner) {
             tester.test(ops);
         } else {
             std::cout <<"tests skipped.\n\n";
-            mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
+            ::mlog[WARN] <<"API for " <<settings.opsClassName <<" semantics with";
             if (settings.valueClassName != settings.opsClassName)
-                mlog[WARN] <<" value=" <<settings.valueClassName;
+                ::mlog[WARN] <<" value=" <<settings.valueClassName;
             if (settings.rstateClassName != settings.opsClassName)
-                mlog[WARN] <<" rstate=" <<settings.rstateClassName;
+                ::mlog[WARN] <<" rstate=" <<settings.rstateClassName;
             if (settings.mstateClassName != settings.opsClassName)
-                mlog[WARN] <<" mstate=" <<settings.mstateClassName;
-            mlog[WARN] <<" cannot be tested\n";
+                ::mlog[WARN] <<" mstate=" <<settings.mstateClassName;
+            ::mlog[WARN] <<" cannot be tested\n";
         }
     }
 }
@@ -486,8 +489,11 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     if (!dispatcher)
         throw std::runtime_error("no semantics dispatcher available for architecture");
     if (settings.trace) {
+        // Wrap the RISC operators in TraceSemantics::RiscOperators and adjust the output stream to be standard output since
+        // the trace is considered the main output from this command and needs to be properly interleaved with the other output
+        // on stdout.
         TraceSemantics::RiscOperatorsPtr trace = TraceSemantics::RiscOperators::instance(ops);
-        trace->set_stream(stdout);
+        trace->stream().destination(Sawyer::Message::FileSink::instance(stdout, Sawyer::Message::Prefix::silentInstance()));
         dispatcher = dispatcher->create(trace);
     } else {
         dispatcher = dispatcher->create(ops);
@@ -517,20 +523,21 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
 int
 main(int argc, char *argv[]) {
     Diagnostics::initialize();
-    mlog = Sawyer::Message::Facility("tool");
-    Diagnostics::mfacilities.insertAndAdjust(mlog);
+    ::mlog = Sawyer::Message::Facility("tool");
+    Diagnostics::mfacilities.insertAndAdjust(::mlog);
 
     // Parse the command-line to load, disassemble, and partition the specimen
-    Settings settings;
-    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, settings).unreachedArgs();
-    adjustSettings(settings);
     P2::Engine engine;
-    if (!settings.isaName.empty())
-        engine.disassembler(Disassembler::lookup(settings.isaName));
+    Settings settings;
+    std::vector<std::string> specimenNames = parseCommandLine(argc, argv, engine, settings);
+    adjustSettings(settings);
     (void) makeRiscOperators(settings, RegisterDictionary::dictionary_i386());// for "list" side effects
     if (specimenNames.empty())
         throw std::runtime_error("no specimen specified; see --help");
+
+    // Parse, disassemble, and partition
     P2::Partitioner partitioner = engine.partition(specimenNames);
+
     testSemanticsApi(settings, partitioner);
     
     // Run sementics on each basic block

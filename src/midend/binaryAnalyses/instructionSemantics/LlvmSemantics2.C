@@ -13,20 +13,24 @@ BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                           const BaseSemantics::SValuePtr &dflt, const BaseSemantics::SValuePtr &cond)
 {
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
     size_t nbits = dflt->get_width();
     SValuePtr addr = SValue::promote(addr_);
     return svalue_expr(InternalNode::create(nbits, InsnSemanticsExpr::OP_READ,
-                                            LeafNode::create_memory(nbits), addr->get_expression()));
+                                            LeafNode::create_memory(addr->get_width(), nbits), addr->get_expression()));
 }
 
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond)
 {
+    if (cond->is_number() && !cond->get_number())
+        return;
     SValuePtr addr = SValue::promote(addr_);
     SValuePtr data = SValue::promote(data_);
     mem_writes.push_back(InternalNode::create(data->get_width(), InsnSemanticsExpr::OP_WRITE,
-                                              LeafNode::create_memory(data->get_width()),
+                                              LeafNode::create_memory(addr->get_width(), data->get_width()),
                                               addr->get_expression(), data->get_expression())->isInternalNode());
 }
 

@@ -261,7 +261,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
     mode_ = mode;
     function_ = bblock_ ? ctx_.partitioner.basicBlockFunctionOwner(bblock) : P2::Function::Ptr();
 
-    if (bblock) {
+    if (bblock && function_) {
         typedef BaseSemantics::RegisterStateGeneric RegState;
         typedef BaseSemantics::MemoryCellList MemState;
         FunctionDataFlow df = functionDataFlow(ctx_.partitioner, function_);
@@ -275,7 +275,7 @@ WSemantics::changeBasicBlock(const P2::BasicBlock::Ptr &bblock, Mode mode) {
         BaseSemantics::RiscOperatorsPtr ops = ctx_.partitioner.newOperators();
         BaseSemantics::SValuePtr initialStackPointer = df.initialStates[0]->semanticState()->readRegister(SP, ops.get());
 
-        BOOST_FOREACH (const P2::DataFlow::DfCfg::VertexNode &vertex, df.dfCfg.vertices()) {
+        BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, df.dfCfg.vertices()) {
             if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK && vertex.value().bblock() == bblock) {
                 switch (mode) {
                     case REG_INIT:

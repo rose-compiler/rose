@@ -1,6 +1,6 @@
 add_library(astDiagnostics OBJECT
   AstConsistencyTests.C AstWarnings.C AstStatistics.C AstPerformance.C)
-add_dependencies(astDiagnostics rosetta_generated generate_stringify)
+add_dependencies(astDiagnostics rosetta_generated)
 
 ########### install files ###############
 

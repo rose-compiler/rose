@@ -3,8 +3,8 @@
 
 #include <FileSystem.h>
 #include <Partitioner2/Function.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 #include <set>
 #include <string>
 
@@ -63,6 +63,44 @@ public:
     BasicBlockConfig& successorVas(const std::set<rose_addr_t> &vas) { successorVas_ = vas; return *this; }
     BasicBlockConfig& insertSuccessorVa(rose_addr_t va) { successorVas_.insert(va); return *this; }
     BasicBlockConfig& clearSuccessorVas() { successorVas_.clear(); return *this; }
+    /** @} */
+};
+
+
+/** Configuration information for a data block. */
+class DataBlockConfig {
+    rose_addr_t address_;
+    std::string name_;
+    std::string comment_;
+
+public:
+    // Default constructor needed by some STL containers
+    DataBlockConfig(): address_(0) {}
+
+    /** Configuration information for a data block. */
+    explicit DataBlockConfig(rose_addr_t va): address_(va) {}
+
+    /** Property: starting address.
+     *
+     *  Addresses are read-only and specified in the constructor. */
+    rose_addr_t address() const { return address_; }
+
+    /** Property: name.
+     *
+     *  A data block may have an optional name.
+     *
+     * @{ */
+    const std::string &name() const { return name_; }
+    DataBlockConfig& name(const std::string &s) { name_ = s; return *this; }
+    /** @} */
+
+    /** Property: comment.
+     *
+     *  A data block may have a multi-line, plain-text, ASCII comment.
+     *
+     * @{ */
+    const std::string& comment() const { return comment_; }
+    DataBlockConfig& comment(const std::string &s) { comment_ = s; return *this; }
     /** @} */
 };
 
@@ -172,11 +210,13 @@ public:
 class Configuration {
 public:
     typedef Sawyer::Container::Map<rose_addr_t, BasicBlockConfig> BasicBlockConfigs;
+    typedef Sawyer::Container::Map<rose_addr_t, DataBlockConfig> DataBlockConfigs;
     typedef Sawyer::Container::Map<rose_addr_t, FunctionConfig> FunctionConfigsByAddress;
     typedef Sawyer::Container::Map<std::string, FunctionConfig> FunctionConfigsByName;
 
 private:
     BasicBlockConfigs bblockConfigs_;
+    DataBlockConfigs dblockConfigs_;
     FunctionConfigsByAddress functionConfigsByAddress_;
     FunctionConfigsByName functionConfigsByName_;
 
@@ -189,6 +229,13 @@ public:
      * @{ */
     const BasicBlockConfigs& basicBlocks() const { return bblockConfigs_; }
     BasicBlockConfigs& basicBlocks() { return bblockConfigs_; }
+    /** @} */
+
+    /** All data block configuration details.
+     *
+     * @{ */
+    const DataBlockConfigs& dataBlocks() const { return dblockConfigs_; }
+    DataBlockConfigs& dataBlocks() { return dblockConfigs_; }
     /** @} */
 
     /** All function configuration details for function configs that have addresses.
@@ -210,6 +257,11 @@ public:
      *  If the basic block exists then return a reference to its configuration, otherwise create a new configuration for it. */
     BasicBlockConfig& insertMaybeBasicBlock(rose_addr_t va);
 
+    /** Lookup or insert a data block.
+     *
+     *  If the data block exists then return a reference to its configuration, otherwise create a new configuration for it. */
+    DataBlockConfig& insertMaybeDataBlock(rose_addr_t va);
+
     /** Lookup or insert a function.
      *
      *  If the function exists then return a reference to its configuration, otherwise create a new configuration for it.
@@ -224,6 +276,12 @@ public:
      *  Inserts basic block configuration information, overwriting any config information that was already present for the same
      *  basic block address.  Returns true if information was inserted rather than overwritten. */
     bool insertConfiguration(const BasicBlockConfig&);
+
+    /** Insert data block configuration information.
+     *
+     *  Inserts data block configuration information, overwriting any config information that was already present for the same
+     *  data block address.  Returns true if information was inserted rather than overwritten. */
+    bool insertConfiguration(const DataBlockConfig&);
 
     /** Insert function configuration information.
      *
@@ -247,6 +305,16 @@ public:
      *  Returns the set of basic block successors. This set is only meaningful at the block's final instruction as returned by
      *  @ref basicBlockFinalInstructionVa. */
     std::set<rose_addr_t> basicBlockSuccessorVas(rose_addr_t bblockVa) const;
+
+    /** Data block name.
+     *
+     *  Returns the name configured for a data block at the specified address, or an empty string. */
+    std::string dataBlockName(rose_addr_t dblockVa) const;
+
+    /** Data block comment.
+     *
+     *  Returns the comment configured for the data block at the specified address, or an empty string. */
+    std::string dataBlockComment(rose_addr_t dblockVa) const;
 
     /** Function name.
      *

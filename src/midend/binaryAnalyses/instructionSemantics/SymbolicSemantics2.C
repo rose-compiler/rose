@@ -142,7 +142,7 @@ MemoryState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const 
     if (1==cells.size())
         return SValue::promote(cells.front()->get_value()->copy());
     // FIXME: This makes no attempt to remove duplicate values [Robb Matzke 2013-03-01]
-    TreeNodePtr expr = LeafNode::create_memory(8);
+    TreeNodePtr expr = LeafNode::create_memory(address->get_width(), dflt->get_width());
     InsnSet definers;
     for (CellList::const_reverse_iterator ci=cells.rbegin(); ci!=cells.rend(); ++ci) {
         SValuePtr cell_addr = SValue::promote((*ci)->get_address());
@@ -208,7 +208,6 @@ void
 MemoryState::writeMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &value,
                          BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps)
 {
-    ASSERT_require(32==address->get_width());
     ASSERT_require(8==value->get_width());
     BaseSemantics::MemoryCellList::writeMemory(address, value, addrOps, valOps);
 }
@@ -223,7 +222,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
     BaseSemantics::StatePtr state = get_state();
 
     // Substitute in registers
-    struct RegSubst: BaseSemantics::RegisterStateGeneric::Visitor {
+    struct RegSubst: RegisterState::Visitor {
         SValuePtr from, to;
         RegSubst(const SValuePtr &from, const SValuePtr &to): from(from), to(to) {}
         virtual BaseSemantics::SValuePtr operator()(const RegisterDescriptor &reg, const BaseSemantics::SValuePtr &val_) {
@@ -231,7 +230,7 @@ RiscOperators::substitute(const SValuePtr &from, const SValuePtr &to)
             return val->substitute(from, to);
         }
     } regsubst(from, to);
-    BaseSemantics::RegisterStateGeneric::promote(state->get_register_state())->traverse(regsubst);
+    RegisterState::promote(state->get_register_state())->traverse(regsubst);
 
     // Substitute in memory
     struct MemSubst: BaseSemantics::MemoryCellList::Visitor {
@@ -646,10 +645,9 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 
     // Update latest writer info when appropriate and able to do so.
     if (SgAsmInstruction *insn = get_insn()) {
-        BaseSemantics::RegisterStatePtr regs = get_state()->get_register_state();
-        BaseSemantics::RegisterStateGenericPtr gregs = boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(regs);
-        if (gregs!=NULL)
-            gregs->set_latest_writer(reg, insn->get_address());
+        RegisterStatePtr regs = boost::dynamic_pointer_cast<RegisterState>(get_state()->get_register_state());
+        if (regs!=NULL)
+            regs->set_latest_writer(reg, insn->get_address());
     }
 }
 
@@ -661,6 +659,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return dflt;
 
     PartialDisableUsedef du(this);
 
@@ -699,11 +699,13 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
+    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
+    if (condition->is_number() && !condition->get_number())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     PartialDisableUsedef du(this);
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {
@@ -713,11 +715,14 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
         state->writeMemory(byte_addr, byte_value, this, this);
 
         // Update the latest writer info if we have a current instruction and the memory state supports it.
-        if (SgAsmInstruction *insn = get_insn()) {
-            BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem);
-            BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
-            ASSERT_not_null(cell); // we just wrote to it!
-            cell->latestWriter(insn->get_address());
+        if (compute_memwriters) {
+            if (SgAsmInstruction *insn = get_insn()) {
+                if (BaseSemantics::MemoryCellListPtr cells = boost::dynamic_pointer_cast<BaseSemantics::MemoryCellList>(mem)) {
+                    BaseSemantics::MemoryCellPtr cell = cells->get_latest_written_cell();
+                    ASSERT_not_null(cell); // we just wrote to it!
+                    cell->latestWriter(insn->get_address());
+                }
+            }
         }
     }
 }

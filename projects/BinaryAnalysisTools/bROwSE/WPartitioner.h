@@ -75,7 +75,7 @@ public:
      *  provider. A null provider causes the default memory map to be used. */
     void memoryMapProvider(WMemoryMap *w) { wMemoryMap_ = w; }
 
-    std::string useConfiguration() const;
+    std::vector<std::string> useConfiguration() const;
     std::string isaName() const;
     bool useSemantics() const;
     GhostEdgeFollowing followGhostEdges() const;

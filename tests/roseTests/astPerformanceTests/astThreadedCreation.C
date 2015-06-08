@@ -20,6 +20,9 @@
 
 #include "rose.h"
 
+#ifdef _REENTRANT                                       // Does user want multi-thread support? (e.g., g++ -pthread)
+
+
 #define NPASSES 3                       /* number of passes through this test, each pass creates and deletes nodes */
 #define NTHREADS 2                      /* zero implies using only the main thread; >0 implies creation of sub-threads */
 #define NODES_PER_THREAD 2000           /* number of nodes to create per thread */
@@ -148,3 +151,11 @@ int main()
 
     return had_errors ? 1 : 0;
 }
+
+#else
+
+int main() {
+    std::cerr <<"This test is not applicable for this configuration (multi-threading is disabled by user)\n";
+}
+
+#endif

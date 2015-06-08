@@ -122,8 +122,10 @@ elf_exe_x86_specimens =				\
     i386-int3					\
     i386-lea					\
     i386-mixed					\
+    i386-mov					\
     i386-mul					\
     i386-nologin				\
+    i386-noop					\
     i386-overlap				\
     i386-pop					\
     i386-pivot_root				\
@@ -194,7 +196,9 @@ other_distributed =				\
     i386-int3.s					\
     i386-lea.s					\
     i386-mixed.s				\
+    i386-mov.s					\
     i386-mul.s					\
+    i386-noop.s					\
     i386-overlap.s				\
     i386-pop.s					\
     i386-pushfd.s				\

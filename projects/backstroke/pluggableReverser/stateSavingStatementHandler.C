@@ -44,13 +44,14 @@ vector<VariableRenaming::VarName> StateSavingStatementHandler::getAllDefsAtNode(
 	using namespace boost::lambda;
 	std::sort(modified_vars.begin(), modified_vars.end(), 
 			bind(ll::lexicographical_compare(),
-			bind(call_begin(), _1), bind(call_end(), _1),
-			bind(call_begin(), _2), bind(call_end(), _2)));
+                             bind(call_begin(), boost::lambda::_1), bind(call_end(), boost::lambda::_1),
+                             bind(call_begin(), boost::lambda::_2), bind(call_end(), boost::lambda::_2)));
 
 	// Here if a def is a member of another def, we only include the latter one. For example, if both a and a.i
 	// are modified, we only include a in the results.
 	modified_vars.erase(
-		std::unique(modified_vars.begin(), modified_vars.end(), bind(BackstrokeUtility::isMemberOf, _2, _1)),
+		std::unique(modified_vars.begin(), modified_vars.end(), bind(BackstrokeUtility::isMemberOf,
+                                                                             boost::lambda::_2, boost::lambda::_1)),
 		modified_vars.end());
 
 	return modified_vars;

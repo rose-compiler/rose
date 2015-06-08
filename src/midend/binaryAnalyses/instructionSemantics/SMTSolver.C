@@ -1,13 +1,10 @@
-// DQ (10/5/2014): This is more strict now that we include rose_config.h in the sage3basic.h.
-// #include "rose.h"
 #include "sage3basic.h"
 
-#ifndef _MSC_VER
-#include "rose_getline.h" /* Mac OSX v10.6 does not have GNU getline() */
-#endif
+#include "rose_getline.h"
 #include "SMTSolver.h"
 
 #include <fcntl.h> /*for O_RDWR, etc.*/
+#include <Sawyer/Stopwatch.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -117,6 +114,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
     Definitions defns;
     generate_file(tmpfile.file, exprs, &defns);
     tmpfile.file.close();
+#if 0 // DEBUGGING [Robb P. Matzke 2015-03-19]
+    std::cerr <<"ROBB: saving SMT file as 'x.smt'\n";
+    system((std::string("cp ") + tmpfile.name + " x.smt").c_str());
+#endif
     struct stat sb;
     int status __attribute__((unused)) = stat(tmpfile.name, &sb);
     ASSERT_require(status>=0);
@@ -133,13 +134,13 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         while (!f.eof()) {
             std::string line;
             std::getline(f, line);
-            if (!line.empty())
-                fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
+            fprintf(debug, "    %5zu: %s\n", ++n, line.c_str());
         }
     }
 
     /* Run the solver and read its output. The first line should be the word "sat" or "unsat" */
     {
+        Sawyer::Stopwatch stopwatch;
         std::string cmd = get_command(tmpfile.name);
         FILE *output = popen(cmd.c_str(), "r");
         ASSERT_not_null(output);
@@ -168,8 +169,10 @@ SMTSolver::satisfiable(const std::vector<InsnSemanticsExpr::TreeNodePtr> &exprs)
         }
         if (line) free(line);
         int status = pclose(output);
+        stopwatch.stop();
         if (debug) {
             fprintf(debug, "Running SMT solver=\"%s\"; exit status=%d\n", cmd.c_str(), status);
+            fprintf(debug, "SMT Solver ran for %g seconds\n", stopwatch.report());
             fprintf(debug, "SMT Solver reported: %s\n", (SAT_YES==retval ? "sat" : SAT_NO==retval ? "unsat" : "unknown"));
             fprintf(debug, "SMT Solver output:\n%s", StringUtility::prefixLines(output_text, "     ").c_str());
         }

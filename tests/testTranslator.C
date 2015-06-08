@@ -3,6 +3,11 @@
 
 int main( int argc, char * argv[] )
    {
+#if 0
+  // Output the ROSE specific predefined macros.
+     outputPredefinedMacros();
+#endif
+
   // Generate the ROSE AST.
      SgProject* project = frontend(argc,argv);
 

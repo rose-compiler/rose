@@ -5,7 +5,7 @@
 #include <Partitioner2/BasicBlock.h>
 #include <Partitioner2/ControlFlowGraph.h>
 #include <Partitioner2/Function.h>
-#include <sawyer/Graph.h>
+#include <Sawyer/Graph.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -97,13 +97,13 @@ typedef Sawyer::Container::Graph<DfCfgVertex> DfCfg;
 class InterproceduralPredicate {
 public:
     virtual ~InterproceduralPredicate() {}
-    virtual bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&, size_t depth) = 0;
+    virtual bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t depth) = 0;
 };
 
 /** Predicate that always returns false, preventing interprocedural analysis. */
 class NotInterprocedural: public InterproceduralPredicate {
 public:
-    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeNodeIterator&, size_t depth) ROSE_OVERRIDE {
+    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t depth) ROSE_OVERRIDE {
         return false;
     }
 };
@@ -118,7 +118,7 @@ std::vector<SgAsmInstruction*> vertexUnpacker(const DfCfgVertex&);
  *  reached vertex belongs to the same function as @p startVertex.
  *
  *  @sa DfCfg */
-DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexNodeIterator &startVertex,
+DfCfg buildDfCfg(const Partitioner&, const ControlFlowGraph&, const ControlFlowGraph::ConstVertexIterator &startVertex,
                  InterproceduralPredicate &predicate = NOT_INTERPROCEDURAL);
 
 /** Emit a dataflow CFG as a GraphViz file. */

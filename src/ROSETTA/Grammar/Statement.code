@@ -652,12 +652,23 @@ StatementReplace (SgStatement *parent, Elemtype *& cur, SgStatement *target, SgS
 #endif
 
           cur = static_cast<Elemtype *>(newstmt);
-          parent->set_isModified(true);
+#if 0
+          if (SgProject::get_verbose() >= 1)
+             {
+               printf ("In StatementReplace: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+             }
+#endif
+       // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+       // parent->set_isModified(true);
+
           return true;
         }
      return false;
    }
 #else
+
+#error "DEAD CODE!"
+
 // DQ (12/30/2009): This is an attempt to build a more portable function to support new smaller ROSETTA generated files.
 // If we want to build this as a non-template function then we will have to reference "SgLocatedNode *& cur" as 
 // "SgLocatedNode ** cur" (or perhaps using SgStatement), else the types prevent the function from working.
@@ -679,6 +690,9 @@ StatementReplace (SgStatement *parent, SgStatement *& cur, SgStatement *target, 
         }
      return false;
    }
+
+#error "DEAD CODE!"
+
 #endif
 
 #if 0
@@ -1087,8 +1101,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                   {
                  // DQ (9/27/2007): Reported as an error by STL debugging mode, fixed as part of move from std::list to std::vector uniformly in ROSE.
                     l.erase(l.begin() + p);
-
-                    parent->set_isModified(true);
+#if 0
+                    if (SgProject::get_verbose() >= 1)
+                       {
+                         printf ("In StatementListInsertChild: test 1: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                       }
+#endif
+                 // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                 // parent->set_isModified(true);
                   }
 
                if (!inFront)
@@ -1190,7 +1210,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(n));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 2: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1222,7 +1249,14 @@ StatementListInsertChild( SgStatement *parent, Rose_STL_Container<Elemtype*>& l,
                       // n->set_scope(parentScope);
 
                          l.insert(l.begin() + p, static_cast<Elemtype*>(stmt));
-                         parent->set_isModified(true);
+#if 0
+                         if (SgProject::get_verbose() >= 1)
+                            {
+                              printf ("In StatementListInsertChild: test 3: Supress marking parent = %p = %s as isModified \n",parent,parent->class_name().c_str());
+                            }
+#endif
+                      // DQ (4/16/2015): Supress marking parent as isModified (we might want to mark this as containing a transformation).
+                      // parent->set_isModified(true);
 
                       // DQ (4/3/2012): Added test to make sure that the pointers are unique.
                       // testAstForUniqueNodes(parentScope);
@@ -1450,6 +1484,9 @@ HEADER_LIST_DECLARATIONS
        // that only the qualified name would distinguish them).
           virtual SgName get_qualified_name() const;
 
+       // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+          SgName get_template_header() const;
+
      protected:
           virtual bool replace_child(SgStatement *,SgStatement *,
                                          bool extractListFromBasicBlock = false);
@@ -1468,6 +1505,8 @@ HEADER_LIST_DECLARATIONS
        // DQ (10/11/2014): Adding support for aterm translation to ROSE AST.
           static SgFunctionDeclaration* build_node_from_nonlist_children(SgType* return_type, SgFunctionParameterList* parameterList, SgScopeStatement* scope, Sg_File_Info* startOfConstruct, SgName name, SgFunctionType* type, SgFunctionDefinition* definition); 
 
+       // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+          bool isNormalizedTemplateFunction() const;
 
 HEADER_FUNCTION_DECLARATION_STATEMENT_END
 
@@ -4030,13 +4069,23 @@ SgStatement::get_scope(void) const
                  // expression (test case is tests/CompileTests/Cxx_tests/test2006_148.C), so we need to skip over non-statements
                     SgNode* stmtTemp = stmt;
                     do {
-                      // printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#if 0
+                         printf ("In SgStatement::get_scope(): (do-while loop) stmtTemp = %p = %s \n",stmtTemp,stmtTemp->class_name().c_str());
+#endif
                          stmtTemp = stmtTemp->get_parent();
                        }
                  // while (stmtTemp && !isSgStatement(stmtTemp));
                  // while ((stmtTemp != NULL) && !isSgStatement(stmtTemp));
-                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                 // while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL));
+                    while ((stmtTemp != NULL) && (isSgStatement(stmtTemp) == NULL) && (isSgArrayType(stmtTemp) == NULL) && (isSgTypeOfType(stmtTemp) == NULL) );
 
+                 // DQ (5/13/2015): Added debugging support.
+                    if (stmtTemp == NULL)
+                       {
+                          printf ("Error: stmtTemp == NULL: in loop over parents from stmt = %p = %s \n",stmt,stmt->class_name().c_str());
+                          ROSE_ASSERT(stmt->get_file_info() != NULL);
+                          stmt->get_file_info()->display("Error: SgStatement has NULL parent");
+                       }
                     ROSE_ASSERT (stmtTemp != NULL);
                     stmt = isSgStatement(stmtTemp);
 
@@ -4059,9 +4108,12 @@ SgStatement::get_scope(void) const
                        }
                       else
                        {
+                      // DQ (5/16/2015): This can also be the SgTypeOf operator.
                       // DQ (2/17/2014): This must be the case of an SgArrayType (not clear what to do here, return NULL).
                          SgArrayType* arrayType = isSgArrayType(stmtTemp);
-                         ROSE_ASSERT(arrayType != NULL);
+                         SgTypeOfType* typeOfType = isSgTypeOfType(stmtTemp);
+                      // ROSE_ASSERT(arrayType != NULL);
+                         ROSE_ASSERT(arrayType != NULL || typeOfType != NULL);
 #if 0
                          printf ("In get_scope(): identified input node to be part of SgArrayType: returning NULL \n");
 #endif
@@ -4531,6 +4583,10 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
    {
      assert (p_symbol_table != NULL);
 
+#if 0
+     printf ("TOP SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
   // DQ (5/9/2013): If this is a namespace then test to make sure we are inserting the symbol into the correct scope.
      const SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
      if (namespaceDefinitionStatement != NULL)
@@ -4586,18 +4642,57 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
 #endif
         }
 
+  // DQ (2/27/2015): This is the problem that is causing test2014_83.C, test2014_88.C, test2014_89.C, and test2014_90.C to fail in the development branch.
   // TV (7/18/2013): If this is a Global Scope then insert an alias in the project wide Global Scope
   // TODO: Check that the symbol have project wide visibility (static function in C)
      const SgGlobal * global_scope = isSgGlobal(this);
-     if (global_scope != NULL) {
-       SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
-       SgProject * project = SageInterface::getProject(global_scope);
-       if (project != NULL) {
-         SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
-         assert(globalScopeAcrossFiles != NULL);
-         globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
-       }
-     }
+     if (global_scope != NULL) 
+        {
+       // DQ (2/28/2015): Original code.
+       // SgAliasSymbol* aliasSymbol = new SgAliasSymbol(s);
+
+          SgProject * project = SageInterface::getProject(global_scope);
+          if (project != NULL) 
+             {
+               SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+               assert(globalScopeAcrossFiles != NULL);
+
+            // DQ (2/28/2015): Added assertion (fails for snippet injection and for some java support).
+            // ROSE_ASSERT(global_scope != globalScopeAcrossFiles);
+               if (global_scope != globalScopeAcrossFiles)
+                  {
+                 // DQ (2/28/2015): We need to handle the case where the input symbol "s" is a SgAliasSymbol.
+                    SgAliasSymbol* aliasSymbol = NULL;
+                    SgAliasSymbol* tmp_aliasSymbol = isSgAliasSymbol(s);
+                    if (tmp_aliasSymbol != NULL)
+                       {
+                      // Call the copy constructor in this case (maybe this detail should be buried into the semantics of the SgAliasSymbol constructor call).
+                         aliasSymbol = new SgAliasSymbol(*tmp_aliasSymbol);
+                       }
+                      else
+                       {
+                         aliasSymbol = new SgAliasSymbol(s);
+                       }
+#if 0
+                    printf ("In SgScopeStatement::insert_symbol(): Insert SgAliasSymbol = %p for input symbol = %p = %s into the globalScopeAcrossFiles = %p global_scope = %p \n",
+                         aliasSymbol,s,s->class_name().c_str(),globalScopeAcrossFiles,global_scope);
+#endif
+                    globalScopeAcrossFiles->get_symbol_table()->insert(n,aliasSymbol);
+                  }
+                 else
+                  {
+#if 1
+                    printf ("Warning: In SgScopeStatement::insert_symbol(): global_scope == globalScopeAcrossFiles: skip insertion of redundant SgAliasSymbol \n");
+#endif
+                  }
+             }
+            else
+             {
+#if 0
+               printf ("In SgScopeStatement::insert_symbol(): project == NULL \n");
+#endif
+             }
+        }
 
 #if 0
      ROSE_ASSERT(s != NULL);
@@ -4654,7 +4749,15 @@ SgScopeStatement::insert_symbol ( const SgName& n, SgSymbol* s )
         }
 #endif
 
+#if 0
+     printf ("In SgScopeStatement::insert_symbol(%s,%p) into scope = %p = %s symbol = %p = %s \n",n.str(),s,this,this->class_name().c_str(),s,s->class_name().c_str());
+#endif
+
      p_symbol_table->insert(n,s);
+
+#if 0
+     printf ("Leaving SgScopeStatement::insert_symbol() \n");
+#endif
    }
 
 void
@@ -9243,6 +9346,11 @@ SgDeclarationStatement::get_type() const
   // DQ (3/15/2014): Added warning since we don't want to be calling this function (unless we make it virtual).
      printf ("WARNING: Non-virtual base class SgDeclarationStatement::get_type() called: this = %p = %s \n",this,this->class_name().c_str());
 
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+
      return NULL;
    }
 
@@ -10776,6 +10884,72 @@ SgFunctionDeclaration::get_qualified_name_prefix_for_return_type() const
      return nameQualifier;
    }
 
+SgName
+SgFunctionDeclaration::get_template_header() const
+   {
+  // DQ (9/7/2014): Added to support template headers in template declarations (member and non-member function declarations).
+
+     SgName template_header;
+     std::map<SgNode*,std::string>::iterator i = SgNode::get_globalQualifiedNameMapForTemplateHeaders().find(const_cast<SgFunctionDeclaration*>(this));
+  // ROSE_ASSERT(i != SgNode::get_globalQualifiedNameMapForNames().end());
+
+     if (i != SgNode::get_globalQualifiedNameMapForTemplateHeaders().end())
+        {
+          template_header = i->second;
+#if 0
+          printf ("Found a valid template header : template_header %s \n",template_header.str());
+#endif
+        }
+#if 0
+     printf ("template_header for SgFunctionDeclaration = %p = %s = %s \n",this,class_name().c_str(),template_header.str());
+#endif
+
+     return template_header;
+   }
+
+
+bool
+SgFunctionDeclaration::isNormalizedTemplateFunction() const
+   {
+  // DQ (12/22/2014): Adding support for EDG normalized template member and non-member functions.
+  // EDG normalizes member and non-member function definitions defined in template classes.
+  // As a result we need to detect where this normalization is done in both the unparser and
+  // the token mapping.  Where the normalization has been done the text string saved in EDG 
+  // and used in ROSE is only representing the body of the function and so the unparser must
+  // know to generate the function prototype declaration to assemble with the function body
+  // held as text.  In the future we will unparse the template declarations from the AST and/or
+  // the token stream, but that is a later step.
+
+     bool string_represents_function_body = false;
+     const SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(this);
+     const SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(this);
+     if (templateFunctionDeclaration != NULL)
+        {
+       // printf ("This is a SgTemplateFunctionDeclaration \n");
+          string_represents_function_body = templateFunctionDeclaration->get_string_represents_function_body();
+        }
+       else
+        {
+          if (templateMemberFunctionDeclaration != NULL)
+             {
+            // printf ("This is a SgTemplateMemberFunctionDeclaration \n");
+               string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
+            // template_function_name = templateMemberFunctionDeclaration->get_name();
+             }
+            else
+             {
+#if 0
+            // This is likely a SgTemplateClassDeclaration
+               if (isSgTemplateClassDeclaration(this) == NULL)
+                  {
+                    printf ("Error: In SgFunctionDeclaration::isNormalizedTemplateFunction(): What is this if not a template function or template member function stmt = %p = %s \n",this,this->class_name().c_str());
+                  }
+#endif
+             }
+        }
+
+     return string_represents_function_body;
+   }
 
 
 SOURCE_FUNCTION_DECLARATION_STATEMENT_END
@@ -12713,6 +12887,7 @@ SgClassDeclaration::get_mangled_name(void) const
           return i->second.c_str();
         }
 #endif
+
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgClassDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
@@ -15259,6 +15434,9 @@ SgTemplateDeclaration::get_mangled_name(void) const
      std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTemplateDeclaration*>(this));
      if (mangledNameString.empty() == false)
         {
+#if 0
+          printf ("In SgTemplateDeclaration::get_mangled_name(): (FOUND in MangledNameFromCache): returning mangledNameString = %s \n",mangledNameString.c_str());
+#endif
        // return i->second.c_str();
           return mangledNameString;
         }
@@ -15268,7 +15446,9 @@ SgTemplateDeclaration::get_mangled_name(void) const
           SgScopeStatement* scope = get_scope();
           ROSE_ASSERT(scope != NULL);
           SgName mangledName = scope->get_mangled_name() + SgName("_template_declaration_") + get_name();
-
+#if 0
+          printf ("In SgTemplateDeclaration::get_mangled_name(): (NOT found in MangledNameFromCache): returning mangledName = %s \n",mangledName.str());
+#endif
        // p_globalMangledNameMap[declaration] = mangledName;
           mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateDeclaration*>(this),mangledName);
           return mangledName;
@@ -15357,7 +15537,13 @@ SgTemplateClassDeclaration::post_construction_initialization()
 SgName
 SgTemplateClassDeclaration::get_mangled_name(void) const
    {
-#ifdef ROSE_USE_NEW_EDG_INTERFACE
+#ifndef ROSE_USE_NEW_EDG_INTERFACE
+  #error "ROSE_USE_NEW_EDG_INTERFACE is required!"
+#endif
+
+
+#if 0
+  // DQ (2/13/2015): This is the older version of the code that was a problem for test2015_09.C.
   // SgName mangled_name = SgClassDeclaration::get_mangled_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
      SgName mangled_name = this->get_templateName() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
 
@@ -15378,16 +15564,71 @@ SgTemplateClassDeclaration::get_mangled_name(void) const
           mangled_name += "__";
         }
 #else
-  // SgName mangled_name = SgClassDeclaration::get_name() + "__num_template_parameters_" + StringUtility::numberToString(get_templateParameters().size());
-     printf ("For EDG 3.3: mangled_name might not be set propoerly for SgTemplateClassDeclaration::get_mangled_name() \n");
-     SgName mangled_name = "";
+     string mangled_name;
 
-     printf ("ERROR: SgTemplateClassDeclaration::get_mangled_name() function should not be called for this IR node (IR node not used in EDG 3.3 compatability). \n");
-     ROSE_ASSERT(false);
+  // DQ (2/13/2015): Fixing bug specific to adding mangle name of the scope of the template class to avoid collisions with other types 
+  // with the same name in different scopes when used as in function types.  The bud demonstrating this problem is in test2015_09.C and 
+  // test2015_10.C.  This problem was caught in the range.h header file for the GNU g++ version 4.8.1 header file system.  This was
+  // an issue to the processing of the newest version of the LBL DSL specification.
+     std::string mangledNameString = SageInterface::getMangledNameFromCache(const_cast<SgTemplateClassDeclaration*>(this));
+     if (mangledNameString.empty() == false)
+        {
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (FOUND in cache) mangledNameString = %s \n",mangledNameString.c_str());
+#endif
+          return mangledNameString;
+        }
+       else
+        {
+       // DQ (3/14/2012): Make sure that this is a valid pointer else it might explain why qualification is not being use to generate the mangled names.
+          ROSE_ASSERT(get_scope() != NULL);
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): calling joinMangledQualifiers(mangleQualifiers(get_scope()),get_name()) --- get_name() = %s \n",get_name().str());
+#endif
+       // DQ (3/14/2012): Seperating the steps to computing the mangled name (which should include some qualification via non empty mangledScopeName)
+       // SgName mangledName = joinMangledQualifiers(mangleQualifiers(get_scope()),get_name());
+          SgName mangledScopeName = mangleQualifiers(get_scope());
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangleQualifiers(get_scope()) mangledScopeName = %s \n",mangledScopeName.str());
+#endif
+       // DQ (3/14/2012): I think that we can assert this.  No, if the scope is SgGlobal (for example) then the mangledName is empty.
+       // ROSE_ASSERT(mangledScopeName.is_null() == false);
+
+       // DQ (2/13/2015): Changed this to use the templateName which excludes the template arguments, I think this is enough to be unique.
+       // SgName mangledName = joinMangledQualifiers(mangledScopeName,get_name());
+          SgName mangledName = joinMangledQualifiers(mangledScopeName,get_templateName());
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s \n",mangledName.str());
+#endif
+          if (mangledName.is_null() == true)
+             {
+#if 0
+               printf ("In SgTemplateClassDeclaration::get_mangled_name(): (NOT found in cache) mangledName = %s get_name() = %s \n",mangledName.str(),get_name().str());
+#endif
+               mangledName = "unknown_scope_and_name";
+             }
+          ROSE_ASSERT(mangledName.is_null() == false);
+
+       // p_globalMangledNameMap[classDeclaration] = mangledName;
+          mangledName = SageInterface::addMangledNameToCache(const_cast<SgTemplateClassDeclaration*>(this),mangledName);
+#if 0
+          printf ("In SgTemplateClassDeclaration::get_mangled_name(): (AFTER adding to cache) mangledName = %s \n",mangledName.str());
+#endif
+       // DQ (5/31/2012): Added test for template brackets that are caught later in AstConsistencyTests.
+       // Make sure that there is no template specific syntax included in the mangled name
+       // string mangled_name = mangledName;
+          mangled_name = mangledName;
+          if ( mangled_name.find('<') != string::npos )
+             {
+               printf ("In SgTemplateClassDeclaration::get_mangled_name(): this = %p = %s check mangled class name = %s \n",this,this->class_name().c_str(),mangled_name.c_str());
+             }
+          ROSE_ASSERT(mangled_name.find('<') == string::npos);
+        }
 #endif
 
 #if 0
-     printf ("In SgTemplateClassDeclaration::get_mangled_name(): mangled_name = %s \n",mangled_name.str());
+  // DQ (7/24/2012): Output the mangled name being generated for debugging.
+     printf (">>>>>>>>>> SgTemplateClassDeclaration::get_mangled_name(): returning mangled_name = %s \n",mangled_name.c_str());
 #endif
 
      return mangled_name;

@@ -189,6 +189,9 @@ ROSE_DLL_API SgRvalueReferenceType* buildRvalueReferenceType(SgType *base_type);
 //! Build a decltype reference type
 ROSE_DLL_API SgDeclType* buildDeclType(SgExpression *base_expression, SgType* base_type);
 
+//! Build a GNU typeof operator
+ROSE_DLL_API SgTypeOfType* buildTypeOfType(SgExpression *base_expression, SgType* base_type);
+
 // Liao, entirely phase out this function ! Build a modifier type with no modifiers set
 //SgModifierType* buildModifierType(SgType *base_type = NULL);
 
@@ -675,7 +678,7 @@ ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer( SgMemberFun
 ROSE_DLL_API SgConstructorInitializer * buildConstructorInitializer_nfi( SgMemberFunctionDeclaration *declaration,SgExprListExp *args,SgType *expression_type,bool need_name,bool need_qualifier,bool need_parenthesis_after_name,bool associated_class_unknown);
 
 //! Build sizeof() expression with an expression parameter
-ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp= NULL);
+ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp_nfi(SgExpression* exp);
 
 //! Build sizeof() expression with a type parameter
@@ -683,12 +686,16 @@ ROSE_DLL_API SgSizeOfOp* buildSizeOfOp(SgType* type = NULL);
 ROSE_DLL_API SgSizeOfOp* buildSizeOfOp_nfi(SgType* type);
 
 //! Build __alignof__() expression with an expression parameter
-ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgExpression* exp= NULL);
+ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgExpression* exp = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgExpression* exp);
 
 //! Build __alignof__() expression with a type parameter
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp(SgType* type = NULL);
 ROSE_DLL_API SgAlignOfOp* buildAlignOfOp_nfi(SgType* type);
+
+//! Build noecept operator expression with an expression parameter
+ROSE_DLL_API SgNoexceptOp* buildNoexceptOp(SgExpression* exp = NULL);
+ROSE_DLL_API SgNoexceptOp* buildNoexceptOp_nfi(SgExpression* exp);
 
 // DQ (7/18/2011): Added support for SgJavaInstanceOfOp
 //! This is part of Java specific operator support.
@@ -954,6 +961,11 @@ SgDefaultOptionStmt * buildDefaultOptionStmt_nfi( SgStatement *body);
 //! Build a SgExprStatement, set File_Info automatically 
 ROSE_DLL_API SgExprStatement* buildExprStatement(SgExpression*  exp = NULL);
 SgExprStatement* buildExprStatement_nfi(SgExpression*  exp);
+
+// DQ (3/27/2015): Added support for SgStatementExpression.
+//! Build a GNU statement expression
+ROSE_DLL_API SgStatementExpression* buildStatementExpression(SgStatement* exp);
+ROSE_DLL_API SgStatementExpression* buildStatementExpression_nfi(SgStatement* exp);
 
 //! Build a switch statement
 ROSE_DLL_API SgSwitchStatement* buildSwitchStatement(SgStatement *item_selector = NULL,SgStatement *body = NULL);

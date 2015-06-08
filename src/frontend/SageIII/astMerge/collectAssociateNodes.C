@@ -301,6 +301,9 @@ addAssociatedNodes( SgType* type, set<SgNode*> & nodeList, bool markMemberNodesD
        // DQ (8/2/2014): Added C++11 SgDeclType support.
           case V_SgDeclType:
 
+       // DQ (3/29/2015): Added support for GNU C language extension typeof.
+          case V_SgTypeOfType:
+
        // These are primative types
           case V_SgJavaWildcardType:
           case V_SgTypeBool:
@@ -1238,7 +1241,17 @@ addAssociatedNodes ( SgNode* node, set<SgNode*> & nodeList, bool markMemberNodes
                SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(classDeclaration);
                if (templateInstantiationDeclaration != NULL)
                   {
-                    addAssociatedNodes(templateInstantiationDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                 // DQ (2/28/2015): Only make recursive call when using a valid node.
+                 // addAssociatedNodes(templateInstantiationDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                    if (templateInstantiationDeclaration->get_templateDeclaration() != NULL)
+                       {
+                         addAssociatedNodes(templateInstantiationDeclaration->get_templateDeclaration(),nodeList,markMemberNodesDefinedToBeDeleted);
+                       }
+                      else
+                       {
+                      // DQ (2/28/2015): Make this at least a warning for now.
+                         printf ("Warning: templateInstantiationDeclaration->get_templateDeclaration() == NULL \n");
+                       }
                   }
 
             // Might want to traverse the base class list!

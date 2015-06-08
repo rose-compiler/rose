@@ -45,10 +45,9 @@ typedef InsnSemanticsExpr::TreeNodePtr TreeNodePtr;
 typedef std::set<SgAsmInstruction*> InsnSet;
 
 
-
-/******************************************************************************************************************
- *                                      Value type
- ******************************************************************************************************************/
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Semantic values
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to an SValue object.  SValue objects are reference counted and should not be explicitly deleted. */
 typedef Sawyer::SharedPointer<class SValue> SValuePtr;
@@ -174,9 +173,7 @@ public:
         return instance(nbits, value);
     }
     virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
-        SValuePtr result = SValue::promote(number_(1, value?1:0));
-        result->get_expression()->set_comment(value?"true":"false");
-        return result;
+        return number_(1, value?1:0);
     }
     virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
         SValuePtr retval(new SValue(*this));
@@ -301,10 +298,17 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Register state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************************************************
- *                                      Memory state
- ******************************************************************************************************************/
+typedef BaseSemantics::RegisterStateGeneric RegisterState;
+typedef BaseSemantics::RegisterStateGenericPtr RegisterStatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Memory state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a MemoryState object.  MemoryState objects are reference counted and should not be explicitly deleted. */
 typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
@@ -464,10 +468,17 @@ public:
 };
 
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Complete state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/******************************************************************************************************************
- *                                      RISC Operators
- ******************************************************************************************************************/
+typedef BaseSemantics::State State;
+typedef BaseSemantics::StatePtr StatePtr;
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      RISC operators
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** Smart pointer to a RiscOperators object.  RiscOperators objects are reference counted and should not be explicitly
  *  deleted. */
@@ -497,13 +508,15 @@ class RiscOperators: public BaseSemantics::RiscOperators {
     // Real constructors
 protected:
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false) {
+        : BaseSemantics::RiscOperators(protoval, solver), compute_usedef(false), omit_cur_insn(false),
+          compute_memwriters(true) {
         set_name("Symbolic");
         (void) SValue::promote(protoval); // make sure its dynamic type is a SymbolicSemantics::SValue
     }
 
     explicit RiscOperators(const BaseSemantics::StatePtr &state, SMTSolver *solver=NULL)
-        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false) {
+        : BaseSemantics::RiscOperators(state, solver), compute_usedef(false), omit_cur_insn(false),
+          compute_memwriters(true) {
         set_name("Symbolic");
         (void) SValue::promote(state->get_protoval()); // values must have SymbolicSemantics::SValue dynamic type
     }
@@ -515,9 +528,9 @@ public:
      * SymbolicSemantics. */
     static RiscOperatorsPtr instance(const RegisterDictionary *regdict, SMTSolver *solver=NULL) {
         BaseSemantics::SValuePtr protoval = SValue::instance();
-        BaseSemantics::RegisterStatePtr registers = BaseSemantics::RegisterStateGeneric::instance(protoval, regdict);
+        BaseSemantics::RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
         BaseSemantics::MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
-        BaseSemantics::StatePtr state = BaseSemantics::State::instance(registers, memory);
+        BaseSemantics::StatePtr state = State::instance(registers, memory);
         return RiscOperatorsPtr(new RiscOperators(state, solver));
     }
 
@@ -600,8 +613,9 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration properties
 protected:
-    bool compute_usedef;                // if true, add use-def info to each value
-    bool omit_cur_insn;                 // if true, do not include cur_insn as a definer
+    bool compute_usedef;                                // if true, add use-def info to each value
+    bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer
+    bool compute_memwriters;                            // if true, add latest writer to each memory cell
 
 public:
     /** Accessor for the compute_usedef property.  If compute_usedef is set, then RISC operators will update the set of
@@ -611,6 +625,17 @@ public:
     void set_compute_usedef(bool b=true) { compute_usedef = b; }
     void clear_compute_usedef() { set_compute_usedef(false); }
     bool get_compute_usedef() const { return compute_usedef; }
+    /** @} */
+
+    /** Property: track latest writer to each memory location.
+     *
+     *  If true, then each @ref writeMemory operation will update the affected memory cells with latest-writer information if
+     *  possible (depending on the type of memory state being used.
+     *
+     * @{ */
+    void set_compute_memwriters(bool b = true) { compute_memwriters = b; }
+    void clear_compute_memwriters() { compute_memwriters = false; }
+    bool get_compute_memwriters() const { return compute_memwriters; }
     /** @} */
 
     // Used internally to control whether cur_insn should be omitted from the list of definers.

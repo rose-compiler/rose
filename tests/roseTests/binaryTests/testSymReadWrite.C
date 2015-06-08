@@ -39,7 +39,7 @@ struct Analysis: public AstSimpleProcessing {
             const RegisterDictionary *regdict = RegisterDictionary::dictionary_i386();
             SymbolicSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict);
             ops->set_compute_usedef(); // only used so we can test that it works
-            BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+            BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
             const SgAsmStatementPtrList &stmts = block->get_statementList();
             for (SgAsmStatementPtrList::const_iterator si=stmts.begin(); si!=stmts.end(); ++si) {
                 SgAsmX86Instruction *insn = isSgAsmX86Instruction(*si);

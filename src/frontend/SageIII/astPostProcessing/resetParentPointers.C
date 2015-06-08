@@ -596,9 +596,12 @@ ResetParentPointers::resetParentPointersInTemplateArgumentList ( const SgTemplat
                                      // ROSE_ASSERT(classDeclaration->get_definition()->get_parent() != NULL);
                                         if (classDeclaration->get_definition() == NULL)
                                            {
+// DQ (9/12/2014): Added more control over output of messages for release versions of ROSE.
+#if PRINT_DEVELOPER_WARNINGS
                                              printf ("WARNING: In resetParentPointersInTemplateArgumentList(): commented out to compile ROSE using ROSE: assertion failing for: classDeclaration->get_definition() != NULL \n");
                                              printf ("--- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
                                           // classDeclaration->get_file_info()->display("assertion failing for: classDeclaration->get_definition() != NULL: debug");
+#endif
                                            }
                                           else
                                            {
@@ -710,7 +713,7 @@ ResetParentPointers::evaluateInheritedAttribute (
   // cerr << "reset parent for node " << node->unparseToString();
 
 #if 0
-     printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->sage_class_name());
+     printf ("##### ResetParentPointers::evaluateInheritedAttribute(node = %p = %s) \n",node,node->class_name().c_str());
 #endif
 #if 0
   // ROSE_ASSERT(node->get_file_info() != NULL);
@@ -1196,9 +1199,12 @@ ResetParentPointers::evaluateInheritedAttribute (
                                 // DQ (1/30/2013): Commented out assertion that appears to be only an issue for ROSE compiling ROSE (part of testing).
                                    if (classDeclaration->get_definingDeclaration()->get_parent() == NULL)
                                       {
+// DQ (9/12/2014): Added more control over output of messages for release versions of ROSE.
+#if PRINT_DEVELOPER_WARNINGS
                                         printf ("WARNING: In resetParentPointersInTemplateArgumentList(): commented out to compile ROSE using ROSE: assertion failing for: classDeclaration->get_definingDeclaration()->get_parent() != NULL \n");
                                         printf ("--- classDeclaration = %p = %s = %s \n",classDeclaration,classDeclaration->class_name().c_str(),classDeclaration->get_name().str());
                                      // classDeclaration->get_file_info()->display("assertion failing for: classDeclaration->get_definingDeclaration()->get_parent() != NULL: debug");
+#endif
                                       }
                                 // ROSE_ASSERT(classDeclaration->get_definingDeclaration()->get_parent() != NULL);
                                  }
@@ -1439,10 +1445,13 @@ ResetParentPointers::evaluateInheritedAttribute (
         }
        else
         {
+       // DQ (2/14/2015): Comment out to debug C++11 data member initialization (See C++11 test2015_13.C).
+       // This was a problem because of a stored SgType pointer that was traversed as part of the AST, this is fixed now.
+
        // Since we don't traverse types this branch is never executed!
           printf ("Found a type or symbol while resetting parents \n");
           printf ("$$$$$ In evaluateInheritedAttribute() \n");
-          printf ("     astNode->class_name() = %s \n",node->class_name().c_str());
+          printf ("   --- astNode->class_name() = %s \n",node->class_name().c_str());
           ROSE_ASSERT(false);
         }
 
@@ -2010,6 +2019,19 @@ ResetParentPointersInMemoryPool::visit(SgNode* node)
                          ROSE_ASSERT(scope != NULL);
                          ROSE_ASSERT(scope->get_symbol_table() != NULL);
                          symbol->set_parent(scope->get_symbol_table());
+                         break;
+                       }
+
+                 // DQ (2/28/2015): Added support for SgAliasSymbol case.
+                    case V_SgAliasSymbol:
+                       {
+                         SgAliasSymbol* tempSymbol = isSgAliasSymbol(symbol);
+                         ROSE_ASSERT(tempSymbol != NULL);
+
+                      // DQ (2/28/2015): I think this is not possible to fix here, so we need to report the error and exit.
+                         printf ("ERROR: parent for SgAliasSymbol not set (can't be fixed up here) \n");
+                         ROSE_ASSERT(false);
+
                          break;
                        }
 

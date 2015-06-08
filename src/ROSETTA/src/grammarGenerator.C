@@ -122,15 +122,25 @@ Grammar::CreateMinimalTraversedGrammarSymbolsSet(Terminal* grammarnode,
 string
 Grammar::restrictedTypeStringOfGrammarString(GrammarString* gs, Terminal* grammarnode, string grammarSymListOpPrefix, string grammarSymListOpPostfix) {
   string type=typeStringOfGrammarString(gs);
+
+  // SgPartialFunctionModifier has "static" as part of its type
+  type=replaceString("static ","",type);
+
   string::size_type posIter = type.find("*");
   if (posIter != string::npos)
     type.replace(posIter, 1, "");
   GrammarNodeInfo gInfo=getGrammarNodeInfo(grammarnode); // MS: should be a member function of GrammarNode
+
   if(gInfo.numContainerMembers>0) { // there can be only one container member!
     //cout << "ContainerMembers>0: " << type << endl;
     type = replaceString("PtrList","",type);
     type = replaceString("List","",type); // only SgInitializedNameList as of 05/20/03, MS
-    type = grammarSymListOpPrefix+type+grammarSymListOpPostfix; // EBNF notation for lists
+    if(!generateSDFTreeGrammar) {
+      type = grammarSymListOpPrefix+type+grammarSymListOpPostfix; // EBNF notation for lists
+    } else {
+      type = string("ListStarOf")+type;
+      sdfTreeGrammarContainerTypes.insert(type);
+    }
   } else {
     type = replaceString("PtrListPtr","",type);
     //cout << "ContainerMembers<=0: " << type << endl;
@@ -184,9 +194,13 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
           */
         string type=restrictedTypeStringOfGrammarString(*stringListIterator,grammarnode, grammarSymListOpPrefix, grammarSymListOpPostfix);
         string varName=(*stringListIterator)->getVariableNameString();
-        rhsTerminalSuccessors+=varName+":"+type;
-                string infoFields=(*stringListIterator)->infoFieldsToString();
-                rhsTerminalSuccessors+=" ["+infoFields+"]";
+        if(generateSDFTreeGrammar) {
+          rhsTerminalSuccessors+=type;
+        } else {
+          rhsTerminalSuccessors+=varName+":"+type;
+          string infoFields=(*stringListIterator)->infoFieldsToString();
+          rhsTerminalSuccessors+=" ["+infoFields+"]";
+        }
         // based on the type*name* used it is infered whether it is a
         // a container or a single data member (single pointer or single obj)
         // this is just a "heuristic" test. Changing the typenames invalidates
@@ -243,16 +257,23 @@ Grammar::CreateAbstractTreeGrammarString(Terminal* grammarnode,
   bool first=true;
   for(vector<GrammarSynthesizedAttribute>::iterator viter=v.begin(); viter!=v.end(); viter++) {
     if((*viter).nodetext!="" && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
-      if(first) {
-        grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
-        first=false;
+      if(generateSDFTreeGrammar) {
+        grammarRule+=string(grammarnode->getName()) + " -> " + (*viter).nodetext+"\n";
       } else {
-        grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
+        if(first) {
+          grammarRule+=string(grammarnode->getName()) + grammarSymArrow + (*viter).nodetext+"\n";
+          first=false;
+        } else {
+          grammarRule+=grammarSymOr + (*viter).nodetext+"\n";
+        }
       }
     }
   }
-  if(v.size()>0 && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) )
-    grammarRule+=grammarSymEndRule;
+  if(v.size()>0 && isAbstractTreeGrammarSymbol(string(grammarnode->getName())) ) {
+    if(!generateSDFTreeGrammar) {
+      grammarRule+=grammarSymEndRule;
+    }
+  }
   
   // union data of subtree nodes
   saLatex.grammarnode=grammarnode;
@@ -293,16 +314,10 @@ void Grammar::buildGrammarDotFile(Terminal* rootNode, ostream& GrammarDotFile) {
   GrammarDotFile << "\n}" << endl;
 }
 
-// MS:2002
+// MS:2002,2014
 void Grammar::buildAbstractTreeGrammarFile(Terminal* rootNode, ostream& AbstractTreeGrammarFile) {
+  generateSDFTreeGrammar=false;
   GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
-#if 0
-// DQ (5/24/2005): debugging code (not required generally)
-  for(set<string>::iterator i=traversedTerminals.begin();i!=traversedTerminals.end();i++)
-     {
-       cout << "traversed Terminal: " << *i << endl;
-     }
-#endif
   GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
   AbstractTreeGrammarFile << "//  Abstract Tree Grammar"<<endl<<endl;
   //AbstractTreeGrammarFile << "Grammar G=<NonTerminals, Terminals, Rules, SgNode>\n\n";
@@ -313,4 +328,23 @@ void Grammar::buildAbstractTreeGrammarFile(Terminal* rootNode, ostream& Abstract
   AbstractTreeGrammarFile << "END"<<endl;
 }
 
-
+// MS:2014
+void Grammar::buildSDFTreeGrammarFile(Terminal* rootNode, ostream& SDFTreeGrammarFile) {
+  generateSDFTreeGrammar=true;
+  GrammarSynthesizedAttribute dummy=BottomUpProcessing(rootNode, &Grammar::CreateMinimalTraversedGrammarSymbolsSet);
+  GrammarSynthesizedAttribute a=BottomUpProcessing(rootNode, &Grammar::CreateAbstractTreeGrammarString);
+  SDFTreeGrammarFile << "regular tree grammar"<< endl;
+  SDFTreeGrammarFile << "start SgNode"<< endl;
+  SDFTreeGrammarFile << "productions"<< endl;
+  SDFTreeGrammarFile << a.text;
+  SDFTreeGrammarFile <<endl;
+  //SDFTreeGrammarFile << "#CONTAINERTYPES:"<<sdfTreeGrammarContainerTypes.size()<<endl;
+  // generate rtg rules for container types 
+  for(set<string>::iterator i=sdfTreeGrammarContainerTypes.begin();i!=sdfTreeGrammarContainerTypes.end();++i) {
+    string listName=*i;
+    string elemName=replaceString("ListStarOf","",listName);
+    SDFTreeGrammarFile << listName << " -> <nil>()"<<endl;
+    SDFTreeGrammarFile << listName << " -> <cons>("<<elemName<<","<<listName<<")"<<endl;
+  }
+  
+}

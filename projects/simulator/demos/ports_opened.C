@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <Diagnostics.h>
 #include <RSIM_Linux32.h>
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 
 using namespace rose;
 using namespace StringUtility;
@@ -371,5 +371,6 @@ main(int argc, char *argv[], char *envp[]) {
 
     sim.terminate_self();
 }
-
+#else
+int main() { return 0; }
 #endif

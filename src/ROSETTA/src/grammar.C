@@ -3394,6 +3394,10 @@ Grammar::buildCode ()
      ROSE_ASSERT (AbstractTreeGrammarFile.good());
      buildAbstractTreeGrammarFile(rootNode, AbstractTreeGrammarFile);
      cout << "DONE: buildAbstractTreeGrammarFile" << endl;
+     ofstream sdfTreeGrammarFile("generated_sdf_tree_grammar.rtg");
+     ROSE_ASSERT (sdfTreeGrammarFile.good());
+     buildSDFTreeGrammarFile(rootNode, sdfTreeGrammarFile);
+     cout << "DONE: buildSDFTreeGrammarFile" << endl;
 
 #if 1
    // JH (01/18/2006)

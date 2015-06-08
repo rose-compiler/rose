@@ -2,6 +2,9 @@
 
 #include "sage3basic.h"
 
+#include "Diagnostics.h"
+using namespace rose::Diagnostics;
+
 /* Constructor reads symbol table entries beginning at entry 'i'. We can't pass an array of COFFSymbolEntry_disk structs
  * because the disk size is 18 bytes, which is not properly aligned according to the C standard. Therefore we pass the actual
  * section and table index. The symbol occupies the specified table slot and st_num_aux_entries additional slots. */
@@ -34,7 +37,10 @@ SgAsmCoffSymbol::ctor(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAs
     ROSE_ASSERT(fhdr->get_section_table()!=NULL);
     if (p_st_section_num > 0) {
         p_bound = fhdr->get_file()->get_section_by_id(p_st_section_num);
-        ROSE_ASSERT(p_bound != NULL);
+        if (NULL==p_bound) {
+            mlog[WARN] <<"PE symbol \"" <<StringUtility::cEscape(p_st_name) <<"\" (index " <<idx <<")"
+                       <<" is not bound to any section (section " <<p_st_section_num <<")\n";
+        }
     }
     
     /* Make initial guesses for storage class, type, and definition state. We'll adjust them after reading aux entries. */

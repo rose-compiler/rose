@@ -17,8 +17,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
-#include <sawyer/Optional.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
 #include <stdarg.h>
 
 namespace rose {
@@ -265,7 +265,7 @@ Partitioner::discover_jump_table(BasicBlock *bb, bool do_create, ExtentMap *tabl
     const RegisterDictionary *regdict = RegisterDictionary::dictionary_amd64(); // compatible w/ older x86 models
     const RegisterDescriptor *REG_EIP = regdict->lookup("eip");
     PartialSymbolicSemantics::RiscOperatorsPtr ops = PartialSymbolicSemantics::RiscOperators::instance(regdict);
-    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops);
+    BaseSemantics::DispatcherPtr dispatcher = DispatcherX86::instance(ops, 32);
     ops->set_memory_map(&ro_map);
     try {
         for (size_t i=0; i<bb->insns.size(); ++i) {

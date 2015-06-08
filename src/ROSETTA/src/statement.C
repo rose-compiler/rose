@@ -1066,8 +1066,11 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "bool","prototypeIsWithoutParameters", "= false",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/27/2015): Note that zero is a ligitimate value to use, so the default should be -1.
   // DQ (2/19/2014): Add support for gnu attribute regnum (required to compile valgrind).
-     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+  // FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= 0",
+  //               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     FunctionDeclaration.setDataPrototype ( "int","gnu_regparm_attribute", "= -1",
                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/9/2014): Example test2014_85.C demonstrates that the declared type of a function can be 
@@ -1361,6 +1364,7 @@ Grammar::setUpStatements ()
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (7/30/2012): Mark this as the first declaration of a declaration list.
+  // DQ (4/5/2015): NOTE: I think this data member is not used!
      VariableDeclaration.setDataPrototype("bool","isFirstDeclarationOfDeclarationList","= true",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
@@ -1725,6 +1729,12 @@ Grammar::setUpStatements ()
      TemplateFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
+  // Functions like this were modified in the class template representation to be a function prototype and the
+  // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
+     TemplateFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (6/28/2013): The template arguments should not always be output where the function is used in a SgTemplateFunctionRefExp 
   // and so we need to record this.  This does not handle where individual function reference expression may or may not explicitly
@@ -1830,6 +1840,12 @@ Grammar::setUpStatements ()
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgTemplateArgumentPtrList", "templateSpecializationArguments", "= SgTemplateArgumentPtrList()",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateMemberFunctionDeclaration.setDataPrototype ( "SgName", "string", "= \"\"",
+                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (9/5/2014): This marks the function as only partially represented in the text string saved and used in the unparser.
+  // Functions like this were modified in the class template representation to be a function prototype and the
+  // the defining declaration represented seperately (and with a partial string internally (representing only the function body)).
+     TemplateMemberFunctionDeclaration.setDataPrototype ( "bool", "string_represents_function_body", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 #if 0
