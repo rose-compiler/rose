@@ -26,9 +26,7 @@ namespace Cmdline {
   extern ROSE_DLL_API int verbose;
 
   void
-  makeSysIncludeList(
-      const Rose_STL_Container<string> &dirs,
-      Rose_STL_Container<string> &result);
+  makeSysIncludeList(const Rose_STL_Container<string> &dirs, Rose_STL_Container<string> &result, bool using_nostdinc_option = false);
 
   //! Convert `-I <path>` to `-I<path>`
   //
@@ -133,6 +131,20 @@ namespace Cmdline {
       ProcessEnableRemoteDebugging (SgProject* project, std::vector<std::string>& argv);
     } // namespace Rose::Cmdline::Fortran::OpenFortranParser
   } // namespace Rose::Cmdline::Fortran
+
+  namespace Gnu {
+    /** @returns true if the GNU option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    Process (SgProject* project, std::vector<std::string>& argv);
+
+    // --param
+    void
+    ProcessParam (SgProject* project, std::vector<std::string>& argv);
+  } // namespace Rose::Cmdline::Gnu
 
   namespace Java {
     static const std::string option_prefix = "-rose:java:";

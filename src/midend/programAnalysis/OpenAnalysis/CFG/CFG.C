@@ -134,15 +134,16 @@ void CFG::Edge::dump (ostream& os)
 //--------------------------------------------------------------------------------------------------------------------
 
 
+// Do not use "si_ptr" -- it is a #define on some systems.
 IRStmtType
-CFG::build_block (CFG::Node* prev_node, IRStmtIterator *si_ptr, CFG::NodeLabelList& exit_nodes,
+CFG::build_block (CFG::Node* prev_node, IRStmtIterator *si_ptr_, CFG::NodeLabelList& exit_nodes,
                   CFG::NodeLabelList* break_nodes, CFG::NodeLabelList* return_nodes,
                   CFG::NodeLabelList* continue_nodes)
 {
   NodeLabelList x_nodes;
   IRStmtType prev_statement = SIMPLE;
-  while (si_ptr->IsValid()) {
-    StmtHandle stmt = si_ptr->Current();
+  while (si_ptr_->IsValid()) {
+    StmtHandle stmt = si_ptr_->Current();
     if (ir.GetLabel(stmt)) {
       // FIXME: Unstructured handling (labels), partially tested.
       // If this statement has a label, it begins a new block (if prev_node
@@ -179,9 +180,9 @@ CFG::build_block (CFG::Node* prev_node, IRStmtIterator *si_ptr, CFG::NodeLabelLi
       x_nodes.clear();
     }
     prev_statement = build_stmt(prev_node, stmt, x_nodes, break_nodes, return_nodes, continue_nodes);
-    IRStmtIterator &tmp = *si_ptr;
+    IRStmtIterator &tmp = *si_ptr_;
     ++tmp;
-//    ++(*si_ptr);
+//    ++(*si_ptr_);
   }
 
   if (prev_statement == SIMPLE)

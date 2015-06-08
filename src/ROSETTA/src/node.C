@@ -309,6 +309,10 @@ Grammar::setUpNodes ()
   // QY: we need a boolean flag for tracking the updates to an ast node
      Node.setDataPrototype("bool","isModified","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (12/3/2014): We need a concept of contains modified code so that we can support the unparsing from the token stream.
+     Node.setDataPrototype("bool","containsTransformation","= false",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
  
 #if 0
   // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store 
@@ -373,6 +377,10 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (9/7/2014): Added support for template headers as part of name qualification.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
   // upon the location where they are referenced.  This map stored the generated names of such types
   // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 
@@ -431,6 +439,11 @@ Grammar::setUpNodes ()
      LocatedNode.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      LocatedNode.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
+
+  // DQ (1/15/2015): We need a concept of transformation restricted to the addition or deletion or transformation of the surounding comments and CPP directives.
+     LocatedNode.setDataPrototype("bool","containsTransformationToSurroundingWhitespace","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+ 
 
   // DQ (3/24/2007): Added support for tokens in the IR.
   // Token.setPredeclarationString ("HEADER_TOKEN_PREDECLARATION" , "../Grammar/LocatedNode.code");

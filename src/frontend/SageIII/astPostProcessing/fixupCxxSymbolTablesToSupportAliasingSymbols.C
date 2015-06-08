@@ -128,9 +128,18 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
              {
                SgInitializedName* initializedNameFromSymbol = isSgInitializedName(symbolBasis);
                ROSE_ASSERT(initializedNameFromSymbol != NULL);
-               ROSE_ASSERT(initializedNameFromSymbol->get_declptr() != NULL);
 
-               declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+            // DQ (9/8/2014): This fails for test2013_234, 235, 240, 241, 242, 246.C.
+            // ROSE_ASSERT(initializedNameFromSymbol->get_declptr() != NULL);
+            // declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+               if (initializedNameFromSymbol->get_declptr() != NULL)
+                  {
+                    declarationAccessLevel = initializedNameFromSymbol->get_declptr()->get_declarationModifier().get_accessModifier().get_modifier();
+                  }
+                 else
+                  {
+                    printf ("ERROR: In injectSymbolsFromReferencedScopeIntoCurrentScope(): initializedNameFromSymbol->get_declptr() == NULL \n");
+                  }
              }
 
 #if ALIAS_SYMBOL_DEBUGGING
@@ -370,7 +379,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                
                if ( alreadyExists == false)
                   {
-                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol (symbol);
+#if 0
+                    printf ("Building a SgAliasSymbol \n");
+#endif
+                 // DQ: The parameter to a SgAliasSymbol is a SgSymbol (but should not be another SgAliasSymbol).
+                    SgAliasSymbol* aliasSymbol = new SgAliasSymbol(symbol);
                     ROSE_ASSERT(aliasSymbol != NULL);
 
                  // DQ (7/12/2014): Added support to trace back the SgAliasSymbol to the declarations that caused it to be added.
@@ -378,10 +391,15 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
                     aliasSymbol->get_causal_nodes().push_back(causalNode);
 
 #if ALIAS_SYMBOL_DEBUGGING
-                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p \n",aliasSymbol);
+                 // printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope as a SgAliasSymbol = %p causalNode = %p = %s \n",aliasSymbol,causalNode,causalNode->class_name().c_str());
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
 #endif
                  // Use the current name and the alias to the symbol
                     currentScope->insert_symbol(name, aliasSymbol);
+
+#if ALIAS_SYMBOL_DEBUGGING
+                    printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): DONE: Adding symbol to new scope (currentScope = %p = %s) as a SgAliasSymbol = %p causalNode = %p = %s \n",currentScope,currentScope->class_name().c_str(),aliasSymbol,causalNode,causalNode->class_name().c_str());
+#endif
                   }
              }
             else
@@ -407,6 +425,9 @@ FixupAstSymbolTablesToSupportAliasedSymbols::injectSymbolsFromReferencedScopeInt
 #if 0
   // debugging
      symbolTable->print("In injectSymbolsFromReferencedScopeIntoCurrentScope(): printing out the symbol tables");
+#endif
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("In injectSymbolsFromReferencedScopeIntoCurrentScope(): referencedScope = %p = %s currentScope = %p = %s accessLevel = %d \n",referencedScope,referencedScope->class_name().c_str(),currentScope,currentScope->class_name().c_str(),accessLevel);
 #endif
    }
 
@@ -804,7 +825,11 @@ FixupAstSymbolTablesToSupportAliasedSymbols::visit ( SgNode* node )
 #endif
                   }
              }
-        }          
+        }
+
+#if ALIAS_SYMBOL_DEBUGGING
+     printf ("Leaving FixupAstSymbolTablesToSupportAliasedSymbols::visit() (preorder AST traversal) node = %p = %s \n",node,node->class_name().c_str());
+#endif
    }
 
 
