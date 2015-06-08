@@ -168,6 +168,7 @@ Analyzer::Analyzer():
   _solver(5),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
+  _maxIterations(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
@@ -200,9 +201,14 @@ bool Analyzer::isPrecise() {
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==-1)
+  if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
-  return (long int)transitionGraph.size()>=_maxTransitions;
+  else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+    return true;
+  else if ((_maxIterations!=-1) && ((long int) _iterations>_maxIterations))
+    return true;
+  else // at least one maximum mode is active, but the corresponding limit has not yet been reached
+    return false;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -3227,7 +3233,7 @@ void Analyzer::runSolver8() {
         }
       }
       oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
-      // solver 8: only traces allowed (no branching)
+      // solver 8: only singe traces allowed
       assert(newEStateList.size()<=1);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
           nesListIter!=newEStateList.end();
@@ -3519,7 +3525,9 @@ void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData)
   _numberOfThreadsToUse = 1;
   _solver = 8;
   _maxTransitions = -1,
+  _maxIterations = -1,
   _maxTransitionsForcedTop = -1;
+  _maxIterationsForcedTop = -1;
   _topifyModeActive = false;
   _numberOfThreadsToUse = 1;
   _latestOutputEState = NULL;
