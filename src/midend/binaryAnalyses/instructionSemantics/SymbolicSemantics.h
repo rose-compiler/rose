@@ -892,7 +892,7 @@ public:
     /** Reads a single-byte value from memory.
      *
      *  Reads from the specified memory state and updates the original state if appropriate.  Reading from a memory
-     *  state might actually create new memory cells in the original state.  The @dflt is the byte value to save to
+     *  state might actually create new memory cells in the original state.  The @p dflt is the byte value to save to
      *  the original state when appropriate. */
     ValueType<8> mem_read_byte(State<ValueType> &state, const ValueType<32> &addr, const ValueType<8> &dflt) const {
         typedef typename State<ValueType>::Memory::CellList CellList;
@@ -917,7 +917,7 @@ public:
     /** Reads a multi-byte value from memory.
      *
      *  Reads a multi-byte, little-endian value from memory and updates the original state if appropriate.  Reading
-     *  from a memory state might actually create new memory cells in the original state.  The @dflt is the value
+     *  from a memory state might actually create new memory cells in the original state.  The @p dflt is the value
      *  to save to the original state when appropriate. */
     template <size_t nBits>
     ValueType<nBits> mem_read(State<ValueType> &state, const ValueType<32> &addr,
