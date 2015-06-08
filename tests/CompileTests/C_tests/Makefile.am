@@ -1019,7 +1019,15 @@ test_optimization_specifier_O1: $(testTranslator)
 test_optimization_specifier_O2: $(testTranslator)
 	$(testTranslator) -O2 -c $(srcdir)/test2015_153.c
 
+# DQ (5/27/2015): This was a bug in the internal generation of the backend compiler command line
+# it was removing the 2nd parameter after the "-o" option, instead of the next parameter after 
+# the "-o" option. Note that the isue was independent of what the 2nd parameter was after the 
+# "-o" option, it was just initially demonstrated with -DNDEBUG.
+test_compile_and_link_with_NDEBUG:
+	$(testTranslator) -o test2015_162 -DNDEBUG $(srcdir)/test2015_162.c
 
+test_compile_and_link_without_NDEBUG:
+	$(testTranslator) -o test2015_162 $(srcdir)/test2015_162.c
 
 ../../testTranslator:
 	cd ../..; $(MAKE) testTranslator
@@ -1100,6 +1108,9 @@ check-local:
 	@$(MAKE) test_optimization_specifier_Os
 	@$(MAKE) test_optimization_specifier_O1
 	@$(MAKE) test_optimization_specifier_O2
+	@$(MAKE) test_mregparm_m32_use
+	@$(MAKE) test_compile_and_link_with_NDEBUG
+	@$(MAKE) test_compile_and_link_without_NDEBUG
 #	@$(MAKE) test_m32_use
 	@echo "*********************************************************************************************"
 	@echo "****** ROSE/tests/CompileTests/C_tests: make check rule complete (terminated normally) ******"

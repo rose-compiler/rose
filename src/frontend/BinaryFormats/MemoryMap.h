@@ -3,10 +3,10 @@
 
 #include "ByteOrder.h"
 
-#include <sawyer/Access.h>
-#include <sawyer/AddressMap.h>
-#include <sawyer/MappedBuffer.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Access.h>
+#include <Sawyer/AddressMap.h>
+#include <Sawyer/MappedBuffer.h>
+#include <Sawyer/Optional.h>
 
 /** Align address downward to boundary.
  *

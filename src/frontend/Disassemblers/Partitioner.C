@@ -17,8 +17,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <math.h>
-#include <sawyer/Optional.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
 #include <stdarg.h>
 
 namespace rose {

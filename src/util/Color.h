@@ -2,7 +2,7 @@
 #define ROSE_Color_H
 
 #include <algorithm>
-#include <sawyer/Map.h>
+#include <Sawyer/Map.h>
 #include <string>
 
 namespace rose {

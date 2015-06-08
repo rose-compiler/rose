@@ -4,7 +4,7 @@
 #include <Partitioner2/Attribute.h>
 #include <Partitioner2/BasicTypes.h>
 
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <string>
 

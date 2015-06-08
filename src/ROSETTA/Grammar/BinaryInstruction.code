@@ -42,7 +42,7 @@ class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
@@ -212,6 +212,68 @@ HEADER_EXPRESSION_START
         public:
                 size_t get_nBits() const;
 HEADER_EXPRESSION_END
+
+
+
+HEADER_RISC_OPERATION_START
+        public:
+                // One enum per RISC operator.  The names are the same as the RISC operator.  Note that some of these
+                // operators aren't normally part of the base set. For instance, "subtract" and comparison operations
+                // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
+                enum RiscOperator {
+                        OP_NONE,
+			OP_undefined,
+                        OP_filterCallTarget,
+                        OP_filterReturnTarget,
+                        OP_filterIndirectJumpTarget,
+                        OP_hlt,
+                        OP_cpuid,
+                        OP_rdtsc,
+                        OP_and_,
+                        OP_or_,
+                        OP_xor_,
+                        OP_invert,
+                        OP_extract,
+                        OP_concat,
+                        OP_leastSignificantSetBit,
+                        OP_mostSignificantSetBit,
+                        OP_rotateLeft,
+                        OP_rotateRight,
+                        OP_shiftLeft,
+                        OP_shiftRight,
+                        OP_shiftRightArithmetic,
+                        OP_equalToZero,
+                        OP_ite,
+                        OP_isEqual,
+                        OP_isNotEqual,
+                        OP_isUnsignedLessThan,
+                        OP_isUnsignedLessThanOrEqual,
+                        OP_isUnsignedGreaterThan,
+                        OP_isUnsignedGreaterThanOrEqual,
+                        OP_isSignedLessThan,
+                        OP_isSignedLessThanOrEqual,
+                        OP_isSignedGreaterThan,
+                        OP_isSignedGreaterThanOrEqual,
+                        OP_unsignedExtend,
+                        OP_signExtend,
+                        OP_add,		// two args + optional carry bit
+                        OP_addCarries,  // carries from a 3-arg add operation
+                        OP_subtract,
+                        OP_negate,
+                        OP_signedDivide,
+                        OP_signedModulo,
+                        OP_signedMultiply,
+                        OP_unsignedDivide,
+                        OP_unsignedModulo,
+                        OP_unsignedMultiply,
+                        OP_interrupt,
+                        OP_readRegister,
+                        OP_writeRegister,
+                        OP_readMemory,  //  three or four args depending on whether segment register is present
+                        OP_writeMemory, //  ditto
+                        OP_N_OPERATORS  // must be last
+                };
+HEADER_RISC_OPERATION_END
 
 
 
@@ -3622,7 +3684,7 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 static X86InstructionSize instructionSizeForWidth(size_t);
                 static size_t widthForInstructionSize(X86InstructionSize);
                 static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
-		static const RegisterDictionary* registersForWidth(size_t);
+                static const RegisterDictionary* registersForWidth(size_t);
 
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,

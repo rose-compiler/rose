@@ -2,7 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 INCLUDES = $(ROSE_INCLUDES)
 
+if ROSE_USING_GCC_VERSION_LATER_4_6
+noinst_LTLIBRARIES =  
+else
 noinst_LTLIBRARIES =  libSDG.la
+endif
 
 libSDG_la_DEPENDENCIES =
 

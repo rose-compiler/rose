@@ -2,8 +2,8 @@
 #define ROSE_Partitioner2_Attributes_H
 
 #include <boost/any.hpp>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 #include <string>
 
 namespace rose {

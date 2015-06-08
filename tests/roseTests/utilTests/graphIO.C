@@ -1,7 +1,7 @@
 #include "GraphUtility.h"
 #include "StringUtility.h"
 #include "Diagnostics.h"
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <iostream>
 #include <sstream>
 

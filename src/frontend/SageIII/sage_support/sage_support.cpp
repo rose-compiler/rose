@@ -6183,7 +6183,7 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
         }
 
   // This is a better implementation since it will include any additional command line options that target the linker
-     Rose_STL_Container<string> linkingCommand ;
+     Rose_STL_Container<string> linkingCommand;
 
      linkingCommand.push_back (linkerName);
      // find all object files generated at file level compilation
@@ -6196,9 +6196,19 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
        // linkingCommand.push_back(get_file(i).generateOutputFileName());
           if (get_file(i).get_skipfinalCompileStep() == false)
              {
-                 linkingCommand.push_back(get_file(i).generateOutputFileName());
+               linkingCommand.push_back(get_file(i).generateOutputFileName());
              }
         }
+
+#if 0
+  // DQ (5/27/2015): There appear to be extra command line options here that we might want to exclude (e.g. -DNDEBUG).
+  // Note that we should leave these in place until we better understand where the limits are of what we should remove.
+     printf ("In SgProject::link(): Output argv list: \n");
+     for (size_t i = 0; i < argv.size(); i++)
+        {
+          printf ("   --- argv = %s \n",argv[i].c_str());
+        }
+#endif
 
   // Add any options specified in the original command line (after preprocessing)
      linkingCommand.insert(linkingCommand.end(), argv.begin(), argv.end());
@@ -6207,10 +6217,10 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
 
   // Additional libraries to be linked with
   // Liao, 9/23/2009, optional linker flags to support OpenMP lowering targeting GOMP
-//     if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
-//     Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
-//     There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
-     if( SageInterface::getProject()->get_openmp_linking())
+  // if ((numberOfFiles() !=0) && (get_file(0).get_openmp_lowering())
+  // Liao 6/29/2012. sometimes rose translator is used as a wrapper for linking
+  // There will be no SgFile at all in this case but we still want to append relevant linking options for OpenMP
+     if (SageInterface::getProject()->get_openmp_linking())
         {
 // Sara Royuela 12/10/2012:  Add GCC version check
 #ifdef USE_ROSE_GOMP_OPENMP_LIBRARY
@@ -6252,10 +6262,15 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
      printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
 #endif
 
-     if ( get_verbose() > 0 )
-        {
-          printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
-        }
+     // TOO1 (2015/05/11): Causes automake configure tests to fail. Checking ld linker, as example:
+     //
+     //     identityTranslator -print-prog-name=ld -rose:verbose 0
+     //     In SgProject::link command line = g++ -print-prog-name=ld
+     //     ld
+     //if ( get_verbose() > 0 )
+     //   {
+     //     printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
+     //   }
 
      int status = systemFromVector(linkingCommand);
 

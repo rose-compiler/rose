@@ -8,7 +8,7 @@
 
 #include "integerOps.h"
 #include "BaseSemantics2.h"
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 
 namespace rose {
 namespace BinaryAnalysis {              // documented elsewhere

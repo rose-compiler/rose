@@ -9,8 +9,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/filesystem.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 
 using namespace rose;
 using namespace Sawyer::Message::Common;

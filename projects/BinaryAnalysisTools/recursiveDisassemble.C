@@ -15,10 +15,10 @@
 #include <Partitioner2/Modules.h>
 #include <Partitioner2/Utility.h>
 #include <rose_strtoull.h>
-#include <sawyer/Assert.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 #include <stringify.h>
 
 

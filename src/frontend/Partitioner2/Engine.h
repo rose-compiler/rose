@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/DistinctList.h>
+#include <Sawyer/DistinctList.h>
 
 namespace rose {
 namespace BinaryAnalysis {

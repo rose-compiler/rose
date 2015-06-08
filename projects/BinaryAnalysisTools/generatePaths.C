@@ -1,7 +1,7 @@
 #include <rose.h>
 
 #include <iostream>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <string>
 
 struct Settings {
