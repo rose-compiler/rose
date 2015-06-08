@@ -219,6 +219,25 @@ faketarget:
 	tests/mailinglist2.C
 	tests/mailinglist3.C
 	tests/arraytest2.C
+	addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/addressTakenAnalysis.h
+	addressTakenAnalysis_obsolete/defUseQuery.h
+	defUseQuery.h
+	Lattice.h
+	rtests/ross-event/runtime.h
+	runtime/runtime.h
+	rtests/ross-event/runtime_macros.h
+	runtime/runtime_macros.h
+	Timer.h
+	VariableIdUtils.h
+	addressTakenAnalysis_obsolete/VariableIdUtils.h
+	CPDomain.hpp
+	LTL.h
+	rtests/vector1/RevStack.h 
+	tests/rers/Problem1401_opt.c
+	tests/rers/Problem1402_opt.c
+	tests/rers/Problem1403_opt.c
+	tests/varid-test1.C
 #      end of fake target
 
 REGRESSION_DATA_DIR=regressiondata
