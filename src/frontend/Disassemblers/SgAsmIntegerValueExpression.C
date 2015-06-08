@@ -2,7 +2,7 @@
 #include "integerOps.h"
 #include "stringify.h"
 #include "Diagnostics.h"
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 
 using namespace rose;
 

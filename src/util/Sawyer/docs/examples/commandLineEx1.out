@@ -1,0 +1,44 @@
+COMMANDLINEEX1(1)                User Commands               COMMANDLINEEX1(1)
+
+
+
+Name
+       commandLineEx1 - disassembles files one address at a time
+
+Synopsis
+       commandLineEx1 [switches] specimen_name
+
+Description
+       This program is a very simple disassembler that tries to disassemble an
+       instruction at each address of the specimen file.
+
+Options
+       The following switches are recognized by all tools in this package.
+
+       --help; -h; -?
+           Show this documentation.
+
+       --version; -V
+           Show version number.
+
+       The following switches are specific to this command.
+
+       --alignment align
+           Alignment for instructions.  The default is 1 (no alignment).
+           Values larger than one will cause each candidate address to be
+           rounded up to the next multiple of align.  If this rounding up
+           causes addresses after a valid instruction to be skipped then a
+           warning is printed. No warning is printed if the alignment skips
+           addresses after a disassembly failure.
+
+       --at virtual-address
+           The first byte of the file is mapped at the specified virtual-
+           address, which defaults to 0.
+
+       --isa architecture
+           Instruction set architecture. Specify "list" to see a list of
+           possible ISAs.
+
+
+
+alpha                              July 2014                 COMMANDLINEEX1(1)
