@@ -683,6 +683,50 @@ buildArmSpecialRegisterList(SgAsmExpression *lhs) {
     return a;
 }
 
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op) {
+    SgAsmRiscOperation *retval = new SgAsmRiscOperation(op);
+    SgAsmExprListExp *operands = new SgAsmExprListExp;
+    operands->set_parent(retval);
+    retval->set_operands(operands);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2, SgAsmExpression *e3) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    appendExpression(retval->get_operands(), e3);
+    return retval;
+}
+
+SgAsmRiscOperation*
+buildRiscOperation(SgAsmRiscOperation::RiscOperator op, SgAsmExpression *e1, SgAsmExpression *e2, SgAsmExpression *e3,
+                   SgAsmExpression *e4) {
+    SgAsmRiscOperation *retval = buildRiscOperation(op);
+    appendExpression(retval->get_operands(), e1);
+    appendExpression(retval->get_operands(), e2);
+    appendExpression(retval->get_operands(), e3);
+    appendExpression(retval->get_operands(), e4);
+    return retval;
+}
+
 // FIXME[Robb P. Matzke 2014-07-21]: deprecated
 SgAsmExprListExp*
 makeExprListExp() {
@@ -692,6 +736,14 @@ makeExprListExp() {
 SgAsmExprListExp*
 buildExprListExpression() {
     return new SgAsmExprListExp();
+}
+
+void
+appendExpression(SgAsmExprListExp *exprList, SgAsmExpression *expr) {
+    ASSERT_not_null(exprList);
+    ASSERT_not_null(expr);
+    expr->set_parent(exprList);
+    exprList->get_expressions().push_back(expr);
 }
 
 SgAsmBlock*

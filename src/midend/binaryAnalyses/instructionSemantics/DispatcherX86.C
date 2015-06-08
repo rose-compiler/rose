@@ -4782,10 +4782,12 @@ BaseSemantics::SValuePtr
 DispatcherX86::readRegister(const RegisterDescriptor &reg) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
-        BaseSemantics::RegisterStatePtr rs = operators->get_state()->get_register_state();
-        if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
-            BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
-            return operators->readRegister(reg);
+        if (BaseSemantics::StatePtr ss = operators->get_state()) {
+            BaseSemantics::RegisterStatePtr rs = ss->get_register_state();
+            if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
+                BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
+                return operators->readRegister(reg);
+            }
         }
     }
     return operators->readRegister(reg);
