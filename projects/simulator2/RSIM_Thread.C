@@ -171,7 +171,7 @@ RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *form
         for (size_t i=0; format[i]; i++)
             syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
 
-        mfprintf(m)("%s[%d](", name, syscall_arg(-1));
+        mfprintf(m)("%s[%"PRId64"](", name, syscall_arg(-1));
         for (size_t i=0; format && format[i]; i++) {
             if (i>0) m <<", ";
             print_single(m, format[i], args+i);
@@ -215,17 +215,20 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
     if (mesg) {
         /* System calls return an integer (negative error numbers, non-negative success) */
         ArgInfo info;
-        uint32_t retval = values ? values[0] : operators()->readRegister(dispatcher()->REG_EAX)->get_number();
-        syscall_arginfo(format[0], retval, &info, app);
+        RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
+        uint64_t unsignedRetval = values ? values[0] : operators()->readRegister(reg)->get_number();
+        int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.get_nbits(), 64);
+        syscall_arginfo(format[0], unsignedRetval, &info, app);
+
 
         {
             SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
             mesg <<" = ";
 
             /* Return value */
-            int error_number = (int32_t)retval<0 && (int32_t)retval>-256 ? -(int32_t)retval : 0;
+            int error_number = signedRetval < 0 && signedRetval > -256 ? -signedRetval : 0;
             if (returns_errno && error_number!=0) {
-                mfprintf(mesg)("%"PRId32" ", retval);
+                mfprintf(mesg)("%"PRId64" ", signedRetval);
                 print_enum(mesg, error_numbers, error_number);
                 mfprintf(mesg)(" (%s)\n", strerror(error_number));
             } else {
@@ -234,8 +237,7 @@ RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app)
             }
 
             /* Additionally, output any other buffer values that were filled in by a successful system call. */
-            int signed_retval = (int)retval;
-            if (!returns_errno || (signed_retval<-1024 || signed_retval>=0) || -EINTR==signed_retval) {
+            if (!returns_errno || (signedRetval<-1024 || signedRetval>=0) || -EINTR==signedRetval) {
                 for (size_t i=1; format[i]; i++) {
                     if ('-'!=format[i]) {
                         uint32_t value = values ? values[i] : syscall_arg(i-1);
@@ -270,20 +272,15 @@ RSIM_Thread::syscall_leave(const char *format, ...)
     va_end(ap);
 }
 
-uint32_t
+uint64_t
 RSIM_Thread::syscall_arg(int idx)
 {
     RegisterDescriptor reg;
-    switch (idx) {
-        case -1: reg = dispatcher()->REG_EAX; break;    // syscall return value
-        case 0: reg = dispatcher()->REG_EBX; break;
-        case 1: reg = dispatcher()->REG_ECX; break;
-        case 2: reg = dispatcher()->REG_EDX; break;
-        case 3: reg = dispatcher()->REG_ESI; break;
-        case 4: reg = dispatcher()->REG_EDI; break;
-        case 5: reg = dispatcher()->REG_EBP; break;
-        default:
-            ASSERT_not_reachable("invalid syscall argument number");
+    if (-1 == idx) {
+        reg = get_process()->get_simulator()->syscallReturnRegister();
+    } else {
+        ASSERT_require((size_t)idx < get_process()->get_simulator()->syscallArgumentRegisters().size());
+        reg = get_process()->get_simulator()->syscallArgumentRegisters()[idx];
     }
     return operators()->readRegister(reg)->get_number();
 }
@@ -777,13 +774,15 @@ RSIM_Thread::report_stack_frames(Sawyer::Message::Stream &mesg, const std::strin
 void
 RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
 {
-    operators()->writeRegister(dispatcher()->REG_anyAX, retval);
+    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    operators()->writeRegister(reg, retval);
 }
 
 void
 RSIM_Thread::syscall_return(int retval)
 {
-    operators()->writeRegister(dispatcher()->REG_EAX, operators()->number_(32, retval));
+    const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
+    operators()->writeRegister(reg, operators()->number_(reg.get_nbits(), retval));
 }
 
 void
@@ -1280,7 +1279,7 @@ RSIM_Thread::emulate_syscall()
     assert(0==status);
     insn_semaphore_posted = true;
 
-    unsigned callno = operators()->readRegister(dispatcher()->REG_EAX)->get_number();
+    unsigned callno = operators()->readRegister(dispatcher()->REG_anyAX)->get_number();
     bool cb_status = callbacks.call_syscall_callbacks(RSIM_Callbacks::BEFORE, this, callno, true);
     if (cb_status) {
         RSIM_Simulator *sim = get_process()->get_simulator();
@@ -1294,7 +1293,7 @@ RSIM_Thread::emulate_syscall()
             sprintf(name, "syscall_%u", callno);
             mfprintf(tracing(TRACE_MISC))("syscall_%u(", callno);
             for (int i=0; i<6; i++)
-                mfprintf(tracing(TRACE_MISC))("%s0x%08"PRIx32, i?", ":"", syscall_arg(i));
+                mfprintf(tracing(TRACE_MISC))("%s0x%08"PRIx64, i?", ":"", syscall_arg(i));
             tracing(TRACE_MISC) <<") is not implemented yet\n";
 
             tracing(TRACE_MISC) <<"dumping core...\n";

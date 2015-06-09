@@ -128,7 +128,6 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
     FILE *trace = (process->tracingFlags() & tracingFacilityBit(TRACE_LOADER)) ? process->tracingFile() : NULL;
     SimLoader *loader = new SimLoader(interpretation, interpreterName);
     ASSERT_require(process->headers().size() == 1);
-    SgAsmGenericHeader *mainHeader = process->headers().front();
 
     // Load the interpreter (dynamic linker).
     // For i386 it's usually ld-linux.so and gets loaded at 0x40000000 (setarch i386 -LRB3)
@@ -180,22 +179,38 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
     if (!vdso_loaded && trace && !settings().vdsoPaths.empty())
         fprintf(trace, "warning: cannot find a virtual dynamic shared object\n");
 
-    // Initialize the brk value. This is the first free area after the main executable.
-    struct FindInitialBrk: public SgSimpleProcessing {
-        FindInitialBrk(): max_mapped_va(0) {}
-        rose_addr_t max_mapped_va;
-        void visit(SgNode *node) {
-            SgAsmGenericSection *section = isSgAsmGenericSection(node);
-            if (section && section->is_mapped())
-                max_mapped_va = std::max(section->get_mapped_actual_va() + section->get_mapped_size(), max_mapped_va);
-        }
-    } t1;
-    t1.traverse(mainHeader, preorder);
-    AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
-    process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
-
     // Cleanup
     delete loader;
+}
+
+void
+RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mainHeader) {
+    // Initialize the brk value. This is the first free area after the main executable.
+    struct FindInitialBrk: public SgSimpleProcessing {
+        rose_addr_t max_mapped_va;
+        bool usePreferredMapping;
+
+        FindInitialBrk(bool usePreferredMapping): max_mapped_va(0), usePreferredMapping(usePreferredMapping) {}
+
+        void visit(SgNode *node) {
+            SgAsmGenericSection *section = isSgAsmGenericSection(node);
+            if (section && section->is_mapped()) {
+                rose_addr_t begin = (section->get_mapped_actual_va() == 0 && usePreferredMapping) ?
+                                    section->get_mapped_preferred_va() :
+                                    section->get_mapped_actual_va();
+                max_mapped_va = std::max(begin + section->get_mapped_size(), max_mapped_va);
+            }
+        }
+    } t1(process->get_simulator()->settings().nativeLoad);
+    t1.traverse(mainHeader, preorder);
+
+    AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
+#if 1 // DEBUGGING [Robb P. Matzke 2015-06-09]
+    std::cerr <<"ROBB: memory map when initializing brk:\n";
+    process->get_memory().dump(std::cerr);
+    std::cerr <<"ROBB: restriction = " <<restriction <<"\n";
+#endif
+    process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
 }
 
 template<typename Word>
@@ -390,6 +405,61 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
     // Initialize the stack pointer register
     const RegisterDescriptor &REG_SP = thread->dispatcher()->stackPointerRegister();
     thread->operators()->writeRegister(REG_SP, thread->operators()->number_(REG_SP.get_nbits(), sp));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      System calls
+//
+// The system calls defined here are identical for Linux 32- and 64-bit, although they're almost certainly at different
+// locations in the syscall table.
+// 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_default_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave("d");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_brk_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("brk", "x");
+}
+
+void
+RSIM_Linux::syscall_brk_body(RSIM_Thread *t, int callno) {
+    rose_addr_t newbrk = t->syscall_arg(0);
+    t->syscall_return(t->get_process()->mem_setbrk(newbrk, t->tracing(TRACE_MMAP)));
+}
+
+void
+RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave("p");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_access_enter(RSIM_Thread *t, int callno) {
+    static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
+    t->syscall_enter("access", "sf", flags);
+}
+
+void
+RSIM_Linux::syscall_access_body(RSIM_Thread *t, int callno) {
+    rose_addr_t nameVa = t->syscall_arg(0);
+    bool error;
+    std::string name = t->get_process()->read_string(nameVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    int mode = t->syscall_arg(1);
+    int result = access(name.c_str(), mode);
+    if (-1 == result)
+        result = -errno;
+    t->syscall_return(result);
 }
 
 

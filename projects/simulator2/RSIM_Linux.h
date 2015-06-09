@@ -20,6 +20,7 @@ public:
 
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
     virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
+    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
 
     /** Push auxv onto the stack. */
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,
@@ -33,6 +34,18 @@ private:
 
 protected:
     rose_addr_t segmentTableVa(SgAsmElfFileHeader *fhdr) const;
+
+    // System calls that are common to both Linux 32- and 64-bit.
+    static void syscall_default_leave(RSIM_Thread*, int);
+
+    static void syscall_access_body(RSIM_Thread *t, int callno);
+    static void syscall_access_enter(RSIM_Thread *t, int callno);
+
+    static void syscall_brk_enter(RSIM_Thread*, int);
+    static void syscall_brk_body(RSIM_Thread*, int);
+    static void syscall_brk_leave(RSIM_Thread*, int);
 };
+
+
 
 #endif

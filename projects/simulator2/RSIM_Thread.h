@@ -365,7 +365,7 @@ public:
 
     /** Returns an argument of a system call. Arguments are numbered beginning at zero. Argument -1 is the syscall number
      * itself (which might only be valid until syscall_return() is invoked. */
-    uint32_t syscall_arg(int idx);
+    uint64_t syscall_arg(int idx);
 
     /** Sets the return value for a system call.  The system call does not actually return by calling this function, it only
      *  sets the value which will eventually be returned.

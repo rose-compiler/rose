@@ -1,4 +1,4 @@
-/* This file contains Linux-64 system call emulation.  Most of these functions are callbacks and have names like:
+/* This file contains Linux-64system call emulation.  Most of these functions are callbacks and have names like:
  *
  *    RSIM_Linux64::syscall_FOO_enter           -- prints syscall tracing info when the call is entered
  *    RSIM_Linux64::syscall_FOO                 -- implements the system call
@@ -24,6 +24,25 @@ RSIM_Linux64::init() {
         // interpreterBaseVa(0x00007ffff7fe1000ull); -- unsolvable alignment constraints against 0x200000
         interpreterBaseVa(0x00007ffff7000000ull);
     }
+
+    // System call registers.
+    syscallReturnRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di,  0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si,  0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx,  0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_r10, 0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_r8,  0, 64));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_r9,  0, 64));
+
+#   define SC_REG(NUM, NAME, LEAVE)                                                                                            \
+        syscall_define((NUM), syscall_##NAME##_enter, syscall_##NAME##_body, syscall_##LEAVE##_leave);
+
+    /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
+     * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 64-bit syscall numbers here. */
+    SC_REG(12,  brk,                            brk);
+    SC_REG(21,  access,                         default);
+
+#   undef SC_REG
 }
 
 bool
@@ -202,5 +221,14 @@ RSIM_Linux64::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 
     return sp;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      System calls
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 
 #endif

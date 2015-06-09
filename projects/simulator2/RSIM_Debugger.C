@@ -27,6 +27,7 @@ class Debugger {
     size_t singleStep_;                                 // stop when this hits zero
     AddressIntervalSet breakPointVas_;                  // instruction addresses to stop at
     std::set<X86InstructionKind> breakPointKinds_;      // instruction kinds to stop at
+    AddressIntervalSet breakPointSyscalls_;             // syscalls numbers (not addresses) at which to break
 public:
     Debugger(std::istream &in, std::ostream &out): in_(in), out_(out), detached_(false), singleStep_(0) {}
 
@@ -48,12 +49,28 @@ public:
         return true;
     }
 
+    // Should debugger stop for this system call?
+    bool shouldStop(const RSIM_Callbacks::SyscallCallback::Args &args) {
+        if (detached_)
+            return false;
+        if (!breakPointSyscalls_.exists(args.callno))
+            return false;
+        singleStep_ = -1;
+        return true;
+    }
+    
     // Read-eval-print loop when stopped for an instruction
     bool repl(const RSIM_Callbacks::InsnCallback::Args &args) {
         out_ <<"stopped at " <<unparseInstructionWithAddress(args.insn) <<"\n";
         return repl(args.thread);
     }
 
+    // Read-eval-print loop when stopped for a syscall
+    bool repl(const RSIM_Callbacks::SyscallCallback::Args &args) {
+        out_ <<"stopped at syscall " <<args.callno <<"\n";
+        return repl(args.thread);
+    }
+    
     // Common read-eval-print loop
     bool repl(RSIM_Thread *thread) {
         while (true) {
@@ -515,17 +532,36 @@ public:
     //   (empty)                        -- show all breakpoints
     //   <interval>                     -- set breakpoints at specified instruction addresses
     //   insn <insn_kind>               -- set breakpoint for certain kind of insn (e.g., "insn rdtsc")
+    //   syscall [<interval>]           -- set breakpoint when this system call number (or any) is about to occur
     void breakPointCommands(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         if (cmd.empty()) {
             if (!breakPointVas_.isEmpty()) {
                 out_ <<"instruction addresses:\n";
-                BOOST_FOREACH (const AddressInterval &interval, breakPointVas_.intervals())
-                    out_ <<"  " <<interval <<"\n";
+                if (breakPointVas_.hull() == AddressInterval::whole()) {
+                    out_ <<"  all\n";
+                } else {
+                    BOOST_FOREACH (const AddressInterval &interval, breakPointVas_.intervals())
+                        out_ <<"  " <<interval <<"\n";
+                }
             }
             if (!breakPointKinds_.empty()) {
                 out_ <<"instruction types:\n";
                 BOOST_FOREACH (X86InstructionKind kind, breakPointKinds_)
                     out_ <<"  " <<stringifyX86InstructionKind(kind, "x86_") <<"\n";
+            }
+            if (!breakPointSyscalls_.isEmpty()) {
+                out_ <<"system calls:\n";
+                if (breakPointSyscalls_.hull() == AddressInterval::whole()) {
+                    out_ <<"  all\n";
+                } else {
+                    BOOST_FOREACH (const AddressInterval &interval, breakPointSyscalls_.intervals()) {
+                        if (interval.isSingleton()) {
+                            out_ <<"  " <<interval.least() <<"\n";
+                        } else {
+                            out_ <<"  " <<interval.least() <<" through " <<interval.greatest() <<"\n";
+                        }
+                    }
+                }
             }
         } else if (cmd[0]=="insn" || cmd[0]=="instruction") {
             if (cmd.size() < 2)
@@ -537,6 +573,14 @@ public:
                 }
             }
             throw std::runtime_error("unknown instruction mnemonic \"" + StringUtility::cEscape(cmd[1]) + "\"");
+        } else if (cmd[0]=="syscall") {
+            if (cmd.size() == 1) {
+                AddressInterval interval = AddressInterval::whole();
+                breakPointSyscalls_.insert(interval);
+            } else {
+                AddressInterval interval = parseAddressInterval(cmd[1]);
+                breakPointSyscalls_.insert(interval);
+            }
         } else {
             AddressInterval interval = parseAddressInterval(cmd[0]);
             breakPointVas_.insert(interval);
@@ -558,6 +602,20 @@ public:
     }
 };
 
+// Invoke debugger per system call
+class PerSyscall: public RSIM_Callbacks::SyscallCallback {
+    Debugger *debugger_;
+public:
+    PerSyscall(Debugger *debugger): debugger_(debugger) {}
+    virtual PerSyscall *clone() { return this; }
+    virtual bool operator()(bool enabled, const Args &args) {
+        if (enabled && debugger_->shouldStop(args))
+            return debugger_->repl(args);
+        return enabled;
+    }
+};
+    
+
 // Attach interactive debugger to the simulator
 void
 attach(RSIM_Simulator &simulator, std::istream &in, std::ostream &out) {
@@ -565,6 +623,7 @@ attach(RSIM_Simulator &simulator, std::istream &in, std::ostream &out) {
         throw std::runtime_error("debugger must be attached before process is loaded"); // FIXME[Robb P. Matzke 2015-06-05]
     Debugger *debugger = new Debugger(in, out);
     simulator.install_callback(new PerInstruction(debugger));
+    simulator.install_callback(new PerSyscall(debugger));
 }
 
 } // namespace

@@ -45,291 +45,23 @@
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
-/* This leave callback just prints using the "d" format and is used by lots of system calls. */
-static void syscall_default_leave(RSIM_Thread *t, int callno);
-
-static void syscall_access(RSIM_Thread *t, int callno);
-static void syscall_access_enter(RSIM_Thread *t, int callno);
-static void syscall_alarm(RSIM_Thread *t, int callno);
-static void syscall_alarm_enter(RSIM_Thread *t, int callno);
-static void syscall_brk(RSIM_Thread *t, int callno);
-static void syscall_brk_enter(RSIM_Thread *t, int callno);
-static void syscall_brk_leave(RSIM_Thread *t, int callno);
-static void syscall_chdir(RSIM_Thread *t, int callno);
-static void syscall_chdir_enter(RSIM_Thread *t, int callno);
-static void syscall_chmod(RSIM_Thread *t, int callno);
-static void syscall_chmod_enter(RSIM_Thread *t, int callno);
-static void syscall_chown(RSIM_Thread *t, int callno);
-static void syscall_chown_enter(RSIM_Thread *t, int callno);
-static void syscall_clock_getres(RSIM_Thread *t, int callno);
-static void syscall_clock_getres_enter(RSIM_Thread *t, int callno);
-static void syscall_clock_getres_leave(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime_enter(RSIM_Thread *t, int callno);
-static void syscall_clock_gettime_leave(RSIM_Thread *t, int callno);
-static void syscall_clock_settime(RSIM_Thread *t, int callno);
-static void syscall_clock_settime_enter(RSIM_Thread *t, int callno);
-static void syscall_clone(RSIM_Thread *t, int callno);
-static void syscall_clone_enter(RSIM_Thread *t, int callno);
-static void syscall_clone_leave(RSIM_Thread *t, int callno);
-static void syscall_close(RSIM_Thread *t, int callno);
-static void syscall_close_enter(RSIM_Thread *t, int callno);
-static void syscall_creat(RSIM_Thread *t, int callno);
-static void syscall_creat_enter(RSIM_Thread *t, int callno);
-static void syscall_dup(RSIM_Thread *t, int callno);
-static void syscall_dup2(RSIM_Thread *t, int callno);
-static void syscall_dup2_enter(RSIM_Thread *t, int callno);
-static void syscall_dup_enter(RSIM_Thread *t, int callno);
-static void syscall_execve(RSIM_Thread *t, int callno);
-static void syscall_execve_enter(RSIM_Thread *t, int callno);
-static void syscall_exit(RSIM_Thread *t, int callno);
-static void syscall_exit_enter(RSIM_Thread *t, int callno);
-static void syscall_exit_group(RSIM_Thread *t, int callno);
-static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
-static void syscall_exit_group_leave(RSIM_Thread *t, int callno);
-static void syscall_exit_leave(RSIM_Thread *t, int callno);
-static void syscall_fchdir(RSIM_Thread *t, int callno);
-static void syscall_fchdir_enter(RSIM_Thread *t, int callno);
-static void syscall_fchmod(RSIM_Thread *t, int callno);
-static void syscall_fchmod_enter(RSIM_Thread *t, int callno);
-static void syscall_fchmodat(RSIM_Thread *t, int callno);
-static void syscall_fchmodat_enter(RSIM_Thread *t, int callno);
-static void syscall_fchown(RSIM_Thread *t, int callno);
-static void syscall_fchown32(RSIM_Thread *t, int callno);
-static void syscall_fchown32_enter(RSIM_Thread *t, int callno);
-static void syscall_fchown_enter(RSIM_Thread *t, int callno);
-static void syscall_fcntl(RSIM_Thread *t, int callno);
-static void syscall_fcntl_enter(RSIM_Thread *t, int callno);
-static void syscall_fcntl_leave(RSIM_Thread *t, int callno);
-static void syscall_fstatfs(RSIM_Thread *t, int callno);
-static void syscall_fstatfs_enter(RSIM_Thread *t, int callno);
-static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
-static void syscall_fstatfs64(RSIM_Thread *t, int callno);
-static void syscall_fstatfs64_enter(RSIM_Thread *t, int callno);
-static void syscall_fstatfs64_leave(RSIM_Thread *t, int callno);
-static void syscall_fsync(RSIM_Thread *t, int callno);
-static void syscall_fsync_enter(RSIM_Thread *t, int callno);
-static void syscall_ftruncate(RSIM_Thread *t, int callno);
-static void syscall_ftruncate_enter(RSIM_Thread *t, int callno);
-static void syscall_futex(RSIM_Thread *t, int callno);
-static void syscall_futex_enter(RSIM_Thread *t, int callno);
-static void syscall_futex_leave(RSIM_Thread *t, int callno);
-static void syscall_getcwd(RSIM_Thread *t, int callno);
-static void syscall_getcwd_enter(RSIM_Thread *t, int callno);
-static void syscall_getcwd_leave(RSIM_Thread *t, int callno);
-static void syscall_getdents(RSIM_Thread *t, int callno);
-static void syscall_getdents64(RSIM_Thread *t, int callno);
-static void syscall_getdents64_enter(RSIM_Thread *t, int callno);
-static void syscall_getdents64_leave(RSIM_Thread *t, int callno);
-static void syscall_getdents_enter(RSIM_Thread *t, int callno);
-static void syscall_getdents_leave(RSIM_Thread *t, int callno);
-static void syscall_getegid(RSIM_Thread *t, int callno);
-static void syscall_getegid32(RSIM_Thread *t, int callno);
-static void syscall_getegid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getegid_enter(RSIM_Thread *t, int callno);
-static void syscall_geteuid(RSIM_Thread *t, int callno);
-static void syscall_geteuid32(RSIM_Thread *t, int callno);
-static void syscall_geteuid32_enter(RSIM_Thread *t, int callno);
-static void syscall_geteuid_enter(RSIM_Thread *t, int callno);
-static void syscall_getgid(RSIM_Thread *t, int callno);
-static void syscall_getgid32(RSIM_Thread *t, int callno);
-static void syscall_getgid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getgid_enter(RSIM_Thread *t, int callno);
-static void syscall_getgroups32_enter(RSIM_Thread *t, int callno);
-static void syscall_getgroups32(RSIM_Thread *t, int callno);
-static void syscall_getgroups32_leave(RSIM_Thread *t, int callno);
-static void syscall_getpgrp(RSIM_Thread *t, int callno);
-static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
-static void syscall_getpid(RSIM_Thread *t, int callno);
-static void syscall_getpid_enter(RSIM_Thread *t, int callno);
-static void syscall_getppid(RSIM_Thread *t, int callno);
-static void syscall_getppid_enter(RSIM_Thread *t, int callno);
-static void syscall_getrlimit(RSIM_Thread *t, int callno);
-static void syscall_getrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_getrlimit_leave(RSIM_Thread *t, int callno);
-static void syscall_gettid(RSIM_Thread *t, int callno);
-static void syscall_gettid_enter(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday_enter(RSIM_Thread *t, int callno);
-static void syscall_gettimeofday_leave(RSIM_Thread *t, int callno);
-static void syscall_getuid(RSIM_Thread *t, int callno);
-static void syscall_getuid32(RSIM_Thread *t, int callno);
-static void syscall_getuid32_enter(RSIM_Thread *t, int callno);
-static void syscall_getuid_enter(RSIM_Thread *t, int callno);
-static void syscall_ioctl(RSIM_Thread *t, int callno);
-static void syscall_ioctl_enter(RSIM_Thread *t, int callno);
-static void syscall_ioctl_leave(RSIM_Thread *t, int callno);
-static void syscall_ipc(RSIM_Thread *t, int callno);
-static void syscall_ipc_enter(RSIM_Thread *t, int callno);
-static void syscall_ipc_leave(RSIM_Thread *t, int callno);
-static void syscall_kill(RSIM_Thread *t, int callno);
-static void syscall_kill_enter(RSIM_Thread *t, int callno);
-static void syscall_link(RSIM_Thread *t, int callno);
-static void syscall_link_enter(RSIM_Thread *t, int callno);
-static void syscall_llseek(RSIM_Thread *t, int callno);
-static void syscall_llseek_enter(RSIM_Thread *t, int callno);
-static void syscall_lseek(RSIM_Thread *t, int callno);
-static void syscall_lseek_enter(RSIM_Thread *t, int callno);
-static void syscall_madvise(RSIM_Thread *t, int callno);
-static void syscall_madvise_enter(RSIM_Thread *t, int callno);
-static void syscall_mkdir(RSIM_Thread *t, int callno);
-static void syscall_mkdir_enter(RSIM_Thread *t, int callno);
-static void syscall_mknod(RSIM_Thread *t, int callno);
-static void syscall_mknod_enter(RSIM_Thread *t, int callno);
-static void syscall_mmap(RSIM_Thread *t, int callno);
-static void syscall_mmap_enter(RSIM_Thread *t, int callno);
-static void syscall_mmap_leave(RSIM_Thread *t, int callno);
-static void syscall_mmap2(RSIM_Thread *t, int callno);
-static void syscall_mmap2_enter(RSIM_Thread *t, int callno);
-static void syscall_mmap2_leave(RSIM_Thread *t, int callno);
-static void syscall_modify_ldt(RSIM_Thread *t, int callno);
-static void syscall_modify_ldt_enter(RSIM_Thread *t, int callno);
-static void syscall_modify_ldt_leave(RSIM_Thread *t, int callno);
-static void syscall_mprotect(RSIM_Thread *t, int callno);
-static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
-static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
-static void syscall_msync(RSIM_Thread *t, int callno);
-static void syscall_msync_enter(RSIM_Thread *t, int callno);
-static void syscall_munmap(RSIM_Thread *t, int callno);
-static void syscall_munmap_enter(RSIM_Thread *t, int callno);
-static void syscall_nanosleep(RSIM_Thread *t, int callno);
-static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
-static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
-static void syscall_open(RSIM_Thread *t, int callno);
-static void syscall_open_enter(RSIM_Thread *t, int callno);
-static void syscall_pause(RSIM_Thread *t, int callno);
-static void syscall_pause_enter(RSIM_Thread *t, int callno);
-static void syscall_pause_leave(RSIM_Thread *t, int callno);
-static void syscall_pipe(RSIM_Thread *t, int callno);
-static void syscall_pipe_enter(RSIM_Thread *t, int callno);
-static void syscall_pipe_leave(RSIM_Thread *t, int callno);
-static void syscall_pipe2(RSIM_Thread *t, int callno);
-static void syscall_pipe2_enter(RSIM_Thread *t, int callno);
-static void syscall_pipe2_leave(RSIM_Thread *t, int callno);
-static void syscall_prctl(RSIM_Thread *t, int callno);
-static void syscall_prctl_enter(RSIM_Thread *t, int callno);
-static void syscall_pread64(RSIM_Thread *t, int callno);
-static void syscall_pread64_enter(RSIM_Thread *t, int callno);
-static void syscall_pread64_leave(RSIM_Thread *t, int callno);
-static void syscall_read(RSIM_Thread *t, int callno);
-static void syscall_read_enter(RSIM_Thread *t, int callno);
-static void syscall_read_leave(RSIM_Thread*, int callno);
-static void syscall_readlink(RSIM_Thread *t, int callno);
-static void syscall_readlink_enter(RSIM_Thread *t, int callno);
-static void syscall_rename(RSIM_Thread *t, int callno);
-static void syscall_rename_enter(RSIM_Thread *t, int callno);
-static void syscall_rmdir(RSIM_Thread *t, int callno);
-static void syscall_rmdir_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigaction_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigpending_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno);
-static void syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_max(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_min(RSIM_Thread *t, int callno);
-static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
-static void syscall_sched_setparam(RSIM_Thread *t, int callno);
-static void syscall_sched_setparam_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_setscheduler(RSIM_Thread *t, int callno);
-static void syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno);
-static void syscall_sched_yield(RSIM_Thread *t, int callno);
-static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
-static void syscall_select(RSIM_Thread *t, int callno);
-static void syscall_select_enter(RSIM_Thread *t, int callno);
-static void syscall_select_leave(RSIM_Thread *t, int callno);
-static void syscall_setgroups32_enter(RSIM_Thread *t, int callno);
-static void syscall_setgroups32(RSIM_Thread *t, int callno);
-static void syscall_set_robust_list(RSIM_Thread *t, int callno);
-static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
-static void syscall_set_thread_area(RSIM_Thread *t, int callno);
-static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
-static void syscall_set_thread_area_leave(RSIM_Thread *t, int callno);
-static void syscall_set_tid_address(RSIM_Thread *t, int callno);
-static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
-static void syscall_setpgid(RSIM_Thread *t, int callno);
-static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
-static void syscall_setrlimit(RSIM_Thread *t, int callno);
-static void syscall_setrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack_enter(RSIM_Thread *t, int callno);
-static void syscall_sigaltstack_leave(RSIM_Thread *t, int callno);
-static void syscall_sigreturn(RSIM_Thread *t, int callno);
-static void syscall_sigreturn_enter(RSIM_Thread *t, int callno);
-static void syscall_sigreturn_leave(RSIM_Thread *t, int callno);
-static void syscall_socketcall(RSIM_Thread *t, int callno);
-static void syscall_socketcall_enter(RSIM_Thread *t, int callno);
-static void syscall_socketcall_leave(RSIM_Thread *t, int callno);
-static void syscall_stat64(RSIM_Thread *t, int callno);
-static void syscall_stat64_enter(RSIM_Thread *t, int callno);
-static void syscall_stat64_leave(RSIM_Thread *t, int callno);
-static void syscall_statfs(RSIM_Thread *t, int callno);
-static void syscall_statfs64(RSIM_Thread *t, int callno);
-static void syscall_statfs64_enter(RSIM_Thread *t, int callno);
-static void syscall_statfs64_leave(RSIM_Thread *t, int callno);
-static void syscall_statfs_enter(RSIM_Thread *t, int callno);
-static void syscall_statfs_leave(RSIM_Thread *t, int callno);
-static void syscall_symlink(RSIM_Thread *t, int callno);
-static void syscall_symlink_enter(RSIM_Thread *t, int callno);
-static void syscall_sync(RSIM_Thread *t, int callno);
-static void syscall_sync_enter(RSIM_Thread *t, int callno);
-static void syscall_sysinfo(RSIM_Thread *t, int callno);
-static void syscall_sysinfo_enter(RSIM_Thread *t, int callno);
-static void syscall_tgkill(RSIM_Thread *t, int callno);
-static void syscall_tgkill_enter(RSIM_Thread *t, int callno);
-static void syscall_time(RSIM_Thread *t, int callno);
-static void syscall_time_enter(RSIM_Thread *t, int callno);
-static void syscall_time_leave(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit_enter(RSIM_Thread *t, int callno);
-static void syscall_ugetrlimit_leave(RSIM_Thread *t, int callno);
-static void syscall_umask(RSIM_Thread *t, int callno);
-static void syscall_umask_enter(RSIM_Thread *t, int callno);
-static void syscall_uname(RSIM_Thread *t, int callno);
-static void syscall_uname_enter(RSIM_Thread *t, int callno);
-static void syscall_uname_leave(RSIM_Thread *t, int callno);
-static void syscall_unlink(RSIM_Thread *t, int callno);
-static void syscall_unlink_enter(RSIM_Thread *t, int callno);
-static void syscall_utime(RSIM_Thread *t, int callno);
-static void syscall_utime_enter(RSIM_Thread *t, int callno);
-static void syscall_utimes(RSIM_Thread *t, int callno);
-static void syscall_utimes_enter(RSIM_Thread *t, int callno);
-static void syscall_wait4(RSIM_Thread *t, int callno);
-static void syscall_wait4_enter(RSIM_Thread *t, int callno);
-static void syscall_wait4_leave(RSIM_Thread *t, int callno);
-static void syscall_waitpid(RSIM_Thread *t, int callno);
-static void syscall_waitpid_enter(RSIM_Thread *t, int callno);
-static void syscall_waitpid_leave(RSIM_Thread *t, int callno);
-static void syscall_write(RSIM_Thread *t, int callno);
-static void syscall_write_enter(RSIM_Thread *t, int callno);
-static void syscall_writev(RSIM_Thread *t, int callno);
-static void syscall_writev_enter(RSIM_Thread *t, int callno);
-
 void
 RSIM_Linux32::init()
 {
     if (interpreterBaseVa() == 0)
         interpreterBaseVa(0x40000000);
 
+    // System call registers.
+    syscallReturnRegister(RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bx, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_cx, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_dx, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_si, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_di, 0, 32));
+    syscallArgumentRegisters().push_back(RegisterDescriptor(x86_regclass_gpr, x86_gpr_bp, 0, 32));
 
 #   define SC_REG(NUM, NAME, LEAVE)                                                                                            \
-        syscall_define((NUM), syscall_##NAME##_enter, syscall_##NAME, syscall_##LEAVE##_leave);
+        syscall_define((NUM), syscall_##NAME##_enter, syscall_##NAME##_body, syscall_##LEAVE##_leave);
 
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 32-bit syscall numbers here. */
@@ -628,22 +360,16 @@ RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
     return sp;
 }
 
-static void
-syscall_default_leave(RSIM_Thread *t, int callno)
-{
-    t->syscall_leave("d");
-}
-
 /*******************************************************************************************************************************/
 
-static void
-syscall_exit_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("exit", "d");
 }
 
-static void
-syscall_exit(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_body(RSIM_Thread *t, int callno)
 {
     if (t->clear_child_tid) {
         uint32_t zero = 0;
@@ -659,8 +385,8 @@ syscall_exit(RSIM_Thread *t, int callno)
     throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), false); /* false=>exit only this thread */
 }
 
-static void
-syscall_exit_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the exit system call body was skipped over. */
     t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
@@ -668,14 +394,14 @@ syscall_exit_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_read_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_read_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("read", "dpd");
 }
 
-static void
-syscall_read(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_read_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0);
     uint32_t buf_va=t->syscall_arg(1), size=t->syscall_arg(2);
@@ -690,8 +416,8 @@ syscall_read(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_read_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_read_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
     t->syscall_leave("d-b", nread>0?nread:0);
@@ -699,14 +425,14 @@ syscall_read_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_write_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_write_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("write", "dbd", t->syscall_arg(2));
 }
 
-static void
-syscall_write(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_write_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0);
     uint32_t buf_va=t->syscall_arg(1);
@@ -727,8 +453,8 @@ syscall_write(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_open_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_open_enter(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(1) & O_CREAT) {
         t->syscall_enter("open", "sff", open_flags, file_mode_flags);
@@ -737,8 +463,8 @@ syscall_open_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_open(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_open_body(RSIM_Thread *t, int callno)
 {
     uint32_t filename_va=t->syscall_arg(0);
     bool error;
@@ -765,14 +491,14 @@ syscall_open(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_close_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_close_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("close", "d");
 }
 
-static void
-syscall_close(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_close_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0);
     if (1==fd || 2==fd) {
@@ -786,15 +512,15 @@ syscall_close(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_waitpid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_waitpid_enter(RSIM_Thread *t, int callno)
 {
     static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
     t->syscall_enter("waitpid", "dpf", wflags);
 }
 
-static void
-syscall_waitpid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_waitpid_body(RSIM_Thread *t, int callno)
 {
     pid_t pid=t->syscall_arg(0);
     uint32_t status_va=t->syscall_arg(1);
@@ -812,22 +538,22 @@ syscall_waitpid(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_waitpid_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", 4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_creat_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_creat_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("creat", "sd");
 }
 
-static void
-syscall_creat(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_creat_body(RSIM_Thread *t, int callno)
 {
     uint32_t filename = t->syscall_arg(0);
     bool error;
@@ -849,14 +575,14 @@ syscall_creat(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_link_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_link_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("link", "ss");
 }
 
-static void
-syscall_link(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_link_body(RSIM_Thread *t, int callno)
 {
     bool error;
 
@@ -877,14 +603,14 @@ syscall_link(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_unlink_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_unlink_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("unlink", "s");
 }
 
-static void
-syscall_unlink(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_unlink_body(RSIM_Thread *t, int callno)
 {
     uint32_t filename_va = t->syscall_arg(0);
     bool error;
@@ -905,14 +631,14 @@ syscall_unlink(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_execve_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_execve_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("execve", "spp");
 }
 
-static void
-syscall_execve(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_execve_body(RSIM_Thread *t, int callno)
 {
     bool error;
 
@@ -971,14 +697,14 @@ syscall_execve(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_chdir_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chdir_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("chdir", "s");
 }
 
-static void
-syscall_chdir(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chdir_body(RSIM_Thread *t, int callno)
 {
     uint32_t path = t->syscall_arg(0);
     bool error;
@@ -999,14 +725,14 @@ syscall_chdir(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_time_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_time_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("time", "p");
 }
 
-static void
-syscall_time(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
 {
     time_t result = time(NULL);
     if (t->syscall_arg(0)) {
@@ -1018,22 +744,22 @@ syscall_time(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_time_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("t");
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_mknod_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mknod_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mknod", "sfd", file_mode_flags);
 }
 
-static void
-syscall_mknod(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mknod_body(RSIM_Thread *t, int callno)
 {
     uint32_t path_va = t->syscall_arg(0);
     int mode = t->syscall_arg(1);
@@ -1050,14 +776,14 @@ syscall_mknod(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_chmod_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chmod_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("chmod", "sd");
 }
 
-static void
-syscall_chmod(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chmod_body(RSIM_Thread *t, int callno)
 {
     uint32_t filename = t->syscall_arg(0);
     bool error;
@@ -1074,14 +800,14 @@ syscall_chmod(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_lseek_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_lseek_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("lseek", "ddf", seek_whence);
 }
 
-static void
-syscall_lseek(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_lseek_body(RSIM_Thread *t, int callno)
 {
     off_t result = lseek(t->syscall_arg(0), t->syscall_arg(1), t->syscall_arg(2));
     t->syscall_return(-1==result?-errno:result);
@@ -1089,42 +815,42 @@ syscall_lseek(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getpid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getpid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getpid", "");
 }
 
-static void
-syscall_getpid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getpid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getpid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getuid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getuid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getuid", "");
 }
 
-static void
-syscall_getuid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getuid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getuid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_alarm_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_alarm_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("alarm", "d");
 }
 
-static void
-syscall_alarm(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_alarm_body(RSIM_Thread *t, int callno)
 {
     int result = alarm(t->syscall_arg(0));
     t->syscall_return(result);
@@ -1132,21 +858,21 @@ syscall_alarm(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_pause_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pause_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("pause", "");
 }
 
-static void
-syscall_pause(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pause_body(RSIM_Thread *t, int callno)
 {
     t->syscall_info.signo = t->sys_sigsuspend(NULL);
     t->syscall_return(-EINTR);
 }
 
-static void
-syscall_pause_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pause_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d");
     if (t->syscall_info.signo>0) {
@@ -1159,14 +885,14 @@ syscall_pause_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_utime_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_utime_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("utime", "sp");
 }
 
-static void
-syscall_utime(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_utime_body(RSIM_Thread *t, int callno)
 {
     bool error;
     std::string filename = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
@@ -1205,39 +931,14 @@ syscall_utime(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_access_enter(RSIM_Thread *t, int callno)
-{
-    static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
-    t->syscall_enter("access", "sf", flags);
-}
-
-static void
-syscall_access(RSIM_Thread *t, int callno)
-{
-    uint32_t name_va=t->syscall_arg(0);
-    bool error;
-    std::string name = t->get_process()->read_string(name_va, 0, &error);
-    if (error) {
-        t->syscall_return(-EFAULT);
-        return;
-    }
-    int mode=t->syscall_arg(1);
-    int result = access(name.c_str(), mode);
-    if (-1==result) result = -errno;
-    t->syscall_return(result);
-}
-
-/*******************************************************************************************************************************/
-
-static void
-syscall_sync_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sync_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sync", "");
 }
 
-static void
-syscall_sync(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sync_body(RSIM_Thread *t, int callno)
 {
     sync();
     t->syscall_return(0);
@@ -1245,14 +946,14 @@ syscall_sync(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_kill_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_kill_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("kill", "df", signal_names);
 }
 
-static void
-syscall_kill(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_kill_body(RSIM_Thread *t, int callno)
 {
     pid_t pid=t->syscall_arg(0);
     int signo=t->syscall_arg(1);
@@ -1262,14 +963,14 @@ syscall_kill(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rename_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rename_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rename", "ss");
 }
 
-static void
-syscall_rename(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rename_body(RSIM_Thread *t, int callno)
 {
     bool error;
 
@@ -1290,14 +991,14 @@ syscall_rename(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_mkdir_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mkdir_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mkdir", "sd");
 }
 
-static void
-syscall_mkdir(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mkdir_body(RSIM_Thread *t, int callno)
 {
     uint32_t pathname = t->syscall_arg(0);
     bool error;
@@ -1315,14 +1016,14 @@ syscall_mkdir(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rmdir_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rmdir_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rmdir", "s");
 }
 
-static void
-syscall_rmdir(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rmdir_body(RSIM_Thread *t, int callno)
 {
     uint32_t pathname = t->syscall_arg(0);
     bool error;
@@ -1339,14 +1040,14 @@ syscall_rmdir(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_dup_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_dup_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("dup", "d");
 }
 
-static void
-syscall_dup(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_dup_body(RSIM_Thread *t, int callno)
 {
     uint32_t fd = t->syscall_arg(0);
     int result = dup(fd);
@@ -1356,14 +1057,14 @@ syscall_dup(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_pipe_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("pipe", "p");
 }
 
-static void
-syscall_pipe(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe_body(RSIM_Thread *t, int callno)
 {
     int32_t guest[2];
     int host[2];
@@ -1385,22 +1086,22 @@ syscall_pipe(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_pipe_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", (size_t)8, print_int_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_pipe2_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe2_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("pipe", "pf", open_flags);
 }
 
-static void
-syscall_pipe2(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe2_body(RSIM_Thread *t, int callno)
 {
 #ifdef HAVE_PIPE2
     int flags = t->syscall_arg(1);
@@ -1427,79 +1128,58 @@ syscall_pipe2(RSIM_Thread *t, int callno)
 #endif
 }
 
-static void
-syscall_pipe2_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pipe2_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", (size_t)8, print_int_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_brk_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("brk", "x");
-}
-
-static void
-syscall_brk(RSIM_Thread *t, int callno)
-{
-    uint32_t newbrk = t->syscall_arg(0);
-    t->syscall_return(t->get_process()->mem_setbrk(newbrk, t->tracing(TRACE_MMAP)));
-}
-
-static void
-syscall_brk_leave(RSIM_Thread *t, int callno)
-{
-    t->syscall_leave("p");
-}
-
-/*******************************************************************************************************************************/
-
-static void
-syscall_getgid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getgid", "");
 }
 
-static void
-syscall_getgid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getgid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_geteuid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_geteuid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("geteuid", "");
 }
 
-static void
-syscall_geteuid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_geteuid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(geteuid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getegid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getegid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getegid", "");
 }
 
-static void
-syscall_getegid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getegid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getegid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_ioctl_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ioctl_enter(RSIM_Thread *t, int callno)
 {
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
@@ -1532,8 +1212,8 @@ syscall_ioctl_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_ioctl(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0);
     uint32_t cmd=t->syscall_arg(1);
@@ -1697,8 +1377,8 @@ syscall_ioctl(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_ioctl_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
 {
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
@@ -1716,14 +1396,14 @@ syscall_ioctl_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_setpgid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setpgid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("setpgid", "dd");
 }
 
-static void
-syscall_setpgid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setpgid_body(RSIM_Thread *t, int callno)
 {
     pid_t pid=t->syscall_arg(0), pgid=t->syscall_arg(1);
     int result = setpgid(pid, pgid);
@@ -1733,14 +1413,14 @@ syscall_setpgid(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_umask_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_umask_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("umask", "d");
 }
 
-static void
-syscall_umask(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_umask_body(RSIM_Thread *t, int callno)
 {
     mode_t mode = t->syscall_arg(0);
     int result = syscall(SYS_umask, mode); 
@@ -1750,14 +1430,14 @@ syscall_umask(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_dup2_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_dup2_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("dup2", "dd");
 }
 
-static void
-syscall_dup2(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_dup2_body(RSIM_Thread *t, int callno)
 {
     int result = dup2(t->syscall_arg(0), t->syscall_arg(1));
     t->syscall_return(-1==result?-errno:result);
@@ -1765,42 +1445,42 @@ syscall_dup2(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getppid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getppid_enter(RSIM_Thread *t, int callno)
 {
             t->syscall_enter("getppid", "");
 }
 
-static void
-syscall_getppid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getppid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getppid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getpgrp_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getpgrp_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getpgrp", "");
 }
 
-static void
-syscall_getpgrp(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getpgrp_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(getpgrp());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_setrlimit_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setrlimit_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("setrlimit", "fP", rlimit_resources, 8, print_rlimit);
 }
 
-static void
-syscall_setrlimit(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setrlimit_body(RSIM_Thread *t, int callno)
 {
     int resource = t->syscall_arg(0);
     uint32_t rlimit_va = t->syscall_arg(1);
@@ -1816,34 +1496,34 @@ syscall_setrlimit(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_ugetrlimit_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ugetrlimit_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("ugetrlimit", "fp", rlimit_resources);
 }
 
-static void
-syscall_ugetrlimit(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ugetrlimit_body(RSIM_Thread *t, int callno)
 {
-    syscall_getrlimit(t, callno);
+    syscall_getrlimit_body(t, callno);
 }
 
-static void
-syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", 8, print_rlimit);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getrlimit_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getrlimit_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getrlimit", "fp", rlimit_resources);
 }
 
-static void
-syscall_getrlimit(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getrlimit_body(RSIM_Thread *t, int callno)
 {
     int resource = t->syscall_arg(0);
     uint32_t rlimit_va = t->syscall_arg(1);
@@ -1865,22 +1545,22 @@ syscall_getrlimit(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_getrlimit_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", 8, print_rlimit);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_gettimeofday_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_gettimeofday_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("gettimeofday", "p");
 }
 
-static void
-syscall_gettimeofday(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
 {
     uint32_t tp = t->syscall_arg(0);
     struct timeval host_time;
@@ -1899,22 +1579,22 @@ syscall_gettimeofday(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_symlink_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_symlink_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("symlink", "ss");
 }
 
-static void
-syscall_symlink(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_symlink_body(RSIM_Thread *t, int callno)
 {
     uint32_t oldpath=t->syscall_arg(0), newpath=t->syscall_arg(1);
     bool error;
@@ -1935,14 +1615,14 @@ syscall_symlink(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_readlink_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_readlink_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("readlink", "spd");
 }
 
-static void
-syscall_readlink(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_readlink_body(RSIM_Thread *t, int callno)
 {
     uint32_t path=t->syscall_arg(0), buf_va=t->syscall_arg(1), bufsize=t->syscall_arg(2);
     char sys_buf[bufsize];
@@ -1964,15 +1644,15 @@ syscall_readlink(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_mmap_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mmap", "P", sizeof(mmap_arg_struct_32), print_mmap_arg_struct_32);
 }
 
 /* See also: syscall_mmap2 */
-static void
-syscall_mmap(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
 {
     mmap_arg_struct_32 args;
     uint32_t args_va = t->syscall_arg(0);
@@ -1993,8 +1673,8 @@ syscall_mmap(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_mmap_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("Dp");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
@@ -2002,14 +1682,14 @@ syscall_mmap_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_munmap_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_munmap_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("munmap", "pd");
 }
 
-static void
-syscall_munmap(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_munmap_body(RSIM_Thread *t, int callno)
 {
     uint32_t va=t->syscall_arg(0);
     uint32_t sz=t->syscall_arg(1);
@@ -2028,14 +1708,14 @@ syscall_munmap(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_ftruncate_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ftruncate_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("ftruncate", "dd");
 }
 
-static void
-syscall_ftruncate(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ftruncate_body(RSIM_Thread *t, int callno)
 {
     int fd = t->syscall_arg(0);
     off_t len = t->syscall_arg(1);
@@ -2045,14 +1725,14 @@ syscall_ftruncate(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fchmod_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchmod_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fchmod", "dd");
 }
 
-static void
-syscall_fchmod(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchmod_body(RSIM_Thread *t, int callno)
 {
     uint32_t fd = t->syscall_arg(0);
     mode_t mode = t->syscall_arg(1);
@@ -2064,14 +1744,14 @@ syscall_fchmod(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fchown_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchown_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fchown", "ddd");
 }
 
-static void
-syscall_fchown(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchown_body(RSIM_Thread *t, int callno)
 {
     uint32_t fd = t->syscall_arg(0);
     int user = t->syscall_arg(1);
@@ -2082,14 +1762,14 @@ syscall_fchown(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_statfs_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("statfs", "sp");
 }
 
-static void
-syscall_statfs(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs_body(RSIM_Thread *t, int callno)
 {
     int result;
     statfs_32 guest_statfs;
@@ -2123,22 +1803,22 @@ syscall_statfs(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_statfs_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fstatfs_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fstatfs", "dp");
 }
 
-static void
-syscall_fstatfs(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs_body(RSIM_Thread *t, int callno)
 {
     int result;
     statfs_32 guest_statfs;
@@ -2165,8 +1845,8 @@ syscall_fstatfs(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_fstatfs_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
 }
@@ -2391,8 +2071,8 @@ cmsg_copy_all(RSIM_Thread *t, const msghdr &host, msghdr_32 &guest)
     return retval;
 }
 
-static void
-syscall_socketcall_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_socketcall_enter(RSIM_Thread *t, int callno)
 {
     uint32_t a[6];
     switch (t->syscall_arg(0)) {
@@ -2892,8 +2572,8 @@ sys_setsockopt(RSIM_Thread *t, int fd, int level, int optname, uint32_t optval_v
     t->syscall_return(result);
 }
 
-static void
-syscall_socketcall(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_socketcall_body(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
      * Linux kernel. See linux/net/socket.c. */
@@ -3015,8 +2695,8 @@ syscall_socketcall(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_socketcall_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
 {
     uint32_t a[7];
     a[0] = t->syscall_arg(-1);
@@ -3071,15 +2751,15 @@ syscall_socketcall_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_wait4_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_wait4_enter(RSIM_Thread *t, int callno)
 {
     static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
     t->syscall_enter("wait4", "dpfp", wflags);
 }
 
-static void
-syscall_wait4(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
 {
     pid_t pid=t->syscall_arg(0);
     uint32_t status_va=t->syscall_arg(1), rusage_va=t->syscall_arg(3);
@@ -3141,22 +2821,22 @@ syscall_wait4(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_wait4_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_wait4_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", 4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sysinfo_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sysinfo", "p");
 }
 
-static void
-syscall_sysinfo(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sysinfo_body(RSIM_Thread *t, int callno)
 {
     static const size_t guest_extra = 20 - 2*sizeof(uint32_t) - sizeof(int32_t);
     static const size_t host_extra  = 20 - 2*sizeof(long)     - sizeof(int);
@@ -3229,8 +2909,8 @@ syscall_sysinfo(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_ipc_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ipc_enter(RSIM_Thread *t, int callno)
 {
     unsigned call = t->syscall_arg(0) & 0xffff;
     int version = t->syscall_arg(0) >> 16;
@@ -4087,8 +3767,8 @@ sys_shmat(RSIM_Thread *t, uint32_t shmid, uint32_t shmflg, uint32_t result_va, u
         t->syscall_return(result);
 }
 
-static void
-syscall_ipc(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ipc_body(RSIM_Thread *t, int callno)
 {
     /* Return value is written to eax by these helper functions. The structure of this code closely follows that in the
      * Linux kernel. */
@@ -4153,8 +3833,8 @@ syscall_ipc(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_ipc_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
 {
     Sawyer::Message::Stream mtrace(t->tracing(TRACE_MMAP));
     unsigned call = t->syscall_arg(0) & 0xffff;
@@ -4214,14 +3894,14 @@ syscall_ipc_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fsync_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fsync_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fsync", "d");
 }
 
-static void
-syscall_fsync(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fsync_body(RSIM_Thread *t, int callno)
 {
     int result = fsync( t->syscall_arg(0));
     t->syscall_return(-1==result?-errno:result);
@@ -4229,14 +3909,14 @@ syscall_fsync(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sigreturn_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigreturn_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sigreturn", "");
 }
 
-static void
-syscall_sigreturn(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigreturn_body(RSIM_Thread *t, int callno)
 {
     int status = t->sys_sigreturn();
     if (status>=0) {
@@ -4246,8 +3926,8 @@ syscall_sigreturn(RSIM_Thread *t, int callno)
     t->syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
 }
 
-static void
-syscall_sigreturn_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigreturn_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the sigreturn system call body was skipped over. */
     t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
@@ -4255,8 +3935,8 @@ syscall_sigreturn_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_clone_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clone_enter(RSIM_Thread *t, int callno)
 {
     /* From linux arch/x86/kernel/process.c:
      *    long sys_clone(unsigned long clone_flags, unsigned long newsp,
@@ -4376,8 +4056,8 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
     }
 }
 
-static void
-syscall_clone(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clone_body(RSIM_Thread *t, int callno)
 {
     unsigned flags = t->syscall_arg(0);
     uint32_t newsp = t->syscall_arg(1);
@@ -4387,8 +4067,8 @@ syscall_clone(RSIM_Thread *t, int callno)
     t->syscall_return(sys_clone(t, flags, newsp, parent_tid_va, child_tls_va, regs_va));
 }
 
-static void
-syscall_clone_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clone_leave(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(-1)) {
         /* Parent */
@@ -4402,14 +4082,14 @@ syscall_clone_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_uname_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_uname_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("uname", "p");
 }
 
-static void
-syscall_uname(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_uname_body(RSIM_Thread *t, int callno)
 {
     uint32_t dest_va=t->syscall_arg(0);
     new_utsname_32 buf;
@@ -4439,42 +4119,42 @@ syscall_uname(RSIM_Thread *t, int callno)
     t->syscall_return(0);
 }
 
-static void
-syscall_uname_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_uname_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", sizeof(new_utsname_32), print_new_utsname_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_modify_ldt_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_modify_ldt_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("modify_ldt", "dpd");
 }
 
-static void
-syscall_modify_ldt(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_modify_ldt_body(RSIM_Thread *t, int callno)
 {
     assert(!"not implemented yet");
 }
 
-static void
-syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d---"); // FIXME
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fchdir_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchdir_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fchdir", "d");
 }
 
-static void
-syscall_fchdir(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchdir_body(RSIM_Thread *t, int callno)
 {
     uint32_t file_descriptor = t->syscall_arg(0);
 
@@ -4485,14 +4165,14 @@ syscall_fchdir(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_mprotect_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mprotect_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mprotect", "pdf", mmap_pflags);
 }
 
-static void
-syscall_mprotect(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mprotect_body(RSIM_Thread *t, int callno)
 {
     uint32_t va=t->syscall_arg(0), size=t->syscall_arg(1), real_perms=t->syscall_arg(2);
     unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::READABLE : 0) |
@@ -4506,8 +4186,8 @@ syscall_mprotect(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_mprotect_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mprotect_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
@@ -4515,8 +4195,8 @@ syscall_mprotect_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_llseek_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_llseek_enter(RSIM_Thread *t, int callno)
 {
     /* From the linux kernel, arguments are:
      *      unsigned int fd,                // file descriptor
@@ -4528,8 +4208,8 @@ syscall_llseek_enter(RSIM_Thread *t, int callno)
     t->syscall_enter("llseek","dddpf", seek_whence);
 }
 
-static void
-syscall_llseek(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_llseek_body(RSIM_Thread *t, int callno)
 {
     int fd = t->syscall_arg(0);
     off64_t offset = ((off64_t)t->syscall_arg(1) << 32) | t->syscall_arg(2);
@@ -4548,14 +4228,14 @@ syscall_llseek(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getdents_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getdents", "dpd");
 }
 
-static void
-syscall_getdents(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents_body(RSIM_Thread *t, int callno)
 {
     int fd = t->syscall_arg(0), sz = t->syscall_arg(2);
     uint32_t dirent_va = t->syscall_arg(1);
@@ -4563,8 +4243,8 @@ syscall_getdents(RSIM_Thread *t, int callno)
     t->syscall_return(status);
 }
 
-static void
-syscall_getdents_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
     t->syscall_leave("d-P", status>0?status:0, print_dentries_32);
@@ -4572,8 +4252,8 @@ syscall_getdents_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_select_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_select_enter(RSIM_Thread *t, int callno)
 {
     /* From the Linux kernel (fs/select.c):
      *    SYSCALL_DEFINE5(select, int, n, fd_set __user *, inp, fd_set __user *, outp,
@@ -4588,8 +4268,8 @@ syscall_select_enter(RSIM_Thread *t, int callno)
                   sizeof(timeval_32), print_timeval_32);
 }
 
-static void
-syscall_select(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_select_body(RSIM_Thread *t, int callno)
 {
     int fd = t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2), ex_va=t->syscall_arg(3), tv_va=t->syscall_arg(4);
@@ -4641,8 +4321,8 @@ syscall_select(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_select_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_select_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-PPPP",
                   sizeof(fd_set), print_bitvec,
@@ -4653,15 +4333,15 @@ syscall_select_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_msync_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_msync_enter(RSIM_Thread *t, int callno)
 {
     static const Translate msync_flags[] = { TF(MS_ASYNC), TF(MS_SYNC), TF(MS_INVALIDATE), T_END };
     t->syscall_enter("msync", "pdf", msync_flags);
 }
 
-static void
-syscall_msync(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_msync_body(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(0) % 4096) {
         t->syscall_return(-EINVAL);
@@ -4680,14 +4360,14 @@ syscall_msync(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_writev_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_writev_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("writev", "dpd");
 }
 
-static void
-syscall_writev(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
 {
     Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
     uint32_t fd=t->syscall_arg(0), iov_va=t->syscall_arg(1);
@@ -4753,14 +4433,14 @@ syscall_writev(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_setparam_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_setparam_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_setparam", "dP", sizeof(sched_param_32), print_sched_param_32);
 }
 
-static void
-syscall_sched_setparam(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_setparam_body(RSIM_Thread *t, int callno)
 {
     pid_t pid = t->syscall_arg(0);
     rose_addr_t params_va = t->syscall_arg(1);
@@ -4780,14 +4460,14 @@ syscall_sched_setparam(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_setscheduler", "dfP", scheduler_policies, sizeof(sched_param_32), print_sched_param_32);
 }
 
-static void
-syscall_sched_setscheduler(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_setscheduler_body(RSIM_Thread *t, int callno)
 {
     pid_t pid = t->syscall_arg(0);
     int policy = t->syscall_arg(1);
@@ -4808,50 +4488,50 @@ syscall_sched_setscheduler(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_getscheduler", "d");
 }
 
-static void
-syscall_sched_getscheduler(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getscheduler_body(RSIM_Thread *t, int callno)
 {
     pid_t pid = t->syscall_arg(0);
     int result = sched_getscheduler(pid);
     t->syscall_return(-1==result ? -errno : result);
 }
 
-static void
-syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("Df", scheduler_policies);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_yield_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_yield_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_yield", "");
 }
 
-static void
-syscall_sched_yield(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_yield_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(sched_yield());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_get_priority_max", "f", scheduler_policies);
 }
 
-static void
-syscall_sched_get_priority_max(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_get_priority_max_body(RSIM_Thread *t, int callno)
 {
     int policy = t->syscall_arg(0);
     int result = sched_get_priority_max(policy);
@@ -4860,14 +4540,14 @@ syscall_sched_get_priority_max(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_get_priority_min", "f", scheduler_policies);
 }
 
-static void
-syscall_sched_get_priority_min(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_get_priority_min_body(RSIM_Thread *t, int callno)
 {
     int policy = t->syscall_arg(0);
     int result = sched_get_priority_min(policy);
@@ -4876,14 +4556,14 @@ syscall_sched_get_priority_min(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_nanosleep_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_nanosleep_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("nanosleep", "Pp", sizeof(timespec_32), print_timespec_32);
 }
 
-static void
-syscall_nanosleep(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_nanosleep_body(RSIM_Thread *t, int callno)
 {
     timespec_32 guest_ts;
     timespec host_ts_in, host_ts_out;
@@ -4910,16 +4590,16 @@ syscall_nanosleep(RSIM_Thread *t, int callno)
     t->syscall_return(-1==result?-errno:result);
 }
 
-static void
-syscall_nanosleep_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_nanosleep_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_prctl_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_prctl_enter(RSIM_Thread *t, int callno)
 {
     switch (t->syscall_arg(0)) {
         case PR_SET_NAME:
@@ -4931,8 +4611,8 @@ syscall_prctl_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_prctl(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_prctl_body(RSIM_Thread *t, int callno)
 {
     int option = t->syscall_arg(0);
     switch (option) {
@@ -4956,14 +4636,14 @@ syscall_prctl(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rt_sigreturn", "");
 }
 
-static void
-syscall_rt_sigreturn(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigreturn_body(RSIM_Thread *t, int callno)
 {
     int status = t->sys_rt_sigreturn();
     if (status>=0) {
@@ -4973,8 +4653,8 @@ syscall_rt_sigreturn(RSIM_Thread *t, int callno)
     t->syscall_return(status); /* ERROR; specimen will likely segfault shortly! */
 }
 
-static void
-syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the rt_sigreturn system call body was skipped over. */
     t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
@@ -4982,14 +4662,14 @@ syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rt_sigaction_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigaction_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
 }
 
-static void
-syscall_rt_sigaction(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigaction_body(RSIM_Thread *t, int callno)
 {
     int signum=t->syscall_arg(0);
     uint32_t action_va=t->syscall_arg(1), oldact_va=t->syscall_arg(2);
@@ -5028,23 +4708,23 @@ syscall_rt_sigaction(RSIM_Thread *t, int callno)
     t->syscall_return(status);
 }
 
-static void
-syscall_rt_sigaction_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigaction_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno)
 {
     static const Translate flags[] = { TE(SIG_BLOCK), TE(SIG_UNBLOCK), TE(SIG_SETMASK), T_END };
     t->syscall_enter("rt_sigprocmask", "ePp", flags, sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
-static void
-syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigprocmask_body(RSIM_Thread *t, int callno)
 {
     int how=t->syscall_arg(0);
     uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2);
@@ -5071,22 +4751,22 @@ syscall_rt_sigprocmask(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rt_sigpending_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigpending_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rt_sigpending", "p");
 }
 
-static void
-syscall_rt_sigpending(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigpending_body(RSIM_Thread *t, int callno)
 {
     uint32_t sigset_va=t->syscall_arg(0);
     RSIM_SignalHandling::SigSet pending;
@@ -5101,22 +4781,22 @@ syscall_rt_sigpending(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("rt_sigsuspend", "Pd", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
-static void
-syscall_rt_sigsuspend(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigsuspend_body(RSIM_Thread *t, int callno)
 {
     assert(sizeof(RSIM_SignalHandling::SigSet)==t->syscall_arg(1));
     RSIM_SignalHandling::SigSet new_mask;
@@ -5128,8 +4808,8 @@ syscall_rt_sigsuspend(RSIM_Thread *t, int callno)
     t->syscall_return(-EINTR);
 }
 
-static void
-syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d");
     if (t->syscall_info.signo>0) {
@@ -5141,14 +4821,14 @@ syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_pread64_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pread64_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("pread64", "dpdd");
 }
 
-static void
-syscall_pread64(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pread64_body(RSIM_Thread *t, int callno)
 {
     int fd              = t->syscall_arg(0);
     uint32_t buf_va     = t->syscall_arg(1);
@@ -5168,8 +4848,8 @@ syscall_pread64(RSIM_Thread *t, int callno)
     delete[] buf;
 }
 
-static void
-syscall_pread64_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_pread64_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
     t->syscall_leave("d-b", nread>0?nread:0);
@@ -5177,14 +4857,14 @@ syscall_pread64_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getcwd_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getcwd_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getcwd", "pd");
 }
 
-static void
-syscall_getcwd(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getcwd_body(RSIM_Thread *t, int callno)
 {
     static char buf[4096]; /* page size in kernel */
     int result = syscall(SYS_getcwd, buf, sizeof buf);
@@ -5207,22 +4887,22 @@ syscall_getcwd(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_getcwd_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getcwd_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("ds");
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sigaltstack_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigaltstack_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sigaltstack", "Pp", sizeof(stack_32), print_stack_32);
 }
 
-static void
-syscall_sigaltstack(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigaltstack_body(RSIM_Thread *t, int callno)
 {
     uint32_t in_va=t->syscall_arg(0), out_va=t->syscall_arg(1);
 
@@ -5246,22 +4926,22 @@ syscall_sigaltstack(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(stack_32), print_stack_32);
 }
             
 /*******************************************************************************************************************************/
 
-static void
-syscall_mmap2_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap2_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mmap2", "pdffdd", mmap_pflags, mmap_mflags);
 }
 
-static void
-syscall_mmap2(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 {
     uint32_t start=t->syscall_arg(0), size=t->syscall_arg(1), prot=t->syscall_arg(2), flags=t->syscall_arg(3);
     uint32_t offset=t->syscall_arg(5)*PAGE_SIZE;
@@ -5278,8 +4958,8 @@ syscall_mmap2(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_mmap2_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("Dp");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
@@ -5288,8 +4968,8 @@ syscall_mmap2_leave(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 /* Single function for syscalls 195 (stat64), 196 (lstat64), and 197 (fstat64) */
-static void
-syscall_stat64_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_stat64_enter(RSIM_Thread *t, int callno)
 {
     if (195==callno || 196==callno) {
         t->syscall_enter(195==callno?"stat64":"lstat64", "sp");
@@ -5298,8 +4978,8 @@ syscall_stat64_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_stat64(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_stat64_body(RSIM_Thread *t, int callno)
 {
     /* We need to be a bit careful with xstat64 calls. The C library invokes one of the xstat64 system calls, which
      * writes a kernel data structure into a temporary buffer, and which the C library then massages into a struct
@@ -5388,22 +5068,22 @@ syscall_stat64(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_stat64_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_stat64_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getuid32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getuid32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getuid32", "");
 }
 
-static void
-syscall_getuid32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getuid32_body(RSIM_Thread *t, int callno)
 {
     uid_t id = getuid();
     t->syscall_return(id);
@@ -5411,14 +5091,14 @@ syscall_getuid32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getgid32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgid32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getgid32", "");
 }
 
-static void
-syscall_getgid32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgid32_body(RSIM_Thread *t, int callno)
 {
     uid_t id = getgid();
     t->syscall_return(id);
@@ -5426,14 +5106,14 @@ syscall_getgid32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_geteuid32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_geteuid32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("geteuid32", "");
 }
 
-static void
-syscall_geteuid32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_geteuid32_body(RSIM_Thread *t, int callno)
 {
     uid_t id = geteuid();
     t->syscall_return(id);
@@ -5441,14 +5121,14 @@ syscall_geteuid32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getegid32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getegid32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getegid32", "");
 }
 
-static void
-syscall_getegid32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getegid32_body(RSIM_Thread *t, int callno)
 {
     uid_t id = getegid();
     t->syscall_return(id);
@@ -5456,14 +5136,14 @@ syscall_getegid32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getgroups32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgroups32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getgroups32", "dp");
 }
 
-static void
-syscall_getgroups32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgroups32_body(RSIM_Thread *t, int callno)
 {
 
     int nelmts = t->syscall_arg(0);
@@ -5503,8 +5183,8 @@ syscall_getgroups32(RSIM_Thread *t, int callno)
     delete[] list;
 }
 
-static void
-syscall_getgroups32_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getgroups32_leave(RSIM_Thread *t, int callno)
 {
     int ngroups = t->syscall_arg(-1);
     int nreq = t->syscall_arg(0);
@@ -5517,16 +5197,16 @@ syscall_getgroups32_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_setgroups32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setgroups32_enter(RSIM_Thread *t, int callno)
 {
     size_t ngroups = t->syscall_arg(0);
     size_t maxgroups = sysconf(_SC_NGROUPS_MAX);
     t->syscall_enter("setgroups32", "dP", std::min(ngroups, maxgroups)*sizeof(gid_t), print_int_32);
 }
 
-static void
-syscall_setgroups32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_setgroups32_body(RSIM_Thread *t, int callno)
 {
     int nelmts = t->syscall_arg(0);
     uint32_t list_ptr = t->syscall_arg(1);
@@ -5558,14 +5238,14 @@ syscall_setgroups32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fchown32_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchown32_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fchown32", "ddd");
 }
 
-static void
-syscall_fchown32(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchown32_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0), user=t->syscall_arg(1), group=t->syscall_arg(2);
     int result = syscall(SYS_fchown, fd, user, group);
@@ -5574,14 +5254,14 @@ syscall_fchown32(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_chown_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chown_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("chown", "sdd");
 }
 
-static void
-syscall_chown(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_chown_body(RSIM_Thread *t, int callno)
 {
     bool error;
     std::string filename = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
@@ -5597,14 +5277,14 @@ syscall_chown(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_madvise_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_madvise_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("madvise", "xde", madvise_behaviors);
 }
 
-static void
-syscall_madvise(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_madvise_body(RSIM_Thread *t, int callno)
 {
     uint32_t start = t->syscall_arg(0);
     uint32_t size = t->syscall_arg(1);
@@ -5663,14 +5343,14 @@ syscall_madvise(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_getdents64_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents64_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getdents64", "dpd");
 }
 
-static void
-syscall_getdents64(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents64_body(RSIM_Thread *t, int callno)
 {
     int fd = t->syscall_arg(0), sz = t->syscall_arg(2);
     uint32_t dirent_va = t->syscall_arg(1);
@@ -5678,8 +5358,8 @@ syscall_getdents64(RSIM_Thread *t, int callno)
     t->syscall_return(status);
 }
 
-static void
-syscall_getdents64_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
     t->syscall_leave("d-P", status>0?status:0, print_dentries_64);
@@ -5687,8 +5367,8 @@ syscall_getdents64_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fcntl_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fcntl_enter(RSIM_Thread *t, int callno)
 {
     static const Translate fcntl_cmds[] = { TE(F_DUPFD),
                                             TE(F_GETFD), TE(F_SETFD),
@@ -5737,8 +5417,8 @@ syscall_fcntl_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_fcntl(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fcntl_body(RSIM_Thread *t, int callno)
 {
     int fd=t->syscall_arg(0), cmd=t->syscall_arg(1), other=t->syscall_arg(2), result=-EINVAL;
     switch (cmd) {
@@ -5802,8 +5482,8 @@ syscall_fcntl(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_fcntl_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fcntl_leave(RSIM_Thread *t, int callno)
 {
     int cmd=t->syscall_arg(1);
     switch (cmd) {
@@ -5818,22 +5498,22 @@ syscall_fcntl_leave(RSIM_Thread *t, int callno)
     
 /*******************************************************************************************************************************/
 
-static void
-syscall_gettid_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_gettid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("gettid", "");
 }
 
-static void
-syscall_gettid(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_gettid_body(RSIM_Thread *t, int callno)
 {
     t->syscall_return(t->get_tid());
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_futex_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_futex_enter(RSIM_Thread *t, int callno)
 {
     /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
     static const Translate opflags[] = {
@@ -5881,8 +5561,8 @@ syscall_futex_enter(RSIM_Thread *t, int callno)
     }
 }
 
-static void
-syscall_futex(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
 {
     /* Variable arguments */
     uint32_t futex1_va = t->syscall_arg(0);
@@ -5931,22 +5611,22 @@ syscall_futex(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_futex_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_futex_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", (size_t)4, print_int_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("sched_getaffinity", "ddp");
 }
 
-static void
-syscall_sched_getaffinity(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getaffinity_body(RSIM_Thread *t, int callno)
 {
     pid_t pid = t->syscall_arg(0);
     
@@ -5969,8 +5649,8 @@ syscall_sched_getaffinity(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 {
     size_t cpuset_nbits = t->syscall_arg(1);
     size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
@@ -5979,14 +5659,14 @@ syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_set_thread_area_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_thread_area_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("set_thread_area", "P", sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
-static void
-syscall_set_thread_area(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_thread_area_body(RSIM_Thread *t, int callno)
 {
     SegmentDescriptor ud;
     if (sizeof(ud)!=t->get_process()->mem_read(&ud, t->syscall_arg(0), sizeof ud)) {
@@ -6006,8 +5686,8 @@ syscall_set_thread_area(RSIM_Thread *t, int callno)
     t->syscall_return(0);
 }
 
-static void
-syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("dP", sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
@@ -6015,14 +5695,14 @@ syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_exit_group_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_group_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("exit_group", "d");
 }
 
-static void
-syscall_exit_group(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_group_body(RSIM_Thread *t, int callno)
 {
     if (t->clear_child_tid) {
         /* From the set_tid_address(2) man page:
@@ -6040,8 +5720,8 @@ syscall_exit_group(RSIM_Thread *t, int callno)
     throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), true); /* true=>exit entire process */
 }
 
-static void
-syscall_exit_group_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_exit_group_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the exit_group system call body was skipped over. */
     t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
@@ -6049,14 +5729,14 @@ syscall_exit_group_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("set_tid_address", "p");
 }
 
-static void
-syscall_set_tid_address(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
 {
     t->clear_child_tid = t->syscall_arg(0);
     t->syscall_return(getpid());
@@ -6064,14 +5744,14 @@ syscall_set_tid_address(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_clock_settime_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_settime_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("clock_settime", "eP", clock_names, sizeof(timespec_32), print_timespec_32);
 }
 
-static void
-syscall_clock_settime(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_settime_body(RSIM_Thread *t, int callno)
 {
     timespec_32 guest_ts;
     if (sizeof(guest_ts)!=t->get_process()->mem_read(&guest_ts, t->syscall_arg(1), sizeof guest_ts)) {
@@ -6088,14 +5768,14 @@ syscall_clock_settime(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_clock_gettime_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_gettime_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("clock_gettime", "ep", clock_names);
 }
 
-static void
-syscall_clock_gettime(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_gettime_body(RSIM_Thread *t, int callno)
 {
     static timespec host_ts;
     int result = syscall(SYS_clock_gettime, t->syscall_arg(0), &host_ts);
@@ -6115,22 +5795,22 @@ syscall_clock_gettime(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_clock_getres_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_getres_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("clock_getres", "ep", clock_names);
 }
 
-static void
-syscall_clock_getres(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_getres_body(RSIM_Thread *t, int callno)
 {
     static timespec host_ts;
     timespec *host_tsp = t->syscall_arg(1) ? &host_ts : NULL;
@@ -6153,22 +5833,22 @@ syscall_clock_getres(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_clock_getres_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_clock_getres_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_statfs64_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs64_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("statfs64", "sdp");
 }
 
-static void
-syscall_statfs64(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs64_body(RSIM_Thread *t, int callno)
 {
     ROSE_ASSERT(t->syscall_arg(1)==sizeof(statfs64_32));
     bool error;
@@ -6200,22 +5880,22 @@ syscall_statfs64(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_statfs64_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_statfs64_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("fstatfs64", "ddp");
 }
 
-static void
-syscall_fstatfs64(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
 {
     int fd                               = t->syscall_arg(0);
     size_t sb_sz __attribute__((unused)) = t->syscall_arg(1);
@@ -6245,22 +5925,22 @@ syscall_fstatfs64(RSIM_Thread *t, int callno)
     t->syscall_return(result);
 }
 
-static void
-syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_tgkill_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_tgkill_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("tgkill", "ddf", signal_names);
 }
 
-static void
-syscall_tgkill(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_tgkill_body(RSIM_Thread *t, int callno)
 {
     int tgid=t->syscall_arg(0), tid=t->syscall_arg(1), sig=t->syscall_arg(2);
     int result = t->sys_tgkill(tgid, tid, sig);
@@ -6269,14 +5949,14 @@ syscall_tgkill(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_utimes_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_utimes_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("utimes", "s");
 }
 
-static void
-syscall_utimes(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
 {
     /*
                 int utimes(const char *filename, const struct timeval times[2]);
@@ -6335,16 +6015,16 @@ syscall_utimes(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_fchmodat_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchmodat_enter(RSIM_Thread *t, int callno)
 {
     /* Note that the library fchmodat() takes a fourth flags argument with the only defined bit being AT_SYMLINK_NOFOLLOW, but
      * the Linux 2.6.32 man page notes that "this flag is not currently implemented." */
     t->syscall_enter("fchmodat", "dsf-", file_mode_flags /*, fchmod_flags*/);
 }
 
-static void
-syscall_fchmodat(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_fchmodat_body(RSIM_Thread *t, int callno)
 {
     int dirfd = t->syscall_arg(0);
     uint32_t path_va = t->syscall_arg(1);
@@ -6363,14 +6043,14 @@ syscall_fchmodat(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-static void
-syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("set_robust_list", "Pd", sizeof(robust_list_head_32), print_robust_list_head_32);
 }
 
-static void
-syscall_set_robust_list(RSIM_Thread *t, int callno)
+void
+RSIM_Linux32::syscall_set_robust_list_body(RSIM_Thread *t, int callno)
 {
     uint32_t head_va=t->syscall_arg(0), len=t->syscall_arg(1);
     if (len!=sizeof(robust_list_head_32)) {

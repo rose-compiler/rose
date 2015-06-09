@@ -1,4 +1,4 @@
-#ifndef ROSE_RSIM_Simulator_H
+#ifndef ROSE_RSIM_Simulator_H  
 #define ROSE_RSIM_Simulator_H
 
 /* Order matters */
@@ -123,7 +123,7 @@
  * // thread, but does not start executing it.
  * sim.loadSpecimen(argc-1, argv+1);
  *
- * // Get ready to execute by making the specified simulator
+ * // Getready to execute by making the specified simulator
  * // active.  This sets up signal handlers, etc.
  * sim.activate();
  *
@@ -193,6 +193,9 @@ private:
     std::string exeName_;                               // Specimen name as given on command-line, original argv[0]
     std::vector<std::string> exeArgs_;                  // Specimen argv, eventually with PATH-resolved argv[0]
     Settings settings_;                                 // Settings from the command-line
+    std::vector<RegisterDescriptor> syscallArgRegs_;    // Registers that store system call arguments
+    RegisterDescriptor syscallNumReg_;                  // Register that stores the system call number
+    RegisterDescriptor syscallRetReg_;                  // Register to hold the system call result
     
 public:
     /** Default constructor. Construct a new simulator object, initializing its properties to sane values, but do not create an
@@ -695,6 +698,20 @@ public:
                         void (*body )(RSIM_Thread*, int callno),
                         void (*leave)(RSIM_Thread*, int callno));
 
+    /** Property: Register that stores a syscall return value.
+     *
+     * @{ */
+    const RegisterDescriptor& syscallReturnRegister() const { return syscallRetReg_; }
+    void syscallReturnRegister(const RegisterDescriptor &r) { syscallRetReg_ = r; }
+    /** @} */
+
+    /** Property: System call argument registers.
+     *
+     * @{ */
+    const std::vector<RegisterDescriptor>& syscallArgumentRegisters() const { return syscallArgRegs_; }
+    std::vector<RegisterDescriptor>& syscallArgumentRegisters() { return syscallArgRegs_; }
+    /** @} */
+
 private:
     std::map<int/*callno*/, SystemCall*> syscall_table;
 
@@ -717,6 +734,9 @@ public:
 
     /** Initialize stack for main thread. */
     virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) = 0;
+
+    /** Initialize the simulated operating system. */
+    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) = 0;
 
     /***************************************************************************************************************************/
     

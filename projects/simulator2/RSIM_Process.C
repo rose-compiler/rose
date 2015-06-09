@@ -228,6 +228,9 @@ RSIM_Process::load() {
         simulator->loadSpecimenArch(this, interpretation, interpname);
     }
 
+    // Initialize the operating system, at least those parts that we're simulating.
+    simulator->initializeSimulatedOs(this, fhdr);
+
     // Create the main thread, but don't allow it to start running yet.  Once a process is up and running there's nothing
     // special about the main thread other than its ID is the thread group for the process.
     PtRegs initialRegisters = simulator->initialRegistersArch();
