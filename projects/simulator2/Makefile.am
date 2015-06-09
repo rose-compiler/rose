@@ -32,6 +32,7 @@ libRSIM_la_SOURCES =				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
+	RSIM_Debugger.C				\
 	RSIM_Futex.C				\
 	RSIM_Linux.C				\
 	RSIM_Linux32.C				\
@@ -47,6 +48,7 @@ include_HEADERS +=				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
+	RSIM_Debugger.h				\
 	RSIM_Futex.h				\
 	RSIM_Linux.h				\
 	RSIM_Linux32.h				\

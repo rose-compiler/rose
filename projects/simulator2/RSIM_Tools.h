@@ -837,23 +837,5 @@ public:
     }
 };
 
-/** Interactive debugger. */
-class InteractiveDebugger: public RSIM_Callbacks::InsnCallback {
-    std::istream &in_;                                  // for reading commands
-    std::ostream &out_;                                 // for writing results
-    bool detached_;                                     // don't ask for commands
-    size_t singleStep_;                                 // stop when this hits zero
-    AddressIntervalSet breakPoints_;                    // when to stop if not single stepping
-public:
-    InteractiveDebugger(std::istream &in, std::ostream &out): in_(in), out_(out), detached_(false), singleStep_(0) {}
-    virtual InteractiveDebugger *clone() { return this; }
-    virtual bool operator()(bool enabled, const Args&);
-    std::vector<std::string> readCommand(const Args&);
-    rose_addr_t parseInteger(std::string);
-    void registerCommand(const Args&, std::vector<std::string> &cmd);
-    void setCommand(const Args&, std::vector<std::string> &cmd);
-};
-
-
 } // namespace
 #endif

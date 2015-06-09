@@ -4,12 +4,13 @@
 
 #ifdef ROSE_ENABLE_SIMULATOR /* protects this whole file */
 
+#include <RSIM_Debugger.h>
 #include <RSIM_Linux32.h>
 #include <RSIM_Linux64.h>
 #include <RSIM_Tools.h>
 #include <Diagnostics.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 
 using namespace rose;
 using namespace rose::Diagnostics;
@@ -22,9 +23,10 @@ enum GuestOs { GUEST_OS_NONE, GUEST_OS_LINUX_x86, GUEST_OS_LINUX_amd64 };
 struct Settings {
     GuestOs guestOs;
     bool catchingSignals;
+    bool usingDebugger;
     RSIM_Simulator::Settings simSettings;
     Settings()
-        : guestOs(GUEST_OS_NONE), catchingSignals(false) {}
+        : guestOs(GUEST_OS_NONE), catchingSignals(false), usingDebugger(false) {}
 };
 
 std::vector<std::string>
@@ -101,6 +103,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .intrinsicValue(false, settings.catchingSignals)
               .hidden(true));
 
+    sg.insert(Switch("debugger")
+              .intrinsicValue(true, settings.usingDebugger)
+              .doc("Invokes a simple interactive debugger.  See RSIM_Tools.C for the commands; this isn't really "
+                   "intended for end users yet."));
+
     return parser
         .with(CommandlineProcessing::genericSwitches())
         .with(sg)                                       // tool-specific
@@ -113,8 +120,8 @@ static void
 simulate(const Settings &settings, const std::vector<std::string> &args, char *envp[]) {
     Simulator sim;
 
-    std::fstream debuggerIo("/dev/tty");
-    sim.install_callback(new RSIM_Tools::InteractiveDebugger(std::cin, std::cout));
+    if (settings.usingDebugger)
+        RSIM_Debugger::attach(sim);
 
     sim.configure(settings.simSettings, envp);
     if (sim.loadSpecimen(args) < 0)

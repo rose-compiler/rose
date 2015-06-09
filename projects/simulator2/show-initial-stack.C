@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <sawyer/IntervalMap.h>
+#include <Sawyer/IntervalMap.h>
 
 using namespace StringUtility;
 
