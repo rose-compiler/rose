@@ -774,7 +774,7 @@ INPUT                  = @top_pwd@/rose.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
                          @top_srcdir@/src/backend/unparser/FortranCodeGeneration/documentation.docs \
                          @top_srcdir@/src/util/FormatRestorer.h \
-                         @top_srcdir@/src/util/sawyer \
+                         @top_srcdir@/src/util/Sawyer \
                          @top_srcdir@/src/util/utilDocumentation.docs \
                          @top_srcdir@/src/util/stringSupport/stringSupportDocumentation.docs \
                          @top_srcdir@/src/util/stringSupport/ \
@@ -866,7 +866,7 @@ EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           = @top_srcdir@/docs/testDoxygen/example1.C \
                          @top_srcdir@/docs/testDoxygen/example1_test.C \
                          @top_srcdir@/docs/testDoxygen/rose_example1_test.C \
-                         @top_srcdir@/src/util/sawyer/docs/examples
+                         @top_srcdir@/src/util/Sawyer/docs/examples
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp
