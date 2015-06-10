@@ -417,14 +417,14 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
 
 void
 RSIM_Linux::syscall_default_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 RSIM_Linux::syscall_brk_enter(RSIM_Thread *t, int callno) {
-    t->syscall_enter("brk", "x");
+    t->syscall_enter("brk").p();
 }
 
 void
@@ -435,7 +435,7 @@ RSIM_Linux::syscall_brk_body(RSIM_Thread *t, int callno) {
 
 void
 RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave("p");
+    t->syscall_leave().p().eret().str("\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -443,7 +443,7 @@ RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux::syscall_access_enter(RSIM_Thread *t, int callno) {
     static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
-    t->syscall_enter("access", "sf", flags);
+    t->syscall_enter("access").s().f(flags);
 }
 
 void

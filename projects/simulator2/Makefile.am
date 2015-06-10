@@ -28,7 +28,6 @@ EXTRA_DIST += README test_status.txt internal_tests.conf syscall_tests.conf pthr
 noinst_LTLIBRARIES = libRSIM.la
 libRSIM_la_CPPFLAGS = $(ROSE_INCLUDES)
 libRSIM_la_SOURCES =				\
-	x86print.C				\
 	RSIM_Adapter.C				\
 	RSIM_Callbacks.C			\
 	RSIM_Common.C				\
@@ -37,6 +36,7 @@ libRSIM_la_SOURCES =				\
 	RSIM_Linux.C				\
 	RSIM_Linux32.C				\
 	RSIM_Linux64.C				\
+	RSIM_Printer.C				\
 	RSIM_Process.C				\
 	RSIM_Semantics.C			\
 	RSIM_SignalHandling.C			\
@@ -44,7 +44,6 @@ libRSIM_la_SOURCES =				\
 	RSIM_Thread.C				\
 	RSIM_Tools.C
 include_HEADERS +=				\
-	x86print.h				\
 	RSIM_Adapter.h				\
 	RSIM_Callbacks.h			\
 	RSIM_Common.h				\
@@ -53,6 +52,7 @@ include_HEADERS +=				\
 	RSIM_Linux.h				\
 	RSIM_Linux32.h				\
 	RSIM_Linux64.h				\
+	RSIM_Printer.h				\
 	RSIM_Process.h				\
 	RSIM_Semantics.h			\
 	RSIM_SignalHandling.h			\

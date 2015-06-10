@@ -380,7 +380,7 @@ RSIM_SignalHandling::generate(const SigInfo &info, RSIM_Process *process, Sawyer
      * arrival message after the target thread's signal delivery message. */
     if (mesg) {
         mesg <<"arrival of ";
-        print_enum(mesg, signal_names, signo);
+        Printer::print_enum(mesg, signal_names, signo);
         mesg <<"(" <<signo <<")" <<s;
         mesg <<" {errno=" <<info.si_errno <<", code=" <<info.si_code;
         if (signo>=FIRST_RT) {

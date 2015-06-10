@@ -125,151 +125,69 @@ RSIM_Thread::current_insn()
     return insn;
 }
 
-
-void
-RSIM_Thread::syscall_arginfo(char format, uint32_t val, ArgInfo *info, va_list *ap)
-{
-    ROSE_ASSERT(info!=NULL);
-    info->val = val;
-    switch (format) {
-        case 'f':       /*flags*/
-        case 'e':       /*enum*/
-            info->xlate = va_arg(*ap, const Translate*);
-            break;
-        case 's': {     /*NUL-terminated string*/
-            info->str = get_process()->read_string(val, 4096, &(info->str_fault));
-            info->str_trunc = (info->str.size() >= 4096);
-            break;
-        }
-        case 'b': {     /* buffer */
-            size_t advertised_size = va_arg(*ap, size_t);
-            assert(advertised_size<10*1000*1000);
-            info->struct_buf = new uint8_t[advertised_size];
-            info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, advertised_size);
-            info->struct_size = 64; /* max print width, measured in columns of output */
-            break;
-        }
-        case 'P': {     /*ptr to a struct*/
-            info->struct_size = va_arg(*ap, size_t);
-            assert(info->struct_size<10*1000*1000);
-            info->struct_printer = va_arg(*ap, ArgInfo::StructPrinter);
-            info->struct_buf = new uint8_t[info->struct_size];
-            info->struct_nread = get_process()->mem_read(info->struct_buf, info->val, info->struct_size);
-            break;
-        }
-    }
+Printer
+RSIM_Thread::print(Sawyer::Message::Stream &m) {
+    return Printer(m, this);
 }
 
-void
-RSIM_Thread::syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app)
-{
+Printer
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint32_t *args) {
+    return Printer(m, this, args);
+}
+
+Printer
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint64_t *args) {
+    return Printer(m, this, args);
+}
+
+Printer
+RSIM_Thread::print(TracingFacility tf) {
+    return print(tracing(tf));
+}
+
+Printer
+RSIM_Thread::syscall_enter(const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-
-    if (m) {
-        assert(strlen(format)<=6);
-        ArgInfo args[6];
-        for (size_t i=0; format[i]; i++)
-            syscall_arginfo(format[i], values?values[i]:syscall_arg(i), args+i, app);
-
-        mfprintf(m)("%s[%"PRId64"](", name, syscall_arg(-1));
-        for (size_t i=0; format && format[i]; i++) {
-            if (i>0) m <<", ";
-            print_single(m, format[i], args+i);
-        }
-        m <<")";
-    }
+    SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
+    return print(m);
 }
 
-void
-RSIM_Thread::syscall_enter(uint32_t *values, const char *name, const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    syscall_enterv(values, name, format, &ap);
-    va_end(ap);
+Printer
+RSIM_Thread::syscall_enter(const uint32_t *args, const std::string &name) {
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
+    SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
+    return print(m, args);
 }
 
-void
-RSIM_Thread::syscall_enter(const char *name, const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    syscall_enterv(NULL, name, format, &ap);
-    va_end(ap);
+Printer
+RSIM_Thread::syscall_enter(const uint64_t *args, const std::string &name) {
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
+    SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
+    return print(m, args);
 }
 
-void
-RSIM_Thread::syscall_leavev(uint32_t *values, const char *format, va_list *app) 
-{
-    bool returns_errno = false;
-    if ('d'==format[0]) {
-        returns_errno = true;
-    } else if ('D'==format[0]) {
-        /* same as 'd' except use next letter for non-error return values */
-        returns_errno = true;
-        format++;
-    }
-
-    ROSE_ASSERT(strlen(format)>=1);
-    Sawyer::Message::Stream &mesg = tracing(TRACE_SYSCALL);
-    if (mesg) {
-        /* System calls return an integer (negative error numbers, non-negative success) */
-        ArgInfo info;
-        RegisterDescriptor reg = get_process()->get_simulator()->syscallReturnRegister();
-        uint64_t unsignedRetval = values ? values[0] : operators()->readRegister(reg)->get_number();
-        int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.get_nbits(), 64);
-        syscall_arginfo(format[0], unsignedRetval, &info, app);
-
-
-        {
-            SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(process->rwlock());
-            mesg <<" = ";
-
-            /* Return value */
-            int error_number = signedRetval < 0 && signedRetval > -256 ? -signedRetval : 0;
-            if (returns_errno && error_number!=0) {
-                mfprintf(mesg)("%"PRId64" ", signedRetval);
-                print_enum(mesg, error_numbers, error_number);
-                mfprintf(mesg)(" (%s)\n", strerror(error_number));
-            } else {
-                print_single(mesg, format[0], &info);
-                mesg <<"\n";
-            }
-
-            /* Additionally, output any other buffer values that were filled in by a successful system call. */
-            if (!returns_errno || (signedRetval<-1024 || signedRetval>=0) || -EINTR==signedRetval) {
-                for (size_t i=1; format[i]; i++) {
-                    if ('-'!=format[i]) {
-                        uint32_t value = values ? values[i] : syscall_arg(i-1);
-                        syscall_arginfo(format[i], value, &info, app);
-                        if ('P'!=format[i] || 0!=value) { /* no need to show null pointers */
-                            mfprintf(mesg)("    result arg%zu = ", i-1);
-                            print_single(mesg, format[i], &info);
-                            mesg <<"\n";
-                        }
-                    }
-                }
-            }
-        }
-    }
+Printer
+RSIM_Thread::syscall_leave() {
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
+    if (m)
+        m <<") = ";
+    return print(m);
 }
 
-void
-RSIM_Thread::syscall_leave(uint32_t *values, const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    syscall_leavev(values, format, &ap);
-    va_end(ap);
+Printer
+RSIM_Thread::syscall_leave(const uint32_t *args) {
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
+    if (m)
+        m <<") = ";
+    return print(m, args);
 }
 
-void
-RSIM_Thread::syscall_leave(const char *format, ...)
-{
-    va_list ap;
-    va_start(ap, format);
-    syscall_leavev(NULL, format, &ap);
-    va_end(ap);
+Printer
+RSIM_Thread::syscall_leave(const uint64_t *args) {
+    Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
+    if (m)
+        m <<") = ";
+    return print(m, args);
 }
 
 uint64_t
@@ -546,7 +464,7 @@ RSIM_Thread::sys_sigreturn()
 
     if (mesg) {
         mesg <<"returning from ";
-        print_enum(mesg, signal_names, frame.signo);
+        Printer::print_enum(mesg, signal_names, frame.signo);
         mesg <<" handler\n";
     }
 

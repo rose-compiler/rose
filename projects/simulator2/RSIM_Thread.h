@@ -315,53 +315,31 @@ public:
      *  eventually replace the switch statement with a table-driven approach more suitable to being extended by the user at run
      *  time along with compile-time support for symbolic emulation. */
     void emulate_syscall();
+
+    /** Return print helper for printing syscall arguments.
+     *
+     * @{ */
+    Printer print(Sawyer::Message::Stream&);
+    Printer print(Sawyer::Message::Stream&, const uint32_t *args);
+    Printer print(Sawyer::Message::Stream&, const uint64_t *args);
+    Printer print(TracingFacility);
+    /** @} */
+
     
     /** Print the name and arguments of a system call in a manner like strace using values in registers.
      *
-     *  The @p name argument should be the name of the system call. The system call number will be automatically appended to the
-     *  name.
+     *  The @p name argument should be the name of the system call. The system call number will be automatically appended to
+     *  the name.  If an array of values is provided then they're used instead of querying from the thread state.
      *
-     *  The @p fmt is a format string describing the following arguments, one character per system call argument.  The following
-     *  formats are allowed:
-     * 
-     *  <ul>
-     *    <li>"-" does not print an argument value, but rather indicates that the argument value is immaterial to the call.
-     *        This is generally only used when unused arguments occur between other used arguments, and not when unused
-     *        arguments are the final arguments.</li>
-     *    <li>"b" is used when the argument is a pointer to a character buffer. An size_t argument should follow in the
-     *        varargs to indicate the total size of the buffer in bytes. In this case, print_buffer() is called to
-     *        display the argument value, escaping unprintable characters, and printing an elipsis if the buffer is large.</li>
-     *    <li>"d" prints the argument as a signed decimal number.</li>
-     *    <li>"D" is reserved for use by syscall_leave().</li>
-     *    <li>"e" interprets the argument as an enum constant. A pointer to a Translation array should appear as the next
-     *        vararg and will be used to convert the numeric argument value into a string.  If the numeric value does not appear
-     *        in the Translation, then the numeric value is printed in place of a string.</li>
-     *    <li>"f" interprets the argument as a set of flag bits. A pinter to a Translation arrray should appear as the next
-     *        vararg and will be used to convert the numeric value into a bit-wise OR expression containing symbols from
-     *        the Translation object.</li>
-     *    <li>"p" interprets the argument as a void pointer and prints a hexadecimal value or the word "null".</li>
-     *    <li>"P" interprets the argument as a typed pointer and prints the pointer value followed by the output from
-     *        a supplied rendering function within curly braces. Two arguments should appear in the varargs list: the size of
-     *        the buffer to which the pointer points, and a function that will render the content of the buffer.</li>
-     *    <li>"s" interprets the argument as a pointer to a NUL-terminated ASCII string and prints the string in a C-like
-     *        syntax.  If the string is long, it will be truncated and followed by an ellipsis.</li>
-     *    <li>"t" interprets the argument as a time_t value and prints a human-readable date and time.</li>
-     *    <li>"x" interprets the argument as an unsigned integer which is printed in hexadecimal format.</li>
-     *    <li>Any other format letter will cause an immediate abort.<li>
-     *  </ul>
+     *  Returns a syscall printer for printing syscall arguments of various formats.
      *
      *  This method produces no output unless system call tracing (TRACE_SYSCALL) is enabled.
-     */
-    void syscall_enter(const char *name, const char *fmt, ...);
-
-    /** Print the name and arguments of a system call in a manner like strace using supplied values.  This is identical to the
-     *  other syscall_enter() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
-     *  the caller. */
-    void syscall_enter(uint32_t *values, const char *name, const char *fmt, ...);
-
-    /** Print the name and arguments of a system call in a manner like strace.  This is intended primarily as an internal
-     *  function called by the syscall_enter() methods. */
-    void syscall_enterv(uint32_t *values, const char *name, const char *format, va_list *app);
+     *
+     * @{ */
+    Printer syscall_enter(const std::string &name);
+    Printer syscall_enter(const uint32_t*, const std::string& name);
+    Printer syscall_enter(const uint64_t*, const std::string& name);
+    /** @} */
 
     /** Returns an argument of a system call. Arguments are numbered beginning at zero. Argument -1 is the syscall number
      * itself (which might only be valid until syscall_return() is invoked. */
@@ -375,34 +353,15 @@ public:
     void syscall_return(int value);
     /** @} */
 
-    /** Print the return value of a system call in a manner like strace.  The format is the same as for the syscall_enter()
-     *  methods except the first letter refers to the system call return value (the remaining letters are the arguments). The
-     *  system call return value is that which was set by the syscall_return() method; the arguments are obtained via the
-     *  syscall_arg() method.
+    /** Print the return value of a system call in a manner like strace.
      *
-     *  If the first format character is "d" or "D" and the system call return value is negative and has an absolute value
-     *  equal to one of the error numbers (from errno.h), then the error symbol and message are printed instead of a decimal
-     *  integer.  If the first character is "D" then the second character serves as the format of the return value when an
-     *  error number is not returned, and following formats are for the arguments. If argument format letters are present
-     *  (other than "-" placeholders), the arguments are printed on lines after the syscall_enter() line.  The most common
-     *  reason for printing arguments during syscall_leave() is to show values that the operating system is returning to the
-     *  user (e.g., the buffer of a read() call).
+     *  Returns a Printer object for printing the return value plus modified arguments.
      *
-     *  The system call simulation code should not output other data to the tracing file between the syscall_enter() and
-     *  syscall_leave() invocations since doing so would mess up the output format.
-     *
-     *  This method produces no output unless system call tracing (TRACE_SYSCALL) is enabled. */
-    void syscall_leave(const char *format, ...);
-
-    /** Print the return value of a system call in a manner like strace but using supplied values. This is identical to the
-     * other syscall_leave() method, except instead of obtaining values from the simulated thread's stack, they are supplied by
-     * the caller. */
-    void syscall_leave(uint32_t *values, const char *format, ...);
-
-    /** Print the return value of a system call. This is intended primarily as an internal function called by the various
-     * syscall_leave() methods. */
-    void syscall_leavev(uint32_t *values, const char *name, va_list *app);
-
+     * @{ */
+    Printer syscall_leave();
+    Printer syscall_leave(const uint32_t *args);
+    Printer syscall_leave(const uint64_t *args);
+    /** @} */
 
 
     /**************************************************************************************************************************
@@ -632,10 +591,6 @@ protected:
 
     /** Constructor helper method. Called only during object construction. */
     void ctor();
-
-    /** Initializes an ArgInfo object to pass to syscall printing functions.  This is called internally by the syscall_enter()
-     *  and syscall_leave() methods. */
-    void syscall_arginfo(char fmt, uint32_t val, ArgInfo *info, va_list *ap);
 
     /**************************************************************************************************************************
      *                                  Data members

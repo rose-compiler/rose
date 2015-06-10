@@ -24,7 +24,7 @@ Sawyer::Message::Facility RSIM_Simulator::mlog;
 static void
 syscall_RSIM_is_present_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("RSIM_is_present", "");
+    t->syscall_enter("RSIM_is_present");
 }
 
 static void
@@ -36,14 +36,14 @@ syscall_RSIM_is_present(RSIM_Thread *t, int callno)
 static void
 syscall_RSIM_is_present_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
 }
 
 /*------------------------------------- message ------------------------------------------------------------------------------*/
 static void
 syscall_RSIM_message_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("RSIM_message", "s");
+    t->syscall_enter("RSIM_message").s();
 }
 
 static void
@@ -55,14 +55,14 @@ syscall_RSIM_message(RSIM_Thread *t, int callno)
 static void
 syscall_RSIM_message_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
 }
 
 /*------------------------------------- delay --------------------------------------------------------------------------------*/
 static void
 syscall_RSIM_delay_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("RSIM_delay", "d");
+    t->syscall_enter("RSIM_delay").d();
 }
 
 static void
@@ -81,7 +81,7 @@ syscall_RSIM_delay(RSIM_Thread *t, int callno)
 static void
 syscall_RSIM_delay_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
 }
 
 /*------------------------------------- transaction --------------------------------------------------------------------------*/
@@ -93,13 +93,13 @@ syscall_RSIM_transaction_enter(RSIM_Thread *t, int callno)
     int cmd = t->syscall_arg(0);
     if (1==cmd) { // rollback
         if (32 == t->get_process()->wordSize()) {
-            t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_32), print_pt_regs_32);
+            t->syscall_enter("RSIM_transaction").e(transaction_flags).P(sizeof(pt_regs_32), print_pt_regs_32);
         } else {
             ASSERT_require(t->get_process()->wordSize() == 64);
-            t->syscall_enter("RSIM_transaction", "eP", transaction_flags, sizeof(pt_regs_64), print_pt_regs_64);
+            t->syscall_enter("RSIM_transaction").e(transaction_flags).P(sizeof(pt_regs_64), print_pt_regs_64);
         }
     } else {
-        t->syscall_enter("RSIM_transaction", "ep", transaction_flags);
+        t->syscall_enter("RSIM_transaction").e(transaction_flags).p();
     }
 }
 
@@ -163,12 +163,12 @@ syscall_RSIM_transaction_leave(RSIM_Thread *t, int callno)
     int result = t->syscall_arg(-1);
     if (0==cmd && 0!=result) { // start
         if (32 == t->get_process()->wordSize()) {
-            t->syscall_leave("d-P", sizeof(pt_regs_32), print_pt_regs_32);
+            t->syscall_leave().ret().arg(1).P(sizeof(pt_regs_32), print_pt_regs_32).str("\n");
         } else {
-            t->syscall_leave("d-P", sizeof(pt_regs_64), print_pt_regs_64);
+            t->syscall_leave().ret().arg(1).P(sizeof(pt_regs_64), print_pt_regs_64).str("\n");
         }
     } else {
-        t->syscall_leave("d");
+        t->syscall_leave().ret().str("\n");
     }
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after transaction syscall:\n");
 }

@@ -78,7 +78,7 @@ print_kernel_stat_32(Sawyer::Message::Stream &m, const uint8_t *_sb, size_t sz)
     assert(sz==sizeof(kernel_stat_32));
     const kernel_stat_32 *sb = (const kernel_stat_32*)_sb;
     mfprintf(m)("dev=%"PRIu64", ino=%"PRIu64", mode=", sb->dev, sb->ino);
-    print_flags(m, file_mode_flags, sb->mode);
+    Printer::print_flags(m, file_mode_flags, sb->mode);
     mfprintf(m)(", nlink=%"PRIu32", uid=%"PRIu32", gid=%"PRIu32", rdev=%"PRIu64", size=%"PRIu64
                 ", blksz=%"PRIu32", blocks=%"PRIu64", ...",
                 sb->nlink, sb->user, sb->group, sb->rdev, sb->size,
@@ -91,7 +91,7 @@ print_timespec_32(Sawyer::Message::Stream &m, const uint8_t *_ts, size_t sz)
     assert(sz==sizeof(timespec_32));
     const timespec_32 *ts = (const timespec_32*)_ts;
     m <<"sec=";
-    print_time(m, ts->tv_sec);
+    Printer::print_time(m, ts->tv_sec);
     mfprintf(m)(", nsec=%"PRId32, ts->tv_nsec);
 }
 
@@ -109,7 +109,7 @@ print_sigaction_32(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
     assert(sz==sizeof(sigaction_32));
     const sigaction_32 *sa = (const sigaction_32*)_sa;
     mfprintf(m)("handler=0x%08"PRIx32", flags=", sa->handler_va);
-    print_flags(m, signal_flags, sa->flags);
+    Printer::print_flags(m, signal_flags, sa->flags);
     mfprintf(m)(", restorer=0x%08"PRIx32", mask=0x%016"PRIx64, sa->restorer_va, sa->mask);
 }
 
@@ -185,7 +185,7 @@ print_SigSet(Sawyer::Message::Stream &m, const uint8_t *vec, size_t sz)
                 uint32_t signo = i*8+j + 1;
                 if (nsigs++)
                     m <<",";
-                print_enum(m, signal_names, signo);
+                Printer::print_enum(m, signal_names, signo);
             }
         }
     }
@@ -197,7 +197,7 @@ print_stack_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(stack_32)==sz);
     const stack_32 *v = (const stack_32*)_v;
     mfprintf(m)("sp=0x%08"PRIx32", flags=", v->ss_sp);
-    print_flags(m, stack_flags, v->ss_flags);
+    Printer::print_flags(m, stack_flags, v->ss_flags);
     mfprintf(m)(", sz=%"PRIu32, v->ss_size);
 }
 
@@ -207,9 +207,9 @@ print_flock_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(flock_32)==sz);
     const flock_32 *v = (const flock_32*)_v;
     m <<"type=";
-    print_enum(m, flock_types, v->l_type);
+    Printer::print_enum(m, flock_types, v->l_type);
     m <<", whence=";
-    print_enum(m, seek_whence, v->l_whence);
+    Printer::print_enum(m, seek_whence, v->l_whence);
     mfprintf(m)(", start=%"PRId32", len=%"PRId32", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
 }
 
@@ -219,9 +219,9 @@ print_flock64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(flock64_32)==sz);
     const flock64_32 *v = (const flock64_32*)_v;
     m <<"type=";
-    print_enum(m, flock_types, v->l_type);
+    Printer::print_enum(m, flock_types, v->l_type);
     m <<", whence=";
-    print_enum(m, seek_whence, v->l_whence);
+    Printer::print_enum(m, seek_whence, v->l_whence);
     mfprintf(m)(", start=%"PRId64", len=%"PRId64", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
 }
 
@@ -369,13 +369,13 @@ print_termios_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(termios_32)==sz);
     const termios_32 *v = (const termios_32*)_v;
     m <<"c_iflag=";
-    print_flags(m, termios_iflags, v->c_iflag);
+    Printer::print_flags(m, termios_iflags, v->c_iflag);
     m <<", c_oflag=";
-    print_flags(m, termios_oflags, v->c_oflag);
+    Printer::print_flags(m, termios_oflags, v->c_oflag);
     m <<", c_cflag=";
-    print_flags(m, termios_cflags, v->c_cflag);
+    Printer::print_flags(m, termios_cflags, v->c_cflag);
     m <<", c_lflag=";
-    print_flags(m, termios_lflags, v->c_lflag);
+    Printer::print_flags(m, termios_lflags, v->c_lflag);
     mfprintf(m)(", c_line=%u, c_cc=[", v->c_line);
     for (int i=0; i<19; i++)
         mfprintf(m)("%s%u", i?",":"", v->c_cc[i]);
@@ -401,11 +401,11 @@ print_exit_status_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
         mfprintf(m)("exit %d", WEXITSTATUS(status));
     } else if (WIFSIGNALED(status)) {
         m <<"terminated by ";
-        print_enum(m, signal_names, WTERMSIG(status));
+        Printer::print_enum(m, signal_names, WTERMSIG(status));
         mfprintf(m)("%s", WCOREDUMP(status)?" with core dump":"");
     } else if (WIFSTOPPED(status)) {
         m <<"stopped by ";
-        print_enum(m, signal_names, WSTOPSIG(status));
+        Printer::print_enum(m, signal_names, WSTOPSIG(status));
     } else {
         mfprintf(m)("0x%08x", status);
     }
@@ -418,47 +418,47 @@ print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     const RSIM_SignalHandling::SigInfo *info = (const RSIM_SignalHandling::SigInfo*)_v;
 
     m <<"signo=";
-    print_enum(m, signal_names, info->si_signo);
+    Printer::print_enum(m, signal_names, info->si_signo);
     mfprintf(m)(", errno=%d", info->si_errno);
     switch (info->si_signo) {
         case SIGSEGV:
             m <<", code=";
-            print_enum(m, siginfo_sigsegv_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigsegv_codes, info->si_code);
             m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGBUS:
             m <<", code=";
-            print_enum(m, siginfo_sigbus_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigbus_codes, info->si_code);
             m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGILL:
             m <<", code=";
-            print_enum(m, siginfo_sigill_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigill_codes, info->si_code);
             m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGFPE:
             m <<", code=";
-            print_enum(m, siginfo_sigfpe_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigfpe_codes, info->si_code);
             m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
             break;
         case SIGTRAP:
             m <<", code=";
-            print_enum(m, siginfo_sigtrap_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigtrap_codes, info->si_code);
             break;
         case SIGCHLD:
             m <<", code=";
-            print_enum(m, siginfo_sigchld_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigchld_codes, info->si_code);
             m <<", pid=" <<info->sigchld.pid <<", uid=" <<info->sigchld.uid <<", status=" <<info->sigchld.status
               <<", utime=" <<info->sigchld.utime <<", stime=" <<info->sigchld.stime;
             break;
         case SIGPOLL:
             m <<", code=";
-            print_enum(m, siginfo_sigpoll_codes, info->si_code);
+            Printer::print_enum(m, siginfo_sigpoll_codes, info->si_code);
             m <<", band=" <<info->sigpoll.band <<", fd=" <<info->sigpoll.fd;
             break;
         default:
             m <<", code=";
-            print_enum(m, siginfo_generic_codes, info->si_code);
+            Printer::print_enum(m, siginfo_generic_codes, info->si_code);
             switch (info->si_code) {
                 case SI_TKILL:
                     m <<", pid=" <<info->rt.pid <<", uid=" <<info->rt.uid
@@ -492,7 +492,7 @@ print_msghdr_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
                 ", control=0x%08"PRIx32", controllen=%"PRIu32", flags=",
                 v->msg_name, v->msg_namelen, v->msg_iov, v->msg_iovlen,
                 v->msg_control, v->msg_controllen);
-    print_flags(m, msghdr_flags, v->msg_flags);
+    Printer::print_flags(m, msghdr_flags, v->msg_flags);
 }
 
 void
@@ -501,17 +501,17 @@ print_new_utsname_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     assert(sizeof(new_utsname_32)==sz);
     const new_utsname_32 *v = (const new_utsname_32*)_v;
     m <<"sysname=";
-    print_string(m, v->sysname);
+    Printer::print_string(m, v->sysname);
     m <<", nodename=";
-    print_string(m, v->nodename);
+    Printer::print_string(m, v->nodename);
     m <<", release=";
-    print_string(m, v->release);
+    Printer::print_string(m, v->release);
     m <<", version=";
-    print_string(m, v->version);
+    Printer::print_string(m, v->version);
     m <<", machine=";
-    print_string(m, v->machine);
+    Printer::print_string(m, v->machine);
     m <<", domainname=";
-    print_string(m, v->domainname);
+    Printer::print_string(m, v->domainname);
 }
 
 void
@@ -520,9 +520,9 @@ print_mmap_arg_struct_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t s
     assert(sizeof(mmap_arg_struct_32)==sz);
     const mmap_arg_struct_32 *v = (const mmap_arg_struct_32*)_v;
     mfprintf(m)("addr=0x%08"PRIx32", len=%"PRId32", prot=", v->addr, v->len);
-    print_flags(m, mmap_pflags, v->prot);
+    Printer::print_flags(m, mmap_pflags, v->prot);
     m <<", flags=";
-    print_flags(m, mmap_mflags, v->flags);
+    Printer::print_flags(m, mmap_mflags, v->flags);
     mfprintf(m)(", fd=%"PRId32", offset=%"PRId32, v->fd, v->offset);
 }
 

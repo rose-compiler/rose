@@ -365,7 +365,7 @@ RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 void
 RSIM_Linux32::syscall_exit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("exit", "d");
+    t->syscall_enter("exit").d();
 }
 
 void
@@ -397,7 +397,7 @@ RSIM_Linux32::syscall_exit_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_read_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("read", "dpd");
+    t->syscall_enter("read").d().p().d();
 }
 
 void
@@ -420,7 +420,7 @@ void
 RSIM_Linux32::syscall_read_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
-    t->syscall_leave("d-b", nread>0?nread:0);
+    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -428,7 +428,7 @@ RSIM_Linux32::syscall_read_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_write_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("write", "dbd", t->syscall_arg(2));
+    t->syscall_enter("write").d().b(t->syscall_arg(2)).d();
 }
 
 void
@@ -457,9 +457,9 @@ void
 RSIM_Linux32::syscall_open_enter(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(1) & O_CREAT) {
-        t->syscall_enter("open", "sff", open_flags, file_mode_flags);
+        t->syscall_enter("open").s().f(open_flags).f(file_mode_flags);
     } else {
-        t->syscall_enter("open", "sf-", open_flags);
+        t->syscall_enter("open").s().f(open_flags).unused();
     }
 }
 
@@ -494,7 +494,7 @@ RSIM_Linux32::syscall_open_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_close_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("close", "d");
+    t->syscall_enter("close").d();
 }
 
 void
@@ -516,7 +516,7 @@ void
 RSIM_Linux32::syscall_waitpid_enter(RSIM_Thread *t, int callno)
 {
     static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
-    t->syscall_enter("waitpid", "dpf", wflags);
+    t->syscall_enter("waitpid").d().p().f(wflags);
 }
 
 void
@@ -541,7 +541,7 @@ RSIM_Linux32::syscall_waitpid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", 4, print_exit_status_32);
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -549,7 +549,7 @@ RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_creat_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("creat", "sd");
+    t->syscall_enter("creat").s().d();
 }
 
 void
@@ -578,7 +578,7 @@ RSIM_Linux32::syscall_creat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_link_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("link", "ss");
+    t->syscall_enter("link").s().s();
 }
 
 void
@@ -606,7 +606,7 @@ RSIM_Linux32::syscall_link_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_unlink_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("unlink", "s");
+    t->syscall_enter("unlink").s();
 }
 
 void
@@ -634,7 +634,7 @@ RSIM_Linux32::syscall_unlink_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_execve_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("execve", "spp");
+    t->syscall_enter("execve").s().p().p();
 }
 
 void
@@ -655,7 +655,7 @@ RSIM_Linux32::syscall_execve_body(RSIM_Thread *t, int callno)
     if (!argv.empty()) {
         for (size_t i=0; i<argv.size(); i++) {
             mfprintf(t->tracing(TRACE_SYSCALL))("    argv[%zu] = ", i);
-            print_string(t->tracing(TRACE_SYSCALL), argv[i], false, false);
+            Printer::print_string(t->tracing(TRACE_SYSCALL), argv[i]);
             t->tracing(TRACE_SYSCALL) <<"\n";
         }
     }
@@ -673,7 +673,7 @@ RSIM_Linux32::syscall_execve_body(RSIM_Thread *t, int callno)
     if (!envp.empty()) {
         for (size_t i=0; i<envp.size(); i++) {
             mfprintf(t->tracing(TRACE_SYSCALL))("    envp[%zu] = ", i);
-            print_string(t->tracing(TRACE_SYSCALL), envp[i], false, false);
+            Printer::print_string(t->tracing(TRACE_SYSCALL), envp[i], false, false);
             t->tracing(TRACE_SYSCALL) <<"\n";
         }
     }
@@ -700,7 +700,7 @@ RSIM_Linux32::syscall_execve_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_chdir_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("chdir", "s");
+    t->syscall_enter("chdir").s();
 }
 
 void
@@ -728,7 +728,7 @@ RSIM_Linux32::syscall_chdir_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_time_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("time", "p");
+    t->syscall_enter("time").p();
 }
 
 void
@@ -747,7 +747,7 @@ RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("t");
+    t->syscall_leave().arg(-1).t().str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -755,7 +755,7 @@ RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mknod_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("mknod", "sfd", file_mode_flags);
+    t->syscall_enter("mknod").s().f(file_mode_flags).d();
 }
 
 void
@@ -779,7 +779,7 @@ RSIM_Linux32::syscall_mknod_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_chmod_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("chmod", "sd");
+    t->syscall_enter("chmod").s().d();
 }
 
 void
@@ -803,7 +803,7 @@ RSIM_Linux32::syscall_chmod_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_lseek_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("lseek", "ddf", seek_whence);
+    t->syscall_enter("lseek").d().d().f(seek_whence);
 }
 
 void
@@ -818,7 +818,7 @@ RSIM_Linux32::syscall_lseek_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getpid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getpid", "");
+    t->syscall_enter("getpid");
 }
 
 void
@@ -832,7 +832,7 @@ RSIM_Linux32::syscall_getpid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getuid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getuid", "");
+    t->syscall_enter("getuid");
 }
 
 void
@@ -846,7 +846,7 @@ RSIM_Linux32::syscall_getuid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_alarm_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("alarm", "d");
+    t->syscall_enter("alarm").d();
 }
 
 void
@@ -861,7 +861,7 @@ RSIM_Linux32::syscall_alarm_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pause_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("pause", "");
+    t->syscall_enter("pause");
 }
 
 void
@@ -874,12 +874,11 @@ RSIM_Linux32::syscall_pause_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pause_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
     if (t->syscall_info.signo>0) {
         t->tracing(TRACE_SYSCALL) <<"    retured due to ";
-        print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
+        Printer::print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
         mfprintf(t->tracing(TRACE_SYSCALL))("(%d)\n", t->syscall_info.signo);
-
     }
 }
 
@@ -888,7 +887,7 @@ RSIM_Linux32::syscall_pause_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_utime_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("utime", "sp");
+    t->syscall_enter("utime").s().p();
 }
 
 void
@@ -934,7 +933,7 @@ RSIM_Linux32::syscall_utime_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sync_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sync", "");
+    t->syscall_enter("sync");
 }
 
 void
@@ -949,7 +948,7 @@ RSIM_Linux32::syscall_sync_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_kill_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("kill", "df", signal_names);
+    t->syscall_enter("kill").d().f(signal_names);
 }
 
 void
@@ -966,7 +965,7 @@ RSIM_Linux32::syscall_kill_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rename_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rename", "ss");
+    t->syscall_enter("rename").s().s();
 }
 
 void
@@ -994,7 +993,7 @@ RSIM_Linux32::syscall_rename_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mkdir_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("mkdir", "sd");
+    t->syscall_enter("mkdir").s().d();
 }
 
 void
@@ -1019,7 +1018,7 @@ RSIM_Linux32::syscall_mkdir_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rmdir_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rmdir", "s");
+    t->syscall_enter("rmdir").s();
 }
 
 void
@@ -1043,7 +1042,7 @@ RSIM_Linux32::syscall_rmdir_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_dup_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("dup", "d");
+    t->syscall_enter("dup").d();
 }
 
 void
@@ -1060,7 +1059,7 @@ RSIM_Linux32::syscall_dup_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pipe_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("pipe", "p");
+    t->syscall_enter("pipe").p();
 }
 
 void
@@ -1089,7 +1088,7 @@ RSIM_Linux32::syscall_pipe_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pipe_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", (size_t)8, print_int_32);
+    t->syscall_leave().ret().P(8, print_int_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1097,7 +1096,7 @@ RSIM_Linux32::syscall_pipe_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pipe2_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("pipe", "pf", open_flags);
+    t->syscall_enter("pipe").p().f(open_flags);
 }
 
 void
@@ -1131,7 +1130,7 @@ RSIM_Linux32::syscall_pipe2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pipe2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", (size_t)8, print_int_32);
+    t->syscall_leave().ret().P((size_t)8, print_int_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1139,7 +1138,7 @@ RSIM_Linux32::syscall_pipe2_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getgid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getgid", "");
+    t->syscall_enter("getgid");
 }
 
 void
@@ -1153,7 +1152,7 @@ RSIM_Linux32::syscall_getgid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_geteuid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("geteuid", "");
+    t->syscall_enter("geteuid");
 }
 
 void
@@ -1167,7 +1166,7 @@ RSIM_Linux32::syscall_geteuid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getegid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getegid", "");
+    t->syscall_enter("getegid");
 }
 
 void
@@ -1184,30 +1183,24 @@ RSIM_Linux32::syscall_ioctl_enter(RSIM_Thread *t, int callno)
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
         case TCGETS:
-            t->syscall_enter("ioctl", "dfp", ioctl_commands);
+            t->syscall_enter("ioctl").d().f(ioctl_commands).p();
             break;
         case TCSETSW:
         case TCSETSF:
         case TCSETS:
-            t->syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(termios_32), print_termios_32);
+            t->syscall_enter("ioctl").d().f(ioctl_commands).P(sizeof(termios_32), print_termios_32);
             break;
         case TCGETA:
-            t->syscall_enter("ioctl", "dfd", ioctl_commands);
-            break;
         case TIOCGPGRP:
-            t->syscall_enter("ioctl", "dfd", ioctl_commands);
-            break;
         case TIOCSPGRP:
-            t->syscall_enter("ioctl", "dfd", ioctl_commands);
+        case TIOCGWINSZ:
+            t->syscall_enter("ioctl").d().f(ioctl_commands).d();
             break;
         case TIOCSWINSZ:
-            t->syscall_enter("ioctl", "dfP", ioctl_commands, sizeof(winsize_32), print_winsize_32);
-            break;
-        case TIOCGWINSZ:
-            t->syscall_enter("ioctl", "dfp", ioctl_commands);
+            t->syscall_enter("ioctl").d().f(ioctl_commands).P(sizeof(winsize_32), print_winsize_32);
             break;
         default:
-            t->syscall_enter("ioctl", "dfd", ioctl_commands);
+            t->syscall_enter("ioctl").d().f(ioctl_commands).d();
             break;
     }
 }
@@ -1383,13 +1376,13 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
         case TCGETS:
-            t->syscall_leave("d--P", sizeof(termios_32), print_termios_32);
+            t->syscall_leave().ret().arg(2).P(sizeof(termios_32), print_termios_32).str("\n");
             break;
         case TIOCGWINSZ:
-            t->syscall_leave("d--P", sizeof(winsize_32), print_winsize_32);
+            t->syscall_leave().ret().arg(2).P(sizeof(winsize_32), print_winsize_32).str("\n");
             break;
         default:
-            t->syscall_leave("d");
+            t->syscall_leave().ret().str("\n");
             break;
     }
 }
@@ -1399,7 +1392,7 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_setpgid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("setpgid", "dd");
+    t->syscall_enter("setpgid").d().d();
 }
 
 void
@@ -1416,7 +1409,7 @@ RSIM_Linux32::syscall_setpgid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_umask_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("umask", "d");
+    t->syscall_enter("umask").d();
 }
 
 void
@@ -1433,7 +1426,7 @@ RSIM_Linux32::syscall_umask_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_dup2_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("dup2", "dd");
+    t->syscall_enter("dup2").d().d();
 }
 
 void
@@ -1448,7 +1441,7 @@ RSIM_Linux32::syscall_dup2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getppid_enter(RSIM_Thread *t, int callno)
 {
-            t->syscall_enter("getppid", "");
+    t->syscall_enter("getppid");
 }
 
 void
@@ -1462,7 +1455,7 @@ RSIM_Linux32::syscall_getppid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getpgrp_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getpgrp", "");
+    t->syscall_enter("getpgrp");
 }
 
 void
@@ -1476,7 +1469,7 @@ RSIM_Linux32::syscall_getpgrp_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_setrlimit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("setrlimit", "fP", rlimit_resources, 8, print_rlimit);
+    t->syscall_enter("setrlimit").f(rlimit_resources).P(8, print_rlimit);
 }
 
 void
@@ -1499,7 +1492,7 @@ RSIM_Linux32::syscall_setrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ugetrlimit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("ugetrlimit", "fp", rlimit_resources);
+    t->syscall_enter("ugetrlimit").f(rlimit_resources).p();
 }
 
 void
@@ -1511,7 +1504,7 @@ RSIM_Linux32::syscall_ugetrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", 8, print_rlimit);
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1519,7 +1512,7 @@ RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getrlimit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getrlimit", "fp", rlimit_resources);
+    t->syscall_enter("getrlimit").f(rlimit_resources).p();
 }
 
 void
@@ -1548,7 +1541,7 @@ RSIM_Linux32::syscall_getrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", 8, print_rlimit);
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1556,7 +1549,7 @@ RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_gettimeofday_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("gettimeofday", "p");
+    t->syscall_enter("gettimeofday").p();
 }
 
 void
@@ -1582,7 +1575,7 @@ RSIM_Linux32::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(timeval_32), print_timeval_32);
+    t->syscall_leave().ret().P(sizeof(timeval_32), print_timeval_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1590,7 +1583,7 @@ RSIM_Linux32::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_symlink_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("symlink", "ss");
+    t->syscall_enter("symlink").s().s();
 }
 
 void
@@ -1618,7 +1611,7 @@ RSIM_Linux32::syscall_symlink_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_readlink_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("readlink", "spd");
+    t->syscall_enter("readlink").s().p().d();
 }
 
 void
@@ -1647,7 +1640,7 @@ RSIM_Linux32::syscall_readlink_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("mmap", "P", sizeof(mmap_arg_struct_32), print_mmap_arg_struct_32);
+    t->syscall_enter("mmap").P(sizeof(mmap_arg_struct_32), print_mmap_arg_struct_32);
 }
 
 /* See also: syscall_mmap2 */
@@ -1676,7 +1669,7 @@ RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("Dp");
+    t->syscall_leave().eret().arg(-1).p().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
@@ -1685,7 +1678,7 @@ RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_munmap_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("munmap", "pd");
+    t->syscall_enter("munmap").p().d();
 }
 
 void
@@ -1711,7 +1704,7 @@ RSIM_Linux32::syscall_munmap_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ftruncate_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("ftruncate", "dd");
+    t->syscall_enter("ftruncate").d().d();
 }
 
 void
@@ -1728,7 +1721,7 @@ RSIM_Linux32::syscall_ftruncate_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchmod_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchmod", "dd");
+    t->syscall_enter("fchmod").d().d();
 }
 
 void
@@ -1747,7 +1740,7 @@ RSIM_Linux32::syscall_fchmod_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchown_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchown", "ddd");
+    t->syscall_enter("fchown").d().d().d();
 }
 
 void
@@ -1765,7 +1758,7 @@ RSIM_Linux32::syscall_fchown_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("statfs", "sp");
+    t->syscall_enter("statfs").s().p();
 }
 
 void
@@ -1806,7 +1799,7 @@ RSIM_Linux32::syscall_statfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1814,7 +1807,7 @@ RSIM_Linux32::syscall_statfs_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fstatfs", "dp");
+    t->syscall_enter("fstatfs").d().p();
 }
 
 void
@@ -1848,7 +1841,7 @@ RSIM_Linux32::syscall_fstatfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(statfs_32), print_statfs_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -2078,63 +2071,63 @@ RSIM_Linux32::syscall_socketcall_enter(RSIM_Thread *t, int callno)
     switch (t->syscall_arg(0)) {
         case 1: /* SYS_SOCKET */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "socket", "fff", protocol_families, socket_types, socket_protocols);
+                t->syscall_enter(a, "socket").f(protocol_families).f(socket_types).f(socket_protocols);
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 2: /* SYS_BIND */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "bind", "dpd");    /* FIXME: we could do a better job printing the address [RPM 2011-01-04] */
+                t->syscall_enter(a, "bind").d().p().d(); // FIXME: we could do a better job printing the address RPM 2011-01-04
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 3: /* SYS_CONNECT */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "connect", "dpd");
+                t->syscall_enter(a, "connect").d().p().d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 4: /* SYS_LISTEN */
             if (8==t->get_process()->mem_read(a, t->syscall_arg(1), 8)) {
-                t->syscall_enter(a, "listen", "dd");
+                t->syscall_enter(a, "listen").d().d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 5:/*SYS_ACCEPT*/
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "accept", "dpp");
+                t->syscall_enter(a, "accept").d().p().p();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
-                t->syscall_enter(a, "socketpair", "dddp");
+                t->syscall_enter(a, "socketpair").d().d().d().p();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 10: /* SYS_RECV */
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
-                t->syscall_enter(a, "recv", "dpdd");
+                t->syscall_enter(a, "recv").d().p().d().d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 14:/*SYS_SETSOCKOPT*/
             if (20==t->get_process()->mem_read(a, t->syscall_arg(1), 20)) {
-                t->syscall_enter(a, "setsockopt", "dddpd");
+                t->syscall_enter(a, "setsockopt").d().d().d().p().d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 16: /* SYS_SENDMSG */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "sendmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+                t->syscall_enter(a, "sendmsg").d().P(sizeof(msghdr_32), print_msghdr_32).d();
                 Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
                 if (trace && sizeof(msghdr)==t->get_process()->mem_read(&msghdr, a[1], sizeof msghdr)) {
@@ -2144,7 +2137,7 @@ RSIM_Linux32::syscall_socketcall_enter(RSIM_Thread *t, int callno)
                             uint8_t *buf = new uint8_t[vasz[1]];
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], vasz[1])) {
                                 mfprintf(trace)("\n    iov #%u: ", i);
-                                print_buffer(trace, vasz[0], buf, vasz[1], 1024);
+                                Printer::print_buffer(trace, vasz[0], buf, vasz[1], 1024);
                                 mfprintf(trace)("; %"PRIu32" byte%s", vasz[1], 1==vasz[1]?"":"s");
                             } else {
                                 mfprintf(trace)("\n    iov #%u: short read of data", i);
@@ -2168,25 +2161,25 @@ RSIM_Linux32::syscall_socketcall_enter(RSIM_Thread *t, int callno)
                     }
                 }
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a, t->syscall_arg(1), 12)) {
-                t->syscall_enter(a, "recvmsg", "dPd", sizeof(msghdr_32), print_msghdr_32);
+                t->syscall_enter(a, "recvmsg").d().P(sizeof(msghdr_32), print_msghdr_32).d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         case 18:/*SYS_ACCEPT4*/
             if (16==t->get_process()->mem_read(a, t->syscall_arg(1), 16)) {
-                t->syscall_enter(a, "accept4", "dppd");
+                t->syscall_enter(a, "accept4").d().p().p().d();
             } else {
-                t->syscall_enter("socketcall", "fp", socketcall_commands);
+                t->syscall_enter("socketcall").f(socketcall_commands).p();
             }
             break;
         default:
-            t->syscall_enter("socketcall", "fp", socketcall_commands);
+            t->syscall_enter("socketcall").f(socketcall_commands).p();
             break;
     }
 }
@@ -2704,13 +2697,13 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
     switch (t->syscall_arg(0)) {
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a+1, t->syscall_arg(1), 16)) {
-                t->syscall_leave(a, "d---P", (size_t)8, print_int_32);
+                t->syscall_leave(a).ret().arg(3).P(8, print_int_32).str("\n");
                 return;
             }
             break;
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
-                t->syscall_leave(a, "d-P-", sizeof(msghdr_32), print_msghdr_32);
+                t->syscall_leave(a).ret().arg(1).P(sizeof(msghdr_32), print_msghdr_32).str("\n");
                 Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
                 if (trace &&
@@ -2725,7 +2718,7 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
                             uint8_t *buf = new uint8_t[nused];
                             if (vasz[1]==t->get_process()->mem_read(buf, vasz[0], nused)) {
                                 mfprintf(trace)("    iov #%u: ", i);
-                                print_buffer(trace, vasz[0], buf, nused, 1024);
+                                Printer::print_buffer(trace, vasz[0], buf, nused, 1024);
                                 mfprintf(trace)("; size total=%"PRIu32" used=%"PRIu32"\n", vasz[1], nused);
                             }
                             delete[] buf;
@@ -2746,7 +2739,7 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
             break;
     }
 
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -2755,7 +2748,7 @@ void
 RSIM_Linux32::syscall_wait4_enter(RSIM_Thread *t, int callno)
 {
     static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
-    t->syscall_enter("wait4", "dpfp", wflags);
+    t->syscall_enter("wait4").d().p().f(wflags).p();
 }
 
 void
@@ -2824,7 +2817,7 @@ RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_wait4_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", 4, print_exit_status_32);
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -2832,7 +2825,7 @@ RSIM_Linux32::syscall_wait4_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sysinfo", "p");
+    t->syscall_enter("sysinfo").p();
 }
 
 void
@@ -2917,82 +2910,84 @@ RSIM_Linux32::syscall_ipc_enter(RSIM_Thread *t, int callno)
     uint32_t second=t->syscall_arg(2), third=t->syscall_arg(3);
     switch (call) {
         case 1: /*SEMOP*/
-            t->syscall_enter("ipc", "fdd-p", ipc_commands);
+            t->syscall_enter("ipc").f(ipc_commands).d().d().unused().p();
             break;
         case 2: /*SEMGET*/
-            t->syscall_enter("ipc", "fddf", ipc_commands, ipc_flags);
+            t->syscall_enter("ipc").f(ipc_commands).d().d().f(ipc_flags);
             break;
         case 3: /*SEMCTL*/
             switch (third & 0xff) {
                 case 16: /*SETVAL*/
-                    t->syscall_enter("ipc", "fddfP", ipc_commands, sem_control, (size_t)4, print_int_32);
+                    t->syscall_enter("ipc").f(ipc_commands).d().d().f(sem_control).P((size_t)4, print_int_32);
                     break;
                 default:
-                    t->syscall_enter("ipc", "fddfp", ipc_commands, sem_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().d().f(sem_control).p();
                     break;
             }
             break;
         case 4: /*SEMTIMEDOP*/
-            t->syscall_enter("ipc", "fdd-pP", ipc_commands, sizeof(timespec_32), print_timespec_32);
+            t->syscall_enter("ipc").f(ipc_commands).d().d().unused().p().P(sizeof(timespec_32), print_timespec_32);
             break;
         case 11: /*MSGSND*/
-            t->syscall_enter("ipc", "fddfb", ipc_commands, ipc_flags, (size_t)(4+t->syscall_arg(2)));
+            t->syscall_enter("ipc").f(ipc_commands).d().d().f(ipc_flags).b(4+t->syscall_arg(2));
             break;
         case 12: /*MSGRCV*/
             if (0==version) {
-                t->syscall_enter("ipc", "fddfP", ipc_commands, ipc_flags, sizeof(ipc_kludge_32), print_ipc_kludge_32);
+                t->syscall_enter("ipc").f(ipc_commands).d().d().f(ipc_flags).P(sizeof(ipc_kludge_32), print_ipc_kludge_32);
             } else {
-                t->syscall_enter("ipc", "fddfpd", ipc_commands, ipc_flags);
+                t->syscall_enter("ipc").f(ipc_commands).d().d().f(ipc_flags).p().d();
             }
             break;
         case 13: /*MSGGET*/
-            t->syscall_enter("ipc", "fpf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
+            t->syscall_enter("ipc").f(ipc_commands).p().f(ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
             break;
         case 14: /*MSGCTL*/
             switch (second & 0xff) {
                 case 0: /* IPC_RMID */
-                    t->syscall_enter("ipc", "fdf", ipc_commands, msg_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(msg_control);
                     break;
                 case 1: /* IPC_SET */
-                    t->syscall_enter("ipc", "fdf-P", ipc_commands, msg_control, sizeof(msqid64_ds_32), print_msqid64_ds_32);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(msg_control).unused()
+                        .P(sizeof(msqid64_ds_32), print_msqid64_ds_32);
                     break;
                 default:
-                    t->syscall_enter("ipc", "fdf-p", ipc_commands, msg_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(msg_control).unused().p();
                     break;
             }
             break;
         case 21: /*SHMAT*/
             if (1==version) {
-                t->syscall_enter("ipc", "fdddpd", ipc_commands);
+                t->syscall_enter("ipc").f(ipc_commands).d().d().d().p().d();
             } else {
-                t->syscall_enter("ipc", "fdfpp", ipc_commands, ipc_flags);
+                t->syscall_enter("ipc").f(ipc_commands).d().f(ipc_flags).p().p();
             }
             break;
         case 22: /*SHMDT*/
-            t->syscall_enter("ipc", "f---p", ipc_commands);
+            t->syscall_enter("ipc").f(ipc_commands).unused().unused().unused().p();
             break;
         case 23: /*SHMGET*/
-            t->syscall_enter("ipc", "fpdf", ipc_commands, ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
+            t->syscall_enter("ipc").f(ipc_commands).p().d().f(ipc_flags); /* arg1 "p" for consistency with strace and ipcs */
             break;
         case 24: /*SHMCTL*/
             switch (second & 0xff) {
                 case 0:         /* IPC_RMID */
-                    t->syscall_enter("ipc", "fdf", ipc_commands, shm_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(shm_control);
                     break;
                 case 1:         /* IPC_SET */
-                    t->syscall_enter("ipc", "fdf-P", ipc_commands, shm_control, sizeof(shmid64_ds_32), print_shmid64_ds_32);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(shm_control).unused()
+                        .P(sizeof(shmid64_ds_32), print_shmid64_ds_32);
                     break;
                 case 11:        /* SHM_LOCK */
                 case 12:        /* SHM_UNLOCK */
-                    t->syscall_enter("ipc", "fdf", ipc_commands, shm_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(shm_control);
                     break;
                 default:
-                    t->syscall_enter("ipc", "fdf-p", ipc_commands, shm_control);
+                    t->syscall_enter("ipc").f(ipc_commands).d().f(shm_control).unused().p();
                     break;
             }
             break;
         default:
-            t->syscall_enter("ipc", "fdddpd", ipc_commands);
+            t->syscall_enter("ipc").f(ipc_commands).d().d().d().p().d();
             break;
     }
 }
@@ -3020,7 +3015,7 @@ sys_semtimedop(RSIM_Thread *t, uint32_t semid, uint32_t sops_va, uint32_t nsops,
     for (uint32_t i=0; i<nsops; i++) {
         mfprintf(strace)("    sops[%"PRIu32"] = { num=%"PRIu16", op=%"PRId16", flg=",
                          i, sops[i].sem_num, sops[i].sem_op);
-        print_flags(strace, sem_flags, sops[i].sem_flg);
+        Printer::print_flags(strace, sem_flags, sops[i].sem_flg);
         strace <<" }\n";
     }
 
@@ -3848,46 +3843,46 @@ RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
                     ROSE_ASSERT(!"not handled");
                 case 2:         /* IPC_STAT */
                 case 11:        /* MSG_STAT */
-                    t->syscall_leave("d----P", sizeof(msqid64_ds_32), print_msqid64_ds_32);
+                    t->syscall_leave().ret().arg(4).P(sizeof(msqid64_ds_32), print_msqid64_ds_32).str("\n");
                     break;
                 default:
-                    t->syscall_leave("d");
+                    t->syscall_leave().ret().str("\n");
                     break;
             }
             break;
         }
         case 21: /* SHMAT */
             if (1==version) {
-                t->syscall_leave("d");
+                t->syscall_leave().ret().str("\n");
             } else {
-                t->syscall_leave("p");
+                t->syscall_leave().arg(-1).p().str("\n");
                 t->get_process()->mem_showmap(mtrace, "  memory map after shmat:\n");
             }
             break;
         case 22: /* SHMDT */
-            t->syscall_leave("d");
+            t->syscall_leave().ret().str("\n");
             t->get_process()->mem_showmap(mtrace, "  memory map after shmdt:\n");
             break;
         case 24: { /* SHMCTL */
             switch (second & 0xff) {
                 case 2:         /* IPC_STAT */
                 case 13:        /* SHM_STAT */
-                    t->syscall_leave("d----P", sizeof(shmid64_ds_32), print_shmid64_ds_32);
+                    t->syscall_leave().ret().arg(4).P(sizeof(shmid64_ds_32), print_shmid64_ds_32).str("\n");
                     break;
                 case 14:        /* SHM_INFO */
-                    t->syscall_leave("d----P", sizeof(shm_info_32), print_shm_info_32);
+                    t->syscall_leave().ret().arg(4).P(sizeof(shm_info_32), print_shm_info_32).str("\n");
                     break;
                 case 3:         /* IPC_INFO */
-                    t->syscall_leave("d----P", sizeof(shminfo64_32), print_shminfo64_32);
+                    t->syscall_leave().ret().arg(4).P(sizeof(shminfo64_32), print_shminfo64_32).str("\n");
                     break;
                 default:
-                    t->syscall_leave("d");
+                    t->syscall_leave().ret().str("\n");
                     break;
             }
             break;
         }
         default:
-            t->syscall_leave("d");
+            t->syscall_leave().ret().str("\n");
             break;
     }
 }
@@ -3897,7 +3892,7 @@ RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fsync_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fsync", "d");
+    t->syscall_enter("fsync").d();
 }
 
 void
@@ -3912,7 +3907,7 @@ RSIM_Linux32::syscall_fsync_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sigreturn_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sigreturn", "");
+    t->syscall_enter("sigreturn");
 }
 
 void
@@ -3954,14 +3949,19 @@ RSIM_Linux32::syscall_clone_enter(RSIM_Thread *t, int callno)
      */
     unsigned flags = t->syscall_arg(0);
     if (flags & CLONE_SETTLS) {
-        t->syscall_enter("clone", "fppPP",
-                      clone_flags,
-                      sizeof(SegmentDescriptor), print_SegmentDescriptor,
-                      sizeof(pt_regs_32), print_pt_regs_32);
+        t->syscall_enter("clone")
+            .f(clone_flags)
+            .p()
+            .p()
+            .P(sizeof(SegmentDescriptor), print_SegmentDescriptor)
+            .P(sizeof(pt_regs_32), print_pt_regs_32);
     } else {
-        t->syscall_enter("clone", "fpppP",
-                      clone_flags,
-                      sizeof(pt_regs_32), print_pt_regs_32);
+        t->syscall_enter("clone")
+            .f(clone_flags)
+            .p()
+            .p()
+            .p()
+            .P(sizeof(pt_regs_32), print_pt_regs_32);
     }
 }
 
@@ -4072,11 +4072,11 @@ RSIM_Linux32::syscall_clone_leave(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(-1)) {
         /* Parent */
-        t->syscall_leave("d");
+        t->syscall_leave().ret().str("\n");
     } else {
         /* Child returns here for fork, but not for thread-clone */
-        t->syscall_enter("child's clone", "fpppP", clone_flags, sizeof(pt_regs_32), print_pt_regs_32);
-        t->syscall_leave("d----P", sizeof(pt_regs_32), print_pt_regs_32);
+        t->syscall_enter("child's clone").f(clone_flags).p().p().p().P(sizeof(pt_regs_32), print_pt_regs_32);
+        t->syscall_leave().ret().arg(4).P(sizeof(pt_regs_32), print_pt_regs_32).str("\n");
     }
 }
 
@@ -4085,7 +4085,7 @@ RSIM_Linux32::syscall_clone_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_uname_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("uname", "p");
+    t->syscall_enter("uname").p();
 }
 
 void
@@ -4122,7 +4122,7 @@ RSIM_Linux32::syscall_uname_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_uname_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(new_utsname_32), print_new_utsname_32);
+    t->syscall_leave().ret().P(sizeof(new_utsname_32), print_new_utsname_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4130,7 +4130,7 @@ RSIM_Linux32::syscall_uname_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_modify_ldt_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("modify_ldt", "dpd");
+    t->syscall_enter("modify_ldt").d().p().d();
 }
 
 void
@@ -4142,7 +4142,7 @@ RSIM_Linux32::syscall_modify_ldt_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d---"); // FIXME
+    t->syscall_leave().ret().str("\n");                 // "---"; // FIXME
 }
 
 /*******************************************************************************************************************************/
@@ -4150,7 +4150,7 @@ RSIM_Linux32::syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchdir_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchdir", "d");
+    t->syscall_enter("fchdir").d();
 }
 
 void
@@ -4168,7 +4168,7 @@ RSIM_Linux32::syscall_fchdir_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mprotect_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("mprotect", "pdf", mmap_pflags);
+    t->syscall_enter("mprotect").p().d().f(mmap_pflags);
 }
 
 void
@@ -4189,7 +4189,7 @@ RSIM_Linux32::syscall_mprotect_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mprotect_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
 }
 
@@ -4205,7 +4205,7 @@ RSIM_Linux32::syscall_llseek_enter(RSIM_Thread *t, int callno)
      *      loff_t __user *result,          // 64-bit user area to write resulting position
      *      unsigned int origin             // whence specified offset is measured
      */
-    t->syscall_enter("llseek","dddpf", seek_whence);
+    t->syscall_enter("llseek").d().d().d().p().f(seek_whence);
 }
 
 void
@@ -4231,7 +4231,7 @@ RSIM_Linux32::syscall_llseek_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getdents_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getdents", "dpd");
+    t->syscall_enter("getdents").d().p().d();
 }
 
 void
@@ -4247,7 +4247,7 @@ void
 RSIM_Linux32::syscall_getdents_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave("d-P", status>0?status:0, print_dentries_32);
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4261,11 +4261,12 @@ RSIM_Linux32::syscall_select_enter(RSIM_Thread *t, int callno)
      * where:
      *    fd_set is enough "unsigned long" data to contain 1024 bits. Regardless of the size of "unsigned long",
      *    the file bits will be in the same order (we are the host is little endian), and the fd_set is the same size. */
-    t->syscall_enter("select", "dPPPP",
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(timeval_32), print_timeval_32);
+    t->syscall_enter("select")
+        .d()
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(timeval_32), print_timeval_32);
 }
 
 void
@@ -4324,11 +4325,11 @@ RSIM_Linux32::syscall_select_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_select_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-PPPP",
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(fd_set), print_bitvec,
-                  sizeof(timeval_32), print_timeval_32);
+    t->syscall_leave().ret().arg(1)
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(fd_set), print_bitvec)
+        .P(sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4337,7 +4338,7 @@ void
 RSIM_Linux32::syscall_msync_enter(RSIM_Thread *t, int callno)
 {
     static const Translate msync_flags[] = { TF(MS_ASYNC), TF(MS_SYNC), TF(MS_INVALIDATE), T_END };
-    t->syscall_enter("msync", "pdf", msync_flags);
+    t->syscall_enter("msync").p().d().f(msync_flags);
 }
 
 void
@@ -4363,7 +4364,7 @@ RSIM_Linux32::syscall_msync_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_writev_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("writev", "dpd");
+    t->syscall_enter("writev").d().p().d();
 }
 
 void
@@ -4407,7 +4408,7 @@ RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
                 strace <<"<seg fault reading buffer>\n";
                 break;
             }
-            print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
+            Printer::print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
             mfprintf(strace)(" (size=%"PRIu32")", iov.iov_len);
 
             /* Write data to the file */
@@ -4436,7 +4437,7 @@ RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_setparam_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_setparam", "dP", sizeof(sched_param_32), print_sched_param_32);
+    t->syscall_enter("sched_setparam").d().P(sizeof(sched_param_32), print_sched_param_32);
 }
 
 void
@@ -4463,7 +4464,7 @@ RSIM_Linux32::syscall_sched_setparam_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_setscheduler_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_setscheduler", "dfP", scheduler_policies, sizeof(sched_param_32), print_sched_param_32);
+    t->syscall_enter("sched_setscheduler").d().f(scheduler_policies).P(sizeof(sched_param_32), print_sched_param_32);
 }
 
 void
@@ -4491,7 +4492,7 @@ RSIM_Linux32::syscall_sched_setscheduler_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_getscheduler", "d");
+    t->syscall_enter("sched_getscheduler").d();
 }
 
 void
@@ -4505,7 +4506,7 @@ RSIM_Linux32::syscall_sched_getscheduler_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("Df", scheduler_policies);
+    t->syscall_leave().eret().f(scheduler_policies).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4513,7 +4514,7 @@ RSIM_Linux32::syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_yield_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_yield", "");
+    t->syscall_enter("sched_yield");
 }
 
 void
@@ -4527,7 +4528,7 @@ RSIM_Linux32::syscall_sched_yield_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_get_priority_max", "f", scheduler_policies);
+    t->syscall_enter("sched_get_priority_max").f(scheduler_policies);
 }
 
 void
@@ -4543,7 +4544,7 @@ RSIM_Linux32::syscall_sched_get_priority_max_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_get_priority_min", "f", scheduler_policies);
+    t->syscall_enter("sched_get_priority_min").f(scheduler_policies);
 }
 
 void
@@ -4559,7 +4560,7 @@ RSIM_Linux32::syscall_sched_get_priority_min_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_nanosleep_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("nanosleep", "Pp", sizeof(timespec_32), print_timespec_32);
+    t->syscall_enter("nanosleep").P(sizeof(timespec_32), print_timespec_32).p();
 }
 
 void
@@ -4593,7 +4594,7 @@ RSIM_Linux32::syscall_nanosleep_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_nanosleep_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4603,10 +4604,10 @@ RSIM_Linux32::syscall_prctl_enter(RSIM_Thread *t, int callno)
 {
     switch (t->syscall_arg(0)) {
         case PR_SET_NAME:
-            t->syscall_enter("prctl", "es", prctl_options);
+            t->syscall_enter("prctl").e(prctl_options).s();
             break;
         default:
-            t->syscall_enter("prctl", "exxxx");
+            t->syscall_enter("prctl").e(prctl_options).x().x().x().x();
             break;
     }
 }
@@ -4639,7 +4640,7 @@ RSIM_Linux32::syscall_prctl_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigreturn_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rt_sigreturn", "");
+    t->syscall_enter("rt_sigreturn");
 }
 
 void
@@ -4665,7 +4666,7 @@ RSIM_Linux32::syscall_rt_sigreturn_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigaction_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rt_sigaction", "fPpd", signal_names, sizeof(sigaction_32), print_sigaction_32);
+    t->syscall_enter("rt_sigaction").f(signal_names).P(sizeof(sigaction_32), print_sigaction_32).p().d();
 }
 
 void
@@ -4711,7 +4712,7 @@ RSIM_Linux32::syscall_rt_sigaction_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigaction_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d--P", sizeof(sigaction_32), print_sigaction_32);
+    t->syscall_leave().ret().arg(2).P(sizeof(sigaction_32), print_sigaction_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4720,7 +4721,7 @@ void
 RSIM_Linux32::syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno)
 {
     static const Translate flags[] = { TE(SIG_BLOCK), TE(SIG_UNBLOCK), TE(SIG_SETMASK), T_END };
-    t->syscall_enter("rt_sigprocmask", "ePp", flags, sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
+    t->syscall_enter("rt_sigprocmask").e(flags).P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).p();
 }
 
 void
@@ -4754,7 +4755,7 @@ RSIM_Linux32::syscall_rt_sigprocmask_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d--P", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
+    t->syscall_leave().ret().arg(2).P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4762,7 +4763,7 @@ RSIM_Linux32::syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigpending_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rt_sigpending", "p");
+    t->syscall_enter("rt_sigpending").p();
 }
 
 void
@@ -4784,7 +4785,7 @@ RSIM_Linux32::syscall_rt_sigpending_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
+    t->syscall_leave().ret().P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4792,7 +4793,7 @@ RSIM_Linux32::syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigsuspend_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("rt_sigsuspend", "Pd", sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
+    t->syscall_enter("rt_sigsuspend").P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).d();
 }
 
 void
@@ -4811,10 +4812,10 @@ RSIM_Linux32::syscall_rt_sigsuspend_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d");
+    t->syscall_leave().ret().str("\n");
     if (t->syscall_info.signo>0) {
         t->tracing(TRACE_SYSCALL) <<"    retured due to ";
-        print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
+        Printer::print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
         mfprintf(t->tracing(TRACE_SYSCALL))("(%d)\n", t->syscall_info.signo);
     }
 }
@@ -4824,7 +4825,7 @@ RSIM_Linux32::syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pread64_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("pread64", "dpdd");
+    t->syscall_enter("pread64").d().p().d().d();
 }
 
 void
@@ -4852,7 +4853,7 @@ void
 RSIM_Linux32::syscall_pread64_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
-    t->syscall_leave("d-b", nread>0?nread:0);
+    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4860,7 +4861,7 @@ RSIM_Linux32::syscall_pread64_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getcwd_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getcwd", "pd");
+    t->syscall_enter("getcwd").p().d();
 }
 
 void
@@ -4890,7 +4891,7 @@ RSIM_Linux32::syscall_getcwd_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getcwd_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("ds");
+    t->syscall_leave().ret().s().str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4898,7 +4899,7 @@ RSIM_Linux32::syscall_getcwd_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sigaltstack_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sigaltstack", "Pp", sizeof(stack_32), print_stack_32);
+    t->syscall_enter("sigaltstack").P(sizeof(stack_32), print_stack_32).p();
 }
 
 void
@@ -4929,7 +4930,7 @@ RSIM_Linux32::syscall_sigaltstack_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(stack_32), print_stack_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(stack_32), print_stack_32).str("\n");
 }
             
 /*******************************************************************************************************************************/
@@ -4937,7 +4938,7 @@ RSIM_Linux32::syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap2_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("mmap2", "pdffdd", mmap_pflags, mmap_mflags);
+    t->syscall_enter("mmap2").p().d().f(mmap_pflags).f(mmap_mflags).d().d();
 }
 
 void
@@ -4961,7 +4962,7 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("Dp");
+    t->syscall_leave().eret().arg(-1).p().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 
@@ -4972,9 +4973,9 @@ void
 RSIM_Linux32::syscall_stat64_enter(RSIM_Thread *t, int callno)
 {
     if (195==callno || 196==callno) {
-        t->syscall_enter(195==callno?"stat64":"lstat64", "sp");
+        t->syscall_enter(195==callno?"stat64":"lstat64").s().p();
     } else {
-        t->syscall_enter("fstat64", "dp");
+        t->syscall_enter("fstat64").d().p();
     }
 }
 
@@ -5071,7 +5072,7 @@ RSIM_Linux32::syscall_stat64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_stat64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(kernel_stat_32), print_kernel_stat_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_32), print_kernel_stat_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5079,7 +5080,7 @@ RSIM_Linux32::syscall_stat64_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getuid32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getuid32", "");
+    t->syscall_enter("getuid32");
 }
 
 void
@@ -5094,7 +5095,7 @@ RSIM_Linux32::syscall_getuid32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getgid32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getgid32", "");
+    t->syscall_enter("getgid32");
 }
 
 void
@@ -5109,7 +5110,7 @@ RSIM_Linux32::syscall_getgid32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_geteuid32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("geteuid32", "");
+    t->syscall_enter("geteuid32");
 }
 
 void
@@ -5124,7 +5125,7 @@ RSIM_Linux32::syscall_geteuid32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getegid32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getegid32", "");
+    t->syscall_enter("getegid32");
 }
 
 void
@@ -5139,7 +5140,7 @@ RSIM_Linux32::syscall_getegid32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getgroups32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getgroups32", "dp");
+    t->syscall_enter("getgroups32").d().p();
 }
 
 void
@@ -5189,9 +5190,9 @@ RSIM_Linux32::syscall_getgroups32_leave(RSIM_Thread *t, int callno)
     int ngroups = t->syscall_arg(-1);
     int nreq = t->syscall_arg(0);
     if (nreq>0) {
-        t->syscall_leave("d-P", std::min(ngroups, nreq)*sizeof(gid_t), print_int_32);
+        t->syscall_leave().ret().arg(1).P(std::min(ngroups, nreq)*sizeof(gid_t), print_int_32).str("\n");
     } else {
-        t->syscall_leave("d");
+        t->syscall_leave().ret().str("\n");
     }
 }
 
@@ -5202,7 +5203,7 @@ RSIM_Linux32::syscall_setgroups32_enter(RSIM_Thread *t, int callno)
 {
     size_t ngroups = t->syscall_arg(0);
     size_t maxgroups = sysconf(_SC_NGROUPS_MAX);
-    t->syscall_enter("setgroups32", "dP", std::min(ngroups, maxgroups)*sizeof(gid_t), print_int_32);
+    t->syscall_enter("setgroups32").d().P(std::min(ngroups, maxgroups)*sizeof(gid_t), print_int_32);
 }
 
 void
@@ -5241,7 +5242,7 @@ RSIM_Linux32::syscall_setgroups32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchown32_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fchown32", "ddd");
+    t->syscall_enter("fchown32").d().d().d();
 }
 
 void
@@ -5257,7 +5258,7 @@ RSIM_Linux32::syscall_fchown32_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_chown_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("chown", "sdd");
+    t->syscall_enter("chown").s().d().d();
 }
 
 void
@@ -5280,7 +5281,7 @@ RSIM_Linux32::syscall_chown_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_madvise_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("madvise", "xde", madvise_behaviors);
+    t->syscall_enter("madvise").x().d().e(madvise_behaviors);
 }
 
 void
@@ -5346,7 +5347,7 @@ RSIM_Linux32::syscall_madvise_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getdents64_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("getdents64", "dpd");
+    t->syscall_enter("getdents64").d().p().d();
 }
 
 void
@@ -5362,7 +5363,7 @@ void
 RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave("d-P", status>0?status:0, print_dentries_64);
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5394,25 +5395,25 @@ RSIM_Linux32::syscall_fcntl_enter(RSIM_Thread *t, int callno)
         case F_GETFL:
         case F_GETOWN:
         case F_GETSIG:
-            t->syscall_enter("fcntl64", "df", fcntl_cmds);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds);
             break;
         case F_SETFD:
         case F_SETOWN:
-            t->syscall_enter("fcntl64", "dfd", fcntl_cmds);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds).d();
             break;
         case F_SETFL:
-            t->syscall_enter("fcntl64", "dff", fcntl_cmds, open_flags);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds).f(open_flags);
             break;
         case F_SETSIG:
-            t->syscall_enter("fcntl64", "dff", fcntl_cmds, signal_names);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds).f(signal_names);
             break;
         case F_GETLK:
         case F_SETLK:
         case F_SETLKW:
-            t->syscall_enter("fcntl64", "dfP", fcntl_cmds, sizeof(flock_32), print_flock_32);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds).P(sizeof(flock_32), print_flock_32);
             break;
         default:
-            t->syscall_enter("fcntl64", "dfd", fcntl_cmds);
+            t->syscall_enter("fcntl64").d().f(fcntl_cmds).d();
             break;
     }
 }
@@ -5488,10 +5489,10 @@ RSIM_Linux32::syscall_fcntl_leave(RSIM_Thread *t, int callno)
     int cmd=t->syscall_arg(1);
     switch (cmd) {
         case F_GETLK:
-            t->syscall_leave("d--P", sizeof(flock_32), print_flock_32);
+            t->syscall_leave().ret().arg(2).P(sizeof(flock_32), print_flock_32).str("\n");
             break;
         default:
-            t->syscall_leave("d");
+            t->syscall_leave().ret().str("\n");
             break;
     }
 }
@@ -5501,7 +5502,7 @@ RSIM_Linux32::syscall_fcntl_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_gettid_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("gettid", "");
+    t->syscall_enter("gettid");
 }
 
 void
@@ -5537,26 +5538,26 @@ RSIM_Linux32::syscall_futex_enter(RSIM_Thread *t, int callno)
     uint32_t op = t->syscall_arg(1);
     switch (op & 0x7f) {
         case 0: /*FUTEX_WAIT*/
-            t->syscall_enter("futex", "PfdP", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32);
             break;
         case 1: /*FUTEX_WAKE*/
-            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
             break;
         case 2: /*FUTEX_FD*/
-            t->syscall_enter("futex", "Pfd", (size_t)4, print_int_32, opflags);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
             break;
         case 3: /*FUTEX_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-P", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32);
             break;
         case 4: /*FUTEX_CMP_REQUEUE*/
-            t->syscall_enter("futex", "Pfd-Pd", (size_t)4, print_int_32, opflags, (size_t)4, print_int_32);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32).d();
             break;
         case 9: /*FUTEX_WAIT_BITSET*/
-            t->syscall_enter("futex", "PfdP-x", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32).unused().x();
             break;
         default:
-            t->syscall_enter("futex", "PfdPPd", (size_t)4, print_int_32, opflags, sizeof(timespec_32), print_timespec_32, 
-                             (size_t)4, print_int_32);
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32)
+                .P(4, print_int_32).d();
             break;
     }
 }
@@ -5614,7 +5615,7 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_futex_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", (size_t)4, print_int_32);
+    t->syscall_leave().ret().P(4, print_int_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5622,7 +5623,7 @@ RSIM_Linux32::syscall_futex_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sched_getaffinity_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("sched_getaffinity", "ddp");
+    t->syscall_enter("sched_getaffinity").d().d().p();
 }
 
 void
@@ -5654,7 +5655,7 @@ RSIM_Linux32::syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 {
     size_t cpuset_nbits = t->syscall_arg(1);
     size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
-    t->syscall_leave("d--P", cpuset_nbytes, print_bitvec);
+    t->syscall_leave().ret().arg(2).P(cpuset_nbytes, print_bitvec).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5662,7 +5663,7 @@ RSIM_Linux32::syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_thread_area_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("set_thread_area", "P", sizeof(SegmentDescriptor), print_SegmentDescriptor);
+    t->syscall_enter("set_thread_area").P(sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
 void
@@ -5689,7 +5690,7 @@ RSIM_Linux32::syscall_set_thread_area_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("dP", sizeof(SegmentDescriptor), print_SegmentDescriptor);
+    t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor).str("\n");
 }
 
 
@@ -5698,7 +5699,7 @@ RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_exit_group_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("exit_group", "d");
+    t->syscall_enter("exit_group").d();
 }
 
 void
@@ -5732,7 +5733,7 @@ RSIM_Linux32::syscall_exit_group_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("set_tid_address", "p");
+    t->syscall_enter("set_tid_address").p();
 }
 
 void
@@ -5747,7 +5748,7 @@ RSIM_Linux32::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_settime_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("clock_settime", "eP", clock_names, sizeof(timespec_32), print_timespec_32);
+    t->syscall_enter("clock_settime").e(clock_names).P(sizeof(timespec_32), print_timespec_32);
 }
 
 void
@@ -5771,7 +5772,7 @@ RSIM_Linux32::syscall_clock_settime_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_gettime_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("clock_gettime", "ep", clock_names);
+    t->syscall_enter("clock_gettime").e(clock_names).p();
 }
 
 void
@@ -5798,7 +5799,7 @@ RSIM_Linux32::syscall_clock_gettime_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5806,7 +5807,7 @@ RSIM_Linux32::syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_getres_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("clock_getres", "ep", clock_names);
+    t->syscall_enter("clock_getres").e(clock_names).p();
 }
 
 void
@@ -5836,7 +5837,7 @@ RSIM_Linux32::syscall_clock_getres_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_getres_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d-P", sizeof(timespec_32), print_timespec_32);
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5844,7 +5845,7 @@ RSIM_Linux32::syscall_clock_getres_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs64_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("statfs64", "sdp");
+    t->syscall_enter("statfs64").s().d().p();
 }
 
 void
@@ -5883,7 +5884,7 @@ RSIM_Linux32::syscall_statfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5891,7 +5892,7 @@ RSIM_Linux32::syscall_statfs64_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("fstatfs64", "ddp");
+    t->syscall_enter("fstatfs64").d().d().p();
 }
 
 void
@@ -5928,7 +5929,7 @@ RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave("d--P", sizeof(statfs64_32), print_statfs64_32);
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -5936,7 +5937,7 @@ RSIM_Linux32::syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_tgkill_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("tgkill", "ddf", signal_names);
+    t->syscall_enter("tgkill").d().d().f(signal_names);
 }
 
 void
@@ -5952,7 +5953,7 @@ RSIM_Linux32::syscall_tgkill_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_utimes_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("utimes", "s");
+    t->syscall_enter("utimes").s();
 }
 
 void
@@ -6020,7 +6021,7 @@ RSIM_Linux32::syscall_fchmodat_enter(RSIM_Thread *t, int callno)
 {
     /* Note that the library fchmodat() takes a fourth flags argument with the only defined bit being AT_SYMLINK_NOFOLLOW, but
      * the Linux 2.6.32 man page notes that "this flag is not currently implemented." */
-    t->syscall_enter("fchmodat", "dsf-", file_mode_flags /*, fchmod_flags*/);
+    t->syscall_enter("fchmodat").d().s().f(file_mode_flags).unused();
 }
 
 void
@@ -6046,7 +6047,7 @@ RSIM_Linux32::syscall_fchmodat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("set_robust_list", "Pd", sizeof(robust_list_head_32), print_robust_list_head_32);
+    t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_32), print_robust_list_head_32).d();
 }
 
 void
