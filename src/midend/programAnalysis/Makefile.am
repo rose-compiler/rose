@@ -4,7 +4,11 @@
 
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+if ROSE_USING_GCC_VERSION_LATER_4_6
+SUBDIRS = staticSingleAssignment ssaUnfilteredCfg
+else
 SUBDIRS = staticSingleAssignment ssaUnfilteredCfg systemDependenceGraph
+endif
 
 ###############################################################################
 # Subdirectory specifics
@@ -109,10 +113,16 @@ libprogramAnalysis_la_SOURCES=\
 	$(mpaVariableRenaming_la_sources) \
 	$(mpaEditDistance_la_sources)
 
+if ROSE_USING_GCC_VERSION_LATER_4_6
+libprogramAnalysis_la_LIBADD = \
+	staticSingleAssignment/libSSA.la \
+	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la
+else
 libprogramAnalysis_la_LIBADD = \
 	staticSingleAssignment/libSSA.la \
 	ssaUnfilteredCfg/libSSA_UnfilteredCfg.la \
 	systemDependenceGraph/libSDG.la
+endif
 
 pkginclude_HEADERS=\
 	$(mpaCallGraphAnalysis_includeHeaders) \
