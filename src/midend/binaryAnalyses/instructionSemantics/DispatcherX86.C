@@ -3207,8 +3207,8 @@ struct IP_punpckl: P {
             size_t halfWidth = a->get_width() / 2;
             size_t nOps = halfWidth / bitsPerOp;
             for (size_t i=0; i<nOps; ++i) {
-                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
-                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, halfWidth + (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partA = ops->extract(a, i*bitsPerOp, (i+1)*bitsPerOp);
+                BaseSemantics::SValuePtr partB = ops->extract(b, i*bitsPerOp, (i+1)*bitsPerOp);
                 BaseSemantics::SValuePtr pair = ops->concat(partA, partB);
                 result = result ? ops->concat(result, pair) : pair;
             }
