@@ -2,7 +2,7 @@
 #define ROSE_GraphUtility_H
 
 #include <boost/cstdint.hpp>
-#include <sawyer/Graph.h>
+#include <Sawyer/Graph.h>
 
 namespace rose {
 

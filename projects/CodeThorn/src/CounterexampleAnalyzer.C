@@ -5,8 +5,11 @@
 using namespace CodeThorn;
 using namespace std;
 
-CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer) : _analyzer(analyzer) {
-}
+CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer) 
+			: _analyzer(analyzer), _csvOutput(NULL), _maxCounterexamples(0) {}
+
+CounterexampleAnalyzer::CounterexampleAnalyzer(Analyzer* analyzer, stringstream* csvOutput) 
+                        : _analyzer(analyzer), _csvOutput(csvOutput), _maxCounterexamples(-1) {}
 
 CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexample, const EState* startState, 
 								bool returnSpuriousLabel, bool resetAnalyzerData) {
@@ -230,8 +233,27 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
   //     contain at least one input symbol in the cycle part of a counterexample --> this counterexample is spurious.
 }
 
+PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, 
+									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+  PropertyValueTable* currentResults = spotConnection.getLtlResults();
+  // call the counterexample-guided prefix refinement for all analyzed LTL properties
+  for (unsigned int i=0; i < spotConnection.getLtlResults()->size(); i++) { 
+    currentResults = cegarPrefixAnalysisForLtl(i, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+  }
+  return currentResults;
+}
+
 PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int property, SpotConnection& spotConnection, 
 									set<int> ltlInAlphabet, set<int> ltlOutAlphabet) {
+  // visualizer for in-depth model outputs (.dot files)
+  Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(),
+                          _analyzer->getFlow(),_analyzer->getPStateSet(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
+  string vizFilenamePrefix = "";
+  if(args.count("viz-cegpra-detailed")) {
+    vizFilenamePrefix=args["viz-cegpra-detailed"].as<string>();
+    string filename = vizFilenamePrefix + "_cegpra_init.dot";
+    writeDotGraphToDisk(filename, visualizer);
+  }
   // OVERVIEW
   // (0) check if the initial model already satsifies the property
   // (0.5) initialization
@@ -243,36 +265,43 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   //   (4) Check the property on the now slightly refined model
   // od
   // (5) return results;
-  cout << "STATUS: CEGAR analysis called for LTL property " << property << " (concrete prefix mode)" << endl;
+  cout << "STATUS: CEGPRA is now analyzing LTL property " << property << "..." << endl;
+  if (_csvOutput) {
+    (*_csvOutput) << endl << property << ",";
+  }
   TransitionGraph* model = _analyzer->getTransitionGraph();
   assert(model->isComplete());
-  //cout << "DEBUG: size of the initial model: " <<  model->size() << " transitions, " << model->estateSet().size() << " states" << endl;
   // (0) check if the given property already holds on the initial over-approximated model
-  spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
   PropertyValueTable* currentResults = spotConnection.getLtlResults();
-  if (currentResults->getPropertyValue(property) == PROPERTY_VALUE_YES) {
-    // if it holds, check all properties using the initial model and return the result
-    spotConnection.checkLtlProperties(*model, ltlInAlphabet, ltlOutAlphabet, true, false);
-    currentResults = spotConnection.getLtlResults();
-    cout << "STATUS: property " << property << " could be verified using the initial model." << endl;
+  if (currentResults->getPropertyValue(property) != PROPERTY_VALUE_UNKNOWN) {
+    cout << "STATUS: property " << property << " was already analyzed. CEGAR analysis will not be started." << endl;
     return currentResults;
   }
+  spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
+  currentResults = spotConnection.getLtlResults();
   // (0.5) prepare for the continuous tracing of concrete states (will become the prefix of a refined abstract model)
   // store connectors in the over-approx. part of the model (single row of input states in the initial "topified" model)
-  vector<const EState*> firstInputOverApprox (ltlInAlphabet.size());
   const EState* startEState = model->getStartEState();
-  firstInputOverApprox = getFollowingInputStates(firstInputOverApprox, startEState, model);
-  //initialize set of connector states in the concrete prefix (startState)
-  set<const EState*> startAndOuputStatesPrefix;
-  startAndOuputStatesPrefix.insert(startEState);
-  // initialize bookkeeping for transitions that lead to paths with error states 
-  // (do not connect these to the over-approx. part of the model when option "keep-error-states" is set)
-  InputsAtEState erroneousBranches;
-  // as long as the property is not satisfiable yet, refine by enlarging the prefix of concrete states according to counterexamples
+  pair<EStatePtrSet, EStatePtrSet> concOutputAndAbstrInput = getConcreteOutputAndAbstractInput(model); 
+  EStatePtrSet startAndOuputStatesPrefix = concOutputAndAbstrInput.first;
+  vector<const EState*> firstInputOverApprox(ltlInAlphabet.size());
+  firstInputOverApprox = sortAbstractInputStates(firstInputOverApprox, concOutputAndAbstrInput.second);
   int loopCount = 0;
   bool falsified = false;
-  while (currentResults->getPropertyValue(property) != PROPERTY_VALUE_YES) {
+  bool verified = true;   // the usual case for the loop below to terminate is a verified property.
+  string ce = "no counterexample yet";
+  // as long as the property is not satisfiable yet, refine by enlarging the prefix of concrete states according to counterexamples
+  while (currentResults->getPropertyValue(property) != PROPERTY_VALUE_YES) { 
+    if (_maxCounterexamples > -1 && (loopCount + 1) > _maxCounterexamples) {
+      verified = false;
+      spotConnection.resetLtlResults(property);
+      break;
+    }
     loopCount++;
+    if (loopCount % 50 == 0) {
+      cout << "STATUS: " << loopCount << " counterexamples analyzed. most recent counterexample: " << endl;
+      cout << ce << endl;
+    }
     // (1) disconnect prefix and over-approx. part of the model
     model->setIsComplete(false);
     for (unsigned int i = 0; i < firstInputOverApprox.size(); i++) {
@@ -285,23 +314,33 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
        }
     }
     model->setIsPrecise(true);
+    if(args.count("viz-cegpra-detailed")) {
+      stringstream filenameStream;
+      filenameStream << vizFilenamePrefix << "cegpra_afterDisconnect_i" << loopCount << ".dot";
+      writeDotGraphToDisk(filenameStream.str(), visualizer);
+    }
     // (2) add a trace to the prefix according to the most recent counterexample. Analyze the counterexample while adding the trace.
-    string ce = currentResults->getCounterexample(property);
-    cout << "STATUS: counterexample: " << ce << endl;
+    ce = currentResults->getCounterexample(property);
+    //cout << "STATUS: counterexample: " << ce << endl;
     CEAnalysisResult ceaResult = analyzeCounterexample(ce, startEState, false, false);
-    //cout << "DEBUG: transitions after new trace: " << model->size() <<  endl;
     if (ceaResult.analysisResult == CE_TYPE_REAL) {
       // still reconnect the concrete prefix with the over-approx. part of the model (step (3)) in order to report the size.
       falsified = true;
+      verified = false;
     } else if (ceaResult.analysisResult == CE_TYPE_SPURIOUS) {
       if(!boolOptions["keep-error-states"]) {
         // remove a trace leading to an error state and mark the branches to it (do not reconnect in phase 3) 
-        removeAndMarkErroneousBranches(&erroneousBranches, model);
+        removeAndMarkErroneousBranches(model);
       }
       //the trace eliminating the spurious counterexample (maybe including a few extra states) was added to the prefix during analysis.
       // --> nothing to do here
     } else {
       assert(0);  //counterexample analysis not successfully completed
+    }
+    if(args.count("viz-cegpra-detailed")) {
+      stringstream filenameStream;
+      filenameStream << vizFilenamePrefix << "cegpra_afterCECheck_i" << loopCount << ".dot";
+      writeDotGraphToDisk(filenameStream.str(), visualizer);
     }
     // (3) reconnect both parts of the model
     model->setIsPrecise(false);
@@ -310,7 +349,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     for (set<const EState*>::iterator i=startAndOuputStatesPrefix.begin(); i!=startAndOuputStatesPrefix.end(); ++i) {
       vector<bool> inputSuccessors(ltlInAlphabet.size(), false);
       if(!boolOptions["keep-error-states"]) {
-        inputSuccessors = setErrorBranches(inputSuccessors, *i, erroneousBranches); 
+        inputSuccessors = setErrorBranches(inputSuccessors, *i); 
       }
       // determine which input states exist as successors in the prefix
       inputSuccessors = hasFollowingInputStates(inputSuccessors, *i, model);
@@ -323,39 +362,87 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
       }
     }
     model->setIsComplete(true);
+    if(args.count("viz-cegpra-detailed")) {
+      stringstream filenameStream;
+      filenameStream << vizFilenamePrefix << "cegpra_afterReconnect_i" << loopCount << ".dot";
+      writeDotGraphToDisk(filenameStream.str(), visualizer);
+    }
     // if falsified: after reconnecting, leave the analysis loop, report size of the model and return the results
     if (falsified) {
       break;
     }
     // (4) check if the property holds on the refined model
-    spotConnection.resetLtlResults();
+    spotConnection.resetLtlResults(property);
     spotConnection.checkSingleProperty(property, *model, ltlInAlphabet, ltlOutAlphabet, true, true);
     currentResults = spotConnection.getLtlResults();
   }
   // (5) check all properties using the current model and return the result
   spotConnection.checkLtlProperties(*model, ltlInAlphabet, ltlOutAlphabet, true, false);
   currentResults = spotConnection.getLtlResults();
-  cout << "STATUS: CEGAR prefix analysis complete. (" << loopCount << " counterexamples analyzed)" << endl;
+  printStgSizeAndCeCount(model, loopCount, property);
+  if (_csvOutput) {
+    if (verified && !falsified)
+      (*_csvOutput) << "y,";
+    if (!verified && falsified)
+      (*_csvOutput) << "n,";
+    if (!verified && !falsified)
+      (*_csvOutput) << "?,";
+    if (verified && falsified) {
+      cout << "ERROR: property can not be both verified and falsified. " << endl;
+      assert(0);
+    }
+    (*_csvOutput) << currentResults->entriesWithValue(PROPERTY_VALUE_YES)<<",";
+    (*_csvOutput) << currentResults->entriesWithValue(PROPERTY_VALUE_NO)<<",";
+    (*_csvOutput) << currentResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
+  }
   return currentResults;
 }
 
-void CounterexampleAnalyzer::removeAndMarkErroneousBranches(InputsAtEState* erroneousBranches, TransitionGraph* model) {
+void CounterexampleAnalyzer::removeAndMarkErroneousBranches(TransitionGraph* model) {
   const EState* errorState = _analyzer->getLatestErrorEState();
   if (errorState) {
     list<pair<const EState*, int> > erroneousTransitions = removeTraceLeadingToErrorState(errorState, model);
     // store entries for the newly discovered transitions to an error path (same path should never be discovered twice)
     for (list<pair<const EState*, int> >::iterator i=erroneousTransitions.begin(); i!=erroneousTransitions.end(); ++i) {
-      InputsAtEState::iterator errorStateEntry = erroneousBranches->find(i->first);
-      if (errorStateEntry != erroneousBranches->end()) {
+      InputsAtEState::iterator errorStateEntry = _erroneousBranches.find(i->first);
+      if (errorStateEntry != _erroneousBranches.end()) {
         errorStateEntry->second.push_back(i->second);
       } else {
         list<int> newEntryTransitionList;
         newEntryTransitionList.push_back(i->second);
         pair<const EState*, list<int> > newEntry(i->first, newEntryTransitionList);
-        erroneousBranches->insert(newEntry);
+        _erroneousBranches.insert(newEntry);
       }
     }
   }
+}
+
+pair<EStatePtrSet, EStatePtrSet> CounterexampleAnalyzer::getConcreteOutputAndAbstractInput(TransitionGraph* model) {
+  EStatePtrSet allEStates=model->estateSet();
+  EStatePtrSet concreteOutputStates;
+  EStatePtrSet abstractInputStates;
+  concreteOutputStates.insert(model->getStartEState());  // the start state has following input states just like output states do.
+  for(EStatePtrSet::iterator i=allEStates.begin(); i!=allEStates.end(); ++i) {
+    if ((*i)->isRersTopified(_analyzer->getVariableIdMapping())) {
+      if ((*i)->io.isStdInIO()) {
+        abstractInputStates.insert(*i);
+      }
+    } else {
+      if ((*i)->io.isStdOutIO()) {
+        concreteOutputStates.insert(*i);
+      }
+    } 
+  }
+  return pair<EStatePtrSet, EStatePtrSet> (concreteOutputStates, abstractInputStates);
+}
+
+vector<const EState*> CounterexampleAnalyzer::sortAbstractInputStates(vector<const EState*> v, EStatePtrSet abstractInputStates) {
+  for (EStatePtrSet::iterator i=abstractInputStates.begin(); i!=abstractInputStates.end(); ++i) {
+    PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
+    int inVal = (*pstate)[_analyzer->globalVarIdByName("input")].getValue().getIntValue();
+    v[inVal - 1] = (*i);
+  }
+  return v;
 }
 
 vector<const EState*> CounterexampleAnalyzer::getFollowingInputStates(vector<const EState*> v, const EState* startEState, TransitionGraph* model) {
@@ -388,10 +475,10 @@ vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, con
   return v;
 }
 
-vector<bool> CounterexampleAnalyzer::setErrorBranches(vector<bool> v, const EState* eState, InputsAtEState erroneousBranches) {
+vector<bool> CounterexampleAnalyzer::setErrorBranches(vector<bool> v, const EState* eState) {
   // do not (re-)connect in a way as to pretend the existence of a path where erroneous behavior was previously discovered
-  boost::unordered_map<const EState*, list<int> >::iterator errorStateEntry = erroneousBranches.find(eState);
-  if (errorStateEntry != erroneousBranches.end()) {
+  boost::unordered_map<const EState*, list<int> >::iterator errorStateEntry = _erroneousBranches.find(eState);
+  if (errorStateEntry != _erroneousBranches.end()) {
     list<int> dontFollowTheseInputs = errorStateEntry->second;
     for (list<int>::iterator k=dontFollowTheseInputs.begin(); k!=dontFollowTheseInputs.end(); ++k) {
       v[(*k) - 1] = true;
@@ -628,5 +715,28 @@ string CounterexampleAnalyzer::ceIoValToString(CeIoVal& ioVal) {
     result += boost::lexical_cast<string>(ioVal.first);
   }
   return result;
+}
+
+void CounterexampleAnalyzer::writeDotGraphToDisk(string filename, Visualizer& visualizer) {
+  cout << "generating dot IO graph file for an abstract STG:"<<filename<<endl;
+  string dotFile="digraph G {\n";
+  dotFile+=visualizer.abstractTransitionGraphToDot();
+  dotFile+="}\n";
+  write_file(filename, dotFile);
+}
+
+void CounterexampleAnalyzer::printStgSizeAndCeCount(TransitionGraph* model, int counterexampleCount, int property) {
+  long inStates = model->numberOfObservableStates(true, false, false);
+  long outStates = model->numberOfObservableStates(false, true, false);
+  long errStates = model->numberOfObservableStates(false, false, true);
+  cout << "STATUS: CEGPRA finished analyzing property " << property << ". #counterexamples analyzed: "<< counterexampleCount << endl;
+  cout << "STATUS: STG size (model resulting from cegar prefix mode)"
+       << ". #transitions: " << model->size()
+       << ", #states: " << model->estateSet().size()
+       << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)" << endl;
+  if (_csvOutput) {
+    (*_csvOutput) << model->size() <<","<< model->estateSet().size() <<","<< inStates <<","<< outStates <<","
+                  << errStates <<","<< counterexampleCount << ","; 
+  }
 }
 

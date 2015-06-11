@@ -1260,13 +1260,23 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "read_instructions_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/23/2015): This must be static because ASM statments can exist in GNU statement expressions 
+  // within typeof operators which then causes the ASM statement to not be traversed as part of the 
+  // AST (beccause it is hidden in a type (and types are not traversed).  The unparsing of the ASM 
+  // statement checks this flag (skip_unparse_asm_commands) since unparsing of ASM is architecture
+  // dependent and a special problem for the portability of the ROSE regression tests (e.g. on older
+  // versions of MAC OS which were non-x86). The solution is to make this a static boolean flag so
+  // that we need not find the SgFile object via a traversal upwards in the AST through the parent 
+  // pointers.
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
   // frequently machine specific and we are compiling then on architectures for which they were
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
   // but not unparsed in the code given to the backend compiler, since this can fail. (See
   // test2007_20.C from Linux Kernel for an example).
-     File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "static bool", "skip_unparse_asm_commands", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/3/2009): For a library archive, these are the name of the object files it contains.
   // This information is obtained via "ar -vox <archive>", and saving and reading the list.
@@ -1339,6 +1349,13 @@ Grammar::setUpSupport ()
   // DQ (4/17/2015): Adding multifile handling support for commandline generation.
      File.setDataPrototype ("bool", "multifile_support", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/24/2015): Record if optimization is specified on the command line (later maybe also save what level).
+  // This is required to set the __OPTIMIZED__ macro (to follow the GNU API).  See test2015_153.c.
+     File.setDataPrototype("bool", "optimization", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
   // ******************************************************************************
   // ******************************************************************************
@@ -1968,7 +1985,6 @@ Grammar::setUpSupport ()
   // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
      Project.setDataPrototype("bool", "appendPID", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

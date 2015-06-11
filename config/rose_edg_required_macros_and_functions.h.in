@@ -126,8 +126,8 @@
    by setting it with a macro to defin it away (to nothing).  See the details in the 
    EDG/src/Changes file. This is tested in: C_tests/test2009_19.c.
 */
-
-#define __thread 
+/* DQ (5/24/2015): We need to support this how as part of improved C level support in ROSE. */
+/* #define __thread */
 
 /* Outside strict ISO C mode (-ansi, -std=c89 or -std=c99), the functions _exit, alloca,
     bcmp, bzero, dcgettext, dgettext, dremf, dreml, drem, exp10f, exp10l, exp10, ffsll,

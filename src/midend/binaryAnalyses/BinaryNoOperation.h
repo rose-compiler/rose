@@ -2,6 +2,7 @@
 #define ROSE_BinaryAnalysis_BinaryNoOperation_H
 
 #include <BaseSemantics2.h>
+#include <Sawyer/Message.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -20,7 +21,8 @@ public:
     /** Base class for normalizing a state. */
     class StateNormalizer: public Sawyer::SharedObject {
     protected:
-        StateNormalizer() {}
+        size_t ignorePoppedMemory_;
+        StateNormalizer(): ignorePoppedMemory_(8192) {}
     public:
         virtual ~StateNormalizer() {}
 
@@ -31,6 +33,17 @@ public:
         static Ptr instance() {
             return Ptr(new StateNormalizer);
         }
+
+        /** Property: ignore recently popped memory.
+         *
+         *  If the stack is well behaved (they usually are) then ignore memory that is off the top of the stack because it's
+         *  been recently popped.  The value if this property is the number of bytes beyond the top of the stack that are
+         *  considered to be recently popped.
+         *
+         * @{ */
+        size_t ignorePoppedMemory() const { return ignorePoppedMemory_; }
+        void ignorePoppedMemory(size_t nbytes) { ignorePoppedMemory_ = nbytes; }
+        /** @} */
 
         /** Constructs an initial state. */
         virtual InstructionSemantics2::BaseSemantics::StatePtr
@@ -46,6 +59,10 @@ public:
 private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     StateNormalizer::Ptr normalizer_;
+    Sawyer::Optional<rose_addr_t> initialSp_;
+
+public:
+    static Sawyer::Message::Facility mlog;              /**< Diagnostic streams. */
 
 public:
     /** Default constructor.
@@ -77,6 +94,16 @@ public:
     void stateNormalizer(const StateNormalizer::Ptr &f) { normalizer_ = f; }
     /** @} */
 
+    /** Property: initial concrete value for stack pointer.
+     *
+     *  A concrete initial value for the stack pointer can be used to help decide whether memory addresses are recently
+     *  popped. It may be possible to do this without a concrete value also, depending on the semantic domain.
+     *
+     * @{ */
+    const Sawyer::Optional<rose_addr_t> initialStackPointer() const { return initialSp_; }
+    void initialStackPointer(const Sawyer::Optional<rose_addr_t> &v) { initialSp_ = v; }
+    /** @} */
+
     /** Determines if an instruction is a no-op. */
     bool isNoop(SgAsmInstruction*) const;
 
@@ -100,6 +127,9 @@ public:
      *  Returns a vector with one element per instruction. The element is true if the instruction is part of one of the
      *  specified index intervals. The returned vector will contain at least @p size elements. */
     static std::vector<bool> toVector(const IndexIntervals&, size_t size=0);
+
+    /** Initializes and registers disassembler diagnostic streams. See Diagnostics::initialize(). */
+    static void initDiagnostics();
 
 protected:
     InstructionSemantics2::BaseSemantics::StatePtr initialState() const;

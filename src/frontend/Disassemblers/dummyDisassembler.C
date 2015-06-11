@@ -105,8 +105,6 @@ unsigned SgAsmPowerpcInstruction::get_anyKind() const { return 0; }
 
 bool SgAsmX86Instruction::terminatesBasicBlock() { return false; }
 bool SgAsmX86Instruction::isUnknown() const { return false; }
-bool SgAsmX86Instruction::hasEffect() { return false; }
-bool SgAsmX86Instruction::hasEffect(const std::vector<SgAsmInstruction*>&, bool, bool) { return false; }
 bool SgAsmX86Instruction::isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmX86Instruction::isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t*, rose_addr_t*) { return false; }
 bool SgAsmX86Instruction::isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) { return false; }
@@ -118,11 +116,6 @@ std::set<rose_addr_t> SgAsmX86Instruction::getSuccessors(bool* complete) { retur
 std::set<rose_addr_t>
 SgAsmX86Instruction::getSuccessors(const std::vector<SgAsmInstruction*>&, bool*, const MemoryMap*) {
     return std::set<rose_addr_t>();
-}
-
-std::vector<std::pair<size_t,size_t> >
-SgAsmX86Instruction::findNoopSubsequences(const std::vector<SgAsmInstruction*>&, bool, bool) {
-    return std::vector<std::pair<size_t,size_t> >();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

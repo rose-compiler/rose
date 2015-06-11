@@ -1,7 +1,7 @@
 #ifndef ROSE_BinaryAnalysis_BinaryDebugger_H
 #define ROSE_BinaryAnalysis_BinaryDebugger_H
 
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 
 namespace rose {
 namespace BinaryAnalysis {

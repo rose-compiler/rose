@@ -28,6 +28,14 @@ recursiveDisassemble_CPPFLAGS = $(ROSE_INCLUDES)
 recursiveDisassemble_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Run specimen natively by single stepping
+
+bin_PROGRAMS += nativeExecutionTrace
+nativeExecutionTrace_SOURCES = nativeExecutionTrace.C
+nativeExecutionTrace_CPPFLAGS = $(ROSE_INCLUDES)
+nativeExecutionTrace_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Single-step a process and compare execution addresses with a list of addresses
 
 bin_PROGRAMS += checkExecutionAddresses
@@ -50,6 +58,14 @@ bin_PROGRAMS += simulate
 simulate_SOURCES = simulate.C
 simulate_CPPFLAGS = $(ROSE_INCLUDES)
 simulate_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
+# Decode encoded strings
+
+bin_PROGRAMS += stringDecoder
+stringDecoder_SOURCES = stringDecoder.C
+stringDecoder_CPPFLAGS = $(ROSE_INCLUDES)
+stringDecoder_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
 # Not distributed; not part of the Git repo

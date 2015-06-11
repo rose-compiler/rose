@@ -4,7 +4,7 @@
 #include <Diagnostics.h>
 #include <Partitioner2/GraphViz.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/GraphTraversal.h>
+#include <Sawyer/GraphTraversal.h>
 #include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;
@@ -159,7 +159,7 @@ CfgEmitter::init() {
 
     // Class initialization
     if (0 == versionDate_) {
-        FILE *dot = popen("dot -V", "r");
+        FILE *dot = popen("dot -V 2>&1", "r");
         if (dot) {
             char buffer[256];
             if (size_t n = fread(buffer, 1, sizeof(buffer)-1, dot)) {
@@ -181,6 +181,7 @@ CfgEmitter::init() {
         size_t addrWidth = partitioner_.instructionProvider().instructionPointerRegister().get_nbits();
         BaseSemantics::RiscOperatorsPtr ops = SymbolicSemantics::RiscOperators::instance(regdict, solver);
         noOpAnalysis_ = NoOperation(cpu->create(ops, addrWidth, regdict));
+        noOpAnalysis_.initialStackPointer(0xdddd0001); // optional; odd prevents false positives for stack aligning instructions
     }
 }
 
@@ -556,7 +557,7 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
             NoOperation::IndexIntervals noopSequences = noOpAnalysis_.findNoopSubsequences(insns);
             noopSequences = NoOperation::largestEarliestNonOverlapping(noopSequences);
             BOOST_FOREACH (const NoOperation::IndexInterval &where, noopSequences) {
-                for (size_t i=where.least(); i<where.greatest(); ++i)
+                for (size_t i=where.least(); i<=where.greatest(); ++i)
                     isPartOfNoopSequence[i] = true;
             }
         }
@@ -733,12 +734,12 @@ CfgEmitter::functionAttributes(const Function::Ptr &function) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CgEmitter::CgEmitter(const Partitioner &partitioner)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(partitioner.functionCallGraph(false/*no parallel edges*/));
 }
 
 CgEmitter::CgEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg)
-    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75) {
+    : partitioner_(partitioner), functionHighlightColor_(0.15, 1.0, 0.75), highlightNameMatcher_("^\\001$") {
     callGraph(cg);
 }
 

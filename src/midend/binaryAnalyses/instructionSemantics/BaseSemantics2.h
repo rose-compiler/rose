@@ -9,10 +9,10 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/optional.hpp>
-#include <sawyer/Assert.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -2359,7 +2359,6 @@ public:
      *  instruction itself is only used for the duration of this call. */
     virtual void iproc_replace(SgAsmInstruction *insn, InsnProcessor *iproc);    
 
-protected:
     /** Given an instruction, return the InsnProcessor key that can be used as an index into the iproc_table. */
     virtual int iproc_key(SgAsmInstruction*) const = 0;
 

@@ -4,7 +4,7 @@
 #include <bROwSE/bROwSE.h>
 
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <Wt/WApplication>
 #include <Wt/WEnvironment>
 

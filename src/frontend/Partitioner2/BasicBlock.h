@@ -6,10 +6,10 @@
 #include <Partitioner2/DataBlock.h>
 #include <Partitioner2/Semantics.h>
 
-#include <sawyer/Cached.h>
-#include <sawyer/Map.h>
-#include <sawyer/Optional.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/Cached.h>
+#include <Sawyer/Map.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/SharedPointer.h>
 
 #include <set>
 #include <string>

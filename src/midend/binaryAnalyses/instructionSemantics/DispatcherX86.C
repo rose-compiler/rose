@@ -19,69 +19,70 @@ static inline size_t asm_type_width(SgAsmType* ty) {
 }
 
 /*******************************************************************************************************************************
- *                                      Functors that handle individual x86 instructions kinds
+ *                                      Base x86 instruction processor
  *******************************************************************************************************************************/
-
 namespace X86 {
 
-// An intermediate class that reduces the amount of typing in all that follows.  Its process() method does some up-front
-// checking, dynamic casting, and pointer dereferencing and then calls the p() method that does the real work.
-class P: public BaseSemantics::InsnProcessor {
-public:
-    typedef DispatcherX86 *D;
-    typedef BaseSemantics::RiscOperators *Ops;
-    typedef SgAsmX86Instruction *I;
-    typedef const SgAsmExpressionPtrList &A;
-    virtual void p(D, Ops, I, A) = 0;
+void
+InsnProcessor::process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) {
+    DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
+    BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
+    SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
+    ASSERT_require(insn!=NULL && insn==operators->get_insn());
+    dispatcher->advanceInstructionPointer(insn);
+    SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
+    check_arg_width(dispatcher.get(), insn, operands);
+    p(dispatcher.get(), operators.get(), insn, operands);
+}
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
-        DispatcherX86Ptr dispatcher = DispatcherX86::promote(dispatcher_);
-        BaseSemantics::RiscOperatorsPtr operators = dispatcher->get_operators();
-        SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
-        ASSERT_require(insn!=NULL && insn==operators->get_insn());
-        dispatcher->advanceInstructionPointer(insn);
-        SgAsmExpressionPtrList &operands = insn->get_operandList()->get_operands();
-        check_arg_width(dispatcher.get(), insn, operands);
-        p(dispatcher.get(), operators.get(), insn, operands);
+void
+InsnProcessor::assert_args(I insn, A args, size_t nargs) {
+    if (args.size()!=nargs) {
+        std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
+        throw BaseSemantics::Exception(mesg, insn);
     }
+}
 
-    void assert_args(I insn, A args, size_t nargs) {
-        if (args.size()!=nargs) {
-            std::string mesg = "instruction must have " + StringUtility::plural(nargs, "arguments");
-            throw BaseSemantics::Exception(mesg, insn);
-        }
-    }
-
-    // This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
-    // E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
-    // Note that even 32-bit x86 architectures might have registers that are larger than 32 bits (e.g., xmm registers on a
-    // Pentium4). Therefore, we consult the register dictionary and only fail if the operand is larger than 32 bits and
-    // contains a register which isn't part of the dictionary.
-    void check_arg_width(D d, I insn, A args) {
-        struct T1: AstSimpleProcessing {
-            D d;
-            I insn;
-            size_t argWidth;
-            T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
-            void visit(SgNode *node) {
-                if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
-                    const RegisterDictionary *regdict = d->get_register_dictionary();
-                    ASSERT_not_null(regdict);
-                    if (regdict->lookup(rre->get_descriptor()).empty())
-                        throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
-                                                       "-bit operands not supported for " +
-                                                       regdict->get_architecture_name(),
-                                                       insn);
-                }
+// This is here because we don't fully support 64-bit mode yet, and a few of the support functions will fail in bad ways.
+// E.g., "jmp ds:[rip+0x200592]" will try to read32() the argument and then fail an assertion because it isn't 32 bits wide.
+// Note that even 32-bit x86 architectures might have registers that are larger than 32 bits (e.g., xmm registers on a
+// Pentium4). Therefore, we consult the register dictionary and only fail if the operand is larger than 32 bits and
+// contains a register which isn't part of the dictionary.
+void
+InsnProcessor::check_arg_width(D d, I insn, A args) {
+    struct T1: AstSimpleProcessing {
+        D d;
+        I insn;
+        size_t argWidth;
+        T1(D d, I insn, size_t argWidth): d(d), insn(insn), argWidth(argWidth) {}
+        void visit(SgNode *node) {
+            if (SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node)) {
+                const RegisterDictionary *regdict = d->get_register_dictionary();
+                ASSERT_not_null(regdict);
+                if (regdict->lookup(rre->get_descriptor()).empty())
+                    throw BaseSemantics::Exception(StringUtility::numberToString(argWidth) +
+                                                   "-bit operands not supported for " +
+                                                   regdict->get_architecture_name(),
+                                                   insn);
             }
-        };
-        for (size_t i=0; i<args.size(); ++i) {
-            size_t nbits = asm_type_width(args[i]->get_type());
-            if (nbits > 32)
-                T1(d, insn, nbits).traverse(args[i], preorder);
         }
+    };
+    for (size_t i=0; i<args.size(); ++i) {
+        size_t nbits = asm_type_width(args[i]->get_type());
+        if (nbits > 32)
+            T1(d, insn, nbits).traverse(args[i], preorder);
     }
-};
+}
+
+} // namespace
+
+
+/*******************************************************************************************************************************
+ *                                      Functors that handle individual x86 instructions kinds
+ *******************************************************************************************************************************/
+namespace X86 {
+
+typedef InsnProcessor P;
 
 // ASCII adjust after addition
 struct IP_aaa: P {
@@ -2593,6 +2594,58 @@ struct IP_pop: P {
     }
 };
 
+// Pop flags register from stack
+//   POPF
+//   POPFD
+//   POPFQ
+struct IP_pop_flags: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr stackVa = d->readRegister(d->REG_anySP);
+            BaseSemantics::SValuePtr oldFlags, poppedFlags;
+            RegisterDescriptor flagsReg;
+            switch (insn->get_operandSize()) {
+                case x86_insnsize_16:
+                    oldFlags = d->readRegister(flagsReg = d->REG_FLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(16), ops->boolean_(true));
+                    break;
+                case x86_insnsize_32:
+                    oldFlags = d->readRegister(flagsReg = d->REG_EFLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(32), ops->boolean_(true));
+                    break;
+                case x86_insnsize_64:
+                    oldFlags = d->readRegister(flagsReg = d->REG_RFLAGS);
+                    poppedFlags = ops->readMemory(d->REG_SS, stackVa, ops->undefined_(64), ops->boolean_(true));
+                    poppedFlags = ops->concat(ops->unsignedExtend(poppedFlags, 32), ops->number_(32, 0));
+                    break;
+                default:
+                    ASSERT_not_reachable("invalid operand size");
+            }
+            stackVa = ops->add(stackVa, ops->number_(stackVa->get_width(), poppedFlags->get_width()/8));
+            ops->writeRegister(d->REG_anySP, stackVa);
+
+            // Clear VIP (bit 19) and VIF (bit 20); i.e., clear bits 0x00180000
+            // Keep IOPL (bits 12 and 13) and VM (bit 17), i.e., preserve bits 0x00023000
+            BaseSemantics::SValuePtr newFlags = ops->extract(poppedFlags, 0, 12);
+            newFlags = ops->concat(newFlags, ops->extract(oldFlags, 12, 14));        // IOPL (bits 12 & 13) is preserved
+            newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 14, 16));
+            if (oldFlags->get_width() >= 32) {
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 16, 17));
+                newFlags = ops->concat(newFlags, ops->extract(oldFlags, 17, 18));    // VM (bit 17) is preserved
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 18, 19));
+                newFlags = ops->concat(newFlags, ops->number_(2, 0));                // VIP (19) and VIF (20) are cleared
+                newFlags = ops->concat(newFlags, ops->extract(poppedFlags, 21, 32));
+                if (oldFlags->get_width() == 64)
+                    newFlags = ops->concat(newFlags, ops->number_(32, 0));
+            }
+            ops->writeRegister(flagsReg, newFlags);
+        }
+    }
+};
+
 // Pop all general-purpose registers
 //  POPA  - 16-bit registers
 //  POPAD - 32-bit registers
@@ -3267,21 +3320,27 @@ struct IP_push_flags: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             // Get the value to be pushed. Assume non-priviledged.
-            BaseSemantics::SValuePtr valueToPush;
+            BaseSemantics::SValuePtr flags;
             switch (insn->get_operandSize()) {
                 case x86_insnsize_16:
-                    valueToPush = d->readRegister(d->REG_FLAGS);
+                    flags = d->readRegister(d->REG_FLAGS);
                     break;
                 case x86_insnsize_32:
-                    valueToPush = d->readRegister(d->REG_EFLAGS);
-                    valueToPush = ops->and_(valueToPush, ops->number_(32, 0x00fcffff));
+                    flags = d->readRegister(d->REG_EFLAGS);
                     break;
                 case x86_insnsize_64:
-                    valueToPush = d->readRegister(d->REG_RFLAGS);
-                    valueToPush = ops->and_(valueToPush, ops->number_(64, 0x00fcffff));
+                    flags = d->readRegister(d->REG_RFLAGS);
                     break;
                 default:
                     ASSERT_not_reachable("invalid operand size");
+            }
+
+            BaseSemantics::SValuePtr valueToPush = ops->extract(flags, 0, 16);
+            if (flags->get_width() >= 32) {
+                valueToPush = ops->concat(valueToPush, ops->number_(2, 0)); // clear VM and RF, bits 16 and 17
+                valueToPush = ops->concat(valueToPush, ops->extract(flags, 18, 32));
+                if (flags->get_width() == 64)
+                    valueToPush = ops->concat(valueToPush, ops->extract(flags, 32, 64));
             }
 
             // Push value onto stack
@@ -3589,6 +3648,14 @@ struct IP_storestring: P {
                                                          addr->get_width()));
                         ops->writeMemory(d->REG_ES, va, src, inLoop);
                     }
+                    ops->writeRegister(d->REG_anyCX, ops->number_(d->REG_anyCX.get_nbits(), 0));
+
+                    // Final value for (E)DI register
+                    BaseSemantics::SValuePtr va =
+                        ops->add(addr,
+                                 ops->unsignedExtend(ops->unsignedMultiply(ops->number_(addr->get_width(), n), step),
+                                                     addr->get_width()));
+                    ops->writeRegister(dstReg, va);
                     return;
                 }
             }
@@ -3637,6 +3704,18 @@ struct IP_sub: P {
             BaseSemantics::SValuePtr difference = d->doAddOperation(minuend, ops->invert(subtrahend), true,
                                                                     ops->boolean_(false));
             d->write(args[0], difference);
+        }
+    }
+};
+
+// Fast system call
+struct IP_syscall: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 0);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            ops->interrupt(x86_exception_syscall, 0);
         }
     }
 };
@@ -3965,6 +4044,9 @@ DispatcherX86::iproc_init()
     iproc_set(x86_pop,          new X86::IP_pop);
     iproc_set(x86_popa,         new X86::IP_pop_gprs);
     iproc_set(x86_popad,        new X86::IP_pop_gprs);
+    iproc_set(x86_popf,         new X86::IP_pop_flags);
+    iproc_set(x86_popfd,        new X86::IP_pop_flags);
+    iproc_set(x86_popfq,        new X86::IP_pop_flags);
     iproc_set(x86_popcnt,       new X86::IP_popcnt);
     iproc_set(x86_por,          new X86::IP_por);
     iproc_set(x86_prefetchnta,  new X86::IP_nop);
@@ -4080,6 +4162,7 @@ DispatcherX86::iproc_init()
     iproc_set(x86_stosq,        new X86::IP_storestring(x86_repeat_none, 64));
     iproc_set(x86_stmxcsr,      new X86::IP_stmxcsr);
     iproc_set(x86_sub,          new X86::IP_sub);
+    iproc_set(x86_syscall,      new X86::IP_syscall);
     iproc_set(x86_sysenter,     new X86::IP_sysenter);
     iproc_set(x86_test,         new X86::IP_test);
     iproc_set(x86_ud2,          new X86::IP_ud2);
@@ -4102,7 +4185,17 @@ DispatcherX86::regcache_init()
                 REG_RDI = findRegister("rdi", 64);
                 REG_RSI = findRegister("rsi", 64);
                 REG_RSP = findRegister("rsp", 64);
+                REG_RBP = findRegister("rbp", 64);
+                REG_RIP = findRegister("rip", 64);
                 REG_RFLAGS = findRegister("rflags", 64);
+                REG_R8 = findRegister("r8", 64);
+                REG_R9 = findRegister("r9", 64);
+                REG_R10 = findRegister("r10", 64);
+                REG_R11 = findRegister("r11", 64);
+                REG_R12 = findRegister("r12", 64);
+                REG_R13 = findRegister("r13", 64);
+                REG_R14 = findRegister("r14", 64);
+                REG_R15 = findRegister("r15", 64);
                 // fall through...
             case x86_insnsize_32:
                 REG_EAX = findRegister("eax", 32);
@@ -4113,6 +4206,7 @@ DispatcherX86::regcache_init()
                 REG_ESI = findRegister("esi", 32);
                 REG_ESP = findRegister("esp", 32);
                 REG_EBP = findRegister("ebp", 32);
+                REG_EIP = findRegister("eip", 32);
                 REG_EFLAGS= findRegister("eflags", 32);
                 REG_ST0 = findRegister("st0", 80);
                 REG_FPSTATUS = findRegister("fpstatus", 16);
@@ -4131,8 +4225,15 @@ DispatcherX86::regcache_init()
                 REG_SI = findRegister("si", 16);
                 REG_SP = findRegister("sp", 16);
                 REG_BP = findRegister("bp", 16);
+                REG_IP = findRegister("ip", 16);
                 REG_AL = findRegister("al", 8);
+                REG_BL = findRegister("bl", 8);
+                REG_CL = findRegister("cl", 8);
+                REG_DL = findRegister("dl", 8);
                 REG_AH = findRegister("ah", 8);
+                REG_BH = findRegister("bh", 8);
+                REG_CH = findRegister("ch", 8);
+                REG_DH = findRegister("dh", 8);
                 REG_FLAGS = findRegister("flags", 16);
                 REG_AF = findRegister("af", 1);
                 REG_CF = findRegister("cf", 1);
@@ -4140,7 +4241,9 @@ DispatcherX86::regcache_init()
                 REG_OF = findRegister("of", 1);
                 REG_PF = findRegister("pf", 1);
                 REG_SF = findRegister("sf", 1);
+                REG_TF = findRegister("tf", 1);
                 REG_ZF = findRegister("zf", 1);
+                REG_CS = findRegister("cs", 16);
                 REG_DS = findRegister("ds", 16);
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
@@ -4149,10 +4252,19 @@ DispatcherX86::regcache_init()
                 ASSERT_not_reachable("invalid instruction size");
         }
 
+        REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax);
+        REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx);
+        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
+        REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx);
+
+        REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di);
+        REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si);
+
         REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
         REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
         REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
-        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
+
+        REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status);
     }
 }
 
@@ -4670,10 +4782,12 @@ BaseSemantics::SValuePtr
 DispatcherX86::readRegister(const RegisterDescriptor &reg) {
     // When reading FLAGS, EFLAGS as a whole do not coalesce individual flags into the single register.
     if (reg.get_major()==x86_regclass_flags && reg.get_offset()==0 && reg.get_nbits()>1) {
-        BaseSemantics::RegisterStatePtr rs = operators->get_state()->get_register_state();
-        if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
-            BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
-            return operators->readRegister(reg);
+        if (BaseSemantics::StatePtr ss = operators->get_state()) {
+            BaseSemantics::RegisterStatePtr rs = ss->get_register_state();
+            if (BaseSemantics::RegisterStateGeneric *rsg = dynamic_cast<BaseSemantics::RegisterStateGeneric*>(rs.get())) {
+                BaseSemantics::RegisterStateGeneric::NoCoalesceOnRead guard(rsg);
+                return operators->readRegister(reg);
+            }
         }
     }
     return operators->readRegister(reg);

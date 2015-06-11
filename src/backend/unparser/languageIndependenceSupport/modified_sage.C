@@ -1523,6 +1523,10 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
              }
 
        // DQ (4/20/2015): Added support for GNU cdecl attribute.
+#if 0
+          printf ("functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() = %s \n",
+               functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() ? "true" : "false");
+#endif
           if (functionDeclaration->get_declarationModifier().get_typeModifier().isGnuAttributeCdecl() == true)
              {
 #if 0
@@ -2232,7 +2236,10 @@ Unparse_MOD_SAGE::printPrefixAttributes(SgDeclarationStatement* decl_stmt, SgUnp
 #endif
        // DQ (1/19/2014): Adding support for gnu attribute regnum to support use in Valgrind application.
           int gnu_regparm_value = functionDeclaration->get_gnu_regparm_attribute();
-          if (gnu_regparm_value > 0)
+
+       // DQ (5/27/2015): Note that zero is a ligitimate value to use, so the default should be -1.
+       // if (gnu_regparm_value > 0)
+          if (gnu_regparm_value >= 0)
              {
                string s = StringUtility::numberToString(gnu_regparm_value);
 #if 0

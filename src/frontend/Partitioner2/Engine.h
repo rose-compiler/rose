@@ -7,7 +7,7 @@
 #include <Partitioner2/Function.h>
 #include <Partitioner2/Partitioner.h>
 #include <Partitioner2/Utility.h>
-#include <sawyer/DistinctList.h>
+#include <Sawyer/DistinctList.h>
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -1057,6 +1057,15 @@ public:
      * @{ */
     bool findingDataFunctionPointers() const /*final*/ { return settings_.partitioner.findingDataFunctionPointers; }
     virtual void findingDataFunctionPointers(bool b) { settings_.partitioner.findingDataFunctionPointers = b; }
+    /** @} */
+
+    /** Property: Configuration files.
+     *
+     *  This property holds a list of configuration files or directories.
+     *
+     * @{ */
+    const std::vector<std::string>& configurationNames() const { return settings_.engine.configurationNames; }
+    std::vector<std::string>& configurationNames() { return settings_.engine.configurationNames; }
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

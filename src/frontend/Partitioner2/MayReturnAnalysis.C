@@ -1,8 +1,8 @@
 #include "sage3basic.h"
 #include <Partitioner2/Partitioner.h>
 
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/ProgressBar.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/ProgressBar.h>
 
 using namespace rose::Diagnostics;
 

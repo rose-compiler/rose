@@ -8,9 +8,9 @@
 #include <TraceSemantics2.h>
 
 #include <map>
-#include <sawyer/Assert.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
 #include <string>
 
 using namespace rose;
