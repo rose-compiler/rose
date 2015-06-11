@@ -183,6 +183,12 @@ RSIM_Linux32::init()
 #undef SC_REG
 }
 
+void
+RSIM_Linux32::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *hdr) {
+    RSIM_Linux::initializeSimulatedOs(process, hdr);
+    process->mmapNextVa(0x40000000);
+}
+
 bool
 RSIM_Linux32::isSupportedArch(SgAsmGenericHeader *fhdr) {
     return isSgAsmElfFileHeader(fhdr) && fhdr->get_word_size()==4;
@@ -390,124 +396,6 @@ RSIM_Linux32::syscall_exit_leave(RSIM_Thread *t, int callno)
 {
     /* This should not be reached, but might be reached if the exit system call body was skipped over. */
     t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_read_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("read").d().p().d();
-}
-
-void
-RSIM_Linux32::syscall_read_body(RSIM_Thread *t, int callno)
-{
-    int fd=t->syscall_arg(0);
-    uint32_t buf_va=t->syscall_arg(1), size=t->syscall_arg(2);
-    char buf[size];
-    ssize_t nread = read(fd, buf, size);
-    if (-1==nread) {
-        t->syscall_return(-errno);
-    } else if (t->get_process()->mem_write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
-        t->syscall_return(-EFAULT);
-    } else {
-        t->syscall_return(nread);
-    }
-}
-
-void
-RSIM_Linux32::syscall_read_leave(RSIM_Thread *t, int callno)
-{
-    ssize_t nread = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_write_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("write").d().b(t->syscall_arg(2)).d();
-}
-
-void
-RSIM_Linux32::syscall_write_body(RSIM_Thread *t, int callno)
-{
-    int fd=t->syscall_arg(0);
-    uint32_t buf_va=t->syscall_arg(1);
-    size_t size=t->syscall_arg(2);
-    uint8_t buf[size];
-    size_t nread = t->get_process()->mem_read(buf, buf_va, size);
-    if (nread!=size) {
-        t->syscall_return(-EFAULT);
-    } else {
-        ssize_t nwritten = write(fd, buf, size);
-        if (-1==nwritten) {
-            t->syscall_return(-errno);
-        } else {
-            t->syscall_return(nwritten);
-        }
-    }
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_open_enter(RSIM_Thread *t, int callno)
-{
-    if (t->syscall_arg(1) & O_CREAT) {
-        t->syscall_enter("open").s().f(open_flags).f(file_mode_flags);
-    } else {
-        t->syscall_enter("open").s().f(open_flags).unused();
-    }
-}
-
-void
-RSIM_Linux32::syscall_open_body(RSIM_Thread *t, int callno)
-{
-    uint32_t filename_va=t->syscall_arg(0);
-    bool error;
-    std::string filename = t->get_process()->read_string(filename_va, 0, &error);
-    if (error) {
-        t->syscall_return(-EFAULT);
-        return;
-    }
-
-    uint32_t flags=t->syscall_arg(1), mode=(flags & O_CREAT)?t->syscall_arg(2):0;
-    int fd = open(filename.c_str(), flags, mode);
-    if (-1==fd) {
-        t->syscall_return(-errno);
-        return;
-    }
-
-    std::string prohibited = "/proc/self/";
-    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
-    prohibited = "/proc/" + StringUtility::numberToString(getpid()) + "/";
-    assert(0!=strncmp(filename.c_str(), prohibited.c_str(), prohibited.size()));
-
-    t->syscall_return(fd);
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_close_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("close").d();
-}
-
-void
-RSIM_Linux32::syscall_close_body(RSIM_Thread *t, int callno)
-{
-    int fd=t->syscall_arg(0);
-    if (1==fd || 2==fd) {
-        /* ROSE is using these */
-        t->syscall_return(-EPERM);
-    } else {
-        int status = close(fd);
-        t->syscall_return(status<0 ? -errno : status);
-    }
 }
 
 /*******************************************************************************************************************************/
@@ -747,7 +635,7 @@ RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().arg(-1).t().str("\n");
+    t->syscall_leave().t().str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1130,7 +1018,7 @@ RSIM_Linux32::syscall_pipe2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pipe2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P((size_t)8, print_int_32).str("\n");
+    t->syscall_leave().ret().P(8, print_int_32).str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -1669,7 +1557,7 @@ RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().arg(-1).p().str("\n");
+    t->syscall_leave().eret().p().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
@@ -3855,7 +3743,7 @@ RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
             if (1==version) {
                 t->syscall_leave().ret().str("\n");
             } else {
-                t->syscall_leave().arg(-1).p().str("\n");
+                t->syscall_leave().p().str("\n");
                 t->get_process()->mem_showmap(mtrace, "  memory map after shmat:\n");
             }
             break;
@@ -4166,36 +4054,6 @@ RSIM_Linux32::syscall_fchdir_body(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 void
-RSIM_Linux32::syscall_mprotect_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("mprotect").p().d().f(mmap_pflags);
-}
-
-void
-RSIM_Linux32::syscall_mprotect_body(RSIM_Thread *t, int callno)
-{
-    uint32_t va=t->syscall_arg(0), size=t->syscall_arg(1), real_perms=t->syscall_arg(2);
-    unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::READABLE : 0) |
-                          ((real_perms & PROT_WRITE) ? MemoryMap::WRITABLE : 0) |
-                          ((real_perms & PROT_EXEC) ? MemoryMap::EXECUTABLE : 0);
-    if (va % PAGE_SIZE) {
-        t->syscall_return(-EINVAL);
-    } else {
-        uint32_t aligned_sz = alignUp(size, (uint32_t)PAGE_SIZE);
-        t->syscall_return(t->get_process()->mem_protect(va, aligned_sz, rose_perms, real_perms));
-    }
-}
-
-void
-RSIM_Linux32::syscall_mprotect_leave(RSIM_Thread *t, int callno)
-{
-    t->syscall_leave().ret().str("\n");
-    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
-}
-
-/*******************************************************************************************************************************/
-
-void
 RSIM_Linux32::syscall_llseek_enter(RSIM_Thread *t, int callno)
 {
     /* From the linux kernel, arguments are:
@@ -4329,7 +4187,8 @@ RSIM_Linux32::syscall_select_leave(RSIM_Thread *t, int callno)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
-        .P(sizeof(timeval_32), print_timeval_32);
+        .P(sizeof(timeval_32), print_timeval_32)
+        .str("\n");
 }
 
 /*******************************************************************************************************************************/
@@ -4962,7 +4821,7 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().arg(-1).p().str("\n");
+    t->syscall_leave().eret().p().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 

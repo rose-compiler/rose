@@ -44,6 +44,23 @@ protected:
     static void syscall_brk_enter(RSIM_Thread*, int);
     static void syscall_brk_body(RSIM_Thread*, int);
     static void syscall_brk_leave(RSIM_Thread*, int);
+
+    static void syscall_close_body(RSIM_Thread *t, int callno);
+    static void syscall_close_enter(RSIM_Thread *t, int callno);
+
+    static void syscall_mprotect_body(RSIM_Thread *t, int callno);
+    static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
+    static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_open_body(RSIM_Thread *t, int callno);
+    static void syscall_open_enter(RSIM_Thread *t, int callno);
+
+    static void syscall_read_body(RSIM_Thread *t, int callno);
+    static void syscall_read_enter(RSIM_Thread *t, int callno);
+    static void syscall_read_leave(RSIM_Thread*, int callno);
+
+    static void syscall_write_body(RSIM_Thread *t, int callno);
+    static void syscall_write_enter(RSIM_Thread *t, int callno);
 };
 
 

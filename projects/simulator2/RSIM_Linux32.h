@@ -13,6 +13,7 @@ public:
 
     virtual bool isSupportedArch(SgAsmGenericHeader*) ROSE_OVERRIDE;
     virtual void loadSpecimenNative(RSIM_Process*, rose::BinaryAnalysis::Disassembler*) ROSE_OVERRIDE;
+    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
     virtual PtRegs initialRegistersArch() ROSE_OVERRIDE;
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,
                                       FILE *trace) ROSE_OVERRIDE;
@@ -41,8 +42,6 @@ protected:
     static void syscall_clone_body(RSIM_Thread *t, int callno);
     static void syscall_clone_enter(RSIM_Thread *t, int callno);
     static void syscall_clone_leave(RSIM_Thread *t, int callno);
-    static void syscall_close_body(RSIM_Thread *t, int callno);
-    static void syscall_close_enter(RSIM_Thread *t, int callno);
     static void syscall_creat_body(RSIM_Thread *t, int callno);
     static void syscall_creat_enter(RSIM_Thread *t, int callno);
     static void syscall_dup_body(RSIM_Thread *t, int callno);
@@ -154,9 +153,6 @@ protected:
     static void syscall_modify_ldt_body(RSIM_Thread *t, int callno);
     static void syscall_modify_ldt_enter(RSIM_Thread *t, int callno);
     static void syscall_modify_ldt_leave(RSIM_Thread *t, int callno);
-    static void syscall_mprotect_body(RSIM_Thread *t, int callno);
-    static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
-    static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
     static void syscall_msync_body(RSIM_Thread *t, int callno);
     static void syscall_msync_enter(RSIM_Thread *t, int callno);
     static void syscall_munmap_body(RSIM_Thread *t, int callno);
@@ -164,8 +160,6 @@ protected:
     static void syscall_nanosleep_body(RSIM_Thread *t, int callno);
     static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
     static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
-    static void syscall_open_body(RSIM_Thread *t, int callno);
-    static void syscall_open_enter(RSIM_Thread *t, int callno);
     static void syscall_pause_body(RSIM_Thread *t, int callno);
     static void syscall_pause_enter(RSIM_Thread *t, int callno);
     static void syscall_pause_leave(RSIM_Thread *t, int callno);
@@ -180,9 +174,6 @@ protected:
     static void syscall_pread64_body(RSIM_Thread *t, int callno);
     static void syscall_pread64_enter(RSIM_Thread *t, int callno);
     static void syscall_pread64_leave(RSIM_Thread *t, int callno);
-    static void syscall_read_body(RSIM_Thread *t, int callno);
-    static void syscall_read_enter(RSIM_Thread *t, int callno);
-    static void syscall_read_leave(RSIM_Thread*, int callno);
     static void syscall_readlink_body(RSIM_Thread *t, int callno);
     static void syscall_readlink_enter(RSIM_Thread *t, int callno);
     static void syscall_rename_body(RSIM_Thread *t, int callno);
@@ -285,8 +276,6 @@ protected:
     static void syscall_waitpid_body(RSIM_Thread *t, int callno);
     static void syscall_waitpid_enter(RSIM_Thread *t, int callno);
     static void syscall_waitpid_leave(RSIM_Thread *t, int callno);
-    static void syscall_write_body(RSIM_Thread *t, int callno);
-    static void syscall_write_enter(RSIM_Thread *t, int callno);
     static void syscall_writev_body(RSIM_Thread *t, int callno);
     static void syscall_writev_enter(RSIM_Thread *t, int callno);
 

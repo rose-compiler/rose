@@ -135,6 +135,9 @@ public:
     // Load shadow register with an entry from the GDT
     void loadShadowRegister(X86SegmentRegister, unsigned gdtIdx);
 
+    // Return segment info for register
+    SegmentInfo& segmentInfo(X86SegmentRegister sr);
+
     // Semantics of an x86 POP instruction so the simulator can easily pop a word from the top of the stack.
     rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr pop();
 

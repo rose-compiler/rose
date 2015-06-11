@@ -32,13 +32,13 @@ class RSIM_Thread;
  *  usage.
  */
 struct Translate {
-    uint32_t    mask;
-    uint32_t    val;
+    unsigned    mask;
+    unsigned    val;
     const char  *str;
 };
 
 // See class Translate
-#define TF(X)           {X, X, #X}                      // Define a bit flag.
+#define TF(X)           {(0==X?unsigned(-1):X), X, #X}  // Define a bit flag.
 #define TF2(M,X)        {M, X, #X}                      // Define a bit vector with possible zero bits.
 #define TF3(M,V,X)      {M, V, #X}                      // Define a masked flag when X is not defined.
 #define TF_FMT(M,FMT)   {0, M, FMT}                     // Format remaining bits; FMT is a printf format string.
@@ -55,14 +55,15 @@ class Printer {
     const uint32_t *args32_;                            // optional args instead of querying from thread
     const uint64_t *args64_;                            // ditto; use either args32_ or args64_ but not both.
     int argNum_;                                        // -1 means return value
-    size_t nPrinted_;
+    size_t nPrinted_;                                   // number of values printed (not counting eret() and str())
+    bool hadRetError_;                                  // true if eret() displayed an error
 public:
     Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread)
-        : thread_(thread), out_(out), args32_(NULL), args64_(NULL), argNum_(0), nPrinted_(0) {};
+        : thread_(thread), out_(out), args32_(NULL), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false) {};
     Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint32_t *args)
-        : thread_(thread), out_(out), args32_(args), args64_(NULL), argNum_(0), nPrinted_(0) {};
+        : thread_(thread), out_(out), args32_(args), args64_(NULL), argNum_(0), nPrinted_(0), hadRetError_(false) {};
     Printer(Sawyer::Message::Stream &out, RSIM_Thread *thread, const uint64_t *args)
-        : thread_(thread), out_(out), args32_(NULL), args64_(args), argNum_(0), nPrinted_(0) {};
+        : thread_(thread), out_(out), args32_(NULL), args64_(args), argNum_(0), nPrinted_(0), hadRetError_(false) {};
 
     static std::string flags_to_str(const Translate *tlist, uint32_t value);
 
@@ -82,64 +83,64 @@ public:
     // NOTE: The following single-letter method names come directly from the original C version that
     // passed this information as a "const char*" of format characters.
 
-    // print buffer
+    // print buffer unless hadRetError
     Printer& b(int64_t nbytes);
     Printer& b(rose_addr_t va, int64_t nbytes);
     Printer& b(rose_addr_t va, const uint8_t *buf, size_t actualSize, size_t printSize);
     static void print_buffer(Sawyer::Message::Stream&, rose_addr_t va, const uint8_t *buf, size_t actualSize, size_t printSize);
 
-    // signed decimal
+    // print signed decimal unless hadRetError
     Printer& d();
     Printer& d(int64_t value);
     static void print_decimal(Sawyer::Message::Stream&, int64_t value);
 
-    // Print enum
+    // Print enum unless hadRetError
     Printer& e(const Translate *tlist);
     Printer& e(uint64_t value, const Translate *tlist);
     static void print_enum(Sawyer::Message::Stream&, const Translate *tlist, uint64_t value);
     
-    // Print flags
+    // Print flags unless hadRetError
     Printer& f(const Translate *tlist);
     Printer& f(uint64_t value, const Translate *tlist);
     static void print_flags(Sawyer::Message::Stream&, const Translate *tlist, uint64_t value);
 
-    // Print pointer
+    // Print pointer unless hadRetError
     Printer& p();
     Printer& p(rose_addr_t va);
     static void print_pointer(Sawyer::Message::Stream&, rose_addr_t va);
 
-    // Print pointer to struct
+    // Print pointer to struct unless hadRetError
     Printer& P(size_t nBytes, StructPrinter);
     Printer& P(rose_addr_t va, size_t structSize, StructPrinter);
     Printer& P(rose_addr_t va, const uint8_t *buffer, size_t structSize, size_t bufferSize, StructPrinter);
     static void print_struct(Sawyer::Message::Stream&, rose_addr_t va, const uint8_t *buf, size_t structSize, size_t bufferSize,
                              StructPrinter);
 
-    // Print string
+    // Print string unless hadRetError
     Printer& s();
     Printer& s(rose_addr_t va);
     static void print_string(Sawyer::Message::Stream&, rose_addr_t va, const std::string&, bool trunc=false, bool error=false);
     static void print_string(Sawyer::Message::Stream&,                 const std::string&, bool trunc=false, bool error=false);
 
-    // Print time
+    // Print time unless hadRetError
     Printer& t();
     Printer& t(uint64_t value);
     static void print_time(Sawyer::Message::Stream&, rose_addr_t value);
 
-    // Print hex value
+    // Print hex value unless hadRetError
     Printer& x();
     Printer& x(uint64_t value);
     static void print_hex(Sawyer::Message::Stream&, uint64_t value);
 
-    // Print syscall return value as integer or error
+    // Print integer or error (setting hadRetError)
     Printer& ret();
     Printer& ret(int64_t value);
-    static void print_ret(Sawyer::Message::Stream&, int64_t value);
+    static bool print_ret(Sawyer::Message::Stream&, int64_t value);
 
-    // Print syscall error number or nothing
+    // Print error number and set hadRetError, or do nothing; does not advance argument or output counters
     Printer& eret();
     Printer& eret(int64_t value);
-    static void print_eret(Sawyer::Message::Stream&, int64_t value);
+    static bool print_eret(Sawyer::Message::Stream&, int64_t value);
 };
 
 #endif

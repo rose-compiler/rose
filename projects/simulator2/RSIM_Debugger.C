@@ -530,14 +530,15 @@ public:
 
     // Breakpoint commands
     //   (empty)                        -- show all breakpoints
-    //   <interval>                     -- set breakpoints at specified instruction addresses
-    //   insn <insn_kind>               -- set breakpoint for certain kind of insn (e.g., "insn rdtsc")
-    //   syscall [<interval>]           -- set breakpoint when this system call number (or any) is about to occur
+    //   [delete] <interval>            -- set/delete breakpoints at specified instruction addresses
+    //   [delete] insn <insn_kind>      -- set/delete breakpoint for certain kind of insn (e.g., "insn rdtsc")
+    //   [delete] syscall [<interval>]  -- set/delete breakpoint when this system call number (or any) is about to occur
     void breakPointCommands(RSIM_Thread *thread, std::vector<std::string> &cmd) {
+        const AddressInterval allAddresses = AddressInterval::whole();
         if (cmd.empty()) {
             if (!breakPointVas_.isEmpty()) {
                 out_ <<"instruction addresses:\n";
-                if (breakPointVas_.hull() == AddressInterval::whole()) {
+                if (breakPointVas_.hull() == allAddresses && breakPointVas_.size() == allAddresses.size()) {
                     out_ <<"  all\n";
                 } else {
                     BOOST_FOREACH (const AddressInterval &interval, breakPointVas_.intervals())
@@ -551,7 +552,7 @@ public:
             }
             if (!breakPointSyscalls_.isEmpty()) {
                 out_ <<"system calls:\n";
-                if (breakPointSyscalls_.hull() == AddressInterval::whole()) {
+                if (breakPointSyscalls_.hull() == allAddresses && breakPointSyscalls_.size() == allAddresses.size()) {
                     out_ <<"  all\n";
                 } else {
                     BOOST_FOREACH (const AddressInterval &interval, breakPointSyscalls_.intervals()) {
@@ -563,27 +564,43 @@ public:
                     }
                 }
             }
-        } else if (cmd[0]=="insn" || cmd[0]=="instruction") {
-            if (cmd.size() < 2)
-                throw std::runtime_error("expected instruction <kind>");
-            for (int i=0; i<x86_last_instruction; ++i) {
-                if (stringifyX86InstructionKind(i, "x86_") == cmd[1]) {
-                    breakPointKinds_.insert(X86InstructionKind(i));
-                    return;
+        } else {
+            bool insert = true;
+            if (cmd[0]=="d" || cmd[0]=="del" || cmd[0]=="delete") {
+                insert = false;
+                cmd.erase(cmd.begin());
+            }
+            if (cmd[0]=="insn" || cmd[0]=="instruction") {
+                if (cmd.size() < 2)
+                    throw std::runtime_error("expected instruction <kind>");
+                for (int i=0; i<x86_last_instruction; ++i) {
+                    if (stringifyX86InstructionKind(i, "x86_") == cmd[1]) {
+                        if (insert) {
+                            breakPointKinds_.insert(X86InstructionKind(i));
+                        } else {
+                            breakPointKinds_.erase(X86InstructionKind(i));
+                        }
+                        return;
+                    }
+                }
+                throw std::runtime_error("unknown instruction mnemonic \"" + StringUtility::cEscape(cmd[1]) + "\"");
+            } else if (cmd[0]=="syscall") {
+                AddressInterval interval = allAddresses;
+                if (cmd.size() > 1)
+                    interval = parseAddressInterval(cmd[1]);
+                if (insert) {
+                    breakPointSyscalls_.insert(interval);
+                } else {
+                    breakPointSyscalls_.erase(interval);
+                }
+            } else {
+                AddressInterval interval = parseAddressInterval(cmd[0]);
+                if (insert) {
+                    breakPointVas_.insert(interval);
+                } else {
+                    breakPointVas_.erase(interval);
                 }
             }
-            throw std::runtime_error("unknown instruction mnemonic \"" + StringUtility::cEscape(cmd[1]) + "\"");
-        } else if (cmd[0]=="syscall") {
-            if (cmd.size() == 1) {
-                AddressInterval interval = AddressInterval::whole();
-                breakPointSyscalls_.insert(interval);
-            } else {
-                AddressInterval interval = parseAddressInterval(cmd[1]);
-                breakPointSyscalls_.insert(interval);
-            }
-        } else {
-            AddressInterval interval = parseAddressInterval(cmd[0]);
-            breakPointVas_.insert(interval);
         }
     }
 };

@@ -171,7 +171,7 @@ RSIM_Thread::syscall_leave() {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     if (m)
         m <<") = ";
-    return print(m);
+    return print(m).arg(-1);
 }
 
 Printer
@@ -179,7 +179,7 @@ RSIM_Thread::syscall_leave(const uint32_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     if (m)
         m <<") = ";
-    return print(m, args);
+    return print(m, args).arg(-1);
 }
 
 Printer
@@ -187,7 +187,7 @@ RSIM_Thread::syscall_leave(const uint64_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     if (m)
         m <<") = ";
-    return print(m, args);
+    return print(m, args).arg(-1);
 }
 
 uint64_t
@@ -697,7 +697,7 @@ RSIM_Thread::syscall_return(const BaseSemantics::SValuePtr &retval)
 }
 
 void
-RSIM_Thread::syscall_return(int retval)
+RSIM_Thread::syscall_return(uint64_t retval)
 {
     const RegisterDescriptor& reg = get_process()->get_simulator()->syscallReturnRegister();
     operators()->writeRegister(reg, operators()->number_(reg.get_nbits(), retval));

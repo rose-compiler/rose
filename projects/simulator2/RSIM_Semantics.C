@@ -96,6 +96,11 @@ RiscOperators::loadShadowRegister(X86SegmentRegister sr, unsigned gdtIdx) {
     segmentInfo_.insert(sr, segment);
 }
 
+RiscOperators::SegmentInfo&
+RiscOperators::segmentInfo(X86SegmentRegister sr) {
+    return segmentInfo_[sr];
+}
+
 void
 RiscOperators::dumpState() {
     Sawyer::Message::Stream out(thread_->tracing(TRACE_STATE));

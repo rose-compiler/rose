@@ -1234,6 +1234,11 @@ struct iovec_32 {
     uint32_t    iov_len;                /* size of buffer in bytes */
 } __attribute__((packed));
 
+struct iovec_64 {
+    uint64_t    iov_base;                               // address of buffer
+    uint64_t    iov_len;                                // size of buffer in bytes
+} __attribute__((packed));
+
 // /* Macros for creating ioctl command numbers. See the _IOC macro in linux source code. */
 // extern unsigned invalid_size_arg_for_IOC; /* provoke linker error for invalid size arguments */
 // #define LINUX_IOC_NONE 0u
@@ -1593,8 +1598,10 @@ void convert(statfs64_32 *g, const statfs_native *h);
 /* Functions to print various data structures */
 void print_SegmentDescriptor(Sawyer::Message::Stream &f, const uint8_t *_ud, size_t sz);
 void print_int_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
+void print_hex_64(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_rlimit(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_kernel_stat_32(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
+void print_kernel_stat_64(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_timespec_32(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timeval_32(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
 void print_sigaction_32(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);

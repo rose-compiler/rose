@@ -350,7 +350,7 @@ public:
      *
      *  @{ */
     void syscall_return(const rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value);
-    void syscall_return(int value);
+    void syscall_return(uint64_t value);
     /** @} */
 
     /** Print the return value of a system call in a manner like strace.

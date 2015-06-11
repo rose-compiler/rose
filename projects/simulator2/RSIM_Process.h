@@ -17,7 +17,7 @@ public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
         : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
-          brkVa_(0), mmap_start(0x40000000ul), mmap_recycle(false), disassembler(NULL), futexes(NULL),
+          brkVa_(0), mmapNextVa_(0), mmap_recycle(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
           terminated(false), termination_status(0), project(NULL), wordSize_(0), core_flags(0), btrace_file(NULL),
           core_styles(CORE_ELF), core_base_name("x-core.rose") {
@@ -192,10 +192,10 @@ public:
      **************************************************************************************************************************/
 private:
     typedef std::vector<std::pair<MemoryMap, std::string > > MapStack;
-    MapStack map_stack;                         /**< Memory map transaction stack. */
-    rose_addr_t brkVa_;                         /**< Current value for brk() syscall; initialized by load() */
-    rose_addr_t mmap_start;                     /**< Minimum address to use when looking for mmap free space */
-    bool mmap_recycle;                          /**< If false, then never reuse mmap addresses */
+    MapStack map_stack;                                 // Memory map transaction stack.
+    rose_addr_t brkVa_;                                 // Current value for brk() syscall; initialized by load()
+    rose_addr_t mmapNextVa_;                            // Minimum address to use when looking for mmap free space
+    bool mmap_recycle;                                  // If false, then never reuse mmap addresses
 
 public:
 
@@ -225,7 +225,7 @@ public:
      *  after it is adjusted.
      *
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
-    int mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &stream);
+    rose_addr_t mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &stream);
 
     /** Unmap some specimen memory.  The starting virtual address, @p va, and number of bytes, @p sz, need not be page aligned,
      *  but if they are then the real munmap() is also called, substituting the real address for @p va.  The return value is a
@@ -373,6 +373,15 @@ public:
      * @{ */
     rose_addr_t brkVa() const { return brkVa_; }
     void brkVa(rose_addr_t va) { brkVa_ = va; }
+    /** @} */
+
+    /** Property: mmap starting address.
+     *
+     *  This is the address where we search for a free area to satisfy a mmap request.
+     *
+     * @{ */
+    rose_addr_t mmapNextVa() const { return mmapNextVa_; }
+    void mmapNextVa(rose_addr_t va) { mmapNextVa_ = va; }
     /** @} */
 
     /**************************************************************************************************************************

@@ -13,6 +13,9 @@
 #include "BinaryDebugger.h"
 #include "Diagnostics.h"
 
+#include <asm/prctl.h>                                  // for the arch_prctl syscall
+#include <sys/prctl.h>                                  // for the arch_prctl syscall
+
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
@@ -39,10 +42,27 @@ RSIM_Linux64::init() {
 
     /* Warning: use hard-coded values here rather than the __NR_* constants from <sys/unistd.h> because the latter varies
      * according to whether ROSE is compiled for 32- or 64-bit.  We always want the 64-bit syscall numbers here. */
+    SC_REG(0,   read,                           read);
+    SC_REG(1,   write,                          default);
+    SC_REG(2,   open,                           default);
+    SC_REG(3,   close,                          default);
+    SC_REG(4,   stat,                           stat);
+    SC_REG(5,   stat,                           stat);  // actually fstat
+    SC_REG(6,   stat,                           stat);  // actually lstat
+    SC_REG(9,   mmap,                           mmap);
+    SC_REG(10,  mprotect,                       mprotect);
     SC_REG(12,  brk,                            brk);
+    SC_REG(20,  writev,                         default);
     SC_REG(21,  access,                         default);
+    SC_REG(158, arch_prctl,                     arch_prctl);
 
 #   undef SC_REG
+}
+
+void
+RSIM_Linux64::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *hdr) {
+    RSIM_Linux::initializeSimulatedOs(process, hdr);
+    process->mmapNextVa(0x7ffff7ff9000ull);
 }
 
 bool
@@ -226,8 +246,270 @@ RSIM_Linux64::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 //                                      System calls
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+RSIM_Linux64::syscall_arch_prctl_enter(RSIM_Thread *t, int callno) {
+    static const Translate code[] = { TE(ARCH_SET_FS), TE(ARCH_GET_FS), TE(ARCH_SET_GS), TE(ARCH_GET_GS), T_END };
+    switch (t->syscall_arg(0)) {
+        case ARCH_SET_FS:
+        case ARCH_SET_GS:
+            t->syscall_enter("arch_prctl").e(code).P(8, print_hex_64);
+            break;
+        default:
+            t->syscall_enter("arch_prctl").e(code).p();
+            break;
+    }
+}
+
+void
+RSIM_Linux64::syscall_arch_prctl_body(RSIM_Thread *t, int callno) {
+    rose_addr_t va = t->syscall_arg(1);
+    int retval = 0;
+    switch (t->syscall_arg(0)) {
+        case ARCH_SET_FS: {
+            uint64_t val;
+            if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
+                retval = -EFAULT;
+            } else {
+                t->operators()->segmentInfo(x86_segreg_fs).base = val;
+            }
+            break;
+        }
+        case ARCH_SET_GS: {
+            uint64_t val;
+            if (t->get_process()->mem_read((uint8_t*)&val, va, sizeof val) != sizeof val) {
+                retval = -EFAULT;
+            } else {
+                t->operators()->segmentInfo(x86_segreg_gs).base = val;
+            }
+            break;
+        }
+        case ARCH_GET_FS: {
+            uint64_t val = t->operators()->segmentInfo(x86_segreg_fs).base;
+            if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
+                retval = -EFAULT;
+            break;
+        }
+        case ARCH_GET_GS: {
+            uint64_t val = t->operators()->segmentInfo(x86_segreg_gs).base;
+            if (t->get_process()->mem_write((uint8_t*)&val, va, sizeof val) != sizeof val)
+                retval = -EFAULT;
+            break;
+        }
+        default:
+            retval = -ENOSYS;
+            break;
+    }
+    t->syscall_return(retval);
+}
+
+void
+RSIM_Linux64::syscall_arch_prctl_leave(RSIM_Thread *t, int callno) {
+    switch (t->syscall_arg(0)) {
+        case ARCH_GET_FS:
+        case ARCH_GET_GS:
+            t->syscall_leave().ret().arg(1).P(8, print_hex_64).str("\n");
+            break;
+        default:
+            t->syscall_leave().ret().str("\n");
+            break;
+    }
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void
+RSIM_Linux64::syscall_mmap_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("mmap").p().d().f(mmap_pflags).f(mmap_mflags).d().d();
+}
+
+void
+RSIM_Linux64::syscall_mmap_body(RSIM_Thread *t, int callno) {
+    rose_addr_t addr = t->syscall_arg(0);
+    rose_addr_t len = t->syscall_arg(1);
+    unsigned linux_perms = t->syscall_arg(2);
+    unsigned linux_flags = t->syscall_arg(3);
+    int fd = t->syscall_arg(4);
+    rose_addr_t offset = t->syscall_arg(5);
+
+    unsigned rose_perms = 0;
+    if (0 != (linux_perms & PROT_READ))
+        rose_perms |= MemoryMap::READABLE;
+    if (0 != (linux_perms & PROT_WRITE))
+        rose_perms |= MemoryMap::WRITABLE;
+    if (0 != (linux_perms & PROT_EXEC))
+        rose_perms |= MemoryMap::EXECUTABLE;
+
+    rose_addr_t result = t->get_process()->mem_map(addr, len, rose_perms, linux_flags, offset, fd);
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_mmap_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().eret().p().str("\n");
+    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_stat_enter(RSIM_Thread *t, int callno)
+{
+    switch (callno) {
+        case 4:
+            t->syscall_enter("stat").s().p();
+            break;
+        case 5:
+            t->syscall_enter("fstat").d().p();
+            break;
+        case 6:                                         // lstat
+            t->syscall_enter("lstat").s().p();
+            break;
+        default:
+            ASSERT_not_reachable("invalid syscall number for stat family");
+    }
+}
+
+void
+RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
+{
+    /* We need to be a bit careful with xstat64 calls. The C library invokes one of the xstat64 system calls, which
+     * writes a kernel data structure into a temporary buffer, and which the C library then massages into a struct
+     * stat64. When simulating, we don't want the C library to monkey with the data returned from the system call
+     * because the simulated C library will do the monkeying (it must only happen once).
+     *
+     * Therefore, we will invoke the system call directly, bypassing the C library, and then copy the result into
+     * specimen memory. If the syscall is made on an amd64 host we need to convert it to an i386 host.
+     *
+     * For some unknown reason, if we invoke the system call with buf allocated on the stack we'll get -EFAULT (-14)
+     * as the result; if we allocate it statically there's no problem.  Also, just in case the size is different than
+     * we think, we'll allocate a guard area above the kernel_stat and check that the syscall didn't write into it. */
+    ROSE_ASSERT(144==sizeof(kernel_stat_64));
+    ROSE_ASSERT(8==sizeof(long));
+    int host_callno = 0;
+    switch (callno) {
+        case 4: host_callno = SYS_stat; break;
+        case 5: host_callno = SYS_fstat; break;
+        case 6: host_callno = SYS_lstat; break;
+        default:
+            ASSERT_not_reachable("invalid syscall number for stat family");
+    }
+    static const size_t kernel_stat_size = sizeof(kernel_stat_64);
+
+    static uint8_t kernel_stat[kernel_stat_size+100];
+    memset(kernel_stat, 0xff, sizeof kernel_stat);
+    int result = 0xdeadbeef;
+
+    /* Make the system call without going through the C library. Well, we go through syscall(), but nothing else. */
+    if (4 /*stat*/ == callno || 6 /*lstat*/ == callno) {
+        bool error;
+        std::string name = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+        if (error) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
+    } else {
+        int fd = t->syscall_arg(0);
+        result = syscall(host_callno, (unsigned long)fd, (unsigned long)kernel_stat);
+    }
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    /* Check for overflow */
+    for (size_t i=kernel_stat_size; i<sizeof kernel_stat; i++)
+        ROSE_ASSERT(0xff==kernel_stat[i]);
+
+    /* Check for underflow.  Check that the kernel initialized as much data as we thought it should.  We
+     * initialized the kernel_stat to all 0xff bytes before making the system call.  The last data member of
+     * kernel_stat is either an 8-byte inode (i386) or zero (amd64), which in either case the high order byte is
+     * almost certainly not 0xff. */
+    ROSE_ASSERT(0xff!=kernel_stat[kernel_stat_size-1]);
+
+    t->get_process()->mem_write(kernel_stat, t->syscall_arg(1), kernel_stat_size);
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64).str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_writev_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("writev").d().p().d();
+}
+
+void
+RSIM_Linux64::syscall_writev_body(RSIM_Thread *t, int callno)
+{
+    Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
+    int fd = t->syscall_arg(0);
+    rose_addr_t iov_va = t->syscall_arg(1);
+    int niov = t->syscall_arg(2), idx = 0;
+    int retval = 0;
+    if (niov<0 || niov>1024) {
+        retval = -EINVAL;
+    } else {
+        if (niov>0)
+            strace <<"\n";
+        for (idx=0; idx<niov; idx++) {
+            /* Obtain buffer address and size */
+            mfprintf(strace)("    iov %d: ", idx);
+
+            iovec_64 iov;
+            if (sizeof(iov)!=t->get_process()->mem_read(&iov, iov_va+idx*sizeof(iov), sizeof(iov))) {
+                if (0==idx)
+                    retval = -EFAULT;
+                strace <<"<segfault reading iovec>\n";
+                break;
+            }
+
+            /* Make sure total size doesn't overflow a ssize_t */
+            if ((iov.iov_len & 0x80000000) || ((uint64_t)retval+iov.iov_len) & 0x8000000000000000ull) {
+                if (0==idx)
+                    retval = -EINVAL;
+                strace <<"<size overflow>\n";
+                break;
+            }
+
+            /* Copy data from guest to host because guest memory might not be contiguous in the host. Perhaps a more
+             * efficient way to do this would be to copy chunks of host-contiguous data in a loop instead. */
+            uint8_t *buf = new uint8_t[iov.iov_len];
+            if (iov.iov_len != t->get_process()->mem_read(buf, iov.iov_base, iov.iov_len)) {
+                if (0==idx)
+                    retval = -EFAULT;
+                strace <<"<seg fault reading buffer>\n";
+                break;
+            }
+            Printer::print_buffer(strace, iov.iov_base, buf, iov.iov_len, 1024);
+            strace <<" (size=" <<iov.iov_len <<")";
+
+            /* Write data to the file */
+            ssize_t nwritten = write(fd, buf, iov.iov_len);
+            delete[] buf; buf = NULL;
+            if (-1==nwritten) {
+                if (0==idx)
+                    retval = -errno;
+                mfprintf(strace)(" <write failed (%s)>\n", strerror(errno));
+                break;
+            }
+            retval += nwritten;
+            if ((uint64_t)nwritten<iov.iov_len) {
+                strace <<" <short write of " <<nwritten <<" bytes>\n";
+                break;
+            }
+            strace <<"\n";
+        }
+    }
+    t->syscall_return(retval);
+    if (niov>0 && niov<=1024)
+        strace <<"writev return";
+}
 
 
 

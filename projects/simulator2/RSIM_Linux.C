@@ -205,11 +205,6 @@ RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mai
     t1.traverse(mainHeader, preorder);
 
     AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
-#if 1 // DEBUGGING [Robb P. Matzke 2015-06-09]
-    std::cerr <<"ROBB: memory map when initializing brk:\n";
-    process->get_memory().dump(std::cerr);
-    std::cerr <<"ROBB: restriction = " <<restriction <<"\n";
-#endif
     process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
 }
 
@@ -423,24 +418,6 @@ RSIM_Linux::syscall_default_leave(RSIM_Thread *t, int callno) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-RSIM_Linux::syscall_brk_enter(RSIM_Thread *t, int callno) {
-    t->syscall_enter("brk").p();
-}
-
-void
-RSIM_Linux::syscall_brk_body(RSIM_Thread *t, int callno) {
-    rose_addr_t newbrk = t->syscall_arg(0);
-    t->syscall_return(t->get_process()->mem_setbrk(newbrk, t->tracing(TRACE_MMAP)));
-}
-
-void
-RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave().p().eret().str("\n");
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void
 RSIM_Linux::syscall_access_enter(RSIM_Thread *t, int callno) {
     static const Translate flags[] = { TF(R_OK), TF(W_OK), TF(X_OK), TF(F_OK), T_END };
     t->syscall_enter("access").s().f(flags);
@@ -460,6 +437,176 @@ RSIM_Linux::syscall_access_body(RSIM_Thread *t, int callno) {
     if (-1 == result)
         result = -errno;
     t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_brk_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("brk").p();
+}
+
+void
+RSIM_Linux::syscall_brk_body(RSIM_Thread *t, int callno) {
+    rose_addr_t newbrk = t->syscall_arg(0);
+    t->syscall_return(t->get_process()->mem_setbrk(newbrk, t->tracing(TRACE_MMAP)));
+}
+
+void
+RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().eret().p().str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_close_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("close").d();
+}
+
+void
+RSIM_Linux::syscall_close_body(RSIM_Thread *t, int callno)
+{
+    int fd=t->syscall_arg(0);
+    if (1==fd || 2==fd) {
+        /* ROSE is using these */
+        t->syscall_return(-EPERM);
+    } else {
+        int status = close(fd);
+        t->syscall_return(status<0 ? -errno : status);
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_mprotect_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("mprotect").p().d().f(mmap_pflags);
+}
+
+void
+RSIM_Linux::syscall_mprotect_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t va = t->syscall_arg(0);
+    size_t size = t->syscall_arg(1);
+    unsigned real_perms = t->syscall_arg(2);
+    unsigned rose_perms = ((real_perms & PROT_READ) ? MemoryMap::READABLE : 0) |
+                          ((real_perms & PROT_WRITE) ? MemoryMap::WRITABLE : 0) |
+                          ((real_perms & PROT_EXEC) ? MemoryMap::EXECUTABLE : 0);
+    if (va % PAGE_SIZE) {
+        t->syscall_return(-EINVAL);
+    } else {
+        size_t aligned_sz = alignUp(size, (size_t)PAGE_SIZE);
+        t->syscall_return(t->get_process()->mem_protect(va, aligned_sz, rose_perms, real_perms));
+    }
+}
+
+void
+RSIM_Linux::syscall_mprotect_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().str("\n");
+    t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_open_enter(RSIM_Thread *t, int callno)
+{
+    if (t->syscall_arg(1) & O_CREAT) {
+        t->syscall_enter("open").s().f(open_flags).f(file_mode_flags);
+    } else {
+        t->syscall_enter("open").s().f(open_flags).unused();
+    }
+}
+
+void
+RSIM_Linux::syscall_open_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t filename_va = t->syscall_arg(0);
+    bool error;
+    std::string filename = t->get_process()->read_string(filename_va, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    unsigned flags = t->syscall_arg(1);
+    unsigned mode = (flags & O_CREAT) ? t->syscall_arg(2) : 0;
+    int fd = open(filename.c_str(), flags, mode);
+    if (-1==fd) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    ASSERT_forbid(boost::starts_with(filename, "/proc/self/"));
+    ASSERT_forbid(boost::starts_with(filename, "/proc/"));
+
+    t->syscall_return(fd);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_read_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("read").d().p().d();
+}
+
+void
+RSIM_Linux::syscall_read_body(RSIM_Thread *t, int callno)
+{
+    int fd=t->syscall_arg(0);
+    rose_addr_t buf_va = t->syscall_arg(1);
+    size_t size = t->syscall_arg(2);
+    char *buf = new char[size];
+    ssize_t nread = read(fd, buf, size);
+    if (-1==nread) {
+        t->syscall_return(-errno);
+    } else if (t->get_process()->mem_write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+        t->syscall_return(-EFAULT);
+    } else {
+        t->syscall_return(nread);
+    }
+    delete[] buf;
+}
+
+void
+RSIM_Linux::syscall_read_leave(RSIM_Thread *t, int callno)
+{
+    ssize_t nread = t->syscall_arg(-1);
+    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_write_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("write").d().b(t->syscall_arg(2)).d();
+}
+
+void
+RSIM_Linux::syscall_write_body(RSIM_Thread *t, int callno)
+{
+    int fd=t->syscall_arg(0);
+    rose_addr_t buf_va=t->syscall_arg(1);
+    size_t size=t->syscall_arg(2);
+    uint8_t *buf = new uint8_t[size];
+    size_t nread = t->get_process()->mem_read(buf, buf_va, size);
+    if (nread!=size) {
+        t->syscall_return(-EFAULT);
+    } else {
+        ssize_t nwritten = write(fd, buf, size);
+        if (-1==nwritten) {
+            t->syscall_return(-errno);
+        } else {
+            t->syscall_return(nwritten);
+        }
+    }
+    delete[] buf;
 }
 
 

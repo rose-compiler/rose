@@ -874,7 +874,7 @@ RSIM_Process::mem_transaction_commit(const std::string &name)
     abort();
 }
 
-int
+rose_addr_t
 RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
 {
     if (newbrk >= 0xb0000000ul)
@@ -890,7 +890,7 @@ RSIM_Process::mem_setbrk(rose_addr_t newbrk, Sawyer::Message::Stream &mesg)
         get_memory().erase(AddressInterval::baseSize(newbrk, brkVa_-newbrk));
         brkVa_ = newbrk;
     }
-    int retval= brkVa_;
+    rose_addr_t retval= brkVa_;
 
     if (mesg)
         mem_showmap(mesg, "memory map after brk syscall:\n");
@@ -992,13 +992,13 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                 start = (rose_addr_t)(int64_t)-EPERM; /* Linux does not allow addr 0 to be mapped */
                 break;
             } else {
-                AddressInterval restriction = AddressInterval::hull(mmap_start, AddressInterval::whole().greatest());
+                AddressInterval restriction = AddressInterval::hull(mmapNextVa_, AddressInterval::whole().greatest());
                 if (!get_memory().findFreeSpace(aligned_size, PAGE_SIZE, restriction).assignTo(start)) {
                     start = (rose_addr_t)(int64_t)-ENOMEM;
                     break;
                 }
                 if (!mmap_recycle)
-                    mmap_start = std::max(mmap_start, start);
+                    mmapNextVa_ = std::max(mmapNextVa_, start);
             }
         }
 

@@ -57,6 +57,23 @@ print_int_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_hex_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    const uint64_t *v = (const uint64_t*)_v;
+    assert(sz % 8 == 0);
+    size_t nelmts = sz/8;
+
+    if (1==nelmts) {
+        m <<StringUtility::toHex2(v[0], 64);
+    } else {
+        m <<"[";
+        for (size_t i=0; i<nelmts; i++)
+            m <<(i?",":"") <<StringUtility::toHex2(v[i], 64);
+        m <<"]";
+    }
+}
+
+void
 print_rlimit(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
 {
     assert(8==sz); /* two 32-bit unsigned integers */
@@ -83,6 +100,16 @@ print_kernel_stat_32(Sawyer::Message::Stream &m, const uint8_t *_sb, size_t sz)
                 ", blksz=%"PRIu32", blocks=%"PRIu64", ...",
                 sb->nlink, sb->user, sb->group, sb->rdev, sb->size,
                 sb->blksize, sb->nblocks);
+}
+
+void
+print_kernel_stat_64(Sawyer::Message::Stream &m, const uint8_t *_sb, size_t sz) {
+    ASSERT_require(sz == sizeof(kernel_stat_64));
+    const kernel_stat_64 *sb = (const kernel_stat_64*)_sb;
+    m <<"dev=" <<sb->dev <<", ino=" <<sb->ino <<", mode=";
+    Printer::print_flags(m, file_mode_flags, sb->mode);
+    m <<", nlink=" <<sb->nlink <<", uid=" <<sb->user <<", gid=" <<sb->group <<", rdev=" <<sb->rdev
+      <<", size=" <<sb->size <<", blksz=" <<sb->blksize <<", blocks=" <<sb->nblocks <<"...";
 }
 
 void

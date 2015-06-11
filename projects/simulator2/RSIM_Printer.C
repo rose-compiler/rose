@@ -113,8 +113,10 @@ Printer::b(rose_addr_t va, int64_t nbytes) {
 
 Printer&
 Printer::b(rose_addr_t va, const uint8_t *buf, size_t actualSize, size_t printSize) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_buffer(out_, va, buf, actualSize, printSize);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_buffer(out_, va, buf, actualSize, printSize);
+    }
     return *this;
 }
 
@@ -161,8 +163,10 @@ Printer::d() {
 
 Printer&
 Printer::d(int64_t value) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_decimal(out_, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_decimal(out_, value);
+    }
     return *this;
 }
 
@@ -181,8 +185,10 @@ Printer::e(const Translate *tlist) {
 
 Printer&
 Printer::e(uint64_t value, const Translate *tlist) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_enum(out_, tlist, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_enum(out_, tlist, value);
+    }
     return *this;
 }
 
@@ -209,8 +215,10 @@ Printer::f(const Translate *tlist) {
 
 Printer&
 Printer::f(uint64_t value, const Translate *tlist) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_flags(out_, tlist, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_flags(out_, tlist, value);
+    }
     return *this;
 }
 
@@ -228,14 +236,20 @@ Printer::p() {
 }
 Printer&
 Printer::p(rose_addr_t value) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_pointer(out_, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_pointer(out_, value);
+    }
     return *this;
 }
 
 void
 Printer::print_pointer(Sawyer::Message::Stream &m, rose_addr_t va) {
-    SAWYER_MESG(m) <<StringUtility::addrToString(va);
+    if (0==va) {
+        SAWYER_MESG(m) <<"NULL";
+    } else {
+        SAWYER_MESG(m) <<StringUtility::addrToString(va);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -257,8 +271,10 @@ Printer::P(rose_addr_t va, size_t nBytes, StructPrinter printer) {
 
 Printer&
 Printer::P(rose_addr_t va, const uint8_t *buffer, size_t need, size_t have, StructPrinter printer) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_struct(out_, va, buffer, need, have, printer);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_struct(out_, va, buffer, need, have, printer);
+    }
     return *this;
 }
 
@@ -288,11 +304,13 @@ Printer::s() {
 
 Printer&
 Printer::s(rose_addr_t va) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    static const size_t limit=1024;
-    bool error = false;
-    std::string str = thread_->get_process()->read_string(va, limit, &error);
-    print_string(out_, va, str, str.size()==limit, error);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        static const size_t limit=1024;
+        bool error = false;
+        std::string str = thread_->get_process()->read_string(va, limit, &error);
+        print_string(out_, va, str, str.size()==limit, error);
+    }
     return *this;
 }
 
@@ -325,8 +343,10 @@ Printer::t() {
 
 Printer&
 Printer::t(uint64_t value) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_time(out_, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_time(out_, value);
+    }
     return *this;
 }
 
@@ -352,8 +372,10 @@ Printer::x() {
 
 Printer&
 Printer::x(uint64_t value) {
-    out_ <<(++nPrinted_ > 1 ? ", " : "");
-    print_hex(out_, value);
+    if (!hadRetError_) {
+        out_ <<(++nPrinted_ > 1 ? ", " : "");
+        print_hex(out_, value);
+    }
     return *this;
 }
 
@@ -366,29 +388,31 @@ Printer::print_hex(Sawyer::Message::Stream &m, uint64_t value) {
 
 Printer&
 Printer::ret() {
-    RegisterDescriptor reg = thread_->get_process()->get_simulator()->syscallReturnRegister();
-    uint64_t unsignedRetval = thread_->operators()->readRegister(reg)->get_number();
-    int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, reg.get_nbits(), 64);
+    size_t nbits = thread_->get_process()->get_simulator()->syscallReturnRegister().get_nbits();
+    uint64_t unsignedRetval = nextArg();
+    int64_t signedRetval = IntegerOps::signExtend2(unsignedRetval, nbits, 64);
     return ret(signedRetval);
 }
 
 Printer&
 Printer::ret(int64_t retval) {
-    print_ret(out_, retval);
+    hadRetError_ = print_ret(out_, retval);
     ++nPrinted_;
     return *this;
 }
 
-void
+bool
 Printer::print_ret(Sawyer::Message::Stream &m, int64_t retval) {
     if (m) {
         if (retval < 0 && retval >= -256) {
             int en = -retval;
             print_enum(m, error_numbers, en);
+            return true;
         } else {
             m <<retval;
         }
     }
+    return false;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -403,19 +427,21 @@ Printer::eret() {
 
 Printer&
 Printer::eret(int64_t retval) {
-    print_eret(out_, retval);
+    hadRetError_ = print_eret(out_, retval);
     return *this;
 }
 
-void
+bool
 Printer::print_eret(Sawyer::Message::Stream &m, int64_t retval) {
     if (m) {
         if (retval < 0 && retval >= -256) {
             int en = -retval;
             print_enum(m, error_numbers, en);
             m <<" ";
+            return true;
         }
     }
+    return false;
 }
 
 
