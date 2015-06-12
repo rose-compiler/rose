@@ -5623,6 +5623,18 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
      printf ("In buildTokenStreamFrontier(): Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
 #endif
 
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 1: transformedStatementSet_1.size() = %zu \n",transformedStatementSet_1.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
+
   // DQ (4/14/2015): After a more detailed evaluation of this function it does not acomplish it's objectives.
   // Note that we first detect the frontier based on a synthysised attribute traversal to record 
   // where nodes can contain transformation even if they are not a transformation directly.
@@ -5630,6 +5642,18 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #if 0
      printf ("In buildTokenStreamFrontier(): DONE: Calling simpleFrontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_2 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 2: transformedStatementSet_2.size() = %zu \n",transformedStatementSet_2.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
 #endif
 
 #if 0
@@ -5650,6 +5674,12 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #if 0
      printf ("In buildTokenStreamFrontier(): DONE: Calling frontierDetectionForTokenStreamMapping(): sourceFile = %p \n",sourceFile);
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_3 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In buildTokenStreamFrontier(): part 3: transformedStatementSet_3.size() = %zu \n",transformedStatementSet_3.size());
 #endif
 
   // ************************************************************************************************
@@ -5762,7 +5792,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile)
 
 #error "DEAD CODE!"
 
-  // DQ (12/6/2014): I ahve deactivated this feature since I think we might not need it.
+  // DQ (12/6/2014): I have deactivated this feature since I think we might not need it.
      printf ("NOTE: Skipping the processing of the frontier nodes \n");
 #endif
 

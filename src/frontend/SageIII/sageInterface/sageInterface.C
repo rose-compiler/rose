@@ -19113,3 +19113,101 @@ TypeEquivalenceChecker tec(false, false);
 return tec.typesAreEqual(typeA, typeB);
 }
 
+
+std::set<SgStatement*>
+SageInterface::collectTransformedStatements( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as transformed.
+  // It is useful for debugging the token-based unparsing.
+
+     class StatementTraversal : public AstSimpleProcessing
+        {
+          public:
+               StatementTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgStatement* statement = isSgStatement(node);
+                 // if (statement != NULL && statement->get_file_info()->isTransformation() == true)
+                    if (statement != NULL && statement->isTransformation() == true)
+                       {
+                         returnset.insert(statement);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgStatement*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     StatementTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
+
+std::set<SgStatement*>
+SageInterface::collectModifiedStatements( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     class StatementTraversal : public AstSimpleProcessing
+        {
+          public:
+               StatementTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgStatement* statement = isSgStatement(node);
+                    if (statement != NULL && statement->get_isModified() == true)
+                       {
+                         returnset.insert(statement);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgStatement*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     StatementTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
+
+std::set<SgLocatedNode*>
+SageInterface::collectModifiedLocatedNodes( SgNode* node )
+   {
+  // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     class LocatedNodeTraversal : public AstSimpleProcessing
+        {
+          public:
+               LocatedNodeTraversal() : count (0) {}
+               void visit (SgNode* node)
+                  {
+                    SgLocatedNode* locatedNode = isSgLocatedNode(node);
+                    if (locatedNode != NULL && locatedNode->get_isModified() == true)
+                       {
+#if 1
+                         printf ("In collectModifiedLocatedNodes(): isModified() == true: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+                         returnset.insert(locatedNode);
+                         count++;
+                       }
+                  }
+
+               int count; // running total of statements found marked as transformations in the input AST
+               std::set<SgLocatedNode*> returnset;
+        };
+
+  // Now buid the traveral object and call the traversal (preorder) on the function definition.
+     LocatedNodeTraversal traversal;
+     traversal.traverse(node, preorder);
+
+     return traversal.returnset;
+   }
+
