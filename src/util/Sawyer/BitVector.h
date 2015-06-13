@@ -122,7 +122,9 @@ public:
         if (bitsPerDigit) {
             nBits = bitsPerDigit * nDigits;
         } else {
-            nBits = ceil(log2(pow(10.0, nDigits)));
+         // DQ (6/13/2015): This is an error for the GNU 4.2.4 compiler.
+         // nBits = ceil(log2(pow(10.0, nDigits)));
+            nBits = ceil(log2(pow(10.0, (double)nDigits)));
         }
 
         // Parse the string
