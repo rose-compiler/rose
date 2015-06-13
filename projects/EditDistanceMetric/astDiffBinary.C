@@ -2,7 +2,7 @@
 #include <BinaryLoader.h>
 #include <Partitioner2/Engine.h>
 #include <EditDistance/TreeEditDistance.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 
 #include "commandLine.h"
 

@@ -9,10 +9,10 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Message.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 
 #include <dlib/matrix.h>
 #include <dlib/optimization.h>

@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "BinaryDataFlow.h"
 #include "BinaryTaintedFlow.h"
+#include "BinaryNoOperation.h"
 
 namespace rose {
 namespace BinaryAnalysis {
@@ -8,6 +9,7 @@ namespace BinaryAnalysis {
 void DataFlow::initDiagnostics() {}
 void TaintedFlow::initDiagnostics() {}
 void InstructionSemantics2::initDiagnostics() {}
+void NoOperation::initDiagnostics() {}
 
 namespace Strings {
 void initDiagnostics() {}

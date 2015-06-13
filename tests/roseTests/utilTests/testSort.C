@@ -3,7 +3,7 @@
 #include "LinearCongruentialGenerator.h"
 #include <cstring>
 #include <iostream>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Stopwatch.h>
 
 using namespace rose;
 

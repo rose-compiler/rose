@@ -946,20 +946,50 @@ testNoop_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS)
 testNoop_Specimens = i386-noop
 testNoop_TestTargets = $(addprefix noop_, $(addsuffix .passed, $(testNoop_Specimens)))
 testNoop_TestAnswers = $(addprefix noop_, $(addsuffix .ans, $(testNoop_Specimens)))
+testNoop_Switches = --stack=0xdddd0001 --use-semantics --no-find-dead-code --no-intra-function-code
 
 TEST_TARGETS += $(testNoop_TestTargets)
 EXTRA_DIST += $(testNoop_TestAnswers)
 
 $(testNoop_TestTargets): noop_%.passed: $(BINARY_SAMPLES)/% testNoop
-	@$(RTH_RUN)						\
-		TITLE="testNoop $* [$@]"			\
-		USE_SUBDIR=yes					\
-		CMD="$(abspath ./testNoop) $(abspath $<)"	\
-		ANS="$(abs_srcdir)/noop_$*.ans"			\
+	@$(RTH_RUN)								\
+		TITLE="testNoop $* [$@]"					\
+		USE_SUBDIR=yes							\
+		CMD="$(abspath ./testNoop) $(testNoop_Switches) $(abspath $<)"	\
+		ANS="$(abs_srcdir)/noop_$*.ans"					\
 		$(top_srcdir)/scripts/test_with_answer $@
 
 .PHONY: check-noop
 check-noop: $(testNoop_TestTargets)
+
+###############################################################################################################################
+# Static semantics tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testStaticSemantics
+testStaticSemantics_SOURCES = testStaticSemantics.C
+testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+# We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
+# message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
+# of debugging is enabled.
+testStaticSemantics_specimens = $(filter-out						\
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens)	\
+	pocketputty2.exe								\
+	,$(any_exe_any_specimens))
+testStaticSemantics_directory = $(top_srcdir)/binaries/samples
+testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
+TEST_TARGETS += $(testPartitioner2_test_targets)
+
+$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticSemantics_directory)/% testStaticSemantics
+	@$(RTH_RUN)						\
+		TITLE="testStaticSemantics $(notdir $<) [$@]"	\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testStaticSemantics $<"		\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+.PHONY: check-testStaticSemantics
+check-testStaticSemantics: $(testStaticSemantics_test_targets)
 
 ###############################################################################################################################
 # DEMOS

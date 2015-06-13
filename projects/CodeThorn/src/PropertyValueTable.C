@@ -158,6 +158,16 @@ void PropertyValueTable::convertValue(PropertyValue from, PropertyValue to) {
   }
 }
 
+int PropertyValueTable::entriesWithValue(PropertyValue v) {
+  int result = 0;
+  for(size_t i=0;i<_propertyValueTable.size();++i) {
+    if(_propertyValueTable[i]==v) {
+      result++;
+    }
+  }
+  return result; 
+}
+
 void PropertyValueTable::writeFile(const char* filename, bool onlyyesno, int offset) {
   writeFile(filename, onlyyesno, offset, false);
 }

@@ -549,6 +549,8 @@ RiscOperators::writeMemory(const RegisterDescriptor &segreg,
     ASSERT_require2(nbits % 8 == 0, "write to memory must be in byte units");
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
 #endif
+    if (condition->is_number() && !condition->get_number())
+        return;
 
     // PartialSymbolicSemantics assumes that its memory state is capable of storing multi-byte values.
     state->writeMemory(address, value, this, this);
@@ -563,6 +565,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg,
     size_t nbits = dflt_->get_width();
     ASSERT_require(1==condition->get_width()); // FIXME: condition is not used
     ASSERT_require2(nbits % 8 == 0, "read from memory must be in byte units");
+    if (condition->is_number() && !condition->get_number())
+        return dflt_;
 
     // Default values come from an optional memory map if possible, otherwise use the passed-in default.
     BaseSemantics::SValuePtr dflt = dflt_;

@@ -328,6 +328,7 @@ namespace CodeThorn {
     std::vector<bool> binaryBindingAssert;
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; }
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
     void eventGlobalTopifyTurnedOn();
@@ -385,6 +386,7 @@ namespace CodeThorn {
     AnalyzerMode _analyzerMode;
     set<const EState*> _newNodesToFold;
     long int _maxTransitions;
+    long int _maxIterations;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
     bool _treatStdErrLikeFailedAssert;

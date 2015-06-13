@@ -8,10 +8,10 @@
 #include <Partitioner2/Engine.h>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
-#include <sawyer/Assert.h>
-#include <sawyer/CommandLine.h>
-#include <sawyer/IntervalMap.h>
-#include <sawyer/Message.h>
+#include <Sawyer/Assert.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/IntervalMap.h>
+#include <Sawyer/Message.h>
 #include <set>
 #include <string>
 #include <vector>

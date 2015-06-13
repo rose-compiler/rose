@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "ConcreteSemantics2.h"
 #include "integerOps.h"
-#include <sawyer/BitVectorSupport.h>
+#include <Sawyer/BitVectorSupport.h>
 
 using namespace Sawyer::Container;
 typedef Sawyer::Container::BitVector::BitRange BitRange;
@@ -467,6 +467,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
     size_t nbits = dflt->get_width();
     ASSERT_require(0 == nbits % 8);
     ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
+    if (cond->is_number() && !cond->get_number())
+        return dflt;
 
     // Read the bytes and concatenate them together.
     BaseSemantics::SValuePtr retval;
@@ -493,10 +495,12 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_, const BaseSemantics::SValuePtr &cond) {
+    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
+    if (cond->is_number() && !cond->get_number())
+        return;
     SValuePtr value = SValue::promote(value_->copy());
     size_t nbits = value->get_width();
     ASSERT_require(0 == nbits % 8);
-    ASSERT_require(1==cond->get_width()); // FIXME: condition is not used
     size_t nbytes = nbits/8;
     BaseSemantics::MemoryStatePtr mem = get_state()->get_memory_state();
     for (size_t bytenum=0; bytenum<nbytes; ++bytenum) {

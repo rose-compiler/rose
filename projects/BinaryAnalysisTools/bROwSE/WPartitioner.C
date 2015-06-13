@@ -7,8 +7,8 @@
 #include <Partitioner2/Modules.h>                       // ROSE
 #include <Partitioner2/ModulesPe.h>                     // ROSE
 #include <rose_strtoull.h>
-#include <sawyer/Message.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/Message.h>
+#include <Sawyer/Stopwatch.h>
 #include <Wt/WBreak>
 #include <Wt/WBorder>
 #include <Wt/WCheckBox>
@@ -342,6 +342,17 @@ bool
 WPartitioner::loadSpecimen() {
     Sawyer::Stopwatch timer;
     Sawyer::Message::Stream info(mlog[INFO] <<"load specimen");
+
+    // This tool doesn't support certain load resources because they require using BinaryDebugger, but the Wt web server does
+    // funny things with certain signals (like assuming any SIGCHLD should cause the server to restart!)  I don't have time to
+    // debug this right now, so we just check for these things explicitly and fail.  Besides, there are other ways around
+    // this. You can use the projects/BinaryAnalysis/dumpMemory tool to take a snapshot of the process and store it in a bunch
+    // of raw binary files, then load those files in the bROwSE tool. [Robb P. Matzke 2015-06-01]
+    BOOST_FOREACH (const std::string &name, ctx_.specimenNames) {
+        if (boost::starts_with(name, "proc:") || boost::starts_with(name, "run:"))
+            ASSERT_not_implemented("bROwSE does not support this resource type: \"" + StringUtility::cEscape(name) + "\"");
+    }
+
     ctx_.engine.loadSpecimens(ctx_.specimenNames);
     info <<"; took " <<timer <<" seconds\n";
     specimenLoaded_.emit(true);

@@ -1,11 +1,12 @@
 #include "sage3basic.h"                                 // only because some header files need it
 
-#include "sawyer/Assert.h"
-#include "sawyer/ProgressBar.h"
+#include "Sawyer/Assert.h"
+#include "Sawyer/ProgressBar.h"
 #include "AsmUnparser.h"                                // rose::BinaryAnalysis::AsmUnparser
 #include "BaseSemantics2.h"                             // rose::BinaryAnalysis::InstructionSemantics2
 #include "BinaryDataFlow.h"                             // rose::BinaryAnalysis::DataFlow
 #include "BinaryLoader.h"                               // BinaryLoader
+#include "BinaryNoOperation.h"                          // rose::BinaryAnalysis::NoOperation
 #include "BinaryString.h"                               // rose::BinaryAnalysis::String
 #include "BinaryTaintedFlow.h"                          // rose::BinaryAnalysis::TaintedFlow
 #include "Diagnostics.h"                                // rose::Diagnostics
@@ -43,13 +44,22 @@ void initialize() {
             destination = Sawyer::Message::FileSink::instance(stderr)->prefix(mprefix);
         }
 
-        // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, so we'll
-        // disable those that we deem are too noisy for most users.  However, the insertAndAdjust might make other choices if
-        // mfacilities already has some stream inserted or the user has already called mfacilities.impset().
+        // Force certain facilities to be enabed or disabled. This might be different than the Sawyer default. If user wants
+        // something else then use mfacilities.control("...") after we return. This doesn't affect any Facility object that's
+        // already registered (such as any added already by the user or Sawyer's own, but we could use mfacilities.renable() if
+        // we wanted that).
+        mfacilities.impset(DEBUG, false);
+        mfacilities.impset(TRACE, false);
+        mfacilities.impset(WHERE, false);
+        mfacilities.impset(MARCH, false);
+        mfacilities.impset(INFO,  true);
+        mfacilities.impset(WARN,  true);
+        mfacilities.impset(ERROR, true);
+        mfacilities.impset(FATAL, true);
+
+        // (Re)construct the main librose Facility.  A Facility is constructed with all Stream objects enabled, but
+        // insertAndAdjust will change that based on mfacilities' settings.
         mlog = Sawyer::Message::Facility("rose", destination);
-        mlog[DEBUG].disable();
-        mlog[TRACE].disable();
-        mlog[WHERE].disable();
         mfacilities.insertAndAdjust(mlog);
 
         // Where should failed assertions go for the Sawyer::Assert macros like ASSERT_require()?
@@ -72,6 +82,7 @@ void initialize() {
         BinaryAnalysis::Partitioner2::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
         BinaryAnalysis::Strings::initDiagnostics();
+        BinaryAnalysis::NoOperation::initDiagnostics();
         EditDistance::initDiagnostics();
     }
 }

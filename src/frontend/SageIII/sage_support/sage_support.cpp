@@ -6262,10 +6262,15 @@ int SgProject::link ( const std::vector<std::string>& argv, std::string linkerNa
      printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
 #endif
 
-     if ( get_verbose() > 0 )
-        {
-          printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
-        }
+     // TOO1 (2015/05/11): Causes automake configure tests to fail. Checking ld linker, as example:
+     //
+     //     identityTranslator -print-prog-name=ld -rose:verbose 0
+     //     In SgProject::link command line = g++ -print-prog-name=ld
+     //     ld
+     //if ( get_verbose() > 0 )
+     //   {
+     //     printf ("In SgProject::link command line = %s \n",CommandlineProcessing::generateStringFromArgList(linkingCommand,false,false).c_str());
+     //   }
 
      int status = systemFromVector(linkingCommand);
 

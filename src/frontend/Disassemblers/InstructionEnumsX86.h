@@ -121,6 +121,7 @@ enum X86RepeatPrefix
 enum X86Exception {
     x86_exception_int,                                  /**< INT instruction. minor is the imm8 argument. */
     x86_exception_sysenter,                             /**< SYSENTER instruction. */
+    x86_exception_syscall,                              /**< SYSCALL instruction. */
     x86_exception_de,                                   /**< Divide error. DIV and IDIV instructions. */
     x86_exception_db,                                   /**< Debug. Any code or data reference. */
     x86_exception_bp,                                   /**< Breakpoint. INT 3 instruction. */

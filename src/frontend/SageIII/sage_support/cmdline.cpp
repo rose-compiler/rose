@@ -14,7 +14,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 using namespace rose;                                   // temporary, until this file lives in namespace rose
 

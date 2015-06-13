@@ -9,9 +9,9 @@
 
 #include <cassert>
 #include <inttypes.h>
-#include <sawyer/BitVector.h>
-#include <sawyer/SharedPointer.h>
-#include <sawyer/SmallObject.h>
+#include <Sawyer/BitVector.h>
+#include <Sawyer/SharedPointer.h>
+#include <Sawyer/SmallObject.h>
 #include <set>
 #include <vector>
 

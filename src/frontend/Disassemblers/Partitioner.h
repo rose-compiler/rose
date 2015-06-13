@@ -3,7 +3,7 @@
 
 #include "callbacks.h"
 #include "Disassembler.h"
-#include <sawyer/Optional.h>
+#include <Sawyer/Optional.h>
 
 namespace rose {
 namespace BinaryAnalysis {

@@ -8,8 +8,8 @@
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
-#include <sawyer/GraphTraversal.h>
-#include <sawyer/DistinctList.h>
+#include <Sawyer/GraphTraversal.h>
+#include <Sawyer/DistinctList.h>
 #include <sstream>
 #include <string>
 #include <vector>

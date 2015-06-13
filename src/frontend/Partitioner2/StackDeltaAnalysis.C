@@ -3,8 +3,8 @@
 #include <BinaryDataFlow.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/SharedPointer.h>
 #include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;

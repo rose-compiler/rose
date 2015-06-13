@@ -2,8 +2,8 @@
 
 #include "rose.h"
 #include <boost/lexical_cast.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Graph.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Graph.h>
 
 using namespace std;
 using namespace boost;
