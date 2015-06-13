@@ -19192,7 +19192,7 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
                     SgLocatedNode* locatedNode = isSgLocatedNode(node);
                     if (locatedNode != NULL && locatedNode->get_isModified() == true)
                        {
-#if 1
+#if 0
                          printf ("In collectModifiedLocatedNodes(): isModified() == true: locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
 #endif
                          returnset.insert(locatedNode);
