@@ -2,7 +2,7 @@
 #include <Diagnostics.h>
 
 #include <boost/foreach.hpp>
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 #include <string>
 #include <vector>
 

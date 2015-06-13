@@ -24,5 +24,5 @@ graphs: This is a graph library from Qing Yi's work which is not
     used in Qing's work it is not clear if it should be used by external 
     users.
 
-sawyer: event logging, runtime logic assertions, etc.
+Sawyer: event logging, runtime logic assertions, etc.
 
