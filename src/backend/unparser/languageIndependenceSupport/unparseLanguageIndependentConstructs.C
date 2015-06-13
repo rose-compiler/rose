@@ -2451,7 +2451,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
                     ROSE_ASSERT(lastStatement != NULL);
 
-#if 1
+#if 0
                     printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): isLastStatementOfScope == true: Calling unparseStatementFromTokenStream() \n");
 #endif
                  // Unparse the sequence of tokens from e_trailing_whitespace_start to (but excluding) e_trailing_whitespace_end.

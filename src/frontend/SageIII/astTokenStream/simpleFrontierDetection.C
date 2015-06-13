@@ -151,7 +151,7 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
        // DQ (4/14/2015): We need to detect modified IR nodes and then set there coresponding parent statement as being transformed.
           if (locatedNode->get_isModified() == true)
              {
-#if 1
+#if 0
                printf ("Found locatedNode = %p = %s as get_isModified = %s \n",locatedNode,locatedNode->class_name().c_str(),locatedNode->get_isModified() ? "true" : "false");
             // ROSE_ASSERT(false);
 #endif
