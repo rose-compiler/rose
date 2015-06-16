@@ -135,6 +135,10 @@ class DeleteFlag { // Wrapper for extra argument type checking
     // DQ (11/28/2009): This is a problem for MSVC ("warning C4273: 'abort' : inconsistent dll linkage").
     //#define __builtin_constant_p(exp) (0)
     #define ROSE_ASSERT assert
+#elif defined(__APPLE__) && defined(__MACH__)
+    // Pei-Hung (06/16/2015) Sawyer is turned off for Mac OSX
+    #define ROSE_ASSERT assert
+    #define ROSE_ABORT  abort
 #elif defined(ROSE_ASSERTION_BEHAVIOR)
     // ROSE_ASSERT should use Sawyer ASSERT macros which support various termination behaviors that are configurable at compile
     // time and can be overridden at runtime by the command-line or the rose::Diagnostics API.  They also produce nicer output.
