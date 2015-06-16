@@ -2475,6 +2475,7 @@ static void generateMappedArrayMemoryHandling(
     )
 {
   ROSE_ASSERT (sym != NULL);
+  ROSE_ASSERT (device_expression!= NULL); // runtime now needs explicit device ID to work
   SgType* orig_type = sym->get_type();
 
   // Step 1: declare a pointer type to array variables in map clauses, we linearize all arrays to be a 1-D pointer
@@ -2847,6 +2848,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   {
     argumentList = buildExprListExp(deepCopy(device_expression)); 
   }
+  else  // use default device ID 0 if device_expression is NULL
+  {
+    device_expression = buildIntVal(0);
+    argumentList = buildExprListExp(device_expression);
+  }
+
   SgExprStatement* dde_enter_stmt = buildFunctionCallStmt (SgName("xomp_deviceDataEnvironmentEnter"), buildVoidType(), argumentList, insertion_scope);
   prependStatement(dde_enter_stmt, insertion_scope); 
 
@@ -3167,9 +3174,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     SgOmpTargetStatement* target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
 
-    // device expression
-    SgExpression* device_expression ;
+    // device expression 
+    SgExpression* device_expression =NULL ;
     device_expression = getClauseExpression (target_directive_stmt, VariantVector(V_SgOmpDeviceClause));
+    // If not found, use the default ID 0
+    if (device_expression == NULL)
+      device_expression = buildIntVal(0); 
 
     // Now we need to ensure that "omp target " has a basic block as its body
    // so we can insert declarations into an inner block, instead of colliding declarations within the scope of "omp target"
@@ -4073,7 +4083,10 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
      ROSE_ASSERT(clause_stmt != NULL);
      Rose_STL_Container<SgOmpClause*> p_clause = 
        NodeQuery::queryNodeList<SgOmpClause>(clause_stmt->get_clauses(),vvt);
-     expr = isSgOmpExpressionClause(p_clause[0])->get_expression();
+     //It is possible that the requested clauses are not found. We allow returning NULL expression.  
+     //Liao, 6/16/2015
+     if (p_clause.size()>=1)
+       expr = isSgOmpExpressionClause(p_clause[0])->get_expression();
      return expr; 
   }
 
