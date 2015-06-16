@@ -138,8 +138,18 @@ class DeleteFlag { // Wrapper for extra argument type checking
 #elif defined(ROSE_ASSERTION_BEHAVIOR)
     // ROSE_ASSERT should use Sawyer ASSERT macros which support various termination behaviors that are configurable at compile
     // time and can be overridden at runtime by the command-line or the rose::Diagnostics API.  They also produce nicer output.
-    #define ROSE_ASSERT ASSERT_require
-    #define ROSE_ABORT  abort
+#ifdef __GNUC__
+    // Pei-Hung (6/16/2015): Using Sawyer ASSERT will consume more than 4GB memory when building ROSE with 32-bit GCC in version 4.2.4
+    // If building ROSE with GCC older than version 4.4, turn off support for Sawyer assert.
+  #include <features.h>
+  #if __GNUC_PREREQ(4,4)
+      #define ROSE_ASSERT ASSERT_require
+      #define ROSE_ABORT  abort
+  #else
+      #define ROSE_ASSERT assert
+      #define ROSE_ABORT  abort
+  #endif
+#endif
 #else
     #define ROSE_ASSERT assert
     #define ROSE_ABORT  abort
