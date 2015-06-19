@@ -30,6 +30,7 @@ static std::map<SgVariableSymbol* , int> per_block_reduction_map;
 static std::vector<SgVariableDeclaration*> per_block_declarations;
 
 static std::map<string , std::vector<SgExpression*> > offload_array_offset_map;
+static std::map<string , std::vector<SgExpression*> > offload_array_size_map;
 
 // Liao 1/23/2015
 // when translating mapped variables using xomp_deviceDataEnvironmentPrepareVariable(), the original variable reference will be used as
@@ -2498,6 +2499,7 @@ static void generateMappedArrayMemoryHandling(
   SgVariableDeclaration* dev_var_size_decl = NULL; 
 
   SgVariableSymbol* dev_var_size_sym = insertion_scope->lookup_variable_symbol(dev_var_size_name);
+  std::vector<SgExpression*> v_size;
   if (dev_var_size_sym == NULL)
   {
 //    SgExpression* initializer = generateSizeCalculationExpression (sym, element_type, array_dimensions[sym]);
@@ -2506,6 +2508,7 @@ static void generateMappedArrayMemoryHandling(
     {
       std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
       initializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.second)));
+      v_size.push_back(deepCopy(bound_pair.second));
     } 
     dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(initializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_size_decl); 
@@ -2514,6 +2517,8 @@ static void generateMappedArrayMemoryHandling(
     dev_var_size_decl = isSgVariableDeclaration(dev_var_size_sym->get_declaration()->get_declaration());
 
   ROSE_ASSERT (dev_var_size_decl != NULL);
+
+  offload_array_size_map[dev_var_name] = v_size;
 
   // generate offset array
   string dev_var_offset_name = "_dev_" + orig_name + "_offset";  
@@ -2761,9 +2766,6 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
   }
-  // at this point, the body must be a BB now.
-  SgBasicBlock* body_block = isSgBasicBlock(target_parallel_stmt->get_body()); // the body of the affected "omp parallel"
-  ROSE_ASSERT (body_block!= NULL);
 
   // collect map clauses and their variables 
   // ----------------------------------------------------------
@@ -2941,24 +2943,57 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
   }
 
   //Pei-Hung: subtract offset from the subscript in the offloaded array reference
-  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(body_block, V_SgVarRefExp);
-  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  if(target_parallel_stmt)
   {
-    SgVarRefExp *vRef = isSgVarRefExp((*i));
-    if(offload_array_offset_map.find(vRef->get_symbol()->get_name().getString()) != offload_array_offset_map.end())
+    // at this point, the body must be a BB now.
+    SgBasicBlock* body_block = isSgBasicBlock(target_parallel_stmt->get_body()); // the body of the affected "omp parallel"
+    ROSE_ASSERT (body_block!= NULL);
+    Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(body_block, V_SgVarRefExp);
+    for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
     {
-      std::vector<SgExpression*> v_offset = offload_array_offset_map.find(vRef->get_symbol()->get_name().getString())->second;
-      if(isSgPntrArrRefExp(vRef->get_parent()) == NULL)
-        continue;
-std::cout << "finding susbscript " << vRef->get_symbol()->get_name().getString() << " in " << offload_array_offset_map.size() << std::endl;
-      SgPntrArrRefExp* pntrArrRef = isSgPntrArrRefExp(vRef->get_parent());
-      for(std::vector<SgExpression*>::reverse_iterator ir = v_offset.rbegin(); ir != v_offset.rend(); ir++)
+      SgVarRefExp *vRef = isSgVarRefExp((*i));
+      SgVariableSymbol* sym = vRef->get_symbol();
+      SgType* type = sym->get_type();
+      if(offload_array_offset_map.find(vRef->get_symbol()->get_name().getString()) != offload_array_offset_map.end())
       {
-        SgExpression* subscript = pntrArrRef->get_rhs_operand();  
-        SgExpression* newsubscript = buildSubtractOp(deepCopy(subscript),deepCopy(*ir));
-        replaceExpression(subscript,newsubscript,true); 
-        pntrArrRef = isSgPntrArrRefExp(pntrArrRef->get_parent()); 
-      } 
+        std::vector<SgExpression*> v_offset = offload_array_offset_map.find(vRef->get_symbol()->get_name().getString())->second;
+        std::vector<SgExpression*> v_size = offload_array_size_map.find(vRef->get_symbol()->get_name().getString())->second;
+        if(isSgPntrArrRefExp(vRef->get_parent()) == NULL)
+          continue;
+        //std::cout << "finding susbscript " << vRef->get_symbol()->get_name().getString() << " in " << offload_array_offset_map.size() << std::endl;
+        SgPntrArrRefExp* pntrArrRef = isSgPntrArrRefExp(vRef->get_parent());
+        std::vector<SgExpression*> arrayType =get_C_array_dimensions(type);
+        //std::cout << "vector size = " << v_offset.size() << " array dim= " << arrayType.size() << std::endl;
+        if(v_offset.size() == arrayType.size())
+        {
+          for(std::vector<SgExpression*>::reverse_iterator ir = v_offset.rbegin(); ir != v_offset.rend(); ir++)
+          {
+            ROSE_ASSERT(pntrArrRef);
+            SgExpression* subscript = pntrArrRef->get_rhs_operand();  
+            SgExpression* newsubscript = buildSubtractOp(deepCopy(subscript),deepCopy(*ir));
+            replaceExpression(subscript,newsubscript,true); 
+            pntrArrRef = isSgPntrArrRefExp(pntrArrRef->get_parent()); 
+          } 
+        }
+        // collapsed case
+        else
+        {
+          ROSE_ASSERT(pntrArrRef);
+          SgExpression* subscript = pntrArrRef->get_rhs_operand();  
+          SgExpression* newsubscript = deepCopy(subscript);
+          std::vector<SgExpression*>::reverse_iterator irsize = v_size.rbegin();
+          for(std::vector<SgExpression*>::reverse_iterator ir = v_offset.rbegin(); ir != v_offset.rend(); ir++)
+          {
+            if(ir ==v_offset.rbegin())
+              newsubscript = buildSubtractOp(newsubscript,deepCopy(*ir));
+            else
+              newsubscript = buildSubtractOp(newsubscript,buildMultiplyOp(deepCopy(*ir),deepCopy(*irsize)));
+            irsize++;  
+          }
+          replaceExpression(subscript,newsubscript,true); 
+          pntrArrRef = isSgPntrArrRefExp(pntrArrRef->get_parent()); 
+        }
+      }
     }
   }
   return all_syms;
