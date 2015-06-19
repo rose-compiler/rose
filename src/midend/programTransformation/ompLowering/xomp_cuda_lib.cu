@@ -219,7 +219,7 @@ void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n)
 {
   assert (dest != NULL);
   assert (src != NULL);
-  if (xomp_verbose)
+//  if (xomp_verbose)
     printf("xomp_memcpyDeviceToHost(): dest=%p src =%p size=%d\n",dest, src, n);
   cudaError_t rt = cudaMemcpy (dest, src, n, cudaMemcpyDeviceToHost);    
   if (rt == cudaSuccess)
@@ -813,7 +813,6 @@ void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variab
   {
     dev_var_address = xomp_deviceMalloc(vsize[0]);
     xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
-
     // The spec says : reuse enclosing data and discard map-type rule.
     // So map-type only matters when no-reuse happens
     if (copy_into)
@@ -840,7 +839,7 @@ void xomp_deviceDataEnvironmentExit(int devID)
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
+       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)((char *)mapped_var->dev_address)), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
        //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!

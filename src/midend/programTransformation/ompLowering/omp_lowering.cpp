@@ -29,6 +29,7 @@ static std::map<SgVariableSymbol* , int> per_block_reduction_map;
 // we have to save them and insert them later when kernel launch statement is generated as part of transOmpTargetParallel
 static std::vector<SgVariableDeclaration*> per_block_declarations;
 
+static std::map<string , std::vector<SgExpression*> > offload_array_offset_map;
 
 // Liao 1/23/2015
 // when translating mapped variables using xomp_deviceDataEnvironmentPrepareVariable(), the original variable reference will be used as
@@ -1595,6 +1596,9 @@ void transOmpTargetLoop_RoundRobin(SgNode* node)
   setLoopLowerBound (new_loop, buildVarRefExp (getFirstVarSym(dev_lower_decl)));
   setLoopUpperBound (new_loop, buildVarRefExp (getFirstVarSym(dev_upper_decl)));
   removeStatement (for_loop);
+  
+
+
   // handle private variables at this loop level, mostly loop index variables.
   // TODO: this is not very elegant since the outer most loop's loop variable is still translated.
   //for reduction
@@ -2515,6 +2519,8 @@ static void generateMappedArrayMemoryHandling(
   SgVariableDeclaration* dev_var_offset_decl = NULL; 
 
   SgVariableSymbol* dev_var_offset_sym = insertion_scope->lookup_variable_symbol(dev_var_offset_name);
+  // vector to store all offset values
+  std::vector<SgExpression*> v_offset;
   if (dev_var_offset_sym == NULL)
   {
     SgExprListExp* arrayInitializer = buildExprListExp();
@@ -2522,6 +2528,7 @@ static void generateMappedArrayMemoryHandling(
     {
       std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
       arrayInitializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.first)));
+      v_offset.push_back(deepCopy(bound_pair.first));
     } 
     dev_var_offset_decl = buildVariableDeclaration (dev_var_offset_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(arrayInitializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_offset_decl); 
@@ -2530,6 +2537,8 @@ static void generateMappedArrayMemoryHandling(
     dev_var_offset_decl = isSgVariableDeclaration(dev_var_offset_sym->get_declaration()->get_declaration());
 
   ROSE_ASSERT (dev_var_offset_decl != NULL);
+
+  offload_array_offset_map[dev_var_name] = v_offset;
 
   // generate Dim array
   string dev_var_Dim_name = "_dev_" + orig_name + "_Dim";  
@@ -2542,7 +2551,7 @@ static void generateMappedArrayMemoryHandling(
     for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
     {
       std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-      arrayInitializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.first)));
+      arrayInitializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.second)));
     } 
     dev_var_Dim_decl = buildVariableDeclaration (dev_var_Dim_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(arrayInitializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_Dim_decl); 
@@ -2585,7 +2594,7 @@ static void generateMappedArrayMemoryHandling(
     SgExprListExp * parameters =
       buildExprListExp(device_expression, buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(array_dimensions[sym].size()), 
           buildVarRefExp( dev_var_size_name, insertion_scope), buildVarRefExp( dev_var_offset_name, insertion_scope),
-          buildVarRefExp( dev_var_offset_name, insertion_scope), copyToExp, copyFromExp
+          buildVarRefExp( dev_var_Dim_name, insertion_scope), copyToExp, copyFromExp
           );
 
     SgExprStatement* dde_prep_stmt = buildAssignStatement (buildVarRefExp(dev_var_name, insertion_scope),
@@ -2751,6 +2760,9 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     target_directive_stmt = isSgOmpTargetStatement(parent);
     ROSE_ASSERT (target_directive_stmt != NULL);
   }
+  // at this point, the body must be a BB now.
+  SgBasicBlock* body_block = isSgBasicBlock(target_parallel_stmt->get_body()); // the body of the affected "omp parallel"
+  ROSE_ASSERT (body_block!= NULL);
 
   // collect map clauses and their variables 
   // ----------------------------------------------------------
@@ -2919,6 +2931,28 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
     SgVariableSymbol * var_sym = isSgVariableSymbol(*iter);
     if (variable_map[var_sym] == true) // we should only collect map variables which show up in the current parallel region
       all_syms.insert (var_sym);
+  }
+
+  //Pei-Hung: subtract offset from the subscript in the offloaded array reference
+  Rose_STL_Container<SgNode*> nodeList = NodeQuery::querySubTree(body_block, V_SgVarRefExp);
+  for (Rose_STL_Container<SgNode *>::iterator i = nodeList.begin(); i != nodeList.end(); i++)
+  {
+    SgVarRefExp *vRef = isSgVarRefExp((*i));
+    if(offload_array_offset_map.find(vRef->get_symbol()->get_name().getString()) != offload_array_offset_map.end())
+    {
+      std::vector<SgExpression*> v_offset = offload_array_offset_map.find(vRef->get_symbol()->get_name().getString())->second;
+      if(isSgPntrArrRefExp(vRef->get_parent()) == NULL)
+        continue;
+std::cout << "finding susbscript " << vRef->get_symbol()->get_name().getString() << " in " << offload_array_offset_map.size() << std::endl;
+      SgPntrArrRefExp* pntrArrRef = isSgPntrArrRefExp(vRef->get_parent());
+      for(std::vector<SgExpression*>::reverse_iterator ir = v_offset.rbegin(); ir != v_offset.rend(); ir++)
+      {
+        SgExpression* subscript = pntrArrRef->get_rhs_operand();  
+        SgExpression* newsubscript = buildSubtractOp(deepCopy(subscript),deepCopy(*ir));
+        replaceExpression(subscript,newsubscript,true); 
+        pntrArrRef = isSgPntrArrRefExp(pntrArrRef->get_parent()); 
+      } 
+    }
   }
   return all_syms;
 } // end transOmpMapVariables() for omp target data's map clauses for now
