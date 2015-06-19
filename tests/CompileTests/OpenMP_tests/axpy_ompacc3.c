@@ -1,3 +1,7 @@
+// Experimental test input for Accelerator directives
+//  simplest scalar*vector operations
+//  Testing extensions for multiple devices
+// Liao 2/2/2015
 //AXPY multiple GPU version, using OpenMP 4.0 standard directives
 // vector = vector + vector * scalar
 #include <stdio.h>
@@ -40,9 +44,10 @@ REAL check(REAL*A, REAL*B, int n)
     return diffsum/sum;
 }
 
-/*serial version */
+/* CPU version */
 void axpy(REAL* x, REAL* y, long n, REAL a) {
   int i;
+#pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
   {
     y[i] += a * x[i];

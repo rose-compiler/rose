@@ -55,7 +55,7 @@ void axpy_ompacc(REAL* x, REAL* y, int n, REAL a) {
    we also need to let the runtime know what the target device is so the runtime will chose the right function to call if the code are generated 
    #pragma omp target device (gpu0) map(x, y) 
 */
-#pragma omp target device (gpu0) map(tofrom: y[0:n]) map(to: x[0:n],a,n)
+#pragma omp target device (0) map(tofrom: y[0:n]) map(to: x[0:n],a,n)
 #pragma omp parallel for shared(x, y, n, a) private(i)
   for (i = 0; i < n; ++i)
     y[i] += a * x[i];
