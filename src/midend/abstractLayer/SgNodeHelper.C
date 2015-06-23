@@ -1292,8 +1292,10 @@ bool SgNodeHelper::isPointerVariable(SgVarRefExp* var) {
 }
 
 bool SgNodeHelper::isArrayDeclaration(SgVariableDeclaration* decl) {
-// TODO: ensure that this is an array (check type)
-  return isAggregateDeclaration(decl);
+  if (isAggregateDeclaration(decl))
+    return true;
+  SgType* type = decl->get_variables()[0]->get_type();
+  return isSgArrayType(type);
 }
 
 bool SgNodeHelper::isAggregateDeclaration(SgVariableDeclaration* decl) {
