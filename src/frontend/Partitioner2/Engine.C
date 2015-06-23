@@ -121,6 +121,17 @@ Engine::loaderSwitches() {
                    "all, this tool assumes a value of " +
                    StringUtility::plural(settings_.loader.deExecuteZeros, "bytes") + "."));
 
+    sg.insert(Switch("const-memory")
+              .intrinsicValue(true, settings_.loader.constMem)
+              .doc("Removes write permission from all memory segments. The instruction semantics assume that all non-writable "
+                   "memory is constant and therefore instructions such as indirect jumps (JMP [address]) will have known "
+                   "successors. The @s{no-const-memory} switch disables this adjustment.  The default is that write "
+                   "permission is " + std::string(settings_.loader.constMem ? "" : "not ") + "removed."));
+    sg.insert(Switch("no-const-memory")
+              .key("const-memory")
+              .intrinsicValue(false, settings_.loader.constMem)
+              .hidden(true));
+
     return sg;
 }
 
@@ -515,6 +526,8 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
 void
 Engine::adjustMemoryMap() {
     Modules::deExecuteZeros(map_/*in,out*/, settings_.loader.deExecuteZeros);
+    if (settings_.loader.constMem)
+        map_.any().changeAccess(0, MemoryMap::WRITABLE);
 }
 
 MemoryMap&

@@ -114,9 +114,13 @@ public:
                                                          *   this data member is non-zero, then the memory map will be adjusted
                                                          *   by removing execute permission from any region of memory that has
                                                          *   at least this many consecutive zero bytes. */
+        bool constMem;                                  /**< Should write permission be removed from all memory segments?
+                                                         *   Removing write permission causes the instruction semantics to
+                                                         *   assume that memory is constant and therefore things like indirect
+                                                         *   jumps will have known successors. */
 
         LoaderSettings()
-            : deExecuteZeros(0) {}
+            : deExecuteZeros(0), constMem(false) {}
     };
 
     /** Settings that control the disassembler.
