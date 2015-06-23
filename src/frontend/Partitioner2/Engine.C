@@ -221,6 +221,30 @@ Engine::partitionerSwitches() {
               .intrinsicValue(false, settings_.partitioner.findingDeadCode)
               .hidden(true));
 
+    sg.insert(Switch("find-thunks")
+              .intrinsicValue(true, settings_.partitioner.findingThunks)
+              .doc("Search for common thunk patterns in areas of executable memory that have not been previously "
+                   "discovered to contain other functions.  When this switch is enabled, the function-searching callbacks "
+                   "include the patterns to match thunks.  This switch does not cause the thunk's instructions to be "
+                   "detached as a separate function from the thunk's target function; that's handled by the "
+                   "@s{split-thunks} switch.  The @s{no-find-thunks} switch turns thunk searching off. The default "
+                   "is to " + std::string(settings_.partitioner.findingThunks ? "" : "not ") + "search for thunks."));
+    sg.insert(Switch("no-find-thunks")
+              .key("find-thunks")
+              .intrinsicValue(false, settings_.partitioner.findingThunks)
+              .hidden(true));
+
+    sg.insert(Switch("split-thunks")
+              .intrinsicValue(true, settings_.partitioner.splittingThunks)
+              .doc("Look for common thunk patterns at the start of existing functions and split off those thunk "
+                   "instructions to their own separate function.  The @s{no-detach-thunks} switch turns this feature "
+                   "off.  The default is to " + std::string(settings_.partitioner.splittingThunks?"":"not ") +
+                   "split thunks into their own functions."));
+    sg.insert(Switch("no-split-thunks")
+              .key("split-thunks")
+              .intrinsicValue(false, settings_.partitioner.splittingThunks)
+              .hidden(true));
+
     sg.insert(Switch("pe-scrambler")
               .argument("dispatcher_address", nonNegativeIntegerParser(settings_.partitioner.peScramblerDispatcherVa))
               .doc("Simulate the action of the PEScrambler dispatch function in order to rewrite CFG edges.  Any edges "
@@ -635,8 +659,8 @@ Engine::createGenericPartitioner() {
     p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchAbbreviatedPrologue::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
-    p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
-    p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
+    if (settings_.partitioner.findingThunks)
+        p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
     p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
     p.functionPrologueMatchers().push_back(ModulesM68k::MatchLink::instance());
     p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
@@ -663,8 +687,8 @@ Engine::createTunedPartitioner() {
         p.functionPrologueMatchers().push_back(ModulesX86::MatchHotPatchPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchStandardPrologue::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchEnterPrologue::instance());
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchLeaJmpThunk::instance());
-        p.functionPrologueMatchers().push_back(ModulesX86::MatchMovJmpThunk::instance());
+        if (settings_.partitioner.findingThunks)
+            p.functionPrologueMatchers().push_back(ModulesX86::MatchThunk::instance());
         p.functionPrologueMatchers().push_back(ModulesX86::MatchRetPadPush::instance());
         p.basicBlockCallbacks().append(ModulesX86::FunctionReturnDetector::instance());
         p.basicBlockCallbacks().append(ModulesX86::SwitchSuccessors::instance());
@@ -774,10 +798,13 @@ Engine::runPartitionerRecursive(Partitioner &partitioner) {
 
 void
 Engine::runPartitionerFinal(Partitioner &partitioner) {
+    if (settings_.partitioner.splittingThunks)
+        ModulesX86::splitThunkFunctions(partitioner);
     if (interp_)
         ModulesPe::nameImportThunks(partitioner, interp_);
     Modules::nameConstants(partitioner);
     Modules::nameStrings(partitioner);
+    //partitioner.fixInterFunctionEdges();
 }
 
 void
