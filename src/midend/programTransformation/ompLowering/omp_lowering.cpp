@@ -2500,17 +2500,39 @@ static void generateMappedArrayMemoryHandling(
 
   SgVariableSymbol* dev_var_size_sym = insertion_scope->lookup_variable_symbol(dev_var_size_name);
   std::vector<SgExpression*> v_size;
+  int dimSize = 0;
   if (dev_var_size_sym == NULL)
   {
 //    SgExpression* initializer = generateSizeCalculationExpression (sym, element_type, array_dimensions[sym]);
     SgExprListExp* initializer = buildExprListExp();
-    for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
+    if(array_dimensions[sym].size() > 0){
+      dimSize = array_dimensions[sym].size();
+      for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
+      {
+        std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
+        initializer->append_expression(deepCopy(bound_pair.second));
+        v_size.push_back(deepCopy(bound_pair.second));
+      } 
+    }
+    else
     {
-      std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-      initializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.second)));
-      v_size.push_back(deepCopy(bound_pair.second));
-    } 
-    dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(initializer), insertion_scope); 
+      ROSE_ASSERT (sym!= NULL);
+      SgArrayType* a_type = isSgArrayType (orig_type);
+      ROSE_ASSERT (a_type!= NULL);
+      std::vector< SgExpression * > dims = get_C_array_dimensions (a_type);
+      for (std::vector < SgExpression* >::const_iterator iter = dims.begin(); iter != dims.end(); iter++)
+      {
+        SgExpression* length_exp  = *iter; 
+        //TODO: get_C_array_dimensions returns one extra null expression somehow.
+        if (!isSgNullExpression(length_exp))
+        {
+          dimSize++;
+          initializer->append_expression(deepCopy(length_exp));
+          v_size.push_back(deepCopy(length_exp));
+        }
+      }
+    }
+    dev_var_size_decl = buildVariableDeclaration (dev_var_size_name, buildArrayType(buildIntType(),buildIntVal(dimSize)), buildAggregateInitializer(initializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_size_decl); 
   }
   else
@@ -2530,13 +2552,23 @@ static void generateMappedArrayMemoryHandling(
   if (dev_var_offset_sym == NULL)
   {
     SgExprListExp* arrayInitializer = buildExprListExp();
-    for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
+    if(array_dimensions[sym].size() > 0){
+      for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
+      {
+        std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
+        arrayInitializer->append_expression(deepCopy(bound_pair.first));
+        v_offset.push_back(deepCopy(bound_pair.first));
+      } 
+    }
+    else
     {
-      std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-      arrayInitializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.first)));
-      v_offset.push_back(deepCopy(bound_pair.first));
-    } 
-    dev_var_offset_decl = buildVariableDeclaration (dev_var_offset_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(arrayInitializer), insertion_scope); 
+      for (int i=0; i < dimSize; ++i)
+      {
+        arrayInitializer->append_expression(buildIntVal(0));
+        v_offset.push_back(buildIntVal(0));
+      } 
+    }
+    dev_var_offset_decl = buildVariableDeclaration (dev_var_offset_name, buildArrayType(buildIntType(),buildIntVal(dimSize)), buildAggregateInitializer(arrayInitializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_offset_decl); 
   }
   else
@@ -2554,12 +2586,21 @@ static void generateMappedArrayMemoryHandling(
   if (dev_var_Dim_sym == NULL)
   {
     SgExprListExp* arrayInitializer = buildExprListExp();
-    for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
-    {
-      std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-      arrayInitializer->append_expression(buildMultiplyOp(buildSizeOfOp(element_type),deepCopy(bound_pair.second)));
+    if(array_dimensions[sym].size() > 0){
+      for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
+      {
+        std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
+        arrayInitializer->append_expression(deepCopy(bound_pair.second));
+      }
     } 
-    dev_var_Dim_decl = buildVariableDeclaration (dev_var_Dim_name, buildArrayType(buildIntType(),buildIntVal(array_dimensions[sym].size())), buildAggregateInitializer(arrayInitializer), insertion_scope); 
+    else
+    {
+      for (int i=0; i < dimSize; ++i)
+      {
+        arrayInitializer->append_expression(deepCopy(v_size[i]));
+      } 
+    }
+    dev_var_Dim_decl = buildVariableDeclaration (dev_var_Dim_name, buildArrayType(buildIntType(),buildIntVal(dimSize)), buildAggregateInitializer(arrayInitializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_Dim_decl); 
   }
   else
@@ -2598,7 +2639,7 @@ static void generateMappedArrayMemoryHandling(
 //cout<<"Debug: inserting var ref to be preserved:"<<sym->get_name()<<"@"<<host_var_ref <<endl;    
 
     SgExprListExp * parameters =
-      buildExprListExp(device_expression, buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(array_dimensions[sym].size()), 
+      buildExprListExp(device_expression, buildCastExp( host_var_ref, buildPointerType(buildVoidType()) ),buildIntVal(dimSize),buildSizeOfOp(element_type), 
           buildVarRefExp( dev_var_size_name, insertion_scope), buildVarRefExp( dev_var_offset_name, insertion_scope),
           buildVarRefExp( dev_var_Dim_name, insertion_scope), copyToExp, copyFromExp
           );
@@ -2984,6 +3025,12 @@ ASTtools::VarSymSet_t transOmpMapVariables(SgStatement* target_data_or_target_pa
           std::vector<SgExpression*>::reverse_iterator irsize = v_size.rbegin();
           for(std::vector<SgExpression*>::reverse_iterator ir = v_offset.rbegin(); ir != v_offset.rend(); ir++)
           {
+            SgIntVal* intVal = isSgIntVal(*ir);
+            if(intVal && intVal->get_value() == 0)
+            {
+              irsize++;  
+              continue;
+            }
             if(ir ==v_offset.rbegin())
               newsubscript = buildSubtractOp(newsubscript,deepCopy(*ir));
             else
