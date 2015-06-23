@@ -678,7 +678,7 @@ void xomp_deviceDataEnvironmentEnter(int devID)
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
-void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var, int* size)
+void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var, int typeSize, int* size)
 {
   void * dev_address = NULL; 
   assert (orig_var != NULL);
@@ -696,7 +696,7 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var,
       int matched = 1;
       for(i=0; i < cur_var->nDim; ++i)
       {
-        if(cur_var->size[i] != size[i])
+        if(cur_var->size[i]*typeSize != size[i]*typeSize)
            matched = 0;
       }
       if(matched)
@@ -707,7 +707,7 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var,
 }
 
 //! Add a newly mapped variable into the current DDE's new variable list
-void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, void * dev_addr, bool copyTo, bool copyFrom)
+void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, int typeSize, void * dev_addr, bool copyTo, bool copyFrom)
 {
   // TODO: sanity check to avoid add duplicated variable or inheritable variable
   assert ( DDE_tail[devID] != NULL );
@@ -717,6 +717,7 @@ void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_
   mapped_var-> offset = (int*)malloc(sizeof(int) * nDim); 
   mapped_var-> DimSize = (int*)malloc(sizeof(int) * nDim);
   mapped_var->nDim = nDim; 
+  mapped_var->typeSize = typeSize; 
   int i;
   for(i = 0; i < nDim; ++i)
   { 
@@ -731,23 +732,23 @@ void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_
   DDE_tail[devID]->new_variable_count ++;
 }
 
-void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim, int typeSize)
 {
   int offset_src;
   int offset_dest;
   assert (ndim <= 3);
   if(ndim == 1)
   {
-     xomp_memcpyDeviceToHost((char*)dest+voffset[0], (char*)src, vsize[0]);
+     xomp_memcpyDeviceToHost((char*)dest+voffset[0]*typeSize, (char*)src, vsize[0]*typeSize);
   }
   else  if(ndim == 2)
   {
      int j;
      for(j=0; j < vsize[1]; ++j)
      {
-       offset_dest  = voffset[1] + (j + voffset[1]) * vDimSize[0];
+       offset_dest  = voffset[0] + (j + voffset[1]) * vDimSize[0];
        offset_src = j  * vsize[0];
-       xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -761,29 +762,29 @@ void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset,
        {
          offset_dest  += vDimSize[0];
          offset_src += vsize[0];
-         xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+         xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
        } 
      }
   }
 }
 
-void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim, int typeSize)
 {
   int offset_src;
   int offset_dest;
   assert (ndim <= 3);
   if(ndim == 1)
   {
-     xomp_memcpyHostToDevice((char*)dest, (char*)src+voffset[0], vsize[0]);
+     xomp_memcpyHostToDevice((char*)dest, (char*)src+voffset[0]*typeSize, vsize[0]*typeSize);
   }
   else  if(ndim == 2)
   {
      int j;
      for(j=0; j < vsize[1]; ++j)
      {
-       offset_src  = voffset[1] + (j + voffset[1]) * vDimSize[0];
+       offset_src  = voffset[0] + (j + voffset[1]) * vDimSize[0];
        offset_dest = j  * vsize[0];
-       xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -791,33 +792,40 @@ void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset
      int i,j;
      for(j=0; j < vsize[2]; ++j)
      {
-       offset_src = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2])) - vDimSize[0];
-       offset_dest = vsize[1] * (j * vsize[2]) - vsize[0];
+       //offset_src = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2]) -1);
+       offset_src = (j+voffset[2])*vDimSize[0]*vDimSize[1] + voffset[1]*vDimSize[0] + voffset[0] - vDimSize[0];
+       offset_dest = j * vsize[1] * vsize[2] - vsize[0];
        for(i=0; i < vsize[1]; ++i)
        {
          offset_src  += vDimSize[0];
          offset_dest += vsize[0];
-         xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+         xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
        } 
      }
   }
 }
 
 // All-in-one function to prepare device variable
-void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variable_address, int nDim, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
+void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variable_address, int nDim, int typeSize, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
 {
   // currently only handle one dimension
   void* dev_var_address = NULL; 
-  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (devID, original_variable_address, vsize);
+  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (devID, original_variable_address, typeSize, vsize);
   if (dev_var_address == NULL)
   {
-    dev_var_address = xomp_deviceMalloc(vsize[0]);
-    xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
+    int devSize = 1;
+    for(int i=0; i < nDim; ++i)
+    {
+      devSize *= vsize[i];
+    }
+printf("sizd = %d\n",devSize);
+    dev_var_address = xomp_deviceMalloc(devSize*typeSize);
+    xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, typeSize, dev_var_address, copy_into, copy_back);
     // The spec says : reuse enclosing data and discard map-type rule.
     // So map-type only matters when no-reuse happens
     if (copy_into)
     {
-      xomp_memScatterHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim);
+      xomp_memScatterHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim, typeSize);
     //  xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize[0]);
     }
   }
@@ -839,7 +847,7 @@ void xomp_deviceDataEnvironmentExit(int devID)
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)((char *)mapped_var->dev_address)), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
+       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)((char *)mapped_var->dev_address)), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim,mapped_var->typeSize);
        //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
