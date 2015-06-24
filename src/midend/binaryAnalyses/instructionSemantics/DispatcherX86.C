@@ -4208,10 +4208,6 @@ DispatcherX86::regcache_init()
                 REG_EBP = findRegister("ebp", 32);
                 REG_EIP = findRegister("eip", 32);
                 REG_EFLAGS= findRegister("eflags", 32);
-                REG_ST0 = findRegister("st0", 80);
-                REG_FPSTATUS = findRegister("fpstatus", 16);
-                REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3);
-                REG_FPCTL = findRegister("fpctl", 16);
                 REG_MXCSR = findRegister("mxcsr", 32);
                 REG_FS = findRegister("fs", 16);
                 REG_GS = findRegister("gs", 16);
@@ -4247,24 +4243,37 @@ DispatcherX86::regcache_init()
                 REG_DS = findRegister("ds", 16);
                 REG_ES = findRegister("es", 16);
                 REG_SS = findRegister("ss", 16);
+
+                // These next few are not in every 16-bit architecture
+                REG_FPSTATUS = findRegister("fpstatus", 16, true);
+                REG_FPSTATUS_TOP = findRegister("fpstatus_top", 3, true);
+                REG_ST0 = findRegister("st0", 80, true);
+                REG_FPCTL = findRegister("fpctl", 16, true);
                 break;
             default:
                 ASSERT_not_reachable("invalid instruction size");
         }
 
-        REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax);
-        REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx);
-        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx);
-        REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx);
+        size_t maxWidth = 0;
+        switch (processorMode()) {
+            case x86_insnsize_64: maxWidth = 64; break;
+            case x86_insnsize_32: maxWidth = 32; break;
+            case x86_insnsize_16: maxWidth = 16; break;
+        }
 
-        REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di);
-        REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si);
+        REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax, maxWidth);
+        REG_anyBX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bx, maxWidth);
+        REG_anyCX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_cx, maxWidth);
+        REG_anyDX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_dx, maxWidth);
 
-        REG_anyIP = regdict->findLargestRegister(x86_regclass_ip, 0);
-        REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp);
-        REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp);
+        REG_anyDI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_di, maxWidth);
+        REG_anySI = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_si, maxWidth);
 
-        REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status);
+        REG_anyIP = regdict->findLargestRegister(x86_regclass_ip,  0,          maxWidth);
+        REG_anySP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_sp, maxWidth);
+        REG_anyBP = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_bp, maxWidth);
+
+        REG_anyFLAGS = regdict->findLargestRegister(x86_regclass_flags, x86_flags_status, maxWidth);
     }
 }
 

@@ -25,12 +25,12 @@ protected:
 
     // Prototypical constructor
     DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
           processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
 
     // Normal constructor
     DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
           processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
         regcache_init();
         iproc_init();
