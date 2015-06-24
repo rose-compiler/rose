@@ -33,7 +33,51 @@ ConstantFolding::constantFoldingOptimization(SgNode* n, bool internalTestingAgai
   // Set internal ability to do error checking against any constant expression trees stored in the AST.
      ih.internalTestingAgainstFrontend = internalTestingAgainstFrontend;
 
-     t.traverse(n,ih);
+     ConstantFoldingSynthesizedAttribute returnAttribute;
+
+  // t.traverse(n,ih);
+     returnAttribute = t.traverse(n,ih);
+
+#if 0
+#if 1
+     printf ("In ConstantFolding::constantFoldingOptimization(): n = %p = %s returnAttribute.newValueExp = %p \n",n,n->class_name().c_str(),returnAttribute.newValueExp);
+  // Note that returnAttribute.newValueExp can be NULL.
+     if (returnAttribute.newValueExp != NULL)
+        {
+          printf ("   --- returnAttribute.newValueExp = %p = %s \n",returnAttribute.newValueExp,returnAttribute.newValueExp->class_name().c_str());
+        }
+#else
+     ROSE_ASSERT(returnAttribute.newValueExp != NULL);
+     printf ("In ConstantFolding::constantFoldingOptimization(): n = %p = %s returnAttribute.newValueExp = %p = %s \n",n,n->class_name().c_str(),returnAttribute.newValueExp,returnAttribute.newValueExp->class_name().c_str());
+#endif
+#endif
+   }
+
+SgValueExp*
+ConstantFolding::returnConstantFoldedValueExpression(SgNode* n, bool internalTestingAgainstFrontend)
+   {
+  // This is the main function interface for constant folding
+     ConstantFoldingTraversal t;
+     ConstantFoldingInheritedAttribute ih;
+
+  // Set internal ability to do error checking against any constant expression trees stored in the AST.
+     ih.internalTestingAgainstFrontend = internalTestingAgainstFrontend;
+
+     ConstantFoldingSynthesizedAttribute returnAttribute;
+
+  // t.traverse(n,ih);
+     returnAttribute = t.traverse(n,ih);
+
+#if 0
+     printf ("In ConstantFolding::constantFoldingOptimization(): n = %p = %s returnAttribute.newValueExp = %p \n",n,n->class_name().c_str(),returnAttribute.newValueExp);
+  // Note that returnAttribute.newValueExp can be NULL.
+     if (returnAttribute.newValueExp != NULL)
+        {
+          printf ("   --- returnAttribute.newValueExp = %p = %s \n",returnAttribute.newValueExp,returnAttribute.newValueExp->class_name().c_str());
+        }
+#endif
+
+     return returnAttribute.newValueExp;
    }
 
 void
@@ -930,6 +974,7 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
      SubTreeSynthesizedAttributes synthesizedAttributeList )
    {
      ConstantFoldingSynthesizedAttribute returnAttribute;
+
 #if 0
      printf ("astNode = %p = %s: synthesizedAttributeList.size() = %ld \n",astNode,astNode->class_name().c_str(),synthesizedAttributeList.size());
      for (SubTreeSynthesizedAttributes::iterator i = synthesizedAttributeList.begin(); i != synthesizedAttributeList.end(); i++)
@@ -1100,7 +1145,7 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                      exprList->get_expressions()[i] = synthesizedValue;
                  }
                }
-               else if (isSgConditionalExp(expr)) // a? b: c
+               else if (isSgConditionalExp(expr)) // a ? b: c
                {
                  SgConditionalExp* cond_exp = isSgConditionalExp(expr);
                  ROSE_ASSERT(cond_exp);
@@ -1129,6 +1174,10 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                else if (!isSgValueExp(expr) && 
                         !isSgVarRefExp(expr) &&
                         !isSgFunctionRefExp(expr) &&
+                     // DQ (6/14/2015): Added case to ignore.  SgNullExpression does not make since in the context of constant folding.
+                        !isSgNullExpression(expr) &&
+                     // DQ (6/14/2015): Added case to ignore.  SgSizeOfOp is not clear if it should be constant folded, since it might be dependent on something that might be transformed.
+                        !isSgSizeOfOp(expr) &&
                         !isSgFunctionCallExp(expr))
                {
                  cout<<"constant folding: unhandled expression type:"<<expr->class_name()<<endl;

@@ -3819,6 +3819,11 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // DQ (12/5/2007): This call to unparse the definition can change the scope in info, so save it and restore it
        // SgScopeStatement* savedScope = info.get_current_scope();
 
+       // DQ (6/23/2015): Added output of type attributes for defining function declaration (see test2015_164.c).
+       // Within GNU the attribute can appear before or after the return type, here it is before the return type.
+       // unp->u_sage->printAttributes(funcdecl_stmt,info);
+       // unp->u_sage->printAttributesForType(funcdecl_stmt,info);
+
        // DQ (12/3/2007): We want the changes to the access state to be saved in
        // the info object. See test2007_172.C for example of why this as a problem,
        // though it is not clear that a private friend is any different than a 
@@ -3942,6 +3947,11 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
        // output the rest of the function declaration
 #if OUTPUT_FUNCTION_DECLARATION_DATA
           curprint ("/* after unparsing the return type */");
+#endif
+
+#if 1
+       // DQ (6/23/2015): Output the GNU attribute where it appears between the return type and the function name.
+          unp->u_sage->printAttributes(funcdecl_stmt,info);
 #endif
 
        // DQ (10/15/2006): Mark that we are unparsing a function declaration (or member function declaration)
@@ -4134,17 +4144,17 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint(" }");
                   }
              }
-#if 0
             else
              {
+#if 0
             // DQ (1/19/2014): Added support for missing attributes.
             // We certainly need to represent a number of different kinds of gnu attributes 
             // consistantly on both the non-defining and defining function declarations.
             // However, this is a bug if the attribute appears after the function declaration
             // (at least for the case of the defining declaration).
                unp->u_sage->printAttributes(funcdecl_stmt,info);
-             }
 #endif
+             }
         }
 
 #if 0
@@ -4225,6 +4235,15 @@ Unparse_ExprStmt::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
 
   // DQ (1/19/2014): Adding gnu attribute prefix support.
      ROSE_ASSERT(funcdefn_stmt->get_declaration() != NULL);
+
+#if 0
+  // DQ (6/23/2015): Added output of type attributes for defining function declaration (see test2015_164.c).
+  // Within GNU the attribute can appear before or after the return type, here it is before the return type.
+     SgFunctionDeclaration* funcdecl_stmt = isSgFunctionDeclaration(funcdefn_stmt->get_declaration());
+     ROSE_ASSERT(funcdecl_stmt != NULL);
+     unp->u_sage->printAttributes(funcdecl_stmt,info);
+#endif
+
      unp->u_sage->printPrefixAttributes(funcdefn_stmt->get_declaration(),info);
 
   // DQ (3/24/2004): Need to permit SgMemberFunctionDecl and SgTemplateInstantiationMemberFunctionDecl
