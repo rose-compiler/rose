@@ -3949,9 +3949,18 @@ Unparse_ExprStmt::unparseFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           curprint ("/* after unparsing the return type */");
 #endif
 
+#if 0
+          printf ("funcdecl_stmt->isForward() = %s \n",funcdecl_stmt->isForward() ? "true" : "false");
+          printf ("ninfo.SkipSemiColon()      = %s \n",ninfo.SkipSemiColon() ? "true" : "false");
+#endif
 #if 1
        // DQ (6/23/2015): Output the GNU attribute where it appears between the return type and the function name.
-          unp->u_sage->printAttributes(funcdecl_stmt,info);
+       // unp->u_sage->printAttributes(funcdecl_stmt,info);
+       // if (funcdecl_stmt->isForward() == false && !ninfo.SkipSemiColon())
+          if (funcdecl_stmt->isForward() == false)
+             {
+               unp->u_sage->printAttributes(funcdecl_stmt,info);
+             }
 #endif
 
        // DQ (10/15/2006): Mark that we are unparsing a function declaration (or member function declaration)
