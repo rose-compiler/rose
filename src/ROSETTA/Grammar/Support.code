@@ -15568,8 +15568,10 @@ SgProject::initialization()
      p_noclobber_if_different_output_file = false;
   // Pei-Hung (8/6/2014): This option appends PID into the output name to avoid file collision in parallel compilation. 
      p_appendPID = false;
+
   // ZG (5/27/2014): This was uninitialized on Windows, so adding it here.
-     p_globalScopeAcrossFiles = NULL;
+  // TV (06/18/15): Initialized above
+  // p_globalScopeAcrossFiles = NULL;
    }
 
 
