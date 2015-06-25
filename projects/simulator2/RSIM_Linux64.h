@@ -28,6 +28,9 @@ protected:
     static void syscall_arch_prctl_body(RSIM_Thread*, int);
     static void syscall_arch_prctl_leave(RSIM_Thread*, int);
 
+    static void syscall_ioctl_enter(RSIM_Thread*, int);
+    static void syscall_ioctl_body(RSIM_Thread*, int);
+
     static void syscall_mmap_enter(RSIM_Thread*, int);
     static void syscall_mmap_body(RSIM_Thread*, int);
     static void syscall_mmap_leave(RSIM_Thread*, int);

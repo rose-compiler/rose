@@ -38,29 +38,57 @@ protected:
     // System calls that are common to both Linux 32- and 64-bit.
     static void syscall_default_leave(RSIM_Thread*, int);
 
-    static void syscall_access_body(RSIM_Thread *t, int callno);
     static void syscall_access_enter(RSIM_Thread *t, int callno);
+    static void syscall_access_body(RSIM_Thread *t, int callno);
 
     static void syscall_brk_enter(RSIM_Thread*, int);
     static void syscall_brk_body(RSIM_Thread*, int);
     static void syscall_brk_leave(RSIM_Thread*, int);
 
-    static void syscall_close_body(RSIM_Thread *t, int callno);
     static void syscall_close_enter(RSIM_Thread *t, int callno);
+    static void syscall_close_body(RSIM_Thread *t, int callno);
 
-    static void syscall_mprotect_body(RSIM_Thread *t, int callno);
+    static void syscall_creat_enter(RSIM_Thread *t, int callno);
+    static void syscall_creat_body(RSIM_Thread *t, int callno);
+
+    static void syscall_dup_enter(RSIM_Thread *t, int callno);
+    static void syscall_dup_body(RSIM_Thread *t, int callno);
+
+    static void syscall_dup2_enter(RSIM_Thread *t, int callno);
+    static void syscall_dup2_body(RSIM_Thread *t, int callno);
+
+    static void syscall_exit_enter(RSIM_Thread *t, int callno);
+    static void syscall_exit_body(RSIM_Thread *t, int callno);
+    static void syscall_exit_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
+    static void syscall_exit_group_body(RSIM_Thread *t, int callno);
+    static void syscall_exit_group_leave(RSIM_Thread *t, int callno);
+
     static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
+    static void syscall_mprotect_body(RSIM_Thread *t, int callno);
     static void syscall_mprotect_leave(RSIM_Thread *t, int callno);
 
-    static void syscall_open_body(RSIM_Thread *t, int callno);
-    static void syscall_open_enter(RSIM_Thread *t, int callno);
+    static void syscall_munmap_enter(RSIM_Thread *t, int callno);
+    static void syscall_munmap_body(RSIM_Thread *t, int callno);
 
-    static void syscall_read_body(RSIM_Thread *t, int callno);
+    static void syscall_open_enter(RSIM_Thread *t, int callno);
+    static void syscall_open_body(RSIM_Thread *t, int callno);
+
+    static void syscall_pipe_enter(RSIM_Thread *t, int callno);
+    static void syscall_pipe_body(RSIM_Thread *t, int callno);
+    static void syscall_pipe_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_pipe2_enter(RSIM_Thread *t, int callno);
+    static void syscall_pipe2_body(RSIM_Thread *t, int callno);
+    static void syscall_pipe2_leave(RSIM_Thread *t, int callno);
+
     static void syscall_read_enter(RSIM_Thread *t, int callno);
+    static void syscall_read_body(RSIM_Thread *t, int callno);
     static void syscall_read_leave(RSIM_Thread*, int callno);
 
-    static void syscall_write_body(RSIM_Thread *t, int callno);
     static void syscall_write_enter(RSIM_Thread *t, int callno);
+    static void syscall_write_body(RSIM_Thread *t, int callno);
 };
 
 

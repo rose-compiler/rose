@@ -206,6 +206,12 @@ RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mai
 
     AddressInterval restriction = AddressInterval::hull(t1.max_mapped_va, AddressInterval::whole().greatest());
     process->brkVa(process->get_memory().findFreeSpace(PAGE_SIZE, PAGE_SIZE, restriction).orElse(0));
+
+    // File descriptors. For now we just re-use ROSE's standard I/O, but in the future we could open new host descriptors to
+    // serve as standard I/O for the guest.
+    process->allocateFileDescriptors(0, 0);
+    process->allocateFileDescriptors(1, 1);
+    process->allocateFileDescriptors(2, 2);
 }
 
 template<typename Word>
@@ -410,6 +416,8 @@ RSIM_Linux::initializeStackArch(RSIM_Thread *thread, SgAsmGenericHeader *_fhdr) 
 // 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Some miscellaneous stuff
+
 void
 RSIM_Linux::syscall_default_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().ret().str("\n");
@@ -468,14 +476,169 @@ RSIM_Linux::syscall_close_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_close_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0);
-    if (1==fd || 2==fd) {
-        /* ROSE is using these */
-        t->syscall_return(-EPERM);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    if (-1 == hostFd) {
+        t->syscall_return(-EBADF);
+    } else if (0==hostFd || 1==hostFd || 2==hostFd) {
+        // Simulator is using these, so fake it.
+        t->syscall_return(0);
+        t->get_process()->eraseGuestFileDescriptor(guestFd);
+    } else if (-1 == close(hostFd)) {
+        t->syscall_return(-errno);
     } else {
-        int status = close(fd);
-        t->syscall_return(status<0 ? -errno : status);
+        t->syscall_return(0);
+        t->get_process()->eraseGuestFileDescriptor(guestFd);
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_creat_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("creat").s().d();
+}
+
+void
+RSIM_Linux::syscall_creat_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t fileNameVa = t->syscall_arg(0);
+    bool error;
+    std::string fileName = t->get_process()->read_string(fileNameVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    mode_t mode = t->syscall_arg(1);
+
+    int hostFd = creat(fileName.c_str(), mode);
+    if (hostFd == -1) {
+        t->syscall_return(-errno);
+        return;
+    }
+    int guestFd = t->get_process()->allocateGuestFileDescriptor(hostFd);
+    if (-1 == guestFd) {
+        t->syscall_return(-ENOMEM);
+        return;
+    }
+
+    t->syscall_return(guestFd);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_dup_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("dup").d();
+}
+
+void
+RSIM_Linux::syscall_dup_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int hostResult = dup(hostFd);
+    int guestResult = t->get_process()->allocateGuestFileDescriptor(hostResult);
+    if (-1==guestResult) guestResult = -errno;
+    t->syscall_return(guestResult);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_dup2_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("dup2").d().d();
+}
+
+void
+RSIM_Linux::syscall_dup2_body(RSIM_Thread *t, int callno)
+{
+    int guestSource = t->syscall_arg(0);
+    int hostSource = t->get_process()->hostFileDescriptor(guestSource);
+
+    int guestTarget = t->syscall_arg(1);
+    int hostTarget = t->get_process()->hostFileDescriptor(guestTarget);   // -1 if guestTarget is not opened yet
+
+    if (-1 == hostTarget) {
+        hostTarget = dup(guestSource);
+    } else {
+        hostTarget = dup2(hostSource, hostTarget);
+    }
+    if (-1 == hostTarget) {
+        t->syscall_return(-errno);
+        return;
+    }
+    t->get_process()->allocateFileDescriptors(guestTarget, hostTarget);
+    t->syscall_return(guestTarget);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_exit_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("exit").d();
+}
+
+void
+RSIM_Linux::syscall_exit_body(RSIM_Thread *t, int callno)
+{
+    if (t->clear_child_tid) {
+        uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
+        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        ROSE_ASSERT(n==sizeof zero);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        ROSE_ASSERT(nwoke>=0);
+    }
+
+    // Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as well). The
+    // simulated thread is effectively dead at this point.
+    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
+    throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), false); // false=>exit only this thread
+}
+
+void
+RSIM_Linux::syscall_exit_leave(RSIM_Thread *t, int callno)
+{
+    // This should not be reached, but might be reached if the exit system call body was skipped over.
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_exit_group_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("exit_group").d();
+}
+
+void
+RSIM_Linux::syscall_exit_group_body(RSIM_Thread *t, int callno)
+{
+    if (t->clear_child_tid) {
+        // From the set_tid_address(2) man page:
+        //   When clear_child_tid is set, and the process exits, and the process was sharing memory with other processes or
+        //   threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL, NULL, 0) call is
+        //   done. (That is, wake a single process waiting on this futex.) Errors are ignored.
+        uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
+        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        ROSE_ASSERT(n==sizeof zero);
+        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        ROSE_ASSERT(nwoke>=0);
+    }
+
+    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
+    throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), true); // true=>exit entire process
+}
+
+void
+RSIM_Linux::syscall_exit_group_leave(RSIM_Thread *t, int callno)
+{
+    // This should not be reached, but might be reached if the exit_group system call body was skipped over.
+    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -532,19 +695,105 @@ RSIM_Linux::syscall_open_body(RSIM_Thread *t, int callno)
         t->syscall_return(-EFAULT);
         return;
     }
+    ASSERT_forbid(boost::starts_with(filename, "/proc/self/"));
+    ASSERT_forbid(boost::starts_with(filename, "/proc/"));
 
+    // Open the host file
     unsigned flags = t->syscall_arg(1);
     unsigned mode = (flags & O_CREAT) ? t->syscall_arg(2) : 0;
-    int fd = open(filename.c_str(), flags, mode);
-    if (-1==fd) {
+    int hostFd = open(filename.c_str(), flags, mode);
+    if (-1==hostFd) {
         t->syscall_return(-errno);
         return;
     }
 
-    ASSERT_forbid(boost::starts_with(filename, "/proc/self/"));
-    ASSERT_forbid(boost::starts_with(filename, "/proc/"));
+    // Find a free guest file descriptor to return.
+    int guestFd = t->get_process()->allocateGuestFileDescriptor(hostFd);
+    t->syscall_return(guestFd);
 
-    t->syscall_return(fd);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_pipe_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pipe").p();
+}
+
+void
+RSIM_Linux::syscall_pipe_body(RSIM_Thread *t, int callno)
+{
+    int32_t guest[2];
+    int host[2];
+    int result = pipe(host);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    guest[0] = t->get_process()->allocateGuestFileDescriptor(host[0]);
+    guest[1] = t->get_process()->allocateGuestFileDescriptor(host[1]);
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->get_process()->eraseGuestFileDescriptor(guest[0]);
+        t->get_process()->eraseGuestFileDescriptor(guest[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux::syscall_pipe_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(8, print_int_32).str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_pipe2_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pipe").p().f(open_flags);
+}
+
+void
+RSIM_Linux::syscall_pipe2_body(RSIM_Thread *t, int callno)
+{
+#ifdef HAVE_PIPE2
+    int flags = t->syscall_arg(1);
+    int host[2];
+    int result = pipe2(host, flags);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    int32_t guest[2];
+    guest[0] = t->get_process()->allocateGuestFileDescriptor(host[0]);
+    guest[1] = t->get_process()->allocateGuestFileDescriptor(host[1]);
+    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
+        close(host[0]);
+        close(host[1]);
+        t->get_process()->eraseGuestFileDescriptor(guest[0]);
+        t->get_process()->eraseGuestFileDescriptor(guest[1]);
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+#else
+    t->syscall_return(-ENOSYS);
+#endif
+}
+
+void
+RSIM_Linux::syscall_pipe2_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(8, print_int_32).str("\n");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -558,19 +807,24 @@ RSIM_Linux::syscall_read_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_read_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0);
-    rose_addr_t buf_va = t->syscall_arg(1);
-    size_t size = t->syscall_arg(2);
-    char *buf = new char[size];
-    ssize_t nread = read(fd, buf, size);
-    if (-1==nread) {
-        t->syscall_return(-errno);
-    } else if (t->get_process()->mem_write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
-        t->syscall_return(-EFAULT);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    if (-1 == hostFd) {
+        t->syscall_return(-EBADF);
     } else {
-        t->syscall_return(nread);
+        rose_addr_t buf_va = t->syscall_arg(1);
+        size_t size = t->syscall_arg(2);
+        char *buf = new char[size];
+        ssize_t nread = read(hostFd, buf, size);
+        if (-1==nread) {
+            t->syscall_return(-errno);
+        } else if (t->get_process()->mem_write(buf, buf_va, (size_t)nread)!=(size_t)nread) {
+            t->syscall_return(-EFAULT);
+        } else {
+            t->syscall_return(nread);
+        }
+        delete[] buf;
     }
-    delete[] buf;
 }
 
 void
@@ -578,6 +832,32 @@ RSIM_Linux::syscall_read_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
     t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_munmap_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("munmap").p().d();
+}
+
+void
+RSIM_Linux::syscall_munmap_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t va=t->syscall_arg(0);
+    size_t sz=t->syscall_arg(1);
+    rose_addr_t aligned_va = alignDown(va, (rose_addr_t)PAGE_SIZE);
+    size_t aligned_sz = alignUp(sz + va - aligned_va, (rose_addr_t)PAGE_SIZE);
+
+    // Check ranges
+    if (aligned_va + aligned_sz <= aligned_va) { // FIXME: not sure if sz==0 is an error
+        t->syscall_return(-EINVAL);
+        return;
+    }
+
+    int status = t->get_process()->mem_unmap(aligned_va, aligned_sz, t->tracing(TRACE_MMAP));
+    t->syscall_return(status);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -591,22 +871,27 @@ RSIM_Linux::syscall_write_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_write_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0);
-    rose_addr_t buf_va=t->syscall_arg(1);
-    size_t size=t->syscall_arg(2);
-    uint8_t *buf = new uint8_t[size];
-    size_t nread = t->get_process()->mem_read(buf, buf_va, size);
-    if (nread!=size) {
-        t->syscall_return(-EFAULT);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    if (-1 == hostFd) {
+        t->syscall_return(-EBADF);
     } else {
-        ssize_t nwritten = write(fd, buf, size);
-        if (-1==nwritten) {
-            t->syscall_return(-errno);
+        rose_addr_t buf_va = t->syscall_arg(1);
+        size_t size = t->syscall_arg(2);
+        uint8_t *buf = new uint8_t[size];
+        size_t nread = t->get_process()->mem_read(buf, buf_va, size);
+        if (nread!=size) {
+            t->syscall_return(-EFAULT);
         } else {
-            t->syscall_return(nwritten);
+            ssize_t nwritten = write(hostFd, buf, size);
+            if (-1==nwritten) {
+                t->syscall_return(-errno);
+            } else {
+                t->syscall_return(nwritten);
+            }
         }
+        delete[] buf;
     }
-    delete[] buf;
 }
 
 

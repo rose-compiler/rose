@@ -829,6 +829,11 @@ RSIM_Thread::main()
                 report_stack_frames(tracing(TRACE_MISC));
                 tracing(TRACE_MISC) <<"exception ignored; continuing with a corrupt state...\n";
             }
+
+            // Advance to next instruction without regard for any branching
+            RegisterDescriptor IP = dispatcher()->REG_anyIP;
+            SgAsmX86Instruction *insn = current_insn();
+            operators()->writeRegister(IP, operators()->number_(IP.get_nbits(), insn->get_address() + insn->get_size()));
 #endif
         } catch (const RSIM_Semantics::Halt &e) {
             // Thrown for the HLT instruction

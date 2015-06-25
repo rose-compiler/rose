@@ -51,10 +51,19 @@ RSIM_Linux64::init() {
     SC_REG(6,   stat,                           stat);  // actually lstat
     SC_REG(9,   mmap,                           mmap);
     SC_REG(10,  mprotect,                       mprotect);
+    SC_REG(11,  munmap,                         default);
     SC_REG(12,  brk,                            brk);
+    SC_REG(16,  ioctl,                          default);
     SC_REG(20,  writev,                         default);
     SC_REG(21,  access,                         default);
+    SC_REG(22,  pipe,                           pipe);
+    SC_REG(32,  dup,                            default);
+    SC_REG(33,  dup2,                           default);
+    SC_REG(60,  exit,                           exit);
+    SC_REG(85,  creat,                          default);
     SC_REG(158, arch_prctl,                     arch_prctl);
+    SC_REG(231, exit_group,                     exit_group);
+    SC_REG(293, pipe2,                          pipe2);
 
 #   undef SC_REG
 }
@@ -62,7 +71,9 @@ RSIM_Linux64::init() {
 void
 RSIM_Linux64::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *hdr) {
     RSIM_Linux::initializeSimulatedOs(process, hdr);
-    process->mmapNextVa(0x7ffff7ff9000ull);
+    process->mmapNextVa(0x00007ffff7fff000ull);
+    process->mmapGrowsDown(true); //  ^^-- is a maximum address
+    process->mmapRecycle(true);
 }
 
 bool
@@ -318,6 +329,18 @@ RSIM_Linux64::syscall_arch_prctl_leave(RSIM_Thread *t, int callno) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux64::syscall_ioctl_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("ioctl").str("...[not supported yet]...");
+}
+
+void
+RSIM_Linux64::syscall_ioctl_body(RSIM_Thread *t, int callno) {
+    t->syscall_return(-ENOTTY);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux64::syscall_mmap_enter(RSIM_Thread *t, int callno) {
     t->syscall_enter("mmap").p().d().f(mmap_pflags).f(mmap_mflags).d().d();
 }
@@ -328,7 +351,8 @@ RSIM_Linux64::syscall_mmap_body(RSIM_Thread *t, int callno) {
     rose_addr_t len = t->syscall_arg(1);
     unsigned linux_perms = t->syscall_arg(2);
     unsigned linux_flags = t->syscall_arg(3);
-    int fd = t->syscall_arg(4);
+    int guestFd = t->syscall_arg(4);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     rose_addr_t offset = t->syscall_arg(5);
 
     unsigned rose_perms = 0;
@@ -339,7 +363,7 @@ RSIM_Linux64::syscall_mmap_body(RSIM_Thread *t, int callno) {
     if (0 != (linux_perms & PROT_EXEC))
         rose_perms |= MemoryMap::EXECUTABLE;
 
-    rose_addr_t result = t->get_process()->mem_map(addr, len, rose_perms, linux_flags, offset, fd);
+    rose_addr_t result = t->get_process()->mem_map(addr, len, rose_perms, linux_flags, offset, hostFd);
     t->syscall_return(result);
 }
 
@@ -409,8 +433,14 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
         }
         result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
     } else {
-        int fd = t->syscall_arg(0);
-        result = syscall(host_callno, (unsigned long)fd, (unsigned long)kernel_stat);
+        int guestFd = t->syscall_arg(0);
+        int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+        if (-1 == hostFd) {
+            result = -1;
+            errno = EBADF;
+        } else {
+            result = syscall(host_callno, (unsigned long)hostFd, (unsigned long)kernel_stat);
+        }
     }
     if (-1==result) {
         t->syscall_return(-errno);
@@ -448,7 +478,8 @@ void
 RSIM_Linux64::syscall_writev_body(RSIM_Thread *t, int callno)
 {
     Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
-    int fd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     rose_addr_t iov_va = t->syscall_arg(1);
     int niov = t->syscall_arg(2), idx = 0;
     int retval = 0;
@@ -490,7 +521,7 @@ RSIM_Linux64::syscall_writev_body(RSIM_Thread *t, int callno)
             strace <<" (size=" <<iov.iov_len <<")";
 
             /* Write data to the file */
-            ssize_t nwritten = write(fd, buf, iov.iov_len);
+            ssize_t nwritten = write(hostFd, buf, iov.iov_len);
             delete[] buf; buf = NULL;
             if (-1==nwritten) {
                 if (0==idx)

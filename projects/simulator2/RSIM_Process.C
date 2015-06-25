@@ -992,13 +992,27 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
                 start = (rose_addr_t)(int64_t)-EPERM; /* Linux does not allow addr 0 to be mapped */
                 break;
             } else {
-                AddressInterval restriction = AddressInterval::hull(mmapNextVa_, AddressInterval::whole().greatest());
-                if (!get_memory().findFreeSpace(aligned_size, PAGE_SIZE, restriction).assignTo(start)) {
+                unsigned flags = 0;
+                AddressInterval restriction;
+                if (mmapGrowsDown_) {
+                    flags = Sawyer::Container::MATCH_BACKWARD;
+                    restriction = AddressInterval::hull(0, mmapNextVa_);
+                } else {
+                    restriction = AddressInterval::hull(mmapNextVa_, AddressInterval::whole().greatest());
+                }
+
+                if (!get_memory().findFreeSpace(aligned_size, PAGE_SIZE, restriction, flags).assignTo(start)) {
                     start = (rose_addr_t)(int64_t)-ENOMEM;
                     break;
                 }
-                if (!mmap_recycle)
-                    mmapNextVa_ = std::max(mmapNextVa_, start);
+
+                if (!mmapRecycle_) {
+                    if (mmapGrowsDown_) {
+                        mmapNextVa_ = std::min(mmapNextVa_, start);
+                    } else {
+                        mmapNextVa_ = std::max(mmapNextVa_, start);
+                    }
+                }
             }
         }
 
@@ -1034,6 +1048,46 @@ RSIM_Process::mem_map(rose_addr_t start, size_t size, unsigned rose_perms, unsig
         }
     } while (0);
     return start;
+}
+
+int
+RSIM_Process::hostFileDescriptor(int guestFd) {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+    return fileDescriptors_.forward().getOptional(guestFd).orElse(-1);
+}
+
+int
+RSIM_Process::guestFileDescriptor(int hostFd) {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+    return fileDescriptors_.reverse().getOptional(hostFd).orElse(-1);
+}
+
+int
+RSIM_Process::allocateGuestFileDescriptor(int hostFd) {
+    int guestFd = -1;
+    if (hostFd != -1) {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+        if (fileDescriptors_.reverse().getOptional(hostFd).assignTo(guestFd))
+            return guestFd;                                 // already allocated
+        while (fileDescriptors_.forward().exists(guestFd))
+            ++guestFd;
+        fileDescriptors_.insert(guestFd, hostFd);
+    }
+    return guestFd;
+}
+
+void
+RSIM_Process::allocateFileDescriptors(int guestFd, int hostFd) {
+    if (guestFd != -1 && hostFd != -1) {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+        fileDescriptors_.insert(guestFd, hostFd);
+    }
+}
+
+void
+RSIM_Process::eraseGuestFileDescriptor(int guestFd) {
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+    fileDescriptors_.eraseSource(guestFd);
 }
 
 void

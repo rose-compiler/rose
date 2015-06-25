@@ -2,6 +2,7 @@
 #define ROSE_RSIM_Process_H
 
 #include "RSIM_Callbacks.h"
+#include <Sawyer/BiMap.h>
 
 class RSIM_Thread;
 class RSIM_Simulator;
@@ -17,7 +18,7 @@ public:
     /** Creates an empty process containing no threads. */
     explicit RSIM_Process(RSIM_Simulator *simulator)
         : simulator(simulator), tracingFile_(NULL), tracingFlags_(0),
-          brkVa_(0), mmapNextVa_(0), mmap_recycle(false), disassembler(NULL), futexes(NULL),
+          brkVa_(0), mmapNextVa_(0), mmapRecycle_(false), mmapGrowsDown_(false), disassembler(NULL), futexes(NULL),
           interpretation(NULL), entryPointOriginalVa_(0), entryPointStartVa_(0),
           terminated(false), termination_status(0), project(NULL), wordSize_(0), core_flags(0), btrace_file(NULL),
           core_styles(CORE_ELF), core_base_name("x-core.rose") {
@@ -195,7 +196,8 @@ private:
     MapStack map_stack;                                 // Memory map transaction stack.
     rose_addr_t brkVa_;                                 // Current value for brk() syscall; initialized by load()
     rose_addr_t mmapNextVa_;                            // Minimum address to use when looking for mmap free space
-    bool mmap_recycle;                                  // If false, then never reuse mmap addresses
+    bool mmapRecycle_;                                  // If false, then never reuse mmap addresses
+    bool mmapGrowsDown_;                                // If true then search down from a maximum, otherwise up from min
 
 public:
 
@@ -384,6 +386,26 @@ public:
     void mmapNextVa(rose_addr_t va) { mmapNextVa_ = va; }
     /** @} */
 
+    /** Property: recycle mmap addresses.
+     *
+     *  If false, then each call to mmap will return an address beyond (less or greater depending on architecture) the last
+     *  address chosen by the simulated OS.
+     *
+     * @{ */
+    bool mmapRecycle() const { return mmapRecycle_; }
+    void mmapRecycle(bool b) { mmapRecycle_ = b; }
+    /** @} */
+
+    /** Property: whether mmap addresses grow down.
+     *
+     *  If set, then memory regions to satisfy mmap requests are searched downward from a maximum address, otherwise upward
+     *  from a minimum address.
+     *
+     * @{ */
+    bool mmapGrowsDown() const { return mmapGrowsDown_; }
+    void mmapGrowsDown(bool b) { mmapGrowsDown_ = b; }
+    /** @} */
+
     /**************************************************************************************************************************
      *                                  Segment registers
      **************************************************************************************************************************/
@@ -461,7 +483,41 @@ public:
      *  Thread safety:  This method is thread safe; it can be invoked on a single object by multiple threads concurrently. */
     size_t get_ninsns() const;
 
+    /***************************************************************************************************************************
+     *                                  File descriptors
+     ***************************************************************************************************************************/
+private:
+    Sawyer::Container::BiMap<int, int> fileDescriptors_; // File descriptor mapping from guest to host (and vice versa)
 
+public:
+    /** Obtain host file descriptor from guest file descriptor.
+     *
+     *  Returns the host file descriptor associated with the specified guest file descriptor. Returns -1 if there is no such
+     *  guest or host file descriptor. */
+    int hostFileDescriptor(int guestFd);
+
+    /** Obtain guest file descriptor from host file descriptor.
+     *
+     *  Returns the guest file descriptor associated with the specified host file descriptor. Returns -1 if there is no such
+     *  guest or host file descriptor. */
+    int guestFileDescriptor(int hostFd);
+
+    /** Allocate a new guest file descriptor.
+     *
+     *  Allocates a new guesst file descriptor and associates it with the specified host descriptor, or returns the already
+     *  associated guest descriptor if the host file descriptor is already mapped. */
+    int allocateGuestFileDescriptor(int hostFd);
+
+    /** Allocate a new guest/host descriptor pair.
+     *
+     *  Adds the specified pair to the descriptor mapping table, erasing any previous associations for the guest or host
+     *  descriptor. */
+    void allocateFileDescriptors(int guestFd, int hostFd);
+
+    /** Erase guest file descriptor.
+     *
+     *  Erases the guest file descriptor from the mapping if it exists. */
+    void eraseGuestFileDescriptor(int guestFd);
 
     /**************************************************************************************************************************
      *                                  Signal handling

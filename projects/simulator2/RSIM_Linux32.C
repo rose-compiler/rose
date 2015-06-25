@@ -187,6 +187,8 @@ void
 RSIM_Linux32::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *hdr) {
     RSIM_Linux::initializeSimulatedOs(process, hdr);
     process->mmapNextVa(0x40000000);
+    process->mmapGrowsDown(false); // ^^-- is a minimum address
+    process->mmapRecycle(false);
 }
 
 bool
@@ -369,38 +371,6 @@ RSIM_Linux32::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 /*******************************************************************************************************************************/
 
 void
-RSIM_Linux32::syscall_exit_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("exit").d();
-}
-
-void
-RSIM_Linux32::syscall_exit_body(RSIM_Thread *t, int callno)
-{
-    if (t->clear_child_tid) {
-        uint32_t zero = 0;
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
-    }
-
-    /* Throwing an Exit will cause the thread main loop to terminate (and perhaps the real thread terminates as
-     * well). The simulated thread is effectively dead at this point. */
-    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
-    throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), false); /* false=>exit only this thread */
-}
-
-void
-RSIM_Linux32::syscall_exit_leave(RSIM_Thread *t, int callno)
-{
-    /* This should not be reached, but might be reached if the exit system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
-}
-
-/*******************************************************************************************************************************/
-
-void
 RSIM_Linux32::syscall_waitpid_enter(RSIM_Thread *t, int callno)
 {
     static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
@@ -430,35 +400,6 @@ void
 RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_creat_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("creat").s().d();
-}
-
-void
-RSIM_Linux32::syscall_creat_body(RSIM_Thread *t, int callno)
-{
-    uint32_t filename = t->syscall_arg(0);
-    bool error;
-    std::string sys_filename = t->get_process()->read_string(filename, 0, &error);
-    if (error) {
-        t->syscall_return(-EFAULT);
-        return;
-    }
-    mode_t mode = t->syscall_arg(1);
-
-    int result = creat(sys_filename.c_str(), mode);
-    if (result == -1) {
-        t->syscall_return(-errno);
-        return;
-    }
-
-    t->syscall_return(result);
 }
 
 /*******************************************************************************************************************************/
@@ -697,7 +638,14 @@ RSIM_Linux32::syscall_lseek_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_lseek_body(RSIM_Thread *t, int callno)
 {
-    off_t result = lseek(t->syscall_arg(0), t->syscall_arg(1), t->syscall_arg(2));
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    if (-1 == hostFd) {
+        t->syscall_return(-EBADF);
+        return;
+    }
+
+    off_t result = lseek(hostFd, t->syscall_arg(1), t->syscall_arg(2));
     t->syscall_return(-1==result?-errno:result);
 }
 
@@ -928,102 +876,6 @@ RSIM_Linux32::syscall_rmdir_body(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 void
-RSIM_Linux32::syscall_dup_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("dup").d();
-}
-
-void
-RSIM_Linux32::syscall_dup_body(RSIM_Thread *t, int callno)
-{
-    uint32_t fd = t->syscall_arg(0);
-    int result = dup(fd);
-    if (-1==result) result = -errno;
-    t->syscall_return(result);
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_pipe_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("pipe").p();
-}
-
-void
-RSIM_Linux32::syscall_pipe_body(RSIM_Thread *t, int callno)
-{
-    int32_t guest[2];
-    int host[2];
-    int result = pipe(host);
-    if (-1==result) {
-        t->syscall_return(-errno);
-        return;
-    }
-
-    guest[0] = host[0];
-    guest[1] = host[1];
-    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
-        close(host[0]);
-        close(host[1]);
-        t->syscall_return(-EFAULT);
-        return;
-    }
-
-    t->syscall_return(result);
-}
-
-void
-RSIM_Linux32::syscall_pipe_leave(RSIM_Thread *t, int callno)
-{
-    t->syscall_leave().ret().P(8, print_int_32).str("\n");
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_pipe2_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("pipe").p().f(open_flags);
-}
-
-void
-RSIM_Linux32::syscall_pipe2_body(RSIM_Thread *t, int callno)
-{
-#ifdef HAVE_PIPE2
-    int flags = t->syscall_arg(1);
-    int host[2];
-    int result = pipe2(host, flags);
-    if (-1==result) {
-        t->syscall_return(-errno);
-        return;
-    }
-
-    int32_t guest[2];
-    guest[0] = host[0];
-    guest[1] = host[1];
-    if (sizeof(guest)!=t->get_process()->mem_write(guest, t->syscall_arg(0), sizeof guest)) {
-        close(host[0]);
-        close(host[1]);
-        t->syscall_return(-EFAULT);
-        return;
-    }
-
-    t->syscall_return(result);
-#else
-    t->syscall_return(-ENOSYS);
-#endif
-}
-
-void
-RSIM_Linux32::syscall_pipe2_leave(RSIM_Thread *t, int callno)
-{
-    t->syscall_leave().ret().P(8, print_int_32).str("\n");
-}
-
-/*******************************************************************************************************************************/
-
-void
 RSIM_Linux32::syscall_getgid_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("getgid");
@@ -1096,13 +948,14 @@ RSIM_Linux32::syscall_ioctl_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0);
-    uint32_t cmd=t->syscall_arg(1);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    uint32_t cmd = t->syscall_arg(1);
 
     switch (cmd) {
         case TCGETS: { /* 0x00005401, tcgetattr*/
             termios_native host_ti;
-            int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
+            int result = syscall(SYS_ioctl, hostFd, cmd, &host_ti);
             if (-1==result) {
                 t->syscall_return(-errno);
                 break;
@@ -1139,7 +992,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
             host_ti.c_line = guest_ti.c_line;
             for (int i=0; i<19; i++)
                 host_ti.c_cc[i] = guest_ti.c_cc[i];
-            int result = syscall(SYS_ioctl, fd, cmd, &host_ti);
+            int result = syscall(SYS_ioctl, hostFd, cmd, &host_ti);
             t->syscall_return(-1==result?-errno:result);
             break;
         }
@@ -1161,7 +1014,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
 
             termio to;
 
-            int result = ioctl(fd, TCGETA, &to);
+            int result = ioctl(hostFd, TCGETA, &to);
             if (-1==result) {
                 result = -errno;
             } else {
@@ -1181,7 +1034,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
                process.
             */
 
-            pid_t pgrp = tcgetpgrp(fd);
+            pid_t pgrp = tcgetpgrp(hostFd);
             if (-1==pgrp) {
                 t->syscall_return(-errno);
                 break;
@@ -1199,7 +1052,7 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
             size_t nread = t->get_process()->mem_read(&pgid_le, t->syscall_arg(2), 4);
             ROSE_ASSERT(4==nread);
             pid_t pgid = ByteOrder::le_to_host(pgid_le);
-            int result = tcsetpgrp(fd, pgid);
+            int result = tcsetpgrp(hostFd, pgid);
             if (-1==result)
                 result = -errno;
             t->syscall_return(result);
@@ -1219,14 +1072,14 @@ RSIM_Linux32::syscall_ioctl_body(RSIM_Thread *t, int callno)
             host_ws.ws_xpixel = guest_ws.ws_xpixel;
             host_ws.ws_ypixel = guest_ws.ws_ypixel;
 
-            int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
+            int result = syscall(SYS_ioctl, hostFd, cmd, &host_ws);
             t->syscall_return(-1==result?-errno:result);
             break;
         }
 
         case TIOCGWINSZ: /* 0x5414, */ {
             winsize_native host_ws;
-            int result = syscall(SYS_ioctl, fd, cmd, &host_ws);
+            int result = syscall(SYS_ioctl, hostFd, cmd, &host_ws);
             if (-1==result) {
                 t->syscall_return(-errno);
                 break;
@@ -1307,21 +1160,6 @@ RSIM_Linux32::syscall_umask_body(RSIM_Thread *t, int callno)
     int result = syscall(SYS_umask, mode); 
     if (result == -1) result = -errno;
     t->syscall_return(result);
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_dup2_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("dup2").d().d();
-}
-
-void
-RSIM_Linux32::syscall_dup2_body(RSIM_Thread *t, int callno)
-{
-    int result = dup2(t->syscall_arg(0), t->syscall_arg(1));
-    t->syscall_return(-1==result?-errno:result);
 }
 
 /*******************************************************************************************************************************/
@@ -1550,7 +1388,8 @@ RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
     if (0 != (args.prot & PROT_EXEC))
         rose_perms |= MemoryMap::EXECUTABLE;
 
-    uint32_t result = t->get_process()->mem_map(args.addr, args.len, rose_perms, args.flags, args.offset, args.fd);
+    int hostFd = t->get_process()->hostFileDescriptor(args.fd);
+    uint32_t result = t->get_process()->mem_map(args.addr, args.len, rose_perms, args.flags, args.offset, hostFd);
     t->syscall_return(result);
 }
 
@@ -1564,32 +1403,6 @@ RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 void
-RSIM_Linux32::syscall_munmap_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("munmap").p().d();
-}
-
-void
-RSIM_Linux32::syscall_munmap_body(RSIM_Thread *t, int callno)
-{
-    uint32_t va=t->syscall_arg(0);
-    uint32_t sz=t->syscall_arg(1);
-    uint32_t aligned_va = alignDown(va, (uint32_t)PAGE_SIZE);
-    uint32_t aligned_sz = alignUp(sz+va-aligned_va, (uint32_t)PAGE_SIZE);
-
-    /* Check ranges */
-    if (aligned_va+aligned_sz <= aligned_va) { /* FIXME: not sure if sz==0 is an error */
-        t->syscall_return(-EINVAL);
-        return;
-    }
-
-    int status = t->get_process()->mem_unmap(aligned_va, aligned_sz, t->tracing(TRACE_MMAP));
-    t->syscall_return(status);
-}
-
-/*******************************************************************************************************************************/
-
-void
 RSIM_Linux32::syscall_ftruncate_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("ftruncate").d().d();
@@ -1598,9 +1411,10 @@ RSIM_Linux32::syscall_ftruncate_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ftruncate_body(RSIM_Thread *t, int callno)
 {
-    int fd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     off_t len = t->syscall_arg(1);
-    int result = ftruncate(fd, len);
+    int result = ftruncate(hostFd, len);
     t->syscall_return(-1==result ? -errno : result);
 }
 
@@ -1615,10 +1429,11 @@ RSIM_Linux32::syscall_fchmod_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchmod_body(RSIM_Thread *t, int callno)
 {
-    uint32_t fd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     mode_t mode = t->syscall_arg(1);
 
-    int result = fchmod(fd, mode);
+    int result = fchmod(hostFd, mode);
     if (result == -1) result = -errno;
     t->syscall_return(result);
 }
@@ -1634,10 +1449,11 @@ RSIM_Linux32::syscall_fchown_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchown_body(RSIM_Thread *t, int callno)
 {
-    uint32_t fd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     int user = t->syscall_arg(1);
     int group = t->syscall_arg(2);
-    int result = syscall(SYS_fchown, fd, user, group);
+    int result = syscall(SYS_fchown, hostFd, user, group);
     t->syscall_return(-1==result?-errno:result);
 }
 
@@ -1705,11 +1521,15 @@ RSIM_Linux32::syscall_fstatfs_body(RSIM_Thread *t, int callno)
     statfs_32 guest_statfs;
 #ifdef SYS_statfs64 /* host is 32-bit machine */
     static statfs64_native host_statfs;
-    result = syscall(SYS_fstatfs64 ,t->syscall_arg(0), sizeof host_statfs, &host_statfs);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    result = syscall(SYS_fstatfs64, hostFd, sizeof host_statfs, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #else               /* host is 64-bit machine */
     static statfs_native host_statfs;
-    result = syscall(SYS_fstatfs, t->syscall_arg(0), &host_statfs);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    result = syscall(SYS_fstatfs, hostFd, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #endif
 
@@ -2081,16 +1901,23 @@ sys_socket(RSIM_Thread *t, int family, int type, int protocol)
     a[0] = family;
     a[1] = type;
     a[2] = protocol;
-    int result = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
+    int guestFd = syscall(SYS_socketcall, 1/*SYS_SOCKET*/, a);
 #else /* amd64 */
-    int result = syscall(SYS_socket, family, type, protocol);
+    int hostFd = syscall(SYS_socket, family, type, protocol);
 #endif
-    t->syscall_return(-1==result?-errno:result);
+    if (-1 == hostFd) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    int guestFd = t->get_process()->allocateGuestFileDescriptor(hostFd);
+    t->syscall_return(guestFd);
 }
 
 static void
-sys_bind(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
+sys_bind(RSIM_Thread *t, int guestFd, uint32_t addr_va, uint32_t addrlen)
 {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     if (addrlen<1 || addrlen>4096) {
         t->syscall_return(-EINVAL);
         return;
@@ -2106,28 +1933,29 @@ sys_bind(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
     ROSE_ASSERT(4==sizeof(int));
     ROSE_ASSERT(4==sizeof(void*));
     int a[3];
-    a[0] = fd;
+    a[0] = hostFd;
     a[1] = (int)addrbuf;
     a[2] = addrlen;
     int result = syscall(SYS_socketcall, 2/*SYS_BIND*/, a);
 #else /* amd64 */
-    int result = syscall(SYS_bind, fd, addrbuf, addrlen);
+    int result = syscall(SYS_bind, hostFd, addrbuf, addrlen);
 #endif
     t->syscall_return(-1==result?-errno:result);
     delete[] addrbuf;
 }
 
 static void
-sys_listen(RSIM_Thread *t, int fd, int backlog)
+sys_listen(RSIM_Thread *t, int guestFd, int backlog)
 {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
 #ifdef SYS_socketcall /* i686 */
     ROSE_ASSERT(4==sizeof(int));
     int a[2];
-    a[0] = fd;
+    a[0] = hostFd;
     a[1] = backlog;
     int result = syscall(SYS_socketcall, 4/*SYS_LISTEN*/, a);
 #else /* amd64 */
-    int result = syscall(SYS_listen, fd, backlog);
+    int result = syscall(SYS_listen, hostFd, backlog);
 #endif
     t->syscall_return(-1==result?-errno:result);
 }
@@ -2135,25 +1963,32 @@ sys_listen(RSIM_Thread *t, int fd, int backlog)
 static void
 sys_socketpair(RSIM_Thread *t, int family, int type, int protocol, uint32_t sockvec_va)
 {
-    int sockets[2];
+    int hostSockets[2];
+    int guestSockets[2];
 #ifdef SYS_socketcall /* i686 */
     ROSE_ASSERT(4==sizeof(int));
     int a[4];
     a[0] = family;
     a[1] = type;
     a[2] = protocol;
-    a[3] = (int)sockets;
+    a[3] = (int)hostSockets;
     int result = syscall(SYS_socketcall, 8/*SYS_SOCKETPAIR*/, a);
 #else /* amd64 */
-    int result = syscall(SYS_socketpair, family, type, protocol, sockets);
+    int result = syscall(SYS_socketpair, family, type, protocol, hostSockets);
 #endif
     if (-1==result) {
         t->syscall_return(-errno);
         return;
     }
 
-    assert(8==sizeof sockets);
-    if (sizeof(sockets)!=t->get_process()->mem_write(sockets, sockvec_va, sizeof sockets)) {
+    assert(8==sizeof guestSockets);
+    guestSockets[0] = t->get_process()->allocateGuestFileDescriptor(hostSockets[0]);
+    guestSockets[1] = t->get_process()->allocateGuestFileDescriptor(hostSockets[1]);
+    if (sizeof(guestSockets)!=t->get_process()->mem_write(guestSockets, sockvec_va, sizeof guestSockets)) {
+        close(hostSockets[0]);
+        close(hostSockets[1]);
+        t->get_process()->eraseGuestFileDescriptor(guestSockets[0]);
+        t->get_process()->eraseGuestFileDescriptor(guestSockets[1]);
         t->syscall_return(-EFAULT);
         return;
     }
@@ -2162,8 +1997,9 @@ sys_socketpair(RSIM_Thread *t, int family, int type, int protocol, uint32_t sock
 }
 
 static void
-sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
+sys_connect(RSIM_Thread *t, int guestFd, uint32_t addr_va, uint32_t addrlen)
 {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint8_t addr[4096];
     if (addrlen==0 || addrlen>sizeof addr) {
         t->syscall_return(-EINVAL);
@@ -2177,12 +2013,12 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 #ifdef SYS_socketcall /*i686*/
     ROSE_ASSERT(4==sizeof(int));
     int a[3];
-    a[0] = fd;
+    a[0] = hostFd;
     a[1] = (uint32_t)addr;
     a[2] = addrlen;
     int result = syscall(SYS_socketcall, 3 /*SYS_CONNECT*/, a);
 #else /*amd64*/
-    int result = syscall(SYS_connect, fd, addr, addrlen);
+    int result = syscall(SYS_connect, hostFd, addr, addrlen);
 #endif
 
     if (-1 == result) {
@@ -2194,8 +2030,9 @@ sys_connect(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen)
 }
 
 static void
-sys_accept4(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen_va, uint32_t flags)
+sys_accept4(RSIM_Thread *t, int guestSrcFd, uint32_t addr_va, uint32_t addrlen_va, uint32_t flags)
 {
+    int hostSrcFd = t->get_process()->hostFileDescriptor(guestSrcFd);
     uint8_t addr[4096];
     uint32_t addrlen = 0;
     if (addr_va != 0 && addrlen_va != 0) {
@@ -2212,39 +2049,43 @@ sys_accept4(RSIM_Thread *t, int fd, uint32_t addr_va, uint32_t addrlen_va, uint3
 #ifdef SYS_socketcall /*i686*/
     ROSE_ASSERT(4==sizeof(int));
     int a[4];
-    a[0] = fd;
+    a[0] = hostSrcFd;
     a[1] = addr_va ? (uint32_t)addr : 0;
     a[2] = addrlen_va ? (uint32_t)&addrlen : 0;
     a[3] = flags;
-    int result = syscall(SYS_socketcall, 18 /*SYS_ACCEPT4*/, a);
+    int hostNewFd = syscall(SYS_socketcall, 18 /*SYS_ACCEPT4*/, a);
 #else /*amd64*/
-    int result = syscall(SYS_accept4, fd, addr_va?addr:NULL, addrlen_va?&addrlen:NULL, flags);
+    int hostNewFd = syscall(SYS_accept4, hostSrcFd, addr_va?addr:NULL, addrlen_va?&addrlen:NULL, flags);
 #endif
-    if (-1 == result) {
+    int guestNewFd = t->get_process()->allocateGuestFileDescriptor(hostNewFd);
+    if (-1 == guestNewFd) {
         t->syscall_return(-errno);
         return;
     }
 
     if (addr_va != 0 && addrlen_va != 0) {
         if (addrlen != t->get_process()->mem_write(addr, addr_va, addrlen)) {
+            close(hostNewFd);
+            t->get_process()->eraseGuestFileDescriptor(guestNewFd);
             t->syscall_return(-EFAULT);
             return;
         }
     }
 
-    t->syscall_return(result);
+    t->syscall_return(guestNewFd);
 }
 
 static void
-sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags, uint32_t addr_va, uint32_t addr_sz)
+sys_recvfrom(RSIM_Thread *t, int guestFd, uint32_t buf_va, uint32_t buf_sz, int flags, uint32_t addr_va, uint32_t addr_sz)
 {
     assert(0==addr_va); /* we don't handle recvfrom yet, only recv. */
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
 
     char *buf = new char[buf_sz];
 #ifdef SYS_socketcall /* i686 */
     ROSE_ASSERT(4==sizeof(int));
     int a[6];
-    a[0] = fd;
+    a[0] = hostFd;
     a[1] = (uint32_t)buf;
     a[2] = buf_sz;
     a[3] = flags;
@@ -2252,7 +2093,7 @@ sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags
     a[5] = 0;
     int result = syscall(SYS_socketcall, 10/*SYS_RECV*/, a);
 #else /* amd64 */
-    int result = syscall(SYS_recvfrom, fd, buf, buf_sz, flags, 0, 0);
+    int result = syscall(SYS_recvfrom, hostFd, buf, buf_sz, flags, 0, 0);
 #endif
     if (-1==result) {
         t->syscall_return(-errno);
@@ -2270,8 +2111,9 @@ sys_recvfrom(RSIM_Thread *t, int fd, uint32_t buf_va, uint32_t buf_sz, int flags
 }
 
 static void
-sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+sys_sendmsg(RSIM_Thread *t, int guestFd, uint32_t msghdr_va, int flags)
 {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     int retval = 0;
     Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
@@ -2322,7 +2164,7 @@ sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 
     /* The real syscall */
     if (0==retval) {
-        retval = sendmsg(fd, &host, flags);
+        retval = sendmsg(hostFd, &host, flags);
         if (-1==retval)
             retval = -errno;
     }
@@ -2340,8 +2182,9 @@ sys_sendmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 }
 
 static void
-sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
+sys_recvmsg(RSIM_Thread *t, int guestFd, uint32_t msghdr_va, int flags)
 {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     int retval = 0;
     Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
 
@@ -2382,7 +2225,7 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 
     /* Make the real call */
     if (0==retval) {
-        retval = recvmsg(fd, &host, flags);
+        retval = recvmsg(hostFd, &host, flags);
         if (-1==retval)
             retval = -errno;
     }
@@ -2420,7 +2263,8 @@ sys_recvmsg(RSIM_Thread *t, int fd, uint32_t msghdr_va, int flags)
 }
 
 static void
-sys_setsockopt(RSIM_Thread *t, int fd, int level, int optname, uint32_t optval_va, uint32_t optsz) {
+sys_setsockopt(RSIM_Thread *t, int guestFd, int level, int optname, uint32_t optval_va, uint32_t optsz) {
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint8_t optval[4096];
     if (optsz<0 || optsz>sizeof optval) {
         t->syscall_return(-EINVAL);
@@ -2436,14 +2280,14 @@ sys_setsockopt(RSIM_Thread *t, int fd, int level, int optname, uint32_t optval_v
 #ifdef SYS_socketcall /*i686*/
     ROSE_ASSERT(4==sizeof(int));
     int a[5];
-    a[0] = fd;
+    a[0] = hostFd;
     a[1] = level;
     a[2] = optname;
     a[3] = optval_va ? (uint32_t)optval : 0;
     a[4] = optsz;
     int result = syscall(SYS_socketcall, 14 /*SYS_SETSOCKOPT*/, a);
 #else /*amd64*/
-    int result = syscall(SYS_setsockopt, fd, level, optname, optval_va?optval:NULL, optsz);
+    int result = syscall(SYS_setsockopt, hostFd, level, optname, optval_va?optval:NULL, optsz);
 #endif
     if (-1 == result) {
         t->syscall_return(-errno);
@@ -3786,7 +3630,9 @@ RSIM_Linux32::syscall_fsync_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fsync_body(RSIM_Thread *t, int callno)
 {
-    int result = fsync( t->syscall_arg(0));
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int result = fsync(hostFd);
     t->syscall_return(-1==result?-errno:result);
 }
 
@@ -4044,10 +3890,11 @@ RSIM_Linux32::syscall_fchdir_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchdir_body(RSIM_Thread *t, int callno)
 {
-    uint32_t file_descriptor = t->syscall_arg(0);
-
-    int result = fchdir(file_descriptor);
-    if (result == -1) result = -errno;
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int result = fchdir(hostFd);
+    if (result == -1)
+        result = -errno;
     t->syscall_return(result);
 }
 
@@ -4069,12 +3916,13 @@ RSIM_Linux32::syscall_llseek_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_llseek_body(RSIM_Thread *t, int callno)
 {
-    int fd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     off64_t offset = ((off64_t)t->syscall_arg(1) << 32) | t->syscall_arg(2);
     uint32_t result_va = t->syscall_arg(3);
     int whence = t->syscall_arg(4);
 
-    off64_t result = lseek64(fd, offset, whence);
+    off64_t result = lseek64(hostFd, offset, whence);
     if (-1==result) {
         t->syscall_return(-errno);
     } else {
@@ -4095,9 +3943,10 @@ RSIM_Linux32::syscall_getdents_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getdents_body(RSIM_Thread *t, int callno)
 {
-    int fd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent32_t>(fd, dirent_va, sz);
+    int status = t->getdents_syscall<dirent32_t>(hostFd, dirent_va, sz);
     t->syscall_return(status);
 }
 
@@ -4118,7 +3967,7 @@ RSIM_Linux32::syscall_select_enter(RSIM_Thread *t, int callno)
      *                    fd_set __user *, exp, struct timeval __user *, tvp)
      * where:
      *    fd_set is enough "unsigned long" data to contain 1024 bits. Regardless of the size of "unsigned long",
-     *    the file bits will be in the same order (we are the host is little endian), and the fd_set is the same size. */
+     *    the file bits will be in the same order (when the host is little endian), and the fd_set is the same size. */
     t->syscall_enter("select")
         .d()
         .P(sizeof(fd_set), print_bitvec)
@@ -4130,24 +3979,84 @@ RSIM_Linux32::syscall_select_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_select_body(RSIM_Thread *t, int callno)
 {
-    int fd = t->syscall_arg(0);
-    uint32_t in_va=t->syscall_arg(1), out_va=t->syscall_arg(2), ex_va=t->syscall_arg(3), tv_va=t->syscall_arg(4);
+    int nFileDescriptors = t->syscall_arg(0);
+    if (nFileDescriptors < 0 || nFileDescriptors>1024) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
 
-    fd_set in, out, ex;
-    fd_set *inp=NULL, *outp=NULL, *exp=NULL;
+    uint32_t inVa=t->syscall_arg(1), outVa=t->syscall_arg(2), exVa=t->syscall_arg(3), tvVa=t->syscall_arg(4);
 
+    // Read the guest file descriptor sets
     ROSE_ASSERT(128==sizeof(fd_set)); /* 128 bytes = 1024 file descriptor bits */
-    if (in_va && sizeof(in)==t->get_process()->mem_read(&in, in_va, sizeof in))
-        inp = &in;
-    if (out_va && sizeof(out)==t->get_process()->mem_read(&out, out_va, sizeof out))
-        outp = &out;
-    if (ex_va && sizeof(ex)==t->get_process()->mem_read(&ex, ex_va, sizeof ex))
-        exp = &ex;
+    fd_set hostIn, hostOut, hostEx;
+    fd_set *hostInPtr=NULL, *hostOutPtr=NULL, *hostExPtr=NULL;
 
+    if (inVa) {
+        fd_set guestIn;
+        if (sizeof(guestIn) != t->get_process()->mem_read(&guestIn, inVa, sizeof guestIn)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        FD_ZERO(&hostIn);
+        for (int guestFd=0; guestFd<nFileDescriptors; ++guestFd) {
+            if (FD_ISSET(guestFd, &guestIn)) {
+                int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+                if (-1 == hostFd) {
+                    t->syscall_return(-EBADF);
+                    return;
+                }
+                FD_SET(hostFd, &hostIn);
+            }
+        }
+        hostInPtr = &hostIn;
+    }
+
+    if (outVa) {
+        fd_set guestOut;
+        if (sizeof(guestOut) != t->get_process()->mem_read(&guestOut, outVa, sizeof guestOut)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        FD_ZERO(&hostOut);
+        for (int guestFd=0; guestFd<nFileDescriptors; ++guestFd) {
+            if (FD_ISSET(guestFd, &guestOut)) {
+                int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+                if (-1 == hostFd) {
+                    t->syscall_return(-EBADF);
+                    return;
+                }
+                FD_SET(hostFd, &hostOut);
+            }
+        }
+        hostOutPtr = &hostOut;
+    }
+
+    if (exVa) {
+        fd_set guestEx;
+        if (sizeof(guestEx) != t->get_process()->mem_read(&guestEx, exVa, sizeof guestEx)) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+        FD_ZERO(&hostEx);
+        for (int guestFd=0; guestFd<nFileDescriptors; ++guestFd) {
+            if (FD_ISSET(guestFd, &guestEx)) {
+                int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+                if (-1 == hostFd) {
+                    t->syscall_return(-EBADF);
+                    return;
+                }
+                FD_SET(hostFd, &hostEx);
+            }
+        }
+        hostExPtr = &hostEx;
+    }
+
+    // Read the timeout
     timeval_32 guest_timeout;
     timeval host_timeout, *tvp=NULL;
-    if (tv_va) {
-        if (sizeof(guest_timeout)!=t->get_process()->mem_read(&guest_timeout, tv_va, sizeof guest_timeout)) {
+    if (tvVa) {
+        if (sizeof(guest_timeout)!=t->get_process()->mem_read(&guest_timeout, tvVa, sizeof guest_timeout)) {
             t->syscall_return(-EFAULT);
             return;
         } else {
@@ -4157,27 +4066,73 @@ RSIM_Linux32::syscall_select_body(RSIM_Thread *t, int callno)
         }
     }
 
-    int result = select(fd, inp, outp, exp, tvp);
+    // Actual operation
+    int result = select(nFileDescriptors, hostInPtr, hostOutPtr, hostExPtr, tvp);
     if (-1==result) {
         t->syscall_return(-errno);
         return;
     }
 
-    if ((in_va  && sizeof(in) !=t->get_process()->mem_write(inp,  in_va,  sizeof in))  ||
-        (out_va && sizeof(out)!=t->get_process()->mem_write(outp, out_va, sizeof out)) ||
-        (ex_va  && sizeof(ex) !=t->get_process()->mem_write(exp,  ex_va,  sizeof ex))) {
-        t->syscall_return(-EFAULT);
-        return;
+    // Convert host descriptors to guest descriptors
+    if (hostInPtr) {
+        fd_set guest;
+        FD_ZERO(&guest);
+        for (int hostFd=0; hostFd<nFileDescriptors; ++hostFd) {
+            if (FD_ISSET(hostFd, &hostIn)) {
+                int guestFd = t->get_process()->guestFileDescriptor(hostFd);
+                ASSERT_require(guestFd >= 0);
+                FD_SET(guestFd, &guest);
+            }
+            if (sizeof(guest) != t->get_process()->mem_write(&guest, inVa, sizeof guest)) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+        }
     }
 
+    if (hostOutPtr) {
+        fd_set guest;
+        FD_ZERO(&guest);
+        for (int hostFd=0; hostFd<nFileDescriptors; ++hostFd) {
+            if (FD_ISSET(hostFd, &hostOut)) {
+                int guestFd = t->get_process()->guestFileDescriptor(hostFd);
+                ASSERT_require(guestFd >= 0);
+                FD_SET(guestFd, &guest);
+            }
+            if (sizeof(guest) != t->get_process()->mem_write(&guest, outVa, sizeof guest)) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+        }
+    }
+
+    if (hostExPtr) {
+        fd_set guest;
+        FD_ZERO(&guest);
+        for (int hostFd=0; hostFd<nFileDescriptors; ++hostFd) {
+            if (FD_ISSET(hostFd, &hostEx)) {
+                int guestFd = t->get_process()->guestFileDescriptor(hostFd);
+                ASSERT_require(guestFd >= 0);
+                FD_SET(guestFd, &guest);
+            }
+            if (sizeof(guest) != t->get_process()->mem_write(&guest, exVa, sizeof guest)) {
+                t->syscall_return(-EFAULT);
+                return;
+            }
+        }
+    }
+
+    // Write time value back to guest
     if (tvp) {
         guest_timeout.tv_sec = tvp->tv_sec;
         guest_timeout.tv_usec = tvp->tv_usec;
-        if (sizeof(guest_timeout)!=t->get_process()->mem_write(&guest_timeout, tv_va, sizeof guest_timeout)) {
+        if (sizeof(guest_timeout)!=t->get_process()->mem_write(&guest_timeout, tvVa, sizeof guest_timeout)) {
             t->syscall_return(-EFAULT);
             return;
         }
     }
+
+    t->syscall_return(result);
 }
 
 void
@@ -4230,7 +4185,9 @@ void
 RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
 {
     Sawyer::Message::Stream strace(t->tracing(TRACE_SYSCALL));
-    uint32_t fd=t->syscall_arg(0), iov_va=t->syscall_arg(1);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    uint32_t iov_va=t->syscall_arg(1);
     int niov=t->syscall_arg(2), idx=0;
     int retval = 0;
     if (niov<0 || niov>1024) {
@@ -4271,7 +4228,7 @@ RSIM_Linux32::syscall_writev_body(RSIM_Thread *t, int callno)
             mfprintf(strace)(" (size=%"PRIu32")", iov.iov_len);
 
             /* Write data to the file */
-            ssize_t nwritten = write(fd, buf, iov.iov_len);
+            ssize_t nwritten = write(hostFd, buf, iov.iov_len);
             if (-1==nwritten) {
                 if (0==idx)
                     retval = -errno;
@@ -4690,13 +4647,14 @@ RSIM_Linux32::syscall_pread64_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_pread64_body(RSIM_Thread *t, int callno)
 {
-    int fd              = t->syscall_arg(0);
+    int guestFd         = t->syscall_arg(0);
     uint32_t buf_va     = t->syscall_arg(1);
     uint32_t size       = t->syscall_arg(2);
     uint32_t offset     = t->syscall_arg(3);
 
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint8_t *buf = new uint8_t[size];
-    ssize_t nread = pread64(fd, buf, size, offset);
+    ssize_t nread = pread64(hostFd, buf, size, offset);
     if (-1==nread) {
         t->syscall_return(-errno);
     } else if ((size_t)nread != t->get_process()->mem_write(buf, buf_va, (size_t)nread)) {
@@ -4805,7 +4763,8 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 {
     uint32_t start=t->syscall_arg(0), size=t->syscall_arg(1), prot=t->syscall_arg(2), flags=t->syscall_arg(3);
     uint32_t offset=t->syscall_arg(5)*PAGE_SIZE;
-    int fd=t->syscall_arg(4);
+    int guestFd=t->syscall_arg(4);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     unsigned rose_perms = 0;
     if (0 != (prot & PROT_READ))
         rose_perms |= MemoryMap::READABLE;
@@ -4814,7 +4773,7 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
     if (0 != (prot & PROT_EXEC))
         rose_perms |= MemoryMap::EXECUTABLE;
 
-    uint32_t result = t->get_process()->mem_map(start, size, rose_perms, flags, offset, fd);
+    uint32_t result = t->get_process()->mem_map(start, size, rose_perms, flags, offset, hostFd);
     t->syscall_return(result);
 }
 
@@ -4878,7 +4837,9 @@ RSIM_Linux32::syscall_stat64_body(RSIM_Thread *t, int callno)
         }
         result = syscall(host_callno, (unsigned long)name.c_str(), (unsigned long)kernel_stat);
     } else {
-        result = syscall(host_callno, (unsigned long)t->syscall_arg(0), (unsigned long)kernel_stat);
+        int guestFd = t->syscall_arg(0);
+        int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+        result = syscall(host_callno, (unsigned long)hostFd, (unsigned long)kernel_stat);
     }
     if (-1==result) {
         t->syscall_return(-errno);
@@ -5107,8 +5068,9 @@ RSIM_Linux32::syscall_fchown32_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchown32_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0), user=t->syscall_arg(1), group=t->syscall_arg(2);
-    int result = syscall(SYS_fchown, fd, user, group);
+    int guestFd=t->syscall_arg(0), user=t->syscall_arg(1), group=t->syscall_arg(2);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int result = syscall(SYS_fchown, hostFd, user, group);
     t->syscall_return(-1==result?-errno:result);
 }
 
@@ -5212,9 +5174,10 @@ RSIM_Linux32::syscall_getdents64_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getdents64_body(RSIM_Thread *t, int callno)
 {
-    int fd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent64_t>(fd, dirent_va, sz);
+    int status = t->getdents_syscall<dirent64_t>(hostFd, dirent_va, sz);
     t->syscall_return(status);
 }
 
@@ -5280,7 +5243,8 @@ RSIM_Linux32::syscall_fcntl_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fcntl_body(RSIM_Thread *t, int callno)
 {
-    int fd=t->syscall_arg(0), cmd=t->syscall_arg(1), other=t->syscall_arg(2), result=-EINVAL;
+    int guestFd=t->syscall_arg(0), cmd=t->syscall_arg(1), other=t->syscall_arg(2), result=-EINVAL;
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     switch (cmd) {
         case F_DUPFD:
 #ifdef F_DUPFD_CLOEXEC
@@ -5294,7 +5258,7 @@ RSIM_Linux32::syscall_fcntl_body(RSIM_Thread *t, int callno)
         case F_SETOWN:
         case F_SETFL:
         case F_SETSIG: {
-            result = fcntl(fd, cmd, other);
+            result = fcntl(hostFd, cmd, other);
             t->syscall_return(-1==result?-errno:result);
             break;
         }
@@ -5313,9 +5277,9 @@ RSIM_Linux32::syscall_fcntl_body(RSIM_Thread *t, int callno)
             host_fl.l_len = guest_fl.l_len;
             host_fl.l_pid = guest_fl.l_pid;
 #ifdef SYS_fcntl64      /* host is 32-bit */
-            result = syscall(SYS_fcntl64, fd, cmd, &host_fl);
+            result = syscall(SYS_fcntl64, hostFd, cmd, &host_fl);
 #else                   /* host is 64-bit */
-            result = syscall(SYS_fcntl, fd, cmd, &host_fl);
+            result = syscall(SYS_fcntl, hostFd, cmd, &host_fl);
 #endif
             if (-1==result) {
                 t->syscall_return(-errno);
@@ -5556,40 +5520,6 @@ RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 /*******************************************************************************************************************************/
 
 void
-RSIM_Linux32::syscall_exit_group_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("exit_group").d();
-}
-
-void
-RSIM_Linux32::syscall_exit_group_body(RSIM_Thread *t, int callno)
-{
-    if (t->clear_child_tid) {
-        /* From the set_tid_address(2) man page:
-         *      When clear_child_tid is set, and the process exits, and the process was sharing memory with other
-         *      processes or threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL,
-         *      NULL, 0) call is done. (That is, wake a single process waiting on this futex.) Errors are ignored. */
-        uint32_t zero = 0;
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
-        ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
-        ROSE_ASSERT(nwoke>=0);
-    }
-
-    t->tracing(TRACE_SYSCALL) <<" = <throwing Exit>\n";
-    throw RSIM_Process::Exit(__W_EXITCODE(t->syscall_arg(0), 0), true); /* true=>exit entire process */
-}
-
-void
-RSIM_Linux32::syscall_exit_group_leave(RSIM_Thread *t, int callno)
-{
-    /* This should not be reached, but might be reached if the exit_group system call body was skipped over. */
-    t->tracing(TRACE_SYSCALL) <<" = <should not have returned>\n";
-}
-
-/*******************************************************************************************************************************/
-
-void
 RSIM_Linux32::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("set_tid_address").p();
@@ -5757,20 +5687,21 @@ RSIM_Linux32::syscall_fstatfs64_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
 {
-    int fd                               = t->syscall_arg(0);
+    int guestFd                          = t->syscall_arg(0);
     size_t sb_sz __attribute__((unused)) = t->syscall_arg(1);
     uint32_t sb_va                       = t->syscall_arg(2);
 
     assert(sb_sz==sizeof(statfs64_32));
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
 
     statfs64_32 guest_statfs;
 #ifdef SYS_statfs64 /* host is a 32-bit machine */
     static statfs64_native host_statfs;
-    int result = syscall(SYS_fstatfs64, fd, sizeof host_statfs, &host_statfs);
+    int result = syscall(SYS_fstatfs64, hostFd, sizeof host_statfs, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #else           /* host is 64-bit machine */
     static statfs_native host_statfs;
-    int result = syscall(SYS_statfs, fd, &host_statfs);
+    int result = syscall(SYS_statfs, hostFd, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #endif
     if (-1==result) {
@@ -5886,7 +5817,8 @@ RSIM_Linux32::syscall_fchmodat_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fchmodat_body(RSIM_Thread *t, int callno)
 {
-    int dirfd = t->syscall_arg(0);
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t path_va = t->syscall_arg(1);
     bool error;
     std::string path = t->get_process()->read_string(path_va, 0, &error);
@@ -5897,7 +5829,7 @@ RSIM_Linux32::syscall_fchmodat_body(RSIM_Thread *t, int callno)
     mode_t mode = t->syscall_arg(2);
     int flags = 0;  // t->syscall_arg(3);
 
-    int result = fchmodat(dirfd, path.c_str(), mode, flags);
+    int result = fchmodat(hostFd, path.c_str(), mode, flags);
     t->syscall_return(-1==result ? -errno : result);
 }
 
