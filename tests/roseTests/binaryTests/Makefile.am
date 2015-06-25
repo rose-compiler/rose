@@ -975,6 +975,35 @@ $(testNoop_TestTargets): noop_%.passed: $(BINARY_SAMPLES)/% testNoop
 check-noop: $(testNoop_TestTargets)
 
 ###############################################################################################################################
+# Static semantics tests
+###############################################################################################################################
+
+noinst_PROGRAMS += testStaticSemantics
+testStaticSemantics_SOURCES = testStaticSemantics.C
+testStaticSemantics_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+
+# We lack semantics for some architectures, so don't try to test them (the result would be an std::runtime_error with the
+# message "no instruction semantics for architecture".  Also, we skip pocketputty2.exe because it takes too long with lots
+# of debugging is enabled.
+testStaticSemantics_specimens = $(filter-out						\
+	$(any_any_mips_specimens) $(any_any_ppc_specimens) $(any_any_arm_specimens)	\
+	pocketputty2.exe								\
+	,$(any_exe_any_specimens))
+testStaticSemantics_directory = $(top_srcdir)/binaries/samples
+testStaticSemantics_test_targets = $(addprefix testStaticSemantics_, $(addsuffix .passed, $(testStaticSemantics_specimens)))
+TEST_TARGETS += $(testPartitioner2_test_targets)
+
+$(testStaticSemantics_test_targets): testStaticSemantics_%.passed: $(testStaticSemantics_directory)/% testStaticSemantics
+	@$(RTH_RUN)						\
+		TITLE="testStaticSemantics $(notdir $<) [$@]"	\
+		USE_SUBDIR=yes					\
+		CMD="$$(pwd)/testStaticSemantics $<"		\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+.PHONY: check-testStaticSemantics
+check-testStaticSemantics: $(testStaticSemantics_test_targets)
+
+###############################################################################################################################
 # DEMOS
 #
 # These demonstrate various aspects of ROSE's binary executable abilities. They are meant to be run sequentially (regardless

@@ -1857,6 +1857,17 @@ ROSE_DLL_API void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeSta
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 ROSE_DLL_API void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
+
+// DQ (6/11/2015): This reports the statements that are marked as transformed (used to debug the token-based unparsing).
+//! This collects the statements that are marked as transformed (useful in debugging).
+ROSE_DLL_API std::set<SgStatement*> collectTransformedStatements( SgNode* node );
+
+//! This collects the statements that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
+ROSE_DLL_API std::set<SgStatement*> collectModifiedStatements( SgNode* node );
+
+//! This collects the SgLocatedNodes that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
+ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node );
+
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.

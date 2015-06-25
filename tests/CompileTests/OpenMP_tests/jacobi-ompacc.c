@@ -60,6 +60,18 @@ REAL tol,relax=1.0,alpha=0.0543;
 REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
 REAL dx,dy;
 
+// value, reference value, and the number of significant digits to be ensured.
+double diff_ratio (double val, double ref, int significant_digits)
+{ 
+  assert (significant_digits>=1);
+  double diff_ratio = fabs(val - ref )/fabs(ref);
+  double upper_limit = pow (0.1, significant_digits); // 1.0/(double(10^significant_digits)) ;
+  printf("value :%E  ref_value: %E  diff_ratio: %E upper_limit: %E \n",val, ref, diff_ratio, upper_limit);
+  // ensure the number of the significant digits to be the same 
+  assert ( diff_ratio < upper_limit);
+  return diff_ratio;
+} 
+
 int main (void) 
 {
 //  float toler;
@@ -229,11 +241,8 @@ void jacobi( )
   }          /*  End iteration loop */
 
   printf("Total Number of Iterations:%d\n",k); 
-  printf("Residual:%E\n", error); 
-  printf("Residual_ref :%E\n", resid_ref); 
-  printf ("Diff ref=%E\n", fabs(error-resid_ref));
-  assert (fabs(error-resid_ref) < 1E-14);
-
+  printf("Verifying residual.. \n"); 
+  diff_ratio (error, resid_ref, 5);
 }
 
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
@@ -261,10 +270,8 @@ void error_check ( )
       error = error + temp*temp; 
     }
   error = sqrt(error)/(n*m);
-  printf("Solution Error :%E \n",error);
-  printf("Solution Error Ref :%E \n",error_ref);
-  printf ("Diff ref=%E\n", fabs(error-error_ref));
-  assert (fabs(error-error_ref) < 1E-14);
+  printf("Verifying Solution Error...\n");
+  diff_ratio(error, error_ref, 5);
 }
 
 

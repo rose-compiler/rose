@@ -35,6 +35,7 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/PartialSymbolicSemantics.C		\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/SMTSolver.C				\
+    instructionSemantics/StaticSemantics2.C			\
     instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
@@ -98,6 +99,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/PartialSymbolicSemantics.h	\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/SMTSolver.h			\
+    instructionSemantics/StaticSemantics2.h		\
     instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
