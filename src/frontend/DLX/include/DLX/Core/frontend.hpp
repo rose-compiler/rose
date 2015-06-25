@@ -16,6 +16,8 @@
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/constructs.hpp"
 
+#include "sage3basic.h"
+
 namespace DLX {
 
 namespace Frontend {
@@ -71,7 +73,7 @@ class Frontend {
       Directives::clause_t<language_t, kind> * clause
     );
 
-    bool build_graph();
+    bool build_graph(const std::map<SgLocatedNode *, directive_t *> & translation_map);
 
 /*! @} */
 
@@ -180,7 +182,7 @@ bool Frontend<language_tpl>::parseDirectives(SgNode * node) {
     directives.push_back(it->second);
   }
 
-  assert(build_graph());
+  assert(build_graph(translation_map));
  
   return true;
 }
