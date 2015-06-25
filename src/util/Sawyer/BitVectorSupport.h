@@ -9,7 +9,11 @@
 #define Sawyer_BitVectorSupport_H
 
 #include <algorithm>
+
+// MS 6/6/15: boost problem boost error: "'uint64_t' was not declared in this scope" workaround. including stdint.h
+#include <stdint.h>
 #include <boost/cstdint.hpp>
+
 #include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <cstring>

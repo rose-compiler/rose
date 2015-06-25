@@ -229,6 +229,7 @@ SgAsmProgramHeader
 SgAsmProgramHeaderList
 SgAsmRegisterNames
 SgAsmRegisterReferenceExpression
+SgAsmRiscOperation
 SgAsmScalarType
 SgAsmSectionHeader
 SgAsmSectionHeaderList
