@@ -350,10 +350,34 @@ simpleFrontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
      ROSE_ASSERT(false);
 #endif
 
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_1 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): part 1: transformedStatementSet_1.size() = %zu \n",transformedStatementSet_1.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_1 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): part 1: modifiedLocatedNodesSet_1.size() = %zu \n",modifiedLocatedNodesSet_1.size());
+#endif
+
   // fdTraversal.traverse(sourceFile,inheritedAttribute);
   // FrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverse(sourceFile,inheritedAttribute);
   // FrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverseInputFiles(sourceFile,inheritedAttribute);
      SimpleFrontierDetectionForTokenStreamMapping_SynthesizedAttribute topAttribute = fdTraversal.traverseWithinFile(sourceFile,inheritedAttribute);
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgStatement*> transformedStatementSet_2 = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): part 2: transformedStatementSet_2.size() = %zu \n",transformedStatementSet_2.size());
+#endif
+
+#if 0
+  // DQ (6/11/2015): Added to support debugging the difference between C and C++ support for token-based unparsing.
+     std::set<SgLocatedNode*> modifiedLocatedNodesSet_2 = SageInterface::collectModifiedLocatedNodes(sourceFile);
+     printf ("In simpleFrontierDetectionForTokenStreamMapping(): part 2: modifiedLocatedNodesSet_2.size() = %zu \n",modifiedLocatedNodesSet_2.size());
+#endif
 
 #if 0
      printf ("   --- topAttribute.isFrontier                                  = %s \n",topAttribute.isFrontier ? "true" : "false");
