@@ -7,8 +7,6 @@
 #include <set>
 #include <vector>
 
-#include "sage3basic.h"
-
 namespace KLT {
 
 template <class Annotation> class Data;

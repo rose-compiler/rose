@@ -16,8 +16,6 @@
 #include "DLX/Core/clauses.hpp"
 #include "DLX/Core/constructs.hpp"
 
-#include "sage3basic.h"
-
 namespace DLX {
 
 namespace Frontend {

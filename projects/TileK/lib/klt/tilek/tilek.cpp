@@ -1,4 +1,6 @@
 
+#include "sage3basic.h"
+
 #include "KLT/utils.hpp"
 
 #include "KLT/Core/data-flow.hpp"
@@ -17,8 +19,6 @@
 
 #include "MDCG/model.hpp"
 #include "MDCG/model-class.hpp"
-
-#include "sage3basic.h"
 
 namespace KLT {
 

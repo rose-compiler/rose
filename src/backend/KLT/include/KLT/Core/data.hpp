@@ -9,8 +9,6 @@
 
 #include <iostream>
 
-#include "sage3basic.h"
-
 class SgExpression;
 class SgVariableSymbol;
 class SgType;

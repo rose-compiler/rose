@@ -1,4 +1,6 @@
 
+#include "sage3basic.h"
+
 #include "DLX/Core/constructs.hpp"
 #include "DLX/Core/frontend.hpp"
 #include "DLX/Core/directives.hpp"

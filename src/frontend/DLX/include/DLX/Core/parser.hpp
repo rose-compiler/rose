@@ -19,8 +19,6 @@
 #include <utility>
 #include <string>
 
-#include "sage3basic.h"
-
 namespace DLX {
 
 namespace Frontend {
