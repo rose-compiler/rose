@@ -4259,6 +4259,7 @@ DispatcherX86::regcache_init()
             case x86_insnsize_64: maxWidth = 64; break;
             case x86_insnsize_32: maxWidth = 32; break;
             case x86_insnsize_16: maxWidth = 16; break;
+            default: ASSERT_not_reachable("invalid processor mode");
         }
 
         REG_anyAX = regdict->findLargestRegister(x86_regclass_gpr, x86_gpr_ax, maxWidth);
