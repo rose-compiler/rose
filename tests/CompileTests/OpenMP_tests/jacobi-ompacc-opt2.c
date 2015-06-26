@@ -233,7 +233,7 @@
     printf("Residual:%E\n", error); 
     printf("Residual_ref :%E\n", resid_ref);
     printf ("Diff ref=%E\n", fabs(error-resid_ref));
-    assert (fabs(error-resid_ref) < 1E-14);
+    assert (fabs(error-resid_ref) < 1E-13);
 
   }
 
@@ -265,7 +265,7 @@
     printf("Solution Error :%E \n",error);
     printf("Solution Error Ref :%E \n",error_ref);
     printf ("Diff ref=%E\n", fabs(error-error_ref));
-    assert (fabs(error-error_ref) < 1E-14);
+    assert (fabs(error-error_ref) < 1E-13);
 
 }
 
