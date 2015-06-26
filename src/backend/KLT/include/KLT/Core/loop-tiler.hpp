@@ -50,7 +50,7 @@ class LoopTiler {
           )
         ).first->second;
 
-        extendTiles(loop, new loop_tiling_t(loop), tiling);
+        tiling.push_back(new loop_tiling_t(loop));
 
         determineTiles(kernel, loop->block, tiling_map);
       }

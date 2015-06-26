@@ -61,6 +61,8 @@ class LoopTrees {
     };
 
     struct loop_t : public node_t {
+      size_t id;
+
       SgVariableSymbol * iterator;
 
       SgExpression * lower_bound;
@@ -72,12 +74,14 @@ class LoopTrees {
       block_t * block;
 
       loop_t(
+        size_t id_,
         SgVariableSymbol * it = NULL,
         SgExpression * lb = NULL,
         SgExpression * ub = NULL,
         SgExpression * stride_ = NULL
       ) :
         node_t(),
+        id(id_),
         iterator(it),
         lower_bound(lb),
         upper_bound(ub),
@@ -91,15 +95,32 @@ class LoopTrees {
       bool isSplitted() const;
     };
 
+    struct tile_t : public node_t {
+      size_t id;
+      size_t order;
+
+      loop_t * loop;
+      tile_t * tile;
+      block_t * block;
+
+      SgVariableSymbol * iterator_sym;
+
+      tile_t(
+        size_t id_, size_t order_, SgVariableSymbol * iterator_sym_, loop_t * loop_
+      ) :
+        id(id_), order(order_), node_t(), loop(loop_),
+        tile(NULL), block(NULL), iterator_sym(iterator_sym_)
+      {}
+
+      virtual ~tile_t() {}
+    };
+
     struct stmt_t : public node_t {
       SgStatement * statement;
 
       stmt_t(SgStatement * stmt = NULL) : node_t(), statement(stmt) {}
       virtual ~stmt_t() {}
     };
-
-  private:
-    static void toText(node_t * node, std::ostream & out, std::string indent);
 
   protected:
     /// List of loop tree in textual order
@@ -213,6 +234,8 @@ class LoopTrees {
     void read(const std::string & filename);
     void read(std::ifstream & in_file);
 
+    static void toText(node_t * node, std::ostream & out, std::string indent);
+
     /// Write a lisp like text
     void toText(char * filename) const;
     
@@ -274,15 +297,17 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
   if (node == NULL) return;
 
   loop_t  * loop  = dynamic_cast<loop_t  *>(node);
+  tile_t  * tile  = dynamic_cast<tile_t  *>(node);
   cond_t  * cond  = dynamic_cast<cond_t  *>(node);
   block_t * block = dynamic_cast<block_t *>(node);
   stmt_t  * stmt  = dynamic_cast<stmt_t  *>(node);
   
-  assert(loop != NULL || cond != NULL || block != NULL || stmt != NULL);
+  assert(loop != NULL || tile != NULL || cond != NULL || block != NULL || stmt != NULL);
   
   if (loop != NULL) {
     out << indent << "loop(" << std::endl;
     out << indent << "  "
+        << loop->id << ", "
         << loop->iterator->get_name().getString() << ", "
         << loop->lower_bound->unparseToString()   << ", "
         << loop->upper_bound->unparseToString()   << ", "
@@ -291,6 +316,20 @@ void LoopTrees<Annotation>::toText(node_t * node, std::ostream & out, std::strin
     printAnnotations<Annotation>(loop->annotations, out, indent);
     
     toText(loop->block, out, indent + "  ");
+
+    out << std::endl << indent << ")";
+  }
+  
+  if (tile != NULL) {
+    out << indent << "tile(" << std::endl;
+    out << indent << "  " << tile->id << ", " << tile->iterator_sym->get_name().getString() << ", " << std::endl
+        << indent << "  " << tile->loop->id << ", " << tile->loop->iterator->get_name().getString() << std::endl
+        << indent << "  " << tile->order << ", " << std::endl;
+    
+    if (tile->tile != NULL)
+      toText(tile->tile, out, indent + "  ");
+    else
+      toText(tile->block, out, indent + "  ");
 
     out << std::endl << indent << ")";
   }

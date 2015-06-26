@@ -108,6 +108,7 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
   typename std::set<Data<Annotation> *>::iterator it_data;
 
   const std::vector<Data<Annotation> *> & data_vect = loop_trees.getDatas();
+//std::cerr << "data_vect.size() = " << data_vect.size() << std::endl;
   context.datas.insert(data_vect.begin(), data_vect.end());
   for (it_data = context.datas.begin(); it_data != context.datas.end(); it_data++) {
     assert(*it_data != NULL);
@@ -116,6 +117,9 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
     if ((*it_data)->isFlowOut())
       context.datas_out.insert(*it_data);
   }
+//std::cerr << "context.datas.size() = "     << context.datas.size() << std::endl;
+//std::cerr << "context.datas_in.size() = "  << context.datas_in.size() << std::endl;
+//std::cerr << "context.datas_out.size() = " << context.datas_out.size() << std::endl;
 
   const std::vector<typename LoopTrees<Annotation>::node_t *> & nodes = loop_trees.getNodes();
   typename std::vector<typename LoopTrees<Annotation>::node_t *>::const_iterator it_node;
@@ -180,6 +184,9 @@ void DataFlow<Annotation, Language, Runtime>::createContextFromLoopTree(
       }
       else assert(false);
     }
+
+//  std::cerr << "read.size() = " << read.size() << std::endl;
+//  std::cerr << "write.size() = " << write.size() << std::endl;
   }
 }
 
@@ -188,7 +195,8 @@ void DataFlow<Annotation, Language, Runtime>::generateFlowSets(
   const std::list<Kernel<Annotation, Language, Runtime> *> & kernels,
   const context_t & context
 ) const {
-  assert(!context.datas.empty());
+  if (context.datas.empty()) return;
+
   assert(!context.accesses_map.empty());
 
   assert(kernels.size() > 0);
