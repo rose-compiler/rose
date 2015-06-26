@@ -334,31 +334,141 @@ int main(int argc, char ** argv) {
 
     assert(kernel_lists.size() == 1);
     assert(kernel_lists.begin()->size() == 1);
-    const std::vector<Kernel::kernel_desc_t *> & kernels = (*kernel_lists.begin()->begin())->getKernels();
-    assert(kernels.size() == 1);
+    Kernel * kernels = *kernel_lists.begin()->begin();
+    assert(kernels->getKernels().size() == 1);
 
-    Kernel::kernel_desc_t * kernel = kernels[0];
+    Kernel::kernel_desc_t * kernel = kernels->getKernels()[0];
     assert(kernel != NULL);
     all_kernels.push_back(kernel);
 
-    // TODO Replace kernel region by "host side" code: 'kernel'
+    DLX::Directives::directive_t<DLX::TileK::language_t> * directive = it_loop_tree->first;
+    assert(directive->construct->kind == DLX::TileK::language_t::e_construct_kernel);
+    DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> * construct =
+                 (DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> *)(directive->construct);
+
+    // Replace kernel region by empty basic block
+    SgBasicBlock * bb = SageBuilder::buildBasicBlock();
+    SageInterface::replaceStatement(construct->assoc_nodes.kernel_region, bb);
+
+    // Insert: "struct kernel_t * kernel = build_kernel(0);"
+    SgInitializer * init = SageBuilder::buildAssignInitializer(
+      SageBuilder::buildFunctionCallExp(
+        Runtime::TileK::tilek_host_api.build_kernel_func,
+        SageBuilder::buildExprListExp(
+          SageBuilder::buildIntVal(kernel->id)
+        )
+      )
+    );
+    SgVariableDeclaration * kernel_decl = SageBuilder::buildVariableDeclaration(
+      "kernel", SageBuilder::buildPointerType(Runtime::TileK::tilek_host_api.kernel_class->get_type()), init, bb
+    );
+    SageInterface::appendStatement(kernel_decl, bb);
+
+    SgVariableSymbol * kernel_sym = SageInterface::getFirstVarSym(kernel_decl);
+    assert(kernel_sym != NULL);
+
+    const Kernel::arguments_t & arguments = kernels->getArguments();
+
+    // Param
+
+    std::list<SgVariableSymbol *>::const_iterator it_param;
+    size_t param_cnt = 0;
+    for (it_param = arguments.parameters.begin(); it_param != arguments.parameters.end(); it_param++) {
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildPntrArrRefExp(
+          SageBuilder::buildArrowExp(
+            SageBuilder::buildVarRefExp(kernel_sym),
+            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.kernel_param_field)
+          ),
+          SageBuilder::buildIntVal(param_cnt++)
+        ),
+        SageBuilder::buildVarRefExp(*it_param)
+      ), bb);
+    }
+
+    // Data
+
+    std::list<KLT::Data<Annotation> *>::const_iterator it_data;
+    size_t data_cnt = 0;
+    for (it_data = arguments.datas.begin(); it_data != arguments.datas.end(); it_data++) {
+      SgExpression * data_first_elem = SageBuilder::buildVarRefExp((*it_data)->getVariableSymbol());
+      for (size_t i = 0; i < (*it_data)->getSections().size(); i++)
+        data_first_elem = SageBuilder::buildPntrArrRefExp(data_first_elem, SageBuilder::buildIntVal(0));
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildPntrArrRefExp(
+          SageBuilder::buildArrowExp(
+            SageBuilder::buildVarRefExp(kernel_sym),
+            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.kernel_data_field)
+          ),
+          SageBuilder::buildIntVal(data_cnt++)
+        ),
+        SageBuilder::buildAddressOfOp(data_first_elem)
+      ), bb);
+    }
+
+    // Loop
+
+    std::vector<Runtime::TileK::loop_desc_t *>::const_iterator it_loop;
+    size_t loop_cnt = 0;
+    for (it_loop = kernel->loops.begin(); it_loop != kernel->loops.end(); it_loop++) {
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildDotExp(
+          SageBuilder::buildPntrArrRefExp(
+            SageBuilder::buildArrowExp(
+              SageBuilder::buildVarRefExp(kernel_sym),
+              SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.kernel_loop_field)
+            ),
+            SageBuilder::buildIntVal(loop_cnt)
+          ),
+          SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.loop_lower_field)
+        ),
+        SageInterface::copyExpression((*it_loop)->lb)
+      ), bb);
+
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildDotExp(
+          SageBuilder::buildPntrArrRefExp(
+            SageBuilder::buildArrowExp(
+              SageBuilder::buildVarRefExp(kernel_sym),
+              SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.kernel_loop_field)
+            ),
+            SageBuilder::buildIntVal(loop_cnt)
+          ),
+          SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.loop_upper_field)
+        ),
+        SageInterface::copyExpression((*it_loop)->ub)
+      ), bb);
+
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildDotExp(
+          SageBuilder::buildPntrArrRefExp(
+            SageBuilder::buildArrowExp(
+              SageBuilder::buildVarRefExp(kernel_sym),
+              SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.kernel_loop_field)
+            ),
+            SageBuilder::buildIntVal(loop_cnt)
+          ),
+          SageBuilder::buildVarRefExp(Runtime::TileK::tilek_host_api.loop_stride_field)
+        ),
+        SageInterface::copyExpression((*it_loop)->stride)
+      ), bb);
+      loop_cnt++;
+    }
+
+    // Insert: "execute_kernel(kernel);"
+
+    SageInterface::appendStatement(
+      SageBuilder::buildFunctionCallStmt(
+        SageBuilder::buildFunctionRefExp(
+          Runtime::TileK::tilek_host_api.execute_kernel_func
+        ),
+        SageBuilder::buildExprListExp(
+          SageBuilder::buildVarRefExp(kernel_sym)
+        )
+      ), bb
+    );
+
 /*
-  struct kernel_t * kernel = build_kernel(0);
-
-  kernel->data[0] = &(A[0][0]);
-  kernel->data[1] = &(b);
-
-  kernel->param[0] = n;
-  kernel->param[1] = m;
-
-  kernel->loops[0].lower = 0;
-  kernel->loops[0].upper = n;
-  kernel->loops[0].stride = 1;
-
-  kernel->loops[1].lower = 0;
-  kernel->loops[1].upper = m;
-  kernel->loops[1].stride = 1;
-
   execute_kernel(kernel);
 */
   }
@@ -386,6 +496,15 @@ struct kernel_desc_t kernel_desc[1] = {
   { 2, 2, 2, 4, loop_desc, &kernel_0 }
 };
 */
+
+  // Removes all TileK pragma
+  std::vector<SgPragmaDeclaration * > pragma_decls = SageInterface::querySubTree<SgPragmaDeclaration>(project);
+  std::vector<SgPragmaDeclaration * >::iterator it_pragma_decl;
+  for (it_pragma_decl = pragma_decls.begin(); it_pragma_decl != pragma_decls.end(); it_pragma_decl++) {
+    std::string directive_string = (*it_pragma_decl)->get_pragma()->get_pragma();
+    if (::DLX::Frontend::consume_label(directive_string, ::DLX::TileK::language_t::language_label))
+      SageInterface::removeStatement(*it_pragma_decl);
+  }
 
   project->unparse();
 
