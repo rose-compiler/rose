@@ -450,6 +450,21 @@ RSIM_Linux::syscall_access_body(RSIM_Thread *t, int callno) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux::syscall_alarm_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("alarm").d();
+}
+
+void
+RSIM_Linux::syscall_alarm_body(RSIM_Thread *t, int callno)
+{
+    int result = alarm(t->syscall_arg(0));
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux::syscall_brk_enter(RSIM_Thread *t, int callno) {
     t->syscall_enter("brk").p();
 }
@@ -463,6 +478,81 @@ RSIM_Linux::syscall_brk_body(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux::syscall_brk_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().eret().p().str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_chdir_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("chdir").s();
+}
+
+void
+RSIM_Linux::syscall_chdir_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t pathVa = t->syscall_arg(0);
+    bool error;
+    std::string path = t->get_process()->read_string(pathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    int result = chdir(path.c_str());
+    if (result == -1) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_chmod_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("chmod").s().d();
+}
+
+void
+RSIM_Linux::syscall_chmod_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t fileNameVa = t->syscall_arg(0);
+    bool error;
+    std::string fileName = t->get_process()->read_string(fileNameVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    mode_t mode = t->syscall_arg(1);
+    int result = chmod(fileName.c_str(), mode);
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_chown_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("chown").s().d().d();
+}
+
+void
+RSIM_Linux::syscall_chown_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+    std::string filename = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    uid_t user = t->syscall_arg(1);
+    gid_t group = t->syscall_arg(2);
+    int result = chown(filename.c_str(),user,group);
+    t->syscall_return(result);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -578,6 +668,72 @@ RSIM_Linux::syscall_dup2_body(RSIM_Thread *t, int callno)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux::syscall_execve_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("execve").s().p().p();
+}
+
+void
+RSIM_Linux::syscall_execve_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+
+    /* Name of executable */
+    std::string filename = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    /* Argument vector */
+    const size_t ptrSize = t->get_process()->wordSize() / 8;
+    std::vector<std::string> argv = t->get_process()->read_string_vector(t->syscall_arg(1), ptrSize, &error);
+    if (!argv.empty()) {
+        for (size_t i=0; i<argv.size(); i++) {
+            t->tracing(TRACE_SYSCALL) <<"    argv[" <<i <<"] = ";
+            Printer::print_string(t->tracing(TRACE_SYSCALL), argv[i]);
+            t->tracing(TRACE_SYSCALL) <<"\n";
+        }
+    }
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    std::vector<char*> sys_argv;
+    for (size_t i = 0; i < argv.size(); ++i)
+        sys_argv.push_back(strdup(argv[i].c_str()));
+    sys_argv.push_back(NULL);
+
+    /* Environment vector */
+    std::vector<std::string> envp = t->get_process()->read_string_vector(t->syscall_arg(2), ptrSize, &error);
+    if (!envp.empty()) {
+        for (size_t i=0; i<envp.size(); i++) {
+            t->tracing(TRACE_SYSCALL) <<"    envp[" <<i <<"] = ";
+            Printer::print_string(t->tracing(TRACE_SYSCALL), envp[i], false, false);
+            t->tracing(TRACE_SYSCALL) <<"\n";
+        }
+    }
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    std::vector<char*> sys_envp;
+    for (unsigned int i = 0; i < envp.size(); ++i)
+        sys_envp.push_back(strdup(envp[i].c_str()));
+    sys_envp.push_back(NULL);
+
+    /* Signal the clear_tid address if necessary, since this is sort of like a child exit. */
+    t->do_clear_child_tid();
+
+    /* The real system call */
+    int result = execve(&filename[0], &sys_argv[0], &sys_envp[0]);
+    ROSE_ASSERT(-1==result);
+    t->syscall_return(-errno);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux::syscall_exit_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("exit").d();
@@ -644,6 +800,462 @@ RSIM_Linux::syscall_exit_group_leave(RSIM_Thread *t, int callno)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux::syscall_fchdir_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fchdir").d();
+}
+
+void
+RSIM_Linux::syscall_fchdir_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int result = fchdir(hostFd);
+    if (result == -1)
+        result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_fchmod_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fchmod").d().d();
+}
+
+void
+RSIM_Linux::syscall_fchmod_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    mode_t mode = t->syscall_arg(1);
+
+    int result = fchmod(hostFd, mode);
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_fchmodat_enter(RSIM_Thread *t, int callno)
+{
+    // Note that the library fchmodat() takes a fourth flags argument with the only defined bit being AT_SYMLINK_NOFOLLOW, but
+    // the Linux 2.6.32 man page notes that "this flag is not currently implemented."
+    t->syscall_enter("fchmodat").d().s().f(file_mode_flags).unused();
+}
+
+void
+RSIM_Linux::syscall_fchmodat_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    rose_addr_t pathVa = t->syscall_arg(1);
+    bool error;
+    std::string path = t->get_process()->read_string(pathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    mode_t mode = t->syscall_arg(2);
+    int flags = 0;  // t->syscall_arg(3);
+
+    int result = fchmodat(hostFd, path.c_str(), mode, flags);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_fchown_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fchown").d().d().d();
+}
+
+void
+RSIM_Linux::syscall_fchown_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int user = t->syscall_arg(1);
+    int group = t->syscall_arg(2);
+    int result = syscall(SYS_fchown, hostFd, user, group);
+    t->syscall_return(-1==result?-errno:result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_fsync_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fsync").d();
+}
+
+void
+RSIM_Linux::syscall_fsync_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    int result = fsync(hostFd);
+    t->syscall_return(-1==result?-errno:result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_ftruncate_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("ftruncate").d().d();
+}
+
+void
+RSIM_Linux::syscall_ftruncate_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    off_t len = t->syscall_arg(1);
+    int result = ftruncate(hostFd, len);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getcwd_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getcwd").p().d();
+}
+
+void
+RSIM_Linux::syscall_getcwd_body(RSIM_Thread *t, int callno)
+{
+    static char buf[4096]; /* page size in kernel */
+    int result = syscall(SYS_getcwd, buf, sizeof buf);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    size_t len = strlen(buf) + 1;
+    if (len > t->syscall_arg(1)) {
+        t->syscall_return(-ERANGE);
+        return;
+    }
+
+    if (len!=t->get_process()->mem_write(buf, t->syscall_arg(0), len)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux::syscall_getcwd_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().s().str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getegid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getegid");
+}
+
+void
+RSIM_Linux::syscall_getegid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getegid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_geteuid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("geteuid");
+}
+
+void
+RSIM_Linux::syscall_geteuid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(geteuid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getgid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getgid");
+}
+
+void
+RSIM_Linux::syscall_getgid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getgid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getpgrp_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getpgrp");
+}
+
+void
+RSIM_Linux::syscall_getpgrp_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getpgrp());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getpid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getpid");
+}
+
+void
+RSIM_Linux::syscall_getpid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getpid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getppid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getppid");
+}
+
+void
+RSIM_Linux::syscall_getppid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getppid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_gettid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("gettid");
+}
+
+void
+RSIM_Linux::syscall_gettid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(t->get_tid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_getuid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getuid");
+}
+
+void
+RSIM_Linux::syscall_getuid_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(getuid());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_kill_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("kill").d().f(signal_names);
+}
+
+void
+RSIM_Linux::syscall_kill_body(RSIM_Thread *t, int callno)
+{
+    pid_t pid=t->syscall_arg(0);
+    int signo=t->syscall_arg(1);
+    int result = t->sys_kill(pid, RSIM_SignalHandling::mk_kill(signo, SI_USER));
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_link_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("link").s().s();
+}
+
+void
+RSIM_Linux::syscall_link_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+
+    std::string oldpath = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+	return;
+    }
+    std::string newpath = t->get_process()->read_string(t->syscall_arg(1), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    int result = syscall(SYS_link, oldpath.c_str(), newpath.c_str());
+    t->syscall_return(-1==result?-errno:result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_lseek_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("lseek").d().d().f(seek_whence);
+}
+
+void
+RSIM_Linux::syscall_lseek_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    if (-1 == hostFd) {
+        t->syscall_return(-EBADF);
+        return;
+    }
+
+    off_t offset = t->syscall_arg(1);
+    int whence = t->syscall_arg(2);
+    off_t result = lseek(hostFd, offset, whence);
+    t->syscall_return(-1==result?-errno:result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_madvise_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("madvise").x().d().e(madvise_behaviors);
+}
+
+void
+RSIM_Linux::syscall_madvise_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t start = t->syscall_arg(0);
+    rose_addr_t size = t->syscall_arg(1);
+    int behavior = t->syscall_arg(2);
+
+    // See linux kernel madvise_behavior_valid()
+    switch (behavior) {
+        case MADV_DOFORK:
+        case MADV_DONTFORK:
+        case MADV_NORMAL:
+        case MADV_SEQUENTIAL:
+        case MADV_RANDOM:
+        case MADV_REMOVE:
+        case MADV_WILLNEED:
+        case MADV_DONTNEED:
+            break;
+        default:
+            t->syscall_return(-EINVAL);
+            return;
+    }
+
+    // Start must be page aligned
+    if (start % PAGE_SIZE) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+    if (start + size < start) {
+        t->syscall_return(-EINVAL);
+        return;
+    }
+
+    // If pages are unmapped, return -ENOMEM
+    ExtentMap mapped_mem;
+    {
+        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(t->get_process()->rwlock());
+        AddressIntervalSet addresses(t->get_process()->get_memory());
+        mapped_mem = toExtentMap(addresses);
+    }
+    ExtentMap unmapped = mapped_mem.subtract_from(Extent(start, size));
+    if (unmapped.size()>0) {
+        t->syscall_return(-ENOMEM);
+        return;
+    }
+
+    // From the madvise manpage: "This call does not influence the semantics of the application (except in the case of
+    // MADV_DONTNEED), but may influence its performance.  The kernel is free to ignore the advice."  So we ignore the advise
+    // in the simulator.
+    if (behavior==MADV_DONTNEED) {
+        t->syscall_return(-ENOSYS);
+        return;
+    }
+
+    t->syscall_return(0);
+    return;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_mkdir_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("mkdir").s().d();
+}
+
+void
+RSIM_Linux::syscall_mkdir_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t pathNameVa = t->syscall_arg(0);
+    bool error;
+    std::string pathName = t->get_process()->read_string(pathNameVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    mode_t mode = t->syscall_arg(1);
+
+    int result = mkdir(pathName.c_str(), mode);
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_mknod_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("mknod").s().f(file_mode_flags).d();
+}
+
+void
+RSIM_Linux::syscall_mknod_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t pathVa = t->syscall_arg(0);
+    int mode = t->syscall_arg(1);
+    unsigned dev = t->syscall_arg(2);
+    bool error;
+    std::string path = t->get_process()->read_string(pathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    int result = mknod(path.c_str(), mode, dev);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux::syscall_mprotect_enter(RSIM_Thread *t, int callno)
 {
     t->syscall_enter("mprotect").p().d().f(mmap_pflags);
@@ -671,6 +1283,32 @@ RSIM_Linux::syscall_mprotect_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave().ret().str("\n");
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mprotect syscall:\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_munmap_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("munmap").p().d();
+}
+
+void
+RSIM_Linux::syscall_munmap_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t va=t->syscall_arg(0);
+    size_t sz=t->syscall_arg(1);
+    rose_addr_t aligned_va = alignDown(va, (rose_addr_t)PAGE_SIZE);
+    size_t aligned_sz = alignUp(sz + va - aligned_va, (rose_addr_t)PAGE_SIZE);
+
+    // Check ranges
+    if (aligned_va + aligned_sz <= aligned_va) { // FIXME: not sure if sz==0 is an error
+        t->syscall_return(-EINVAL);
+        return;
+    }
+
+    int status = t->get_process()->mem_unmap(aligned_va, aligned_sz, t->tracing(TRACE_MMAP));
+    t->syscall_return(status);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -711,6 +1349,32 @@ RSIM_Linux::syscall_open_body(RSIM_Thread *t, int callno)
     int guestFd = t->get_process()->allocateGuestFileDescriptor(hostFd);
     t->syscall_return(guestFd);
 
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_pause_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("pause");
+}
+
+void
+RSIM_Linux::syscall_pause_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_info.signo = t->sys_sigsuspend(NULL);
+    t->syscall_return(-EINTR);
+}
+
+void
+RSIM_Linux::syscall_pause_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().str("\n");
+    if (t->syscall_info.signo>0) {
+        t->tracing(TRACE_SYSCALL) <<"    retured due to ";
+        Printer::print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
+        t->tracing(TRACE_SYSCALL) <<"(" <<t->syscall_info.signo <<")\n";
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -837,27 +1501,281 @@ RSIM_Linux::syscall_read_leave(RSIM_Thread *t, int callno)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
-RSIM_Linux::syscall_munmap_enter(RSIM_Thread *t, int callno)
+RSIM_Linux::syscall_readlink_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("munmap").p().d();
+    t->syscall_enter("readlink").s().p().d();
 }
 
 void
-RSIM_Linux::syscall_munmap_body(RSIM_Thread *t, int callno)
+RSIM_Linux::syscall_readlink_body(RSIM_Thread *t, int callno)
 {
-    rose_addr_t va=t->syscall_arg(0);
-    size_t sz=t->syscall_arg(1);
-    rose_addr_t aligned_va = alignDown(va, (rose_addr_t)PAGE_SIZE);
-    size_t aligned_sz = alignUp(sz + va - aligned_va, (rose_addr_t)PAGE_SIZE);
-
-    // Check ranges
-    if (aligned_va + aligned_sz <= aligned_va) { // FIXME: not sure if sz==0 is an error
-        t->syscall_return(-EINVAL);
+    rose_addr_t pathVa = t->syscall_arg(0);
+    rose_addr_t bufVa = t->syscall_arg(1);
+    size_t bufSize = t->syscall_arg(2);
+    if (bufSize > 32768) {
+        t->syscall_return(-ENOMEM);
+        return;
+    }
+    bool error;
+    std::string path = t->get_process()->read_string(pathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
         return;
     }
 
-    int status = t->get_process()->mem_unmap(aligned_va, aligned_sz, t->tracing(TRACE_MMAP));
-    t->syscall_return(status);
+    char *buf = new char[bufSize];
+    int result = readlink(path.c_str(), buf, bufSize);
+    if (result == -1) {
+        result = -errno;
+    } else {
+        size_t nWritten = t->get_process()->mem_write(buf, bufVa, result);
+        if (nWritten < (size_t)result)
+            result = -EFAULT;
+    }
+    t->syscall_return(result);
+    delete[] buf;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_rename_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("rename").s().s();
+}
+
+void
+RSIM_Linux::syscall_rename_body(RSIM_Thread *t, int callno)
+{
+    bool error;
+
+    std::string oldpath = t->get_process()->read_string(t->syscall_arg(0), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+	return;
+    }
+    std::string newpath = t->get_process()->read_string(t->syscall_arg(1), 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+	return;
+    }
+
+    int result = syscall(SYS_rename,oldpath.c_str(), newpath.c_str());
+    t->syscall_return(-1==result?-errno:result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_rmdir_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("rmdir").s();
+}
+
+void
+RSIM_Linux::syscall_rmdir_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t pathNameVa = t->syscall_arg(0);
+    bool error;
+    std::string pathName = t->get_process()->read_string(pathNameVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    int result = rmdir(pathName.c_str());
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_max").f(scheduler_policies);
+}
+
+void
+RSIM_Linux::syscall_sched_get_priority_max_body(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_max(policy);
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_get_priority_min").f(scheduler_policies);
+}
+
+void
+RSIM_Linux::syscall_sched_get_priority_min_body(RSIM_Thread *t, int callno)
+{
+    int policy = t->syscall_arg(0);
+    int result = sched_get_priority_min(policy);
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_getscheduler").d();
+}
+
+void
+RSIM_Linux::syscall_sched_getscheduler_body(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    int result = sched_getscheduler(pid);
+    t->syscall_return(-1==result ? -errno : result);
+}
+
+void
+RSIM_Linux::syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().eret().f(scheduler_policies).str("\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_sched_yield_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sched_yield");
+}
+
+void
+RSIM_Linux::syscall_sched_yield_body(RSIM_Thread *t, int callno)
+{
+    t->syscall_return(sched_yield());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_setpgid_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("setpgid").d().d();
+}
+
+void
+RSIM_Linux::syscall_setpgid_body(RSIM_Thread *t, int callno)
+{
+    pid_t pid=t->syscall_arg(0), pgid=t->syscall_arg(1);
+    int result = setpgid(pid, pgid);
+    if (-1==result) { result = -errno; }
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_symlink_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("symlink").s().s();
+}
+
+void
+RSIM_Linux::syscall_symlink_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t oldPathVa = t->syscall_arg(0);
+    rose_addr_t newPathVa = t->syscall_arg(1);
+    bool error;
+    std::string oldPath = t->get_process()->read_string(oldPathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    std::string newPath = t->get_process()->read_string(newPathVa, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    int result = symlink(oldPath.c_str(), newPath.c_str());
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_sync_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sync");
+}
+
+void
+RSIM_Linux::syscall_sync_body(RSIM_Thread *t, int callno)
+{
+    sync();
+    t->syscall_return(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_tgkill_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("tgkill").d().d().f(signal_names);
+}
+
+void
+RSIM_Linux::syscall_tgkill_body(RSIM_Thread *t, int callno)
+{
+    int tgid=t->syscall_arg(0), tid=t->syscall_arg(1), sig=t->syscall_arg(2);
+    int result = t->sys_tgkill(tgid, tid, sig);
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_umask_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("umask").d();
+}
+
+void
+RSIM_Linux::syscall_umask_body(RSIM_Thread *t, int callno)
+{
+    mode_t mode = t->syscall_arg(0);
+    int result = syscall(SYS_umask, mode); 
+    if (result == -1) result = -errno;
+    t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_unlink_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("unlink").s();
+}
+
+void
+RSIM_Linux::syscall_unlink_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t filename_va = t->syscall_arg(0);
+    bool error;
+    std::string filename = t->get_process()->read_string(filename_va, 0, &error);
+    if (error) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    int result = unlink(filename.c_str());
+    if (result == -1) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    t->syscall_return(result);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

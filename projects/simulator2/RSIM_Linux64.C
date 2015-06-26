@@ -49,6 +49,7 @@ RSIM_Linux64::init() {
     SC_REG(4,   stat,                           stat);
     SC_REG(5,   stat,                           stat);  // actually fstat
     SC_REG(6,   stat,                           stat);  // actually lstat
+    SC_REG(8,   lseek,                          default);
     SC_REG(9,   mmap,                           mmap);
     SC_REG(10,  mprotect,                       mprotect);
     SC_REG(11,  munmap,                         default);
@@ -57,12 +58,51 @@ RSIM_Linux64::init() {
     SC_REG(20,  writev,                         default);
     SC_REG(21,  access,                         default);
     SC_REG(22,  pipe,                           pipe);
+    SC_REG(24,  sched_yield,                    default);
+    SC_REG(28,  madvise,                        default);
     SC_REG(32,  dup,                            default);
     SC_REG(33,  dup2,                           default);
+    SC_REG(34,  pause,                          pause);
+    SC_REG(37,  alarm,                          default);
+    SC_REG(39,  getpid,                         default);
+    SC_REG(59,  execve,                         default);
     SC_REG(60,  exit,                           exit);
+    SC_REG(62,  kill,                           default);
+    SC_REG(74,  fsync,                          default);
+    SC_REG(77,  ftruncate,                      default);
+    SC_REG(79,  getcwd,                         getcwd);
+    SC_REG(80,  chdir,                          default);
+    SC_REG(81,  fchdir,                         default);
+    SC_REG(82,  rename,                         default);
+    SC_REG(83,  mkdir,                          default);
+    SC_REG(84,  rmdir,                          default);
     SC_REG(85,  creat,                          default);
+    SC_REG(86,  link,                           default);
+    SC_REG(87,  unlink,                         default);
+    SC_REG(88,  symlink,                        default);
+    SC_REG(89,  readlink,                       default);
+    SC_REG(90,  chmod,                          default);
+    SC_REG(91,  fchmod,                         default);
+    SC_REG(92,  chown,                          default);
+    SC_REG(93,  fchown,                         default);
+    SC_REG(95,  umask,                          default);
+    SC_REG(102, getuid,                         default);
+    SC_REG(104, getgid,                         default);
+    SC_REG(107, geteuid,                        default);
+    SC_REG(108, getegid,                        default);
+    SC_REG(109, setpgid,                        default);
+    SC_REG(110, getppid,                        default);
+    SC_REG(111, getpgrp,                        default);
+    SC_REG(133, mknod,                          default);
+    SC_REG(145, sched_getscheduler,             sched_getscheduler);
+    SC_REG(145, sched_get_priority_max,         default);
+    SC_REG(147, sched_get_priority_min,         default);
     SC_REG(158, arch_prctl,                     arch_prctl);
+    SC_REG(162, sync,                           default);
+    SC_REG(186, gettid,                         default);
     SC_REG(231, exit_group,                     exit_group);
+    SC_REG(234, tgkill,                         default);
+    SC_REG(268, fchmodat,                       default);
     SC_REG(293, pipe2,                          pipe2);
 
 #   undef SC_REG

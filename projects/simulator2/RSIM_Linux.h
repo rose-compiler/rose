@@ -41,9 +41,21 @@ protected:
     static void syscall_access_enter(RSIM_Thread *t, int callno);
     static void syscall_access_body(RSIM_Thread *t, int callno);
 
+    static void syscall_alarm_enter(RSIM_Thread *t, int callno);
+    static void syscall_alarm_body(RSIM_Thread *t, int callno);
+
     static void syscall_brk_enter(RSIM_Thread*, int);
     static void syscall_brk_body(RSIM_Thread*, int);
     static void syscall_brk_leave(RSIM_Thread*, int);
+
+    static void syscall_chdir_enter(RSIM_Thread *t, int callno);
+    static void syscall_chdir_body(RSIM_Thread *t, int callno);
+
+    static void syscall_chmod_enter(RSIM_Thread *t, int callno);
+    static void syscall_chmod_body(RSIM_Thread *t, int callno);
+
+    static void syscall_chown_enter(RSIM_Thread *t, int callno);
+    static void syscall_chown_body(RSIM_Thread *t, int callno);
 
     static void syscall_close_enter(RSIM_Thread *t, int callno);
     static void syscall_close_body(RSIM_Thread *t, int callno);
@@ -57,6 +69,9 @@ protected:
     static void syscall_dup2_enter(RSIM_Thread *t, int callno);
     static void syscall_dup2_body(RSIM_Thread *t, int callno);
 
+    static void syscall_execve_enter(RSIM_Thread *t, int callno);
+    static void syscall_execve_body(RSIM_Thread *t, int callno);
+
     static void syscall_exit_enter(RSIM_Thread *t, int callno);
     static void syscall_exit_body(RSIM_Thread *t, int callno);
     static void syscall_exit_leave(RSIM_Thread *t, int callno);
@@ -64,6 +79,70 @@ protected:
     static void syscall_exit_group_enter(RSIM_Thread *t, int callno);
     static void syscall_exit_group_body(RSIM_Thread *t, int callno);
     static void syscall_exit_group_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_fchdir_enter(RSIM_Thread *t, int callno);
+    static void syscall_fchdir_body(RSIM_Thread *t, int callno);
+
+    static void syscall_fchmod_enter(RSIM_Thread *t, int callno);
+    static void syscall_fchmod_body(RSIM_Thread *t, int callno);
+
+    static void syscall_fchmodat_enter(RSIM_Thread *t, int callno);
+    static void syscall_fchmodat_body(RSIM_Thread *t, int callno);
+
+    static void syscall_fchown_enter(RSIM_Thread *t, int callno);
+    static void syscall_fchown_body(RSIM_Thread *t, int callno);
+
+    static void syscall_fsync_enter(RSIM_Thread *t, int callno);
+    static void syscall_fsync_body(RSIM_Thread *t, int callno);
+
+    static void syscall_ftruncate_enter(RSIM_Thread *t, int callno);
+    static void syscall_ftruncate_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getcwd_enter(RSIM_Thread *t, int callno);
+    static void syscall_getcwd_body(RSIM_Thread *t, int callno);
+    static void syscall_getcwd_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_getegid_enter(RSIM_Thread *t, int callno);
+    static void syscall_getegid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_geteuid_enter(RSIM_Thread *t, int callno);
+    static void syscall_geteuid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getgid_enter(RSIM_Thread *t, int callno);
+    static void syscall_getgid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getpgrp_enter(RSIM_Thread *t, int callno);
+    static void syscall_getpgrp_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getpid_enter(RSIM_Thread *t, int callno);
+    static void syscall_getpid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getppid_enter(RSIM_Thread *t, int callno);
+    static void syscall_getppid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_gettid_enter(RSIM_Thread *t, int callno);
+    static void syscall_gettid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_getuid_enter(RSIM_Thread *t, int callno);
+    static void syscall_getuid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_kill_enter(RSIM_Thread *t, int callno);
+    static void syscall_kill_body(RSIM_Thread *t, int callno);
+
+    static void syscall_link_enter(RSIM_Thread *t, int callno);
+    static void syscall_link_body(RSIM_Thread *t, int callno);
+
+    static void syscall_lseek_enter(RSIM_Thread *t, int callno);
+    static void syscall_lseek_body(RSIM_Thread *t, int callno);
+
+    static void syscall_madvise_enter(RSIM_Thread *t, int callno);
+    static void syscall_madvise_body(RSIM_Thread *t, int callno);
+
+    static void syscall_mkdir_enter(RSIM_Thread *t, int callno);
+    static void syscall_mkdir_body(RSIM_Thread *t, int callno);
+
+    static void syscall_mknod_enter(RSIM_Thread *t, int callno);
+    static void syscall_mknod_body(RSIM_Thread *t, int callno);
 
     static void syscall_mprotect_enter(RSIM_Thread *t, int callno);
     static void syscall_mprotect_body(RSIM_Thread *t, int callno);
@@ -74,6 +153,10 @@ protected:
 
     static void syscall_open_enter(RSIM_Thread *t, int callno);
     static void syscall_open_body(RSIM_Thread *t, int callno);
+
+    static void syscall_pause_enter(RSIM_Thread *t, int callno);
+    static void syscall_pause_body(RSIM_Thread *t, int callno);
+    static void syscall_pause_leave(RSIM_Thread *t, int callno);
 
     static void syscall_pipe_enter(RSIM_Thread *t, int callno);
     static void syscall_pipe_body(RSIM_Thread *t, int callno);
@@ -86,6 +169,46 @@ protected:
     static void syscall_read_enter(RSIM_Thread *t, int callno);
     static void syscall_read_body(RSIM_Thread *t, int callno);
     static void syscall_read_leave(RSIM_Thread*, int callno);
+
+    static void syscall_readlink_enter(RSIM_Thread *t, int callno);
+    static void syscall_readlink_body(RSIM_Thread *t, int callno);
+
+    static void syscall_rename_enter(RSIM_Thread *t, int callno);
+    static void syscall_rename_body(RSIM_Thread *t, int callno);
+
+    static void syscall_rmdir_enter(RSIM_Thread *t, int callno);
+    static void syscall_rmdir_body(RSIM_Thread *t, int callno);
+
+    static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
+    static void syscall_sched_get_priority_max_body(RSIM_Thread *t, int callno);
+
+    static void syscall_sched_get_priority_min_enter(RSIM_Thread *t, int callno);
+    static void syscall_sched_get_priority_min_body(RSIM_Thread *t, int callno);
+
+    static void syscall_sched_getscheduler_enter(RSIM_Thread *t, int callno);
+    static void syscall_sched_getscheduler_body(RSIM_Thread *t, int callno);
+    static void syscall_sched_getscheduler_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
+    static void syscall_sched_yield_body(RSIM_Thread *t, int callno);
+
+    static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
+    static void syscall_setpgid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_symlink_enter(RSIM_Thread *t, int callno);
+    static void syscall_symlink_body(RSIM_Thread *t, int callno);
+
+    static void syscall_sync_enter(RSIM_Thread *t, int callno);
+    static void syscall_sync_body(RSIM_Thread *t, int callno);
+
+    static void syscall_tgkill_enter(RSIM_Thread *t, int callno);
+    static void syscall_tgkill_body(RSIM_Thread *t, int callno);
+
+    static void syscall_umask_enter(RSIM_Thread *t, int callno);
+    static void syscall_umask_body(RSIM_Thread *t, int callno);
+
+    static void syscall_unlink_enter(RSIM_Thread *t, int callno);
+    static void syscall_unlink_body(RSIM_Thread *t, int callno);
 
     static void syscall_write_enter(RSIM_Thread *t, int callno);
     static void syscall_write_body(RSIM_Thread *t, int callno);
