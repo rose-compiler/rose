@@ -255,14 +255,8 @@ void jacobi( )
   }          /*  End iteration loop */
 
   printf("Total Number of Iterations:%d\n",k); 
-<<<<<<< HEAD
   printf("Checking Residual... \n"); 
   diff_ratio (error, resid_ref, 5);
-=======
-  printf("Verifying Residual... \n"); 
-  diff_ratio (error, resid_ref, 5);
-
->>>>>>> 506fd8d9024a32293df490dac30e8dea03b40090
 }
 
 /*      subroutine error_check (n,m,alpha,dx,dy,u,f) 
@@ -290,11 +284,7 @@ void error_check ( )
       error = error + temp*temp; 
     }
   error = sqrt(error)/(n*m);
-<<<<<<< HEAD
   printf(" checking error diff ratio \n");
-=======
-  printf("Verifying Solution Error ... \n");
->>>>>>> 506fd8d9024a32293df490dac30e8dea03b40090
   diff_ratio (error, error_ref, 5);
 }
 
