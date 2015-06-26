@@ -219,7 +219,7 @@ void * xomp_memcpyDeviceToHost (void *dest, const void * src, size_t n)
 {
   assert (dest != NULL);
   assert (src != NULL);
-//  if (xomp_verbose)
+  if (xomp_verbose)
     printf("xomp_memcpyDeviceToHost(): dest=%p src =%p size=%d\n",dest, src, n);
   cudaError_t rt = cudaMemcpy (dest, src, n, cudaMemcpyDeviceToHost);    
   if (rt == cudaSuccess)
@@ -599,12 +599,19 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
   assert (src != NULL);
   assert (desc != NULL);
 
+  desc-> size = (int*)malloc(sizeof(int) * src->nDim); 
+  desc-> offset = (int*)malloc(sizeof(int) * src->nDim); 
+  desc-> DimSize = (int*)malloc(sizeof(int) * src->nDim);
+  desc->nDim = src->nDim;
+  desc->typeSize = src->typeSize;
+
   desc->address = src->address;
   int i;
-  for(i = 0; i < desc->nDim; ++i) 
+  for(i = 0; i < src->nDim; ++i) 
   {
     desc->size[i]= src->size[i]; 
     desc->offset[i]= src->offset[i]; 
+    desc->DimSize[i]= src->DimSize[i]; 
   }
   desc->dev_address = src ->dev_address; 
    // we do not want to inherit the copy directions or map-type of parent DDE's variable
@@ -743,12 +750,13 @@ void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset,
   }
   else  if(ndim == 2)
   {
+// vsize[1] stores the fastest-access dimension
      int j;
-     for(j=0; j < vsize[1]; ++j)
+     for(j=0; j < vsize[0]; ++j)
      {
-       offset_dest  = voffset[0] + (j + voffset[1]) * vDimSize[0];
-       offset_src = j  * vsize[0];
-       xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
+       offset_dest  = voffset[1] + (j + voffset[0]) * vDimSize[1];
+       offset_src = j  * vsize[1];
+       xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[1]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -780,11 +788,11 @@ void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset
   else  if(ndim == 2)
   {
      int j;
-     for(j=0; j < vsize[1]; ++j)
+     for(j=0; j < vsize[0]; ++j)
      {
-       offset_src  = voffset[0] + (j + voffset[1]) * vDimSize[0];
-       offset_dest = j  * vsize[0];
-       xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
+       offset_src  = voffset[1] + (j + voffset[0]) * vDimSize[1];
+       offset_dest = j  * vsize[1];
+       xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[1]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -818,7 +826,6 @@ void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variab
     {
       devSize *= vsize[i];
     }
-printf("sizd = %d\n",devSize);
     dev_var_address = xomp_deviceMalloc(devSize*typeSize);
     xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, typeSize, dev_var_address, copy_into, copy_back);
     // The spec says : reuse enclosing data and discard map-type rule.
