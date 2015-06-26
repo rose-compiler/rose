@@ -981,7 +981,7 @@ void ExprWalker::visit(SgVarRefExp* sgn)
   VarsInfo& def_vars_info = duvi.getDefVarsInfoMod();
   VarsInfo& use_vars_info = duvi.getUseVarsInfoMod();
 
-  if(sgn_type_info == arrayType) {
+  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType) {
     // If found a reference to whole array, def/use all its elements.
     duvi.addAllArrayElements(SageInterface::convertRefToInitializedName(sgn), vidm, isModExpr);
   } else if(isModExpr) {
@@ -1016,7 +1016,7 @@ void ExprWalker::visit(SgInitializedName* sgn)
   // determine the type info
   VariableIdTypeInfo sgn_type_info = getVariableIdTypeInfo(vid, vidm);
 
-  if(sgn_type_info == arrayType)
+  if(vidm.getModeVariableIdForEachArrayElement() && sgn_type_info == arrayType)
     // When defining an array, define all its elements.
     duvi.addAllArrayElements(sgn, vidm, true);
   else
