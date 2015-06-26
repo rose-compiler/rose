@@ -119,7 +119,17 @@ print_timespec_32(Sawyer::Message::Stream &m, const uint8_t *_ts, size_t sz)
     const timespec_32 *ts = (const timespec_32*)_ts;
     m <<"sec=";
     Printer::print_time(m, ts->tv_sec);
-    mfprintf(m)(", nsec=%"PRId32, ts->tv_nsec);
+    m <<", nsec=" <<ts->tv_nsec;
+}
+
+void
+print_timespec_64(Sawyer::Message::Stream &m, const uint8_t *_ts, size_t sz)
+{
+    assert(sz==sizeof(timespec_32));
+    const timespec_64 *ts = (const timespec_64*)_ts;
+    m <<"sec=";
+    Printer::print_time(m, ts->tv_sec);
+    m <<", nsec=" <<ts->tv_nsec;
 }
 
 void
@@ -135,9 +145,21 @@ print_sigaction_32(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_32));
     const sigaction_32 *sa = (const sigaction_32*)_sa;
-    mfprintf(m)("handler=0x%08"PRIx32", flags=", sa->handler_va);
+    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
     Printer::print_flags(m, signal_flags, sa->flags);
-    mfprintf(m)(", restorer=0x%08"PRIx32", mask=0x%016"PRIx64, sa->restorer_va, sa->mask);
+    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
+    m <<", mask=" <<StringUtility::addrToString(sa->mask);
+}
+
+void
+print_sigaction_64(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
+{
+    assert(sz==sizeof(sigaction_64));
+    const sigaction_64 *sa = (const sigaction_64*)_sa;
+    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
+    Printer::print_flags(m, signal_flags, sa->flags);
+    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
+    m <<", mask=" <<StringUtility::addrToString(sa->mask);
 }
 
 void
@@ -237,7 +259,19 @@ print_flock_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     Printer::print_enum(m, flock_types, v->l_type);
     m <<", whence=";
     Printer::print_enum(m, seek_whence, v->l_whence);
-    mfprintf(m)(", start=%"PRId32", len=%"PRId32", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
+    m <<", start=" <<v->l_start <<", len=" <<v->l_len <<", pid=" <<v->l_pid;
+}
+
+void
+print_flock_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(flock_64)==sz);
+    const flock_64 *v = (const flock_64*)_v;
+    m <<"type=";
+    Printer::print_enum(m, flock_types, v->l_type);
+    m <<", whence=";
+    Printer::print_enum(m, seek_whence, v->l_whence);
+    m <<", start=" <<v->l_start <<", len=" <<v->l_len <<", pid=" <<v->l_pid;
 }
 
 void
@@ -249,7 +283,7 @@ print_flock64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     Printer::print_enum(m, flock_types, v->l_type);
     m <<", whence=";
     Printer::print_enum(m, seek_whence, v->l_whence);
-    mfprintf(m)(", start=%"PRId64", len=%"PRId64", pid=%"PRId32, v->l_start, v->l_len, v->l_pid);
+    m <<", start=" <<v->l_start <<", len=" <<v->l_len <<", pid=" <<v->l_pid;
 }
 
 void

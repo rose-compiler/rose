@@ -505,6 +505,11 @@ struct timespec_32 {
     int32_t tv_nsec;
 } __attribute__((packed));
 
+struct timespec_64 {
+    uint64_t tv_sec;
+    uint64_t tv_nsec;
+};
+
 struct timeval_32 {
     uint32_t tv_sec;        /* seconds */
     uint32_t tv_usec;       /* microseconds */
@@ -600,6 +605,14 @@ struct SigAction {
         x.mask = mask;
         return x;
     }
+    sigaction_64 get_sigaction_64() const {
+        sigaction_64 x;
+        x.handler_va = handlerVa;
+        x.flags = flags;
+        x.restorer_va = restorerVa;
+        x.mask = mask;
+        return x;
+    }
 };
 
 
@@ -646,6 +659,15 @@ struct flock_32 {
     int32_t l_len;
     int32_t l_pid;
 } __attribute__((packed));
+
+/* The kernel struct flock on a 64-bit architecture */
+struct flock_64 {
+    uint16_t l_type;
+    uint16_t l_whence;
+    uint64_t l_start;
+    uint64_t l_len;
+    uint32_t l_pid;
+};
 
 /* The kernel struct flock on the host */
 struct flock_native {
@@ -1603,8 +1625,10 @@ void print_rlimit(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_kernel_stat_32(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_kernel_stat_64(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_timespec_32(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
+void print_timespec_64(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timeval_32(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
 void print_sigaction_32(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
+void print_sigaction_64(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
 void print_dentries_helper(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz, size_t wordsize);
 void print_dentries_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_dentries_64(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
@@ -1612,6 +1636,7 @@ void print_bitvec(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_SigSet(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_stack_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_flock_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);

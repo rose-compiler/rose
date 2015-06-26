@@ -54,6 +54,8 @@ RSIM_Linux64::init() {
     SC_REG(10,  mprotect,                       mprotect);
     SC_REG(11,  munmap,                         default);
     SC_REG(12,  brk,                            brk);
+    SC_REG(13,  rt_sigaction,                   rt_sigaction);
+    SC_REG(14,  rt_sigprocmask,                 rt_sigprocmask);
     SC_REG(16,  ioctl,                          default);
     SC_REG(20,  writev,                         default);
     SC_REG(21,  access,                         default);
@@ -63,11 +65,19 @@ RSIM_Linux64::init() {
     SC_REG(32,  dup,                            default);
     SC_REG(33,  dup2,                           default);
     SC_REG(34,  pause,                          pause);
+    SC_REG(35,  nanosleep,                      nanosleep);
     SC_REG(37,  alarm,                          default);
     SC_REG(39,  getpid,                         default);
+    SC_REG(41,  socket,                         default);
+    SC_REG(42,  connect,                        default);
+    SC_REG(43,  accept,                         default);
+    SC_REG(49,  bind,                           default);
+    SC_REG(50,  listen,                         default);
+    SC_REG(54,  setsockopt,                     default);
     SC_REG(59,  execve,                         default);
     SC_REG(60,  exit,                           exit);
     SC_REG(62,  kill,                           default);
+    SC_REG(72,  fcntl,                          fcntl);
     SC_REG(74,  fsync,                          default);
     SC_REG(77,  ftruncate,                      default);
     SC_REG(79,  getcwd,                         getcwd);

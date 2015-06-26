@@ -206,7 +206,7 @@ RSIM_Simulator::configure(const Settings &providedSettings, char **envp) {
     if (!settings_.tracingFileName.empty() && '/'!=settings_.tracingFileName[0]) {
         char dirname[4096];
         char *dirname_p = getcwd(dirname, sizeof dirname);
-        ASSERT_not_null(dirname_p);
+        ASSERT_always_not_null(dirname_p);
         settings_.tracingFileName = std::string(dirname) + "/" + settings_.tracingFileName;
     }
 
