@@ -62,7 +62,11 @@ int mmm()
   int n = N; 
   cudaGetDeviceCount(&GPU_N);
   printf("CUDA-capable device count: %i\n", GPU_N);
-  assert (GPU_N>0 && GPU_N<MAX_GPU_COUNT);
+    if (GPU_N > MAX_GPU_COUNT)
+    {
+        GPU_N = MAX_GPU_COUNT;
+    }
+  assert (GPU_N>0 && GPU_N<=MAX_GPU_COUNT);
 
   omp_set_num_threads(GPU_N);
 #pragma omp parallel for shared (GPU_N, a, b, c, n) private(idev)
@@ -83,7 +87,7 @@ int mmm()
     printf("thread %d working on GPU devices %d with size %d copying data from y_ompacc with offset %d\n",tid, tid, size,offset);
     int i, j, k;
 
-#pragma omp target device (tid) map(tofrom:c[offset:n*size]), map(to:a[offset:n*size],b[0:n*n], offset,size,n)
+#pragma omp target device (tid) map(tofrom:c[offset:size][0:n]), map(to:a[offset:size][0:n],b[0:n][0:n], offset,size,n)
 #pragma omp parallel for private(i,j,k) shared (a,b,c, n, offset, size)
     for (i = offset; i < offset + size; i++)
       for (j = 0; j < M; j++)
