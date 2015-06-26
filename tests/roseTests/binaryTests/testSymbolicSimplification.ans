@@ -1,1 +1,3 @@
 (add esp_0 (negate esp_0) 0xfffffffc) = 0xfffffffc<4294967292,-4>[32]
+(add esp_0 4 8 (negate esp_0)) = 0x0000000c[32]
+(add v1 4 8 (negate (add v1 4))) = (add[32] (negate[32] (add[32] v3[32] 0x00000004[32])) v3[32] 0x0000000c[32])

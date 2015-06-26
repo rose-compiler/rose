@@ -88,7 +88,9 @@ test_svalues() {
 
 int
 main() {
+#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
     test_yices_linkage();
+#endif
     test_add_simplifications();
     test_svalues();
 }
