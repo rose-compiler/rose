@@ -2540,7 +2540,6 @@ static void generateMappedArrayMemoryHandling(
 
   ROSE_ASSERT (dev_var_size_decl != NULL);
 
-  offload_array_size_map[dev_var_name] = v_size;
 
   // generate offset array
   string dev_var_offset_name = "_dev_" + orig_name + "_offset";  
@@ -2583,22 +2582,34 @@ static void generateMappedArrayMemoryHandling(
   SgVariableDeclaration* dev_var_Dim_decl = NULL; 
 
   SgVariableSymbol* dev_var_Dim_sym = insertion_scope->lookup_variable_symbol(dev_var_Dim_name);
+  std::vector<SgExpression*> v_dimSize;
   if (dev_var_Dim_sym == NULL)
   {
     SgExprListExp* arrayInitializer = buildExprListExp();
-    if(array_dimensions[sym].size() > 0){
-      for (std::vector < std::pair <SgExpression*, SgExpression*> >::const_iterator iter = array_dimensions[sym].begin(); iter != array_dimensions[sym].end(); iter++)
-      {
-        std::pair <SgExpression*, SgExpression*> bound_pair = *iter; 
-        arrayInitializer->append_expression(deepCopy(bound_pair.second));
-      }
-    } 
-    else
     {
-      for (int i=0; i < dimSize; ++i)
+      ROSE_ASSERT (sym!= NULL);
+      SgArrayType* a_type = isSgArrayType (orig_type);
+      if(a_type != NULL){
+        std::vector< SgExpression * > dims = get_C_array_dimensions (a_type);
+        for (std::vector < SgExpression* >::const_iterator iter = dims.begin(); iter != dims.end(); iter++)
+        {
+          SgExpression* length_exp  = *iter; 
+          //TODO: get_C_array_dimensions returns one extra null expression somehow.
+          if (!isSgNullExpression(length_exp))
+          {
+            arrayInitializer->append_expression(deepCopy(length_exp));
+            v_dimSize.push_back(deepCopy(length_exp));
+          }
+        }
+      }
+      else
       {
-        arrayInitializer->append_expression(deepCopy(v_size[i]));
-      } 
+        for (int i=0; i < dimSize; ++i)
+        {
+          arrayInitializer->append_expression(deepCopy(v_size[i]));
+          v_dimSize.push_back(deepCopy(v_size[i]));
+        } 
+      }
     }
     dev_var_Dim_decl = buildVariableDeclaration (dev_var_Dim_name, buildArrayType(buildIntType(),buildIntVal(dimSize)), buildAggregateInitializer(arrayInitializer), insertion_scope); 
     insertStatementBefore (insertion_anchor_stmt, dev_var_Dim_decl); 
@@ -2607,6 +2618,7 @@ static void generateMappedArrayMemoryHandling(
     dev_var_Dim_decl = isSgVariableDeclaration(dev_var_Dim_sym->get_declaration()->get_declaration());
 
   ROSE_ASSERT (dev_var_Dim_decl != NULL);
+  offload_array_size_map[dev_var_name] = v_dimSize;
 
   // Only if we are in the mode of inserting data handling statements
   if (!need_generate_data_stmt)
