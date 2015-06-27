@@ -71,7 +71,15 @@ DisassemblerX86::init(size_t wordsize)
         case 2:
             addrWidth = 16;
             insnSize = x86_insnsize_16;
+#if 0 // [Robb P. Matzke 2015-06-23]
             regdict = RegisterDictionary::dictionary_i286();
+#else
+            // A word size of 2 bytes doesn't necessarily mean 80286. E.g., $ROSE/binaries/samples/exefmt.exe has a header that
+            // advertises architecture ISA_IA32_Family with a word size of 2 and which contains an occasional 32-bit floating
+            // point instruction, although perhaps because of disassembling data with a disassembler that understands 32-bit op
+            // codes.
+            regdict = RegisterDictionary::dictionary_i386_387();
+#endif
             REG_IP = *regdict->lookup("ip");
             REG_SP = *regdict->lookup("sp");
             REG_SS = *regdict->lookup("ss");
