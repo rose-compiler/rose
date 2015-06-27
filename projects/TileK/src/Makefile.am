@@ -33,6 +33,7 @@ tilek_LDADD= \
   -lDLX-core -lMFB-sage -lMDCG -lKLT -lKLT-core \
   $(builddir)/../lib/dlx/tilek/libDLX-TileK.la \
   $(builddir)/../lib/klt/tilek/libKLT-TileK.la \
+  $(builddir)/../lib/mdcg/tilek/libMDCG-TileK.la \
   $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 #########################################

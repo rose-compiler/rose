@@ -1,3 +1,3 @@
 
-SUBDIRS=tilek dlx/tilek klt/tilek
+SUBDIRS=tilek dlx/tilek klt/tilek mdcg/tilek
 
