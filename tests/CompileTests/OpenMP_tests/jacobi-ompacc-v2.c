@@ -74,18 +74,6 @@ REAL tol,relax=1.0,alpha=0.0543;
 REAL u[MSIZE][MSIZE],f[MSIZE][MSIZE],uold[MSIZE][MSIZE];
 REAL dx,dy;
 
-// value, reference value, and the number of significant digits to be ensured.
-double diff_ratio (double val, double ref, int significant_digits)
-{ 
-  assert (significant_digits>=1);
-  double diff_ratio = fabs(val - ref )/fabs(ref);
-  double upper_limit = pow (0.1, significant_digits); // 1.0/(double(10^significant_digits)) ;
-  printf("value :%E  ref_value: %E  diff_ratio: %E upper_limit: %E \n",val, ref, diff_ratio, upper_limit);
-  // ensure the number of the significant digits to be the same 
-  assert ( diff_ratio < upper_limit);
-  return diff_ratio;
-} 
-
 int main (void) 
 {
 //  float toler;
