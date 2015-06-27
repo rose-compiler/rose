@@ -19,6 +19,8 @@
 
 #include "MDCG/model.hpp"
 #include "MDCG/model-class.hpp"
+#include "MDCG/model-function.hpp"
+#include "MDCG/model-type.hpp"
 
 namespace KLT {
 
@@ -460,6 +462,10 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
   MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
   tilek_host_api.execute_kernel_func = execute_kernel_func->node->symbol;
   assert(tilek_host_api.execute_kernel_func != NULL);
+
+  MDCG::Model::type_t kernel_func_ptr_type = model.lookup<MDCG::Model::type_t>("kernel_func_ptr");
+  tilek_host_api.kernel_func_ptr_type = kernel_func_ptr_type->node->type;
+  assert(tilek_host_api.kernel_func_ptr_type != NULL);
 }
 
 void TileK::useSymbolsKernel(
@@ -475,7 +481,9 @@ void TileK::useSymbolsHost(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  // TODO
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_host_api.kernel_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_loop_class, file_id);
 }
 
 template <>
