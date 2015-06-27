@@ -486,7 +486,9 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
   //      void SgDeclarationStatement::resetTemplateNameSupport ( bool & nameResetFromMangledForm, SgName & name )
   // It is less clear how to refactor this code.
 
-#if 0
+#define DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST 0
+
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
      printf ("In SageBuilder::appendTemplateArgumentsToName(): CRITICAL FUNCTION TO BE REFACTORED (name = %s) \n",name.str());
 #endif
 
@@ -506,7 +508,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      while (i != templateArgumentsList.end())
         {
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (top of loop) templateArgumentsList element *i = %p = %s returnName = %s \n",*i,(*i)->class_name().c_str(),returnName.str());
 #endif
 #if 0
@@ -519,7 +521,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
        // returnName += (*i)->unparseToString();
           returnName += (*i)->unparseToString(info);
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
 #endif
           i++;
@@ -534,7 +536,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
                returnName += " , ";
              }
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (bottom of loop) returnName = %s \n",returnName.str());
 #endif
         }
@@ -544,7 +546,7 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if 0
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
 #endif
 
