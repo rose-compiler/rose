@@ -14,11 +14,13 @@ if ROSE_BUILD_JAVA_LANGUAGE_SUPPORT
 # library (which will then be made into a dynamic shared library).
 lib_LTLIBRARIES = libJavaTraversal.la
 
-JavaTraversal.C: JavaTraversal.h
+# Use BUILT_SOURCES to ensure JavaTraversal.h is built before any other Target
+BUILT_SOURCES = JavaTraversal.h
+#JavaTraversal.C: JavaTraversal.h
 
 # Make this dependent on files that will be unpacked (untared) 
 # from the src/3rdPartyLibraries/java-parser/ecjROSE.jar file.
-JavaParserActionROSE.C: JavaTraversal.h
+#JavaParserActionROSE.C: JavaTraversal.h
 
 # This rule will build both: $(ECJ_DIR)/JavaTraversal.h and $(ECJ_DIR)/JavaParser.h
 # in the event that they don't already exist in $(ECJ_DIR).
@@ -30,7 +32,7 @@ libroseJava_la_SOURCES = \
 	jserver.C \
 	openJavaParser_main.C
 
-libJavaTraversal_la_SOURCES = JavaParserActionROSE.C JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
+libJavaTraversal_la_SOURCES = ${srcdir}/JavaParserActionROSE.C ${srcdir}/JavaTraversal.C token.C jni_token.C JavaSourceCodePosition.C jni_JavaSourceCodePosition.C VisitorContext.C jni_utils.C java_support.C
 
 pkginclude_HEADERS = ecj.h jserver.h java_support.h token.h jni_token.h JavaSourceCodePosition.h jni_JavaSourceCodePosition.h jni_utils.h VisitorContext.h
 
