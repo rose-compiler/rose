@@ -199,6 +199,11 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     assert(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
+   case V_SgGotoStatement: {
+     SgGotoStatement* gotoStmt=isSgGotoStatement(node);
+     SgLabelStatement* targetLabel=gotoStmt->get_label();
+     ROSE_ASSERT(targetLabel);
+   }
   }
   default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
