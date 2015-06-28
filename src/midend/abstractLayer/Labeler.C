@@ -207,13 +207,15 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgFunctionDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
+  case V_SgGotoStatement:
+    return 1;
   case V_SgReturnStmt:
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
       //cout << "DEBUG: Labeler: assigning 3 labels for SgReturnStmt(SgFunctionCallExp)"<<endl;
       return 3;
-    }
-    else
+    } else {
       return 1;
+    }
   default:
     return 0;
   }
