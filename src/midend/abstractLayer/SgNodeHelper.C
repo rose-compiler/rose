@@ -870,7 +870,7 @@ bool SgNodeHelper::isLoopCond(SgNode* node) {
  */
 bool SgNodeHelper::isCond(SgNode* node) {
   SgNode* parent=node->get_parent();
-  if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent))
+  if(isSgIfStmt(parent)||isSgWhileStmt(parent)||isSgDoWhileStmt(parent)||isSgForStatement(parent)||isSgConditionalExp(parent)||isSgSwitchStatement(parent))
     return SgNodeHelper::getCond(parent)==node && node!=0;
   else
     return false;
