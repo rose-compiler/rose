@@ -1111,10 +1111,10 @@
 0x004016a6: c7 43 54 00 18 40 00    |.CT..@. |<sp-12>   mov    dword ds:[ebx + 0x54], 0x00401800<<Func>>
 0x004016ad: c7 43 24 10 30 40 00    |.C$.0@. |<sp-12>   mov    dword ds:[ebx + 0x24], 0x00403010<.bss+0x10>
 0x004016b4: 89 03                   |..      |<sp-12>   mov    dword ds:[ebx], eax
-0x004016b6: c7 43 18 f0 17 40 00    |.C...@. |<sp-12>   mov    dword ds:[ebx + 0x18], 0x004017f0
-0x004016bd: c7 43 1c e0 17 40 00    |.C...@. |<sp-12>   mov    dword ds:[ebx + 0x1c], 0x004017e0
-0x004016c4: c7 43 20 d0 17 40 00    |.C ..@. |<sp-12>   mov    dword ds:[ebx + 0x20], 0x004017d0
-0x004016cb: c7 43 44 c0 17 40 00    |.CD..@. |<sp-12>   mov    dword ds:[ebx + 0x44], 0x004017c0
+0x004016b6: c7 43 18 f0 17 40 00    |.C...@. |<sp-12>   mov    dword ds:[ebx + 0x18], 0x004017f0<<Func>>
+0x004016bd: c7 43 1c e0 17 40 00    |.C...@. |<sp-12>   mov    dword ds:[ebx + 0x1c], 0x004017e0<<Func>>
+0x004016c4: c7 43 20 d0 17 40 00    |.C ..@. |<sp-12>   mov    dword ds:[ebx + 0x20], 0x004017d0<<Func>>
+0x004016cb: c7 43 44 c0 17 40 00    |.CD..@. |<sp-12>   mov    dword ds:[ebx + 0x44], 0x004017c0<<Func>>
 0x004016d2: c7 04 24 00 00 00 00    |..$.... |<sp-12>   mov    dword ss:[esp], 0x00000000
 0x004016d9: e8 72 01 00 00          |.r...   |<sp-12>   call   0x00401850<<Func>>
 0x004016d9: Outgoing stack delta: -16
@@ -1171,6 +1171,12 @@
 0x0040173f: e9 f0 fe ff ff          |.....   |<sp-12>   jmp    0x00401634<<BBlock>>
 0x0040173f: Outgoing stack delta: -12
 0x0040173f: Successor blocks: 0x00401634
+
+0x00401750: ================================== Function (thunk, graph) unknown name
+
+0x00401750: Basic block reasons: entry point, CFG head
+0x00401750: ff 25 84 40 40 00       |.%.@@.  |          jmp    dword ds:[0x00404084<.idata+0x84>]
+0x00401750: Successor blocks: unknown
 
 0x00401760: ================================== Function (function call, graph) unknown name
 0x00401760: Function stack delta: +4
@@ -1231,6 +1237,30 @@
 0x004017b5: c3                      |.       |<sp+0 >   ret    
 0x004017b5: Outgoing stack delta: +4
 0x004017b5: Successor blocks: unknown
+
+0x004017c0: ================================== Function (thunk, graph) unknown name
+
+0x004017c0: Basic block reasons: entry point, CFG head
+0x004017c0: ff 25 7c 40 40 00       |.%|@@.  |          jmp    dword ds:[0x0040407c<.idata+0x7c>]
+0x004017c0: Successor blocks: unknown
+
+0x004017d0: ================================== Function (thunk, graph) unknown name
+
+0x004017d0: Basic block reasons: entry point, CFG head
+0x004017d0: ff 25 90 40 40 00       |.%.@@.  |          jmp    dword ds:[0x00404090<.idata+0x90>]
+0x004017d0: Successor blocks: unknown
+
+0x004017e0: ================================== Function (thunk, graph) unknown name
+
+0x004017e0: Basic block reasons: entry point, CFG head
+0x004017e0: ff 25 88 40 40 00       |.%.@@.  |          jmp    dword ds:[0x00404088<.idata+0x88>]
+0x004017e0: Successor blocks: unknown
+
+0x004017f0: ================================== Function (thunk, graph) unknown name
+
+0x004017f0: Basic block reasons: entry point, CFG head
+0x004017f0: ff 25 8c 40 40 00       |.%.@@.  |          jmp    dword ds:[0x0040408c<.idata+0x8c>]
+0x004017f0: Successor blocks: unknown
 
 0x00401800: ================================== Function (pattern, graph) unknown name
 

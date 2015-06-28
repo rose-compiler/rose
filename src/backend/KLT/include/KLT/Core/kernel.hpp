@@ -64,12 +64,19 @@ class Kernel {
       SgVariableSymbol * context;
     };
 
-    struct a_kernel {
+    struct kernel_desc_t {
+      static size_t id_cnt;
+      size_t id;
       std::string kernel_name;
 
       typename Runtime::exec_config_t config;
 
-      std::vector<typename Runtime::a_loop> loops;
+      std::vector<typename Runtime::loop_desc_t *> loops;
+      std::vector<typename Runtime::tile_desc_t *> tiles;
+
+      kernel_desc_t(const std::string & kernel_name_) : 
+        id(id_cnt++), kernel_name(kernel_name_), config(), loops(), tiles()
+      {}
     };
 
   protected:
@@ -91,7 +98,7 @@ class Kernel {
     arguments_t p_arguments;
 
     /// All actual kernels that have been generated for this kernel (different decisions made in shape interpretation)
-    std::vector<a_kernel *> p_generated_kernels;
+    std::vector<kernel_desc_t *> p_generated_kernels;
 
     void registerLoopsAndNodes(typename LoopTrees<Annotation>::node_t * node) {
       assert(node != NULL);
@@ -149,8 +156,8 @@ class Kernel {
     arguments_t & getArguments() { return p_arguments; }
     const arguments_t & getArguments() const { return p_arguments; }
 
-    void addKernel(a_kernel * kernel) { p_generated_kernels.push_back(kernel); }
-    const std::vector<a_kernel *> & getKernels() const { return p_generated_kernels; }
+    void addKernel(kernel_desc_t * kernel) { p_generated_kernels.push_back(kernel); }
+    const std::vector<kernel_desc_t *> & getKernels() const { return p_generated_kernels; }
 
     const LoopTrees<Annotation> & getLoopTree() const { return p_loop_tree; }
 
@@ -169,8 +176,8 @@ void collectReferencedSymbols(Kernel<Annotation, Language, Runtime> * kernel, st
   for (it_root = roots.begin(); it_root != roots.end(); it_root++)
     collectReferencedSymbols<Annotation>(*it_root, symbols);
 
-  assert(!kernel->getDataflow().datas.empty()); // Should always have some data
-  collectReferencedSymbols<Annotation>(kernel->getDataflow().datas, symbols);
+  if (!kernel->getDataflow().datas.empty())
+    collectReferencedSymbols<Annotation>(kernel->getDataflow().datas, symbols);
 }
 
 /** Generate a parameter list for a kernel
@@ -185,6 +192,32 @@ SgStatement * generateStatement(
 );
 
 template <class Annotation, class Language, class Runtime>
+std::pair<SgStatement *, SgScopeStatement *> generateLoops(
+  typename LoopTrees<Annotation>::loop_t * loop,
+  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
+);
+
+template <class Annotation>
+struct tile_generation_t {
+  tile_generation_t(
+    SgStatement * gen_stmt_, SgScopeStatement * new_scope_, typename ::KLT::LoopTrees<Annotation>::block_t * next_block_
+  ) :
+    gen_stmt(gen_stmt_), new_scope(new_scope_), next_block(next_block_)
+  {}
+
+  SgStatement * gen_stmt;
+  SgScopeStatement * new_scope;
+  typename ::KLT::LoopTrees<Annotation>::block_t * next_block;
+};
+
+template <class Annotation, class Language, class Runtime>
+tile_generation_t<Annotation> generateTiles(
+  typename LoopTrees<Annotation>::tile_t * tile,
+  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
+);
+
+/*
+template <class Annotation, class Language, class Runtime>
 std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops(
   typename LoopTrees<Annotation>::loop_t * loop,
   size_t & loop_cnt,
@@ -193,12 +226,12 @@ std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops(
   typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t & tiling,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
 );
+*/
 
 template <class Annotation, class Language, class Runtime>
 typename Runtime::exec_mode_t changeExecutionMode(
   const typename Runtime::exec_mode_t & exec_mode,
-  const typename Runtime::exec_config_t & exec_cfg,
-  typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t & tiling
+  const typename Runtime::exec_config_t & exec_cfg
 );
 
 template <class Annotation, class Language, class Runtime>
@@ -221,56 +254,49 @@ SgScopeStatement * generateExecModeGuards(
 template <class Annotation, class Language, class Runtime>
 void generateKernelBody(
   typename ::KLT::LoopTrees<Annotation>::node_t * node,
-  size_t & loop_cnt,
-  size_t & tile_cnt,
-  std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::a_loop> & loop_descriptors_map,
   typename Runtime::exec_mode_t exec_mode,
   const typename Runtime::exec_config_t & exec_cfg,
-  const std::map<
-    typename ::KLT::LoopTrees<Annotation>::loop_t *,
-    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
-  > & tilings,
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps,
   SgScopeStatement * scope
 ) {
   assert(node != NULL);
 
   typename ::KLT::LoopTrees<Annotation>::loop_t  * loop  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::loop_t  *>(node);
+  typename ::KLT::LoopTrees<Annotation>::tile_t  * tile  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::tile_t  *>(node);
   typename ::KLT::LoopTrees<Annotation>::cond_t  * cond  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::cond_t  *>(node);
   typename ::KLT::LoopTrees<Annotation>::block_t * block = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::block_t *>(node);
   typename ::KLT::LoopTrees<Annotation>::stmt_t  * stmt  = dynamic_cast<typename ::KLT::LoopTrees<Annotation>::stmt_t  *>(node);
 
   if (loop != NULL) {
-//  std::cout << "[generateKernelBody]  loop != NULL" << std::endl;
-    typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t * tiling = NULL;
-    typename std::map<
-      typename ::KLT::LoopTrees<Annotation>::loop_t *,
-      typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t *
-    >::const_iterator it_tiling = tilings.find(loop);
-    if (it_tiling != tilings.end()) {
-      assert(it_tiling->second != NULL);
-      tiling = it_tiling->second;
-    }
+//  std::cerr << "[generateKernelBody]  loop != NULL" << std::endl;
 
-    std::pair<SgStatement *, std::vector<SgScopeStatement *> > sg_loop = generateLoops<Annotation, Language, Runtime>(
-      loop, loop_cnt, tile_cnt, loop_descriptors_map, *tiling, local_symbol_maps
-    );
+    std::pair<SgStatement *, SgScopeStatement *> sg_loop = generateLoops<Annotation, Language, Runtime>(loop, local_symbol_maps);
     SageInterface::appendStatement(sg_loop.first, scope);
 
-    typename Runtime::exec_mode_t next_exec_mode = changeExecutionMode<Annotation, Language, Runtime>(exec_mode, exec_cfg, *tiling);
+    typename Runtime::exec_mode_t next_exec_mode = changeExecutionMode<Annotation, Language, Runtime>(exec_mode, exec_cfg);
 
-    std::vector<SgScopeStatement *>::const_iterator it_scope;
-    for (it_scope = sg_loop.second.begin(); it_scope != sg_loop.second.end(); it_scope++) {
+    generateKernelBody<Annotation, Language, Runtime>(
+      loop->block, next_exec_mode, exec_cfg, local_symbol_maps, sg_loop.second
+    );
 
-      generateKernelBody<Annotation, Language, Runtime>(
-        loop->block, loop_cnt, tile_cnt, loop_descriptors_map, next_exec_mode, exec_cfg, tilings, local_symbol_maps, *it_scope
-      );
-    }
+    generateSynchronizations<Annotation, Language, Runtime>(next_exec_mode, exec_mode, exec_cfg, scope, local_symbol_maps);
+  }
+  else if (tile != NULL) {
+//  std::cerr << "[generateKernelBody]  tile != NULL" << std::endl;
+
+    tile_generation_t<Annotation> sg_tile = generateTiles<Annotation, Language, Runtime>(tile, local_symbol_maps);
+    if (sg_tile.gen_stmt != NULL) SageInterface::appendStatement(sg_tile.gen_stmt, scope);
+
+    typename Runtime::exec_mode_t next_exec_mode = changeExecutionMode<Annotation, Language, Runtime>(exec_mode, exec_cfg);
+
+    generateKernelBody<Annotation, Language, Runtime>(
+      sg_tile.next_block, next_exec_mode, exec_cfg, local_symbol_maps, sg_tile.new_scope != NULL ? sg_tile.new_scope : scope
+    );
 
     generateSynchronizations<Annotation, Language, Runtime>(next_exec_mode, exec_mode, exec_cfg, scope, local_symbol_maps);
   }
   else if (cond != NULL) {
-//  std::cout << "[generateKernelBody]  cond != NULL" << std::endl;
+//  std::cerr << "[generateKernelBody]  cond != NULL" << std::endl;
 
     /// \todo translation of 'cond->condition'
     SgExprStatement * cond_stmt = SageBuilder::buildExprStatement(cond->condition);
@@ -282,15 +308,15 @@ void generateKernelBody(
 
     if (cond->block_true != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_true, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_true
+        cond->block_true, exec_mode, exec_cfg, local_symbol_maps, bb_true
       );
     if (cond->block_false != NULL)
       generateKernelBody<Annotation, Language, Runtime>(
-        cond->block_false, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_false
+        cond->block_false, exec_mode, exec_cfg, local_symbol_maps, bb_false
       );
   }
   else if (block != NULL) {
-//  std::cout << "[generateKernelBody]  block != NULL" << std::endl;
+//  std::cerr << "[generateKernelBody]  block != NULL" << std::endl;
 
     SgScopeStatement * bb_scope = scope;
     if (block->children.size() > 1) {
@@ -301,11 +327,11 @@ void generateKernelBody(
     typename std::vector<typename LoopTrees<Annotation>::node_t * >::const_iterator it_child;
     for (it_child = block->children.begin(); it_child != block->children.end(); it_child++)
       generateKernelBody<Annotation, Language, Runtime>(
-        *it_child, loop_cnt, tile_cnt, loop_descriptors_map, exec_mode, exec_cfg, tilings, local_symbol_maps, bb_scope
+        *it_child, exec_mode, exec_cfg, local_symbol_maps, bb_scope
       );
   }
   else if (stmt != NULL) {
-//  std::cout << "[generateKernelBody]  stmt != NULL" << std::endl;
+//  std::cerr << "[generateKernelBody]  stmt != NULL" << std::endl;
     SgStatement * sg_stmt = generateStatement<Annotation, Language, Runtime>(stmt, local_symbol_maps);
 
     SgScopeStatement * bb_scope = generateExecModeGuards<Annotation, Language, Runtime>(exec_mode, exec_cfg, scope, local_symbol_maps);

@@ -450,6 +450,18 @@ TEST_TARGETS += testRNG.passed
 testRNG.passed: testRNG
 	@$(RTH_RUN) CMD="./testRNG" $(TEST_EXIT_STATUS) $@
 
+# Symbolic expression simplifications
+noinst_PROGRAMS += testSymbolicSimplification
+testSymbolicSimplification_SOURCES = testSymbolicSimplification.C
+testSymbolicSimplification_LDADD = $(LIBS_WITH_RPATH) $(ROSE_SEPARATE_LIBS)
+TEST_TARGETS += testSymbolicSimplification.passed
+testSymbolicSimplification.passed: $(TEST_WITH_ANSWER) testSymbolicSimplification testSymbolicSimplification.ans
+	@$(RTH_RUN)						\
+		TITLE="test symbolic simplification [$@]"	\
+		CMD="./testSymbolicSimplification"		\
+		ANS="$(srcdir)/testSymbolicSimplification.ans"	\
+		$< $@
+
 # Instruction semantics verification
 noinst_PROGRAMS += verifySemantics
 verifySemantics_SOURCES = verifySemantics.C

@@ -397,32 +397,72 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSema
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    SValuePtr a = SValue::promote(a_);
+    SValuePtr b = SValue::promote(b_);
+
+    // This is a common case on 64-bit architectures
+    // FIXME[Robb P. Matzke 2015-06-24]: this will probably only compile with GCC >4.x on a 64-bit machine. The real solution
+    // would be to either use a multi-precision library (sort of overkill) or implement division in Sawyer's BitVector class.
+    if (a->get_width() == 128 && b->get_width() == 64) {
+        __uint128_t numerator = a->bits().toInteger(BitRange::baseSize(64, 64));
+        numerator <<= 64;
+        numerator |= a->bits().toInteger(BitRange::baseSize(0, 64));
+        uint64_t denominator = b->bits().toInteger();
+        if (0 == denominator)
+            throw BaseSemantics::Exception("division by zero", get_insn());
+        __uint128_t ratio = numerator / denominator;
+        uint64_t ratio_lo = ratio;
+        uint64_t ratio_hi = ratio >> 64;
+        BitVector resultBits(128);
+        resultBits.fromInteger(BitRange::baseSize(0, 64), ratio_lo);
+        resultBits.fromInteger(BitRange::baseSize(64, 64), ratio_hi);
+        return svalue_number(resultBits);
+    }
+
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
-    if (a_->get_width() > 64 || b_->get_width() > 64) {
-        throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a_->get_width()) +
-                                       "] / y[" + StringUtility::addrToString(b_->get_width()) +
+    if (a->get_width() > 64 || b->get_width() > 64) {
+        throw BaseSemantics::Exception("unsignedDivide x[" + StringUtility::addrToString(a->get_width()) +
+                                       "] / y[" + StringUtility::addrToString(b->get_width()) +
                                        "] is not implemented", get_insn());
     }
-    uint64_t a = a_->get_number();
-    uint64_t b = b_->get_number();
-    if (0==b)
+
+    uint64_t an = a->get_number();
+    uint64_t bn = b->get_number();
+    if (0==bn)
         throw BaseSemantics::Exception("division by zero", get_insn());
-    return svalue_number(a_->get_width(), a/b);
+    return svalue_number(a->get_width(), an/bn);
 }
 
 BaseSemantics::SValuePtr
 RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SValuePtr &b_) {
+    SValuePtr a = SValue::promote(a_);
+    SValuePtr b = SValue::promote(b_);
+
+    // This is a common case on 64-bit architectures
+    // FIXME[Robb P. Matzke 2015-06-24]: this will probably only compile with GCC >4.x on a 64-bit machine. The real solution
+    // would be to either use a multi-precision library (sort of overkill) or implement division in Sawyer's BitVector class.
+    if (a->get_width() == 128 && b->get_width() == 64) {
+        __uint128_t numerator = a->bits().toInteger(BitRange::baseSize(64, 64));
+        numerator <<= 64;
+        numerator |= a->bits().toInteger(BitRange::baseSize(0, 64));
+        uint64_t denominator = b->bits().toInteger();
+        if (0 == denominator)
+            throw BaseSemantics::Exception("division by zero", get_insn());
+        uint64_t remainder = numerator % denominator;
+        return svalue_number(64, remainder);
+    }
+
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
-    if (a_->get_width() > 64 || b_->get_width() > 64) {
-        throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a_->get_width()) +
-                                       "] % y[" + StringUtility::addrToString(b_->get_width()) +
+    if (a->get_width() > 64 || b->get_width() > 64) {
+        throw BaseSemantics::Exception("unsignedModulo x[" + StringUtility::addrToString(a->get_width()) +
+                                       "] % y[" + StringUtility::addrToString(b->get_width()) +
                                        "] is not implemented", get_insn());
     }
-    uint64_t a = a_->get_number();
-    uint64_t b = b_->get_number();
-    if (0==b)
+    uint64_t an = a->get_number();
+    uint64_t bn = b->get_number();
+    if (0==bn)
         throw BaseSemantics::Exception("division by zero", get_insn());
-    return svalue_number(b_->get_width(), a % b);
+    return svalue_number(b->get_width(), an % bn);
 }
 
 BaseSemantics::SValuePtr
