@@ -80,6 +80,8 @@ class TileK {
       SgExpression * ub;
       SgExpression * stride;
 
+      std::vector<tile_desc_t *> tiles;
+
       loop_desc_t(size_t id_, SgExpression * lb_, SgExpression * ub_, SgExpression * stride_) :
         id(id_), lb(lb_), ub(ub_), stride(stride_)
       {}
@@ -103,7 +105,16 @@ class TileK {
     } tilek_kernel_api;
 
     static struct tilek_host_api_t {
-      // TODO
+      SgClassSymbol * kernel_class;
+        SgVariableSymbol * kernel_data_field;
+        SgVariableSymbol * kernel_param_field;
+        SgVariableSymbol * kernel_loop_field;
+          SgVariableSymbol * loop_lower_field;
+          SgVariableSymbol * loop_upper_field;
+          SgVariableSymbol * loop_stride_field;
+      SgFunctionSymbol * build_kernel_func;
+      SgFunctionSymbol * execute_kernel_func;
+      SgType * kernel_func_ptr_type;
     } tilek_host_api;
 
     static void loadAPI(const MDCG::Model::model_t & model);

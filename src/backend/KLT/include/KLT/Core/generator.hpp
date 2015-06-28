@@ -253,8 +253,6 @@ void Generator<Annotation, Language, Runtime, Driver>::generate(
       unsigned cnt = 0;
       typename std::set<std::map<loop_t *, loop_tiling_t *> >::iterator it_loop_tiling_map;
       for (it_loop_tiling_map = loop_tiling_set.begin(); it_loop_tiling_map != loop_tiling_set.end(); it_loop_tiling_map++) {
-
-
         typename ::MFB::KLT<Kernel<Annotation, Language, Runtime> >::object_desc_t kernel_desc(cnt++, *it_kernel, p_file_id);
 
         kernel_desc.tiling.insert(it_loop_tiling_map->begin(), it_loop_tiling_map->end());

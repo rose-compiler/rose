@@ -93,11 +93,15 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
   if (loop != NULL) {
     typename std::map<loop_t *, loop_tiling_t *>::const_iterator it_tiling = loop_tiling.find(loop);
     if (it_tiling != loop_tiling.end() && it_tiling->second != NULL && it_tiling->second->tiles.size() > 0) {
+      
+      std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_desc_t *> loop_map;
       std::vector<std::pair<loop_t *, loop_tiling_t *> > collapsable_loops;
       block_t * next_block = NULL;
       while (loop != NULL && it_tiling != loop_tiling.end() && it_tiling->second != NULL && it_tiling->second->tiles.size() > 0) {
-        std::cerr << "# A >> Loop " << loop->id << std::endl;
-        loops.push_back(new typename Runtime::loop_desc_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride));
+//      std::cerr << "# A >> Loop " << loop->id << std::endl;
+        typename Runtime::loop_desc_t * loop_desc = new typename Runtime::loop_desc_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride);
+        loops.push_back(loop_desc);
+        loop_map.insert(std::pair<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_desc_t *>(loop, loop_desc));
 
         collapsable_loops.push_back(
           std::pair<loop_t *, loop_tiling_t *>(loop, it_tiling->second)
@@ -125,8 +129,12 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
           tile_t * tile = new tile_t(it_tile->id, it_tile->order, it_tile->iterator_sym, it_collapsable->first);
           collapsed_tiles.push_back(tile);
 
-          std::cerr << "# B >> Tile " << it_tile->id << std::endl;
-          tiles.push_back(new typename Runtime::tile_desc_t(*it_tile));
+//        std::cerr << "# B >> Tile " << it_tile->id << std::endl;
+          typename Runtime::tile_desc_t * tile_desc = new typename Runtime::tile_desc_t(*it_tile);
+          tiles.push_back(tile_desc);
+          typename std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::loop_desc_t *>::const_iterator it_loop_map = loop_map.find(it_collapsable->first);
+          assert(it_loop_map != loop_map.end());
+          it_loop_map->second->tiles.push_back(tile_desc);
         }
       }
 
@@ -140,7 +148,7 @@ typename ::KLT::LoopTrees<Annotation>::node_t * collapseLoopsAndTiles(
       return collapsed_tiles.front();
     }
     else {
-      std::cerr << "# A >> Loop " << loop->id << std::endl;
+//    std::cerr << "# A >> Loop " << loop->id << std::endl;
       loops.push_back(new typename Runtime::loop_desc_t(loop->id, loop->lower_bound, loop->upper_bound, loop->stride));
 
       loop_t * new_loop = new loop_t(loop->id, loop->iterator, loop->lower_bound, loop->upper_bound, loop->stride);
@@ -254,17 +262,17 @@ typename KLT<Object>::build_result_t Driver<KLT>::build(typename KLT<Object>::ob
     ::KLT::generateKernelBody<Annotation, Language, Runtime>(root, (typename Runtime::exec_mode_t)0, result->config, local_symbol_maps, body);
   }
 
-  std::cerr << "# >> Kernel " << result->kernel_name << " (" << result->id << ")" << std::endl;
+//std::cerr << "# >> Kernel " << result->kernel_name << " (" << result->id << ")" << std::endl;
 
-  typename std::vector<typename Runtime::loop_desc_t *>::const_iterator it_loop;
-  for (it_loop = result->loops.begin(); it_loop != result->loops.end(); it_loop++) {
-    std::cerr << "# >> Loop " << (*it_loop)->id << std::endl;
-  }
+//typename std::vector<typename Runtime::loop_desc_t *>::const_iterator it_loop;
+//for (it_loop = result->loops.begin(); it_loop != result->loops.end(); it_loop++) {
+//  std::cerr << "# >> Loop " << (*it_loop)->id << std::endl;
+//}
 
-  typename std::vector<typename Runtime::tile_desc_t *>::const_iterator it_tile;
-  for (it_tile = result->tiles.begin(); it_tile != result->tiles.end(); it_tile++) {
-    std::cerr << "# >> Tile " << (*it_tile)->id << std::endl;
-  }
+//typename std::vector<typename Runtime::tile_desc_t *>::const_iterator it_tile;
+//for (it_tile = result->tiles.begin(); it_tile != result->tiles.end(); it_tile++) {
+//  std::cerr << "# >> Tile " << (*it_tile)->id << std::endl;
+//}
 
   SageInterface::setSourcePositionForTransformation(body);
 
