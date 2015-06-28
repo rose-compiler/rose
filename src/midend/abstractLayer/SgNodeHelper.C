@@ -863,7 +863,6 @@ bool SgNodeHelper::isLoopCond(SgNode* node) {
     return false;
 }
 
-
 /*! 
   * \author Markus Schordan
   * \date 2012.

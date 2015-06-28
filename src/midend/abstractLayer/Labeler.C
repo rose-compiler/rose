@@ -208,6 +208,9 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgGotoStatement:
+  case V_SgSwitchStatement:
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt:
     return 1;
   case V_SgReturnStmt:
     if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
