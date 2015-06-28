@@ -199,11 +199,9 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     assert(stmtPtrList.size()>0);
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
-   case V_SgGotoStatement: {
-     SgGotoStatement* gotoStmt=isSgGotoStatement(node);
-     SgLabelStatement* targetLabel=gotoStmt->get_label();
-     ROSE_ASSERT(targetLabel);
-   }
+  }
+  case V_SgGotoStatement: {
+    return labeler->getLabel(node);
   }
   default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
@@ -249,13 +247,12 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgLabelStatement:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
-      finalSet.insert(labeler->getLabel(node));
-      return finalSet;
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
   case V_SgExprStatement: {
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   }
-
   case V_SgIfStmt: {
     SgNode* nodeTB=SgNodeHelper::getTrueBranch(node);
     LabelSet finalSetTB=finalLabels(nodeTB);
@@ -295,8 +292,21 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgFunctionCallExp:
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
-
-  default:
+  case V_SgGotoStatement: {
+#if 1
+    // for the goto statement (as special case) the final set is empty. This allows all other functions
+    // operate correctly even in the presence of gotos. The edge for 'goto label' is created as part
+    // of the semantics of goto (and does not *require* the final labels).
+    return finalSet;
+#else
+    SgGotoStatement* gotoStmt=isSgGotoStatement(node);
+    SgLabelStatement* targetSgLabelStmt=gotoStmt->get_label();
+    ROSE_ASSERT(targetSgLabelStmt);
+    finalSet.insert(labeler->getLabel(targetSgLabelStmt));
+    return finalSet;
+#endif
+  }
+default:
     cerr << "Error: Unknown node in CodeThorn::CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
    }
 }
@@ -675,6 +685,22 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+  case V_SgGotoStatement: {
+#if 1
+    SgGotoStatement* gotoStmt=isSgGotoStatement(node);
+    SgLabelStatement* targetSgLabelStmt=gotoStmt->get_label();
+    ROSE_ASSERT(targetSgLabelStmt);
+    Label targetLabel=labeler->getLabel(targetSgLabelStmt);
+    edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,targetLabel));
+    return edgeSet;
+#else
+    LabelSet labSet=finalLabels(node);
+    for(LabelSet::iterator i=labSet.begin();i!=labSet.end();++i) {
+      edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,*i));
+    }
+    return edgeSet;
+#endif
+  }
   case V_SgWhileStmt: 
     return WhileAndDoWhileLoopFlow(node,edgeSet,EDGE_FORWARD,EDGE_BACKWARD);
   case V_SgDoWhileStmt: 
@@ -773,6 +799,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+
   default:
     cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;
