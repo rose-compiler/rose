@@ -961,6 +961,10 @@ SgNode* SgNodeHelper::getCond(SgNode* node) {
   if(SgForStatement* forstmt=isSgForStatement(node)) {
     return forstmt->get_test();
   }
+  if(SgSwitchStatement* switchstmt=isSgSwitchStatement(node)) {
+    return switchstmt->get_item_selector();
+  }
+
   throw "SgNodeHelper::getCond: improper node operation.";
 }
 

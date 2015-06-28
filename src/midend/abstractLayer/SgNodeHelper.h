@@ -76,7 +76,7 @@ namespace SgNodeHelper {
   //! in constrast to all other expressions in the ROSE AST which are either a SgExprStatement or have a SgExpressionRoot node.
   bool isForIncExpr(SgNode* node);
 
-  //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator (does not handle switch).
+  //! returns the root node representing the AST of the condition of If, While, DoWhile, For, CondOperator, switch.
   SgNode* getCond(SgNode* node);
 
   //! returns the string representing the condition (removes trailing ';')
