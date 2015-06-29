@@ -765,7 +765,7 @@ Flow CFAnalysis::flow(SgNode* node) {
         Flow flowStmt=flow(body);
         edgeSet+=flowStmt;
         {
-          // create edges from a fall through case to the next case. Exlude those with a break at the end.
+          // create edges from other case stmts to the next case that have no break at the end.
           if(prevCaseStmtBody) {
             LabelSet finalBodyLabels=finalLabels(prevCaseStmtBody);
             for(LabelSet::iterator i=finalBodyLabels.begin();i!=finalBodyLabels.end();++i) {
