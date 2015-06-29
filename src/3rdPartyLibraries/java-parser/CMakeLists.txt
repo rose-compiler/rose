@@ -13,30 +13,38 @@ endif()
 
 add_custom_command(
   OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
-          ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.h
   COMMAND ${Java_JAVAC_EXECUTABLE} -cp
           "${CMAKE_CURRENT_SOURCE_DIR}/ecj-3.8.2.jar${sep}${CMAKE_CURRENT_SOURCE_DIR}${sep}."
           -d ${CMAKE_CURRENT_BINARY_DIR}
           ${CMAKE_CURRENT_SOURCE_DIR}/JavaParser.java
-  COMMAND ${Java_JAVAH_EXECUTABLE} -jni
-          -classpath
-          "${CMAKE_CURRENT_SOURCE_DIR}/ecj-3.8.2.jar${sep}."
-          -d ${CMAKE_CURRENT_BINARY_DIR} JavaParser
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/JavaParser.java
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 add_custom_command(
+  OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.h
+  COMMAND ${Java_JAVAH_EXECUTABLE} -jni
+          -classpath
+          "${CMAKE_CURRENT_SOURCE_DIR}/ecj-3.8.2.jar${sep}."
+          -d ${CMAKE_CURRENT_BINARY_DIR} JavaParser
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/JavaParser.class
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_command(
   OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
-          ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.h
   COMMAND ${Java_JAVAC_EXECUTABLE} -cp
 	        "${CMAKE_CURRENT_SOURCE_DIR}/ecj-3.8.2.jar${sep}${CMAKE_CURRENT_SOURCE_DIR}${sep}."
           ${CMAKE_CURRENT_SOURCE_DIR}/JavaTraversal.java
           -d ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/JavaTraversal.java
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+add_custom_command(
+  OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.h
   COMMAND ${Java_JAVAH_EXECUTABLE} -jni
           -classpath
           "${CMAKE_CURRENT_SOURCE_DIR}/ecj-3.8.2.jar${sep}."
           -d ${CMAKE_CURRENT_BINARY_DIR} JavaTraversal
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/JavaTraversal.java
+  DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/JavaTraversal.class
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 # This is needed when distcheck compiles the code, I don't know why.

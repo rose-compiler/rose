@@ -195,7 +195,7 @@ message(STATUS "The ROSE SCM version Unix timestamp is ${ROSE_SCM_VERSION_UNIX_D
 #-------------------------------------------------------------------------------
 # Boost C++ Libraries
 #-------------------------------------------------------------------------------
-set(Boost_USE_STATIC_LIBS TRUE)        
+set(Boost_USE_STATIC_LIBS FALSE)        
 set(Boost_DEBUG TRUE)
 
 # Honor BOOST_HOME environment variable
@@ -229,17 +229,24 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 endif (WIN32)
 
-#Ensure that Boost is found
-# environment variable BOOST_ROOT can help to find a user-specified path to Boost
+# Ensure that Boost is found. Environment variable BOOST_ROOT can help to find a user-specified path to Boost.
 SET(Boost_ADDITIONAL_VERSIONS "1.36.0" "1.37" "1.37.0" "1.38.0" "1.39.0" "1.40.0" )
 find_package( Boost 1.36.0 COMPONENTS date_time filesystem iostreams program_options regex system wave thread REQUIRED)
-
-
 
 if(NOT Boost_FOUND)
     message(FATAL_ERROR "Could not find Boost version 1.35.0 or newer command")
 endif(NOT Boost_FOUND)
 include_directories(${Boost_INCLUDE_DIRS})
+
+# If the boost is compiled with multi-thread support then we must add "-pthread" to all compile and link commands, or whatever
+# is appropriate for the system.  With GCC it is not sufficient to just add "-lpthread" to the link commands--the "-pthread"
+# switch MUST be added to the compile commands as well.
+find_package(Threads)
+if(CMAKE_COMPILER_IS_GNUCXX AND ${CMAKE_USE_PTHREADS_INIT})
+  add_definitions(-pthread)
+endif()
+
+
 
 
 
@@ -570,6 +577,18 @@ if(enable-yices)
      An executable named /bin/yices should be under the specified prefix.")
 endif()
 
+set(ASSERTION_BEHAVIOR "exit" CACHE STRING
+  "Default behavior of failed assertions. Can be 'abort', 'exit', or 'throw'.")
+if(ASSERTION_BEHAVIOR STREQUAL "abort")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_ABORT")
+elseif(ASSERTION_BEHAVIOR STREQUAL "exit")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_EXIT")
+elseif(ASSERTION_BEHAVIOR STREQUAL "throw")
+  add_definitions("-DROSE_ASSERTION_BEHAVIOR=ROSE_ASSERTION_THROW")
+else()
+  message(FATAL_ERROR "ASSERTION_BEHAVIOR should be 'abort', 'exit', or 'throw'")
+endif()
+
 set(with-alternate_backend_Cxx_compiler "" CACHE STRING
   "Specify an alternative C++ back-end compiler")
 if(with-alternate_backend_Cxx_compiler)
@@ -870,7 +889,7 @@ endif (NOT WIN32)
 
 # define a global variable to collect all common linked third-party libraries for rose
 if (NOT WIN32)
-  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} )
+  set( link_with_libraries ${Boost_LIBRARIES} ${M_LIB} ${RT_LIB} ${CMAKE_THREAD_LIBS_INIT})
 else (NOT WIN32)
   set( link_with_libraries ${Boost_LIBRARIES}  shlwapi.lib psapi.lib)
 endif (NOT WIN32)

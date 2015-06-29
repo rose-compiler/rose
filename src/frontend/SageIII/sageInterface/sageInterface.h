@@ -115,8 +115,6 @@ namespace SageInterface
   // to support analysis information without constantly modifing the IR.
      DeclarationSets* buildDeclarationSets(SgNode*);
 
-
-
 //! An internal counter for generating unique SgName
 ROSE_DLL_API extern int gensym_counter;
 
@@ -600,6 +598,10 @@ bool isPostfixOperator( SgExpression* exp );
 //! Is an overloaded operator an index operator (also referred to as call or subscript operators). (e.g. X & operator()() or X & operator[]()).
 bool isIndexOperator( SgExpression* exp );
 
+// DQ (1/10/2014): Adding more general support for token based unparsing.
+//! Used to support token unparsing (when the output the trailing token sequence).
+SgStatement* lastStatementOfScopeWithTokenInfo (SgScopeStatement* scope, std::map<SgNode*,TokenStreamSequenceToNodeMapping*> & tokenStreamSequenceMap);
+
 //@}
 
 //------------------------------------------------------------------------
@@ -953,6 +955,8 @@ get_C_array_dimensions(const SgArrayType& arrtype, SgInitializedName& initname);
 ROSE_DLL_API bool isArrayReference(SgExpression* ref, SgExpression** arrayNameExp=NULL, std::vector<SgExpression*>** subscripts=NULL);
 
 
+//! Collect variable references in array types. The default NodeQuery::querySubTree() will miss variables referenced in array type's index list. e.g. double *buffer = new double[numItems] ;
+ROSE_DLL_API int collectVariableReferencesInArrayTypes (SgLocatedNode* root, Rose_STL_Container<SgNode*> & currentVarRefList);
 //! Has a UPC shared type of any kinds (shared-to-shared, private-to-shared, shared-to-private, shared scalar/array)? An optional parameter, mod_type_out, stores the first SgModifierType with UPC access information.
 /*!
  * Note: we classify private-to-shared as 'has shared' type for convenience here. It is indeed a private type in strict sense.
@@ -1039,6 +1043,13 @@ ROSE_DLL_API SgInitializedName* getLoopIndexVariable(SgNode* loop);
 //!Check if a SgInitializedName is used as a loop index within a AST subtree
 //! This function will use a bottom-up traverse starting from the subtree_root to find all enclosing loops and check if ivar is used as an index for either of them.
 ROSE_DLL_API bool isLoopIndexVariable(SgInitializedName* ivar, SgNode* subtree_root);
+
+//! Check if a for loop uses C99 style initialization statement with multiple expressions like for (int i=0, j=0; ..) or for (i=0,j=0;...)
+/*!
+   for (int i=0, j=0; ..) is stored as two variable declarations under SgForInitStatement's init_stmt member
+   for (i=0,j=0;...) is stored as a single expression statement, with comma expression (i=0,j=0).
+*/
+ROSE_DLL_API bool hasMultipleInitStatmentsOrExpressions (SgForStatement* for_loop);
 
 //! Routines to get and set the body of a loop
 ROSE_DLL_API SgStatement* getLoopBody(SgScopeStatement* loop);
@@ -1202,6 +1213,8 @@ std::vector<SgBreakStmt*> findBreakStmts(SgStatement* code, const std::string& f
   std::vector<SgGotoStatement*> findGotoStmts(SgStatement* scope, SgLabelStatement* l);
   std::vector<SgStatement*> getSwitchCases(SgSwitchStatement* sw);
 
+//! Collect all variable references in a subtree
+  void collectVarRefs(SgLocatedNode* root, std::vector<SgVarRefExp* >& result);
   //! Topdown traverse a subtree from root to find the first declaration given its name, scope (optional, can be NULL), and defining or nondefining flag.
   template <typename T>
   T* findDeclarationStatement(SgNode* root, std::string name, SgScopeStatement* scope, bool isDefining)
@@ -1546,8 +1559,8 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 //! Get next statement within the same scope of current statement
   ROSE_DLL_API SgStatement* getNextStatement(SgStatement * currentStmt);
 
-//! Get previous statement within the same scope of current statement
-  ROSE_DLL_API SgStatement* getPreviousStatement(SgStatement * currentStmt);
+//! Get previous statement of the current statement. It may return a previous statement of a parent scope by default (climbOutScope is true), otherwise only a previous statement of the same scope is returned.  
+  ROSE_DLL_API SgStatement* getPreviousStatement(SgStatement * currentStmt, bool climbOutScope = true);
 #if 0 //TODO
   // preorder traversal from current SgNode till find next SgNode of type V_SgXXX
   SgNode* getNextSgNode( const SgNode* currentNode, VariantT=V_SgNode);
@@ -1844,6 +1857,17 @@ ROSE_DLL_API void fixTemplateDeclaration(SgTemplateDeclaration* stmt, SgScopeSta
 
 //! A wrapper containing fixes (fixVariableDeclaration(),fixStructDeclaration(), fixLabelStatement(), etc) for all kinds statements. Should be used before attaching the statement into AST.
 ROSE_DLL_API void fixStatement(SgStatement* stmt, SgScopeStatement* scope);
+
+// DQ (6/11/2015): This reports the statements that are marked as transformed (used to debug the token-based unparsing).
+//! This collects the statements that are marked as transformed (useful in debugging).
+ROSE_DLL_API std::set<SgStatement*> collectTransformedStatements( SgNode* node );
+
+//! This collects the statements that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
+ROSE_DLL_API std::set<SgStatement*> collectModifiedStatements( SgNode* node );
+
+//! This collects the SgLocatedNodes that are marked as modified (a flag automatically set by all set_* generated functions) (useful in debugging).
+ROSE_DLL_API std::set<SgLocatedNode*> collectModifiedLocatedNodes( SgNode* node );
+
 //@}
 
 //! Update defining and nondefining links due to a newly introduced function declaration. Should be used after inserting the function into a scope.
@@ -1908,6 +1932,14 @@ ROSE_DLL_API void removeUnusedLabels(SgNode* top);
 //! Remove consecutive labels
 ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
 
+//! Merge a variable assignment statement into a matching variable declaration statement. Callers should make sure the merge is semantically correct (by not introducing compilation errors). This function simply does the merge transformation, without eligibility check.
+/*!
+ *  e.g.  int i;  i=10;  becomes int i=10;  the original i=10 will be deleted after the merge
+ *  if success, return true, otherwise return false (e.g. variable declaration does not match or already has an initializer)
+ *  The original assignment stmt will be removed by default
+ */
+ROSE_DLL_API bool mergeDeclarationAndAssignment (SgVariableDeclaration* decl, SgExprStatement* assign_stmt, bool removeAssignStmt = true);
+
 //! Replace an expression with a temporary variable and an assignment statement
 /*!
  Add a new temporary variable to contain the value of 'from'
@@ -1960,6 +1992,13 @@ ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfCatch(SgCatchOptionStmt* cos)
 //! Check if the body of a SgOmpBodyStatement is a SgBasicBlock, create one if not
 ROSE_DLL_API SgBasicBlock* ensureBasicBlockAsBodyOfOmpBodyStmt(SgOmpBodyStatement* ompbodyStmt);
 
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+//! Remove unused basic block IR nodes added as part of normalization.
+ROSE_DLL_API void cleanupNontransformedBasicBlockNode();
+
+// DQ (1/18/2015): This is added to support better quality token-based unparsing.
+//! Record where normalization have been done so that we can preform denormalizations as required for the token-based unparsing to generate minimal diffs.
+ROSE_DLL_API void recordNormalizations(SgStatement* s);
 
 //! Check if a statement is a (true or false) body of a container-like parent, such as For, Upc_forall, Do-while,
 //! switch, If, Catch, OmpBodyStmt, etc
@@ -2049,9 +2088,6 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
 
 // DQ (6/7/2012): Unclear where this function should go...
   bool hasTemplateSyntax( const SgName & name );
-
-//! Move a declaration to a scope which is the closest to the declaration's use places
-bool moveDeclarationToInnermostScope(SgDeclarationStatement* decl, bool debug/*= false */);
 
 #if 0
 

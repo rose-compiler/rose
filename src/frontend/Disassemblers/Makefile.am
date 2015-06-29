@@ -11,7 +11,7 @@ if ROSE_BUILD_BINARY_ANALYSIS_SUPPORT
    libroseDisassemblers_la_SOURCES =											\
 	SgAsmBlock.C SgAsmFunction.C											\
 	SgAsmInstruction.C SgAsmArmInstruction.C SgAsmPowerpcInstruction.C SgAsmX86Instruction.C SgAsmMipsInstruction.C	\
-	SgAsmM68kInstruction.C												\
+	SgAsmM68kInstruction.C x86InstructionProperties.C								\
 	SgAsmInterpretation.C SgAsmIntegerValueExpression.C SgAsmFloatValueExpression.C SgAsmExpression.C SgAsmType.C	\
 	BinaryDebugger.C Expressions.C Partitioner.C PStatistics.C IPDParser.C IPDUnparser.C Registers.C		\
         Disassembler.C DisassemblerArm.C DisassemblerMips.C DisassemblerM68k.C DisassemblerPowerpc.C DisassemblerX86.C	\
@@ -26,6 +26,7 @@ pkginclude_HEADERS =													\
 	BinaryDebugger.h Partitioner.h Registers.h BitPattern.h								\
 	Disassembler.h DisassemblerArm.h DisassemblerMips.h DisassemblerM68k.h DisassemblerPowerpc.h DisassemblerX86.h	\
 	Assembler.h AssemblerX86.h AssemblerX86Init.h									\
-	InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h
+	InstructionEnumsX86.h InstructionEnumsMips.h InstructionEnumsM68k.h x86InstructionProperties.h			\
+	armInstructionEnum.h powerpcInstructionEnum.h
 
 EXTRA_DIST = CMakeLists.txt dummyDisassembler.C

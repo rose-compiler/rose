@@ -10,34 +10,54 @@ Liao 4/11/2012
 //----------------------------------------------------
 // Device xomp_cuda_property retrieving functions
 
-extern struct DDE_data * DDE_head;
-extern struct DDE_data * DDE_tail;
+DDE** DDE_head;
+DDE** DDE_tail;
 
-cudaDeviceProp* xomp_cuda_prop = NULL; 
+void** xomp_cuda_prop; 
 bool xomp_verbose = false;
 
-// this can be called multiple times. But the xomp_cuda_prop variable will only be set once
-cudaDeviceProp * xomp_getCudaDeviceProp()
+void xomp_acc_init(void)
 {
-  if (xomp_cuda_prop == NULL )
+  cudaError_t err;
+  int maxDevice = 0;
+  err = cudaGetDeviceCount(&maxDevice);
+  if(err != cudaSuccess)
   {
-    xomp_cuda_prop = (cudaDeviceProp *) malloc(sizeof(cudaDeviceProp));
-    assert (xomp_cuda_prop != NULL);
+      fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+      exit(err);
+  }
+  DDE_head = (DDE**)malloc(sizeof(DDE*)*maxDevice);
+  DDE_tail = (DDE**)malloc(sizeof(DDE*)*maxDevice);
+  xomp_cuda_prop = (void**)malloc(sizeof(void*)*maxDevice);
+} 
+
+// this can be called multiple times. But the xomp_cuda_prop variable will only be set once
+cudaDeviceProp * xomp_getCudaDeviceProp(int devID)
+{
+  cudaDeviceProp* propPointer = NULL;
+  if (xomp_cuda_prop[devID] == NULL )
+  {
+    propPointer = (cudaDeviceProp *) malloc(sizeof(cudaDeviceProp));
+    xomp_cuda_prop[devID] = propPointer;
+    assert (xomp_cuda_prop[devID] != NULL);
     int count;
     cudaGetDeviceCount (&count);
     assert (count>=1); // must have at least one GPU here
-    cudaGetDeviceProperties  (xomp_cuda_prop, 0);
+    
+    cudaGetDeviceProperties  (propPointer, devID);
   }
-  return xomp_cuda_prop;
+  else
+    propPointer = (cudaDeviceProp *)xomp_cuda_prop[devID];
+  return propPointer;
 }
 
-void xomp_print_gpu_info()
+void xomp_print_gpu_info(int devID)
 {
-  int max_threads_per_block = xomp_getCudaDeviceProp()->maxThreadsPerBlock;
-  int max_blocks_per_grid_x = xomp_getCudaDeviceProp()->maxGridSize[0];
-  int global_memory_size =    xomp_getCudaDeviceProp()->totalGlobalMem;
-  int shared_memory_size =    xomp_getCudaDeviceProp()->sharedMemPerBlock;
-  int registers_per_block =   xomp_getCudaDeviceProp()->regsPerBlock;
+  int max_threads_per_block = xomp_getCudaDeviceProp(devID)->maxThreadsPerBlock;
+  int max_blocks_per_grid_x = xomp_getCudaDeviceProp(devID)->maxGridSize[0];
+  int global_memory_size =    xomp_getCudaDeviceProp(devID)->totalGlobalMem;
+  int shared_memory_size =    xomp_getCudaDeviceProp(devID)->sharedMemPerBlock;
+  int registers_per_block =   xomp_getCudaDeviceProp(devID)->regsPerBlock;
 
   printf ("Found a GPU with \n\tmax threads per block=%d, \n\tmax blocks for Grid X dimension=%d\n\
       \tglobal mem bytes =%d, \n\tshared mem bytes =%d, \n\tregs per block = %d\n",
@@ -46,15 +66,17 @@ void xomp_print_gpu_info()
 }
 // A helper function to probe physical limits based on GPU Compute Capability numbers
 // Reference: http://developer.download.nvidia.com/compute/cuda/CUDA_Occupancy_calculator.xls
-size_t xomp_get_maxThreadBlocksPerMultiprocessor()
+size_t xomp_get_maxThreadBlocksPerMultiprocessor(int devID)
 {
   int major, minor; 
-  major = xomp_getCudaDeviceProp()-> major;
-  minor = xomp_getCudaDeviceProp()-> minor;
+  major = xomp_getCudaDeviceProp(devID)-> major;
+  minor = xomp_getCudaDeviceProp(devID)-> minor;
   if (major <= 2) //1.x and 2.x: 8 blocks per multiprocessor
     return 8;
-  else if (minor <= 5)
+  else if (major == 3)
     return 16;
+  else if (major == 5)
+    return 32;
   else
   {
    printf("Error: xomp_get_maxThreadBlocksPerMultiprocessor(): unhandled Compute Capability numbers%d.%d \n", major, minor);
@@ -72,29 +94,29 @@ size_t xomp_get_maxThreadBlocksPerMultiprocessor()
 //  1) max-active-threads per multiprocessor 
 //  2) max active thread blocks per multiprocessor
 // So for 1-D block, max threads per block = maxThreadsPerMultiProcessor /  maxBlocks per multiprocessor
-size_t xomp_get_maxThreadsPerBlock()
+size_t xomp_get_maxThreadsPerBlock(int devID)
 {
   // this often causes oversubscription to the cores supported by GPU SM processors
   //return xomp_getCudaDeviceProp()->maxThreadsPerBlock;
   //return 128;
   // 2.0: 1536/8= 192 threads per block
   // 3.5 2048/16 = 128
-  return xomp_getCudaDeviceProp()->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor();
+  return xomp_getCudaDeviceProp(devID)->maxThreadsPerMultiProcessor / xomp_get_maxThreadBlocksPerMultiprocessor(devID);
 }
 
 /*
 * In order to ensure best performance, we setup max_block limitation here, so that each core in the GPU works on only one threads.
 * Use XOMP_accelerator_loop_default() runtime to support input data size that exceeds max_block*xomp_get_maxThreadsPerBlock().  
 */
-size_t xomp_get_max1DBlock(size_t s)
+size_t xomp_get_max1DBlock(int devID, size_t s)
 {
 #if 1  
-  size_t block_num = s/xomp_get_maxThreadsPerBlock();
-  if (s % xomp_get_maxThreadsPerBlock()!= 0)
+  size_t block_num = s/xomp_get_maxThreadsPerBlock(devID);
+  if (s % xomp_get_maxThreadsPerBlock(devID)!= 0)
      block_num ++;
   //return block_num;     
 
-  size_t max_block = xomp_getCudaDeviceProp()->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor();
+  size_t max_block = xomp_getCudaDeviceProp(devID)->multiProcessorCount* xomp_get_maxThreadBlocksPerMultiprocessor(devID);
 
   return block_num<max_block? block_num: max_block; 
 
@@ -113,28 +135,28 @@ size_t xomp_get_max1DBlock(size_t s)
 //    x <= maxThreadsDim[0],  1024
 //    y <= maxThreadsDim[1], 1024 
 //  maxThreadsDim[0] happens to be equal to  maxThreadsDim[1] so we use a single function to calculate max segments for both dimensions
-size_t xomp_get_max_threads_per_dimesion_2D ()
+size_t xomp_get_max_threads_per_dimesion_2D (int devID)
 {
 
-  int max_threads_per_block = xomp_getCudaDeviceProp()->maxThreadsPerBlock;
+  int max_threads_per_block = xomp_getCudaDeviceProp(devID)->maxThreadsPerBlock;
   // we equalize the number of threads in each dimension
   int max_threads_per_2d_dimension = (int)(sqrt((float)max_threads_per_block));  
   assert (max_threads_per_2d_dimension*max_threads_per_2d_dimension<= max_threads_per_block);
 
   // our assumption is that dim[0] == dim[1] so we handle x and y in one function
-  assert ( xomp_getCudaDeviceProp()->maxThreadsDim[0] == xomp_getCudaDeviceProp()->maxThreadsDim[1]);   
-  assert (max_threads_per_2d_dimension <= xomp_getCudaDeviceProp()->maxThreadsDim[0]);
+  assert ( xomp_getCudaDeviceProp(devID)->maxThreadsDim[0] == xomp_getCudaDeviceProp(devID)->maxThreadsDim[1]);   
+  assert (max_threads_per_2d_dimension <= xomp_getCudaDeviceProp(devID)->maxThreadsDim[0]);
   return max_threads_per_2d_dimension;
 }
 
 // return the max number of segments for a dimension (either x or y) of a 2D block
 // we define the number of segments to be  SIZE_of_Dimension_x/max_threads_x_dimension
-size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(size_t dimension_size)
+size_t xomp_get_maxSegmentsPerDimensionOf2DBlock(int devID, size_t dimension_size)
 {
   // For simplicity, we don't yet consider the factor of warp size for now
   // TODO: block size should be divisible by the warp size??
   // e.g. max threads per block is 1024, then max number of tiles per dimension in a 2D block is 1024^0.5 = 32 threads
-  size_t max_threads_per_2d_dimension = xomp_get_max_threads_per_dimesion_2D ();
+  size_t max_threads_per_2d_dimension = xomp_get_max_threads_per_dimesion_2D (devID);
   size_t block_num_x_or_y =  dimension_size/max_threads_per_2d_dimension;
   if (dimension_size % max_threads_per_2d_dimension != 0)
      block_num_x_or_y ++;
@@ -577,12 +599,19 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
   assert (src != NULL);
   assert (desc != NULL);
 
+  desc-> size = (int*)malloc(sizeof(int) * src->nDim); 
+  desc-> offset = (int*)malloc(sizeof(int) * src->nDim); 
+  desc-> DimSize = (int*)malloc(sizeof(int) * src->nDim);
+  desc->nDim = src->nDim;
+  desc->typeSize = src->typeSize;
+
   desc->address = src->address;
   int i;
-  for(i = 0; i < desc->nDim; ++i) 
+  for(i = 0; i < src->nDim; ++i) 
   {
     desc->size[i]= src->size[i]; 
     desc->offset[i]= src->offset[i]; 
+    desc->DimSize[i]= src->DimSize[i]; 
   }
   desc->dev_address = src ->dev_address; 
    // we do not want to inherit the copy directions or map-type of parent DDE's variable
@@ -593,15 +622,16 @@ void copy_mapped_variable (struct XOMP_mapped_variable* desc, struct XOMP_mapped
 // create a new DDE-data node and 
 // append it to the end of the tracking list, and 
 // copy all variables from its parent node to be into the set of inherited variable set.
-void xomp_deviceDataEnvironmentEnter()
+void xomp_deviceDataEnvironmentEnter(int devID)
 {
   // create a new DDE node and initialize it
-  struct DDE_data * data = (struct DDE_data *) malloc (sizeof (struct DDE_data));
+  DDE * data = (DDE *) malloc (sizeof (DDE));
   assert (data!=NULL);
   data->new_variable_count = 0;
   data->inherited_variable_count = 0;
   data->parent = NULL;
   data->child= NULL;
+  data->devID= devID;
 
   // For simplicity, we pre-allocate the storage for the list of variables
   // TODO: improve the efficiency
@@ -610,20 +640,20 @@ void xomp_deviceDataEnvironmentEnter()
 
   // Append the data to the list
   // Case 1: empty list, add as the first node, nothing else to do
-  if (DDE_tail == NULL)
+  if (DDE_tail[devID] == NULL)
   {
-    assert (DDE_head == NULL );
-    DDE_head = data;
-    DDE_tail = data;
+    assert (DDE_head[devID] == NULL );
+    DDE_head[devID] = data;
+    DDE_tail[devID] = data;
     return; 
   }
 
   // Case 2: non-empty list
   // create double links
-  data->parent = DDE_tail; 
-  DDE_tail->child = data;
+  data->parent = DDE_tail[devID]; 
+  DDE_tail[devID]->child = data;
   // shift the tail
-  DDE_tail = data;
+  DDE_tail[devID] = data;
 
   // copy all variables from its parent node into the inherited variable set. 
   // Both new and inherited variables of the parent node become inherited for the current node
@@ -636,7 +666,7 @@ void xomp_deviceDataEnvironmentEnter()
   for (i = 0; i < data->parent->new_variable_count; i++)
   {
     struct XOMP_mapped_variable* dest_element  = data->inherited_variables + offset;
-    struct DDE_data* p = data->parent;
+    DDE* p = data->parent;
     struct XOMP_mapped_variable* src_element  =  p->new_variables + i;
 
     copy_mapped_variable(dest_element, src_element);
@@ -655,17 +685,17 @@ void xomp_deviceDataEnvironmentEnter()
 
 // Check if an original  variable is already mapped in enclosing data environment, return its device variable's address if yes.
 // return NULL if not
-void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
+void* xomp_deviceDataEnvironmentGetInheritedVariable (int devID, void* orig_var, int typeSize, int* size)
 {
   void * dev_address = NULL; 
   assert (orig_var != NULL);
   int i; 
   // At this point, DDE list should not be empty
   // At least a call to XOMP_Device_Data_Environment_Enter() should have finished before
-  assert ( DDE_tail != NULL );
-  for (i = 0; i < DDE_tail->inherited_variable_count; i++)
+  assert ( DDE_tail[devID] != NULL );
+  for (i = 0; i < DDE_tail[devID]->inherited_variable_count; i++)
   {
-    struct XOMP_mapped_variable* cur_var = DDE_tail->inherited_variables + i; 
+    struct XOMP_mapped_variable* cur_var = DDE_tail[devID]->inherited_variables + i; 
     if (cur_var->address == orig_var)
     {
       dev_address = cur_var-> dev_address;
@@ -673,7 +703,7 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
       int matched = 1;
       for(i=0; i < cur_var->nDim; ++i)
       {
-        if(cur_var->size[i] != size[i])
+        if(cur_var->size[i]*typeSize != size[i]*typeSize)
            matched = 0;
       }
       if(matched)
@@ -684,16 +714,17 @@ void* xomp_deviceDataEnvironmentGetInheritedVariable (void* orig_var, int* size)
 }
 
 //! Add a newly mapped variable into the current DDE's new variable list
-void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, void * dev_addr, bool copyTo, bool copyFrom)
+void xomp_deviceDataEnvironmentAddVariable (int devID, void* var_addr, int* var_size, int* var_offset, int* var_dim, int nDim, int typeSize, void * dev_addr, bool copyTo, bool copyFrom)
 {
   // TODO: sanity check to avoid add duplicated variable or inheritable variable
-  assert ( DDE_tail != NULL );
-  struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + DDE_tail->new_variable_count ;
+  assert ( DDE_tail[devID] != NULL );
+  struct XOMP_mapped_variable* mapped_var = DDE_tail[devID]->new_variables + DDE_tail[devID]->new_variable_count ;
   mapped_var-> address = var_addr;
   mapped_var-> size = (int*)malloc(sizeof(int) * nDim); 
   mapped_var-> offset = (int*)malloc(sizeof(int) * nDim); 
   mapped_var-> DimSize = (int*)malloc(sizeof(int) * nDim);
   mapped_var->nDim = nDim; 
+  mapped_var->typeSize = typeSize; 
   int i;
   for(i = 0; i < nDim; ++i)
   { 
@@ -705,26 +736,27 @@ void xomp_deviceDataEnvironmentAddVariable (void* var_addr, int* var_size, int* 
   mapped_var-> copyTo= copyTo; 
   mapped_var-> copyFrom= copyFrom; 
   // now move up the offset
-  DDE_tail->new_variable_count ++;
+  DDE_tail[devID]->new_variable_count ++;
 }
 
-void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim, int typeSize)
 {
   int offset_src;
   int offset_dest;
   assert (ndim <= 3);
   if(ndim == 1)
   {
-     xomp_memcpyDeviceToHost((char*)dest, (char*)src+voffset[0], vsize[0]);
+     xomp_memcpyDeviceToHost((char*)dest+voffset[0]*typeSize, (char*)src, vsize[0]*typeSize);
   }
   else  if(ndim == 2)
   {
+// vsize[1] stores the fastest-access dimension
      int j;
-     for(j=0; j < vsize[1]; ++j)
+     for(j=0; j < vsize[0]; ++j)
      {
-       offset_dest  = voffset[1] + (j + voffset[1]) * vDimSize[0];
-       offset_src = j  * vsize[0];
-       xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       offset_dest  = voffset[1] + (j + voffset[0]) * vDimSize[1];
+       offset_src = j  * vsize[1];
+       xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[1]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -738,29 +770,29 @@ void xomp_memGatherDeviceToHost(void* dest, void* src, int* vsize, int* voffset,
        {
          offset_dest  += vDimSize[0];
          offset_src += vsize[0];
-         xomp_memcpyDeviceToHost((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+         xomp_memcpyDeviceToHost((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
        } 
      }
   }
 }
 
-void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim)
+void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset, int* vDimSize, int ndim, int typeSize)
 {
   int offset_src;
   int offset_dest;
   assert (ndim <= 3);
   if(ndim == 1)
   {
-     xomp_memcpyHostToDevice((char*)dest, (char*)src+voffset[0], vsize[0]);
+     xomp_memcpyHostToDevice((char*)dest, (char*)src+voffset[0]*typeSize, vsize[0]*typeSize);
   }
   else  if(ndim == 2)
   {
      int j;
-     for(j=0; j < vsize[1]; ++j)
+     for(j=0; j < vsize[0]; ++j)
      {
-       offset_src  = voffset[1] + (j + voffset[1]) * vDimSize[0];
-       offset_dest = j  * vsize[0];
-       xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+       offset_src  = voffset[1] + (j + voffset[0]) * vDimSize[1];
+       offset_dest = j  * vsize[1];
+       xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[1]*typeSize);
      } 
   }
   else  if(ndim == 3)
@@ -768,34 +800,39 @@ void xomp_memScatterHostToDevice(void* dest, void* src, int* vsize, int* voffset
      int i,j;
      for(j=0; j < vsize[2]; ++j)
      {
-       offset_src = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2])) - vDimSize[0];
-       offset_dest = vsize[1] * (j * vsize[2]) - vsize[0];
+       //offset_src = voffset[0] + vDimSize[0]*( voffset[1] + vDimSize[1] * (j + voffset[2]) -1);
+       offset_src = (j+voffset[2])*vDimSize[0]*vDimSize[1] + voffset[1]*vDimSize[0] + voffset[0] - vDimSize[0];
+       offset_dest = j * vsize[1] * vsize[2] - vsize[0];
        for(i=0; i < vsize[1]; ++i)
        {
          offset_src  += vDimSize[0];
          offset_dest += vsize[0];
-         xomp_memcpyHostToDevice((char*)dest+offset_dest, (char*)src+offset_src, vsize[0]);
+         xomp_memcpyHostToDevice((char*)dest+offset_dest*typeSize, (char*)src+offset_src*typeSize, vsize[0]*typeSize);
        } 
      }
   }
 }
 
 // All-in-one function to prepare device variable
-void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address, int nDim, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
+void* xomp_deviceDataEnvironmentPrepareVariable(int devID, void* original_variable_address, int nDim, int typeSize, int* vsize, int* voffset, int* vDimSize, bool copy_into, bool copy_back)
 {
   // currently only handle one dimension
   void* dev_var_address = NULL; 
-  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (original_variable_address, vsize);
+  dev_var_address = xomp_deviceDataEnvironmentGetInheritedVariable (devID, original_variable_address, typeSize, vsize);
   if (dev_var_address == NULL)
   {
-    dev_var_address = xomp_deviceMalloc(vsize[0]);
-    xomp_deviceDataEnvironmentAddVariable (original_variable_address, vsize, voffset, vDimSize, nDim, dev_var_address, copy_into, copy_back);
-
+    int devSize = 1;
+    for(int i=0; i < nDim; ++i)
+    {
+      devSize *= vsize[i];
+    }
+    dev_var_address = xomp_deviceMalloc(devSize*typeSize);
+    xomp_deviceDataEnvironmentAddVariable (devID, original_variable_address, vsize, voffset, vDimSize, nDim, typeSize, dev_var_address, copy_into, copy_back);
     // The spec says : reuse enclosing data and discard map-type rule.
     // So map-type only matters when no-reuse happens
     if (copy_into)
     {
-      xomp_memScatterHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim);
+      xomp_memScatterHostToDevice(dev_var_address, original_variable_address, vsize, voffset, vDimSize, nDim, typeSize);
     //  xomp_memcpyHostToDevice(dev_var_address, original_variable_address, vsize[0]);
     }
   }
@@ -804,20 +841,20 @@ void* xomp_deviceDataEnvironmentPrepareVariable(void* original_variable_address,
 }
 
 // Exit current DDE: copy back values if specified, deallocate memory, delete the DDE-data node from the end of the tracking list
-void xomp_deviceDataEnvironmentExit()
+void xomp_deviceDataEnvironmentExit(int devID)
 {
-  assert ( DDE_tail != NULL );
+  assert ( DDE_tail[devID] != NULL );
 
   // Deallocate mapped device variables which are allocated by this current DDE
   // Optionally copy the value back to host if specified.
   int i; 
-  for (i = 0; i < DDE_tail->new_variable_count; i++)
+  for (i = 0; i < DDE_tail[devID]->new_variable_count; i++)
   {
-    struct XOMP_mapped_variable* mapped_var = DDE_tail->new_variables + i;
+    struct XOMP_mapped_variable* mapped_var = DDE_tail[devID]->new_variables + i;
     void * dev_address = mapped_var->dev_address;
     if (mapped_var->copyFrom)
     {
-       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((void *)mapped_var->dev_address), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim);
+       xomp_memGatherDeviceToHost(((void *)((char*)mapped_var->address)),((void *)((char *)mapped_var->dev_address)), mapped_var->size,mapped_var->offset,mapped_var->DimSize, mapped_var->nDim,mapped_var->typeSize);
        //xomp_memcpyDeviceToHost(((void *)((char*)mapped_var->address+mapped_var->offset[0])),((const void *)mapped_var->dev_address), mapped_var->size[0]);
     }
     // free after copy back!!
@@ -825,23 +862,23 @@ void xomp_deviceDataEnvironmentExit()
   }
 
   // Deallocate pre-allocated variable lists
-  free (DDE_tail->new_variables);
-  free (DDE_tail->inherited_variables);
+  free (DDE_tail[devID]->new_variables);
+  free (DDE_tail[devID]->inherited_variables);
   
   // Delete the node from the tail
-  struct DDE_data * parent = DDE_tail->parent; 
+  DDE * parent = DDE_tail[devID]->parent; 
   if (parent != NULL)
   {
-    assert (DDE_tail == parent->child); 
-    DDE_tail = parent; 
+    assert (DDE_tail[devID] == parent->child); 
+    DDE_tail[devID] = parent; 
     free (parent->child);
     parent->child = NULL;
   }
   else // last node in the list
   {
-    free (DDE_tail);
-    DDE_head = NULL;
-    DDE_tail = NULL;
+    free (DDE_tail[devID]);
+    DDE_head[devID] = NULL;
+    DDE_tail[devID] = NULL;
   }  
 }
 

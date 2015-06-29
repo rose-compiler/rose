@@ -223,11 +223,11 @@ set_target_properties(ROSE_DLL PROPERTIES
 )
 
 add_dependencies(ROSE_DLL
-  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf generate_stringify
+  OMPPARSER ROSE_PREPROCESSOR ${edg_lib} libhpdf
   generate_rosePublicConfig poet)
 
 
-########### next target ###############
+########### next targets ###############
 remove_definitions(-DROSE_DLL_EXPORTS)
 add_executable(testSharedRoseLib testRoseLib.C)
 target_link_libraries(testSharedRoseLib

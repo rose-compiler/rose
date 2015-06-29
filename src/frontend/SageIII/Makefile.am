@@ -12,7 +12,7 @@ include $(srcdir)/sage_support/Makefile_variables
 # use relative paths.
 #
 #mptPartialRedundancyEliminationPath=$(srcdir)/partialRedundancyElimination#
-fSageSupportPath=sage_support#
+fSageSupportPath=$(srcdir)/sage_support#
 
 # DQ (6/25/2011): Readded this directory so that we can support the older behavior as a default
 # although this will likely fail at least some of the nearly one hundred new name qualification tests.

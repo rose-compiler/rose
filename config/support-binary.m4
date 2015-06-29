@@ -91,9 +91,6 @@ ROSE_SUPPORT_DWARF
 # Setup Automake conditional in --- (not yet distributed)
 AM_CONDITIONAL(ROSE_USE_DWARF,test ! "$with_dwarf" = no)
 
-AC_ARG_ENABLE(assembly-semantics, AS_HELP_STRING([--enable-assembly-semantics], [Enable semantics-based analysis of assembly code]))
-AM_CONDITIONAL(ROSE_USE_ASSEMBLY_SEMANTICS, [test "x$enable_assembly_semantics" = xyes])
-
 # Xen and Ether [RPM 2009-10-28]
 AC_ARG_WITH(ether,
         [  --with-ether=PATH   prefix of Xen/Ether installation
@@ -107,12 +104,13 @@ AC_SUBST(ETHER_PREFIX)
 AM_CONDITIONAL(ROSE_USE_ETHER,test "$with_ether" != "no")
 
 # libgcrypt is used for computing SHA1 hashes of binary basic block semantics, among other things. [RPM 2010-05-12]
-AC_CHECK_HEADERS(gcrypt.h)
+AC_CHECK_HEADERS(gcrypt.h,,[HAVE_GCRYPT=yes],[HAVE_GCRYPT=no])
 AC_CHECK_LIB(gpg-error,gpg_strerror) dnl needed by statically linked libgcrypt
 AC_CHECK_LIB(gcrypt,gcry_check_version)
+AM_CONDITIONAL([HAS_LIBRARY_GCRYPT], [test "x$HAVE_GCRYPT" = "xyes"])
 
-# Multi-thread support is needed by the simulator.  This also enables/disables major parts of threadSupport.[Ch] within
-# the ROSE library.
+# Check for POSIX threads.  Just because we have POSIX threads does not necessarily mean that the user wants ROSE
+# to be compiled with multi-thread support.  See also "--with-boost-thread" configure switch.
 AC_CHECK_HEADERS(pthread.h)
 
 # Check for the __thread keyword.  This type qualifier creates objects that are thread local.

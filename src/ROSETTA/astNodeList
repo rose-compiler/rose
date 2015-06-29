@@ -229,6 +229,7 @@ SgAsmProgramHeader
 SgAsmProgramHeaderList
 SgAsmRegisterNames
 SgAsmRegisterReferenceExpression
+SgAsmRiscOperation
 SgAsmScalarType
 SgAsmSectionHeader
 SgAsmSectionHeaderList
@@ -484,6 +485,7 @@ SgNaryBooleanOp
 SgNaryComparisonOp
 SgNewExp
 SgNode
+SgNoexceptOp
 SgNotEqualOp
 SgNotOp
 SgNonMembershipOp
@@ -661,6 +663,7 @@ SgTypeLongDouble
 SgTypeLongLong
 SgTypeModifier
 SgTypeNullptr
+SgTypeOfType
 SgTypeShort
 SgTypeSigned128bitInteger
 SgTypeSignedChar

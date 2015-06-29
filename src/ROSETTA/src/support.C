@@ -544,6 +544,10 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("SgFile::outputLanguageOption_enum","language","= SgFile::e_default_output_language",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, COPY_DATA);
 
+  // DQ (1/10/2015): We need to save a pointer to the SgSourceFile to support the token based unparsing efficiently.
+     Unparse_Info.setDataPrototype("SgSourceFile*","current_source_file","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype           ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
 
@@ -569,17 +573,26 @@ Grammar::setUpSupport ()
      BaseClass.setDataPrototype               ( "SgBaseClassModifier*", "baseClassModifier", "= NULL",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, CLONE_PTR);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added support for name qualification.
+  // BaseClass.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      BaseClass.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // BaseClass.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      BaseClass.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/11/2011): Added information required for new name qualification support.
+  // BaseClass.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      BaseClass.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      ExpBaseClass.setDataPrototype ( "SgExpression*", "base_class_exp", "= NULL",
                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1036,6 +1049,15 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "std::string"  , "unparse_output_filename", "= \"\"",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (4/17/2015): Adding support to save the original specification of the object file name from the command line (as specified using the "-o" option).
+  // This is required for multiple file support which is using the "-o" option to specify the executable name when linking.  We have to split up the 
+  // command so that we can call ROSE seperately with each file to generate a new source file and then call the backend compiler to generate the object 
+  // file, and then call the linker seperately to using the object files to generate the named executable.
+     File.setDataPrototype         ( "std::string" , "objectFileNameWithPath", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "std::string" , "objectFileNameWithoutPath", "= \"\"",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // DQ (2/2/2003): Added to support -E and -H options (calling the backend directly)
      File.setDataPrototype         ( "bool", "useBackendOnly", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1247,13 +1269,23 @@ Grammar::setUpSupport ()
      File.setDataPrototype         ( "bool", "read_instructions_only", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/23/2015): This must be static because ASM statments can exist in GNU statement expressions 
+  // within typeof operators which then causes the ASM statement to not be traversed as part of the 
+  // AST (beccause it is hidden in a type (and types are not traversed).  The unparsing of the ASM 
+  // statement checks this flag (skip_unparse_asm_commands) since unparsing of ASM is architecture
+  // dependent and a special problem for the portability of the ROSE regression tests (e.g. on older
+  // versions of MAC OS which were non-x86). The solution is to make this a static boolean flag so
+  // that we need not find the SgFile object via a traversal upwards in the AST through the parent 
+  // pointers.
   // DQ (1/10/2009): The C language ASM statements are providing significant trouble, they are
   // frequently machine specific and we are compiling then on architectures for which they were
   // not designed.  This option allows then to be read, constructed in the AST to support analysis
   // but not unparsed in the code given to the backend compiler, since this can fail. (See
   // test2007_20.C from Linux Kernel for an example).
-     File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File.setDataPrototype         ( "bool", "skip_unparse_asm_commands", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype         ( "static bool", "skip_unparse_asm_commands", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (2/3/2009): For a library archive, these are the name of the object files it contains.
   // This information is obtained via "ar -vox <archive>", and saving and reading the list.
@@ -1314,10 +1346,6 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "skipAstConsistancyTests", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
-     Project.setDataPrototype("bool", "appendPID", "= false",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
 
   // DQ (4/28/2014): This might be improved it it were moved to the translator directly.  The result
   // would be the demonstration of a more general mechansim requireing no modification to ROSE directly.
@@ -1326,6 +1354,16 @@ Grammar::setUpSupport ()
   // in ROSE).  In general we would need a more flexible mechanism than adding a flag to ROSE.
   // File.setDataPrototype ("bool", "shared_memory_dsl", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (4/17/2015): Adding multifile handling support for commandline generation.
+     File.setDataPrototype ("bool", "multifile_support", "= false",
+                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (5/24/2015): Record if optimization is specified on the command line (later maybe also save what level).
+  // This is required to set the __OPTIMIZED__ macro (to follow the GNU API).  See test2015_153.c.
+     File.setDataPrototype("bool", "optimization", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 
 
   // ******************************************************************************
@@ -1953,6 +1991,9 @@ Grammar::setUpSupport ()
      Project.setDataPrototype("bool", "suppressConstantFoldingPostProcessing", "= false",
             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // Pei-Hung (8/6/2014): This option -rose:appendPID appends PID into the temporary output name to avoid issues in parallel compilation. 
+     Project.setDataPrototype("bool", "appendPID", "= false",
+            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      Attribute.setDataPrototype    ( "std::string"  , "name", "= \"\"",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2297,17 +2338,26 @@ Specifiers that can have only one value (implemented with a protected enum varia
      TemplateArgument.setDataPrototype     ( "bool", "explicitlySpecified", "= true",
                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/14/2011): Added support for name qualification.
+  // TemplateArgument.setDataPrototype ( "int", "name_qualification_length", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype ( "int", "name_qualification_length", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/14/2011): Added information required for new name qualification support.
+  // TemplateArgument.setDataPrototype("bool","type_elaboration_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool","type_elaboration_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/14/2011): Added information required for new name qualification support.
+  // TemplateArgument.setDataPrototype("bool","global_qualification_required","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool","global_qualification_required","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 1
   // DQ (5/4/2013): These variables are needed to reproduce the way that we handle types 
   // in function parameters and allow the same technique to be used for template arguments.
@@ -2316,26 +2366,38 @@ Specifiers that can have only one value (implemented with a protected enum varia
   // unparseFunctionParameterDeclaration() and the template argument handling in 
   // function unparseTemplateArgument().
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (12/20/2006): Record if global name qualification is required on the type.
   // See test2003_01.C for an example of where this is required. Note that for a
   // variable declaration (SgVariableDeclaration) this information is recorded directly
   // on the SgVariableDeclaration node.  This use on the InitializedName is reserved for
   // function parameters, and I am not sure if it is useful anywhere else.
+  // TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool", "requiresGlobalNameQualificationOnType", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                 NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
   // (not the SgInitializedName itself since it might be referenced from several places, I think).
+  // TemplateArgument.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+  //        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
-            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateArgument.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
+  //                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      TemplateArgument.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
   // DQ (4/2/2007): Added list as separate IR node to support mixing of lists and data members in IR nodes in ROSETTA.
