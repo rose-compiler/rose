@@ -611,6 +611,11 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_158.c \
      test2015_160.c \
      test2015_161.c \
+     test2015_163.c \
+     test2015_164.c \
+     test2015_165.c \
+     test2015_166.c \
+     test2015_167.c \
      $(EXTRA_OS_SPECIFIC_SOURCE_FILES)
 
 # DQ (4/11/2015): New failing tests:
