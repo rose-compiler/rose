@@ -32,12 +32,13 @@ private:
     template<typename Word>
     rose_addr_t pushArgcArgvEnvAuxv(RSIM_Process*, FILE *trace, SgAsmElfFileHeader*, rose_addr_t sp, rose_addr_t execfn_va);
 
+public:
+    static void syscall_default_leave(RSIM_Thread*, int);
+
 protected:
     rose_addr_t segmentTableVa(SgAsmElfFileHeader *fhdr) const;
 
     // System calls that are common to both Linux 32- and 64-bit.
-    static void syscall_default_leave(RSIM_Thread*, int);
-
     static void syscall_accept_helper(RSIM_Thread*, int guestSrcFd, rose_addr_t addrVa, rose_addr_t addrLenVa, unsigned flags);
 
     static void syscall_access_enter(RSIM_Thread *t, int callno);
