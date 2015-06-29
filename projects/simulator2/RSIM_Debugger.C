@@ -9,9 +9,14 @@
 #include "BaseSemantics2.h"
 #include <Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
-#include <readline/readline.h>
-#include <readline/history.h>
 #include <stringify.h>
+
+#ifdef ROSE_HAVE_LIBREADLINE
+# include <readline/readline.h>
+# include <readline/history.h>
+#else
+# include <rose_getline.h>
+#endif
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
@@ -160,7 +165,14 @@ public:
                 }
             } r;
 
+#if ROSE_HAVE_LIBREADLINE
             r.readline_buf = readline(prompt.c_str());
+#else
+            size_t nAlloc = 0;
+            if (0==rose_getline(&r.readline_buf, &nAlloc, stdin))
+                r.readline_buf = NULL;
+#endif
+
             if (!r.readline_buf)
                 return std::vector<std::string>(1, "quit");
             char *s = r.readline_buf;
@@ -168,7 +180,9 @@ public:
             if ('#'==*s || !*s)
                 continue;
 
+#if ROSE_HAVE_LIBREADLINE
             add_history(r.readline_buf);
+#endif
             return splitCommand(s);
         }
     }
