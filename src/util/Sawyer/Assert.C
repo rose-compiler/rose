@@ -19,6 +19,8 @@ AssertFailureHandler assertFailureHandler;
 SAWYER_EXPORT void
 fail(const char *mesg, const char *expr, const std::string &note, const char *filename, unsigned linenum, const char *funcname)
 {
+    initializeLibrary();
+
     if (!Message::assertionStream)
         Message::assertionStream = Message::mlog[Message::FATAL];
 
