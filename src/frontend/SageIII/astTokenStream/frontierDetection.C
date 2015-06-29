@@ -7,7 +7,8 @@
 // DQ (11/29/2013): Added to support marking of redundant mappings of statements to token streams.
 #include "tokenStreamMapping.h"
 
-#include "frontierDetection.h"
+// DQ (12/4/2014): This is redundant with being included in "tokenStreamMapping.h".
+// #include "frontierDetection.h"
 
 #include "previousAndNextNode.h"
 
@@ -196,7 +197,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           bool forceUnparseFromTokenStream = false;
           bool forceUnparseFromAST         = false;
 #endif
-
+#if 0
+          printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
+#endif
        // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
        // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
        // variable so that all regression tests can be processed to mix the unparsing of 
@@ -305,6 +308,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
        // AstAttribute::AttributeNodeInfo* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
        // AstAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+          printf ("Adding attribute: test 1: blue \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
@@ -636,12 +642,15 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 
                if (statement != NULL)
                   {
+#if 0
+                    printf ("Adding attribute: test 2: green \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
             else
              {
-            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unarpsed from the token stream.
+            // DQ (11/30/2013): We need to build a frontier even if the whole AST is to be unparsed from the token stream.
                SgGlobal* globalScope = isSgGlobal(n);
                if (globalScope != NULL)
                   {
@@ -654,7 +663,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"blue\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
-
+#if 0
+                    printf ("Adding attribute: test 3: blue \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -810,6 +821,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"red\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+                    printf ("Adding attribute: test 4: red \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
                  else
@@ -1045,6 +1059,10 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+     std::set<SgStatement*> transformedStatementSet = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In frontierDetectionForTokenStreamMapping(): transformedStatementSet.size() = %zu \n",transformedStatementSet.size());
+#endif
+#if 0
   // Debugging (this set in the constructor).
      printf ("numberOfNodes = %d \n",fdTraversal.numberOfNodes);
 #endif
@@ -1107,6 +1125,9 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
              }
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( statement, name, options);
 
+#if 0
+          printf ("Adding attribute: test 5: skyblue or greenyellow \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
@@ -1182,7 +1203,7 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
   // Now traverse the AST and record the linked list of nodes to be unparsed as tokens and from the AST.
-  // So that we can query next and last statements and determin if they were unparsed from the token 
+  // So that we can query next and last statements and determine if they were unparsed from the token 
   // stream or the AST.  Not clear if the edges of token-stream/AST unparsing should be unparsed from the 
   // token stream leading trailing token information or from the AST using the attached CPP info.
 
@@ -1259,6 +1280,19 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+  // SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     printf ("In frontierDetectionForTokenStreamMapping(): Output dot file for project \n");
+
+     generateDOTforMultipleFile(*project);
+#endif
+
+#if 0
      printf ("Exiting as a test! \n");
      ROSE_ASSERT(false);
 #endif
@@ -1324,13 +1358,18 @@ FrontierDetectionForTokenStreamMappingAttribute::additionalNodeInfo()
 AstAttribute*
 FrontierDetectionForTokenStreamMappingAttribute::copy()
    {
-  // Support for the coping of AST and associated attributes on each IR node (required for attributes 
+  // Support for the copying of AST and associated attributes on each IR node (required for attributes 
   // derived from AstAttribute, else just the base class AstAttribute will be copied).
 
+#if 0
      printf ("Error: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
      ROSE_ASSERT(false);
 
      return new FrontierDetectionForTokenStreamMappingAttribute(*this);
+#else
+     printf ("Warning: FrontierDetectionForTokenStreamMappingAttribute::copy(): not implemented! \n");
+     return NULL;
+#endif
    }
 
 #if 0

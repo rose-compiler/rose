@@ -607,9 +607,14 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                            ROSE_ASSERT(newinit != NULL);
                            // printf ("MoveDeclarationsToFirstUseVisitor::visit(): newinit = %p = %s \n",newinit,newinit->class_name().c_str());
                            ROSE_ASSERT(newinit->get_type() != NULL);
+
                            SgAssignInitializer* i = new SgAssignInitializer(SgNULL_FILE,newinit,newinit->get_type());
                            i->set_endOfConstruct(SgNULL_FILE);
                            // printf ("Built a SgAssignInitializer #1 \n");
+
+                        // DQ (4/6/2015): Adding testing of isTransformed flag (testing for consistancy).
+                        // printf ("MoveDeclarationsToFirstUseVisitor: Testing 1: i = %p = %s testing: i->isTransformation() = %s \n",i,i->class_name().c_str(),i->isTransformation() ? "true" : "false");
+
                            vars[vari]->set_initializer(i);
                            stmts[initi] = decl;
                            newinit->set_parent(i);
@@ -619,8 +624,12 @@ class MoveDeclarationsToFirstUseVisitor: public AstSimpleProcessing
                            i->set_parent(in);
                            ROSE_ASSERT(i->get_parent() != NULL);
 
-                           i->set_file_info(new Sg_File_Info(*(newinit->get_file_info())));
+                        // DQ (4/6/2015): We should not need to build another Sg_File_Info object here becasue one was already build in the constructor.
+                        // i->set_file_info(new Sg_File_Info(*(newinit->get_file_info())));
                            ROSE_ASSERT(i->get_file_info() != NULL);
+
+                        // DQ (4/6/2015): Adding testing of isTransformed flag (testing for consistancy).
+                        // printf ("MoveDeclarationsToFirstUseVisitor: Testing 2: i = %p = %s testing: i->isTransformation() = %s \n",i,i->class_name().c_str(),i->isTransformation() ? "true" : "false");
 
                            // Assumes only one var per declaration FIXME
                            ROSE_ASSERT (vars.size() == 1);
@@ -751,26 +760,53 @@ SgInitializedNamePtrList findInitializedNamesInScope(SgScopeStatement* scope) {
 
 // Combined procedure for cleaning up code after inlining.  Does not do
 // variable renaming or block flattening, however.
-void cleanupInlinedCode(SgNode* top) {
-    simpleCopyAndConstantPropagation(top);
-    SageInterface::removeJumpsToNextStatement(top);
-    SageInterface::removeUnusedLabels(top);
-    RemoveNullStatementsVisitor().traverse(top, postorder);
-    MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
-    FindInitializedNames fin;
-    fin.traverse(top, preorder);
-    for (SgInitializedNamePtrList::iterator i = fin.ls.begin(); i != fin.ls.end(); ++i) {
-        doSubexpressionExpansionSmart(*i);
-    }
-    simpleCopyAndConstantPropagation(top);
-    RemoveNullStatementsVisitor().traverse(top, postorder);
+void cleanupInlinedCode(SgNode* top) 
+   {
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+  // SgGlobal* globalScope = TransformationSupport::getGlobalScope(top);
+  // ROSE_ASSERT(globalScope != NULL);
+     ROSE_ASSERT(isSgProject(top) != NULL);
+     checkTransformedFlagsVisitor(top);
+
+     simpleCopyAndConstantPropagation(top);
+     SageInterface::removeJumpsToNextStatement(top);
+     SageInterface::removeUnusedLabels(top);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(top);
+
+     RemoveNullStatementsVisitor().traverse(top, postorder);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(top);
+
+     MoveDeclarationsToFirstUseVisitor().traverse(top, postorder);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(top);
+
+     FindInitializedNames fin;
+     fin.traverse(top, preorder);
+     for (SgInitializedNamePtrList::iterator i = fin.ls.begin(); i != fin.ls.end(); ++i) 
+        {
+          doSubexpressionExpansionSmart(*i);
+        }
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(top);
+
+     simpleCopyAndConstantPropagation(top);
+     RemoveNullStatementsVisitor().traverse(top, postorder);
 
     // Make sure the AST is consistent. To save time, we'll just fix things that we know can go wrong. For instance, the
     // SgAsmExpression.p_lvalue data member is required to be true for certain operators and is set to false in other
     // situations. Since we've introduced new expressions into the AST we need to adjust their p_lvalue according to the
     // operators where they were inserted.
-    markLhsValues(top);
-}
+     markLhsValues(top);
+
+  // DQ (4/6/2015): Adding check for isTransformed flag consistancy.
+     checkTransformedFlagsVisitor(top);
+   }
 
 void removeNullStatements(SgNode* top) {
   RemoveNullStatementsVisitor().traverse(top, postorder);
@@ -796,4 +832,34 @@ class ChangeAllMembersToPublicVisitor: public AstSimpleProcessing {
 void changeAllMembersToPublic(SgNode* top) {
   ChangeAllMembersToPublicVisitor().traverse(top, preorder);
 }
+
+
+// Find all used variable declarations.
+class CheckTransformedFlagsVisitor: public AstSimpleProcessing 
+   {
+     public:
+          virtual void visit(SgNode* n) 
+             {
+               SgLocatedNode* locatedNode = isSgLocatedNode(n);
+               if (locatedNode != NULL)
+                  {
+#if 0
+                    printf ("CheckTransformedFlagsVisitor: Found locatedNode = %p = %s \n",locatedNode,locatedNode->class_name().c_str());
+#endif
+                    if (locatedNode->isTransformation() == true)
+                       {
+#if 0
+                         printf ("Found locatedNode = %p = %s as transformation \n",locatedNode,locatedNode->class_name().c_str());
+                      // ROSE_ASSERT(false);
+#endif
+                       }
+                  }
+             }
+   };
+
+void checkTransformedFlagsVisitor(SgNode* e) 
+   {
+     CheckTransformedFlagsVisitor traversal;
+     traversal.traverse(e, preorder);
+   }
 

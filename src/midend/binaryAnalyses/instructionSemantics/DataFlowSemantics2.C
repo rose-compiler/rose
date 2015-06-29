@@ -372,9 +372,9 @@ RiscOperators::insertDataFlowEdge(const AbstractLocation &source, const Abstract
                                   DataFlowEdge::EdgeType edgeType) {
     // Try to find existing vertices.  This is a linear traversal because abstract locations for memory addresses
     // don't have relational operators (they might be symbolic expressions or other user-defined types).
-    DataFlowGraph::VertexNodeIterator sourceIter = dflow_.vertices().end();
-    DataFlowGraph::VertexNodeIterator targetIter = dflow_.vertices().end();
-    for (DataFlowGraph::VertexNodeIterator iter=dflow_.vertices().begin(); iter!=dflow_.vertices().end(); ++iter) {
+    DataFlowGraph::VertexIterator sourceIter = dflow_.vertices().end();
+    DataFlowGraph::VertexIterator targetIter = dflow_.vertices().end();
+    for (DataFlowGraph::VertexIterator iter=dflow_.vertices().begin(); iter!=dflow_.vertices().end(); ++iter) {
         const AbstractLocation &vertex = iter->value();
         if (sourceIter == dflow_.vertices().end()) {
             if (vertex.mustAlias(source))
@@ -435,6 +435,8 @@ RiscOperators::writeRegister(const RegisterDescriptor &reg, const BaseSemantics:
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                           const BaseSemantics::SValuePtr &dflt_, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return dflt_;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr dflt = MultiSemantics::SValue::promote(dflt_);
@@ -460,6 +462,8 @@ RiscOperators::readMemory(const RegisterDescriptor &segreg, const BaseSemantics:
 void
 RiscOperators::writeMemory(const RegisterDescriptor &segreg, const BaseSemantics::SValuePtr &addr_,
                            const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) {
+    if (cond->is_number() && !cond->get_number())
+        return;
     TemporarilyDeactivate deactivate(this, innerDomainId_);
     MultiSemantics::SValuePtr addr = MultiSemantics::SValue::promote(addr_);
     MultiSemantics::SValuePtr data = MultiSemantics::SValue::promote(data_);

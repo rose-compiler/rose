@@ -1,5 +1,5 @@
-#ifndef RD_LATTICE_H
-#define RD_LATTICE_H
+#ifndef LV_LATTICE_H
+#define LV_LATTICE_H
 
 #include "Labeler.h"
 #include "VariableIdMapping.h"

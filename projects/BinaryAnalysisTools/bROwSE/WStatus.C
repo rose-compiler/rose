@@ -4,7 +4,7 @@
 #include <Color.h>                                      // ROSE
 #include <Diagnostics.h>                                // ROSE
 #include <InsnSemanticsExpr.h>                          // ROSE
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/SharedPointer.h>
 #include <sys/resource.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
@@ -313,7 +313,7 @@ WStatus::redraw() {
 
     // Semantics info
     {
-        Sawyer::PoolAllocator &exprPool = BinaryAnalysis::InsnSemanticsExpr::TreeNode::poolAllocator();
+        Sawyer::SynchronizedPoolAllocator &exprPool = BinaryAnalysis::InsnSemanticsExpr::TreeNode::poolAllocator();
         std::pair<size_t, size_t> exprAllocs = exprPool.nAllocated();
         wSemanticsAllocated_->setText(numberToString(exprAllocs.first));
         wSemanticsReserved_->setText(numberToString(exprAllocs.second));

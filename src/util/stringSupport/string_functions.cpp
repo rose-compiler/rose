@@ -525,6 +525,9 @@ StringUtility::cEscape(const std::string &s) {
             case '\"':
                 result += "\\\"";
                 break;
+            case '\\':
+                result += "\\\\";
+                break;
             default:
                 if (isprint(ch)) {
                     result += ch;
@@ -605,6 +608,8 @@ StringUtility::unsignedToHex2(uint64_t value, size_t nbits)
 string
 StringUtility::addrToString(uint64_t value, size_t nbits)
 {
+    if (0 == nbits)
+        nbits = value > 0xffffffff ? 64 : 32;
     return toHex2(value, nbits, false, false);
 }
 

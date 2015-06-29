@@ -8,7 +8,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
-#include <sawyer/GraphBoost.h>
+#include <Sawyer/GraphBoost.h>
 
 class SgNode;
 class SgAsmBlock;
@@ -1044,7 +1044,7 @@ ControlFlow::write_graphviz(std::ostream &out, const CFG &cfg,
             SgNode *node = get_ast_node(cfg, f.vertices.front());
             SgAsmFunction *func = SageInterface::getEnclosingNode<SgAsmFunction>(node, true);
             char cluster_name[64];
-            sprintf(cluster_name, "cluster_F%"PRIx64, func->get_entry_va());
+            sprintf(cluster_name, "cluster_F%" PRIx64, func->get_entry_va());
             out <<"  subgraph " <<cluster_name <<" {\n"
                 <<"    style=filled;\n"
                 <<"    color=lightgrey;\n"

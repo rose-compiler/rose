@@ -309,6 +309,10 @@ Grammar::setUpNodes ()
   // QY: we need a boolean flag for tracking the updates to an ast node
      Node.setDataPrototype("bool","isModified","= false",
                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (12/3/2014): We need a concept of contains modified code so that we can support the unparsing from the token stream.
+     Node.setDataPrototype("bool","containsTransformation","= false",
+                           NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
  
 #if 0
   // DQ (7/23/2005): Remove this flag since it is no longer used.  It is not particularly eligant to store 
@@ -373,6 +377,10 @@ Grammar::setUpNodes ()
      Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTypes","",
             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+  // DQ (9/7/2014): Added support for template headers as part of name qualification.
+     Node.setDataPrototype("static std::map<SgNode*,std::string>","globalQualifiedNameMapForTemplateHeaders","",
+            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (6/3/2011): Names of types that can have embedded qualified names have names that are dependent 
   // upon the location where they are referenced.  This map stored the generated names of such types
   // which are then used in the unparsing.  This is relevant only for C++ and is a part of the name 
@@ -431,6 +439,11 @@ Grammar::setUpNodes ()
      LocatedNode.setFunctionPrototype      ( "HEADER_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
      LocatedNode.setFunctionSource         ( "SOURCE_ATTRIBUTE_SUPPORT", "../Grammar/Support.code");
 #endif
+
+  // DQ (1/15/2015): We need a concept of transformation restricted to the addition or deletion or transformation of the surounding comments and CPP directives.
+     LocatedNode.setDataPrototype("bool","containsTransformationToSurroundingWhitespace","= false",
+                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+ 
 
   // DQ (3/24/2007): Added support for tokens in the IR.
   // Token.setPredeclarationString ("HEADER_TOKEN_PREDECLARATION" , "../Grammar/LocatedNode.code");
@@ -914,18 +927,27 @@ Grammar::setUpNodes ()
      InitializedName.setDataPrototype("bool", "protected_declaration", "= false",
                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added support for name qualification on the type referenced by the InitializedName
   // (not the SgInitializedName itself since it might be referenced from several places, I think).
+  // InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype ( "int", "name_qualification_length_for_type", "= 0",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("bool","type_elaboration_required_for_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/11/2015): Skip building of access functions (because it sets the isModified flag, not wanted for the name qualification step).
   // DQ (5/12/2011): Added information required for new name qualification support.
+  // InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
+  //            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      InitializedName.setDataPrototype("bool","global_qualification_required_for_type","= false",
-                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #if 0
   // DQ (11/18/2013): Added final to support Java (which can use it to represent const function parameters in function declarations).
   // This support is represented as a declaration modifier (but that is not sufficient for use in function parameters).

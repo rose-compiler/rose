@@ -8,6 +8,7 @@
 
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_START
 #include "InstructionEnumsX86.h" /* register numbers, instruction size, etc. */
+class RegisterDictionary;
 HEADER_BINARY_X86_INSTRUCTION_PREDECLARATION_END
 
 HEADER_BINARY_ARM_INSTRUCTION_PREDECLARATION_START
@@ -41,7 +42,7 @@ class RegisterDictionary;
 HEADER_INTERPRETATION_PREDECLARATION_END
 
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_START
-#include <sawyer/BitVector.h>
+#include <Sawyer/BitVector.h>
 HEADER_CONSTANT_EXPRESSION_PREDECLARATION_END
 
 HEADER_BINARY_INSTRUCTION_PREDECLARATION_START
@@ -101,7 +102,7 @@ HEADER_INTERPRETATION_END
 
 HEADER_BINARY_INSTRUCTION_START
         public:
-		static const int64_t INVALID_STACK_DELTA;
+                static const int64_t INVALID_STACK_DELTA;
 
                 SgAsmInstruction* cfgBinFlowOutEdge(const VirtualBinCFG::AuxiliaryInformation* info);
                 std::vector<VirtualBinCFG::CFGEdge> cfgBinOutEdges(const VirtualBinCFG::AuxiliaryInformation* info);
@@ -129,7 +130,7 @@ HEADER_BINARY_INSTRUCTION_START
                                                             const MemoryMap *initial_memory=NULL);
                 virtual size_t get_size() const;
                 virtual bool isUnknown() const;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_INSTRUCTION_END
 
 
@@ -198,7 +199,7 @@ HEADER_FLOAT_VALUE_EXPRESSION_START
         public:
                 SgAsmFloatValueExpression(): p_nativeValue(0.0), p_nativeValueIsValid(true) {}
                 SgAsmFloatValueExpression(double nativeValue, SgAsmType*);
-		SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
+                SgAsmFloatValueExpression(const Sawyer::Container::BitVector&,SgAsmType*);
                 void set_nativeValue(double);
                 double get_nativeValue() const;
                 void updateBitVector();
@@ -211,6 +212,68 @@ HEADER_EXPRESSION_START
         public:
                 size_t get_nBits() const;
 HEADER_EXPRESSION_END
+
+
+
+HEADER_RISC_OPERATION_START
+        public:
+                // One enum per RISC operator.  The names are the same as the RISC operator.  Note that some of these
+                // operators aren't normally part of the base set. For instance, "subtract" and comparison operations
+                // are usually implemented in terms of more basic operations like add_, invert, and equalToZero.
+                enum RiscOperator {
+                        OP_NONE,
+			OP_undefined,
+                        OP_filterCallTarget,
+                        OP_filterReturnTarget,
+                        OP_filterIndirectJumpTarget,
+                        OP_hlt,
+                        OP_cpuid,
+                        OP_rdtsc,
+                        OP_and_,
+                        OP_or_,
+                        OP_xor_,
+                        OP_invert,
+                        OP_extract,
+                        OP_concat,
+                        OP_leastSignificantSetBit,
+                        OP_mostSignificantSetBit,
+                        OP_rotateLeft,
+                        OP_rotateRight,
+                        OP_shiftLeft,
+                        OP_shiftRight,
+                        OP_shiftRightArithmetic,
+                        OP_equalToZero,
+                        OP_ite,
+                        OP_isEqual,
+                        OP_isNotEqual,
+                        OP_isUnsignedLessThan,
+                        OP_isUnsignedLessThanOrEqual,
+                        OP_isUnsignedGreaterThan,
+                        OP_isUnsignedGreaterThanOrEqual,
+                        OP_isSignedLessThan,
+                        OP_isSignedLessThanOrEqual,
+                        OP_isSignedGreaterThan,
+                        OP_isSignedGreaterThanOrEqual,
+                        OP_unsignedExtend,
+                        OP_signExtend,
+                        OP_add,		// two args + optional carry bit
+                        OP_addCarries,  // carries from a 3-arg add operation
+                        OP_subtract,
+                        OP_negate,
+                        OP_signedDivide,
+                        OP_signedModulo,
+                        OP_signedMultiply,
+                        OP_unsignedDivide,
+                        OP_unsignedModulo,
+                        OP_unsignedMultiply,
+                        OP_interrupt,
+                        OP_readRegister,
+                        OP_writeRegister,
+                        OP_readMemory,  //  three or four args depending on whether segment register is present
+                        OP_writeMemory, //  ditto
+                        OP_N_OPERATORS  // must be last
+                };
+HEADER_RISC_OPERATION_END
 
 
 
@@ -3618,6 +3681,11 @@ HEADER_DOS_EXTENDED_HEADER_END
 
 HEADER_BINARY_X86_INSTRUCTION_START
         public:
+                static X86InstructionSize instructionSizeForWidth(size_t);
+                static size_t widthForInstructionSize(X86InstructionSize);
+                static const RegisterDictionary* registersForInstructionSize(X86InstructionSize);
+                static const RegisterDictionary* registersForWidth(size_t);
+
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
                                                 rose_addr_t *target, rose_addr_t *ret) ROSE_OVERRIDE;
@@ -3626,18 +3694,12 @@ HEADER_BINARY_X86_INSTRUCTION_START
                 virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
                 virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) ROSE_OVERRIDE;
                 virtual bool getBranchTarget(rose_addr_t *target/*out*/) ROSE_OVERRIDE;
-                virtual bool hasEffect() ROSE_OVERRIDE;
-                virtual bool hasEffect(const std::vector<SgAsmInstruction*>&, bool allow_branch=false,
-                                       bool relax_stack_semantics=false) ROSE_OVERRIDE;
-                virtual std::vector<std::pair<size_t,size_t> >
-                    findNoopSubsequences(const std::vector<SgAsmInstruction*>& insns, bool allow_branch=false,
-                                         bool relax_stack_semantics=false) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                             bool* complete,
                                                             const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
                 virtual bool isUnknown() const;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_X86_INSTRUCTION_END
 
 
@@ -3647,7 +3709,7 @@ HEADER_BINARY_POWERPC_INSTRUCTION_START
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const;
+                virtual unsigned get_anyKind() const;
 HEADER_BINARY_POWERPC_INSTRUCTION_END
 
 
@@ -3657,7 +3719,7 @@ HEADER_BINARY_ARM_INSTRUCTION_START
                 virtual bool terminatesBasicBlock() ROSE_OVERRIDE;
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_ARM_INSTRUCTION_END
 
 
@@ -3674,7 +3736,7 @@ HEADER_BINARY_MIPS_INSTRUCTION_START
                 virtual std::set<rose_addr_t> getSuccessors(bool* complete) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
                 virtual bool getBranchTarget(rose_addr_t *target) ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_MIPS_INSTRUCTION_END
 
 
@@ -3693,7 +3755,7 @@ HEADER_BINARY_M68K_INSTRUCTION_START
                                                             bool* complete,
                                                             const MemoryMap *initial_memory=NULL) ROSE_OVERRIDE;
                 virtual bool isUnknown() const ROSE_OVERRIDE;
-		virtual unsigned get_anyKind() const ROSE_OVERRIDE;
+                virtual unsigned get_anyKind() const ROSE_OVERRIDE;
 HEADER_BINARY_M68K_INSTRUCTION_END
 
 
@@ -3788,7 +3850,7 @@ HEADER_BINARY_FUNCTION_DECLARATION_START
                 // NOTE: If you add more here, then fix Partitioner::parse_switches()
                 //       Also fix SgAsmFunction::reason_key()
                 FUNC_NONE        = 0x00000000,  /**< Used for initialization; not a bit flag. */
-		FUNC_EXCEPTION_HANDLER
+                FUNC_EXCEPTION_HANDLER
                                  = 0x00008000,  /**< Function for handling an exception. */
                 FUNC_ENTRY_POINT = 0x00010000,  /**< An entry point specified in the file header. */
                 FUNC_CALL_TARGET = 0x00020000,  /**< Target of a function call instruction sequence in the CFG. When used as

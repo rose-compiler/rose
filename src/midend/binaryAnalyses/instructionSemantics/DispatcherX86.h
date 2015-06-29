@@ -7,19 +7,36 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Dispatcher
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
 protected:
+    X86InstructionSize processorMode_;
+
     // Prototypical constructor
-    DispatcherX86() {}
+    DispatcherX86()
+        : BaseSemantics::Dispatcher(32, SgAsmX86Instruction::registersForInstructionSize(x86_insnsize_32)),
+          processorMode_(x86_insnsize_32) {}
+
+    // Prototypical constructor
+    DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
 
     // Normal constructor
-    explicit DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops): BaseSemantics::Dispatcher(ops) {
-        set_register_dictionary(RegisterDictionary::dictionary_pentium4());
+    DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
+          processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
         regcache_init();
         iproc_init();
     }
+
+public:
 
     /** Loads the iproc table with instruction processing functors. This normally happens from the constructor. */
     void iproc_init();
@@ -30,11 +47,32 @@ protected:
 public:
     /** Cached register. This register is cached so that there are not so many calls to Dispatcher::findRegister(). The
      *  register descriptor is updated only when the register dictionary is changed (see set_register_dictionary()).
+     *
+     *  Register names like REG_anyAX have sizes that depend on the architecture: 16 bits for 16-bit architectures, 32 bits for
+     *  32-bit architectures, etc.  The other register names have specific sizes--such as REG_EAX being 32 bits--and are
+     *  defined only on architectures that support them.
+     *
      * @{ */
-    RegisterDescriptor REG_EAX, REG_EBX, REG_ECX, REG_EDX, REG_EDI, REG_EIP, REG_ESI, REG_ESP, REG_EBP;
-    RegisterDescriptor REG_AX, REG_CX, REG_DX, REG_AL, REG_AH;
-    RegisterDescriptor REG_EFLAGS, REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_ZF;
-    RegisterDescriptor REG_DS, REG_ES, REG_SS;
+    RegisterDescriptor REG_anyAX, REG_anyBX, REG_anyCX, REG_anyDX;
+    RegisterDescriptor REG_RAX,   REG_RBX,   REG_RCX,   REG_RDX;
+    RegisterDescriptor REG_EAX,   REG_EBX,   REG_ECX,   REG_EDX;
+    RegisterDescriptor REG_AX,    REG_BX,    REG_CX,    REG_DX;
+    RegisterDescriptor REG_AL,    REG_BL,    REG_CL,    REG_DL;
+    RegisterDescriptor REG_AH,    REG_BH,    REG_CH,    REG_DH;
+
+    RegisterDescriptor REG_R8,    REG_R9,    REG_R10,   REG_R11;
+    RegisterDescriptor REG_R12,   REG_R13,   REG_R14,   REG_R15;
+
+    RegisterDescriptor REG_anyDI, REG_anySI, REG_anySP, REG_anyBP, REG_anyIP;
+    RegisterDescriptor REG_RDI,   REG_RSI,   REG_RSP,   REG_RBP,   REG_RIP;
+    RegisterDescriptor REG_EDI,   REG_ESI,   REG_ESP,   REG_EBP,   REG_EIP;
+    RegisterDescriptor REG_DI,    REG_SI,    REG_SP,    REG_BP,    REG_IP;
+
+    RegisterDescriptor REG_CS, REG_DS, REG_ES, REG_SS, REG_FS, REG_GS;
+
+    RegisterDescriptor REG_anyFLAGS, REG_RFLAGS, REG_EFLAGS, REG_FLAGS;
+    RegisterDescriptor REG_AF, REG_CF, REG_DF, REG_OF, REG_PF, REG_SF, REG_TF, REG_ZF;
+
     RegisterDescriptor REG_ST0, REG_FPSTATUS, REG_FPSTATUS_TOP, REG_FPCTL, REG_MXCSR;
     /** @}*/
 
@@ -44,14 +82,26 @@ public:
         return DispatcherX86Ptr(new DispatcherX86);
     }
 
+    /** Construct a prototyipcal dispatcher. Construct a prototypical dispatcher with a specified address size. The only thing
+     * this dispatcher can be used for is to create another dispatcher with the virtual @ref create method. */
+    static DispatcherX86Ptr instance(size_t addrWidth, const RegisterDictionary *regs=NULL) {
+        return DispatcherX86Ptr(new DispatcherX86(addrWidth, regs));
+    }
+
     /** Constructor. */
-    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops) {
-        return DispatcherX86Ptr(new DispatcherX86(ops));
+    static DispatcherX86Ptr instance(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth,
+                                     const RegisterDictionary *regs=NULL) {
+        return DispatcherX86Ptr(new DispatcherX86(ops, addrWidth, regs));
     }
 
     /** Virtual constructor. */
-    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops) const ROSE_OVERRIDE {
-        return instance(ops);
+    virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
+                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+        if (0==addrWidth)
+            addrWidth = addressWidth();
+        if (NULL==regs)
+            regs = get_register_dictionary();
+        return instance(ops, addrWidth, regs);
     }
 
     /** Dynamic cast to a DispatcherX86Ptr with assertion. */
@@ -61,11 +111,22 @@ public:
         return retval;
     }
 
+    /** CPU mode of operation.
+     *
+     * @{ */
+    X86InstructionSize processorMode() const { return processorMode_; }
+    void processorMode(X86InstructionSize m) { processorMode_ = m; }
+    /** @} */
+
     virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
 
     /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
+
+    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
+
+    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
 
     virtual int iproc_key(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
@@ -73,10 +134,18 @@ public:
         return insn->get_kind();
     }
 
-    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=32) ROSE_OVERRIDE;
+    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
-    /** Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
+    /** Architecture-specific read from register.
+     *
+     *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
+
+    /** Architecture-specific write to register.
+     *
+     *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
+     *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
+    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);
@@ -104,15 +173,17 @@ public:
      *  whether we just executed the instruction, and is usually the return value from the previous repEnter() call. If @p
      *  in_loop is false then this function is a no-op. Otherwise, the ECX register is decremented and, if it is non-zero and
      *  the repeat condition (true, equal, or not-equal) is satisified, then the EIP register is reset to the specified
-     *  instruction address causing the instruction to be repeated. Use this in conjunction with repEnter(). */
-    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va);
+     *  instruction address causing the instruction to be repeated. Use this in conjunction with repEnter().  The REP and REPE
+     *  prefixes are shared, both represented by x86_repeat_repe, and we use the honorZeroFlag to decide whether the prefix is
+     *  REP (false) or REPE (true). */
+    virtual void repLeave(X86RepeatPrefix, const BaseSemantics::SValuePtr &in_loop, rose_addr_t insn_va, bool honorZeroFlag);
 
     /** Adds two values and adjusts flags.  This method can be used for subtraction if @p b is two's complement and @p
      *  invertCarries is set.  If @p cond is supplied, then the addition and flag adjustments are conditional.
      * @{ */
-    virtual BaseSemantics::SValuePtr doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+    virtual BaseSemantics::SValuePtr doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                                                     bool invertCarries, const BaseSemantics::SValuePtr &carryIn);
-    virtual BaseSemantics::SValuePtr doAddOperation(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
+    virtual BaseSemantics::SValuePtr doAddOperation(BaseSemantics::SValuePtr a, BaseSemantics::SValuePtr b,
                                                     bool invertCarries, const BaseSemantics::SValuePtr &carryIn,
                                                     const BaseSemantics::SValuePtr &cond);
     /** @}*/
@@ -150,8 +221,50 @@ public:
 
     /** Pop the top item from the floating point stack. */
     virtual void popFloatingPoint();
+
+    /** Extend or truncate value to propert memory address width. */
+    virtual BaseSemantics::SValuePtr fixMemoryAddress(const BaseSemantics::SValuePtr &address) const;
+
+    /** Convert a signed value to a narrower unsigned type.  Returns the truncated source value except when the value cannot
+     *  be represented in the narrower type, in which case the closest unsigned value is returned (zero or all bits set). */
+    virtual BaseSemantics::SValuePtr saturateSignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
+
+    /** Convert a signed value to a narrower signed type.  Returns the truncated source value except when the value cannot be
+     * represented by the narrower type, in which case the closest signed value is returned. The closest signed value is either
+     * 0b1000...0 (minimum signed value) or 0b0111...1 (maximum signed value). */
+    virtual BaseSemantics::SValuePtr saturateSignedToSigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
+
+    /** Convert an unsigned value to a narrower unsigned type.  Returns the truncated source value except when the value cannot
+     * be represented by the narrower type, in which case the closest unsigned value is returned. */
+    virtual BaseSemantics::SValuePtr saturateUnsignedToUnsigned(const BaseSemantics::SValuePtr&, size_t narrowerWidth);
 };
         
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Instruction processors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+namespace X86 {
+
+/** Base class for all x86 instruction processors.
+ *
+ *  This class provides single-letter names for some types that are used in all instructions: D, I, A, and Ops for the
+ *  dispatcher raw pointer, instruction pointer, argument list pointer, and RISC operators raw pointer.  It also takes care
+ *  of advancing the instruction pointer prior to handing the instruction to the subclass, which by the way is done via
+ *  @ref p method (short for "process").  See examples in DispatcherX86.C -- there are <em>lots</em> of them. */
+class InsnProcessor: public BaseSemantics::InsnProcessor {
+public:
+    typedef DispatcherX86 *D;
+    typedef BaseSemantics::RiscOperators *Ops;
+    typedef SgAsmX86Instruction *I;
+    typedef const SgAsmExpressionPtrList &A;
+    virtual void p(D, Ops, I, A) = 0;
+    virtual void process(const BaseSemantics::DispatcherPtr&, SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void assert_args(I insn, A args, size_t nargs);
+    void check_arg_width(D d, I insn, A args);
+};
+
+} // namespace
+
 } // namespace
 } // namespace
 } // namespace

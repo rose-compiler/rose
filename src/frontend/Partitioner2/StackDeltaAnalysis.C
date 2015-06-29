@@ -3,8 +3,8 @@
 #include <BinaryDataFlow.h>
 #include <Partitioner2/DataFlow.h>
 #include <Partitioner2/Partitioner.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/SharedPointer.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/SharedPointer.h>
 #include <SymbolicSemantics2.h>
 
 using namespace rose::Diagnostics;
@@ -14,12 +14,42 @@ namespace rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
 
+void
+Partitioner::forgetStackDeltas() const {
+    BOOST_FOREACH (const BasicBlock::Ptr &bb, basicBlocks()) {
+        bb->stackDeltaIn().clear();
+        bb->stackDeltaOut().clear();
+        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+            insn->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
+    }
+    BOOST_FOREACH (const Function::Ptr &func, functions()) {
+        func->stackDelta().clear();
+    }
+}
+
+void
+Partitioner::forgetStackDeltas(const Function::Ptr &function) const {
+    ASSERT_not_null(function);
+    BOOST_FOREACH (rose_addr_t va, function->basicBlockAddresses()) {
+        ControlFlowGraph::ConstVertexIterator vertex = findPlaceholder(va);
+        if (vertex != cfg().vertices().end() && vertex->value().type() == V_BASIC_BLOCK) {
+            if (BasicBlock::Ptr bb = vertex->value().bblock()) {
+                bb->stackDeltaIn().clear();
+                bb->stackDeltaOut().clear();
+                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                    insn->set_stackDelta(SgAsmInstruction::INVALID_STACK_DELTA);
+            }
+        }
+    }
+    function->stackDelta().clear();
+}
+
 // Determines when to perform interprocedural dataflow.  We want stack delta analysis to be interprocedural only if the called
 // function has no stack delta.
 struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
     const Partitioner &partitioner;
     InterproceduralPredicate(const Partitioner &partitioner): partitioner(partitioner) {}
-    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeNodeIterator &callEdge, size_t depth) {
+    bool operator()(const ControlFlowGraph &cfg, const ControlFlowGraph::ConstEdgeIterator &callEdge, size_t depth) {
         if (depth > partitioner.stackDeltaInterproceduralLimit())
             return false;
         ASSERT_require(callEdge != cfg.edges().end());
@@ -169,7 +199,7 @@ public:
     // Required by dataflow engine: compute new output state given a vertex and input state.
     State::Ptr operator()(const P2::DataFlow::DfCfg &dfCfg, size_t vertexId, const State::Ptr &incomingState) const {
         State::Ptr retval = State::promote(incomingState->clone());
-        P2::DataFlow::DfCfg::ConstVertexNodeIterator vertex = dfCfg.findVertex(vertexId);
+        P2::DataFlow::DfCfg::ConstVertexIterator vertex = dfCfg.findVertex(vertexId);
         ASSERT_require(vertex != dfCfg.vertices().end());
         if (P2::DataFlow::DfCfgVertex::FAKED_CALL == vertex->value().type()) {
             // Adjust the stack pointer as if the function call returned.  If we know the function delta then use it, otherwise
@@ -262,7 +292,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     
     // Create the CFG that we'll use for dataflow.
-    ControlFlowGraph::ConstVertexNodeIterator cfgStart = findPlaceholder(function->address());
+    ControlFlowGraph::ConstVertexIterator cfgStart = findPlaceholder(function->address());
     if (cfgStart == cfg_.vertices().end()) {
         SAWYER_MESG(mlog[ERROR]) <<"functionStackDeltas: " <<function->printableName()
                                  <<" entry block is not attached to the CFG/AUM\n";
@@ -279,14 +309,20 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     }
     InterproceduralPredicate ip(*this);
     P2::DataFlow::DfCfg dfCfg = P2::DataFlow::buildDfCfg(*this, cfg_, cfgStart, ip);
-    P2::DataFlow::DfCfg::VertexNodeIterator dfCfgStart = dfCfg.findVertex(0);
+    P2::DataFlow::DfCfg::VertexIterator dfCfgStart = dfCfg.findVertex(0);
     BaseSemantics::DispatcherPtr cpu = newDispatcher(ops);
+    if (cpu==NULL) {
+        mlog[DEBUG] <<"  no instruction semantics for this architecture\n";
+        forgetStackDeltas(function);
+        function->stackDelta() = retval;
+        return retval;
+    }
     BinaryAnalysis::DataFlow df(cpu);
 
     // Dump the CFG for debugging
     if (mlog[DEBUG]) {
         using namespace Sawyer::Container::Algorithm;
-        BOOST_FOREACH (const P2::DataFlow::DfCfg::VertexNode &vertex, dfCfg.vertices()) {
+        BOOST_FOREACH (const P2::DataFlow::DfCfg::Vertex &vertex, dfCfg.vertices()) {
             mlog[DEBUG] <<"  Vertex #" <<vertex.id() <<" [";
             if (BasicBlock::Ptr bb = vertex.value().bblock())
                 mlog[DEBUG] <<" " <<bb->printableName();
@@ -304,7 +340,7 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
                     mlog[DEBUG] <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
             }
             mlog[DEBUG] <<"    successor vertices {";
-            BOOST_FOREACH (const P2::DataFlow::DfCfg::EdgeNode &edge, vertex.outEdges())
+            BOOST_FOREACH (const P2::DataFlow::DfCfg::Edge &edge, vertex.outEdges())
                 mlog[DEBUG] <<" " <<edge.target()->id();
             mlog[DEBUG] <<" }\n";
         }
@@ -317,8 +353,9 @@ Partitioner::functionStackDelta(const Function::Ptr &function) const {
     Engine engine(dfCfg, xfer);
     try {
         engine.runToFixedPoint(dfCfgStart->id(), xfer.initialState());
-    } catch (const BaseSemantics::Exception&) {
-        SAWYER_MESG(trace) <<" = BOTTOM (semantics exception)\n";
+    } catch (const BaseSemantics::Exception &e) {
+        SAWYER_MESG(trace) <<" = BOTTOM (semantics exception: " <<e.what() <<")\n";
+        forgetStackDeltas(function);
         retval = ops->undefined_(bitsPerWord);
         function->stackDelta() = retval;
         return retval;

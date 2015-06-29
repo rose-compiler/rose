@@ -1,7 +1,9 @@
 #ifndef Rose_YicesSolver_H
 #define Rose_YicesSolver_H
 
+#include "rosePublicConfig.h"
 #include "SMTSolver.h"
+#include <Sawyer/Map.h>
 
 #ifdef ROSE_HAVE_LIBYICES
 #  include <yices_c.h>
@@ -26,6 +28,9 @@ public:
         LM_LIBRARY=0x0001,                      /**< The Yices runtime library is available. */
         LM_EXECUTABLE=0x0002                    /**< The "yices" executable is available. */
     };
+
+    /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
+    typedef Sawyer::Container::Map<InsnSemanticsExpr::TreeNodePtr, std::string> TermNames;
 
     /** Constructor prefers to use the Yices executable interface. See set_linkage(). */
     YicesSolver(): linkage(LM_NONE), context(NULL) {
@@ -75,11 +80,16 @@ protected:
 
 private:
     LinkMode linkage;
+    TermNames termNames;                                // only used by Yices executable translator; library uses termExprs
     void init();
+
+    static std::string get_typename(const InsnSemanticsExpr::TreeNodePtr&);
 
     /* These out_*() functions convert a InsnSemanticsExpr expression into text which is suitable as input to "yices"
      * executable. */
-    void out_define(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&, Definitions*);
+    void out_comments(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
+    void out_common_subexpressions(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
+    void out_define(std::ostream&, const std::vector<InsnSemanticsExpr::TreeNodePtr>&, Definitions*);
     void out_assert(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
     void out_number(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
     void out_expr(std::ostream&, const InsnSemanticsExpr::TreeNodePtr&);
@@ -99,6 +109,9 @@ private:
     void out_write(std::ostream &o, const InsnSemanticsExpr::InternalNodePtr&);
 
 #ifdef ROSE_HAVE_LIBYICES
+    typedef Sawyer::Container::Map<InsnSemanticsExpr::TreeNodePtr, yices_expr> TermExprs;
+    TermExprs termExprs;                                // for common subexpressions
+
     /* These ctx_*() functions build a Yices context object if Yices is linked into this executable. */
     typedef yices_expr (*UnaryAPI)(yices_context, yices_expr operand);
     typedef yices_expr (*BinaryAPI)(yices_context, yices_expr operand1, yices_expr operand2);
@@ -106,7 +119,8 @@ private:
     typedef yices_expr (*ShiftAPI)(yices_context, yices_expr, unsigned amount);
 
     yices_context context;
-    void ctx_define(const InsnSemanticsExpr::TreeNodePtr&, Definitions*);
+    void ctx_common_subexpressions(const std::vector<InsnSemanticsExpr::TreeNodePtr>&);
+    void ctx_define(const std::vector<InsnSemanticsExpr::TreeNodePtr>&, Definitions*);
     void ctx_assert(const InsnSemanticsExpr::TreeNodePtr&);
     yices_expr ctx_expr(const InsnSemanticsExpr::TreeNodePtr&);
     yices_expr ctx_unary(UnaryAPI, const InsnSemanticsExpr::InternalNodePtr&);

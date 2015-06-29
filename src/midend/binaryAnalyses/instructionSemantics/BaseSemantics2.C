@@ -1,10 +1,26 @@
 #include "sage3basic.h"
 #include "BaseSemantics2.h"
 #include "AsmUnparser_compat.h"
+#include "Diagnostics.h"
 
 namespace rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
+
+using namespace Sawyer::Message::Common;
+
+Sawyer::Message::Facility mlog;
+
+void
+initDiagnostics() {
+    static bool initialized = false;
+    if (!initialized) {
+        initialized = true;
+        mlog = Sawyer::Message::Facility("rose::BinaryAnalysis::InstructionSemantics2", Diagnostics::destination);
+        Diagnostics::mfacilities.insertAndAdjust(mlog);
+    }
+}
+
 namespace BaseSemantics {
 
 /*******************************************************************************************************************************
@@ -177,6 +193,8 @@ RegisterStateGeneric::get_nonoverlapping_parts(const Extent &overlap, const RegP
 SValuePtr
 RegisterStateGeneric::readRegister(const RegisterDescriptor &reg, RiscOperators *ops)
 {
+    ASSERT_require(reg.is_valid());
+
     // Fast case: the state does not store this register or any register that might overlap with this register.
     Registers::iterator ri = registers.find(reg);
     if (ri==registers.end()) {
@@ -275,13 +293,24 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
 {
     ASSERT_not_null(value);
     ASSERT_require2(reg.get_nbits()==value->get_width(), "value written to register must be the same width as the register");
+    erase_register(reg, ops);
+    Registers::iterator ri = registers.find(reg);
+    if (ri == registers.end()) {
+        registers[reg].push_back(RegPair(reg, value));
+    } else {
+        ri->second.push_back(RegPair(reg, value));
+    }
+}
+
+void
+RegisterStateGeneric::erase_register(const RegisterDescriptor &reg, RiscOperators *ops)
+{
+    ASSERT_require(reg.is_valid());
 
     // Fast case: the state does not store this register or any register that might overlap with this register
     Registers::iterator ri = registers.find(reg);
-    if (ri==registers.end()) {
-        registers[reg].push_back(RegPair(reg, value));
-        return;
-    }
+    if (ri == registers.end())
+        return;                                         // no part of register is stored in this state
 
     // Look for existing registers that overlap with this register and remove them.  If the overlap was only partial, then we
     // need to eventually add the non-overlapping part back into the list.
@@ -289,26 +318,16 @@ RegisterStateGeneric::writeRegister(const RegisterDescriptor &reg, const SValueP
     Extent need_extent(reg.get_offset(), reg.get_nbits());
     for (RegPairs::iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
         Extent have_extent(rvi->desc.get_offset(), rvi->desc.get_nbits());
-        if (need_extent==have_extent) {
-            // found exact match. No need to traverse further because a RegisterStateGeneric never stores overlapping values.
-            ASSERT_require(nonoverlaps.empty());
-            rvi->value = value;
-            return;
-        } else {
-            Extent overlap = need_extent.intersect(have_extent);
-            if (!overlap.empty()) {
-                get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
-                rvi->value = SValuePtr(); // mark pair for removal by setting it to null
-            }
+        Extent overlap = need_extent.intersect(have_extent);
+        if (!overlap.empty()) {
+            get_nonoverlapping_parts(overlap, *rvi, ops, &nonoverlaps);
+            rvi->value = SValuePtr(); // mark pair for removal by setting it to null
         }
     }
 
     // Remove marked pairs, then add the non-overlapping parts.
     ri->second.erase(std::remove_if(ri->second.begin(), ri->second.end(), has_null_value), ri->second.end());
     ri->second.insert(ri->second.end(), nonoverlaps.begin(), nonoverlaps.end());
-
-    // Insert the new value.
-    ri->second.push_back(RegPair(reg, value));
 }
 
 RegisterStateGeneric::RegPairs
@@ -432,6 +451,10 @@ RegisterStateGeneric::get_latest_writers(const RegisterDescriptor &desc) const
     return retval;
 }
 
+static bool
+sortByOffset(const RegisterStateGeneric::RegPair &a, const RegisterStateGeneric::RegPair &b) {
+    return a.desc.get_offset() < b.desc.get_offset();
+}
 
 void
 RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
@@ -446,7 +469,9 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
     size_t maxlen = 6; // use at least this many columns even if register names are short.
     for (int i=0; i<2; ++i) {
         for (Registers::const_iterator ri=registers.begin(); ri!=registers.end(); ++ri) {
-            for (RegPairs::const_iterator rvi=ri->second.begin(); rvi!=ri->second.end(); ++rvi) {
+            RegPairs regPairs = ri->second;
+            std::sort(regPairs.begin(), regPairs.end(), sortByOffset);
+            for (RegPairs::const_iterator rvi=regPairs.begin(); rvi!=regPairs.end(); ++rvi) {
                 std::string regname = regnames(rvi->desc);
                 if (!fmt.get_suppress_initial_values() || rvi->value->get_comment().empty() ||
                     0!=rvi->value->get_comment().compare(regname+"_0")) {
@@ -1018,6 +1043,15 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
     stream <<" value=" <<(*value_+fmt);
 }
 
+void
+MemoryCellList::clearNonWritten() {
+    for (CellList::iterator ci=cells.begin(); ci!=cells.end(); ++ci) {
+        if (!(*ci)->latestWriter())
+            *ci = MemoryCellPtr();
+    }
+    cells.erase(std::remove(cells.begin(), cells.end(), MemoryCellPtr()), cells.end());
+}
+
 SValuePtr
 MemoryCellList::readMemory(const SValuePtr &addr, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps)
 {
@@ -1061,10 +1095,25 @@ MemoryCellList::get_latest_writers(const SValuePtr &addr, size_t nbits, RiscOper
 void
 MemoryCellList::writeMemory(const SValuePtr &addr, const SValuePtr &value, RiscOperators *addrOps, RiscOperators *valOps)
 {
+    ASSERT_not_null(addr);
     ASSERT_require(!byte_restricted || value->get_width()==8);
-    MemoryCellPtr cell = protocell->create(addr, value);
-    cells.push_front(cell);
-    latest_written_cell = cell;
+    MemoryCellPtr newCell = protocell->create(addr, value);
+
+    // Prune away all cells that must-alias this new one since they will be occluded by this new one.
+    if (occlusionsErased_) {
+        for (CellList::iterator cli=cells.begin(); cli!=cells.end(); /*void*/) {
+            MemoryCellPtr oldCell = *cli;
+            if (newCell->must_alias(oldCell, addrOps)) {
+                cli = cells.erase(cli);
+            } else {
+                ++cli;
+            }
+        }
+    }
+
+    // Insert the new cell
+    cells.push_front(newCell);
+    latest_written_cell = newCell;
 }
 
 void
@@ -1078,6 +1127,7 @@ MemoryCellList::CellList
 MemoryCellList::scan(const BaseSemantics::SValuePtr &addr, size_t nbits, RiscOperators *addrOps, RiscOperators *valOps,
                      bool &short_circuited/*out*/) const
 {
+    ASSERT_not_null(addr);
     short_circuited = false;
     CellList retval;
     MemoryCellPtr tmpcell = protocell->create(addr, valOps->undefined_(nbits));
@@ -1114,19 +1164,112 @@ State::print(std::ostream &stream, Formatter &fmt) const
  *                                      RiscOperators
  *******************************************************************************************************************************/
 
+void
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
+    ASSERT_not_null(insn);
+    SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<unparseInstructionWithAddress(insn) <<"\n";
+    cur_insn = insn;
+    ++ninsns;
+};
+
 SValuePtr
-RiscOperators::subtract(const SValuePtr &subtrahand, const SValuePtr &minuend) {
-    return add(subtrahand, negate(minuend));
+RiscOperators::subtract(const SValuePtr &minuend, const SValuePtr &subtrahend) {
+    return add(minuend, negate(subtrahend));
 }
 
 SValuePtr
 RiscOperators::equal(const SValuePtr &a, const SValuePtr &b) {
-    return equalToZero(subtract(a, b));
+    return isEqual(a, b);
+}
+
+SValuePtr
+RiscOperators::isEqual(const SValuePtr &a, const SValuePtr &b) {
+    return equalToZero(xor_(a, b));
+}
+
+SValuePtr
+RiscOperators::isNotEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedLessThan(const SValuePtr &a, const SValuePtr &b) {
+    SValuePtr wideA = unsignedExtend(a, a->get_width()+1);
+    SValuePtr wideB = unsignedExtend(b, b->get_width()+1);
+    SValuePtr diff = subtract(wideA, wideB);
+    return extract(diff, diff->get_width()-1, diff->get_width()); // A < B iff sign(wideA - wideB) == -1
+}
+
+SValuePtr
+RiscOperators::isUnsignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return or_(isUnsignedLessThan(a, b), isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedGreaterThan(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isUnsignedLessThanOrEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isUnsignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isUnsignedLessThan(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedLessThan(const SValuePtr &a, const SValuePtr &b) {
+    ASSERT_require(a->get_width() == b->get_width());
+    size_t nbits = a->get_width();
+    SValuePtr aIsNeg = extract(a, nbits-1, nbits);
+    SValuePtr bIsNeg = extract(b, nbits-1, nbits);
+    SValuePtr diff = subtract(signExtend(a, nbits+1), signExtend(b, nbits+1));
+    SValuePtr diffIsNeg = extract(diff, nbits+1, nbits+2);
+    SValuePtr negPos = and_(aIsNeg, invert(bIsNeg));   // A is negative and B is non-negative?
+    SValuePtr sameSigns = invert(xor_(aIsNeg, bIsNeg)); // A and B are both negative or both non-negative?
+    SValuePtr result = or_(negPos, and_(sameSigns, diffIsNeg));
+    return result;
+}
+
+SValuePtr
+RiscOperators::isSignedLessThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return or_(isSignedLessThan(a, b), isEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedGreaterThan(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isSignedLessThanOrEqual(a, b));
+}
+
+SValuePtr
+RiscOperators::isSignedGreaterThanOrEqual(const SValuePtr &a, const SValuePtr &b) {
+    return invert(isSignedLessThan(a, b));
 }
 
 /*******************************************************************************************************************************
  *                                      Dispatcher
  *******************************************************************************************************************************/
+
+void
+Dispatcher::advanceInstructionPointer(SgAsmInstruction *insn) {
+    RegisterDescriptor ipReg = instructionPointerRegister();
+    size_t nBits = ipReg.get_nbits();
+    BaseSemantics::SValuePtr ipValue;
+    if (!autoResetInstructionPointer_ && operators->get_state() && operators->get_state()->get_register_state()) {
+        BaseSemantics::RegisterStateGenericPtr grState =
+            boost::dynamic_pointer_cast<BaseSemantics::RegisterStateGeneric>(operators->get_state()->get_register_state());
+        if (grState && grState->is_partly_stored(ipReg))
+            ipValue = operators->readRegister(ipReg);
+    }
+    if (!ipValue)
+        ipValue = operators->number_(nBits, insn->get_address());
+    ipValue = operators->add(ipValue, operators->number_(nBits, insn->get_size()));
+    operators->writeRegister(ipReg, ipValue);
+}
+
+void
+Dispatcher::addressWidth(size_t nBits) {
+    ASSERT_require2(nBits==addrWidth_ || addrWidth_==0, "address width cannot be changed once it is set");
+    addrWidth_ = nBits;
+}
 
 void
 Dispatcher::processInstruction(SgAsmInstruction *insn)
@@ -1178,7 +1321,7 @@ Dispatcher::iproc_get(int key)
 }
 
 const RegisterDescriptor &
-Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing)
+Dispatcher::findRegister(const std::string &regname, size_t nbits/*=0*/, bool allowMissing) const
 {
     const RegisterDictionary *regdict = get_register_dictionary();
     if (!regdict)
@@ -1250,6 +1393,8 @@ Dispatcher::incrementRegisters(SgAsmExpression *e)
 SValuePtr
 Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
 {
+    if (0==nbits)
+        nbits = addressWidth();
     BaseSemantics::SValuePtr retval;
     if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         retval = effectiveAddress(mre->get_address(), nbits);
@@ -1259,12 +1404,6 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     } else if (SgAsmBinaryAdd *op = isSgAsmBinaryAdd(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
         BaseSemantics::SValuePtr rhs = effectiveAddress(op->get_rhs(), nbits);
-        if (0==nbits)
-            nbits = std::max(lhs->get_width(), rhs->get_width());
-        if (lhs->get_width() < nbits)
-            lhs = operators->signExtend(lhs, nbits);
-        if (rhs->get_width() < nbits)
-            rhs = operators->signExtend(rhs, nbits);
         retval = operators->add(lhs, rhs);
     } else if (SgAsmBinaryMultiply *op = isSgAsmBinaryMultiply(e)) {
         BaseSemantics::SValuePtr lhs = effectiveAddress(op->get_lhs(), nbits);
@@ -1275,14 +1414,11 @@ Dispatcher::effectiveAddress(SgAsmExpression *e, size_t nbits/*=0*/)
     }
 
     ASSERT_not_null(retval);
-    if (nbits!=0) {
-        if (retval->get_width() < nbits) {
-            retval = operators->signExtend(retval, nbits);
-        } else if (retval->get_width() > nbits) {
-            retval = operators->extract(retval, 0, nbits);
-        }
+    if (retval->get_width() < nbits) {
+        retval = operators->signExtend(retval, nbits);
+    } else if (retval->get_width() > nbits) {
+        retval = operators->extract(retval, 0, nbits);
     }
-
     return retval;
 }
 
@@ -1320,6 +1456,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         operators->writeRegister(reg, value);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        ASSERT_require(0==addrWidth_ || addr->get_width()==addrWidth_);
         operators->writeMemory(segmentRegister(mre), addr, value, operators->boolean_(true));
     } else {
         ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
@@ -1327,9 +1464,16 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
 }
 
 SValuePtr
-Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/)
+Dispatcher::read(SgAsmExpression *e, size_t value_nbits/*=0*/, size_t addr_nbits/*=0*/)
 {
     ASSERT_not_null(e);
+    if (0 == value_nbits) {
+        SgAsmType *expr_type = e->get_type();
+        ASSERT_not_null(expr_type);
+        value_nbits = expr_type->get_nBits();
+        ASSERT_require(value_nbits != 0);
+    }
+
     SValuePtr retval;
     if (SgAsmDirectRegisterExpression *re = isSgAsmDirectRegisterExpression(e)) {
         retval = operators->readRegister(re->get_descriptor());
@@ -1349,6 +1493,7 @@ Dispatcher::read(SgAsmExpression *e, size_t value_nbits, size_t addr_nbits/*=0*/
         retval = operators->readRegister(reg);
     } else if (SgAsmMemoryReferenceExpression *mre = isSgAsmMemoryReferenceExpression(e)) {
         BaseSemantics::SValuePtr addr = effectiveAddress(mre, addr_nbits);
+        ASSERT_require(0==addrWidth_ || addr->get_width()==addrWidth_);
         BaseSemantics::SValuePtr dflt = undefined_(value_nbits);
         retval = operators->readMemory(segmentRegister(mre), addr, dflt, operators->boolean_(true));
     } else if (SgAsmValueExpression *ve = isSgAsmValueExpression(e)) {

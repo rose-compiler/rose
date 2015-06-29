@@ -5,5 +5,5 @@ target_link_libraries(testSymbolTable
 
 add_test(
   NAME testSymbolTable_test1
-  COMMAND testSymbolTable ${CMAKE_CURRENT_SOURCE_DIR}/input.C
+  COMMAND testSymbolTable -c ${CMAKE_CURRENT_SOURCE_DIR}/input.C
 )

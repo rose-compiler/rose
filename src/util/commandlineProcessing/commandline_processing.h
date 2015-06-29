@@ -5,7 +5,7 @@
 #include "rosedll.h"
 #include <list>
 #define Rose_STL_Container std::vector
-#include <sawyer/CommandLine.h>
+#include <Sawyer/CommandLine.h>
 
 //Rama (12/22/2006): changing the class to a namespace and removing the "static"ness of the "member" functions
 

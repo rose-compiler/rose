@@ -38,7 +38,8 @@ public:
     }
 
     const MemoryMap& memoryMap() const;
-    void memoryMap(const MemoryMap&);
+    void memoryMap(const MemoryMap&);                   // model is marked as out-of-date
+    void updateModelIfNecessary();                      // update model if it is out-of-date (expensive)
 
     /** Update string table from new partitioner.
      *
@@ -53,7 +54,7 @@ public:
     const P2::ReferenceSet& crossReferences(size_t stringIdx);
 
     /** Return string at index. */
-    const rose::BinaryAnalysis::StringFinder::String& meta(size_t stringIdx);
+    const rose::BinaryAnalysis::Strings::EncodedString& string(size_t stringIdx);
 
 private:
     void init();

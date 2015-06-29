@@ -18,6 +18,7 @@
 #include "Timer.h"
 
 using namespace CodeThorn;
+using namespace std;
 
 #include "CollectionOperators.h"
 
@@ -167,7 +168,9 @@ Analyzer::Analyzer():
   _solver(5),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
+  _maxIterations(-1),
   _maxTransitionsForcedTop(-1),
+  _maxIterationsForcedTop(-1),
   _treatStdErrLikeFailedAssert(false),
   _skipSelectedFunctionCalls(false),
   _explorationMode(EXPL_BREADTH_FIRST),
@@ -198,9 +201,14 @@ bool Analyzer::isPrecise() {
 }
 
 bool Analyzer::isIncompleteSTGReady() {
-  if(_maxTransitions==-1)
+  if(_maxTransitions==-1 && _maxIterations==-1)
     return false;
-  return (long int)transitionGraph.size()>=_maxTransitions;
+  else if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+    return true;
+  else if ((_maxIterations!=-1) && ((long int) _iterations>_maxIterations))
+    return true;
+  else // at least one maximum mode is active, but the corresponding limit has not yet been reached
+    return false;
 }
 
 ExprAnalyzer* Analyzer::getExprAnalyzer() {
@@ -338,11 +346,8 @@ void Analyzer::addToWorkList(const EState* estate) {
     case EXPL_LOOP_AWARE: {
       if(isLoopCondLabel(estate->label())) {
         estateWorkList.push_back(estate);
-        if(_curr_iteration_cnt==0 && _next_iteration_cnt==0) {
-          _curr_iteration_cnt=1; // initialization
-        } else {
-          _next_iteration_cnt++;
-        }
+        //cout<<"DEBUG: push to WorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
+        _next_iteration_cnt++;
       } else {
         estateWorkList.push_front(estate);
       }
@@ -356,12 +361,13 @@ void Analyzer::addToWorkList(const EState* estate) {
 }
 
 bool Analyzer::isActiveGlobalTopify() {
-  if(_maxTransitionsForcedTop==-1)
+  if(_maxTransitionsForcedTop==-1 && _maxIterationsForcedTop==-1)
     return false;
   if(_topifyModeActive) {
     return true;
   } else {
-    if((long int)transitionGraph.size()>=_maxTransitionsForcedTop) {
+    if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
+        || (_maxIterationsForcedTop!=-1 && _iterations>_maxIterationsForcedTop) ) {
       _topifyModeActive=true;
       eventGlobalTopifyTurnedOn();
       boolOptions.registerOption("rers-binary",false);
@@ -384,6 +390,11 @@ void Analyzer::eventGlobalTopifyTurnedOn() {
     nt++;
   }
   cout<<"STATUS: switched to static analysis (approximating "<<n<<" of "<<nt<<" variables with top-conversion)."<<endl;
+  //switch to the counter for approximated loop iterations
+  if (_maxTransitionsForcedTop > 1 || _maxIterationsForcedTop > 0) {
+    _iterations--;
+    _approximated_iterations++;
+  }
 }
 
 void Analyzer::topifyVariable(PState& pstate, ConstraintSet& cset, VariableId varId) {
@@ -503,12 +514,13 @@ const EState* Analyzer::popWorkList() {
       estateWorkList.pop_front();
       if(getExplorationMode()==EXPL_LOOP_AWARE && isLoopCondLabel(estate->label())) {
         //cout<<"DEBUG: popFromWorkList: "<<_curr_iteration_cnt<<","<<_next_iteration_cnt<<":"<<_iterations<<endl;
-        _curr_iteration_cnt--;
         if(_curr_iteration_cnt==0) {
-          _curr_iteration_cnt=_next_iteration_cnt;
+          _curr_iteration_cnt= (_next_iteration_cnt - 1);
           _next_iteration_cnt=0;
           incIterations();
           //cout<<"STATUS: Started analyzing loop iteration "<<_iterations<<"-"<<_approximated_iterations<<endl;
+        } else {
+          _curr_iteration_cnt--;
         }
       }
     }
@@ -684,7 +696,7 @@ EState Analyzer::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState c
             //cout<<"DEBUG:initializing array element:"<<arrayElemId.toString()<<"="<<intVal<<endl;
             newPState.setVariableToValue(arrayElemId,CodeThorn::CppCapsuleAValue(AType::ConstIntLattice(intVal)));
           } else {
-            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<astTermWithNullValuesToString(exp)<<endl;
+            cerr<<"Error: unsupported array initializer value:"<<exp->unparseToString()<<" AST:"<<SPRAY::AstTerm::astTermWithNullValuesToString(exp)<<endl;
             exit(1);
           }
           elemIndex++;
@@ -979,7 +991,6 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
               PState newPstate  = _pstate;
               newPstate[globalVarIdByName("output")]=CodeThorn::AType::CppCapsuleConstIntLattice(rers_result);
               EState _eState=createEState(edge.target,newPstate,_cset,_io);
-              //EState _eState=createEState(edge.target,_pstate,_cset,_io); //previous version
               return elistify(_eState);
             }
             RERS_Problem::rersGlobalVarsCallReturnInit(this,_pstate, omp_get_thread_num());
@@ -1413,7 +1424,7 @@ list<EState> Analyzer::transferFunction(Edge edge, const EState* estate) {
           varVal=varVal-const1; // overloaded binary - operator
           break;
         default:
-          cerr << "Operator-AST:"<<astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+          cerr << "Operator-AST:"<<SPRAY::AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
           cerr << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
           cerr << "Operand:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze3)<<endl;
           cerr<<"Error: programmatic error in handling of inc/dec operators."<<endl;
@@ -1529,8 +1540,8 @@ void Analyzer::initializeSolver1(std::string functionToStartAt,SgNode* root, boo
   Labeler* labeler= new IOLabeler(root,getVariableIdMapping());
   cout << "INIT: Initializing ExprAnalyzer."<<endl;
   exprAnalyzer.setVariableIdMapping(getVariableIdMapping());
-  cout << "INIT: Creating CFAnalyzer."<<endl;
-  cfanalyzer=new CFAnalyzer(labeler);
+  cout << "INIT: Creating CFAnalysis."<<endl;
+  cfanalyzer=new CFAnalysis(labeler);
   //cout<< "DEBUG: mappingLabelToLabelProperty: "<<endl<<getLabeler()->toString()<<endl;
   cout << "INIT: Building CFGs."<<endl;
 
@@ -1686,7 +1697,7 @@ PState Analyzer::analyzeAssignRhs(PState currentPState,VariableId lhsVar, SgNode
         return newPState;
       } else {
         cerr<<"Errpr: RHS: unknown : type: ";
-        cerr<<astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
+        cerr<<SPRAY::AstTerm::astTermWithNullValuesToString(isSgExpression(rhs)->get_type());
         exit(1);
       }
       cout<<endl;
@@ -1982,7 +1993,7 @@ void Analyzer::removeNonIOStates() {
   }
 }
 
-void Analyzer::reduceGraphInOutWorklistOnly(bool reduceIn, bool reduceOut) {
+void Analyzer::reduceGraphInOutWorklistOnly(bool includeIn, bool includeOut, bool includeErr) {
   // 1.) worklist_reduce <- list of startState and all input/output states
   std::list<const EState*> worklist_reduce;
   EStatePtrSet states=transitionGraph.estateSet();
@@ -1992,14 +2003,14 @@ void Analyzer::reduceGraphInOutWorklistOnly(bool reduceIn, bool reduceOut) {
   }
   worklist_reduce.push_back(transitionGraph.getStartEState());
   for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    if ( (reduceIn&&(*i)->io.isStdInIO()) || (reduceOut&&(*i)->io.isStdOutIO()) ) {
+    if ( (includeIn&&(*i)->io.isStdInIO()) || (includeOut&&(*i)->io.isStdOutIO()) || (includeErr&&(*i)->io.isFailedAssertIO())) {
       worklist_reduce.push_back(*i);
     }
   }
   // 2.) for each state in worklist_reduce: insert startState/I/O/worklist transitions into list of new transitions ("newTransitions").
   std::list<Transition*> newTransitions;
   for(std::list<const EState*>::iterator i=worklist_reduce.begin();i!=worklist_reduce.end();++i) {
-    boost::unordered_set<Transition*>* someNewTransitions = transitionsToInOutAndWorklist(*i);
+    boost::unordered_set<Transition*>* someNewTransitions = transitionsToInOutErrAndWorklist(*i, includeIn, includeOut, includeErr);
     newTransitions.insert(newTransitions.begin(), someNewTransitions->begin(), someNewTransitions->end());
   }
   // 3.) remove all old transitions
@@ -2014,17 +2025,20 @@ void Analyzer::reduceGraphInOutWorklistOnly(bool reduceIn, bool reduceOut) {
   }
 }
 
-
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( const EState* startState) {
+boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* startState,
+									    bool includeIn, bool includeOut, bool includeErr) {
   // initialize result set and visited set (the latter for cycle checks)
   boost::unordered_set<Transition*>* result = new boost::unordered_set<Transition*>();
   boost::unordered_set<const EState*>* visited = new boost::unordered_set<const EState*>();
   // start the recursive function from initState's successors, therefore with a minimum distance of one from initState. 
   // Simplifies the detection of allowed self-edges.
   EStatePtrSet succOfInitState = transitionGraph.succ(startState);
+  if (startState->io.isFailedAssertIO()) {
+    assert (succOfInitState.size() == 0);
+  }
   for(EStatePtrSet::iterator i=succOfInitState.begin();i!=succOfInitState.end();++i) {
     boost::unordered_set<Transition*>* tempResult = new boost::unordered_set<Transition*>();
-    tempResult = transitionsToInOutAndWorklist((*i), startState, result, visited);
+    tempResult = transitionsToInOutErrAndWorklist((*i), startState, result, visited, includeIn, includeOut, includeErr);
     result->insert(tempResult->begin(), tempResult->end());
     tempResult = NULL;
   }
@@ -2034,18 +2048,23 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( cons
 }
                                                             
 
-boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( const EState* currentState, const EState* startState, 
-                                                                  boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited) {
+boost::unordered_set<Transition*>* Analyzer::transitionsToInOutErrAndWorklist( const EState* currentState, const EState* startState,
+                                                                            boost::unordered_set<Transition*>* results, boost::unordered_set<const EState*>* visited,
+									    bool includeIn, bool includeOut, bool includeErr) {
   //cycle check
   if (visited->count(currentState)) {
     return results;  //currentState already visited, do nothing
   } 
   visited->insert(currentState);
   //base case
-  // add a new transition if the current state is either input, output (as long as the start state is not output)
-  // or a leaf which is not a failing assertion
-  if( currentState->io.isStdInIO() || (!startState->io.isStdOutIO() && currentState->io.isStdOutIO())  
-          || (transitionGraph.succ(currentState).size() == 0 && !currentState->io.isFailedAssertIO())) {
+  // add a new transition depending on what type of states are to be included in the reduced STG. Looks at input, 
+  // output (as long as the start state is not output), failed assertion and worklist states.
+  if( (includeIn && currentState->io.isStdInIO()) 
+      || (!startState->io.isStdOutIO() &&  includeIn && currentState->io.isStdOutIO())  
+      || (includeErr && currentState->io.isFailedAssertIO()) 
+      // currently disabled 
+      //|| (transitionGraph.succ(currentState).size() == 0 && !currentState->io.isFailedAssertIO()) //defines a worklist state
+  ) { 
     Edge* newEdge = new Edge(startState->label(),EDGE_PATH,currentState->label());
     Transition* newTransition = new Transition(startState, *newEdge, currentState);
     results->insert(newTransition);
@@ -2053,7 +2072,7 @@ boost::unordered_set<Transition*>* Analyzer::transitionsToInOutAndWorklist( cons
     //recursively collect the resulting transitions
     EStatePtrSet nextStates = transitionGraph.succ(currentState);
     for(EStatePtrSet::iterator i=nextStates.begin();i!=nextStates.end();++i) {
-      transitionsToInOutAndWorklist((*i), startState, results, visited);
+      transitionsToInOutErrAndWorklist((*i), startState, results, visited, includeIn, includeOut, includeErr);
     }
   }
   return results;
@@ -2819,7 +2838,6 @@ void Analyzer::runSolver5() {
               }
               
               // record reachability
-              //int assertCode=reachabilityAssertCode(currentEStatePtr); //previous version
               int assertCode;
               if(boolOptions["rers-binary"]) {
                 assertCode=reachabilityAssertCode(newEStatePtr);
@@ -2879,7 +2897,7 @@ void Analyzer::runSolver5() {
     transitionGraph.setIsComplete(!isComplete);
   } else {
     bool complete;
-    if(boolOptions["incomplete-stg"]) {
+    if(boolOptions["set-stg-incomplete"]) {
       complete=false;
     } else {
       complete=true;
@@ -3178,11 +3196,12 @@ void Analyzer::runSolver8() {
     RERS_Problem::rersGlobalVarsArrayInit(workers);
   }
 #endif
-  //cout <<"STATUS: Running parallel solver 8 with "<<workers<<" thread (more not allowed)."<<endl;
   while(!isEmptyWorkList()) {
     bool oneSuccessorOnly=false;
     EState newEStateBackupForOneSuccessorOnly;
     const EState* currentEStatePtr;
+    //solver 8
+    assert(estateWorkList.size() == 1);
     if (!isEmptyWorkList()) {
       currentEStatePtr=popWorkList();
     } else {
@@ -3214,7 +3233,7 @@ void Analyzer::runSolver8() {
         }
       }
       oneSuccessorOnly=oneSuccessorOnly&&(newEStateList.size()==1);
-      // solver 8: only traces allowed (no branching)
+      // solver 8: only singe traces allowed
       assert(newEStateList.size()<=1);
       for(list<EState>::iterator nesListIter=newEStateList.begin();
           nesListIter!=newEStateList.end();
@@ -3222,7 +3241,6 @@ void Analyzer::runSolver8() {
         // newEstate is passed by value (not created yet)
         EState newEState=*nesListIter;
         assert(newEState.label()!=Labeler::NO_LABEL);
-
         if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState))) {
           if(oneSuccessorOnly && _minimizeStates && (newEState.io.isNonIO())) {
             newEStateBackupForOneSuccessorOnly=newEState;
@@ -3234,7 +3252,7 @@ void Analyzer::runSolver8() {
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
           // further tracing of an STG that is reduced to input/output/error states.
           if (newEStatePtr->io.isStdOutIO()) {
-            _latestOutputEstate = newEStatePtr;
+            _latestOutputEState = newEStatePtr;
           }
           if (true)//simply continue analysing until the input sequence runs out
             addToWorkList(newEStatePtr);          
@@ -3244,12 +3262,12 @@ void Analyzer::runSolver8() {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
           const EState* newEStatePtr;
           newEStatePtr=processNewOrExisting(newEState);
+          _latestErrorEState = newEStatePtr;
           recordTransition(currentEStatePtr,e,newEStatePtr);
         }
       }  // all successor states of transfer function
     } // all outgoing edges in CFG
   } // while worklist is not empty
-
   //the result of the analysis is just a concrete trace on the original program
   transitionGraph.setIsPrecise(true);
   transitionGraph.setIsComplete(false);
@@ -3501,42 +3519,48 @@ void Analyzer::swapStgWithBackup() {
   backupTransitionGraph = tTemp;
 }
 
-void Analyzer::resetAnalyzerToSolver8(EState* startEState) {
+void Analyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData) {
   assert(startEState);
   //set attributes specific to solver 8
   _numberOfThreadsToUse = 1;
   _solver = 8;
   _maxTransitions = -1,
+  _maxIterations = -1,
   _maxTransitionsForcedTop = -1;
+  _maxIterationsForcedTop = -1;
   _topifyModeActive = false;
   _numberOfThreadsToUse = 1;
+  _latestOutputEState = NULL;
+  _latestErrorEState = NULL;
 
-  //reset internal data structures
-  EStateSet newEStateSet;
-  estateSet = newEStateSet;
-  PStateSet newPStateSet;
-  pstateSet = newPStateSet;
-  EStateWorkList newEStateWorkList;
-  estateWorkList = newEStateWorkList;
-  TransitionGraph newTransitionGraph;
-  transitionGraph = newTransitionGraph;
-  Label startLabel=cfanalyzer->getLabel(startFunRoot);
-  transitionGraph.setStartLabel(startLabel);
-  list<int> newInputSequence;
-  _inputSequence = newInputSequence;
-  resetInputSequenceIterator();
+  if (resetAnalyzerData) {
+    //reset internal data structures
+    EStateSet newEStateSet;
+    estateSet = newEStateSet;
+    PStateSet newPStateSet;
+    pstateSet = newPStateSet;
+    EStateWorkList newEStateWorkList;
+    estateWorkList = newEStateWorkList;
+    TransitionGraph newTransitionGraph;
+    transitionGraph = newTransitionGraph;
+    Label startLabel=cfanalyzer->getLabel(startFunRoot);
+    transitionGraph.setStartLabel(startLabel);
+    list<int> newInputSequence;
+    _inputSequence = newInputSequence;
+    resetInputSequenceIterator();
 #ifndef USE_CUSTOM_HSET
-  estateSet.max_load_factor(0.7);
-  pstateSet.max_load_factor(0.7);
-  constraintSetMaintainer.max_load_factor(0.7);
+    estateSet.max_load_factor(0.7);
+    pstateSet.max_load_factor(0.7);
+    constraintSetMaintainer.max_load_factor(0.7);
 #endif
+  }
   // initialize worklist
-  const EState* currentEState=processNew(*startEState);
+  const EState* currentEState=processNewOrExisting(*startEState);
   assert(currentEState);
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);
-  //cout << "RESET: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
-  //cout << "RESET: reset to solver 8 finished."<<endl;
+  //cout << "STATUS: start state: "<<currentEState->toString(&variableIdMapping)<<endl;
+  //cout << "STATUS: reset to solver 8 finished."<<endl;
 }
 
 void Analyzer::continueAnalysisFrom(EState * newStartEState) {
@@ -3544,10 +3568,10 @@ void Analyzer::continueAnalysisFrom(EState * newStartEState) {
   addToWorkList(newStartEState);
   // connect the latest output state with the state where the analysis stopped due to missing 
   // values in the input sequence
-  assert(_latestOutputEstate);
+  assert(_latestOutputEState);
   assert(_estateBeforeMissingInput);
-  Edge edge(_latestOutputEstate->label(),EDGE_PATH,_estateBeforeMissingInput->label());
-  Transition transition(_latestOutputEstate,edge,_estateBeforeMissingInput); 
+  Edge edge(_latestOutputEState->label(),EDGE_PATH,_estateBeforeMissingInput->label());
+  Transition transition(_latestOutputEState,edge,_estateBeforeMissingInput); 
   transitionGraph.add(transition);
   runSolver();
 }

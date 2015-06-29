@@ -103,6 +103,15 @@ public:
      *  according to the optional supplied NameGenerator. */
     const std::string& lookup(const RegisterDescriptor&) const;
 
+    /** Finds the first largest register with specified major and minor number.
+     *
+     *  Returns the first register with the largest width and having the specified major and minor numbers. Registers wider
+     *  than @p maxWidth (if non-zero) are ignored. If no register is found with the major/minor number then an invalid
+     *  (default-constructed) register is returned.
+     *
+     *  This function takes O(n) time where n is the number of registers defined. */
+    RegisterDescriptor findLargestRegister(unsigned major, unsigned minor, size_t maxWidth=0) const;
+
     /** Returns the list of all register definitions in the dictionary.
      * @{ */
     const Entries& get_registers() const;

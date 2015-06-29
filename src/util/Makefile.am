@@ -67,70 +67,70 @@ pkginclude_HEADERS =				\
 EXTRA_DIST = CMakeLists.txt setup.h utilDocumentation.docs
 
 ########################################################################################################################
-# rules for the sawyer subdirectory
+# rules for the Sawyer subdirectory
 
 noinst_LTLIBRARIES += libroseSawyer.la
 libroseSawyer_la_SOURCES =			\
-	sawyer/Assert.C				\
-	sawyer/CommandLine.C			\
-	sawyer/GraphTraversal.C			\
-	sawyer/Markup.C				\
-	sawyer/MarkupPod.C			\
-	sawyer/Message.C			\
-	sawyer/ProgressBar.C			\
-	sawyer/Sawyer.C				\
-	sawyer/SmallObject.C			\
-	sawyer/Stopwatch.C			\
-	sawyer/Synchronization.C		\
-	sawyer/useHeaders.C
+	Sawyer/Assert.C				\
+	Sawyer/CommandLine.C			\
+	Sawyer/GraphTraversal.C			\
+	Sawyer/Markup.C				\
+	Sawyer/MarkupPod.C			\
+	Sawyer/Message.C			\
+	Sawyer/ProgressBar.C			\
+	Sawyer/Sawyer.C				\
+	Sawyer/SmallObject.C			\
+	Sawyer/Stopwatch.C			\
+	Sawyer/Synchronization.C		\
+	Sawyer/useHeaders.C
 nobase_pkginclude_HEADERS   =			\
-	sawyer/Access.h				\
-	sawyer/AddressMap.h			\
-	sawyer/AddressSegment.h			\
-	sawyer/AllocatingBuffer.h		\
-	sawyer/Assert.h				\
-	sawyer/BiMap.h				\
-	sawyer/BitVector.h			\
-	sawyer/BitVectorSupport.h		\
-	sawyer/Buffer.h				\
-	sawyer/Cached.h				\
-	sawyer/Callbacks.h			\
-	sawyer/CommandLine.h			\
-	sawyer/DefaultAllocator.h		\
-	sawyer/DistinctList.h			\
-	sawyer/Graph.h				\
-	sawyer/GraphBoost.h			\
-	sawyer/GraphTraversal.h			\
-	sawyer/IndexedList.h			\
-	sawyer/Interval.h			\
-	sawyer/IntervalMap.h			\
-	sawyer/IntervalSet.h			\
-	sawyer/Map.h				\
-	sawyer/MappedBuffer.h			\
-	sawyer/Markup.h				\
-	sawyer/MarkupPod.h			\
-	sawyer/Message.h			\
-	sawyer/NullBuffer.h			\
-	sawyer/Optional.h			\
-	sawyer/PoolAllocator.h			\
-	sawyer/ProgressBar.h			\
-	sawyer/Sawyer.h				\
-	sawyer/SharedPointer.h			\
-	sawyer/SmallObject.h			\
-	sawyer/Stack.h				\
-	sawyer/StaticBuffer.h			\
-	sawyer/Stopwatch.h			\
-	sawyer/Synchronization.h		\
-	sawyer/WarningsOff.h			\
-	sawyer/WarningsRestore.h
-EXTRA_DIST += sawyer/CMakeLists.txt
+	Sawyer/Access.h				\
+	Sawyer/AddressMap.h			\
+	Sawyer/AddressSegment.h			\
+	Sawyer/AllocatingBuffer.h		\
+	Sawyer/Assert.h				\
+	Sawyer/BiMap.h				\
+	Sawyer/BitVector.h			\
+	Sawyer/BitVectorSupport.h		\
+	Sawyer/Buffer.h				\
+	Sawyer/Cached.h				\
+	Sawyer/Callbacks.h			\
+	Sawyer/CommandLine.h			\
+	Sawyer/DefaultAllocator.h		\
+	Sawyer/DistinctList.h			\
+	Sawyer/Graph.h				\
+	Sawyer/GraphBoost.h			\
+	Sawyer/GraphTraversal.h			\
+	Sawyer/IndexedList.h			\
+	Sawyer/Interval.h			\
+	Sawyer/IntervalMap.h			\
+	Sawyer/IntervalSet.h			\
+	Sawyer/Map.h				\
+	Sawyer/MappedBuffer.h			\
+	Sawyer/Markup.h				\
+	Sawyer/MarkupPod.h			\
+	Sawyer/Message.h			\
+	Sawyer/NullBuffer.h			\
+	Sawyer/Optional.h			\
+	Sawyer/PoolAllocator.h			\
+	Sawyer/ProgressBar.h			\
+	Sawyer/Sawyer.h				\
+	Sawyer/SharedPointer.h			\
+	Sawyer/SmallObject.h			\
+	Sawyer/Stack.h				\
+	Sawyer/StaticBuffer.h			\
+	Sawyer/Stopwatch.h			\
+	Sawyer/Synchronization.h		\
+	Sawyer/WarningsOff.h			\
+	Sawyer/WarningsRestore.h
+EXTRA_DIST += Sawyer/CMakeLists.txt
 
 ########################################################################################################################
 # automake boilerplate
 
 # DQ (4/5/2009): Added rose_paths.C to clean rule, instead of to the DISTCLEANFILES
 clean-local:
-	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C stringify.[Ch]
+	rm -rf $(CXX_TEMPLATE_OBJECTS) Templates.DB ii_files ti_files rose_paths.C
 
 distclean-local:
 	rm -rf Templates.DB

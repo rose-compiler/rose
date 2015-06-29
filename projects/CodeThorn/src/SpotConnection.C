@@ -31,15 +31,89 @@ std::list<LtlProperty>* SpotConnection::getUnknownFormulae() {
 
 PropertyValueTable* SpotConnection::getLtlResults() {
   if (ltlResults) {
-    return new PropertyValueTable(*ltlResults); 
+    return ltlResults; 
   } else {
     cout<< "ERROR: LTL results requested even though the SpotConnection has not been initialized yet." << endl;
     assert(0);
   }
 }
 
+void SpotConnection::resetLtlResults() { 
+  ltlResults->init(ltlResults->size()); 
+}
+
+void SpotConnection::resetLtlResults(int property) { 
+  ltlResults->setPropertyValue(property, PROPERTY_VALUE_UNKNOWN);
+  ltlResults->setCounterexample(property, "");
+}
+
+void SpotConnection::checkSingleProperty(int propertyNum, TransitionGraph& stg, 
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
+  if (stg.size() == 0) {
+    cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
+    return;
+  }
+  if (!stg.isPrecise() && !stg.isComplete()) {
+    return;  //neither falsification nor verification works
+  } 
+  //prepare the analysis
+  //determine largest input Value, then merge input and output alphabet
+  int maxInputVal = *( std::max_element(inVals.begin(), inVals.end()) );
+  std::set<int> ioValues = inVals;
+  ioValues.insert(outVals.begin(), outVals.end());
+  //initializing the atomic propositions used based on I/O values
+  spot::ltl::atomic_prop_set* sap = getAtomicProps(ioValues, maxInputVal);
+  //instantiate a new dictionary for atomic propositions 
+  // (will be used by the model tgba as well as by the ltl formula tgbas)
+  spot::bdd_dict dict;
+  //create a tgba from CodeThorn's STG model
+  SpotTgba* ct_tgba = new SpotTgba(stg, *sap, dict, inVals, outVals);
+  LtlProperty ltlProperty; 
+  //TODO: improve on this iteration over list elements
+  for (std::list<LtlProperty>::iterator i = behaviorProperties.begin(); i != behaviorProperties.end(); i++) {
+    if (i->propertyNumber == propertyNum) {
+      ltlProperty = *i;
+      break;
+    }
+  }
+  checkAndUpdateResults(ltlProperty, ct_tgba, stg, withCounterexample, spuriousNoAnswers);
+  delete ct_tgba;
+  ct_tgba = NULL;
+}
+
+void SpotConnection::checkAndUpdateResults(LtlProperty property, SpotTgba* ct_tgba, TransitionGraph& stg, 
+						bool withCounterexample, bool spuriousNoAnswers) {
+  std::string* pCounterExample;
+  if (checkFormula(ct_tgba, property.ltlString , ct_tgba->get_dict(), &pCounterExample)) {  //SPOT returns that the formula could be verified
+    if (stg.isComplete()) {
+      ltlResults->strictUpdatePropertyValue(property.propertyNumber, PROPERTY_VALUE_YES);
+    } else {
+      //not all possible execution paths are covered in this stg model, ignore SPOT's result
+    }
+  } else {  //SPOT returns that there exists a counterexample that falsifies the formula
+    if (stg.isPrecise()) {
+      ltlResults->strictUpdatePropertyValue(property.propertyNumber, PROPERTY_VALUE_NO);
+      if (withCounterexample) {
+        ltlResults->strictUpdateCounterexample(property.propertyNumber, *pCounterExample);
+      }
+      delete pCounterExample;
+    } else {
+      // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
+      if (spuriousNoAnswers) {
+        // new: register counterexample and check it later
+        ltlResults->strictUpdatePropertyValue(property.propertyNumber, PROPERTY_VALUE_NO);
+        if (withCounterexample) {
+          ltlResults->strictUpdateCounterexample(property.propertyNumber, *pCounterExample);
+        }
+        delete pCounterExample;
+      }
+    }
+  }
+  pCounterExample = NULL;
+}
+
 void SpotConnection::checkLtlProperties(TransitionGraph& stg,
-						std::set<int> inVals, std::set<int> outVals, bool withCounterexample) {
+						std::set<int> inVals, std::set<int> outVals, bool withCounterexample, bool spuriousNoAnswers) {
   if (stg.size() == 0) {
     cout << "STATUS: the transition system used as a model is empty, LTL behavior could not be checked." << endl;
     return;
@@ -78,7 +152,7 @@ void SpotConnection::checkLtlProperties(TransitionGraph& stg,
           delete pCounterExample;
         } else {
           // old: the stg is over-approximated, falsification cannot work. Ignore SPOT's answer.
-          if (boolOptions["check-ltl-counterexamples"]) {
+          if (spuriousNoAnswers) {
             // new: register counterexample and check it later
             ltlResults->strictUpdatePropertyValue(i->propertyNumber, PROPERTY_VALUE_NO);
             if (withCounterexample) {
@@ -407,13 +481,13 @@ std::string SpotConnection::filterCounterexample(std::string spotRun, bool inclu
   std::list<std::string> returnedPrefix;
   std::list<std::string> returnedCycle;
     for (std::list<std::string>::iterator i = prefix.begin(); i != prefix.end() ; ++i) {
-      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {  //only select input propositions
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) { 
         returnedPrefix.push_back(*i);
         //cout << "DEBUG: added " << (*i) << " to returnedPrefix. " << endl;
       }
     }
     for (std::list<std::string>::iterator i = cycle.begin(); i != cycle.end() ; ++i) {
-      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) {  //only select input propositions
+      if (i->at(0) == 'i' || (includeOutputStates && i->at(0) == 'o' )) { 
         returnedCycle.push_back(*i);
         //cout << "DEBUG: added " << (*i) << " to returnedCycle. " << endl;
       }
@@ -428,6 +502,7 @@ std::string SpotConnection::filterCounterexample(std::string spotRun, bool inclu
     result += (*i);
   }
   result += "]";
+  assert(returnedCycle.size() > 0); // empty cycle part in counterexample currently not supported
   result += "([";
   for (std::list<std::string>::iterator i = returnedCycle.begin(); i != returnedCycle.end() ; ++i) {
     if (i != returnedCycle.begin()) {

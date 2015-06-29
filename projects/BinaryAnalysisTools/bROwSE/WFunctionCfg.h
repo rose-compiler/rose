@@ -23,6 +23,7 @@ class WFunctionCfg: public Wt::WContainerWidget {
     Wt::WScrollArea *wScrollArea_;                      // contains a CFG image or a message
     Wt::WImage *wImage_;                                // image for the CFG
     Wt::WText *wMessage_;
+    Wt::WAnchor *wDownloadAnchor_;                      // Download link for CFG GraphViz *.dot file
     typedef std::pair<Wt::WRectArea*, rose_addr_t> AreaAddr;
     std::vector<AreaAddr> areas_;
     Wt::Signal<P2::Function::Ptr> functionChanged_;     // emitted when the current function changes
@@ -32,7 +33,7 @@ class WFunctionCfg: public Wt::WContainerWidget {
 public:
     WFunctionCfg(Context &ctx, Wt::WContainerWidget *parent=NULL)
         : Wt::WContainerWidget(parent), ctx_(ctx),
-          wNavigation_(NULL), wAddresses_(NULL), wScrollArea_(NULL), wImage_(NULL), wMessage_(NULL) {
+          wNavigation_(NULL), wAddresses_(NULL), wScrollArea_(NULL), wImage_(NULL), wMessage_(NULL), wDownloadAnchor_(NULL) {
         init();
     }
 

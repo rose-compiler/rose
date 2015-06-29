@@ -10,10 +10,10 @@
 #include <rose_strtoull.h>
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <sawyer/CommandLine.h>
-#include <sawyer/Optional.h>
-#include <sawyer/ProgressBar.h>
-#include <sawyer/Stopwatch.h>
+#include <Sawyer/CommandLine.h>
+#include <Sawyer/Optional.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Stopwatch.h>
 
 // Instruction pointer member from user_regs_struct in <sys/user.h>
 #if __WORDSIZE == 64
@@ -268,7 +268,7 @@ main(int argc, char *argv[]) {
 
     // Parse, map, link, and/or relocate
     info <<"performing parse, map, and optional link steps";
-    engine.parse(specimenNames);
+    engine.parseContainers(specimenNames);
     Sawyer::Stopwatch loadTimer;
     if (settings.performLink) {
         BinaryLoader *loader = engine.obtainLoader();
@@ -283,7 +283,7 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    engine.load(specimenNames);
+    engine.loadSpecimens(specimenNames);
     info <<"; completed in " <<loadTimer <<" seconds\n";
 
     // Disassemble, partition, and get list of functions.  No need to create an AST.

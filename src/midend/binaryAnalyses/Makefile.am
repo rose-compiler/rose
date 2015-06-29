@@ -18,6 +18,7 @@ libbinaryMidend_la_SOURCES =					\
     dataflowanalyses/RoseBin_Emulate.cpp			\
     dataflowanalyses/RoseBin_DataFlowAbstract.cpp		\
     instructionSemantics/BaseSemantics2.C			\
+    instructionSemantics/ConcreteSemantics2.C			\
     instructionSemantics/DataFlowSemantics2.C			\
     instructionSemantics/DispatcherM68k.C			\
     instructionSemantics/DispatcherPowerpc.C			\
@@ -34,6 +35,8 @@ libbinaryMidend_la_SOURCES =					\
     instructionSemantics/PartialSymbolicSemantics.C		\
     instructionSemantics/TraceSemantics2.C			\
     instructionSemantics/SMTSolver.C				\
+    instructionSemantics/StaticSemantics2.C			\
+    instructionSemantics/SymbolicMemory2.C			\
     instructionSemantics/SymbolicSemantics.C			\
     instructionSemantics/SymbolicSemantics2.C			\
     instructionSemantics/YicesSolver.C				\
@@ -44,6 +47,7 @@ libbinaryMidend_la_SOURCES =					\
     BinaryFunctionCall.C					\
     BinaryCallingConvention.C					\
     BinaryMagic.C						\
+    BinaryNoOperation.C						\
     BinaryReturnValueUsed.C					\
     BinaryString.C						\
     BinaryTaintedFlow.C						\
@@ -80,6 +84,7 @@ pkginclude_HEADERS =					\
     instructionSemantics/InsnSemanticsExpr.h		\
     instructionSemantics/BaseSemantics.h		\
     instructionSemantics/BaseSemantics2.h		\
+    instructionSemantics/ConcreteSemantics2.h		\
     instructionSemantics/DataFlowSemantics2.h		\
     instructionSemantics/DispatcherM68k.h		\
     instructionSemantics/DispatcherPowerpc.h		\
@@ -94,6 +99,8 @@ pkginclude_HEADERS =					\
     instructionSemantics/PartialSymbolicSemantics.h	\
     instructionSemantics/PartialSymbolicSemantics2.h	\
     instructionSemantics/SMTSolver.h			\
+    instructionSemantics/StaticSemantics2.h		\
+    instructionSemantics/SymbolicMemory2.h		\
     instructionSemantics/SymbolicSemantics.h		\
     instructionSemantics/SymbolicSemantics2.h		\
     instructionSemantics/TestSemantics2.h		\
@@ -110,6 +117,7 @@ pkginclude_HEADERS =					\
     BinaryFunctionCall.h				\
     BinaryCallingConvention.h				\
     BinaryMagic.h					\
+    BinaryNoOperation.h					\
     BinaryPointerDetection.h				\
     BinaryAnalysisUtils.h				\
     BinaryReturnValueUsed.h				\

@@ -13,18 +13,18 @@
 #include <string>
 #include <list>
 #include "Labeler.h"
-#include "CFAnalyzer.h"
+#include "CFAnalysis.h"
 #include "AType.h"
 #include "VariableIdMapping.h"
 #include "EqualityMaintainer.h"
 #include "HSetMaintainer.h"
 
-using namespace std;
+using namespace SPRAY;
 
 namespace CodeThorn {
 
-typedef list<AValue> ListOfAValue;
- typedef VariableIdMapping::VariableIdSet SetOfVariableId;
+  typedef std::list<AValue> ListOfAValue;
+  typedef VariableIdMapping::VariableIdSet SetOfVariableId;
 
 /*
   EQ_VAR_CONST : equal (==)
@@ -49,10 +49,10 @@ class Constraint {
   VariableId rhsVar() const;
   AValue rhsVal() const;
   CppCapsuleAValue rhsValCppCapsule() const;
-  string toString() const;
-  string toString(VariableIdMapping*) const;
-  string toAssertionString(VariableIdMapping*) const;
-  string operatorStringFromStream(istream& is);
+  std::string toString() const;
+  std::string toString(VariableIdMapping*) const;
+  std::string toAssertionString(VariableIdMapping*) const;
+  std::string operatorStringFromStream(istream& is);
   void fromStream(istream& is);
   void toStream(ostream& os);
   void toStreamAsTuple(ostream& os);
@@ -66,7 +66,7 @@ class Constraint {
   void setLhsVar(VariableId lhs) { _lhsVar=lhs; } 
  private:
   void initialize();
-  string opToString() const;
+  std::string opToString() const;
   ConstraintOp _op;
   VariableId _lhsVar;
   VariableId _rhsVar;
@@ -98,10 +98,10 @@ class ConstraintSet : public set<Constraint> {
   // deprecated
   ConstraintSet findSpecificSet(Constraint::ConstraintOp op, VariableId varId) const;
 
-  string toString() const;
-  string toString(VariableIdMapping* vim) const;
-  string toStringWithoutBraces(VariableIdMapping* vim) const;
-  string toAssertionString(VariableIdMapping* vim) const;
+  std::string toString() const;
+  std::string toString(VariableIdMapping* vim) const;
+  std::string toStringWithoutBraces(VariableIdMapping* vim) const;
+  std::string toAssertionString(VariableIdMapping* vim) const;
 
   //! returns concrete int-value if equality exists, otherwise Top.
   AType::ConstIntLattice varConstIntLatticeValue(const VariableId varId) const;
@@ -232,7 +232,7 @@ class ConstraintSetEqualToPred {
  class ConstraintSetMaintainer : public HSetMaintainer<ConstraintSet, ConstraintSetHashFun,ConstraintSetEqualToPred> {
  public:
   typedef HSetMaintainer<ConstraintSet, ConstraintSetHashFun,ConstraintSetEqualToPred>::ProcessingResult ProcessingResult;
-  string toString();
+  std::string toString();
  };
  
 } // end of namespace CodeThorn

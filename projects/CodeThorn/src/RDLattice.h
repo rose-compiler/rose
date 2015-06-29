@@ -5,6 +5,8 @@
 #include "VariableIdMapping.h"
 #include "Lattice.h"
 
+namespace SPRAY {
+
 /*! 
   * \author Markus Schordan
   * \date 2013.
@@ -26,11 +28,13 @@ class RDLattice : public Lattice {
   void setEmptySet();
   void combine(Lattice& b);
   bool approximatedBy(Lattice& b);
-
+  LabelSet getRDs(SPRAY::VariableId);
  private:
   std::set<std::pair<SPRAY::Label,VariableId> > rdSet;
   bool _bot;
 };
+
+}
 
 #endif
 

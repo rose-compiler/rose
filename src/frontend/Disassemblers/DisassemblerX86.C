@@ -65,31 +65,49 @@ DisassemblerX86::init(size_t wordsize)
 {
     /* The default register dictionary.  If a register dictionary is specified in an SgAsmInterpretation, then that one will be
      * used instead of the default we set here. */
+    const RegisterDictionary *regdict = NULL;
+    size_t addrWidth=0;
     switch (wordsize) {
         case 2:
+            addrWidth = 16;
             insnSize = x86_insnsize_16;
-            set_registers(RegisterDictionary::dictionary_i286());
-            REG_IP = *p_registers->lookup("ip");
-            REG_SP = *p_registers->lookup("sp");
-            REG_SS = *p_registers->lookup("ss");
+#if 0 // [Robb P. Matzke 2015-06-23]
+            regdict = RegisterDictionary::dictionary_i286();
+#else
+            // A word size of 2 bytes doesn't necessarily mean 80286. E.g., $ROSE/binaries/samples/exefmt.exe has a header that
+            // advertises architecture ISA_IA32_Family with a word size of 2 and which contains an occasional 32-bit floating
+            // point instruction, although perhaps because of disassembling data with a disassembler that understands 32-bit op
+            // codes.
+            regdict = RegisterDictionary::dictionary_i386_387();
+#endif
+            REG_IP = *regdict->lookup("ip");
+            REG_SP = *regdict->lookup("sp");
+            REG_SS = *regdict->lookup("ss");
             break;
         case 4:
+            addrWidth = 32;
             insnSize = x86_insnsize_32;
-            set_registers(RegisterDictionary::dictionary_pentium4());
-            REG_IP = *p_registers->lookup("eip");
-            REG_SP = *p_registers->lookup("esp");
-            REG_SS = *p_registers->lookup("ss");
+            regdict = RegisterDictionary::dictionary_pentium4();
+            REG_IP = *regdict->lookup("eip");
+            REG_SP = *regdict->lookup("esp");
+            REG_SS = *regdict->lookup("ss");
             break;
         case 8:
+            addrWidth = 64;
             insnSize = x86_insnsize_64;
-            set_registers(RegisterDictionary::dictionary_amd64());
-            REG_IP = *p_registers->lookup("rip");
-            REG_SP = *p_registers->lookup("rsp");
-            REG_SS = *p_registers->lookup("ss");
+            regdict = RegisterDictionary::dictionary_amd64();
+            REG_IP = *regdict->lookup("rip");
+            REG_SP = *regdict->lookup("rsp");
+            REG_SS = *regdict->lookup("ss");
             break;
-        default: ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
+        default:
+            ASSERT_not_reachable("instruction must be 2, 4, or 8 bytes");
     }
-    p_proto_dispatcher = InstructionSemantics2::DispatcherX86::instance();
+    InstructionSemantics2::DispatcherX86Ptr d = InstructionSemantics2::DispatcherX86::instance(addrWidth, regdict);
+    d->set_register_dictionary(regdict);                // so register cache is initialized
+    p_proto_dispatcher = d; 
+
+    set_registers(regdict);
     set_wordsize(wordsize);
     set_alignment(1);
     set_sex(ByteOrder::ORDER_LSB);
@@ -941,9 +959,12 @@ DisassemblerX86::getImmJb()
         case x86_insnsize_32:
             retval = SageBuilderAsm::buildValueX86DWord(target);
             break;
-        default:
+        case x86_insnsize_64:
             retval = SageBuilderAsm::buildValueX86QWord(target);
             break;
+        default:
+            ASSERT_not_reachable("invalid instruction size: " + stringifyX86InstructionSize(insnSize));
+            return NULL;                                // not reachable, but avoids MSCV warning
     }
     retval->set_bit_offset(bit_offset);
     retval->set_bit_size(8);

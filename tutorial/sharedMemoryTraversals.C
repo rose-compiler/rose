@@ -1,5 +1,7 @@
 #include <rose.h>
 
+#ifdef _REENTRANT                                       // Does user want ROSE to be thread-aware?
+
 class NodeTypeTraversal: public AstSimpleProcessing {
 public:
     NodeTypeTraversal(enum VariantT variant, std::string typeName)
@@ -42,3 +44,11 @@ int main(int argc, char **argv) {
     std::cout << "shared-memory parallel execution of traversals" << std::endl;
     parallelTraversal.traverseInParallel(project, preorder);
 }
+
+#else
+
+int main() {
+    std::cout <<"parallel traversal is not supported in this configuration (user does not want ROSE to be thread-aware)\n";
+}
+
+#endif

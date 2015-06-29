@@ -265,9 +265,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
   // DQ (3/31/2004): If there are templates used then we need to modify the *.ti file build by EDG.
   // buildTemplateInstantiationSupportFile ( project );
 
-     /* Make sure the isModified boolean is clear for all newly-parsed nodes. */
-     checkIsModifiedFlag(project);
-     // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
+  // DQ (4/16/2015): This is replaced with a better implementation.
+  // Make sure the isModified boolean is clear for all newly-parsed nodes.
+  // checkIsModifiedFlag(project);
+     unsetNodesMarkedAsModified(project);
+
+  // set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction);
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
      return project;
@@ -1354,7 +1357,7 @@ ROSE::getNextStatement ( SgStatement *currentStatement )
    }
          
 SgStatement*
-ROSE::getPreviousStatement ( SgStatement *targetStatement )
+ROSE::getPreviousStatement ( SgStatement *targetStatement , bool climbOutScope /*= true*/)
    {
      ROSE_ASSERT (targetStatement  != NULL);
 
@@ -1385,23 +1388,32 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
         {
           case V_SgFunctionParameterList:
              {
-            // We define the previous statement in this case to be the function declaration
-               previousStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (isSgFunctionDeclaration(previousStatement) != NULL);
+               if (climbOutScope)
+               {
+                 // We define the previous statement in this case to be the function declaration
+                 previousStatement = isSgStatement(targetStatement->get_parent());
+                 ROSE_ASSERT (isSgFunctionDeclaration(previousStatement) != NULL);
+               }
                break;
              }
 
           case V_SgForInitStatement:
              {
-               previousStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (isSgForStatement(previousStatement) != NULL);
+               if (climbOutScope)
+               {
+                 previousStatement = isSgStatement(targetStatement->get_parent());
+                 ROSE_ASSERT (isSgForStatement(previousStatement) != NULL);
+               }
                break;
              }
 
           case V_SgBasicBlock:
              {
-               previousStatement = isSgStatement(targetStatement->get_parent());
-               ROSE_ASSERT (previousStatement != NULL);
+               if (climbOutScope)
+               {
+                 previousStatement = isSgStatement(targetStatement->get_parent());
+                 ROSE_ASSERT (previousStatement != NULL);
+               }
                break;
              }
 
@@ -1441,8 +1453,11 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
                   // treat the parent as the previous statement
                  else if (isSgIfStmt(scope))
                   {
-                    previousStatement = isSgStatement(targetStatement->get_parent());
-                    ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
+                    if (climbOutScope)
+                    {
+                      previousStatement = isSgStatement(targetStatement->get_parent());
+                      ROSE_ASSERT (isSgIfStmt(previousStatement) != NULL);
+                    }
                   }
                  else
                   {
@@ -1461,7 +1476,7 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
                   }
 
             // If the target statement was the first statement in a scope then 
-               if (previousStatement == NULL)
+               if ((previousStatement == NULL)&& climbOutScope)
                   {
                  // Then set the previous statement to be the scope containing the current statement
                  // printf ("previousStatement == NULL: previous scope = %s \n",scope->unparseToString().c_str());
@@ -1490,7 +1505,8 @@ ROSE::getPreviousStatement ( SgStatement *targetStatement )
         printf ("@@@@@ previousStatement->unparseToString() = %s \n",previousStatement->unparseToString().c_str());
 #endif
 
-     ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
+     if (climbOutScope)
+       ROSE_ASSERT (isSgGlobal(targetStatement) != NULL || previousStatement != NULL);
 
      return previousStatement;
    }

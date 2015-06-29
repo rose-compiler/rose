@@ -80,8 +80,9 @@ YicesSolver::satisfiable(const std::vector<TreeNodePtr> &exprs)
 #endif
 
         Definitions defns;
-        for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
-            ctx_define(*ei, &defns);
+        termExprs.clear();
+        ctx_define(exprs, &defns);
+        ctx_common_subexpressions(exprs);
         for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
             ctx_assert(*ei);
         switch (yices_check(context)) {
@@ -118,11 +119,32 @@ YicesSolver::generate_file(std::ostream &o, const std::vector<TreeNodePtr> &expr
     Definitions *allocated = NULL;
     if (!defns)
         defns = allocated = new Definitions;
+    termNames.clear();
 
-    for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
-        out_define(o, *ei, defns);
-    for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
+    o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"; Uninterpreted variables\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+    out_define(o, exprs, defns);
+
+    o <<"\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"; Common subexpressions\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+    out_common_subexpressions(o, exprs);
+
+    out_comments(o, exprs);
+
+    o <<"\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"; Assertions\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+    for (std::vector<TreeNodePtr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei) {
+        o <<"\n"
+          <<"; effective size = " <<StringUtility::plural((*ei)->nnodes(), "nodes")
+          <<", actual size = " <<StringUtility::plural((*ei)->nnodesUnique(), "nodes") <<"\n";
         out_assert(o, *ei);
+    }
+
     o <<"\n(check)\n";
 
     delete allocated;
@@ -215,11 +237,9 @@ YicesSolver::parse_evidence()
                 size_t nbits = rest-s;
                 s = rest;
 
-                if (')'!=*s++)
-                    throw Error(s-1, "')' expected at end of memory value (10)");
-
                 std::string addr_name = StringUtility::addrToString(addr);
-                ASSERT_require(evidence.find(addr_name)==evidence.end());
+                if (evidence.find(addr_name) != evidence.end())
+                    throw Error(s, addr_name + " appears more than once (10)");
                 evidence[addr_name] = std::pair<size_t, uint64_t>(nbits, val);
 
             } else {
@@ -284,28 +304,120 @@ YicesSolver::clear_evidence()
     evidence.clear();
 }
 
+/** Emit type name for term. */
+std::string
+YicesSolver::get_typename(const TreeNodePtr &expr) {
+    ASSERT_not_null(expr);
+    if (expr->isScalar())
+        return "(bitvector " + StringUtility::numberToString(expr->get_nbits()) + ")";
+    return ("(-> (bitvector " + StringUtility::numberToString(expr->domainWidth()) + ")"
+            " (bitvector " + StringUtility::numberToString(expr->get_nbits()) + "))");
+}
+
 /** Traverse an expression and produce Yices "define" statements for variables. */
 void
-YicesSolver::out_define(std::ostream &o, const TreeNodePtr &tn, Definitions *defns)
-{
+YicesSolver::out_define(std::ostream &o, const std::vector<TreeNodePtr> &exprs, Definitions *defns) {
     ASSERT_not_null(defns);
-    LeafNodePtr ln = tn->isLeafNode();
-    InternalNodePtr in = tn->isInternalNode();
 
-    if (ln && ln->is_variable()) {
-        if (defns->find(ln->get_name())==defns->end()) {
-            defns->insert(ln->get_name());
-            o <<"(define v" <<ln->get_name() <<"::(bitvector " <<ln->get_nbits() <<"))\n";
+    struct T1: Visitor {
+        typedef std::set<const TreeNode*> SeenNodes;
+        SeenNodes seen;
+        std::ostream &o;
+        Definitions *defns;
+
+        T1(std::ostream &o, Definitions *defns)
+            : o(o), defns(defns) {}
+
+        VisitAction preVisit(const TreeNodePtr &node) {
+            if (!seen.insert(getRawPointer(node)).second)
+                return TRUNCATE;                        // already processed this subexpression
+            if (LeafNodePtr leaf = node->isLeafNode()) {
+                if (leaf->is_variable()) {
+                    if (defns->find(leaf->get_name())==defns->end()) {
+                        defns->insert(leaf->get_name());
+                        o <<"\n";
+                        if (!leaf->get_comment().empty())
+                            o <<StringUtility::prefixLines(leaf->get_comment(), "; ") <<"\n";
+                        o <<"(define v" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
+                    }
+                } else if (leaf->is_memory()) {
+                    if (defns->find(leaf->get_name())==defns->end()) {
+                        defns->insert(leaf->get_name());
+                        o <<"\n";
+                        if (!leaf->get_comment().empty())
+                            o <<StringUtility::prefixLines(leaf->get_comment(), "; ") <<"\n";
+                        o <<"(define m" <<leaf->get_name() <<"::" <<get_typename(leaf) <<")\n";
+                    }
+                }
+            }
+            return CONTINUE;
         }
-    } else if (ln && ln->is_memory()) {
-        if (defns->find(ln->get_name())==defns->end()) {
-            defns->insert(ln->get_name());
-            o <<"(define m" <<ln->get_name() <<"::(-> (bitvector 32) (bitvector " <<ln->get_nbits() <<")))\n";
+
+        VisitAction postVisit(const TreeNodePtr&) {
+            return CONTINUE;
         }
-    } else if (in) {
-        for (size_t i=0; i<in->nchildren(); i++)
-            out_define(o, in->child(i), defns);
+    } t1(o, defns);
+
+    BOOST_FOREACH (const TreeNodePtr &expr, exprs)
+        expr->depth_first_traversal(t1);
+}
+
+/** Generate definitions for common subexpressions. */
+void
+YicesSolver::out_common_subexpressions(std::ostream &o, const std::vector<TreeNodePtr> &exprs) {
+    std::vector<TreeNodePtr> cses = findCommonSubexpressions(exprs);
+    for (size_t i=0; i<cses.size(); ++i) {
+        o <<"\n";
+        if (!cses[i]->get_comment().empty())
+            o <<StringUtility::prefixLines(cses[i]->get_comment(), "; ") <<"\n";
+        o <<"; effective size = " <<StringUtility::plural(cses[i]->nnodes(), "nodes")
+          <<", actual size = " <<StringUtility::plural(cses[i]->nnodesUnique(), "nodes") <<"\n";
+        std::string termName = "cse_" + StringUtility::numberToString(i);
+        o <<"(define " <<termName <<"::" <<get_typename(cses[i]) <<" ";
+        out_expr(o, cses[i]);
+        o <<")\n";
+        termNames.insert(cses[i], termName);
     }
+}
+
+//  Generate comments for certain expressions
+void
+YicesSolver::out_comments(std::ostream &o, const std::vector<TreeNodePtr> &exprs) {
+    struct T1: Visitor {
+        typedef std::set<const TreeNode*> SeenNodes;
+        SeenNodes seen;
+        std::ostream &o;
+        bool commented;
+
+        T1(std::ostream &o)
+            : o(o), commented(false) {}
+
+        VisitAction preVisit(const TreeNodePtr &node) {
+            if (!seen.insert(getRawPointer(node)).second)
+                return TRUNCATE;                        // already processed this subexpression
+            if (LeafNodePtr leaf = node->isLeafNode()) {
+                if ((leaf->is_variable() || leaf->is_memory()) && !leaf->get_comment().empty()) {
+                    if (!commented) {
+                        o <<"\n"
+                          <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+                          <<"; Variable comments\n"
+                          <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
+                        commented = true;
+                    }
+                    o <<"\n; " <<leaf->toString() <<": "
+                      <<StringUtility::prefixLines(leaf->get_comment(), ";    ", false) <<"\n";
+                }
+            }
+            return CONTINUE;
+        }
+
+        VisitAction postVisit(const TreeNodePtr&) {
+            return CONTINUE;
+        }
+    } t1(o);
+
+    BOOST_FOREACH (const TreeNodePtr &expr, exprs)
+        expr->depth_first_traversal(t1);
 }
 
 /** Generate a Yices "assert" statement for an expression. */
@@ -332,7 +444,10 @@ YicesSolver::out_expr(std::ostream &o, const TreeNodePtr &tn)
 {
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
-    if (ln) {
+    std::string subExprName;
+    if (termNames.getOptional(tn).assignTo(subExprName)) {
+        o <<subExprName;
+    } else if (ln) {
         if (ln->is_known()) {
             if (ln->get_nbits() <= 64) {
                 o <<"(mk-bv " <<ln->get_nbits() <<" " <<ln->get_value() <<")";
@@ -435,7 +550,7 @@ YicesSolver::out_ite(std::ostream &o, const InternalNodePtr &in)
 {
     ASSERT_require(in && 3==in->nchildren());
     ASSERT_require(in->child(0)->get_nbits()==1);
-    o <<"(ite (=";
+    o <<"(ite (= ";
     out_expr(o, in->child(0));
     o <<" 0b1)";
     for (size_t i=1; i<3; i++) {
@@ -592,17 +707,21 @@ YicesSolver::out_zerop(std::ostream &o, const InternalNodePtr &in)
  *  widths. Yices' bv-mul operator requires that both operands are the same size and the result is the size of each operand.
  *  Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
- *    (bv-mul (bv-sign-extend A [|B|-1]) (bv-sign-extend B [|A|-1]))
+ *    (bv-mul (bv-sign-extend A |B|) (bv-sign-extend B |A|))
  *  \endcode
  */
 void
 YicesSolver::out_mult(std::ostream &o, const InternalNodePtr &in)
 {
+    ASSERT_require(in->get_nbits() == in->child(0)->get_nbits() + in->child(1)->get_nbits());
+    size_t extend0 = in->child(1)->get_nbits(); // amount by which to extend arg0
+    size_t extend1 = in->child(0)->get_nbits(); // amount by which to extend arg1
+
     o <<"(bv-mul (bv-sign-extend ";
     out_expr(o, in->child(0));
-    o <<" " <<(in->child(1)->get_nbits()-1) <<") (bv-sign-extend ";
+    o <<" " <<extend0 <<") (bv-sign-extend ";
     out_expr(o, in->child(1));
-    o <<" " <<(in->child(0)->get_nbits()-1) <<"))";
+    o <<" " <<extend1 <<"))";
 }
 
 /** Output for write. */
@@ -632,37 +751,64 @@ YicesSolver::out_read(std::ostream &o, const InternalNodePtr &in)
 #ifdef ROSE_HAVE_LIBYICES
 /** Traverse an expression and define Yices variables. */
 void
-YicesSolver::ctx_define(const TreeNodePtr &tn, Definitions *defns)
+YicesSolver::ctx_define(const std::vector<TreeNodePtr> &exprs, Definitions *defns)
 {
-    ASSERT_not_null(defns);
-    LeafNodePtr ln = tn->isLeafNode();
-    InternalNodePtr in = tn->isInternalNode();
+    struct T1: Visitor {
+        typedef std::set<const TreeNode*> SeenNodes;
+        SeenNodes seen;
+        YicesSolver *self;
+        Definitions *defns;
 
-    if (ln && ln->is_variable()) {
-        if (defns->find(ln->get_name())==defns->end()) {
-            defns->insert(ln->get_name());
-            yices_type bvtype = yices_mk_bitvector_type(context, ln->get_nbits());
-            ASSERT_not_null(bvtype);
-            char name[64];
-            snprintf(name, sizeof name, "v%"PRIu64, ln->get_name());
-            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, bvtype);
-            ASSERT_not_null(vdecl);
+        T1(YicesSolver *self, Definitions *defns): self(self), defns(defns) {}
+
+        VisitAction preVisit(const TreeNodePtr &node) {
+            if (!seen.insert(getRawPointer(node)).second)
+                return TRUNCATE;                        // already processed this subexpression
+            if (LeafNodePtr leaf = node->isLeafNode()) {
+                if (leaf->is_variable()) {
+                    if (defns->find(leaf->get_name()) == defns->end()) {
+                        defns->insert(leaf->get_name());
+                        yices_type bvtype = yices_mk_bitvector_type(self->context, leaf->get_nbits());
+                        ASSERT_not_null(bvtype);
+                        char name[64];
+                        snprintf(name, sizeof name, "v%"PRIu64, leaf->get_name());
+                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, bvtype);
+                        ASSERT_not_null(vdecl);
+                    }
+                } else if (leaf->is_memory()) {
+                    if (defns->find(leaf->get_name()) == defns->end()) {
+                        defns->insert(leaf->get_name());
+                        yices_type domain = yices_mk_bitvector_type(self->context, leaf->domainWidth());
+                        yices_type range = yices_mk_bitvector_type(self->context, leaf->get_nbits());
+                        yices_type ftype = yices_mk_function_type(self->context, &domain, 1, range);
+                        ASSERT_not_null(ftype);
+                        char name[64];
+                        snprintf(name, sizeof name, "m%"PRIu64, leaf->get_name());
+                        yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(self->context, name, ftype);
+                        ASSERT_not_null(vdecl);
+                    }
+                }
+            }
+            return CONTINUE;
         }
-    } else if (ln && ln->is_memory()) {
-        if (defns->find(ln->get_name())==defns->end()) {
-            defns->insert(ln->get_name());
-            yices_type domain = yices_mk_bitvector_type(context, 32);
-            yices_type range = yices_mk_bitvector_type(context, ln->get_nbits());
-            yices_type ftype = yices_mk_function_type(context, &domain, 1, range);
-            ASSERT_not_null(ftype);
-            char name[64];
-            snprintf(name, sizeof name, "m%"PRIu64, ln->get_name());
-            yices_var_decl vdecl __attribute__((unused)) = yices_mk_var_decl(context, name, ftype);
-            ASSERT_not_null(vdecl);
+
+        VisitAction postVisit(const TreeNodePtr&) {
+            return CONTINUE;
         }
-    } else if (in) {
-        for (size_t i=0; i<in->nchildren(); i++)
-            ctx_define(in->child(i), defns);
+    } t1(this, defns);
+
+    BOOST_FOREACH (const TreeNodePtr &expr, exprs)
+        expr->depth_first_traversal(t1);
+}
+#endif
+
+#ifdef ROSE_HAVE_LIBYICES
+void
+YicesSolver::ctx_common_subexpressions(const std::vector<TreeNodePtr> &exprs) {
+    std::vector<TreeNodePtr> cses = findCommonSubexpressions(exprs);
+    BOOST_FOREACH (const TreeNodePtr &cse, cses) {
+        yices_expr cseExpr = ctx_expr(cse);
+        termExprs.insert(cse, cseExpr);
     }
 }
 #endif
@@ -686,7 +832,9 @@ YicesSolver::ctx_expr(const TreeNodePtr &tn)
     yices_expr retval = 0;
     LeafNodePtr ln = tn->isLeafNode();
     InternalNodePtr in = tn->isInternalNode();
-    if (ln) {
+    if (termExprs.getOptional(tn).assignTo(retval)) {
+        return retval;
+    } else if (ln) {
         if (ln->is_known()) {
             if (ln->get_nbits() <= 64) {
                 retval = yices_mk_bv_constant(context, ln->get_nbits(), ln->get_value());
@@ -977,15 +1125,19 @@ YicesSolver::ctx_zerop(const InternalNodePtr &in)
  *  the sum of the input widths. Yices' bv-mul operator requires that both operands are the same size and the result is the
  *  size of each operand. Therefore, we rewrite (OP_SMUL A B) to become, in Yices:
  *  \code
- *    (bv-mul (bv-sign-extend A [|B|-1]) (bv-sign-extend B [|A|-1]))
+ *    (bv-mul (bv-sign-extend A |B|]) (bv-sign-extend B |A|))
  *  \endcode
  */
 yices_expr
 YicesSolver::ctx_mult(const InternalNodePtr &in)
 {
+    ASSERT_require(in->get_nbits() == in->child(0)->get_nbits() + in->child(1)->get_nbits());
+    size_t extend0 = in->child(1)->get_nbits(); // amount by which to extend arg0
+    size_t extend1 = in->child(0)->get_nbits(); // amount by which to extend arg1
+
     yices_expr retval = yices_mk_bv_mul(context, 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), in->child(1)->get_nbits()-1), 
-                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), in->child(0)->get_nbits()-1));
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(0)), extend0), 
+                                        yices_mk_bv_sign_extend(context, ctx_expr(in->child(1)), extend1));
     ASSERT_not_null(retval);
     return retval;
 }
