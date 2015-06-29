@@ -24,16 +24,35 @@ private:
 
 protected:
     // System calls specific to 64-bit Linux
+    static void syscall_accept_enter(RSIM_Thread*, int callno);
+    static void syscall_accept_body(RSIM_Thread*, int callno);
+    static void syscall_accept_leave(RSIM_Thread*, int callno);
+
     static void syscall_arch_prctl_enter(RSIM_Thread*, int);
     static void syscall_arch_prctl_body(RSIM_Thread*, int);
     static void syscall_arch_prctl_leave(RSIM_Thread*, int);
 
+    static void syscall_bind_enter(RSIM_Thread*, int callno);
+    static void syscall_bind_body(RSIM_Thread*, int callno);
+
+    static void syscall_connect_enter(RSIM_Thread*, int callno);
+    static void syscall_connect_body(RSIM_Thread*, int callno);
+
     static void syscall_ioctl_enter(RSIM_Thread*, int);
     static void syscall_ioctl_body(RSIM_Thread*, int);
+
+    static void syscall_listen_enter(RSIM_Thread *t, int callno);
+    static void syscall_listen_body(RSIM_Thread *t, int callno);
 
     static void syscall_mmap_enter(RSIM_Thread*, int);
     static void syscall_mmap_body(RSIM_Thread*, int);
     static void syscall_mmap_leave(RSIM_Thread*, int);
+
+    static void syscall_setsockopt_enter(RSIM_Thread*, int callno);
+    static void syscall_setsockopt_body(RSIM_Thread*, int callno);
+
+    static void syscall_socket_enter(RSIM_Thread*, int callno);
+    static void syscall_socket_body(RSIM_Thread*, int callno);
 
     static void syscall_stat_enter(RSIM_Thread*, int);
     static void syscall_stat_body(RSIM_Thread*, int);

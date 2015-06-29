@@ -126,68 +126,68 @@ RSIM_Thread::current_insn()
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m) {
-    return Printer(m, this);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const std::string &atEnd) {
+    return Printer(m, this, atEnd);
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m, const uint32_t *args) {
-    return Printer(m, this, args);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint32_t *args, const std::string &atEnd) {
+    return Printer(m, this, args, atEnd);
 }
 
 Printer
-RSIM_Thread::print(Sawyer::Message::Stream &m, const uint64_t *args) {
-    return Printer(m, this, args);
+RSIM_Thread::print(Sawyer::Message::Stream &m, const uint64_t *args, const std::string &atEnd) {
+    return Printer(m, this, args, atEnd);
 }
 
 Printer
-RSIM_Thread::print(TracingFacility tf) {
-    return print(tracing(tf));
+RSIM_Thread::print(TracingFacility tf, const std::string &atEnd) {
+    return print(tracing(tf), atEnd);
 }
 
 Printer
 RSIM_Thread::syscall_enter(const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m);
+    return print(m, ")");
 }
 
 Printer
 RSIM_Thread::syscall_enter(const uint32_t *args, const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m, args);
+    return print(m, args, ")");
 }
 
 Printer
 RSIM_Thread::syscall_enter(const uint64_t *args, const std::string &name) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
     SAWYER_MESG(m) <<name <<"[" <<syscall_arg(-1) <<"](";
-    return print(m, args);
+    return print(m, args, ")");
 }
 
 Printer
 RSIM_Thread::syscall_leave() {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m).arg(-1);
+    Printer p = print(m, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 Printer
 RSIM_Thread::syscall_leave(const uint32_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m, args).arg(-1);
+    Printer p = print(m, args, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 Printer
 RSIM_Thread::syscall_leave(const uint64_t *args) {
     Sawyer::Message::Stream &m = tracing(TRACE_SYSCALL);
-    if (m)
-        m <<") = ";
-    return print(m, args).arg(-1);
+    Printer p = print(m, args, "\n");
+    p.str(" = ").arg(-1);
+    return p;
 }
 
 uint64_t

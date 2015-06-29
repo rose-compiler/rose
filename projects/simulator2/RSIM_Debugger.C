@@ -5,8 +5,9 @@
 
 #include "RSIM_Debugger.h"
 
-#include "rose_strtoull.h"
-#include "BaseSemantics2.h"
+#include <Diagnostics.h>
+#include <rose_strtoull.h>
+#include <BaseSemantics2.h>
 #include <Partitioner2/Utility.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <stringify.h>
@@ -20,9 +21,12 @@
 
 using namespace rose;
 using namespace rose::BinaryAnalysis;
+using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis::InstructionSemantics2;
 
 namespace RSIM_Debugger {
+
+static Sawyer::Message::Facility mlog;
 
 // The main debugger
 class Debugger {
@@ -33,6 +37,8 @@ class Debugger {
     AddressIntervalSet breakPointVas_;                  // instruction addresses to stop at
     std::set<X86InstructionKind> breakPointKinds_;      // instruction kinds to stop at
     AddressIntervalSet breakPointSyscalls_;             // syscalls numbers (not addresses) at which to break
+    AddressIntervalSet breakPointFds_;                  // file descriptors on which to stop
+
 public:
     Debugger(std::istream &in, std::ostream &out): in_(in), out_(out), detached_(false), singleStep_(0) {}
 
@@ -55,24 +61,136 @@ public:
     }
 
     // Should debugger stop for this system call?
-    bool shouldStop(const RSIM_Callbacks::SyscallCallback::Args &args) {
+    bool shouldStop(const RSIM_Simulator::SystemCall::Callback::Args &args) {
         if (detached_)
             return false;
-        if (!breakPointSyscalls_.exists(args.callno))
-            return false;
-        singleStep_ = -1;
-        return true;
+
+        if (breakPointSyscalls_.exists(args.callno)) {
+            singleStep_ = -1;
+            return true;
+        }
+        
+        if (!breakPointFds_.isEmpty()) {
+            std::vector<int> fds;
+            if (args.thread->get_process()->wordSize() == 64) {
+                switch (args.callno) {
+                    case 0:                             // read
+                    case 1:                             // write
+                    case 3:                             // close
+                    case 5:                             // fstat
+                    case 16:                            // ioctl
+                    case 17:                            // pread64
+                    case 18:                            // pwrite64
+                    case 19:                            // readv
+                    case 20:                            // writev
+                    case 32:                            // dup
+                    case 42:                            // connect
+                    case 43:                            // accept
+                    case 44:                            // sendto
+                    case 45:                            // recvfrom
+                    case 46:                            // sendmsg
+                    case 47:                            // recvmsg
+                    case 49:                            // bind
+                    case 50:                            // listen
+                    case 51:                            // getsockname
+                    case 52:                            // getpeername
+                    case 54:                            // setsockopt
+                    case 55:                            // getsockopt
+                    case 72:                            // fcntl
+                    case 73:                            // flock
+                    case 74:                            // fsync
+                    case 75:                            // fdatasync
+                    case 77:                            // ftruncate
+                    case 78:                            // getdents
+                    case 81:                            // fchdir
+                    case 91:                            // fchmod
+                    case 93:                            // fchown
+                    case 138:                           // fstatfs
+                    case 187:                           // readahead
+                    case 190:                           // fsetxattr
+                    case 193:                           // fgetxattr
+                    case 196:                           // flistxattr
+                    case 199:                           // fremovexattr
+                    case 214:                           // epoll_ctl_old
+                    case 215:                           // epoll_wait_old
+                    case 217:                           // getdents64
+                    case 221:                           // fadvise64
+                    case 232:                           // epoll_wait
+                    case 233:                           // epoll_ctl
+                    case 257:                           // openat
+                    case 258:                           // mkdirat
+                    case 259:                           // mknodat
+                    case 260:                           // chownat
+                    case 261:                           // futimesat
+                    case 262:                           // newfstatat
+                    case 263:                           // unlinkat
+                    case 267:                           // readlinkat
+                    case 268:                           // fchmodat
+                    case 269:                           // faccessat
+                    case 277:                           // syncfilerange
+                    case 278:                           // vmsplice
+                    case 280:                           // utimensat
+                    case 281:                           // epoll_pwait
+                    case 282:                           // signalfd
+                    case 285:                           // fallocate
+                    case 286:                           // timerfd_settime
+                    case 287:                           // timerfd_gettime
+                    case 289:                           // signalfd4
+                    case 295:                           // preadv
+                    case 296:                           // pwritev
+                        fds.push_back(args.thread->syscall_arg(0));
+                        break;
+                    case 7:                             // poll
+                    case 23:                            // select
+                    case 270:                           // pselect6
+                    case 271:                           // ppoll
+                        TODO("[Robb P. Matzke 2015-06-29]");
+                    case 9:                             // mmap
+                        fds.push_back(args.thread->syscall_arg(4));
+                        break;
+                    case 33:                            // dup2
+                    case 40:                            // sendfile
+                    case 276:                           // tee
+                    case 292:                           // dup3
+                        fds.push_back(args.thread->syscall_arg(0));
+                        fds.push_back(args.thread->syscall_arg(1));
+                        break;
+                    case 264:                           // renameat
+                    case 265:                           // linkat
+                    case 275:                           // splice
+                        fds.push_back(args.thread->syscall_arg(0));
+                        fds.push_back(args.thread->syscall_arg(2));
+                        break;
+                    case 266:                           // symlinkat
+                        fds.push_back(args.thread->syscall_arg(1));
+                        break;
+                    default:
+                        // not a file descriptor syscall
+                        break;
+                }
+            } else {
+                TODO("file descriptor breakpoints not implemented for 32-bit"); // [Robb P. Matzke 2015-06-29]
+            }
+            BOOST_FOREACH (int fd, fds) {
+                if (breakPointFds_.exists(fd)) {
+                    singleStep_ = -1;
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
     
     // Read-eval-print loop when stopped for an instruction
     bool repl(const RSIM_Callbacks::InsnCallback::Args &args) {
-        out_ <<"stopped at " <<unparseInstructionWithAddress(args.insn) <<"\n";
+        mlog[INFO] <<"stopped at " <<unparseInstructionWithAddress(args.insn) <<"\n";
         return repl(args.thread);
     }
 
     // Read-eval-print loop when stopped for a syscall
-    bool repl(const RSIM_Callbacks::SyscallCallback::Args &args) {
-        out_ <<"stopped at syscall " <<args.callno <<"\n";
+    bool repl(const RSIM_Simulator::SystemCall::Callback::Args &args) {
+        mlog[INFO] <<"stopped at syscall " <<args.callno <<"\n";
         return repl(args.thread);
     }
     
@@ -547,6 +665,7 @@ public:
     //   [delete] <interval>            -- set/delete breakpoints at specified instruction addresses
     //   [delete] insn <insn_kind>      -- set/delete breakpoint for certain kind of insn (e.g., "insn rdtsc")
     //   [delete] syscall [<interval>]  -- set/delete breakpoint when this system call number (or any) is about to occur
+    //   [delete] fd [<interval>]       -- set/delete breakpoint for file descriptors (or any if no interval)
     void breakPointCommands(RSIM_Thread *thread, std::vector<std::string> &cmd) {
         const AddressInterval allAddresses = AddressInterval::whole();
         if (cmd.empty()) {
@@ -570,6 +689,20 @@ public:
                     out_ <<"  all\n";
                 } else {
                     BOOST_FOREACH (const AddressInterval &interval, breakPointSyscalls_.intervals()) {
+                        if (interval.isSingleton()) {
+                            out_ <<"  " <<interval.least() <<"\n";
+                        } else {
+                            out_ <<"  " <<interval.least() <<" through " <<interval.greatest() <<"\n";
+                        }
+                    }
+                }
+            }
+            if (!breakPointFds_.isEmpty()) {
+                out_ <<"file descriptors:\n";
+                if (breakPointFds_.hull() == allAddresses && breakPointFds_.size() == allAddresses.size()) {
+                    out_ <<"  all\n";
+                } else {
+                    BOOST_FOREACH (const AddressInterval &interval, breakPointFds_.intervals()) {
                         if (interval.isSingleton()) {
                             out_ <<"  " <<interval.least() <<"\n";
                         } else {
@@ -607,6 +740,15 @@ public:
                 } else {
                     breakPointSyscalls_.erase(interval);
                 }
+            } else if (cmd[0]=="fd" || cmd[0]=="file" || cmd[0]=="files") {
+                AddressInterval interval = allAddresses;
+                if (cmd.size() > 1)
+                    interval = parseAddressInterval(cmd[1]);
+                if (insert) {
+                    breakPointFds_.insert(interval);
+                } else {
+                    breakPointFds_.erase(interval);
+                }
             } else {
                 AddressInterval interval = parseAddressInterval(cmd[0]);
                 if (insert) {
@@ -634,7 +776,7 @@ public:
 };
 
 // Invoke debugger per system call
-class PerSyscall: public RSIM_Callbacks::SyscallCallback {
+class PerSyscall: public RSIM_Simulator::SystemCall::Callback {
     Debugger *debugger_;
 public:
     PerSyscall(Debugger *debugger): debugger_(debugger) {}
@@ -650,11 +792,20 @@ public:
 // Attach interactive debugger to the simulator
 void
 attach(RSIM_Simulator &simulator, std::istream &in, std::ostream &out) {
+    static size_t ncalls = 0;
+    if (1 == ++ncalls)
+        mlog = Sawyer::Message::Facility("RSIM_Debugger", Diagnostics::destination);
+
     if (simulator.get_process())
         throw std::runtime_error("debugger must be attached before process is loaded"); // FIXME[Robb P. Matzke 2015-06-05]
     Debugger *debugger = new Debugger(in, out);
     simulator.install_callback(new PerInstruction(debugger));
-    simulator.install_callback(new PerSyscall(debugger));
+
+    PerSyscall *perSyscall = new PerSyscall(debugger);
+    for (size_t i=0; i<512; ++i) {
+        if (simulator.syscall_is_implemented(i))
+            simulator.syscall_implementation(i)->enter.append(perSyscall);
+    }
 }
 
 } // namespace

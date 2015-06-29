@@ -70,7 +70,7 @@ RSIM_Linux64::init() {
     SC_REG(39,  getpid,                         default);
     SC_REG(41,  socket,                         default);
     SC_REG(42,  connect,                        default);
-    SC_REG(43,  accept,                         default);
+    SC_REG(43,  accept,                         accept);
     SC_REG(49,  bind,                           default);
     SC_REG(50,  listen,                         default);
     SC_REG(54,  setsockopt,                     default);
@@ -308,6 +308,35 @@ RSIM_Linux64::pushAuxVector(RSIM_Process *process, rose_addr_t sp, rose_addr_t e
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux64::syscall_accept_enter(RSIM_Thread *t, int callno) {
+    ASSERT_require(sizeof(socklen_t)==4);
+    t->syscall_enter("accept").d().p().P(4, print_int_32).d();
+}
+
+void
+RSIM_Linux64::syscall_accept_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    rose_addr_t addrLenVa = t->syscall_arg(2);
+    unsigned flags = t->syscall_arg(3);
+    syscall_accept_helper(t, guestFd, addrVa, addrLenVa, flags);
+}
+
+void
+RSIM_Linux64::syscall_accept_leave(RSIM_Thread *t, int callno) {
+    rose_addr_t addrlenVa = t->syscall_arg(2);
+    ASSERT_require(sizeof(socklen_t)==4);
+    socklen_t addrlen = 0;
+    if (sizeof(addrlen) == t->get_process()->mem_read(&addrlen, addrlenVa, sizeof(addrlen))) {
+        t->syscall_leave().ret().arg(1).P(addrlen, print_sockaddr);
+    } else {
+        t->syscall_leave().ret();
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux64::syscall_arch_prctl_enter(RSIM_Thread *t, int callno) {
     static const Translate code[] = { TE(ARCH_SET_FS), TE(ARCH_GET_FS), TE(ARCH_SET_GS), TE(ARCH_GET_GS), T_END };
     switch (t->syscall_arg(0)) {
@@ -368,12 +397,44 @@ RSIM_Linux64::syscall_arch_prctl_leave(RSIM_Thread *t, int callno) {
     switch (t->syscall_arg(0)) {
         case ARCH_GET_FS:
         case ARCH_GET_GS:
-            t->syscall_leave().ret().arg(1).P(8, print_hex_64).str("\n");
+            t->syscall_leave().ret().arg(1).P(8, print_hex_64);
             break;
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_bind_enter(RSIM_Thread *t, int callno) {
+    socklen_t addrlen = t->syscall_arg(2);
+    t->syscall_enter("bind").d().P(addrlen, print_sockaddr).d();
+}
+
+void
+RSIM_Linux64::syscall_bind_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    size_t addrSize = t->syscall_arg(2);
+    syscall_bind_helper(t, guestFd, addrVa, addrSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_connect_enter(RSIM_Thread *t, int callno) {
+    socklen_t addrlen = t->syscall_arg(2);
+    t->syscall_enter("connect").d().P(addrlen, print_sockaddr).d();
+}
+
+void
+RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    rose_addr_t addrVa = t->syscall_arg(1);
+    size_t addrSize = t->syscall_arg(2);
+    syscall_connect_helper(t, guestFd, addrVa, addrSize);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,6 +447,20 @@ RSIM_Linux64::syscall_ioctl_enter(RSIM_Thread *t, int callno) {
 void
 RSIM_Linux64::syscall_ioctl_body(RSIM_Thread *t, int callno) {
     t->syscall_return(-ENOTTY);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_listen_enter(RSIM_Thread *t, int callno) {
+    t->syscall_enter("listen").d().d();
+}
+
+void
+RSIM_Linux64::syscall_listen_body(RSIM_Thread *t, int callno) {
+    int guestFd = t->syscall_arg(0);
+    int backlog = t->syscall_arg(1);
+    syscall_listen_helper(t, guestFd, backlog);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -419,8 +494,43 @@ RSIM_Linux64::syscall_mmap_body(RSIM_Thread *t, int callno) {
 
 void
 RSIM_Linux64::syscall_mmap_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_setsockopt_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("setsockopt").d().d().d().p().d();
+}
+
+void
+RSIM_Linux64::syscall_setsockopt_body(RSIM_Thread *t, int callno) {
+    int guestFd          = t->syscall_arg(0);
+    int level            = t->syscall_arg(1);
+    int optName          = t->syscall_arg(2);
+    rose_addr_t optvalVa = t->syscall_arg(3);
+    size_t optSize       = t->syscall_arg(4);
+    syscall_setsockopt_helper(t, guestFd, level, optName, optvalVa, optSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_socket_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("socket").f(protocol_families).f(socket_types).f(socket_protocols);
+}
+
+void
+RSIM_Linux64::syscall_socket_body(RSIM_Thread *t, int callno)
+{
+    int family = t->syscall_arg(0);
+    int type = t->syscall_arg(1);
+    int proto = t->syscall_arg(2);
+    syscall_socket_helper(t, family, type, proto);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,7 +623,7 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
-    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
