@@ -87,6 +87,8 @@ SgStatement * generateStatement<
   std::map<SgVariableSymbol *, SgVariableSymbol *> data_sym_to_local;
   std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *> data_sym_to_data;
 
+//std::cerr << "local_symbol_maps.datas.size() = " << local_symbol_maps.datas.size() << std::endl;
+
   for (it_data_to_local = local_symbol_maps.datas.begin(); it_data_to_local != local_symbol_maps.datas.end(); it_data_to_local++) {
     Data<DLX::KLT_Annotation<DLX::TileK::language_t> > * data = it_data_to_local->first;
     SgVariableSymbol * data_sym = it_data_to_local->first->getVariableSymbol();
@@ -99,12 +101,18 @@ SgStatement * generateStatement<
   std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
   std::vector<SgVarRefExp *>::const_iterator it_var_ref;
 
+//std::cerr << "generateStatement: " << var_refs.size() << " variable references found." << std::endl;
+
   for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
     SgVarRefExp * var_ref = *it_var_ref;
     SgVariableSymbol * var_sym = var_ref->get_symbol();
 
+//  std::cerr << "-> Var: " << var_sym->get_name().getString() << std::endl;
+
     std::map<SgVariableSymbol *, Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *>::const_iterator it_data_sym_to_data = data_sym_to_data.find(var_sym);
     if (it_data_sym_to_data == data_sym_to_data.end()) continue; // Not a variable reference to a Data
+
+//  std::cerr << "-> Found DATA !" << std::endl;
 
     Data<DLX::KLT_Annotation<DLX::TileK::language_t> > * data = it_data_sym_to_data->second;
 
@@ -327,7 +335,13 @@ tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> > generateTiles<
     }
 
     SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(tile_iterator), lower_bound));
-    SgExprStatement * test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
+    SgExprStatement * test_stmt = NULL;
+    if (previous_iterator == NULL) {
+      test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
+    }
+    else {
+      test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessThanOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
+    }
     SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
                                 SageBuilder::buildVarRefExp(tile_iterator),
                                 SageBuilder::buildDotExp(
@@ -459,7 +473,7 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
   tilek_host_api.build_kernel_func = build_kernel_func->node->symbol;
   assert(tilek_host_api.build_kernel_func != NULL);
 
-  MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
+  MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("execute_kernel");
   tilek_host_api.execute_kernel_func = execute_kernel_func->node->symbol;
   assert(tilek_host_api.execute_kernel_func != NULL);
 
@@ -737,22 +751,23 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * data_sym = data->getVariableSymbol();
     std::string data_name = data_sym->get_name().getString();
 
-    SgExpression * init;
+    SgExpression * init = SageBuilder::buildCastExp(
+      SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
+      SageBuilder::buildPointerType(data->getBaseType())
+    );
+
+    SgType * data_type;
     if (data->getSections().size() > 0)
-      init = SageBuilder::buildCastExp(
-        SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
-        data_sym->get_type()
-      );
-    else
-      init = SageBuilder::buildPointerDerefExp(SageBuilder::buildCastExp(
-        SageBuilder::buildPntrArrRefExp(SageBuilder::buildVarRefExp(arg_data_sym), SageBuilder::buildIntVal(arg_cnt)),
-        SageBuilder::buildPointerType(data_sym->get_type())
-      ));
+      data_type = SageBuilder::buildPointerType(data->getBaseType());
+    else {
+      data_type = data->getBaseType();
+      init = SageBuilder::buildPointerDerefExp(init);
+    }
 
     SageInterface::prependStatement(
       SageBuilder::buildVariableDeclaration(
         data_name,
-        data_sym->get_type(),
+        data_type,
         SageBuilder::buildAssignInitializer(init),
         kernel_body
       ),
@@ -761,7 +776,7 @@ SgBasicBlock * createLocalDeclarations<
     SgVariableSymbol * new_sym = kernel_body->lookup_variable_symbol(data_name);
     assert(new_sym != NULL);
 
-    local_symbol_maps.parameters.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, new_sym));
+    local_symbol_maps.datas.insert(std::pair< ::KLT::Data<DLX::KLT_Annotation<DLX::TileK::language_t> > *, SgVariableSymbol *>(data, new_sym));
     arg_cnt++;
   }
 
