@@ -1,0 +1,327 @@
+COMMANDS WE CAN SIMULATE
+  
+This is a list of UNIX utilities as specified by IEEE Std 1003.1-2008, which is part of the Single UNIX Specification (SUS). These utilities can be found on UNIX Operating systems and most UNIX-like operating systems.
+- http://en.wikipedia.org/wiki/List_of_Unix_utilities
+
+ar - create, modify, and extract from archives
+basename - strip directory and suffix from filenames
+bc -  An arbitrary precision calculator language
+cal - displays a calendar
+cat   - concatenate and display files 
+cksum - checksum and count the bytes in a file
+cmp - compare two files
+comm - compare two sorted files line by line
+csplit - split a file into sections determined by context lines
+ctags - Generate tag files for source code
+cut - remove sections from each line of files
+date - print or set the system date and time
+diff - find differences between two files
+dirname - strip non-directory suffix from file name
+echo - display a line of text
+expand - convert tabs to spaces
+expr - evaluate expressions
+f77
+false - do nothing, unsuccessfully
+file - determine file type
+fold - wrap each input line to fit in specified width
+getconf - get configuration values
+gzip, gunzip, zcat - compress or expand files
+grep, egrep, fgrep - print lines matching a pattern
+head - output the first part of files
+iconv - Convert encoding of given files from one encoding to another
+less - browse or page through a text file 
+lex,flex - fast lexical analyzer generator
+ln - make links between files
+locale - Get locale-specific information. 
+localedef - compile locale definition files
+logname - print user´s login name
+ls    - list contents of directory 
+ls -a - list contents of directory (show all files, including .-files) 
+ls -F - list contents of directory (show file types) 
+mkdir - make directories
+nl - number lines of files
+nm - list symbols from object files
+od - dump files in octal and other formats
+paste - merge lines of files
+patch - apply a diff file to an original
+printf - format and print data
+pwd    - return working directory name 
+rm     - remove files (sit on your hands first!) 
+rm -r  - remove a directory (sit on your hands first!) 
+rmdir  - remove directories
+sed - stream editor for filtering and transforming text
+split - split a file into pieces
+strings - print the strings of printable characters in files.
+tail - output the last part of files
+tee - read from standard input and write to standard output and files
+time - time a simple command or give resource usage
+tr - translate or delete characters
+tsort - perform topological sort
+uname - print system information
+unexpand - convert spaces to tabs
+uniq - report or omit repeated lines
+unlink - call the unlink function to remove the specified file
+wc - print the number of newlines, words, and bytes in files
+who - show who is logged on
+
+COMMANDS THAT DOES NOT WORK
+awk,gawk - pattern scanning and processing language
+ syscall_205(0x00000000, 0x00000000, 0x00254ff4, 0x00000000, 0x00000000, 0xbffff0a8) is not implemented yet
+
+du - estimate file space usage
+
+ instruction semantics: instruction not implemented [0x804da74:fld    FLOAT PTR ds:[ecx + 0x08]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x804da77:fld    FLOAT PTR ds:[ebx + 0xffffcf88(-0x00003078)]]
+
+ed, red - text editor
+ syscall_60(0x0000003f, 0x0001e7b9, 0xbffffff8, 0x40dc4ca0, 0x00000000, 0xbffff138) is not implemented yet
+
+
+find - search for files in a directory hierarchy
+ instruction semantics: instruction not implemented [0x13b6df:fld    DOUBLE PTR ss:[ebp + 0xf0(-0x10)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x804b3b3:fstp   FLOAT PTR ss:[ebp + 0xfffffe4c(-0x000001b4)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x804b3bb:fld    FLOAT PTR ss:[ebp + 0xfffffe4c(-0x000001b4)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x804b3c7:fld    DOUBLE PTR ds:[0x08065120]]
+
+
+fuser - identify processes using files or sockets
+ Cannot open a network socket.
+
+ipcs - report XSI interprocess communication facilities status
+ lt-x86sim: /home/saebjornsen1/WORK/ROSE.git/ROSE/projects/simulator/x86sim.C:4772: void EmulationPolicy::emulate_syscall(): Assertion `!"not handled"' failed.
+
+kill - terminate a process
+ kill: can't find process "%1"
+
+join - join lines of two files on a common field
+
+'link --help' - call the link function to create a link to a file
+ /bin/link: write error: Operation not permitted
+ specimen exited with status 1
+
+cp    - copy files 
+make - GNU make utility to maintain groups of programs
+mv - move (rename) files
+
+ instruction semantics: instruction not implemented [0x8057019:fld    DOUBLE PTR ds:[edx]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x805701b:fld    DOUBLE PTR ds:[eax]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x805701d:fxch   st(1)]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x805701f:fucompp ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8057021:fnstsw ax]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8057023:sahf   ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056d97:fld    DOUBLE PTR ds:[edx]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056d99:fld    DOUBLE PTR ds:[eax]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056d9b:fxch   st(1)]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056d9d:fucompp ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056d9f:fnstsw ax]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056da1:sahf   ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056dab:fld    DOUBLE PTR ds:[edx]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8056db4:fstp   DOUBLE PTR ss:[esp + 0x10]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x13fc3f:fld    DOUBLE PTR ds:[edx]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x13fc44:fstp   DOUBLE PTR ss:[ebp + 0x9c(-0x64)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x142632:fld    DOUBLE PTR ds:[eax]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x142634:fst    DOUBLE PTR ss:[ebp + 0xfffffedc(-0x00000124)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x14263a:fst    DOUBLE PTR ss:[ebp + 0xd4(-0x2c)]]
+ 
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x14263d:fstp   DOUBLE PTR ss:[esp]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x1426b7:fld    DOUBLE PTR ss:[ebp + 0xfffffedc(-0x00000124)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x1426bd:fstp   DOUBLE PTR ss:[esp]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x142c3a:fld    DOUBLE PTR ss:[ebp + 0xfffffedc(-0x00000124)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x142c4e:fstp   DOUBLE PTR ss:[esp + 0x10]]
+
+ Ignored. Continuing with a corrupt state...
+
+
+'man make' - format and display the on-line manual pages
+ Error executing formatting or display command.
+ System command (cd /usr/share/man && (echo ".pl 11i"; /usr/bin/gunzip -c '/usr/share/man/man1/make.1.gz') | /usr/bin/gtbl | /usr/bin/nroff -c --legacy ISO-8859-1 -mandoc 2>/dev/null | /usr/bin/less -is) exited with status -1.
+ No manual entry for make
+ specimen exited with status 1
+
+
+M4 - manual page for M4 1.4.5
+ /usr/bin/m4: getrlimit: Function not implemented
+
+chgrp -  change group ownership
+ setarch i386 -LRB3   ./x86sim chgrp rose test.5 
+ /bin/chgrp: invalid group `rose'
+ /bin/chgrp: write error: Operation not permitted
+ specimen exited with status 1
+
+
+chown - change file owner and group
+ setarch i386 -LRB3   ./x86sim chown saebjornsen1 test.5 
+ /bin/chown: `saebjornsen1': invalid user
+ /bin/chown: write error: Operation not permitted
+ specimen exited with status 1
+
+
+id - print user identity
+ syscall_205(0x00000000, 0x00000000, 0x00254ff4, 0x00000000, 0x00000000, 0xbfffe098) is not implemented yet
+
+
+vi,e  - creen-oriented (visual) display editor based on ex 
+ fails due to some input error
+
+df - report file system disk space usage
+
+ instruction semantics: instruction not implemented [0x8049e60:fild   QWORD PTR ss:[esp]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e70:fstp   DOUBLE PTR ss:[ebp + 0xfffff808(-0x000007f8)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e76:fld    DOUBLE PTR ss:[ebp + 0xfffff808(-0x000007f8)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e7c:fld    FLOAT PTR ds:[ebx + 0xffffd2ac(-0x00002d54)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8049e82:fxch   st(1)]
+
+
+more
+
+ space does not change the page as it is supposed to
+
+mv     - move files or directories 
+ warning: cannot find virtual dynamic shared object: x86vdso
+ instruction semantics: instruction not implemented [0x8051d64:fld    FLOAT PTR ds:[ecx + 0x08]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8051d67:fld    FLOAT PTR ds:[ebx + 0xffffdd40(-0x000022c0)]]
+
+ Ignored. Continuing with a corrupt state...
+ register "st(1)" is not available for i386
+
+
+
+strip - Discard symbols from object files
+ strip: sandbox-emulator.2.o: File format not recognized
+
+ls -l - list contents of directory (long format, including size, permissions, and ownership) 
+ syscall_229(0xbfffd960, 0x07c7eb0f, 0x00000000, 0x00000000, 0x07c80870, 0xbfffd928) is not implemented yet
+
+ps     - report process status 
+top    - display and update information about processes 
+
+ instruction semantics: instruction not implemented [0xdd1c09:popfd  ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0xdd1c0c:popfd  ]
+ 
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8052229:popfd  ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x805222c:popfd  ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0xdd04e1:fldz   ]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0xdd04e6:fst    DOUBLE PTR ss:[ebp + 0xe8(-0x18)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0xdd04e9:fstp   DOUBLE PTR ss:[ebp + 0xe0(-0x20)]]
+
+ Ignored. Continuing with a corrupt state...
+ syscall_19(0x00000005, 0x00000000, 0x00000000, 0xbfffec78, 0x00dd8380, 0xbfffec08) is not implemented yet
+
+
+
+sort - sort lines of text files
+ instruction semantics: instruction not implemented [0x804ffef:fild   DWORD PTR ss:[esp]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x804fff5:fstp   DOUBLE PTR ss:[ebp + 0xf0(-0x10)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x8050004:fld    FLOAT PTR ds:[ebx + 0xffffe00c(-0x00001ff4)]]
+
+ Ignored. Continuing with a corrupt state...
+ instruction semantics: instruction not implemented [0x805000c:fld    DOUBLE PTR ss:[ebp + 0xf0(-0x10)]]
+
+test - check file types and compare values
+ /usr/bin/test: write error: Operation not permitted
+ specimen exited with status 2
+
+touch - change file timestamps
+ lt-x86sim: /home/saebjornsen1/WORK/ROSE.git/ROSE/projects/simulator/x86sim.C:3693: void EmulationPolicy::emulate_syscall(): Assertion `1==nread' failed.
+
+true - do nothing, successfully
+ /bin/true: write error: Operation not permitted
+
+tty - print the file name of the terminal connected to standard input
+ read 4 bytes failed at 0x00001af4
+
+
+WANT TO SIMULATE
+
+
+http://en.wikipedia.org/wiki/List_of_Unix_utilities
+
+Basic Commands
+
+chmod - change the permissions mode of a file 
+man   - find and display reference manual pages 
+passwd - change your password 
+who    - who is on the system 
+
+Editors
+
+emacs  - programmable editor 
+

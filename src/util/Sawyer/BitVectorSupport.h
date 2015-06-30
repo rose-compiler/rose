@@ -1383,10 +1383,10 @@ void fromString(Word *vec, const BitRange &range, const std::string &input) {
  *  parse to more than 64 bits. */
 template<class Word>
 void fromDecimal(Word *vec, const BitRange &range, const std::string &input) {
-    uint64_t v = 0;
+    boost::uint64_t v = 0;
     BOOST_FOREACH (char ch, input) {
         if (isdigit(ch)) {
-            uint64_t tmp = v * 10 + (ch - '0');
+            boost::uint64_t tmp = v * 10 + (ch - '0');
             if (tmp < v)
                 throw std::runtime_error("overflow parsing decimal string");
             v = tmp;

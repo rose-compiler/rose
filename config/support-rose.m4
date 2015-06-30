@@ -2056,6 +2056,14 @@ projects/Viz/lib/Makefile
 projects/Viz/src/Makefile
 projects/Viz/tools/Makefile
 projects/Viz/examples/Makefile
+projects/TileK/Makefile
+projects/TileK/lib/Makefile
+projects/TileK/lib/dlx/tilek/Makefile
+projects/TileK/lib/klt/tilek/Makefile
+projects/TileK/lib/mdcg/tilek/Makefile
+projects/TileK/lib/tilek/Makefile
+projects/TileK/src/Makefile
+projects/TileK/examples/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile

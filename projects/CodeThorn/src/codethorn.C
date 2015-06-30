@@ -343,6 +343,8 @@ int main( int argc, char * argv[] ) {
     ("csv-assert", po::value< string >(), "output assert reachability results into a CSV file [arg]")
     ("csv-assert-live", po::value< string >(), "output assert reachability results during analysis into a CSV file [arg]")
     ("csv-stats",po::value< string >(),"output statistics into a CSV file [arg]")
+    ("csv-stats-size-and-ltl",po::value< string >(),"output statistics regarding the final model size and results for LTL properties into a CSV file [arg]")
+    ("csv-stats-cegpra",po::value< string >(),"output statistics regarding the counterexample-guided prefix refinement analysis (cegpra) into a CSV file [arg]")
     ("tg1-estate-address", po::value< string >(), "transition graph 1: visualize address [=yes|no]")
     ("tg1-estate-id", po::value< string >(), "transition graph 1: visualize estate-id [=yes|no]")
     ("tg1-estate-properties", po::value< string >(), "transition graph 1: visualize all estate-properties [=yes|no]") 
@@ -368,6 +370,7 @@ int main( int argc, char * argv[] ) {
     ("semantic-fold-threshold",po::value< int >(),"Set threshold with <arg> for semantic fold operation (experimental)")
     ("post-collapse-stg",po::value< string >(),"compute collapsed state transition graph after the complete transition graph has been computed. [=yes|no]")
     ("viz",po::value< string >(),"generate visualizations (dot) outputs [=yes|no]")
+    ("viz-cegpra-detailed",po::value< string >(),"generate visualization (dot) output files with prefix <arg> for different stages within each loop of cegpra.")
     ("update-input-var",po::value< string >(),"For testing purposes only. Default is Yes. [=yes|no]")
     ("run-rose-tests",po::value< string >(),"Run ROSE AST tests. [=yes|no]")
     ("reduce-cfg",po::value< string >(),"Reduce CFG nodes which are not relevant for the analysis. [=yes|no]")
@@ -391,6 +394,7 @@ int main( int argc, char * argv[] ) {
     ("generate-assertions",po::value< string >(),"generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("rersformat",po::value< int >(),"Set year of rers format (2012, 2013).")
     ("max-transitions",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max transitions (default: no limit).")
+    ("max-iterations",po::value< int >(),"Passes (possibly) incomplete STG to verifier after max loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("max-transitions-forced-top",po::value< int >(),"Performs approximation after <arg> transitions (default: no limit).")
     ("max-iterations-forced-top",po::value< int >(),"Performs approximation after <arg> loop iterations (default: no limit). Currently requires --exploration-mode=loop-aware.")
     ("variable-value-threshold",po::value< int >(),"sets a threshold for the maximum number of different values are stored for each variable.")
@@ -434,7 +438,9 @@ int main( int argc, char * argv[] ) {
     ("counterexamples-with-output", po::value< string >(), "reported counterexamples for LTL or reachability properties also include output values [=yes|no]")
     ("check-ltl-counterexamples", po::value< string >(), "report ltl counterexamples if and only if they are not spurious [=yes|no]")
     ("refinement-constraints-demo", po::value< string >(), "display constraints that are collected in order to later on help a refined analysis avoid spurious counterexamples. [=yes|no]")
-    ("cegar-prefix-ltl",po::value< int >(),"Select an LTL property that should be checked using the cegar-prefix mode (between 0 and 99).")
+    ("cegpra-ltl",po::value< int >(),"Select the ID of an LTL property that should be checked using cegpra (between 0 and 99).")
+    ("cegpra-ltl-all",po::value< string >(),"Check all specified LTL properties using cegpra [=yes|no]")
+    ("cegpra-max-iterations",po::value< int >(),"Select a maximum number of counterexamples anaylzed by cegpra (default: no limit).")
     ("set-stg-incomplete", po::value< string >(), "set to true if the generated STG will not contain all possible execution paths (e.g. if only a subset of the input values is used). [=yes|no]")
     ("determine-prefix-depth", po::value< string >(), "if possible, display a guarantee about the length of the discovered prefix of possible program traces. [=yes|no]")
     ("minimize-states", po::value< string >(), "does not store single successor states (minimizes number of states).")
@@ -519,6 +525,7 @@ int main( int argc, char * argv[] ) {
   boolOptions.registerOption("with-ltl-counterexamples",false);
   boolOptions.registerOption("counterexamples-with-output",false);
   boolOptions.registerOption("check-ltl-counterexamples",false); 
+  boolOptions.registerOption("cegpra-ltl-all",false); 
   boolOptions.registerOption("refinement-constraints-demo",false);
   boolOptions.registerOption("determine-prefix-depth",false);
   boolOptions.registerOption("set-stg-incomplete",false);
@@ -533,13 +540,13 @@ int main( int argc, char * argv[] ) {
   Analyzer analyzer;
   global_analyzer=&analyzer;
 
-  if (args.count("cegar-prefix-ltl")) {
+  if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
     analyzer.setMaxTransitionsForcedTop(1); //initial over-approximated model
     boolOptions.registerOption("no-input-input",true);
     boolOptions.registerOption("with-ltl-counterexamples",true);
     boolOptions.registerOption("counterexamples-with-output",true);
-    cout << "STATUS: cegar prefix mode activated (with it LTL counterexamples that include output states)." << endl;
-    cout << "STATUS: cegar prefix mode: will remove input state --> input state transitions in the approximated STG. " << endl;
+    cout << "STATUS: CEGPRA activated (with it LTL counterexamples that include output states)." << endl;
+    cout << "STATUS: CEGPRA mode: will remove input state --> input state transitions in the approximated STG. " << endl;
   }
 
   if (boolOptions["counterexamples-with-output"]) {
@@ -633,15 +640,8 @@ int main( int argc, char * argv[] ) {
     // default value
     analyzer.setExplorationMode(Analyzer::EXPL_BREADTH_FIRST);
   }
-  if(args.count("max-transitions")) {
-    analyzer.setMaxTransitions(args["max-transitions"].as<int>());
-  }
 
-  if(args.count("max-transitions-forced-top")) {
-    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
-  }
-
-  if(args.count("max-iterations-forced-top")) {
+  if (args.count("max-iterations") || args.count("max-iterations-forced-top")) {
     bool notSupported=false;
     if (!args.count("exploration-mode")) {
       notSupported=true;
@@ -652,9 +652,24 @@ int main( int argc, char * argv[] ) {
       }
     }
     if(notSupported) {
-      cout << "Error: \"max-iterations-forced-top\" mode currently requires \"--exploration-mode=loop-aware\"." << endl;
+      cout << "Error: \"max-iterations[-forced-top]\" modes currently require \"--exploration-mode=loop-aware\"." << endl;
       exit(1);
     }
+  }
+
+  if(args.count("max-transitions")) {
+    analyzer.setMaxTransitions(args["max-transitions"].as<int>());
+  }
+
+  if(args.count("max-iterations")) {
+    analyzer.setMaxIterations(args["max-iterations"].as<int>());
+  }
+
+  if(args.count("max-transitions-forced-top")) {
+    analyzer.setMaxTransitionsForcedTop(args["max-transitions-forced-top"].as<int>());
+  }
+
+  if(args.count("max-iterations-forced-top")) {
     analyzer.setMaxIterationsForcedTop(args["max-iterations-forced-top"].as<int>());
   }
 
@@ -734,6 +749,8 @@ int main( int argc, char * argv[] ) {
   for (int i=1; i<argc; ++i) {
     if (string(argv[i]).find("--csv-assert")==0
         || string(argv[i]).find("--csv-stats")==0
+        || string(argv[i]).find("--csv-stats-cegpra")==0
+        || string(argv[i]).find("--csv-stats-size-and-ltl")==0
         || string(argv[i]).find("--csv-assert-live")==0
         || string(argv[i]).find("--threads" )==0
         || string(argv[i]).find("--display-diff")==0
@@ -1088,6 +1105,9 @@ int main( int argc, char * argv[] ) {
   long transitionGraphSizeIoOnly = 0;
   double spotLtlAnalysisTime = 0;
 
+  stringstream statisticsSizeAndLtl;
+  stringstream statisticsCegpra;
+
   if (args.count("check-ltl")) {
     string ltl_filename = args["check-ltl"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
@@ -1144,20 +1164,33 @@ int main( int argc, char * argv[] ) {
     }
     PropertyValueTable* ltlResults;
     SpotConnection spotConnection(ltl_filename);
-    if (!args.count("cegar-prefix-ltl")) {
-      cout << "STATUS: generating LTL results"<<endl;
-      bool spuriousNoAnswers = false;
-      if (boolOptions["check-ltl-counterexamples"]) {
-        spuriousNoAnswers = true;
+    cout << "STATUS: generating LTL results"<<endl;
+    bool spuriousNoAnswers = false;
+    if (boolOptions["check-ltl-counterexamples"]) {
+      spuriousNoAnswers = true;
+    }
+    spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
+    spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
+    ltlResults = spotConnection.getLtlResults();
+    if (args.count("cegpra-ltl") || boolOptions["cegpra-ltl-all"]) {
+      if (args.count("csv-stats-cegpra")) {
+        statisticsCegpra << "init,";
+        printStgSize(analyzer.getTransitionGraph(), "initial abstract model", &statisticsCegpra);
+        statisticsCegpra << ",na,na";
+        statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
+        statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
+        statisticsCegpra << "," << ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
       }
-      spotConnection.checkLtlProperties( *(analyzer.getTransitionGraph()), ltlInAlphabet, ltlOutAlphabet, withCounterexample, spuriousNoAnswers);
-      spotLtlAnalysisTime=timer.getElapsedTimeInMilliSec();
-      ltlResults = spotConnection.getLtlResults();
-    } else {
-      CounterexampleAnalyzer ceAnalyzer(&analyzer);
-      int property = args["cegar-prefix-ltl"].as<int>();
-      ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
-      printStgSize(analyzer.getTransitionGraph(), "model resulting from cegar prefix mode");
+      CounterexampleAnalyzer ceAnalyzer(&analyzer, &statisticsCegpra);
+      if (args.count("cegpra-max-iterations")) {
+        ceAnalyzer.setMaxCounterexamples(args["cegpra-max-iterations"].as<int>());
+      }
+      if (boolOptions["cegpra-ltl-all"]) {
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(spotConnection, ltlInAlphabet, ltlOutAlphabet);
+      } else {  // cegpra for single LTL property
+        int property = args["cegpra-ltl"].as<int>();
+        ltlResults = ceAnalyzer.cegarPrefixAnalysisForLtl(property, spotConnection, ltlInAlphabet, ltlOutAlphabet);
+      }
     }
     if (boolOptions["check-ltl-counterexamples"]) {
       cout << "STATUS: checking for spurious counterexamples..."<<endl;
@@ -1213,6 +1246,12 @@ int main( int argc, char * argv[] ) {
       std::string csv_filename = args["csv-spot-ltl"].as<string>();
       cout << "STATUS: writing ltl results to file: " << csv_filename << endl;
       ltlResults->writeFile(csv_filename.c_str(), false, 0, withCounterexample);
+    }
+    if (args.count("csv-stats-size-and-ltl")) {
+      printStgSize(analyzer.getTransitionGraph(), "final model", &statisticsSizeAndLtl);
+      statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_YES);
+      statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_NO);
+      statisticsSizeAndLtl <<","<< ltlResults->entriesWithValue(PROPERTY_VALUE_UNKNOWN);
     }
     delete ltlResults;
     ltlResults = NULL;
@@ -1429,6 +1468,23 @@ int main( int argc, char * argv[] ) {
     cout << "generated "<<filename<<endl;
   }
 
+  if (args.count("csv-stats-size-and-ltl")) {
+    // content of a line in the .csv file: 
+    // <#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
+    string filename = args["csv-stats-size-and-ltl"].as<string>(); 
+    write_file(filename,statisticsSizeAndLtl.str());
+    cout << "generated "<<filename<<endl;
+  }
+
+  if (args.count("csv-stats-cegpra")) {
+    // content of a line in the .csv file: 
+    // <analyzed_property>,<#transitions>,<#states>,<#input_states>,<#output_states>,<#error_states>,
+    // <#analyzed_counterexamples>,<analysis_result(y/n/?)>,<#verified_LTL>,<#falsified_LTL>,<#unknown_LTL>
+    string filename = args["csv-stats-cegpra"].as<string>(); 
+    write_file(filename,statisticsCegpra.str());
+    cout << "generated "<<filename<<endl;
+  }
+
   if (args.count("check-ltl-sol")) {
     string ltl_filename = args["check-ltl-sol"].as<string>();
     if(boolOptions["rersmode"]) {  //reduce the graph accordingly, if not already done
@@ -1616,7 +1672,7 @@ int main( int argc, char * argv[] ) {
   return 0;
 }
 
-void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment) {
+void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment, stringstream* csvOutput) {
   long inStates = model->numberOfObservableStates(true, false, false);
   long outStates = model->numberOfObservableStates(false, true, false);
   long errStates = model->numberOfObservableStates(false, false, true);
@@ -1627,6 +1683,9 @@ void CodeThorn::printStgSize(TransitionGraph* model, string optionalComment) {
   cout << ". #transitions: " << model->size();
   cout << ", #states: " << model->estateSet().size() 
        << " (" << inStates << " in / " << outStates << " out / " << errStates << " err)" << endl;
+  if (csvOutput) {
+    (*csvOutput) << model->size() <<","<< model->estateSet().size() <<","<< inStates <<","<< outStates <<","<< errStates; 
+  }
 }
 
 //currently not used. conceived due to different statistics after LTL evaluation that could be printed in the same way as above.

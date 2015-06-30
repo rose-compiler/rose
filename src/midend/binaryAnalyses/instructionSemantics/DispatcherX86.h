@@ -25,12 +25,12 @@ protected:
 
     // Prototypical constructor
     DispatcherX86(size_t addrWidth, const RegisterDictionary *regs/*=NULL*/)
-        : BaseSemantics::Dispatcher(addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+        : BaseSemantics::Dispatcher(addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
           processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {}
 
     // Normal constructor
     DispatcherX86(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth, const RegisterDictionary *regs)
-        : BaseSemantics::Dispatcher(ops, addrWidth, SgAsmX86Instruction::registersForWidth(addrWidth)),
+        : BaseSemantics::Dispatcher(ops, addrWidth, regs ? regs : SgAsmX86Instruction::registersForWidth(addrWidth)),
           processorMode_(SgAsmX86Instruction::instructionSizeForWidth(addrWidth)) {
         regcache_init();
         iproc_init();
@@ -136,8 +136,16 @@ public:
 
     virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
 
-    /** Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
+    /** Architecture-specific read from register.
+     *
+     *  Similar to RiscOperators::readRegister, but might do additional architecture-specific things. */
     virtual BaseSemantics::SValuePtr readRegister(const RegisterDescriptor&);
+
+    /** Architecture-specific write to register.
+     *
+     *  Similar to RiscOperators::writeRegister, but might do additional architecture-specific things. For instance, writing to
+     *  a 32-bit GPR such as "eax" on x86-64 will write zeros to the upper half of "rax". */
+    virtual void writeRegister(const RegisterDescriptor&, const BaseSemantics::SValuePtr &result);
 
     /** Set parity, sign, and zero flags appropriate for result value. */
     virtual void setFlagsForResult(const BaseSemantics::SValuePtr &result);

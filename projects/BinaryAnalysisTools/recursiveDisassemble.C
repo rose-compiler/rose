@@ -650,7 +650,7 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error("no specimen specified; see --help");
 
     // Load the specimen as raw data or an ELF or PE container.
-    MemoryMap map = engine.loadSpecimens(specimenNames);
+    engine.loadSpecimens(specimenNames);
     SgAsmInterpretation *interp = engine.interpretation();
 
     // Some analyses need to know what part of the address space is being disassembled.

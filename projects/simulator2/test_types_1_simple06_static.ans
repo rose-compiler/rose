@@ -1,0 +1,3 @@
+Pointers discovered by PtrAnalysis:
+    data pointer, non-stack, constant address
+    data pointer, symbolic address

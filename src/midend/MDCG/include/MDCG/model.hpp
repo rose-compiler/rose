@@ -146,6 +146,9 @@ void model_t::lookup<Model::class_t>(const std::string & name, std::set<Model::c
 template <>
 void model_t::lookup<Model::namespace_t>(const std::string & name, std::set<Model::namespace_t> & result) const;
 
+template <>
+void model_t::lookup<Model::type_t>(const std::string & name, std::set<Model::type_t> & result) const;
+
 /** @} */
 
 }
