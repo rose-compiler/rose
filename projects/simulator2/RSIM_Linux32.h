@@ -113,13 +113,9 @@ protected:
     static void syscall_select_leave(RSIM_Thread *t, int callno);
     static void syscall_setgroups32_body(RSIM_Thread *t, int callno);
     static void syscall_setgroups32_enter(RSIM_Thread *t, int callno);
-    static void syscall_set_robust_list_body(RSIM_Thread *t, int callno);
-    static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_body(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_enter(RSIM_Thread *t, int callno);
     static void syscall_set_thread_area_leave(RSIM_Thread *t, int callno);
-    static void syscall_set_tid_address_body(RSIM_Thread *t, int callno);
-    static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
     static void syscall_setrlimit_body(RSIM_Thread *t, int callno);
     static void syscall_setrlimit_enter(RSIM_Thread *t, int callno);
     static void syscall_sigaltstack_body(RSIM_Thread *t, int callno);

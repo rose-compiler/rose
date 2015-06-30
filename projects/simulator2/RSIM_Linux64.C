@@ -96,6 +96,7 @@ RSIM_Linux64::init() {
     SC_REG(92,  chown,                          default);
     SC_REG(93,  fchown,                         default);
     SC_REG(95,  umask,                          default);
+    SC_REG(97,  getrlimit,                      getrlimit);
     SC_REG(102, getuid,                         default);
     SC_REG(104, getgid,                         default);
     SC_REG(107, geteuid,                        default);
@@ -110,9 +111,12 @@ RSIM_Linux64::init() {
     SC_REG(158, arch_prctl,                     arch_prctl);
     SC_REG(162, sync,                           default);
     SC_REG(186, gettid,                         default);
+    SC_REG(202, futex,                          futex);
+    SC_REG(218, set_tid_address,                default);
     SC_REG(231, exit_group,                     exit_group);
     SC_REG(234, tgkill,                         default);
     SC_REG(268, fchmodat,                       default);
+    SC_REG(273, set_robust_list,                default);
     SC_REG(293, pipe2,                          pipe2);
 
 #   undef SC_REG
@@ -445,6 +449,148 @@ RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
     rose_addr_t addrVa = t->syscall_arg(1);
     size_t addrSize = t->syscall_arg(2);
     syscall_connect_helper(t, guestFd, addrVa, addrSize);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_futex_enter(RSIM_Thread *t, int callno)
+{
+    /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
+    static const Translate opflags[] = {
+        TF3(0xff, 0x80, FUTEX_PRIVATE_FLAG|FUTEX_WAIT),
+        TF3(0x80, 0x80, FUTEX_PRIVATE_FLAG),
+        TF3(0x100, 0x100, FUTEX_CLOCK_REALTIME),
+        TF3(0x7f, 0, FUTEX_WAIT),
+        TF3(0x7f, 1, FUTEX_WAKE),
+        TF3(0x7f, 2, FUTEX_FD),
+        TF3(0x7f, 3, FUTEX_REQUEUE),
+        TF3(0x7f, 4, FUTEX_CMP_REQUEUE),
+        TF3(0x7f, 5, FUTEX_WAKE_OP),
+        TF3(0x7f, 6, FUTEX_LOCK_PI),
+        TF3(0x7f, 7, FUTEX_UNLOCK_PI),
+        TF3(0x7f, 8, FUTEX_TRYLOCK_PI),
+        TF3(0x7f, 9, FUTEX_WAIT_BITSET),
+        TF3(0x7f, 10, FUTEX_WAKE_BITSET),
+        T_END
+    };
+
+    unsigned op = t->syscall_arg(1);
+    switch (op & 0x7f) {
+        case 0: /*FUTEX_WAIT*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32);
+            break;
+        case 1: /*FUTEX_WAKE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
+            break;
+        case 2: /*FUTEX_FD*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d();
+            break;
+        case 3: /*FUTEX_REQUEUE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32);
+            break;
+        case 4: /*FUTEX_CMP_REQUEUE*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().unused().P(4, print_int_32).d();
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32).unused().x();
+            break;
+        default:
+            t->syscall_enter("futex").P(4, print_int_32).f(opflags).d().P(sizeof(timespec_32), print_timespec_32)
+                .P(4, print_int_32).d();
+            break;
+    }
+}
+
+void
+RSIM_Linux64::syscall_futex_body(RSIM_Thread *t, int callno)
+{
+    /* Variable arguments */
+    rose_addr_t futex1_va = t->syscall_arg(0);
+    int op = t->syscall_arg(1);
+    int val1 = t->syscall_arg(2);
+    uint32_t timeout_va = 0;                    /* arg 3 when present */
+    uint32_t futex2_va = 0;                     /* arg 4 when present */
+    uint32_t val3 = 0;                          /* arg 5 when present */
+
+    int result = -ENOSYS;
+    switch (op & 0x7f) {
+        case 0: /*FUTEX_WAIT*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            result = t->futex_wait(futex1_va, val1);
+            break;
+        case 1: /*FUTEX_WAKE*/
+            result = t->futex_wake(futex1_va, val1);
+            break;
+        case 2: /*FUTEX_FD*/
+            assert(0); // NOT HANDLED YET
+            break;
+        case 3: /*FUTEX_REQUEUE*/
+            futex2_va = t->syscall_arg(4);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 4: /*FUTEX_CMP_REQUEUE*/
+            futex2_va = t->syscall_arg(4);
+            val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+        case 9: /*FUTEX_WAIT_BITSET*/
+            timeout_va = t->syscall_arg(3);
+            assert(0==timeout_va); // NOT HANDLED YET
+            val3 = t->syscall_arg(5);
+            result = t->futex_wait(futex1_va, val1, val3/*bitset*/);
+            break;
+        default:
+            timeout_va =t->syscall_arg(3);
+            futex2_va = t->syscall_arg(4);
+            val3 = t->syscall_arg(5);
+            assert(0); // NOT HANDLED YET
+            break;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_futex_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(4, print_int_32);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_getrlimit_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getrlimit").f(rlimit_resources).p();
+}
+
+void
+RSIM_Linux64::syscall_getrlimit_body(RSIM_Thread *t, int callno)
+{
+    int resource = t->syscall_arg(0);
+    rose_addr_t rlimit_va = t->syscall_arg(1);
+    struct rlimit rlimit_native;
+    ASSERT_require(sizeof(rlimit_native)==16);
+    int result = getrlimit(resource, &rlimit_native);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (sizeof(rlimit_native) != t->get_process()->mem_write(&rlimit_native, rlimit_va, sizeof(rlimit_native))) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(16, print_rlimit_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

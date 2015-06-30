@@ -867,11 +867,11 @@ RSIM_Linux::syscall_exit_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_exit_body(RSIM_Thread *t, int callno)
 {
-    if (t->clear_child_tid) {
+    if (t->clearChildTidVa()) {
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -899,15 +899,15 @@ RSIM_Linux::syscall_exit_group_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux::syscall_exit_group_body(RSIM_Thread *t, int callno)
 {
-    if (t->clear_child_tid) {
+    if (t->clearChildTidVa()) {
         // From the set_tid_address(2) man page:
         //   When clear_child_tid is set, and the process exits, and the process was sharing memory with other processes or
         //   threads, then 0 is written at this address, and a futex(child_tidptr, FUTEX_WAKE, 1, NULL, NULL, 0) call is
         //   done. (That is, wake a single process waiting on this futex.) Errors are ignored.
         uint32_t zero = 0;                              // FIXME[Robb P. Matzke 2015-06-24]: is this right for 64-bit?
-        size_t n = t->get_process()->mem_write(&zero, t->clear_child_tid, sizeof zero);
+        size_t n = t->get_process()->mem_write(&zero, t->clearChildTidVa(), sizeof zero);
         ROSE_ASSERT(n==sizeof zero);
-        int nwoke = t->futex_wake(t->clear_child_tid, INT_MAX);
+        int nwoke = t->futex_wake(t->clearChildTidVa(), INT_MAX);
         ROSE_ASSERT(nwoke>=0);
     }
 
@@ -2232,6 +2232,70 @@ RSIM_Linux::syscall_setsockopt_helper(RSIM_Thread *t, int guestFd, int level, in
     }
     
     t->syscall_return(result);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
+{
+    if (t->get_process()->wordSize() == 32) {
+        t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_32), print_robust_list_head_32).d();
+    } else {
+        t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_64), print_robust_list_head_64).d();
+    }
+}
+
+void
+RSIM_Linux::syscall_set_robust_list_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t head_va = t->syscall_arg(0);
+    size_t len = t->syscall_arg(1);
+
+    if (t->get_process()->wordSize() == 32) {
+        if (len!=sizeof(robust_list_head_32)) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+        robust_list_head_32 guest_head;
+        if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    } else {
+        ASSERT_require(t->get_process()->wordSize() == 64);
+        if (len!=sizeof(robust_list_head_64)) {
+            t->syscall_return(-EINVAL);
+            return;
+        }
+        robust_list_head_64 guest_head;
+        if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
+            t->syscall_return(-EFAULT);
+            return;
+        }
+    }
+
+    /* The robust list is maintained in user space and accessed by the kernel only when we a thread dies. Since the
+     * simulator handles thread death, we don't need to tell the kernel about the specimen's list until later. In
+     * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
+     * kernel. */
+    t->robustListHeadVa(head_va);
+    t->syscall_return(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("set_tid_address").p();
+}
+
+void
+RSIM_Linux::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
+{
+    t->clearChildTidVa(t->syscall_arg(0));
+    t->syscall_return(getpid());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -693,7 +693,7 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_setrlimit_enter(RSIM_Thread *t, int callno)
 {
-    t->syscall_enter("setrlimit").f(rlimit_resources).P(8, print_rlimit);
+    t->syscall_enter("setrlimit").f(rlimit_resources).P(8, print_rlimit_32);
 }
 
 void
@@ -728,7 +728,7 @@ RSIM_Linux32::syscall_ugetrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit);
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit_32);
 }
 
 /*******************************************************************************************************************************/
@@ -765,7 +765,7 @@ RSIM_Linux32::syscall_getrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit);
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit_32);
 }
 
 /*******************************************************************************************************************************/
@@ -2930,7 +2930,7 @@ sys_clone(RSIM_Thread *t, unsigned flags, uint32_t newsp, uint32_t parent_tid_va
         // on the futex at that address. The address involved may be changed by the set_tid_address(2) system call. This is
         // used by threading libraries.
         if (isChild && 0!=(flags & CLONE_CHILD_CLEARTID))
-            t->clear_child_tid = parent_tid_va;
+            t->clearChildTidVa(parent_tid_va);
 
         // CLONE_PARENT_SETTID: Store child thread ID at location ptid in parent and child memory. (In Linux 2.5.32-2.5.48
         // there was a flag CLONE_SETTID that did this.)
@@ -4021,8 +4021,6 @@ RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 
 /*******************************************************************************************************************************/
 
-/*******************************************************************************************************************************/
-
 void
 RSIM_Linux32::syscall_futex_enter(RSIM_Thread *t, int callno)
 {
@@ -4203,21 +4201,6 @@ RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
     t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_set_tid_address_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("set_tid_address").p();
-}
-
-void
-RSIM_Linux32::syscall_set_tid_address_body(RSIM_Thread *t, int callno)
-{
-    t->clear_child_tid = t->syscall_arg(0);
-    t->syscall_return(getpid());
-}
 
 /*******************************************************************************************************************************/
 
@@ -4473,37 +4456,6 @@ RSIM_Linux32::syscall_utimes_body(RSIM_Thread *t, int callno)
     }
 
     t->syscall_return(result);
-}
-
-/*******************************************************************************************************************************/
-
-void
-RSIM_Linux32::syscall_set_robust_list_enter(RSIM_Thread *t, int callno)
-{
-    t->syscall_enter("set_robust_list").P(sizeof(robust_list_head_32), print_robust_list_head_32).d();
-}
-
-void
-RSIM_Linux32::syscall_set_robust_list_body(RSIM_Thread *t, int callno)
-{
-    uint32_t head_va=t->syscall_arg(0), len=t->syscall_arg(1);
-    if (len!=sizeof(robust_list_head_32)) {
-        t->syscall_return(-EINVAL);
-        return;
-    }
-
-    robust_list_head_32 guest_head;
-    if (sizeof(guest_head)!=t->get_process()->mem_read(&guest_head, head_va, sizeof(guest_head))) {
-        t->syscall_return(-EFAULT);
-        return;
-    }
-
-    /* The robust list is maintained in user space and accessed by the kernel only when we a thread dies. Since the
-     * simulator handles thread death, we don't need to tell the kernel about the specimen's list until later. In
-     * fact, we can't tell the kernel because that would cause our own list (set by libc) to be removed from the
-     * kernel. */
-    t->robust_list_head_va = head_va;
-    t->syscall_return(0);
 }
 
 /*******************************************************************************************************************************/

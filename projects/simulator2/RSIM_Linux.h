@@ -217,6 +217,12 @@ protected:
     static void syscall_sched_yield_enter(RSIM_Thread *t, int callno);
     static void syscall_sched_yield_body(RSIM_Thread *t, int callno);
 
+    static void syscall_set_robust_list_enter(RSIM_Thread *t, int callno);
+    static void syscall_set_robust_list_body(RSIM_Thread *t, int callno);
+
+    static void syscall_set_tid_address_enter(RSIM_Thread *t, int callno);
+    static void syscall_set_tid_address_body(RSIM_Thread *t, int callno);
+
     static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
     static void syscall_setpgid_body(RSIM_Thread *t, int callno);
 

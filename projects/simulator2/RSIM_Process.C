@@ -1195,7 +1195,7 @@ RSIM_Process::clone_thread_helper(void *_clone_info)
 
         /* Should a memory location be cleared (and futex signaled) when the thread dies? */
         if (clone_info->flags & CLONE_CHILD_CLEARTID)
-            thread->clear_child_tid = clone_info->parent_tid_va;
+            thread->clearChildTidVa(clone_info->parent_tid_va);
 
         clone_info->newtid = tid;
     } while (0);

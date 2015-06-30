@@ -764,7 +764,19 @@ struct robust_list_head_32 {
     uint32_t next_va;           /* virtual address of next lock_entry in list; points to self if list is empty */
     int32_t futex_offset;       /* offset from lock_entry to futex */
     uint32_t pending_va;        /* copy of lock_entry as it is being added to the list */
+    robust_list_head_32()
+        : next_va(0), futex_offset(0), pending_va(0) {}
 } __attribute__((packed));
+
+struct robust_list_head_64 {
+    uint64_t next_va;
+    int64_t futex_offset;
+    uint64_t pending_va;
+    robust_list_head_64()
+        : next_va(0), futex_offset(0), pending_va(0) {}
+    robust_list_head_64(const robust_list_head_32 &x)
+        : next_va(x.next_va), futex_offset(x.futex_offset), pending_va(x.pending_va) {}
+};
 
 static const Translate ipc_commands[] = {
     TF3(0x0000ffff, 1, SEMOP),
@@ -1621,7 +1633,8 @@ void convert(statfs64_32 *g, const statfs_native *h);
 void print_SegmentDescriptor(Sawyer::Message::Stream &f, const uint8_t *_ud, size_t sz);
 void print_int_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_hex_64(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
-void print_rlimit(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
+void print_rlimit_32(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
+void print_rlimit_64(Sawyer::Message::Stream &f, const uint8_t *ptr, size_t sz);
 void print_kernel_stat_32(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_kernel_stat_64(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t sz);
 void print_timespec_32(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
@@ -1641,6 +1654,7 @@ void print_flock64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_robust_list_head_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_robust_list_head_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_ipc64_perm_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_msqid64_ds_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_ipc_kludge_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);

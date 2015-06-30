@@ -10,6 +10,7 @@
 #include <sys/socket.h>
 
 using namespace rose::Diagnostics;
+using namespace StringUtility;
 
 unsigned
 tracingFacilityBit(TracingFacility tf)
@@ -66,17 +67,17 @@ print_hex_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
     size_t nelmts = sz/8;
 
     if (1==nelmts) {
-        m <<StringUtility::toHex2(v[0], 64);
+        m <<toHex2(v[0], 64);
     } else {
         m <<"[";
         for (size_t i=0; i<nelmts; i++)
-            m <<(i?",":"") <<StringUtility::toHex2(v[i], 64);
+            m <<(i?",":"") <<toHex2(v[i], 64);
         m <<"]";
     }
 }
 
 void
-print_rlimit(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
+print_rlimit_32(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
 {
     assert(8==sz); /* two 32-bit unsigned integers */
     if (0==~((const uint32_t*)ptr)[0]) {
@@ -88,6 +89,22 @@ print_rlimit(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
         m <<", rlim_max=unlimited";
     } else {
         mfprintf(m)(", rlim_max=%"PRIu32, ((const uint32_t*)ptr)[1]);
+    }
+}
+
+void
+print_rlimit_64(Sawyer::Message::Stream &m, const uint8_t *ptr, size_t sz)
+{
+    assert(16==sz); /* two 64-bit unsigned integers */
+    if (0==~((const uint64_t*)ptr)[0]) {
+        m <<"rlim_cur=unlimited";
+    } else {
+        m <<"rlim_cur=" <<((const uint64_t*)ptr)[0];
+    }
+    if (0==~((const uint64_t*)ptr)[1]) {
+        m <<", rlim_max=unlimited";
+    } else {
+        m <<", rlim_max=" <<((const uint64_t*)ptr)[1];
     }
 }
 
@@ -147,10 +164,10 @@ print_sigaction_32(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_32));
     const sigaction_32 *sa = (const sigaction_32*)_sa;
-    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
+    m <<"handler=" <<addrToString(sa->handler_va) <<", flags=";
     Printer::print_flags(m, signal_flags, sa->flags);
-    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
-    m <<", mask=" <<StringUtility::addrToString(sa->mask);
+    m <<", restorer=" <<addrToString(sa->restorer_va);
+    m <<", mask=" <<addrToString(sa->mask);
 }
 
 void
@@ -158,10 +175,10 @@ print_sigaction_64(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 {
     assert(sz==sizeof(sigaction_64));
     const sigaction_64 *sa = (const sigaction_64*)_sa;
-    m <<"handler=" <<StringUtility::addrToString(sa->handler_va) <<", flags=";
+    m <<"handler=" <<addrToString(sa->handler_va) <<", flags=";
     Printer::print_flags(m, signal_flags, sa->flags);
-    m <<", restorer=" <<StringUtility::addrToString(sa->restorer_va);
-    m <<", mask=" <<StringUtility::addrToString(sa->mask);
+    m <<", restorer=" <<addrToString(sa->restorer_va);
+    m <<", mask=" <<addrToString(sa->mask);
 }
 
 void
@@ -319,8 +336,19 @@ print_robust_list_head_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t 
 {
     assert(sizeof(robust_list_head_32)==sz);
     const robust_list_head_32 *v = (const robust_list_head_32*)_v;
-    mfprintf(m)("next_va=0x%08"PRIx32", futex_offset=%"PRId32", pending_va=0x%08"PRIx32,
-                v->next_va, v->futex_offset, v->pending_va);
+    m <<"next_va=" <<addrToString(v->next_va)
+      <<", futex_offset=" <<toHex(v->futex_offset)
+      <<", pending_va=" <<addrToString(v->pending_va);
+}
+
+void
+print_robust_list_head_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(robust_list_head_32)==sz);
+    const robust_list_head_64 *v = (const robust_list_head_64*)_v;
+    m <<"next_va=" <<addrToString(v->next_va)
+      <<", futex_offset=" <<toHex(v->futex_offset)
+      <<", pending_va=" <<addrToString(v->pending_va);
 }
 
 void
@@ -487,22 +515,22 @@ print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
         case SIGSEGV:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigsegv_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGBUS:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigbus_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGILL:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigill_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGFPE:
             m <<", code=";
             Printer::print_enum(m, siginfo_sigfpe_codes, info->si_code);
-            m <<", addr=" <<StringUtility::addrToString(info->sigfault.addr);
+            m <<", addr=" <<addrToString(info->sigfault.addr);
             break;
         case SIGTRAP:
             m <<", code=";
@@ -525,7 +553,7 @@ print_SigInfo(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
             switch (info->si_code) {
                 case SI_TKILL:
                     m <<", pid=" <<info->rt.pid <<", uid=" <<info->rt.uid
-                      <<", sigval=" <<StringUtility::addrToString(info->rt.sigval);
+                      <<", sigval=" <<addrToString(info->rt.sigval);
                     break;
                 case SI_USER:
                     m <<", pid=" <<info->kill.pid <<", uid=" <<info->kill.uid;
