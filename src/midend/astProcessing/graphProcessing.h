@@ -55,6 +55,7 @@ FINISH TEMPFLATPATH CODE
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <boost/utility.hpp> // required to TIE support
 #include <boost/graph/graphviz.hpp>
 #include <boost/graph/dominator_tree.hpp>
 #include <boost/graph/reverse_graph.hpp>
@@ -1270,11 +1271,11 @@ These should NOT be used by the user. They are simply for writing interesting in
             mf << "digraph defaultName { \n";
             vertex_iterator v, vend;
             edge_iterator e, eend;
-            for (tie(v, vend) = vertices(*gc); v != vend; ++v)
+            for (boost::tie(v, vend) = vertices(*gc); v != vend; ++v)
             {
                 printCFGNode(vertintmap[*v], mf);
             }
-            for (tie(e, eend) = edges(*gc); e != eend; ++e)
+            for (boost::tie(e, eend) = edges(*gc); e != eend; ++e)
             {
                 printCFGEdge(edgeintmap[*e], g, mf);
             }
@@ -1295,7 +1296,7 @@ These should NOT be used by the user. They are simply for writing interesting in
             mf << "digraph defaultName { \n";
             vertex_iterator v, vend;
             edge_iterator e, eend;
-            for (tie(v, vend) = vertices(*gc); v != vend; ++v)
+            for (boost::tie(v, vend) = vertices(*gc); v != vend; ++v)
             {
                 if (nodeStrings.find(vertintmap[*v]) != nodeStrings.end()) {
                     int nn = vertintmap[*v];
@@ -1305,7 +1306,7 @@ These should NOT be used by the user. They are simply for writing interesting in
                     printCFGNodeGeneric(vertintmap[*v], "noprop", mf);
                 }
             }
-           for (tie(e, eend) = edges(*gc); e != eend; ++e)
+           for (boost::tie(e, eend) = edges(*gc); e != eend; ++e)
             {
                 printCFGEdge(edgeintmap[*e], g, mf);
             }
@@ -1371,20 +1372,20 @@ SgGraphTraversal<CFG>::
 findClosuresAndMarkersAndEnumerate(CFG*& g)
 {
     edge_iterator e, eend;
-    for (tie(e, eend) = edges(*g); e != eend; ++e) {
+    for (boost::tie(e, eend) = edges(*g); e != eend; ++e) {
         intedgemap[nextEdge] = *e;
         edgeintmap[*e] = nextEdge;
         nextEdge++;
     }
     vertex_iterator v1, vend1;
-    for (tie(v1, vend1) = vertices(*g); v1 != vend1; ++v1)
+    for (boost::tie(v1, vend1) = vertices(*g); v1 != vend1; ++v1)
     {
         vertintmap[*v1] = nextNode;
         intvertmap[nextNode] = *v1;
         nextNode++;
     }
     vertex_iterator v, vend;
-    for (tie(v, vend) = vertices(*g); v != vend; ++v) {
+    for (boost::tie(v, vend) = vertices(*g); v != vend; ++v) {
         std::vector<int> outs = getOutEdges(vertintmap[*v], g);
         std::vector<int> ins = getInEdges(vertintmap[*v], g);
         if (outs.size() > 1)
