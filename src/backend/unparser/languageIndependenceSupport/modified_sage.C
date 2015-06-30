@@ -1466,7 +1466,26 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                   }
                  else
                   {
+#if 0
+                    printf ("In printSpecifier2(): Output function's inline keyword \n");
+#endif
+#if 1
+                 // DQ (6/27/2015): We need this to be output because the isGnuAttributeAlwaysInline() maybe true, but we need to output
+                 // the "inline" keyword for GNU 4.2.4 compiler (only able to demonstrate the problem on Google protobuffer on RHEL5).
                     curprint( "inline ");
+#else
+                    if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
+                       {
+                      // Supress use of redundant inline keyword if the GNU attribute is being used.
+#if 0
+                         printf ("In printSpecifier2(): Supress use of redundant inline keyword if the GNU attribute is being used \n");
+#endif
+                       }
+                      else
+                       {
+                         curprint( "inline ");
+                       }
+#endif
                   }
              }
 
@@ -2030,7 +2049,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
           if (initializedName->isGnuAttributePacked() == true)
              {
             // curprint(" /* from printAttributes(SgDeclarationStatement*) triggered from SgInitializedName */ __attribute__((packed))");
-               curprint(" __attribute__((packed))");
+               curprint(" __attribute__((packed)) ");
 #if 0
                printf ("Exiting as a test! \n");
                ROSE_ASSERT(false);
@@ -2068,79 +2087,79 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
        // DQ (2/26/2013): Added noinline attribute code generation.
           if (functionDeclaration->get_functionModifier().isGnuAttributeConstructor() == true)
              {
-               curprint( " __attribute__((constructor))");
+               curprint( " __attribute__((constructor)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeDestructor() == true)
              {
-               curprint( " __attribute__((destructor))");
+               curprint( " __attribute__((destructor)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributePure() == true)
              {
-               curprint( " __attribute__((pure))");
+               curprint( " __attribute__((pure)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeWeak() == true)
              {
-               curprint( " __attribute__((weak))");
+               curprint( " __attribute__((weak)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeUnused() == true)
              {
-               curprint( " __attribute__((unused))");
+               curprint( " __attribute__((unused)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeUsed() == true)
              {
-               curprint( " __attribute__((used))");
+               curprint( " __attribute__((used)) ");
              }
 #if 0
           printf ("In printAttributes(SgDeclarationStatement*): functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() = %s \n",functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() ? "true" : "false");
 #endif
           if (functionDeclaration->get_functionModifier().isGnuAttributeDeprecated() == true)
              {
-               curprint( " __attribute__((deprecated))");
+               curprint( " __attribute__((deprecated)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeMalloc() == true)
              {
-               curprint( " __attribute__((malloc))");
+               curprint( " __attribute__((malloc)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNaked() == true)
              {
-               curprint( " __attribute__((naked))");
+               curprint( " __attribute__((naked)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoInstrumentFunction() == true)
              {
-               curprint( " __attribute__((no_instrument_function))");
+               curprint( " __attribute__((no_instrument_function)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoCheckMemoryUsage() == true)
              {
-               curprint( " __attribute__((no_check_memory_usage))");
+               curprint( " __attribute__((no_check_memory_usage)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoInline() == true)
              {
-               curprint( " __attribute__((noinline))");
+               curprint( " __attribute__((noinline)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
              {
-               curprint( " __attribute__((always_inline))");
+               curprint( " __attribute__((always_inline)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeNoThrow() == true)
              {
-               curprint( " __attribute__((no_throw))");
+               curprint( " __attribute__((no_throw)) ");
              }
 
           if (functionDeclaration->get_functionModifier().isGnuAttributeWeakReference() == true)
              {
-               curprint( " __attribute__((weakref))");
+               curprint( " __attribute__((weakref)) ");
              }
 
        // DQ (1/5/2014): Adding support for gnu visibility attributes.
@@ -2197,7 +2216,7 @@ Unparse_MOD_SAGE::printAttributes(SgDeclarationStatement* decl_stmt, SgUnparse_I
                  // curprint(" __attribute__((visibility%s))",s.c_str());
                     curprint(" __attribute__((visibility");
                     curprint(s);
-                    curprint("))");
+                    curprint(")) ");
                   }
              }
 #if 0
