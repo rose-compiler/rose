@@ -1469,8 +1469,11 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 #if 0
                     printf ("In printSpecifier2(): Output function's inline keyword \n");
 #endif
-                 // curprint( "inline ");
-
+#if 1
+                 // DQ (6/27/2015): We need this to be output because the isGnuAttributeAlwaysInline() maybe true, but we need to output
+                 // the "inline" keyword for GNU 4.2.4 compiler (only able to demonstrate the problem on Google protobuffer on RHEL5).
+                    curprint( "inline ");
+#else
                     if (functionDeclaration->get_functionModifier().isGnuAttributeAlwaysInline() == true)
                        {
                       // Supress use of redundant inline keyword if the GNU attribute is being used.
@@ -1482,6 +1485,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
                        {
                          curprint( "inline ");
                        }
+#endif
                   }
              }
 
