@@ -124,27 +124,7 @@ threads.  This can lead to some subtle behavior:
   signal to be forwarded to the guest process or thread.
 
 * The simulator is multi-threaded C++ program even if the guest is a
-  single threaded C program. Calling fork in a multi-threaded process
-  is very difficult to do correctly, and calling exec in a
-  multi-threaded C++ process is very difficult. Therefore, the
-  simulator is not able to handle fork or exec calls on behalf of a
-  single threaded non-C++ program.
-
-  Reason fork is hard: fork immediately creates a new process from the
-  existing process's memory, and the new process has only one
-  thread. Any thread synchronization primitives in the new process
-  will have the same value they had in the old process. If the old
-  process had a locked mutex, then the mutex is locked in the new
-  process also, buf if the thread that held the lock is no longer
-  present in the new process then the mutex will remain locked
-  forever.
-
-  Reason exec is hard for C++: exec replaces the current process's
-  memory and registers with memory loaded from another program and
-  registers reinitialized.  For C++, all global objects' destructors
-  get run first. It's difficult to get a multi-threaded process into a
-  state where global objects are all ready to have their destructors
-  called when any one of the threads is about to call exec.
+  single threaded C program.
 
 == System calls ==
 
@@ -210,6 +190,28 @@ return value:
     sim.syscall_define(22, syscall_access_enter, syscall_access_body,
                        RSIM_Linux::syscall_default_leave)
 
+== fork (clone) and exec system calls ==
+
+The simulator is always multi-threaded even when the guest has a
+single thread. In order to simulate a fork on behalf of the guest, the
+simulator needs to call fork() natively, but calling fork in a
+multi-threaded program is fraught with danger.  See this blog for a
+good description
+[http://www.linuxprogrammingblog.com/threads-and-fork-think-twice-before-using-them].
+
+In short, the problem is that fork() can interrupt threads in the
+parent process while they're executing in critical sections, and that
+the only functions safe to call in the child process are async signal
+safe functions (which excludes things like I/O, memory allocation,
+etc.). Unfortunately, the simulator needs to continue simulating guest
+instructions in the child after fork returns, which involves lots more
+than just async-signal safe functions!
+
+It's theoretically possible to use pthread_atfork to handle these
+cases, but this is is hard to do correctly and we still don't have
+guarantees that libraries used by ROSE are doing it right even if ROSE
+is. Besides, the Boost thread library, which we're using for
+portability, does not have an equivalent function.
 
 == Interactive debugger ==
 

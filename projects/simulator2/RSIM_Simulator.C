@@ -376,7 +376,18 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
 }
 
 int
-RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args)
+RSIM_Simulator::loadSpecimen(pid_t existingPid) {
+    char cmd[8192];
+    ssize_t nread = readlink(("/proc/" + StringUtility::numberToString(existingPid) + "/exe").c_str(), cmd, sizeof cmd);
+    if (-1 == nread)
+        return -errno;
+    if ((size_t)nread + 1 >= sizeof cmd)
+        return -ENAMETOOLONG;
+    return loadSpecimen(std::vector<std::string>(1, cmd), existingPid);
+}
+
+int
+RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args, int existingPid/*=-1*/)
 {
     ASSERT_require2(exeArgs_.empty(), "specimen cannot be loaded twice");
     ASSERT_forbid2(args.empty(), "we must at least have an executable name");
@@ -387,7 +398,7 @@ RSIM_Simulator::loadSpecimen(const std::vector<std::string> &args)
 
     create_process();
 
-    SgAsmGenericHeader *fhdr = process->load();
+    SgAsmGenericHeader *fhdr = process->load(existingPid);
     if (!fhdr)
         return -ENOEXEC;
     entry_va = fhdr->get_base_va() + fhdr->get_entry_rva();

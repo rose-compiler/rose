@@ -197,7 +197,7 @@ RSIM_Linux32::isSupportedArch(SgAsmGenericHeader *fhdr) {
 }
 
 void
-RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler) {
+RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
     TODO("[Robb P. Matzke 2015-06-03]");
 }
 

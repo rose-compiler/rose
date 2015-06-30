@@ -162,8 +162,10 @@ RSIM_Process::get_ninsns() const
 }
 
 SgAsmGenericHeader*
-RSIM_Process::load() {
+RSIM_Process::load(int existingPid /*=-1*/) {
     FILE *trace = (tracingFlags_ & tracingFacilityBit(TRACE_LOADER)) ? tracingFile_ : NULL;
+    if (existingPid != -1)
+        simulator->settings().nativeLoad = true;
 
     // Find the executable in $PATH if necessary and update the simulator's exeArgs[0]
     ASSERT_require(!simulator->exeName().empty() && !simulator->exeArgs().empty());
@@ -222,7 +224,7 @@ RSIM_Process::load() {
 
     // Initialize state: memory and registers. Stack initialization happens later.
     if (simulator->settings().nativeLoad) {
-        simulator->loadSpecimenNative(this, disassembler);
+        simulator->loadSpecimenNative(this, disassembler, existingPid);
     } else {
         /* Link the interpreter into the AST */
         simulator->loadSpecimenArch(this, interpretation, interpname);
@@ -1064,15 +1066,18 @@ RSIM_Process::guestFileDescriptor(int hostFd) {
 
 int
 RSIM_Process::allocateGuestFileDescriptor(int hostFd) {
-    int guestFd = -1;
-    if (hostFd != -1) {
-        SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
-        if (fileDescriptors_.reverse().getOptional(hostFd).assignTo(guestFd))
-            return guestFd;                                 // already allocated
-        while (fileDescriptors_.forward().exists(guestFd))
+    if (hostFd < 0)
+        return -1;
+
+    SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(instance_rwlock);
+
+    int guestFd = 0;
+    if (fileDescriptors_.reverse().getOptional(hostFd).assignTo(guestFd))
+        return guestFd;                                 // already allocated
+
+    while (fileDescriptors_.forward().exists(guestFd))
             ++guestFd;
-        fileDescriptors_.insert(guestFd, hostFd);
-    }
+    fileDescriptors_.insert(guestFd, hostFd);
     return guestFd;
 }
 

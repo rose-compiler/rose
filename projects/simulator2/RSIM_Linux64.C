@@ -132,9 +132,15 @@ RSIM_Linux64::isSupportedArch(SgAsmGenericHeader *fhdr) {
 }
 
 void
-RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler) {
+RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {
     process->mem_transaction_start("specimen main memory");
-    BinaryDebugger debugger(exeArgs());
+    BinaryDebugger debugger;
+    if (existingPid != -1) {
+        debugger.attach(existingPid);
+    } else {
+        debugger.attach(exeArgs());
+    }
+
     process->get_memory().insertProcess(":noattach:" + StringUtility::numberToString(debugger.isAttached()));
 
     const RegisterDictionary *regs = disassembler->get_registers();
@@ -160,7 +166,11 @@ RSIM_Linux64::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembl
     initialRegs_.r14 = debugger.readRegister(*regs->lookup("r14")).toInteger();
     initialRegs_.r15 = debugger.readRegister(*regs->lookup("r15")).toInteger();
 
-    debugger.terminate();
+    if (existingPid != -1) {
+        debugger.detach();
+    } else {
+        debugger.terminate();
+    }
     return;
 }
     
