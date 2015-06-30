@@ -182,7 +182,7 @@ void model_t::lookup<Model::variable_t>(const std::string & name, std::set<Model
     if ((*it_variable)->node->symbol->get_name().getString() == name)
       result.insert(*it_variable);
 }
-  
+
 template <>
 void model_t::lookup<Model::field_t>(const std::string & name, std::set<Model::field_t> & result) const {
   std::vector<Model::field_t>::const_iterator it_field;
@@ -190,7 +190,7 @@ void model_t::lookup<Model::field_t>(const std::string & name, std::set<Model::f
     if ((*it_field)->node->symbol->get_name().getString() == name)
       result.insert(*it_field);
 }
-  
+
 template <>
 void model_t::lookup<Model::function_t>(const std::string & name, std::set<Model::function_t> & result) const {
   std::vector<Model::function_t>::const_iterator it_function;
@@ -198,7 +198,7 @@ void model_t::lookup<Model::function_t>(const std::string & name, std::set<Model
     if ((*it_function)->node->symbol->get_name().getString() == name)
       result.insert(*it_function);
 }
-  
+
 template <>
 void model_t::lookup<Model::method_t>(const std::string & name, std::set<Model::method_t> & result) const {
   std::vector<Model::method_t>::const_iterator it_method;
@@ -206,7 +206,7 @@ void model_t::lookup<Model::method_t>(const std::string & name, std::set<Model::
     if ((*it_method)->node->symbol->get_name().getString() == name)
       result.insert(*it_method);
 }
-  
+
 template <>
 void model_t::lookup<Model::class_t>(const std::string & name, std::set<Model::class_t> & result) const {
   std::vector<Model::class_t>::const_iterator it_class;
@@ -214,13 +214,24 @@ void model_t::lookup<Model::class_t>(const std::string & name, std::set<Model::c
     if ((*it_class)->node->symbol->get_name().getString() == name)
       result.insert(*it_class);
 }
-  
+
 template <>
 void model_t::lookup<Model::namespace_t>(const std::string & name, std::set<Model::namespace_t> & result) const {
   std::vector<Model::namespace_t>::const_iterator it_namespace;
   for (it_namespace = namespaces.begin(); it_namespace != namespaces.end(); it_namespace++)
     if ((*it_namespace)->node->symbol->get_name().getString() == name)
       result.insert(*it_namespace);
+}
+
+template <>
+void model_t::lookup<Model::type_t>(const std::string & name, std::set<Model::type_t> & result) const {
+  std::vector<Model::type_t>::const_iterator it_type;
+  for (it_type = types.begin(); it_type != types.end(); it_type++)
+    if ((*it_type)->node->kind == node_t<e_model_type>::e_typedef_type &&
+        (*it_type)->node->typedef_symbol != NULL &&
+        (*it_type)->node->typedef_symbol->get_declaration() != NULL &&
+        (*it_type)->node->typedef_symbol->get_declaration()->get_name() == name)
+      result.insert(*it_type);
 }
 
 template <Model::model_elements_e kind>

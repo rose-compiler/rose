@@ -206,7 +206,7 @@ RSIM_Simulator::configure(const Settings &providedSettings, char **envp) {
     if (!settings_.tracingFileName.empty() && '/'!=settings_.tracingFileName[0]) {
         char dirname[4096];
         char *dirname_p = getcwd(dirname, sizeof dirname);
-        ASSERT_not_null(dirname_p);
+        ASSERT_always_not_null(dirname_p);
         settings_.tracingFileName = std::string(dirname) + "/" + settings_.tracingFileName;
     }
 
@@ -303,12 +303,12 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     SwitchGroup sg("Simulator switches");
 
-    sg.insert(Switch("trace")
+    sg.insert(Switch("tracefile")
               .argument("filename", anyParser(settings.tracingFileName))
               .doc("Name of tracing file. Any occurrance of the substring \"${pid}\" will be replaced with the "
                    "specimen process ID."));
 
-    sg.insert(Switch("debug")
+    sg.insert(Switch("trace")
               .argument("how", listParser(enumParser<TracingFacility>(settings.tracing)
                                           ->with("all", TRACE_NFACILITIES)
                                           ->with("insn", TRACE_INSN)
@@ -323,7 +323,7 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
                                           ->with("futex", TRACE_FUTEX)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
-              .doc("Debugging categories. The following words can be specified either as part of a comma-separated list "
+              .doc("Tracing categories. The following words can be specified either as part of a comma-separated list "
                    "or with separate instances of this switch: all, insn, state, mem, mmap, signal, syscall, loader, "
                    "progress, thread, futex."));
 

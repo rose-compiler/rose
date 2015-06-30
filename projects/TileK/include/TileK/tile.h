@@ -7,8 +7,8 @@
 struct tile_desc_t {
   int idx;
   enum tile_kind_e {
-    e_tile_static,
-    e_tile_dynamic
+    e_tile_static = 0,
+    e_tile_dynamic = 1
   } kind;
   int param;
 };

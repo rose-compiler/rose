@@ -38,11 +38,15 @@ protected:
     // System calls that are common to both Linux 32- and 64-bit.
     static void syscall_default_leave(RSIM_Thread*, int);
 
+    static void syscall_accept_helper(RSIM_Thread*, int guestSrcFd, rose_addr_t addrVa, rose_addr_t addrLenVa, unsigned flags);
+
     static void syscall_access_enter(RSIM_Thread *t, int callno);
     static void syscall_access_body(RSIM_Thread *t, int callno);
 
     static void syscall_alarm_enter(RSIM_Thread *t, int callno);
     static void syscall_alarm_body(RSIM_Thread *t, int callno);
+
+    static void syscall_bind_helper(RSIM_Thread*, int guestFd, rose_addr_t addr_va, size_t addrlen);
 
     static void syscall_brk_enter(RSIM_Thread*, int);
     static void syscall_brk_body(RSIM_Thread*, int);
@@ -59,6 +63,8 @@ protected:
 
     static void syscall_close_enter(RSIM_Thread *t, int callno);
     static void syscall_close_body(RSIM_Thread *t, int callno);
+
+    static void syscall_connect_helper(RSIM_Thread *t, int guestFd, rose_addr_t addr_va, size_t addrlen);
 
     static void syscall_creat_enter(RSIM_Thread *t, int callno);
     static void syscall_creat_body(RSIM_Thread *t, int callno);
@@ -91,6 +97,10 @@ protected:
 
     static void syscall_fchown_enter(RSIM_Thread *t, int callno);
     static void syscall_fchown_body(RSIM_Thread *t, int callno);
+
+    static void syscall_fcntl_enter(RSIM_Thread *t, int callno);
+    static void syscall_fcntl_body(RSIM_Thread *t, int callno);
+    static void syscall_fcntl_leave(RSIM_Thread *t, int callno);
 
     static void syscall_fsync_enter(RSIM_Thread *t, int callno);
     static void syscall_fsync_body(RSIM_Thread *t, int callno);
@@ -132,6 +142,8 @@ protected:
     static void syscall_link_enter(RSIM_Thread *t, int callno);
     static void syscall_link_body(RSIM_Thread *t, int callno);
 
+    static void syscall_listen_helper(RSIM_Thread *t, int guestFd, int backlog);
+    
     static void syscall_lseek_enter(RSIM_Thread *t, int callno);
     static void syscall_lseek_body(RSIM_Thread *t, int callno);
 
@@ -150,6 +162,10 @@ protected:
 
     static void syscall_munmap_enter(RSIM_Thread *t, int callno);
     static void syscall_munmap_body(RSIM_Thread *t, int callno);
+
+    static void syscall_nanosleep_enter(RSIM_Thread *t, int callno);
+    static void syscall_nanosleep_body(RSIM_Thread *t, int callno);
+    static void syscall_nanosleep_leave(RSIM_Thread *t, int callno);
 
     static void syscall_open_enter(RSIM_Thread *t, int callno);
     static void syscall_open_body(RSIM_Thread *t, int callno);
@@ -179,6 +195,14 @@ protected:
     static void syscall_rmdir_enter(RSIM_Thread *t, int callno);
     static void syscall_rmdir_body(RSIM_Thread *t, int callno);
 
+    static void syscall_rt_sigaction_enter(RSIM_Thread *t, int callno);
+    static void syscall_rt_sigaction_body(RSIM_Thread *t, int callno);
+    static void syscall_rt_sigaction_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_rt_sigprocmask_enter(RSIM_Thread *t, int callno);
+    static void syscall_rt_sigprocmask_body(RSIM_Thread *t, int callno);
+    static void syscall_rt_sigprocmask_leave(RSIM_Thread *t, int callno);
+
     static void syscall_sched_get_priority_max_enter(RSIM_Thread *t, int callno);
     static void syscall_sched_get_priority_max_body(RSIM_Thread *t, int callno);
 
@@ -194,6 +218,10 @@ protected:
 
     static void syscall_setpgid_enter(RSIM_Thread *t, int callno);
     static void syscall_setpgid_body(RSIM_Thread *t, int callno);
+
+    static void syscall_setsockopt_helper(RSIM_Thread*, int guestFd, int level, int optname, rose_addr_t optval_va, size_t optsz);
+
+    static void syscall_socket_helper(RSIM_Thread*, int family, int type, int protocol);
 
     static void syscall_symlink_enter(RSIM_Thread *t, int callno);
     static void syscall_symlink_body(RSIM_Thread *t, int callno);

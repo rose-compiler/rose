@@ -73,6 +73,13 @@ bool option_trace=false;
 
 //boost::program_options::variables_map args;
 
+void writeFile(std::string filename, std::string data) {
+  std::ofstream myfile;
+  myfile.open(filename.c_str(),std::ios::out);
+  myfile << data;
+  myfile.close();
+}
+
 void generateRessourceUsageVis(RDAnalysis* rdAnalyzer) {
   cout << "INFO: computing program statistics."<<endl;
   SPRAY::ProgramStatistics ps(rdAnalyzer->getVariableIdMapping(),
@@ -408,6 +415,17 @@ int main(int argc, char* argv[]) {
 
   if (args.count("print-varidmapping")||args.count("print-varidmapping-array")) {
     variableIdMapping.toStream(cout);
+  }
+
+  if(args.count("icfg-dot")) {
+    CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
+    Flow flow=cfAnalysis->flow(root);
+    InterFlow interFlow=cfAnalysis->interFlow(flow);
+    cfAnalysis->intraInterFlow(flow,interFlow);
+    string dotString=flow.toDot(labeler);
+    writeFile("icfg.dot",dotString);
+    delete cfAnalysis;
+    exit(0);
   }
 
   runAnalyses(root, labeler, &variableIdMapping);

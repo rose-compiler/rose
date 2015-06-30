@@ -91,6 +91,7 @@ void SPRAY::RDLattice::removeAllPairsWithVariableId(VariableId var) {
        ++i;
   }
 }
+
 /*! 
   * \author Markus Schordan
   * \date 2013.

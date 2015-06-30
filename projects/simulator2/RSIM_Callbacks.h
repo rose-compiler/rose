@@ -263,7 +263,7 @@ public:
          *  operation. */
         struct Args {
             Args(RSIM_Process *process, unsigned how, unsigned req_perms, rose_addr_t va, size_t nbytes,
-                 void *buffer, size_t &nbytes_xfer/*out*/)
+                 void *buffer, size_t *nbytes_xfer/*out*/)
                 : process(process), how(how), req_perms(req_perms), va(va), nbytes(nbytes),
                   buffer(buffer), nbytes_xfer(nbytes_xfer) {}
             RSIM_Process *process;              /**< The process whose memory is accessed. */
@@ -272,7 +272,7 @@ public:
             rose_addr_t va;                     /**< Virtual address for beginning of memory access. */
             size_t nbytes;                      /**< Size of memory access. */
             void *buffer;                       /**< Buffer to be filled by read callbacks; contains data for writes. */
-            mutable size_t &nbytes_xfer;        /**< Amount of data transferred. */
+            size_t *nbytes_xfer;                /**< Amount of data transferred. */
         };
         virtual bool operator()(bool prev, const Args&) = 0;
     };

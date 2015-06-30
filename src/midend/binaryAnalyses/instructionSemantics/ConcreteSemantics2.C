@@ -403,6 +403,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     // This is a common case on 64-bit architectures
     // FIXME[Robb P. Matzke 2015-06-24]: this will probably only compile with GCC >4.x on a 64-bit machine. The real solution
     // would be to either use a multi-precision library (sort of overkill) or implement division in Sawyer's BitVector class.
+#ifdef __x86_64
     if (a->get_width() == 128 && b->get_width() == 64) {
         __uint128_t numerator = a->bits().toInteger(BitRange::baseSize(64, 64));
         numerator <<= 64;
@@ -418,6 +419,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
         resultBits.fromInteger(BitRange::baseSize(64, 64), ratio_hi);
         return svalue_number(resultBits);
     }
+#endif
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a divide method
     if (a->get_width() > 64 || b->get_width() > 64) {
@@ -441,6 +443,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
     // This is a common case on 64-bit architectures
     // FIXME[Robb P. Matzke 2015-06-24]: this will probably only compile with GCC >4.x on a 64-bit machine. The real solution
     // would be to either use a multi-precision library (sort of overkill) or implement division in Sawyer's BitVector class.
+#ifdef __x86_64
     if (a->get_width() == 128 && b->get_width() == 64) {
         __uint128_t numerator = a->bits().toInteger(BitRange::baseSize(64, 64));
         numerator <<= 64;
@@ -451,6 +454,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a_, const BaseSema
         uint64_t remainder = numerator % denominator;
         return svalue_number(64, remainder);
     }
+#endif
 
     // FIXME[Robb P. Matzke 2015-03-31]: BitVector doesn't have a modulo method
     if (a->get_width() > 64 || b->get_width() > 64) {

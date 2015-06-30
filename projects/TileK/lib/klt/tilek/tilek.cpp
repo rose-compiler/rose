@@ -19,6 +19,8 @@
 
 #include "MDCG/model.hpp"
 #include "MDCG/model-class.hpp"
+#include "MDCG/model-function.hpp"
+#include "MDCG/model-type.hpp"
 
 namespace KLT {
 
@@ -426,6 +428,14 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
     tilek_kernel_api.context_loop_field = context_class->scope->field_children[0]->node->symbol;
     tilek_kernel_api.context_tile_field = context_class->scope->field_children[1]->node->symbol;
 
+  MDCG::Model::class_t kernel_class = model.lookup<MDCG::Model::class_t>("kernel_t");
+  tilek_host_api.kernel_class = kernel_class->node->symbol;
+  assert(tilek_host_api.kernel_class != NULL);
+
+    tilek_host_api.kernel_data_field  = kernel_class->scope->field_children[1]->node->symbol;
+    tilek_host_api.kernel_param_field = kernel_class->scope->field_children[2]->node->symbol;
+    tilek_host_api.kernel_loop_field  = kernel_class->scope->field_children[3]->node->symbol;
+
   MDCG::Model::class_t loop_class = model.lookup<MDCG::Model::class_t>("loop_t");
   tilek_kernel_api.context_loop_class = loop_class->node->symbol;
   assert(tilek_kernel_api.context_loop_class != NULL);
@@ -434,6 +444,10 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
     tilek_kernel_api.context_loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
     tilek_kernel_api.context_loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
 
+    tilek_host_api.loop_lower_field  = loop_class->scope->field_children[0]->node->symbol;
+    tilek_host_api.loop_upper_field  = loop_class->scope->field_children[1]->node->symbol;
+    tilek_host_api.loop_stride_field = loop_class->scope->field_children[2]->node->symbol;
+
   MDCG::Model::class_t tile_class = model.lookup<MDCG::Model::class_t>("tile_t");
   tilek_kernel_api.context_tile_class = tile_class->node->symbol;
   assert(tilek_kernel_api.context_tile_class != NULL);
@@ -441,7 +455,17 @@ void TileK::loadAPI(const MDCG::Model::model_t & model) {
     tilek_kernel_api.context_tile_length_field = tile_class->scope->field_children[0]->node->symbol;
     tilek_kernel_api.context_tile_stride_field = tile_class->scope->field_children[1]->node->symbol;
 
-  // TODO Host API
+  MDCG::Model::function_t build_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
+  tilek_host_api.build_kernel_func = build_kernel_func->node->symbol;
+  assert(tilek_host_api.build_kernel_func != NULL);
+
+  MDCG::Model::function_t execute_kernel_func = model.lookup<MDCG::Model::function_t>("build_kernel");
+  tilek_host_api.execute_kernel_func = execute_kernel_func->node->symbol;
+  assert(tilek_host_api.execute_kernel_func != NULL);
+
+  MDCG::Model::type_t kernel_func_ptr_type = model.lookup<MDCG::Model::type_t>("kernel_func_ptr");
+  tilek_host_api.kernel_func_ptr_type = kernel_func_ptr_type->node->type;
+  assert(tilek_host_api.kernel_func_ptr_type != NULL);
 }
 
 void TileK::useSymbolsKernel(
@@ -457,7 +481,9 @@ void TileK::useSymbolsHost(
   MFB::Driver<MFB::Sage> & driver,
   unsigned long file_id
 ) {
-  // TODO
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_host_api.kernel_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_tile_class, file_id);
+  driver.useSymbol<SgClassDeclaration>(::KLT::Runtime::TileK::tilek_kernel_api.context_loop_class, file_id);
 }
 
 template <>

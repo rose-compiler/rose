@@ -182,7 +182,7 @@ isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &in
         return n;
     if (size_t n = isJmpMemThunk(partitioner, insns))
         return n;
-#if 0 // [Robb P. Matzke 2015-06-23]: disabled for now.
+#if 0 // [Robb P. Matzke 2015-06-23]: disabled for now, but see splitThunkFunctions
     // This matcher is causing too many false positives. The problem is that when the partitioner fails to find some code of a
     // function and then starts searching for function prologues it's likely to find a "JMP imm" that just happens to be part
     // of the control flow in the missed code. It then tries to turn that JMP into its own function right in the middle of some
@@ -199,9 +199,6 @@ splitThunkFunctions(Partitioner &partitioner) {
     while (!workList.empty()) {
         Function::Ptr candidate = workList.back();
         workList.pop_back();
-#if 1 // DEBUGGING [Robb P. Matzke 2015-06-23]
-        std::cerr <<"splitThunkFunctions considering " <<candidate->printableName() <<"\n";
-#endif
 
         // Get the entry vertex in the CFG and the entry basic block.
         ControlFlowGraph::ConstVertexIterator entryVertex = partitioner.findPlaceholder(candidate->address());
@@ -226,6 +223,10 @@ splitThunkFunctions(Partitioner &partitioner) {
 
         // Does the function appear to start with a thunk pattern of instructions?
         size_t thunkSize = isThunk(partitioner, entryBlock->instructions());
+#if 1 // [Robb P. Matzke 2015-06-26]: this case is commented out in isThunk(), so handle it here
+        if (0 == thunkSize)
+            thunkSize = isJmpImmThunk(partitioner, entryBlock->instructions());
+#endif
         if (0 == thunkSize)
             continue;
         bool thunkIsPrefix = thunkSize < entryBlock->nInstructions();

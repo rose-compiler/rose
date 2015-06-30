@@ -151,8 +151,10 @@ DFAnalysisBase::normalizeProgram(SgProject* root) {
 }
 
 void
-DFAnalysisBase::initialize(SgProject* root) {
-  cout << "INIT: Creating VariableIdMapping."<<endl;
+DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/* = false*/) {
+  cout << "INIT: Creating VariableIdMapping." << endl;
+  if (variableIdForEachArrayElement)
+    _variableIdMapping.setModeVariableIdForEachArrayElement(true);
   _variableIdMapping.computeVariableSymbolMapping(root);
   _pointerAnalysisEmptyImplementation=new PointerAnalysisEmptyImplementation(&_variableIdMapping);
   _pointerAnalysisEmptyImplementation->initialize();

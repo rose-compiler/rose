@@ -1300,6 +1300,58 @@ struct IP_movbe: P {
     }
 };
 
+// Move high packed double-precision floating-point value
+struct IP_movhpd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
+            RegisterDescriptor reg = rre->get_descriptor();
+            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+            reg.set_offset(64);
+            reg.set_nbits(64);
+            BaseSemantics::SValuePtr val = d->read(args[1]);
+            ASSERT_require(val->get_width() == 64);
+            d->writeRegister(reg, val);
+        } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
+            RegisterDescriptor reg = rre->get_descriptor();
+            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+            reg.set_offset(64);
+            reg.set_nbits(64);
+            BaseSemantics::SValuePtr val = d->readRegister(reg);
+            d->write(args[0], val);
+        } else {
+            ASSERT_not_reachable("one of the args should have been an XMM register");
+        }
+    }
+};
+
+// Move low packed double-precision floating-point value
+struct IP_movlpd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[0])) {
+            RegisterDescriptor reg = rre->get_descriptor();
+            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+            reg.set_nbits(64);
+            BaseSemantics::SValuePtr val = d->read(args[1]);
+            ASSERT_require(val->get_width() == 64);
+            d->writeRegister(reg, val);
+        } else if (SgAsmDirectRegisterExpression *rre = isSgAsmDirectRegisterExpression(args[1])) {
+            RegisterDescriptor reg = rre->get_descriptor();
+            ASSERT_require(reg.get_offset() == 0 && reg.get_nbits() == 128);
+            reg.set_nbits(64);
+            BaseSemantics::SValuePtr val = d->readRegister(reg);
+            d->write(args[0], val);
+        } else {
+            ASSERT_not_reachable("one of the args should have been an XMM register");
+        }
+    }
+};
+
 // Move source to destination with truncation or zero extend
 // Used for MOVD and MOVQ
 struct IP_move_zero_extend: P {
@@ -3944,6 +3996,8 @@ DispatcherX86::iproc_init()
     iproc_set(x86_movd,         new X86::IP_move_zero_extend);
     iproc_set(x86_movdqa,       new X86::IP_move_same);
     iproc_set(x86_movdqu,       new X86::IP_move_same);
+    iproc_set(x86_movhpd,       new X86::IP_movhpd);
+    iproc_set(x86_movlpd,       new X86::IP_movlpd);
     iproc_set(x86_movq,         new X86::IP_move_zero_extend);
     iproc_set(x86_movntdqa,     new X86::IP_move_same);
     iproc_set(x86_movntdq,      new X86::IP_move_same);
