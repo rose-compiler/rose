@@ -97,8 +97,12 @@ class VariableIdMapping {
      this mode must be set before the mapping is computed with computeVariableSymbolMapping
   */
   void setModeVariableIdForEachArrayElement(bool active) { ROSE_ASSERT(mappingVarIdToSym.size()==0); modeVariableIdForEachArrayElement=active; }
+  bool getModeVariableIdForEachArrayElement() { return modeVariableIdForEachArrayElement; }
   SgExpressionPtrList& getInitializerListOfArrayVariable(VariableId arrayVar);
+  size_t getArrayDimensions(SgArrayType* t, std::vector<size_t> *dimensions = NULL);
   size_t getArrayElementCount(SgArrayType* t);
+  size_t getArrayDimensionsFromInitializer(SgAggregateInitializer* init, std::vector<size_t> *dimensions = NULL);
+  VariableId idForArrayRef(SgPntrArrRefExp* ref);
  private:
   void generateStmtSymbolDotEdge(std::ofstream&, SgNode* node,VariableId id);
   std::string generateDotSgSymbol(SgSymbol* sym);
