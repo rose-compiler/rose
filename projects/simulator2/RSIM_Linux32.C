@@ -399,7 +399,7 @@ RSIM_Linux32::syscall_waitpid_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_waitpid_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
@@ -426,7 +426,7 @@ RSIM_Linux32::syscall_time_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_time_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().t().str("\n");
+    t->syscall_leave().t();
 }
 
 /*******************************************************************************************************************************/
@@ -677,13 +677,13 @@ RSIM_Linux32::syscall_ioctl_leave(RSIM_Thread *t, int callno)
     uint32_t cmd=t->syscall_arg(1);
     switch (cmd) {
         case TCGETS:
-            t->syscall_leave().ret().arg(2).P(sizeof(termios_32), print_termios_32).str("\n");
+            t->syscall_leave().ret().arg(2).P(sizeof(termios_32), print_termios_32);
             break;
         case TIOCGWINSZ:
-            t->syscall_leave().ret().arg(2).P(sizeof(winsize_32), print_winsize_32).str("\n");
+            t->syscall_leave().ret().arg(2).P(sizeof(winsize_32), print_winsize_32);
             break;
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
 }
@@ -728,7 +728,7 @@ RSIM_Linux32::syscall_ugetrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_ugetrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit);
 }
 
 /*******************************************************************************************************************************/
@@ -765,7 +765,7 @@ RSIM_Linux32::syscall_getrlimit_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(8, print_rlimit).str("\n");
+    t->syscall_leave().ret().arg(1).P(8, print_rlimit);
 }
 
 /*******************************************************************************************************************************/
@@ -799,7 +799,7 @@ RSIM_Linux32::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(timeval_32), print_timeval_32).str("\n");
+    t->syscall_leave().ret().P(sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
@@ -837,7 +837,7 @@ RSIM_Linux32::syscall_mmap_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap syscall:\n");
 }
 
@@ -887,7 +887,7 @@ RSIM_Linux32::syscall_statfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32);
 }
 
 /*******************************************************************************************************************************/
@@ -933,7 +933,7 @@ RSIM_Linux32::syscall_fstatfs_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(statfs_32), print_statfs_32);
 }
 
 /*******************************************************************************************************************************/
@@ -1631,13 +1631,13 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
     switch (t->syscall_arg(0)) {
         case 8: /* SYS_SOCKETPAIR */
             if (16==t->get_process()->mem_read(a+1, t->syscall_arg(1), 16)) {
-                t->syscall_leave(a).ret().arg(3).P(8, print_int_32).str("\n");
+                t->syscall_leave(a).ret().arg(3).P(8, print_int_32);
                 return;
             }
             break;
         case 17: /* SYS_RECVMSG */
             if (12==t->get_process()->mem_read(a+1, t->syscall_arg(1), 12)) {
-                t->syscall_leave(a).ret().arg(1).P(sizeof(msghdr_32), print_msghdr_32).str("\n");
+                t->syscall_leave(a).ret().arg(1).P(sizeof(msghdr_32), print_msghdr_32);
                 Sawyer::Message::Stream trace(t->tracing(TRACE_SYSCALL));
                 msghdr_32 msghdr;
                 if (trace &&
@@ -1673,7 +1673,7 @@ RSIM_Linux32::syscall_socketcall_leave(RSIM_Thread *t, int callno)
             break;
     }
 
-    t->syscall_leave().ret().str("\n");
+    t->syscall_leave().ret();
 }
 
 /*******************************************************************************************************************************/
@@ -1751,7 +1751,7 @@ RSIM_Linux32::syscall_wait4_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_wait4_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 /*******************************************************************************************************************************/
@@ -2777,46 +2777,46 @@ RSIM_Linux32::syscall_ipc_leave(RSIM_Thread *t, int callno)
                     ROSE_ASSERT(!"not handled");
                 case 2:         /* IPC_STAT */
                 case 11:        /* MSG_STAT */
-                    t->syscall_leave().ret().arg(4).P(sizeof(msqid64_ds_32), print_msqid64_ds_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(msqid64_ds_32), print_msqid64_ds_32);
                     break;
                 default:
-                    t->syscall_leave().ret().str("\n");
+                    t->syscall_leave().ret();
                     break;
             }
             break;
         }
         case 21: /* SHMAT */
             if (1==version) {
-                t->syscall_leave().ret().str("\n");
+                t->syscall_leave().ret();
             } else {
-                t->syscall_leave().p().str("\n");
+                t->syscall_leave().p();
                 t->get_process()->mem_showmap(mtrace, "  memory map after shmat:\n");
             }
             break;
         case 22: /* SHMDT */
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             t->get_process()->mem_showmap(mtrace, "  memory map after shmdt:\n");
             break;
         case 24: { /* SHMCTL */
             switch (second & 0xff) {
                 case 2:         /* IPC_STAT */
                 case 13:        /* SHM_STAT */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shmid64_ds_32), print_shmid64_ds_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shmid64_ds_32), print_shmid64_ds_32);
                     break;
                 case 14:        /* SHM_INFO */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shm_info_32), print_shm_info_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shm_info_32), print_shm_info_32);
                     break;
                 case 3:         /* IPC_INFO */
-                    t->syscall_leave().ret().arg(4).P(sizeof(shminfo64_32), print_shminfo64_32).str("\n");
+                    t->syscall_leave().ret().arg(4).P(sizeof(shminfo64_32), print_shminfo64_32);
                     break;
                 default:
-                    t->syscall_leave().ret().str("\n");
+                    t->syscall_leave().ret();
                     break;
             }
             break;
         }
         default:
-            t->syscall_leave().ret().str("\n");
+            t->syscall_leave().ret();
             break;
     }
 }
@@ -2991,11 +2991,11 @@ RSIM_Linux32::syscall_clone_leave(RSIM_Thread *t, int callno)
 {
     if (t->syscall_arg(-1)) {
         /* Parent */
-        t->syscall_leave().ret().str("\n");
+        t->syscall_leave().ret();
     } else {
         /* Child returns here for fork, but not for thread-clone */
         t->syscall_enter("child's clone").f(clone_flags).p().p().p().P(sizeof(pt_regs_32), print_pt_regs_32);
-        t->syscall_leave().ret().arg(4).P(sizeof(pt_regs_32), print_pt_regs_32).str("\n");
+        t->syscall_leave().ret().arg(4).P(sizeof(pt_regs_32), print_pt_regs_32);
     }
 }
 
@@ -3041,7 +3041,7 @@ RSIM_Linux32::syscall_uname_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_uname_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(new_utsname_32), print_new_utsname_32).str("\n");
+    t->syscall_leave().ret().P(sizeof(new_utsname_32), print_new_utsname_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3061,7 +3061,7 @@ RSIM_Linux32::syscall_modify_ldt_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_modify_ldt_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().str("\n");                 // "---"; // FIXME
+    t->syscall_leave().ret();                           // "---"; // FIXME
 }
 
 /*******************************************************************************************************************************/
@@ -3120,7 +3120,7 @@ void
 RSIM_Linux32::syscall_getdents_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3308,8 +3308,7 @@ RSIM_Linux32::syscall_select_leave(RSIM_Thread *t, int callno)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
         .P(sizeof(fd_set), print_bitvec)
-        .P(sizeof(timeval_32), print_timeval_32)
-        .str("\n");
+        .P(sizeof(timeval_32), print_timeval_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3560,7 +3559,7 @@ RSIM_Linux32::syscall_rt_sigpending_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigpending_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet).str("\n");
+    t->syscall_leave().ret().P(sizeof(RSIM_SignalHandling::SigSet), print_SigSet);
 }
 
 /*******************************************************************************************************************************/
@@ -3587,7 +3586,7 @@ RSIM_Linux32::syscall_rt_sigsuspend_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_rt_sigsuspend_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().str("\n");
+    t->syscall_leave().ret();
     if (t->syscall_info.signo>0) {
         t->tracing(TRACE_SYSCALL) <<"    retured due to ";
         Printer::print_enum(t->tracing(TRACE_SYSCALL), signal_names, t->syscall_info.signo);
@@ -3629,7 +3628,7 @@ void
 RSIM_Linux32::syscall_pread64_leave(RSIM_Thread *t, int callno)
 {
     ssize_t nread = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).b(nread>0?nread:0).str("\n");
+    t->syscall_leave().ret().arg(1).b(nread>0?nread:0);
 }
 
 /*******************************************************************************************************************************/
@@ -3668,7 +3667,7 @@ RSIM_Linux32::syscall_sigaltstack_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sigaltstack_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(stack_32), print_stack_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(stack_32), print_stack_32);
 }
             
 /*******************************************************************************************************************************/
@@ -3701,7 +3700,7 @@ RSIM_Linux32::syscall_mmap2_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_mmap2_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().eret().p().str("\n");
+    t->syscall_leave().eret().p();
     t->get_process()->mem_showmap(t->tracing(TRACE_MMAP), "  memory map after mmap2 syscall:\n");
 }
 
@@ -3813,7 +3812,7 @@ RSIM_Linux32::syscall_stat64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_stat64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_32), print_kernel_stat_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_32), print_kernel_stat_32);
 }
 
 /*******************************************************************************************************************************/
@@ -3931,9 +3930,9 @@ RSIM_Linux32::syscall_getgroups32_leave(RSIM_Thread *t, int callno)
     int ngroups = t->syscall_arg(-1);
     int nreq = t->syscall_arg(0);
     if (nreq>0) {
-        t->syscall_leave().ret().arg(1).P(std::min(ngroups, nreq)*sizeof(gid_t), print_int_32).str("\n");
+        t->syscall_leave().ret().arg(1).P(std::min(ngroups, nreq)*sizeof(gid_t), print_int_32);
     } else {
-        t->syscall_leave().ret().str("\n");
+        t->syscall_leave().ret();
     }
 }
 
@@ -4017,7 +4016,7 @@ void
 RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64).str("\n");
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64);
 }
 
 /*******************************************************************************************************************************/
@@ -4126,7 +4125,7 @@ RSIM_Linux32::syscall_futex_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_futex_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(4, print_int_32).str("\n");
+    t->syscall_leave().ret().P(4, print_int_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4166,7 +4165,7 @@ RSIM_Linux32::syscall_sched_getaffinity_leave(RSIM_Thread *t, int callno)
 {
     size_t cpuset_nbits = t->syscall_arg(1);
     size_t cpuset_nbytes = (cpuset_nbits+7) / 8;
-    t->syscall_leave().ret().arg(2).P(cpuset_nbytes, print_bitvec).str("\n");
+    t->syscall_leave().ret().arg(2).P(cpuset_nbytes, print_bitvec);
 }
 
 /*******************************************************************************************************************************/
@@ -4201,7 +4200,7 @@ RSIM_Linux32::syscall_set_thread_area_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_set_thread_area_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor).str("\n");
+    t->syscall_leave().ret().P(sizeof(SegmentDescriptor), print_SegmentDescriptor);
 }
 
 
@@ -4276,7 +4275,7 @@ RSIM_Linux32::syscall_clock_gettime_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_gettime_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4314,7 +4313,7 @@ RSIM_Linux32::syscall_clock_getres_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_clock_getres_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32).str("\n");
+    t->syscall_leave().ret().arg(1).P(sizeof(timespec_32), print_timespec_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4361,7 +4360,7 @@ RSIM_Linux32::syscall_statfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_statfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4407,7 +4406,7 @@ RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_fstatfs64_leave(RSIM_Thread *t, int callno)
 {
-    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32).str("\n");
+    t->syscall_leave().ret().arg(2).P(sizeof(statfs64_32), print_statfs64_32);
 }
 
 /*******************************************************************************************************************************/

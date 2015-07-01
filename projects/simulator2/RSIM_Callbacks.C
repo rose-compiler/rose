@@ -124,10 +124,10 @@ RSIM_Callbacks::call_memory_callbacks(When when,
 {
     if (when==BEFORE)
         return memory_pre.apply (prev,
-                                 MemoryCallback::Args(process, how, req_perms, va, nbytes, buffer, nbytes_xfer),
+                                 MemoryCallback::Args(process, how, req_perms, va, nbytes, buffer, &nbytes_xfer),
                                  ROSE_Callbacks::FORWARD);
     return     memory_post.apply(prev,
-                                 MemoryCallback::Args(process, how, req_perms, va, nbytes, buffer, nbytes_xfer),
+                                 MemoryCallback::Args(process, how, req_perms, va, nbytes, buffer, &nbytes_xfer),
                                  ROSE_Callbacks::FORWARD);
 }
 

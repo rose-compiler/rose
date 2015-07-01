@@ -319,10 +319,10 @@ public:
     /** Return print helper for printing syscall arguments.
      *
      * @{ */
-    Printer print(Sawyer::Message::Stream&);
-    Printer print(Sawyer::Message::Stream&, const uint32_t *args);
-    Printer print(Sawyer::Message::Stream&, const uint64_t *args);
-    Printer print(TracingFacility);
+    Printer print(Sawyer::Message::Stream&, const std::string &atEnd);
+    Printer print(Sawyer::Message::Stream&, const uint32_t *args, const std::string &atEnd);
+    Printer print(Sawyer::Message::Stream&, const uint64_t *args, const std::string &atEnd);
+    Printer print(TracingFacility, const std::string &atEnd);
     /** @} */
 
     

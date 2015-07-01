@@ -1657,5 +1657,6 @@ void print_sched_param_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t 
 void print_msghdr_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_new_utsname_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_mmap_arg_struct_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_sockaddr(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 
 #endif /* ROSE_RSIM_Common_H */
