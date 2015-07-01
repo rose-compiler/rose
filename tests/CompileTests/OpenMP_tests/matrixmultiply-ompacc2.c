@@ -18,7 +18,7 @@ int mmm();
 int mmm2();
 int verify();
 
-#define MAX_GPU_COUNT 4
+//#define MAX_GPU_COUNT 4
 
 int main(void)
 {
@@ -58,16 +58,17 @@ c d  x  g h  = c*e+ d*g,  c*f+ d*h
 
 int mmm()
 {
-  int GPU_N = 0, idev;
+  int GPU_N , idev;
   int n = N; 
-  cudaGetDeviceCount(&GPU_N);
+  GPU_N = xomp_get_num_devices(); 
   printf("CUDA-capable device count: %i\n", GPU_N);
+#if 0
     if (GPU_N > MAX_GPU_COUNT)
     {
         GPU_N = MAX_GPU_COUNT;
     }
   assert (GPU_N>0 && GPU_N<=MAX_GPU_COUNT);
-
+#endif
   omp_set_num_threads(GPU_N);
 #pragma omp parallel for shared (GPU_N, a, b, c, n) private(idev)
   for (idev = 0; idev < GPU_N; idev++)

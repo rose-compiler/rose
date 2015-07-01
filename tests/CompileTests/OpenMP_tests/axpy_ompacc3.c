@@ -13,7 +13,7 @@
 
 #define REAL double
 #define VEC_LEN 1024000 //use a fixed number for now
-#define MAX_GPU_COUNT 4 // maximum GPU numbers in computation
+//#define MAX_GPU_COUNT 4 // maximum GPU numbers in computation
 
 /* zero out the entire vector */
 void zero(REAL *A, int n)
@@ -73,12 +73,15 @@ int main(int argc, char *argv[])
   init(y_ref, n);
   memcpy(y_ompacc, y_ref, n*sizeof(REAL));
 
-  int GPU_N = 0;
+//  int GPU_N = 0;
+  int GPU_N = xomp_get_num_devices();
+#if 0
   cudaGetDeviceCount(&GPU_N);
   if (GPU_N > MAX_GPU_COUNT)
   {
     GPU_N = MAX_GPU_COUNT;
   }
+#endif
   printf("CUDA-capable device count: %i\n", GPU_N);
 
   // preparation for multiple GPUs
