@@ -9,7 +9,7 @@ class RSIM_Linux: public RSIM_Simulator {
     rose_addr_t vdsoMappedVa_;                          // Address where vdso is mapped into specimen, or zero
     rose_addr_t vdsoEntryVa_;                           // Entry address for vdso, or zero
 public:
-    RSIM_Linux(): interpreterBaseVa_(0), vdsoName_("x86vdso"), vdsoMappedVa_(0), vdsoEntryVa_(0) {
+    RSIM_Linux(): interpreterBaseVa_(0), vdsoMappedVa_(0), vdsoEntryVa_(0) {
         init();
     }
 
@@ -17,7 +17,10 @@ public:
     void interpreterBaseVa(rose_addr_t va) { interpreterBaseVa_ = va; }
     rose_addr_t vdsoMappedVa() const { return vdsoMappedVa_; }
     rose_addr_t vdsoEntryVa() const { return vdsoEntryVa_; }
+    const std::string& vdsoName() const { return vdsoName_; }
+    void vdsoName(const std::string &s) { vdsoName_ = s; }
 
+    virtual void loadVsyscalls(RSIM_Process*) = 0;
     virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
     virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
     virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;

@@ -103,7 +103,7 @@ public:
         vdso_mapped_va = std::max(vdso_mapped_va, (rose_addr_t)0x40000000); /* value used on hudson-rose-07 */
 
         unsigned vdso_access = MemoryMap::READABLE | MemoryMap::EXECUTABLE;
-        MemoryMap::Segment vdso_segment = MemoryMap::Segment::fileInstance(vdso_name, vdso_access, "[vdso]");
+        MemoryMap::Segment vdso_segment = MemoryMap::Segment::fileInstance(vdso_name, vdso_access, "[vdso] "+vdso_name);
         assert((ssize_t)vdso_segment.buffer()->size()==sb.st_size);
         map->insert(AddressInterval::baseSize(vdso_mapped_va, vdso_segment.buffer()->size()), vdso_segment);
 
@@ -160,19 +160,22 @@ RSIM_Linux::loadSpecimenArch(RSIM_Process *process, SgAsmInterpretation *interpr
 
     /* Load and map the virtual dynamic shared library. */
     bool vdso_loaded = false;
-    for (size_t i=0; i<settings().vdsoPaths.size() && !vdso_loaded; i++) {
-        for (int j=0; j<2 && !vdso_loaded; j++) {
-            std::string vdsoName = settings().vdsoPaths[i] + (j ? "" : "/" + vdsoName_);
-            if (trace)
-                fprintf(trace, "looking for vdso: %s\n", vdsoName.c_str());
-            if ((vdso_loaded = loader->map_vdso(vdsoName, interpretation, &process->get_memory()))) {
+    std::vector<std::string> paths = settings().vdsoPaths;
+    if (paths.empty()) {
+        paths.push_back(".");
+        paths.push_back(ROSE_AUTOMAKE_TOP_BUILDDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_DATADIR + "/projects/simulator2");
+    }
+    for (size_t i=0; i<paths.size() && !vdso_loaded; ++i) {
+        FileSystem::Path path = paths[i];
+        for (int j=0; j<2 && !vdso_loaded; ++j) {
+            FileSystem::Path name = j ? path / vdsoName_ : path;
+            if (FileSystem::isFile(name) &&
+                (vdso_loaded = loader->map_vdso(FileSystem::toString(name), interpretation, &process->get_memory()))) {
                 vdsoMappedVa_ = loader->vdso_mapped_va;
                 vdsoEntryVa_ = loader->vdso_entry_va;
                 headers.push_back(loader->vdso);
-                if (trace) {
-                    fprintf(trace, "mapped %s at 0x%08"PRIx64" with entry va 0x%08"PRIx64"\n",
-                            vdsoName.c_str(), vdsoMappedVa_, vdsoEntryVa_);
-                }
             }
         }
     }
@@ -212,6 +215,9 @@ RSIM_Linux::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *mai
     process->allocateFileDescriptors(0, 0);
     process->allocateFileDescriptors(1, 1);
     process->allocateFileDescriptors(2, 2);
+
+    // Load the virtual system call page
+    loadVsyscalls(process);
 }
 
 template<typename Word>

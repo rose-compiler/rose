@@ -48,6 +48,8 @@ using namespace rose::BinaryAnalysis;
 void
 RSIM_Linux32::init()
 {
+    vdsoName("linux-gate.so");
+
     if (interpreterBaseVa() == 0)
         interpreterBaseVa(0x40000000);
 
@@ -195,6 +197,9 @@ bool
 RSIM_Linux32::isSupportedArch(SgAsmGenericHeader *fhdr) {
     return isSgAsmElfFileHeader(fhdr) && fhdr->get_word_size()==4;
 }
+
+void
+RSIM_Linux32::loadVsyscalls(RSIM_Process *process) {}
 
 void
 RSIM_Linux32::loadSpecimenNative(RSIM_Process *process, Disassembler *disassembler, int existingPid/*=-1*/) {

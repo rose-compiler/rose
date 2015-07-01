@@ -181,6 +181,7 @@ public:
         std::vector<CoreStyle> coreStyles;
         std::string interpreterName;
         std::vector<std::string> vdsoPaths;
+        std::vector<std::string> vsyscallPaths;
         std::string semaphoreName;
         bool showAuxv;
         std::string binaryTraceName;

@@ -11,9 +11,6 @@ noinst_PROGRAMS=
 lib_LIBRARIES=
 TEST_TARGETS = 
 
-warn_no_tests:
-	@echo "  NOTE    simulator testing is disabled (no i386 support)"
-
 ###############################################################################################################################
 #  DOCUMENTATION, CONFIGURATION, ETC
 ###############################################################################################################################
@@ -65,21 +62,6 @@ $(libRSIM_la_SOURCES:.C=.o): %.o: %.h
 $(libRSIM_la_SOURCES:.C=.lo): %.lo: %.h
 
 ###############################################################################################################################
-# CLIENT LIBRARY
-###############################################################################################################################
-
-EXTRA_DIST += RSIM_Client.c RSIM_Client.h
-MOSTLYCLEANFILES += librsim_client.a
-librsim_client.a: RSIM_Client.o
-	@echo "  LINK32  $@"
-	$(AR) rcs $@ $^
-
-MOSTLYCLEANFILES += RSIM_Client.o
-RSIM_Client.o: RSIM_Client.c RSIM_Client.h
-	@echo "  CC32   $@"
-	: ; $(CC) $(CFLAGS32) -Wall -o $@ -c $<
-
-###############################################################################################################################
 #  PROGRAMS
 ###############################################################################################################################
 
@@ -102,45 +84,103 @@ show_initial_stack_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 #  INTERNAL SIMULATOR TESTS
 ###############################################################################################################################
 
-INTERNAL_TEST_TARGETS =
-
-#------------------------------------------------------------------------------------------------------------------------------
-# all internal tests
-
-if ENABLE_I386
-else
-INTERNAL_TEST_TARGETS += warn_no_tests
-endif
-
-check-internal: $(INTERNAL_TEST_TARGETS)
-MOSTLYCLEANFILES += $(INTERNAL_TEST_TARGETS)
+SimulatorFlags = --arch=linux-amd64 --native-load --trace=syscall,mmap,progress
 
 ###############################################################################################################################
 #  SYSTEM CALL TESTS
 ###############################################################################################################################
 
-# Source and executables for test inputs. The inputs are 32-bit executables. They come in three flavors depending
-# on how they're compiled and linked:
-#    SYS_TEST_INPUTS_SA  -- stand-alone, no additional source required
-#    SYS_TEST_INPUTS_RT  -- require linking with librt
-#    SYS_TEST_INPUTS_TS  -- use the SYS_TEST_SUPPORT library
-SYS_TEST_SUPPORT_SRC = $(srcdir)/syscall_tests/audit_parse_verify.c \
-                   $(srcdir)/syscall_tests/audit_parse_verify_utils.c \
-                   $(srcdir)/syscall_tests/audit_utils.c \
-                   $(srcdir)/syscall_tests/cleanup.c \
-                   $(srcdir)/syscall_tests/cloner.c \
-                   $(srcdir)/syscall_tests/get_high_address.c \
-                   $(srcdir)/syscall_tests/libtestsuite.c \
-                   $(srcdir)/syscall_tests/parse_opts.c \
-                   $(srcdir)/syscall_tests/rmobj.c \
-                   $(srcdir)/syscall_tests/search_path.c \
-                   $(srcdir)/syscall_tests/simple_test_looping.c \
-                   $(srcdir)/syscall_tests/system_specific_process_info.c \
-                   $(srcdir)/syscall_tests/tst_is_cwd.c \
-                   $(srcdir)/syscall_tests/tst_kvercmp.c \
-                   $(srcdir)/syscall_tests/tst_res.c \
-                   $(srcdir)/syscall_tests/tst_sig.c \
-                   $(srcdir)/syscall_tests/tst_tmpdir.c
+# Sources to generate the 32- or 64-bit specimen executables.  These come in three flavors depending on how they're linked:
+#    SyscallTests_Standalone   -- stand-alone, no additional source required
+#    SyscallTests_WithLibrt    -- require linking with librt
+#    SyscallTests_WithLibtest  -- use the SYS_TEST_SUPPORT library
+
+# The test support library
+SyscallTets_LibTest_Src =					\
+	$(srcdir)/syscall_tests/audit_parse_verify.c		\
+        $(srcdir)/syscall_tests/audit_parse_verify_utils.c	\
+        $(srcdir)/syscall_tests/audit_utils.c			\
+        $(srcdir)/syscall_tests/cleanup.c			\
+        $(srcdir)/syscall_tests/cloner.c			\
+        $(srcdir)/syscall_tests/get_high_address.c		\
+        $(srcdir)/syscall_tests/libtestsuite.c			\
+        $(srcdir)/syscall_tests/parse_opts.c			\
+        $(srcdir)/syscall_tests/rmobj.c				\
+        $(srcdir)/syscall_tests/search_path.c			\
+        $(srcdir)/syscall_tests/simple_test_looping.c		\
+        $(srcdir)/syscall_tests/system_specific_process_info.c	\
+        $(srcdir)/syscall_tests/tst_is_cwd.c			\
+        $(srcdir)/syscall_tests/tst_kvercmp.c			\
+        $(srcdir)/syscall_tests/tst_res.c			\
+        $(srcdir)/syscall_tests/tst_sig.c			\
+        $(srcdir)/syscall_tests/tst_tmpdir.c
+
+SyscallTests_Standalone_Src =				\
+	$(srcdir)/syscall_tests/syscall_sa.114.c	\
+	$(srcdir)/syscall_tests/syscall_sa.122.01.c	\
+	$(srcdir)/syscall_tests/syscall_sa.122.02.c	\
+	$(srcdir)/syscall_tests/syscall_sa.122.03.c	\
+	$(srcdir)/syscall_tests/syscall_sa.13.c		\
+	$(srcdir)/syscall_tests/syscall_sa.197.1.c	\
+	$(srcdir)/syscall_tests/syscall_sa.197.3.c	\
+	$(srcdir)/syscall_tests/syscall_sa.20.c		\
+	$(srcdir)/syscall_tests/syscall_sa.24.c		\
+	$(srcdir)/syscall_tests/syscall_sa.3.c		\
+	$(srcdir)/syscall_tests/syscall_sa.4.1.c	\
+	$(srcdir)/syscall_tests/syscall_sa.41.c		\
+	$(srcdir)/syscall_tests/syscall_sa.4.2.c	\
+	$(srcdir)/syscall_tests/syscall_sa.47.c		\
+	$(srcdir)/syscall_tests/syscall_sa.49.c		\
+	$(srcdir)/syscall_tests/syscall_sa.50.c		\
+	$(srcdir)/syscall_tests/syscall_sa.5.1.c	\
+	$(srcdir)/syscall_tests/syscall_sa.5.2.c	\
+	$(srcdir)/syscall_tests/syscall_sa.5.4.c	\
+	$(srcdir)/syscall_tests/syscall_sa.5.6.c	\
+	$(srcdir)/syscall_tests/syscall_sa.57.c		\
+	$(srcdir)/syscall_tests/syscall_sa.5.9.c	\
+	$(srcdir)/syscall_tests/syscall_sa.64.c		\
+	$(srcdir)/syscall_tests/syscall_sa.65.c		\
+	$(srcdir)/syscall_tests/syscall_sa.78.c		\
+	$(srcdir)/syscall_tests/syscall_sa.83.c		\
+	$(srcdir)/syscall_tests/syscall_sa.85.c 
+
+SyscallTests_Standalone_Exes = $(notdir $(basename $(SyscallTests_Standalone_Src)))
+MOSTLYCLEANFILES += $(SyscallTests_Standalone_Exes)
+
+SyscallTests_Standalone_Tests = $(addsuffix .passed, $(SyscallTests_Standalone_Exes))
+TEST_TARGETS += $(SyscallTests_Standalone_Tests)
+
+$(SyscallTests_Standalone_Exes): %: $(srcdir)/syscall_tests/%.c
+	$(CC) -Wall -g -o $@ $^
+
+$(SyscallTests_Standalone_Tests): %.passed: % x86sim
+	@$(RTH_RUN)									\
+		TITLE="x86sim $< [$@]"							\
+		USE_SUBDIR=yes								\
+		CMD="x86_64 -R $(abspath .)/x86sim $(SimulatorFlags) $(abspath $<)"	\
+		$(top_srcdir)/scripts/test_exit_status $@
+
+.PHONY: check-syscalltests-standalone
+check-syscalltests-standalone: $(SyscallTests_Standalone_Tests)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 EXTRA_DIST +=      $(SYS_TEST_SUPPORT_SRC) \
 		   $(srcdir)/syscall_tests/audit_parse_verify.h \
@@ -177,42 +217,7 @@ EXTRA_DIST +=      $(SYS_TEST_SUPPORT_SRC) \
 		   $(srcdir)/syscall_tests/syscall_tst.65.c
 
 
-# SYS_TEST_INPUTS_SA_SRC = $(wildcard $(srcdir)/syscall_tests/syscall_sa*.c)
-SYS_TEST_INPUTS_SA_SRC = \
-		   $(srcdir)/syscall_tests/syscall_sa.114.c \
-		   $(srcdir)/syscall_tests/syscall_sa.122.01.c \
-		   $(srcdir)/syscall_tests/syscall_sa.122.02.c \
-		   $(srcdir)/syscall_tests/syscall_sa.122.03.c \
-		   $(srcdir)/syscall_tests/syscall_sa.13.c \
-		   $(srcdir)/syscall_tests/syscall_sa.197.1.c \
-		   $(srcdir)/syscall_tests/syscall_sa.197.3.c \
-		   $(srcdir)/syscall_tests/syscall_sa.199.c \
-		   $(srcdir)/syscall_tests/syscall_sa.200.c \
-		   $(srcdir)/syscall_tests/syscall_sa.201.c \
-		   $(srcdir)/syscall_tests/syscall_sa.202.c \
-		   $(srcdir)/syscall_tests/syscall_sa.20.c \
-		   $(srcdir)/syscall_tests/syscall_sa.224.c \
-		   $(srcdir)/syscall_tests/syscall_sa.24.c \
-		   $(srcdir)/syscall_tests/syscall_sa.3.c \
-		   $(srcdir)/syscall_tests/syscall_sa.4.1.c \
-		   $(srcdir)/syscall_tests/syscall_sa.41.c \
-		   $(srcdir)/syscall_tests/syscall_sa.4.2.c \
-		   $(srcdir)/syscall_tests/syscall_sa.47.c \
-		   $(srcdir)/syscall_tests/syscall_sa.49.c \
-		   $(srcdir)/syscall_tests/syscall_sa.50.c \
-		   $(srcdir)/syscall_tests/syscall_sa.5.1.c \
-		   $(srcdir)/syscall_tests/syscall_sa.5.2.c \
-		   $(srcdir)/syscall_tests/syscall_sa.5.4.c \
-		   $(srcdir)/syscall_tests/syscall_sa.5.6.c \
-		   $(srcdir)/syscall_tests/syscall_sa.57.c \
-		   $(srcdir)/syscall_tests/syscall_sa.5.9.c \
-		   $(srcdir)/syscall_tests/syscall_sa.64.c \
-		   $(srcdir)/syscall_tests/syscall_sa.65.c \
-		   $(srcdir)/syscall_tests/syscall_sa.78.c \
-		   $(srcdir)/syscall_tests/syscall_sa.83.c \
-		   $(srcdir)/syscall_tests/syscall_sa.85.c 
 
-#SYS_TEST_INPUTS_RT_SRC = $(wildcard $(srcdir)/syscall_tests/syscall_rt*.c)
 SYS_TEST_INPUTS_RT_SRC = \
                    $(srcdir)/syscall_tests/syscall_rt.18.c
 
@@ -509,7 +514,9 @@ TEST_INPUTS_FAILING = \
 #			Calls gettimeofday() in rapid succession for 30 seconds to make sure the value is monotonically
 #			increasing. However, some versions of the kernel have a bug in the way they interact with the RTC
 #			which can cause the clock to go backward by small amounts every so often.  See this discussion
-#			for an example: http://www.gossamer-threads.com/lists/linux/kernel/813344
+#			for an example: http://www.gossamer-threads.com/lists/linux/kernel/813344.
+#			This test can also fail if run while a leap-second is introduced since POSIX time goes backward
+#			near the leap second (slim chance we're actually testing right then!)
 #		   $(srcdir)/syscall_tests/syscall_tst.95.c 
 #			This test does not pass natively on some systems, therefore we shouldn't expect it to pass
 #			under x86sim either.
@@ -1222,6 +1229,7 @@ check-local: run-tests
 # are too long due.  In general, we don't want to use wild cards because some users might have some similarly named files
 # that they wouldn't expect a "make clean" to delete.
 clean-local: $(SYS_TEST_CLEANUPS) $(PTHREAD_TEST_CLEANUPS) $(TYPES_1_CLEANUPS)
+	rm -rf $(TEST_TARGETS) $(TEST_TARGETS:.passed=.failed)
 	-chmod -f -R a+rwx tmp-sim
 	rm -rf tmp-sim x-core.rose test-file-fchown32
 	-chmod -f -R a+rwx fchmodattestdir* fchmodattestfile*.txt

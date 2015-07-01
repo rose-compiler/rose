@@ -343,7 +343,28 @@ RSIM_Simulator::commandLineSwitches(Settings &settings) {
               .argument("name", listParser(anyParser(settings.vdsoPaths)))
               .whichValue(SAVE_ALL)
               .explosiveLists(true)
-              .doc("Directory names for searching for the virtual shared dynamic objects."));
+              .doc("The linux operating system maps a page of executable memory called the virtual dynamic shared "
+                   "object (vdso) named \"linux-gate.so\" (32 bit) or \"linux-vdso.so\" (64 bit). This file does not "
+                   "normally exist in the filesystem, but the simulator is able to load an arbitrary file as the VDSO. "
+                   "This switch can provide the names of the directories to search for a file named either \"linux-gate.so\" "
+                   "or \"linux-vdso.so\" (depending on the word size).  It can also be used to specify a particular file "
+                   "name.  Multiple directories are specified either by separating them with comma, semicolon, or colon "
+                   "or by using this switch multiple times."));
+
+    sg.insert(Switch("vsyscall")
+              .argument("name", listParser(anyParser(settings.vsyscallPaths)))
+              .whichValue(SAVE_ALL)
+              .explosiveLists(true)
+              .doc("The linux-amd64 operating system maps a page of executable memory at 0xffffffffff600000 that "
+                   "contains up to three system calls: time, gettimeofday, and getcpu. The purpose is to be able to "
+                   "service these calls without the usual more expensive switch to kernel mode.  The simulator must "
+                   "also map code at this address or else those system calls will segfault.  The simulator looks for "
+                   "a file named \"vsyscall-amd64\" in various directories and maps the first such file found.  This "
+                   "switch can be used to override the list of directoies that are searched, or can even provide the "
+                   "name of a particular file.  The default search paths are the current working directory, the ROSE "
+                   "build directory, the ROSE source directory, and the ROSE data installation directory.  Multiple "
+                   "directories are specified either by separating them with comma, semicolon, or colon or by using "
+                   "this switch multiple times."));
 
     sg.insert(Switch("semaphore")
               .argument("name", anyParser(settings.semaphoreName))

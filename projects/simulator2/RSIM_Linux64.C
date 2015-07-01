@@ -1,26 +1,31 @@
-/* This file contains Linux-64system call emulation.  Most of these functions are callbacks and have names like:
+/* This file contains Linux-amd64 system call emulation.  Most of these functions are callbacks and have names like:
  *
  *    RSIM_Linux64::syscall_FOO_enter           -- prints syscall tracing info when the call is entered
  *    RSIM_Linux64::syscall_FOO                 -- implements the system call
  *    RSIM_Linux64::syscall_FOO_leave           -- prints syscall tracing info when the call returns
  */
-#include "rose.h"
+#include <rose.h>
 #include "RSIM_Private.h"
 
 #ifdef ROSE_ENABLE_SIMULATOR
 
 #include "RSIM_Linux64.h"
-#include "BinaryDebugger.h"
-#include "Diagnostics.h"
+#include <BinaryDebugger.h>                             // rose
+#include <Diagnostics.h>                                // rose
+#include <FileSystem.h>                                 // rose
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall
+#include <sys/wait.h>                                   // for the wait4 syscall
 
+using namespace rose;
 using namespace rose::Diagnostics;
 using namespace rose::BinaryAnalysis;
 
 void
 RSIM_Linux64::init() {
+    vdsoName("linux-vdso.so");
+
     if (interpreterBaseVa() == 0) {
         // Linux seems to ignore the alignment constraints (0x200000) in the ld-linux-x86-64.so interpreter and uses 0x1000
         // instead. Unfortunately ROSE's BinaryLoader can't do that (2015-06-02) so we use a different load address instead.
@@ -137,6 +142,39 @@ RSIM_Linux64::initializeSimulatedOs(RSIM_Process *process, SgAsmGenericHeader *h
 bool
 RSIM_Linux64::isSupportedArch(SgAsmGenericHeader *fhdr) {
     return isSgAsmElfFileHeader(fhdr) && fhdr->get_word_size()==8;
+}
+
+void
+RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
+    if (process->wordSize() != 64)
+        return;
+    
+    std::vector<std::string> paths = settings().vsyscallPaths;
+    if (paths.empty()) {
+        paths.push_back(".");
+        paths.push_back(ROSE_AUTOMAKE_TOP_BUILDDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_TOP_SRCDIR + "/projects/simulator2");
+        paths.push_back(ROSE_AUTOMAKE_DATADIR + "/projects/simulator2");
+    }
+    AddressInterval loaded;
+    std::string found;
+    BOOST_FOREACH (const std::string &vsyscallPath, paths) {
+        FileSystem::Path path = vsyscallPath;
+        FileSystem::Path name = path / "vsyscall-amd64";
+        if (FileSystem::isFile(name)) {
+            found = FileSystem::toString(name);
+            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            break;
+        } else if (FileSystem::isFile(path)) {
+            found = FileSystem::toString(name);
+            loaded = process->get_memory().insertFile(":0xffffffffff600000+0x1000=rx::" + found);
+            break;
+        }
+    }
+
+    // Change the name from just a file name to "[vsyscall] ..."
+    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory().within(loaded).segments())
+        segment.name("[vsyscall] " + found);
 }
 
 void

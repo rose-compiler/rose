@@ -100,6 +100,20 @@ simulator:
 
    $ ./x86sim .... --vdso=linux-vdso.so ....
 
+== Linux vsyscall ==
+
+Some Linux-amd64 system calls are implemented by mapping a page of the
+Linux kernel into user space at address 0xffffffffff600000. In order
+to use these system calls the simulator must implement them itself,
+and does so by mapping some assembly to that location.  The assembly
+is contained in the "vsyscall-amd64" file and the "--vsyscall" switch
+says where to look for that file.  The default is the current working
+directory.
+
+If the vsyscall page is not mapped then certain system calls will
+likely segfault.  For Linux 2.6.32-amd64 for instance, these are
+the time, gettimeofday, and getcpu syscalls.
+
 == Process and thread model ==
 
 The simulator runs each guest process in a separate simulator process,
