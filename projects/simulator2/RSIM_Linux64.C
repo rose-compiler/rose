@@ -76,7 +76,9 @@ RSIM_Linux64::init() {
     SC_REG(54,  setsockopt,                     default);
     SC_REG(59,  execve,                         default);
     SC_REG(60,  exit,                           exit);
+    SC_REG(61,  wait4,                          wait4);
     SC_REG(62,  kill,                           default);
+    SC_REG(63,  uname,                          uname);
     SC_REG(72,  fcntl,                          fcntl);
     SC_REG(74,  fsync,                          default);
     SC_REG(77,  ftruncate,                      default);
@@ -96,6 +98,7 @@ RSIM_Linux64::init() {
     SC_REG(92,  chown,                          default);
     SC_REG(93,  fchown,                         default);
     SC_REG(95,  umask,                          default);
+    SC_REG(96,  gettimeofday,                   gettimeofday);
     SC_REG(97,  getrlimit,                      getrlimit);
     SC_REG(102, getuid,                         default);
     SC_REG(104, getgid,                         default);
@@ -111,6 +114,7 @@ RSIM_Linux64::init() {
     SC_REG(158, arch_prctl,                     arch_prctl);
     SC_REG(162, sync,                           default);
     SC_REG(186, gettid,                         default);
+    SC_REG(201, time,                           time);
     SC_REG(202, futex,                          futex);
     SC_REG(218, set_tid_address,                default);
     SC_REG(231, exit_group,                     exit_group);
@@ -596,6 +600,37 @@ RSIM_Linux64::syscall_getrlimit_leave(RSIM_Thread *t, int callno)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux64::syscall_gettimeofday_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("gettimeofday").p();
+}
+
+void
+RSIM_Linux64::syscall_gettimeofday_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t tp = t->syscall_arg(0);
+    ASSERT_require(8 == sizeof(long));
+    struct timeval host_time;
+
+    int result = gettimeofday(&host_time, NULL);
+    if (result == -1) {
+        result = -errno;
+    } else if (sizeof(host_time) != t->get_process()->mem_write(&host_time, tp, sizeof host_time)) {
+        result = -EFAULT;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_gettimeofday_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(sizeof(timeval), print_timeval);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux64::syscall_ioctl_enter(RSIM_Thread *t, int callno) {
     t->syscall_enter("ioctl").str("...[not supported yet]...");
 }
@@ -780,6 +815,115 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_time_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("time").p();
+}
+
+void
+RSIM_Linux64::syscall_time_body(RSIM_Thread *t, int callno)
+{
+    time_t result = time(NULL);
+    if (t->syscall_arg(0)) {
+        ASSERT_require(8 == sizeof(result));
+        if (8 != t->get_process()->mem_write(&result, t->syscall_arg(0), 8))
+            result = -EFAULT;
+    }
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_time_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().t();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_uname_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("uname").p();
+}
+
+void
+RSIM_Linux64::syscall_uname_body(RSIM_Thread *t, int callno)
+{
+    rose_addr_t dest_va = t->syscall_arg(0);
+    new_utsname_64 buf;
+    memset(&buf, ' ', sizeof buf);
+    if (-1 == syscall(SYS_uname, &buf)) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    if (sizeof(buf) != t->get_process()->mem_write(&buf, dest_va, sizeof buf)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(0);
+}
+
+void
+RSIM_Linux64::syscall_uname_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().P(sizeof(new_utsname_64), print_new_utsname_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_wait4_enter(RSIM_Thread *t, int callno)
+{
+    static const Translate wflags[] = { TF(WNOHANG), TF(WUNTRACED), T_END };
+    t->syscall_enter("wait4").d().p().f(wflags).p();
+}
+
+void
+RSIM_Linux64::syscall_wait4_body(RSIM_Thread *t, int callno)
+{
+    pid_t pid = t->syscall_arg(0);
+    rose_addr_t status_va = t->syscall_arg(1), rusage_va = t->syscall_arg(3);
+    int options = t->syscall_arg(2);
+    int status;
+    struct rusage rusage;
+
+    // check that we can write to status_va and rusage before we wait for anything
+    if (status_va && 4 != t->get_process()->mem_write(&status, status_va, 4)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    if (rusage_va && sizeof(rusage) != t->get_process()->mem_write(&rusage, rusage_va, sizeof rusage)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+    
+    // Now do the wait
+    int result = wait4(pid, &status, options, &rusage);
+    if( result == -1) {
+        t->syscall_return(-errno);
+        return;
+    }
+
+    // Write results to specimen memory
+    if (status_va != 0)
+        t->get_process()->mem_write(&status, status_va, 4);
+    if (rusage_va != 0)
+        t->get_process()->mem_write(&rusage, rusage_va, sizeof rusage);
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_wait4_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(4, print_exit_status_32);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

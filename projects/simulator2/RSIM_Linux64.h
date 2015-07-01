@@ -46,6 +46,10 @@ protected:
     static void syscall_getrlimit_body(RSIM_Thread *t, int callno);
     static void syscall_getrlimit_leave(RSIM_Thread *t, int callno);
 
+    static void syscall_gettimeofday_enter(RSIM_Thread *t, int callno);
+    static void syscall_gettimeofday_body(RSIM_Thread *t, int callno);
+    static void syscall_gettimeofday_leave(RSIM_Thread *t, int callno);
+
     static void syscall_ioctl_enter(RSIM_Thread*, int);
     static void syscall_ioctl_body(RSIM_Thread*, int);
 
@@ -65,6 +69,18 @@ protected:
     static void syscall_stat_enter(RSIM_Thread*, int);
     static void syscall_stat_body(RSIM_Thread*, int);
     static void syscall_stat_leave(RSIM_Thread*, int);
+
+    static void syscall_time_enter(RSIM_Thread *t, int callno);
+    static void syscall_time_body(RSIM_Thread *t, int callno);
+    static void syscall_time_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_uname_enter(RSIM_Thread *t, int callno);
+    static void syscall_uname_body(RSIM_Thread *t, int callno);
+    static void syscall_uname_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_wait4_enter(RSIM_Thread *t, int callno);
+    static void syscall_wait4_body(RSIM_Thread *t, int callno);
+    static void syscall_wait4_leave(RSIM_Thread *t, int callno);
 
     static void syscall_writev_enter(RSIM_Thread*, int);
     static void syscall_writev_body(RSIM_Thread*, int);

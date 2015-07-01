@@ -1504,6 +1504,16 @@ struct new_utsname_32 {
     char domainname[65];
 } __attribute__((packed));
 
+/* Kernel's struct new_utsname on amd64 */
+struct new_utsname_64 {
+    char sysname[65];
+    char nodename[65];
+    char release[65];
+    char version[65];
+    char machine[65];
+    char domainname[65];
+};
+
 /* Third arg of madvise syscall */
 static const Translate madvise_behaviors[] = {
     TE(MADV_NORMAL), TE(MADV_RANDOM), TE(MADV_SEQUENTIAL), TE(MADV_WILLNEED), TE(MADV_DONTNEED),
@@ -1640,6 +1650,7 @@ void print_kernel_stat_64(Sawyer::Message::Stream &f, const uint8_t *_sb, size_t
 void print_timespec_32(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timespec_64(Sawyer::Message::Stream &f, const uint8_t *_ts, size_t sz);
 void print_timeval_32(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
+void print_timeval(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
 void print_sigaction_32(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
 void print_sigaction_64(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
 void print_dentries_helper(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz, size_t wordsize);
@@ -1670,6 +1681,7 @@ void print_SigInfo(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_sched_param_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_msghdr_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_new_utsname_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_new_utsname_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_mmap_arg_struct_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_sockaddr(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 

@@ -156,7 +156,15 @@ print_timeval_32(Sawyer::Message::Stream &m, const uint8_t *_tv, size_t sz)
 {
     assert(sz==sizeof(timeval_32));
     const timeval_32 *tv = (const timeval_32*)_tv;
-    mfprintf(m)("sec=%"PRIu32", usec=%"PRIu32, tv->tv_sec, tv->tv_usec);
+    m <<"sec=" <<tv->tv_sec <<", usec=" <<tv->tv_usec;
+}
+
+void
+print_timeval(Sawyer::Message::Stream &m, const uint8_t *_tv, size_t sz)
+{
+    assert(sz==sizeof(timeval));
+    const timeval *tv = (const timeval*)_tv;
+    m <<"sec=" <<tv->tv_sec <<", usec=" <<tv->tv_usec;
 }
 
 void
@@ -591,6 +599,25 @@ print_new_utsname_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(new_utsname_32)==sz);
     const new_utsname_32 *v = (const new_utsname_32*)_v;
+    m <<"sysname=";
+    Printer::print_string(m, v->sysname);
+    m <<", nodename=";
+    Printer::print_string(m, v->nodename);
+    m <<", release=";
+    Printer::print_string(m, v->release);
+    m <<", version=";
+    Printer::print_string(m, v->version);
+    m <<", machine=";
+    Printer::print_string(m, v->machine);
+    m <<", domainname=";
+    Printer::print_string(m, v->domainname);
+}
+
+void
+print_new_utsname_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
+{
+    assert(sizeof(new_utsname_64)==sz);
+    const new_utsname_64 *v = (const new_utsname_64*)_v;
     m <<"sysname=";
     Printer::print_string(m, v->sysname);
     m <<", nodename=";
