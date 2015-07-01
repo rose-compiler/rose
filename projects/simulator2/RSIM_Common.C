@@ -5,7 +5,9 @@
 
 #include "integerOps.h"
 #include "Diagnostics.h"
+#include <arpa/inet.h>
 #include <sys/wait.h>
+#include <sys/socket.h>
 
 using namespace rose::Diagnostics;
 
@@ -674,6 +676,26 @@ convert(statfs64_32 *g, const statfs_native *h)
     g->f_spare[2] = h->f_spare[2];
     g->f_spare[3] = h->f_spare[3];
 }
+
+void
+print_sockaddr(Sawyer::Message::Stream &m, const uint8_t *addr, size_t addrlen) {
+    if (addrlen<2) {
+        m <<"too short";
+    } else {
+        uint16_t family = *(uint16_t*)addr;
+        if (family != AF_INET && family != AF_INET6) {
+            m <<"family=" <<family;
+        } else if (addrlen < 8) {
+            m <<"too short";
+        } else {
+            int port = ntohs(*(uint16_t*)(addr+2));
+            char s[INET_ADDRSTRLEN];
+            if (inet_ntop(family, addr+4, s, sizeof s))
+                m <<s <<":" <<port;
+        }
+    }
+}
+
 
 #endif /* ROSE_ENABLE_SIMULATOR */
 
