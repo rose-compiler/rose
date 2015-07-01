@@ -12,7 +12,7 @@ struct context_t {
   struct tile_t * tiles;
 };
 
-typedef void (*kernel_func_ptr)(void **, int *, struct context_t *);
+typedef void (*kernel_func_ptr)(int *, void **,  struct context_t *);
 
 struct kernel_desc_t {
   int num_data;

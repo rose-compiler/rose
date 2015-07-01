@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 
-void kernel_0(void ** data, int * param, struct context_t * ctx) {
+void kernel_0(int * param, void ** data, struct context_t * ctx) {
 /*  
   printf("param = {%d , %d}\n", param[0], param[1]);
 
