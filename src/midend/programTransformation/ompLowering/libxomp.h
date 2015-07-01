@@ -326,6 +326,11 @@ typedef struct DDE_data {
  struct  DDE_data* child;
 } DDE;
 
+// Internal control variables for target devices
+extern int xomp_get_num_devices();
+extern int xomp_num_devices; 
+extern int xomp_max_num_devices; 
+
 // The head of the list of DDE data nodes
 extern DDE** DDE_head; //TODO. We don't really need this head pointer, it is like a stack, access the end is enough
 // The tail of the list
