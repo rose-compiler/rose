@@ -54,7 +54,6 @@ include_HEADERS +=				\
 	RSIM_Semantics.h			\
 	RSIM_SignalHandling.h			\
 	RSIM_Simulator.h			\
-	RSIM_Templates.h			\
 	RSIM_Thread.h				\
 	RSIM_Tools.h
 

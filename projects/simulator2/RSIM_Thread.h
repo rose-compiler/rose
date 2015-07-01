@@ -612,9 +612,6 @@ protected:
      *                                  Data members
      **************************************************************************************************************************/
 
-public:                                                 // FIXME
-    template<class guest_dirent_t> int getdents_syscall(int fd, uint32_t dirent_va, size_t sz);
-
 private:
     /* Stuff related to threads */
     rose_addr_t robustListHeadVa_;                      /* Address of robust futex list head. See set_robust_list() syscall */

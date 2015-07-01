@@ -626,17 +626,25 @@ static const Translate open_flags[] = { TF(O_RDWR), TF(O_RDONLY), TF(O_WRONLY),
                                         T_END };
 
 /* Types for getdents syscalls */
-struct dirent32_t {
+struct dirent_32 {
     uint32_t d_ino;
     uint32_t d_off;
     uint16_t d_reclen;
 } __attribute__((__packed__));
 
-struct dirent64_t {
+/* Type for the getdents64 call for linux-x86 */
+struct dirent64_32 {
     uint64_t d_ino;
     uint64_t d_off;
     uint16_t d_reclen;
     uint8_t d_type;
+} __attribute__((__packed__));
+
+/** Type for the getdents call for linux-amd64 */
+struct dirent_64 {
+    uint64_t d_ino;
+    uint64_t d_off;
+    uint16_t d_reclen;
 } __attribute__((__packed__));
 
 static const Translate stack_flags[] = {TF(SS_DISABLE), TF(SS_ONSTACK), T_END};
@@ -711,6 +719,22 @@ struct statfs_32 {
     uint32_t f_flags;
     uint32_t f_spare[4];
 } __attribute__((packed));
+
+/* kernels struct statfs on amd64 */
+struct statfs_64 {
+    uint64_t f_type;
+    uint64_t f_bsize;
+    uint64_t f_blocks;
+    uint64_t f_bfree;
+    uint64_t f_bavail;
+    uint64_t f_files;
+    uint64_t f_ffree;
+    uint32_t f_fsid[2];
+    uint64_t f_namelen;
+    uint64_t f_frsize;
+    uint64_t f_flags;
+    uint64_t f_spare[4];
+};
 
 /* kernel's struct statfs on the host */
 struct statfs_native {
@@ -1653,9 +1677,9 @@ void print_timeval_32(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz)
 void print_timeval(Sawyer::Message::Stream &f, const uint8_t *_tv, size_t sz);
 void print_sigaction_32(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
 void print_sigaction_64(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz);
-void print_dentries_helper(Sawyer::Message::Stream &f, const uint8_t *_sa, size_t sz, size_t wordsize);
 void print_dentries_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_dentries_64(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
+void print_dentries64_32(Sawyer::Message::Stream &f, const uint8_t *sa, size_t sz);
 void print_bitvec(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_SigSet(Sawyer::Message::Stream &f, const uint8_t *vec, size_t sz);
 void print_stack_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
@@ -1663,7 +1687,9 @@ void print_flock_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_flock64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_statfs_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_statfs64_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
+void print_statfs(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_robust_list_head_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_robust_list_head_64(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);
 void print_ipc64_perm_32(Sawyer::Message::Stream &f, const uint8_t *_v, size_t sz);

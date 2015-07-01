@@ -16,6 +16,7 @@
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall
+#include <sys/vfs.h>                                    // for the statfs syscalls
 #include <sys/wait.h>                                   // for the wait4 syscall
 
 using namespace rose;
@@ -87,6 +88,7 @@ RSIM_Linux64::init() {
     SC_REG(72,  fcntl,                          fcntl);
     SC_REG(74,  fsync,                          default);
     SC_REG(77,  ftruncate,                      default);
+    SC_REG(78,  getdents,                       getdents);
     SC_REG(79,  getcwd,                         getcwd);
     SC_REG(80,  chdir,                          default);
     SC_REG(81,  fchdir,                         default);
@@ -113,6 +115,7 @@ RSIM_Linux64::init() {
     SC_REG(110, getppid,                        default);
     SC_REG(111, getpgrp,                        default);
     SC_REG(133, mknod,                          default);
+    SC_REG(138, fstatfs,                        fstatfs);
     SC_REG(145, sched_getscheduler,             sched_getscheduler);
     SC_REG(145, sched_get_priority_max,         default);
     SC_REG(147, sched_get_priority_min,         default);
@@ -496,6 +499,42 @@ RSIM_Linux64::syscall_connect_body(RSIM_Thread *t, int callno) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
+RSIM_Linux64::syscall_fstatfs_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("fstatfs").d().d().p();
+}
+
+void
+RSIM_Linux64::syscall_fstatfs_body(RSIM_Thread *t, int callno)
+{
+    int guestFd      = t->syscall_arg(0);
+    rose_addr_t sbVa = t->syscall_arg(1);
+
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+
+    struct statfs_64 host_statfs;
+    int result = syscall(SYS_fstatfs, hostFd, &host_statfs);
+    if (-1==result) {
+        t->syscall_return(-errno);
+        return;
+    }
+    if (sizeof(host_statfs) != t->get_process()->mem_write(&host_statfs, sbVa, sizeof host_statfs)) {
+        t->syscall_return(-EFAULT);
+        return;
+    }
+
+    t->syscall_return(result);
+}
+
+void
+RSIM_Linux64::syscall_fstatfs_leave(RSIM_Thread *t, int callno)
+{
+    t->syscall_leave().ret().arg(1).P(sizeof(struct statfs_64), print_statfs_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
 RSIM_Linux64::syscall_futex_enter(RSIM_Thread *t, int callno)
 {
     /* We cannot include <linux/futex.h> portably across a variety of Linux machines. */
@@ -598,6 +637,31 @@ void
 RSIM_Linux64::syscall_futex_leave(RSIM_Thread *t, int callno)
 {
     t->syscall_leave().ret().P(4, print_int_32);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_getdents_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("getdents").d().p().d();
+}
+
+void
+RSIM_Linux64::syscall_getdents_body(RSIM_Thread *t, int callno)
+{
+    int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
+    int hostFd = t->get_process()->hostFileDescriptor(guestFd);
+    rose_addr_t dirent_va = t->syscall_arg(1);
+    int status = getdents_syscall<dirent_64, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    t->syscall_return(status);
+}
+
+void
+RSIM_Linux64::syscall_getdents_leave(RSIM_Thread *t, int callno)
+{
+    int status = t->syscall_arg(-1);
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

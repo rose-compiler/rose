@@ -8,7 +8,6 @@
 #include "RSIM_Futex.h"
 #include "RSIM_Process.h"
 #include "RSIM_Thread.h"
-#include "RSIM_Templates.h"
 #include "RSIM_Tools.h"
 
 #include <BinaryLoader.h>

@@ -35,11 +35,17 @@ private:
     template<typename Word>
     rose_addr_t pushArgcArgvEnvAuxv(RSIM_Process*, FILE *trace, SgAsmElfFileHeader*, rose_addr_t sp, rose_addr_t execfn_va);
 
+    template<class guest_dirent_t, class host_dirent_type, int syscallNumber>
+    int getdents_syscall(int fd, rose_addr_t dirent_va, size_t sz);
+
 public:
     static void syscall_default_leave(RSIM_Thread*, int);
 
 protected:
     rose_addr_t segmentTableVa(SgAsmElfFileHeader *fhdr) const;
+
+    template<class guest_dirent_t, class host_dirent_t>
+    static int getdents_syscall(RSIM_Thread*, int syscallNumber, int fd, rose_addr_t direntVa, size_t sz);
 
     // System calls that are common to both Linux 32- and 64-bit.
     static void syscall_accept_helper(RSIM_Thread*, int guestSrcFd, rose_addr_t addrVa, rose_addr_t addrLenVa, unsigned flags);

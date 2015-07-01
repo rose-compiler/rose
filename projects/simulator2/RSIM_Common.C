@@ -6,6 +6,7 @@
 #include "integerOps.h"
 #include "Diagnostics.h"
 #include <arpa/inet.h>
+#include <sys/vfs.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
 
@@ -190,52 +191,53 @@ print_sigaction_64(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz)
 }
 
 void
-print_dentries_helper(Sawyer::Message::Stream &m, const uint8_t *_sa, size_t sz, size_t wordsize)
+print_dentries_32(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
 {
-    if (0==sz) {
+    if (0 == sz) {
         m <<"empty";
     } else {
         m <<"\n";
-        size_t offset = 0;
-        for (size_t i=0; offset<sz; i++) {
-            uint64_t d_ino, d_off;
-            int d_reclen, d_type;
-            const char *d_name;
-            if (4==wordsize) {
-                const dirent32_t *sa = (const dirent32_t*)(_sa+offset);
-                d_ino = sa->d_ino;
-                d_off = sa->d_off;
-                d_reclen = sa->d_reclen;
-                d_type = _sa[offset+sa->d_reclen-1];
-                d_name = (const char*)_sa + offset + sizeof(*sa);
-            } else {
-                assert(8==wordsize);
-                const dirent64_t *sa = (const dirent64_t*)(_sa+offset);
-                d_ino = sa->d_ino;
-                d_off = sa->d_off;
-                d_reclen = sa->d_reclen;
-                d_type = sa->d_type;
-                d_name = (const char*)_sa + offset + sizeof(*sa);
-            }
-            mfprintf(m)("        dentry[%3zu]: ino=%-8"PRIu64" next_offset=%-8"PRIu64" reclen=%-3d"
-                        " type=%-3d name=\"%s\"\n", i, d_ino, d_off, d_reclen, d_type, d_name);
-            offset = d_off;
-            if (0==offset) break;
+        for (size_t i=0; (i+1)*sizeof(dirent_32) <= sz; ++i) {
+            const dirent_32 *d = (const dirent_32*)(sa + i*sizeof(dirent_32));
+            int type = ((const uint8_t*)d)[d->d_reclen - 1];
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
         }
-        m <<" ";
     }
-}
-
-void
-print_dentries_32(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
-{
-    print_dentries_helper(m, sa, sz, 4);
 }
 
 void
 print_dentries_64(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
 {
-    print_dentries_helper(m, sa, sz, 8);
+    if (0 == sz) {
+        m <<"empty";
+    } else {
+        m <<"\n";
+        for (size_t i=0; (i+1)*sizeof(dirent_64) <= sz; ++i) {
+            const dirent_64 *d = (const dirent_64*)(sa + i*sizeof(dirent_64));
+            int type = ((const uint8_t*)d)[d->d_reclen - 1];
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
+        }
+    }
+}
+
+void
+print_dentries64_32(Sawyer::Message::Stream &m, const uint8_t *sa, size_t sz)
+{
+    if (0 == sz) {
+        m <<"empty";
+    } else {
+        m <<"\n";
+        for (size_t i=0; (i+1)*sizeof(dirent64_32) <= sz; ++i) {
+            const dirent64_32 *d = (const dirent64_32*)(sa + i*sizeof(dirent64_32));
+            const char *name = (const char*)d + d->d_reclen;
+            m <<"        dentry[" <<i <<"]: ino=" <<d->d_ino <<", off=" <<d->d_off
+              <<", reclen=" <<d->d_reclen <<", type=" <<d->d_type <<", name=\"" <<StringUtility::cEscape(name) <<"\"\n";
+        }
+    }
 }
 
 void
@@ -327,6 +329,24 @@ print_statfs_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 }
 
 void
+print_statfs_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    assert(sizeof(statfs_64)==sz);
+    const statfs_64 *v = (const statfs_64*)_v;
+    m <<"type=" <<v->f_type
+      <<", bsize=" <<v->f_bsize
+      <<", blocks=" <<v->f_blocks
+      <<", bfree=" <<v->f_bfree
+      <<", bavail=" <<v->f_bavail
+      <<", files=" <<v->f_files
+      <<", ffree=" <<v->f_ffree
+      <<", fsid=[" <<v->f_fsid[0] <<", " <<v->f_fsid[1] <<"]"
+      <<", namelen=" <<v->f_namelen
+      <<", frsize=" <<v->f_frsize
+      <<", flags=" <<v->f_flags
+      <<", spare=[" <<v->f_spare[0] <<", " <<v->f_spare[1] <<", " <<v->f_spare[2] <<", " <<v->f_spare[3] <<"]";
+}
+
+void
 print_statfs64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
 {
     assert(sizeof(statfs64_32)==sz);
@@ -337,6 +357,24 @@ print_statfs64_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz)
                 v->f_type, v->f_bsize, v->f_blocks, v->f_bfree, v->f_bavail, v->f_files,
                 v->f_ffree, v->f_fsid[0], v->f_fsid[1], v->f_namelen, v->f_frsize, v->f_flags,
                 v->f_spare[0], v->f_spare[1], v->f_spare[2], v->f_spare[3]);
+}
+
+void
+print_statfs(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    assert(sizeof(struct statfs)==sz);
+    const struct statfs *v = (const struct statfs*)_v;
+    m <<"type=" <<v->f_type
+      <<", bsize=" <<v->f_bsize
+      <<", blocks=" <<v->f_blocks
+      <<", bfree=" <<v->f_bfree
+      <<", bavail=" <<v->f_bavail
+      <<", files=" <<v->f_files
+      <<", ffree=" <<v->f_ffree
+      <<", fsid=[" <<v->f_fsid.__val[0] <<", " <<v->f_fsid.__val[1] <<"]"
+      <<", namelen=" <<v->f_namelen
+      <<", frsize=" <<v->f_frsize
+      <<", flags=" <<v->f_flags
+      <<", spare=[" <<v->f_spare[0] <<", " <<v->f_spare[1] <<", " <<v->f_spare[2] <<", " <<v->f_spare[3] <<"]";
 }
 
 void

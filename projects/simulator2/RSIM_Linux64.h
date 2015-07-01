@@ -39,9 +39,17 @@ protected:
     static void syscall_connect_enter(RSIM_Thread*, int callno);
     static void syscall_connect_body(RSIM_Thread*, int callno);
 
+    static void syscall_fstatfs_enter(RSIM_Thread *t, int callno);
+    static void syscall_fstatfs_body(RSIM_Thread *t, int callno);
+    static void syscall_fstatfs_leave(RSIM_Thread *t, int callno);
+
     static void syscall_futex_enter(RSIM_Thread *t, int callno);
     static void syscall_futex_body(RSIM_Thread *t, int callno);
     static void syscall_futex_leave(RSIM_Thread *t, int callno);
+
+    static void syscall_getdents_enter(RSIM_Thread *t, int callno);
+    static void syscall_getdents_body(RSIM_Thread *t, int callno);
+    static void syscall_getdents_leave(RSIM_Thread *t, int callno);
 
     static void syscall_getrlimit_enter(RSIM_Thread *t, int callno);
     static void syscall_getrlimit_body(RSIM_Thread *t, int callno);

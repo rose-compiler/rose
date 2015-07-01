@@ -3117,7 +3117,13 @@ RSIM_Linux32::syscall_getdents_body(RSIM_Thread *t, int callno)
     int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
     int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent32_t>(hostFd, dirent_va, sz);
+    int status;
+    if (4 == sizeof(long)) {
+        status = getdents_syscall<dirent_32, dirent64_32>(t, SYS_getdents64, hostFd, dirent_va, sz);
+    } else {
+        status = getdents_syscall<dirent_32, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    }
+
     t->syscall_return(status);
 }
 
@@ -4013,7 +4019,12 @@ RSIM_Linux32::syscall_getdents64_body(RSIM_Thread *t, int callno)
     int guestFd = t->syscall_arg(0), sz = t->syscall_arg(2);
     int hostFd = t->get_process()->hostFileDescriptor(guestFd);
     uint32_t dirent_va = t->syscall_arg(1);
-    int status = t->getdents_syscall<dirent64_t>(hostFd, dirent_va, sz);
+    int status;
+    if (4 == sizeof(long)) {
+        status = getdents_syscall<dirent64_32, dirent64_32>(t, SYS_getdents64, hostFd, dirent_va, sz);
+    } else {
+        status = getdents_syscall<dirent64_32, dirent_64>(t, SYS_getdents, hostFd, dirent_va, sz);
+    }
     t->syscall_return(status);
 }
 
@@ -4021,7 +4032,7 @@ void
 RSIM_Linux32::syscall_getdents64_leave(RSIM_Thread *t, int callno)
 {
     int status = t->syscall_arg(-1);
-    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries_64);
+    t->syscall_leave().ret().arg(1).P(status>0?status:0, print_dentries64_32);
 }
 
 /*******************************************************************************************************************************/
@@ -4376,7 +4387,7 @@ RSIM_Linux32::syscall_fstatfs64_body(RSIM_Thread *t, int callno)
     convert(&guest_statfs, &host_statfs);
 #else           /* host is 64-bit machine */
     static statfs_native host_statfs;
-    int result = syscall(SYS_statfs, hostFd, &host_statfs);
+    int result = syscall(SYS_fstatfs, hostFd, &host_statfs);
     convert(&guest_statfs, &host_statfs);
 #endif
     if (-1==result) {
