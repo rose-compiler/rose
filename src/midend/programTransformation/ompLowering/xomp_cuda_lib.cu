@@ -19,8 +19,22 @@ int xomp_max_num_devices =  -1; // -1 means un-initialized
 void** xomp_cuda_prop; 
 bool xomp_verbose = false;
 
+/* Set the device id to be used by the current task */
+void xomp_set_default_device (int devID)
+{
+  cudaError_t err;
+  assert (devID>=0 && devID< xomp_get_max_devices());
+  err = cudaSetDevice(devID); 
+  if(err != cudaSuccess)
+  {
+    fprintf(stderr,"XOMP acc_init: %s %s %d\n", cudaGetErrorString(err), __FILE__, __LINE__);
+    exit(err);
+  }
+
+}
+
 /* Obtain the max number of devices supported by the hardware*/
-int omp_get_max_devices(void)
+int xomp_get_max_devices(void)
 {
   int rt; 
   cudaError_t err;
@@ -53,7 +67,7 @@ int xomp_get_num_devices (void)
 
   // otherwise, obtain it based on max device count and env variable
   if (xomp_max_num_devices == -1)
-    xomp_max_num_devices = omp_get_max_devices();
+    xomp_max_num_devices = xomp_get_max_devices();
 
   env_var_str = getenv("OMP_NUM_DEVICES");
   if (env_var_str != NULL)
@@ -96,7 +110,7 @@ void xomp_acc_init(void)
       exit(err);
   }
 #endif 
-  xomp_max_num_devices = omp_get_max_devices();
+  xomp_max_num_devices = xomp_get_max_devices();
 
   DDE_head = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
   DDE_tail = (DDE**)malloc(sizeof(DDE*)*xomp_max_num_devices);
