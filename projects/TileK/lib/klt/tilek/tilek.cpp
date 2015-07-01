@@ -290,7 +290,11 @@ tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> > generateTiles<
     DLX::KLT_Annotation<DLX::TileK::language_t>, Language::None, Runtime::TileK
   >::local_symbol_maps_t & local_symbol_maps
 ) {
+  bool disordered_tiles = true;
+
   std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *> loop_iterator_map;
+  std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgExpression *> loop_iterator_expression_map;
+
   SgForStatement * first_for_stmt = NULL;
   SgForStatement * last_for_stmt = NULL;
   LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::block_t * block = NULL;
@@ -311,32 +315,92 @@ tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> > generateTiles<
       loop_iterator_map.insert(std::pair<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>(loop, tile_iterator));
     }
 
+    if (disordered_tiles) {
+      std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgExpression *>::iterator it_loop_iterator_expression = loop_iterator_expression_map.find(loop);
+      if (it_loop_iterator_expression != loop_iterator_expression_map.end())
+        it_loop_iterator_expression->second = SageBuilder::buildAddOp(it_loop_iterator_expression->second, SageBuilder::buildVarRefExp(tile_iterator));
+      else
+        loop_iterator_expression_map.insert(
+          std::pair<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgExpression *>(
+            loop,
+            SageBuilder::buildAddOp(
+              SageBuilder::buildDotExp(
+                SageBuilder::buildPntrArrRefExp(
+                  SageBuilder::buildArrowExp(
+                    SageBuilder::buildVarRefExp(local_symbol_maps.context),
+                    SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_field)
+                  ),
+                  SageBuilder::buildIntVal(loop->id)
+                ),
+                SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_lower_field)
+              ),
+              SageBuilder::buildVarRefExp(tile_iterator)
+            )
+          )
+        );
+    }
+
     SgExpression * lower_bound = NULL;
     SgExpression * upper_bound = NULL;
-    if (previous_iterator == NULL) {
-      lower_bound = translateConstExpression(loop->lower_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
-      upper_bound = translateConstExpression(loop->upper_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
+    if (disordered_tiles) {
+      lower_bound = SageBuilder::buildIntVal(0);
+      upper_bound = SageBuilder::buildDotExp(
+                      SageBuilder::buildPntrArrRefExp(
+                        SageBuilder::buildArrowExp(
+                          SageBuilder::buildVarRefExp(local_symbol_maps.context),
+                          SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_field)
+                        ),
+                        SageBuilder::buildIntVal(tile->id)
+                      ),
+                      SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_length_field)
+                    );
     }
     else {
-      lower_bound = SageBuilder::buildVarRefExp(previous_iterator);
-      upper_bound = SageBuilder::buildAddOp(
-                      SageBuilder::buildVarRefExp(previous_iterator),
-                      SageBuilder::buildDotExp(
+      if (previous_iterator == NULL) {
+//      lower_bound = translateConstExpression(loop->lower_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
+//      upper_bound = translateConstExpression(loop->upper_bound, local_symbol_maps.iterators, local_symbol_maps.parameters);
+        lower_bound = SageBuilder::buildDotExp(
                         SageBuilder::buildPntrArrRefExp(
                           SageBuilder::buildArrowExp(
                             SageBuilder::buildVarRefExp(local_symbol_maps.context),
-                            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_field)
+                            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_field)
                           ),
-                          SageBuilder::buildIntVal(tile->id)
+                          SageBuilder::buildIntVal(loop->id)
                         ),
-                        SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_length_field)
-                      )
-                    ); // 'tile_iterator' + 'ctx'->tile['tile_id'].length
+                        SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_lower_field)
+                      );
+        upper_bound = SageBuilder::buildDotExp(
+                        SageBuilder::buildPntrArrRefExp(
+                          SageBuilder::buildArrowExp(
+                            SageBuilder::buildVarRefExp(local_symbol_maps.context),
+                            SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_field)
+                          ),
+                          SageBuilder::buildIntVal(loop->id)
+                        ),
+                        SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_loop_lower_field)
+                      );
+      }
+      else {
+        lower_bound = SageBuilder::buildVarRefExp(previous_iterator);
+        upper_bound = SageBuilder::buildAddOp(
+                        SageBuilder::buildVarRefExp(previous_iterator),
+                        SageBuilder::buildDotExp(
+                          SageBuilder::buildPntrArrRefExp(
+                            SageBuilder::buildArrowExp(
+                              SageBuilder::buildVarRefExp(local_symbol_maps.context),
+                              SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_field)
+                            ),
+                            SageBuilder::buildIntVal(tile->id)
+                          ),
+                          SageBuilder::buildVarRefExp(Runtime::TileK::tilek_kernel_api.context_tile_length_field)
+                        )
+                      ); // 'tile_iterator' + 'ctx'->tile['tile_id'].length
+      }
     }
 
     SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(tile_iterator), lower_bound));
     SgExprStatement * test_stmt = NULL;
-    if (previous_iterator == NULL) {
+    if (!disordered_tiles && previous_iterator == NULL) {
       test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
     }
     else {
@@ -373,13 +437,25 @@ tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> > generateTiles<
   SgBasicBlock * body = SageBuilder::buildBasicBlock();
   SageInterface::setLoopBody(last_for_stmt, body);
 
-  std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>::const_iterator it_loop_iterator;
-  for (it_loop_iterator = loop_iterator_map.begin(); it_loop_iterator != loop_iterator_map.end(); it_loop_iterator++) {
-    std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator->first->iterator);
-    assert(it_sym_to_local != local_symbol_maps.iterators.end());
-    SageInterface::appendStatement(SageBuilder::buildAssignStatement(
-      SageBuilder::buildVarRefExp(it_sym_to_local->second), SageBuilder::buildVarRefExp(it_loop_iterator->second)
-    ), body);
+  if (disordered_tiles) {
+    std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgExpression *>::const_iterator it_loop_iterator_expression;
+    for (it_loop_iterator_expression = loop_iterator_expression_map.begin(); it_loop_iterator_expression != loop_iterator_expression_map.end(); it_loop_iterator_expression++) {
+      std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator_expression->first->iterator);
+      assert(it_sym_to_local != local_symbol_maps.iterators.end());
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(it_sym_to_local->second), it_loop_iterator_expression->second
+      ), body);
+    }
+  }
+  else {
+    std::map<LoopTrees<DLX::KLT_Annotation<DLX::TileK::language_t> >::loop_t *, SgVariableSymbol *>::const_iterator it_loop_iterator;
+    for (it_loop_iterator = loop_iterator_map.begin(); it_loop_iterator != loop_iterator_map.end(); it_loop_iterator++) {
+      std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator->first->iterator);
+      assert(it_sym_to_local != local_symbol_maps.iterators.end());
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(it_sym_to_local->second), SageBuilder::buildVarRefExp(it_loop_iterator->second)
+      ), body);
+    }
   }
 
   return tile_generation_t<DLX::KLT_Annotation<DLX::TileK::language_t> >(first_for_stmt, body, block);
