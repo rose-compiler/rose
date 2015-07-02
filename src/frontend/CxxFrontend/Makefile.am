@@ -146,14 +146,14 @@ EDG.tar.gz:  edg-generate-sig.output
 			wget -q --spider -t 3 --wait=5 $(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz ; \
 			if [ $$? -eq 0 ]; then \
 				wget -O "$(EDGBIN_BEST_NAME).tar.gz" "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz"; \
-				touch $(EDGBIN_BEST_NAME).tar.gz; \
-				echo "Symbolic link "$(EDGBIN_BEST_NAME).tar.gz" to $@!";\
-				ln -sf $(EDGBIN_BEST_NAME).tar.gz $@; \
 			else \
 				echo "Destination not reachable: download EDG binary from the following link when the network is available:"; \
 				echo "$(EDGBIN_REMOTE_TARBALLS)/$(EDGBIN_BEST_NAME).tar.gz";\
 			fi; \
 		fi; \
+		touch $(EDGBIN_BEST_NAME).tar.gz; \
+		echo "Symbolic link "$(EDGBIN_BEST_NAME).tar.gz" to $@!";\
+		ln -sf $(EDGBIN_BEST_NAME).tar.gz $@; \
 	fi
 
 # This target can be used to explicitly download the EDG tarball without needing to know its name.
