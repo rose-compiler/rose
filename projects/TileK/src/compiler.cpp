@@ -405,14 +405,14 @@ int main(int argc, char ** argv) {
     // Insert: "struct kernel_t * kernel = build_kernel(0);"
     SgInitializer * init = SageBuilder::buildAssignInitializer(
       SageBuilder::buildFunctionCallExp(
-        Runtime::tilek_host_api.build_kernel_func,
+        Runtime::host_api.build_kernel_func,
         SageBuilder::buildExprListExp(
           SageBuilder::buildIntVal(kernel->id)
         )
       )
     );
     SgVariableDeclaration * kernel_decl = SageBuilder::buildVariableDeclaration(
-      "kernel", SageBuilder::buildPointerType(Runtime::tilek_host_api.kernel_class->get_type()), init, bb
+      "kernel", SageBuilder::buildPointerType(Runtime::host_api.kernel_class->get_type()), init, bb
     );
     SageInterface::appendStatement(kernel_decl, bb);
 
@@ -430,7 +430,7 @@ int main(int argc, char ** argv) {
         SageBuilder::buildPntrArrRefExp(
           SageBuilder::buildArrowExp(
             SageBuilder::buildVarRefExp(kernel_sym),
-            SageBuilder::buildVarRefExp(Runtime::tilek_host_api.kernel_param_field)
+            SageBuilder::buildVarRefExp(Runtime::host_api.kernel_param_field)
           ),
           SageBuilder::buildIntVal(param_cnt++)
         ),
@@ -450,7 +450,7 @@ int main(int argc, char ** argv) {
         SageBuilder::buildPntrArrRefExp(
           SageBuilder::buildArrowExp(
             SageBuilder::buildVarRefExp(kernel_sym),
-            SageBuilder::buildVarRefExp(Runtime::tilek_host_api.kernel_data_field)
+            SageBuilder::buildVarRefExp(Runtime::host_api.kernel_data_field)
           ),
           SageBuilder::buildIntVal(data_cnt++)
         ),
@@ -468,11 +468,11 @@ int main(int argc, char ** argv) {
           SageBuilder::buildPntrArrRefExp(
             SageBuilder::buildArrowExp(
               SageBuilder::buildVarRefExp(kernel_sym),
-              SageBuilder::buildVarRefExp(Runtime::tilek_host_api.kernel_loop_field)
+              SageBuilder::buildVarRefExp(Runtime::host_api.kernel_loop_field)
             ),
             SageBuilder::buildIntVal(loop_cnt)
           ),
-          SageBuilder::buildVarRefExp(Runtime::tilek_host_api.loop_lower_field)
+          SageBuilder::buildVarRefExp(Runtime::host_api.loop_lower_field)
         ),
         SageInterface::copyExpression((*it_loop)->lb)
       ), bb);
@@ -482,11 +482,11 @@ int main(int argc, char ** argv) {
           SageBuilder::buildPntrArrRefExp(
             SageBuilder::buildArrowExp(
               SageBuilder::buildVarRefExp(kernel_sym),
-              SageBuilder::buildVarRefExp(Runtime::tilek_host_api.kernel_loop_field)
+              SageBuilder::buildVarRefExp(Runtime::host_api.kernel_loop_field)
             ),
             SageBuilder::buildIntVal(loop_cnt)
           ),
-          SageBuilder::buildVarRefExp(Runtime::tilek_host_api.loop_upper_field)
+          SageBuilder::buildVarRefExp(Runtime::host_api.loop_upper_field)
         ),
         SageInterface::copyExpression((*it_loop)->ub)
       ), bb);
@@ -496,11 +496,11 @@ int main(int argc, char ** argv) {
           SageBuilder::buildPntrArrRefExp(
             SageBuilder::buildArrowExp(
               SageBuilder::buildVarRefExp(kernel_sym),
-              SageBuilder::buildVarRefExp(Runtime::tilek_host_api.kernel_loop_field)
+              SageBuilder::buildVarRefExp(Runtime::host_api.kernel_loop_field)
             ),
             SageBuilder::buildIntVal(loop_cnt)
           ),
-          SageBuilder::buildVarRefExp(Runtime::tilek_host_api.loop_stride_field)
+          SageBuilder::buildVarRefExp(Runtime::host_api.loop_stride_field)
         ),
         SageInterface::copyExpression((*it_loop)->stride)
       ), bb);
@@ -512,7 +512,7 @@ int main(int argc, char ** argv) {
     SageInterface::appendStatement(
       SageBuilder::buildFunctionCallStmt(
         SageBuilder::buildFunctionRefExp(
-          Runtime::tilek_host_api.execute_kernel_func
+          Runtime::host_api.execute_kernel_func
         ),
         SageBuilder::buildExprListExp(
           SageBuilder::buildVarRefExp(kernel_sym)
@@ -545,7 +545,7 @@ int main(int argc, char ** argv) {
     decl_name.str()
   );
 
-//SgType * type = Runtime::tilek_host_api.kernel_class->get_type();
+//SgType * type = Runtime::host_api.kernel_class->get_type();
 //assert(type != NULL);
 //type = SageBuilder::buildPointerType(type);
 //assert(type != NULL);

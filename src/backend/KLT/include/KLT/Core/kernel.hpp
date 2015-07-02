@@ -169,6 +169,12 @@ class Kernel {
     static unsigned long id_cnt;
 };
 
+SgExpression * translateConstExpression(
+  SgExpression * expr,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & param_to_local,
+  const std::map<SgVariableSymbol *, SgVariableSymbol *> & iter_to_local
+);
+
 template <class Annotation, class Language, class Runtime>
 void collectReferencedSymbols(Kernel<Annotation, Language, Runtime> * kernel, std::set<SgVariableSymbol *> & symbols) {
   const std::list<typename LoopTrees<Annotation>::node_t *> & roots = kernel->getRoots();
@@ -189,13 +195,138 @@ template <class Annotation, class Language, class Runtime>
 SgStatement * generateStatement(
   typename LoopTrees<Annotation>::stmt_t * stmt,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
+) {
+  SgStatement * result = SageInterface::copyStatement(stmt->statement);
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local;
+  typename std::map<Data<Annotation> *, SgVariableSymbol *>::const_iterator it_data_to_local;
+
+  std::map<SgVariableSymbol *, SgVariableSymbol *> data_sym_to_local;
+  std::map<SgVariableSymbol *, Data<Annotation> *> data_sym_to_data;
+
+//std::cerr << "local_symbol_maps.datas.size() = " << local_symbol_maps.datas.size() << std::endl;
+
+  for (it_data_to_local = local_symbol_maps.datas.begin(); it_data_to_local != local_symbol_maps.datas.end(); it_data_to_local++) {
+    Data<Annotation> * data = it_data_to_local->first;
+    SgVariableSymbol * data_sym = it_data_to_local->first->getVariableSymbol();
+    SgVariableSymbol * local_sym = it_data_to_local->second;
+
+    data_sym_to_local.insert(std::pair<SgVariableSymbol *, SgVariableSymbol *>(data_sym, local_sym));
+    data_sym_to_data.insert(std::pair<SgVariableSymbol *, Data<Annotation> *>(data_sym, data));
+  }
+
+  std::vector<SgVarRefExp *> var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  std::vector<SgVarRefExp *>::const_iterator it_var_ref;
+
+//std::cerr << "generateStatement: " << var_refs.size() << " variable references found." << std::endl;
+
+  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+    SgVarRefExp * var_ref = *it_var_ref;
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+//  std::cerr << "-> Var: " << var_sym->get_name().getString() << std::endl;
+
+    typename std::map<SgVariableSymbol *, Data<Annotation> *>::const_iterator it_data_sym_to_data = data_sym_to_data.find(var_sym);
+    if (it_data_sym_to_data == data_sym_to_data.end()) continue; // Not a variable reference to a Data
+
+//  std::cerr << "-> Found DATA !" << std::endl;
+
+    Data<Annotation> * data = it_data_sym_to_data->second;
+
+    SgPntrArrRefExp * arr_ref = isSgPntrArrRefExp(var_ref->get_parent());
+    SgPntrArrRefExp * top_arr_ref = NULL;
+    std::vector<SgExpression *> subscripts;
+    while (arr_ref != NULL) {
+      top_arr_ref = arr_ref;
+      subscripts.push_back(arr_ref->get_rhs_operand_i());
+      arr_ref = isSgPntrArrRefExp(arr_ref->get_parent());
+    }
+    assert(subscripts.size() == data->getSections().size());
+
+    if (data->getSections().size() > 1) {
+      assert(top_arr_ref != NULL);
+      std::vector<SgExpression *>::const_iterator it_subscript = subscripts.begin();
+      SgExpression * subscript = SageInterface::copyExpression(*it_subscript);
+      it_subscript++;
+      size_t cnt = 1;
+      while (it_subscript != subscripts.end()) {
+        SgExpression * dim_size = SageInterface::copyExpression(data->getSections()[cnt].size);
+        subscript = SageBuilder::buildMultiplyOp(subscript, dim_size);
+        subscript = SageBuilder::buildAddOp(subscript, SageInterface::copyExpression(*it_subscript));
+        cnt++; it_subscript++;
+      }
+      SageInterface::replaceExpression(top_arr_ref, SageBuilder::buildPntrArrRefExp(SageInterface::copyExpression(var_ref), subscript), true);
+    }
+  }
+
+  var_refs = SageInterface::querySubTree<SgVarRefExp>(result);
+  for (it_var_ref = var_refs.begin(); it_var_ref != var_refs.end(); it_var_ref++) {
+    SgVarRefExp * var_ref = *it_var_ref;
+    SgVariableSymbol * var_sym = var_ref->get_symbol();
+
+    SgVariableSymbol * local_sym = NULL;
+    it_sym_to_local = local_symbol_maps.parameters.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.parameters.end())
+      local_sym = it_sym_to_local->second;
+
+    it_sym_to_local = local_symbol_maps.scalars.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.scalars.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    it_sym_to_local = data_sym_to_local.find(var_sym);
+    if (it_sym_to_local != data_sym_to_local.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    it_sym_to_local = local_symbol_maps.iterators.find(var_sym);
+    if (it_sym_to_local != local_symbol_maps.iterators.end()) {
+      assert(local_sym == NULL);
+
+      local_sym = it_sym_to_local->second;
+    }
+
+    if (local_sym != NULL)
+      SageInterface::replaceExpression(var_ref, SageBuilder::buildVarRefExp(local_sym), true);
+    else {
+      /// \todo valid if sym can be found in local scope
+    }
+  }
+
+  assert(result != NULL);
+
+  return result;
+}
 
 template <class Annotation, class Language, class Runtime>
 std::pair<SgStatement *, SgScopeStatement *> generateLoops(
   typename LoopTrees<Annotation>::loop_t * loop,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
+) {
+  std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(loop->iterator);
+  assert(it_sym_to_local != local_symbol_maps.iterators.end());
+
+  SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(
+                                  SageBuilder::buildVarRefExp(it_sym_to_local->second),
+                                  translateConstExpression(loop->lower_bound, local_symbol_maps.iterators, local_symbol_maps.parameters)
+                                ));
+  SgExprStatement * test_stmt  = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(
+                                   SageBuilder::buildVarRefExp(it_sym_to_local->second),
+                                   translateConstExpression(loop->upper_bound, local_symbol_maps.iterators, local_symbol_maps.parameters))
+                                 );
+  SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
+                              SageBuilder::buildVarRefExp(it_sym_to_local->second),
+                              translateConstExpression(loop->stride, local_symbol_maps.iterators, local_symbol_maps.parameters)
+                            );
+  SgBasicBlock * for_body = SageBuilder::buildBasicBlock();
+  SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, for_body);
+
+  return std::pair<SgStatement *, SgScopeStatement *>(for_stmt, for_body);
+}
 
 template <class Annotation>
 struct tile_generation_t {
@@ -214,25 +345,128 @@ template <class Annotation, class Language, class Runtime>
 tile_generation_t<Annotation> generateTiles(
   typename LoopTrees<Annotation>::tile_t * tile,
   const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
+) {
+  bool disordered_tiles = true;
 
-/*
-template <class Annotation, class Language, class Runtime>
-std::pair<SgStatement *, std::vector<SgScopeStatement *> > generateLoops(
-  typename LoopTrees<Annotation>::loop_t * loop,
-  size_t & loop_cnt,
-  size_t & tile_cnt,
-  std::map<typename ::KLT::LoopTrees<Annotation>::loop_t *, typename Runtime::a_loop> & loop_descriptors_map,
-  typename ::KLT::LoopTiler<Annotation, Language, Runtime>::loop_tiling_t & tiling,
-  const typename Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
-*/
+  std::map<typename LoopTrees<Annotation>::loop_t *, SgVariableSymbol *> loop_iterator_map;
+  std::map<typename LoopTrees<Annotation>::loop_t *, SgExpression *> loop_iterator_expression_map;
+
+  SgForStatement * first_for_stmt = NULL;
+  SgForStatement * last_for_stmt = NULL;
+  typename LoopTrees<Annotation>::block_t * block = NULL;
+  while (tile != NULL) {
+    typename LoopTrees<Annotation>::loop_t * loop = tile->loop;
+    assert(loop != NULL);
+
+    SgVariableSymbol * tile_iterator = tile->iterator_sym;
+    assert(tile_iterator != NULL);
+
+    typename std::map<typename LoopTrees<Annotation>::loop_t *, SgVariableSymbol *>::iterator it_loop_iterator = loop_iterator_map.find(loop);
+    SgVariableSymbol * previous_iterator = NULL;
+    if (it_loop_iterator != loop_iterator_map.end()) {
+      previous_iterator = it_loop_iterator->second;
+      it_loop_iterator->second = tile_iterator;
+    }
+    else {
+      loop_iterator_map.insert(std::pair<typename LoopTrees<Annotation>::loop_t *, SgVariableSymbol *>(loop, tile_iterator));
+    }
+
+    if (disordered_tiles) {
+      typename std::map<typename LoopTrees<Annotation>::loop_t *, SgExpression *>::iterator it_loop_iterator_expression = loop_iterator_expression_map.find(loop);
+      if (it_loop_iterator_expression != loop_iterator_expression_map.end())
+        it_loop_iterator_expression->second = SageBuilder::buildAddOp(it_loop_iterator_expression->second, SageBuilder::buildVarRefExp(tile_iterator));
+      else
+        loop_iterator_expression_map.insert(
+          std::pair<typename LoopTrees<Annotation>::loop_t *, SgExpression *>(
+            loop,
+            SageBuilder::buildAddOp(
+              Runtime::kernel_api.buildLoopLower(loop->id, local_symbol_maps.context),
+              SageBuilder::buildVarRefExp(tile_iterator)
+            )
+          )
+        );
+    }
+
+    SgExpression * lower_bound = NULL;
+    SgExpression * upper_bound = NULL;
+    if (disordered_tiles) {
+      lower_bound = SageBuilder::buildIntVal(0);
+      upper_bound = Runtime::kernel_api.buildTileLength(tile->id, local_symbol_maps.context);
+    }
+    else {
+      if (previous_iterator == NULL) {
+        lower_bound = Runtime::kernel_api.buildLoopLower(loop->id, local_symbol_maps.context);
+        upper_bound = Runtime::kernel_api.buildLoopUpper(loop->id, local_symbol_maps.context);
+      }
+      else {
+        lower_bound = SageBuilder::buildVarRefExp(previous_iterator);
+        upper_bound = SageBuilder::buildAddOp(
+                        SageBuilder::buildVarRefExp(previous_iterator),
+                        Runtime::kernel_api.buildTileLength(tile->id, local_symbol_maps.context)
+                      ); // 'tile_iterator' + 'ctx'->tile['tile_id'].length
+      }
+    }
+
+    SgExprStatement * init_stmt = SageBuilder::buildExprStatement(SageBuilder::buildAssignOp(SageBuilder::buildVarRefExp(tile_iterator), lower_bound));
+    SgExprStatement * test_stmt = NULL;
+    if (!disordered_tiles && previous_iterator == NULL) {
+      test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessOrEqualOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
+    }
+    else {
+      test_stmt = SageBuilder::buildExprStatement(SageBuilder::buildLessThanOp(SageBuilder::buildVarRefExp(tile_iterator), upper_bound));
+    }
+    SgExpression * inc_expr = SageBuilder::buildPlusAssignOp(
+                                SageBuilder::buildVarRefExp(tile_iterator),
+                                Runtime::kernel_api.buildTileStride(tile->id, local_symbol_maps.context)
+                              ); // 'tile_iterator' += 'ctx'->tile['tile_id'].stride
+
+    SgForStatement * for_stmt = SageBuilder::buildForStatement(init_stmt, test_stmt, inc_expr, NULL);
+
+    if (last_for_stmt != NULL)
+      SageInterface::setLoopBody(last_for_stmt, for_stmt);
+    else
+      first_for_stmt = for_stmt;
+    last_for_stmt = for_stmt;
+
+    block = tile->block;
+    tile = tile->tile;
+  }
+  assert(block != NULL);
+
+  SgBasicBlock * body = SageBuilder::buildBasicBlock();
+  SageInterface::setLoopBody(last_for_stmt, body);
+
+  if (disordered_tiles) {
+    typename std::map<typename LoopTrees<Annotation>::loop_t *, SgExpression *>::const_iterator it_loop_iterator_expression;
+    for (it_loop_iterator_expression = loop_iterator_expression_map.begin(); it_loop_iterator_expression != loop_iterator_expression_map.end(); it_loop_iterator_expression++) {
+      std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator_expression->first->iterator);
+      assert(it_sym_to_local != local_symbol_maps.iterators.end());
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(it_sym_to_local->second), it_loop_iterator_expression->second
+      ), body);
+    }
+  }
+  else {
+    typename std::map<typename LoopTrees<Annotation>::loop_t *, SgVariableSymbol *>::const_iterator it_loop_iterator;
+    for (it_loop_iterator = loop_iterator_map.begin(); it_loop_iterator != loop_iterator_map.end(); it_loop_iterator++) {
+      std::map<SgVariableSymbol *, SgVariableSymbol *>::const_iterator it_sym_to_local = local_symbol_maps.iterators.find(it_loop_iterator->first->iterator);
+      assert(it_sym_to_local != local_symbol_maps.iterators.end());
+      SageInterface::appendStatement(SageBuilder::buildAssignStatement(
+        SageBuilder::buildVarRefExp(it_sym_to_local->second), SageBuilder::buildVarRefExp(it_loop_iterator->second)
+      ), body);
+    }
+  }
+
+  return tile_generation_t<Annotation>(first_for_stmt, body, block);
+}
 
 template <class Annotation, class Language, class Runtime>
 typename Runtime::exec_mode_t changeExecutionMode(
   const typename Runtime::exec_mode_t & exec_mode,
   const typename Runtime::exec_config_t & exec_cfg
-);
+) {
+  return exec_mode;
+}
 
 template <class Annotation, class Language, class Runtime>
 void generateSynchronizations(
@@ -241,7 +475,7 @@ void generateSynchronizations(
   const typename Runtime::exec_config_t & exec_cfg,
   SgScopeStatement * scope,
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
+) {}
 
 template <class Annotation, class Language, class Runtime>
 SgScopeStatement * generateExecModeGuards(
@@ -249,7 +483,9 @@ SgScopeStatement * generateExecModeGuards(
   const typename Runtime::exec_config_t & exec_cfg,
   SgScopeStatement * scope,
   const typename ::KLT::Kernel<Annotation, Language, Runtime>::local_symbol_maps_t & local_symbol_maps
-);
+) {
+  return scope;
+}
 
 template <class Annotation, class Language, class Runtime>
 void generateKernelBody(
