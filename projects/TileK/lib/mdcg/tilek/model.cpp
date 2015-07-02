@@ -127,7 +127,7 @@ SgExpression * KernelDesc::createFieldInitializer(
     }
     case 5:
     { // kernel_func_ptr kernel_ptr;
-      MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::tilek_host_api.kernel_func_ptr_type, NULL, NULL, file_id, false, true);
+      MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::host_api.kernel_func_ptr_type, NULL, NULL, file_id, false, true);
       MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
       assert(var_decl_res.symbol != NULL);
 

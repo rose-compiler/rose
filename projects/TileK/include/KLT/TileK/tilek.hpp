@@ -91,7 +91,7 @@ class TileK {
 
     enum exec_mode_t { e_default };
 
-    static struct tilek_kernel_api_t {
+    static struct kernel_api_t {
       SgClassSymbol * context_class;
         SgClassSymbol * context_loop_class;
         SgVariableSymbol * context_loop_field;
@@ -102,9 +102,16 @@ class TileK {
         SgVariableSymbol * context_tile_field;
           SgVariableSymbol * context_tile_length_field;
           SgVariableSymbol * context_tile_stride_field;
-    } tilek_kernel_api;
 
-    static struct tilek_host_api_t {
+      SgExpression * buildLoopLower (size_t loop_id, SgVariableSymbol * ctx) const;
+      SgExpression * buildLoopUpper (size_t loop_id, SgVariableSymbol * ctx) const;
+      SgExpression * buildLoopStride(size_t loop_id, SgVariableSymbol * ctx) const;
+
+      SgExpression * buildTileLength(size_t tile_id, SgVariableSymbol * ctx) const;
+      SgExpression * buildTileStride(size_t tile_id, SgVariableSymbol * ctx) const;
+    } kernel_api;
+
+    static struct host_api_t {
       SgClassSymbol * kernel_class;
         SgVariableSymbol * kernel_data_field;
         SgVariableSymbol * kernel_param_field;
@@ -115,7 +122,7 @@ class TileK {
       SgFunctionSymbol * build_kernel_func;
       SgFunctionSymbol * execute_kernel_func;
       SgType * kernel_func_ptr_type;
-    } tilek_host_api;
+    } host_api;
 
     static void loadAPI(const MDCG::Model::model_t & model);
     static void useSymbolsKernel(MFB::Driver<MFB::Sage> & driver, unsigned long file_id);
