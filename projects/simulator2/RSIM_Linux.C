@@ -7,6 +7,7 @@
 #include "BinaryLoaderElf.h"
 
 #include <sys/mman.h>
+#include <sys/syscall.h>                                // SYS_xxx definitions
 #include <sys/user.h>
 #include <sys/types.h>
 

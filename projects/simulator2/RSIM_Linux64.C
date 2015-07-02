@@ -16,6 +16,7 @@
 
 #include <asm/prctl.h>                                  // for the arch_prctl syscall
 #include <sys/prctl.h>                                  // for the arch_prctl syscall
+#include <sys/syscall.h>                                // SYS_xxx definitions
 #include <sys/vfs.h>                                    // for the statfs syscalls
 #include <sys/wait.h>                                   // for the wait4 syscall
 
@@ -107,6 +108,7 @@ RSIM_Linux64::init() {
     SC_REG(95,  umask,                          default);
     SC_REG(96,  gettimeofday,                   gettimeofday);
     SC_REG(97,  getrlimit,                      getrlimit);
+    SC_REG(99,  sysinfo,                        sysinfo);
     SC_REG(102, getuid,                         default);
     SC_REG(104, getgid,                         default);
     SC_REG(107, geteuid,                        default);
@@ -917,6 +919,37 @@ RSIM_Linux64::syscall_stat_body(RSIM_Thread *t, int callno)
 void
 RSIM_Linux64::syscall_stat_leave(RSIM_Thread *t, int callno) {
     t->syscall_leave().ret().arg(1).P(sizeof(kernel_stat_64), print_kernel_stat_64);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+RSIM_Linux64::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
+{
+    t->syscall_enter("sysinfo").p();
+}
+
+void
+RSIM_Linux64::syscall_sysinfo_body(RSIM_Thread *t, int callno)
+{
+    sysinfo_native hostBuf;
+    int result  = syscall(SYS_sysinfo, &hostBuf);
+
+    if (-1==result) {
+        t->syscall_return(-errno);
+    } else {
+        sysinfo_64 guestBuf(hostBuf);
+        if (sizeof guestBuf != t->get_process()->mem_write(&guestBuf, t->syscall_arg(0), sizeof guestBuf)) {
+            t->syscall_return(-EFAULT);
+        } else {
+            t->syscall_return(result);
+        }
+    }
+}
+
+void
+RSIM_Linux64::syscall_sysinfo_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().ret().P(sizeof(sysinfo_64), print_sysinfo_64);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -9,8 +9,9 @@
 #include <boost/regex.hpp>
 #include <errno.h>
 #include <sys/mman.h>
-#include <sys/user.h>
+#include <sys/syscall.h>                                // SYS_xxx definitions
 #include <sys/types.h>
+#include <sys/user.h>
 
 using namespace rose::BinaryAnalysis;
 using namespace rose::Diagnostics;

@@ -119,7 +119,7 @@ RSIM_Linux32::init()
     SC_REG(100, fstatfs,                        fstatfs);
     SC_REG(102, socketcall,                     socketcall);
     SC_REG(114, wait4,                          wait4);
-    SC_REG(116, sysinfo,                        default);               // FIXME: probably needs an explicit leave
+    SC_REG(116, sysinfo,                        sysinfo);
     SC_REG(117, ipc,                            ipc);
     SC_REG(118, fsync,                          default);
     SC_REG(119, sigreturn,                      sigreturn);
@@ -1770,73 +1770,24 @@ RSIM_Linux32::syscall_sysinfo_enter(RSIM_Thread *t, int callno)
 void
 RSIM_Linux32::syscall_sysinfo_body(RSIM_Thread *t, int callno)
 {
-    static const size_t guest_extra = 20 - 2*sizeof(uint32_t) - sizeof(int32_t);
-    static const size_t host_extra  = 20 - 2*sizeof(long)     - sizeof(int);
-
-    struct guest_sysinfo {      /* Sysinfo to be written into the specimen's memory */
-        int32_t uptime;         /* Seconds since boot */
-        uint32_t loads[3];      /* 1, 5, and 15 minute load averages */
-        uint32_t totalram;      /* Total usable main memory size */
-        uint32_t freeram;       /* Available memory size */
-        uint32_t sharedram;     /* Amount of shared memory */
-        uint32_t bufferram;     /* Memory used by buffers */
-        uint32_t totalswap;     /* Total swap space size */
-        uint32_t freeswap;      /* swap space still available */
-        uint16_t procs;         /* Number of current processes */
-        uint16_t pad;           /* explicit padding for m68k */
-        uint32_t totalhigh;     /* Total high memory size */
-        uint32_t freehigh;      /* Available high memory size */
-        uint32_t mem_unit;      /* Memory unit size in bytes */
-        char _f[guest_extra];   /* Padding for libc5 */
-    } __attribute__((__packed__));
-
-    struct host_sysinfo {
-        long uptime;
-        unsigned long loads[3];
-        unsigned long totalram;
-        unsigned long freeram;
-        unsigned long sharedram;
-        unsigned long bufferram;
-        unsigned long totalswap;
-        unsigned long freeswap;
-        unsigned short procs;
-        unsigned short pad;      
-        unsigned long totalhigh;
-        unsigned long freehigh;
-        unsigned int mem_unit;
-        char _f[host_extra];
-    };
-
-    host_sysinfo host_sys;
-    int result  = syscall(SYS_sysinfo, &host_sys);
+    sysinfo_native hostBuf;
+    int result  = syscall(SYS_sysinfo, &hostBuf);
 
     if (-1==result) {
         t->syscall_return(-errno);
     } else {
-        guest_sysinfo guest_sys;
-        guest_sys.uptime = host_sys.uptime;
-        for(int i = 0 ; i < 3 ; i++)
-            guest_sys.loads[i] = host_sys.loads[i];
-        guest_sys.totalram      = host_sys.totalram;
-        guest_sys.freeram       = host_sys.freeram;
-        guest_sys.sharedram     = host_sys.sharedram;
-        guest_sys.bufferram     = host_sys.bufferram;
-        guest_sys.totalswap     = host_sys.totalswap;
-        guest_sys.freeswap      = host_sys.freeswap;
-        guest_sys.procs         = host_sys.procs;
-        guest_sys.pad           = host_sys.pad;
-        guest_sys.totalhigh     = host_sys.totalhigh;
-        guest_sys.mem_unit      = host_sys.mem_unit;
-        memset(guest_sys._f, 0, sizeof(guest_sys._f));
-        memcpy(guest_sys._f, host_sys._f, std::min(guest_extra, host_extra));
-
-        size_t nwritten = t->get_process()->mem_write(&guest_sys, t->syscall_arg(0), sizeof(guest_sys));
-        if (nwritten!=sizeof(guest_sys)) {
+        sysinfo_32 guestBuf(hostBuf);
+        if (sizeof guestBuf != t->get_process()->mem_write(&guestBuf, t->syscall_arg(0), sizeof guestBuf)) {
             t->syscall_return(-EFAULT);
         } else {
             t->syscall_return(result);
         }
     }
+}
+
+void
+RSIM_Linux32::syscall_sysinfo_leave(RSIM_Thread *t, int callno) {
+    t->syscall_leave().ret().P(sizeof(sysinfo_32), print_sysinfo_32);
 }
 
 /*******************************************************************************************************************************/

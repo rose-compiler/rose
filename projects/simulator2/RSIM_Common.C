@@ -789,6 +789,44 @@ print_sockaddr(Sawyer::Message::Stream &m, const uint8_t *addr, size_t addrlen) 
     }
 }
 
+void
+print_sysinfo_32(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    ASSERT_require(sizeof(sysinfo_32)==sz);
+    const sysinfo_32 *v = (const sysinfo_32*)_v;
+    m <<"uptime=" <<v->uptime
+      <<", loads=[" <<v->loads[0] <<", " <<v->loads[1] <<", " <<v->loads[2] <<"]"
+      <<", totalram=" <<v->totalram
+      <<", freeram=" <<v->freeram
+      <<", sharedram=" <<v->sharedram
+      <<", bufferram=" <<v->bufferram
+      <<", totalswap=" <<v->totalswap
+      <<", freeswap=" <<v->freeswap
+      <<", procs=" <<v->procs
+      <<", totalhigh=" <<v->totalhigh
+      <<", freehigh=" <<v->freehigh
+      <<", mem_unit=" <<v->mem_unit;
+}
+
+void
+print_sysinfo_64(Sawyer::Message::Stream &m, const uint8_t *_v, size_t sz) {
+    ASSERT_require(sizeof(sysinfo_64)==sz);
+    const sysinfo_64 *v = (const sysinfo_64*)_v;
+    m <<"uptime=" <<v->uptime
+      <<", loads=[" <<v->loads[0] <<", " <<v->loads[1] <<", " <<v->loads[2] <<"]"
+      <<", totalram=" <<v->totalram
+      <<", freeram=" <<v->freeram
+      <<", sharedram=" <<v->sharedram
+      <<", bufferram=" <<v->bufferram
+      <<", totalswap=" <<v->totalswap
+      <<", freeswap=" <<v->freeswap
+      <<", procs=" <<v->procs
+      <<", totalhigh=" <<v->totalhigh
+      <<", freehigh=" <<v->freehigh
+      <<", mem_unit=" <<v->mem_unit;
+}
+
+
+
 
 #endif /* ROSE_ENABLE_SIMULATOR */
 
