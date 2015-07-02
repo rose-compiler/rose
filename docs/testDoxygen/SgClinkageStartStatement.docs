@@ -4,7 +4,7 @@
 
 /*!
 \class SgClinkageStartStatement
-\brief This class represents the concept of a C style "extern \"C\" " declaration.  But
+\brief This class represents the concept of a C style <code>extern "C"</code> declaration.  But
     such information (linkage) is stored within linkage modifiers currently.
 
     This class is no longer used, see SgLinkageModifier for more details on 
