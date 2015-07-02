@@ -129,6 +129,15 @@ SgExpression * KernelDesc::createFieldInitializer(
     { // kernel_func_ptr kernel_ptr;
       MFB::Sage<SgVariableDeclaration>::object_desc_t var_decl_desc(kernel->kernel_name, Runtime::tilek_host_api.kernel_func_ptr_type, NULL, NULL, file_id, false, true);
       MFB::Sage<SgVariableDeclaration>::build_result_t var_decl_res = static_initializer.getDriver().build<SgVariableDeclaration>(var_decl_desc);
+      assert(var_decl_res.symbol != NULL);
+
+      assert(var_decl_res.symbol->get_declaration() != NULL);
+//    var_decl_res.symbol->get_declaration()->get_storageModifier().setExtern();
+      assert(var_decl_res.symbol->get_declaration()->get_parent() != NULL);
+
+      SgDeclarationStatement * decl_stmt = isSgDeclarationStatement(var_decl_res.symbol->get_declaration()->get_parent());
+      decl_stmt->get_declarationModifier().unsetDefault();
+      decl_stmt->get_declarationModifier().get_storageModifier().setExtern();
 
       return SageBuilder::buildAddressOfOp(SageBuilder::buildVarRefExp(var_decl_res.symbol));
     }

@@ -237,6 +237,47 @@ int main(int argc, char ** argv) {
 
     LoopTrees * loop_tree = new LoopTrees();
       loop_trees.insert(std::pair<DLX::Directives::directive_t<DLX::TileK::language_t> *, LoopTrees *>(directive, loop_tree));
+
+    std::vector<DLX::Directives::generic_clause_t<DLX::TileK::language_t> *>::const_iterator it_clause;
+//  std::cerr << directive->clause_list.size() << " clauses." << std::endl;
+    for (it_clause = directive->clause_list.begin(); it_clause != directive->clause_list.end(); it_clause++) {
+      DLX::Directives::generic_clause_t<DLX::TileK::language_t> * clause = *it_clause;
+      if (clause->kind != DLX::TileK::language_t::e_clause_data) continue;
+      DLX::Directives::clause_t<DLX::TileK::language_t, DLX::TileK::language_t::e_clause_data> * data_clause = 
+                   (DLX::Directives::clause_t<DLX::TileK::language_t, DLX::TileK::language_t::e_clause_data> *)clause;
+
+//    std::cerr << "Data clause: " << std::endl;
+
+      std::vector<DLX::Frontend::data_sections_t>::const_iterator it_data_sections;
+      for (it_data_sections = data_clause->parameters.data_sections.begin(); it_data_sections != data_clause->parameters.data_sections.end(); it_data_sections++) {
+        SgVariableSymbol * data_sym = it_data_sections->first;
+
+//      std::cerr << "-> Data: " << data_sym->get_name().getString() << std::endl;
+
+        SgType * base_type = data_sym->get_type();
+        std::vector<DLX::Frontend::section_t>::const_iterator it_section;
+        for (it_section = it_data_sections->second.begin(); it_section != it_data_sections->second.end(); it_section++) {
+          SgPointerType * ptr_type = isSgPointerType(base_type);
+          SgArrayType * arr_type = isSgArrayType(base_type);
+          if (ptr_type != NULL)
+            base_type = ptr_type->get_base_type();
+          else if (arr_type != NULL)
+            base_type = arr_type->get_base_type();
+          else assert(false);
+          assert(base_type != NULL);
+        }
+        KLT::Data<Annotation> * data = new KLT::Data<Annotation>(data_sym, base_type);
+        for (it_section = it_data_sections->second.begin(); it_section != it_data_sections->second.end(); it_section++) {
+          KLT::Data<Annotation>::section_t section;
+            section.lower_bound = it_section->lower_bound;
+            section.size = it_section->size;
+            section.stride = it_section->stride;
+          data->addSection(section);
+        }
+        loop_tree->addData(data);
+      }
+    }
+
     std::vector<SgVariableSymbol *> iterators;
     std::vector<SgVariableSymbol *> locals;
     std::vector<SgVariableSymbol *> others;
@@ -264,10 +305,15 @@ int main(int argc, char ** argv) {
     for (it_data = datas_.begin(); it_data != datas_.end(); it_data++)
       datas.push_back((*it_data)->getVariableSymbol());
 
+//  std::cerr << datas.size() << " data." << std::endl;
+
     std::vector<SgVariableSymbol *>::const_iterator it_other;
     for (it_other = others.begin(); it_other != others.end(); it_other++)
       if (std::find(params.begin(), params.end(), *it_other) == params.end() && std::find(datas.begin(), datas.end(), *it_other) == datas.end()) {
-        SgType * data_type = (*it_other)->get_type();
+//      std::cerr << "-> Data: " << (*it_other)->get_name().getString() << std::endl;
+
+        assert(false); // TODO No scalar in TileK...
+/*      SgType * data_type = (*it_other)->get_type();
         std::vector<KLT::Data<Annotation>::section_t> sections;
         while (isSgPointerType(data_type)) {
           sections.push_back(KLT::Data<Annotation>::section_t{0,0,0});
@@ -278,8 +324,8 @@ int main(int argc, char ** argv) {
         for (it_section = sections.begin(); it_section != sections.end(); it_section++)
           data->addSection(*it_section);
         loop_tree->addData(data);
-        
-//      loop_tree->addScalar(*it_other); // Neither iterators or parameters or data
+*/
+        loop_tree->addScalar(*it_other); // Neither iterators or parameters or data
       }
 
 //  loop_tree->toText(std::cout);
@@ -348,6 +394,9 @@ int main(int argc, char ** argv) {
     assert(directive->construct->kind == DLX::TileK::language_t::e_construct_kernel);
     DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> * construct =
                  (DLX::Directives::construct_t<DLX::TileK::language_t, DLX::TileK::language_t::e_construct_kernel> *)(directive->construct);
+
+    assert(construct->assoc_nodes.kernel_region->get_scope() != NULL);
+    Runtime::useSymbolsHost(driver, driver.getFileID(construct->assoc_nodes.kernel_region->get_scope()));
 
     // Replace kernel region by empty basic block
     SgBasicBlock * bb = SageBuilder::buildBasicBlock();

@@ -644,7 +644,12 @@ CODETHORN_TESTS= \
     tests/rers/Problem28_opt.C \
     tests/rers/Problem901-solutions.csv \
     tests/rers/Problem901-solutions.ltl.csv \
-    tests/rers/Problem901.c
+    tests/rers/Problem901.c \
+    tests/gototest1.C \
+    tests/gototest2.C \
+    tests/gototest3.C \
+    tests/switchtest1.C
+
 
 # MS: does not exist
 #    tests/test.ltl \

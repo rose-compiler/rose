@@ -200,11 +200,34 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     node=*stmtPtrList.begin();
     return labeler->getLabel(node);
   }
+  case V_SgGotoStatement: {
+    return labeler->getLabel(node);
+  }
+  case V_SgSwitchStatement: {
+    node=SgNodeHelper::getCond(node);
+    ROSE_ASSERT(node);
+    return labeler->getLabel(node);
+  }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl; exit(1);
+    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::initialLabel: "<<node->sage_class_name()<<endl;
+    exit(1);
   }
 }
- 
+
+SgStatement* CFAnalysis::getCaseOrDefaultBodyStmt(SgNode* node) {
+  SgStatement* body=0;
+  if(SgCaseOptionStmt* stmt=isSgCaseOptionStmt(node)) {
+    body=stmt->get_body();
+  } else if(SgDefaultOptionStmt* stmt=isSgDefaultOptionStmt(node)) {
+    body=stmt->get_body(); 
+  } else {
+    cerr<<"Error: requesting body of switch case or default, but node is not a default or option stmt."<<endl;
+    exit(1);
+  }
+  ROSE_ASSERT(body);
+  return body;
+} 
+
 LabelSet CFAnalysis::finalLabels(SgNode* node) {
   assert(node);
   assert(labeler->isLabelRelevantNode(node));
@@ -244,13 +267,14 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgLabelStatement:
   case V_SgInitializedName:
   case V_SgVariableDeclaration:
-      finalSet.insert(labeler->getLabel(node));
-      return finalSet;
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt:
+    finalSet.insert(labeler->getLabel(node));
+    return finalSet;
   case V_SgExprStatement: {
     finalSet.insert(labeler->getLabel(node));
     return finalSet;
   }
-
   case V_SgIfStmt: {
     SgNode* nodeTB=SgNodeHelper::getTrueBranch(node);
     LabelSet finalSetTB=finalLabels(nodeTB);
@@ -290,10 +314,43 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   case V_SgFunctionCallExp:
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
-
+  case V_SgGotoStatement: {
+    // for the goto statement (as special case) the final set is empty. This allows all other functions
+    // operate correctly even in the presence of gotos. The edge for 'goto label' is created as part
+    // of the semantics of goto (and does not *require* the final labels).
+    return finalSet;
+  }
+  case V_SgSwitchStatement: {
+    // 1) add all break statements, 2) add final label of last stmt (emulating a break)
+    set<SgNode*> breakNodes=SgNodeHelper::LoopRelevantBreakStmtNodes(node);
+    LabelSet lset=labeler->getLabelSet(breakNodes);
+    finalSet+=lset;
+    //cout << finalSet.toString() << endl;
+    // very last case in switch (not necessarily default), if it does not contain a break has still a final label.
+    // if it is a break it will still be the last label. If it is a goto it will not have a final label (which is correct).
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
+    SgStatement* body=switchStmt->get_body();
+    SgBasicBlock* block=isSgBasicBlock(body);
+    if(!block) {
+      cerr<<"Error: CFAnalysis::finalLabels: body of switch is not a basic block. Unknown structure."<<endl;
+      exit(1);
+    }
+    const SgStatementPtrList& stmtList=block->get_statements();
+    // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
+    if(stmtList.size()>0) {
+      SgNode* lastStmt=stmtList.back();
+      SgStatement* lastStmt2=getCaseOrDefaultBodyStmt(lastStmt);
+      LabelSet lsetLastStmt=finalLabels(lastStmt2);
+      finalSet+=lsetLastStmt;
+    } else {
+      cerr<<"Error: CFAnalysis::finalLabels: body of switch is empty."<<endl;
+      exit(1);
+    }
+    return finalSet;
+  }
   default:
-    cerr << "Error: Unknown node in CodeThorn::CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
-   }
+    cerr << "Error: Unknown node in CFAnalysis::finalLabels: "<<node->sage_class_name()<<endl; exit(1);
+  }
 }
 
 
@@ -651,6 +708,8 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
   case V_SgExprStatement:
+  case V_SgDefaultOptionStmt:
+  case V_SgCaseOptionStmt:
     return edgeSet;
   case V_SgIfStmt: {
     SgNode* nodeC=SgNodeHelper::getCond(node);
@@ -667,6 +726,60 @@ Flow CFAnalysis::flow(SgNode* node) {
       edgeFB.addType(EDGE_FORWARD);
       edgeSet.insert(edgeFB);
       edgeSet+=flowFB;
+    }
+    return edgeSet;
+  }
+  case V_SgGotoStatement: {
+    SgGotoStatement* gotoStmt=isSgGotoStatement(node);
+    SgLabelStatement* targetSgLabelStmt=gotoStmt->get_label();
+    ROSE_ASSERT(targetSgLabelStmt);
+    // note that the target label is not an element of the finalLabels set.
+    Label targetLabel=labeler->getLabel(targetSgLabelStmt);
+    edgeSet.insert(Edge(initialLabel(node),EDGE_FORWARD,targetLabel));
+    return edgeSet;
+  }
+  case V_SgSwitchStatement: {
+    SgNode* nodeC=SgNodeHelper::getCond(node);
+    Label condLabel=getLabel(nodeC);
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(node);
+    SgStatement* body=switchStmt->get_body();
+    SgBasicBlock* block=isSgBasicBlock(body);
+    if(!block) {
+      cerr<<"Error: CFAnalysis::flow: body of switch is not a basic block. Unknown structure."<<endl;
+      exit(1);
+    }
+    SgStatementPtrList& stmtList=block->get_statements();
+    ROSE_ASSERT(stmtList.size()>0);
+    SgStatement* prevCaseStmtBody=0;
+    for(SgStatementPtrList::iterator i=stmtList.begin();
+        i!=stmtList.end();
+        ++i) {
+      // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
+      //SgDefaultOptionStmt
+      if(isSgCaseOptionStmt(*i)||isSgDefaultOptionStmt(*i)) {
+        Label stmtLab=labeler->getLabel(*i);
+        SgStatement* body=getCaseOrDefaultBodyStmt(*i);
+        ROSE_ASSERT(body);
+        edgeSet.insert(Edge(condLabel,EDGE_FORWARD,stmtLab));
+        edgeSet.insert(Edge(stmtLab,EDGE_FORWARD,initialLabel(body)));
+        Flow flowStmt=flow(body);
+        edgeSet+=flowStmt;
+        {
+          // create edges from other case stmts to the next case that have no break at the end.
+          if(prevCaseStmtBody) {
+            LabelSet finalBodyLabels=finalLabels(prevCaseStmtBody);
+            for(LabelSet::iterator i=finalBodyLabels.begin();i!=finalBodyLabels.end();++i) {
+              if(!isSgBreakStmt(labeler->getNode(*i))) {
+                edgeSet.insert(Edge(*i,EDGE_FORWARD,stmtLab));
+              }
+            }
+          }
+        }
+        prevCaseStmtBody=body;
+      } else {
+        cerr<<"Error: control flow: stmt in switch is not a case or default stmt. Not supported yet."<<endl;
+        exit(1);
+      }
     }
     return edgeSet;
   }
@@ -768,6 +881,7 @@ Flow CFAnalysis::flow(SgNode* node) {
     }
     return edgeSet;
   }
+
   default:
     cerr << "Error: Unknown node in CFAnalysis::flow: "<<node->sage_class_name()<<endl; 
     cerr << "Problemnode: "<<node->unparseToString()<<endl;

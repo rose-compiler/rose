@@ -78,11 +78,23 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
   if(isSgReturnStmt(node)) {
     node=SgNodeHelper::getFirstChild(node);
   }
+  if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(node)) {
+    SgStatement* blockStmt=isSgBasicBlock(caseStmt->get_parent());
+    ROSE_ASSERT(blockStmt);
+    SgSwitchStatement* switchStmt=isSgSwitchStatement(blockStmt->get_parent());
+    ROSE_ASSERT(switchStmt);
+    SgStatement* condStmt=isSgStatement(SgNodeHelper::getCond(switchStmt));
+    ROSE_ASSERT(condStmt);
+    transferSwitchCase(lab,condStmt, caseStmt,element);
+    return;
+  }
   if(SgExpression* expr=isSgExpression(node)) {
     transferExpression(lab,expr,element);
+    return;
   }
   if(SgVariableDeclaration* vardecl=isSgVariableDeclaration(node)) {
     transferDeclaration(lab,vardecl,element);
+    return;
   }
   return;
 }
@@ -98,6 +110,9 @@ void DFTransferFunctions::transferDeclaration(Label label, SgVariableDeclaration
   // default identity function
 }
 
+void DFTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
+  // default identity function
+}
 
 void DFTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) {
   // default identity function

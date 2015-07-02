@@ -1,5 +1,5 @@
 
-void foo(int n, int m, float ** A, float b) {
+void kernel(int n, int m, float ** A, float b) {
   int i, j;
   #pragma tilek kernel data(A[0:n][0:n], b)
   {

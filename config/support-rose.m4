@@ -2064,6 +2064,7 @@ projects/TileK/lib/mdcg/tilek/Makefile
 projects/TileK/lib/tilek/Makefile
 projects/TileK/src/Makefile
 projects/TileK/examples/Makefile
+projects/TileK/tests/Makefile
 tests/Makefile
 tests/RunTests/Makefile
 tests/RunTests/A++Tests/Makefile
