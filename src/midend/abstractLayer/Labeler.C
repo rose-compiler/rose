@@ -131,16 +131,35 @@ string LabelProperty::toString() {
   //assert(_isValid);
   stringstream ss;
   ss<<_node<<":";
-  if(_node)
-    ss<<SgNodeHelper::nodeToString(_node)<<", ";
-  else
+  if(_node) {
+    ss<<_node->class_name()
+      <<":"
+      <<SgNodeHelper::nodeToString(_node)<<", ";
+  } else {
     ss<<"null, ";
+  }
   ss<<"var:"<<_variableId.toString()<<", ";
-  ss<<"labelType:"<<_labelType<<", ";
+  ss<<"labelType:"<<labelTypeToString(_labelType)<<", ";
   ss<<"ioType:"<<_ioType<<", ";
   ss<<"ltl:"<<isLTLRelevant()<<", ";
   ss<<"termination:"<<isTerminationRelevant();
   return ss.str();
+}
+
+string LabelProperty::labelTypeToString(LabelType lt) {
+  switch(lt) {
+  case LABEL_UNDEF: return "undef";
+  case LABEL_OTHER: return "other";
+  case LABEL_FUNCTIONCALL: return "functioncall";
+  case LABEL_FUNCTIONCALLRETURN: return "functioncallreturn";
+  case LABEL_FUNCTIONENTRY: return "functionentry";
+  case LABEL_FUNCTIONEXIT: return "functionexit";
+  case LABEL_BLOCKBEGIN: return "blockbegin";
+  case LABEL_BLOCKEND: return "blockend";
+  default:
+    cerr<<"Error: unknown label type."<<endl;
+    exit(1);
+  }
 }
 
 SgNode* LabelProperty::getNode() { if(!_isValid) cout<<"ERROR:"<<toString()<<endl; assert(_isValid); return _node;}
@@ -204,7 +223,6 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   case V_SgBreakStmt:
   case V_SgVariableDeclaration:
   case V_SgLabelStatement:
-  case V_SgFunctionDeclaration:
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgGotoStatement:
