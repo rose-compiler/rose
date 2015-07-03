@@ -14,6 +14,8 @@ clean-local:
 
 #########################################
 
+test_1-kernel.c: rose_test_1.c
+test_1-data.c: rose_test_1.c
 rose_test_1.c: $(srcdir)/test_1.c $(TILEK_BIN)/tilek
 	$(TILEK_BIN)/tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/test_1.c
 
@@ -34,6 +36,8 @@ check-test_1: test_1
 
 #########################################
 
+test_2-kernel.c: rose_test_2.c
+test_2-data.c: rose_test_2.c
 rose_test_2.c: $(srcdir)/test_2.c $(TILEK_BIN)/tilek
 	$(TILEK_BIN)/tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/test_2.c
 
@@ -54,6 +58,8 @@ check-test_2: test_2
 
 #########################################
 
+test_3-kernel.c: rose_test_3.c
+test_3-data.c: rose_test_3.c
 rose_test_3.c: $(srcdir)/test_3.c $(TILEK_BIN)/tilek
 	$(TILEK_BIN)/tilek -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/../include -c $(srcdir)/test_3.c
 
