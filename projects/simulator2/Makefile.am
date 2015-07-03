@@ -71,7 +71,7 @@ EXTRA_DIST += RSIM_Private.h
 noinst_PROGRAMS += x86sim
 x86sim_SOURCES = x86sim.C
 x86sim_CPPFLAGS = $(ROSE_INCLUDES)
-x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lreadline
+x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(LIBS_WITH_RPATH) $(ROSE_LIBS)
 
 # help debug the initial stack
 noinst_PROGRAMS += show-initial-stack
