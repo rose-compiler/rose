@@ -61,6 +61,8 @@ class LabelProperty {
                     LABEL_FUNCTIONENTRY, LABEL_FUNCTIONEXIT,
                     LABEL_BLOCKBEGIN, LABEL_BLOCKEND
    };
+   std::string labelTypeToString(LabelType lt);
+
    LabelProperty();
    LabelProperty(SgNode* node);
    LabelProperty(SgNode* node, LabelType labelType);
@@ -74,7 +76,6 @@ class LabelProperty {
    bool isFunctionExitLabel();
    bool isBlockBeginLabel();
    bool isBlockEndLabel();
-
  public:
    void initializeIO(VariableIdMapping* variableIdMapping);
 
