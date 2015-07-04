@@ -177,7 +177,7 @@ DFAnalysisBase::initialize(SgProject* root, bool variableIdForEachArrayElement/*
   cout << "INIT: Optimizing CFGs for label-out-info solver 1."<<endl;
   {
     size_t numDeletedEdges=_cfanalyzer->deleteFunctionCallLocalEdges(_flow);
-    int numReducedNodes=_cfanalyzer->reduceBlockBeginNodes(_flow);
+    int numReducedNodes=0; //_cfanalyzer->reduceBlockBeginNodes(_flow);
     cout << "INIT: Optimization finished (educed nodes: "<<numReducedNodes<<" deleted edges: "<<numDeletedEdges<<")"<<endl;
   }
 

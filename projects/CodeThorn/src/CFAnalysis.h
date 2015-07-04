@@ -43,8 +43,11 @@ class CFAnalysis {
   void intraInterFlow(Flow&, InterFlow&);
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
+  // deprecated (eliminates block begin and block end nodes)
   int reduceBlockBeginNodes(Flow& flow);
+  int reduceBlockBeginEndNodes(Flow& flow);
   int reduceEmptyConditionNodes(Flow& flow);
+  int optimizeFlow(Flow& flow);
 
   /*! 
    * This function performs inlining on the ICFG by reducing

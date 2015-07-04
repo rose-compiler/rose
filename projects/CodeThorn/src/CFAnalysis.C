@@ -186,7 +186,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     node=SgNodeHelper::getLoopBody(node);
     return labeler->getLabel(node);
   case V_SgBasicBlock:
-   return labeler->getLabel(node);
+   return labeler->blockBeginLabel(node);
    // TODO: for(emptyInitList;S;S) {}
   case V_SgForStatement: {
     SgStatementPtrList& stmtPtrList=SgNodeHelper::getForInitList(node);
@@ -252,8 +252,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
   switch (node->variantT()) {
   // function declarations inside basic block
   case V_SgFunctionDeclaration:
-      finalSet.insert(labeler->getLabel(node));
-      return finalSet;
+    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
+    exit(1);
+    //finalSet.insert(labeler->getLabel(node));
+    //return finalSet;
   case V_SgFunctionDefinition: {
     SgBasicBlock* body=isSgFunctionDefinition(node)->get_body();
     return finalLabels(body);
@@ -301,6 +303,10 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   case V_SgBasicBlock: {
+#if 1
+    finalSet.insert(labeler->blockEndLabel(node));
+    return finalSet;
+#else
     if(SgNodeHelper::numChildren(node)>0) {
       SgNode* lastNode=SgNodeHelper::getLastOfBlock(node);
       LabelSet s=finalLabels(lastNode);
@@ -310,6 +316,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
       finalSet.insert(initialLabel(node));
     }
     return finalSet;
+#endif
   }
   case V_SgFunctionCallExp:
     finalSet.insert(labeler->functionCallReturnLabel(node));
@@ -436,34 +443,54 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
    *   remove(b,n2)
    *   insert(n1,n2)
    */
-  if(inFlow.size()==0 && outFlow.size()==0)
+  if(inFlow.size()==0 && outFlow.size()==0) {
     return 0;
-
-  if(inFlow.size()==0 || outFlow.size()==0) {
-    Flow edges=inFlow+outFlow;
-    flow.deleteEdges(edges);
+  } else if(inFlow.size()>0 && outFlow.size()>0) {
+    for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+      for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+        Edge e1=*initer;
+        Edge e2=*outiter;
+        Edge newEdge=Edge(e1.source,e1.types(),e2.target);
+        flow.erase(e1);
+        flow.erase(e2);
+        flow.insert(newEdge);
+      }
+      return 1;
+    }
+  } else if(inFlow.size()>0) {
+    for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
+      Edge e1=*initer;
+      flow.erase(e1);
+    }
+    return 1;
+  } else if(outFlow.size()>0) {
+    for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
+      Edge e2=*outiter;
+      flow.erase(e2);
+    }
     return 1;
   }
+  return 0;
+}
 
-  for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
-    for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
-      Edge e1=*initer;
-      Edge e2=*outiter;
-      Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-      flow.erase(e1);
-      flow.erase(e2);
-      flow.insert(newEdge);
-    }
-  }
-  return 1;
+int CFAnalysis::optimizeFlow(Flow& flow) {
+  int n=0;
+  n+=reduceEmptyConditionNodes(flow);
+  n+=reduceBlockBeginEndNodes(flow);
+  return n;
+}
+
+int CFAnalysis::reduceBlockBeginEndNodes(Flow& flow) {
+  return reduceBlockBeginNodes(flow);
 }
 
 int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-    //cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
-    if(isSgBasicBlock(getNode(*i))) {
+    cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
+    //    if(isSgBasicBlock(getNode(*i))) {
+    if(labeler->isBlockBeginLabel(*i)||labeler->isBlockEndLabel(*i)) {
 #if 1
       cnt+=reduceNode(flow,*i);
 #else
@@ -674,7 +701,11 @@ Flow CFAnalysis::flow(SgNode* node) {
        this edge is identical if we have some other branches. Because we maintain the edges as an edge-set
        this operation is always OK.
      */
+#if 0
     LabelSet funFinalLabels=finalLabels(node);
+#else
+    LabelSet funFinalLabels=finalLabels(body);
+#endif
     for(LabelSet::iterator i=funFinalLabels.begin();i!=funFinalLabels.end();++i) {
       Edge explicitEdge=Edge(*i,EDGE_FORWARD,labeler->functionExitLabel(node));
       if(SgNodeHelper::isLoopCond(labeler->getNode(*i))) {
@@ -790,6 +821,8 @@ Flow CFAnalysis::flow(SgNode* node) {
   case V_SgBasicBlock: {
     size_t len=node->get_numberOfTraversalSuccessors();
     if(len==0) {
+      Edge edge=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,labeler->blockEndLabel(node));
+      edgeSet.insert(edge);
       return edgeSet;
     } else {
       if(len==1) {
@@ -806,8 +839,16 @@ Flow CFAnalysis::flow(SgNode* node) {
       }
     }
     SgNode* firstStmt=node->get_traversalSuccessorByIndex(0);
-    Edge edge=Edge(getLabel(node),EDGE_FORWARD,initialLabel(firstStmt));
-    edgeSet.insert(edge);
+    Edge edge1=Edge(labeler->blockBeginLabel(node),EDGE_FORWARD,initialLabel(firstStmt));
+    edgeSet.insert(edge1);
+    ROSE_ASSERT(len>=1);
+    SgNode* lastStmt=node->get_traversalSuccessorByIndex(len-1);
+    ROSE_ASSERT(isSgStatement(lastStmt));
+    LabelSet lastStmtFinalLabels=finalLabels(lastStmt);
+    for(LabelSet::iterator i=lastStmtFinalLabels.begin();i!=lastStmtFinalLabels.end();++i) {
+      Edge edge2=Edge(*i,EDGE_FORWARD,labeler->blockEndLabel(node));
+      edgeSet.insert(edge2);
+    }
     return edgeSet;
   }
 
