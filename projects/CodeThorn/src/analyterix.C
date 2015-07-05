@@ -437,7 +437,6 @@ int main(int argc, char* argv[]) {
   if(args.count("icfg-dot")) {
     CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
     Flow flow=cfAnalysis->flow(root);
-    cout<<"OPTION:"<<option_optimize_icfg<<endl;
     if(option_optimize_icfg) {
       cfAnalysis->optimizeFlow(flow);
     }

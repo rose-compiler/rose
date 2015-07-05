@@ -163,6 +163,8 @@ Label CFAnalysis::initialLabel(SgNode* node) {
   assert(labeler->isLabelRelevantNode(node));
   switch (node->variantT()) {
   case V_SgFunctionDeclaration:
+    cerr<<"Error: icfg construction: function declarations are not associated with a label."<<endl;
+    exit(1);
   case V_SgNullStatement:
   case V_SgPragmaDeclaration:
   case V_SgLabelStatement:
@@ -303,7 +305,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   case V_SgBasicBlock: {
-#if 1
+#if 0
     finalSet.insert(labeler->blockEndLabel(node));
     return finalSet;
 #else
@@ -436,6 +438,29 @@ int CFAnalysis::reduceEmptyConditionNodes(Flow& flow) {
 int CFAnalysis::reduceNode(Flow& flow, Label lab) {
   Flow inFlow=flow.inEdges(lab);
   Flow outFlow=flow.outEdges(lab);
+  EdgeTypeSet unionEdgeTypeSets;
+  for(Flow::iterator i=inFlow.begin();i!=inFlow.end();++i) {
+    EdgeTypeSet edgeTypeSet=(*i).types();
+    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
+  }
+  for(Flow::iterator i=outFlow.begin();i!=outFlow.end();++i) {
+    EdgeTypeSet edgeTypeSet=(*i).types();
+    unionEdgeTypeSets.insert(edgeTypeSet.begin(),edgeTypeSet.end());
+  }
+  // edge type cleanup
+  // if true and false edge exist, remove both (merging true and false branches to a single branch)
+  // if forward and backward exist, remove backward (we are removing a cycle)
+  if(unionEdgeTypeSets.find(EDGE_TRUE)!=unionEdgeTypeSets.end()
+     && unionEdgeTypeSets.find(EDGE_FALSE)!=unionEdgeTypeSets.end()) {
+    unionEdgeTypeSets.erase(EDGE_TRUE);
+    unionEdgeTypeSets.erase(EDGE_FALSE);
+  }
+  if(unionEdgeTypeSets.find(EDGE_FORWARD)!=unionEdgeTypeSets.end()
+     && unionEdgeTypeSets.find(EDGE_BACKWARD)!=unionEdgeTypeSets.end()) {
+    unionEdgeTypeSets.erase(EDGE_FORWARD);
+    unionEdgeTypeSets.erase(EDGE_BACKWARD);
+  }
+  
   /* description of essential operations:
    *   inedges: (n_i,b)
    *   outedge: (b,n2) 
@@ -450,7 +475,8 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
       for(Flow::iterator outiter=outFlow.begin();outiter!=outFlow.end();++outiter) {
         Edge e1=*initer;
         Edge e2=*outiter;
-        Edge newEdge=Edge(e1.source,e1.types(),e2.target);
+        // preserve edge annotations of ingoing and outgoing edges
+        Edge newEdge=Edge(e1.source,unionEdgeTypeSets,e2.target);
         flow.erase(e1);
         flow.erase(e2);
         flow.insert(newEdge);
@@ -475,48 +501,33 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
 
 int CFAnalysis::optimizeFlow(Flow& flow) {
   int n=0;
-  n+=reduceEmptyConditionNodes(flow);
   n+=reduceBlockBeginEndNodes(flow);
+  n+=reduceEmptyConditionNodes(flow);
   return n;
 }
 
 int CFAnalysis::reduceBlockBeginEndNodes(Flow& flow) {
-  return reduceBlockBeginNodes(flow);
+  int cnt=0;
+  cnt+=reduceBlockBeginNodes(flow);
+  cnt+=reduceBlockEndNodes(flow);
 }
 
 int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   LabelSet labs=flow.nodeLabels();
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
-    cout<<"Checking label: "<<(*i)<<" node: "<<getNode(*i)<<" code:"<<getNode(*i)->unparseToString()<<endl;
-    //    if(isSgBasicBlock(getNode(*i))) {
     if(labeler->isBlockBeginLabel(*i)||labeler->isBlockEndLabel(*i)) {
-#if 1
       cnt+=reduceNode(flow,*i);
-#else
-      cnt++;
-      Flow inFlow=flow.inEdges(*i);
-      Flow outFlow=flow.outEdges(*i);
-
-      // multiple out-edges not supported yet
-      assert(outFlow.size()<=1); 
-
-      /* description of essential operations:
-       *   inedges: (n_i,b)
-       *   outedge: (b,n2) 
-       *   remove(n_i,b)
-       *   remove(b,n2)
-       *   insert(n1,n2)
-       */
-      for(Flow::iterator initer=inFlow.begin();initer!=inFlow.end();++initer) {
-        Edge e1=*initer;
-        Edge e2=*outFlow.begin();
-        Edge newEdge=Edge(e1.source,e1.types(),e2.target);
-        flow.erase(e1);
-        flow.erase(e2);
-        flow.insert(newEdge);
-      }
-#endif
+    }
+  }
+  return cnt;
+}
+int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
+  LabelSet labs=flow.nodeLabels();
+  int cnt=0;
+  for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
+    if(labeler->isBlockEndLabel(*i)) {
+      cnt+=reduceNode(flow,*i);
     }
   }
   return cnt;

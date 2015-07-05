@@ -43,10 +43,18 @@ class CFAnalysis {
   void intraInterFlow(Flow&, InterFlow&);
   Flow controlDependenceGraph(Flow& controlFlow);
   int reduceNode(Flow& flow, Label lab);
-  // deprecated (eliminates block begin and block end nodes)
+  // eliminates only block begin nodes, but not block end nodes.
   int reduceBlockBeginNodes(Flow& flow);
+  // eliminates only block end nodes, but not block begin nodes.
+  int reduceBlockEndNodes(Flow& flow);
+  // eliminates block begin and block end nodes.
   int reduceBlockBeginEndNodes(Flow& flow);
+  /*
+    eliminates empty codition nodes. This requires that only one successor is left in the icfg.
+    this function can be applied after optimizations (e.g. empty blocks have been removed from the icfg).
+  */
   int reduceEmptyConditionNodes(Flow& flow);
+  // calls functions reduceBlockBeginEndNodes and reduceEmptyConditionNodes (in this order).
   int optimizeFlow(Flow& flow);
 
   /*! 
