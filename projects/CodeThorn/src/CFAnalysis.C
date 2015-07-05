@@ -799,12 +799,13 @@ Flow CFAnalysis::flow(SgNode* node) {
       // TODO: revisit this case: this should work for all stmts in the body, when break has its own label as final label.
       //SgDefaultOptionStmt
       if(isSgCaseOptionStmt(*i)||isSgDefaultOptionStmt(*i)) {
-        Label stmtLab=labeler->getLabel(*i);
-        SgStatement* body=getCaseOrDefaultBodyStmt(*i);
-        ROSE_ASSERT(body);
-        edgeSet.insert(Edge(condLabel,EDGE_FORWARD,stmtLab));
-        edgeSet.insert(Edge(stmtLab,EDGE_FORWARD,initialLabel(body)));
-        Flow flowStmt=flow(body);
+        Label caseStmtLab=labeler->getLabel(*i);
+        SgStatement* caseBody=getCaseOrDefaultBodyStmt(*i);
+        ROSE_ASSERT(caseBody);
+        Label caseBodyLab=labeler->getLabel(caseBody);
+        edgeSet.insert(Edge(condLabel,EDGE_FORWARD,caseStmtLab));
+        edgeSet.insert(Edge(caseStmtLab,EDGE_FORWARD,initialLabel(caseBody)));
+        Flow flowStmt=flow(caseBody);
         edgeSet+=flowStmt;
         {
           // create edges from other case stmts to the next case that have no break at the end.
@@ -812,12 +813,12 @@ Flow CFAnalysis::flow(SgNode* node) {
             LabelSet finalBodyLabels=finalLabels(prevCaseStmtBody);
             for(LabelSet::iterator i=finalBodyLabels.begin();i!=finalBodyLabels.end();++i) {
               if(!isSgBreakStmt(labeler->getNode(*i))) {
-                edgeSet.insert(Edge(*i,EDGE_FORWARD,stmtLab));
+                edgeSet.insert(Edge(*i,EDGE_FORWARD,caseBodyLab));
               }
             }
           }
         }
-        prevCaseStmtBody=body;
+        prevCaseStmtBody=caseBody;
       } else {
         cerr<<"Error: control flow: stmt in switch is not a case or default stmt. Not supported yet."<<endl;
         exit(1);
