@@ -5,9 +5,9 @@
 /*!
 \class SgExprStatement
 \brief This class represents the concept of a C or C++ statement which contains a
-    expression.
+expression.
 
-    Any expression can be used alone as statement in C and C++, the expression statment
+Any expression can be used alone as statement in C and C++, the expression statment
 provides a mechanism to wrap any SgExpression and make it a SgStaement for use
 anywhere a SgStatement might be required (e.g. in a list of SgStatement objects in a
 SgBasicBlock).
@@ -34,7 +34,7 @@ SgBasicBlock).
 \fn SgExprStatement::SgExprStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgExprStatement base class.
+This constructor builds the SgExprStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -47,14 +47,14 @@ SgBasicBlock).
 \fn SgExprStatement::~SgExprStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgExprStatement::isSgExprStatement (SgNode *s)
 \brief Cast function (from derived class to SgExprStatement pointer).
 
-   This functions returns a SgExprStatement pointer for any input of a 
+This functions returns a SgExprStatement pointer for any input of a 
 pointer to an object derived from a SgExprStatement.
 
 \return Returns valid pointer to SgExprStatement if input is derived from a SgLocatedNode.
@@ -64,7 +64,7 @@ pointer to an object derived from a SgExprStatement.
 \fn SgExprStatement::isSgExprStatement (const SgNode *s)
 \brief Cast function (from derived class to SgExprStatement pointer).
 
-   This functions returns a SgExprStatement pointer for any input of a 
+This functions returns a SgExprStatement pointer for any input of a 
 pointer to an object derived from a SgExprStatement.
 
 \return Returns valid pointer to SgExprStatement if input is derived from a SgLocatedNode.

@@ -7,7 +7,7 @@
 \brief This class represents the notion of an value (expression value).
 
 \internal This class will hold a string value so that the exact text for constants can be
-    help in the AST.
+help in the AST.
 
 \todo Add string to this class so that the exact value can be held in the AST.
 
@@ -33,7 +33,7 @@
 \fn SgDoubleVal::SgDoubleVal ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgDoubleVal base class.
+This constructor builds the SgDoubleVal base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -44,6 +44,6 @@
 \fn SgDoubleVal::~SgDoubleVal()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 

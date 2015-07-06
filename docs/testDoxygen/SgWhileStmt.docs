@@ -33,7 +33,7 @@
 /*! \var SgWhileStmt::p_else_body
 \brief This pointer to an SgStatement holds the body of the 'else' block.
 
-    This member is intended for use with Python, and should be NULL otherwise.
+This member is intended for use with Python, and should be NULL otherwise.
 
 */
 
@@ -44,7 +44,7 @@
 \fn SgWhileStmt::SgWhileStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgWhileStmt base class.
+This constructor builds the SgWhileStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -57,14 +57,14 @@
 \fn SgWhileStmt::~SgWhileStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgWhileStmt::isSgWhileStmt (SgNode *s)
 \brief Cast function (from derived class to SgWhileStmt pointer).
 
-   This functions returns a SgWhileStmt pointer for any input of a 
+This functions returns a SgWhileStmt pointer for any input of a 
 pointer to an object derived from a SgWhileStmt.
 
 \return Returns valid pointer to SgWhileStmt if input is derived from a SgLocatedNode.
@@ -74,7 +74,7 @@ pointer to an object derived from a SgWhileStmt.
 \fn SgWhileStmt::isSgWhileStmt (const SgNode *s)
 \brief Cast function (from derived class to SgWhileStmt pointer).
 
-   This functions returns a SgWhileStmt pointer for any input of a 
+This functions returns a SgWhileStmt pointer for any input of a 
 pointer to an object derived from a SgWhileStmt.
 
 \return Returns valid pointer to SgWhileStmt if input is derived from a SgLocatedNode.

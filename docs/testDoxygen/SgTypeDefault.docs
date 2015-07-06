@@ -17,9 +17,9 @@
    -# SgAggregateInitializer (returned by member function get_type())
    -# SgConstructorInitializer (returned by member function get_type())
    -# SgExpressionRoot (returned by member function get_type() if member function
-           get_operand() returns NULL valued pointer)
+      get_operand() returns NULL valued pointer)
    -# SgPointerDerefExp (returned by member function get_type(), if member function
-           get_operand() returns valid valued pointer or operands type is V_SgTypeDefault)
+      get_operand() returns valid valued pointer or operands type is V_SgTypeDefault)
    -# SgThrowOp (used by member function set_type())
 
 \sa
@@ -40,7 +40,7 @@
 \fn SgTypeDefault::SgTypeDefault()
 \brief This is the constructor.
 
-   This constructor builds the SgTypeDefault base class.
+This constructor builds the SgTypeDefault base class.
 
 \sa 
 \ref SgTypeDefault_create "Example:create an SgTypeDefault object"
@@ -50,14 +50,14 @@
 \fn SgTypeDefault::~SgTypeDefault()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgTypeDefault::isSgTypeDefault (SgNode *s)
 \brief Cast function (from derived class to SgTypeDefault pointer).
 
-   This functions returns a SgTypeDefault pointer for any input of a 
+This functions returns a SgTypeDefault pointer for any input of a 
 pointer to an object derived from a SgTypeDefault.
 
 \return Returns valid pointer to SgTypeDefault if input is derived from a SgLocatedNode.
@@ -67,7 +67,7 @@ pointer to an object derived from a SgTypeDefault.
 \fn SgTypeDefault::isSgTypeDefault (const SgNode *s)
 \brief Cast function (from derived class to SgTypeDefault pointer).
 
-   This functions returns a SgTypeDefault pointer for any input of a 
+This functions returns a SgTypeDefault pointer for any input of a 
 pointer to an object derived from a SgTypeDefault.
 
 \return Returns valid pointer to SgTypeDefault if input is derived from a SgTypeDefault node.

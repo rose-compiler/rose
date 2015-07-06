@@ -5,25 +5,25 @@
 /*!
 \class SgVariableSymbol
 \brief This class represents the concept of a variable name within the compiler (a
-    shared container for the declaration of a variable (SgInitializedName)).
+shared container for the declaration of a variable (SgInitializedName)).
 
-   Symbols are a simpler way for the compiler to quickly associate types,
+Symbols are a simpler way for the compiler to quickly associate types,
 declarations and names.  This symbol is specific to holding a variable name.
 
 \internal  Symbols are placed into scopes (more precisely into symbol tables held in 
-    each SgScopeStatement).  Most symbols are only in a single symbol table, but the
-    SgVariableSymbol can exist in two scopes if it is a static data member declared both
-    in its class (SgClassDefinition) and outside of the class (in global scope or a
-    namespace scope (SgGlobal or SgNamespaceDefinitionStatement)).
+each SgScopeStatement).  Most symbols are only in a single symbol table, but the
+SgVariableSymbol can exist in two scopes if it is a static data member declared both
+in its class (SgClassDefinition) and outside of the class (in global scope or a
+namespace scope (SgGlobal or SgNamespaceDefinitionStatement)).
 
 \todo Need to figure out if it is such a great idea of a single symbol to be in two scopes
-    or if it would be better to use two different symbols (since there are two different
-    SgInitializedName object built (the last one referencing the previous one through
-    the p_prev_decl_item pointer)).
+or if it would be better to use two different symbols (since there are two different
+SgInitializedName object built (the last one referencing the previous one through
+the p_prev_decl_item pointer)).
 
 \todo The get_type() function can return NULL when the get_definition() is NULL.  I think
-    we should have assertiosn to make sure that get_definition is a valid pointer and that
-    get_type() should not return NULL.
+we should have assertiosn to make sure that get_definition is a valid pointer and that
+get_type() should not return NULL.
 
 \sa \ref SgInitializedName
 
@@ -41,16 +41,16 @@ declarations and names.  This symbol is specific to holding a variable name.
 \brief This pointer is always valid and stores the first non-defining declaration 
 where the class was defined.  
 
-    It is important to note that this is the first non-defining declaration as 
+It is important to note that this is the first non-defining declaration as 
 opposed to the defining declaration.  Thus is it the first forward declaration for the
 named class or a non-defining version of the declaration if the named class is
 defined at the locations where it was declared.
 
 \internal The value held is sharable across many references where as the defining
-          declaration (not held by this variable) should have one unique reference
-          within the Sage III AST, except where reference though the declarations
-          definingDeclaration data member pointer.  See declarations for details
-          (SgDeclarationStatements).
+declaration (not held by this variable) should have one unique reference
+within the Sage III AST, except where reference though the declarations
+definingDeclaration data member pointer.  See declarations for details
+(SgDeclarationStatements).
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ defined at the locations where it was declared.
 \fn SgVariableSymbol::SgVariableSymbol( SgClassDeclaration* declaration = NULL )
 \brief This is the only constructor.
 
-   This constructor builds the SgVariableSymbol base class.
+This constructor builds the SgVariableSymbol base class.
 
 \sa 
 \ref SgVariableSymbol_create "Example:create an SgVariableSymbol object"
@@ -101,7 +101,7 @@ defined at the locations where it was declared.
 \fn SgVariableSymbol::isSgVariableSymbol (SgNode *s)
 \brief Cast function (from derived class to SgVariableSymbol pointer).
 
-   This functions returns a SgVariableSymbol pointer for any input of a 
+This functions returns a SgVariableSymbol pointer for any input of a 
 pointer to an object derived from a SgVariableSymbol.
 
 \return Returns valid pointer to SgVariableSymbol if input is derived from a SgVariableSymbol.
@@ -111,7 +111,7 @@ pointer to an object derived from a SgVariableSymbol.
 \fn SgVariableSymbol::isSgVariableSymbol (const SgNode *s)
 \brief Cast function (from derived class to SgVariableSymbol pointer).
 
-   This functions returns a SgVariableSymbol pointer for any input of a 
+This functions returns a SgVariableSymbol pointer for any input of a 
 pointer to an object derived from a SgVariableSymbol.
 
 \return Returns valid pointer to SgVariableSymbol if input is derived from a SgVariableSymbol.

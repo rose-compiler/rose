@@ -5,12 +5,12 @@
 /*!
 \class SgStatementExpression
 \brief This class represents the GNU extension "statement expression" (thus is
-    non-standard C and C++).
+non-standard C and C++).
 
 The statement expression is a GNU extension that is helpful in the implementation of
 macros and expressions.  In most cases an alternative construction of code is possible.
 More information is at: \n
-   http://developer.apple.com/documentation/developertools/gcc-4.0.1/gcc/Statement-Exprs.html \n
+http://developer.apple.com/documentation/developertools/gcc-4.0.1/gcc/Statement-Exprs.html \n
 In g++, the result value of a statement expression undergoes array and function pointer
 decay, and is returned by value to the enclosing expression. For instance, if A is a
 class, then: \n
@@ -20,7 +20,7 @@ that will be used to invoke Foo. Therefore the this pointer observed by Foo will
 the address of a.
 
 \internal This sort of expression can be useful and is important to at least one user so
-    it is implemented in ROSE. 
+it is implemented in ROSE. 
 
 \sa
 \ref SgStatementExpression_usage  "Example of using a SgStatementExpression object"
@@ -35,7 +35,7 @@ the address of a.
 \var SgStatementExpression::p_statement
 \brief This a pointer to the SgStatement (usually a SgBasicBlock).
 
-   This is the expression provided as an argument to the sizeof operator
+This is the expression provided as an argument to the sizeof operator
 (if it is an expression).
 
 */
@@ -44,7 +44,7 @@ the address of a.
 \var SgStatementExpression::p_operand_type
 \brief This a pointer to the SgType given to the sizeof operator.
 
-   This is the type provided as an argument to the sizeof operator
+This is the type provided as an argument to the sizeof operator
 (if it is a type).
 
 */
@@ -71,7 +71,7 @@ the address of a.
 \fn SgStatementExpression::SgStatementExpression ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgStatementExpression base class.
+This constructor builds the SgStatementExpression base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -82,14 +82,14 @@ the address of a.
 \fn SgStatementExpression::~SgStatementExpression()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgStatementExpression::isSgStatementExpression (SgNode *s)
 \brief Cast function (from derived class to SgStatementExpression pointer).
 
-   This functions returns a SgStatementExpression pointer for any input of a 
+This functions returns a SgStatementExpression pointer for any input of a 
 pointer to an object derived from a SgStatementExpression.
 
 \return Returns valid pointer to SgStatementExpression if input is derived from a SgStatementExpression.
@@ -99,10 +99,10 @@ pointer to an object derived from a SgStatementExpression.
 \fn SgStatementExpression::isSgStatementExpression (const SgNode *s)
 \brief Cast function (from derived class to SgStatementExpression pointer).
 
-   This functions returns a SgStatementExpression pointer for any input of a 
+This functions returns a SgStatementExpression pointer for any input of a 
 pointer to an object derived from a SgStatementExpression.
 
 \return Returns valid pointer to SgStatementExpression if input is derived from a
-    SgStatementExpression.
+SgStatementExpression.
 */
 

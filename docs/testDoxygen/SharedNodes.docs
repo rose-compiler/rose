@@ -4,8 +4,8 @@
 /*!
 \page SharedNodes Shared vs. Nonshared IR Nodes within Sage III
 
-   Within the AST some types of IR nodes referenced via pointers and are shared while
-    others are never shared:
+Within the AST some types of IR nodes referenced via pointers and are shared while
+others are never shared:
       - Never shared IR nodes:
         -# Sg_File_Info (this is only a warning and not an error, at present)
         -# SgStatement (all but SgDeclarationStatement IR nodes)
@@ -22,12 +22,12 @@
         -# SgType (all types derived from SgType)
         -# SgSymbol (all types derived from SgSymbol and having the same name in the same
            scope)
-    Other IR nodes are never referenced directly by pointers (stored as data members
-    instead of pointer to instances):
+Other IR nodes are never referenced directly by pointers (stored as data members
+instead of pointer to instances):
         - SgName
         - SgModifier (and all classes derived from SgModifier)
 
-    Within the AST it makes since to share some IR nodes and not share others.  Still
+Within the AST it makes since to share some IR nodes and not share others.  Still
 other IR nodes become special cases that are sometimes shared.  Types are good IR nodes to
 share since within the language definition, within any scope a type can have only a single
 definition.  Any statement referencing that type can thus share a reference with any other 
@@ -39,27 +39,27 @@ within a single scope a SgSymbol object is unique and thus shared between all po
 references (as long as it referes to a unique named entity, variable name, type name,
 etc.).  
 
-   Some IR nodes are not meant to be shared, many SgStatement and SgExpression nodes 
+Some IR nodes are not meant to be shared, many SgStatement and SgExpression nodes 
 (classes derived from SgStatement and SgExpression) are like this.  And expression exists
 once within the AST and is not shared.  Again the structure of C++ as a language is used
 as a guide, expressions are written once within a single location within the source code
 and C++ provides no mechanism for share references to the same expression.  Most C++ 
 statements have a similar representation (e.g. a SgForStatement is not shared within the AST).
 
-   Some cases are more complex and require special attention, SgDeclarationStatements
+Some cases are more complex and require special attention, SgDeclarationStatements
 fit into this catagory.  Where they are used within types, symbols, typedefs, etc., they
 can be shared.  However, where they appear as forward declarations by them selves as
 statements they are reprlicated.  Thus two forward declarations to the same class,
 function, member function, enum, etc., will exist as two separate declarations, each
 referencing the same definition (for class, function, or member function declaration).
 
-   With the new AST Merge mechanism, many more declartions can now be shared as part of
+With the new AST Merge mechanism, many more declartions can now be shared as part of
 the merger of different AST from files that may change some of the same header files.
 
-   Some AST tests confirm/test the sharing and nonsharing semantics within the Sage III 
+Some AST tests confirm/test the sharing and nonsharing semantics within the Sage III 
 AST (\sa AST_Diagnostics):
    - All statements in a single scope are unique
    - All Sg_File_Info objects are unique
 
-    
+
 */

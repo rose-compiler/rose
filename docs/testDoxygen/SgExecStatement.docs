@@ -18,7 +18,7 @@ file, or code object. This node is intended for use with Python.
 \var SgExecStatement::p_executable
 \brief The object to be executed.
 
-    This expression is evaluated and executed dynamically.
+This expression is evaluated and executed dynamically.
 
 */
 
@@ -42,7 +42,7 @@ file, or code object. This node is intended for use with Python.
 \fn SgExecStatement::SgExecStatement ( SgExpression* executable, SgExpression* globals, SgExpression* locals)
 \brief This is the constructor.
 
-   This constructor builds the SgExecStatement base class.
+This constructor builds the SgExecStatement base class.
 
 */
 /*
@@ -60,7 +60,7 @@ file, or code object. This node is intended for use with Python.
 \fn SgExecStatement::isSgExecStatement (SgNode *s)
 \brief Cast function (from derived class to SgExecStatement pointer).
 
-   This functions returns a SgExecStatement pointer for any input of a 
+This functions returns a SgExecStatement pointer for any input of a 
 pointer to an object derived from a SgExecStatement.
 
 \return Returns valid pointer to SgExecStatement if input is derived from a SgExecStatement.
@@ -70,7 +70,7 @@ pointer to an object derived from a SgExecStatement.
 \fn SgExecStatement::isSgExecStatement (const SgNode *s)
 \brief Cast function (from derived class to SgExecStatement pointer).
 
-   This functions returns a SgExecStatement pointer for any input of a 
+This functions returns a SgExecStatement pointer for any input of a 
 pointer to an object derived from a SgExecStatement.
 
 \return Returns valid pointer to SgExecStatement if input is derived from a SgExecStatement.

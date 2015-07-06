@@ -6,7 +6,7 @@
 \class SgDeclarationStatement
 \brief This class represents the concept of a declaration statement.
 
-    Declaration statements are where variables and types are
+Declaration statements are where variables and types are
 defined and become available for use within a program.  Declarations
 are strored in symbols (\ref SgSymbol) and used to associate
 the symbol with a location within a scope within the application 
@@ -17,7 +17,7 @@ function declarations, namespace declarations, pragma declarations,
 template declarations, typedef declarations, using declarations,
 using directives, variable declarations, etc.
 
-   An important concept for a few types fo declarations is that
+An important concept for a few types fo declarations is that
 of defining vs. non-defining.  Defining declarations are associated with
 definitions, for example a class definition or function definition.
 A class declaration where a class is defined (instead of a forward 
@@ -36,31 +36,43 @@ also share their name, but this is not implemented yet).  If a variable
 is defined to be extern or only defined through a refererence or pointer, 
 then there would be no defining declaration (only a non-defining declaration).
 
-   The following code contains no defining declaration for the 
-type "foobar": \n
-     typedef struct foobar *((FunctionPointer)(void);\n
-     foobar* foobar_pointer = NULL; \n
+The following code contains no defining declaration for the 
+type "foobar":
+
+@code
+typedef struct foobar *((FunctionPointer)(void);
+foobar* foobar_pointer = NULL;
+@endcode
+
 and yet is valid code (even though there is no explicit forward declaration
 of "foobar" as a class (or struct).  In this case foobar is represented
 using a non-defining declaration internally and that declaration is 
 reference multiple types (once within each statement).  Note that
 the code above is valid C++, and not valid C code (to make it valid C code 
 we would have to add "struct" the pointer declaration, for example:
-     struct foobar* foobar_pointer = NULL; \n
+
+@code
+struct foobar* foobar_pointer = NULL;
+@endcode
+
 So C++ is not always a super set of C :-).
 
 
-Different types of declarations explained: \n
-    C and C++ declarations can come in several forms, for example: \n
-typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef) \n
-struct A { int i; };         // autonomous declaration \n
-struct B { int i; } b;       // non autonomous declaration \n
+Different types of declarations explained:
+C and C++ declarations can come in several forms, for example:
+
+@code
+typedef struct { int A; } A; // unnamed class declaration (which gets a name from the typedef)
+struct A { int i; };         // autonomous declaration
+struct B { int i; } b;       // non autonomous declaration
+@endocde
+
 In these cases "struct" and "class" can be used interchangablily. Internally 
 "struct" and "class" are he same (but with a different enum to classify them,
 see SgNameType and SgClassType).  Clearly most C++ code uses autonomous 
 declarations.
 
-    There are no uses of this IR node anywhere.  All statements
+There are no uses of this IR node anywhere.  All statements
 are derived from this SgDeclarationStatement class.
 
 \internal This is a base class for all statements.
@@ -159,10 +171,10 @@ are derived from this SgDeclarationStatement class.
      whose sole purpose it to fold into the mangled name debugging information.
 
 \test To test the mangled name generation we should construct a program using the mangled
-     names and compile it to verify uniquenss of the veriable names.  Since functions
-     of the same name can be repeated, mangled names from functions should generate
-     functions in the test program and mangled names of veriables should generate
-     variables, etc.
+names and compile it to verify uniquenss of the veriable names.  Since functions
+of the same name can be repeated, mangled names from functions should generate
+functions in the test program and mangled names of veriables should generate
+variables, etc.
 
 \sa
 \ref SgDeclarationStatement_usage  "Example of using a SgDeclarationStatement object"
@@ -177,7 +189,7 @@ are derived from this SgDeclarationStatement class.
 \brief This pointer is valid only if a defining declaration exists, and stores the defining declaration 
 where the declaration was defined.
 
-    It is important to note that this is the only defining declaration as 
+It is important to note that this is the only defining declaration as 
 opposed to the non-defining declarations (where there can, depending on IR node, often be many).
 
 \internal The value held is not shared within the Sage III AST (except though this data
@@ -189,23 +201,23 @@ member in each defining and non-defining declaration).
 where a declaration was made explicitly (as in forward declaration) or implicitly as in
 the case of a few IR nodes (e.g. SgClassDeclaration). See description of SgDeclarationStatement.
 
-    It is important to note that this is the first non-defining declaration as 
+It is important to note that this is the first non-defining declaration as 
 opposed to the defining declaration.  Thus it is usually the first forward declaration.
 
 \internal The value held is sharable across many references where as the defining
-          declaration (not held by this variable) should have one unique reference
-          within the AST, except where reference though the declarations
-          definingDeclaration data member pointer.  See declarations for details
-          (SgDeclarationStatements).
+declaration (not held by this variable) should have one unique reference
+within the AST, except where reference though the declarations
+definingDeclaration data member pointer.  See declarations for details
+(SgDeclarationStatements).
 */
 
 /*! \var SgDeclarationStatement::p_linkage
 \brief This string stores the value "C", "C++", or "fortran" to define the external
-    linkage for generating linkable names.
+linkage for generating linkable names.
 
-   The only values that make sense here are "C", "C++" is the assumed default and requires
-   a NULL pointer value.  And the use of "fortran" would be backend specific (may be
-   rejected by some backend vendor compilers).
+The only values that make sense here are "C", "C++" is the assumed default and requires
+a NULL pointer value.  And the use of "fortran" would be backend specific (may be
+rejected by some backend vendor compilers).
 
 */
 
@@ -221,8 +233,8 @@ opposed to the defining declaration.  Thus it is usually the first forward decla
 \var SgDeclarationStatement::p_declarationModifier
 \brief This is the mechanism to handle declaration modifiers.
 
-    See Stroustrup 3rd edition, Appendix A, for details of how modifiers are represented
-    in ROSE.
+See Stroustrup 3rd edition, Appendix A, for details of how modifiers are represented
+in ROSE.
 
 \internal There is no interface to declaration modifiers implemented directly in this
 SgDeclarationStatement class.  This was done to simplify the implementation.  Users
@@ -238,18 +250,18 @@ declaration.  Either that or it is information used by the unparser (Oh, I hope 
 \deprecated This will likely be removed at some point.
 
 \internal This mechanism is now redundnat with the better support for defining/nondefining
-    declarations.
+declarations.
 */
 
 /*!
 \var SgDeclarationStatement::p_forward
 \brief This marks a declaration as being an explicit forward declaration.
 
-   All non-defining declaations are marked as forward declarations, while 
+All non-defining declaations are marked as forward declarations, while 
 a defining declaration is NOT a marked as a forward declaration.
 
 \internal It is not clear enough to just use defining vs. nondefining declarations
-     to know when something is a forward declaration!
+to know when something is a forward declaration!
 
 */
 
@@ -257,14 +269,14 @@ a defining declaration is NOT a marked as a forward declaration.
 \var SgDeclarationStatement::p_externBrace
 \brief This marks that the declaration appeared with "extern".
 
-   Note that I think this is also set even if it appears between "extern {" and "}".
+Note that I think this is also set even if it appears between "extern {" and "}".
 It might be that this is a way to specify the first "extern {", but I don't think
 it is used interanlly and it is not clear if attaching the "extern {" to
 a declaration is a great way to handle this problem generally (appears to be
 overlly sensative to transformations that would add, remove, or move declarations
 (e.g in inlining and outlining transformations). 
 
-   Currently the lex pass saves all "extern \"C\" {" declarations and treats them as
+Currently the lex pass saves all "extern \"C\" {" declarations and treats them as
 CPP directive (along with comments), they are then woven back into the AST as 
 a separate pass.
 
@@ -279,14 +291,14 @@ in the source code directly (where "X" is either "C", "C++", or "fortran".
 /*!
 \var SgDeclarationStatement::p_skipElaborateType
 \brief This marks "type elaboration" which is the use of the keyword "class" before
-    variables of type class.
+variables of type class.
 
-    This is not often required, but is routinely output by the unparser to be
-    conservative.  The support for hidden lists allows the unparser to more
-    precisely output the type elaboration, and so this variable is redundant.
+This is not often required, but is routinely output by the unparser to be
+conservative.  The support for hidden lists allows the unparser to more
+precisely output the type elaboration, and so this variable is redundant.
 
 \deprecated This is now redundant with the hidden list analysis done to support more
-    accurate code generation.
+accurate code generation.
 
 \internal This field is used in a default mode and could be set to be more accurate.
 */
@@ -296,7 +308,7 @@ in the source code directly (where "X" is either "C", "C++", or "fortran".
 \brief This marks a declaration are requiring qualification in its output in the unparser.
 
 \deprecated This is now redundant with the hidden list analysis done to support more
-    accurate code generation.
+accurate code generation.
 
 \internal Although this variable is specific to unparing, I think it may be required.
 Although the name qualifications were recently reimplemented to be more uniform and robust
@@ -312,7 +324,7 @@ I'm not clear if this variable is a part of that new implementation (and thus re
 \fn SgDeclarationStatement::SgDeclarationStatement ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgDeclarationStatement base class.
+This constructor builds the SgDeclarationStatement base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -325,14 +337,14 @@ I'm not clear if this variable is a part of that new implementation (and thus re
 \fn SgDeclarationStatement::~SgDeclarationStatement()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgDeclarationStatement::isSgDeclarationStatement (SgNode *s)
 \brief Cast function (from derived class to SgDeclarationStatement pointer).
 
-   This functions returns a SgDeclarationStatement pointer for any input of a 
+This functions returns a SgDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgDeclarationStatement.
 
 \return Returns valid pointer to SgDeclarationStatement if input is derived from a SgLocatedNode.
@@ -342,7 +354,7 @@ pointer to an object derived from a SgDeclarationStatement.
 \fn SgDeclarationStatement::isSgDeclarationStatement (const SgNode *s)
 \brief Cast function (from derived class to SgDeclarationStatement pointer).
 
-   This functions returns a SgDeclarationStatement pointer for any input of a 
+This functions returns a SgDeclarationStatement pointer for any input of a 
 pointer to an object derived from a SgDeclarationStatement.
 
 \return Returns valid pointer to SgDeclarationStatement if input is derived from a SgLocatedNode.
@@ -378,28 +390,28 @@ pointer to an object derived from a SgDeclarationStatement.
 
 /*! \fn SgDeclarationStatement::get_definingDeclaration() const
 \brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
-    that variable's documentation for details).
+that variable's documentation for details).
 */
 
 /*! \fn SgDeclarationStatement::set_definingDeclaration( SgDeclarationStatement* definingDeclaration )
 \brief This is an access function for the SgDeclarationStatement::p_definingDeclaration data member (see
-    that variable's documentation for details).
+that variable's documentation for details).
 */
 
 /*! \fn SgDeclarationStatement::get_firstNondefiningDeclaration() const
 \brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
-    that variable's documentation for details).
+that variable's documentation for details).
 */
 
 /*! \fn SgDeclarationStatement::set_firstNondefiningDeclaration( SgDeclarationStatement* firstNondefiningDeclaration )
 \brief This is an access function for the SgDeclarationStatement::p_firstNondefiningDeclaration data member (see
-    that variable's documentation for details).
+that variable's documentation for details).
 */
 
 
 /*! \fn SgDeclarationStatement::get_symbol_from_symbol_table() const
 \brief \b FOR \b INTERNAL \b USE Get the associated symbol from the symbol table in the stored scope.
-       Users should use the SgDeclarationStatement::search_for_symbol_from_symbol_table() instead.
+Users should use the SgDeclarationStatement::search_for_symbol_from_symbol_table() instead.
 */
 
 /*! \fn SgDeclarationStatement::search_for_symbol_from_symbol_table() const
@@ -414,7 +426,7 @@ pointer to an object derived from a SgDeclarationStatement.
 \return Returns bool.
 
 \internal Only a few types of declarations do not have associated symbols
-    (SgFunctionParameterList, SgCtorInitializerList, SgPragmaDeclaration, 
-     SgVariableDeclaration, SgVariableDefinition).
+(SgFunctionParameterList, SgCtorInitializerList, SgPragmaDeclaration, 
+SgVariableDeclaration, SgVariableDefinition).
 */
 

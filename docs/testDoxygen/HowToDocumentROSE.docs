@@ -59,7 +59,10 @@
  *    and their inputs) do not need to be documented with doxygen.
  *
  *  + <b>Description:</b> All API entities should have a clear description, including an example if the entity is sufficiently
- *    complex or could be tricky to use.
+ *    complex or could be tricky to use.  It is not necessary to start the documentation with "This function", "This class",
+ *    etc. since that information is provided by doxygen. Type information is also not necessary except when it makes the
+ *    description clearer.  For instance, instead of writing "This function returns a list of strings by splitting the input
+ *    string at semicolons", write "Returns a list of strings by splitting the input string at semicolons."
  *
  *  + <b>%Function parameters:</b> %Function parameters need to be documented when their type and/or name is not
  *    sufficient. They can be documented in list format or as part of the function's description.  Use the @c @@p tag when
