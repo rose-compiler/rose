@@ -197,7 +197,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
           bool forceUnparseFromTokenStream = false;
           bool forceUnparseFromAST         = false;
 #endif
-
+#if 0
+          printf ("ROSE_tokenUnparsingTestingMode = %s \n",ROSE_tokenUnparsingTestingMode ? "true" : "false");
+#endif
        // DQ (12/1/2013): Added switch to control testing mode for token unparsing.
        // Test codes in the tests/roseTests/astTokenStreamTests directory turn on this 
        // variable so that all regression tests can be processed to mix the unparsing of 
@@ -306,6 +308,9 @@ FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode* n, Fr
        // AstAttribute::AttributeNodeInfo* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
        // AstAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+          printf ("Adding attribute: test 1: blue \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
@@ -637,6 +642,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
 
                if (statement != NULL)
                   {
+#if 0
+                    printf ("Adding attribute: test 2: green \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -655,7 +663,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"blue\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
-
+#if 0
+                    printf ("Adding attribute: test 3: blue \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
              }
@@ -811,6 +821,9 @@ FrontierDetectionForTokenStreamMapping::evaluateSynthesizedAttribute (SgNode* n,
                     string name    = "token_frontier";
                     string options = "color=\"red\"";
                     FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( (SgNode*) n, name, options);
+#if 0
+                    printf ("Adding attribute: test 4: red \n");
+#endif
                     statement->setAttribute(name,attribute);
                   }
                  else
@@ -1046,6 +1059,10 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 #endif
 
 #if 0
+     std::set<SgStatement*> transformedStatementSet = SageInterface::collectTransformedStatements(sourceFile);
+     printf ("In frontierDetectionForTokenStreamMapping(): transformedStatementSet.size() = %zu \n",transformedStatementSet.size());
+#endif
+#if 0
   // Debugging (this set in the constructor).
      printf ("numberOfNodes = %d \n",fdTraversal.numberOfNodes);
 #endif
@@ -1108,6 +1125,9 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
              }
           FrontierDetectionForTokenStreamMappingAttribute* attribute = new FrontierDetectionForTokenStreamMappingAttribute ( statement, name, options);
 
+#if 0
+          printf ("Adding attribute: test 5: skyblue or greenyellow \n");
+#endif
           statement->setAttribute(name,attribute);
 
 #if 0
@@ -1257,6 +1277,19 @@ frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile )
 
 #if 0
      printf ("In frontierDetectionForTokenStreamMapping(): DONE: Calling previousAndNextNodeTraversal() \n");
+#endif
+
+#if 0
+  // DQ (11/20/2013): Test using support for multiple files for Java testing.
+  // Output an optional graph of the AST (just the tree, when active)
+  // generateDOT ( *project );
+  // SgProject* project = isSgProject(sourceFile->get_project());
+  // SgProject* project = sourceFile->get_project();
+     ROSE_ASSERT(project != NULL);
+
+     printf ("In frontierDetectionForTokenStreamMapping(): Output dot file for project \n");
+
+     generateDOTforMultipleFile(*project);
 #endif
 
 #if 0

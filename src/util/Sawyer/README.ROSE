@@ -1,0 +1,9 @@
+The files in this directory come from the Sawyer project at
+github.com:matzke1/sawyer
+
+The CMakeLists.txt file is the ROSE version, not the Sawyer version.
+
+If you make other changes here, be polite and contribute them back
+to the Sawyer project.
+
+Thanks.

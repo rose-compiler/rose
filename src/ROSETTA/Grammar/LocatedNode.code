@@ -78,6 +78,18 @@ HEADER_START
        */
           bool isCompilerGenerated () const;
 
+      /*! \brief Allow IR nodes (mostly SgLocatedNode) to be marked as a transformation.
+
+          Since the flag for isTransformation is stored in the Sg_File_Info, and because there
+          are up to three of these for the source position information to be comprehensive, this 
+          function permits a mechanism to have them be set uniformally.  Warnings are issued if
+          they are not set uniformally.
+
+          \internal This function marks the Sg_File_Info objects that must already be present.
+       */
+          void setTransformation ();
+          void unsetTransformation ();
+
        // DQ (12/4/2014): Added interface function to simplify code.
       /*! \brief Simple test for if this is a part of a transformation.
 
@@ -761,6 +773,9 @@ SgLocatedNode::post_construction_initialization()
 void
 SgLocatedNode::setCompilerGenerated ()
    {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      ROSE_ASSERT(get_endOfConstruct() != NULL);
      get_startOfConstruct()->setCompilerGenerated();
@@ -778,6 +793,9 @@ SgLocatedNode::setCompilerGenerated ()
 void
 SgLocatedNode::unsetCompilerGenerated()
    {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      ROSE_ASSERT(get_endOfConstruct() != NULL);
      get_startOfConstruct()->unsetCompilerGenerated();
@@ -796,6 +814,9 @@ SgLocatedNode::isCompilerGenerated () const
    {
   // DQ (7/5/2014): Added function to define a simple API.
 
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
      ROSE_ASSERT(get_startOfConstruct() != NULL);
      ROSE_ASSERT(get_endOfConstruct() != NULL);
 
@@ -812,10 +833,54 @@ SgLocatedNode::isCompilerGenerated () const
    }
 
 
+// DQ (4/14/2015): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::setTransformation ()
+   {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->setTransformation();
+     get_endOfConstruct()->setTransformation();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          expression->get_operatorPosition()->setTransformation();
+        }
+   }
+
+// DQ (4/14/2015): These function are part of a move to lift the interface for
+// IR node classification from the Sg_File_Info object to the SgLocatedNode (at least).
+void
+SgLocatedNode::unsetTransformation()
+   {
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
+
+     ROSE_ASSERT(get_startOfConstruct() != NULL);
+     ROSE_ASSERT(get_endOfConstruct() != NULL);
+     get_startOfConstruct()->unsetTransformation();
+     get_endOfConstruct()->unsetTransformation();
+
+     SgExpression* expression = isSgExpression(this);
+     if (expression != NULL && expression->get_operatorPosition() != NULL)
+        {
+          ROSE_ASSERT(expression->get_operatorPosition() != NULL);
+          expression->get_operatorPosition()->unsetTransformation();
+        }
+   }
+
 bool
 SgLocatedNode::isTransformation () const
    {
   // DQ (12/4/2014): Added function to define a simple API.
+
+  // DQ (4/14/2015): Detect if this is called from a NULL pointer.
+     ROSE_ASSERT(this != NULL);
 
      ROSE_ASSERT(get_startOfConstruct() != NULL);
 
