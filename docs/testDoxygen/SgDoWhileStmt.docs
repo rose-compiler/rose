@@ -9,7 +9,7 @@
 \internal 
 
 \todo The conditional test should be an expression (different from a SgWhileStmt),
-      see test2005_114.C for examples and details.
+see test2005_114.C for examples and details.
 */
 
 /*
@@ -26,10 +26,10 @@
 \brief This pointer a SgStatement, the conditional expression in the loop construct.
 
 \todo This should be changed to be a SgExpression (to follow the C++ standard).
-    We also have the condition specified before the body within the ROSETTA
-    specification and this causes the traversal to travers the condition and body in the
-    wrong order (for do-while, the traversal should be body forst and condition second).
-    See test2005_114.C for more details and example code (example of strange loops).
+We also have the condition specified before the body within the ROSETTA
+specification and this causes the traversal to travers the condition and body in the
+wrong order (for do-while, the traversal should be body forst and condition second).
+See test2005_114.C for more details and example code (example of strange loops).
 */
 
 /*! \var SgDoWhileStmt::p_body
@@ -44,7 +44,7 @@
 \fn SgDoWhileStmt::SgDoWhileStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgDoWhileStmt base class.
+This constructor builds the SgDoWhileStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -57,14 +57,14 @@
 \fn SgDoWhileStmt::~SgDoWhileStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgDoWhileStmt::isSgDoWhileStmt (SgNode *s)
 \brief Cast function (from derived class to SgDoWhileStmt pointer).
 
-   This functions returns a SgDoWhileStmt pointer for any input of a 
+This functions returns a SgDoWhileStmt pointer for any input of a 
 pointer to an object derived from a SgDoWhileStmt.
 
 \return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.
@@ -74,7 +74,7 @@ pointer to an object derived from a SgDoWhileStmt.
 \fn SgDoWhileStmt::isSgDoWhileStmt (const SgNode *s)
 \brief Cast function (from derived class to SgDoWhileStmt pointer).
 
-   This functions returns a SgDoWhileStmt pointer for any input of a 
+This functions returns a SgDoWhileStmt pointer for any input of a 
 pointer to an object derived from a SgDoWhileStmt.
 
 \return Returns valid pointer to SgDoWhileStmt if input is derived from a SgLocatedNode.

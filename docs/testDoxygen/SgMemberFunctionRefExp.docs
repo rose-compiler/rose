@@ -5,7 +5,7 @@
 /*!
 \class SgMemberFunctionRefExp
 \brief This class represents the member function being called and must be assembled in the
-    SgFunctionCall with the function arguments.
+SgFunctionCall with the function arguments.
 
 \internal 
 
@@ -22,7 +22,7 @@
 \var SgMemberFunctionRefExp::p_symbol_i
 \brief This is the SgMemberFunctionSymbol.
 
-     This binds the function reference to the member function declaration.
+This binds the function reference to the member function declaration.
 Note that all SgSymbol objects are shared (just like SgType objects)
 */
 
@@ -59,7 +59,7 @@ Note that all SgSymbol objects are shared (just like SgType objects)
 \fn SgMemberFunctionRefExp::SgMemberFunctionRefExp ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgMemberFunctionRefExp base class.
+This constructor builds the SgMemberFunctionRefExp base class.
 
 \param startOfConstruct represents the position in the source code
 \sa 
@@ -70,14 +70,14 @@ Note that all SgSymbol objects are shared (just like SgType objects)
 \fn SgMemberFunctionRefExp::~SgMemberFunctionRefExp()
 \brief This is the destructor.
 
-   Only the Sg_File_Info object can be deleted in this object.
+Only the Sg_File_Info object can be deleted in this object.
 */
 
 /*!
 \fn SgMemberFunctionRefExp::isSgMemberFunctionRefExp (SgNode *s)
 \brief Cast function (from derived class to SgMemberFunctionRefExp pointer).
 
-   This functions returns a SgMemberFunctionRefExp pointer for any input of a 
+This functions returns a SgMemberFunctionRefExp pointer for any input of a 
 pointer to an object derived from a SgMemberFunctionRefExp.
 
 \return Returns valid pointer to SgMemberFunctionRefExp if input is derived from a SgMemberFunctionRefExp.
@@ -87,7 +87,7 @@ pointer to an object derived from a SgMemberFunctionRefExp.
 \fn SgMemberFunctionRefExp::isSgMemberFunctionRefExp (const SgNode *s)
 \brief Cast function (from derived class to SgMemberFunctionRefExp pointer).
 
-   This functions returns a SgMemberFunctionRefExp pointer for any input of a 
+This functions returns a SgMemberFunctionRefExp pointer for any input of a 
 pointer to an object derived from a SgMemberFunctionRefExp.
 
 \return Returns valid pointer to SgMemberFunctionRefExp if input is derived from a SgMemberFunctionRefExp.
@@ -102,13 +102,13 @@ pointer to an object derived from a SgMemberFunctionRefExp.
 \fn SgMemberFunctionRefExp::get_type() const
 \brief Get the type associated with this expression
 
-     Note that the return value is either:
+Note that the return value is either:
    -# SgFunctionType : normal function call
    -# SgMemberFunctionType : normal member function call
    -# SgTypedefType : in the case of a function call from a pointer
 
-   It should always be a vailid pointer.  These details are verified in the AST
-   Consistancy Tests.
+It should always be a vailid pointer.  These details are verified in the AST
+Consistancy Tests.
 
 \return Returns SgType (but not any SgType).
 */
@@ -117,7 +117,7 @@ pointer to an object derived from a SgMemberFunctionRefExp.
 \fn SgMemberFunctionRefExp::set_type()
 \brief Set the type associated with this expression
 
-   This is an internally called function, it sets up the type of the expression 
+This is an internally called function, it sets up the type of the expression 
 based upon the types of the subexpressions (if any). Thus it takes no 
 arguments.
 

@@ -23,7 +23,7 @@
 \fn SgContinueStmt::SgContinueStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgContinueStmt base class.
+This constructor builds the SgContinueStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -36,14 +36,14 @@
 \fn SgContinueStmt::~SgContinueStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgContinueStmt::isSgContinueStmt (SgNode *s)
 \brief Cast function (from derived class to SgContinueStmt pointer).
 
-   This functions returns a SgContinueStmt pointer for any input of a 
+This functions returns a SgContinueStmt pointer for any input of a 
 pointer to an object derived from a SgContinueStmt.
 
 \return Returns valid pointer to SgContinueStmt if input is derived from a SgLocatedNode.
@@ -53,7 +53,7 @@ pointer to an object derived from a SgContinueStmt.
 \fn SgContinueStmt::isSgContinueStmt (const SgNode *s)
 \brief Cast function (from derived class to SgContinueStmt pointer).
 
-   This functions returns a SgContinueStmt pointer for any input of a 
+This functions returns a SgContinueStmt pointer for any input of a 
 pointer to an object derived from a SgContinueStmt.
 
 \return Returns valid pointer to SgContinueStmt if input is derived from a SgLocatedNode.

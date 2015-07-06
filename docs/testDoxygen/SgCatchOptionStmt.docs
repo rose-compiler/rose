@@ -5,7 +5,7 @@
 /*!
 \class SgCatchOptionStmt
 \brief This class represents the concept of a catch within a try-catch construct used in
-    C++ exception handling.
+C++ exception handling.
 
 \internal try and catch, though linked semanticaly, are seperate statements in the IR.
 
@@ -28,7 +28,7 @@
 
 /*! \var SgCatchOptionStmt::p_body
 \brief This pointer to a SgBasicBlock used to hold the statements to be executed when the
-    exception is caught.
+exception is caught.
 
 */
 
@@ -44,7 +44,7 @@
 \fn SgCatchOptionStmt::SgCatchOptionStmt ( Sg_File_Info* startOfConstruct = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgCatchOptionStmt base class.
+This constructor builds the SgCatchOptionStmt base class.
 
 \param startOfConstruct represents the position in the source code
 */
@@ -57,14 +57,14 @@
 \fn SgCatchOptionStmt::~SgCatchOptionStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgCatchOptionStmt::isSgCatchOptionStmt (SgNode *s)
 \brief Cast function (from derived class to SgCatchOptionStmt pointer).
 
-   This functions returns a SgCatchOptionStmt pointer for any input of a 
+This functions returns a SgCatchOptionStmt pointer for any input of a 
 pointer to an object derived from a SgCatchOptionStmt.
 
 \return Returns valid pointer to SgCatchOptionStmt if input is derived from a SgLocatedNode.
@@ -74,7 +74,7 @@ pointer to an object derived from a SgCatchOptionStmt.
 \fn SgCatchOptionStmt::isSgCatchOptionStmt (const SgNode *s)
 \brief Cast function (from derived class to SgCatchOptionStmt pointer).
 
-   This functions returns a SgCatchOptionStmt pointer for any input of a 
+This functions returns a SgCatchOptionStmt pointer for any input of a 
 pointer to an object derived from a SgCatchOptionStmt.
 
 \return Returns valid pointer to SgCatchOptionStmt if input is derived from a SgLocatedNode.

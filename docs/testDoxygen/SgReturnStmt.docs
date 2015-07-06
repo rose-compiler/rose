@@ -7,8 +7,8 @@
 \brief This class represents the concept of a C Assembler statement (untested).
 
 \todo Check that when return (SgReturnStatement) is implicit, it should be marked as
-    compiler generated.  Actually we only include returns in the AST which are explicit, so
-    this is not a problem.
+compiler generated.  Actually we only include returns in the AST which are explicit, so
+this is not a problem.
 
 \sa
 \ref SgReturnStmt_usage  "Example of using a SgReturnStmt object"
@@ -32,7 +32,7 @@
 \fn SgReturnStmt::SgReturnStmt ( Sg_File_Info* startOfConstruct = NULL, SgExpression *return_expr = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgReturnStmt base class.
+This constructor builds the SgReturnStmt base class.
 
 \param startOfConstruct represents the position in the source code
 
@@ -44,7 +44,7 @@
 \fn SgReturnStmt::SgReturnStmt ( Sg_File_Info* startOfConstruct = NULL, SgExpressionRoot *return_expr = NULL )
 \brief This is the constructor.
 
-   This constructor builds the SgReturnStmt base class.
+This constructor builds the SgReturnStmt base class.
 
 \deprecated This constructor is likely to be deprecated.
 
@@ -54,14 +54,14 @@
 \fn SgReturnStmt::~SgReturnStmt()
 \brief This is the destructor.
 
-   There are a lot of things to delete, but nothing is deleted in this destructor.
+There are a lot of things to delete, but nothing is deleted in this destructor.
 */
 
 /*!
 \fn SgReturnStmt::isSgReturnStmt (SgNode *s)
 \brief Cast function (from derived class to SgReturnStmt pointer).
 
-   This functions returns a SgReturnStmt pointer for any input of a 
+This functions returns a SgReturnStmt pointer for any input of a 
 pointer to an object derived from a SgReturnStmt.
 
 \return Returns valid pointer to SgReturnStmt if input is derived from a SgLocatedNode.
@@ -71,7 +71,7 @@ pointer to an object derived from a SgReturnStmt.
 \fn SgReturnStmt::isSgReturnStmt (const SgNode *s)
 \brief Cast function (from derived class to SgReturnStmt pointer).
 
-   This functions returns a SgReturnStmt pointer for any input of a 
+This functions returns a SgReturnStmt pointer for any input of a 
 pointer to an object derived from a SgReturnStmt.
 
 \return Returns valid pointer to SgReturnStmt if input is derived from a SgLocatedNode.

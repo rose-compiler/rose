@@ -6,13 +6,13 @@
 \class SgFunctionType
 \brief This class represents a type for all functions.
 
-   Note that covariant return types of virtual functions are permited in C++,
+Note that covariant return types of virtual functions are permited in C++,
 thus this class has explicit support for the function return type and the 
 original function's return type.
 
 \internal This type is derived from to build member function types
-    (SgMemberFunctionType), partial function types (SgPartialFunctionType),
-    and also (SgPartialFunctionModifierType and SgUnknownMemberFunctionType).
+(SgMemberFunctionType), partial function types (SgPartialFunctionType),
+and also (SgPartialFunctionModifierType and SgUnknownMemberFunctionType).
 
 \sa
 \ref SgFunctionType_usage  "Example of using a SgFunctionType object"
@@ -33,7 +33,7 @@ original function's return type.
 */
 /*! \var SgBasicBlock::p_has_ellipses
 \brief This boolean variable is true if the function use the "..." type 
-   (support for variable number of parameters).
+(support for variable number of parameters).
 */
 
 //////////////////////////////////////////////////////////////////////////
@@ -43,7 +43,7 @@ original function's return type.
 \fn SgFunctionType::SgFunctionType()
 \brief This is the constructor.
 
-   This constructor builds the SgFunctionType base class.
+This constructor builds the SgFunctionType base class.
 
 \sa 
 \ref SgFunctionType_create "Example:create an SgFunctionType object"
@@ -53,14 +53,14 @@ original function's return type.
 \fn SgFunctionType::~SgFunctionType()
 \brief This is the destructor.
 
-   There is nothing to delete in this object.
+There is nothing to delete in this object.
 */
 
 /*!
 \fn SgFunctionType::isSgFunctionType (SgNode *s)
 \brief Cast function (from derived class to SgFunctionType pointer).
 
-   This functions returns a SgFunctionType pointer for any input of a 
+This functions returns a SgFunctionType pointer for any input of a 
 pointer to an object derived from a SgFunctionType.
 
 \return Returns valid pointer to SgFunctionType if input is derived from a SgLocatedNode.
@@ -70,7 +70,7 @@ pointer to an object derived from a SgFunctionType.
 \fn SgFunctionType::isSgFunctionType (const SgNode *s)
 \brief Cast function (from derived class to SgFunctionType pointer).
 
-   This functions returns a SgFunctionType pointer for any input of a 
+This functions returns a SgFunctionType pointer for any input of a 
 pointer to an object derived from a SgFunctionType.
 
 \return Returns valid pointer to SgFunctionType if input is derived from a SgFunctionType node.
