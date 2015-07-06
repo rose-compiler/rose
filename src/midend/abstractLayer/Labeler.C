@@ -156,6 +156,7 @@ string LabelProperty::labelTypeToString(LabelType lt) {
   case LABEL_FUNCTIONEXIT: return "functionexit";
   case LABEL_BLOCKBEGIN: return "blockbegin";
   case LABEL_BLOCKEND: return "blockend";
+  case LABEL_EMPTY_STMT: return "blockend";
   default:
     cerr<<"Error: unknown label type."<<endl;
     exit(1);
@@ -170,6 +171,7 @@ bool LabelProperty::isFunctionEntryLabel() { assert(_isValid); return _labelType
 bool LabelProperty::isFunctionExitLabel() { assert(_isValid); return _labelType==LABEL_FUNCTIONEXIT; }
 bool LabelProperty::isBlockBeginLabel() { assert(_isValid); return _labelType==LABEL_BLOCKBEGIN; }
 bool LabelProperty::isBlockEndLabel() { assert(_isValid); return _labelType==LABEL_BLOCKEND; }
+bool LabelProperty::isEmptyStmtLabel() { assert(_isValid); return _labelType==LABEL_EMPTY_STMT; }
 
 void LabelProperty::makeTerminationIrrelevant(bool t) {assert(_isTerminationRelevant); _isTerminationRelevant=false;}
 bool LabelProperty::isTerminationRelevant() {assert(_isValid); return _isTerminationRelevant;}
@@ -204,7 +206,7 @@ int Labeler::isLabelRelevantNode(SgNode* node) {
   switch(node->variantT()) {
   case V_SgFunctionCallExp:
   case V_SgBasicBlock:
-    return 2;
+    return 1;
   case V_SgFunctionDefinition:
     return 2;
   case V_SgExprStatement:
@@ -267,9 +269,9 @@ void Labeler::createLabels(SgNode* root) {
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONENTRY));
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONEXIT));
       } else if(isSgBasicBlock(*i)) {
-        assert(num==2);
+        assert(num==1);
         registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKBEGIN));
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
+        // registerLabel(LabelProperty(*i,LabelProperty::LABEL_BLOCKEND));
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
@@ -409,6 +411,11 @@ bool Labeler::isFunctionEntryLabel(Label lab) {
 bool Labeler::isFunctionExitLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isFunctionExitLabel();
 }
+
+bool Labeler::isEmptyStmtLabel(Label lab) {
+  return mappingLabelToLabelProperty[lab.getId()].isEmptyStmtLabel();
+}
+
 bool Labeler::isBlockBeginLabel(Label lab) {
   return mappingLabelToLabelProperty[lab.getId()].isBlockBeginLabel();
 }
